@@ -1,5 +1,10 @@
 # Social media scheduling using Nuxt layers
 
+## ⚠️ Project Status: In Progress
+
+This project is currently under development and not yet complete. Features may be missing or unstable.
+
+
 ![Home](./images/HomePage.png)
 ![Home-v2](./images/HomePage-2.png)
 ![App](./images/Screenshot%202025-10-17%20at%2011-20-43%20App%20%40local-monorepo_site.png)
@@ -213,24 +218,34 @@ erDiagram
 
 ## Setup
 
+To try the project locally, follow these steps:
 
 1. Clone the repository
-2. Run `pnpm install`
-3. Run `pnpm dev`
-4. Run `pnpm build`
-5. Run `pnpm start`
+2. Run `pnpm i` to install dependencies
+3. Create a `.env` file based on the `.env-example` file (fill in the required values)
+4. Run `pnpm packages db db:generate` and `pnpm packages db db:migrate` to set up the database
+5. Run `pnpm packages [layer] dev` for each layer you want to work on (e.g., `pnpm packages ui dev`, `pnpm packages auth dev`, etc.)
+6. Finally, run `pnpm packages site dev` to start the main site
 
-### Specific layer
+### Currently Working Features
 
+- User registration and login
+- Assets management
+- Tools
+- Connection to Google and Facebook
+- Connect Facebook page
+- Create/update posts
+- Calendar view of scheduled posts (Month, Week, Day views)
+- Hover on posts in calendar shows preview based on platform
 
-1. Run `pnpm packages [layer] install`
-2. Run `pnpm packages [layer] dev`
-3. Run `pnpm packages [layer] build`
-4. Run `pnpm packages [layer] start`
+### Specific Layer Commands
 
-Example : 
+- Install dependencies for a layer: `pnpm packages [layer] install`
+- Start dev server for a layer: `pnpm packages [layer] dev`
+- Build a layer: `pnpm packages [layer] build`
+- Start production server for a layer: `pnpm packages [layer] start`
 
-`pnpm packages ui dev` for the dev server for the ui Layer 
+Example: `pnpm packages ui dev` for the dev server for the ui layer 
 
 
 
