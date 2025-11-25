@@ -35,14 +35,14 @@ export default defineEventHandler(async (event) => {
 
 
     // Get social media accounts with filters
-    const account = await socialMediaAccountService.getAccountsForPlatform(
+    const accounts = await socialMediaAccountService.getAccountsForPlatform(
       platform,
       user.id
     )
     const matcher: Record<string, SchedulerPluginConstructor> = {
       facebook: FacebookPlugin,
     }
-    if (!matcher[platform] || !account) {
+    if (!matcher[platform] || !accounts.length) {
       throw createError({
         statusCode: 400,
         statusMessage: 'Invalid platform'
@@ -50,12 +50,17 @@ export default defineEventHandler(async (event) => {
     }
 
     const scheduler = new SchedulerPost({
-      accounts: account
+      accounts: accounts
     });
     scheduler.use(matcher[platform]);
 
-
-
+    const account = accounts.find(account => account.providerId === platform);
+    if (!account) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Invalid account'
+      })
+    }
     //@ts-ignore
     return await scheduler.pages(account.accessToken);
   } catch (error) {

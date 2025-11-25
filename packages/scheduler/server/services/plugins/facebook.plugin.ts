@@ -391,7 +391,6 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
   }
 
   async pages(_: any, accessToken: string) {
-
     const url = this._getGraphApiUrl(`/me/accounts?fields=id,username,name,picture.type(large)&access_token=${accessToken}`);
     const { data } = await (
       await this.fetch(url, undefined, 'fetch pages')
