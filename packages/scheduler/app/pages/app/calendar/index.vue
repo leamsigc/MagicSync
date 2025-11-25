@@ -8,6 +8,7 @@ import { usePostManager } from '../posts/composables/UsePostManager';
 import UpdatePostModal from '../posts/components/UpdatePostModal.vue';
 import NewCalendarPostModal from '../posts/components/NewCalendarPostModal.vue';
 import dayjs from 'dayjs';
+import type { PostWithAllData } from '#layers/BaseDB/db/schema';
 
 /**
  *
@@ -35,7 +36,7 @@ useHead({
   ]
 })
 const toast = useToast()
-const events = postList.value.map(post => {
+const events = postList.value.map((post: PostWithAllData) => {
   return {
     post,
     id: post.id,

@@ -6,7 +6,9 @@ import SchedulerPageHeader from './components/SchedulerPageHeader.vue';
 import type { EventClickArg } from '@fullcalendar/core/index.js';
 import { usePostManager } from '../posts/composables/UsePostManager';
 import UpdatePostModal from '../posts/components/UpdatePostModal.vue';
-import type { Post } from '#layers/BaseDB/db/schema';
+import NewCalendarPostModal from '../posts/components/NewCalendarPostModal.vue';
+import dayjs from 'dayjs';
+import type { PostWithAllData } from '#layers/BaseDB/db/schema';
 
 /**
  *
@@ -24,18 +26,25 @@ import type { Post } from '#layers/BaseDB/db/schema';
 const activeBusinessId = useState<string>('business:id');
 
 const { getPosts, postList } = usePostManager();
-await getPosts(activeBusinessId.value);
+const currentMonth = ref(dayjs().format('YYYY-MM'));
+await getPosts(activeBusinessId.value, {
+  limit: 100,
+  page: 1,
+  offset: 0,
+}, {
+  startDate: dayjs().startOf('month').format('YYYY-MM-DD'),
+  endDate: dayjs().endOf('month').format('YYYY-MM-DD')
+});
 
 const { t } = useI18n()
 useHead({
-  title: t('seo_title_all'),
+  title: t('seo_title_month'),
   meta: [
-    { name: 'description', content: t('seo_description_all') }
+    { name: 'description', content: t('seo_description_month') }
   ]
 })
 const toast = useToast()
-const date = useDateFormat(useNow(), "YYYY-MM-DD");
-const events = postList.value.map(post => {
+const events = postList.value.map((post: PostWithAllData) => {
   return {
     post,
     id: post.id,
@@ -47,12 +56,22 @@ const events = postList.value.map(post => {
   }
 })
 
+const newPostModalRef = ref<InstanceType<typeof NewCalendarPostModal> | null>(null);
+
 const HandleDateClicked = (event: DateClickArg) => {
-  toast.add({
-    title: 'Date Clicked',
-    description: ` Date clicked: ${event.dateStr}`,
-    color: 'success'
-  })
+  // Check if the date is in the pass show toast
+  if (dayjs(event.dateStr).isBefore(dayjs().add(-1, 'day'))) {
+    toast.add({
+      title: 'Date disabled',
+      description: `Please select a date in the future`,
+      color: 'error',
+    })
+    return;
+  }
+  // Open new post modal and pass the date to the modal
+  const date = new Date(event.dateStr);
+  newPostModalRef.value?.openModal(date);
+
 }
 
 const updatePostModalRef = ref<InstanceType<typeof UpdatePostModal> | null>(null);
@@ -65,7 +84,7 @@ const HandleEventClicked = (event: EventClickArg) => {
   })
 
   if (event.event.extendedProps?.post) {
-    updatePostModalRef.value?.openModal(event.event.extendedProps.post as Post);
+    updatePostModalRef.value?.openModal(event.event.extendedProps.post);
   }
 }
 </script>
@@ -74,6 +93,7 @@ const HandleEventClicked = (event: EventClickArg) => {
     <SchedulerPageHeader />
     <ScheduleCalendar :events="events" @date-clicked="HandleDateClicked" @event-clicked="HandleEventClicked" />
     <UpdatePostModal ref="updatePostModalRef" />
+    <NewCalendarPostModal ref="newPostModalRef" />
   </div>
 </template>
 
