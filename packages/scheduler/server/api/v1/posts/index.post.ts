@@ -12,24 +12,10 @@ export default defineEventHandler(async (event) => {
     const body = await readBody(event)
 
     // Validate required fields
-    if (!body.businessId) {
+    if (!body.businessId || !body.content || !body.targetPlatforms || !Array.isArray(body.targetPlatforms) || body.targetPlatforms.length === 0) {
       throw createError({
         statusCode: 400,
-        statusMessage: 'Business ID is required'
-      })
-    }
-
-    if (!body.content) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: 'Post content is required'
-      })
-    }
-
-    if (!body.targetPlatforms || !Array.isArray(body.targetPlatforms) || body.targetPlatforms.length === 0) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: 'At least one target platform is required'
+        statusMessage: 'Missing required fields'
       })
     }
 

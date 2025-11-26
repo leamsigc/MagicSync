@@ -8,13 +8,6 @@ export default defineEventHandler(async (event): Promise<PaginatedResponse<Busin
   // Check user is login
   // Get user from session (assuming auth middleware sets this)
   const user = await checkUserIsLogin(event)
-
-  if (!user) {
-    throw createError({
-      statusCode: 401,
-      statusMessage: 'Unauthorized'
-    })
-  }
   //Get all the business for the current user
   const businesses = await businessProfileService.findByUserId(user.id)
   //return the business

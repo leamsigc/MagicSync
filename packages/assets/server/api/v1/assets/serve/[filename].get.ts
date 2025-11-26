@@ -4,18 +4,8 @@ import { join } from 'node:path'
 
 export default defineEventHandler(async (event) => {
   try {
-    // Get authenticated user
-    const headers = getHeaders(event)
-    const session = await auth.api.getSession({
-      headers: new Headers(headers as Record<string, string>)
-    })
-
-    if (!session?.user?.id) {
-      throw createError({
-        statusCode: 401,
-        statusMessage: 'Unauthorized'
-      })
-    }
+    // Get user from session
+    const user = await checkUserIsLogin(event)
 
     const filename = getRouterParam(event, 'filename')
 
@@ -29,7 +19,7 @@ export default defineEventHandler(async (event) => {
     // Construct the user-specific folder path
     // Use the env FILE_STORAGE_MOUNT=./upload/files
     const fileStorageMount = process.env.FILE_STORAGE_MOUNT || './upload/files'
-    const userFolder = join(process.cwd(), fileStorageMount, 'userFiles', session.user.id)
+    const userFolder = join(process.cwd(), fileStorageMount, 'userFiles', user.id)
     const filePath = join(userFolder, filename)
 
     // Retrieve the file from local storage

@@ -5,12 +5,6 @@ import { checkUserIsLogin } from "#layers/BaseAuth/server/utils/AuthHelpers"
 export default defineEventHandler(async (event) => {
   const user = await checkUserIsLogin(event)
 
-  if (!user) {
-    throw createError({
-      statusCode: 401,
-      statusMessage: 'Unauthorized'
-    })
-  }
 
   const id = getRouterParam(event, 'id');
   if (!id) {

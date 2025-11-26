@@ -1,16 +1,16 @@
 import { socialMediaAccountService } from "#layers/BaseDB/server/services/social-media-account.service"
 import type { PostContent } from "#layers/BaseDB/server/services/types"
 
+interface ValidationResult {
+  isValid: boolean;
+  warnings?: string[];
+  errors?: string[];
+}
+
 export default defineEventHandler(async (event) => {
   try {
     // Get user from session
     const session = await getUserSessionFromEvent(event)
-    if (!session?.user?.id) {
-      throw createError({
-        statusCode: 401,
-        statusMessage: 'Unauthorized'
-      })
-    }
 
     // Get request body
     const body = await readBody(event)
@@ -35,7 +35,7 @@ export default defineEventHandler(async (event) => {
       mediaUrls: body.mediaUrls || []
     }
 
-    let validationResults: Record<string, any> = {}
+    let validationResults: Record<string, ValidationResult & { platform?: string, accountName?: string }> = {}
 
     if (body.platforms) {
       // Validate against specific platforms
@@ -104,3 +104,13 @@ export default defineEventHandler(async (event) => {
     })
   }
 })
+
+function validateContentForPlatform(platform: any, content: PostContent): ValidationResult {
+  // This is a placeholder. Real implementation would validate content against platform rules.
+  return { isValid: true, warnings: [], errors: [] }
+}
+
+function validateCrossPlatformContent(content: PostContent, platforms: any[]): ValidationResult {
+  // This is a placeholder. Real implementation would validate content across platforms.
+  return { isValid: true, warnings: [], errors: [] }
+}

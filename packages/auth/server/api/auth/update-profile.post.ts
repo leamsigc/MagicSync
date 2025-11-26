@@ -12,17 +12,8 @@ const updateProfileSchema = z.object({
 
 export default defineEventHandler(async (event) => {
   try {
-    // Get the current session
-    const session = await auth.api.getSession({
-      headers: event.headers
-    });
-
-    if (!session?.user) {
-      throw createError({
-        statusCode: 401,
-        statusMessage: 'Unauthorized'
-      })
-    }
+    // Get user from session
+    const user = await checkUserIsLogin(event)
 
     // Parse and validate the request body
     const body = await readBody(event)

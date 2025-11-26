@@ -33,10 +33,10 @@ export default defineEventHandler(async (event) => {
 
     const result = await postService.getPostStats(businessId, session.user.id, filters)
 
-    if (!result.success) {
+    if (!result) {
       throw createError({
         statusCode: 500,
-        statusMessage: result.error || 'Failed to calculate post statistics'
+        statusMessage: 'Failed to calculate post statistics'
       })
     }
 

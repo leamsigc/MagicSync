@@ -30,17 +30,10 @@ export default defineEventHandler(async (event) => {
     // Get post
     const result = await postService.findById(postId, user.id, includePlatforms)
 
-    if (!result.success) {
-      if (result.code === 'NOT_FOUND') {
-        throw createError({
-          statusCode: 404,
-          statusMessage: 'Post not found'
-        })
-      }
-
+    if (!result) {
       throw createError({
         statusCode: 500,
-        statusMessage: result.error || 'Failed to fetch post'
+        statusMessage: result || 'Failed to fetch post'
       })
     }
 

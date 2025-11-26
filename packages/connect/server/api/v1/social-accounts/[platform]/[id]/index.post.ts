@@ -16,13 +16,6 @@ interface ConnectSocialMediaAccountBody {
 export default defineEventHandler(async (event) => {
   try {
     const user = await checkUserIsLogin(event);
-
-    if (!user) {
-      throw createError({
-        statusCode: 401,
-        statusMessage: 'Unauthorized',
-      });
-    }
     const platform = getRouterParam(event, 'platform') as SocialMediaPlatform;
     const pageId = getRouterParam(event, 'id') as string;
 

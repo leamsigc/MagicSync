@@ -18,17 +18,11 @@ export default defineEventHandler(async (event) => {
     // Delete post
     const result = await postService.delete(postId, user.id)
 
-    if (!result.success) {
-      if (result.code === 'NOT_FOUND') {
-        throw createError({
-          statusCode: 404,
-          statusMessage: 'Post not found'
-        })
-      }
+    if (!result) {
 
       throw createError({
         statusCode: 500,
-        statusMessage: result.error || 'Failed to delete post'
+        statusMessage: 'Failed to delete post'
       })
     }
 

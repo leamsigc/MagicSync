@@ -4,18 +4,8 @@ import { join } from 'path'
 
 export default defineEventHandler(async (event) => {
   try {
-    // Get authenticated user
-    const headers = getHeaders(event)
-    const session = await auth.api.getSession({
-      headers: new Headers(headers as Record<string, string>)
-    })
-
-    if (!session?.user?.id) {
-      throw createError({
-        statusCode: 401,
-        statusMessage: 'Unauthorized'
-      })
-    }
+    // Get user from session
+    const user = await checkUserIsLogin(event)
 
     // Get the file path from the route parameters
     const path = getRouterParam(event, 'path')
@@ -28,7 +18,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // Security: Ensure the path is within the user's folder
-    const userFolder = `userFiles/${session.user.id}`
+    const userFolder = `userFiles/${user.id}`
     const safePath = path.replace(/\.\./g, '') // Remove any path traversal attempts
 
     // Build the full file path

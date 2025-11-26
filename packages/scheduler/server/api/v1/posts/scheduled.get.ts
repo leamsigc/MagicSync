@@ -28,10 +28,10 @@ export default defineEventHandler(async (event) => {
     // Get scheduled posts
     const result = await postService.findScheduledPosts(beforeDate)
 
-    if (!result.success) {
+    if (!result) {
       throw createError({
         statusCode: 500,
-        statusMessage: result.error || 'Failed to fetch scheduled posts'
+        statusMessage: 'Failed to fetch scheduled posts'
       })
     }
 

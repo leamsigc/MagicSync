@@ -553,6 +553,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     accessToken: string,
     media: Asset[]
   ): Promise<{ media_fbid: string }[]> {
+    const baseUrl = process.env.NUXT_PUBLIC_BASE_URL || 'http://localhost:3000'
     return Promise.all(
       media.map(async (m) => {
         const url = this._getGraphApiUrl(`/${accountId}/photos?access_token=${accessToken}`);
@@ -564,7 +565,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              url: `http://localhost:3000${m.url}`,
+              url: `${baseUrl}${m.url}`,
               published: false,
             }),
           },

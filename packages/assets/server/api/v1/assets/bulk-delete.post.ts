@@ -2,18 +2,8 @@ import { assetService } from '#layers/BaseAssets/server/services/asset.service';
 import { auth } from '#layers/BaseAuth/lib/auth';
 export default defineEventHandler(async (event) => {
   try {
-    // Get authenticated user
-    const headers = getHeaders(event)
-    const session = await auth.api.getSession({
-      headers: new Headers(headers as Record<string, string>)
-    })
-
-    if (!session?.user?.id) {
-      throw createError({
-        statusCode: 401,
-        statusMessage: 'Unauthorized'
-      })
-    }
+    // Get user from session
+    const user = await checkUserIsLogin(event)
 
     // Get request body
     const body = await readBody(event)
@@ -35,7 +25,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // Delete multiple assets
-    const result = await assetService.deleteMultiple(body.assetIds, session.user.id)
+    const result = await assetService.deleteMultiple(body.assetIds, user.id)
 
     if (!result.success) {
       throw createError({

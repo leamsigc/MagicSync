@@ -4,18 +4,8 @@ import { auth } from '#layers/BaseAuth/lib/auth';
 
 export default defineEventHandler(async (event) => {
   try {
-    // Get authenticated user
-    const headers = getHeaders(event)
-    const session = await auth.api.getSession({
-      headers: new Headers(headers as Record<string, string>)
-    })
-
-    if (!session?.user?.id) {
-      throw createError({
-        statusCode: 401,
-        statusMessage: 'Unauthorized'
-      })
-    }
+    // Get user from session
+    const user = await checkUserIsLogin(event)
 
     // Get query parameters
     const query = getQuery(event)
@@ -25,10 +15,10 @@ export default defineEventHandler(async (event) => {
 
     if (businessId) {
       // Get storage usage for specific business
-      result = await assetService.getStorageUsageByBusiness(businessId, session.user.id)
+      result = await assetService.getStorageUsageByBusiness(businessId, user.id)
     } else {
       // Get total storage usage for user
-      result = await assetService.getStorageUsage(session.user.id)
+      result = await assetService.getStorageUsage(user.id)
     }
 
     if (!result.success) {

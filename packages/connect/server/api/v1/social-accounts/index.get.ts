@@ -17,13 +17,6 @@ export default defineEventHandler(async (event) => {
     // Get user from session (assuming auth middleware sets this)
     const user = await checkUserIsLogin(event)
 
-    if (!user) {
-      throw createError({
-        statusCode: 401,
-        statusMessage: 'Unauthorized'
-      })
-    }
-
     // Get query parameters for filtering
     const query = getQuery(event)
     const platform = query.platformId as string;

@@ -4,18 +4,8 @@ import { type ServerFile } from 'nuxt-file-storage'
 
 export default defineEventHandler(async (event) => {
   try {
-    // Get authenticated user
-    const headers = getHeaders(event)
-    const session = await auth.api.getSession({
-      headers: new Headers(headers as Record<string, string>)
-    })
-
-    if (!session?.user?.id) {
-      throw createError({
-        statusCode: 401,
-        statusMessage: 'Unauthorized'
-      })
-    }
+    // Get user from session
+    const user = await checkUserIsLogin(event)
 
     // Handle nuxt-file-storage files
     const { files } = await readBody<{ files: ServerFile[] }>(event)
@@ -30,7 +20,7 @@ export default defineEventHandler(async (event) => {
     const uploadedAssets = []
 
     // Create user-specific folder path
-    const userFolder = `/userFiles/${session.user.id}`
+    const userFolder = `/userFiles/${user.id}`
 
     // Process each uploaded file
     for (const file of files) {
@@ -65,7 +55,7 @@ export default defineEventHandler(async (event) => {
           }
         }
 
-        const result = await assetService.create(session.user.id, assetData)
+        const result = await assetService.create(user.id, assetData)
 
         if (result.success) {
           uploadedAssets.push(result.data)

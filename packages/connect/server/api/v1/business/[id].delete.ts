@@ -2,14 +2,8 @@ import { businessProfileService } from '#layers/BaseDB/server/services/business-
 import { checkUserIsLogin } from "#layers/BaseAuth/server/utils/AuthHelpers"
 
 export default defineEventHandler(async (event) => {
+  // Get user from session
   const user = await checkUserIsLogin(event)
-
-  if (!user) {
-    throw createError({
-      statusCode: 401,
-      statusMessage: 'Unauthorized'
-    })
-  }
 
   const id = getRouterParam(event, 'id');
   if (!id) {

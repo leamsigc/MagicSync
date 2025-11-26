@@ -3,19 +3,8 @@ import { auth } from '#layers/BaseAuth/lib/auth';
 
 export default defineEventHandler(async (event) => {
   try {
-    // Get authenticated user
-    const headers = getHeaders(event)
-    const session = await auth.api.getSession({
-      headers: new Headers(headers as Record<string, string>)
-    })
-
-    if (!session?.user?.id) {
-      throw createError({
-        statusCode: 401,
-        statusMessage: 'Unauthorized'
-      })
-    }
-
+    // Get user from session
+    const user = await checkUserIsLogin(event)
     // Get asset ID from route parameters
     const assetId = getRouterParam(event, 'id')
 
@@ -39,7 +28,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // Update asset metadata
-    const result = await assetService.updateMetadata(assetId, session.user.id, body.metadata)
+    const result = await assetService.updateMetadata(assetId, user.id, body.metadata)
 
     if (!result.success) {
       if (result.code === 'NOT_FOUND') {

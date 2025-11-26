@@ -25,10 +25,10 @@ export default defineEventHandler(async (event) => {
 
     // Verify post exists and belongs to user
     const postResult = await postService.findById(postId, user.id)
-    if (!postResult.success) {
+    if (!postResult) {
       throw createError({
-        statusCode: postResult.code === 'NOT_FOUND' ? 404 : 500,
-        statusMessage: postResult.error || 'Failed to find post'
+        statusCode: 404,
+        statusMessage: 'Failed to find post'
       })
     }
 
@@ -43,8 +43,8 @@ export default defineEventHandler(async (event) => {
     }
 
     // Update post status to scheduled for immediate publishing
-    const updateResult = await postService.updateStatus(postId, user.id, 'scheduled')
-    if (!updateResult.success) {
+    const updateResult = await postService.updateStatus(postId, user.id, 'pending')
+    if (!updateResult) {
       throw createError({
         statusCode: 500,
         statusMessage: 'Failed to update post status'
