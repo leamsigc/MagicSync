@@ -1,5 +1,4 @@
 import { relations } from 'drizzle-orm'
-import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import { assets } from './assets/assets'
 
 import { user } from './auth/auth'
@@ -25,20 +24,6 @@ export * from './templates/templates'
 export * from './audit/audit'
 export * from './entityDetails/entityDetails'
 export * from './socialMedia/socialMedia'
-
-/***
-* Custom table here
-**/
-export const tools = sqliteTable('tool', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
-  name: text('name').notNull(),
-  url: text('url'),
-  description: text('description'),
-  likes: integer('likes'),
-  tags: text('tags'),
-  pricing: text('pricing'),
-  imageUrl: text('image_url')
-})
 
 /***
 * Cross-feature relationships

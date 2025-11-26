@@ -51,13 +51,20 @@ export default defineEventHandler(async (event) => {
     }
 
     const scheduler = new SchedulerPost({
-      accounts: [account]
+      accounts: account
     });
     scheduler.use(matcher[platform]);
 
+    const platformAccount = account.find(account => account.providerId === platform);
+    if (!platformAccount) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Invalid platform'
+      })
+    }
 
     //@ts-ignore
-    const pageDetails = await scheduler.fetchPageInformation(pageId, account.accessToken) as {
+    const pageDetails = await scheduler.fetchPageInformation(pageId, platformAccount.accessToken) as {
       id: string;
       name: string;
       access_token: string;

@@ -13,13 +13,7 @@ export default defineTask({
     const postToProcess = listOfPostToProcess.map((post) => {
       autoScheduler.triggerSocialMediaPost(post);
     });
-
-
-
-
-    console.log("##############");
-    console.log(listOfPostToProcess);
-    console.log("##############");
+    console.log("#### Trigger auto post for old post  ", listOfPostToProcess.length);
 
     return { result: "Success" };
   },

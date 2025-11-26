@@ -76,11 +76,10 @@ export class AssetService {
 
   async findById(id: string, userId: string): Promise<ServiceResponse<Asset>> {
     try {
-      const [asset] = await this.db
-        .select()
-        .from(assets)
-        .where(and(eq(assets.id, id), eq(assets.userId, userId)))
-        .limit(1);
+      const asset = await this.db
+        .query.assets.findFirst({
+          where: and(eq(assets.id, id), eq(assets.userId, userId)),
+        });
 
       if (!asset) {
         return { success: false, error: 'Asset not found', code: 'NOT_FOUND' };

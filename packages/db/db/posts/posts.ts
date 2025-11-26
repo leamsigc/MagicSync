@@ -15,8 +15,8 @@ export const posts = sqliteTable('posts', {
   scheduledAt: integer('scheduled_at', { mode: 'timestamp' }),
   publishedAt: integer('published_at', { mode: 'timestamp' }),
   status: text('status', {
-    enum: ['draft', 'scheduled', 'published', 'failed']
-  }).notNull().default('draft'),
+    enum: ['pending', 'published', 'failed']
+  }).notNull().default('pending'),
   targetPlatforms: text('target_platforms').notNull(), // JSON array of social account IDs
   createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()).notNull()
@@ -32,12 +32,23 @@ export const platformPosts = sqliteTable('platform_posts', {
     enum: ['pending', 'published', 'failed']
   }).notNull().default('pending'),
   errorMessage: text('error_message'),
+  platformSettings: text('platform_settings', { mode: 'json' }), // JSON object for platform-specific settings
+  publishDetail: text('publish_detail', { mode: 'json' }), // JSON object for publish details
   publishedAt: integer('published_at', { mode: 'timestamp' }),
   createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()).notNull()
 })
 
+
+export type PlatformSettings = {
+  url?: string
+}
+export type PublishDetail = Map<string, {
+  publishedId?: string
+  publishedUrl?: string
+}>
 export type Post = InferSelectModel<typeof posts>
 export type PlatformPost = InferSelectModel<typeof platformPosts>
+export type PlatformPostInsert = typeof platformPosts.$inferInsert
 export type PostWithPlatformPosts = Post & { platformPosts: PlatformPost[], socialMediaAccount: SocialMediaAccount }
 export type PostWithAllData = Post & { platformPosts: PlatformPost[], user: User, assets: Asset[], }
 

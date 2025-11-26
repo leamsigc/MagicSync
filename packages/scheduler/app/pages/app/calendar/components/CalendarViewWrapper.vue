@@ -65,9 +65,10 @@ const newPostModalRef = ref<InstanceType<typeof NewCalendarPostModal> | null>(nu
 
 const HandleDateClicked = (event: DateClickArg) => {
   // Check if the date is in the pass show toast
-  if (dayjs(event.dateStr).isBefore(dayjs())) {
+  const now = dayjs().format('YYYY-MM-DD');
+  if (dayjs(event.date).isBefore(now)) {
     toast.add({
-      title: 'Date disabled',
+      title: `Date ${event.dateStr} disabled`,
       description: `Please select a date in the future`,
       color: 'error',
     })
@@ -82,11 +83,11 @@ const HandleDateClicked = (event: DateClickArg) => {
 const updatePostModalRef = ref<InstanceType<typeof UpdatePostModal> | null>(null);
 
 const HandleEventClicked = (event: EventClickArg) => {
-  toast.add({
-    title: 'event Clicked',
-    description: ` Date clicked: ${event.event.title}`,
-    color: 'success'
-  })
+  // toast.add({
+  //   title: 'event Clicked',
+  //   description: ` Date clicked: ${event.event.title}`,
+  //   color: 'success'
+  // })
 
   if (event.event.extendedProps?.post) {
     updatePostModalRef.value?.openModal(event.event.extendedProps.post);

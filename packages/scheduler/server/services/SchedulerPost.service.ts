@@ -1,4 +1,5 @@
-import { type Post, type SocialMediaAccount as Integration, type Account } from '#layers/BaseDB/db/schema';
+import { ValidationError } from '#layers/BaseAssets/server/shared/assetsTypes';
+import { type Post, type SocialMediaAccount as Integration, type Account, type SocialMediaAccount, type PostWithAllData } from '#layers/BaseDB/db/schema';
 import { EventEmitter } from 'events';
 
 // Simplified types based on the core requirements for SchedulerPost
@@ -7,7 +8,7 @@ export type PostResponse = {
   id: string;
   postId: string;
   releaseURL: string;
-  status: string;
+  status: 'pending' | 'published' | 'failed';
   error?: string;
 };
 
@@ -44,26 +45,20 @@ export interface SchedulerPlugin {
 
   validate(postDetail: Post): Promise<string[]>;
   post(
-    id: string,
-    accessToken: string,
-    postDetail: PostDetails,
+    postDetails: PostWithAllData,
     comments: PostDetails[],
-    integration: Integration
-  ): Promise<PostResponse[]>;
+    socialMediaAccount: SocialMediaAccount
+  ): Promise<PostResponse>;
   update(
-    id: string,
-    accessToken: string,
-    postId: string,
-    updateDetails: PostDetails,
-    integration: Integration
-  ): Promise<PostResponse[]>;
+    postDetails: PostWithAllData,
+    comments: PostDetails[],
+    socialMediaAccount: SocialMediaAccount
+  ): Promise<PostResponse>;
   addComment(
-    id: string,
-    accessToken: string,
-    postId: string,
-    commentDetails: PostDetails,
-    integration: Integration
-  ): Promise<PostResponse[]>;
+    postDetails: PostWithAllData,
+    comments: PostDetails,
+    socialMediaAccount: SocialMediaAccount
+  ): Promise<PostResponse>;
 }
 
 export interface SchedulerPluginConstructor {
@@ -94,26 +89,20 @@ export abstract class BaseSchedulerPlugin implements SchedulerPlugin {
 
   abstract validate(postDetail: Post): Promise<string[]>;
   abstract post(
-    id: string,
-    accessToken: string,
-    postDetails: PostDetails,
+    postDetails: PostWithAllData,
     comments: PostDetails[],
-    integration: Integration
-  ): Promise<PostResponse[]>;
+    socialMediaAccount: SocialMediaAccount
+  ): Promise<PostResponse>;
   abstract update(
-    id: string,
-    accessToken: string,
-    postId: string,
-    updateDetail: PostDetails,
-    integration: Integration
-  ): Promise<PostResponse[]>;
+    postDetails: PostWithAllData,
+    comments: PostDetails[],
+    socialMediaAccount: SocialMediaAccount
+  ): Promise<PostResponse>;
   abstract addComment(
-    id: string,
-    accessToken: string,
-    postId: string,
-    commentDetails: PostDetails,
-    integration: Integration
-  ): Promise<PostResponse[]>;
+    postDetails: PostWithAllData,
+    comments: PostDetails,
+    socialMediaAccount: SocialMediaAccount
+  ): Promise<PostResponse>;
 }
 
 export class SchedulerPost extends EventEmitter {
@@ -180,73 +169,61 @@ export class SchedulerPost extends EventEmitter {
   private async executeOnPlugins(
     action: 'post' | 'update' | 'addComment',
     params: unknown[],
-    integrations: Integration[],
+    socialMediaAccount: SocialMediaAccount,
     eventPrefix: string,
     extraData: Record<string, unknown> = {}
-  ): Promise<{ [integrationId: string]: PostResponse[] }> {
-    const results: { [integrationId: string]: PostResponse[] } = {};
-    const promises = integrations.map(async (integration) => {
-      const plugin = this.plugins.get(integration.platform);
-      if (plugin) {
-        try {
-          const responses = await (plugin[action] as (...args: unknown[]) => Promise<PostResponse[]>)(...params, integration);
-          results[integration.id] = responses;
-          this.emit(`${eventPrefix}:published`, { integrationId: integration.id, responses, ...extraData });
-        } catch (error: unknown) {
-          this.emit(`${eventPrefix}:failed`, {
-            pluginName: integration.platform,
-            error: (error as Error).message || 'Unknown error during plugin execution',
-            integrationId: integration.id,
-            ...extraData,
-          });
-        }
-      } else {
+  ): Promise<PostResponse> {
+    const plugin = this.plugins.get(socialMediaAccount.platform);
+    if (plugin) {
+      try {
+        const responses = await (plugin[action] as unknown as (...args: unknown[]) => Promise<PostResponse>)(...params, socialMediaAccount);
+        this.emit(`${eventPrefix}:published`, { socialMediaAccountId: socialMediaAccount.accountId, responses, ...extraData });
+        return responses;
+      } catch (error: unknown) {
         this.emit(`${eventPrefix}:failed`, {
-          pluginName: integration.platform,
-          error: 'Plugin not registered for this integration',
-          integrationId: integration.id,
           ...extraData,
         });
+        throw error;
       }
-    });
-
-    await Promise.allSettled(promises);
-    return results;
+    } else {
+      this.emit(`${eventPrefix}:failed`, {
+        pluginName: socialMediaAccount.platform,
+        error: 'Plugin not registered for this socialMediaAccount',
+        socialMediaAccountId: socialMediaAccount.id,
+        ...extraData,
+      });
+      throw new Error('Plugin not registered for this socialMediaAccount');
+    }
   }
 
   async publish(
-    id: string,
-    accessToken: string,
-    postDetails: Post,
+    postDetails: PostWithAllData,
     comments: PostDetails[],
-    integrations: Integration[]
-  ): Promise<{ [integrationId: string]: PostResponse[] }> {
+    socialMediaAccount: SocialMediaAccount
+  ): Promise<PostResponse> {
+
     const validationErrors = await this.validate(postDetails);
     if (Object.keys(validationErrors).length > 0) {
       this.emit('post:validation-failed', validationErrors);
-      return {};
+      throw new Error('Post validation failed');
     }
 
-    return this.executeOnPlugins('post', [id, accessToken, postDetails, comments], integrations, 'post', { postDetails, comments });
+    return this.executeOnPlugins('post', [postDetails, comments, socialMediaAccount], socialMediaAccount, 'post', { postDetails, comments });
   }
 
   async update(
-    id: string,
-    accessToken: string,
-    postId: string,
-    updateDetails: PostDetails,
-    integrations: Integration[]
-  ): Promise<{ [integrationId: string]: PostResponse[] }> {
-    return this.executeOnPlugins('update', [id, accessToken, postId, updateDetails], integrations, 'post:update', { postId, updateDetails });
+    postDetails: PostWithAllData,
+    comments: PostDetails[],
+    socialMediaAccount: SocialMediaAccount
+  ): Promise<PostResponse> {
+    return this.executeOnPlugins('update', [postDetails, comments, socialMediaAccount], socialMediaAccount, 'post:update', { postDetails, comments });
   }
 
   async addComment(
-    id: string,
-    accessToken: string,
-    postId: string,
-    commentDetails: PostDetails,
-    integrations: Integration[]
-  ): Promise<{ [integrationId: string]: PostResponse[] }> {
-    return this.executeOnPlugins('addComment', [id, accessToken, postId, commentDetails], integrations, 'comment:add', { postId, commentDetails });
+    postDetails: PostWithAllData,
+    comment: PostDetails,
+    socialMediaAccount: SocialMediaAccount
+  ): Promise<PostResponse> {
+    return this.executeOnPlugins('addComment', [postDetails, comment, socialMediaAccount], socialMediaAccount, 'comment:add', { postDetails, comment });
   }
 }

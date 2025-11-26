@@ -44,7 +44,7 @@ const formattedPostDate = computed(() => {
       </div>
       <UButton icon="i-heroicons-x-mark" variant="ghost" color="neutral" />
     </div>
-    <p class="text-gray-800 dark:text-gray-200 mb-3">{{ props.postContent }}</p>
+    <p class="text-gray-800 dark:text-gray-200 mb-3 whitespace-break-spaces">{{ props.postContent }}</p>
     <div v-if="props.mediaAssets && props.mediaAssets.length > 0 && props.mediaAssets[0]"
       class="relative mb-3 grid grid-cols-2 gap-1">
       <img :src="image.url" alt="Post media" class="rounded-lg w-full h-auto  aspect-square object-cover"

@@ -28,8 +28,8 @@ const { setActiveBusiness, activeBusinessId } = useBusinessManager();
 const router = useRouter();
 
 
-const HandleSetActive = (id: string) => {
-  setActiveBusiness(id);
+const HandleSetActive = async (id: string) => {
+  await setActiveBusiness(id);
   router.push('/app');
 };
 </script>

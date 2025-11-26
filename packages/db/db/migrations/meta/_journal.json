@@ -5,29 +5,8 @@
     {
       "idx": 0,
       "version": "6",
-      "when": 1759132933407,
-      "tag": "0000_sloppy_king_bedlam",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "6",
-      "when": 1759139248400,
-      "tag": "0001_goofy_the_liberteens",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "6",
-      "when": 1761581465184,
-      "tag": "0002_daily_purifiers",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "6",
-      "when": 1763110145650,
-      "tag": "0003_lyrical_groot",
+      "when": 1764161881284,
+      "tag": "0000_short_nextwave",
       "breakpoints": true
     }
   ]

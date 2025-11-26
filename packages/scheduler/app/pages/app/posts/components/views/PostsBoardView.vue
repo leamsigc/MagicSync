@@ -12,14 +12,14 @@
  */
 import { computed } from 'vue';
 import DefaultPreview from '../DefaultPreview.vue';
-import type { PostWithAllData } from '#layers/BaseDB/db/posts/posts';
+import type { PlatformPost, PostWithAllData, PublishDetail } from '#layers/BaseDB/db/posts/posts';
 import dayjs from 'dayjs';
 
 const props = defineProps<{
   posts: PostWithAllData[];
 }>();
 
-const postStatuses = ['draft', 'Scheduled', 'Published',]; // Example statuses
+const postStatuses = ['pending', 'published', 'failed',]; // Example statuses
 
 const groupedPosts = computed(() => {
   const groups: Record<string, PostWithAllData[]> = {};
@@ -41,14 +41,17 @@ const groupedPosts = computed(() => {
   });
   return groups;
 });
-
+const getPlatformDetails = (platform: PlatformPost): PublishDetail => {
+  const details = JSON.parse(platform.publishDetail as unknown as string || '{}');
+  return new Map(Object.entries(details));
+};
 </script>
 
 <template>
   <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
     <div v-for="(postsInGroup, status) in groupedPosts" :key="status"
       class="bg-gray-900/10 dark:bg-gray-800/10 p-4 rounded-lg shadow">
-      <h3 class="font-bold text-lg mb-3">{{ status }} ({{ postsInGroup.length }})</h3>
+      <h3 class="font-bold text-lg mb-3">{{ status.toLocaleUpperCase() }} ({{ postsInGroup.length }})</h3>
       <div class="space-y-3">
         <template v-for="post in postsInGroup" :key="post.id" :show-bg="false">
           <UCard :ui="{ header: 'p-0 sm:p-2', footer: 'p-0 sm:p-2', body: 'p-0 sm:p-0 h-full', root: 'p-1' }"
@@ -89,6 +92,19 @@ const groupedPosts = computed(() => {
                       <UIcon name="lucide:text-select" class="size-3" />
                       {{ post.user.name }}
                     </UBadge>
+                  </div>
+                </div>
+              </div>
+              <div class="px-3 py-2.5 border-t border-border border-dashed mt-5" v-if="status === 'published'">
+                <div class="flex items-center justify-between flex-wrap gap-2">
+                  <div class="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
+                    <UButton color="neutral" variant="soft" v-for="platform in post.platformPosts" :key="platform.id"
+                      target="_blank" :to="getPlatformDetails(platform).get(platform.socialAccountId)?.publishedUrl">
+                      <UIcon name="lucide:link" class="size-3" />
+                      {{ getPlatformDetails(platform).get(platform.socialAccountId)?.publishedUrl ?
+                        `${platform.platformPostId} URL`
+                        : "No url" }}
+                    </UButton>
                   </div>
                 </div>
               </div>

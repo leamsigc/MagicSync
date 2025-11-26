@@ -1,4 +1,4 @@
-import type { Post } from '#layers/BaseDB/db/schema';
+import type { Asset, Post, PostWithAllData, SocialMediaAccount } from '#layers/BaseDB/db/schema';
 import type { PostDetails, PostResponse, Integration, MediaContent } from '../SchedulerPost.service';
 import { BaseSchedulerPlugin } from '../SchedulerPost.service';
 import dayjs from 'dayjs';
@@ -551,7 +551,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
   private async _uploadPhotos(
     accountId: string,
     accessToken: string,
-    media: MediaContent[]
+    media: Asset[]
   ): Promise<{ media_fbid: string }[]> {
     return Promise.all(
       media.map(async (m) => {
@@ -564,7 +564,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              url: m.path,
+              url: `http://localhost:3000${m.url}`,
               published: false,
             }),
           },
@@ -613,49 +613,35 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
   }
 
   override async post(
-    id: string,
-    accessToken: string,
-    postDetails: PostDetails,
-    comments: PostDetails[] = [], // Added comments parameter with a default empty array
-    integration: Integration
-  ): Promise<PostResponse[]> {
+    postDetails: PostWithAllData,
+    comments: PostDetails[],
+    socialMediaAccount: SocialMediaAccount
+  ): Promise<PostResponse> {
     try {
       let finalId = '';
       let finalUrl = '';
 
-      const isVideo = postDetails.media?.some(media => media.type === 'video' || media.path.includes('.mp4'));
+      const isVideo = postDetails.assets?.some(media => media.mimeType === 'video' || media.filename.includes('.mp4'));
 
       if (isVideo) {
-        const { id: videoId } = await this._uploadVideo(integration.accountId, accessToken, postDetails);
-        finalUrl = 'https://www.facebook.com/reel/' + videoId;
-        finalId = videoId;
+        // const { id: videoId } = await this._uploadVideo(socialMediaAccount.accountId, socialMediaAccount.accessToken, postDetails);
+        // finalUrl = 'https://www.facebook.com/reel/' + videoId;
+        // finalId = videoId;
       } else {
-        const uploadPhotos = postDetails.media?.length
-          ? await this._uploadPhotos(integration.accountId, accessToken, postDetails.media)
+        const uploadPhotos = postDetails.assets?.length
+          ? await this._uploadPhotos(socialMediaAccount.accountId, socialMediaAccount.accessToken, postDetails.assets)
           : [];
-        console.log("########FACEBOOK########");
 
+        const { id: postId, permalink_url } = await this._createFeedPost(
+          socialMediaAccount.accountId,
+          socialMediaAccount.accessToken,
+          postDetails.content,
+          uploadPhotos,
+          ""
+        );
 
-        console.log({
-          id,
-          accessToken,
-          postDetails,
-          comments,
-          integration
-        });
-
-        console.log("########FACEBOOK########");
-
-        // const { id: postId, permalink_url } = await this._createFeedPost(
-        //   integration.accountId,
-        //   accessToken,
-        //   postDetails.message,
-        //   uploadPhotos,
-        //   (postDetails.settings as FacebookDto)?.url
-        // );
-
-        // finalUrl = permalink_url;
-        // finalId = postId;
+        finalUrl = permalink_url;
+        finalId = postId;
       }
 
       const response: PostResponse = {
@@ -666,7 +652,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
       };
 
       this.emit('facebook:post:published', { postId: finalId, response });
-      return [response]; // Wrapped in an array
+      return response;
     } catch (error: unknown) {
       const errorResponse: PostResponse = {
         id: postDetails.id,
@@ -676,43 +662,39 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
         error: (error as Error).message,
       };
       this.emit('facebook:post:failed', { error: (error as Error).message });
-      return [errorResponse]; // Wrapped in an array
+      return errorResponse;
     }
   }
 
   override async update(
-    id: string,
-    accessToken: string,
-    postId: string,
-    updateDetails: PostDetails,
-    integration: Integration
-  ): Promise<PostResponse[]> {
+    postDetails: PostWithAllData,
+    comments: PostDetails[],
+    socialMediaAccount: SocialMediaAccount
+  ): Promise<PostResponse> {
     // Facebook API does not directly support updating a post's content or media after publishing.
     // A common approach is to delete the old post and create a new one, or to update only certain fields if supported.
     // For this implementation, we'll simulate an update by returning a new PostResponse with 'updated' status.
     // In a real scenario, you'd interact with the Facebook Graph API to attempt an update.
-    console.log(`Attempting to update Facebook post ${postId} with details:`, updateDetails);
+    console.log(`Attempting to update Facebook post ${postDetails.id} with details:`, postDetails);
 
-    const updatedPostId = `fb_updated_${postId}`;
+    const updatedPostId = `fb_updated_${postDetails.id}`;
     const response: PostResponse = {
-      id: updateDetails.id,
+      id: postDetails.id,
       postId: updatedPostId,
-      releaseURL: `https://www.facebook.com/${integration.accountId}/posts/${updatedPostId}`,
-      status: 'updated',
+      releaseURL: `https://www.facebook.com/${socialMediaAccount.accountId}/posts/${updatedPostId}`,
+      status: "published",
     };
-    this.emit('facebook:post:updated', { postId: updatedPostId, updateDetails });
-    return [response]; // Wrapped in an array
+    this.emit('facebook:post:updated', { postId: updatedPostId, postDetails });
+    return response;
   }
 
   override async addComment(
-    id: string,
-    accessToken: string,
-    postId: string,
+    postDetails: PostWithAllData,
     commentDetails: PostDetails,
-    integration: Integration
-  ): Promise<PostResponse[]> {
+    socialMediaAccount: SocialMediaAccount
+  ): Promise<PostResponse> {
     try {
-      const url = this._getGraphApiUrl(`/${postId}/comments?access_token=${accessToken}&fields=id,permalink_url`);
+      const url = this._getGraphApiUrl(`/${socialMediaAccount.accountId}/comments?access_token=${socialMediaAccount.accessToken}&fields=id,permalink_url`);
       const { id: commentId, permalink_url } = await (
         await this.fetch(
           url,
@@ -736,10 +718,10 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
         id: commentDetails.id,
         postId: commentId,
         releaseURL: permalink_url,
-        status: 'commented',
+        status: 'published',
       };
-      this.emit('facebook:comment:added', { commentId, postId, commentDetails });
-      return [response]; // Wrapped in an array
+      this.emit('facebook:comment:added', { commentId, permalink_url, commentDetails });
+      return response;
     } catch (error: unknown) {
       const errorResponse: PostResponse = {
         id: commentDetails.id,
@@ -749,7 +731,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
         error: (error as Error).message,
       };
       this.emit('facebook:comment:failed', { error: (error as Error).message });
-      return [errorResponse]; // Wrapped in an array
+      return errorResponse;
     }
   }
 }

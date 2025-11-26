@@ -81,11 +81,8 @@ export default defineEventHandler(async (event) => {
 
       return sendRedirect(event, successUrl)
     } catch (userInfoError) {
-      console.error('Error getting user info after OAuth:', userInfoError)
-      throw createError({
-        statusCode: 500,
-        statusMessage: 'Failed to retrieve account information'
-      })
+      const baseUrl = process.env.NUXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+      return sendRedirect(event, `${baseUrl}/app/integrations`)
     }
   } catch (error) {
     console.error('Error handling OAuth callback:', error)

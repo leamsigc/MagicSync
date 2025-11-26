@@ -1,17 +1,17 @@
-import { assetService } from './asset.service';
-import type { PlatformPost, Post, PostCreateBase, PostWithAllData } from '#layers/BaseDB/db/schema'
+import type { PlatformPost, Post, PostCreateBase, PostWithAllData, SocialMediaAccount, PublishDetail } from '#layers/BaseDB/db/schema'
 import type {
   PaginatedResponse,
   QueryOptions,
   ServiceResponse
 } from './types'
 import { and, eq, gte, inArray, lte, sql, notExists, exists, or, not, between } from 'drizzle-orm'
-import { assets, platformPosts, posts, user } from '#layers/BaseDB/db/schema'
+import { assets, platformPosts, posts } from '#layers/BaseDB/db/schema'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
 import {
   ValidationError
 } from './types'
 import { socialMediaAccountService } from './social-media-account.service'
+import type { PostResponse } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 
 
 export interface UpdatePostData {
@@ -19,7 +19,7 @@ export interface UpdatePostData {
   mediaAssets?: string[]
   scheduledAt?: Date
   targetPlatforms?: string[]
-  status?: 'draft' | 'scheduled' | 'published' | 'failed'
+  status?: 'pending' | 'published' | 'failed'
 }
 
 export interface CreatePlatformPostData {
@@ -28,6 +28,8 @@ export interface CreatePlatformPostData {
   platformPostId?: string
   status?: 'pending' | 'published' | 'failed'
   errorMessage?: string
+  publishDetail?: String
+  platformSettings?: string
 }
 
 export class PostService {
@@ -41,9 +43,9 @@ export class PostService {
       const now = new Date()
 
       // Determine initial status
-      let status: 'draft' | 'scheduled' = 'draft'
+      let status: 'pending' = 'pending'
       if (data.scheduledAt && data.scheduledAt > now) {
-        status = 'scheduled'
+        status = 'pending'
       }
 
       const [post] = await this.db.insert(posts).values({
@@ -89,14 +91,19 @@ export class PostService {
     }
   }
 
-  async findById(id: string, userId: string, includePlatforms: boolean = false): Promise<ServiceResponse<PostWithAllData | Post>> {
+  async findById(id: string, userId: string, includePlatforms: boolean = false, includeUser: boolean = false): Promise<ServiceResponse<PostWithAllData | Post>> {
     try {
+      const include: Record<string, boolean> = {}
+      if (includePlatforms) {
+        include.platformPosts = true
+      }
+      if (includeUser) {
+        include.user = true
+      }
 
       const post = await this.db.query.posts.findFirst({
         where: and(eq(posts.id, id), eq(posts.userId, userId)),
-        with: includePlatforms ? {
-          platformPosts: true
-        } : {}
+        with: include
       })
       if (!post) {
         return { error: 'Post not found', code: 'NOT_FOUND' }
@@ -187,7 +194,7 @@ export class PostService {
         .select()
         .from(posts)
         .where(and(
-          inArray(posts.status, ['scheduled', 'draft']),
+          eq(posts.status, 'pending'),
           lte(posts.scheduledAt, cutoffDate)
         ))
         .orderBy(posts.scheduledAt)
@@ -196,6 +203,25 @@ export class PostService {
     } catch (error) {
       return { error: 'Failed to fetch scheduled posts' }
     }
+  }
+
+  async findByIdFull({ postId }: { postId: string }): Promise<PostWithAllData> {
+    const post = await this.db.query.posts.findFirst({
+      where: eq(posts.id, postId),
+      with: {
+        platformPosts: true,
+        user: true,
+      }
+    }) as PostWithAllData;
+    if (!post) {
+      throw new Error('Post not found')
+    }
+    const assetsIds = post.mediaAssets ? JSON.parse(post.mediaAssets) : []
+    const postAssets = await this.db.query.assets.findMany({
+      where: inArray(assets.id, assetsIds),
+    })
+    post.assets = postAssets;
+    return post;
   }
 
   async update(id: string, userId: string, data: UpdatePostData): Promise<ServiceResponse<Post>> {
@@ -256,7 +282,7 @@ export class PostService {
     }
   }
 
-  async updateStatus(id: string, userId: string, status: 'draft' | 'scheduled' | 'published' | 'failed'): Promise<ServiceResponse<Post>> {
+  async updateStatus(id: string, userId: string, status: 'pending' | 'published' | 'failed'): Promise<ServiceResponse<Post>> {
     try {
       const updateData: any = {
         status,
@@ -265,6 +291,7 @@ export class PostService {
 
       if (status === 'published') {
         updateData.publishedAt = new Date()
+        updateData.scheduledAt = new Date()
       }
 
       const [updated] = await this.db
@@ -359,7 +386,7 @@ export class PostService {
 
       // Reset post status if it was failed
       if (post.status === 'failed') {
-        const updateResult = await this.updateStatus(id, userId, 'scheduled')
+        const updateResult = await this.updateStatus(id, userId, 'pending')
       }
 
       // Reset failed platform posts to pending
@@ -395,8 +422,7 @@ export class PostService {
       const stats = {
         total: posts.length,
         byStatus: {
-          draft: posts.filter(p => p.status === 'draft').length,
-          scheduled: posts.filter(p => p.status === 'scheduled').length,
+          draft: posts.filter(p => p.status === 'pending').length,
           published: posts.filter(p => p.status === 'published').length,
           failed: posts.filter(p => p.status === 'failed').length
         },
@@ -427,7 +453,7 @@ export class PostService {
           stats.recentActivity.publishedToday++
         }
 
-        if (post.status === 'scheduled' && post.scheduledAt && post.scheduledAt <= next7Days) {
+        if (post.status === 'pending' && post.scheduledAt && post.scheduledAt <= next7Days) {
           stats.recentActivity.scheduledNext7Days++
         }
 
@@ -482,10 +508,7 @@ export class PostService {
 
     const list = await this.db.query.posts.findMany({
       where: and(
-        or(
-          eq(posts.status, 'scheduled'),
-          eq(posts.status, 'draft')
-        ),
+        eq(posts.status, 'pending'),
         between(posts.scheduledAt, startOfToday, now)
       ),
       with: {
@@ -495,6 +518,27 @@ export class PostService {
     })
     return list
   }
+
+  async updatePostBaseOnResponse(post: PostWithAllData, response: PostResponse, socialPlatform: PlatformPost) {
+    const socialPlatformId = socialPlatform.socialAccountId;
+    // Check on the old details and update
+    const oldDetails = JSON.parse(socialPlatform.publishDetail as unknown as string || '{}');
+
+
+    const platformSpecificDetails = {
+      publishedId: response.postId,
+      publishedUrl: response.releaseURL
+    }
+    const publishDetails: PublishDetail = new Map(Object.entries(oldDetails));
+    publishDetails.set(socialPlatformId, platformSpecificDetails);
+    const detailsString = JSON.stringify(publishDetails);
+    console.log(detailsString);
+
+
+    await this.updateStatus(post.id, post.user.id, response.status)
+    await this.updatePlatformPost(socialPlatform.id, { publishDetail: detailsString, status: response.status })
+  }
+
 
   private validateCreateData(data: PostCreateBase): void {
 
@@ -514,7 +558,7 @@ export class PostService {
       throw new ValidationError('At least one target platform is required', 'targetPlatforms')
     }
 
-    if ((data.status === 'scheduled' || data.status === 'draft') && (data.scheduledAt && data.scheduledAt <= new Date())) {
+    if ((data.status === 'pending') && (data.scheduledAt && data.scheduledAt <= new Date())) {
       throw new ValidationError('Scheduled time must be in the future', 'scheduledAt')
     }
   }

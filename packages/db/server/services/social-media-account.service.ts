@@ -177,17 +177,14 @@ export class SocialMediaAccountService {
     platform: SocialMediaPlatform,
     accountId: string
   ): Promise<SocialMediaAccount | null> {
-    const [account] = await this.db
-      .select()
-      .from(socialMediaAccounts)
-      .where(
-        and(
-          eq(socialMediaAccounts.userId, userId),
-          eq(socialMediaAccounts.platform, platform),
-          eq(socialMediaAccounts.accountId, accountId)
-        )
-      )
-      .limit(1)
+
+    const account = await this.db.query.socialMediaAccounts.findFirst({
+      where: and(
+        eq(socialMediaAccounts.userId, userId),
+        eq(socialMediaAccounts.platform, platform),
+        eq(socialMediaAccounts.accountId, accountId)
+      ),
+    })
 
     return account || null
   }

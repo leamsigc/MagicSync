@@ -72,8 +72,8 @@ export default defineEventHandler(async (event) => {
     console.log("Status", body.status);
 
     if (body.status === 'published' && result.data) {
-      const fullPost = await postService.findById(result.data.id, user.id, true);
-      if (!fullPost || !fullPost.data) {
+      const fullPost = await postService.findByIdFull({ postId: result.data.id });
+      if (!fullPost || !fullPost) {
         throw createError({
           statusCode: 400,
           statusMessage: 'Failed to find post'
@@ -81,7 +81,7 @@ export default defineEventHandler(async (event) => {
       }
       // Schedule post
       const trigger = new AutoPostService()
-      trigger.triggerSocialMediaPost(fullPost.data as PostWithAllData);
+      trigger.triggerSocialMediaPost(fullPost);
     }
 
 
@@ -96,7 +96,7 @@ export default defineEventHandler(async (event) => {
 
     throw createError({
       statusCode: 500,
-      statusMessage: 'Internal server error'
+      statusMessage: `Internal server error: ${error} `
     })
   }
 })

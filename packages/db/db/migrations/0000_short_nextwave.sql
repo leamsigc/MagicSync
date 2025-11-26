@@ -1,14 +1,3 @@
-CREATE TABLE `tool` (
-	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
-	`name` text NOT NULL,
-	`url` text,
-	`description` text,
-	`likes` integer,
-	`tags` text,
-	`pricing` text,
-	`image_url` text
-);
---> statement-breakpoint
 CREATE TABLE `assets` (
 	`id` text PRIMARY KEY NOT NULL,
 	`user_id` text NOT NULL,
@@ -105,6 +94,8 @@ CREATE TABLE `platform_posts` (
 	`platform_post_id` text,
 	`status` text DEFAULT 'pending' NOT NULL,
 	`error_message` text,
+	`platform_settings` text,
+	`publish_detail` text,
 	`published_at` integer,
 	`created_at` integer NOT NULL,
 	FOREIGN KEY (`post_id`) REFERENCES `posts`(`id`) ON UPDATE no action ON DELETE cascade,
@@ -119,7 +110,7 @@ CREATE TABLE `posts` (
 	`media_assets` text,
 	`scheduled_at` integer,
 	`published_at` integer,
-	`status` text DEFAULT 'draft' NOT NULL,
+	`status` text DEFAULT 'pending' NOT NULL,
 	`target_platforms` text NOT NULL,
 	`created_at` integer NOT NULL,
 	`updated_at` integer NOT NULL,
@@ -145,6 +136,15 @@ CREATE TABLE `reviews` (
 	FOREIGN KEY (`business_id`) REFERENCES `business_profiles`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
+CREATE TABLE `social_media_account_managers` (
+	`social_media_account_id` text NOT NULL,
+	`user_id` text NOT NULL,
+	`created_at` integer NOT NULL,
+	`updated_at` integer NOT NULL,
+	FOREIGN KEY (`social_media_account_id`) REFERENCES `social_media_accounts`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
 CREATE TABLE `social_media_accounts` (
 	`id` text PRIMARY KEY NOT NULL,
 	`user_id` text NOT NULL,
@@ -157,10 +157,12 @@ CREATE TABLE `social_media_accounts` (
 	`token_expires_at` integer,
 	`is_active` integer DEFAULT true NOT NULL,
 	`last_sync_at` integer,
+	`entity_detail_id` text,
 	`created_at` integer NOT NULL,
 	`updated_at` integer NOT NULL,
 	FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE cascade,
-	FOREIGN KEY (`business_id`) REFERENCES `business_profiles`(`id`) ON UPDATE no action ON DELETE cascade
+	FOREIGN KEY (`business_id`) REFERENCES `business_profiles`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`entity_detail_id`) REFERENCES `entity_details`(`id`) ON UPDATE no action ON DELETE set null
 );
 --> statement-breakpoint
 CREATE TABLE `subscriptions` (
@@ -175,4 +177,49 @@ CREATE TABLE `subscriptions` (
 	`created_at` integer NOT NULL,
 	`updated_at` integer NOT NULL,
 	FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE TABLE `template_assets` (
+	`id` text PRIMARY KEY NOT NULL,
+	`templateId` text NOT NULL,
+	`name` text NOT NULL,
+	`url` text NOT NULL,
+	`createdAt` integer NOT NULL,
+	FOREIGN KEY (`templateId`) REFERENCES `templates`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE TABLE `templates` (
+	`id` text PRIMARY KEY NOT NULL,
+	`ownerId` text NOT NULL,
+	`type` text NOT NULL,
+	`title` text NOT NULL,
+	`content` text NOT NULL,
+	`isPublic` integer DEFAULT false NOT NULL,
+	`createdAt` integer NOT NULL,
+	`updatedAt` integer NOT NULL,
+	FOREIGN KEY (`ownerId`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE TABLE `audit_log` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`user_id` text,
+	`category` text NOT NULL,
+	`action` text NOT NULL,
+	`target_type` text,
+	`target_id` text,
+	`ip_address` text,
+	`user_agent` text,
+	`status` text DEFAULT 'success' NOT NULL,
+	`details` text,
+	`created_at` integer NOT NULL,
+	FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE set null
+);
+--> statement-breakpoint
+CREATE TABLE `entity_details` (
+	`id` text PRIMARY KEY NOT NULL,
+	`entity_id` text NOT NULL,
+	`entity_type` text NOT NULL,
+	`details` text NOT NULL,
+	`created_at` integer NOT NULL,
+	`updated_at` integer NOT NULL
 );
