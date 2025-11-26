@@ -118,7 +118,7 @@ const selectedTab = ref('local')
       </template>
 
       <template #pexels>
-        <ImageGalleryFromPexel :is-open="selectedTab === 'pexels'" @select-images="HandlePexelSelect" />
+        <ImageGalleryFromPexel @select-images="HandlePexelSelect" />
       </template>
 
       <template #canvas>

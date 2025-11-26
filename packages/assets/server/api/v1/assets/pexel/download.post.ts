@@ -1,5 +1,5 @@
 import { assetService } from '#layers/BaseAssets/server/services/asset.service'
-
+import { type ServerFile } from 'nuxt-file-storage'
 interface PexelsPhoto {
   id: number
   width: number
@@ -40,7 +40,7 @@ export default defineEventHandler(async (event) => {
 
     for (const photo of photos) {
       try {
-        const response = await $fetch(photo.src.original, { responseType: 'arrayBuffer' })
+        const response = await $fetch(photo.src.large, { responseType: 'arrayBuffer' })
         const buffer = Buffer.from(response)
 
         const fileExtension = photo.src.original.split('.').pop() || 'jpeg'
@@ -48,19 +48,22 @@ export default defineEventHandler(async (event) => {
         const fullFilename = `${uniqueFilename}.${fileExtension}`
 
         // Mimic ServerFile structure for storeFileLocally
-        const serverFile = {
-          data: buffer.toString('base64'), // storeFileLocally expects base64 data
+        const serverFile: ServerFile = {
           name: fullFilename,
-          type: `image/${fileExtension}`, // Guess content type
+          type: `image/${fileExtension}`,
           size: buffer.length,
-          tempFilePath: '', // Not used by storeFileLocally but required by type
+          tempFilePath: '',
+          content: `data:image/${fileExtension};base64,${buffer.toString('base64')}`,
         }
+
 
         const storedFile = await storeFileLocally(
           serverFile,
           uniqueFilename,
           userFolder,
         )
+        console.log(storedFile);
+
 
         const fileUrl = `/api/v1/assets/serve/${uniqueFilename}.${fileExtension}`
 

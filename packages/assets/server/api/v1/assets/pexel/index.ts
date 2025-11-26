@@ -26,14 +26,9 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    const response = await $fetch(`https://api.pexels.com/v1/search`, {
+    const response = await $fetch(`https://api.pexels.com/v1/search?query=${searchQuery}&per_page=${perPage}`, {
       headers: {
         Authorization: pexelsApiKey,
-      },
-      query: {
-        query: searchQuery,
-        page,
-        per_page: perPage,
       },
     })
     return response

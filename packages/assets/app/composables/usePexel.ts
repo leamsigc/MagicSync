@@ -56,7 +56,7 @@ export const usePexel = () => {
   const searchPhotos = async (newQuery?: string) => {
     if (newQuery !== undefined) {
       query.value = newQuery
-      currentPage.value = 1 // Reset to first page for new search
+      currentPage.value = 1
     }
 
     if (!query.value) {
@@ -68,7 +68,7 @@ export const usePexel = () => {
     isLoading.value = true
     error.value = null
     try {
-      const { data, error: fetchError } = await useFetch<PexelsSearchResponse>(
+      const response = await $fetch<PexelsSearchResponse>(
         `/api/v1/assets/pexel`,
         {
           method: 'GET',
@@ -80,18 +80,8 @@ export const usePexel = () => {
         },
       )
 
-      if (fetchError.value) {
-        throw fetchError.value
-      }
-
-      if (data.value) {
-        if (currentPage.value === 1) {
-          photos.value = data.value.photos
-        } else {
-          photos.value = [...photos.value, ...data.value.photos]
-        }
-        totalResults.value = data.value.total_results
-      }
+      photos.value = response.photos
+      totalResults.value = response.total_results
     } catch (e) {
       error.value = e
       console.error('Pexels search error:', e)
@@ -121,14 +111,12 @@ export const usePexel = () => {
   }
 
   // Watch for changes in query to automatically trigger search
-  watch(query, (newQuery, oldQuery) => {
-    if (newQuery !== oldQuery && newQuery.length > 2) { // Trigger search if query changes and is meaningful
-      searchPhotos(newQuery)
-    } else if (newQuery.length === 0) {
-      photos.value = []
-      totalResults.value = 0
+  useDebounceFn(() => {
+    if (query.value.length > 2) { // Trigger search if query is meaningful
+      searchPhotos(query.value)
     }
-  })
+  }, 1000)
+
 
   return {
     query,

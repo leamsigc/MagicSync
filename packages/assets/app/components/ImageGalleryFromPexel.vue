@@ -69,7 +69,7 @@ const handleSearch = () => {
 
 const handleUseSelectedImages = async () => {
   const { data, error } = await useFetch<DownloadPexelImagesResponse>('/api/v1/assets/pexel/download', {
-    method: 'POST', // Use POST for downloading images
+    method: 'POST',
     body: { photos: selectedPhotos.value },
   })
 
@@ -144,24 +144,31 @@ watch(
               <p class="text-sm">Try a different search term.</p>
             </div>
             <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-              <UCard v-for="photo in photos" :key="photo.id"
+              <UCard v-for="photo in photos" :key="photo.id" :ui="{ body: 'p-0 sm:p-0' }"
                 :class="['relative cursor-pointer group', { 'ring-2 ring-primary': selectedPhotos.some((p: PexelsPhoto) => p.id === photo.id) }]">
-                <img :src="photo.src.medium" :alt="photo.alt" class="w-full h-48 object-cover rounded-md"
+                <img :src="photo.src.landscape" :alt="photo.alt" class="w-full h-48 object-cover rounded-md"
                   @click="toggleSelectPhoto(photo)" />
                 <div
-                  class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                  class="absolute inset-0 bg-black/50  flex items-center justify-center  group-hover:opacity-100 transition-opacity duration-200"
+                  :class="{ 'opacity-0': !selectedPhotos.some((p: PexelsPhoto) => p.id === photo.id) }"
                   @click="toggleSelectPhoto(photo)">
                   <UIcon v-if="selectedPhotos.some((p: PexelsPhoto) => p.id === photo.id)"
                     name="i-heroicons-check-circle-solid" class="w-10 h-10 text-primary-400" />
                   <UIcon v-else name="i-heroicons-plus-circle-solid" class="w-10 h-10 text-white" />
                 </div>
-                <div class="absolute bottom-2 left-2 text-white text-xs bg-black bg-opacity-50 px-2 py-1 rounded-md">
+                <div class="absolute bottom-2 left-2 text-white text-xs bg-black  px-2 py-1 rounded-md">
                   {{ photo.photographer }}
                 </div>
               </UCard>
             </div>
             <div v-if="isLoading" class="flex justify-center py-4">
-              <Uspinner />
+              <div class="flex items-center gap-4">
+                <USkeleton class="h-12 w-12 rounded-full" />
+                <div class="grid gap-2">
+                  <USkeleton class="h-4 w-[250px]" />
+                  <USkeleton class="h-4 w-[200px]" />
+                </div>
+              </div>
             </div>
           </div>
 
