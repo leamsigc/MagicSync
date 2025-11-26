@@ -1,0 +1,46 @@
+{
+  "en": {
+    "local": "Local",
+    "pexels": "Pexels",
+    "canvas": "Canvas",
+    "googleDrive": "Google Drive",
+    "upload": "Upload",
+    "selected": "Selected",
+    "pexelsIntegrationComingSoon": "Pexels integration coming soon!",
+    "canvasIntegrationComingSoon": "Canvas integration coming soon!",
+    "googleDriveIntegrationComingSoon": "Google Drive integration coming soon!"
+  },
+  "es": {
+    "local": "Local",
+    "pexels": "Pexels",
+    "canvas": "Canvas",
+    "googleDrive": "Google Drive",
+    "upload": "Subir",
+    "selected": "Seleccionado",
+    "pexelsIntegrationComingSoon": "¡Próximamente integración con Pexels!",
+    "canvasIntegrationComingSoon": "¡Próximamente integración con Canvas!",
+    "googleDriveIntegrationComingSoon": "¡Próximamente integración con Google Drive!"
+  },
+  "de": {
+    "local": "Lokal",
+    "pexels": "Pexels",
+    "canvas": "Canvas",
+    "googleDrive": "Google Drive",
+    "upload": "Hochladen",
+    "selected": "Ausgewählt",
+    "pexelsIntegrationComingSoon": "Pexels-Integration kommt bald!",
+    "canvasIntegrationComingSoon": "Canvas-Integration kommt bald!",
+    "googleDriveIntegrationComingSoon": "Google Drive-Integration kommt bald!"
+  },
+  "fr": {
+    "local": "Local",
+    "pexels": "Pexels",
+    "canvas": "Canvas",
+    "googleDrive": "Google Drive",
+    "upload": "Télécharger",
+    "selected": "Sélectionné",
+    "pexelsIntegrationComingSoon": "Intégration Pexels à venir !",
+    "canvasIntegrationComingSoon": "Intégration Canvas à venir !",
+    "googleDriveIntegrationComingSoon": "Intégration Google Drive à venir !"
+  }
+}

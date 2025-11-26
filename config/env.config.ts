@@ -11,8 +11,8 @@ export function checkEnv(env: NodeJS.ProcessEnv) {
     // 'MAIL_FROM_EMAIL',
     // 'GOOGLE_CLIENT_ID',
     // 'GOOGLE_CLIENT_SECRET',
-    // 'NUXT_OPENAI_API_KEY'
-
+    // 'NUXT_OPENAI_API_KEY',
+    'NUXT_PEXELS_API_KEY'
   ]
 
   const missing = required.filter(key => !env[key])

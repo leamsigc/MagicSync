@@ -40,8 +40,6 @@ export const usePostManager = () => {
 
 
       postList.value = response.data ?? []
-      console.log("Post", response);
-
     } catch (err: any) {
       error.value = err.data?.message || err.message || 'Failed to fetch posts'
       throw err

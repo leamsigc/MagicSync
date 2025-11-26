@@ -16,12 +16,9 @@
 import { ref, computed } from 'vue';
 import { usePostManager } from './composables/UsePostManager';
 import NewPostModal from './components/NewPostModal.vue';
-import DefaultPreview from './components/DefaultPreview.vue';
-import PostsGridView from './components/views/PostsGridView.vue'; // Import the new Grid View component
-import PostsBoardView from './components/views/PostsBoardView.vue'; // Import the new Board View component
-import PostsTableView from './components/views/PostsTableView.vue'; // Import the new Table View component
-import type { PostWithAllData } from '#layers/BaseDB/db/posts/posts';
-import type { Asset } from '#layers/BaseDB/db/schema';
+import PostsGridView from './components/views/PostsGridView.vue';
+import PostsBoardView from './components/views/PostsBoardView.vue';
+import PostsTableView from './components/views/PostsTableView.vue';
 
 const activeBusinessId = useState<string>('business:id');
 
@@ -60,7 +57,8 @@ const currentMonthPosts = computed(() => {
       </template>
     </BasePageHeader>
     <div class="flex justify-between items-center mb-4 bg-grey-950/10 rounded-lg p-3">
-      <UButtonGroup>
+      <section>
+
         <UButton icon="i-heroicons-squares-2x2" :variant="currentView === 'Board' ? 'solid' : 'ghost'"
           @click="currentView = 'Board'">Board</UButton>
         <UButton icon="i-heroicons-table-cells" :variant="currentView === 'Table' ? 'solid' : 'ghost'"
@@ -68,9 +66,9 @@ const currentMonthPosts = computed(() => {
         <UButton icon="lucide:grid" :variant="currentView === 'Grid' ? 'solid' : 'ghost'" @click="currentView = 'Grid'">
           Grid
         </UButton>
-      </UButtonGroup>
+      </section>
 
-      <UMonthPicker v-model="monthDate" />
+      <!-- <UMonthPicker v-model="monthDate" /> -->
     </div>
 
     <!-- List of all posts -->
