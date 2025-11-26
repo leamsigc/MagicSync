@@ -531,8 +531,7 @@ export class PostService {
     }
     const publishDetails: PublishDetail = new Map(Object.entries(oldDetails));
     publishDetails.set(socialPlatformId, platformSpecificDetails);
-    const detailsString = JSON.stringify(publishDetails);
-    console.log(detailsString);
+    const detailsString = JSON.stringify(Object.fromEntries(publishDetails));
 
 
     await this.updateStatus(post.id, post.user.id, response.status)

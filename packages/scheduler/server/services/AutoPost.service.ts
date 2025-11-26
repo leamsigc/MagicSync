@@ -39,6 +39,7 @@ export class AutoPostService {
           [],
           socialMediaAccount
         );
+
         await postService.updatePostBaseOnResponse(post, response, platformPost);
       } catch (e) {
         console.error(e);
