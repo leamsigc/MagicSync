@@ -71,7 +71,9 @@ const calendarOptions: CalendarOptions = {
     dayGrid: {
       // options apply to dayGridMonth, dayGridWeek, and dayGridDay views
       eventLimit: 2,
-    }
+      dayMaxEvents: 1,
+      dayMaxEventRows: 1,
+    },
   },
   events: events.value,
 };

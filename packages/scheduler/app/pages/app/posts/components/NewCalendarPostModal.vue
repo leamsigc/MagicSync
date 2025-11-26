@@ -17,9 +17,10 @@
 import { ref } from 'vue';
 import { usePostManager } from '../composables/UsePostManager';
 import PostModalContent from './PostModalContent.vue';
-import type { Post, PostCreateBase, PostWithAllData } from '#layers/BaseDB/db/schema';
+import type { PostCreateBase, } from '#layers/BaseDB/db/schema';
 
-const { t } = useI18n();
+const $emit = defineEmits(['refresh']);
+
 const { createPost } = usePostManager();
 
 const isOpen = ref(false);
@@ -28,6 +29,7 @@ const postModalContentRef = ref<InstanceType<typeof PostModalContent> | null>(nu
 const handleSave = async (postData: PostCreateBase) => {
   await createPost(postData);
   isOpen.value = false;
+  $emit('refresh');
 };
 
 const handleClose = () => {

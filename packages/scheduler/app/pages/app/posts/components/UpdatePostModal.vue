@@ -17,9 +17,9 @@
 import { ref } from 'vue';
 import { usePostManager } from '../composables/UsePostManager';
 import PostModalContent from './PostModalContent.vue';
-import type { Post, PostCreateBase, PostWithAllData } from '#layers/BaseDB/db/schema';
+import type { PostCreateBase, PostWithAllData } from '#layers/BaseDB/db/schema';
 
-const { t } = useI18n();
+const $emit = defineEmits(['refresh']);
 const { updatePost } = usePostManager();
 
 const isOpen = ref(false);
@@ -30,6 +30,7 @@ const handleUpdate = async (postData: PostCreateBase) => {
   if (postToUpdate.value?.id) {
     await updatePost(postToUpdate.value.id, postData);
     isOpen.value = false;
+    $emit('refresh');
   }
 };
 

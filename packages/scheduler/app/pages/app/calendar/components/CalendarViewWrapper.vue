@@ -39,15 +39,19 @@ const activeBusinessId = useState<string>('business:id');
 const { getPosts, postList } = usePostManager();
 
 // Fetch posts based on provided startDate and endDate
-await getPosts(activeBusinessId.value, {
-  page: 1,
-  limit: 100
-},
-  {
-    startDate: props.startDate,
-    endDate: props.endDate
-  }
-);
+const HandleRefresh = async () => {
+  await getPosts(activeBusinessId.value, {
+    page: 1,
+    limit: 100
+  },
+    {
+      startDate: props.startDate,
+      endDate: props.endDate
+    }
+  );
+}
+
+await HandleRefresh();
 
 const events = postList.value.map((post: PostWithAllData) => {
   return {
@@ -83,11 +87,6 @@ const HandleDateClicked = (event: DateClickArg) => {
 const updatePostModalRef = ref<InstanceType<typeof UpdatePostModal> | null>(null);
 
 const HandleEventClicked = (event: EventClickArg) => {
-  // toast.add({
-  //   title: 'event Clicked',
-  //   description: ` Date clicked: ${event.event.title}`,
-  //   color: 'success'
-  // })
 
   if (event.event.extendedProps?.post) {
     updatePostModalRef.value?.openModal(event.event.extendedProps.post);
@@ -99,8 +98,8 @@ const HandleEventClicked = (event: EventClickArg) => {
     <SchedulerPageHeader />
     <ScheduleCalendar :active-view="activeView" :events="events" @date-clicked="HandleDateClicked"
       @event-clicked="HandleEventClicked" />
-    <UpdatePostModal ref="updatePostModalRef" />
-    <NewCalendarPostModal ref="newPostModalRef" />
+    <UpdatePostModal ref="updatePostModalRef" @refresh="HandleRefresh" />
+    <NewCalendarPostModal ref="newPostModalRef" @refresh="HandleRefresh" />
   </div>
 </template>
 

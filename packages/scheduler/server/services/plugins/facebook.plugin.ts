@@ -551,7 +551,8 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
   private async _uploadPhotos(
     accountId: string,
     accessToken: string,
-    media: Asset[]
+    media: Asset[],
+    userId: string
   ): Promise<{ media_fbid: string }[]> {
     const baseUrl = process.env.NUXT_PUBLIC_BASE_URL || 'http://localhost:3000'
     return Promise.all(
@@ -565,7 +566,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              url: `${baseUrl}${m.url}`,
+              url: `${baseUrl}${m.url.replace('/serve/', '/public/')}?userId=${userId}`,
               published: false,
             }),
           },
@@ -630,7 +631,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
         // finalId = videoId;
       } else {
         const uploadPhotos = postDetails.assets?.length
-          ? await this._uploadPhotos(socialMediaAccount.accountId, socialMediaAccount.accessToken, postDetails.assets)
+          ? await this._uploadPhotos(socialMediaAccount.accountId, socialMediaAccount.accessToken, postDetails.assets, socialMediaAccount.userId)
           : [];
 
         const { id: postId, permalink_url } = await this._createFeedPost(
