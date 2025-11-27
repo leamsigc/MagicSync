@@ -1,21 +1,29 @@
-FROM node:24-alpine AS serve
-# RUN curl -sL https://unpkg.com/@pnpm/self-installer | node
-# RUN corepack enable
+# Build stage
+FROM node:24-alpine AS builder
+ARG NODE_ENV=production
 RUN npm install -g pnpm
 
-WORKDIR  /usr/app/site
+WORKDIR /usr/app
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
 COPY . .
-RUN npm config set registry https://registry.npmjs.org/
-RUN pnpm i --ignore-scripts --unsafe-perm
-ENV PATH  /usr/app/site/node_modules/.bin:$PATH
-RUN pnpm  build
 
+RUN pnpm install --frozen-lockfile
 
-ENV PORT=$PORT
-    
-COPY --from=serve /packages/site/.output /src/.output
-# Optional, only needed if you rely on unbundled dependencies
-# COPY --from=build /src/node_modules /src/node_modules
+RUN cd packages/site && pnpm build
+
+# Production stage
+FROM node:24-alpine AS production
+
+WORKDIR /usr/app
+
+COPY --from=builder /usr/app/packages/site/.output ./.output
+ARG NODE_ENV=production
+ARG NUXT_HOST=0.0.0.0
+ENV NODE_ENV=${NODE_ENV}
+ENV NUXT_HOST=${NUXT_HOST}
 ENV NODE_ENV=production
-CMD [ "node", ".output/server/index.mjs" ]
+
+EXPOSE 3000
+CMD ["node", ".output/server/index.mjs"]

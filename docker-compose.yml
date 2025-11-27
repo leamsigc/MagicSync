@@ -1,52 +1,24 @@
 version: "3.7"
 
 services:
-  traefik:
-    image: "traefik"
-    restart: always
-    command:
-      - "--api=true"
-      - "--api.insecure=true"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.web.address=:80"
-      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
-      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
-      - "--entrypoints.websecure.address=:443"
-      - "--certificatesresolvers.mytlschallenge.acme.tlschallenge=true"
-      - "--certificatesresolvers.mytlschallenge.acme.email=${SSL_EMAIL}"
-      - "--certificatesresolvers.mytlschallenge.acme.storage=/letsencrypt/acme.json"
-    ports:
-      - "8080:80"
-      - "9443:443"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-
-
   site:
     depends_on:
-      - traefik
+      - db
     env_file:
       - .env
     ports:
-      - "3333:3000"
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.site.rule=Host(`${SUBDOMAIN}.${DOMAIN_NAME}`)
-      - traefik.http.routers.site.tls=true
-      - traefik.http.routers.site.entrypoints=web,websecure
-      - traefik.http.routers.site.tls.certresolver=mytlschallenge
-      - traefik.http.middlewares.site.headers.SSLRedirect=true
-      - traefik.http.middlewares.site.headers.STSSeconds=315360000
-      - traefik.http.middlewares.site.headers.browserXSSFilter=true
-      - traefik.http.middlewares.site.headers.contentTypeNosniff=true
-      - traefik.http.middlewares.site.headers.forceSTSHeader=true
-      - traefik.http.middlewares.site.headers.SSLHost=${DOMAIN_NAME}
-      - traefik.http.middlewares.site.headers.STSIncludeSubdomains=true
-      - traefik.http.middlewares.site.headers.STSPreload=true
+      - "3000:3000"
     build:
       dockerfile: Dockerfile
       context: .
 
-volumes:
-  traefik_data:
+  db:
+    image: ghcr.io/tursodatabase/libsql-server:latest
+    platform: linux/amd64
+    ports:
+      - "8080:8080"
+      - "5001:5001"
+    # environment:
+    #   - SQLD_NODE=primary
+    volumes:
+      - ./sqld:/var/lib/sqld
