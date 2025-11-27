@@ -392,7 +392,7 @@ const handleDeleteAsset = (asset: Asset) => {
               class="asset-image w-full h-auto object-cover transition-all duration-500 group-hover:scale-110 asset-image-hover-scale"
               loading="lazy" />
             <div v-else
-              class="aspect-square bg-gradient-to-br from-muted via-muted/80 to-muted/50 flex items-center justify-center relative">
+              class="aspect-square bg-linear-to-br from-muted via-muted/80 to-muted/50 flex items-center justify-center relative">
               <!-- Animated Background Pattern -->
               <div class="absolute inset-0 opacity-20">
                 <div class="absolute top-4 left-4 w-8 h-8 bg-primary/20 rounded-full animate-float-1"></div>
@@ -459,7 +459,7 @@ const handleDeleteAsset = (asset: Asset) => {
           </div>
 
           <!-- Enhanced Asset Info Panel -->
-          <div class="p-4 bg-gradient-to-t from-background/95 to-background/80 backdrop-blur-sm">
+          <div class="p-4 bg-linear-to-t from-background/95 to-background/80 backdrop-blur-sm">
             <h3 class="font-semibold text-sm truncate mb-2 group-hover:text-primary transition-colors duration-300">
               {{ getAssetDisplayName(asset) }}
             </h3>
@@ -616,6 +616,11 @@ const handleDeleteAsset = (asset: Asset) => {
             <img v-if="previewAsset && getAssetType(previewAsset.mimeType) === 'image'"
               :src="getAssetPreviewUrl(previewAsset)" :alt="getAssetDisplayName(previewAsset)"
               class="max-w-full max-h-full object-contain rounded-lg shadow-2xl" />
+
+            <div v-else-if="previewAsset && getAssetType(previewAsset.mimeType) === 'video'"
+              class="flex items-center justify-center  bg-muted rounded-lg max-w-2xl">
+              <video :src="previewAsset.url" controls class="aspect-video"></video>
+            </div>
             <div v-else-if="previewAsset" class="flex items-center justify-center w-64 h-64 bg-muted rounded-lg">
               <div class="text-center">
                 <Icon :name="getAssetType(previewAsset.mimeType) === 'video' ? 'lucide:video' : 'lucide:file'"

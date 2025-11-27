@@ -42,6 +42,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
   private readonly API_VERSION = 'v20.0';
   private readonly GRAPH_API_BASE_URL = 'https://graph.facebook.com';
   private readonly OAUTH_DIALOG_URL = 'https://www.facebook.com/v20.0/dialog/oauth';
+  private readonly baseUrl = process.env.NUXT_PUBLIC_BASE_URL || 'http://localhost:3000'
 
   protected init(options?: any): void {
     // Initialize Facebook API client or settings
@@ -520,8 +521,10 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
   private async _uploadVideo(
     accountId: string,
     accessToken: string,
-    postDetails: PostDetails
+    postDetails: PostWithAllData
   ): Promise<{ id: string; permalink_url: string }> {
+    const theFirstVideoFromThePost = postDetails.assets?.find((media) => media.mimeType.includes('video') || media.filename.includes('.mp4'));
+
     const url = this._getGraphApiUrl(`/${accountId}/videos?access_token=${accessToken}&fields=id,permalink_url`);
     const response = await this.fetch(
       url,
@@ -531,8 +534,8 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          file_url: postDetails.media?.[0]?.path!,
-          description: postDetails.message,
+          file_url: `${this.baseUrl}${theFirstVideoFromThePost?.url.replace('/serve/', '/public/')}?userId=${postDetails.userId}`,
+          description: postDetails.content,
           published: true,
         }),
       },
@@ -554,7 +557,6 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     media: Asset[],
     userId: string
   ): Promise<{ media_fbid: string }[]> {
-    const baseUrl = process.env.NUXT_PUBLIC_BASE_URL || 'http://localhost:3000'
     return Promise.all(
       media.map(async (m) => {
         const url = this._getGraphApiUrl(`/${accountId}/photos?access_token=${accessToken}`);
@@ -566,7 +568,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              url: `${baseUrl}${m.url.replace('/serve/', '/public/')}?userId=${userId}`,
+              url: `${this.baseUrl}${m.url.replace('/serve/', '/public/')}?userId=${userId}`,
               published: false,
             }),
           },
@@ -623,12 +625,12 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
       let finalId = '';
       let finalUrl = '';
 
-      const isVideo = postDetails.assets?.some(media => media.mimeType === 'video' || media.filename.includes('.mp4'));
+      const isVideo = postDetails.assets?.some(media => media.mimeType.includes('video') || media.filename.includes('.mp4'));
 
       if (isVideo) {
-        // const { id: videoId } = await this._uploadVideo(socialMediaAccount.accountId, socialMediaAccount.accessToken, postDetails);
-        // finalUrl = 'https://www.facebook.com/reel/' + videoId;
-        // finalId = videoId;
+        const { id: videoId } = await this._uploadVideo(socialMediaAccount.accountId, socialMediaAccount.accessToken, postDetails);
+        finalUrl = 'https://www.facebook.com/reel/' + videoId;
+        finalId = videoId;
       } else {
         const uploadPhotos = postDetails.assets?.length
           ? await this._uploadPhotos(socialMediaAccount.accountId, socialMediaAccount.accessToken, postDetails.assets, socialMediaAccount.userId)
