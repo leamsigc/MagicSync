@@ -30,14 +30,22 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
   readonly pluginName = 'facebook';
   public override exposedMethods = [
     'handleErrors',
-    'refreshToken',
-    'generateAuthUrl',
     'reConnect',
-    'authenticate',
     'pages',
     'fetchPageInformation',
     'analytics',
-  ];
+    'getPageInsights',
+    'getPostInsights',
+    'getComments',
+    'getCommentCount',
+    'replyToComment',
+    'deleteComment',
+    'hideComment',
+    'getTaggedPosts',
+    'getMentions',
+    'getConversations',
+    'replyToConversation',
+  ] as const;
 
   private readonly API_VERSION = 'v20.0';
   private readonly GRAPH_API_BASE_URL = 'https://graph.facebook.com';
@@ -219,43 +227,243 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     return undefined;
   }
 
-  async refreshToken(refresh_token: string): Promise<AuthTokenDetails> {
-    // Facebook does not use refresh tokens in the same way as other platforms.
-    // Long-lived access tokens are exchanged for short-lived ones.
-    // The provided FacebookProvider example returns empty values, so we'll follow that.
-    return {
-      refreshToken: '',
-      expiresIn: 0,
-      accessToken: '',
-      id: '',
-      name: '',
-      picture: '',
-      username: '',
-    };
+  /**
+   * Get page-level insights/statistics
+   */
+  async getPageInsights(
+    pageId: string,
+    accessToken: string,
+    days: number = 30
+  ): Promise<any> {
+    const until = dayjs().endOf('day').unix();
+    const since = dayjs().subtract(days, 'day').unix();
+
+    const url = this._getGraphApiUrl(
+      `/${pageId}/insights?metric=page_impressions,page_impressions_unique,page_engaged_users,page_post_engagements,page_fans,page_views_total&access_token=${accessToken}&period=day&since=${since}&until=${until}`
+    );
+    const { data } = await (
+      await this.fetch(url, undefined, 'fetch page insights')
+    ).json();
+
+    return data?.map((d: any) => ({
+      label:
+        d.name === 'page_impressions' ? 'Page Impressions' :
+          d.name === 'page_impressions_unique' ? 'Unique Impressions' :
+            d.name === 'page_engaged_users' ? 'Engaged Users' :
+              d.name === 'page_post_engagements' ? 'Post Engagements' :
+                d.name === 'page_fans' ? 'Page Fans' :
+                  'Page Views',
+      data: d?.values?.map((v: any) => ({
+        total: v.value,
+        date: dayjs(v.end_time).format('YYYY-MM-DD'),
+      })),
+    })) || [];
   }
 
-  async generateAuthUrl() {
-    const state = this._makeId(6);
-    const scopes = [
-      'pages_show_list',
-      'business_management',
-      'pages_manage_posts',
-      'pages_manage_engagement',
-      'pages_read_engagement',
-      'read_insights',
-    ];
-    return {
-      url:
-        `${this.OAUTH_DIALOG_URL}` +
-        `?client_id=${process.env.FACEBOOK_APP_ID}` +
-        `&redirect_uri=${encodeURIComponent(
-          `${process.env.FRONTEND_URL}/integrations/social/facebook`
-        )}` +
-        `&state=${state}` +
-        `&scope=${scopes.join(',')}`,
-      codeVerifier: this._makeId(10),
-      state,
-    };
+  /**
+   * Get post-level insights/statistics
+   */
+  async getPostInsights(
+    postId: string,
+    accessToken: string
+  ): Promise<any> {
+    const url = this._getGraphApiUrl(
+      `/${postId}/insights?metric=post_impressions,post_impressions_unique,post_engaged_users,post_clicks,post_reactions_by_type_total&access_token=${accessToken}`
+    );
+    const { data } = await (
+      await this.fetch(url, undefined, 'fetch post insights')
+    ).json();
+
+    return data?.map((d: any) => ({
+      label:
+        d.name === 'post_impressions' ? 'Post Impressions' :
+          d.name === 'post_impressions_unique' ? 'Unique Impressions' :
+            d.name === 'post_engaged_users' ? 'Engaged Users' :
+              d.name === 'post_clicks' ? 'Post Clicks' :
+                'Reactions',
+      value: d.values?.[0]?.value || 0,
+    })) || [];
+  }
+
+  /**
+   * Get comments on a post or page object
+   */
+  async getComments(
+    objectId: string,
+    accessToken: string,
+    options?: { limit?: number; after?: string }
+  ): Promise<any> {
+    const params = new URLSearchParams({
+      access_token: accessToken,
+      fields: 'id,message,from,created_time,like_count,comment_count,parent',
+      limit: String(options?.limit || 25),
+      ...(options?.after ? { after: options.after } : {}),
+    });
+
+    const url = this._getGraphApiUrl(`/${objectId}/comments?${params.toString()}`);
+    const response = await this.fetch(url, undefined, 'get comments');
+    return response.json();
+  }
+
+  /**
+   * Get comment count for a post
+   */
+  async getCommentCount(
+    postId: string,
+    accessToken: string
+  ): Promise<number> {
+    const url = this._getGraphApiUrl(
+      `/${postId}?fields=comments.summary(true).limit(0)&access_token=${accessToken}`
+    );
+    const data = await (
+      await this.fetch(url, undefined, 'get comment count')
+    ).json();
+
+    return data?.comments?.summary?.total_count || 0;
+  }
+
+  /**
+   * Reply to a comment
+   */
+  async replyToComment(
+    commentId: string,
+    replyText: string,
+    accessToken: string
+  ): Promise<any> {
+    const url = this._getGraphApiUrl(`/${commentId}/comments?access_token=${accessToken}`);
+    const response = await this.fetch(
+      url,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: replyText,
+        }),
+      },
+      'reply to comment'
+    );
+    return response.json();
+  }
+
+  /**
+   * Delete a comment
+   */
+  async deleteComment(
+    commentId: string,
+    accessToken: string
+  ): Promise<{ success: boolean }> {
+    const url = this._getGraphApiUrl(`/${commentId}?access_token=${accessToken}`);
+    const response = await this.fetch(
+      url,
+      {
+        method: 'DELETE',
+      },
+      'delete comment'
+    );
+    return response.json();
+  }
+
+  /**
+   * Hide or unhide a comment
+   */
+  async hideComment(
+    commentId: string,
+    isHidden: boolean,
+    accessToken: string
+  ): Promise<{ success: boolean }> {
+    const url = this._getGraphApiUrl(`/${commentId}?access_token=${accessToken}`);
+    const response = await this.fetch(
+      url,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          is_hidden: isHidden,
+        }),
+      },
+      'hide comment'
+    );
+    return response.json();
+  }
+
+  /**
+   * Get posts where the page is tagged
+   */
+  async getTaggedPosts(
+    pageId: string,
+    accessToken: string,
+    options?: { limit?: number; after?: string }
+  ): Promise<any> {
+    const params = new URLSearchParams({
+      access_token: accessToken,
+      fields: 'id,message,created_time,from,permalink_url',
+      limit: String(options?.limit || 25),
+      ...(options?.after ? { after: options.after } : {}),
+    });
+
+    const url = this._getGraphApiUrl(`/${pageId}/tagged?${params.toString()}`);
+    const response = await this.fetch(url, undefined, 'get tagged posts');
+    return response.json();
+  }
+
+  /**
+   * Get mentions of the page (same as tagged for now)
+   */
+  async getMentions(
+    pageId: string,
+    accessToken: string,
+    options?: { limit?: number; after?: string }
+  ): Promise<any> {
+    return this.getTaggedPosts(pageId, accessToken, options);
+  }
+
+  /**
+   * Get page conversations/messages
+   */
+  async getConversations(
+    pageId: string,
+    accessToken: string,
+    options?: { limit?: number; after?: string }
+  ): Promise<any> {
+    const params = new URLSearchParams({
+      access_token: accessToken,
+      fields: 'id,link,updated_time,message_count,unread_count,participants',
+      limit: String(options?.limit || 25),
+      ...(options?.after ? { after: options.after } : {}),
+    });
+
+    const url = this._getGraphApiUrl(`/${pageId}/conversations?${params.toString()}`);
+    const response = await this.fetch(url, undefined, 'get conversations');
+    return response.json();
+  }
+
+  /**
+   * Reply to a conversation
+   */
+  async replyToConversation(
+    conversationId: string,
+    message: string,
+    accessToken: string
+  ): Promise<any> {
+    const url = this._getGraphApiUrl(`/${conversationId}/messages?access_token=${accessToken}`);
+    const response = await this.fetch(
+      url,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: message,
+        }),
+      },
+      'reply to conversation'
+    );
+    return response.json();
   }
 
   async reConnect(
@@ -265,8 +473,8 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
   ): Promise<AuthTokenDetails> {
     const information = await this.fetchPageInformation(
       this,
-      accessToken,
-      requiredId
+      requiredId,
+      accessToken
     );
 
     return {
@@ -277,117 +485,6 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
       expiresIn: dayjs().add(59, 'days').unix() - dayjs().unix(),
       picture: information.picture,
       username: information.username,
-    };
-  }
-
-  /**
-   * Fetches a short-lived access token from Facebook.
-   * @param code The authorization code.
-   * @param redirectUri The redirect URI used in the authorization flow.
-   * @param refresh Optional refresh parameter.
-   * @returns The access token response.
-   */
-  private async _getShortLivedAccessToken(
-    code: string,
-    redirectUri: string,
-    refresh?: string
-  ): Promise<{ access_token: string; expires_in: number }> {
-    const url =
-      this._getGraphApiUrl('/oauth/access_token') +
-      `?client_id=${process.env.FACEBOOK_APP_ID}` +
-      `&redirect_uri=${encodeURIComponent(
-        `${redirectUri}${refresh ? `?refresh=${refresh}` : ''}`
-      )}` +
-      `&client_secret=${process.env.FACEBOOK_APP_SECRET}` +
-      `&code=${code}`;
-    const response = await this.fetch(url, undefined, 'get short-lived access token');
-    return response.json();
-  }
-
-  /**
-   * Exchanges a short-lived access token for a long-lived one.
-   * @param shortLivedToken The short-lived access token.
-   * @returns The long-lived access token.
-   */
-  private async _getLongLivedAccessToken(shortLivedToken: string): Promise<string> {
-    const url =
-      this._getGraphApiUrl('/oauth/access_token') +
-      '?grant_type=fb_exchange_token' +
-      `&client_id=${process.env.FACEBOOK_APP_ID}` +
-      `&client_secret=${process.env.FACEBOOK_APP_SECRET}` +
-      `&fb_exchange_token=${shortLivedToken}&fields=access_token,expires_in`;
-    const response = await this.fetch(url, undefined, 'get long-lived access token');
-    const { access_token } = await response.json();
-    return access_token;
-  }
-
-  /**
-   * Checks if the granted permissions include all required scopes.
-   * @param accessToken The user's access token.
-   * @param requiredScopes An array of required permission scopes.
-   * @throws Error if any required permissions are missing.
-   */
-  private async _checkPermissions(accessToken: string, requiredScopes: string[]): Promise<void> {
-    const url = this._getGraphApiUrl(`/me/permissions?access_token=${accessToken}`);
-    const response = await this.fetch(url, undefined, 'check permissions');
-    const { data } = await response.json();
-
-    const grantedPermissions = data
-      .filter((d: any) => d.status === 'granted')
-      .map((p: any) => p.permission);
-
-    const missingScopes = requiredScopes.filter(scope => !grantedPermissions.includes(scope));
-    if (missingScopes.length > 0) {
-      throw new Error(`Missing required permissions: ${missingScopes.join(', ')}`);
-    }
-  }
-
-  /**
-   * Fetches user information (id, name, picture) for the authenticated user.
-   * @param accessToken The user's access token.
-   * @returns User details.
-   */
-  private async _fetchMe(accessToken: string): Promise<{ id: string; name: string; picture: { data: { url: string } } }> {
-    const url = this._getGraphApiUrl(`/me?fields=id,name,picture&access_token=${accessToken}`);
-    const response = await this.fetch(url, undefined, 'fetch user info');
-    return response.json();
-  }
-
-  async authenticate(params: {
-    code: string;
-    codeVerifier: string;
-    refresh?: string;
-  }) {
-    const redirectUri = `${process.env.FRONTEND_URL}/integrations/social/facebook`;
-
-    const { access_token: shortLivedAccessToken } = await this._getShortLivedAccessToken(
-      params.code,
-      redirectUri,
-      params.refresh
-    );
-
-    const longLivedAccessToken = await this._getLongLivedAccessToken(shortLivedAccessToken);
-
-    const scopes = [
-      'pages_show_list',
-      'business_management',
-      'pages_manage_posts',
-      'pages_manage_engagement',
-      'pages_read_engagement',
-      'read_insights',
-    ];
-    await this._checkPermissions(longLivedAccessToken, scopes);
-
-    const { id, name, picture } = await this._fetchMe(longLivedAccessToken);
-
-    return {
-      id,
-      name,
-      accessToken: longLivedAccessToken,
-      refreshToken: longLivedAccessToken, // Facebook uses long-lived access tokens as refresh tokens
-      expiresIn: dayjs().add(59, 'days').unix() - dayjs().unix(), // Long-lived tokens last 60 days
-      picture: picture?.data?.url || '',
-      username: '',
     };
   }
 

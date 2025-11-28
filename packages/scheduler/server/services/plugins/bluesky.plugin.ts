@@ -1,5 +1,6 @@
 import type { PostDetails, PostResponse, Integration } from '../SchedulerPost.service';
 import { BaseSchedulerPlugin, type MediaContent } from '../SchedulerPost.service';
+import type { Post, PostWithAllData, SocialMediaAccount, Asset } from '#layers/BaseDB/db/schema';
 import { AtpAgent, RichText, AppBskyFeedPost, AppBskyFeedDefs, BlobRef } from '@atproto/api';
 
 type AppBskyEmbedVideo = any;
@@ -28,9 +29,20 @@ class BadBody extends Error {
 
 
 export class BlueskyPlugin extends BaseSchedulerPlugin {
+  static readonly pluginName = 'bluesky';
   readonly pluginName = 'bluesky';
-  public exposedMethods?: string[] = ["blueSkyMaxLength"];
+  public override exposedMethods = [
+    'blueSkyMaxLength',
+    'getProfile',
+    'getPostThread',
+    'getNotifications',
+    'listNotifications',
+    'getFollowers',
+    'getFollowing',
+    'searchPosts',
+  ] as const;
   private agent!: AtpAgent;
+  serviceUrl!: string;
 
   blueSkyMaxLength() {
     return 300;
@@ -40,46 +52,201 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
 
 
   protected init(options?: { serviceUrl: string }): void {
-    this.agent = new AtpAgent({ service: options?.serviceUrl || 'https://bsky.social' });
+    this.serviceUrl = options?.serviceUrl || 'https://bsky.social';
+    this.agent = new AtpAgent({ service: this.serviceUrl });
     console.log('Bluesky plugin initialized', options);
   }
 
-  async validate(postDetails: PostDetails): Promise<string[]> {
+  override async validate(post: Post): Promise<string[]> {
     const errors: string[] = [];
-    if (!postDetails.message || postDetails.message.trim() === '') {
+    if (!post.content || post.content.trim() === '') {
       errors.push('Post message cannot be empty.');
     }
-    // Additional validation logic can be added here, e.g., media checks, length limits
-    return errors;
+    if (post.content && post.content.length > 300) {
+      errors.push('Post content is too long (max 300 characters)');
+    }
+    return Promise.resolve(errors);
   }
 
-  async post(
-    id: string,
-    accessToken: string,
-    postDetails: PostDetails,
-    comments: PostDetails[],
-    integration: Integration
-  ): Promise<PostResponse[]> {
-    const responses: PostResponse[] = [];
-    try {
+  /**
+   * Get user profile with stats (followers, following, posts count)
+   */
+  async getProfile(handle: string, accessToken?: string): Promise<any> {
+    if (accessToken) {
       await this.agent.login({
-        identifier: integration.username,
+        identifier: handle,
         password: accessToken,
       });
+    }
 
-      const rt = new RichText({ text: postDetails.message });
+    const profile = await this.agent.getProfile({ actor: handle });
+    return {
+      did: profile.data.did,
+      handle: profile.data.handle,
+      displayName: profile.data.displayName,
+      description: profile.data.description,
+      avatar: profile.data.avatar,
+      followersCount: profile.data.followersCount || 0,
+      followsCount: profile.data.followsCount || 0,
+      postsCount: profile.data.postsCount || 0,
+    };
+  }
+
+  /**
+   * Get post thread with replies and engagement metrics
+   */
+  async getPostThread(uri: string, accessToken?: string): Promise<any> {
+    if (accessToken) {
+      const session = JSON.parse(accessToken);
+      await this.agent.resumeSession(session);
+    }
+
+    const thread = await this.agent.getPostThread({ uri });
+    return thread.data;
+  }
+
+  /**
+   * Get notifications (likes, reposts, follows, mentions, replies)
+   */
+  async getNotifications(
+    accessToken: string,
+    options?: { limit?: number; cursor?: string }
+  ): Promise<any> {
+    const session = JSON.parse(accessToken);
+    await this.agent.resumeSession(session);
+
+    const notifications = await this.agent.listNotifications({
+      limit: options?.limit || 50,
+      cursor: options?.cursor,
+    });
+
+    return {
+      notifications: notifications.data.notifications,
+      cursor: notifications.data.cursor,
+    };
+  }
+
+  /**
+   * List all notifications with optional filtering
+   */
+  async listNotifications(
+    accessToken: string,
+    options?: {
+      limit?: number;
+      cursor?: string;
+      seenAt?: string;
+    }
+  ): Promise<any> {
+    return this.getNotifications(accessToken, options);
+  }
+
+  /**
+   * Get followers list for a user
+   */
+  async getFollowers(
+    actor: string,
+    accessToken?: string,
+    options?: { limit?: number; cursor?: string }
+  ): Promise<any> {
+    if (accessToken) {
+      const session = JSON.parse(accessToken);
+      await this.agent.resumeSession(session);
+    }
+
+    const followers = await this.agent.getFollowers({
+      actor,
+      limit: options?.limit || 50,
+      cursor: options?.cursor,
+    });
+
+    return {
+      followers: followers.data.followers,
+      cursor: followers.data.cursor,
+    };
+  }
+
+  /**
+   * Get following list for a user
+   */
+  async getFollowing(
+    actor: string,
+    accessToken?: string,
+    options?: { limit?: number; cursor?: string }
+  ): Promise<any> {
+    if (accessToken) {
+      const session = JSON.parse(accessToken);
+      await this.agent.resumeSession(session);
+    }
+
+    const following = await this.agent.getFollows({
+      actor,
+      limit: options?.limit || 50,
+      cursor: options?.cursor,
+    });
+
+    return {
+      following: following.data.follows,
+      cursor: following.data.cursor,
+    };
+  }
+
+  /**
+   * Search for posts
+   */
+  async searchPosts(
+    query: string,
+    accessToken?: string,
+    options?: {
+      limit?: number;
+      cursor?: string;
+      sort?: 'top' | 'latest';
+    }
+  ): Promise<any> {
+    if (accessToken) {
+      const session = JSON.parse(accessToken);
+      await this.agent.resumeSession(session);
+    }
+
+    const results = await this.agent.app.bsky.feed.searchPosts({
+      q: query,
+      limit: options?.limit || 25,
+      cursor: options?.cursor,
+      sort: options?.sort || 'latest',
+    });
+
+    return {
+      posts: results.data.posts,
+      cursor: results.data.cursor,
+    };
+  }
+
+  override async post(
+    postDetails: PostWithAllData,
+    comments: PostDetails[],
+    socialMediaAccount: SocialMediaAccount
+  ): Promise<PostResponse> {
+    try {
+      await this.agent.login({
+        identifier: socialMediaAccount.username,
+        password: socialMediaAccount.accessToken,
+      });
+
+      const rt = new RichText({ text: postDetails.content });
       await rt.detectFacets(this.agent);
 
-      // Separate images and videos
-      const imageMedia =
-        postDetails.media?.filter((p) => p.type === 'image') || [];
-      const videoMedia =
-        postDetails.media?.filter((p) => p.type === 'video') || [];
+      // Handle media from assets
+      const imageAssets = postDetails.assets?.filter(
+        (asset: Asset) => asset.mimeType.includes('image')
+      ) || [];
+      const videoAssets = postDetails.assets?.filter(
+        (asset: Asset) => asset.mimeType.includes('video')
+      ) || [];
 
       // Upload images
       const images = await Promise.all(
-        imageMedia.map(async (p) => {
-          const { buffer, width, height } = await this.reduceImageBySize(p.path);
+        imageAssets.map(async (asset: Asset) => {
+          const imageUrl = `${this.serviceUrl}${asset.url}`;
+          const { buffer, width, height } = await this.reduceImageBySize(imageUrl);
           return {
             width,
             height,
@@ -90,21 +257,20 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
 
       // Upload videos (only one video per post is supported by Bluesky)
       let videoEmbed: AppBskyEmbedVideo | null = null;
-      if (videoMedia.length > 0) {
-        videoEmbed = await this.uploadVideo(this.agent, videoMedia[0].path);
+      if (videoAssets.length > 0) {
+        const videoUrl = `${this.serviceUrl}${videoAssets[0].url}`;
+        videoEmbed = await this.uploadVideo(this.agent, videoUrl);
       }
 
       // Determine embed based on media types
       let embed: any = {};
       if (videoEmbed) {
-        // If there's a video, use video embed (Bluesky supports only one video per post)
         embed = videoEmbed;
       } else if (images.length > 0) {
-        // If there are images but no video, use image embed
         embed = {
           $type: 'app.bsky.embed.images',
-          images: images.map((p, index) => ({
-            alt: imageMedia?.[index]?.alt || '',
+          images: images.map((p: { buffer: { data: { blob: any; }; }; width: any; height: any; }, index: string | number) => ({
+            alt: imageAssets?.[index]?.filename || '',
             image: p.buffer.data.blob,
             aspectRatio: {
               width: p.width,
@@ -127,29 +293,15 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
         postRecord,
       );
 
-      const mainPostResponse: PostResponse = {
+      const response: PostResponse = {
         id: postDetails.id,
         postId: blueskyResponse.uri,
         releaseURL: `https://bsky.app/profile/${this.agent.session?.handle}/post/${blueskyResponse.uri.split('/').pop()}`,
         status: 'published',
       };
-      responses.push(mainPostResponse);
-      this.emit('bluesky:post:published', { postId: mainPostResponse.postId, response: mainPostResponse });
 
-      if (postDetails.comments && postDetails.comments.length > 0) {
-        for (const comment of postDetails.comments) {
-          const commentResponse = await this.addComment(
-            comment.id,
-            accessToken,
-            mainPostResponse.postId,
-            comment,
-            integration
-          );
-          responses.push(...commentResponse);
-        }
-      }
-
-      return responses;
+      this.emit('bluesky:post:published', { postId: response.postId, response });
+      return response;
     } catch (error: unknown) {
       const errorResponse: PostResponse = {
         id: postDetails.id,
@@ -158,39 +310,36 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
         status: 'failed',
         error: (error as Error).message,
       };
-      responses.push(errorResponse);
       this.emit('bluesky:post:failed', { error: (error as Error).message });
-      return responses;
+      return errorResponse;
     }
   }
 
-  async update(
-    id: string,
-    accessToken: string,
-    postId: string,
-    updateDetails: PostDetails,
-    integration: Integration
-  ): Promise<PostResponse[]> {
-    const responses: PostResponse[] = [];
+  override async update(
+    postDetails: PostWithAllData,
+    comments: PostDetails[],
+    socialMediaAccount: SocialMediaAccount
+  ): Promise<PostResponse> {
     try {
       await this.agent.login({
-        identifier: integration.username,
-        password: accessToken,
+        identifier: socialMediaAccount.username,
+        password: socialMediaAccount.accessToken,
       });
 
-      // Delete the old post
-      const rkeyToDelete = postId.split('/').pop();
-      if (this.agent.session?.did && rkeyToDelete) {
-        await this.agent.api.com.atproto.repo.deleteRecord({
-          repo: this.agent.session.did,
-          collection: 'app.bsky.feed.post',
-          rkey: rkeyToDelete,
-        });
+      // Bluesky doesn't support editing, delete and recreate
+      if (postDetails.postId) {
+        const rkeyToDelete = postDetails.postId.split('/').pop();
+        if (this.agent.session?.did && rkeyToDelete) {
+          await this.agent.api.com.atproto.repo.deleteRecord({
+            repo: this.agent.session.did,
+            collection: 'app.bsky.feed.post',
+            rkey: rkeyToDelete,
+          });
+        }
       }
 
-
-      // Create a new post with updated content
-      const rt = new RichText({ text: updateDetails.message });
+      // Create new post with updated content
+      const rt = new RichText({ text: postDetails.content });
       await rt.detectFacets(this.agent);
 
       const postRecord: AppBskyFeedPost.Record = {
@@ -205,66 +354,47 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
         postRecord,
       );
 
-      const mainPostResponse: PostResponse = {
-        id: updateDetails.id,
+      const response: PostResponse = {
+        id: postDetails.id,
         postId: blueskyResponse.uri,
         releaseURL: `https://bsky.app/profile/${this.agent.session?.handle}/post/${blueskyResponse.uri.split('/').pop()}`,
-        status: 'updated',
+        status: 'published',
       };
-      responses.push(mainPostResponse);
-      this.emit('bluesky:post:updated', { postId: mainPostResponse.postId, updateDetails });
 
-      if (updateDetails.comments && updateDetails.comments.length > 0) {
-        // For updates, we might need a more sophisticated logic to update existing comments
-        // or add new ones. For now, we'll just add new comments.
-        for (const comment of updateDetails.comments) {
-          const commentResponse = await this.addComment(
-            comment.id,
-            accessToken,
-            mainPostResponse.postId,
-            comment,
-            integration
-          );
-          responses.push(...commentResponse);
-        }
-      }
-
-      return responses;
+      this.emit('bluesky:post:updated', { postId: response.postId, postDetails });
+      return response;
     } catch (error: unknown) {
       const errorResponse: PostResponse = {
-        id: updateDetails.id,
-        postId: postId,
+        id: postDetails.id,
+        postId: '',
         releaseURL: '',
         status: 'failed',
         error: (error as Error).message,
       };
-      responses.push(errorResponse);
       this.emit('bluesky:post:update:failed', { error: (error as Error).message });
-      return responses;
+      return errorResponse;
     }
   }
 
-  async addComment(
-    id: string,
-    accessToken: string,
-    postId: string,
+  override async addComment(
+    postDetails: PostWithAllData,
     commentDetails: PostDetails,
-    integration: Integration
-  ): Promise<PostResponse[]> {
-    const responses: PostResponse[] = [];
+    socialMediaAccount: SocialMediaAccount
+  ): Promise<PostResponse> {
     try {
       await this.agent.login({
-        identifier: integration.username,
-        password: accessToken,
+        identifier: socialMediaAccount.username,
+        password: socialMediaAccount.accessToken,
       });
 
       const rt = new RichText({ text: commentDetails.message });
       await rt.detectFacets(this.agent);
 
-      const parentUri = postId;
+      const parentUri = postDetails.postId || '';
       const threadResponse = await this.agent.api.app.bsky.feed.getPostThread({ uri: parentUri });
 
-      if (!threadResponse.data.thread || !threadResponse.data.thread.post) {
+      // Type narrowing: ensure the thread is a ThreadViewPost (which has a 'post' property)
+      if (!threadResponse.data.thread || !AppBskyFeedDefs.isThreadViewPost(threadResponse.data.thread)) {
         throw new Error('Parent post not found for commenting.');
       }
 
@@ -296,25 +426,11 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
         id: commentDetails.id,
         postId: blueskyResponse.uri,
         releaseURL: `https://bsky.app/profile/${this.agent.session?.handle}/post/${blueskyResponse.uri.split('/').pop()}`,
-        status: 'commented',
+        status: 'published',
       };
-      responses.push(response);
-      this.emit('bluesky:comment:added', { commentId: response.postId, postId, commentDetails });
 
-      if (commentDetails.comments && commentDetails.comments.length > 0) {
-        for (const nestedComment of commentDetails.comments) {
-          const nestedCommentResponse = await this.addComment(
-            nestedComment.id,
-            accessToken,
-            response.postId, // The parent for nested comments is the current comment
-            nestedComment,
-            integration
-          );
-          responses.push(...nestedCommentResponse);
-        }
-      }
-
-      return responses;
+      this.emit('bluesky:comment:added', { commentId: response.postId, postDetails, commentDetails });
+      return response;
     } catch (error: unknown) {
       const errorResponse: PostResponse = {
         id: commentDetails.id,
@@ -323,9 +439,8 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
         status: 'failed',
         error: (error as Error).message,
       };
-      responses.push(errorResponse);
       this.emit('bluesky:comment:failed', { error: (error as Error).message });
-      return responses;
+      return errorResponse;
     }
   }
 

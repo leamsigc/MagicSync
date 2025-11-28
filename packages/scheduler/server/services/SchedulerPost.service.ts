@@ -37,7 +37,7 @@ export type PostDetails<T = Record<string, unknown>> = {
 
 export interface SchedulerPlugin {
   readonly pluginName: string;
-  readonly exposedMethods?: string[];
+  readonly exposedMethods?: readonly string[];
   [key: string]: unknown; // Allow for additional properties
 
   onRegister?(scheduler: SchedulerPost): void;
@@ -69,7 +69,7 @@ export interface SchedulerPluginConstructor {
 export abstract class BaseSchedulerPlugin implements SchedulerPlugin {
   abstract readonly pluginName: string;
   public scheduler: SchedulerPost;
-  public exposedMethods?: string[];
+  public exposedMethods?: readonly (string & keyof this)[];
   [key: string]: unknown;
 
   // Optional methods

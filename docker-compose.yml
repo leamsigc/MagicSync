@@ -1,9 +1,8 @@
-version: "3.7"
-
 services:
   site:
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     env_file:
       - .env
     ports:
@@ -11,7 +10,6 @@ services:
     build:
       dockerfile: Dockerfile
       context: .
-
   db:
     image: ghcr.io/tursodatabase/libsql-server:latest
     platform: linux/amd64
@@ -22,3 +20,9 @@ services:
     #   - SQLD_NODE=primary
     volumes:
       - ./sqld:/var/lib/sqld
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8080/health || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
