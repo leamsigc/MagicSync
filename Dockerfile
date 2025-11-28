@@ -18,4 +18,4 @@ ENV NODE_ENV=${NODE_ENV}
 ENV NUXT_HOST=${NUXT_HOST}
 
 EXPOSE 3000
-CMD ["node", ".output/server/index.mjs"]
+CMD ["pnpm", "start"]

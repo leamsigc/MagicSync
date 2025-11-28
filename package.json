@@ -42,7 +42,9 @@
     "dev": "dotenv -- pnpm -r dev",
     "build": "dotenv -- pnpm -r build",
     "start": "pnpm --stream -r run dev",
-    "clean": "pnpm -r run clean"
+    "clean": "pnpm -r run clean",
+    "doc": "pnpm packages magicsync-docs dev",
+    "doc:build": "pnpm packages magicsync-docs build"
   },
   "devDependencies": {
     "dotenv-cli": "^7.4.4"

@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <filter id="sticker-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="4" result="blur"/>
+      <feOffset in="blur" dx="2" dy="4" result="offsetBlur"/>
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.3"/>
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <linearGradient id="body-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:hsl(24.6, 95%, 58.1%)" />
+      <stop offset="100%" style="stop-color:hsl(24.6, 95%, 48.1%)" />
+    </linearGradient>
+    <linearGradient id="visor-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#00f2ff" />
+      <stop offset="50%" style="stop-color:#ffffff" />
+      <stop offset="100%" style="stop-color:#00f2ff" />
+    </linearGradient>
+  </defs>
+
+  <g filter="url(#sticker-shadow)">
+    <!-- White Sticker Border -->
+    <path fill="white" stroke="white" stroke-width="15" stroke-linejoin="round" d="
+      M256 40 
+      C180 40 120 90 120 160
+      C120 190 135 220 160 240
+      L160 280
+      C120 320 80 300 60 340
+      C50 360 60 380 80 390
+      C100 400 130 380 150 350
+      
+      L180 380
+      C160 420 140 440 160 460
+      C180 480 210 460 220 420
+      
+      L256 440
+      
+      L292 420
+      C302 460 332 480 352 460
+      C372 440 352 420 332 380
+      
+      L362 350
+      C382 380 412 400 432 390
+      C452 380 462 360 452 340
+      C432 300 392 320 352 280
+      
+      L352 240
+      C377 220 392 190 392 160
+      C392 90 332 40 256 40
+      Z
+    "/>
+
+    <!-- Octopus Body -->
+    <path fill="url(#body-grad)" d="
+      M256 48
+      C185 48 128 95 128 160
+      C128 190 142 215 165 235
+      V280
+      C125 315 90 300 70 340
+      C65 350 70 360 80 365
+      C90 370 110 360 130 330
+      
+      L170 370
+      C150 410 140 430 155 445
+      C170 460 190 440 200 410
+      
+      L256 430
+      
+      L312 410
+      C322 440 342 460 357 445
+      C372 430 362 410 342 370
+      
+      L382 330
+      C402 360 422 370 432 365
+      C442 360 447 350 442 340
+      C422 300 387 315 347 280
+      
+      V235
+      C370 215 384 190 384 160
+      C384 95 327 48 256 48
+      Z
+    "/>
+
+    <!-- Ninja Headband -->
+    <path fill="#333" d="M128 140 H384 V180 H128 Z"/>
+    <!-- Headband Knot -->
+    <path fill="#333" d="M380 150 L420 130 L410 160 L440 170 L384 170 Z"/>
+
+    <!-- Futuristic Visor (Eyes) -->
+    <path fill="url(#visor-grad)" d="M160 150 H352 V170 H160 Z" opacity="0.9"/>
+    
+    <!-- Tech Lines / Circuitry on Head -->
+    <path fill="none" stroke="white" stroke-width="3" stroke-opacity="0.5" d="M256 48 V80"/>
+    <path fill="none" stroke="white" stroke-width="3" stroke-opacity="0.5" d="M200 60 L220 90"/>
+    <path fill="none" stroke="white" stroke-width="3" stroke-opacity="0.5" d="M312 60 L292 90"/>
+    
+    <!-- Holding Items (Abstract Orbs) -->
+    <circle cx="70" cy="340" r="15" fill="#1877F2" /> <!-- FB Blue -->
+    <circle cx="155" cy="445" r="15" fill="#E4405F" /> <!-- Insta Pink -->
+    <circle cx="357" cy="445" r="15" fill="#0A66C2" /> <!-- LinkedIn Blue -->
+    <circle cx="442" cy="340" r="15" fill="#1DA1F2" /> <!-- Twitter Blue -->
+
+  </g>
+</svg>

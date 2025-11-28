@@ -1,22 +1,34 @@
 {
-  "name": "@local-monorepo/doc",
-  "type": "module",
-  "version": "0.0.1",
-  "main": "./nuxt.config.ts",
+  "name": "magicsync-docs",
+  "version": "1.0.0",
+  "description": "MagicSync Documentation",
+  "main": "index.js",
   "scripts": {
-    "dev": "nuxi dev .playground",
-    "dev:prepare": "nuxt prepare .playground",
-    "build": "nuxt build .playground",
-    "generate": "nuxt generate .playground",
-    "preview": "nuxt preview .playground",
-    "lint": "eslint ."
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "docs:dev": "vitepress dev",
+    "docs:build": "vitepress build",
+    "docs:preview": "vitepress preview",
+    "dev": "vitepress dev",
+    "build": "tsx scripts/update-metadata.ts && vitepress build",
+    "preview": "vitepress preview",
+    "update:metadata": "tsx scripts/update-metadata.ts"
+  },
+  "keywords": [],
+  "author": "Ismael Garcia <leamsigc@leamsigc.com>",
+  "license": "MIT",
+  "packageManager": "pnpm@10.19.0",
+  "dependencies": {
+    "dayjs": "^1.11.19",
+    "gray-matter": "^4.0.3",
+    "gsap": "^3.13.0",
+    "shiki": "^3.15.0"
   },
   "devDependencies": {
-    "@nuxt/eslint": "catalog:",
-    "eslint": "catalog:",
-    "nuxt": "catalog:",
-    "typescript": "catalog:",
-    "vue": "catalog:",
-    "@nuxtjs/i18n": "catalog:"
+    "@types/node": "^22.10.2",
+    "mermaid": "^11.12.1",
+    "tsx": "^4.19.2",
+    "vitepress": "2.0.0-alpha.13",
+    "vitepress-plugin-llms": "^1.9.3",
+    "vitepress-plugin-mermaid": "^2.0.17"
   }
 }

@@ -58,7 +58,7 @@ export default defineNuxtConfig({
     '@local-monorepo/auth',
     '@local-monorepo/email',
     '@local-monorepo/assets',
-    // '@local-monorepo/content',
+    '@local-monorepo/content',
     '@local-monorepo/tools',
     '@local-monorepo/scheduler',
     '@local-monorepo/connect'

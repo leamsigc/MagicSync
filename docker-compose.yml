@@ -1,10 +1,11 @@
 services:
   site:
     depends_on:
-      db:
-        condition: service_healthy
+      - db
     env_file:
       - .env
+    environment:
+      - NUXT_HOST=0.0.0.0
     ports:
       - "3000:3000"
     build:
@@ -12,6 +13,8 @@ services:
       context: .
   db:
     image: ghcr.io/tursodatabase/libsql-server:latest
+    env_file:
+      - .env
     platform: linux/amd64
     ports:
       - "8080:8080"
@@ -20,9 +23,6 @@ services:
     #   - SQLD_NODE=primary
     volumes:
       - ./sqld:/var/lib/sqld
-    healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost:8080/health || exit 1" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
+    environment:
+      - 'JWT=${JWT}'
+      - 'SQLD_AUTH_JWT_KEY=${SQLD_AUTH_JWT_KEY}'
