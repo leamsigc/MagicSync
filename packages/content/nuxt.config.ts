@@ -6,6 +6,15 @@ import type { NuxtPage } from 'nuxt/schema'
 const currentDir = dirname(fileURLToPath(import.meta.url))
 
 export default defineNuxtConfig({
+  routeRules: {
+    "/": { static: true },
+    "/blog": { swr: true },
+    "/blog/**": { swr: 1200 },
+    "/app/**": { swr: true },
+    '/api/v1/**': {
+      cors: true
+    }
+  },
   devtools: { enabled: true },
   experimental: {
     viteEnvironmentApi: true,

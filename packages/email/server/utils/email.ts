@@ -13,8 +13,8 @@ export interface EmailService {
 }
 
 export const useMailgun = (): EmailService => {
-  const MAILGUN_API_KEY = process.env.MAILGUN_API_KEY
-  const MAILGUN_DOMAIN = process.env.MAILGUN_DOMAIN
+  const MAILGUN_API_KEY = process.env.NUXT_MAILGUN_API_KEY
+  const MAILGUN_DOMAIN = process.env.NUXT_MAILGUN_DOMAIN
   const MAILGUN_API_URL = `https://api.mailgun.net/v3/${MAILGUN_DOMAIN}/messages`
 
   const send = async (emailOptions: EmailOptions): Promise<void> => {
@@ -65,7 +65,7 @@ export const sendUserVerificationEmail = async (user: User, url: string) => {
 
   try {
     await useMailgun().send({
-      from: process.env.MAIL_FROM_EMAIL || 'no-reply@localhost.com',
+      from: process.env.NUXT_MAIL_FROM_EMAIL || 'no-reply@localhost.com',
       to: user.email,
       subject: 'Email Verification',
       html: emailMJML.html
@@ -80,7 +80,7 @@ export const sendUserPasswordResetEmail = async (url: string, user: User) => {
   const emailHTML = await userPasswordResetTemplate(url, user)
   try {
     await useMailgun().send({
-      from: process.env.MAIL_FROM_EMAIL || 'no-reply@localhost.com',
+      from: process.env.NUXT_MAIL_FROM_EMAIL || 'no-reply@localhost.com',
       to: user.email,
       subject: 'Password Reset',
       html: emailHTML.html

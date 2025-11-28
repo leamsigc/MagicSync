@@ -3,6 +3,8 @@ import { promises as fs } from 'node:fs'
 import { join } from 'node:path'
 
 export default defineEventHandler(async (event) => {
+  const { NUXT_FILE_STORAGE_MOUNT } = useRuntimeConfig(event)
+
   try {
     // Get user from session
     const user = await checkUserIsLogin(event)
@@ -17,8 +19,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // Construct the user-specific folder path
-    // Use the env FILE_STORAGE_MOUNT=./upload/files
-    const fileStorageMount = process.env.FILE_STORAGE_MOUNT || './upload/files'
+    const fileStorageMount = NUXT_FILE_STORAGE_MOUNT || './upload/files'
     const userFolder = join(process.cwd(), fileStorageMount, 'userFiles', user.id)
     const filePath = join(userFolder, filename)
 

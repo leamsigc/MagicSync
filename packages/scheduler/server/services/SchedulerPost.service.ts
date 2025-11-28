@@ -38,6 +38,7 @@ export type PostDetails<T = Record<string, unknown>> = {
 export interface SchedulerPlugin {
   readonly pluginName: string;
   readonly exposedMethods?: readonly string[];
+  maxConcurrentJob?: number;
   [key: string]: unknown; // Allow for additional properties
 
   onRegister?(scheduler: SchedulerPost): void;
@@ -70,6 +71,7 @@ export abstract class BaseSchedulerPlugin implements SchedulerPlugin {
   abstract readonly pluginName: string;
   public scheduler: SchedulerPost;
   public exposedMethods?: readonly (string & keyof this)[];
+  maxConcurrentJob?: number;
   [key: string]: unknown;
 
   // Optional methods

@@ -3,6 +3,8 @@ import { readFile } from 'fs/promises'
 import { join } from 'path'
 
 export default defineEventHandler(async (event) => {
+  const { NUXT_FILE_STORAGE_MOUNT } = useRuntimeConfig(event)
+
   try {
     // Get user from session
     const user = await checkUserIsLogin(event)
@@ -22,7 +24,7 @@ export default defineEventHandler(async (event) => {
     const safePath = path.replace(/\.\./g, '') // Remove any path traversal attempts
 
     // Build the full file path
-    const fileStorageMount = process.env.FILE_STORAGE_MOUNT || './upload/files'
+    const fileStorageMount = NUXT_FILE_STORAGE_MOUNT || './upload/files'
     const fullPath = join(fileStorageMount, userFolder, safePath)
 
     try {

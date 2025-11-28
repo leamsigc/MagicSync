@@ -3,14 +3,15 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "build": "nuxt build",
-    "dev": "nuxt dev",
+    "build": "nuxt build --logLevel verbose --dotenv ../../.env",
+    "dev": "nuxt dev --inspect",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "db:generate": "drizzle-kit generate --config @local-monorepo/db/config/drizzle.config.ts",
+    "db:generate": "drizzle-kit generate --config ../db/config/drizzle.config.ts",
     "db:migrate": "drizzle-kit migrate --config ../db/config/drizzle.config.ts",
-    "db:studio": "drizzle-kit studio --config ../db/config/drizzle.config.ts"
+    "db:studio": "drizzle-kit studio --config ../db/config/drizzle.config.ts",
+    "start": " node .output/server/index.mjs"
   },
   "dependencies": {
     "@local-monorepo/ai-tools": "workspace:*",
@@ -26,6 +27,7 @@
     "@local-monorepo/ui": "workspace:*",
     "@nuxtjs/i18n": "catalog:",
     "nuxt": "catalog:",
+    "tsx": "catalog:",
     "vue": "catalog:",
     "vue-router": "catalog:"
   },

@@ -2,6 +2,24 @@
     "version": "0.2.1",
     "configurations": [
         {
+            "type": "chrome",
+            "request": "launch",
+            "name": "client: chrome",
+            "url": "http://localhost:3000",
+            // this should point to your Nuxt `srcDir`, which is `app` by default
+            "webRoot": "${workspaceFolder}/packages/site"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "server: nuxt",
+            "outputCapture": "std",
+            "program": "${workspaceFolder}/packages/sites/node_modules/nuxt/bin/nuxt.mjs",
+            "args": [
+                "dev"
+            ],
+        },
+        {
             "type": "node",
             "name": "Launch Nuxt Dev Server",
             "request": "launch",
@@ -274,6 +292,16 @@
             "skipFiles": [
                 "<node_internals>/**"
             ]
+        }
+    ],
+    "compounds": [
+        {
+            "name": "fullstack: nuxt",
+            "configurations": [
+                "server: nuxt",
+                "client: chrome"
+            ],
+            "stopAll": true
         }
     ]
 }

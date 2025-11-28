@@ -24,6 +24,14 @@ export default defineNuxtConfig({
   $meta: {
     name: 'BaseAuth',
   },
+  runtimeConfig: {
+    NUXT_BETTER_AUTH_URL: process.env.NUXT_BETTER_AUTH_URL,
+    NUXT_GOOGLE_CLIENT_ID: process.env.NUXT_GOOGLE_CLIENT_ID,
+    NUXT_GOOGLE_CLIENT_SECRET: process.env.NUXT_GOOGLE_CLIENT_SECRET,
+    NUXT_FACEBOOK_CLIENT_ID: process.env.NUXT_FACEBOOK_CLIENT_ID,
+    NUXT_FACEBOOK_CLIENT_SECRET: process.env.NUXT_FACEBOOK_CLIENT_SECRET,
+    NUXT_FACEBOOK_CONFIG_ID: process.env.NUXT_FACEBOOK_CONFIG_ID,
+  },
   extends: ['@local-monorepo/db', '@local-monorepo/ui', '@local-monorepo/email'],
   modules: ['@nuxtjs/i18n', 'nuxt-auth-utils',],
   i18n: {

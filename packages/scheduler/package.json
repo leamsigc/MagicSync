@@ -19,14 +19,16 @@
     "@fullcalendar/multimonth": "catalog:",
     "@fullcalendar/scrollgrid": "catalog:",
     "@fullcalendar/timegrid": "catalog:",
+    "@local-monorepo/assets": "workspace:*",
     "@local-monorepo/auth": "workspace:*",
+    "@local-monorepo/connect": "workspace:*",
     "@local-monorepo/db": "workspace:*",
     "@local-monorepo/ui": "workspace:*",
-    "@local-monorepo/connect": "workspace:*",
-    "@local-monorepo/assets": "workspace:*",
     "axios": "catalog:",
     "dayjs": "catalog:",
-    "sharp": "catalog:"
+    "googleapis": "catalog:",
+    "sharp": "catalog:",
+    "twitter-api-v2": "catalog:"
   },
   "devDependencies": {
     "@fullcalendar/core": "catalog:",

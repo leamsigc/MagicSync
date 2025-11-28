@@ -3,7 +3,7 @@ import { drizzle } from 'drizzle-orm/libsql'
 import { tursoConfig } from '../../config/turso.config'
 import * as schema from '#layers/BaseDB/db/schema'
 
-const tursoClient = createClient({
+export const tursoClient = createClient({
   url: tursoConfig.url,
   authToken: tursoConfig.authToken
 })

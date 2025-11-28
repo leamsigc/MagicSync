@@ -7,6 +7,15 @@ const currentDir = dirname(fileURLToPath(import.meta.url))
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
+  routeRules: {
+    "/": { static: true },
+    "/blog": { swr: true },
+    "/blog/**": { swr: 1200 },
+    "/app/**": { swr: true },
+    '/api/v1/**': {
+      cors: true
+    }
+  },
   // debug: true,
   experimental: {
     viteEnvironmentApi: true,
@@ -19,13 +28,28 @@ export default defineNuxtConfig({
 
   nitro: {
     experimental: {
-      // openAPI: true,
-      // tasks: true,
+      openAPI: true,
+      tasks: true,
     },
-    // scheduledTasks: {
-    //   // Run `cms:update` task every minute
-    //   '* * * * *': ['social:post']
-    // }
+  },
+  runtimeConfig: {
+    NUXT_APP_URL: process.env.NUXT_APP_URL,
+    NUXT_TURSO_DATABASE_URL: process.env.NUXT_TURSO_DATABASE_URL,
+    NUXT_TURSO_AUTH_TOKEN: process.env.NUXT_TURSO_AUTH_TOKEN,
+    NUXT_SESSION_PASSWORD: process.env.NUXT_SESSION_PASSWORD,
+    NUXT_BETTER_AUTH_SECRET: process.env.NUXT_BETTER_AUTH_SECRET,
+    NUXT_BETTER_AUTH_URL: process.env.NUXT_BETTER_AUTH_URL,
+    NUXT_MAILGUN_API_KEY: process.env.NUXT_MAILGUN_API_KEY,
+    NUXT_MAILGUN_DOMAIN: process.env.NUXT_MAILGUN_DOMAIN,
+    NUXT_MAIL_FROM_EMAIL: process.env.NUXT_MAIL_FROM_EMAIL,
+    NUXT_GOOGLE_CLIENT_ID: process.env.NUXT_GOOGLE_CLIENT_ID,
+    NUXT_GOOGLE_CLIENT_SECRET: process.env.NUXT_GOOGLE_CLIENT_SECRET,
+    NUXT_OPENAI_API_KEY: process.env.NUXT_OPENAI_API_KEY,
+    NUXT_FACEBOOK_CLIENT_ID: process.env.NUXT_FACEBOOK_CLIENT_ID,
+    NUXT_FACEBOOK_CLIENT_SECRET: process.env.NUXT_FACEBOOK_CLIENT_SECRET,
+    NUXT_FACEBOOK_CONFIG_ID: process.env.NUXT_FACEBOOK_CONFIG_ID,
+    NUXT_FILE_STORAGE_MOUNT: process.env.NUXT_FILE_STORAGE_MOUNT,
+    NUXT_PEXELS_API_KEY: process.env.NUXT_PEXELS_API_KEY,
   },
 
   extends: [
@@ -34,7 +58,7 @@ export default defineNuxtConfig({
     '@local-monorepo/auth',
     '@local-monorepo/email',
     '@local-monorepo/assets',
-    '@local-monorepo/content',
+    // '@local-monorepo/content',
     '@local-monorepo/tools',
     '@local-monorepo/scheduler',
     '@local-monorepo/connect'

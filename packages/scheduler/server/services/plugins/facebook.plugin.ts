@@ -47,10 +47,11 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     'replyToConversation',
   ] as const;
 
+
   private readonly API_VERSION = 'v20.0';
   private readonly GRAPH_API_BASE_URL = 'https://graph.facebook.com';
   private readonly OAUTH_DIALOG_URL = 'https://www.facebook.com/v20.0/dialog/oauth';
-  private readonly baseUrl = process.env.NUXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+  private readonly baseUrl = useRuntimeConfig().NUXT_APP_URL || 'http://localhost:3000'
 
   protected init(options?: any): void {
     // Initialize Facebook API client or settings

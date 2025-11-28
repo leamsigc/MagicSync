@@ -7,7 +7,7 @@ import { logAuditService } from '#layers/BaseDB/server/services/auditLog.service
 
 
 export const auth = betterAuth({
-  baseURL: process.env.BETTER_AUTH_URL || process.env.NUXT_BETTER_AUTH_URL || 'http://localhost:3000',
+  baseURL: process.env.NUXT_BETTER_AUTH_URL || 'http://localhost:3000',
   database: drizzleAdapter(useDrizzle(), {
     provider: 'sqlite',
     schema: {
@@ -69,8 +69,8 @@ export const auth = betterAuth({
   },
   socialProviders: {
     google: {
-      clientId: process.env.GOOGLE_CLIENT_ID as string,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+      clientId: process.env.NUXT_GOOGLE_CLIENT_ID as string,
+      clientSecret: process.env.NUXT_GOOGLE_CLIENT_SECRET as string,
       accessType: "offline",
       // prompt: "select_account+consent",
       scope: [
@@ -82,9 +82,9 @@ export const auth = betterAuth({
       ]
     },
     facebook: {
-      clientId: process.env.FACEBOOK_CLIENT_ID as string,
-      clientSecret: process.env.FACEBOOK_CLIENT_SECRET as string,
-      configId: process.env.FACEBOOK_CONFIG_ID as string,
+      clientId: process.env.NUXT_FACEBOOK_CLIENT_ID as string,
+      clientSecret: process.env.NUXT_FACEBOOK_CLIENT_SECRET as string,
+      configId: process.env.NUXT_FACEBOOK_CONFIG_ID as string,
       scopes: [
         "email",
         "public_profile",

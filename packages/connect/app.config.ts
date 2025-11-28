@@ -11,4 +11,7 @@ declare module '@nuxt/schema' {
       name?: string
     }
   }
+  interface RuntimeConfig {
+    NUXT_BASE_URL: string
+  }
 }

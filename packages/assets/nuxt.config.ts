@@ -23,10 +23,14 @@ export default defineNuxtConfig({
   $meta: {
     name: 'BaseAssets',
   },
+  runtimeConfig: {
+    NUXT_FILE_STORAGE_MOUNT: process.env.NUXT_FILE_STORAGE_MOUNT,
+    NUXT_PEXELS_API_KEY: process.env.NUXT_PEXELS_API_KEY,
+  },
   extends: ['@local-monorepo/db', '@local-monorepo/ui', '@local-monorepo/auth'],
   modules: ['@nuxtjs/i18n', 'nuxt-file-storage'],
   fileStorage: {
-    mount: process.env.FILE_STORAGE_MOUNT || './upload/files'
+    mount: process.env.NUXT_FILE_STORAGE_MOUNT || './upload/files'
   },
   i18n: {
     vueI18n: join(currentDir, './translations/i18n.config.ts'),

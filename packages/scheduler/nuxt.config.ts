@@ -20,13 +20,16 @@ export default defineNuxtConfig({
       openAPI: true,
       tasks: true,
     },
-    scheduledTasks: {
-      // Run `cms:update` task every minute
-      '* * * * *': ['social:post']
-    }
+    // scheduledTasks: {
+    //   // Run `cms:update` task every minute
+    //   '* * * * *': ['social:post']
+    // }
   },
   $meta: {
     name: 'BaseScheduler',
+  },
+  runtimeConfig: {
+    NUXT_APP_URL: process.env.NUXT_APP_URL,
   },
   extends: ['@local-monorepo/db', '@local-monorepo/ui', '@local-monorepo/auth', "@local-monorepo/connect", "@local-monorepo/assets"],
   modules: ['@nuxtjs/i18n'],

@@ -31,6 +31,7 @@
   "dependencies": {
     "@nuxt/fonts": "catalog:",
     "@types/three": "catalog:",
+    "consola": "^3.4.2",
     "three": "catalog:"
   }
 }
