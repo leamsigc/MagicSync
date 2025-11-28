@@ -20,11 +20,7 @@ const { isCardActive, startAnimation } = useCardAnimation(
 </script>
 
 <template>
-  <div
-    class="feature-card"
-    id="fully-typed-api"
-    @mouseover.stop.prevent="startAnimation"
-  >
+  <div class="feature-card" id="fully-typed-api" @mouseover.stop.prevent="startAnimation">
     <div class="feature__visualization" :class="{ active: isCardActive }">
       <div class="ide">
         <span class="code code__inactive">
@@ -34,42 +30,28 @@ const { isCardActive, startAnimation } = useCardAnimation(
           <span class="code--red">const</span> server =
           <span class="code--red">await</span>
           <span class="code--purple">&nbsp;createServer</span>({<br />
-          <span class="code--grey"
-            >&nbsp;&nbsp;&nbsp;// user config options</span
-          ><br />
+          <span class="code--grey">&nbsp;&nbsp;&nbsp;// user config options</span><br />
           })
         </span>
         <span class="code code__feature">
-          <span class="code--red">await</span> server.<span
-            class="code--highlight"
-            >listen</span
-          >()<br />
-          <span class="code--extra"
-            >server.<span class="code--purple">printUrls</span>()</span
-          >
+          <span class="code--red">await</span> server.<span class="code--highlight">listen</span>()<br />
+          <span class="code--extra">server.<span class="code--purple">printUrls</span>()</span>
         </span>
       </div>
       <div class="tooltip">
         <span class="code">
-          (method) ViteDevServer.<span class="code--blue">listen</span
-          >(port<span class="code--blue">?:</span> number
-          <span class="code--blue">| undefined,</span> isRestart<span
-            class="code--blue"
-            >?:</span
-          >
+          (method) ViteDevServer.<span class="code--blue">listen</span>(port<span class="code--blue">?:</span> number
+          <span class="code--blue">| undefined,</span> isRestart<span class="code--blue">?:</span>
           boolean <span class="code--blue">| undefined</span>):
-          <span class="code--yellow">Promise</span
-          ><span class="code--blue">&lt;</span>ViteDevServer<span
-            class="code--blue"
-            >&gt;</span
-          ><br />
+          <span class="code--yellow">Promise</span><span class="code--blue">&lt;</span>ViteDevServer<span
+            class="code--blue">&gt;</span><br />
           <span class="code--descriptor">Start the server.</span>
         </span>
       </div>
     </div>
     <div class="feature__meta meta--center">
-      <div class="meta__title">Fully Typed API</div>
-      <div class="meta__description">End-to-end type safety from schema to resolvers to client queries.</div>
+      <div class="meta__title">Unified Social Platform</div>
+      <div class="meta__description">Manage all your social media accounts from a single, intuitive dashboard.</div>
     </div>
   </div>
 </template>
@@ -94,11 +76,9 @@ const { isCardActive, startAnimation } = useCardAnimation(
     border: 1px solid rgba(64, 64, 64, 0.5);
     border-right: none;
     border-top: none;
-    background: linear-gradient(
-      to top,
-      rgba(23, 23, 23, 0.35) 0%,
-      #171717 100%
-    );
+    background: linear-gradient(to top,
+        rgba(23, 23, 23, 0.35) 0%,
+        #171717 100%);
   }
 
   .tooltip {

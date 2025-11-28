@@ -5,83 +5,124 @@ import { codeToHtml } from 'shiki'
 
 useSlideIn('#code-examples')
 
-type Tab = 'schema' | 'resolver' | 'query' | 'response'
+type Tab = 'post_data' | 'schedule_post' | 'ai_generate' | 'analytics_report'
 
-const activeTab = ref<Tab>('schema')
+const activeTab = ref<Tab>('post_data')
 const copied = ref(false)
 const highlightedCode = ref<Record<Tab, string>>({
-  schema: '',
-  resolver: '',
-  query: '',
-  response: '',
+  post_data: '',
+  schedule_post: '',
+  ai_generate: '',
+  analytics_report: '',
 })
 
 const tabs: { id: Tab; label: string }[] = [
-  { id: 'schema', label: 'Schema' },
-  { id: 'resolver', label: 'Resolver' },
-  { id: 'query', label: 'Query' },
-  { id: 'response', label: 'Response' },
+  { id: 'post_data', label: 'Post Data' },
+  { id: 'schedule_post', label: 'Schedule Post' },
+  { id: 'ai_generate', label: 'AI Generate' },
+  { id: 'analytics_report', label: 'Analytics' },
 ]
 
 const codeExamples: Record<Tab, { code: string; language: string }> = {
-  schema: {
-    code: `# server/graphql/user.graphql
-
-type User {
-  id: ID!
-  name: String!
-  email: String!
-  posts: [Post!]!
-}
-
-type Query {
-  user(id: ID!): User
-  users: [User!]!
+  post_data: {
+    code: `// post.json
+{
+  "platform": "Twitter",
+  "content": "Excited to announce our new AI-powered content creation tools! #SocialMedia #AI #ContentCreation",
+  "media": [
+    "https://example.com/image1.jpg"
+  ],
+  "scheduled_for": "2025-12-01T10:00:00Z"
 }`,
-    language: 'graphql'
+    language: 'json'
   },
-  resolver: {
-    code: `// server/graphql/user.resolver.ts
+  schedule_post: {
+    code: `// composables/useScheduler.ts
 
-export const userQueries = defineQuery({
-  user: async (_, { id }, context) => {
-    return await context.storage.getItem(\`users:\${id}\`)
-  },
-  users: async (_, __, context) => {
-    return await context.storage.getKeys('users:')
-  },
-})`,
-    language: 'typescript'
-  },
-  query: {
-    code: `# app/graphql/getUser.graphql
+import { ref } from 'vue'
 
-query GetUser($id: ID!) {
-  user(id: $id) {
-    id
-    name
-    email
-    posts {
-      title
+export function useScheduler() {
+  const isLoading = ref(false)
+  const error = ref(null)
+
+  async function schedulePost(post: SocialMediaPost) {
+    isLoading.value = true
+    try {
+      const response = await $fetch('/api/v1/schedule', {
+        method: 'POST',
+        body: post,
+      })
+      // Handle successful scheduling
+      return response
+    } catch (e) {
+      error.value = e
+    } finally {
+      isLoading.value = false
     }
   }
+
+  return { schedulePost, isLoading, error }
 }`,
-    language: 'graphql'
-  },
-  response: {
-    code: `// Fully typed response!
-
-import type { GetUserQuery } from '#graphql/client'
-
-const { data } = await useAsyncData(() =>
-  $fetch<GetUserQuery>('/api/graphql', {
-    method: 'POST',
-    body: { query: GetUserDocument }
-  })
-)
-
-// data.user is fully typed ✓`,
     language: 'typescript'
+  },
+  ai_generate: {
+    code: `// composables/useAICreation.ts
+
+import { ref } from 'vue'
+
+export function useAICreation() {
+  const generatedContent = ref('')
+  const isLoading = ref(false)
+  const error = ref(null)
+
+  async function generatePostIdeas(prompt: string) {
+    isLoading.value = true
+    try {
+      const response = await $fetch<{ idea: string }>('/api/v1/ai/generate-idea', {
+        method: 'POST',
+        body: { prompt },
+      })
+      generatedContent.value = response.idea
+    } catch (e) {
+      error.value = e
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  return { generatePostIdeas, generatedContent, isLoading, error }
+}`,
+    language: 'typescript'
+  },
+  analytics_report: {
+    code: `// analytics_report.json
+{
+  "report_date": "2025-11-30",
+  "total_posts": 120,
+  "platforms": {
+    "Twitter": {
+      "impressions": 55000,
+      "engagements": 3200,
+      "likes": 2500,
+      "comments": 300,
+      "shares": 400
+    },
+    "Facebook": {
+      "impressions": 80000,
+      "engagements": 4500,
+      "likes": 3500,
+      "comments": 500,
+      "shares": 500
+    }
+  },
+  "top_performing_post": {
+    "id": "post-xyz-123",
+    "platform": "Twitter",
+    "content": "Our latest blog post is live!",
+    "engagements": 1200
+  }
+}`,
+    language: 'json'
   },
 }
 
@@ -89,7 +130,7 @@ onMounted(async () => {
   // Highlight all code examples using Shiki
   for (const [key, value] of Object.entries(codeExamples)) {
     const html = await codeToHtml(value.code, {
-      lang: value.language === 'graphql' ? 'graphql' : 'typescript',
+      lang: value.language === 'json' ? 'json' : 'typescript', // Use 'json' for JSON examples
       theme: 'one-dark-pro',
       colorReplacements: {
         '#282c34': '#1e1e1e', // Replace One Dark Pro bg with darker color
@@ -117,46 +158,28 @@ const currentHighlightedCode = computed(() => {
   <section id="code-examples" class="code-examples">
     <div class="code-examples__container">
       <div class="code-examples__header">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="70"
-          height="61"
-          viewBox="0 0 70 61"
-          fill="none"
-          style="overflow: visible"
-        >
+        <svg xmlns="http://www.w3.org/2000/svg" width="70" height="61" viewBox="0 0 70 61" fill="none"
+          style="overflow: visible">
           <path
             d="M38.5 0.772461V60.5215M22.6301 60.7725V38.7905C22.6301 25.3784 17.3675 12.5156 8 3.03184M54.3699 60.7725V38.7905C54.3699 25.3784 59.6325 12.5156 69 3.03184"
-            stroke="url(#linear-gradient-code)"
-            stroke-width="2"
-          />
+            stroke="url(#linear-gradient-code)" stroke-width="2" />
           <defs>
-            <linearGradient
-              id="linear-gradient-code"
-              x1="38.5"
-              y1="0.772461"
-              x2="38.5"
-              y2="60.7725"
-              gradientUnits="userSpaceOnUse"
-            >
+            <linearGradient id="linear-gradient-code" x1="38.5" y1="0.772461" x2="38.5" y2="60.7725"
+              gradientUnits="userSpaceOnUse">
               <stop offset="0" stop-color="#404040" stop-opacity="0" />
               <stop offset="0.5" stop-color="#737373" />
               <stop offset="1" stop-color="#404040" stop-opacity="0" />
             </linearGradient>
           </defs>
         </svg>
-        <h2>Experience the power</h2>
-        <p>From GraphQL schema to fully-typed resolvers and queries in seconds</p>
+        <h2>Code to Connect Your Audience</h2>
+        <p>From simple post scheduling to advanced AI content generation and detailed analytics.</p>
       </div>
 
       <div class="code-examples__content">
         <div class="code-examples__tabs">
-          <button
-            v-for="tab in tabs"
-            :key="tab.id"
-            :class="['tab', { active: activeTab === tab.id }]"
-            @click="activeTab = tab.id"
-          >
+          <button v-for="tab in tabs" :key="tab.id" :class="['tab', { active: activeTab === tab.id }]"
+            @click="activeTab = tab.id">
             {{ tab.label }}
           </button>
         </div>
@@ -164,11 +187,13 @@ const currentHighlightedCode = computed(() => {
         <div class="code-examples__code">
           <button class="copy-btn" @click="copyCode">
             <svg v-if="!copied" width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <rect x="9" y="9" width="13" height="13" rx="2" stroke="currentColor" stroke-width="2"/>
-              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke="currentColor" stroke-width="2"/>
+              <rect x="9" y="9" width="13" height="13" rx="2" stroke="currentColor" stroke-width="2" />
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke="currentColor"
+                stroke-width="2" />
             </svg>
             <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <polyline points="20 6 9 17 4 12" stroke="#13b351" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <polyline points="20 6 9 17 4 12" stroke="#13b351" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
             </svg>
             {{ copied ? 'Copied!' : 'Copy' }}
           </button>
@@ -214,11 +239,9 @@ const currentHighlightedCode = computed(() => {
     font-weight: 700;
     line-height: 1.2;
     margin-bottom: 16px;
-    background: radial-gradient(
-      circle 300px at 30% -180%,
-      #E10098 0%,
-      #ffffff 100%
-    );
+    background: radial-gradient(circle 300px at 30% -180%,
+        #E10098 0%,
+        #ffffff 100%);
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;

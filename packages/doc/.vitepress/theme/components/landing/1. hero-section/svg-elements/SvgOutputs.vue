@@ -11,30 +11,13 @@ defineProps({
 </script>
 
 <template>
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="844"
-    height="80"
-    viewBox="0 0 844 40"
-    fill="none"
-    class="output-line"
-    style="opacity: 0.8"
-  >
-    <path
-      d="M843.463 1.3315L245.316 5.47507L0.633077 4.69725"
-      stroke="url(#output_gradient)"
-      stroke-width="1.2"
-    />
+  <svg xmlns="http://www.w3.org/2000/svg" width="844" height="80" viewBox="0 0 844 40" fill="none" class="output-line"
+    style="opacity: 0.8">
+    <path d="M843.463 1.3315L245.316 5.47507L0.633077 4.69725" stroke="url(#output_gradient)" stroke-width="1.2" />
     <g v-for="outputLine in outputLines">
-      <SvgNode
-        path="M843.463 1.3315L245.316 5.47507L0.633077 4.69725"
-        :position="outputLine.value.position"
-        :visible="outputLine.value.visible"
-        :label-visible="outputLine.value.labelVisible"
-        :label="outputLine.value.label"
-        dot-color="#d499ff"
-        glow-color="#E10098"
-      />
+      <SvgNode path="M843.463 1.3315L245.316 5.47507L0.633077 4.69725" :position="outputLine.value.position"
+        :visible="outputLine.value.visible" :label-visible="outputLine.value.labelVisible"
+        :label="outputLine.value.label" dot-color="#d499ff" glow-color="#E10098" />
     </g>
     <defs>
       <linearGradient id="output_gradient" gradientUnits="userSpaceOnUse">
@@ -50,7 +33,7 @@ defineProps({
 .output-line {
   position: absolute;
   top: 300px;
-  left: 785px;
+  left: 0px;
   transform: translate3d(0, 0, 0);
 }
 </style>

@@ -11,34 +11,17 @@ defineProps({
 </script>
 
 <template>
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="844"
-    height="644"
-    viewBox="0 0 844 644"
-    fill="none"
-    class="input-lines"
-  >
+  <svg xmlns="http://www.w3.org/2000/svg" width="844" height="644" viewBox="0 0 844 644" fill="none"
+    class="input-lines">
     <!-- Input Lines -->
     <g v-for="inputLine in inputLines" :key="inputLine.value.path">
-      <path
-        :d="inputLine.value.path"
-        stroke="url(#base_gradient)"
-        stroke-width="1.2"
-        style="opacity: 0.8"
-      />
+      <path :d="inputLine.value.path" stroke="url(#base_gradient)" stroke-width="1.2" style="opacity: 0.8" />
       <SvgNode v-bind="inputLine.value" />
     </g>
 
     <defs>
-      <linearGradient
-        id="base_gradient"
-        x1="88.1032"
-        y1="324.167"
-        x2="843.505"
-        y2="324.167"
-        gradientUnits="userSpaceOnUse"
-      >
+      <linearGradient id="base_gradient" x1="88.1032" y1="324.167" x2="843.505" y2="324.167"
+        gradientUnits="userSpaceOnUse">
         <stop offset="0" stop-color="#c6caff" stop-opacity="0" />
         <stop offset="0.2" stop-color="#c6caff" stop-opacity="0.1" />
         <stop offset="0.4" stop-color="white" stop-opacity="0.4" />
@@ -52,6 +35,9 @@ defineProps({
 
 <style scoped>
 .input-lines {
+  position: absolute;
+  top: 0;
+  right: 0;
   transform: translate3d(0, 0, 0);
 
   &:deep(.circle-dot) {

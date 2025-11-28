@@ -8,8 +8,8 @@ async function migrateDatabase() {
 
 export default defineNitroPlugin(async (nitroApp) => {
 
-  console.log("<<<---- START MIGRATION")
-  const db = await migrateDatabase()
-  console.log("END MIGRATION ---->>>")
+  // console.log("<<<---- START MIGRATION")
+  // const db = await migrateDatabase()
+  // console.log("END MIGRATION ---->>>")
 
 })
