@@ -16,12 +16,8 @@ interface Props {
 }
 const router = useRouter();
 
-const { componentName } = withDefaults(
-  defineProps<Props>(),
-  {
-    componentName: 'BaseHero'
-  }
-);
+const { componentName = 'BaseHero' } =
+  defineProps<Props>();
 
 const componentDescriptions: Record<string, { name: string; description: string }> = {
   'BaseBannerPromo': { name: 'Banner Promo', description: 'Banner promo for other pages.' },

@@ -53,7 +53,7 @@ export default defineNuxtConfig({
   ui: {
     fonts: true,
     colorMode: true,
-    content: true,
+    // content: true,
     mdc: true
   },
   hooks: {

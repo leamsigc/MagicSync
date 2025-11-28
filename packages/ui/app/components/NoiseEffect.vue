@@ -15,9 +15,7 @@ interface Props {
   noise?: number;
 }
 
-const { noise } = withDefaults(defineProps<Props>(), {
-  noise: 0.4,
-});
+const { noise = 0.5 } = defineProps<Props>();
 </script>
 
 <template>

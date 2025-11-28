@@ -117,7 +117,7 @@ const mode = useColorMode()
     </section>
     <!-- gradient effect img -->
     <div
-      class="absolute bottom-0 left-0 w-full h-20 md:h-28 bg-gradient-to-tl from-neutral-950/50 dark:from-neutral-900 to-transparent   blur-2xl " />
+      class="absolute bottom-0 left-0 w-full h-20 md:h-28 bg-linear-to-tl from-neutral-950/50 dark:from-neutral-900 to-transparent   blur-2xl " />
   </BaseTyndallEffect>
 </template>
 
@@ -152,11 +152,11 @@ const mode = useColorMode()
 
 @keyframes img-border-animation {
   from {
-    @apply border-t-muted/10;
+    border-top-color: rgb(var(--color-muted) / 0.1);
   }
 
   to {
-    @apply border-t-muted/60;
+    border-top-color: rgb(var(--color-muted) / 0.6);
   }
 }
 </style>

@@ -20,16 +20,12 @@ interface Props {
   blurStart?: number;
   blurEnd?: number;
 }
-const { grid, blurStart, blurEnd } = withDefaults(defineProps<Props>(), {
-  grid: () => ({
-    pattern: 'grid',
-    color: 'white',
-    opacity: 0.5,
-    blur: 4,
-  }),
-  blurStart: 0,
-  blurEnd: 0,
-});
+const { grid = {
+  pattern: 'grid',
+  color: 'white',
+  opacity: 0.5,
+  blur: 4,
+}, blurStart = 0, blurEnd = 0 } = defineProps<Props>();
 const generateGridPattern = ({
   grid,
 }: {

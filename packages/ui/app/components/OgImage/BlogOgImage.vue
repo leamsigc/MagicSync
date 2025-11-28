@@ -4,12 +4,7 @@
  */
 import { computed } from 'vue'
 
-const { title, description, imageUrl, headline } = withDefaults(defineProps<{ title?: string, description?: string, headline?: string, imageUrl?: string }>(), {
-  title: 'title',
-  description: 'description',
-  headline: 'headline',
-  imageUrl: "https://raw.githubusercontent.com/leamsigc/MagicSync/refs/heads/main/images/HomePage.png"
-})
+const { title = 'title', description = 'description', imageUrl = "https://raw.githubusercontent.com/leamsigc/MagicSync/refs/heads/main/images/HomePage.png", headline = 'headline' } = defineProps<{ title?: string, description?: string, headline?: string, imageUrl?: string }>();
 
 const titleTrim = computed(() => title.slice(0, 60))
 </script>

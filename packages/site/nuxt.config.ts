@@ -8,7 +8,7 @@ const currentDir = dirname(fileURLToPath(import.meta.url))
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   routeRules: {
-    "/": { static: true },
+    "/": { swr: 1200 },
     "/blog": { swr: true },
     "/blog/**": { swr: 1200 },
     "/app/**": { swr: true },
@@ -16,7 +16,7 @@ export default defineNuxtConfig({
       cors: true
     }
   },
-  // debug: true,
+  debug: true,
   experimental: {
     viteEnvironmentApi: true,
     typescriptPlugin: true

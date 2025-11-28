@@ -3,7 +3,8 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "build": "nuxt build --logLevel verbose --dotenv ../../.env",
+    "build": "nuxt build --logLevel verbose",
+    "build:debug": "nuxt build --debug",
     "dev": "nuxt dev --inspect",
     "generate": "nuxt generate",
     "preview": "nuxt preview",

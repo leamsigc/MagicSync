@@ -25,3 +25,23 @@ logs
 *.db*
 
 .unlighthouse
+
+# Large directories
+images/
+opencodetmp/
+
+# Git
+.git
+
+# Docker
+Dockerfile*
+docker-compose*
+
+# Docs and misc
+.github/
+scripts/
+*.md
+CODE_OF_CONDUCT.md
+CONTRIBUTING.md
+PROMPT.md
+README.md
