@@ -26,7 +26,8 @@
     "eslint": "catalog:",
     "nuxt": "catalog:",
     "typescript": "catalog:",
-    "vue": "catalog:"
+    "vue": "catalog:",
+    "tailwindcss": "catalog:"
   },
   "dependencies": {
     "@nuxt/fonts": "catalog:",

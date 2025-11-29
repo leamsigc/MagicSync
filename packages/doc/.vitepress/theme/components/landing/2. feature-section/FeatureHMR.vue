@@ -165,9 +165,9 @@ const { startAnimation } = useCardAnimation(
       </div>
     </div>
     <div class="feature__meta meta--center">
-      <div class="meta__title">Real-time Previews & Scheduling</div>
+      <div class="meta__title">Hover & Preview</div>
       <div class="meta__description">
-        Instantly preview your social media posts across platforms and schedule them with ease.
+        Custom preview for each supported platform.
       </div>
     </div>
   </div>

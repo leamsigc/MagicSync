@@ -174,7 +174,7 @@ const { isCardActive, startAnimation } = useCardAnimation(
     <div class="feature__meta">
       <div class="meta__title">Flexible Integrations</div>
       <div class="meta__description">
-        Connect to various third-party services and APIs to enhance your social media management workflow.
+        Import your media assets from many sources and use them in your posts.
       </div>
     </div>
   </div>

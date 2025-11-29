@@ -12,6 +12,7 @@ import './styles/vars.css'
 import './styles/custom.css'
 import './styles/landing.css'
 import './styles/metadata.css'
+import './styles/tailwind.css'
 
 export default {
   extends: DefaultTheme,

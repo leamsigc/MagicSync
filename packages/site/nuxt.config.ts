@@ -16,7 +16,7 @@ export default defineNuxtConfig({
       cors: true
     }
   },
-  debug: true,
+  // debug: true,
   experimental: {
     viteEnvironmentApi: true,
     typescriptPlugin: true

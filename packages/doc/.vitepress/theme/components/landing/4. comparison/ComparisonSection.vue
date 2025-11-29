@@ -9,18 +9,21 @@ type View = 'before' | 'after'
 const activeView = ref<View>('before')
 
 const beforeSteps = [
-  { icon: '📝', title: 'Install dependencies', description: 'graphql, @graphql-tools/schema, @graphql-tools/load-files...' },
-  { icon: '⚙️', title: 'Configure server', description: 'Set up GraphQL server, context, error handling' },
-  { icon: '📦', title: 'Build schema', description: 'Manually combine type definitions and resolvers' },
-  { icon: '🔧', title: 'Setup type generation', description: 'Configure GraphQL Codegen with multiple plugins' },
-  { icon: '🔄', title: 'Watch for changes', description: 'Set up file watchers for schema regeneration' },
-  { icon: '📱', title: 'Configure client', description: 'Set up GraphQL client with typed operations' },
+  { icon: '�', title: 'Log into Each Platform Separately', description: 'Facebook, Instagram, Twitter, LinkedIn, TikTok... switching between 10+ tabs daily', highlight: false },
+  { icon: '⏰', title: 'Manually Post at Optimal Times', description: 'Set alarms to post at peak hours across different time zones for each platform', highlight: false },
+  { icon: '📝', title: 'Recreate Content for Each Platform', description: 'Resize images, adjust captions, reformat videos for each platform\'s requirements', highlight: false },
+  { icon: '�', title: 'Track Multiple Passwords & Logins', description: 'Remember credentials for each platform, deal with 2FA codes and password resets', highlight: false },
+  { icon: '�', title: 'Manually Check Analytics', description: 'Visit each platform individually to see performance metrics and engagement', highlight: false },
+  { icon: '💬', title: 'Monitor Comments Across Platforms', description: 'Check notifications on every platform to respond to comments and messages', highlight: false },
+  { icon: '�', title: 'Use Spreadsheets for Planning', description: 'Maintain complex Excel sheets to track what was posted where and when', highlight: false },
+  { icon: '🎨', title: 'Design Graphics Separately', description: 'Use different tools for image editing, then upload to each platform manually', highlight: false },
+  { icon: '❌', title: 'Miss Posting Deadlines', description: 'Forget to post during busy hours, leading to inconsistent presence', highlight: false },
+  { icon: '🤯', title: 'Spend 10+ Hours Weekly', description: 'Waste valuable time on repetitive tasks instead of growing your business', highlight: true },
 ]
 
 const afterSteps = [
-  { icon: '⚡', title: 'Install Nitro GraphQL', description: 'pnpm add nitro-graphql', highlight: true },
-  { icon: '✨', title: 'Drop your .graphql files', description: 'Auto-discovery handles the rest', highlight: true },
-  { icon: '🎉', title: 'Start coding', description: 'Fully typed GraphQL API ready to use!', highlight: true },
+  { icon: '⚡', title: 'Create posts', description: 'Create a post in MagicSync', highlight: true },
+  { icon: '🎉', title: 'Post in all platforms', description: 'MagicSync will post your content in all platforms', highlight: true },
 ]
 </script>
 
@@ -57,7 +60,7 @@ const afterSteps = [
           </defs>
         </svg>
         <h2>Before vs After</h2>
-        <p>See how Nitro GraphQL simplifies your workflow</p>
+        <p>See how MagicSync simplifies your workflow</p>
       </div>
 
       <div class="comparison__toggle">
@@ -66,14 +69,14 @@ const afterSteps = [
           @click="activeView = 'before'"
         >
           <span class="toggle-icon">😓</span>
-          <span>Manual Setup</span>
+          <span>Manualy posting content</span>
         </button>
         <button
           :class="['toggle-btn', { active: activeView === 'after' }]"
           @click="activeView = 'after'"
         >
           <span class="toggle-icon">🚀</span>
-          <span>With Nitro GraphQL</span>
+          <span>With MagicSync</span>
         </button>
       </div>
 
@@ -117,7 +120,7 @@ const afterSteps = [
               </div>
             </div>
             <div class="view-footer view-footer--success">
-              <span class="footer-text">Minutes to production-ready GraphQL 🎉</span>
+              <span class="footer-text">All social media account up to date 🎉</span>
             </div>
           </div>
         </transition>

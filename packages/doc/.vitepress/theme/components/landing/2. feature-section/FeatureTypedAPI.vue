@@ -24,7 +24,7 @@ const { isCardActive, startAnimation } = useCardAnimation(
     <div class="feature__visualization" :class="{ active: isCardActive }">
       <div class="ide">
         <span class="code code__inactive">
-          <span class="code--red">import</span> { createServer }
+          <span class="code--red">docker</span> compose
           <span class="code--red">from</span>
           <span class="code--blue">&nbsp;'vite'</span><br /><br />
           <span class="code--red">const</span> server =
@@ -40,12 +40,8 @@ const { isCardActive, startAnimation } = useCardAnimation(
       </div>
       <div class="tooltip">
         <span class="code">
-          (method) ViteDevServer.<span class="code--blue">listen</span>(port<span class="code--blue">?:</span> number
-          <span class="code--blue">| undefined,</span> isRestart<span class="code--blue">?:</span>
-          boolean <span class="code--blue">| undefined</span>):
-          <span class="code--yellow">Promise</span><span class="code--blue">&lt;</span>ViteDevServer<span
-            class="code--blue">&gt;</span><br />
-          <span class="code--descriptor">Start the server.</span>
+          docker <span class="code--blue"> compose </span>up -d
+          <span class="code--descriptor">Local development</span>
         </span>
       </div>
     </div>

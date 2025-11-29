@@ -108,7 +108,7 @@ onUnmounted(() => {
         </Transition>
         <div class="terminal__enter-pulse" v-show="highlightEnter" />
         <Transition name="ready-label-transition">
-          <span class="terminal__ready-label" v-if="commandTriggered">GraphQL Ready ✓</span>
+          <span class="terminal__ready-label" v-if="commandTriggered">Social Media connected ✓</span>
         </Transition>
         <div class="terminal__glow" />
       </div>

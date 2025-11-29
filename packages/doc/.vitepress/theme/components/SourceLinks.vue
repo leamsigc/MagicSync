@@ -34,7 +34,7 @@ const links = computed(() => {
     // Default to searching in src/utils
     result.push({
       text: 'Source',
-      href: `https://github.com/productdevbook/nitro-graphql/blob/main/src/utils/define.ts`,
+      href: `https://github.com/leamsigc/magicsync/blob/main/src/utils/define.ts`,
       icon: '📄',
     })
   }

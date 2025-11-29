@@ -602,8 +602,8 @@ Before submitting your PR, ensure:
 
 If you need help while developing:
 
-- **Questions**: Ask in [GitHub Discussions](https://github.com/productdevbook/nitro-graphql/discussions)
-- **Bugs**: Report in [GitHub Issues](https://github.com/productdevbook/nitro-graphql/issues)
+- **Questions**: Ask in [GitHub Discussions](https://github.com/leamsigc/magicsync/discussions)
+- **Bugs**: Report in [GitHub Issues](https://github.com/leamsigc/magicsync/issues)
 - **Architecture**: Review [Architecture Guide](/contributing/architecture)
 - **Setup Issues**: Check [Development Setup](/contributing/development-setup)
 
@@ -611,7 +611,7 @@ If you need help while developing:
 
 - Review the [Architecture](/contributing/architecture) guide
 - Learn about [Documentation](/contributing/documentation) standards
-- Check out [existing PRs](https://github.com/productdevbook/nitro-graphql/pulls) for examples
+- Check out [existing PRs](https://github.com/leamsigc/magicsync/pulls) for examples
 
 ---
 

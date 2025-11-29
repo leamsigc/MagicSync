@@ -320,9 +320,9 @@ Now that you have your development environment set up:
 
 If you encounter issues during setup:
 
-- Check existing [GitHub Issues](https://github.com/productdevbook/nitro-graphql/issues)
+- Check existing [GitHub Issues](https://github.com/leamsigc/magicsync/issues)
 - Open a new issue with details about your setup
-- Ask in [GitHub Discussions](https://github.com/productdevbook/nitro-graphql/discussions)
+- Ask in [GitHub Discussions](https://github.com/leamsigc/magicsync/discussions)
 
 ---
 

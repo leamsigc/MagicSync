@@ -220,7 +220,7 @@ const startAnimation = () => {
     }
 
     .feature__meta {
-      max-width: 275px;
+      max-width: 375px;
       position: relative;
       z-index: 2;
       pointer-events: none;

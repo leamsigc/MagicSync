@@ -25,7 +25,10 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
+    "autoprefixer": "^10.4.22",
     "mermaid": "^11.12.1",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.17",
     "tsx": "^4.19.2",
     "vitepress": "2.0.0-alpha.13",
     "vitepress-plugin-llms": "^1.9.3",

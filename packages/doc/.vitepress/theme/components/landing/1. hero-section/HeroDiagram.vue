@@ -328,7 +328,9 @@ const animateSingleInputDesktop = (inputLine: Ref<SvgNodeProps>) => {
   timeline.set(
     inputLine.value,
     {
-      position: 0,
+      position: .7,
+      duration: 10,
+      ease: 'expo.inOut',
     },
     0,
   )
@@ -337,9 +339,9 @@ const animateSingleInputDesktop = (inputLine: Ref<SvgNodeProps>) => {
   timeline.to(
     inputLine.value,
     {
-      position: Math.random() * 0.1 + 0.4,
+      position: 0,
       duration: 1,
-      ease: 'expo.out',
+      ease: 'expo.inOut',
     },
     0,
   )
@@ -366,11 +368,11 @@ const animateSingleInputDesktop = (inputLine: Ref<SvgNodeProps>) => {
   timeline.to(
     inputLine.value,
     {
-      position: 1,
+      position: 0,
       duration: 1.2,
-      ease: 'power3.in',
+      ease: 'power3.inOut',
     },
-    1.2,
+    0,
   )
 
   // Hide the label
@@ -379,7 +381,7 @@ const animateSingleInputDesktop = (inputLine: Ref<SvgNodeProps>) => {
     {
       labelVisible: false,
     },
-    1.6,
+    0,
   )
 
   // Hide the dot
@@ -388,7 +390,7 @@ const animateSingleInputDesktop = (inputLine: Ref<SvgNodeProps>) => {
     {
       visible: false,
     },
-    1.9,
+    1,
   )
 
   // Return the timeline
@@ -492,13 +494,12 @@ onMounted(() => {
   width: 1630px;
   overflow: hidden;
   margin: -100px auto 0;
-  min-height: 500px;
-
+  min-height: 600px;
   @media (max-width: 1630px) {
     left: 50%;
     transform: translate3d(-50%, 0, 0);
   }
-
+  
   @media (max-width: 768px) {
     left: 50%;
     transform: translate3d(-50%, 0, 0) scale(0.9);

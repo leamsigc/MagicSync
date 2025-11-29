@@ -39,7 +39,7 @@ const { isCardActive, startAnimation } = useCardAnimation(
         </g>
 
         <!-- JS Text -->
-        <text class="js-text" x="80" y="120">.JS</text>
+        <text class="js-text" x="50" y="120">MagicSync</text>
 
         <!-- Connector -->
         <path class="connector" opacity="0.25"
@@ -51,7 +51,7 @@ const { isCardActive, startAnimation } = useCardAnimation(
             <rect class="client__bg" x="193" y="20" width="182" height="54" fill="url(#linear-client-bg)"
               fill-opacity="0.1" />
             <g class="client__glow" filter="url(#filter-client-glow)">
-              <rect x="213" y="41.5342" width="12" height="12" rx="1" fill="#FFE358" />
+              <rect x="213" y="41.5342" width="12" height="12" rx="1" fill="#298459" />
             </g>
             <rect class="client__indicator" x="212.777" y="41.5338" width="12" height="12" rx="1" />
           </g>
@@ -60,15 +60,14 @@ const { isCardActive, startAnimation } = useCardAnimation(
         </g>
 
         <!-- Client Transform Text -->
-        <text class="client-text" x="236" y="53">Client transform</text>
-
+        <text class="client-text" x="236" y="53">Facebook</text>
         <!-- Server Transform Box -->
         <g class="server" filter="url(#filter-server)">
           <g clip-path="url(#clip-server)">
             <rect class="server__bg" x="193" y="90" width="186" height="54" fill="url(#linear-server-bg)"
               fill-opacity="0.1" />
             <g class="server__glow" filter="url(#filter-server-glow)">
-              <circle cx="218.933" cy="117.534" r="5.93296" fill="#FFE358" />
+              <circle cx="218.933" cy="117.534" r="5.93296" fill="#298459" />
             </g>
             <rect class="server__indicator" x="212.777" y="111.74" width="12" height="12" rx="1" />
           </g>
@@ -77,7 +76,7 @@ const { isCardActive, startAnimation } = useCardAnimation(
         </g>
 
         <!-- Server Transform Text -->
-        <text class="server-text" x="236" y="122">Server transform</text>
+        <text class="server-text" x="236" y="122">Instagram</text>
 
         <!-- Definitions -->
         <defs>
@@ -137,25 +136,29 @@ const { isCardActive, startAnimation } = useCardAnimation(
             <feGaussianBlur stdDeviation="5" result="effect1_foregroundBlur_1_6" />
           </filter>
           <linearGradient id="linear-js-glow" x1="130" y1="144" x2="22.5" y2="23.5002" gradientUnits="userSpaceOnUse">
-            <stop stop-color="#FFE358" />
-            <stop offset="1" stop-color="#FFE358" stop-opacity="0" />
+            <stop stop-color="#298459" />
+            <stop offset="1" stop-color="#298459" stop-opacity="0" />
           </linearGradient>
           <linearGradient id="linear-js-bg" x1="130" y1="144" x2="22.5" y2="23.5002" gradientUnits="userSpaceOnUse">
-            <stop stop-color="#FFE358" />
-            <stop offset="1" stop-color="#FFE358" stop-opacity="0" />
+            <stop stop-color="#298459" />
+            <stop offset="1" stop-color="#298459" stop-opacity="0" />
           </linearGradient>
           <linearGradient id="linear-client-bg" x1="193" y1="47" x2="375" y2="47" gradientUnits="userSpaceOnUse">
-            <stop stop-color="#FFE358" />
-            <stop offset="1" stop-color="#FFE358" stop-opacity="0" />
+            <stop stop-color="#298459" />
+            <stop offset="1" stop-color="#298459" stop-opacity="0" />
           </linearGradient>
           <linearGradient id="linear-server-bg" x1="193" y1="117" x2="379" y2="117" gradientUnits="userSpaceOnUse">
-            <stop stop-color="#FFE358" />
-            <stop offset="1" stop-color="#FFE358" stop-opacity="0" />
+            <stop stop-color="#298459" />
+            <stop offset="1" stop-color="#298459" stop-opacity="0" />
           </linearGradient>
           <clipPath id="clip-client">
             <rect x="193" y="22" width="182" height="51.0677" rx="12.168" fill="white" />
           </clipPath>
           <clipPath id="clip-server">
+            <rect x="193" y="92.2065" width="182.416" height="51.0677" rx="12.168" fill="white" />
+          </clipPath>
+
+          <clipPath id="clip-facebook">
             <rect x="193" y="92.2065" width="182.416" height="51.0677" rx="12.168" fill="white" />
           </clipPath>
         </defs>
@@ -198,7 +201,7 @@ const { isCardActive, startAnimation } = useCardAnimation(
   .js-text {
     fill: #a3a3a3;
     font-family: Inter, sans-serif;
-    font-size: 30px;
+    font-size: 10px;
     font-weight: 500;
     line-height: normal;
     letter-spacing: -0.5px;
@@ -245,7 +248,7 @@ const { isCardActive, startAnimation } = useCardAnimation(
 
   &.active {
     .connector {
-      stroke: #ffe358;
+      stroke: #298459;
       transition-delay: 0.1s;
     }
 

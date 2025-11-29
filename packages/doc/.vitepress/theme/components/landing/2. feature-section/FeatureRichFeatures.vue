@@ -100,9 +100,9 @@ const { isCardActive, startAnimation } = useCardAnimation(
       <div class="center-glow" />
     </div>
     <div class="feature__meta meta--center">
-      <div class="meta__title">AI-Powered Content Creation</div>
+      <div class="meta__title">Rich Features</div>
       <div class="meta__description">
-        Generate engaging posts, smart replies, and creative ideas with our advanced AI tools.
+        Need to schedule all holidays? No problem! Our platform allows you to schedule all holidays and events in one click.
       </div>
     </div>
   </div>

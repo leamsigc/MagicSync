@@ -1,14 +1,14 @@
 ---
 layout: default
-title: Social Media Success
-description: Streamline your social media, Google My Business, and content creation with our all-in-one platform for small businesses. Manage posts, reviews, and graphics effortlessly.
+title: Automate Your Social Media. Grow Your Business.
+description: Save 10+ hours weekly managing social media. Schedule posts, engage customers, and track results across all platforms with MagicSync—the all-in-one platform built for small businesses.
 
 ogImage:
   component: BlogOgImage
   props:
-    title: Social Media Success
-    description: Streamline your social media, Google My Business, and content creation with our all-in-one platform for small businesses.
-    headline: Social Media Success
+    title: Automate Your Social Media. Grow Your Business.
+    description: The all-in-one social media management platform for small businesses
+    headline: MagicSync - Social Media Made Simple
     imageUrl: "/img/home-dark.png"
 
 head:
@@ -22,59 +22,152 @@ head:
 ---
 badge:
   label: New!
-  content: Boost your business
+  content: AI-Powered Content Generation
 actions:
-  - label: Get Started for Free
+  - label: Start Free Trial
     href: /register
     icon: "lucide:arrow-right"
-  - label: Learn More
-    href: /#features
+  - label: Watch Demo
+    href: /demo
     variant: secondary
 heroImage:
   light: "/img/home-light.png"
   dark: "/img/home-dark.png"
-  alt: "Dashboard of MBSMM My Business Social Media Manager"
+  alt: "MagicSync Dashboard - Social Media Management Made Simple"
 
 ---
 #title
-Your All-in-One Platform for </br>
-<span class="gradient-text">Small Business </span></br>
-Social Media Success
+Automate Your Social Media. </br>
+<span class="gradient-text">Grow Your Business.</span>
 
 #description
-Effortlessly manage all your social media, Google My Business, and content creation in one powerful platform. Save time, boost engagement, and grow your business.
+Save 10+ hours every week managing social media. Schedule posts, engage customers, and track results across all platforms—without the hassle or high costs.
 ::
 
 
 ::BaseBenefits
 ---
 items:
-  - title: Streamlined Workflow
-    description: Effortlessly manage all your social media accounts, Google My Business, and content creation in one platform.
-    icon: "lucide:settings-2"
-  - title: Social Media Integration
-    description: Connect with multiple social media platforms, including Facebook, Instagram, and Twitter.
-    icon: "lucide:share-2" 
-  - title: AI-Powered Content
-    description: Generate bulk posts, holiday content, and smart review responses with advanced AI.
+  - title: Save 10+ Hours Weekly
+    description: Stop logging into multiple platforms. Schedule all your social media posts from one dashboard and reclaim your time.
+    icon: "lucide:clock"
+  - title: Grow Your Audience
+    description: AI-powered content suggestions and optimal posting times help you reach more customers and build a loyal following.
+    icon: "lucide:trending-up" 
+  - title: Increase Revenue
+    description: Turn social engagement into sales. Respond to customers, share testimonials, and promote offers across all platforms.
+    icon: "lucide:dollar-sign"
+  - title: Own Your Data
+    description: Self-hosted option means complete control. Your data stays on your servers—no third-party access, no privacy concerns.
+    icon: "lucide:shield-check"
+  - title: AI Content Generation
+    description: Generate engaging posts, captions, and hashtags instantly. Never run out of content ideas again.
     icon: "lucide:sparkles"
-  - title: Customizable Graphics
-    description: Design stunning graphics and remove backgrounds with our custom Konva-based image editor.
-    icon: "lucide:image-plus"
-  - title: Smart Review Management
-    description: Monitor, respond to, and leverage customer reviews to build trust and improve your online presence.
-    icon: "lucide:star"
-  - title: Automated Scheduling
-    description: Plan your content calendar, schedule posts, and track performance with ease.
-    icon: "lucide:calendar"
-  - title: Google My Business Management
-    description: Seamlessly manage your GMB profile, respond to reviews, and update business information.
-    icon: "lucide:map-pin" 
+  - title: Multi-Platform Support
+    description: Manage Facebook, Instagram, Twitter, LinkedIn, TikTok, YouTube, Google My Business, and 10+ more platforms.
+    icon: "lucide:share-2"
 ---
 #title
-Why Choose MBSMM My Business Social Media Manager?
+Why Small Businesses Choose MagicSync
 #description
-Discover the benefits of MBSMM My Business Social Media Manager.
+Everything you need to succeed on social media, without the complexity or cost of enterprise tools.
 ::
 
 
+::F-a-q
+---
+items:
+  - question: How much does MagicSync cost?
+    answer: We offer a free self-hosted version and a Pro cloud-hosted plan at $29/month (save 17% with annual billing). No hidden fees, no per-user charges.
+    value: 1
+  - question: Which platforms are supported?
+    answer: Facebook, Instagram, X/Twitter, LinkedIn, TikTok, YouTube, Google My Business, Pinterest, Reddit, Discord, Threads, Bluesky, WordPress, and Dev.to.
+    value: 2
+  - question: Do I need technical skills?
+    answer: No! Our cloud-hosted version requires zero technical setup. If you choose self-hosting, we provide step-by-step guides.
+    value: 3
+  - question: Can I try it for free?
+    answer: Yes! Get a 14-day free trial of our Pro plan. No credit card required. Or use our free self-hosted version forever.
+    value: 4
+  - question: How is this different from Hootsuite or Buffer?
+    answer: MagicSync costs less ($29 vs $60-99/month), offers unlimited accounts, includes AI content generation, and gives you the option to self-host for complete data ownership.
+    value: 5
+  - question: Can multiple team members use one account?
+    answer: Yes! Pro plans support up to 10 team members. Enterprise plans have unlimited users with role-based permissions.
+    value: 6
+---
+
+#title
+Frequently Asked Questions
+#description
+Got questions? We've got answers. Check out our complete FAQ or contact our team.
+::
+
+
+::BaseTestimonials
+---
+items:
+  - name: Sarah Martinez
+    role: Owner, Bella's Bistro
+    avatar: "/avatars/sarah.jpg"
+    content: "MagicSync saved me 10 hours a week! I can now focus on running my restaurant while my social media runs on autopilot. Customer engagement is up 300%."
+    rating: 5
+  - name: Michael Chen
+    role: Marketing Director, TechStart Agency
+    avatar: "/avatars/michael.jpg"
+    content: "We manage 25 client accounts with MagicSync. The team collaboration features and bulk scheduling are game-changers. Highly recommend!"
+    rating: 5
+  - name: Jessica Thompson
+    role: Real Estate Agent
+    avatar: "/avatars/jessica.jpg"
+    content: "Posting new listings across all platforms used to take hours. Now it takes minutes. I've closed 2 extra deals this month thanks to increased visibility."
+    rating: 5
+---
+#title
+Trusted by 10,000+ Small Businesses
+#description
+See what business owners are saying about MagicSync.
+::
+
+
+::BaseFeatures
+---
+items:
+  - title: Schedule Across All Platforms
+    description: Plan your content calendar weeks or months in advance. Post to all your social accounts with one click.
+    icon: "lucide:calendar-check"
+  - title: AI Content Assistant
+    description: Generate engaging posts, captions, and hashtags instantly. Get content ideas tailored to your business.
+    icon: "lucide:bot"
+  - title: Analytics & Insights
+    description: Track performance, monitor engagement, and identify your best content. Make data-driven decisions.
+    icon: "lucide:bar-chart-3"
+  - title: Team Collaboration
+    description: Assign posts, set approval workflows, and manage permissions. Perfect for teams and agencies.
+    icon: "lucide:users"
+  - title: Media Library
+    description: Store and organize all your images and videos. Access them anytime for quick posting.
+    icon: "lucide:image"
+  - title: Bulk Scheduling
+    description: Upload CSV files or use our bulk editor to schedule hundreds of posts at once.
+    icon: "lucide:layers"
+---
+#title
+Everything You Need to Succeed
+#description
+Powerful features designed for small businesses, not enterprise complexity.
+::
+
+
+::BaseCallToAction
+---
+title: Ready to Transform Your Social Media?
+description: Join 10,000+ small businesses saving time and growing their audience with MagicSync.
+primaryAction:
+  label: Start Free Trial
+  href: /register
+secondaryAction:
+  label: View Pricing
+  href: /pricing
+---
+::

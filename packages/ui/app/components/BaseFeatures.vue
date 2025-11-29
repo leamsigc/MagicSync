@@ -85,16 +85,16 @@ const { list } = toRefs(props);
                 <Icon :name="icon" class="size-6 text-primary" />
               </div>
 
-              <UCardTitle>
+              <section>
                 {{ title }}
-              </UCardTitle>
+              </section>
             </div>
           </template>
 
           <template #default>
-            <UCardContent class="text-muted-foreground text-center">
+            <section class="text-muted-foreground text-center">
               {{ description }}
-            </UCardContent>
+            </section>
           </template>
         </UCard>
       </div>

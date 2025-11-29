@@ -24,9 +24,9 @@ const commits = computed(() => {
 </script>
 
 <template>
-  <em v-if="!commits.length" class="no-changes">No recent changes</em>
+  <em v-if="!commits.length" class="opacity-70">No recent changes</em>
 
-  <div class="changelog-grid">
+  <div class="grid grid-cols-[28px_1fr] gap-y-2 gap-x-3 relative items-center pl-[6px] [&>*]:flex [&>*]:items-center before:content-[''] before:absolute before:left-[20px] before:top-0 before:bottom-0 before:w-[1px] before:bg-[var(--vp-c-divider)] before:opacity-30 before:z-0">
     <ChangelogEntry
       v-for="(commit, idx) of commits"
       :key="commit.hash"
@@ -38,34 +38,5 @@ const commits = computed(() => {
 </template>
 
 <style scoped>
-.no-changes {
-  opacity: 0.7;
-}
-
-.changelog-grid {
-  display: grid;
-  grid-template-columns: 28px 1fr;
-  gap: 0.5rem 0.75rem;
-  position: relative;
-  align-items: center;
-  padding-left: 6px;
-}
-
-.changelog-grid > :deep(*) {
-  display: flex;
-  align-items: center;
-}
-
-/* Vertical connecting line between icons */
-.changelog-grid::before {
-  content: '';
-  position: absolute;
-  left: 20px;
-  top: 0;
-  bottom: 0;
-  width: 1px;
-  background: var(--vp-c-divider);
-  opacity: 0.3;
-  z-index: 0;
-}
+/* Tailwind classes used in template */
 </style>

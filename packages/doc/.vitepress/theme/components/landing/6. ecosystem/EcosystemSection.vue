@@ -13,40 +13,52 @@ interface Integration {
 
 const integrations: Integration[] = [
   {
-    name: 'Nitro',
-    logo: '⚗️',
-    description: 'Built on Nitro for blazing-fast server performance',
-    color: '#00DC82',
-  },
-  {
-    name: 'Nuxt',
+    name: 'Nuxt 4',
     logo: '💚',
-    description: 'First-class Nuxt integration with automatic type generation',
+    description: 'Built with Nuxt 4 for modern, performant full-stack applications',
     color: '#00DC82',
   },
   {
-    name: 'H3',
-    logo: '🔷',
-    description: 'Powered by H3 event context for seamless server integration',
-    color: '#41B8C4',
+    name: 'Nuxt UI v4',
+    logo: '🎨',
+    description: 'Beautiful, accessible components with Nuxt UI v4 and Tailwind CSS',
+    color: '#00DC82',
   },
   {
-    name: 'GraphQL Yoga',
-    logo: '🧘',
-    description: 'Default GraphQL server with powerful features',
-    color: '#E10098',
+    name: 'LibSQL',
+    logo: '�️',
+    description: 'Powered by LibSQL (Turso) for edge-ready, distributed database',
+    color: '#4FF8D2',
   },
   {
-    name: 'Apollo Server',
-    logo: '🚀',
-    description: 'Apollo Server support with federation capabilities',
-    color: '#3F20BA',
+    name: 'Drizzle ORM',
+    logo: '🌊',
+    description: 'Type-safe database queries with Drizzle ORM',
+    color: '#C5F74F',
   },
   {
     name: 'TypeScript',
     logo: '📘',
-    description: 'End-to-end type safety with automatic type generation',
+    description: 'End-to-end type safety across the entire application',
     color: '#3178C6',
+  },
+  {
+    name: 'Docker',
+    logo: '�',
+    description: 'Easy self-hosting with Docker Compose for complete control',
+    color: '#2496ED',
+  },
+  {
+    name: 'Vite',
+    logo: '⚡',
+    description: 'Lightning-fast development with Vite and HMR',
+    color: '#646CFF',
+  },
+  {
+    name: 'Vue 3',
+    logo: '�',
+    description: 'Reactive, component-based UI with Vue 3 Composition API',
+    color: '#42B883',
   },
 ]
 
@@ -86,7 +98,7 @@ const hoveredCard = ref<number | null>(null)
           </defs>
         </svg>
         <h2>Built on modern tools</h2>
-        <p>Integrates seamlessly with the ecosystem you already love</p>
+        <p>Powered by the best open-source technologies for reliability and performance</p>
       </div>
 
       <div class="ecosystem__grid">
@@ -108,9 +120,9 @@ const hoveredCard = ref<number | null>(null)
 
       <div class="ecosystem__footer">
         <div class="footer-content">
-          <h3>Works with your stack</h3>
-          <p>Nitro GraphQL is framework-agnostic and integrates with any Nitro or Nuxt application</p>
-          <a href="/guide/quick-start-nitro" class="footer-link">
+          <h3>Open Source & Self-Hostable</h3>
+          <p>MagicSync is built with modern, battle-tested open-source technologies. Self-host for complete control or use our cloud platform.</p>
+          <a href="/guide/quick-start" class="footer-link">
             Get started
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
               <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>

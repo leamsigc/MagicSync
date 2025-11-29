@@ -63,6 +63,22 @@ export default withMermaid(defineConfig({
             { text: 'Quick Start', link: '/guide/quick-start' },
           ],
         },
+        {
+          text: 'Project Overview',
+          collapsed: false,
+          items: [
+            { text: 'Layers', link: '/guide/layers' },
+            { text: 'Roadmap', link: '/guide/roadmap' },
+          ],
+        },
+        {
+          text: 'Guides',
+          collapsed: false,
+          items: [
+            { text: 'Docker Setup', link: '/guide/docker-setup' },
+            { text: 'Platform Keys', link: '/guide/platform-keys' },
+          ],
+        },
       ],
       '/ecosystem/': [
         {
@@ -118,6 +134,6 @@ export default withMermaid(defineConfig({
   },
 
   sitemap: {
-    hostname: 'https://nitro-graphql.dev',
+    hostname: 'https://magicsync.dev',
   },
 }))

@@ -53,44 +53,20 @@ function getGithubUrl(contributor: ContributorInfo): string {
 </script>
 
 <template>
-  <div class="contributors-container">
+  <div class="flex flex-wrap gap-4 pt-2">
     <a
       v-for="c of contributors"
       :key="c.email"
       :href="getGithubUrl(c)"
       target="_blank"
-      class="contributor"
+      class="flex gap-2 items-center no-underline text-[var(--vp-c-text-1)] transition-opacity duration-200 hover:opacity-70"
     >
-      <img :src="getAvatarUrl(c)" class="avatar">
+      <img :src="getAvatarUrl(c)" class="w-8 h-8 rounded-full">
       {{ c.name }}
     </a>
   </div>
 </template>
 
 <style scoped>
-.contributors-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  padding-top: 0.5rem;
-}
-
-.contributor {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-  text-decoration: none;
-  color: var(--vp-c-text-1);
-  transition: opacity 0.2s;
-}
-
-.contributor:hover {
-  opacity: 0.7;
-}
-
-.avatar {
-  width: 2rem;
-  height: 2rem;
-  border-radius: 9999px;
-}
+/* Tailwind classes used in template */
 </style>

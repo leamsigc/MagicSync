@@ -51,28 +51,29 @@ function getFunctionLink(fn: string) {
 </script>
 
 <template>
-  <div class="function-info-grid">
-    <div class="label">
+  <div class="grid grid-cols-[100px_auto] gap-2 text-sm mt-4 mb-8 items-start">
+    <div class="opacity-50">
       Category
     </div>
     <div><a :href="`/api/#${category?.toLowerCase() || ''}`">{{ category }}</a></div>
     <template v-if="lastUpdated">
-      <div class="label">
+      <div class="opacity-50">
         Last Changed
       </div>
       <div>{{ lastUpdated }}</div>
     </template>
     <template v-if="related.length">
-      <div class="label">
+      <div class="opacity-50">
         Related
       </div>
-      <div class="related-links">
+      <div class="flex gap-1 flex-wrap">
         <a
           v-for="(name, idx) of related"
           :key="idx"
           :href="getFunctionLink(name)"
+          class="!p-0"
         >
-          <code>{{ name }}</code>
+          <code class="text-sm">{{ name }}</code>
         </a>
       </div>
     </template>
@@ -80,31 +81,5 @@ function getFunctionLink(fn: string) {
 </template>
 
 <style scoped>
-.function-info-grid {
-  display: grid;
-  grid-template-columns: 100px auto;
-  gap: 0.5rem;
-  font-size: 0.875rem;
-  margin-top: 1rem;
-  margin-bottom: 2rem;
-  align-items: start;
-}
-
-.label {
-  opacity: 0.5;
-}
-
-.related-links {
-  display: flex;
-  gap: 0.25rem;
-  flex-wrap: wrap;
-}
-
-.related-links a {
-  padding: 0 !important;
-}
-
-.related-links code {
-  font-size: 0.875rem;
-}
+/* Tailwind classes used in template */
 </style>

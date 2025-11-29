@@ -41,7 +41,7 @@ onMounted(() => {
     </div>
     <div>
       <a
-        :href="`https://github.com/productdevbook/nitro-graphql/releases/tag/v${commit.version}`"
+        :href="`https://github.com/leamsigc/magicsync/releases/tag/v${commit.version}`"
         target="_blank"
         class="version-link"
       >
@@ -57,7 +57,7 @@ onMounted(() => {
       </svg>
     </div>
     <div class="commit-content">
-      <a :href="`https://github.com/productdevbook/nitro-graphql/commit/${commit.hash}`" target="_blank" class="commit-link">
+      <a :href="`https://github.com/leamsigc/magicsync/commit/${commit.hash}`" target="_blank" class="commit-link">
         <code class="commit-hash">{{ commit.hash.slice(0, 5) }}</code>
       </a>
       <span class="commit-text">
