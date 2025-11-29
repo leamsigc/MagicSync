@@ -6,23 +6,24 @@ import HeroDiagram from './HeroDiagram.vue'
   <div class="hero">
     <div class="container">
       <!-- Release Button -->
-      <a href="https://github.com/leamsigc/production-example-nuxt-monorepo/releases" class="hero__pill"
+      <a href="https://github.com/leamsigc/magicsync/releases" class="hero__pill"
         target="_blank">
         <span>⚡</span>
         <span>Version 1.0.0 Released</span>
       </a>
 
       <!-- Heading -->
-      <h1>Social Media Management<br />Made Easy</h1>
+      <h1>Social Media Management Made Easy</h1>
       <!-- Tagline -->
-      <h3>
-        Streamline your social media presence with powerful scheduling, AI-driven content, and insightful analytics.
-      </h3>
+      <p class="mb-5 max-w-xl text-center">
+        Streamline your social media presence with powerful scheduling,
+        AI-driven content, and insightful analytics.
+      </p>
 
       <!-- CTA Buttons -->
       <div class="hero__actions">
         <a href="/guide/quick-start" class="btn btn--primary">Get started</a>
-        <a href="https://github.com/leamsigc/production-example-nuxt-monorepo" target="_blank" class="btn btn--outline">
+        <a href="https://github.com/leamsigc/magicsync" target="_blank" class="btn btn--outline">
           <img src="./github.svg" alt="GitHub logo" width="20" height="20" />
           GitHub
         </a>

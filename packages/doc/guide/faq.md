@@ -266,7 +266,7 @@ Can't find what you're looking for? We're here to help!
     <div class="feature-icon">💬</div>
     <h3 class="feature-title">Community</h3>
     <p class="feature-description">Ask questions and get help</p>
-    <a href="https://github.com/leamsigc/production-example-nuxt-monorepo/discussions" class="feature-link">Join Community →</a>
+    <a href="https://github.com/leamsigc/magicsync/discussions" class="feature-link">Join Community →</a>
   </div>
   
   <div class="feature-item">

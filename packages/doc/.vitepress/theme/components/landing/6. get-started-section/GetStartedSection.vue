@@ -109,11 +109,11 @@
       </svg>
       <img src="/logo.svg" alt="Nitro GraphQL Logo" class="vite-chip__logo" />
     </div>
-    <h2>Start building with Nitro GraphQL</h2>
+    <h2>Stop wasting time now</h2>
     <h3>
-      Experience GraphQL development the way it should be - simple, type-safe, and powerful.
+      Invest the time on what is important for the business and let MagicSync handle the Social Media.
     </h3>
-    <a href="/guide/quick-start-nitro" class="btn btn--primary">Get started</a>
+    <a href="/guide/quick-start-nitro" class="btn btn--primary"> Try it now</a>
     <div class="glow glow--purple" />
     <div class="glow glow--blue" />
   </div>

@@ -149,7 +149,7 @@ const items = computed(() => [
     {
       label: t('userNav.github'),
       icon: 'i-heroicons-mark-github',
-      to: 'https://github.com/leamsigc/production-example-nuxt-monorepo',
+      to: 'https://github.com/leamsigc/magicsync',
       target: '_blank'
     },
     {

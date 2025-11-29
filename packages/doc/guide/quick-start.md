@@ -144,7 +144,7 @@ Check your timezone settings and ensure the scheduled time is in the future.
 Verify your image format (JPG, PNG, WebP) and size (max 10MB).
 
 ::: warning Need More Help?
-Visit our [FAQ](/guide/faq) or join our [Community Support](https://github.com/leamsigc/production-example-nuxt-monorepo/discussions).
+Visit our [FAQ](/guide/faq) or join our [Community Support](https://github.com/leamsigc/magicsync/discussions).
 :::
 
 ## Next Steps

@@ -44,21 +44,22 @@ onBeforeUnmount(() => {
 
 <div class="VPHome">
   <Hero/>
-  <CodeExamplesSection />
+
+  <ComparisonSection class='z-10' />
+
+  <EcosystemSection />
   <FeatureSection title="The Octopus of Social Media Management" description="Manage your social media accounts from one place. From Facebook to Google My Business, we've got you covered." type="pink">
     <FeatureInstantServerStart />
     <FeatureHMR />
     <FeatureRichFeatures />
     <FeatureOptimizedBuild />
   </FeatureSection>
-  <ComparisonSection />
   <FeatureSection title="Built for Small Business" type="blue" class="feature-section--flip">
     <FeatureFlexiblePlugins />
     <FeatureTypedAPI />
     <FeatureSSRSupport />
     <FeatureCI />
   </FeatureSection>
-  <EcosystemSection />
   <CommunitySection />
   <GetStartedSection />
 </div>

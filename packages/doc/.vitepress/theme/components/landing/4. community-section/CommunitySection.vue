@@ -3,65 +3,22 @@ import CommunityCard, { type Testimonial } from './CommunityCard.vue'
 
 const testimonials: Testimonial[] = [
   {
-    name: 'Nitro Team',
-    handle: '@unjsio',
+    name: 'MagicSync solo team',
+    handle: '@leamsigc',
     avatar:
-      'https://avatars.githubusercontent.com/u/80154025?s=200&v=4',
+      'https://avatars.githubusercontent.com/u/23272293?s=200&v=4',
     comment: [
-      `Nitro GraphQL provides a seamless GraphQL integration that just works. The auto-discovery and type generation features make it incredibly easy to build type-safe GraphQL APIs.`,
+      `I build MagicSync beacause I needed a tool to manage the social media from my friends and family, as well as a way to learn a little bit more about how to build a big nuxt application usin Nuxt layers`,
     ],
-  },
-  {
-    name: 'GraphQL Community',
-    handle: '@graphql',
-    avatar:
-      'https://avatars.githubusercontent.com/u/12972006?s=200&v=4',
-    comment: [
-      `A fantastic tool that brings the power of GraphQL to Nitro applications with zero configuration needed.`,
-    ],
-  },
-  {
-    name: 'Nuxt Community',
-    handle: '@nuxt_js',
-    avatar:
-      'https://avatars.githubusercontent.com/u/23360933?s=200&v=4',
-    comment: [
-      'Nitro GraphQL makes adding GraphQL to Nuxt applications a breeze. The type generation works perfectly with our setup.',
-    ],
-  },
-  {
-    name: 'Developer',
-    handle: '@developer',
-    avatar:
-      'https://avatars.githubusercontent.com/u/1?s=200&v=4',
-    comment: [
-      `The auto-discovery feature is game-changing. No more manual schema stitching or complex setup. Just drop your .graphql files and you're ready to go.`,
-    ],
-  },
-  {
-    name: 'Full Stack Dev',
-    handle: '@fullstack',
-    avatar:
-      'https://avatars.githubusercontent.com/u/2?s=200&v=4',
-    comment: [
-      `Type generation for both server and client is incredibly powerful. Our frontend and backend teams love the type safety it provides.`,
-    ],
-  },
-  {
-    name: 'Tech Lead',
-    handle: '@techlead',
-    avatar:
-      'https://avatars.githubusercontent.com/u/3?s=200&v=4',
-    comment: ['Nitro GraphQL has significantly improved our development workflow and code quality.'],
   },
 ]
 </script>
 
 <template>
   <section class="community-section">
-    <h2>Loved by developers</h2>
+    <h2>Loved by developers?</h2>
     <h3>
-      Don't take our word for it - see what developers are saying about Nitro GraphQL.
+      We dont have any testimonials yet, but we are working on it!, for now he is my own
     </h3>
     <div class="community-grid-container">
       <div class="community-grid">

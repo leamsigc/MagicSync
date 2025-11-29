@@ -81,7 +81,7 @@ Ready to streamline your social media? Here's how to get started:
 
 - **[Documentation](/guide/introduction)** - Comprehensive guides and tutorials
 - **[FAQ](/guide/faq)** - Common questions answered
-- **[Community Support](https://github.com/leamsigc/production-example-nuxt-monorepo)** - Join our community
+- **[Community Support](https://github.com/leamsigc/magicsync)** - Join our community
 - **[Contact Us](/contact)** - Get in touch with our team
 
 ---

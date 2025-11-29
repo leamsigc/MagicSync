@@ -9,7 +9,7 @@
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/leamsigc/production-example-nuxt-monorepo.git
+   git clone https://github.com/leamsigc/magicsync.git
    ```
 
 2. Install dependencies:

@@ -91,11 +91,11 @@ export default withMermaid(defineConfig({
     },
 
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/leamsigc/production-example-nuxt-monorepo' },
+      { icon: 'github', link: 'https://github.com/leamsigc/magicsync' },
     ],
 
     editLink: {
-      pattern: 'https://github.com/leamsigc/production-example-nuxt-monorepo/edit/main/packages/doc/:path',
+      pattern: 'https://github.com/leamsigc/magicsync/edit/main/packages/doc/:path',
       text: 'Edit this page on GitHub',
     },
 
@@ -108,7 +108,7 @@ export default withMermaid(defineConfig({
 
     footer: {
       message: 'Released under the MIT License.',
-      copyright: 'Copyright © 2024-present MagicSync',
+      copyright: 'Copyright © 2024-present MagicSync - Leamsigc (Documentation is base on Graphql)',
     },
 
     outline: {
