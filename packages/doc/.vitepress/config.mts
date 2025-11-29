@@ -19,7 +19,7 @@ export default withMermaid(defineConfig({
   cleanUrls: true,
   lastUpdated: true,
   ignoreDeadLinks: true,
-  base: '/magicsync/',
+  base: '/MagicSync/',
 
   vite: {
     plugins: [
