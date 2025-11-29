@@ -15,7 +15,7 @@ async function fetchGitHubContributors(page = 1): Promise<Array<{ login: string,
 
   try {
     const response = await fetch(
-      `https://api.github.com/repos/productdevbook/nitro-graphql/contributors?per_page=100&page=${page}`,
+      `https://api.github.com/repos/leamsigc/magicsync/contributors?per_page=100&page=${page}`,
       {
         headers: {
           'content-type': 'application/json',

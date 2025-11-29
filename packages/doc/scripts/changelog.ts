@@ -60,7 +60,7 @@ export function getFileChangelog(filePath: string, limit = 10): CommitInfo[] {
 async function fetchGitHubReleases(): Promise<CommitInfo[]> {
   try {
     const response = await fetch(
-      'https://api.github.com/repos/productdevbook/nitro-graphql/releases?per_page=20',
+      'https://api.github.com/repos/leamsigc/magicsync/releases?per_page=20',
       {
         headers: {
           'content-type': 'application/json',
