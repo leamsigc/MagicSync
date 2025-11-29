@@ -6,15 +6,16 @@ category: Contributing
 
 <FunctionInfo fn="developmentSetup"/>
 
-This guide will help you set up a local development environment for contributing to Nitro GraphQL.
+This guide will help you set up a local development environment for contributing to MagicSync.
 
 ## Prerequisites
 
 Before you begin, ensure you have the following installed:
 
-- **Node.js**: v18.0.0 or higher
-- **pnpm**: v10.18.0 or higher (specified in package.json)
+- **Node.js**: v20.0.0 or higher
+- **pnpm**: v10.19.0 or higher (specified in package.json)
 - **Git**: Latest version
+- **Docker** (optional): For testing self-hosted deployment
 
 ## Initial Setup
 
@@ -23,8 +24,8 @@ Before you begin, ensure you have the following installed:
 First, fork the repository on GitHub, then clone your fork:
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/nitro-graphql.git
-cd nitro-graphql
+git clone https://github.com/YOUR_USERNAME/magicsync.git
+cd magicsync
 ```
 
 ### 2. Enable Corepack
@@ -44,109 +45,124 @@ pnpm install --frozen-lockfile
 ```
 
 This will install dependencies for:
-- The main module
-- All playground environments
-- Documentation site
+- All workspace packages (scheduler, content, ui, site, doc)
+- The monorepo tooling
+
+### 4. Set Up Environment Variables
+
+Copy the example environment file:
+
+```bash
+cp .env-example .env
+```
+
+Edit `.env` and configure the required variables. See the [Platform Keys](/guide/platform-keys) guide for obtaining API keys for social media platforms.
 
 ## Development Workflow
 
-### Building the Module
+### Running the Development Server
 
-The project uses `tsdown` as its build tool. There are two main build modes:
+The project is organized as a monorepo with multiple packages. You can run them individually or together.
 
-#### Production Build
+#### Run All Services
 
-Build the module once:
+Start all development servers concurrently:
+
+```bash
+pnpm dev
+```
+
+This starts:
+- **Scheduler** (`packages/scheduler`) - Main application server on port 3000
+- **Content Site** (`packages/content`) - Marketing/landing pages
+- **Documentation** (`packages/doc`) - Documentation site
+
+#### Run Individual Packages
+
+Run a specific package:
+
+```bash
+# Scheduler (main app)
+pnpm --filter @magicsync/scheduler dev
+
+# Documentation
+pnpm doc
+
+# Content site
+pnpm --filter @magicsync/content dev
+```
+
+### Building for Production
+
+Build all packages:
 
 ```bash
 pnpm build
 ```
 
-Output will be generated in the `dist/` directory.
-
-#### Watch Mode (Development)
-
-Keep the module building automatically as you make changes:
+Build specific packages:
 
 ```bash
-pnpm dev
+# Build scheduler
+pnpm --filter @magicsync/scheduler build
+
+# Build documentation
+pnpm doc:build
 ```
 
-This is the recommended mode for active development. Keep this running in a dedicated terminal window.
+### Database Setup
 
-### Testing with Playgrounds
+MagicSync uses LibSQL (Turso) with Drizzle ORM.
 
-Nitro GraphQL includes multiple playground environments for testing different scenarios. You'll typically need **two terminal windows**:
+#### Local Development
 
-**Terminal 1**: Run the build watcher
-```bash
-pnpm dev
-```
+For local development, the database runs in-memory or uses a local SQLite file.
 
-**Terminal 2**: Run a playground
+#### Generate Database Migrations
 
-#### Nitro Playground (Standalone Server)
-
-Test the module in a standalone Nitro application:
-
-```bash
-pnpm playground:nitro
-```
-
-This starts a Nitro server with GraphQL at `http://localhost:3000/api/graphql`.
-
-**Manual approach** (if you need more control):
-```bash
-cd playgrounds/nitro
-pnpm install
-pnpm dev
-```
-
-#### Nuxt Playground (Full-Stack)
-
-Test the module in a full Nuxt application with client-side features:
+After modifying database schemas:
 
 ```bash
-pnpm playground:nuxt
+cd packages/scheduler
+pnpm db:generate
 ```
 
-This starts a Nuxt app at `http://localhost:3000` with:
-- Server GraphQL API
-- Client-side type generation
-- Frontend components using GraphQL
-
-**Manual approach**:
-```bash
-cd playgrounds/nuxt
-pnpm install
-pnpm dev
-```
-
-#### Federation Playground
-
-Test Apollo Federation features with multiple subgraphs:
+#### Apply Migrations
 
 ```bash
-pnpm playground:federation
+cd packages/scheduler
+pnpm db:migrate
 ```
 
-This starts multiple services demonstrating federated GraphQL architecture.
+#### View Database
 
-**Manual approach**:
+Open Drizzle Studio to inspect the database:
+
 ```bash
-cd playgrounds/federation
-pnpm install
-pnpm dev
+cd packages/scheduler
+pnpm db:studio
 ```
 
-### Other Available Playgrounds
+## Testing with Docker
 
-The project includes additional playground environments:
+Test the self-hosted deployment:
 
-- `playgrounds/apollo` - Apollo Server integration
-- `playgrounds/vite` - Vite integration testing
+```bash
+docker compose up -d
+```
 
-Navigate to the specific directory and run `pnpm dev` to start them.
+This starts:
+- MagicSync application
+- Database
+- Any required services
+
+Access the application at `http://localhost:3000`
+
+Stop the containers:
+
+```bash
+docker compose down
+```
 
 ## Code Quality
 
@@ -164,17 +180,23 @@ Automatically fix linting issues:
 pnpm lint:fix
 ```
 
-The project uses `@antfu/eslint-config` for consistent code style.
+The project uses ESLint with custom configuration.
 
 ### Type Checking
 
-TypeScript type checking is handled automatically during the build process. Run:
+TypeScript type checking:
 
 ```bash
-pnpm build
+pnpm typecheck
 ```
 
-Watch for type errors in the console output.
+### Formatting
+
+Format code with Prettier:
+
+```bash
+pnpm format
+```
 
 ## Development Commands Reference
 
@@ -183,130 +205,123 @@ Here's a complete reference of available commands:
 | Command | Description |
 |---------|-------------|
 | `pnpm install` | Install all dependencies |
-| `pnpm build` | Build the module for production |
-| `pnpm dev` | Build in watch mode for development |
-| `pnpm lint` | Check code quality with ESLint |
+| `pnpm dev` | Run all dev servers |
+| `pnpm build` | Build all packages |
+| `pnpm lint` | Check code quality |
 | `pnpm lint:fix` | Auto-fix linting issues |
-| `pnpm playground:nitro` | Run Nitro playground |
-| `pnpm playground:nuxt` | Run Nuxt playground |
-| `pnpm playground:federation` | Run Federation playground |
-| `pnpm bumpp` | Bump version (maintainers only) |
-| `pnpm release` | Build and publish (maintainers only) |
+| `pnpm typecheck` | Run TypeScript type checking |
+| `pnpm format` | Format code with Prettier |
+| `pnpm doc` | Run documentation dev server |
+| `pnpm doc:build` | Build documentation |
+| `pnpm clean` | Clean all build artifacts |
 
 ## Project Structure
 
-Understanding the project structure will help you navigate the codebase:
+Understanding the monorepo structure:
 
 ```
-nitro-graphql/
-├── src/                          # Source code
-│   ├── index.ts                  # Main module entry
-│   ├── rollup.ts                 # Rollup plugin
-│   ├── routes/                   # Runtime route handlers
-│   │   ├── graphql-yoga.ts       # GraphQL Yoga server
-│   │   ├── apollo-server.ts      # Apollo Server handler
-│   │   └── health.ts             # Health check endpoint
-│   ├── utils/                    # Utility functions
-│   │   ├── index.ts              # File scanning (schemas, resolvers)
-│   │   ├── define.ts             # Resolver definition utilities
-│   │   ├── type-generation.ts    # Type generation orchestration
-│   │   ├── server-codegen.ts     # Server type generation
-│   │   ├── client-codegen.ts     # Client type generation
-│   │   ├── path-resolver.ts      # Path resolution (v2.0+)
-│   │   ├── file-generator.ts     # File generation (v2.0+)
-│   │   ├── apollo.ts             # Apollo utilities
-│   │   └── directive-parser.ts   # Directive parsing
-│   ├── types/                    # TypeScript type definitions
-│   ├── virtual/                  # Virtual module implementations
-│   ├── graphql/                  # GraphQL runtime exports
-│   └── ecosystem/                # Framework integrations
-│       └── nuxt.ts               # Nuxt module integration
-├── playgrounds/                  # Test environments
-│   ├── nitro/                    # Nitro playground
-│   ├── nuxt/                     # Nuxt playground
-│   ├── federation/               # Federation playground
-│   ├── apollo/                   # Apollo Server playground
-│   └── vite/                     # Vite playground
-├── dist/                         # Build output (generated)
-├── .docs/                        # Documentation site (VitePress)
-├── tsdown.config.ts              # Build configuration
-├── package.json                  # Package configuration
-└── pnpm-workspace.yaml           # pnpm workspace configuration
+magicsync/
+├── packages/
+│   ├── scheduler/              # Main application
+│   │   ├── server/             # Nuxt server code
+│   │   │   ├── api/            # API routes
+│   │   │   ├── services/       # Business logic
+│   │   │   │   └── plugins/    # Social media platform integrations
+│   │   │   ├── database/       # Database schemas & migrations
+│   │   │   └── utils/          # Server utilities
+│   │   ├── app/                # Nuxt app (pages, components)
+│   │   ├── composables/        # Vue composables
+│   │   └── nuxt.config.ts      # Nuxt configuration
+│   ├── content/                # Marketing/landing pages
+│   ├── ui/                     # Shared UI components (Nuxt UI)
+│   ├── site/                   # Additional site pages
+│   └── doc/                    # Documentation (VitePress)
+│       ├── .vitepress/         # VitePress config & theme
+│       ├── guide/              # User guides
+│       └── contributing/       # Contributing docs
+├── docker-compose.yml          # Docker setup
+├── .env-example                # Environment variables template
+├── pnpm-workspace.yaml         # pnpm workspace config
+└── package.json                # Root package.json
 ```
 
 ## Debugging Tips
 
-### Debugging Type Generation
+### Debugging API Routes
 
-When working on type generation features:
+When working on server API routes:
 
-1. Check generated files in playground directories:
-   - Nitro: `.nitro/types/nitro-graphql-{server,client}.d.ts`
-   - Nuxt: `.nuxt/types/nitro-graphql-{server,client}.d.ts`
+1. Check server logs in the terminal
+2. Use the Nuxt DevTools (automatically available in dev mode)
+3. Add `console.log()` statements in `packages/scheduler/server/api/`
 
-2. Enable verbose logging (if implemented) in your test configuration
+### Debugging Social Media Integrations
 
-3. Check the generated schema file:
-   - `server/graphql/schema.ts` (auto-generated)
+When working on platform plugins (`packages/scheduler/server/services/plugins/`):
 
-### Debugging File Discovery
+1. Check the plugin file for the specific platform (e.g., `facebook.plugin.ts`)
+2. Verify API credentials in `.env`
+3. Use the platform's API documentation for reference
+4. Test with the platform's developer tools/sandbox
 
-To debug schema and resolver discovery:
+### Debugging Database Issues
 
-1. Add console logs in `src/utils/index.ts`
-2. Check the `scanSchemas()` and `scanResolvers()` functions
-3. Verify files match the expected patterns:
-   - Schemas: `**/*.graphql`
-   - Resolvers: `**/*.resolver.ts`
+If you encounter database problems:
+
+1. Check the schema in `packages/scheduler/server/database/schema/`
+2. Verify migrations in `packages/scheduler/drizzle/`
+3. Use Drizzle Studio to inspect data: `pnpm db:studio`
+4. Check database connection in `.env`
 
 ### Debugging Build Issues
 
-If the build fails or produces unexpected output:
+If builds fail:
 
-1. Clean the dist directory:
+1. Clean build artifacts:
    ```bash
-   rm -rf dist
-   pnpm build
+   pnpm clean
    ```
 
-2. Check for TypeScript errors in the console
+2. Remove node_modules and reinstall:
+   ```bash
+   rm -rf node_modules
+   pnpm install --frozen-lockfile
+   ```
 
-3. Verify `tsdown.config.ts` configuration
-
-4. Check that external dependencies are properly declared
+3. Check for TypeScript errors:
+   ```bash
+   pnpm typecheck
+   ```
 
 ## Common Issues
 
-### Module Not Found in Playground
+### Port Already in Use
 
-If the playground can't find the module:
-
-```bash
-# From the root directory
-pnpm build
-
-# Then reinstall playground dependencies
-cd playgrounds/nitro
-rm -rf node_modules
-pnpm install
-```
-
-### Types Not Updating
-
-If generated types aren't updating:
-
-1. Restart the dev server in the playground
-2. Delete the build directory (`.nitro` or `.nuxt`)
-3. Ensure `pnpm dev` is running in the root directory
-
-### pnpm Version Mismatch
-
-If you see pnpm version errors:
+If port 3000 is already in use:
 
 ```bash
-corepack enable
-corepack prepare pnpm@10.18.0 --activate
+# Find and kill the process
+lsof -ti:3000 | xargs kill -9
+
+# Or use a different port
+PORT=3001 pnpm dev
 ```
+
+### Environment Variables Not Loading
+
+If environment variables aren't working:
+
+1. Ensure `.env` exists in the root directory
+2. Restart the dev server
+3. Check that variables are prefixed with `NUXT_` for Nuxt runtime config
+
+### Database Connection Errors
+
+If you can't connect to the database:
+
+1. Check `NUXT_DATABASE_URL` in `.env`
+2. For Turso, verify your auth token is correct
+3. For local development, ensure the database file path is writable
 
 ## Next Steps
 

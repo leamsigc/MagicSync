@@ -6,7 +6,7 @@ category: Contributing
 
 <FunctionInfo fn="addingFeatures"/>
 
-This guide walks you through the process of adding new features to Nitro GraphQL, from initial development to submitting a pull request.
+This guide walks you through adding new features to MagicSync, from development to submitting a pull request.
 
 ## Before You Start
 
@@ -19,12 +19,12 @@ This guide walks you through the process of adding new features to Nitro GraphQL
 
 ### 1. Set Up Your Environment
 
-Follow the [Development Setup](/contributing/development-setup) guide to get started.
+Follow the [Development Setup](/contributing/development-setup) guide.
 
 ```bash
 # Clone your fork
-git clone https://github.com/YOUR_USERNAME/nitro-graphql.git
-cd nitro-graphql
+git clone https://github.com/YOUR_USERNAME/magicsync.git
+cd magicsync
 
 # Install dependencies
 pnpm install
@@ -46,34 +46,58 @@ git checkout -b fix/bug-description
 
 # For documentation
 git checkout -b docs/update-description
-
-# For maintenance
-git checkout -b chore/task-description
 ```
 
 **Examples:**
-- `feat/custom-scalars`
-- `feat/graphql-shield-integration`
-- `fix/type-generation-windows`
-- `docs/federation-guide`
+- `feat/tiktok-integration`
+- `feat/bulk-post-scheduling`
+- `fix/instagram-image-upload`
+- `docs/platform-setup-guide`
 
 ### 3. Implement Your Feature
 
-#### File Organization
+#### Common Feature Types
 
-Place your code in the appropriate location:
+**Adding a New Social Media Platform:**
 
+1. Create a new plugin file in `packages/scheduler/server/services/plugins/`
+2. Follow the existing plugin pattern (see `facebook.plugin.ts` or `twitter.plugin.ts`)
+3. Implement required methods: `post()`, `getProfile()`, etc.
+4. Add platform configuration to the database schema
+5. Update the UI to include the new platform
+
+**Adding API Endpoints:**
+
+Create new routes in `packages/scheduler/server/api/`:
+
+```typescript
+// packages/scheduler/server/api/posts/schedule.post.ts
+export default defineEventHandler(async (event) => {
+  const body = await readBody(event)
+  
+  // Your logic here
+  
+  return {
+    success: true,
+    data: result
+  }
+})
 ```
-src/
-├── index.ts              # Add module setup code here
-├── types/
-│   └── index.ts          # Add new type definitions
-├── utils/
-│   └── your-util.ts      # Add utility functions
-├── routes/
-│   └── your-route.ts     # Add new route handlers
-└── ecosystem/
-    └── your-integration.ts  # Add framework integrations
+
+**Adding UI Components:**
+
+Add components to `packages/scheduler/app/components/` or `packages/ui/components/`:
+
+```vue
+<template>
+  <div class="your-component">
+    <!-- Your component template -->
+  </div>
+</template>
+
+<script setup lang="ts">
+// Your component logic
+</script>
 ```
 
 #### Code Style
@@ -83,111 +107,23 @@ Follow these guidelines:
 **TypeScript:**
 ```typescript
 // ✅ Use explicit types for public APIs
-// ✅ Use type imports when possible
-import type { NitroConfig } from 'nitropack'
-
-export function generateTypes(options: GenerateOptions): Promise<void>
+export function schedulePost(options: ScheduleOptions): Promise<Post>
 
 // ✅ Prefer named exports
 export function myFunction() {}
 
-// ❌ Avoid default exports (except for route handlers)
-export default myFunction // Don't do this
+// ❌ Avoid default exports (except for Nuxt pages/API routes)
 ```
 
 **Naming Conventions:**
-- **Functions**: `camelCase` - `generateTypes`, `scanSchemas`
-- **Types/Interfaces**: `PascalCase` - `GraphQLConfig`, `ResolverOptions`
-- **Constants**: `UPPER_SNAKE_CASE` - `DEFAULT_ENDPOINT`, `MAX_RETRIES`
-- **Files**: `kebab-case` - `type-generation.ts`, `path-resolver.ts`
-
-**Code Organization:**
-```typescript
-// Order your code logically:
-
-import type { NitroConfig } from 'nitropack'
-// 1. Imports
-import { defineNitroModule } from 'nitropack/kit'
-
-// 2. Types and interfaces
-export interface FeatureOptions {
-  enabled: boolean
-}
-
-// 3. Constants
-const DEFAULT_OPTIONS: FeatureOptions = {
-  enabled: true
-}
-
-// 4. Helper functions
-function validateOptions(options: FeatureOptions) {
-  // ...
-}
-
-// 5. Main exported functions
-export function setupFeature(options: FeatureOptions) {
-  // ...
-}
-```
-
-#### Testing Your Changes
-
-Test your feature in multiple environments:
-
-**Nitro Playground:**
-```bash
-# Terminal 1
-pnpm dev
-
-# Terminal 2
-pnpm playground:nitro
-```
-
-**Nuxt Playground:**
-```bash
-# Terminal 1
-pnpm dev
-
-# Terminal 2
-pnpm playground:nuxt
-```
-
-**Add test cases** to the playground:
-```typescript
-// playgrounds/nitro/server/graphql/test.resolver.ts
-export const testQueries = defineQuery({
-  testMyFeature: async () => {
-    // Test your feature
-    return { success: true }
-  }
-})
-```
-
-#### Type Safety
-
-Ensure your feature is fully typed:
-
-```typescript
-// Add types to src/types/index.ts
-export interface MyFeatureOptions {
-  option1: string
-  option2?: number
-}
-
-// Extend module configuration
-export interface GraphQLOptions {
-  // ... existing options
-  myFeature?: MyFeatureOptions
-}
-```
+- **Functions**: `camelCase` - `schedulePost`, `getPlatforms`
+- **Types/Interfaces**: `PascalCase` - `PostData`, `PlatformConfig`
+- **Constants**: `UPPER_SNAKE_CASE` - `MAX_FILE_SIZE`, `DEFAULT_TIMEOUT`
+- **Files**: `kebab-case` - `post-scheduler.ts`, `platform-config.ts`
 
 ### 4. Add Documentation
 
-Every feature needs documentation:
-
-#### Update Relevant Guides
-
-Add documentation to `.docs/guide/`:
+Every feature needs documentation in `packages/doc/guide/`:
 
 ```markdown
 # Your Feature Name
@@ -196,131 +132,36 @@ Brief description of what your feature does.
 
 ## Usage
 
-\`\`\`typescript
-// Code example
-import graphql from 'nitro-graphql'
-import { defineNitroConfig } from 'nitro/config'
+Explain how to use the feature with examples.
 
-export default defineNitroConfig({
-  modules: [
-    graphql({
-      framework: 'graphql-yoga',
-      myFeature: {
-        option1: 'value',
-      },
-    }),
-  ],
-})
-\`\`\`
+## Configuration
 
-## Options
-
-### `option1`
-- Type: `string`
-- Required: Yes
-- Description: Description of option1
-
-### `option2`
-- Type: `number`
-- Default: `10`
-- Description: Description of option2
+List any configuration options.
 
 ## Examples
 
-### Example 1: Basic Usage
-\`\`\`typescript
-// Example code
-\`\`\`
-
-### Example 2: Advanced Usage
-\`\`\`typescript
-// Example code
-\`\`\`
-
-## Best Practices
-
-- Best practice 1
-- Best practice 2
+Provide practical examples.
 ```
 
-#### Add to API Reference
+### 5. Test Your Changes
 
-If your feature adds new APIs, document them in `.docs/api/`:
+```bash
+# Run the development server
+pnpm dev
 
-```markdown
-# Your API
+# Test in the browser
+# Navigate to http://localhost:3000
 
-## `yourFunction()`
+# Run type checking
+pnpm typecheck
 
-Description of the function.
-
-### Parameters
-
-- `param1` - Type and description
-- `param2` - Type and description
-
-### Returns
-
-Description of return value.
-
-### Example
-
-\`\`\`typescript
-import { yourFunction } from 'nitro-graphql/utils'
-
-yourFunction(param1, param2)
-\`\`\`
-```
-
-#### Add Examples
-
-Create practical examples in `.docs/examples/`:
-
-```markdown
-# Example: Using Your Feature
-
-This example shows how to use [Your Feature] in a real-world scenario.
-
-## Setup
-
-\`\`\`bash
-pnpm add nitro-graphql
-\`\`\`
-
-## Implementation
-
-\`\`\`typescript
-// Full working example
-\`\`\`
-
-## Explanation
-
-Explain the key parts of the example.
-```
-
-### 5. Update CLAUDE.md
-
-If your feature changes development workflows or architecture, update `/Users/code/Work/pb/nitro-graphql/CLAUDE.md`:
-
-```markdown
-## Your Feature Section
-
-Description of your feature and how it fits into the architecture.
-
-### Usage
-\`\`\`typescript
-// Example
-\`\`\`
-
-### Key Files
-- `src/your-file.ts` - Description
+# Run linter
+pnpm lint
 ```
 
 ## Pull Request Process
 
 ### 1. Prepare Your Changes
-
-Before submitting:
 
 ```bash
 # Run linter
@@ -329,9 +170,8 @@ pnpm lint:fix
 # Build the project
 pnpm build
 
-# Test in playgrounds
-pnpm playground:nitro
-pnpm playground:nuxt
+# Test the application
+pnpm dev
 ```
 
 ### 2. Commit Your Changes
@@ -341,17 +181,13 @@ Use [Conventional Commits](https://www.conventionalcommits.org/):
 **Format:**
 ```
 type(scope): description
-
-[optional body]
-
-[optional footer]
 ```
 
 **Types:**
 - `feat:` - New feature
 - `fix:` - Bug fix
 - `docs:` - Documentation only
-- `style:` - Code style (formatting, semicolons, etc.)
+- `style:` - Code style
 - `refactor:` - Code refactoring
 - `perf:` - Performance improvements
 - `test:` - Adding tests
@@ -359,30 +195,10 @@ type(scope): description
 
 **Examples:**
 ```bash
-git commit -m "feat: add custom scalar support"
-git commit -m "feat(codegen): add external service type generation"
-git commit -m "fix: resolve Windows path issues in type generation"
-git commit -m "docs: add Apollo Federation guide"
-git commit -m "refactor(scanner): improve file discovery performance"
-```
-
-**Good commit messages:**
-```
-feat: add GraphQL shield integration
-
-- Add shield directive support
-- Update type generation for shield
-- Add examples and documentation
-
-Closes #123
-```
-
-**Bad commit messages:**
-```
-update stuff
-fix bug
-wip
-changes
+git commit -m "feat: add TikTok integration"
+git commit -m "feat(scheduler): add bulk post scheduling"
+git commit -m "fix: resolve Instagram image upload issue"
+git commit -m "docs: add platform setup guide"
 ```
 
 ### 3. Push to Your Fork
@@ -398,14 +214,14 @@ git push origin feat/your-feature-name
 Use the same format as commit messages:
 
 ```
-feat: add custom scalar support
-fix: resolve type generation issues on Windows
-docs: improve federation guide
+feat: add TikTok integration
+fix: resolve Instagram upload issues
+docs: improve platform setup guide
 ```
 
 #### PR Description
 
-Fill out the template completely:
+Fill out the template:
 
 ```markdown
 ## Description
@@ -415,7 +231,6 @@ Clear description of what this PR does and why.
 ## Related Issues
 
 Closes #123
-Relates to #456
 
 ## Changes
 
@@ -425,193 +240,33 @@ Relates to #456
 
 ## Testing
 
-- [x] Tested in Nitro playground
-- [x] Tested in Nuxt playground
-- [x] Tested in Federation playground (if applicable)
-- [x] Added/updated tests
+- [x] Tested locally
 - [x] Documentation updated
+- [x] No breaking changes
 
 ## Screenshots (if applicable)
 
 Add screenshots for UI changes
-
-## Breaking Changes
-
-List any breaking changes and migration guide
-
-## Checklist
-
-- [x] Code follows project style guidelines
-- [x] Self-review completed
-- [x] Comments added for complex logic
-- [x] Documentation updated
-- [x] No new warnings generated
 ```
-
-#### Review Process
-
-1. **Automated Checks** - CI must pass
-2. **Maintainer Review** - Wait for feedback
-3. **Address Comments** - Make requested changes
-4. **Approval** - Get approval from maintainers
-5. **Merge** - Maintainer will merge your PR
-
-### 5. Respond to Feedback
-
-When you receive review comments:
-
-```bash
-# Make changes based on feedback
-# ... edit files ...
-
-# Commit changes
-git add .
-git commit -m "refactor: address review feedback"
-
-# Push updates
-git push origin feat/your-feature-name
-```
-
-## Feature Examples
-
-### Example 1: Adding a New Utility Function
-
-```typescript
-// src/utils/my-utility.ts
-import type { GraphQLSchema } from 'graphql'
-
-/**
- * Utility to validate GraphQL schema
- */
-export function validateSchema(schema: GraphQLSchema): boolean {
-  // Implementation
-  return true
-}
-
-// Export from main utils
-// src/utils/index.ts
-export { validateSchema } from './my-utility'
-```
-
-**Add to package.json exports:**
-```json
-{
-  "exports": {
-    "./utils": {
-      "types": "./dist/utils/index.d.ts",
-      "import": "./dist/utils/index.js"
-    }
-  }
-}
-```
-
-### Example 2: Adding Configuration Option
-
-```typescript
-// src/types/index.ts
-export interface GraphQLOptions {
-  // ... existing options
-
-  /**
-   * Enable schema validation
-   * @default true
-   */
-  validateSchema?: boolean
-}
-
-// src/index.ts
-export default defineNitroModule({
-  setup(nitro, options) {
-    const validateSchema = options.validateSchema ?? true
-
-    if (validateSchema) {
-      // Implement validation
-    }
-  }
-})
-```
-
-### Example 3: Adding a New Route Handler
-
-```typescript
-// src/routes/my-endpoint.ts
-import { defineEventHandler } from 'nitro/h3'
-
-export default defineEventHandler((event) => {
-  return {
-    message: 'My endpoint'
-  }
-})
-
-// Register in src/index.ts
-nitro.options.handlers.push({
-  route: '/api/my-endpoint',
-  handler: resolver.resolve('./routes/my-endpoint')
-})
-```
-
-## Common Pitfalls
-
-### Avoid These Mistakes
-
-1. **Not testing in playgrounds**
-   - Always test your changes in both Nitro and Nuxt playgrounds
-
-2. **Breaking existing features**
-   - Ensure backward compatibility
-   - Add deprecation warnings for breaking changes
-
-3. **Missing documentation**
-   - Every feature needs docs
-   - Add examples and use cases
-
-4. **Poor type safety**
-   - Add proper TypeScript types
-   - Don't use `any` unless absolutely necessary
-
-5. **Not following code style**
-   - Run `pnpm lint:fix` before committing
-   - Follow existing patterns
-
-6. **Huge pull requests**
-   - Keep PRs focused and small
-   - Split large features into multiple PRs
-
-7. **Not responding to reviews**
-   - Address feedback promptly
-   - Ask questions if something is unclear
 
 ## Feature Checklist
 
-Before submitting your PR, ensure:
+Before submitting your PR:
 
 - [ ] Code is properly typed
-- [ ] Tests added/updated (when applicable)
 - [ ] Documentation written
-- [ ] Examples added
-- [ ] Tested in Nitro playground
-- [ ] Tested in Nuxt playground
+- [ ] Tested locally
 - [ ] Linter passes (`pnpm lint`)
 - [ ] Build succeeds (`pnpm build`)
 - [ ] Commit messages follow conventions
 - [ ] PR description is complete
 - [ ] No breaking changes (or documented)
-- [ ] CLAUDE.md updated (if needed)
 
 ## Getting Help
 
-If you need help while developing:
-
 - **Questions**: Ask in [GitHub Discussions](https://github.com/leamsigc/magicsync/discussions)
 - **Bugs**: Report in [GitHub Issues](https://github.com/leamsigc/magicsync/issues)
-- **Architecture**: Review [Architecture Guide](/contributing/architecture)
 - **Setup Issues**: Check [Development Setup](/contributing/development-setup)
-
-## Next Steps
-
-- Review the [Architecture](/contributing/architecture) guide
-- Learn about [Documentation](/contributing/documentation) standards
-- Check out [existing PRs](https://github.com/leamsigc/magicsync/pulls) for examples
 
 ---
 
