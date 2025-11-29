@@ -108,7 +108,7 @@ export default withMermaid(defineConfig({
 
     footer: {
       message: 'Released under the MIT License.',
-      copyright: 'Copyright © 2024-present MagicSync - Leamsigc (Documentation is base on Graphql)',
+      copyright: 'Copyright © 2024-present MagicSync - Leamsigc (Documentation is base on https://nitro-graphql.pages.dev/)',
     },
 
     outline: {
