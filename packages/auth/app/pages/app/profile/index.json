@@ -1,0 +1,122 @@
+{
+    "en": {
+        "title": "Profile",
+        "description": "Manage your profile information",
+        "heading": "Your Profile",
+        "subheading": "Update your personal information and profile picture",
+        "form": {
+            "name": "Full Name",
+            "firstName": "First Name",
+            "lastName": "Last Name",
+            "email": "Email",
+            "image": "Profile Picture",
+            "save": "Save Changes",
+            "cancel": "Cancel"
+        },
+        "placeholders": {
+            "name": "Enter your full name",
+            "firstName": "Enter your first name",
+            "lastName": "Enter your last name"
+        },
+        "messages": {
+            "success": "Profile updated successfully",
+            "error": "Failed to update profile",
+            "loading": "Updating profile..."
+        },
+        "avatar": {
+            "upload": "Upload Photo",
+            "change": "Change Photo",
+            "remove": "Remove Photo"
+        }
+    },
+    "es": {
+        "title": "Perfil",
+        "description": "Administra tu información de perfil",
+        "heading": "Tu Perfil",
+        "subheading": "Actualiza tu información personal y foto de perfil",
+        "form": {
+            "name": "Nombre Completo",
+            "firstName": "Nombre",
+            "lastName": "Apellido",
+            "email": "Correo Electrónico",
+            "image": "Foto de Perfil",
+            "save": "Guardar Cambios",
+            "cancel": "Cancelar"
+        },
+        "placeholders": {
+            "name": "Ingresa tu nombre completo",
+            "firstName": "Ingresa tu nombre",
+            "lastName": "Ingresa tu apellido"
+        },
+        "messages": {
+            "success": "Perfil actualizado exitosamente",
+            "error": "Error al actualizar perfil",
+            "loading": "Actualizando perfil..."
+        },
+        "avatar": {
+            "upload": "Subir Foto",
+            "change": "Cambiar Foto",
+            "remove": "Eliminar Foto"
+        }
+    },
+    "de": {
+        "title": "Profil",
+        "description": "Verwalten Sie Ihre Profilinformationen",
+        "heading": "Ihr Profil",
+        "subheading": "Aktualisieren Sie Ihre persönlichen Informationen und Ihr Profilbild",
+        "form": {
+            "name": "Vollständiger Name",
+            "firstName": "Vorname",
+            "lastName": "Nachname",
+            "email": "E-Mail",
+            "image": "Profilbild",
+            "save": "Änderungen Speichern",
+            "cancel": "Abbrechen"
+        },
+        "placeholders": {
+            "name": "Geben Sie Ihren vollständigen Namen ein",
+            "firstName": "Geben Sie Ihren Vornamen ein",
+            "lastName": "Geben Sie Ihren Nachnamen ein"
+        },
+        "messages": {
+            "success": "Profil erfolgreich aktualisiert",
+            "error": "Fehler beim Aktualisieren des Profils",
+            "loading": "Profil wird aktualisiert..."
+        },
+        "avatar": {
+            "upload": "Foto Hochladen",
+            "change": "Foto Ändern",
+            "remove": "Foto Entfernen"
+        }
+    },
+    "fr": {
+        "title": "Profil",
+        "description": "Gérez vos informations de profil",
+        "heading": "Votre Profil",
+        "subheading": "Mettez à jour vos informations personnelles et votre photo de profil",
+        "form": {
+            "name": "Nom Complet",
+            "firstName": "Prénom",
+            "lastName": "Nom de Famille",
+            "email": "Email",
+            "image": "Photo de Profil",
+            "save": "Enregistrer les Modifications",
+            "cancel": "Annuler"
+        },
+        "placeholders": {
+            "name": "Entrez votre nom complet",
+            "firstName": "Entrez votre prénom",
+            "lastName": "Entrez votre nom de famille"
+        },
+        "messages": {
+            "success": "Profil mis à jour avec succès",
+            "error": "Échec de la mise à jour du profil",
+            "loading": "Mise à jour du profil..."
+        },
+        "avatar": {
+            "upload": "Télécharger une Photo",
+            "change": "Changer la Photo",
+            "remove": "Supprimer la Photo"
+        }
+    }
+}

@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // Get current user session (Better Auth should have handled the OAuth flow)
+    // Get current user session
     const user = await checkUserIsLogin(event)
 
     if (!user) {
@@ -30,62 +30,21 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    if (!businessId) {
+    // Define Better Auth supported platforms (native + Generic OAuth)
+    const betterAuthPlatforms: SocialMediaPlatform[] = [
+      'facebook', 'instagram', 'threads', 'google', 'googlemybusiness',
+      'reddit', 'discord', 'linkedin', 'linkedin-page', 'twitter', 'youtube', 'tiktok', 'dribbble'
+    ]
+
+    if (!betterAuthPlatforms.includes(platform)) {
       throw createError({
         statusCode: 400,
-        statusMessage: 'Business ID is required'
+        statusMessage: `Platform ${platform} is not supported`
       })
     }
 
-    try {
-      // Get user info from the connected social account
-      // Note: We'll need the accountId from Better Auth's account linking
-      // For now, we'll use a placeholder approach
-      const userInfo = await getUserInfo(platform, user.id)
-      if (!userInfo || !userInfo.id) {
-        throw createError({
-          statusCode: 400,
-          statusMessage: 'User info not found after OAuth callback'
-        })
-      }
 
-      // Check if account already exists
-      const existingAccount = await socialMediaAccountService.getAccountByPlatformAndAccountId(
-        user.id,
-        platform,
-        userInfo.id
-      )
 
-      let account
-      if (existingAccount) {
-        // Update existing account
-        account = await socialMediaAccountService.updateAccount(existingAccount.id, {
-          accountName: userInfo.name,
-          isActive: true,
-          lastSyncAt: new Date()
-        })
-      } else {
-        // Create new account record
-        account = await socialMediaAccountService.createAccount({
-          userId: user.id,
-          businessId,
-          platform,
-          accountId: userInfo.id,
-          accountName: userInfo.name,
-          // Better Auth manages tokens internally, so we don't store them
-          accessToken: '',
-        })
-      }
-
-      // Redirect to success page
-      const baseUrl = NUXT_BASE_URL || 'http://localhost:3000'
-      const successUrl = `${baseUrl}/app/social-accounts?connected=${platform}`
-
-      return sendRedirect(event, successUrl)
-    } catch (userInfoError) {
-      const baseUrl = NUXT_BASE_URL || 'http://localhost:3000'
-      return sendRedirect(event, `${baseUrl}/app/integrations`)
-    }
   } catch (error) {
     console.error('Error handling OAuth callback:', error)
 
@@ -94,7 +53,7 @@ export default defineEventHandler(async (event) => {
     const errorMessage = error instanceof Error
       ? error.message
       : (error as any)?.statusMessage || 'Connection failed'
-    const errorUrl = `${baseUrl}/app/social-accounts?error=${encodeURIComponent(errorMessage)}`
+    const errorUrl = `${baseUrl}/app/integrations?error=${encodeURIComponent(errorMessage)}`
 
     return sendRedirect(event, errorUrl)
   }

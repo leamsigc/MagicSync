@@ -11,7 +11,25 @@ export const socialMediaAccounts = sqliteTable('social_media_accounts', {
   userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
   businessId: text('business_id').notNull().references(() => businessProfiles.id, { onDelete: 'cascade' }),
   platform: text('platform', {
-    enum: ['facebook', 'instagram', 'twitter', 'tiktok', 'google_my_business']
+    enum: [
+      'facebook',
+      'instagram',
+      'instagram-standalone',
+      'twitter',
+      'tiktok',
+      'google',
+      'googlemybusiness',
+      'discord',
+      'linkedin',
+      'linkedin-page',
+      'threads',
+      'youtube',
+      'bluesky',
+      'devto',
+      'dribbble',
+      'reddit',
+      'wordpress'
+    ]
   }).notNull(),
   accountId: text('account_id').notNull(),
   accountName: text('account_name').notNull(),

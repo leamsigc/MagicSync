@@ -5,6 +5,7 @@ import { user } from './auth/auth'
 // Import tables for relations
 import { businessProfiles } from './business/business'
 import { entityDetails } from './entityDetails/entityDetails'
+import { notifications } from './notifications/notifications'
 import { platformPosts, posts } from './posts/posts'
 import { reviews } from './reviews/reviews'
 import { socialMediaAccountManagers, socialMediaAccounts } from './socialMedia/socialMedia'
@@ -24,6 +25,7 @@ export * from './templates/templates'
 export * from './audit/audit'
 export * from './entityDetails/entityDetails'
 export * from './socialMedia/socialMedia'
+export * from './notifications/notifications'
 
 /***
 * Cross-feature relationships
@@ -36,7 +38,8 @@ export const userRelations = relations(user, ({ many }) => ({
   socialMediaAccountManagers: many(socialMediaAccountManagers),
   assets: many(assets),
   posts: many(posts),
-  subscriptions: many(subscriptions)
+  subscriptions: many(subscriptions),
+  notifications: many(notifications)
 }))
 
 // Business profile relations - connecting to dependent features
@@ -120,3 +123,13 @@ export const subscriptionsRelations = relations(subscriptions, ({ one }) => ({
     references: [user.id]
   })
 }))
+
+// Notification relations
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  user: one(user, {
+    fields: [notifications.userId],
+    references: [user.id]
+  })
+}))
+
+

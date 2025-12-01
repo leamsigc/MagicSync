@@ -4,7 +4,7 @@
  * @author Ismael Garcia <leamsigc@leamsigc.com>
  * @version 0.0.1
  */
-
+import { AutoPostService } from '#layers/BaseScheduler/server/services/AutoPost.service';
 import { checkUserIsLogin } from "#layers/BaseAuth/server/utils/AuthHelpers"
 import { postService, type UpdatePostData } from "#layers/BaseDB/server/services/post.service"
 
@@ -84,7 +84,18 @@ export default defineEventHandler(async (event) => {
         statusMessage: result || 'Failed to update post'
       })
     }
-
+    if (body.status === 'published' && result.data) {
+      const fullPost = await postService.findByIdFull({ postId: result.data.id });
+      if (!fullPost || !fullPost) {
+        throw createError({
+          statusCode: 400,
+          statusMessage: 'Failed to find post'
+        })
+      }
+      // Schedule post
+      const trigger = new AutoPostService()
+      trigger.triggerSocialMediaPost(fullPost);
+    }
     return result.data;
   } catch (error: any) {
     if (error.statusCode) {

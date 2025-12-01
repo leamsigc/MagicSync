@@ -1,3 +1,4 @@
+import { decryptKey } from '#layers/BaseAuth/server/utils/AuthHelpers';
 import type { PostDetails, PostResponse, Integration } from '../SchedulerPost.service';
 import { BaseSchedulerPlugin, type MediaContent } from '../SchedulerPost.service';
 import type { Post, PostWithAllData, SocialMediaAccount, Asset } from '#layers/BaseDB/db/schema';
@@ -53,8 +54,9 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
 
   protected init(options?: { serviceUrl: string }): void {
     this.serviceUrl = options?.serviceUrl || 'https://bsky.social';
-    this.agent = new AtpAgent({ service: this.serviceUrl });
-    console.log('Bluesky plugin initialized', options);
+    this.agent = new AtpAgent({ service: this.serviceUrl || 'https://bsky.social' })
+
+    console.log('Bluesky plugin initialized', this.serviceUrl);
   }
 
   override async validate(post: Post): Promise<string[]> {
@@ -219,6 +221,17 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
       cursor: results.data.cursor,
     };
   }
+  async login(socialMediaAccount: SocialMediaAccount) {
+    await this.init();
+    const pwd = await  decryptKey(socialMediaAccount.accessToken);
+
+    console.log({socialMediaAccount});
+
+    await this.agent.login({
+      identifier: socialMediaAccount.accountName,
+      password: pwd,
+    });
+  }
 
   override async post(
     postDetails: PostWithAllData,
@@ -226,10 +239,7 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
     socialMediaAccount: SocialMediaAccount
   ): Promise<PostResponse> {
     try {
-      await this.agent.login({
-        identifier: socialMediaAccount.username,
-        password: socialMediaAccount.accessToken,
-      });
+      await this.login(socialMediaAccount);
 
       const rt = new RichText({ text: postDetails.content });
       await rt.detectFacets(this.agent);
@@ -292,6 +302,8 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
         { repo: this.agent.session?.did || '' },
         postRecord,
       );
+
+
 
       const response: PostResponse = {
         id: postDetails.id,

@@ -1,7 +1,7 @@
 <!--  Translation file -->
 <i18n src="../connect.json"></i18n>
 <script lang="ts" setup>
-import { useConnectionManager } from '../composables/useConnectionManager';
+import { useConnectionManager, type Connection } from '../composables/useConnectionManager';
 
 /**
  *
@@ -14,11 +14,62 @@ import { useConnectionManager } from '../composables/useConnectionManager';
  * @todo [ ] Integration test.
  * @todo [✔] Update the typescript.
  */
-
+import * as z from 'zod'
+import type { AuthFormField, FormSubmitEvent } from '@nuxt/ui'
 const { connectionList, setConnectionList, HandleConnectTo } = useConnectionManager();
 
 setConnectionList();
+
 const { t } = useI18n();
+const toast = useToast();
+const HandleConnectBaseOnThePlatform = (connection: Connection) => {
+  if (connection.platform == 'bluesky') {
+    blueskyModal.value = true
+  } else {
+    HandleConnectTo(connection)
+  }
+}
+const blueskyModal = ref(false)
+const schema = z.object({
+  baseUrl: z.string().optional(),
+  username: z.string('Username is required'),
+  password: z.string('Password is required')
+})
+type Schema = z.output<typeof schema>
+const fields = ref<AuthFormField[]>([
+  {
+    name: 'baseUrl',
+    type: 'text',
+    label: 'Base URL',
+    placeholder: 'Enter your base url',
+  },
+  {
+    name: 'username',
+    type: 'text',
+    label: 'Username',
+    placeholder: 'Enter your username',
+    required: true
+  },
+  {
+    name: 'password',
+    type: 'password',
+    label: 'Password',
+    placeholder: 'Enter your password',
+    required: true
+  },
+])
+
+const HandleConnectToBluesky = (payload: FormSubmitEvent<Schema>) => {
+  HandleConnectTo({
+    name: 'Bluesky',
+    icon: 'fa6-brands:bluesky',
+    url: '#',
+    platform: "bluesky",
+    authType: 'api-key'
+  }, payload.data)
+  blueskyModal.value = false
+
+}
 </script>
 
 <template>
@@ -28,13 +79,22 @@ const { t } = useI18n();
         <Icon name="lucide:plus" size="80" class="" />
       </section>
       <h3 class=" text-center">{{ t('states.add_connection') }}</h3>
-
     </UButton>
-
     <template #content>
       <section class="grid grid-cols-3 gap-4 p-6">
         <UButton color="neutral" variant="soft" v-for="connection in connectionList" :key="connection.name"
-          @click="HandleConnectTo(connection)" class="p-4   rounded grid place-content-center text-center">
+          @click="HandleConnectBaseOnThePlatform(connection)"
+          class="p-4   rounded grid place-content-center text-center">
+          <template v-if="connection.platform == 'bluesky'">
+            <UModal v-model:open="blueskyModal" title="Bluesky" :ui="{ footer: 'justify-end' }" size="small"
+              class="max-w-sm">
+              <template #body>
+                <UAuthForm :schema="schema" title="Bluesky" description="Enter bluesky credentials" icon="i-lucide-user"
+                  :fields="fields" @submit="HandleConnectToBluesky" class="max-w-md" />
+              </template>
+            </UModal>
+
+          </template>
           <Icon :name="connection.icon" size="48" class="w-20" />
           <h3>{{ connection.name }}</h3>
         </UButton>

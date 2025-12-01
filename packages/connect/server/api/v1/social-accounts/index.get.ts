@@ -14,15 +14,12 @@ defineRouteMeta({
 });
 export default defineEventHandler(async (event) => {
   try {
-    // Get user from session (assuming auth middleware sets this)
     const user = await checkUserIsLogin(event)
 
-    // Get query parameters for filtering
     const query = getQuery(event)
     const platform = query.platformId as string;
 
     if (!platform) {
-      // Get social media accounts for the current user
       return socialMediaAccountService.getAccountsByUserId(user.id)
     }
 

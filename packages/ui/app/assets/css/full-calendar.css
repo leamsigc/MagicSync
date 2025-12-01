@@ -66,7 +66,7 @@ NOTE: for old browsers, will need to restart watcher after changing a variable
 .fc .fc-toolbar {
   @apply grid gap-3 md:flex md:items-center md:justify-between;
   .fc-toolbar-chunk + .fc-toolbar-title {
-    @apply order-1 md:order-none;
+    @apply order-1 md:order-0;
   }
 }
 /* Toolbar title */
@@ -118,7 +118,7 @@ NOTE: for old browsers, will need to restart watcher after changing a variable
 }
 /* MultiMonth */
 .fc .fc-multimonth-multicol .fc-daygrid-more-link {
-  @apply border-primary bg-primary text-[10px] leading-4 text-[var(--primary-foreground)];
+  @apply border-primary bg-primary text-[10px] leading-4 text-(--primary-foreground);
 }
 
 /* Mulimonth popup */
@@ -134,7 +134,4 @@ NOTE: for old browsers, will need to restart watcher after changing a variable
 }
 .fc-day-past .fc-daygrid-day-bg{
   @apply bg-primary/10;
-}
-.fc-day-future .fc-daygrid-day-bg {
-
 }

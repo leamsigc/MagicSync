@@ -5,7 +5,8 @@
   "scripts": {
     "build": "nuxt build --logLevel verbose",
     "build:debug": "nuxt build --debug",
-    "dev": "nuxt dev --inspect",
+    "dev": "nuxt dev",
+    "dev:debug": "nuxt dev --inspect",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",

@@ -1,0 +1,126 @@
+{
+    "en": {
+        "title": "Notifications",
+        "description": "View and manage your notifications",
+        "heading": "Notifications",
+        "subheading": "Stay updated with your latest notifications",
+        "filters": {
+            "all": "All",
+            "unread": "Unread"
+        },
+        "actions": {
+            "markAllRead": "Mark All as Read",
+            "markAsRead": "Mark as Read",
+            "delete": "Delete"
+        },
+        "empty": {
+            "title": "No notifications",
+            "description": "You're all caught up! No new notifications."
+        },
+        "types": {
+            "info": "Info",
+            "success": "Success",
+            "warning": "Warning",
+            "error": "Error"
+        },
+        "time": {
+            "justNow": "Just now",
+            "minutesAgo": "{count} minutes ago",
+            "hoursAgo": "{count} hours ago",
+            "daysAgo": "{count} days ago"
+        }
+    },
+    "es": {
+        "title": "Notificaciones",
+        "description": "Ver y administrar tus notificaciones",
+        "heading": "Notificaciones",
+        "subheading": "Mantente actualizado con tus últimas notificaciones",
+        "filters": {
+            "all": "Todas",
+            "unread": "No Leídas"
+        },
+        "actions": {
+            "markAllRead": "Marcar Todas como Leídas",
+            "markAsRead": "Marcar como Leída",
+            "delete": "Eliminar"
+        },
+        "empty": {
+            "title": "Sin notificaciones",
+            "description": "¡Estás al día! No hay nuevas notificaciones."
+        },
+        "types": {
+            "info": "Info",
+            "success": "Éxito",
+            "warning": "Advertencia",
+            "error": "Error"
+        },
+        "time": {
+            "justNow": "Justo ahora",
+            "minutesAgo": "Hace {count} minutos",
+            "hoursAgo": "Hace {count} horas",
+            "daysAgo": "Hace {count} días"
+        }
+    },
+    "de": {
+        "title": "Benachrichtigungen",
+        "description": "Benachrichtigungen anzeigen und verwalten",
+        "heading": "Benachrichtigungen",
+        "subheading": "Bleiben Sie mit Ihren neuesten Benachrichtigungen auf dem Laufenden",
+        "filters": {
+            "all": "Alle",
+            "unread": "Ungelesen"
+        },
+        "actions": {
+            "markAllRead": "Alle als Gelesen Markieren",
+            "markAsRead": "Als Gelesen Markieren",
+            "delete": "Löschen"
+        },
+        "empty": {
+            "title": "Keine Benachrichtigungen",
+            "description": "Sie sind auf dem neuesten Stand! Keine neuen Benachrichtigungen."
+        },
+        "types": {
+            "info": "Info",
+            "success": "Erfolg",
+            "warning": "Warnung",
+            "error": "Fehler"
+        },
+        "time": {
+            "justNow": "Gerade eben",
+            "minutesAgo": "Vor {count} Minuten",
+            "hoursAgo": "Vor {count} Stunden",
+            "daysAgo": "Vor {count} Tagen"
+        }
+    },
+    "fr": {
+        "title": "Notifications",
+        "description": "Voir et gérer vos notifications",
+        "heading": "Notifications",
+        "subheading": "Restez à jour avec vos dernières notifications",
+        "filters": {
+            "all": "Toutes",
+            "unread": "Non Lues"
+        },
+        "actions": {
+            "markAllRead": "Tout Marquer comme Lu",
+            "markAsRead": "Marquer comme Lu",
+            "delete": "Supprimer"
+        },
+        "empty": {
+            "title": "Aucune notification",
+            "description": "Vous êtes à jour! Aucune nouvelle notification."
+        },
+        "types": {
+            "info": "Info",
+            "success": "Succès",
+            "warning": "Avertissement",
+            "error": "Erreur"
+        },
+        "time": {
+            "justNow": "À l'instant",
+            "minutesAgo": "Il y a {count} minutes",
+            "hoursAgo": "Il y a {count} heures",
+            "daysAgo": "Il y a {count} jours"
+        }
+    }
+}

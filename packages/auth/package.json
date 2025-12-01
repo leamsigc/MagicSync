@@ -17,7 +17,8 @@
     "@local-monorepo/ui": "workspace:*",
     "@nuxtjs/i18n": "catalog:",
     "better-auth": "catalog:",
-    "better-sqlite3": "catalog:"
+    "better-sqlite3": "catalog:",
+    "@better-auth/utils": "catalog:"
   },
   "devDependencies": {
     "@nuxt/eslint": "catalog:",

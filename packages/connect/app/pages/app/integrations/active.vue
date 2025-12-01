@@ -39,8 +39,8 @@ useHead({
     <BasePageHeader :title="t('title')" :description="t('description')" />
     <div class="grid grid-cols-5 gap-2">
       <ConnectIntegrationCard v-for="social in pagesList" :name="social.accountName" :key="social.id"
-        :image="social.entityDetail.details.picture" :icon="`logos:${social.platform}`"
-        :tags="[social.entityDetail.entityType]"
+        :image="social.entityDetail.details.picture ? social.entityDetail.details.picture : ''"
+        :icon="`logos:${social.platform}`" :tags="[social.entityDetail.entityType]"
         :time="dayjs(social.createdAt as unknown as string).format('YYYY-MM-DD')" connected :show-pages="false" />
     </div>
   </div>

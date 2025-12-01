@@ -4,11 +4,12 @@ import { linkSocial } from "#layers/BaseAuth/lib/auth-client";
 import type { SocialMediaAccount, SocialMediaComplete } from "#layers/BaseDB/db/schema";
 import { useBusinessManager } from "../../business/composables/useBusinessManager";
 
-interface Connection {
+export interface Connection {
   name: string;
   icon: string;
   url: string;
-  platform: 'facebook' | 'instagram' | 'twitter' | 'tiktok' | 'google' | 'github' | 'discord' | 'apple' | 'microsoft' | 'linkedin' | 'threads' | 'youtube' | 'pinterest' | 'mastodon' | 'bluesky';
+  platform: 'facebook' | 'instagram' | 'instagram-standalone' | 'twitter' | 'tiktok' | 'google' | 'googlemybusiness' | 'discord' | 'linkedin' | 'linkedin-page' | 'threads' | 'youtube' | 'bluesky' | 'devto' | 'dribbble' | 'reddit' | 'wordpress';
+  authType?: 'better-auth' | 'manual-oauth' | 'api-key';
 }
 
 
@@ -19,33 +20,77 @@ export const useConnectionManager = () => {
   const allConnections = ref<SocialMediaAccount[]>([]);
   const pagesList = useState<SocialMediaComplete[]>("socialMedia:List", () => []);
   const facebookPages = ref<FacebookPage[]>([]);
+  const router = useRouter();
   const setConnectionList = () => {
     connectionList.value = [
-      { name: 'Facebook', icon: 'logos:facebook', url: '#', platform: 'facebook' },
-      { name: 'Instagram', icon: 'logos:instagram', url: '#', platform: "instagram" },
-      { name: 'Threads', icon: 'fa6-brands:square-threads', url: '#', platform: "threads" },
-      { name: 'X (Twitter)', icon: 'logos:twitter', url: '#', platform: "twitter" },
-      { name: 'LinkedIn', icon: 'logos:linkedin', url: '#', platform: "linkedin" },
-      { name: 'YouTube', icon: 'logos:youtube', url: '#', platform: "youtube" },
-      { name: 'TikTok', icon: 'logos:tiktok', url: '#', platform: "tiktok" },
-      { name: 'Pinterest', icon: 'logos:pinterest', url: '#', platform: "pinterest" },
-      { name: 'Mastodon', icon: 'logos:mastodon', url: '#', platform: "mastodon" },
-      { name: 'Bluesky', icon: 'fa6-brands:square-bluesky', url: '#', platform: "bluesky" },
-      { name: 'Google Business', icon: 'logos:google', url: '#', platform: "google" },
+      // Better Auth OAuth platforms (native support)
+      { name: 'Facebook', icon: 'logos:facebook', url: '#', platform: 'facebook', authType: 'better-auth' },
+      { name: 'Instagram', icon: 'logos:instagram-icon', url: '#', platform: "instagram", authType: 'better-auth' },
+      { name: 'Threads', icon: 'fa6-brands:square-threads', url: '#', platform: "threads", authType: 'better-auth' },
+      { name: 'Google Business', icon: 'logos:google', url: '#', platform: "googlemybusiness", authType: 'better-auth' },
+      { name: 'LinkedIn', icon: 'logos:linkedin-icon', url: '#', platform: "linkedin", authType: 'better-auth' },
+      { name: 'X (Twitter)', icon: 'logos:twitter', url: '#', platform: "twitter", authType: 'better-auth' },
+      { name: 'TikTok', icon: 'logos:tiktok-icon', url: '#', platform: "tiktok", authType: 'better-auth' },
+      { name: 'Discord', icon: 'logos:discord-icon', url: '#', platform: "discord", authType: 'better-auth' },
+      { name: 'Reddit', icon: 'logos:reddit-icon', url: '#', platform: "reddit", authType: 'better-auth' },
+      { name: 'YouTube', icon: 'logos:youtube-icon', url: '#', platform: "youtube", authType: 'better-auth' },
+
+      // Better Auth Generic OAuth platforms
+      { name: 'LinkedIn Page', icon: 'logos:linkedin-icon', url: '#', platform: "linkedin-page", authType: 'better-auth' },
+      { name: 'Dribbble', icon: 'logos:dribbble-icon', url: '#', platform: "dribbble", authType: 'better-auth' },
+
+      // API Key / Credential-based platforms
+      { name: 'Bluesky', icon: 'fa6-brands:bluesky', url: '#', platform: "bluesky", authType: 'api-key' },
+      { name: 'Dev.to', icon: 'logos:dev-badge', url: '#', platform: "devto", authType: 'api-key' },
+      { name: 'WordPress', icon: 'logos:wordpress-icon', url: '#', platform: "wordpress", authType: 'api-key' },
     ]
   }
   const getAllConnections = async (connections: SocialMediaAccount[]) => {
     allConnections.value = connections
   }
-  const HandleConnectTo = async (connection: Connection) => {
+  const HandleConnectTo = async (connection: Connection, credentials?: { [key: string]: string }) => {
     try {
       const { activeBusinessId } = useBusinessManager()
-      linkSocial({
-        provider: connection.platform,
-        callbackURL: `/api/v1/social-accounts/callback/${connection.platform}?businessId=${activeBusinessId.value}`,
-      });
+
+      if (connection.authType === 'better-auth') {
+        linkSocial({
+          provider: connection.platform,
+          callbackURL: `/api/v1/social-accounts/callback/${connection.platform}?businessId=${activeBusinessId.value}`,
+        });
+      } else if (connection.authType === 'api-key') {
+        if (connection.platform == 'bluesky') {
+          const response = await $fetch<Promise<SocialMediaAccount>>(`/api/v1/social-accounts/api-key/bluesky?businessId=${activeBusinessId.value}`, {
+            method: 'POST',
+            body: { ...credentials, ...connection, platformId: connection.platform, businessId: activeBusinessId.value },
+          });
+          console.log("######## Connect to Bluesky #######");
+          console.log(response);
+          toast.add({
+            title: 'Success',
+            description: 'Successfully connected to Bluesky',
+            icon: 'i-heroicons-check-circle',
+            color: 'success',
+          });
+          await getAllSocialMediaAccounts();
+          router.push('/app/integrations/active')
+          return response
+        }
+        // Show modal for API key/credential input
+        toast.add({
+          title: 'API Key Required',
+          description: `Please configure ${connection.name} credentials in settings`,
+          icon: 'i-heroicons-information-circle',
+          color: 'info',
+        });
+      }
     } catch (error) {
-      console.error('Error adding business:', error);
+      console.error('Error connecting to platform:', error);
+      toast.add({
+        title: 'Connection Failed',
+        description: `Failed to connect to ${connection.name}`,
+        icon: 'i-heroicons-x-circle',
+        color: 'error',
+      });
       throw error;
     }
   }

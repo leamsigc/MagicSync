@@ -2,6 +2,7 @@ packages:
   - packages/*
 
 catalog:
+  '@better-auth/utils': ^0.3.0
   '@atproto/api': ^0.18.3
   '@fullcalendar/core': ^6.1.19
   '@fullcalendar/daygrid': ^6.1.19

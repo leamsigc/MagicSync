@@ -53,10 +53,6 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-
-    // If the status is scheduled
-    console.log("Status", body.status);
-
     if (body.status === 'published' && result.data) {
       const fullPost = await postService.findByIdFull({ postId: result.data.id });
       if (!fullPost || !fullPost) {

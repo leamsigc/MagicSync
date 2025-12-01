@@ -1,0 +1,214 @@
+{
+    "en": {
+        "title": "Account Settings",
+        "description": "Manage your account settings and security",
+        "heading": "Account Settings",
+        "subheading": "Manage your account preferences, linked accounts, and security settings",
+        "tabs": {
+            "general": "General",
+            "linked": "Linked Accounts",
+            "security": "Security",
+            "danger": "Danger Zone"
+        },
+        "general": {
+            "title": "General Settings",
+            "email": "Email Address",
+            "emailVerified": "Email Verified",
+            "verified": "Verified",
+            "notVerified": "Not Verified",
+            "save": "Save Changes"
+        },
+        "linked": {
+            "title": "Linked Accounts",
+            "description": "Manage your connected social media accounts",
+            "provider": "Provider",
+            "connectedAt": "Connected",
+            "unlink": "Unlink",
+            "noAccounts": "No linked accounts"
+        },
+        "security": {
+            "title": "Security Settings",
+            "password": "Change Password",
+            "twoFactor": "Two-Factor Authentication",
+            "sessions": "Active Sessions"
+        },
+        "danger": {
+            "title": "Danger Zone",
+            "description": "Irreversible and destructive actions",
+            "deleteAccount": "Delete Account",
+            "deleteDescription": "Once you delete your account, there is no going back. Please be certain.",
+            "deleteButton": "Delete My Account",
+            "confirmTitle": "Are you absolutely sure?",
+            "confirmDescription": "This action cannot be undone. This will permanently delete your account and remove your data from our servers.",
+            "cancel": "Cancel",
+            "confirm": "Yes, delete my account"
+        },
+        "messages": {
+            "success": "Settings updated successfully",
+            "error": "Failed to update settings",
+            "unlinkSuccess": "Account unlinked successfully",
+            "unlinkError": "Failed to unlink account",
+            "deleteSuccess": "Account deleted successfully",
+            "deleteError": "Failed to delete account"
+        }
+    },
+    "es": {
+        "title": "Configuración de Cuenta",
+        "description": "Administra la configuración y seguridad de tu cuenta",
+        "heading": "Configuración de Cuenta",
+        "subheading": "Administra tus preferencias de cuenta, cuentas vinculadas y configuración de seguridad",
+        "tabs": {
+            "general": "General",
+            "linked": "Cuentas Vinculadas",
+            "security": "Seguridad",
+            "danger": "Zona de Peligro"
+        },
+        "general": {
+            "title": "Configuración General",
+            "email": "Correo Electrónico",
+            "emailVerified": "Correo Verificado",
+            "verified": "Verificado",
+            "notVerified": "No Verificado",
+            "save": "Guardar Cambios"
+        },
+        "linked": {
+            "title": "Cuentas Vinculadas",
+            "description": "Administra tus cuentas de redes sociales conectadas",
+            "provider": "Proveedor",
+            "connectedAt": "Conectado",
+            "unlink": "Desvincular",
+            "noAccounts": "Sin cuentas vinculadas"
+        },
+        "security": {
+            "title": "Configuración de Seguridad",
+            "password": "Cambiar Contraseña",
+            "twoFactor": "Autenticación de Dos Factores",
+            "sessions": "Sesiones Activas"
+        },
+        "danger": {
+            "title": "Zona de Peligro",
+            "description": "Acciones irreversibles y destructivas",
+            "deleteAccount": "Eliminar Cuenta",
+            "deleteDescription": "Una vez que elimines tu cuenta, no hay vuelta atrás. Por favor, asegúrate.",
+            "deleteButton": "Eliminar Mi Cuenta",
+            "confirmTitle": "¿Estás absolutamente seguro?",
+            "confirmDescription": "Esta acción no se puede deshacer. Esto eliminará permanentemente tu cuenta y eliminará tus datos de nuestros servidores.",
+            "cancel": "Cancelar",
+            "confirm": "Sí, eliminar mi cuenta"
+        },
+        "messages": {
+            "success": "Configuración actualizada exitosamente",
+            "error": "Error al actualizar configuración",
+            "unlinkSuccess": "Cuenta desvinculada exitosamente",
+            "unlinkError": "Error al desvincular cuenta",
+            "deleteSuccess": "Cuenta eliminada exitosamente",
+            "deleteError": "Error al eliminar cuenta"
+        }
+    },
+    "de": {
+        "title": "Kontoeinstellungen",
+        "description": "Verwalten Sie Ihre Kontoeinstellungen und Sicherheit",
+        "heading": "Kontoeinstellungen",
+        "subheading": "Verwalten Sie Ihre Kontoeinstellungen, verknüpfte Konten und Sicherheitseinstellungen",
+        "tabs": {
+            "general": "Allgemein",
+            "linked": "Verknüpfte Konten",
+            "security": "Sicherheit",
+            "danger": "Gefahrenzone"
+        },
+        "general": {
+            "title": "Allgemeine Einstellungen",
+            "email": "E-Mail-Adresse",
+            "emailVerified": "E-Mail Verifiziert",
+            "verified": "Verifiziert",
+            "notVerified": "Nicht Verifiziert",
+            "save": "Änderungen Speichern"
+        },
+        "linked": {
+            "title": "Verknüpfte Konten",
+            "description": "Verwalten Sie Ihre verbundenen Social-Media-Konten",
+            "provider": "Anbieter",
+            "connectedAt": "Verbunden",
+            "unlink": "Trennen",
+            "noAccounts": "Keine verknüpften Konten"
+        },
+        "security": {
+            "title": "Sicherheitseinstellungen",
+            "password": "Passwort Ändern",
+            "twoFactor": "Zwei-Faktor-Authentifizierung",
+            "sessions": "Aktive Sitzungen"
+        },
+        "danger": {
+            "title": "Gefahrenzone",
+            "description": "Irreversible und destruktive Aktionen",
+            "deleteAccount": "Konto Löschen",
+            "deleteDescription": "Sobald Sie Ihr Konto löschen, gibt es kein Zurück mehr. Bitte seien Sie sicher.",
+            "deleteButton": "Mein Konto Löschen",
+            "confirmTitle": "Sind Sie absolut sicher?",
+            "confirmDescription": "Diese Aktion kann nicht rückgängig gemacht werden. Dies wird Ihr Konto dauerhaft löschen und Ihre Daten von unseren Servern entfernen.",
+            "cancel": "Abbrechen",
+            "confirm": "Ja, mein Konto löschen"
+        },
+        "messages": {
+            "success": "Einstellungen erfolgreich aktualisiert",
+            "error": "Fehler beim Aktualisieren der Einstellungen",
+            "unlinkSuccess": "Konto erfolgreich getrennt",
+            "unlinkError": "Fehler beim Trennen des Kontos",
+            "deleteSuccess": "Konto erfolgreich gelöscht",
+            "deleteError": "Fehler beim Löschen des Kontos"
+        }
+    },
+    "fr": {
+        "title": "Paramètres du Compte",
+        "description": "Gérez les paramètres et la sécurité de votre compte",
+        "heading": "Paramètres du Compte",
+        "subheading": "Gérez vos préférences de compte, comptes liés et paramètres de sécurité",
+        "tabs": {
+            "general": "Général",
+            "linked": "Comptes Liés",
+            "security": "Sécurité",
+            "danger": "Zone de Danger"
+        },
+        "general": {
+            "title": "Paramètres Généraux",
+            "email": "Adresse Email",
+            "emailVerified": "Email Vérifié",
+            "verified": "Vérifié",
+            "notVerified": "Non Vérifié",
+            "save": "Enregistrer les Modifications"
+        },
+        "linked": {
+            "title": "Comptes Liés",
+            "description": "Gérez vos comptes de réseaux sociaux connectés",
+            "provider": "Fournisseur",
+            "connectedAt": "Connecté",
+            "unlink": "Délier",
+            "noAccounts": "Aucun compte lié"
+        },
+        "security": {
+            "title": "Paramètres de Sécurité",
+            "password": "Changer le Mot de Passe",
+            "twoFactor": "Authentification à Deux Facteurs",
+            "sessions": "Sessions Actives"
+        },
+        "danger": {
+            "title": "Zone de Danger",
+            "description": "Actions irréversibles et destructives",
+            "deleteAccount": "Supprimer le Compte",
+            "deleteDescription": "Une fois que vous supprimez votre compte, il n'y a pas de retour en arrière. Veuillez être certain.",
+            "deleteButton": "Supprimer Mon Compte",
+            "confirmTitle": "Êtes-vous absolument sûr?",
+            "confirmDescription": "Cette action ne peut pas être annulée. Cela supprimera définitivement votre compte et supprimera vos données de nos serveurs.",
+            "cancel": "Annuler",
+            "confirm": "Oui, supprimer mon compte"
+        },
+        "messages": {
+            "success": "Paramètres mis à jour avec succès",
+            "error": "Échec de la mise à jour des paramètres",
+            "unlinkSuccess": "Compte délié avec succès",
+            "unlinkError": "Échec de la déliaison du compte",
+            "deleteSuccess": "Compte supprimé avec succès",
+            "deleteError": "Échec de la suppression du compte"
+        }
+    }
+}

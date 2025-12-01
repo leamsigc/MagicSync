@@ -11,6 +11,30 @@ export function getAuthUrl(platform: SocialMediaPlatform, callbackUrl?: string) 
 }
 
 /**
+ * Check if platform is supported by Better Auth (native or Generic OAuth)
+ */
+export function isBetterAuthPlatform(platform: SocialMediaPlatform): boolean {
+  const betterAuthPlatforms: SocialMediaPlatform[] = [
+    // Native Better Auth providers
+    'facebook',
+    'instagram',
+    'threads',
+    'google',
+    'googlemybusiness',
+    'reddit',
+    'discord',
+    'linkedin',
+    'twitter',
+    'tiktok',
+    // Generic OAuth providers
+    'linkedin-page',
+    'youtube',
+    'dribbble'
+  ]
+  return betterAuthPlatforms.includes(platform)
+}
+
+/**
  * Link a social account to the current authenticated user
  */
 export function linkAccount(platform: SocialMediaPlatform, callbackUrl?: string) {

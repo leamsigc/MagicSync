@@ -9,6 +9,9 @@ catalogs:
     '@atproto/api':
       specifier: ^0.18.3
       version: 0.18.3
+    '@better-auth/utils':
+      specifier: ^0.3.0
+      version: 0.3.0
     '@fullcalendar/core':
       specifier: ^6.1.19
       version: 6.1.19
@@ -235,6 +238,9 @@ importers:
 
   packages/auth:
     dependencies:
+      '@better-auth/utils':
+        specifier: 'catalog:'
+        version: 0.3.0
       '@local-monorepo/db':
         specifier: workspace:*
         version: link:../db

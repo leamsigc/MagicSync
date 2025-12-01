@@ -17,7 +17,24 @@ import { account, type Account, type User } from '#layers/BaseDB/db/auth/auth'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
 import { entityDetailsService } from '#layers/BaseDB/server/services/entity-details.service' // Import new service
 
-export type SocialMediaPlatform = 'facebook' | 'instagram' | 'twitter' | 'tiktok' | 'google_my_business'
+export type SocialMediaPlatform =
+  | 'facebook'
+  | 'instagram'
+  | 'instagram-standalone'
+  | 'twitter'
+  | 'tiktok'
+  | 'google'
+  | 'googlemybusiness'
+  | 'discord'
+  | 'linkedin'
+  | 'linkedin-page'
+  | 'threads'
+  | 'youtube'
+  | 'bluesky'
+  | 'devto'
+  | 'dribbble'
+  | 'reddit'
+  | 'wordpress'
 
 export interface CreateSocialMediaAccountData {
   userId: string

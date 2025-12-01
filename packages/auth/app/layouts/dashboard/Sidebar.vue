@@ -153,11 +153,11 @@ const navigationItems = computed<NavigationMenuItem[][]>(() => {
         children: [
           {
             label: menuData.menu.profile,
-            to: '/app/settings/profile'
+            to: '/app/profile'
           },
           {
             label: menuData.userNav.account,
-            to: '/app/settings/account'
+            to: '/app/account'
           },
           {
             label: menuData.userNav.appearance,
@@ -165,7 +165,7 @@ const navigationItems = computed<NavigationMenuItem[][]>(() => {
           },
           {
             label: menuData.menu.notification,
-            to: '/app/settings/notification'
+            to: '/app/notifications'
           },
           {
             label: menuData.menu.emailTemplate,

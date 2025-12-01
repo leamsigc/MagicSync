@@ -6,8 +6,14 @@ export const getUserSessionFromEvent = async (e: H3Event) => {
     headers: e.headers
   });
 };
+import { symmetricEncrypt, symmetricDecrypt } from "better-auth/crypto";
 
-
+export const encryptKey = async (data: string) => {
+  return await symmetricEncrypt({ key: process.env.BETTER_AUTH_SECRET!, data });
+}
+export const decryptKey = async (data: string) => {
+  return await symmetricDecrypt({ key: process.env.BETTER_AUTH_SECRET!, data });
+}
 
 export const checkUserIsLogin = async (event: H3Event) => {
   // Get user from session
