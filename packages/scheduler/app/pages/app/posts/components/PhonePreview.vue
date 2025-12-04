@@ -38,15 +38,15 @@ const props = defineProps<Props>();
 
 const platformConfig = computed(() => {
   const configs: Record<string, { logo: string; bgColor: string; textColor: string }> = {
-    instagram: { logo: 'Instagram', bgColor: 'bg-white', textColor: 'text-black' },
+    instagram: { logo: 'Instagram', bgColor: '', textColor: 'text-zinc-100' },
     twitter: { logo: '𝕏', bgColor: 'bg-black', textColor: 'text-white' },
     x: { logo: '𝕏', bgColor: 'bg-black', textColor: 'text-white' },
-    facebook: { logo: 'facebook', bgColor: 'bg-white', textColor: 'text-black' },
-    linkedin: { logo: 'LinkedIn', bgColor: 'bg-white', textColor: 'text-black' },
-    tiktok: { logo: 'TikTok', bgColor: 'bg-black', textColor: 'text-white' },
-    threads: { logo: 'Threads', bgColor: 'bg-white', textColor: 'text-black' },
-    bluesky: { logo: 'Bluesky', bgColor: 'bg-white', textColor: 'text-black' },
-    default: { logo: 'Preview', bgColor: 'bg-zinc-900', textColor: 'text-zinc-100' },
+    facebook: { logo: 'facebook', bgColor: '', textColor: 'text-zinc-100' },
+    linkedin: { logo: 'LinkedIn', bgColor: '', textColor: 'text-zinc-100' },
+    tiktok: { logo: 'TikTok', bgColor: '', textColor: 'text-white' },
+    threads: { logo: 'Threads', bgColor: '', textColor: 'text-zinc-100' },
+    bluesky: { logo: 'Bluesky', bgColor: '', textColor: 'text-zinc-100' },
+    default: { logo: 'Preview', bgColor: '', textColor: 'text-zinc-100' },
   };
   return configs[props.platform] || configs.default;
 });

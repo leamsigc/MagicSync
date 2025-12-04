@@ -27,7 +27,7 @@ const date = dayjs(Date.now()).format('hh:mm A · MMM D, YYYY');// 3:47 PM · No
 </script>
 
 <template>
-  <div class="bg-black text-white p-4 max-w-md mx-auto font-twitter">
+  <div class=" text-white p-4 max-w-md mx-auto font-twitter">
     <!-- Header -->
     <div class="flex items-center justify-between mb-2">
       <div class="flex items-center">

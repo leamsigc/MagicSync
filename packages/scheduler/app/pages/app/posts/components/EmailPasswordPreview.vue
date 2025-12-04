@@ -22,7 +22,7 @@ const props = defineProps<{
 </script>
 
 <template>
-  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 max-w-md mx-auto">
+  <div class="rounded-lg shadow-md p-4 max-w-md mx-auto">
     <div class="flex items-center mb-3">
       <UAvatar src="https://avatars.githubusercontent.com/u/739984?v=4" alt="User" size="md" />
       <div class="ml-3">

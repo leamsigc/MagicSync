@@ -30,7 +30,7 @@ const formattedPostDate = computed(() => {
 </script>
 
 <template>
-  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 max-w-md mx-auto">
+  <div class=" rounded-lg shadow-md p-4 max-w-md mx-auto">
     <div class="flex items-center justify-between mb-3">
       <div class="flex items-center">
         <UAvatar :src="user?.image || ''" :alt="user?.name" size="md" />
