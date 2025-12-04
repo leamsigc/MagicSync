@@ -62,13 +62,7 @@ const progressColor = computed(() => {
         <div class="w-px h-6 bg-zinc-800 mx-1"></div>
 
         <slot name="ai-tools" />
-
-        <UTooltip text="Emoji">
-          <button @click="emit('open-emoji')"
-            class="p-2 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 transition-colors">
-            <Icon name="lucide:smile" class="w-5 h-5" />
-          </button>
-        </UTooltip>
+        <slot name="emoji" />
       </div>
 
       <div class="flex items-center gap-3">

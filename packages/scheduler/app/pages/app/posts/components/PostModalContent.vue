@@ -29,6 +29,7 @@ import PostContextSwitcher from './editor/PostContextSwitcher.vue';
 import PostContentEditor from './editor/PostContentEditor.vue';
 import PostAIAssistant from './editor/PostAIAssistant.vue';
 import { useAI } from '../composables/useAI';
+import EmojiPicker from '#layers/BaseScheduler/app/components/EmojiPicker.vue';
 
 interface TargetPlatform {
   accountId: string;
@@ -438,6 +439,12 @@ const handleAIAction = async (action: string) => {
     });
   }
 };
+/*
+Emoji related 
+ */
+const handleEmojiSelect = (emoji: string) => {
+  postForm.value.content += emoji;
+};
 </script>
 
 <template>
@@ -488,6 +495,9 @@ const handleAIAction = async (action: string) => {
                     :placeholder="`Drafting for ${activeContextLabel}...`">
                     <template #ai-tools>
                       <PostAIAssistant :loading="aiLoading" @action="handleAIAction" />
+                    </template>
+                    <template #emoji>
+                      <EmojiPicker @select="handleEmojiSelect" />
                     </template>
                     <template #assetsList>
                       <section v-for="asset in postMediaAssets">

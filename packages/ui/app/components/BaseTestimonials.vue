@@ -90,37 +90,34 @@ const { list } = toRefs(props);
       </h3>
     </div>
 
-    <UCarousel :opts="{
+    <UCarousel v-slot="{ item: review }" :items="list" :opts="{
       align: 'start',
-    }" class="relative w-[80%] sm:w-[90%] lg:max-w-screen-xl mx-auto">
-      <UCarouselItem v-for="review in list" :key="review.name" class="md:basis-1/2 lg:basis-1/3">
-        <UCard class="bg-muted/50 dark:bg-card">
-          <div class="px-6 py-6 pb-0">
-            <div class="flex gap-1 pb-6">
-              <UIcon name="lucide-star" class="size-4 fill-primary text-primary" />
-              <UIcon name="lucide-star" class="size-4 fill-primary text-primary" />
-              <UIcon name="lucide-star" class="size-4 fill-primary text-primary" />
-              <UIcon name="lucide-star" class="size-4 fill-primary text-primary" />
-              <UIcon name="lucide-star" class="size-4 fill-primary text-primary" />
-            </div>
-
-            "{{ review.comment }}"
+    }" :ui="{ item: 'basis-full md:basis-1/2 lg:basis-1/3' }"
+      class="relative w-[80%] sm:w-[90%] lg:max-w-screen-xl mx-auto" arrows loop autoplay>
+      <UCard class="bg-muted/50 dark:bg-card">
+        <div class="px-6 py-6 pb-0">
+          <div class="flex gap-1 pb-6">
+            <UIcon name="lucide-star" class="size-4 fill-primary text-primary" />
+            <UIcon name="lucide-star" class="size-4 fill-primary text-primary" />
+            <UIcon name="lucide-star" class="size-4 fill-primary text-primary" />
+            <UIcon name="lucide-star" class="size-4 fill-primary text-primary" />
+            <UIcon name="lucide-star" class="size-4 fill-primary text-primary" />
           </div>
 
-          <div class="flex flex-row items-center gap-4 px-6 py-4">
-            <UAvatar size="lg">
-              <img :src="review.image" :alt="review.name" />
-            </UAvatar>
+          "{{ review.comment }}"
+        </div>
 
-            <div class="flex flex-col">
-              <p class="text-lg font-medium">{{ review.name }}</p>
-              <p class="text-sm text-muted-foreground">{{ review.userName }}</p>
-            </div>
+        <div class="flex flex-row items-center gap-4 px-6 py-4">
+          <UAvatar size="lg" rounded>
+            <img :src="review.image" :alt="review.name" class="rounded-full" />
+          </UAvatar>
+
+          <div class="flex flex-col">
+            <p class="text-lg font-medium">{{ review.name }}</p>
+            <p class="text-sm text-muted-foreground">{{ review.userName }}</p>
           </div>
-        </UCard>
-      </UCarouselItem>
-      <UCarouselPrevious />
-      <UCarouselNext />
+        </div>
+      </UCard>
     </UCarousel>
   </section>
 </template>
