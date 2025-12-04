@@ -1,16 +1,6 @@
 <script lang="ts" setup>
-/**
- * Component Description: Wrapper component that renders the appropriate platform preview within a phone shell
- *
- * @author Ismael Garcia <leamsigc@leamsigc.com>
- * @version 0.0.2
- *
- * @todo [ ] Test the component
- * @todo [ ] Integration test.
- * @todo [✔] Update the typescript.
- */
 import type { Asset, PostCreateBase } from '#layers/BaseDB/db/schema';
-import type { SocialMediaPlatformConfigurations } from '../composables/usePlatformConfiguration';
+import type { PlatformConfig, SocialMediaPlatformConfigurations, PostFormat } from '../composables/usePlatformConfiguration';
 
 const FacebookPreview = defineAsyncComponent(() => import('./FacebookPreview.vue'));
 const InstagramPreview = defineAsyncComponent(() => import('./InstagramPreview.vue'));
@@ -25,33 +15,70 @@ const PinterestPreview = defineAsyncComponent(() => import('./PinterestPreview.v
 const MastodonPreview = defineAsyncComponent(() => import('./MastodonPreview.vue'));
 const BlueskyPreview = defineAsyncComponent(() => import('./BlueskyPreview.vue'));
 const DefaultPreview = defineAsyncComponent(() => import('./DefaultPreview.vue'));
-
+const VerticalVideoPreview = defineAsyncComponent(() => import('./VerticalVideoPreview.vue'));
 
 interface Props {
   postContent: string;
   mediaAssets: Asset[];
   platform: keyof SocialMediaPlatformConfigurations;
   post: PostCreateBase;
+  currentPlatformConfig: PlatformConfig;
+  format?: PostFormat;
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+  format: 'post'
+});
+
+const emit = defineEmits<{
+  (e: 'update:format', format: PostFormat): void;
+}>();
+
+const selectedFormat = ref<PostFormat>(props.format);
+
+watch(() => props.format, (newFormat) => {
+  selectedFormat.value = newFormat;
+});
+
+const supportedFormats = computed(() => {
+  return props.currentPlatformConfig?.supportedFormats || ['post'];
+});
+
+const isVerticalVideo = computed(() => {
+  return selectedFormat.value === 'reel' || selectedFormat.value === 'short' || props.platform === 'tiktok';
+});
+
+const handleFormatChange = (format: PostFormat) => {
+  selectedFormat.value = format;
+  emit('update:format', format);
+};
 
 const platformConfig = computed(() => {
   const configs: Record<string, { logo: string; bgColor: string; textColor: string }> = {
-    instagram: { logo: 'Instagram', bgColor: '', textColor: 'text-zinc-100' },
-    twitter: { logo: '𝕏', bgColor: 'bg-black', textColor: 'text-white' },
-    x: { logo: '𝕏', bgColor: 'bg-black', textColor: 'text-white' },
-    facebook: { logo: 'facebook', bgColor: '', textColor: 'text-zinc-100' },
-    linkedin: { logo: 'LinkedIn', bgColor: '', textColor: 'text-zinc-100' },
-    tiktok: { logo: 'TikTok', bgColor: '', textColor: 'text-white' },
-    threads: { logo: 'Threads', bgColor: '', textColor: 'text-zinc-100' },
-    bluesky: { logo: 'Bluesky', bgColor: '', textColor: 'text-zinc-100' },
-    default: { logo: 'Preview', bgColor: '', textColor: 'text-zinc-100' },
+    instagram: { logo: 'Instagram', bgColor: '', textColor: 'dark:text-zinc-100' },
+    twitter: { logo: '𝕏', bgColor: 'bg-black', textColor: 'dark:text-white' },
+    x: { logo: '𝕏', bgColor: 'bg-black', textColor: 'dark:text-white' },
+    facebook: { logo: 'facebook', bgColor: '', textColor: 'dark:text-zinc-100' },
+    linkedin: { logo: 'LinkedIn', bgColor: '', textColor: 'dark:text-zinc-100' },
+    tiktok: { logo: 'TikTok', bgColor: 'bg-black', textColor: 'dark:text-white' },
+    threads: { logo: 'Threads', bgColor: '', textColor: 'dark:text-zinc-100' },
+    bluesky: { logo: 'Bluesky', bgColor: '', textColor: 'dark:text-zinc-100' },
+    youtube: { logo: 'YouTube', bgColor: '', textColor: 'dark:text-zinc-100' },
+    default: { logo: 'Preview', bgColor: '', textColor: 'dark:text-zinc-100' },
   };
+
+  if (isVerticalVideo.value) {
+    return { ...configs[props.platform] || configs.default, bgColor: 'bg-black' };
+  }
+
   return configs[props.platform] || configs.default;
 });
 
 const currentPreviewComponent = computed(() => {
+  if (isVerticalVideo.value) {
+    return VerticalVideoPreview;
+  }
+
   switch (props.platform) {
     case 'facebook':
       return FacebookPreview;
@@ -82,14 +109,38 @@ const currentPreviewComponent = computed(() => {
       return DefaultPreview;
   }
 });
+
+const formatLabels: Record<PostFormat, string> = {
+  post: 'POST',
+  reel: 'REEL',
+  story: 'STORY',
+  short: 'SHORT'
+};
 </script>
 
 <template>
-  <PhoneShell :platform-config="platformConfig">
-    <component :postContent="postContent" :mediaAssets="mediaAssets" :platform="platform" :post="post"
-      :is="currentPreviewComponent" />
-    <template #footer>
+  <div class="flex flex-col items-center">
+    <div v-if="supportedFormats.length > 1"
+      class="mb-4 w-full max-w-[320px] flex items-center justify-between bg-zinc-900/80 p-2 rounded-xl border border-white/10 backdrop-blur shadow-xl">
+      <div class="flex items-center gap-2">
+        <Icon :name="`logos:${platform}`" class="w-5 h-5" />
+        <span class="text-sm font-bold text-zinc-200">{{ platformConfig?.logo || platform }}</span>
+      </div>
+      <div class="flex bg-zinc-800 rounded-lg p-1 gap-1">
+        <button v-for="fmt in supportedFormats" :key="fmt" @click="handleFormatChange(fmt)" :class="[
+          'px-3 py-1 text-[10px] font-bold uppercase rounded transition-all',
+          selectedFormat === fmt
+            ? 'bg-zinc-600 text-white shadow-sm'
+            : 'text-zinc-500 hover:text-zinc-300'
+        ]">
+          {{ formatLabels[fmt] }}
+        </button>
+      </div>
+    </div>
 
-    </template>
-  </PhoneShell>
+    <PhoneShell :platform-config="platformConfig">
+      <component :is="currentPreviewComponent" :postContent="postContent" :mediaAssets="mediaAssets"
+        :platform="platform" :post="post" :format="selectedFormat" />
+    </PhoneShell>
+  </div>
 </template>

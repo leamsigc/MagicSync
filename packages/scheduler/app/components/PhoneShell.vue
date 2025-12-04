@@ -50,15 +50,16 @@ withDefaults(defineProps<Props>(), {
         class="fill-[#E5E5E5] stroke-[#E5E5E5] stroke-[0.5] dark:fill-[#404040] dark:stroke-[#404040]"></path>
       <foreignObject x="21.25" y="19.25" width="389.5" height="843.5" clip-path="url(#roundedCorners)">
         <div class=" relative w-full h-full overflow-y-auto rounded-4xl"
-          :class="platformConfig?.bgColor || 'bg-zinc-900'">
+          :class="platformConfig?.bgColor || 'bg-white dark:bg-zinc-900'">
           <!-- Platform Header -->
           <div
-            class="sticky top-4 z-40 px-4 py-3 border-b border-zinc-200 dark:border-zinc-800/10 backdrop-blur-md  rounded-t-full">
+            class="sticky top-4 z-40 px-4 py-3 border-b border-zinc-200  dark:border-zinc-800/10 backdrop-blur-md  rounded-t-full">
             <div class="flex items-center justify-between">
-              <h3 class="text-lg font-bold" :class="platformConfig?.textColor || 'text-zinc-900'">
+              <h3 class="text-lg font-bold" :class="platformConfig?.textColor || ' dark:text-white'">
                 {{ platformConfig?.logo || 'Preview' }}
               </h3>
-              <Icon name="lucide:more-vertical" class="w-5 h-5" :class="platformConfig?.textColor || 'text-zinc-900'" />
+              <Icon name="lucide:more-vertical" class="w-5 h-5"
+                :class="platformConfig?.textColor || 'dark:text-white'" />
             </div>
           </div>
 

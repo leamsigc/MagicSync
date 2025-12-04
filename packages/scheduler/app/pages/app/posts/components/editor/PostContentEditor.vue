@@ -1,3 +1,6 @@
+<!--  Translation file -->
+<i18n src="../../posts.json"></i18n>
+
 <script lang="ts" setup>
 /**
  * Component Description: Main text editor area with character count and toolbar

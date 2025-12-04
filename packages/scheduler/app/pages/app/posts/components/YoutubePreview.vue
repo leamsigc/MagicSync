@@ -25,7 +25,7 @@ const props = defineProps<{
 </script>
 
 <template>
-  <div class=" rounded-lg shadow-md p-4 max-w-md mx-auto">
+  <div class=" rounded-lg  p-4 max-w-md mx-auto">
     <div class="flex items-center mb-3">
       <UAvatar :src="user?.image || ''" :alt="user?.name" size="md" />
       <div class="ml-3">

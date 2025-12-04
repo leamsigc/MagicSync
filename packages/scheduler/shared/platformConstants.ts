@@ -3,37 +3,27 @@
  * including restrictions and supported features for various platforms.
  * This file serves as the single source of truth for both UI validation and server-side enforcement.
  */
+export type PostFormat = 'post' | 'reel' | 'story' | 'short';
+
 export interface PlatformConfig {
-    /** Maximum length of post content in characters */
+    icon: string;
+    color: string;
     maxPostLength: number;
-    /** Maximum number of images allowed per post */
     maxImages: number;
-    /** Whether the platform supports comments */
     supportsComments: boolean;
-    /** Whether the platform supports images in comments */
     supportsImagesInComments: boolean;
-    /** Whether the platform supports carousel posts (multiple images/videos) */
     supportsCarousel: boolean;
-    /** Whether the platform supports video posts */
     supportsVideo: boolean;
-    /** Maximum video duration in seconds (optional) */
     maxVideoLengthSeconds?: number;
-    /** Whether the platform supports link previews */
     supportsLinkPreviews: boolean;
-    /** Whether the platform supports tags/hashtags */
     supportsTags?: boolean;
-    /** Whether the platform supports categories */
     supportsCategories?: boolean;
-    /** Whether the platform supports privacy settings (public, private, etc.) */
     supportsPrivacySettings?: boolean;
-    /** Whether the platform supports sound/audio features */
     supportsSounds?: boolean;
-    /** Whether the platform supports short-form video (Shorts, Reels, TikToks) */
     supportsShorts?: boolean;
-    /** Whether the platform supports stories */
     supportsStories?: boolean;
-    /** Maximum number of concurrent jobs/requests allowed (for rate limiting) */
     maxConcurrentJob?: number;
+    supportedFormats: PostFormat[];
 }
 
 export interface SocialMediaPlatformConfigurations {
@@ -62,13 +52,15 @@ export interface SocialMediaPlatformConfigurations {
 
 export const platformConfigurations: SocialMediaPlatformConfigurations = {
     default: {
-        maxPostLength: 100000, // Very large default
+        icon: 'i-heroicons-globe-alt',
+        color: '#6B7280',
+        maxPostLength: 100000,
         maxImages: 10,
         supportsComments: true,
         supportsImagesInComments: true,
         supportsCarousel: true,
         supportsVideo: true,
-        maxVideoLengthSeconds: 72000, // 20 hours
+        maxVideoLengthSeconds: 72000,
         supportsLinkPreviews: true,
         supportsTags: true,
         supportsCategories: true,
@@ -77,35 +69,44 @@ export const platformConfigurations: SocialMediaPlatformConfigurations = {
         supportsShorts: true,
         supportsStories: true,
         maxConcurrentJob: 10,
+        supportedFormats: ['post', 'reel', 'story', 'short'],
     },
     facebook: {
+        icon: 'i-simple-icons-facebook',
+        color: '#1877F2',
         maxPostLength: 63206,
         maxImages: 10,
         supportsComments: true,
         supportsImagesInComments: true,
         supportsCarousel: true,
         supportsVideo: true,
-        maxVideoLengthSeconds: 14400, // 4 hours
+        maxVideoLengthSeconds: 14400,
         supportsLinkPreviews: true,
         supportsStories: true,
         maxConcurrentJob: 10,
+        supportedFormats: ['post', 'reel', 'story'],
     },
     instagram: {
+        icon: 'i-simple-icons-instagram',
+        color: '#E4405F',
         maxPostLength: 2200,
         maxImages: 10,
         supportsComments: true,
         supportsImagesInComments: false,
         supportsCarousel: true,
         supportsVideo: true,
-        maxVideoLengthSeconds: 3600, // 60 mins (Reels)
+        maxVideoLengthSeconds: 3600,
         supportsLinkPreviews: false,
         supportsStories: true,
-        maxConcurrentJob: 2, // 100 posts/24hrs -> conservative limit
+        maxConcurrentJob: 2,
+        supportedFormats: ['post', 'reel', 'story'],
     },
     'instagram-standalone': {
+        icon: 'i-simple-icons-instagram',
+        color: '#E4405F',
         maxPostLength: 2200,
         maxImages: 10,
-        supportsComments: false, // Deprecated
+        supportsComments: false,
         supportsImagesInComments: false,
         supportsCarousel: true,
         supportsVideo: true,
@@ -113,19 +114,11 @@ export const platformConfigurations: SocialMediaPlatformConfigurations = {
         supportsLinkPreviews: false,
         supportsStories: false,
         maxConcurrentJob: 1,
+        supportedFormats: ['post'],
     },
     twitter: {
-        maxPostLength: 280, // Standard limit (Premium is 4000, handled in plugin logic)
-        maxImages: 4,
-        supportsComments: true,
-        supportsImagesInComments: true,
-        supportsCarousel: false,
-        supportsVideo: true,
-        maxVideoLengthSeconds: 140, // 2 mins 20 secs
-        supportsLinkPreviews: true,
-        maxConcurrentJob: 1, // 300 posts/3hrs -> strict limit
-    },
-    x: { // Alias for twitter
+        icon: 'i-simple-icons-x',
+        color: '#000000',
         maxPostLength: 280,
         maxImages: 4,
         supportsComments: true,
@@ -135,19 +128,39 @@ export const platformConfigurations: SocialMediaPlatformConfigurations = {
         maxVideoLengthSeconds: 140,
         supportsLinkPreviews: true,
         maxConcurrentJob: 1,
+        supportedFormats: ['post'],
     },
-    google: { // Google Business Profile
+    x: {
+        icon: 'i-simple-icons-x',
+        color: '#000000',
+        maxPostLength: 280,
+        maxImages: 4,
+        supportsComments: true,
+        supportsImagesInComments: true,
+        supportsCarousel: false,
+        supportsVideo: true,
+        maxVideoLengthSeconds: 140,
+        supportsLinkPreviews: true,
+        maxConcurrentJob: 1,
+        supportedFormats: ['post'],
+    },
+    google: {
+        icon: 'i-simple-icons-google',
+        color: '#4285F4',
         maxPostLength: 1500,
         maxImages: 1,
-        supportsComments: false, // GMB doesn't support standard comments on posts in the same way
+        supportsComments: false,
         supportsImagesInComments: false,
         supportsCarousel: false,
         supportsVideo: true,
         maxVideoLengthSeconds: 30,
         supportsLinkPreviews: true,
         maxConcurrentJob: 5,
+        supportedFormats: ['post'],
     },
     'email-password': {
+        icon: 'i-heroicons-envelope',
+        color: '#6B7280',
         maxPostLength: 5000,
         maxImages: 5,
         supportsComments: true,
@@ -157,19 +170,11 @@ export const platformConfigurations: SocialMediaPlatformConfigurations = {
         maxVideoLengthSeconds: 600,
         supportsLinkPreviews: true,
         maxConcurrentJob: 10,
+        supportedFormats: ['post'],
     },
     linkedin: {
-        maxPostLength: 3000,
-        maxImages: 9,
-        supportsComments: true,
-        supportsImagesInComments: true,
-        supportsCarousel: true, // Document posts act as carousels
-        supportsVideo: true,
-        maxVideoLengthSeconds: 600, // 10 mins
-        supportsLinkPreviews: true,
-        maxConcurrentJob: 2, // Professional limits
-    },
-    'linkedin-page': {
+        icon: 'i-simple-icons-linkedin',
+        color: '#0A66C2',
         maxPostLength: 3000,
         maxImages: 9,
         supportsComments: true,
@@ -179,104 +184,145 @@ export const platformConfigurations: SocialMediaPlatformConfigurations = {
         maxVideoLengthSeconds: 600,
         supportsLinkPreviews: true,
         maxConcurrentJob: 2,
+        supportedFormats: ['post'],
+    },
+    'linkedin-page': {
+        icon: 'i-simple-icons-linkedin',
+        color: '#0A66C2',
+        maxPostLength: 3000,
+        maxImages: 9,
+        supportsComments: true,
+        supportsImagesInComments: true,
+        supportsCarousel: true,
+        supportsVideo: true,
+        maxVideoLengthSeconds: 600,
+        supportsLinkPreviews: true,
+        maxConcurrentJob: 2,
+        supportedFormats: ['post'],
     },
     tiktok: {
+        icon: 'i-simple-icons-tiktok',
+        color: '#000000',
         maxPostLength: 2200,
-        maxImages: 0, // Video only
+        maxImages: 0,
         supportsComments: true,
         supportsImagesInComments: false,
-        supportsCarousel: false, // Photo mode exists but API focuses on video
+        supportsCarousel: false,
         supportsVideo: true,
-        maxVideoLengthSeconds: 600, // 10 mins
+        maxVideoLengthSeconds: 600,
         supportsLinkPreviews: false,
         supportsSounds: true,
         supportsShorts: true,
         maxConcurrentJob: 2,
+        supportedFormats: ['short'],
     },
     threads: {
+        icon: 'i-simple-icons-threads',
+        color: '#000000',
         maxPostLength: 500,
         maxImages: 10,
         supportsComments: true,
         supportsImagesInComments: true,
         supportsCarousel: true,
         supportsVideo: true,
-        maxVideoLengthSeconds: 300, // 5 mins
+        maxVideoLengthSeconds: 300,
         supportsLinkPreviews: true,
-        maxConcurrentJob: 3, // 250 posts/24hrs
+        maxConcurrentJob: 3,
+        supportedFormats: ['post'],
     },
     youtube: {
-        maxPostLength: 5000, // Description limit
-        maxImages: 0, // Video only
+        icon: 'i-simple-icons-youtube',
+        color: '#FF0000',
+        maxPostLength: 5000,
+        maxImages: 0,
         supportsComments: true,
         supportsImagesInComments: false,
         supportsCarousel: false,
         supportsVideo: true,
-        maxVideoLengthSeconds: 43200, // 12 hours
+        maxVideoLengthSeconds: 43200,
         supportsLinkPreviews: true,
         supportsTags: true,
         supportsCategories: true,
         supportsPrivacySettings: true,
         supportsShorts: true,
-        maxConcurrentJob: 1, // Strict quota limits
+        maxConcurrentJob: 1,
+        supportedFormats: ['post', 'short'],
     },
     pinterest: {
+        icon: 'i-simple-icons-pinterest',
+        color: '#E60023',
         maxPostLength: 500,
         maxImages: 1,
         supportsComments: true,
         supportsImagesInComments: false,
         supportsCarousel: true,
         supportsVideo: true,
-        maxVideoLengthSeconds: 900, // 15 mins
+        maxVideoLengthSeconds: 900,
         supportsLinkPreviews: true,
         maxConcurrentJob: 5,
+        supportedFormats: ['post'],
     },
     mastodon: {
+        icon: 'i-simple-icons-mastodon',
+        color: '#6364FF',
         maxPostLength: 500,
         maxImages: 4,
         supportsComments: true,
         supportsImagesInComments: false,
         supportsCarousel: false,
         supportsVideo: true,
-        maxVideoLengthSeconds: 300, // Server dependent, usually 5 mins
+        maxVideoLengthSeconds: 300,
         supportsLinkPreviews: true,
         maxConcurrentJob: 5,
+        supportedFormats: ['post'],
     },
     bluesky: {
+        icon: 'i-simple-icons-bluesky',
+        color: '#0085FF',
         maxPostLength: 300,
         maxImages: 4,
         supportsComments: true,
         supportsImagesInComments: false,
         supportsCarousel: false,
-        supportsVideo: false, // Not yet in API?
+        supportsVideo: false,
         supportsLinkPreviews: true,
         maxConcurrentJob: 5,
+        supportedFormats: ['post'],
     },
     reddit: {
-        maxPostLength: 40000, // Self-post limit
-        maxImages: 1, // Gallery support varies, sticking to 1 for now
+        icon: 'i-simple-icons-reddit',
+        color: '#FF4500',
+        maxPostLength: 40000,
+        maxImages: 1,
         supportsComments: true,
         supportsImagesInComments: false,
         supportsCarousel: false,
         supportsVideo: true,
-        maxVideoLengthSeconds: 900, // 15 mins
+        maxVideoLengthSeconds: 900,
         supportsLinkPreviews: true,
-        supportsTags: true, // Flair
-        maxConcurrentJob: 1, // 1 req/sec strict
+        supportsTags: true,
+        maxConcurrentJob: 1,
+        supportedFormats: ['post'],
     },
     discord: {
+        icon: 'i-simple-icons-discord',
+        color: '#5865F2',
         maxPostLength: 2000,
         maxImages: 10,
-        supportsComments: true, // Replies
+        supportsComments: true,
         supportsImagesInComments: true,
         supportsCarousel: false,
         supportsVideo: true,
-        maxVideoLengthSeconds: 600, // File size limit dependent
+        maxVideoLengthSeconds: 600,
         supportsLinkPreviews: true,
         maxConcurrentJob: 5,
+        supportedFormats: ['post'],
     },
     dribbble: {
-        maxPostLength: 500, // Description
-        maxImages: 1, // Single shot
+        icon: 'i-simple-icons-dribbble',
+        color: '#EA4C89',
+        maxPostLength: 500,
+        maxImages: 1,
         supportsComments: true,
         supportsImagesInComments: false,
         supportsCarousel: false,
@@ -284,11 +330,14 @@ export const platformConfigurations: SocialMediaPlatformConfigurations = {
         maxVideoLengthSeconds: 60,
         supportsLinkPreviews: false,
         supportsTags: true,
-        maxConcurrentJob: 2, // 60 req/min
+        maxConcurrentJob: 2,
+        supportedFormats: ['post'],
     },
     devto: {
+        icon: 'i-simple-icons-devdotto',
+        color: '#0A0A0A',
         maxPostLength: 25000,
-        maxImages: 1, // Cover image
+        maxImages: 1,
         supportsComments: true,
         supportsImagesInComments: false,
         supportsCarousel: false,
@@ -296,10 +345,13 @@ export const platformConfigurations: SocialMediaPlatformConfigurations = {
         supportsLinkPreviews: true,
         supportsTags: true,
         maxConcurrentJob: 5,
+        supportedFormats: ['post'],
     },
     wordpress: {
-        maxPostLength: 100000, // Unlimited effectively
-        maxImages: 1, // Featured image
+        icon: 'i-simple-icons-wordpress',
+        color: '#21759B',
+        maxPostLength: 100000,
+        maxImages: 1,
         supportsComments: true,
         supportsImagesInComments: false,
         supportsCarousel: false,
@@ -309,5 +361,7 @@ export const platformConfigurations: SocialMediaPlatformConfigurations = {
         supportsTags: true,
         supportsCategories: true,
         maxConcurrentJob: 5,
+        supportedFormats: ['post'],
     },
 };
+

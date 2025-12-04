@@ -15,7 +15,7 @@
  * @todo [✔] Update the typescript.
  */
 import { ref, computed, defineAsyncComponent, watch, onMounted } from 'vue';
-import { usePlatformConfiguration, type SocialMediaPlatformConfigurations } from '../composables/usePlatformConfiguration';
+import { usePlatformConfiguration, type SocialMediaPlatformConfigurations, type PostFormat } from '../composables/usePlatformConfiguration';
 import type { PostCreateBase, Asset, Post, PostWithAllData, SocialMediaComplete } from '#layers/BaseDB/db/schema';
 import dayjs from 'dayjs';
 import PostPlatformSelector from './editor/PostPlatformSelector.vue';
@@ -96,6 +96,7 @@ const activeBusinessId = useState<string>('business:id');
 const postMediaAssets = ref<Asset[]>([]);
 const postHasError = ref(false);
 const validationErrors = ref<{ platform: string; message: string }[]>([]);
+const selectedPostFormat = ref<PostFormat>('post');
 
 const explicitPreviewPlatform = ref<keyof typeof previewsMap | 'default'>('default');
 const previewsMap = {
@@ -474,7 +475,8 @@ const handleEmojiSelect = (emoji: string) => {
             <template #editor>
               <div class="py-3">
                 <div class="flex items-center justify-between">
-                  <PostContextSwitcher v-model="explicitPreviewPlatform" :tabs="contextTabs" />
+                  <PostContextSwitcher v-model="explicitPreviewPlatform" :tabs="contextTabs"
+                    :currentPlatformConfig="currentPlatformConfig" />
                   <UButton v-if="explicitPreviewPlatform !== 'default'" @click="revertToMaster" variant="ghost"
                     color="neutral" class="text-xs  hover:text-red-400 flex items-center gap-1 transition-colors">
                     <Icon name="lucide:rotate-ccw" class="w-3 h-3" />
@@ -535,7 +537,8 @@ const handleEmojiSelect = (emoji: string) => {
         <div class=" p-4">
           <PhonePreview :postContent="formatPostContent(postForm.content, currentPreviewPlatform)"
             :mediaAssets="postMediaAssets" :platform="currentPreviewPlatform"
-            :post="(postForm as unknown as PostCreateBase)" />
+            :post="(postForm as unknown as PostCreateBase)" :currentPlatformConfig="currentPlatformConfig"
+            v-model:format="selectedPostFormat" />
         </div>
       </div>
       <!-- Bottom -->
