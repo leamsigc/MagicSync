@@ -30,8 +30,8 @@ const openModal = () => {
 
 <template>
 
-  <UModal v-model:open="isOpen" :ui="{ content: 'min-w-6xl overflow-y-auto', }"
-    @after:enter="postModalContentRef?.ResetToBase()" :dismissible="false">
+  <UModal v-model:open="isOpen" @after:enter="postModalContentRef?.ResetToBase()" :dismissible="false"
+    :ui="{ content: 'min-w-6xl overflow-y-auto', }">
     <UButton color="neutral" variant="solid" @click="openModal">
       <Icon name="lucide:edit" class="mr-2 h-4 w-4" />
       {{ t('buttons.schedule_post') }}

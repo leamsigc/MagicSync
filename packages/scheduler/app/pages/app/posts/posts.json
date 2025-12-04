@@ -7,7 +7,16 @@
     "buttons": {
       "schedule_post": "Schedule Post",
       "new_post": "New Post",
-      "edit_post": "Edit Post"
+      "edit_post": "Edit Post",
+      "cancel": "Cancel"
+    },
+    "create_post": {
+      "title": "Create Post",
+      "description": "Design, refine, and schedule your social presence.",
+      "destinations": "Destinations",
+      "revert_to_master": "Revert to Master",
+      "editing_platform_only": "Editing {platform} only. Changes won't affect other platforms.",
+      "live_preview": "Live Preview"
     },
     "newPostModal": {
       "defaultPreview": "Default Preview",
@@ -42,6 +51,20 @@
   "es": {
     "title": "Posts",
     "description": "Posts",
+    "create_post": {
+      "title": "Crear publicación",
+      "description": "Diseña, refina y programa tu presencia social.",
+      "destinations": "Destinos",
+      "revert_to_master": "Volver al maestro",
+      "editing_platform_only": "Editando solo {platform}. Los cambios no afectarán a otras plataformas.",
+      "live_preview": "Vista previa en vivo"
+    },
+    "buttons": {
+      "schedule_post": "Programar publicación",
+      "new_post": "Nueva publicación",
+      "edit_post": "Editar publicación",
+      "cancel": "Cancelar"
+    },
     "newPostModal": {
       "defaultPreview": "Vista previa predeterminada",
       "editorTab": "Editor",
@@ -75,6 +98,20 @@
   "fr": {
     "title": "Posts",
     "description": "Posts",
+    "create_post": {
+      "title": "Créer une publication",
+      "description": "Concevez, affinez et planifiez votre présence sociale.",
+      "destinations": "Destinations",
+      "revert_to_master": "Revenir au maître",
+      "editing_platform_only": "Modification de {platform} uniquement. Les changements n'affecteront pas les autres plateformes.",
+      "live_preview": "Aperçu en direct"
+    },
+    "buttons": {
+      "schedule_post": "Planifier la publication",
+      "new_post": "Nouvelle publication",
+      "edit_post": "Modifier la publication",
+      "cancel": "Annuler"
+    },
     "newPostModal": {
       "defaultPreview": "Aperçu par défaut",
       "editorTab": "Éditeur",
@@ -108,6 +145,20 @@
   "de": {
     "title": "Posts",
     "description": "Posts",
+    "create_post": {
+      "title": "Beitrag erstellen",
+      "description": "Entwerfen, verfeinern und planen Sie Ihre soziale Präsenz.",
+      "destinations": "Ziele",
+      "revert_to_master": "Zurück zum Master",
+      "editing_platform_only": "Bearbeitung nur für {platform}. Änderungen betreffen keine anderen Plattformen.",
+      "live_preview": "Live-Vorschau"
+    },
+    "buttons": {
+      "schedule_post": "Beitrag planen",
+      "new_post": "Neuer Beitrag",
+      "edit_post": "Beitrag bearbeiten",
+      "cancel": "Abbrechen"
+    },
     "newPostModal": {
       "defaultPreview": "Standardvorschau",
       "editorTab": "Editor",

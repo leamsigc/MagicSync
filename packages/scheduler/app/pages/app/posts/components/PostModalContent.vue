@@ -15,27 +15,20 @@
  * @todo [✔] Update the typescript.
  */
 import { ref, computed, defineAsyncComponent, watch, onMounted } from 'vue';
-import { usePlatformConfiguration, type PlatformConfig, type SocialMediaPlatformConfigurations } from '../composables/usePlatformConfiguration';
-import type { PostCreateBase, Asset, Post, PostWithAllData } from '#layers/BaseDB/db/schema';
-import { useSocialMediaManager } from '#imports';
-import { useAssetManager } from '#imports';
+import { usePlatformConfiguration, type SocialMediaPlatformConfigurations } from '../composables/usePlatformConfiguration';
+import type { PostCreateBase, Asset, Post, PostWithAllData, SocialMediaComplete } from '#layers/BaseDB/db/schema';
 import dayjs from 'dayjs';
+import PostPlatformSelector from './editor/PostPlatformSelector.vue';
 
-const FacebookPreview = defineAsyncComponent(() => import('./FacebookPreview.vue'));
-const InstagramPreview = defineAsyncComponent(() => import('./InstagramPreview.vue'));
-const TwitterPreview = defineAsyncComponent(() => import('./TwitterPreview.vue'));
-const GooglePreview = defineAsyncComponent(() => import('./GooglePreview.vue'));
-const EmailPasswordPreview = defineAsyncComponent(() => import('./EmailPasswordPreview.vue'));
-const LinkedinPreview = defineAsyncComponent(() => import('./LinkedinPreview.vue'));
-const TiktokPreview = defineAsyncComponent(() => import('./TiktokPreview.vue'));
-const ThreadsPreview = defineAsyncComponent(() => import('./ThreadsPreview.vue'));
-const YoutubePreview = defineAsyncComponent(() => import('./YoutubePreview.vue'));
-const PinterestPreview = defineAsyncComponent(() => import('./PinterestPreview.vue'));
-const MastodonPreview = defineAsyncComponent(() => import('./MastodonPreview.vue'));
-const BlueskyPreview = defineAsyncComponent(() => import('./BlueskyPreview.vue'));
-const DefaultPreview = defineAsyncComponent(() => import('./DefaultPreview.vue'));
+
 import { CalendarDate } from '@internationalized/date'
 import type { DateValue } from '@internationalized/date'
+import { useValidation } from '../composables/useValidation';
+import PhonePreview from './PhonePreview.vue';
+import PostContextSwitcher from './editor/PostContextSwitcher.vue';
+import PostContentEditor from './editor/PostContentEditor.vue';
+import PostAIAssistant from './editor/PostAIAssistant.vue';
+import { useAI } from '../composables/useAI';
 
 interface TargetPlatform {
   accountId: string;
@@ -65,7 +58,7 @@ const emit = defineEmits(['save', 'update', 'close']);
 
 const { t } = useI18n();
 const toast = useToast();
-const { getAllSocialMediaAccounts, pagesList } = useSocialMediaManager();
+const { getAllSocialMediaAccounts, connectedSocialAccountsList } = useSocialMediaManager();
 const { getAssetsByIds } = useAssetManager();
 const { platformConfigurations, validatePostForPlatform } = usePlatformConfiguration();
 
@@ -75,7 +68,7 @@ const postForm = ref<PostForm>({
   scheduledAt: new Date(),
   mediaAssets: [],
   targetPlatforms: [],
-  status: 'draft',
+  status: 'pending',
   comment: []
 });
 const now = new Date();
@@ -87,7 +80,6 @@ const selectedDate = shallowRef(
   )
 )
 const isDateUnavailable = (date: DateValue) => {
-  // Check if the selected date is in the past
   return dayjs(date.toString()).isBefore(dayjs().add(-1, 'day'));
 }
 const selectedTime = ref(dayjs(postForm.value.scheduledAt).format('HH:mm'));
@@ -106,19 +98,19 @@ const validationErrors = ref<{ platform: string; message: string }[]>([]);
 
 const explicitPreviewPlatform = ref<keyof typeof previewsMap | 'default'>('default');
 const previewsMap = {
-  facebook: FacebookPreview,
-  instagram: InstagramPreview,
-  twitter: TwitterPreview,
-  google: GooglePreview,
-  'email-password': EmailPasswordPreview,
-  linkedin: LinkedinPreview,
-  tiktok: TiktokPreview,
-  threads: ThreadsPreview,
-  youtube: YoutubePreview,
-  pinterest: PinterestPreview,
-  mastodon: MastodonPreview,
-  bluesky: BlueskyPreview,
-  default: DefaultPreview,
+  facebook: '',
+  instagram: '',
+  twitter: '',
+  google: '',
+  'email-password': '',
+  linkedin: '',
+  tiktok: '',
+  threads: '',
+  youtube: '',
+  pinterest: '',
+  mastodon: '',
+  bluesky: '',
+  default: '',
 };
 
 onMounted(async () => {
@@ -130,7 +122,6 @@ onMounted(async () => {
       const firstPlatformPost = platformPosts[0];
       explicitPreviewPlatform.value = firstPlatformPost?.platformPostId as keyof typeof previewsMap || 'default';
     }
-    console.log("#####", platformPosts);
 
     const processedTargetPlatforms: TargetPlatform[] = platformPosts.map(p => ({
       accountId: p.socialAccountId,
@@ -193,20 +184,6 @@ const formatPostContent = (content: string, platformType: keyof typeof previewsM
   return content;
 };
 
-const previewComponent = computed(() => {
-  const component = previewsMap[currentPreviewPlatform.value as keyof typeof previewsMap];
-  return component || DefaultPreview;
-});
-
-const previewSelectOptions = computed(() => {
-  const options = [{ label: t('newPostModal.defaultPreview'), value: 'default' }];
-
-  (Object.keys(previewsMap) as Array<keyof typeof previewsMap>).forEach(platform => {
-    options.push({ label: platform, value: platform });
-  });
-  return options;
-});
-
 const tabs = [{
   label: t('newPostModal.editorTab'),
   description: t('newPostModal.editorDescription'),
@@ -219,27 +196,7 @@ const tabs = [{
   slot: "media" as const
 }];
 
-function toggleSocialAccount(accountId: string) {
-  const existingIndex = postForm.value.targetPlatforms.findIndex(
-    (target) => target.accountId === accountId
-  );
-
-  if (existingIndex !== -1) {
-    postForm.value.targetPlatforms.splice(existingIndex, 1);
-  } else {
-    const account = pagesList.value.find((page) => page.id === accountId);
-    const platform = account?.platform as keyof SocialMediaPlatformConfigurations || 'default';
-    explicitPreviewPlatform.value = platform;
-    if (account) {
-      postForm.value.targetPlatforms.push({
-        accountId: account.id,
-        platformType: account.platform as keyof SocialMediaPlatformConfigurations,
-      });
-    }
-  }
-}
-
-const handleSavePost = async (status: 'draft' | 'scheduled' | 'published' | 'failed') => {
+const handleSavePost = async (status: 'pending' | 'published' | 'failed') => {
   validationErrors.value = [];
   postHasError.value = false;
 
@@ -270,7 +227,7 @@ const handleSavePost = async (status: 'draft' | 'scheduled' | 'published' | 'fai
   if (validationErrors.value.length > 0) {
     postHasError.value = true;
     if (firstInvalidPlatform) {
-      explicitPreviewPlatform.value = firstInvalidPlatform.platformType;
+      explicitPreviewPlatform.value = firstInvalidPlatform.platformType as keyof typeof previewsMap;
       toast.add({
         title: t('validation.postInvalidForPlatform', { platform: firstInvalidPlatform.platformType }),
         description: validationErrors.value.map(e => e.message).join('\n'),
@@ -281,7 +238,7 @@ const handleSavePost = async (status: 'draft' | 'scheduled' | 'published' | 'fai
     return;
   }
 
-  if (status === 'scheduled' && dayjs(postForm.value.scheduledAt).isBefore(dayjs())) {
+  if (status === 'pending' && dayjs(postForm.value.scheduledAt).isBefore(dayjs())) {
     postHasError.value = true;
     toast.add({ title: t('validation.pastScheduledTime'), icon: 'i-heroicons-exclamation-triangle', color: 'error' });
     return;
@@ -309,7 +266,7 @@ const ResetToBase = () => {
     scheduledAt: new Date(),
     mediaAssets: [],
     targetPlatforms: [],
-    status: 'draft',
+    status: 'pending',
     comment: []
   }
   selectedDate.value = new CalendarDate(
@@ -347,6 +304,140 @@ defineExpose({
   ResetToBase,
   setScheduleDateAt
 });
+
+
+/* Editor context */
+interface PlatformOverride {
+  content?: string;
+  comments?: string[];
+}
+
+const { validatePlatform } = useValidation();
+// Master Content State
+const masterComments = ref<string[]>([]);
+const masterMedia = ref<Asset[]>([]);
+
+// Platform Overrides State
+const platformOverrides = ref<Record<string, PlatformOverride>>({});
+
+// Active Context (which tab is selected)
+
+const contextTabs = computed(() => {
+  const tabs = [
+    { label: 'Master', value: 'default', icon: 'lucide:globe' }
+  ];
+
+  postForm.value.targetPlatforms.forEach(platform => {
+    // check if the platform type is already in the tabs
+    const existingTab = tabs.find(tab => tab.value === platform.platformType);
+    if (existingTab) {
+      return;
+    }
+    tabs.push({
+      label: platform.platformType.charAt(0).toUpperCase() + platform.platformType.slice(1),
+      value: platform.platformType,
+      icon: `logos:${platform.platformType}`
+    });
+  });
+  return tabs;
+});
+const activeContextLabel = computed(() => {
+  return contextTabs.value.find(t => t.value === explicitPreviewPlatform.value)?.label || 'Unknown';
+});
+
+/* Account selections  */
+const selectedSocialMediaAccounts = computed(() => {
+  const connectedIds = postForm.value.targetPlatforms.map(platform => platform.accountId);
+  return connectedSocialAccountsList.value.filter((account: { id: string; }) => connectedIds.includes(account.id));
+})
+
+const togglePlatform = (account: SocialMediaComplete) => {
+  const connectedIds = postForm.value.targetPlatforms.map(platform => platform.accountId);
+
+  if (connectedIds.includes(account.id)) {
+    postForm.value.targetPlatforms = postForm.value.targetPlatforms.filter(platform => platform.accountId !== account.id);
+  } else {
+    postForm.value.targetPlatforms.push({ accountId: account.id, platformType: account.platform as keyof SocialMediaPlatformConfigurations });
+  }
+}
+const validationStatus = computed(() => {
+  const status: Record<string, { isValid: boolean; errors: string[]; warnings: string[]; }> = {};
+
+  postForm.value.targetPlatforms.forEach(platform => {
+    const contentToValidate = platformOverrides.value[platform.accountId]?.content ?? postForm.value.content;
+    const commentsToValidate = platformOverrides.value[platform.accountId]?.comments ?? masterComments.value;
+    // Use the new validation composable
+    const result = validatePlatform(
+      platform.platformType,
+      contentToValidate,
+      masterMedia.value,
+      commentsToValidate
+    );
+    status[platform.accountId] = {
+      isValid: result.status === 'valid',
+      errors: result.messages.filter(m => m.status === 'error').map(item => item.message),
+      warnings: result.messages.filter(m => m.status === 'warning').map(item => item.message)
+    };
+  });
+
+  return status;
+});
+const revertToMaster = () => {
+  explicitPreviewPlatform.value = "default";
+}
+
+const currentPlatformConfig = computed(() => {
+  if (explicitPreviewPlatform.value === 'default') {
+    return platformConfigurations['default'];
+  }
+  return platformConfigurations[explicitPreviewPlatform.value] || platformConfigurations['default'];
+});
+
+/* Ai related need to move  */
+const { rewriteContent, fixGrammar, generateHashtags, smartSplit, isLoading: aiLoading } = useAI();
+const handleAIAction = async (action: string) => {
+  const content = postForm.value.content;
+
+  if (!content) return;
+  try {
+    let result;
+    switch (action) {
+      case 'rewrite-professional':
+        result = await rewriteContent(content, 'professional');
+        if (result) postForm.value.content = result;
+        break;
+      case 'rewrite-fun':
+        result = await rewriteContent(content, 'fun');
+        if (result) postForm.value.content = result;
+        break;
+      case 'rewrite-concise':
+        result = await rewriteContent(content, 'concise');
+        if (result) postForm.value.content = result;
+        break;
+      case 'fix-grammar':
+        result = await fixGrammar(content);
+        if (result) postForm.value.content = result;
+        break;
+      case 'generate-hashtags':
+        const hashtags = await generateHashtags(content);
+        if (hashtags) postForm.value.content += `\n\n${hashtags.join(' ')}`;
+        break;
+      case 'smart-split':
+        const thread = await smartSplit(content, postForm.value.targetPlatforms.map(platform => platform.platformType));
+        if (thread && thread.length > 0) {
+          postForm.value.content = thread[0];
+          postForm.value.comment = thread.slice(1);
+        }
+        break;
+    }
+  } catch (error) {
+    toast.add({
+      title: 'AI Error',
+      description: 'Failed to process AI request',
+      color: 'red'
+    });
+  }
+};
 </script>
 
 <template>
@@ -357,41 +448,10 @@ defineExpose({
           <div class="flex items-center gap-2 ml-5">
             <!-- Social Accounts Selection -->
             <div class="flex -space-x-1">
-              <section v-for="target in postForm.targetPlatforms" :key="target.accountId">
-                <template v-if="pagesList.find(p => p.id === target.accountId)">
-                  <UAvatar :src="pagesList.find(p => p.id === target.accountId)?.entityDetail?.details?.picture"
-                    :alt="pagesList.find(p => p.id === target.accountId)?.accountName" size="sm"
-                    class="cursor-pointer ring-2 ring-white dark:ring-gray-900"
-                    :class="{ 'border border-primary': postForm.targetPlatforms.some(t => t.accountId === target.accountId) }"
-                    @click="toggleSocialAccount(target.accountId)">
-                    <UBadge color="neutral" variant="soft" :leading-icon="`logos:${target.platformType}`" size="xs"
-                      class="mt-2">
-                    </UBadge>
-                  </UAvatar>
-                </template>
-              </section>
+              <PostPlatformSelector :accounts="connectedSocialAccountsList"
+                :selectedAccounts="selectedSocialMediaAccounts" @toggle="togglePlatform"
+                :validationStatus="validationStatus" />
             </div>
-            <UPopover>
-              <UButton icon="i-heroicons-plus" size="sm" color="neutral" variant="solid" />
-              <template #content>
-                <UCard>
-                  <section class="grid grid-cols-2 gap-2">
-                    <div v-for="account in pagesList" :key="account.id" class="flex flex-col items-center"
-                      @click="toggleSocialAccount(account.id)">
-                      <template v-if="!postForm.targetPlatforms.some(target => target.accountId === account.id)">
-                        <UAvatar :src="account.entityDetail.details.picture" :alt="account.accountName" size="3xl"
-                          class="cursor-pointer ring-2 ring-white dark:ring-gray-900"
-                          :class="{ 'border border-primary': postForm.targetPlatforms.some(target => target.accountId === account.id) }" />
-                        <p class="mt-2 text-sm font-medium">{{ account.accountName }}</p>
-                      </template>
-                    </div>
-                  </section>
-                  <UEmpty :title="t('newPostModal.noMoreAccounts')"
-                    v-if="pagesList.length === postForm.targetPlatforms.length" />
-                </UCard>
-
-              </template>
-            </UPopover>
           </div>
 
         </h3>
@@ -406,23 +466,35 @@ defineExpose({
 
             <template #editor>
               <div class="py-3">
-                <UTextarea v-model="postForm.content" :placeholder="t('newPostModal.postPlaceholder')" :rows="8"
-                  class="w-full" />
-
-                <div v-if="postHasError" class="mt-2 text-red-500 text-sm">
-                  {{ t('validation.emptyPostOrNoPlatform') }}
+                <div class="flex items-center justify-between">
+                  <PostContextSwitcher v-model="explicitPreviewPlatform" :tabs="contextTabs" />
+                  <UButton v-if="explicitPreviewPlatform !== 'default'" @click="revertToMaster" variant="ghost"
+                    color="neutral" class="text-xs  hover:text-red-400 flex items-center gap-1 transition-colors">
+                    <Icon name="lucide:rotate-ccw" class="w-3 h-3" />
+                    {{ t('create_post.revert_to_master') }}
+                  </UButton>
                 </div>
+                <div
+                  class=" border border-muted  rounded-xl overflow-hidden focus-within:ring-1 focus-within:ring-indigo-500/10 transition-all mt-2">
+                  <div v-if="explicitPreviewPlatform !== 'default'"
+                    class=" px-4 py-2  border-primary/20 flex items-center gap-2">
+                    <Icon name="lucide:info" class="w-4 h-4 text-indigo-400" />
+                    <span class="text-xs text-indigo-300"
+                      v-html="t('create_post.editing_platform_only', { platform: `<strong>${activeContextLabel}</strong>` })"></span>
+                  </div>
 
-                <div class="mt-4 flex gap-2">
-                  <UButton icon="i-heroicons-photo" variant="ghost">
-                    {{ t('newPostModal.insertMedia') }}
-                  </UButton>
-                  <UButton icon="i-heroicons-paint-brush" variant="ghost">
-                    {{ t('newPostModal.designMedia') }}
-                  </UButton>
-                  <UButton icon="i-heroicons-sparkles" variant="ghost">
-                    {{ t('newPostModal.aiImage') }}
-                  </UButton>
+                  <PostContentEditor v-model="postForm.content" :character-count="postForm.content.length"
+                    :max-characters="currentPlatformConfig.maxPostLength"
+                    :placeholder="`Drafting for ${activeContextLabel}...`">
+                    <template #ai-tools>
+                      <PostAIAssistant :loading="aiLoading" @action="handleAIAction" />
+                    </template>
+                    <template #assetsList>
+                      <section v-for="asset in postMediaAssets">
+                        <img :src="asset.url" :alt="asset.filename" class="size-20 rounded-2xl">
+                      </section>
+                    </template>
+                  </PostContentEditor>
                 </div>
 
                 <div class="mt-4">
@@ -430,7 +502,8 @@ defineExpose({
                   <div v-for="(comment, index) in postForm.comment" :key="index" class="flex items-center gap-2 mb-2">
                     <UTextarea v-model="postForm.comment[index]"
                       :placeholder="t('newPostModal.commentPlaceholder', { index: index + 1 })" :rows="8"
-                      class="flex-1" />
+                      color="neutral" variant="none"
+                      class="w-full flex-1 bg-transparent resize-none focus:ring-0 p-4 text-lg text-zinc-100 border border-muted rounded-2xl placeholder-zinc-600 scrollbar-hide" />
                     <UButton v-if="postForm.comment.length > 0" icon="i-heroicons-trash-20-solid" color="error"
                       variant="ghost" @click="removeComment(index)" />
                   </div>
@@ -449,17 +522,13 @@ defineExpose({
         </div>
 
         <!-- Right Side: Preview -->
-        <div class="flex-1 p-4">
-          <div class="flex items-center justify-between mb-2">
-            <h4 class="text-sm font-semibold">{{ t('newPostModal.previewTitle') }}</h4>
-            <USelect v-model="explicitPreviewPlatform" :items="previewSelectOptions" class="w-40" />
-          </div>
-          <component :is="previewComponent" :postContent="formatPostContent(postForm.content, currentPreviewPlatform)"
+        <div class=" p-4">
+          <PhonePreview :postContent="formatPostContent(postForm.content, currentPreviewPlatform)"
             :mediaAssets="postMediaAssets" :platform="currentPreviewPlatform"
-            :post="postForm as unknown as PostCreateBase" />
+            :post="(postForm as unknown as PostCreateBase)" />
         </div>
       </div>
-
+      <!-- Bottom -->
       <div class="border-t border-gray-200 dark:border-gray-800 pt-4 flex justify-center">
         <UPopover>
           <UButton icon="i-heroicons-calendar" variant="ghost">
@@ -479,14 +548,14 @@ defineExpose({
       <template #footer>
         <div class="flex justify-end gap-2">
           <UButton :disabled="haveAtLeastOneAccountSelected" color="secondary" variant="outline"
-            @click="handleSavePost('draft')">
+            @click="handleSavePost('pending')">
             {{ t('newPostModal.saveDraft') }}
           </UButton>
           <UButton color="primary" variant="outline" @click="handleSavePost('published')"
             :disabled="haveAtLeastOneAccountSelected">
             {{ t('newPostModal.postNow') }}
           </UButton>
-          <UButton color="warning" variant="ghost" @click="handleSavePost('scheduled')"
+          <UButton color="warning" variant="ghost" @click="handleSavePost('pending')"
             :disabled="haveAtLeastOneAccountSelected">
             {{ t('newPostModal.schedule') }}
           </UButton>

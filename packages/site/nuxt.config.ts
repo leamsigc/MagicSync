@@ -50,6 +50,7 @@ export default defineNuxtConfig({
     NUXT_FACEBOOK_CONFIG_ID: process.env.NUXT_FACEBOOK_CONFIG_ID,
     NUXT_FILE_STORAGE_MOUNT: process.env.NUXT_FILE_STORAGE_MOUNT,
     NUXT_PEXELS_API_KEY: process.env.NUXT_PEXELS_API_KEY,
+    googleGenerativeAiApiKey: process.env.NUXT_GOOGLE_GENERATIVE_AI_API_KEY
   },
 
   extends: [

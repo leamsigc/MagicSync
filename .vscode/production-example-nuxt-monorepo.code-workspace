@@ -1,0 +1,22 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"*.css": "tailwindcss"
+		},
+		"tailwindCSS.classAttributes": [
+			"class",
+			"ui"
+		]
+	},
+	"files.watcherExclude": {
+		"**/node_modules": true,
+		"**/node_modules/**": true,
+		"**/node_modules/*/**": true,
+		"**/node_modules/*/*/**": true
+	}
+}

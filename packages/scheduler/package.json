@@ -12,6 +12,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@ai-sdk/google": "^2.0.44",
     "@atproto/api": "catalog:",
     "@fullcalendar/daygrid": "catalog:",
     "@fullcalendar/interaction": "catalog:",
@@ -24,6 +25,7 @@
     "@local-monorepo/connect": "workspace:*",
     "@local-monorepo/db": "workspace:*",
     "@local-monorepo/ui": "workspace:*",
+    "ai": "^5.0.106",
     "axios": "catalog:",
     "dayjs": "catalog:",
     "googleapis": "catalog:",
