@@ -6,11 +6,17 @@
 interface Props {
   loading?: boolean;
 }
+const { getTemplatesByType, templateList, isLoading, createTemplate, updateTemplate, deleteTemplate } = useTemplateManager()
+const TEMPLATE_TYPE = 'CHAT' as const
+onMounted(() => {
+  getTemplatesByType(TEMPLATE_TYPE)
+})
+
 
 const props = defineProps<Props>();
-const emit = defineEmits(['action']);
+const emit = defineEmits(['action', 'template-action']);
 
-const aiActions = [
+const aiActions = computed(() => [
   [
     {
       label: 'Rewrite Professional',
@@ -43,8 +49,14 @@ const aiActions = [
       icon: 'lucide:scissors',
       onSelect: () => emit('action', 'smart-split')
     }
-  ]
-];
+  ],
+  templateList.value[TEMPLATE_TYPE]?.map((template) => {
+    return {
+      label: template.title,
+      onSelect: () => emit('template-action', template.content)
+    }
+  })
+])
 </script>
 
 <template>

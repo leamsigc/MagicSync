@@ -2,7 +2,7 @@ import type { InferSelectModel } from 'drizzle-orm'
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import { user } from '../auth/auth'
 
-export const TemplateType = ['EMAIL', 'ASSETS'] as const
+export const TemplateType = ['EMAIL', 'IMAGES', 'CHAT', 'VARIABLE'] as const
 
 export const templates = sqliteTable('templates', {
   id: text('id').primaryKey(),

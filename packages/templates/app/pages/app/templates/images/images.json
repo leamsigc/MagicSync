@@ -1,0 +1,38 @@
+{
+    "en": {
+        "seo_title": "Image Templates",
+        "seo_description": "Manage your image templates",
+        "title": "Image Templates",
+        "description": "Create and manage reusable image templates for your visual content",
+        "create_template": "Create Image Template",
+        "no_templates": "No image templates yet",
+        "create_first": "Create your first image template to get started"
+    },
+    "es": {
+        "seo_title": "Plantillas de Imágenes",
+        "seo_description": "Gestiona tus plantillas de imágenes",
+        "title": "Plantillas de Imágenes",
+        "description": "Crea y gestiona plantillas de imágenes reutilizables para tu contenido visual",
+        "create_template": "Crear Plantilla de Imagen",
+        "no_templates": "Aún no hay plantillas de imágenes",
+        "create_first": "Crea tu primera plantilla de imagen para comenzar"
+    },
+    "de": {
+        "seo_title": "Bildvorlagen",
+        "seo_description": "Verwalten Sie Ihre Bildvorlagen",
+        "title": "Bildvorlagen",
+        "description": "Erstellen und verwalten Sie wiederverwendbare Bildvorlagen für Ihre visuellen Inhalte",
+        "create_template": "Bildvorlage erstellen",
+        "no_templates": "Noch keine Bildvorlagen",
+        "create_first": "Erstellen Sie Ihre erste Bildvorlage, um zu beginnen"
+    },
+    "fr": {
+        "seo_title": "Modèles d'Images",
+        "seo_description": "Gérez vos modèles d'images",
+        "title": "Modèles d'Images",
+        "description": "Créez et gérez des modèles d'images réutilisables pour votre contenu visuel",
+        "create_template": "Créer un Modèle d'Image",
+        "no_templates": "Pas encore de modèles d'images",
+        "create_first": "Créez votre premier modèle d'image pour commencer"
+    }
+}

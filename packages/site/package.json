@@ -27,6 +27,7 @@
     "@local-monorepo/scheduler": "workspace:*",
     "@local-monorepo/tools": "workspace:*",
     "@local-monorepo/ui": "workspace:*",
+    "@local-monorepo/templates": "workspace:*",
     "@nuxtjs/i18n": "catalog:",
     "nuxt": "catalog:",
     "tsx": "catalog:",

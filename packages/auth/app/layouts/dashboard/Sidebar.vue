@@ -138,12 +138,20 @@ const navigationItems = computed<NavigationMenuItem[][]>(() => {
         icon: 'i-lucide-layout',
         children: [
           {
+            label: menuData.menu.chat,
+            to: '/app/templates/chat'
+          },
+          {
             label: menuData.menu.email,
             to: '/app/templates/email'
           },
           {
             label: menuData.menu.image,
-            to: '/app/templates/image'
+            to: '/app/templates/images'
+          },
+          {
+            label: menuData.menu.variables,
+            to: '/app/templates/variables'
           }
         ]
       },

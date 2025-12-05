@@ -1,5 +1,5 @@
 import { defineNuxtConfig } from 'nuxt/config'
-import { type NuxtPage } from 'nuxt/schema'
+import type { NuxtPage } from 'nuxt/schema'
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
 
@@ -18,22 +18,12 @@ export default defineNuxtConfig({
   nitro: {
     experimental: {
       openAPI: true,
-      tasks: true,
-    },
-    // scheduledTasks: {
-    //   // Run `cms:update` task every minute
-    //   '* * * * *': ['social:post']
-    // }
+    }
   },
   $meta: {
-    name: 'BaseScheduler',
+    name: 'BaseTemplate',
   },
-  runtimeConfig: {
-    NUXT_APP_URL: process.env.NUXT_APP_URL,
-    googleGenerativeAiApiKey: process.env.NUXT_GOOGLE_GENERATIVE_AI_API_KEY,
-    GOOGLE_GENERATIVE_AI_API_KEY: process.env.NUXT_GOOGLE_GENERATIVE_AI_API_KEY
-  },
-  extends: ['@local-monorepo/db', '@local-monorepo/ui', '@local-monorepo/auth', "@local-monorepo/connect", "@local-monorepo/assets", "@local-monorepo/templates"],
+  extends: ['@local-monorepo/db', '@local-monorepo/ui', '@local-monorepo/auth'],
   modules: ['@nuxtjs/i18n'],
   i18n: {
     vueI18n: join(currentDir, './translations/i18n.config.ts'),

@@ -151,6 +151,12 @@
       - Optimize Web Vitals (LCP, CLS, FID).
       - Utilize Nuxt's auto-imports feature for components and composables.
       
+      Database Interaction (Drizzle ORM)
+      - Prefer using the Query API (`db.query.table.findMany`, `db.query.table.findFirst`) for fetching data, especially when handling relations.
+      - Use `db.select()` mainly for complex aggregations or when performance requires specific SQL optimization not achievable with the Query API.
+      - Always define relations in `schema.ts` to enable relational queries.
+      - Use `db.insert`, `db.update`, `db.delete` for mutations.
+      
       Nuxt-specific Guidelines
       - Follow Nuxt 3 directory structure (e.g., pages/, components/, composables/).
       - Use Nuxt's built-in features:
@@ -501,3 +507,8 @@ example :
 </template>
 
 ```
+
+
+IMPORTART
+
+AVOID COMMENTS IN THE CODE, IF YOU NEED TO EXPLAIN SOMETHING THEN USE THE DOCUMENTATION IN THE ./package/docs 

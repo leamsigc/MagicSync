@@ -14,7 +14,6 @@
  * @todo [ ] Integration test.
  * @todo [✔] Update the typescript.
  */
-import { ref, computed, defineAsyncComponent, watch, onMounted } from 'vue';
 import { usePlatformConfiguration, type SocialMediaPlatformConfigurations, type PostFormat } from '../composables/usePlatformConfiguration';
 import type { PostCreateBase, Asset, Post, PostWithAllData, SocialMediaComplete } from '#layers/BaseDB/db/schema';
 import dayjs from 'dayjs';
@@ -27,9 +26,9 @@ import { useValidation } from '../composables/useValidation';
 import PhonePreview from './PhonePreview.vue';
 import PostContextSwitcher from './editor/PostContextSwitcher.vue';
 import PostContentEditor from './editor/PostContentEditor.vue';
-import PostAIAssistant from './editor/PostAIAssistant.vue';
 import { useAI } from '../composables/useAI';
 import EmojiPicker from '#layers/BaseScheduler/app/components/EmojiPicker.vue';
+import { useBusinessManager } from '#layers/BaseConnect/app/pages/app/business/composables/useBusinessManager';
 
 interface TargetPlatform {
   accountId: string;
@@ -62,6 +61,7 @@ const toast = useToast();
 const { getAllSocialMediaAccounts, connectedSocialAccountsList } = useSocialMediaManager();
 const { getAssetsByIds } = useAssetManager();
 const { platformConfigurations, validatePostForPlatform } = usePlatformConfiguration();
+const { businesses } = useBusinessManager();
 
 const postForm = ref<PostForm>({
   content: '',
@@ -396,7 +396,7 @@ const currentPlatformConfig = computed(() => {
 });
 
 /* Ai related need to move  */
-const { rewriteContent, fixGrammar, generateHashtags, smartSplit, isLoading: aiLoading } = useAI();
+const { rewriteContent, fixGrammar, generateHashtags, smartSplit, isLoading: aiLoading, customPrompt } = useAI();
 const handleAIAction = async (action: string) => {
   const content = postForm.value.content;
 
@@ -440,11 +440,48 @@ const handleAIAction = async (action: string) => {
     });
   }
 };
+
+const handleTemplateAction = async (templateContent: string) => {
+  const content = postForm.value.content;
+
+  if (!content) {
+    toast.add({
+      icon: 'i-heroicons-exclamation-triangle',
+      title: 'Content Error',
+      description: 'Content is required',
+      variant: 'destructive',
+      color: "error"
+    });
+    return;
+  };
+  try {
+    const activeBusiness = businesses.value.data.find(b => b.isActive);
+    console.log(activeBusiness);
+    const finalContent = templateContent.replaceAll('{POSTCONTENT}', content).replaceAll('{BUSSINESID}', activeBusiness?.name || 'MagicSync');
+    console.log(finalContent);
+    const result = await customPrompt(finalContent);
+
+    console.log(result);
+
+  } catch (error) {
+    toast.add({
+
+      icon: 'i-heroicons-exclamation-triangle',
+      title: 'Template Error',
+      description: error,
+      color: "error"
+    });
+  }
+};
 /*
 Emoji related 
  */
 const handleEmojiSelect = (emoji: string) => {
   postForm.value.content += emoji;
+};
+/* Variable related */
+const handleVariableAction = (variable: string) => {
+  postForm.value.content += variable;
 };
 </script>
 
@@ -495,8 +532,10 @@ const handleEmojiSelect = (emoji: string) => {
                   <PostContentEditor v-model="postForm.content" :character-count="postForm.content.length"
                     :max-characters="currentPlatformConfig.maxPostLength"
                     :placeholder="`Drafting for ${activeContextLabel}...`">
+                    <TemplateVariablePopUp @action="handleVariableAction" />
                     <template #ai-tools>
-                      <PostAIAssistant :loading="aiLoading" @action="handleAIAction" />
+                      <PostAIAssistant :loading="aiLoading" @action="handleAIAction"
+                        @template-action="handleTemplateAction" />
                     </template>
                     <template #emoji>
                       <EmojiPicker @select="handleEmojiSelect" />

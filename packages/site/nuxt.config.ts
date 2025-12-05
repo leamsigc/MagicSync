@@ -62,7 +62,8 @@ export default defineNuxtConfig({
     '@local-monorepo/content',
     '@local-monorepo/tools',
     '@local-monorepo/scheduler',
-    '@local-monorepo/connect'
+    '@local-monorepo/connect',
+    '@local-monorepo/templates'
   ],
 
   modules: ['@nuxtjs/seo', '@nuxtjs/i18n', '@nuxt/hints'],

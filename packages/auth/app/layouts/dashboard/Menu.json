@@ -50,7 +50,9 @@
       "blogs": "Blogs",
       "featured": "Featured",
       "components": "Components",
-      "business": "Business"
+      "business": "Business",
+      "variables": "Variables",
+      "chat": "Chat"
     },
     "userNav": {
       "upgradeToPro": "Upgrade to Pro",
@@ -133,7 +135,9 @@
       "blogs": "Blogs",
       "featured": "Destacado",
       "components": "Componentes",
-      "business": "Business"
+      "business": "Business",
+      "variables": "Variables",
+      "chat": "Chat"
     },
     "userNav": {
       "upgradeToPro": "Actualizar a Pro",
@@ -216,7 +220,9 @@
       "blogs": "Blogs",
       "featured": "Vorgestellt",
       "components": "Komponenten",
-      "business": "Business"
+      "business": "Business",
+      "variables": "Variablen",
+      "chat": "Chat"
     },
     "userNav": {
       "upgradeToPro": "Auf Pro upgraden",
@@ -299,7 +305,9 @@
       "blogs": "Blogs",
       "featured": "En vedette",
       "components": "Composants",
-      "business": "Business"
+      "business": "Business",
+      "variables": "Variables",
+      "chat": "Chat"
     },
     "userNav": {
       "upgradeToPro": "Mettre à niveau vers Pro",

@@ -1,0 +1,38 @@
+{
+    "en": {
+        "seo_title": "Email Templates",
+        "seo_description": "Manage your email templates",
+        "title": "Email Templates",
+        "description": "Create and manage reusable email templates for your communications",
+        "create_template": "Create Email Template",
+        "no_templates": "No email templates yet",
+        "create_first": "Create your first email template to get started"
+    },
+    "es": {
+        "seo_title": "Plantillas de Correo",
+        "seo_description": "Gestiona tus plantillas de correo electrónico",
+        "title": "Plantillas de Correo",
+        "description": "Crea y gestiona plantillas de correo electrónico reutilizables para tus comunicaciones",
+        "create_template": "Crear Plantilla de Correo",
+        "no_templates": "Aún no hay plantillas de correo",
+        "create_first": "Crea tu primera plantilla de correo para comenzar"
+    },
+    "de": {
+        "seo_title": "E-Mail-Vorlagen",
+        "seo_description": "Verwalten Sie Ihre E-Mail-Vorlagen",
+        "title": "E-Mail-Vorlagen",
+        "description": "Erstellen und verwalten Sie wiederverwendbare E-Mail-Vorlagen für Ihre Kommunikation",
+        "create_template": "E-Mail-Vorlage erstellen",
+        "no_templates": "Noch keine E-Mail-Vorlagen",
+        "create_first": "Erstellen Sie Ihre erste E-Mail-Vorlage, um zu beginnen"
+    },
+    "fr": {
+        "seo_title": "Modèles d'E-mail",
+        "seo_description": "Gérez vos modèles d'e-mail",
+        "title": "Modèles d'E-mail",
+        "description": "Créez et gérez des modèles d'e-mail réutilisables pour vos communications",
+        "create_template": "Créer un Modèle d'E-mail",
+        "no_templates": "Pas encore de modèles d'e-mail",
+        "create_first": "Créez votre premier modèle d'e-mail pour commencer"
+    }
+}

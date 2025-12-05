@@ -1,0 +1,38 @@
+{
+    "en": {
+        "seo_title": "Chat Templates",
+        "seo_description": "Manage your chat templates",
+        "title": "Chat Templates",
+        "description": "Create and manage quick response templates for chat communications",
+        "create_template": "Create Chat Template",
+        "no_templates": "No chat templates yet",
+        "create_first": "Create your first chat template to get started"
+    },
+    "es": {
+        "seo_title": "Plantillas de Chat",
+        "seo_description": "Gestiona tus plantillas de chat",
+        "title": "Plantillas de Chat",
+        "description": "Crea y gestiona plantillas de respuesta rápida para comunicaciones de chat",
+        "create_template": "Crear Plantilla de Chat",
+        "no_templates": "Aún no hay plantillas de chat",
+        "create_first": "Crea tu primera plantilla de chat para comenzar"
+    },
+    "de": {
+        "seo_title": "Chat-Vorlagen",
+        "seo_description": "Verwalten Sie Ihre Chat-Vorlagen",
+        "title": "Chat-Vorlagen",
+        "description": "Erstellen und verwalten Sie Schnellantwort-Vorlagen für Chat-Kommunikation",
+        "create_template": "Chat-Vorlage erstellen",
+        "no_templates": "Noch keine Chat-Vorlagen",
+        "create_first": "Erstellen Sie Ihre erste Chat-Vorlage, um zu beginnen"
+    },
+    "fr": {
+        "seo_title": "Modèles de Chat",
+        "seo_description": "Gérez vos modèles de chat",
+        "title": "Modèles de Chat",
+        "description": "Créez et gérez des modèles de réponse rapide pour les communications par chat",
+        "create_template": "Créer un Modèle de Chat",
+        "no_templates": "Pas encore de modèles de chat",
+        "create_first": "Créez votre premier modèle de chat pour commencer"
+    }
+}

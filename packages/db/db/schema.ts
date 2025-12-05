@@ -10,6 +10,7 @@ import { platformPosts, posts } from './posts/posts'
 import { reviews } from './reviews/reviews'
 import { socialMediaAccountManagers, socialMediaAccounts } from './socialMedia/socialMedia'
 import { subscriptions } from './subscriptions/subscriptions'
+import { templates, templateAssets } from './templates/templates'
 
 export * from './assets/assets'
 
@@ -39,7 +40,8 @@ export const userRelations = relations(user, ({ many }) => ({
   assets: many(assets),
   posts: many(posts),
   subscriptions: many(subscriptions),
-  notifications: many(notifications)
+  notifications: many(notifications),
+  templates: many(templates)
 }))
 
 // Business profile relations - connecting to dependent features
@@ -132,4 +134,18 @@ export const notificationsRelations = relations(notifications, ({ one }) => ({
   })
 }))
 
+// Template relations
+export const templatesRelations = relations(templates, ({ one, many }) => ({
+  user: one(user, {
+    fields: [templates.ownerId],
+    references: [user.id]
+  }),
+  assets: many(templateAssets)
+}))
 
+export const templateAssetsRelations = relations(templateAssets, ({ one }) => ({
+  template: one(templates, {
+    fields: [templateAssets.templateId],
+    references: [templates.id]
+  })
+}))

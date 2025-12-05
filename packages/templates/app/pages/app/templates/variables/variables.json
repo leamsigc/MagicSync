@@ -1,0 +1,38 @@
+{
+    "en": {
+        "seo_title": "Variable Templates",
+        "seo_description": "Manage your variable templates",
+        "title": "Variable Templates",
+        "description": "Create and manage reusable text variables and code snippets",
+        "create_template": "Create Variable Template",
+        "no_templates": "No variable templates yet",
+        "create_first": "Create your first variable template to get started"
+    },
+    "es": {
+        "seo_title": "Plantillas de Variables",
+        "seo_description": "Gestiona tus plantillas de variables",
+        "title": "Plantillas de Variables",
+        "description": "Crea y gestiona variables de texto reutilizables y fragmentos de código",
+        "create_template": "Crear Plantilla de Variable",
+        "no_templates": "Aún no hay plantillas de variables",
+        "create_first": "Crea tu primera plantilla de variable para comenzar"
+    },
+    "de": {
+        "seo_title": "Variablenvorlagen",
+        "seo_description": "Verwalten Sie Ihre Variablenvorlagen",
+        "title": "Variablenvorlagen",
+        "description": "Erstellen und verwalten Sie wiederverwendbare Textvariablen und Code-Snippets",
+        "create_template": "Variablenvorlage erstellen",
+        "no_templates": "Noch keine Variablenvorlagen",
+        "create_first": "Erstellen Sie Ihre erste Variablenvorlage, um zu beginnen"
+    },
+    "fr": {
+        "seo_title": "Modèles de Variables",
+        "seo_description": "Gérez vos modèles de variables",
+        "title": "Modèles de Variables",
+        "description": "Créez et gérez des variables de texte réutilisables et des extraits de code",
+        "create_template": "Créer un Modèle de Variable",
+        "no_templates": "Pas encore de modèles de variables",
+        "create_first": "Créez votre premier modèle de variable pour commencer"
+    }
+}

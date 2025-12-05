@@ -76,18 +76,18 @@ export class TemplateService {
 
   async findById(id: string, userId: string): Promise<ServiceResponse<TemplateWithAssets>> {
     try {
-      const [template] = await this.db
-        .select()
-        .from(templates)
-        .where(and(eq(templates.id, id), or(eq(templates.ownerId, userId), eq(templates.isPublic, true))))
-        .limit(1);
+      const template = await this.db.query.templates.findFirst({
+        where: and(eq(templates.id, id), or(eq(templates.ownerId, userId), eq(templates.isPublic, true))),
+        with: {
+          assets: true
+        }
+      });
 
       if (!template) {
         return { success: false, error: 'Template not found', code: 'NOT_FOUND' };
       }
 
-      const assets = await this.findAssetsByTemplateId(id);
-      return { success: true, data: { ...template, assets } };
+      return { success: true, data: template as TemplateWithAssets };
     } catch (error) {
       return { success: false, error: 'Failed to fetch template' };
     }
@@ -98,7 +98,7 @@ export class TemplateService {
       const { pagination = { page: 1, limit: 20 }, filters = {} } = options;
       const offset = ((pagination.page || 1) - 1) * (pagination.limit || 20);
 
-      let whereConditions: SQL<unknown> = eq(templates.ownerId, ownerId);
+      let whereConditions = eq(templates.ownerId, ownerId);
 
       // Apply filters
       if (filters.type && TemplateType.includes(filters.type)) {
@@ -108,13 +108,15 @@ export class TemplateService {
         whereConditions = and(whereConditions, eq(templates.isPublic, filters.isPublic))!;
       }
 
-      const templateList = await this.db
-        .select()
-        .from(templates)
-        .where(whereConditions)
-        .limit(pagination.limit || 20)
-        .offset(offset)
-        .orderBy(sql`${templates.updatedAt} DESC`);
+      const templateList = await this.db.query.templates.findMany({
+        where: whereConditions,
+        limit: pagination.limit || 20,
+        offset,
+        orderBy: (templates, { desc }) => [desc(templates.updatedAt)],
+        with: {
+          assets: true
+        }
+      });
 
       const result = await this.db
         .select({ count: sql<number>`count(*)` })
@@ -143,20 +145,22 @@ export class TemplateService {
       const { pagination = { page: 1, limit: 20 }, filters = {} } = options;
       const offset = ((pagination.page || 1) - 1) * (pagination.limit || 20);
 
-      let whereConditions: SQL<unknown> = eq(templates.isPublic, true);
+      let whereConditions = eq(templates.isPublic, true);
 
       // Apply filters
       if (filters.type && TemplateType.includes(filters.type)) {
         whereConditions = and(whereConditions, eq(templates.type, filters.type))!;
       }
 
-      const templateList = await this.db
-        .select()
-        .from(templates)
-        .where(whereConditions)
-        .limit(pagination.limit || 20)
-        .offset(offset)
-        .orderBy(sql`${templates.updatedAt} DESC`);
+      const templateList = await this.db.query.templates.findMany({
+        where: whereConditions,
+        limit: pagination.limit || 20,
+        offset,
+        orderBy: (templates, { desc }) => [desc(templates.updatedAt)],
+        with: {
+          assets: true
+        }
+      });
 
       const result = await this.db
         .select({ count: sql<number>`count(*)` })
@@ -291,10 +295,9 @@ export class TemplateService {
   }
 
   private async findAssetsByTemplateId(templateId: string): Promise<TemplateAsset[]> {
-    return await this.db
-      .select()
-      .from(templateAssets)
-      .where(eq(templateAssets.templateId, templateId));
+    return await this.db.query.templateAssets.findMany({
+      where: eq(templateAssets.templateId, templateId)
+    });
   }
 
   private validateCreateData(data: CreateTemplateData): void {

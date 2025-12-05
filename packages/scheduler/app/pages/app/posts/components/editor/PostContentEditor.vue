@@ -49,19 +49,7 @@ const progressColor = computed(() => {
     </div>
     <div class="flex items-center justify-between px-4 py-3 border-t border-zinc-800/50">
       <div class="flex items-center gap-2">
-        <UTooltip text="Attach Media">
-          <button @click="emit('attach-media')"
-            class="p-2 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 transition-colors">
-            <Icon name="lucide:paperclip" class="w-5 h-5" />
-          </button>
-        </UTooltip>
-
-        <UTooltip text="Variables">
-          <button class="p-2 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 transition-colors">
-            <Icon name="lucide:braces" class="w-5 h-5" />
-          </button>
-        </UTooltip>
-
+        <slot></slot>
         <div class="w-px h-6 bg-zinc-800 mx-1"></div>
 
         <slot name="ai-tools" />

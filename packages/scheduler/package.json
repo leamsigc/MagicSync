@@ -25,6 +25,7 @@
     "@local-monorepo/connect": "workspace:*",
     "@local-monorepo/db": "workspace:*",
     "@local-monorepo/ui": "workspace:*",
+    "@local-monorepo/templates": "workspace:*",
     "ai": "^5.0.106",
     "axios": "catalog:",
     "dayjs": "catalog:",
