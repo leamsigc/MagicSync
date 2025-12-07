@@ -117,7 +117,7 @@ export const auth = betterAuth({
       scopes: ['openid', 'profile', 'email', 'w_member_social'],
     },
     tiktok: {
-      clientKey: process.env.NUXT_TIKTOK_CLIENT_KEY as string,
+      clientKey: process.env.NUXT_TIKTOK_CLIENT_ID as string,
       clientSecret: process.env.NUXT_TIKTOK_CLIENT_SECRET as string,
     },
     twitter: {
