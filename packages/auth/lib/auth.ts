@@ -9,12 +9,21 @@ import { logAuditService } from '#layers/BaseDB/server/services/auditLog.service
 
 export const auth = betterAuth({
   baseURL: process.env.NUXT_BETTER_AUTH_URL || 'http://localhost:3000',
+  trustedOrigins: [
+    process.env.NUXT_BETTER_AUTH_URL || 'http://localhost:3000'
+  ],
   database: drizzleAdapter(useDrizzle(), {
     provider: 'sqlite',
     schema: {
       ...schema
     }
   }),
+  session: {
+    cookieCache: {
+      enabled: true,
+      maxAge: 10 * 60 // Cache for 10 minutes
+    }
+  },
   user: {
     additionalFields: {
       firstName: {

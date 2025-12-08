@@ -10,8 +10,8 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const isUserNavigatingToTheApp = to.path.startsWith('/app')
   const { data: loggedIn } = await authClient.useSession(useFetch)
 
-  user.value = loggedIn.value?.user;
-  session.value = loggedIn.value?.session
+  user.value = loggedIn.value?.user as User;
+  session.value = loggedIn.value?.session as Session
 
   const isNavigatingToLoginOrRegister = to.path.startsWith('/login') || to.path.startsWith('/register')
 

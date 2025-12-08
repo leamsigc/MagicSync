@@ -142,4 +142,8 @@ export default defineNuxtConfig({
       console.log(`\n`) */
     }
   },
+  site: {
+    url: "https://magicsync.dev",
+    name: "MagicSync - Social Media Management Made Easy"
+  },
 })
