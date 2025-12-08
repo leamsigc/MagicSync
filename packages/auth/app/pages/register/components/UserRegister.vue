@@ -32,31 +32,36 @@ const fields = computed<AuthFormField[]>(() => [{
   type: 'text',
   label: t('form.first_name'),
   placeholder: t('placeholders.first_name'),
-  required: true
+  required: true,
+  disabled: true
 }, {
   name: 'lastName',
   type: 'text',
   label: t('form.last_name'),
   placeholder: t('placeholders.last_name'),
-  required: true
+  required: true,
+  disabled: true
 }, {
   name: 'email',
   type: 'email',
   label: t('form.email'),
   placeholder: t('placeholders.email'),
-  required: true
+  required: true,
+  disabled: true
 }, {
   name: 'password',
   label: t('form.password'),
   type: 'password',
   placeholder: t('placeholders.password'),
-  required: true
+  required: true,
+  disabled: true
 }, {
   name: 'passwordConfirm',
   label: t('form.password_confirm'),
   type: 'password',
   placeholder: t('placeholders.password_confirm'),
-  required: true
+  required: true,
+  disabled: true
 }, {
   name: 'remember',
   label: t('form.remember_me'),
@@ -98,6 +103,14 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
 }
 
 async function HandleRegisterUser(data: Schema) {
+
+  add({
+    title: t('messages.register_error'),
+    description: "Registration only available by invitation code",
+    color: 'error'
+  })
+  return;
+  // TODO: For now only google is available
   await signUp.email({
     email: data.email,
     password: data.password,

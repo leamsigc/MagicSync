@@ -32,13 +32,15 @@ const fields = computed<AuthFormField[]>(() => [{
   type: 'email',
   label: t('form.email'),
   placeholder: t('placeholders.email'),
-  required: true
+  required: true,
+  disabled: true
 }, {
   name: 'password',
   label: t('form.password'),
   type: 'password',
   placeholder: t('placeholders.password'),
-  required: true
+  required: true,
+  disabled: true
 }, {
   name: 'remember',
   label: t('form.remember_me'),
@@ -74,6 +76,13 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
 }
 
 async function HandleLoginUser(email: string, password: string) {
+  add({
+    title: t('coming_soon.title'),
+    description: t('coming_soon.description'),
+    color: 'info'
+  })
+  return;
+  // TODO: For now only google is available
   await signIn.email({
     email,
     password,

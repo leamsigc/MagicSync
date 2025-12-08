@@ -55,6 +55,7 @@ catalog:
   zod: ^4.1.13
   zod-to-json-schema: ^3.25.0
   tailwindcss: 4.1.17
+  "nuxt-umami": "^3.2.1"
 
 onlyBuiltDependencies:
   - esbuild

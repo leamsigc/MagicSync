@@ -110,7 +110,7 @@ export default defineNuxtConfig({
     '@local-monorepo/templates'
   ],
 
-  modules: ['@nuxtjs/seo', '@nuxtjs/i18n', '@nuxt/hints'],
+  modules: ['@nuxtjs/seo', '@nuxtjs/i18n', '@nuxt/hints', 'nuxt-umami'],
   i18n: {
     vueI18n: join(currentDir, './translations/i18n.config.ts'),
     baseUrl: process.env.NUXT_APP_URL,
@@ -145,5 +145,11 @@ export default defineNuxtConfig({
   site: {
     url: "https://magicsync.dev",
     name: "MagicSync - Social Media Management Made Easy"
+  },
+  umami: {
+    id: '55b75e65-727f-44ae-9f58-c2d67c2f3b4b',
+    host: 'https://umami.giessen.dev',
+    autoTrack: true,
+    ignoreLocalhost: true
   },
 })
