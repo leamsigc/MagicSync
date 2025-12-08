@@ -1,13 +1,26 @@
-import type { PostDetails, PostResponse, Integration } from '../SchedulerPost.service';
+import type { PostResponse, Integration, PluginPostDetails, PluginSocialMediaAccount } from '../SchedulerPost.service';
 import { BaseSchedulerPlugin, type MediaContent } from '../SchedulerPost.service';
 import type { Post, PostWithAllData, SocialMediaAccount, Asset } from '#layers/BaseDB/db/schema';
 import sharp from 'sharp';
+import type { DribbbleSettings } from '../../../shared/platformSettings';
 
 import { platformConfigurations } from '../../../shared/platformConstants';
 
 export class DribbblePlugin extends BaseSchedulerPlugin {
     static readonly pluginName = 'dribbble';
     readonly pluginName = 'dribbble';
+
+    private getPlatformData(postDetails: PluginPostDetails) {
+        const platformName = this.pluginName;
+        const platformContent = (postDetails as any).platformContent?.[platformName];
+        const platformSettings = (postDetails as any).platformSettings?.[platformName] as DribbbleSettings | undefined;
+        return {
+            content: platformContent?.content || postDetails.content,
+            settings: platformSettings,
+            postFormat: (postDetails as any).postFormat || 'post'
+        };
+    }
+
     public override exposedMethods = [
         'dribbbleMaxLength',
         'getUser',
@@ -24,12 +37,13 @@ export class DribbblePlugin extends BaseSchedulerPlugin {
 
     override async validate(post: Post): Promise<string[]> {
         const errors: string[] = [];
+        const postWithAssets = post as any;
 
         if (!post.content || post.content.trim() === '') {
             errors.push('Shot title cannot be empty.');
         }
 
-        if (!post.assets || post.assets.length === 0) {
+        if (!postWithAssets.assets || postWithAssets.assets.length === 0) {
             errors.push('At least one image is required for Dribbble shots.');
         }
 
@@ -55,7 +69,7 @@ export class DribbblePlugin extends BaseSchedulerPlugin {
         try {
             const response = await fetch(asset.url);
             const arrayBuffer = await response.arrayBuffer();
-            let imageBuffer = Buffer.from(arrayBuffer);
+            let imageBuffer = Buffer.from(arrayBuffer as ArrayBuffer);
 
             const metadata = await sharp(imageBuffer).metadata();
             let width = metadata.width!;
@@ -94,18 +108,13 @@ export class DribbblePlugin extends BaseSchedulerPlugin {
     }
 
     override async post(
-        postDetails: PostWithAllData,
-        comments: PostDetails[],
-        socialMediaAccount: SocialMediaAccount
+        postDetails: PluginPostDetails,
+        comments: PluginPostDetails[],
+        socialMediaAccount: PluginSocialMediaAccount
     ): Promise<PostResponse> {
         try {
-            if (!postDetails.assets || postDetails.assets.length === 0) {
-                throw new Error('At least one image is required for Dribbble shots');
-            }
-
-            const imageAsset = postDetails.assets.find((asset: Asset) =>
-                asset.mimeType.includes('image')
-            );
+            const { content, settings } = this.getPlatformData(postDetails);
+            const imageAsset = postDetails.assets?.find((a) => a.mimeType.startsWith('image/'));
 
             if (!imageAsset) {
                 throw new Error('No valid image found in assets');
@@ -123,7 +132,7 @@ export class DribbblePlugin extends BaseSchedulerPlugin {
                 formData.append('description', postDetails.content);
             }
 
-            const settings = postDetails.settings as any;
+            // const settings = postDetails.settings as any; // already got settings from getPlatformData
 
             // Add tags if provided (max 12)
             if (settings?.tags && Array.isArray(settings.tags)) {
@@ -189,9 +198,9 @@ export class DribbblePlugin extends BaseSchedulerPlugin {
     }
 
     override async update(
-        postDetails: PostWithAllData,
-        comments: PostDetails[],
-        socialMediaAccount: SocialMediaAccount
+        postDetails: PluginPostDetails,
+        comments: PluginPostDetails[],
+        socialMediaAccount: PluginSocialMediaAccount
     ): Promise<PostResponse> {
         try {
             if (!postDetails.postId) {
@@ -209,7 +218,8 @@ export class DribbblePlugin extends BaseSchedulerPlugin {
                 updateData.description = postDetails.content;
             }
 
-            const settings = postDetails.settings as any;
+            const { content, settings } = this.getPlatformData(postDetails);
+            // const settings = postDetails.settings as any; // Already retrieved
             if (settings?.tags && Array.isArray(settings.tags)) {
                 updateData.tags = settings.tags.slice(0, 12);
             }
@@ -256,9 +266,9 @@ export class DribbblePlugin extends BaseSchedulerPlugin {
     }
 
     override async addComment(
-        postDetails: PostWithAllData,
-        commentDetails: PostDetails,
-        socialMediaAccount: SocialMediaAccount
+        postDetails: PluginPostDetails,
+        commentDetails: PluginPostDetails,
+        socialMediaAccount: PluginSocialMediaAccount
     ): Promise<PostResponse> {
         try {
             if (!postDetails.postId) {
@@ -274,7 +284,7 @@ export class DribbblePlugin extends BaseSchedulerPlugin {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        body: commentDetails.message,
+                        body: commentDetails.content,
                     }),
                 }
             );

@@ -2,6 +2,9 @@ import type { Asset, Post, PostWithAllData, SocialMediaAccount } from '#layers/B
 import type { PostDetails, PostResponse, Integration, MediaContent } from '../SchedulerPost.service';
 import { BaseSchedulerPlugin } from '../SchedulerPost.service';
 import dayjs from 'dayjs';
+import type { GoogleBusinessSettings } from '../../../shared/platformSettings';
+
+// Type definitions for Google My Business API responses
 
 // Type definitions for Google My Business API responses
 type AuthTokenDetails = {
@@ -99,6 +102,18 @@ type GMBPostData = {
 export class GoogleMyBusinessPlugin extends BaseSchedulerPlugin {
     static readonly pluginName = 'googlemybusiness';
     readonly pluginName = 'googlemybusiness';
+
+    private getPlatformData(postDetails: PostWithAllData) {
+        const platformName = this.pluginName;
+        const platformContent = (postDetails as any).platformContent?.[platformName];
+        const platformSettings = (postDetails as any).platformSettings?.[platformName] as GoogleBusinessSettings | undefined;
+        return {
+            content: platformContent?.content || postDetails.content,
+            settings: platformSettings,
+            postFormat: (postDetails as any).postFormat || 'post'
+        };
+    }
+
     public override exposedMethods = [
         'handleErrors',
         'reConnect',
@@ -523,15 +538,67 @@ export class GoogleMyBusinessPlugin extends BaseSchedulerPlugin {
         socialMediaAccount: SocialMediaAccount
     ): Promise<PostResponse> {
         try {
+            const { content, settings } = this.getPlatformData(postDetails);
+
             // Prepare post data based on type
             const postData: GMBPostData = {
-                topicType: 'STANDARD',
-                summary: postDetails.content,
+                topicType: (settings?.topicType as any) || 'STANDARD',
+                summary: content || '',
                 media: postDetails.assets?.map((asset: Asset) => ({
                     mediaFormat: asset.mimeType.includes('video') ? 'VIDEO' as const : 'PHOTO' as const,
                     sourceUrl: `${this.baseUrl}${asset.url.replace('/serve/', '/public/')}?userId=${postDetails.userId}`,
                 })),
             };
+
+            // Handle Event
+            if (postData.topicType === 'EVENT' && settings) {
+                if (!settings.eventTitle || !settings.eventStartDate) {
+                    throw new Error('Event title and start date are required for EVENT posts');
+                }
+
+                const start = dayjs(`${settings.eventStartDate} ${settings.eventStartTime || '00:00'}`);
+                const end = settings.eventEndDate
+                    ? dayjs(`${settings.eventEndDate} ${settings.eventEndTime || '23:59'}`)
+                    : start.add(1, 'hour');
+
+                postData.event = {
+                    title: settings.eventTitle,
+                    schedule: {
+                        startDate: { year: start.year(), month: start.month() + 1, day: start.date() },
+                        startTime: { hours: start.hour(), minutes: start.minute() },
+                        endDate: { year: end.year(), month: end.month() + 1, day: end.date() },
+                        endTime: { hours: end.hour(), minutes: end.minute() },
+                    }
+                };
+            }
+
+            // Handle Offer
+            if (postData.topicType === 'OFFER' && settings) {
+                if (!settings.offerCouponCode) {
+                    throw new Error('Coupon code is required for OFFER posts');
+                }
+
+                postData.offer = {
+                    couponCode: settings.offerCouponCode,
+                    redeemOnlineUrl: settings.offerRedeemUrl,
+                    termsConditions: settings.offerTerms,
+                };
+            }
+
+            // Handle CTA
+            if (settings?.callToActionType && settings.callToActionType !== 'CALL') {
+                if (!settings.callToActionUrl) {
+                    throw new Error('CTA URL is required for the selected action type');
+                }
+                postData.callToAction = {
+                    actionType: settings.callToActionType as any,
+                    url: settings.callToActionUrl,
+                };
+            } else if (settings?.callToActionType === 'CALL') {
+                postData.callToAction = {
+                    actionType: 'CALL',
+                };
+            }
 
             const result = await this.createPost(
                 socialMediaAccount.accountId,

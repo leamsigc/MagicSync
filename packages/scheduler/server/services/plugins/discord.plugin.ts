@@ -1,12 +1,25 @@
-import type { PostDetails, PostResponse, Integration } from '../SchedulerPost.service';
+import type { PostResponse, Integration, PluginPostDetails, PluginSocialMediaAccount } from '../SchedulerPost.service';
 import { BaseSchedulerPlugin, type MediaContent } from '../SchedulerPost.service';
 import type { Post, PostWithAllData, SocialMediaAccount, Asset } from '#layers/BaseDB/db/schema';
+import type { DiscordSettings } from '../../../shared/platformSettings';
 
 import { platformConfigurations } from '../../../shared/platformConstants';
 
 export class DiscordPlugin extends BaseSchedulerPlugin {
     static readonly pluginName = 'discord';
     readonly pluginName = 'discord';
+
+    private getPlatformData(postDetails: PluginPostDetails) {
+        const platformName = this.pluginName;
+        const platformContent = (postDetails as any).platformContent?.[platformName];
+        const platformSettings = (postDetails as any).platformSettings?.[platformName] as DiscordSettings | undefined;
+        return {
+            content: platformContent?.content || postDetails.content,
+            settings: platformSettings,
+            postFormat: (postDetails as any).postFormat || 'post'
+        };
+    }
+
     public override exposedMethods = [
         'discordMaxLength',
         'getGuilds',
@@ -58,20 +71,22 @@ export class DiscordPlugin extends BaseSchedulerPlugin {
     }
 
     override async post(
-        postDetails: PostWithAllData,
-        comments: PostDetails[],
-        socialMediaAccount: SocialMediaAccount
+        postDetails: PluginPostDetails,
+        comments: PluginPostDetails[],
+        socialMediaAccount: PluginSocialMediaAccount
     ): Promise<PostResponse> {
         try {
-            const settings = postDetails.settings as any;
-            const channelId = settings?.channelId || socialMediaAccount.metadata?.channelId;
+            const { content, settings } = this.getPlatformData(postDetails);
 
+            // Fetch guildID and channelID appropriately
+            // Prioritize settings.channelId, then socialMediaAccount.metadata.channelId, then socialMediaAccount.accountId
+            const channelId = settings?.channelId || socialMediaAccount.metadata?.channelId || socialMediaAccount.accountId;
             if (!channelId) {
                 throw new Error('Channel ID is required. Please configure it in account settings.');
             }
 
             const messagePayload: any = {
-                content: postDetails.content,
+                content: content,
             };
 
             // Add embeds if provided in settings
@@ -87,6 +102,7 @@ export class DiscordPlugin extends BaseSchedulerPlugin {
                 // Upload files
                 for (let i = 0; i < Math.min(postDetails.assets.length, 10); i++) {
                     const asset = postDetails.assets[i];
+                    if (!asset) continue;
                     const fileResponse = await fetch(asset.url);
                     const fileBlob = await fileResponse.blob();
                     formData.append(`files[${i}]`, fileBlob, asset.filename);
@@ -97,7 +113,7 @@ export class DiscordPlugin extends BaseSchedulerPlugin {
                     {
                         method: 'POST',
                         headers: {
-                            Authorization: `Bearer ${socialMediaAccount.accessToken}`,
+                            Authorization: `Bot ${socialMediaAccount.accessToken}`,
                         },
                         body: formData,
                     }
@@ -126,7 +142,7 @@ export class DiscordPlugin extends BaseSchedulerPlugin {
                     {
                         method: 'POST',
                         headers: {
-                            Authorization: `Bearer ${socialMediaAccount.accessToken}`,
+                            Authorization: `Bot ${socialMediaAccount.accessToken}`,
                             'Content-Type': 'application/json',
                         },
                         body: JSON.stringify(messagePayload),
@@ -164,39 +180,41 @@ export class DiscordPlugin extends BaseSchedulerPlugin {
     }
 
     override async update(
-        postDetails: PostWithAllData,
-        comments: PostDetails[],
-        socialMediaAccount: SocialMediaAccount
+        postDetails: PluginPostDetails,
+        comments: PluginPostDetails[],
+        socialMediaAccount: PluginSocialMediaAccount
     ): Promise<PostResponse> {
         try {
+            const { content, settings } = this.getPlatformData(postDetails);
+
             if (!postDetails.postId) {
-                throw new Error('Message ID is required for updating');
+                throw new Error('Message ID is required for update');
             }
 
-            const settings = postDetails.settings as any;
-            const channelId = settings?.channelId || socialMediaAccount.metadata?.channelId;
+            // Prefer channelId from settings, fall back to metadata or account info
+            // In Discord, you usually post to a specific channel. The account might be linked to a guild/user.
+            // Metadata usually stores the selected channel ID from connection time or UI selection.
+            const channelId = settings?.channelId || socialMediaAccount.metadata?.channelId || socialMediaAccount.accountId;
 
             if (!channelId) {
-                throw new Error('Channel ID is required');
+                throw new Error('Discord Channel ID is required');
             }
 
-            const messagePayload: any = {
-                content: postDetails.content,
+            // Construct payload
+            const payload: any = {
+                content: content,
+                // embeds: settings?.embeds, // Removed as embeds is not on DiscordSettings currently
             };
-
-            if (settings?.embeds && Array.isArray(settings.embeds)) {
-                messagePayload.embeds = settings.embeds;
-            }
 
             const response = await fetch(
                 `https://discord.com/api/v10/channels/${channelId}/messages/${postDetails.postId}`,
                 {
                     method: 'PATCH',
                     headers: {
-                        Authorization: `Bearer ${socialMediaAccount.accessToken}`,
+                        Authorization: `Bot ${socialMediaAccount.accessToken}`,
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify(messagePayload),
+                    body: JSON.stringify(payload),
                 }
             );
 
@@ -230,22 +248,23 @@ export class DiscordPlugin extends BaseSchedulerPlugin {
     }
 
     override async addComment(
-        postDetails: PostWithAllData,
-        commentDetails: PostDetails,
-        socialMediaAccount: SocialMediaAccount
+        postDetails: PluginPostDetails,
+        commentDetails: PluginPostDetails,
+        socialMediaAccount: PluginSocialMediaAccount
     ): Promise<PostResponse> {
         try {
             // Discord doesn't have traditional comments, but we can reply to a message
             // This creates a new message that references the original
-            const settings = postDetails.settings as any;
-            const channelId = settings?.channelId || socialMediaAccount.metadata?.channelId;
+            const { content } = this.getPlatformData(commentDetails);
+            const settings = postDetails.settings;
+            const channelId = settings?.channelId || socialMediaAccount.metadata?.channelId || socialMediaAccount.accountId;
 
             if (!channelId) {
                 throw new Error('Channel ID is required');
             }
 
             const messagePayload: any = {
-                content: commentDetails.message,
+                content: content,
                 message_reference: {
                     message_id: postDetails.postId,
                 },

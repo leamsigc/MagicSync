@@ -1,4 +1,4 @@
-import type { PostDetails, PostResponse, Integration } from '../SchedulerPost.service';
+import type { PostResponse, Integration, PluginPostDetails, PluginSocialMediaAccount } from '../SchedulerPost.service';
 import { BaseSchedulerPlugin } from '../SchedulerPost.service';
 import type { Post, PostWithAllData, SocialMediaAccount } from '#layers/BaseDB/db/schema';
 
@@ -47,9 +47,9 @@ export class InstagramStandalonePlugin extends BaseSchedulerPlugin {
     }
 
     override async post(
-        postDetails: PostWithAllData,
-        comments: PostDetails[],
-        socialMediaAccount: SocialMediaAccount
+        postDetails: PluginPostDetails,
+        comments: PluginPostDetails[],
+        socialMediaAccount: PluginSocialMediaAccount
     ): Promise<PostResponse> {
         // Instagram Basic Display API is read-only and has been deprecated
         const errorResponse: PostResponse = {
@@ -68,17 +68,17 @@ export class InstagramStandalonePlugin extends BaseSchedulerPlugin {
     }
 
     override async update(
-        postDetails: PostWithAllData,
-        comments: PostDetails[],
-        socialMediaAccount: SocialMediaAccount
+        postDetails: PluginPostDetails,
+        comments: PluginPostDetails[],
+        socialMediaAccount: PluginSocialMediaAccount
     ): Promise<PostResponse> {
         return this.post(postDetails, comments, socialMediaAccount);
     }
 
     override async addComment(
-        postDetails: PostWithAllData,
-        commentDetails: PostDetails,
-        socialMediaAccount: SocialMediaAccount
+        postDetails: PluginPostDetails,
+        commentDetails: PluginPostDetails,
+        socialMediaAccount: PluginSocialMediaAccount
     ): Promise<PostResponse> {
         const errorResponse: PostResponse = {
             id: commentDetails.id,

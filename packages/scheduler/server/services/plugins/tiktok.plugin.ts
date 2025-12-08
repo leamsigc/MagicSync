@@ -1,12 +1,25 @@
 import type { PostDetails, PostResponse, Integration } from '../SchedulerPost.service';
 import { BaseSchedulerPlugin, type MediaContent } from '../SchedulerPost.service';
 import type { Post, PostWithAllData, SocialMediaAccount, Asset } from '#layers/BaseDB/db/schema';
+import type { TikTokSettings } from '../../../shared/platformSettings';
 
 import { platformConfigurations } from '../../../shared/platformConstants';
 
 export class TikTokPlugin extends BaseSchedulerPlugin {
     static readonly pluginName = 'tiktok';
     readonly pluginName = 'tiktok';
+
+    private getPlatformData(postDetails: PostWithAllData) {
+        const platformName = this.pluginName;
+        const platformContent = (postDetails as any).platformContent?.[platformName];
+        const platformSettings = (postDetails as any).platformSettings?.[platformName] as TikTokSettings | undefined;
+        return {
+            content: platformContent?.content || postDetails.content,
+            settings: platformSettings,
+            postFormat: (postDetails as any).postFormat || 'post'
+        };
+    }
+
     public override exposedMethods = [
         'tiktokMaxLength',
         'getUser',
@@ -95,16 +108,16 @@ export class TikTokPlugin extends BaseSchedulerPlugin {
                 throw new Error('No video file found in assets');
             }
 
-            const settings = postDetails.settings as any;
+            const { content, settings } = this.getPlatformData(postDetails);
 
             // Step 1: Initialize video upload
             const initData: any = {
                 post_info: {
-                    title: postDetails.title || '',
-                    privacy_level: settings?.privacy_level || 'SELF_ONLY', // PUBLIC, FRIENDS_ONLY, SELF_ONLY
-                    disable_duet: settings?.disable_duet || false,
-                    disable_comment: settings?.disable_comment || false,
-                    disable_stitch: settings?.disable_stitch || false,
+                    title: content || '', // Use platform content as title
+                    privacy_level: settings?.privacy_level || 'PUBLIC', // Default to PUBLIC if not set
+                    disable_duet: settings?.disable_duet ?? false,
+                    disable_comment: settings?.disable_comment ?? false,
+                    disable_stitch: settings?.disable_stitch ?? false,
                     video_cover_timestamp_ms: settings?.video_cover_timestamp_ms || 0,
                 },
                 source_info: {

@@ -16,6 +16,7 @@
  */
 import { usePlatformConfiguration, type SocialMediaPlatformConfigurations, type PostFormat } from '../composables/usePlatformConfiguration';
 import type { PostCreateBase, Asset, Post, PostWithAllData, SocialMediaComplete } from '#layers/BaseDB/db/schema';
+import type { PlatformSettings } from '#layers/BaseScheduler/shared/platformSettings';
 import dayjs from 'dayjs';
 import PostPlatformSelector from './editor/PostPlatformSelector.vue';
 
@@ -26,16 +27,24 @@ import { useValidation } from '../composables/useValidation';
 import PhonePreview from './PhonePreview.vue';
 import PostContextSwitcher from './editor/PostContextSwitcher.vue';
 import PostContentEditor from './editor/PostContentEditor.vue';
+import PostFormatSelector from './PostFormatSelector.vue';
 import { useAI } from '../composables/useAI';
+import { usePlatformSettings } from '../composables/usePlatformSettings';
 import EmojiPicker from '#layers/BaseScheduler/app/components/EmojiPicker.vue';
 import { useBusinessManager } from '#layers/BaseConnect/app/pages/app/business/composables/useBusinessManager';
+import PlatformSettingsPanel from '#layers/BaseScheduler/app/components/PlatformSettingsPanel.vue';
 
 interface TargetPlatform {
   accountId: string;
   platformType: keyof SocialMediaPlatformConfigurations;
 }
 
-interface PostForm extends Omit<PostCreateBase, 'targetPlatforms' | 'mediaAssets'> { // Removed 'comment' from Omit
+interface PlatformContentOverride {
+  content: string;
+  comments?: string[];
+}
+
+interface PostForm extends Omit<PostCreateBase, 'targetPlatforms' | 'mediaAssets' | 'platformContent' | 'platformSettings'> { // Removed 'comment', 'platformContent', 'platformSettings' from Omit to redefine
   id?: string;
   createdAt?: Date;
   updatedAt?: Date;
@@ -48,6 +57,9 @@ interface PostForm extends Omit<PostCreateBase, 'targetPlatforms' | 'mediaAssets
   isShort?: boolean;
   isStory?: boolean;
   hasSound?: boolean;
+  platformContent?: Record<string, PlatformContentOverride>; // NEW: Platform-specific content
+  postFormat?: PostFormat; // NEW: Selected post format
+  platformSettings?: Record<string, PlatformSettings>;
 }
 
 const props = defineProps<{
@@ -70,7 +82,10 @@ const postForm = ref<PostForm>({
   mediaAssets: [],
   targetPlatforms: [],
   status: 'pending',
-  comment: []
+  comment: [],
+  platformContent: {}, // NEW: Initialize platform content overrides
+  postFormat: 'post', // NEW: Default format
+  platformSettings: {},
 });
 const now = new Date();
 const selectedDate = shallowRef(
@@ -161,14 +176,6 @@ onMounted(async () => {
     }
   }
 });
-
-function addComment() {
-  postForm.value.comment.push('');
-}
-
-function removeComment(index: number) {
-  postForm.value.comment.splice(index, 1);
-}
 
 const currentPreviewPlatform = computed(() => {
   if (explicitPreviewPlatform.value !== 'default') {
@@ -315,17 +322,72 @@ interface PlatformOverride {
 }
 
 const { validatePlatform } = useValidation();
-// Master Content State
-const masterComments = ref<string[]>([]);
 const masterMedia = ref<Asset[]>([]);
 
-// Platform Overrides State
-const platformOverrides = ref<Record<string, PlatformOverride>>({});
+// Removed unused platformOverrides ref used incorrectly before
+
+
+const platformSettingsState = usePlatformSettings();
+const {
+  currentContent,
+  currentComments,
+  addComment,
+  removeComment,
+  updateComment,
+  hasPlatformOverride,
+  getContentForPlatform,
+  getCommentsForPlatform,
+} = platformSettingsState;
+
+watch(explicitPreviewPlatform, (val) => {
+  platformSettingsState.selectedPlatform.value = val;
+}, { immediate: true });
+
+watch(() => postForm.value.content, (val) => {
+  if (explicitPreviewPlatform.value === 'default') {
+    platformSettingsState.masterContent.value = val;
+  }
+}, { immediate: true });
+
+watch(platformSettingsState.masterContent, (val) => {
+  if (explicitPreviewPlatform.value === 'default') {
+    postForm.value.content = val;
+  }
+});
+
+watch(() => postForm.value.comment, (val) => {
+  if (explicitPreviewPlatform.value === 'default') {
+    platformSettingsState.masterComments.value = val;
+  }
+}, { immediate: true });
+
+watch(platformSettingsState.masterComments, (val) => {
+  if (explicitPreviewPlatform.value === 'default') {
+    postForm.value.comment = val;
+  }
+});
+
+watch(platformSettingsState.platformContent, (val) => {
+  postForm.value.platformContent = val;
+}, { deep: true });
+
+watch(platformSettingsState.platformSettings, (val) => {
+  postForm.value.platformSettings = val;
+}, { deep: true });
 
 // Active Context (which tab is selected)
 
 const contextTabs = computed(() => {
-  const tabs = [
+  // Define local interface for Tab compatible with PostContextSwitcher
+  interface ContextTab {
+    label: string;
+    value: string;
+    icon: string;
+    hasOverride?: boolean;
+    disabled?: boolean;
+  }
+
+  const tabs: ContextTab[] = [
     { label: 'Master', value: 'default', icon: 'lucide:globe' }
   ];
 
@@ -335,10 +397,25 @@ const contextTabs = computed(() => {
     if (existingTab) {
       return;
     }
+
+    // Check if this platform has an override
+    // We check via the composable helper or directly from the form state if synced
+    // The composable 'hasPlatformOverride' takes a platform *type* or *accountId*? 
+    // Looking at usePlatformSettings, it uses selectedPlatform which can be anything used as key map.
+    // In TogglePlatform we seem to map by accountId? No, 'platformContent' usually keyed by platformName (like 'twitter', 'linkedin') 
+    // OR by accountId?
+    // Let's check usePlatformSettings usage. It seems to use 'selectedPlatform.value' as the key. 
+    // In 'explicitPreviewPlatform' watcher, we set selectedPlatform.value = val. 'val' comes from 'explicitPreviewPlatform'.
+    // 'explicitPreviewPlatform' is set to 'default' or 'platformType' (e.g. 'twitter').
+    // So overrides are keyed by PLATFORM TYPE (e.g. 'twitter'), not accountId.
+
+    const hasOverride = !!postForm.value.platformContent?.[platform.platformType]?.content;
+
     tabs.push({
       label: platform.platformType.charAt(0).toUpperCase() + platform.platformType.slice(1),
       value: platform.platformType,
-      icon: `logos:${platform.platformType}`
+      icon: `logos:${platform.platformType}`,
+      hasOverride
     });
   });
   return tabs;
@@ -366,8 +443,13 @@ const validationStatus = computed(() => {
   const status: Record<string, { isValid: boolean; errors: string[]; warnings: string[]; }> = {};
 
   postForm.value.targetPlatforms.forEach(platform => {
-    const contentToValidate = platformOverrides.value[platform.accountId]?.content ?? postForm.value.content;
-    const commentsToValidate = platformOverrides.value[platform.accountId]?.comments ?? masterComments.value;
+    // Correctly accessing content:
+    // If there is an override for this platform TYPE, use it. Otherwise use master content.
+    // The PostForm stores overrides by platform TYPE (string key in Record).
+    const override = postForm.value.platformContent?.[platform.platformType];
+    const contentToValidate = override?.content ?? postForm.value.content;
+    const commentsToValidate = override?.comments ?? platformSettingsState.masterComments.value; // Using masterComments directly for fallback
+
     // Use the new validation composable
     const result = validatePlatform(
       platform.platformType,
@@ -386,7 +468,7 @@ const validationStatus = computed(() => {
 });
 const revertToMaster = () => {
   explicitPreviewPlatform.value = "default";
-}
+};
 
 const currentPlatformConfig = computed(() => {
   if (explicitPreviewPlatform.value === 'default') {
@@ -529,7 +611,7 @@ const handleVariableAction = (variable: string) => {
                       v-html="t('create_post.editing_platform_only', { platform: `<strong>${activeContextLabel}</strong>` })"></span>
                   </div>
 
-                  <PostContentEditor v-model="postForm.content" :character-count="postForm.content.length"
+                  <PostContentEditor v-model="currentContent" :character-count="currentContent.length"
                     :max-characters="currentPlatformConfig.maxPostLength"
                     :placeholder="`Drafting for ${activeContextLabel}...`">
                     <TemplateVariablePopUp @action="handleVariableAction" />
@@ -548,14 +630,21 @@ const handleVariableAction = (variable: string) => {
                   </PostContentEditor>
                 </div>
 
+                <!-- Post Format Selector -->
+                <PostFormatSelector v-model="postForm.postFormat"
+                  :platforms="postForm.targetPlatforms.map(p => p.platformType)" class="mt-4" />
+
+                <!-- Platform-Specific Settings Panel -->
+                <PlatformSettingsPanel v-model="postForm.platformSettings!" :platform="explicitPreviewPlatform" />
+
                 <div class="mt-4">
                   <h4 class="text-sm font-semibold mb-2">{{ t('newPostModal.commentsTitle') }}</h4>
-                  <div v-for="(comment, index) in postForm.comment" :key="index" class="flex items-center gap-2 mb-2">
-                    <UTextarea v-model="postForm.comment[index]"
+                  <div v-for="(comment, index) in currentComments" :key="index" class="flex items-center gap-2 mb-2">
+                    <UTextarea :model-value="currentComments[index]" @update:model-value="updateComment(index, $event)"
                       :placeholder="t('newPostModal.commentPlaceholder', { index: index + 1 })" :rows="8"
                       color="neutral" variant="none"
                       class="w-full flex-1 bg-transparent resize-none focus:ring-0 p-4 text-lg text-zinc-100 border border-muted rounded-2xl placeholder-zinc-600 scrollbar-hide" />
-                    <UButton v-if="postForm.comment.length > 0" icon="i-heroicons-trash-20-solid" color="error"
+                    <UButton v-if="currentComments.length > 0" icon="i-heroicons-trash-20-solid" color="error"
                       variant="ghost" @click="removeComment(index)" />
                   </div>
                   <UButton icon="i-heroicons-plus-circle-20-solid" variant="ghost" @click="addComment">

@@ -2,6 +2,7 @@ import type { Asset, Post, PostWithAllData, SocialMediaAccount } from '#layers/B
 import type { PostDetails, PostResponse, Integration, MediaContent } from '../SchedulerPost.service';
 import { BaseSchedulerPlugin } from '../SchedulerPost.service';
 import dayjs from 'dayjs';
+import type { FacebookSettings } from '../../../shared/platformSettings';
 
 // Placeholder types - these should ideally be imported from a shared types file
 type AuthTokenDetails = {
@@ -28,6 +29,18 @@ type FacebookDto = {
 export class FacebookPlugin extends BaseSchedulerPlugin {
   static readonly pluginName = 'facebook';
   readonly pluginName = 'facebook';
+
+  private getPlatformData(postDetails: PostWithAllData) {
+    const platformName = this.pluginName;
+    const platformContent = (postDetails as any).platformContent?.[platformName];
+    const platformSettings = (postDetails as any).platformSettings?.[platformName] as FacebookSettings | undefined;
+    return {
+      content: platformContent?.content || postDetails.content,
+      settings: platformSettings,
+      postFormat: (postDetails as any).postFormat || 'post'
+    };
+  }
+
   public override exposedMethods = [
     'handleErrors',
     'reConnect',
@@ -619,7 +632,8 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
   private async _uploadVideo(
     accountId: string,
     accessToken: string,
-    postDetails: PostWithAllData
+    postDetails: PostWithAllData,
+    description?: string
   ): Promise<{ id: string; permalink_url: string }> {
     const theFirstVideoFromThePost = postDetails.assets?.find((media) => media.mimeType.includes('video') || media.filename.includes('.mp4'));
 
@@ -633,7 +647,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
         },
         body: JSON.stringify({
           file_url: `${this.baseUrl}${theFirstVideoFromThePost?.url.replace('/serve/', '/public/')}?userId=${postDetails.userId}`,
-          description: postDetails.content,
+          description: description || postDetails.content,
           published: true,
         }),
       },
@@ -720,13 +734,15 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     socialMediaAccount: SocialMediaAccount
   ): Promise<PostResponse> {
     try {
+      const { content, settings, postFormat } = this.getPlatformData(postDetails);
       let finalId = '';
       let finalUrl = '';
 
       const isVideo = postDetails.assets?.some(media => media.mimeType.includes('video') || media.filename.includes('.mp4'));
 
       if (isVideo) {
-        const { id: videoId } = await this._uploadVideo(socialMediaAccount.accountId, socialMediaAccount.accessToken, postDetails);
+        // Pass content override to _uploadVideo
+        const { id: videoId } = await this._uploadVideo(socialMediaAccount.accountId, socialMediaAccount.accessToken, postDetails, content);
         finalUrl = 'https://www.facebook.com/reel/' + videoId;
         finalId = videoId;
       } else {
@@ -737,9 +753,9 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
         const { id: postId, permalink_url } = await this._createFeedPost(
           socialMediaAccount.accountId,
           socialMediaAccount.accessToken,
-          postDetails.content,
+          content, // Use platform-specific content
           uploadPhotos,
-          ""
+          settings?.url || "" // Use link from settings if available
         );
 
         finalUrl = permalink_url;

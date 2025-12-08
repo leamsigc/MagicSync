@@ -4,6 +4,20 @@ import { EventEmitter } from 'events';
 
 // Simplified types based on the core requirements for SchedulerPost
 export type { Integration };
+
+export type PluginPostDetails = PostWithAllData & {
+  title?: string;
+  settings?: any;
+  postId?: string;
+  releaseURL?: string;
+};
+
+export type PluginSocialMediaAccount = SocialMediaAccount & {
+  metadata?: any;
+  username?: string;
+  picture?: string;
+};
+
 export type PostResponse = {
   id: string;
   postId: string;
@@ -32,6 +46,9 @@ export type PostDetails<T = Record<string, unknown>> = {
   media?: MediaContent[];
   poll?: PollDetails;
   comments?: PostDetails[];
+  platformSettings?: Record<string, any>;
+  platformContent?: Record<string, { content: string; comments?: string[] }>;
+  postFormat?: 'post' | 'reel' | 'story' | 'short';
 };
 
 
@@ -46,19 +63,19 @@ export interface SchedulerPlugin {
 
   validate(postDetail: Post): Promise<string[]>;
   post(
-    postDetails: PostWithAllData,
-    comments: PostDetails[],
-    socialMediaAccount: SocialMediaAccount
+    postDetails: PluginPostDetails,
+    comments: PluginPostDetails[],
+    socialMediaAccount: PluginSocialMediaAccount
   ): Promise<PostResponse>;
   update(
-    postDetails: PostWithAllData,
-    comments: PostDetails[],
-    socialMediaAccount: SocialMediaAccount
+    postDetails: PluginPostDetails,
+    comments: PluginPostDetails[],
+    socialMediaAccount: PluginSocialMediaAccount
   ): Promise<PostResponse>;
   addComment(
-    postDetails: PostWithAllData,
-    comments: PostDetails,
-    socialMediaAccount: SocialMediaAccount
+    postDetails: PluginPostDetails,
+    comments: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount
   ): Promise<PostResponse>;
 }
 
@@ -91,19 +108,19 @@ export abstract class BaseSchedulerPlugin implements SchedulerPlugin {
 
   abstract validate(postDetail: Post): Promise<string[]>;
   abstract post(
-    postDetails: PostWithAllData,
-    comments: PostDetails[],
-    socialMediaAccount: SocialMediaAccount
+    postDetails: PluginPostDetails,
+    comments: PluginPostDetails[],
+    socialMediaAccount: PluginSocialMediaAccount
   ): Promise<PostResponse>;
   abstract update(
-    postDetails: PostWithAllData,
-    comments: PostDetails[],
-    socialMediaAccount: SocialMediaAccount
+    postDetails: PluginPostDetails,
+    comments: PluginPostDetails[],
+    socialMediaAccount: PluginSocialMediaAccount
   ): Promise<PostResponse>;
   abstract addComment(
-    postDetails: PostWithAllData,
-    comments: PostDetails,
-    socialMediaAccount: SocialMediaAccount
+    postDetails: PluginPostDetails,
+    comments: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount
   ): Promise<PostResponse>;
 }
 
@@ -171,7 +188,7 @@ export class SchedulerPost extends EventEmitter {
   private async executeOnPlugins(
     action: 'post' | 'update' | 'addComment',
     params: unknown[],
-    socialMediaAccount: SocialMediaAccount,
+    socialMediaAccount: PluginSocialMediaAccount,
     eventPrefix: string,
     extraData: Record<string, unknown> = {}
   ): Promise<PostResponse> {
@@ -199,9 +216,9 @@ export class SchedulerPost extends EventEmitter {
   }
 
   async publish(
-    postDetails: PostWithAllData,
-    comments: PostDetails[],
-    socialMediaAccount: SocialMediaAccount
+    postDetails: PluginPostDetails,
+    comments: PluginPostDetails[],
+    socialMediaAccount: PluginSocialMediaAccount
   ): Promise<PostResponse> {
 
     const validationErrors = await this.validate(postDetails);
@@ -214,17 +231,17 @@ export class SchedulerPost extends EventEmitter {
   }
 
   async update(
-    postDetails: PostWithAllData,
-    comments: PostDetails[],
-    socialMediaAccount: SocialMediaAccount
+    postDetails: PluginPostDetails,
+    comments: PluginPostDetails[],
+    socialMediaAccount: PluginSocialMediaAccount
   ): Promise<PostResponse> {
     return this.executeOnPlugins('update', [postDetails, comments, socialMediaAccount], socialMediaAccount, 'post:update', { postDetails, comments });
   }
 
   async addComment(
-    postDetails: PostWithAllData,
-    comment: PostDetails,
-    socialMediaAccount: SocialMediaAccount
+    postDetails: PluginPostDetails,
+    comment: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount
   ): Promise<PostResponse> {
     return this.executeOnPlugins('addComment', [postDetails, comment, socialMediaAccount], socialMediaAccount, 'comment:add', { postDetails, comment });
   }

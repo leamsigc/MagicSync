@@ -1,12 +1,25 @@
-import type { PostDetails, PostResponse, Integration } from '../SchedulerPost.service';
+import type { PostResponse, Integration, PluginPostDetails, PluginSocialMediaAccount } from '../SchedulerPost.service';
 import { BaseSchedulerPlugin, type MediaContent } from '../SchedulerPost.service';
 import type { Post, PostWithAllData, SocialMediaAccount, Asset } from '#layers/BaseDB/db/schema';
+import type { ThreadsSettings } from '../../../shared/platformSettings';
 
 import { platformConfigurations } from '../../../shared/platformConstants';
 
 export class ThreadsPlugin extends BaseSchedulerPlugin {
     static readonly pluginName = 'threads';
     readonly pluginName = 'threads';
+
+    private getPlatformData(postDetails: PluginPostDetails) {
+        const platformName = this.pluginName;
+        const platformContent = (postDetails as any).platformContent?.[platformName];
+        const platformSettings = (postDetails as any).platformSettings?.[platformName] as ThreadsSettings | undefined;
+        return {
+            content: platformContent?.content || postDetails.content,
+            settings: platformSettings,
+            postFormat: (postDetails as any).postFormat || 'post'
+        };
+    }
+
     public override exposedMethods = [
         'threadsMaxLength',
         'getProfile',
@@ -113,12 +126,19 @@ export class ThreadsPlugin extends BaseSchedulerPlugin {
     }
 
     override async post(
-        postDetails: PostWithAllData,
-        comments: PostDetails[],
-        socialMediaAccount: SocialMediaAccount
+        postDetails: PluginPostDetails,
+        comments: PluginPostDetails[],
+        socialMediaAccount: PluginSocialMediaAccount
     ): Promise<PostResponse> {
         try {
-            const userId = socialMediaAccount.metadata?.threadsUserId || socialMediaAccount.accountId;
+            const { content, settings } = this.getPlatformData(postDetails);
+            const accessToken = socialMediaAccount.accessToken;
+            const userId = socialMediaAccount.accountId; // Assuming accountId is userId for Threads
+
+            // Determine Media Type
+            let mediaType: 'TEXT' | 'IMAGE' | 'VIDEO' | 'CAROUSEL' = 'TEXT';
+            let mediaUrl = undefined;
+            const children: string[] = [];
 
             if (!userId) {
                 throw new Error('Threads user ID is required');
@@ -210,28 +230,17 @@ export class ThreadsPlugin extends BaseSchedulerPlugin {
     }
 
     override async update(
-        postDetails: PostWithAllData,
-        comments: PostDetails[],
-        socialMediaAccount: SocialMediaAccount
+        postDetails: PluginPostDetails,
+        comments: PluginPostDetails[],
+        socialMediaAccount: PluginSocialMediaAccount
     ): Promise<PostResponse> {
-        // Threads does not support editing posts
-        const errorResponse: PostResponse = {
-            id: postDetails.id,
-            postId: postDetails.postId || '',
-            releaseURL: '',
-            status: 'failed',
-            error: 'Threads does not support editing posts via API.',
-        };
-        this.emit('threads:post:update:failed', {
-            error: 'Threads API does not support post editing'
-        });
-        return Promise.resolve(errorResponse);
+        throw new Error('Update not supported for Threads');
     }
 
     override async addComment(
-        postDetails: PostWithAllData,
-        commentDetails: PostDetails,
-        socialMediaAccount: SocialMediaAccount
+        postDetails: PluginPostDetails,
+        commentDetails: PluginPostDetails,
+        socialMediaAccount: PluginSocialMediaAccount
     ): Promise<PostResponse> {
         try {
             if (!postDetails.postId) {
@@ -243,7 +252,7 @@ export class ThreadsPlugin extends BaseSchedulerPlugin {
             // Create reply container
             const params = new URLSearchParams({
                 media_type: 'TEXT',
-                text: commentDetails.message,
+                text: commentDetails.content, // Changed from message to content for PluginPostDetails
                 reply_to_id: postDetails.postId,
                 access_token: socialMediaAccount.accessToken,
             });

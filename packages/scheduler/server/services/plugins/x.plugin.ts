@@ -4,6 +4,7 @@ import type { Post, PostWithAllData, SocialMediaAccount, Asset } from '#layers/B
 import { TwitterApi } from 'twitter-api-v2';
 import sharp from 'sharp';
 import { platformConfigurations } from '../../../shared/platformConstants';
+import type { TwitterSettings } from '../../../shared/platformSettings';
 
 export class XPlugin extends BaseSchedulerPlugin {
     static readonly pluginName = 'x';
@@ -124,8 +125,13 @@ export class XPlugin extends BaseSchedulerPlugin {
                 accessSecret,
             });
 
+            // Use platform-specific content if available, otherwise use master content
+            const platformContent = (postDetails as any).platformContent?.twitter
+                || (postDetails as any).platformContent?.x;
+            const contentToPost = platformContent?.content || postDetails.content;
+
             const tweetOptions: any = {
-                text: postDetails.content,
+                text: contentToPost,
             };
 
             // Handle media attachments
@@ -172,8 +178,34 @@ export class XPlugin extends BaseSchedulerPlugin {
             if (settings?.poll && settings.poll.options && settings.poll.options.length > 0) {
                 tweetOptions.poll = {
                     options: settings.poll.options,
-                    duration_minutes: settings.poll.duration || 1440, // Default 24 hours
+                    duration_minutes: settings.poll.duration || 1440,
                 };
+            }
+
+            // Platform-specific settings from platformSettings
+            const postPlatformSettings = (postDetails as any).platformSettings as Record<string, TwitterSettings> | undefined;
+            const platformSettings = postPlatformSettings?.twitter || postPlatformSettings?.x;
+            if (platformSettings) {
+                // Handle who_can_reply setting
+                if (platformSettings.who_can_reply && platformSettings.who_can_reply !== 'everyone') {
+                    const replySettingsMap: Record<string, string> = {
+                        'following': 'following',
+                        'mentionedUsers': 'mentionedUsers',
+                        'subscribers': 'subscribers',
+                        'verified': 'verified',
+                    };
+                    if (replySettingsMap[platformSettings.who_can_reply]) {
+                        tweetOptions.reply_settings = replySettingsMap[platformSettings.who_can_reply];
+                    }
+                }
+
+                // Handle community posting
+                if (platformSettings.community) {
+                    const communityMatch = platformSettings.community.match(/communities\/(\d+)/);
+                    if (communityMatch) {
+                        tweetOptions.community_id = communityMatch[1];
+                    }
+                }
             }
 
             const tweet = await client.v2.tweet(tweetOptions);

@@ -27,8 +27,10 @@ export default defineEventHandler(async (event) => {
       targetPlatforms: body.targetPlatforms,
       scheduledAt: body.scheduledAt || new Date(),
       status: body.status || 'draft',
-      comment: body.comment || []
-
+      comment: body.comment || [],
+      platformContent: body.platformContent || {},
+      platformSettings: body.platformSettings || {},
+      postFormat: body.postFormat || 'post'
     }
 
     // Handle scheduled date

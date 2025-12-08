@@ -1,12 +1,25 @@
 import type { PostDetails, PostResponse, Integration } from '../SchedulerPost.service';
 import { BaseSchedulerPlugin, type MediaContent } from '../SchedulerPost.service';
 import type { Post, PostWithAllData, SocialMediaAccount, Asset } from '#layers/BaseDB/db/schema';
+import type { RedditSettings } from '../../../shared/platformSettings';
 
 import { platformConfigurations } from '../../../shared/platformConstants';
 
 export class RedditPlugin extends BaseSchedulerPlugin {
     static readonly pluginName = 'reddit';
     readonly pluginName = 'reddit';
+
+    private getPlatformData(postDetails: PostWithAllData) {
+        const platformName = this.pluginName;
+        const platformContent = (postDetails as any).platformContent?.[platformName];
+        const platformSettings = (postDetails as any).platformSettings?.[platformName] as RedditSettings | undefined;
+        return {
+            content: platformContent?.content || postDetails.content,
+            settings: platformSettings,
+            postFormat: (postDetails as any).postFormat || 'post'
+        };
+    }
+
     public override exposedMethods = [
         'redditMaxLength',
         'getSubreddits',
@@ -157,22 +170,46 @@ export class RedditPlugin extends BaseSchedulerPlugin {
                 delete submitData.text;
             }
 
-            // Add flair if provided
-            if (settings?.flair_id) {
-                submitData.flair_id = settings.flair_id;
-            }
-            if (settings?.flair_text) {
-                submitData.flair_text = settings.flair_text;
+            submitData.title = finalTitle;
+            submitData.kind = settings?.type || 'self'; // self, link, image, video
+            // ... (other fields handled below based on kind)
+
+            if (settings?.type === 'link') {
+                if (!settings.url) throw new Error('URL required for link post');
+                postData.append('url', settings.url);
+            } else if (settings?.type === 'self' || !settings?.type) {
+                postData.append('text', bodyContent || '');
             }
 
-            // Set NSFW flag if provided
-            if (settings?.nsfw) {
-                submitData.nsfw = true;
+            if (settings?.subreddit?.flair?.id) {
+                postData.append('flair_id', settings.subreddit.flair.id);
+            }
+            if (settings?.subreddit?.flair?.text) {
+                postData.append('flair_text', settings.subreddit.flair.text);
             }
 
-            // Set spoiler flag if provided
-            if (settings?.spoiler) {
-                submitData.spoiler = true;
+            // Handle Image/Video Upload if kind is image/video
+            if (settings?.type === 'image' || settings?.type === 'video') {
+                // ... logic for uploadMedia and then submit
+                // Actually, uploadMedia returns something to attach? Or we submit directly?
+                // Usually step 1: submit link/text, step 2: upload? No, often upload first.
+                // Existing code uses uploadMedia.
+                if (!postDetails.assets || postDetails.assets.length === 0) throw new Error('Media required for image/video post');
+                const asset = postDetails.assets[0];
+                const mediaUrl = await this.uploadMedia(subreddit, asset, accessToken);
+                postData.append('url', mediaUrl);
+                // kind is 'image' or 'video' but endpoint uses 'link' with special URL?
+                // Reddit API for media is complex. 'kind' should be 'image' or 'video' usually maps to 'link' pointing to hosted media?
+                // Existing implementation `uploadMedia` likely handles AWS upload or similar and returns URL.
+                // If `uploadMedia` returns reddit-hosted URL, then `kind` is 'link'? 
+                // Or `kind` 'image' exists? Reddit submit endpoint accepts 'sr', 'title', 'kind', 'url'/'text'.
+                // If type is 'image', we usually submit as 'link' with URL to image?
+                // Actually, `kind` param in `/api/submit` is 'link', 'self', 'image', 'video', 'videogif'?
+                // Docs say: kind='link' or 'self'. 'image'/'video' are newer and might differ.
+                // Let's assume 'link' for media if uploadMedia returns a URL.
+                if (settings.type === 'image' || settings.type === 'video') {
+                    postData.set('kind', 'link');
+                }
             }
 
             const response = await fetch('https://oauth.reddit.com/api/submit', {

@@ -1,7 +1,8 @@
-import type { PostDetails, PostResponse, Integration } from '../SchedulerPost.service';
+import type { PostResponse, Integration, PluginPostDetails, PluginSocialMediaAccount } from '../SchedulerPost.service';
 import { BaseSchedulerPlugin } from '../SchedulerPost.service';
 import type { Post, PostWithAllData, SocialMediaAccount, Asset } from '#layers/BaseDB/db/schema';
 import sharp from 'sharp';
+import type { LinkedInSettings } from '../../../shared/platformSettings';
 
 /**
  * LinkedIn Page Plugin - Posts on behalf of LinkedIn Organization/Company pages
@@ -12,6 +13,18 @@ import { platformConfigurations } from '../../../shared/platformConstants';
 export class LinkedInPagePlugin extends BaseSchedulerPlugin {
     static readonly pluginName = 'linkedin-page';
     readonly pluginName = 'linkedin-page';
+
+    private getPlatformData(postDetails: PluginPostDetails) {
+        const platformName = this.pluginName;
+        const platformContent = (postDetails as any).platformContent?.[platformName];
+        const platformSettings = (postDetails as any).platformSettings?.[platformName] as LinkedInSettings | undefined;
+        return {
+            content: platformContent?.content || postDetails.content,
+            settings: platformSettings,
+            postFormat: (postDetails as any).postFormat || 'post'
+        };
+    }
+
     public override exposedMethods = [
         'linkedInMaxLength',
         'getOrganizations',
@@ -104,63 +117,66 @@ export class LinkedInPagePlugin extends BaseSchedulerPlugin {
     }
 
     override async post(
-        postDetails: PostWithAllData,
-        comments: PostDetails[],
-        socialMediaAccount: SocialMediaAccount
+        postDetails: PluginPostDetails,
+        comments: PluginPostDetails[],
+        socialMediaAccount: PluginSocialMediaAccount
     ): Promise<PostResponse> {
         try {
-            // Organization URN format: urn:li:organization:{organization_id}
-            const organizationUrn = socialMediaAccount.metadata?.organizationUrn ||
+            const { content } = this.getPlatformData(postDetails);
+
+            const author = socialMediaAccount.metadata?.organizationUrn ||
                 `urn:li:organization:${socialMediaAccount.accountId}`;
 
-            const postData: any = {
-                author: organizationUrn,
+            // Check for media
+            const imageAsset = postDetails.assets?.find(
+                (asset) => asset.mimeType.includes('image')
+            );
+
+            let mediaUrn = '';
+
+            if (imageAsset) {
+                // Fetch image buffer
+                const response = await fetch(imageAsset.url);
+                const arrayBuffer = await response.arrayBuffer();
+                const imageBuffer = Buffer.from(arrayBuffer as ArrayBuffer);
+
+                // Upload image
+                mediaUrn = await this.uploadImage(
+                    author,
+                    imageBuffer,
+                    socialMediaAccount.accessToken
+                );
+            }
+
+            const shareBody: any = {
+                author: author,
                 lifecycleState: 'PUBLISHED',
                 specificContent: {
                     'com.linkedin.ugc.ShareContent': {
                         shareCommentary: {
-                            text: postDetails.content,
+                            text: content,
                         },
-                        shareMediaCategory: 'NONE',
+                        shareMediaCategory: mediaUrn ? 'IMAGE' : 'NONE',
+                        media: mediaUrn
+                            ? [
+                                {
+                                    status: 'READY',
+                                    description: {
+                                        text: 'Image',
+                                    },
+                                    media: mediaUrn,
+                                    title: {
+                                        text: 'Image',
+                                    },
+                                },
+                            ]
+                            : [],
                     },
                 },
                 visibility: {
                     'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC',
                 },
             };
-
-            // Handle media attachments
-            if (postDetails.assets && postDetails.assets.length > 0) {
-                const imageAssets = postDetails.assets.filter((asset: Asset) =>
-                    asset.mimeType.includes('image')
-                );
-
-                if (imageAssets.length > 0) {
-                    const media: any[] = [];
-
-                    for (const asset of imageAssets) {
-                        const response = await fetch(asset.url);
-                        const arrayBuffer = await response.arrayBuffer();
-                        const imageBuffer = Buffer.from(arrayBuffer);
-
-                        const assetUrn = await this.uploadImage(organizationUrn, imageBuffer, socialMediaAccount.accessToken);
-
-                        media.push({
-                            status: 'READY',
-                            description: {
-                                text: asset.filename || 'Image',
-                            },
-                            media: assetUrn,
-                            title: {
-                                text: asset.filename || 'Image',
-                            },
-                        });
-                    }
-
-                    postData.specificContent['com.linkedin.ugc.ShareContent'].shareMediaCategory = 'IMAGE';
-                    postData.specificContent['com.linkedin.ugc.ShareContent'].media = media;
-                }
-            }
 
             const response = await fetch('https://api.linkedin.com/v2/ugcPosts', {
                 method: 'POST',
@@ -207,9 +223,9 @@ export class LinkedInPagePlugin extends BaseSchedulerPlugin {
     }
 
     override async update(
-        postDetails: PostWithAllData,
-        comments: PostDetails[],
-        socialMediaAccount: SocialMediaAccount
+        postDetails: PluginPostDetails,
+        comments: PluginPostDetails[],
+        socialMediaAccount: PluginSocialMediaAccount
     ): Promise<PostResponse> {
         // LinkedIn doesn't support editing posts via API
         const errorResponse: PostResponse = {
@@ -226,9 +242,9 @@ export class LinkedInPagePlugin extends BaseSchedulerPlugin {
     }
 
     override async addComment(
-        postDetails: PostWithAllData,
-        commentDetails: PostDetails,
-        socialMediaAccount: SocialMediaAccount
+        postDetails: PluginPostDetails,
+        commentDetails: PluginPostDetails,
+        socialMediaAccount: PluginSocialMediaAccount
     ): Promise<PostResponse> {
         try {
             if (!postDetails.postId) {
@@ -241,7 +257,7 @@ export class LinkedInPagePlugin extends BaseSchedulerPlugin {
             const commentData = {
                 actor: organizationUrn,
                 message: {
-                    text: commentDetails.message,
+                    text: commentDetails.content,
                 },
                 object: postDetails.postId,
             };

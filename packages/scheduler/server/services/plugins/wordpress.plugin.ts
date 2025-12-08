@@ -1,12 +1,25 @@
 import type { PostDetails, PostResponse, Integration } from '../SchedulerPost.service';
 import { BaseSchedulerPlugin, type MediaContent } from '../SchedulerPost.service';
 import type { Post, PostWithAllData, SocialMediaAccount, Asset } from '#layers/BaseDB/db/schema';
+import type { WordPressSettings } from '../../../shared/platformSettings';
 
 import { platformConfigurations } from '../../../shared/platformConstants';
 
 export class WordPressPlugin extends BaseSchedulerPlugin {
     static readonly pluginName = 'wordpress';
     readonly pluginName = 'wordpress';
+
+    private getPlatformData(postDetails: PostWithAllData) {
+        const platformName = this.pluginName;
+        const platformContent = (postDetails as any).platformContent?.[platformName];
+        const platformSettings = (postDetails as any).platformSettings?.[platformName] as WordPressSettings | undefined;
+        return {
+            content: platformContent?.content || postDetails.content,
+            settings: platformSettings,
+            postFormat: (postDetails as any).postFormat || 'post'
+        };
+    }
+
     public override exposedMethods = [
         'wordPressMaxLength',
         'getCategories',

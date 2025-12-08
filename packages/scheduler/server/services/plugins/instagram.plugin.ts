@@ -1,12 +1,25 @@
 import type { PostDetails, PostResponse, Integration } from '../SchedulerPost.service';
 import { BaseSchedulerPlugin, type MediaContent } from '../SchedulerPost.service';
 import type { Post, PostWithAllData, SocialMediaAccount, Asset } from '#layers/BaseDB/db/schema';
+import type { InstagramSettings } from '../../../shared/platformSettings';
 
 import { platformConfigurations } from '../../../shared/platformConstants';
 
 export class InstagramPlugin extends BaseSchedulerPlugin {
     static readonly pluginName = 'instagram';
     readonly pluginName = 'instagram';
+
+    private getPlatformData(postDetails: PostWithAllData) {
+        const platformName = this.pluginName;
+        const platformContent = (postDetails as any).platformContent?.[platformName];
+        const platformSettings = (postDetails as any).platformSettings?.[platformName] as InstagramSettings | undefined;
+        return {
+            content: platformContent?.content || postDetails.content,
+            settings: platformSettings,
+            postFormat: (postDetails as any).postFormat || 'post'
+        };
+    }
+
     public override exposedMethods = [
         'instagramMaxLength',
         'getProfile',
@@ -77,7 +90,7 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
         igUserId: string,
         mediaUrl: string,
         caption: string,
-        mediaType: 'IMAGE' | 'VIDEO' | 'CAROUSEL',
+        mediaType: 'IMAGE' | 'VIDEO' | 'CAROUSEL' | 'STORIES',
         accessToken: string,
         children?: string[]
     ): Promise<string> {
@@ -92,6 +105,14 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
         } else if (mediaType === 'VIDEO') {
             params.append('media_type', 'VIDEO');
             params.append('video_url', mediaUrl);
+        } else if (mediaType === 'STORIES') {
+            params.append('media_type', 'STORIES');
+            params.append('image_url', mediaUrl); // Stories support image_url or video_url, assuming image for now or need logic
+            // If video story, we need video_url. Let's handle generic logic:
+            if (mediaUrl.includes('.mp4') || mediaUrl.includes('video')) {
+                params.delete('image_url');
+                params.append('video_url', mediaUrl);
+            }
         } else {
             params.append('image_url', mediaUrl);
         }
@@ -183,16 +204,26 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
                 throw new Error('At least one media file is required');
             }
 
-            const caption = postDetails.content || '';
-            const settings = postDetails.settings as any;
+            const { content, settings, postFormat } = this.getPlatformData(postDetails);
+            const caption = content || '';
 
             // Determine media type
             const hasVideo = postDetails.assets.some((asset: Asset) => asset.mimeType.includes('video'));
             const hasImage = postDetails.assets.some((asset: Asset) => asset.mimeType.includes('image'));
+            const isStory = postFormat === 'story' || settings?.post_type === 'story';
 
             let containerId: string;
 
-            if (postDetails.assets.length > 1 && !hasVideo) {
+            if (isStory) {
+                const asset = postDetails.assets[0];
+                containerId = await this.createContainer(
+                    igUserId,
+                    asset.url,
+                    caption,
+                    'STORIES',
+                    socialMediaAccount.accessToken
+                );
+            } else if (postDetails.assets.length > 1 && !hasVideo) {
                 // Carousel post (multiple images)
                 const childContainers: string[] = [];
 
@@ -218,7 +249,7 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
                     childContainers
                 );
             } else if (hasVideo) {
-                // Single video post
+                // Single video post (Reel)
                 const videoAsset = postDetails.assets.find((asset: Asset) => asset.mimeType.includes('video'));
                 if (!videoAsset) {
                     throw new Error('Video asset not found');

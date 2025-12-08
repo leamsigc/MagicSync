@@ -1,13 +1,26 @@
-import type { PostDetails, PostResponse, Integration } from '../SchedulerPost.service';
+import type { PostResponse, Integration, PluginPostDetails, PluginSocialMediaAccount } from '../SchedulerPost.service';
 import { BaseSchedulerPlugin, type MediaContent } from '../SchedulerPost.service';
 import type { Post, PostWithAllData, SocialMediaAccount, Asset } from '#layers/BaseDB/db/schema';
 import sharp from 'sharp';
+import type { LinkedInSettings } from '../../../shared/platformSettings';
 
 import { platformConfigurations } from '../../../shared/platformConstants';
 
 export class LinkedInPlugin extends BaseSchedulerPlugin {
     static readonly pluginName = 'linkedin';
     readonly pluginName = 'linkedin';
+
+    private getPlatformData(postDetails: PluginPostDetails) {
+        const platformName = this.pluginName;
+        const platformContent = (postDetails as any).platformContent?.[platformName];
+        const platformSettings = (postDetails as any).platformSettings?.[platformName] as LinkedInSettings | undefined;
+        return {
+            content: platformContent?.content || postDetails.content,
+            settings: platformSettings,
+            postFormat: (postDetails as any).postFormat || 'post'
+        };
+    }
+
     public override exposedMethods = [
         'linkedInMaxLength',
         'getProfile',
@@ -96,62 +109,63 @@ export class LinkedInPlugin extends BaseSchedulerPlugin {
     }
 
     override async post(
-        postDetails: PostWithAllData,
-        comments: PostDetails[],
-        socialMediaAccount: SocialMediaAccount
+        postDetails: PluginPostDetails,
+        comments: PluginPostDetails[],
+        socialMediaAccount: PluginSocialMediaAccount
     ): Promise<PostResponse> {
         try {
-            const personUrn = socialMediaAccount.metadata?.personUrn ||
-                `urn:li:person:${socialMediaAccount.accountId}`;
+            const { content } = this.getPlatformData(postDetails);
 
-            const postData: any = {
-                author: personUrn,
+            // Check for media
+            const imageAsset = postDetails.assets?.find(
+                (asset) => asset.mimeType.includes('image')
+            );
+
+            let mediaUrn = '';
+
+            if (imageAsset) {
+                // Fetch image buffer
+                const response = await fetch(imageAsset.url);
+                const arrayBuffer = await response.arrayBuffer();
+                const imageBuffer = Buffer.from(arrayBuffer as ArrayBuffer);
+
+                // Upload image
+                mediaUrn = await this.uploadImage(
+                    `urn:li:person:${socialMediaAccount.accountId}`,
+                    imageBuffer,
+                    socialMediaAccount.accessToken
+                );
+            }
+
+            const shareBody: any = {
+                author: `urn:li:person:${socialMediaAccount.accountId}`,
                 lifecycleState: 'PUBLISHED',
                 specificContent: {
                     'com.linkedin.ugc.ShareContent': {
                         shareCommentary: {
-                            text: postDetails.content,
+                            text: content,
                         },
-                        shareMediaCategory: 'NONE',
+                        shareMediaCategory: mediaUrn ? 'IMAGE' : 'NONE',
+                        media: mediaUrn
+                            ? [
+                                {
+                                    status: 'READY',
+                                    description: {
+                                        text: imageAsset?.filename || 'Image',
+                                    },
+                                    media: mediaUrn,
+                                    title: {
+                                        text: imageAsset?.filename || 'Image',
+                                    },
+                                },
+                            ]
+                            : [],
                     },
                 },
                 visibility: {
                     'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC',
                 },
             };
-
-            // Handle media attachments
-            if (postDetails.assets && postDetails.assets.length > 0) {
-                const imageAssets = postDetails.assets.filter((asset: Asset) =>
-                    asset.mimeType.includes('image')
-                );
-
-                if (imageAssets.length > 0) {
-                    const media: any[] = [];
-
-                    for (const asset of imageAssets) {
-                        const response = await fetch(asset.url);
-                        const arrayBuffer = await response.arrayBuffer();
-                        const imageBuffer = Buffer.from(arrayBuffer);
-
-                        const assetUrn = await this.uploadImage(personUrn, imageBuffer, socialMediaAccount.accessToken);
-
-                        media.push({
-                            status: 'READY',
-                            description: {
-                                text: asset.filename || 'Image',
-                            },
-                            media: assetUrn,
-                            title: {
-                                text: asset.filename || 'Image',
-                            },
-                        });
-                    }
-
-                    postData.specificContent['com.linkedin.ugc.ShareContent'].shareMediaCategory = 'IMAGE';
-                    postData.specificContent['com.linkedin.ugc.ShareContent'].media = media;
-                }
-            }
 
             const response = await fetch('https://api.linkedin.com/v2/ugcPosts', {
                 method: 'POST',
@@ -161,7 +175,7 @@ export class LinkedInPlugin extends BaseSchedulerPlugin {
                     'X-Restli-Protocol-Version': '2.0.0',
                     'LinkedIn-Version': '202401',
                 },
-                body: JSON.stringify(postData),
+                body: JSON.stringify(shareBody),
             });
 
             if (!response.ok) {
@@ -173,12 +187,16 @@ export class LinkedInPlugin extends BaseSchedulerPlugin {
             const postId = data.id;
 
             // Extract share ID from the URN
-            const shareId = postId.replace('urn:li:share:', '').replace('urn:li:ugcPost:', '');
+            let shareId = postId;
+            if (shareId.includes(':')) {
+                const parts = shareId.split(':');
+                shareId = parts[parts.length - 1];
+            }
 
             const postResponse: PostResponse = {
                 id: postDetails.id,
                 postId,
-                releaseURL: `https://www.linkedin.com/feed/update/${shareId}/`,
+                releaseURL: `https://www.linkedin.com/feed/update/urn:li:activity:${shareId}/`,
                 status: 'published',
             };
 
@@ -198,9 +216,9 @@ export class LinkedInPlugin extends BaseSchedulerPlugin {
     }
 
     override async update(
-        postDetails: PostWithAllData,
-        comments: PostDetails[],
-        socialMediaAccount: SocialMediaAccount
+        postDetails: PluginPostDetails,
+        comments: PluginPostDetails[],
+        socialMediaAccount: PluginSocialMediaAccount
     ): Promise<PostResponse> {
         // LinkedIn doesn't support editing posts via API
         // Delete and recreate pattern similar to Bluesky
@@ -218,9 +236,9 @@ export class LinkedInPlugin extends BaseSchedulerPlugin {
     }
 
     override async addComment(
-        postDetails: PostWithAllData,
-        commentDetails: PostDetails,
-        socialMediaAccount: SocialMediaAccount
+        postDetails: PluginPostDetails,
+        commentDetails: PluginPostDetails,
+        socialMediaAccount: PluginSocialMediaAccount
     ): Promise<PostResponse> {
         try {
             if (!postDetails.postId) {
@@ -233,7 +251,7 @@ export class LinkedInPlugin extends BaseSchedulerPlugin {
             const commentData = {
                 actor: personUrn,
                 message: {
-                    text: commentDetails.message,
+                    text: commentDetails.content,
                 },
                 object: postDetails.postId,
             };

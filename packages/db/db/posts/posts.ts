@@ -11,13 +11,16 @@ export const posts = sqliteTable('posts', {
   userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
   businessId: text('business_id').notNull().references(() => businessProfiles.id, { onDelete: 'cascade' }),
   content: text('content').notNull(),
-  mediaAssets: text('media_assets'), // JSON array of asset IDs
+  mediaAssets: text('media_assets'),
   scheduledAt: integer('scheduled_at', { mode: 'timestamp' }),
   publishedAt: integer('published_at', { mode: 'timestamp' }),
   status: text('status', {
     enum: ['pending', 'published', 'failed']
   }).notNull().default('pending'),
-  targetPlatforms: text('target_platforms').notNull(), // JSON array of social account IDs
+  targetPlatforms: text('target_platforms').notNull(),
+  platformContent: text('platform_content', { mode: 'json' }),
+  platformSettings: text('platform_settings', { mode: 'json' }),
+  postFormat: text('post_format', { enum: ['post', 'reel', 'story', 'short'] }).default('post'),
   createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()).notNull()
 })
@@ -39,8 +42,10 @@ export const platformPosts = sqliteTable('platform_posts', {
 })
 
 
-export type PlatformSettings = {
-  url?: string
+export type PlatformSettingsRecord = Record<string, any>
+export type PlatformContentOverride = {
+  content: string
+  comments?: string[]
 }
 export type PublishDetail = Map<string, {
   publishedId?: string
@@ -58,4 +63,7 @@ export type PostCreateBase = PostCreate & {
   targetPlatforms: string[]
   mediaAssets: string[]
   comment: string[]
+  platformContent?: Record<string, PlatformContentOverride>
+  platformSettings?: PlatformSettingsRecord
+  postFormat?: 'post' | 'reel' | 'story' | 'short'
 }
