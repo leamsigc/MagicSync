@@ -74,7 +74,7 @@ Everything you need to succeed on social media, without the complexity or cost o
 ::
 
 
-::F-a-q
+::BaseFaq
 ---
 items:
   - question: How much does MagicSync cost?

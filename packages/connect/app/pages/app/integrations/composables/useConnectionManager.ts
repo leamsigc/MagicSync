@@ -1,6 +1,6 @@
 import type { FacebookPage } from '#layers/BaseConnect/utils/FacebookPages';
 
-import { linkSocial } from "#layers/BaseAuth/lib/auth-client";
+import { linkSocial, signIn } from "#layers/BaseAuth/lib/auth-client";
 import type { SocialMediaAccount, SocialMediaComplete } from "#layers/BaseDB/db/schema";
 import { useBusinessManager } from "../../business/composables/useBusinessManager";
 
@@ -25,8 +25,6 @@ export const useConnectionManager = () => {
     connectionList.value = [
       // Better Auth OAuth platforms (native support)
       { name: 'Facebook', icon: 'logos:facebook', url: '#', platform: 'facebook', authType: 'better-auth' },
-      { name: 'Instagram', icon: 'logos:instagram-icon', url: '#', platform: "instagram", authType: 'better-auth' },
-      { name: 'Threads', icon: 'fa6-brands:square-threads', url: '#', platform: "threads", authType: 'better-auth' },
       { name: 'Google Business', icon: 'logos:google', url: '#', platform: "googlemybusiness", authType: 'better-auth' },
       { name: 'LinkedIn', icon: 'logos:linkedin-icon', url: '#', platform: "linkedin", authType: 'better-auth' },
       { name: 'X (Twitter)', icon: 'logos:twitter', url: '#', platform: "twitter", authType: 'better-auth' },
@@ -36,8 +34,10 @@ export const useConnectionManager = () => {
       { name: 'YouTube', icon: 'logos:youtube-icon', url: '#', platform: "youtube", authType: 'better-auth' },
 
       // Better Auth Generic OAuth platforms
-      { name: 'LinkedIn Page', icon: 'logos:linkedin-icon', url: '#', platform: "linkedin-page", authType: 'better-auth' },
-      { name: 'Dribbble', icon: 'logos:dribbble-icon', url: '#', platform: "dribbble", authType: 'better-auth' },
+      { name: 'Instagram', icon: 'logos:instagram-icon', url: '#', platform: "instagram", authType: 'manual-oauth' },
+      { name: 'LinkedIn Page', icon: 'logos:linkedin-icon', url: '#', platform: "linkedin-page", authType: 'manual-oauth' },
+      { name: 'Threads', icon: 'fa6-brands:square-threads', url: '#', platform: "threads", authType: 'manual-oauth' },
+      { name: 'Dribbble', icon: 'logos:dribbble-icon', url: '#', platform: "dribbble", authType: 'manual-oauth' },
 
       // API Key / Credential-based platforms
       { name: 'Bluesky', icon: 'fa6-brands:bluesky', url: '#', platform: "bluesky", authType: 'api-key' },
@@ -82,7 +82,13 @@ export const useConnectionManager = () => {
           icon: 'i-heroicons-information-circle',
           color: 'info',
         });
+      } else if (connection.authType === 'manual-oauth') {
+        signIn.oauth2({
+          providerId: connection.platform,
+          callbackURL: `/api/v1/social-accounts/callback/${connection.platform}?businessId=${activeBusinessId.value}`,
+        })
       }
+
     } catch (error) {
       console.error('Error connecting to platform:', error);
       toast.add({

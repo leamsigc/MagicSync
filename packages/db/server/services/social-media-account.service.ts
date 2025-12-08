@@ -16,6 +16,7 @@ import { socialMediaAccounts } from '#layers/BaseDB/db/socialMedia/socialMedia'
 import { account, type Account, type User } from '#layers/BaseDB/db/auth/auth'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
 import { entityDetailsService } from '#layers/BaseDB/server/services/entity-details.service' // Import new service
+import { businessProfiles } from '#layers/BaseDB/db/schema';
 
 export type SocialMediaPlatform =
   | 'facebook'
@@ -285,6 +286,26 @@ export class SocialMediaAccountService {
 
     return socialMediaAccount;
   }
+
+  async createOrUpdateAccountFromAuth({ id, name, access_token, picture, username, platformId, user }: {
+    id: string;
+    name: string;
+    access_token: string;
+    picture: string;
+    username: string;
+    platformId: SocialMediaPlatform;
+    user: User;
+  }) {
+    // get business if from current user
+
+    const businessFromUser = await this.db.query.businessProfiles.findFirst({
+      where: eq(businessProfiles.userId, user.id),
+    });
+
+
+    return this.createOrUpdateAccount({ id, name, access_token, picture, username, user, businessId: businessFromUser?.id as string, platformId });
+
+  }
   async getAccountByAccountId(id: string) {
     return this.db.query.socialMediaAccounts.findFirst({
       where: eq(socialMediaAccounts.accountId, id),
@@ -366,36 +387,6 @@ export class SocialMediaAccountService {
     // For now, we'll assume the account is valid if it exists and is active
     // In a real implementation, you'd make an API call to verify the token
     return { isValid: true, needsRefresh }
-  }
-
-  /**
-   * Get platform-specific OAuth scopes
-   */
-  getPlatformScopes(platform: SocialMediaPlatform): string[] {
-    const scopes = {
-      facebook: ['pages_manage_posts', 'pages_read_engagement', 'pages_show_list'],
-      instagram: ['instagram_basic', 'instagram_content_publish'],
-      twitter: ['tweet.read', 'tweet.write', 'users.read'],
-      tiktok: ['video.list', 'video.upload'],
-      google_my_business: ['https://www.googleapis.com/auth/business.manage']
-    }
-
-    return scopes[platform] || []
-  }
-
-  /**
-   * Get platform-specific OAuth URLs
-   */
-  getPlatformOAuthUrl(platform: SocialMediaPlatform): string {
-    const urls = {
-      facebook: 'https://www.facebook.com/v18.0/dialog/oauth',
-      instagram: 'https://api.instagram.com/oauth/authorize',
-      twitter: 'https://twitter.com/i/oauth2/authorize',
-      tiktok: 'https://www.tiktok.com/auth/authorize/',
-      google_my_business: 'https://accounts.google.com/oauth2/v2/auth'
-    }
-
-    return urls[platform] || ''
   }
 }
 

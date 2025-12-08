@@ -1,3 +1,4 @@
+import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service';
 import { APIError, betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { admin, createAuthMiddleware, genericOAuth } from 'better-auth/plugins'
@@ -64,7 +65,7 @@ export const auth = betterAuth({
       allowDifferentEmails: true,
       updateUserInfoOnLink: true,
       allowUnlinkingAll: false,
-      trustedProviders: ['google', 'facebook', 'email-password', 'linkedin', 'twitter', 'tiktok', 'threads', 'youtube', 'reddit', 'discord', 'dribbble'],
+      trustedProviders: ['google', 'facebook', 'email-password', 'linkedin', 'twitter', 'tiktok', 'threads', 'youtube', 'reddit', 'discord', 'dribbble', 'instagram'],
     },
   },
   socialProviders: {
@@ -242,7 +243,106 @@ export const auth = betterAuth({
           scopes: ['public', 'upload'],
           pkce: false,
         },
+        // Instagram OAuth - not natively supported
+        {
+          providerId: 'instagram',
+          clientId: process.env.NUXT_INSTAGRAM_CLIENT_ID as string,
+          clientSecret: process.env.NUXT_INSTAGRAM_CLIENT_SECRET as string,
+          authorizationUrl: 'https://instagram.com/oauth/authorize',
+          tokenUrl: 'https://api.instagram.com/oauth/access_token',
+          userInfoUrl: 'https://graph.instagram.com/me?fields=id,name,username,profile_picture_url',
+          scopes: ['instagram_business_basic'],
+          pkce: false,
+          mapProfileToUser: (profile: any) => {
+            return {
+              ...profile,
+              image: profile.profile_picture_url,
+              email: `${profile.id}@instagram.com`,
+            };
+          },
+        },
+        // Threads OAuth - not natively supported
+        {
+          providerId: 'threads',
+          clientId: process.env.NUXT_THREADS_CLIENT_ID as string,
+          clientSecret: process.env.NUXT_THREADS_CLIENT_SECRET as string,
+          authorizationUrl: 'https://threads.net/oauth/authorize',
+          tokenUrl: 'https://api.threads.net/oauth/access_token',
+          userInfoUrl: 'https://api.threads.net/me',
+          redirectURI: `${process?.env.NUXT_APP_URL?.indexOf('https') == -1 ? 'https://redirectmeto.com/' + process?.env.NUXT_APP_URL : process?.env.NUXT_APP_URL}/integrations/social/threads`,
+          scopes: [
+            'threads_basic',
+            'threads_content_publish',
+            'threads_manage_replies',
+            'threads_manage_insights',
+            'threads_profile_discovery',
+          ],
+          pkce: false,
+          mapProfileToUser: (profile: any) => {
+            return {
+              ...profile,
+              image: profile.profile_picture_url,
+              email: `${profile.id}@threads.net`,
+            };
+          },
+        },
       ]
     })
-  ]
+  ],
+  databaseHooks: {
+    account: {
+      create: {
+        after: async (account, ctx) => {
+
+          if (account.providerId === "threads") {
+            //Get user information then create SocialMedia from the user details
+            const { id, username, threads_profile_picture_url } = await $fetch<{ id: string, username: string, threads_profile_picture_url: string }>(`https://graph.threads.net/v1.0/me?fields=id,username,threads_profile_picture_url&access_token=${account.accessToken}`);
+
+
+            socialMediaAccountService.createOrUpdateAccountFromAuth({
+              id: id,
+              name: username,
+              access_token: account.accessToken as string,
+              picture: threads_profile_picture_url,
+              username: username,
+              platformId: 'threads',
+              user: ctx?.context.session?.user as schema.User
+            });
+            return;
+          }
+          if (account.providerId !== "instagram") return;
+          // Fetch user information then create SocialMedia from the user details
+          /*
+          "id",
+          "name",
+          "username",
+          "account_type",
+          "website",
+          "media_count",
+          "followers_count",
+          "follows_count",
+          "biography",
+          "profile_picture_url",
+          */
+
+          const response = await $fetch<{ id: string, name: string, username: string, account_type: string, website: string, media_count: number, followers_count: number, follows_count: number, biography: string, profile_picture_url: string }>(`https://graph.instagram.com/me?fields=id,name,username,account_type,website,media_count,followers_count,follows_count,biography,profile_picture_url`, {
+            headers: {
+              Authorization: `Bearer ${account.accessToken}`,
+            },
+          });
+
+          socialMediaAccountService.createOrUpdateAccountFromAuth({
+            id: response.id,
+            name: response.name,
+            access_token: account.accessToken as string,
+            picture: response.profile_picture_url,
+            username: response.username,
+            platformId: "instagram",
+            user: ctx?.context.session?.user as schema.User
+          });
+
+        }
+      }
+    }
+  }
 })

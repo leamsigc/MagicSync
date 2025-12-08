@@ -74,7 +74,7 @@ Todo lo que necesitas para tener éxito en redes sociales, sin la complejidad ni
 ::
 
 
-::F-a-q
+::BaseFaq
 ---
 items:
   - question: ¿Cuánto cuesta MagicSync?
