@@ -1,8 +1,8 @@
-import type { Asset, Post, PostWithAllData, SocialMediaAccount } from '#layers/BaseDB/db/schema';
-import type { PostDetails, PostResponse, Integration, MediaContent } from '../SchedulerPost.service';
-import { BaseSchedulerPlugin } from '../SchedulerPost.service';
+import type { Asset, PostWithAllData, SocialMediaAccount } from '#layers/BaseDB/db/schema';
+import type { PostResponse, } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
+import type { FacebookSettings } from '#layers/BaseScheduler/shared/platformSettings';
 import dayjs from 'dayjs';
-import type { FacebookSettings } from '../../../shared/platformSettings';
+import { BaseSchedulerPlugin } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 
 // Placeholder types - these should ideally be imported from a shared types file
 type AuthTokenDetails = {
@@ -71,20 +71,6 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     console.log('Facebook plugin initialized', options);
   }
 
-  /**
-   * Generates a random string of specified length.
-   * @param length The length of the string to generate.
-   * @returns A random string.
-   */
-  private _makeId(length: number): string {
-    let result = '';
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    const charactersLength = characters.length;
-    for (let i = 0; i < length; i++) {
-      result += characters.charAt(Math.floor(Math.random() * charactersLength));
-    }
-    return result;
-  }
 
   /**
    * Constructs a Facebook Graph API URL.
@@ -508,10 +494,6 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
       await this.fetch(url, undefined, 'fetch pages')
     ).json();
 
-    console.log({
-      url,
-      data
-    });
     return data;
   }
 
@@ -583,32 +565,22 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
   }
 
 
-  override async validate(post: Post): Promise<string[]> {
-    const postDetails: PostDetails = {
-      message: post.content,
-      media: [],
-      comments: [],
-      settings: {},
-      id: post.id
-    };
+  override async validate(post: PostWithAllData): Promise<string[]> {
 
     const errors: string[] = [];
-    const detail = postDetails;
-    if (detail.message && detail.message.length > 63206) {
+    const detail = post;
+    if (detail.content && detail.content.length > 63206) {
       errors.push('Post content is too long');
     }
-    if (detail.media) {
-      for (const media of detail.media) {
-        if (media.type !== 'image' && media.type !== 'video') {
-          errors.push(`Unsupported media type: ${media.type}, only image and video allowed`);
+    if (detail.assets) {
+      for (const media of detail.assets) {
+        if (media.mimeType !== 'image' && media.mimeType !== 'video') {
+          errors.push(`Unsupported media type: ${media.mimeType}, only image and video allowed`);
         }
       }
     }
-    if (detail.poll) {
-      errors.push('Polls are not supported on Facebook');
-    }
     // Check for Facebook.com links
-    if (detail.message && detail.message.includes('facebook.com')) {
+    if (detail.content && detail.content.includes('facebook.com')) {
       errors.push('Cannot post Facebook.com links');
     }
     // Check URL format if settings.url
@@ -730,7 +702,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
 
   override async post(
     postDetails: PostWithAllData,
-    comments: PostDetails[],
+    comments: PostWithAllData[],
     socialMediaAccount: SocialMediaAccount
   ): Promise<PostResponse> {
     try {
@@ -786,29 +758,83 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
 
   override async update(
     postDetails: PostWithAllData,
-    comments: PostDetails[],
+    comments: PostWithAllData[],
     socialMediaAccount: SocialMediaAccount
   ): Promise<PostResponse> {
-    // Facebook API does not directly support updating a post's content or media after publishing.
-    // A common approach is to delete the old post and create a new one, or to update only certain fields if supported.
-    // For this implementation, we'll simulate an update by returning a new PostResponse with 'updated' status.
-    // In a real scenario, you'd interact with the Facebook Graph API to attempt an update.
-    console.log(`Attempting to update Facebook post ${postDetails.id} with details:`, postDetails);
+    const publicationDetails = postDetails.platformPosts.find((platform) => platform.socialAccountId === socialMediaAccount.id);
+    if (!publicationDetails) {
+      throw new Error('Published platform details not found');
+    }
+    const details = JSON.parse(publicationDetails.publishDetail as unknown as string || '{}') as PostResponse;
+    const postId = details.postId;
+    if (!postId) {
+      throw new Error('Post details not found');
+    }
 
-    const updatedPostId = `fb_updated_${postDetails.id}`;
+    console.log(`Attempting to update Facebook post ${postId} with details:`, postDetails);
+
+    // Facebook Page Post Update
+    // POST /{post_id} with message
+    const { content, settings } = this.getPlatformData(postDetails);
+
+    // Correct URL for updating: /{post-id}
+    const url = this._getGraphApiUrl(`/${postId}?access_token=${socialMediaAccount.accessToken}`);
+
+    // Note: Link updating might not be supported via simple update call depending on post type, 
+    // but 'message' usually is.
+    const body: any = { message: content };
+    if (settings?.url) {
+      // Trying to update link might fail or be ignored if it wasn't a link post
+      // body.link = settings.url; 
+    }
+
+    const requestApi = await this.fetch(
+      url,
+      {
+        method: 'POST', // Updating post uses POST to the node
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      },
+      'update post'
+    );
+
+    const responseJson = await requestApi.json();
+    // Facebook update response usually just { success: true } or { id: ... }? 
+    // Actually typically just success, ID doesn't change.
+
     const response: PostResponse = {
       id: postDetails.id,
-      postId: updatedPostId,
-      releaseURL: `https://www.facebook.com/${socialMediaAccount.accountId}/posts/${updatedPostId}`,
+      postId: postId,
+      releaseURL: details.releaseURL || '',
       status: "published",
     };
-    this.emit('facebook:post:updated', { postId: updatedPostId, postDetails });
+    this.emit('facebook:post:updated', { postId: postDetails.id, postDetails });
     return response;
   }
 
+  async getStatistic(
+    postDetails: PostWithAllData,
+    socialMediaAccount: SocialMediaAccount
+  ): Promise<any> {
+    const publicationDetails = postDetails.platformPosts.find((platform) => platform.socialAccountId === socialMediaAccount.id);
+    if (!publicationDetails) {
+      throw new Error('Published platform details not found');
+    }
+    const details = JSON.parse(publicationDetails.publishDetail as unknown as string || '{}') as PostResponse;
+    const postId = details.postId;
+    if (!postId) {
+      throw new Error('Post details not found');
+    }
+
+    return this.getPostInsights(postId, socialMediaAccount.accessToken);
+  }
+
+
   override async addComment(
     postDetails: PostWithAllData,
-    commentDetails: PostDetails,
+    commentDetails: PostWithAllData,
     socialMediaAccount: SocialMediaAccount
   ): Promise<PostResponse> {
     try {
@@ -822,15 +848,15 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              ...(commentDetails.media?.length && commentDetails.media[0]?.path
-                ? { attachment_url: commentDetails.media[0].path }
+              ...(commentDetails.assets?.length && commentDetails.assets[0]?.url
+                ? { attachment_url: commentDetails.assets[0].url }
                 : {}),
-              message: commentDetails.message,
+              message: commentDetails.content,
             }),
           },
           'add comment'
         )
-      ).json();
+      ).json() as { id: string; permalink_url: string };
 
       const response: PostResponse = {
         id: commentDetails.id,

@@ -102,7 +102,7 @@ export class LinkedInPlugin extends BaseSchedulerPlugin {
             headers: {
                 'Content-Type': 'application/octet-stream',
             },
-            body: imageBuffer,
+            body: imageBuffer as any,
         });
 
         return asset;
@@ -220,19 +220,53 @@ export class LinkedInPlugin extends BaseSchedulerPlugin {
         comments: PluginPostDetails[],
         socialMediaAccount: PluginSocialMediaAccount
     ): Promise<PostResponse> {
-        // LinkedIn doesn't support editing posts via API
-        // Delete and recreate pattern similar to Bluesky
-        const errorResponse: PostResponse = {
-            id: postDetails.id,
-            postId: postDetails.postId || '',
-            releaseURL: '',
-            status: 'failed',
-            error: 'LinkedIn does not support editing posts via API. Please delete and recreate the post instead.',
-        };
-        this.emit('linkedin:post:update:failed', {
-            error: 'LinkedIn API does not support post editing'
+        const publishedPlatformDetails = postDetails.platformPosts.find((platform) => platform.socialAccountId === socialMediaAccount.id);
+        if (!publishedPlatformDetails) {
+            throw new Error('Published platform details not found');
+        }
+
+        const publishedDetails = publishedPlatformDetails.publishDetail ? JSON.parse(publishedPlatformDetails.publishDetail as string) as PostResponse : null;
+        if (!publishedDetails) {
+            throw new Error('Published details not found');
+        }
+        const publishedPostId = publishedDetails.postId;
+
+        // LinkedIn textual edit is theoretically possible via UGC API PATCH but complex and often restricted.
+        // For now, consistent with previous behavior but using correct ID retrieval.
+        // If we wanted to support it, we'd need to PATCH urn:li:ugcPost:...
+
+        throw new Error('LinkedIn does not support editing posts via API. Please delete and recreate the post instead.');
+    }
+
+    async getStatistic(
+        postDetails: PluginPostDetails,
+        socialMediaAccount: PluginSocialMediaAccount
+    ): Promise<any> {
+        const publishedPlatformDetails = postDetails.platformPosts.find((platform) => platform.socialAccountId === socialMediaAccount.id);
+        if (!publishedPlatformDetails) {
+            throw new Error('Published platform details not found');
+        }
+
+        const publishedDetails = publishedPlatformDetails.publishDetail ? JSON.parse(publishedPlatformDetails.publishDetail as string) as PostResponse : null;
+        if (!publishedDetails) {
+            throw new Error('Published details not found');
+        }
+        const publishedPostId = publishedDetails.postId;
+
+        const response = await fetch(`https://api.linkedin.com/v2/socialActions/${encodeURIComponent(publishedPostId)}`, {
+            headers: {
+                Authorization: `Bearer ${socialMediaAccount.accessToken}`,
+                'X-Restli-Protocol-Version': '2.0.0',
+                'LinkedIn-Version': '202401',
+            },
         });
-        return Promise.resolve(errorResponse);
+
+        if (!response.ok) {
+            const error = await response.text();
+            throw new Error(`LinkedIn stats failed: ${error}`);
+        }
+
+        return response.json();
     }
 
     override async addComment(

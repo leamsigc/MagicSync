@@ -85,6 +85,7 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
     ): Promise<PostResponse> {
         try {
             const { content, settings } = this.getPlatformData(postDetails);
+            const publicationDetails = postDetails.platformPosts.find((platform) => platform.socialAccountId === socialMediaAccount.id);
 
             if (!postDetails.assets || postDetails.assets.length === 0) {
                 throw new Error('Video file is required for YouTube uploads');
@@ -177,6 +178,36 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
         }
     }
 
+    async getStatistic(
+        postDetails: PluginPostDetails,
+        socialMediaAccount: PluginSocialMediaAccount
+    ): Promise<any> {
+        const publicationDetails = postDetails.platformPosts.find((platform) => platform.socialAccountId === socialMediaAccount.id);
+        if (!publicationDetails) {
+            throw new Error('Published platform details not found');
+        }
+        const details = JSON.parse(publicationDetails.publishDetail as unknown as string || '{}') as PostResponse;
+        const postId = details.postId;
+
+        if (!postId) {
+            throw new Error('Post details not found');
+        }
+
+        const oauth2Client = new google.auth.OAuth2();
+        oauth2Client.setCredentials({
+            access_token: socialMediaAccount.accessToken,
+        });
+
+        const youtube = google.youtube({ version: 'v3', auth: oauth2Client });
+
+        const response = await youtube.videos.list({
+            part: ['statistics'],
+            id: [postId],
+        });
+
+        return response.data.items?.[0]?.statistics || {};
+    }
+
     override async update(
         postDetails: PluginPostDetails,
         comments: PluginPostDetails[],
@@ -193,7 +224,13 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
 
             const youtube = google.youtube({ version: 'v3', auth: oauth2Client });
 
-            if (!postDetails.postId) {
+            if (!publicationDetails) {
+                throw new Error('Published platform details not found');
+            }
+            const details = JSON.parse(publicationDetails.publishDetail as unknown as string || '{}') as PostResponse;
+            const postId = details.postId;
+
+            if (!postId) {
                 throw new Error('Video ID is required for update');
             }
 
@@ -208,15 +245,15 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
             await youtube.videos.update({
                 part: ['snippet'],
                 requestBody: {
-                    id: postDetails.postId,
+                    id: postId,
                     snippet: snippet
                 }
             });
 
             const postResponse: PostResponse = {
                 id: postDetails.id,
-                postId: postDetails.postId,
-                releaseURL: `https://www.youtube.com/watch?v=${postDetails.postId}`,
+                postId: postId,
+                releaseURL: `https://www.youtube.com/watch?v=${postId}`,
                 status: 'published',
             };
 
@@ -243,7 +280,14 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
         try {
             const { content } = this.getPlatformData(commentDetails);
 
-            if (!postDetails.postId) {
+            const publicationDetails = postDetails.platformPosts.find((platform) => platform.socialAccountId === socialMediaAccount.id);
+            if (!publicationDetails) {
+                throw new Error('Published platform details not found');
+            }
+            const details = JSON.parse(publicationDetails.publishDetail as unknown as string || '{}') as PostResponse;
+            const postId = details.postId;
+
+            if (!postId) {
                 throw new Error('Video ID is required for commenting');
             }
 
@@ -259,7 +303,7 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
                 part: ['snippet'],
                 requestBody: {
                     snippet: {
-                        videoId: postDetails.postId,
+                        videoId: postId,
                         topLevelComment: {
                             snippet: {
                                 textOriginal: content,
@@ -274,7 +318,7 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
             const commentResult: PostResponse = {
                 id: commentDetails.id,
                 postId: commentId || '',
-                releaseURL: `https://www.youtube.com/watch?v=${postDetails.postId}&lc=${commentId}`,
+                releaseURL: `https://www.youtube.com/watch?v=${postId}&lc=${commentId}`,
                 status: 'published',
             };
 

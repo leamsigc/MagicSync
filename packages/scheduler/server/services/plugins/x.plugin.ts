@@ -1,4 +1,4 @@
-import type { PostDetails, PostResponse, Integration } from '../SchedulerPost.service';
+import type { PostDetails, PostResponse, Integration, PluginPostDetails, PluginSocialMediaAccount } from '../SchedulerPost.service';
 import { BaseSchedulerPlugin, type MediaContent } from '../SchedulerPost.service';
 import type { Post, PostWithAllData, SocialMediaAccount, Asset } from '#layers/BaseDB/db/schema';
 import { TwitterApi } from 'twitter-api-v2';
@@ -26,7 +26,7 @@ export class XPlugin extends BaseSchedulerPlugin {
 
     override async validate(post: Post): Promise<string[]> {
         const errors: string[] = [];
-        const settings = post.settings as any;
+        const settings = (post as any).settings;
         const isPremium = settings?.isPremium || false;
         const maxLength = this.xMaxLength(isPremium);
 
@@ -95,7 +95,7 @@ export class XPlugin extends BaseSchedulerPlugin {
                 width = Math.floor(width * 0.9);
                 height = Math.floor(height * 0.9);
 
-                imageBuffer = await sharp(imageBuffer)
+                imageBuffer = await sharp(imageBuffer as unknown as Buffer)
                     .resize(width, height)
                     .jpeg({ quality: 85 })
                     .toBuffer();
@@ -106,9 +106,9 @@ export class XPlugin extends BaseSchedulerPlugin {
     }
 
     override async post(
-        postDetails: PostWithAllData,
-        comments: PostDetails[],
-        socialMediaAccount: SocialMediaAccount
+        postDetails: PluginPostDetails,
+        comments: PluginPostDetails[],
+        socialMediaAccount: PluginSocialMediaAccount
     ): Promise<PostResponse> {
         try {
             // X stores token as "accessToken:accessSecret"
@@ -233,14 +233,19 @@ export class XPlugin extends BaseSchedulerPlugin {
     }
 
     override async update(
-        postDetails: PostWithAllData,
-        comments: PostDetails[],
-        socialMediaAccount: SocialMediaAccount
+        postDetails: PluginPostDetails,
+        comments: PluginPostDetails[],
+        socialMediaAccount: PluginSocialMediaAccount
     ): Promise<PostResponse> {
         try {
-            // X doesn't support editing tweets
-            // Delete and recreate pattern like Bluesky
-            if (!postDetails.postId) {
+            const publicationDetails = postDetails.platformPosts.find((platform) => platform.socialAccountId === socialMediaAccount.id);
+            if (!publicationDetails) {
+                throw new Error('Published platform details not found');
+            }
+            const details = JSON.parse(publicationDetails.publishDetail as unknown as string || '{}') as PostResponse;
+            const postId = details.postId;
+
+            if (!postId) {
                 throw new Error('Tweet ID is required for updating');
             }
 
@@ -253,8 +258,9 @@ export class XPlugin extends BaseSchedulerPlugin {
                 accessSecret,
             });
 
-            // Delete old tweet
-            await client.v2.deleteTweet(postDetails.postId);
+            // X (Free API) doesn't support editing. 
+            // Delete and recreate pattern changes the ID and URL which effectively is a new post.
+            // Keeping consistent with previous behavior of deleting and posting new.
 
             // Create new tweet
             const newTweet = await client.v2.tweet(postDetails.content);
@@ -281,10 +287,28 @@ export class XPlugin extends BaseSchedulerPlugin {
         }
     }
 
-    override async addComment(
+    async getStatistic(
         postDetails: PostWithAllData,
-        commentDetails: PostDetails,
         socialMediaAccount: SocialMediaAccount
+    ): Promise<any> {
+        const publicationDetails = postDetails.platformPosts.find((platform) => platform.socialAccountId === socialMediaAccount.id);
+        if (!publicationDetails) {
+            throw new Error('Published platform details not found');
+        }
+        const details = JSON.parse(publicationDetails.publishDetail as unknown as string || '{}') as PostResponse;
+        const postId = details.postId;
+        if (!postId) {
+            throw new Error('Post details not found');
+        }
+
+        const [accessToken, accessSecret] = socialMediaAccount.accessToken.split(':');
+        return this.getTweetMetrics(postId, accessToken, accessSecret);
+    }
+
+    override async addComment(
+        postDetails: PluginPostDetails,
+        commentDetails: PluginPostDetails,
+        socialMediaAccount: PluginSocialMediaAccount
     ): Promise<PostResponse> {
         try {
             if (!postDetails.postId) {

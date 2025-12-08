@@ -77,6 +77,10 @@ export interface SchedulerPlugin {
     comments: PluginPostDetails,
     socialMediaAccount: PluginSocialMediaAccount
   ): Promise<PostResponse>;
+  getStatistic(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount
+  ): Promise<any>;
 }
 
 export interface SchedulerPluginConstructor {
@@ -122,6 +126,10 @@ export abstract class BaseSchedulerPlugin implements SchedulerPlugin {
     comments: PluginPostDetails,
     socialMediaAccount: PluginSocialMediaAccount
   ): Promise<PostResponse>;
+  abstract getStatistic(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount
+  ): Promise<any>;
 }
 
 export class SchedulerPost extends EventEmitter {
@@ -244,5 +252,22 @@ export class SchedulerPost extends EventEmitter {
     socialMediaAccount: PluginSocialMediaAccount
   ): Promise<PostResponse> {
     return this.executeOnPlugins('addComment', [postDetails, comment, socialMediaAccount], socialMediaAccount, 'comment:add', { postDetails, comment });
+  }
+
+  async getStatistic(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount
+  ): Promise<any> {
+    const plugin = this.plugins.get(socialMediaAccount.platform);
+    if (plugin) {
+      try {
+        const stats = await plugin.getStatistic(postDetails, socialMediaAccount);
+        return stats;
+      } catch (error: unknown) {
+        throw error;
+      }
+    } else {
+      throw new Error('Plugin not registered for this socialMediaAccount');
+    }
   }
 }

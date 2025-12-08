@@ -1,4 +1,4 @@
-import type { PostDetails, PostResponse, Integration } from '../SchedulerPost.service';
+import type { PostDetails, PostResponse, Integration, PluginPostDetails, PluginSocialMediaAccount } from '../SchedulerPost.service';
 import { BaseSchedulerPlugin, type MediaContent } from '../SchedulerPost.service';
 import type { Post, PostWithAllData, SocialMediaAccount, Asset } from '#layers/BaseDB/db/schema';
 import type { RedditSettings } from '../../../shared/platformSettings';
@@ -122,9 +122,9 @@ export class RedditPlugin extends BaseSchedulerPlugin {
     }
 
     override async post(
-        postDetails: PostWithAllData,
-        comments: PostDetails[],
-        socialMediaAccount: SocialMediaAccount
+        postDetails: PluginPostDetails,
+        comments: PluginPostDetails[],
+        socialMediaAccount: PluginSocialMediaAccount
     ): Promise<PostResponse> {
         try {
             const settings = postDetails.settings as any;
@@ -170,46 +170,28 @@ export class RedditPlugin extends BaseSchedulerPlugin {
                 delete submitData.text;
             }
 
-            submitData.title = finalTitle;
-            submitData.kind = settings?.type || 'self'; // self, link, image, video
-            // ... (other fields handled below based on kind)
+            // Cleanup and finalize data types
+            if (settings?.url && !submitData.url) {
+                submitData.url = settings.url;
+            }
 
-            if (settings?.type === 'link') {
-                if (!settings.url) throw new Error('URL required for link post');
-                postData.append('url', settings.url);
-            } else if (settings?.type === 'self' || !settings?.type) {
-                postData.append('text', bodyContent || '');
+            // Ensure type is set
+            if (!submitData.kind) {
+                submitData.kind = settings?.type || 'self';
+            }
+
+            if (submitData.kind === 'link' || submitData.kind === 'image' || submitData.kind === 'video') {
+                delete submitData.text; // URL posts don't have text body usually? Or they can? 
+                // Reddit API: link posts use 'url', self posts use 'text'.
+                if (submitData.kind === 'self') delete submitData.url;
+                else delete submitData.text;
             }
 
             if (settings?.subreddit?.flair?.id) {
-                postData.append('flair_id', settings.subreddit.flair.id);
+                submitData.flair_id = settings.subreddit.flair.id;
             }
             if (settings?.subreddit?.flair?.text) {
-                postData.append('flair_text', settings.subreddit.flair.text);
-            }
-
-            // Handle Image/Video Upload if kind is image/video
-            if (settings?.type === 'image' || settings?.type === 'video') {
-                // ... logic for uploadMedia and then submit
-                // Actually, uploadMedia returns something to attach? Or we submit directly?
-                // Usually step 1: submit link/text, step 2: upload? No, often upload first.
-                // Existing code uses uploadMedia.
-                if (!postDetails.assets || postDetails.assets.length === 0) throw new Error('Media required for image/video post');
-                const asset = postDetails.assets[0];
-                const mediaUrl = await this.uploadMedia(subreddit, asset, accessToken);
-                postData.append('url', mediaUrl);
-                // kind is 'image' or 'video' but endpoint uses 'link' with special URL?
-                // Reddit API for media is complex. 'kind' should be 'image' or 'video' usually maps to 'link' pointing to hosted media?
-                // Existing implementation `uploadMedia` likely handles AWS upload or similar and returns URL.
-                // If `uploadMedia` returns reddit-hosted URL, then `kind` is 'link'? 
-                // Or `kind` 'image' exists? Reddit submit endpoint accepts 'sr', 'title', 'kind', 'url'/'text'.
-                // If type is 'image', we usually submit as 'link' with URL to image?
-                // Actually, `kind` param in `/api/submit` is 'link', 'self', 'image', 'video', 'videogif'?
-                // Docs say: kind='link' or 'self'. 'image'/'video' are newer and might differ.
-                // Let's assume 'link' for media if uploadMedia returns a URL.
-                if (settings.type === 'image' || settings.type === 'video') {
-                    postData.set('kind', 'link');
-                }
+                submitData.flair_text = settings.subreddit.flair.text;
             }
 
             const response = await fetch('https://oauth.reddit.com/api/submit', {
@@ -263,12 +245,19 @@ export class RedditPlugin extends BaseSchedulerPlugin {
     }
 
     override async update(
-        postDetails: PostWithAllData,
-        comments: PostDetails[],
-        socialMediaAccount: SocialMediaAccount
+        postDetails: PluginPostDetails,
+        comments: PluginPostDetails[],
+        socialMediaAccount: PluginSocialMediaAccount
     ): Promise<PostResponse> {
         try {
-            if (!postDetails.postId) {
+            const publicationDetails = postDetails.platformPosts.find((platform) => platform.socialAccountId === socialMediaAccount.id);
+            if (!publicationDetails) {
+                throw new Error('Published platform details not found');
+            }
+            const details = JSON.parse(publicationDetails.publishDetail as unknown as string || '{}') as PostResponse;
+            const postId = details.postId;
+
+            if (!postId) {
                 throw new Error('Post ID is required for updating');
             }
 
@@ -281,7 +270,7 @@ export class RedditPlugin extends BaseSchedulerPlugin {
                     'User-Agent': 'PostScheduler/1.0',
                 },
                 body: new URLSearchParams({
-                    thing_id: postDetails.postId,
+                    thing_id: postId,
                     text: postDetails.content,
                 }),
             });
@@ -293,8 +282,8 @@ export class RedditPlugin extends BaseSchedulerPlugin {
 
             const postResponse: PostResponse = {
                 id: postDetails.id,
-                postId: postDetails.postId,
-                releaseURL: postDetails.releaseURL || '',
+                postId: postId,
+                releaseURL: details.releaseURL || '',
                 status: 'published',
             };
 
@@ -317,10 +306,34 @@ export class RedditPlugin extends BaseSchedulerPlugin {
         }
     }
 
+    async getStatistic(
+        postDetails: PluginPostDetails,
+        socialMediaAccount: PluginSocialMediaAccount
+    ): Promise<any> {
+        const publicationDetails = postDetails.platformPosts.find((platform) => platform.socialAccountId === socialMediaAccount.id);
+        if (!publicationDetails) {
+            throw new Error('Published platform details not found');
+        }
+        const details = JSON.parse(publicationDetails.publishDetail as unknown as string || '{}') as PostResponse;
+        const postId = details.postId;
+        if (!postId) {
+            throw new Error('Post details not found');
+        }
+
+        const response = await fetch(`https://oauth.reddit.com/api/info?id=${postId}`, {
+            headers: {
+                Authorization: `Bearer ${socialMediaAccount.accessToken}`,
+                'User-Agent': 'PostScheduler/1.0',
+            },
+        });
+        const data = await response.json();
+        return data?.data?.children?.[0]?.data || {};
+    }
+
     override async addComment(
-        postDetails: PostWithAllData,
-        commentDetails: PostDetails,
-        socialMediaAccount: SocialMediaAccount
+        postDetails: PluginPostDetails,
+        commentDetails: PluginPostDetails,
+        socialMediaAccount: PluginSocialMediaAccount
     ): Promise<PostResponse> {
         try {
             if (!postDetails.postId) {
@@ -336,7 +349,7 @@ export class RedditPlugin extends BaseSchedulerPlugin {
                 },
                 body: new URLSearchParams({
                     thing_id: postDetails.postId,
-                    text: commentDetails.message,
+                    text: commentDetails.content,
                 }),
             });
 

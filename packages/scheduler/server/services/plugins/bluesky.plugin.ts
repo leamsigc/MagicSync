@@ -1,10 +1,11 @@
 import { decryptKey } from '#layers/BaseAuth/server/utils/AuthHelpers';
-import type { PostDetails, PostResponse, Integration } from '../SchedulerPost.service';
-import { BaseSchedulerPlugin, type MediaContent, type PluginPostDetails, type PluginSocialMediaAccount } from '../SchedulerPost.service';
-import type { Post, PostWithAllData, SocialMediaAccount, Asset } from '#layers/BaseDB/db/schema';
+import type { PostResponse } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
+import { BaseSchedulerPlugin, type PluginPostDetails, type PluginSocialMediaAccount } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
+import type { Post, SocialMediaAccount, Asset } from '#layers/BaseDB/db/schema';
 import { AtpAgent, RichText, AppBskyFeedPost, AppBskyFeedDefs, BlobRef } from '@atproto/api';
-import type { BlueskySettings } from '../../../shared/platformSettings';
-import { platformConfigurations } from '../../../shared/platformConstants';
+import type { BlueskySettings } from '#layers/BaseScheduler/shared/platformSettings';
+import { platformConfigurations } from '#layers/BaseScheduler/shared/platformConstants';
+
 type AppBskyEmbedVideo = any;
 type AppBskyVideoDefs = any;
 
@@ -282,7 +283,7 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
       // Upload videos (only one video per post is supported by Bluesky)
       let videoEmbed: AppBskyEmbedVideo | null = null;
       if (videoAssets.length > 0) {
-        const videoUrl = `${this.serviceUrl}${videoAssets[0].url}`;
+        const videoUrl = `${this.serviceUrl}${(videoAssets[0] as Asset).url}`;
         videoEmbed = await this.uploadVideo(this.agent, videoUrl);
       }
 
@@ -294,7 +295,7 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
         embed = {
           $type: 'app.bsky.embed.images',
           images: images.map((p: { buffer: { data: { blob: any; }; }; width: any; height: any; }, index: string | number) => ({
-            alt: imageAssets?.[index]?.filename || '',
+            alt: imageAssets?.[index as number]?.filename || '',
             image: p.buffer.data.blob,
             aspectRatio: {
               width: p.width,
@@ -346,26 +347,58 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
     comments: PluginPostDetails[],
     socialMediaAccount: PluginSocialMediaAccount
   ): Promise<PostResponse> {
+
+    const publishedPlatformDetails = postDetails.platformPosts.find((platform) => platform.socialAccountId === socialMediaAccount.id);
+    if (!publishedPlatformDetails) {
+      throw new Error('Published platform details not found');
+    }
+
+    const publishedDetails = publishedPlatformDetails.publishDetail ? JSON.parse(publishedPlatformDetails.publishDetail as string) as PostResponse : null;
+    if (!publishedDetails) {
+      throw new Error('Published details not found');
+    }
+    const publishedPostId = publishedDetails.postId;
+
     const { content, settings } = this.getPlatformData(postDetails);
     const username = socialMediaAccount.username || socialMediaAccount.accountName;
-
-    if (!postDetails.postId) {
+    if (!publishedPostId) {
       throw new Error('Post ID is required for update');
     }
 
-    // Logic for update... assuming similar structure
-    // Since I'm just fixing types, I'll keep existing logic primarily but ensure signature matches.
-    // The existing logic probably referenced 'postDetails.content'.
 
-    throw new Error('Update not fully implemented for Bluesky');
-    /*
-    return {
-        id: postDetails.id,
-        postId: postDetails.postId,
-        releaseURL: `https://bsky.app/profile/${username}/post/${postDetails.postId}`, // Simplified
-        status: 'published',
+    const postRecord: AppBskyFeedPost.Record = {
+      $type: 'app.bsky.feed.post',
+      text: content,
+      facets: [],
+      createdAt: postDetails.createdAt.toISOString(),
+      // embed: getEmbed(postDetails),
     };
-    */
+
+    const rkey = publishedPostId.split('/').pop();
+    if (!rkey) throw new Error('Invalid post ID');
+
+    // Using com.atproto.repo.putRecord or generic put on the collection if convenient, 
+    // but assuming agent.api.app.bsky.feed.post.put exists and follows standard repo put semantics
+    // app.bsky.feed.post corresponds to a collection, so .put might expect { repo, rkey, record }
+    const blueskyResponse = await this.agent.api.app.bsky.feed.post.put(
+      {
+        repo: this.agent.session?.did || '',
+        rkey: rkey,
+      },
+      postRecord,
+    );
+
+    const response: PostResponse = {
+      id: postDetails.id,
+      postId: blueskyResponse.uri,
+      releaseURL: `https://bsky.app/profile/${this.agent.session?.handle}/post/${blueskyResponse.uri.split('/').pop()}`,
+      status: 'published',
+    };
+
+    this.emit('bluesky:post:published', { postId: response.postId, response });
+    return response;
+
+
   }
 
   override async addComment(
@@ -376,7 +409,16 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
     try {
       await this.login(socialMediaAccount);
 
-      const parentUri = postDetails.postId || '';
+      const publishedPlatformDetails = postDetails.platformPosts.find((platform) => platform.socialAccountId === socialMediaAccount.id);
+      if (!publishedPlatformDetails) {
+        throw new Error('Published platform details not found');
+      }
+
+      const publishedDetails = publishedPlatformDetails.publishDetail ? JSON.parse(publishedPlatformDetails.publishDetail as string) as PostResponse : null;
+      if (!publishedDetails) {
+        throw new Error('Published details not found');
+      }
+      const parentUri = publishedDetails.postId;
       if (!parentUri) {
         throw new Error('Parent post ID is required for commenting');
       }
@@ -549,5 +591,24 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
       $type: 'app.bsky.embed.video',
       video: blob,
     } satisfies AppBskyEmbedVideo;
+  }
+
+  async getStatistic(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount
+  ): Promise<any> {
+    const publishedPlatformDetails = postDetails.platformPosts.find((platform) => platform.socialAccountId === socialMediaAccount.id);
+    if (!publishedPlatformDetails) {
+      throw new Error('Published platform details not found');
+    }
+
+    const publishedDetails = publishedPlatformDetails.publishDetail ? JSON.parse(publishedPlatformDetails.publishDetail as string) as PostResponse : null;
+    if (!publishedDetails) {
+      throw new Error('Published details not found');
+    }
+    const publishedPostId = publishedDetails.postId;
+
+    const thread = await this.getPostThread(publishedPostId, socialMediaAccount.accessToken);
+    return thread;
   }
 }
