@@ -13,7 +13,7 @@
     "db:generate": "drizzle-kit generate --config ../db/config/drizzle.config.ts",
     "db:migrate": "drizzle-kit migrate --config ../db/config/drizzle.config.ts",
     "db:studio": "drizzle-kit studio --config ../db/config/drizzle.config.ts",
-    "start": "HOST=localhost node .output/server/index.mjs"
+    "start": "node .output/server/index.mjs"
   },
   "dependencies": {
     "@local-monorepo/ai-tools": "workspace:*",
