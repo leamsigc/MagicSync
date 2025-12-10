@@ -22,13 +22,13 @@ const {
   addTextLayer,
   eraseLayer,
   updateFrameSettings,
-  undo, // Assuming undo/redo are for general actions, not just menu
+  undo,
   redo,
   clearCanvas,
-  updateFrameSettingsToImageDimension,
   zoomIn,
   zoomOut, // For "New" action
-  editor
+  editor,
+  updateFrameSettingsToImageDimension
 } = useFabricJs();
 
 import type { DropdownMenuItem } from '@nuxt/ui'

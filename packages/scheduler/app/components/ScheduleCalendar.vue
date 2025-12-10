@@ -40,7 +40,7 @@ const $emit = defineEmits({
 
 const { locale } = useI18n()
 
-const calendarOptions: CalendarOptions = {
+const calendarOptions = computed((): CalendarOptions => ({
   plugins: [timeGridPlugin, interactionPlugin, dayGridPlugin],
   initialView: activeView.value,
   editable: false,
@@ -76,7 +76,7 @@ const calendarOptions: CalendarOptions = {
     },
   },
   events: events.value,
-};
+}));
 </script>
 <template>
   <FullCalendar :options="calendarOptions" :event-limit="true">

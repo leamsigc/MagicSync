@@ -68,6 +68,21 @@ export const useFabricJs = () => {
     }
   };
 
+  const updateFrameSettingsToImageDimension = () => {
+    if (editor.value) {
+
+      const toolsPlugin = editor.value.getPlugin('tools') as ToolsPlugin;
+      // Get image size
+      const imageSize = toolsPlugin
+      // toolsPlugin.updateFrameSettings(
+      //   {
+      //     width: ,
+      //     height:,
+      //   },
+      // );
+    }
+  };
+
   return {
     editor,
     run,
@@ -112,5 +127,6 @@ export const useFabricJs = () => {
     loadTemplateFromJson: (json: string) => (editor.value?.getPlugin('tools') as ToolsPlugin)?.loadTemplateFromJson(json),
     exportCurrentCanvas: () => (editor.value?.getPlugin('tools') as ToolsPlugin)?.exportCurrentCanvas(),
     groupLayers: () => (editor.value?.getPlugin('tools') as ToolsPlugin)?.groupLayers(),
+    updateFrameSettingsToImageDimension
   };
 };

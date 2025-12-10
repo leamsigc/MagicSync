@@ -50,10 +50,9 @@ const HandleRefresh = async () => {
     }
   );
 }
+HandleRefresh();
 
-await HandleRefresh();
-
-const events = postList.value.map((post: PostWithAllData) => {
+const events = computed(() => postList.value.map((post: PostWithAllData) => {
   return {
     post,
     id: post.id,
@@ -63,7 +62,7 @@ const events = postList.value.map((post: PostWithAllData) => {
       post
     }
   }
-})
+}))
 
 const newPostModalRef = ref<InstanceType<typeof NewCalendarPostModal> | null>(null);
 

@@ -11,7 +11,7 @@ export default defineNuxtConfig({
     "/": { swr: 1200 },
     "/blog": { swr: true },
     "/blog/**": { swr: 1200 },
-    "/app/**": { swr: true },
+    "/app/**": { swr: false },
     '/api/v1/**': {
       cors: true
     }

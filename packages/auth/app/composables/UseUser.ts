@@ -11,12 +11,51 @@ export function UseUser() {
 
   // Todo: Move to store and pinia
   const user = useState<User | null>('auth:user')
-  const session = useState<Session>('auth:session')
+  const session = useState<Session | null>('auth:session')
   const sessionFetching = import.meta.server ? ref(false) : useState('auth:sessionFetching', () => false)
+  const headers = import.meta.server ? useRequestHeaders() : undefined
 
   const listAccounts = useState('auth:listAccounts')
 
+  const fetchSession = async () => {
+    if (sessionFetching.value) {
+      return
+    }
+    sessionFetching.value = true
 
+    // Use useFetch for better SSR support and hydration
+    const { data: sessionData } = await useFetch<{ session: Session, user: User }>('/api/auth/get-session', {
+      headers: import.meta.server ? useRequestHeaders() : undefined,
+      key: 'auth-session',
+      retry: 0
+    })
+
+
+    const data = sessionData.value
+    session.value = data?.session || null
+    console.log("Fetched session");
+    const userDefaults = {
+      image: null,
+      role: null,
+      banReason: null,
+      banned: null,
+      banExpires: null,
+      stripeCustomerId: null
+    }
+    user.value = data?.user
+      ? Object.assign({}, userDefaults, data.user)
+      : null
+    sessionFetching.value = false
+    return data
+  }
+
+  if (import.meta.client) {
+    client.$store.listen('$sessionSignal', async (signal) => {
+      if (!signal)
+        return
+      await fetchSession()
+    })
+  }
 
   const getUserAccountList = async () => {
     const data = await client.listAccounts()
@@ -50,6 +89,7 @@ export function UseUser() {
     },
     client,
     getUserAccountList,
-    listAccounts
+    listAccounts,
+    fetchSession
   }
 }
