@@ -22,7 +22,7 @@ export default defineNuxtConfig({
     }
   },
   runtimeConfig: {
-    NUXT_BASE_URL: process.env.NUXT_BASE_URL,
+    BASE_URL: process.env.NUXT_BASE_URL,
   },
   $meta: {
     name: 'BaseConnect',

@@ -5,7 +5,7 @@ export default defineEventHandler(async (event) => {
   try {
     const filename = getRouterParam(event, 'filename')
     const { userId } = getQuery(event)
-    const { NUXT_FILE_STORAGE_MOUNT } = useRuntimeConfig(event)
+    const { FILE_STORAGE_MOUNT } = useRuntimeConfig(event)
 
     if (!filename) {
       throw createError({
@@ -21,7 +21,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // Construct the user-specific folder path
-    const fileStorageMount = NUXT_FILE_STORAGE_MOUNT || './upload/files'
+    const fileStorageMount = FILE_STORAGE_MOUNT || './upload/files'
     const userFolder = join(process.cwd(), fileStorageMount, 'userFiles', userId as string)
     const filePath = join(userFolder, filename)
 

@@ -64,7 +64,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
   private readonly API_VERSION = 'v20.0';
   private readonly GRAPH_API_BASE_URL = 'https://graph.facebook.com';
   private readonly OAUTH_DIALOG_URL = 'https://www.facebook.com/v20.0/dialog/oauth';
-  private readonly baseUrl = useRuntimeConfig().NUXT_APP_URL || 'http://localhost:3000'
+  private readonly baseUrl = useRuntimeConfig().APP_URL || 'http://localhost:3000'
 
   protected init(options?: any): void {
     // Initialize Facebook API client or settings
@@ -780,12 +780,12 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     // Correct URL for updating: /{post-id}
     const url = this._getGraphApiUrl(`/${postId}?access_token=${socialMediaAccount.accessToken}`);
 
-    // Note: Link updating might not be supported via simple update call depending on post type, 
+    // Note: Link updating might not be supported via simple update call depending on post type,
     // but 'message' usually is.
     const body: any = { message: content };
     if (settings?.url) {
       // Trying to update link might fail or be ignored if it wasn't a link post
-      // body.link = settings.url; 
+      // body.link = settings.url;
     }
 
     const requestApi = await this.fetch(
@@ -801,7 +801,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     );
 
     const responseJson = await requestApi.json();
-    // Facebook update response usually just { success: true } or { id: ... }? 
+    // Facebook update response usually just { success: true } or { id: ... }?
     // Actually typically just success, ID doesn't change.
 
     const response: PostResponse = {

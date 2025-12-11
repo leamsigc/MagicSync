@@ -3,7 +3,7 @@ import { checkUserIsLogin } from "#layers/BaseAuth/server/utils/AuthHelpers"
 
 
 export default defineEventHandler(async (event) => {
-  const { NUXT_BASE_URL } = useRuntimeConfig(event)
+  const { BASE_URL } = useRuntimeConfig(event)
 
   try {
     const platform = getRouterParam(event, 'platform') as SocialMediaPlatform
@@ -49,7 +49,7 @@ export default defineEventHandler(async (event) => {
     console.error('Error handling OAuth callback:', error)
 
     // Redirect to error page
-    const baseUrl = NUXT_BASE_URL || 'http://localhost:3000'
+    const baseUrl = BASE_URL || 'http://localhost:3000'
     const errorMessage = error instanceof Error
       ? error.message
       : (error as any)?.statusMessage || 'Connection failed'

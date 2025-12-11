@@ -24,8 +24,8 @@ export default defineNuxtConfig({
     name: 'BaseAssets',
   },
   runtimeConfig: {
-    NUXT_FILE_STORAGE_MOUNT: process.env.NUXT_FILE_STORAGE_MOUNT,
-    NUXT_PEXELS_API_KEY: process.env.NUXT_PEXELS_API_KEY,
+    FILE_STORAGE_MOUNT: process.env.NUXT_FILE_STORAGE_MOUNT,
+    PEXELS_API_KEY: process.env.NUXT_PEXELS_API_KEY,
   },
   extends: ['@local-monorepo/db', '@local-monorepo/ui', '@local-monorepo/auth'],
   modules: ['@nuxtjs/i18n', 'nuxt-file-storage'],

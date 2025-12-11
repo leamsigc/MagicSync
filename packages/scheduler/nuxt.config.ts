@@ -29,9 +29,8 @@ export default defineNuxtConfig({
     name: 'BaseScheduler',
   },
   runtimeConfig: {
-    NUXT_APP_URL: process.env.NUXT_APP_URL,
+    APP_URL: process.env.NUXT_APP_URL,
     googleGenerativeAiApiKey: process.env.NUXT_GOOGLE_GENERATIVE_AI_API_KEY,
-    GOOGLE_GENERATIVE_AI_API_KEY: process.env.NUXT_GOOGLE_GENERATIVE_AI_API_KEY
   },
   extends: ['@local-monorepo/db', '@local-monorepo/ui', '@local-monorepo/auth', "@local-monorepo/connect", "@local-monorepo/assets", "@local-monorepo/templates"],
   modules: ['@nuxtjs/i18n'],

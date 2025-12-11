@@ -7,7 +7,7 @@ export default defineEventHandler(async (event) => {
   const searchQuery = query.query as string || ''
   const page = parseInt(query.page as string) || 1
   const perPage = parseInt(query.per_page as string) || 15
-  const { NUXT_PEXELS_API_KEY } = useRuntimeConfig(event);
+  const { PEXELS_API_KEY } = useRuntimeConfig(event);
 
 
   if (!searchQuery) {
@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  const pexelsApiKey = NUXT_PEXELS_API_KEY;
+  const pexelsApiKey = PEXELS_API_KEY;
   if (!pexelsApiKey) {
     throw createError({
       statusCode: 500,
