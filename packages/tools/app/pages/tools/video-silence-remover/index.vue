@@ -23,6 +23,21 @@ const silenceThreshold = ref<number>(15)
 const bufferFrames = ref<number>(15)
 const isProcessing = computed(() => !!processingId.value)
 
+// Video recording state
+const showRecordingModal = ref(false)
+const recordingStream = ref<MediaStream | null>(null)
+const recordingVideo = ref<HTMLVideoElement | null>(null)
+const mediaRecorder = ref<MediaRecorder | null>(null)
+const recordedChunks = ref<Blob[]>([])
+const isRecording = ref(false)
+const isPaused = ref(false)
+const isMuted = ref(false)
+const selectedCamera = ref<string>('')
+const selectedAspectRatio = ref<'16:9' | '9:16' | '1:1'>('16:9')
+const availableCameras = ref<MediaDeviceInfo[]>([])
+const recordingDuration = ref(0)
+const recordingTimer = ref<NodeJS.Timeout | null>(null)
+
 // Watch for file uploads
 watch(uploadedVideo, (newFiles) => {
   if (newFiles && newFiles.length > 0) {
@@ -113,6 +128,288 @@ const onFileDrop = async (f: File | File[] | null | undefined) => {
   uploadedVideo.value = Array.isArray(f) ? f : [f]
 }
 
+// Video recording functions
+const openRecordingModal = async () => {
+  showRecordingModal.value = true
+  await initializeRecording()
+}
+
+const closeRecordingModal = () => {
+  stopRecording()
+  showRecordingModal.value = false
+  cleanupRecording()
+}
+
+const initializeRecording = async () => {
+  try {
+    // Get available cameras
+    const devices = await navigator.mediaDevices.enumerateDevices()
+    availableCameras.value = devices.filter(device => device.kind === 'videoinput')
+
+    // Default to first camera
+    if (availableCameras.value.length > 0) {
+      selectedCamera.value = availableCameras.value[0]?.deviceId
+    }
+
+    await startCameraStream()
+  } catch (error) {
+    console.error('Failed to initialize recording:', error)
+    toast.add({
+      title: t('error'),
+      description: t('camera_access_required'),
+      color: 'error'
+    })
+  }
+}
+
+const startCameraStream = async () => {
+  try {
+    // Set video constraints based on aspect ratio
+    let videoConstraints: MediaTrackConstraints = {
+      deviceId: selectedCamera.value ? { exact: selectedCamera.value } : undefined,
+    }
+
+    // Set ideal resolution based on aspect ratio
+    switch (selectedAspectRatio.value) {
+      case '16:9':
+        videoConstraints.width = { ideal: 1920 }
+        videoConstraints.height = { ideal: 1080 }
+        break
+      case '9:16':
+        // For portrait, request taller than wide
+        videoConstraints.width = { ideal: 720 }
+        videoConstraints.height = { ideal: 1280 }
+        break
+      case '1:1':
+        videoConstraints.width = { ideal: 1080 }
+        videoConstraints.height = { ideal: 1080 }
+        break
+    }
+
+    const constraints: MediaStreamConstraints = {
+      video: videoConstraints,
+      audio: true
+    }
+
+    recordingStream.value = await navigator.mediaDevices.getUserMedia(constraints)
+
+    // Apply aspect ratio cropping if needed
+    await applyAspectRatioCropping()
+
+    if (recordingVideo.value) {
+      recordingVideo.value.srcObject = recordingStream.value
+      // Preview is always muted to avoid audio feedback
+      recordingVideo.value.muted = true
+    }
+  } catch (error) {
+    console.error('Failed to start camera stream:', error)
+    toast.add({
+      title: t('error'),
+      description: t('permission_denied'),
+      color: 'error'
+    })
+  }
+}
+
+const applyAspectRatioCropping = async () => {
+  if (!recordingStream.value) return
+
+  const videoTrack = recordingStream.value.getVideoTracks()[0]
+  if (!videoTrack) return
+
+  const capabilities = videoTrack.getCapabilities()
+  const settings = videoTrack.getSettings()
+
+  // Apply cropping constraints based on aspect ratio
+  const newConstraints: MediaTrackConstraints = {
+    deviceId: selectedCamera.value ? { exact: selectedCamera.value } : undefined,
+  }
+
+  switch (selectedAspectRatio.value) {
+    case '16:9':
+      newConstraints.width = { ideal: 1920 }
+      newConstraints.height = { ideal: 1080 }
+      newConstraints.aspectRatio = 16 / 9
+      break
+    case '9:16':
+      newConstraints.width = { ideal: 720 }
+      newConstraints.height = { ideal: 1280 }
+      newConstraints.aspectRatio = 9 / 16
+      break
+    case '1:1':
+      newConstraints.width = { ideal: 1080 }
+      newConstraints.height = { ideal: 1080 }
+      newConstraints.aspectRatio = 1
+      break
+  }
+
+  try {
+    await videoTrack.applyConstraints(newConstraints)
+  } catch (error) {
+    console.warn('Could not apply aspect ratio constraints:', error)
+    // Continue without cropping - the video will maintain its natural aspect ratio
+  }
+}
+
+const changeCamera = async (deviceId: string) => {
+  selectedCamera.value = deviceId
+  if (recordingStream.value) {
+    recordingStream.value.getTracks().forEach(track => track.stop())
+    recordingStream.value = null
+  }
+  await startCameraStream()
+}
+
+const changeAspectRatio = async (aspectRatio: '16:9' | '9:16' | '1:1') => {
+  selectedAspectRatio.value = aspectRatio
+  // Reapply aspect ratio constraints to the active video track
+  await applyAspectRatioCropping()
+}
+
+const toggleMute = () => {
+  isMuted.value = !isMuted.value
+  if (recordingStream.value) {
+    recordingStream.value.getAudioTracks().forEach(track => {
+      track.enabled = !isMuted.value
+    })
+  }
+  // Preview video is always muted to avoid audio feedback
+  if (recordingVideo.value) {
+    recordingVideo.value.muted = true
+  }
+}
+
+const startRecording = () => {
+  if (!recordingStream.value) return
+
+  // Try different mime types in order of preference
+  const mimeTypes = [
+    'video/webm;codecs=vp9,opus',
+    'video/webm;codecs=vp9',
+    'video/webm;codecs=h264,opus',
+    'video/webm;codecs=h264',
+    'video/webm',
+    'video/mp4',
+    '' // Let browser choose default
+  ]
+
+  let selectedMimeType = ''
+  for (const mimeType of mimeTypes) {
+    if (!mimeType || MediaRecorder.isTypeSupported(mimeType)) {
+      selectedMimeType = mimeType
+      break
+    }
+  }
+
+  if (!selectedMimeType && !MediaRecorder.isTypeSupported('')) {
+    toast.add({
+      title: t('error'),
+      description: 'Recording is not supported in this browser',
+      color: 'error'
+    })
+    return
+  }
+
+  recordedChunks.value = []
+  const options: MediaRecorderOptions = selectedMimeType ? { mimeType: selectedMimeType } : {}
+  mediaRecorder.value = new MediaRecorder(recordingStream.value, options)
+
+  mediaRecorder.value.ondataavailable = (event) => {
+    if (event.data.size > 0) {
+      recordedChunks.value.push(event.data)
+    }
+  }
+
+  mediaRecorder.value.onstop = () => {
+    const mimeType = selectedMimeType || 'video/webm'
+    const blob = new Blob(recordedChunks.value, { type: mimeType })
+    const url = URL.createObjectURL(blob)
+    const extension = mimeType.includes('mp4') ? 'mp4' : 'webm'
+    const file = new File([blob], `recorded-video-${Date.now()}.${extension}`, { type: mimeType })
+
+    // Set as selected video
+    uploadedVideo.value = [file]
+    videoUrl.value = url
+    processedVideo.value = null
+
+    closeRecordingModal()
+    toast.add({
+      title: t('success'),
+      description: 'Video recorded successfully',
+      color: 'success'
+    })
+  }
+
+  mediaRecorder.value.start()
+  isRecording.value = true
+  isPaused.value = false
+  recordingDuration.value = 0
+
+  // Start timer
+  recordingTimer.value = setInterval(() => {
+    recordingDuration.value++
+  }, 1000)
+}
+const pauseRecording = () => {
+  if (mediaRecorder.value && isRecording.value) {
+    if (isPaused.value) {
+      mediaRecorder.value.resume()
+      isPaused.value = false
+      // Resume timer
+      recordingTimer.value = setInterval(() => {
+        recordingDuration.value++
+      }, 1000)
+    } else {
+      mediaRecorder.value.pause()
+      isPaused.value = true
+      // Pause timer
+      if (recordingTimer.value) {
+        clearInterval(recordingTimer.value)
+        recordingTimer.value = null
+      }
+    }
+  }
+}
+
+const stopRecording = () => {
+  if (mediaRecorder.value && isRecording.value) {
+    mediaRecorder.value.stop()
+    isRecording.value = false
+    isPaused.value = false
+
+    // Clear timer
+    if (recordingTimer.value) {
+      clearInterval(recordingTimer.value)
+      recordingTimer.value = null
+    }
+  }
+}
+
+const cleanupRecording = () => {
+  if (recordingStream.value) {
+    recordingStream.value.getTracks().forEach(track => track.stop())
+    recordingStream.value = null
+  }
+  if (recordingVideo.value) {
+    recordingVideo.value.srcObject = null
+  }
+  if (recordingTimer.value) {
+    clearInterval(recordingTimer.value)
+    recordingTimer.value = null
+  }
+  mediaRecorder.value = null
+  recordedChunks.value = []
+  isRecording.value = false
+  isPaused.value = false
+  recordingDuration.value = 0
+}
+
+const formatDuration = (seconds: number) => {
+  const mins = Math.floor(seconds / 60)
+  const secs = seconds % 60
+  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+}
+
 const MAX_FILE_SIZE = 1000 * 1024 * 1024 // 1GB
 </script>
 
@@ -140,7 +437,7 @@ const MAX_FILE_SIZE = 1000 * 1024 * 1024 // 1GB
 
               <!-- Actions -->
               <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <UButton variant="outline" class="flex-1">
+                <UButton variant="outline" class="flex-1" @click="openRecordingModal">
                   <UIcon name="i-heroicons-video-camera" class="mr-2" />
                   {{ t('record_video') }}
                 </UButton>
@@ -232,9 +529,129 @@ const MAX_FILE_SIZE = 1000 * 1024 * 1024 // 1GB
         </BaseShinyCard>
       </div>
     </div>
+
+    <!-- Video Recording Modal -->
+    <UModal v-model:open="showRecordingModal" @close="closeRecordingModal" size="xl" fullscreen>
+      <template #content>
+        <div class="p-6 grid place-content-center h-full">
+          <div class="p-6 max-w-full h-full">
+            <div class="flex items-center justify-between mb-6">
+              <h2 class="text-2xl font-bold text-white">{{ t('record_video') }}</h2>
+              <UButton variant="ghost" @click="closeRecordingModal">
+                <UIcon name="i-heroicons-x-mark" class="w-6 h-6" />
+              </UButton>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-6 gap-6">
+              <!-- Left: Camera Settings -->
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-sm font-medium text-white mb-2">{{ t('select_camera') }}</label>
+                  <USelect v-model="selectedCamera"
+                    :options="availableCameras.map(camera => ({ label: camera.label || `Camera ${availableCameras.indexOf(camera) + 1}`, value: camera.deviceId }))"
+                    @update:model-value="(value) => value && changeCamera(String(value))" class="w-full" />
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-white mb-2">{{ t('select_aspect_ratio') }}</label>
+                  <div class="grid grid-cols-3 gap-2">
+                    <UButton :variant="selectedAspectRatio === '16:9' ? 'solid' : 'outline'" size="sm"
+                      @click="changeAspectRatio('16:9')" class="text-xs">
+                      16:9
+                    </UButton>
+                    <UButton :variant="selectedAspectRatio === '9:16' ? 'solid' : 'outline'" size="sm"
+                      @click="changeAspectRatio('9:16')" class="text-xs">
+                      9:16
+                    </UButton>
+                    <UButton :variant="selectedAspectRatio === '1:1' ? 'solid' : 'outline'" size="sm"
+                      @click="changeAspectRatio('1:1')" class="text-xs">
+                      1:1
+                    </UButton>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Center: Video Preview -->
+              <div
+                class="flex flex-col items-center space-y-4 col-span-4 relative transition-all duration-500 ease-in-out  rounded-[2rem]   overflow-hidden mx-auto w-full "
+                :class="{
+                  'max-w-5xl aspect-video': selectedAspectRatio === '16:9',
+                  'max-w-[400px] aspect-[9/16]': selectedAspectRatio === '9:16',
+                  'max-w-[600px] aspect-square': selectedAspectRatio === '1:1',
+                }">
+                <div class="relative w-full h-full bg-black group">
+                  <video ref="recordingVideo" autoplay playsinline muted="true"
+                    class="w-full h-full object-cover transition-transform duration-500 opacity-100"></video>
+
+                  <!-- Recording Indicator -->
+                  <div v-if="isRecording" class="absolute top-4 left-4 flex items-center space-x-2">
+                    <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                    <span class="text-white text-sm font-medium">{{ formatDuration(recordingDuration) }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right: Recording Controls -->
+              <div class="flex flex-col justify-center space-y-4">
+                <!-- Audio Control -->
+                <UButton :variant="isMuted ? 'solid' : 'outline'" color="secondary" @click="toggleMute" class="w-full">
+                  <UIcon :name="isMuted ? 'i-heroicons-microphone-slash' : 'i-heroicons-microphone'" class="mr-2" />
+                  {{ isMuted ? t('unmute') : t('mute') }}
+                </UButton>
+
+                <!-- Recording Controls -->
+                <div class="space-y-2">
+                  <UButton v-if="!isRecording" color="primary" @click="startRecording" class="w-full">
+                    <UIcon name="i-heroicons-video-camera" class="mr-2" />
+                    {{ t('start_recording') }}
+                  </UButton>
+
+                  <UButton v-else-if="!isPaused" color="warning" @click="pauseRecording" class="w-full">
+                    <UIcon name="i-heroicons-pause" class="mr-2" />
+                    {{ t('pause_recording') }}
+                  </UButton>
+
+                  <UButton v-else color="success" @click="pauseRecording" class="w-full">
+                    <UIcon name="i-heroicons-play" class="mr-2" />
+                    {{ t('start_recording') }}
+                  </UButton>
+
+                  <UButton v-if="isRecording" color="error" @click="stopRecording" class="w-full">
+                    <UIcon name="i-heroicons-stop" class="mr-2" />
+                    {{ t('stop_recording') }}
+                  </UButton>
+                </div>
+
+                <!-- Status -->
+                <div class="text-center">
+                  <p v-if="isRecording && !isPaused" class="text-red-400 font-medium">
+                    {{ t('recording') }}
+                  </p>
+                  <p v-else-if="isRecording && isPaused" class="text-yellow-400 font-medium">
+                    {{ t('pause_recording') }}
+                  </p>
+                  <p v-else class="text-neutral-400">
+                    {{ t('ready_to_process') }}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+    </UModal>
   </div>
 </template>
 
 <style scoped>
-/* Add any custom styles if needed */
+/* Custom aspect ratio classes */
+.w-45 {
+  width: 11.25rem;
+  /* 180px */
+}
+
+.h-45 {
+  height: 11.25rem;
+  /* 180px */
+}
 </style>
