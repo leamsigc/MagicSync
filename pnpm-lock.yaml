@@ -132,6 +132,9 @@ catalogs:
     nuxt-file-storage:
       specifier: ^0.3.0
       version: 0.3.0
+    nuxt-umami:
+      specifier: ^3.2.1
+      version: 3.2.1
     sass:
       specifier: ^1.94.2
       version: 1.94.2
@@ -622,7 +625,7 @@ importers:
         specifier: 'catalog:'
         version: 4.2.1(@libsql/client@0.15.15)(@parcel/watcher@2.5.1)(@types/node@24.3.3)(@vue/compiler-sfc@3.5.25)(better-sqlite3@12.4.6)(db0@0.3.4(@libsql/client@0.15.15)(better-sqlite3@12.4.6)(drizzle-orm@0.44.7(@libsql/client@0.15.15)(@opentelemetry/api@1.9.0)(better-sqlite3@12.4.6)(kysely@0.28.7)))(drizzle-orm@0.44.7(@libsql/client@0.15.15)(@opentelemetry/api@1.9.0)(better-sqlite3@12.4.6)(kysely@0.28.7))(eslint@9.39.1(jiti@2.6.1))(ioredis@5.8.2)(lightningcss@1.30.2)(magicast@0.5.1)(optionator@0.9.4)(rollup@4.52.5)(sass@1.94.2)(terser@5.44.0)(tsx@4.20.6)(typescript@5.9.3)(vite@7.2.2(@types/node@24.3.3)(jiti@2.6.1)(lightningcss@1.30.2)(sass@1.94.2)(terser@5.44.0)(tsx@4.20.6)(yaml@2.8.1))(yaml@2.8.1)
       nuxt-umami:
-        specifier: ^3.2.1
+        specifier: 'catalog:'
         version: 3.2.1(magicast@0.5.1)
       tailwindcss:
         specifier: 'catalog:'

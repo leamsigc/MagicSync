@@ -11,9 +11,4 @@ declare module '@nuxt/schema' {
       name?: string
     }
   }
-
-  interface RuntimeConfig {
-    PEXELS_API_KEY: string
-    FILE_STORAGE_MOUNT: string
-  }
 }
