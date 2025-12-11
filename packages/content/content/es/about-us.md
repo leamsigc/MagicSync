@@ -37,6 +37,8 @@ ogImage:
     imageUrl: "/img/home-dark.png"
 ---
 
+<section class="mx-auto  prose pt-6 text-sm md:text-xl dark:prose-invert prose-pre:bg-transparent">
+
 # Acerca de MagicSync
 
 Bienvenido a MagicSync, la plataforma todo en uno de programación de redes sociales diseñada específicamente para pequeñas empresas. Nuestra misión es empoderar a emprendedores y negocios con poderosas herramientas que optimicen la gestión de redes sociales, aumenten el engagement y promuevan el crecimiento.
@@ -77,3 +79,6 @@ Somos más que una herramienta - somos tu socio en el éxito digital. Cada funci
 Únete a miles de pequeñas empresas que confían en MagicSync para potenciar su presencia en redes sociales. Desde cafeterías locales hasta tiendas de comercio electrónico en crecimiento, nuestra plataforma escala con tu negocio.
 
 ¿Listo para transformar tu estrategia en redes sociales? [Comienza hoy](#) o [contáctanos](#) para saber más sobre cómo MagicSync puede ayudar a tu negocio a prosperar en línea.
+
+
+</section>

@@ -16,6 +16,33 @@ const appConfig = useAppConfig()
 const socials = appConfig.BaseUiLayer.footer.socialLinks
 const companyName = appConfig.BaseUiLayer.footer.companyName
 const logoUrl = appConfig.BaseUiLayer.main.logo
+
+const companyLinks = [
+  {
+    label: t('footer.aboutUs'),
+    to: '/about-us'
+  },
+  {
+    label: t('footer.careers'),
+    to: '/release-notes'
+  },
+  {
+    label: t('footer.pressKit'),
+    to: '/privacy-policy'
+  },
+  {
+    label: t('footer.partners'),
+    to: 'partners'
+  },
+  {
+    label: t('footer.contact'),
+    to: 'contact'
+  },
+  {
+    label: t('footer.legal'),
+    to: '/terms-of-use'
+  }
+]
 </script>
 
 <template>
@@ -106,17 +133,11 @@ const logoUrl = appConfig.BaseUiLayer.main.logo
           <div>
             <h3 class="mb-4 text-sm font-semibold tracking-wider uppercase">{{ t('footer.company') }}</h3>
             <ul class="space-y-3">
-              <li v-for="item in [
-                t('footer.aboutUs'),
-                t('footer.careers'),
-                t('footer.pressKit'),
-                t('footer.partners'),
-                t('footer.contact'),
-                t('footer.legal'),
-              ]" :key="item">
-                <NuxtLink class="text-sm text-muted-foreground transition-colors hover:text-primary" to="#">
-                  {{ item }}
-                </NuxtLink>
+              <li v-for="item in companyLinks" :key="item.to">
+                <NuxtLinkLocale class="text-sm text-muted-foreground transition-colors hover:text-primary"
+                  :to="item.to">
+                  {{ item.label }}
+                </NuxtLinkLocale>
               </li>
             </ul>
           </div>

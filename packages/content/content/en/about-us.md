@@ -36,6 +36,7 @@ ogImage:
     headline: About Us
     imageUrl: "/img/home-dark.png"
 ---
+<section class="mx-auto  prose pt-6 text-sm md:text-xl dark:prose-invert prose-pre:bg-transparent">
 
 # About MagicSync
 
@@ -77,3 +78,6 @@ We're more than just a tool - we're your partner in digital success. Every featu
 Join thousands of small businesses who trust MagicSync to power their social media presence. From local cafes to growing e-commerce stores, our platform scales with your business.
 
 Ready to transform your social media strategy? [Get started today](#) or [contact us](#) to learn more about how MagicSync can help your business thrive online.
+
+
+</section>

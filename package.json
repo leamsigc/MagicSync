@@ -6,6 +6,7 @@
     "packages": "dotenv -- pnpm --filter",
     "install:all": "pnpm -r install",
     "site": "pnpm packages @local-monorepo/site build",
+    "site:preview": "pnpm packages @local-monorepo/site preview",
     "site:start": "pnpm packages @local-monorepo/site start",
     "site:dev": "pnpm packages @local-monorepo/site dev",
     "site:dev:debug": "NODE_OPTIONS=\"--inspect\" pnpm packages @local-monorepo/site dev",

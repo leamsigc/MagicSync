@@ -37,6 +37,8 @@ ogImage:
     imageUrl: "/img/home-dark.png"
 ---
 
+<section class="mx-auto  prose pt-6 text-sm md:text-xl dark:prose-invert prose-pre:bg-transparent">
+
 # Términos de Uso
 
 Estos Términos de Uso ("Términos") rigen tu acceso y uso de la plataforma de programación de redes sociales de MagicSync y servicios relacionados (colectivamente, el "Servicio").
@@ -116,3 +118,6 @@ Estos Términos se rigen e interpretan de acuerdo con las leyes aplicables, sin 
 Si tienes preguntas sobre estos Términos, contáctanos en [correo de contacto].
 
 Última actualización: [Fecha Actual]
+
+
+</section>

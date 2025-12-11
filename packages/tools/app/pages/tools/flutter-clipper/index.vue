@@ -22,30 +22,11 @@ useHead({
     { name: 'description', content: t('description') }
   ]
 });
-
-const menuItems = [
-  {
-    icon: 'lucide:plus',
-    translationKey: t('menu.main.new'),
-    action: () => {
-      console.log('New action triggered');
-
-    },
-  },
-  {
-    icon: 'lucide:copy',
-    translationKey: t('menu.main.copy'),
-    action: () => {
-      console.log('Copy action triggered');
-
-    },
-  },
-];
 </script>
 
 <template>
   <section class="min-h-screen min-w-full relative">
-    <BaseSecondaryMenu :menu="menuItems" />
+    <BaseHeader />
     <section class="p-12 mt-12">
       <FlutterClipperEditor />
     </section>

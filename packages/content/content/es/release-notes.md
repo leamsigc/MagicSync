@@ -37,6 +37,8 @@ ogImage:
     imageUrl: "/img/home-dark.png"
 ---
 
+<section class="mx-auto  prose pt-6 text-sm md:text-xl dark:prose-invert prose-pre:bg-transparent">
+
 # Notas de Versión
 
 Mantente informado sobre las últimas funciones, mejoras y correcciones de errores en MagicSync. Actualizamos regularmente nuestra plataforma para proporcionarte la mejor experiencia de gestión de redes sociales.
@@ -95,3 +97,7 @@ Para notas de versión anteriores y versiones archivadas, visita nuestra página
 ---
 
 *Nota: Las funciones y plazos están sujetos a cambios. Priorizamos basado en los comentarios de los usuarios y las necesidades del mercado.*
+
+
+
+<section class="mx-auto  prose pt-6 text-sm md:text-xl dark:prose-invert prose-pre:bg-transparent">

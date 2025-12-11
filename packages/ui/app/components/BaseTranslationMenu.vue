@@ -18,7 +18,7 @@ const { locale, setLocale } = useI18n()
 </script>
 
 <template>
-  <ULocaleSelect v-model="locale" :locales="[en, es, fr, de]" @update:model-value="setLocale($event as any)"
-    class="w-48" />
+  <ULocaleSelect v-model="locale" :locales="[en, es, fr, de]" @update:model-value="setLocale($event as any)" class=""
+    variant="none" />
 </template>
 <style scoped></style>

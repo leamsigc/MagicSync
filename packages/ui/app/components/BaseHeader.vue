@@ -11,75 +11,79 @@
  * @todo [✔] Update the typescript.
  */
 import type { NavigationMenuItem } from '@nuxt/ui'
+const { t, locale } = useI18n()
 const appConfig = useAppConfig()
 
 const companyName = appConfig.BaseUiLayer.footer.companyName
 const route = useRoute()
-
+const selectedLanguage = computed(() => {
+  return locale.value === 'en' ? '' : `/${locale.value}`
+})
 const items = computed<NavigationMenuItem[]>(() => [
   {
-    label: 'Dev docs',
-    to: '/ui-preview',
-    active: route.path.startsWith('/ui-preview')
+    label: t('navigation.devDocs'),
+    to: `${selectedLanguage.value}/ui-preview`,
+    active: route.path.startsWith(`${selectedLanguage.value}/ui-preview`),
   },
   {
-    label: 'Blogs',
-    to: '/blog',
-    active: route.path.startsWith('/blog')
+    label: t('navigation.blogs'),
+    to: `${selectedLanguage.value}/blog`,
+    active: route.path.startsWith(`${selectedLanguage.value}/blog`)
   },
   {
-    label: 'Platform ',
-    to: '/platform',
-    active: route.path.startsWith('/platform'),
+    label: t('navigation.platform'),
+    to: `${selectedLanguage.value}/platform`,
+    active: route.path.startsWith(`${selectedLanguage.value}/platform`),
     class: "px-10",
     children: [
       {
-        label: 'Google My Business',
-        description: 'Grow your Google My Business audience with use of AI',
-        to: '/platform/google-my-business',
+        label: t('navigation.googleMyBusiness'),
+        description: t('navigation.googleMyBusinessDesc'),
+        to: `${selectedLanguage.value}/platform/google-my-business`,
         icon: 'i-lucide-house',
+
       },
       {
-        label: 'Facebook',
-        description: 'Grow your Facebook audiance with use of AI',
-        to: '/platform/facebook',
+        label: t('navigation.facebook'),
+        description: t('navigation.facebookDesc'),
+        to: `${selectedLanguage.value}/platform/facebook`,
         icon: 'i-lucide-facebook'
       },
       {
-        label: 'Twitter',
-        description: 'Grow your Twitter audience with use of AI',
-        to: '/platform/twitter',
+        label: t('navigation.twitter'),
+        description: t('navigation.twitterDesc'),
+        to: `${selectedLanguage.value}/platform/twitter`,
         icon: 'i-lucide-twitter'
       },
       {
-        label: 'Instagram',
-        description: 'Grow your Instagram audience with use of AI',
-        to: '/platform/instagram',
+        label: t('navigation.instagram'),
+        description: t('navigation.instagramDesc'),
+        to: `${selectedLanguage.value}/platform/instagram`,
         icon: 'i-lucide-instagram'
       },
       {
-        label: 'Linkedin',
-        description: 'Grow your Linkedin audience with use of AI',
-        to: '/platform/linkedin',
+        label: t('navigation.linkedin'),
+        description: t('navigation.linkedinDesc'),
+        to: `${selectedLanguage.value}/platform/linkedin`,
         icon: 'i-lucide-linkedin'
       },
       {
-        label: 'Pinterest',
-        description: 'Grow your Pinterest audience with use of AI',
-        to: '/platform/pinterest',
+        label: t('navigation.pinterest'),
+        description: t('navigation.pinterestDesc'),
+        to: `${selectedLanguage.value}/platform/pinterest`,
         icon: 'i-lucide-pinterest'
       }
     ]
   },
   {
-    label: 'Tools',
-    to: '/tools',
-    active: route.path.startsWith('/tools')
+    label: t('navigation.tools'),
+    to: `${selectedLanguage.value}/tools`,
+    active: route.path.startsWith(`${selectedLanguage.value}/tools`)
   },
   {
-    label: 'Playground',
-    to: '/playground',
-    active: route.path.startsWith('/playground')
+    label: t('navigation.playground'),
+    to: `${selectedLanguage.value}/playground`,
+    active: route.path.startsWith(`${selectedLanguage.value}/playground`)
   }
 ])
 </script>
@@ -87,8 +91,9 @@ const items = computed<NavigationMenuItem[]>(() => [
 <template>
   <UHeader class="dark:bg-transparent  border-0">
     <template #left>
-      <UTooltip text="Home" :kbds="['meta', 'H']">
-        <UButton color="neutral" variant="ghost" to="/" icon="fxemoji:flaginhole" aria-label="Home">
+      <UTooltip :text="t('navigation.home')" :kbds="['meta', 'H']">
+        <UButton color="neutral" variant="ghost" :to="selectedLanguage || '/'" icon="fxemoji:flaginhole"
+          :aria-label="t('navigation.home')">
           {{ companyName }}
         </UButton>
       </UTooltip>
@@ -101,13 +106,14 @@ const items = computed<NavigationMenuItem[]>(() => [
       <UColorModeButton />
 
 
-      <UTooltip text="Login" :kbds="['meta', 'L']">
-        <UButton color="primary" variant="ghost" to="/login" icon="i-lucide-user" aria-label="Login" />
+      <UTooltip :text="t('navigation.login')" :kbds="['meta', 'L']">
+        <UButton color="primary" variant="ghost" :to="`${selectedLanguage}/login`" icon="i-lucide-user"
+          :aria-label="t('navigation.login')" />
       </UTooltip>
       <BaseTranslationMenu />
-      <UTooltip text="Open on GitHub" :kbds="['meta', 'G']">
-        <UButton color="neutral" variant="ghost" to="https://github.com/leamsigc/magicsync"
-          target="_blank" icon="i-simple-icons-github" aria-label="GitHub" />
+      <UTooltip :text="t('navigation.openOnGitHub')" :kbds="['meta', 'G']">
+        <UButton color="neutral" variant="ghost" to="https://github.com/leamsigc/magicsync" target="_blank"
+          icon="i-simple-icons-github" :aria-label="t('navigation.openOnGitHub')" />
       </UTooltip>
     </template>
   </UHeader>

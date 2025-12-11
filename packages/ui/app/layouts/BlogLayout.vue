@@ -16,7 +16,7 @@
 <template>
   <main class="blog">
     <BaseHeader />
-    <section class="mx-auto  prose pt-6 text-sm md:text-xl dark:prose-invert prose-pre:bg-transparent">
+    <section class="mx-auto  prose pt-6 text-sm md:text-xl dark:prose-invert prose-pre:bg-transparent blog">
       <slot />
     </section>
     <LazyBaseBannerPromo />

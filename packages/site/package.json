@@ -8,7 +8,7 @@
     "dev": "nuxt dev",
     "dev:debug": "nuxt dev --inspect",
     "generate": "nuxt generate",
-    "preview": "nuxt preview",
+    "preview": "nuxt preview --dotenv ../../.env ",
     "postinstall": "nuxt prepare",
     "db:generate": "drizzle-kit generate --config ../db/config/drizzle.config.ts",
     "db:migrate": "drizzle-kit migrate --config ../db/config/drizzle.config.ts",

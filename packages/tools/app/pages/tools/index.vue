@@ -29,6 +29,13 @@ const posts = ref([
     date: '2024-11-04',
     to: "/tools/flutter-clipper"
   },
+  {
+    title: 'Video Silence Remover',
+    description: 'Remove silent parts from your videos automatically with our free online tool',
+    image: 'https://nuxt.com/assets/blog/v3.14.png',
+    date: '2024-12-11',
+    to: "/tools/video-silence-remover"
+  },
 ])
 const { t } = useI18n()
 useHead({
@@ -53,7 +60,7 @@ defineOgImage({
   <section class="min-h-screen min-w-full relative">
     <main class="min-h-screen fixed inset-0">
       <section class="min-h-screen relative p-10 bg-background-foreground">
-        <ImageCanvasEditorMainMenu />
+        <BaseHeader />
         <section class="mt-24">
           <UBlogPosts :posts="posts" />
         </section>

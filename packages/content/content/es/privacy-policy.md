@@ -37,6 +37,8 @@ ogImage:
     imageUrl: "/img/home-dark.png"
 ---
 
+<section class="mx-auto  prose pt-6 text-sm md:text-xl dark:prose-invert prose-pre:bg-transparent">
+
 # Política de Privacidad
 
 Esta Política de Privacidad describe cómo MagicSync ("nosotros", "nuestro" o "nuestra") recopila, utiliza y protege la información que proporcionas al usar nuestra plataforma de programación de redes sociales.
@@ -98,3 +100,6 @@ Podemos actualizar esta Política de Privacidad de vez en cuando. Te notificarem
 Si tienes alguna pregunta sobre esta Política de Privacidad, contáctanos en [correo de contacto].
 
 Última actualización: [Fecha Actual]
+
+
+</section>
