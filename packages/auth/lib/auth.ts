@@ -10,7 +10,8 @@ import { logAuditService } from '#layers/BaseDB/server/services/auditLog.service
 export const auth = betterAuth({
   baseURL: process.env.NUXT_BETTER_AUTH_URL || 'http://localhost:3000',
   trustedOrigins: [
-    process.env.NUXT_BETTER_AUTH_URL || 'http://localhost:3000'
+    process.env.NUXT_BETTER_AUTH_URL || 'http://localhost:3000',
+    "127.0.0.1:3000"
   ],
   database: drizzleAdapter(useDrizzle(), {
     provider: 'sqlite',
