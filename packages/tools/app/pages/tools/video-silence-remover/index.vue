@@ -148,6 +148,7 @@ const initializeRecording = async () => {
 
     // Default to first camera
     if (availableCameras.value.length > 0) {
+      // @ts-ignore
       selectedCamera.value = availableCameras.value[0]?.deviceId
     }
 
@@ -438,7 +439,7 @@ const MAX_FILE_SIZE = 1000 * 1024 * 1024 // 1GB
               <!-- Actions -->
               <div class="flex flex-col sm:flex-row gap-4 justify-center">
                 <UButton variant="outline" class="flex-1" @click="openRecordingModal">
-                  <UIcon name="i-heroicons-video-camera" class="mr-2" />
+                  <Icon name="i-heroicons-video-camera" class="mr-2" />
                   {{ t('record_video') }}
                 </UButton>
               </div>
@@ -457,7 +458,7 @@ const MAX_FILE_SIZE = 1000 * 1024 * 1024 // 1GB
               <div class="flex items-center justify-between">
                 <h3 class="text-lg font-semibold text-white">{{ t('original_video') }}</h3>
                 <UButton variant="ghost" color="error" @click="deleteFile">
-                  <UIcon name="i-heroicons-trash" class="mr-2" />
+                  <Icon name="i-heroicons-trash" class="mr-2" />
                   {{ t('delete') }}
                 </UButton>
               </div>
@@ -480,7 +481,7 @@ const MAX_FILE_SIZE = 1000 * 1024 * 1024 // 1GB
               </div>
 
               <UButton :disabled="isProcessing" @click="handleRemoveSilence" class="w-full" color="primary">
-                <UIcon name="i-heroicons-scissors" class="mr-2" />
+                <Icon name="i-heroicons-scissors" class="mr-2" />
                 {{ isProcessing ? t('processing') : t('remove_silence') }}
               </UButton>
             </div>
@@ -504,7 +505,7 @@ const MAX_FILE_SIZE = 1000 * 1024 * 1024 // 1GB
 
               <!-- Ready Status -->
               <div v-else-if="!processedVideo" class="text-center py-8">
-                <UIcon name="i-heroicons-check-circle" class="mx-auto h-12 w-12 text-green-400 mb-4" />
+                <Icon name="i-heroicons-check-circle" class="mx-auto h-12 w-12 text-green-400 mb-4" />
                 <p class="text-white">{{ t('ready_to_process') }}</p>
               </div>
 
@@ -520,7 +521,7 @@ const MAX_FILE_SIZE = 1000 * 1024 * 1024 // 1GB
                 </div>
 
                 <UButton @click="downloadVideo" variant="outline" class="w-full">
-                  <UIcon name="i-heroicons-arrow-down-tray" class="mr-2" />
+                  <Icon name="i-heroicons-arrow-down-tray" class="mr-2" />
                   {{ t('download') }}
                 </UButton>
               </div>
@@ -533,106 +534,75 @@ const MAX_FILE_SIZE = 1000 * 1024 * 1024 // 1GB
     <!-- Video Recording Modal -->
     <UModal v-model:open="showRecordingModal" @close="closeRecordingModal" size="xl" fullscreen>
       <template #content>
-        <div class="p-6 grid place-content-center h-full">
-          <div class="p-6 max-w-full h-full">
-            <div class="flex items-center justify-between mb-6">
-              <h2 class="text-2xl font-bold text-white">{{ t('record_video') }}</h2>
-              <UButton variant="ghost" @click="closeRecordingModal">
-                <UIcon name="i-heroicons-x-mark" class="w-6 h-6" />
-              </UButton>
-            </div>
+        <div class="flex flex-col items-center justify-center h-full p-4 ">
+          <div
+            class="relative flex flex-col items-center justify-center  transition-all duration-500 ease-in-out bg-black rounded-xl  overflow-hidden mx-auto w-full "
+            :class="{
+              'max-w-5xl aspect-video': selectedAspectRatio === '16:9',
+              'max-w-[400px] aspect-[9/16]': selectedAspectRatio === '9:16',
+              'max-w-[600px] aspect-square': selectedAspectRatio === '1:1',
+            }">
 
-            <div class="grid grid-cols-1 lg:grid-cols-6 gap-6">
-              <!-- Left: Camera Settings -->
-              <div class="space-y-4">
-                <div>
-                  <label class="block text-sm font-medium text-white mb-2">{{ t('select_camera') }}</label>
-                  <USelect v-model="selectedCamera"
-                    :options="availableCameras.map(camera => ({ label: camera.label || `Camera ${availableCameras.indexOf(camera) + 1}`, value: camera.deviceId }))"
-                    @update:model-value="(value) => value && changeCamera(String(value))" class="w-full" />
-                </div>
+            <div class="relative w-full h-full bg-black group">
+              <!-- Recording Video -->
+              <video ref="recordingVideo" autoplay playsinline muted="true"
+                class="w-full h-full object-cover transition-transform duration-500 opacity-100"></video>
 
-                <div>
-                  <label class="block text-sm font-medium text-white mb-2">{{ t('select_aspect_ratio') }}</label>
-                  <div class="grid grid-cols-3 gap-2">
-                    <UButton :variant="selectedAspectRatio === '16:9' ? 'solid' : 'outline'" size="sm"
-                      @click="changeAspectRatio('16:9')" class="text-xs">
+              <!-- Recording Indicator -->
+              <div v-if="isRecording" class="absolute top-4 left-4 flex items-center space-x-2">
+                <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                <span class="text-white text-sm font-medium">{{ formatDuration(recordingDuration) }}</span>
+              </div>
+
+              <!-- Bottom Controls -->
+              <div class="absolute bottom-4 left-0 right-0 flex flex-col items-center space-y-4 ">
+                <!-- Aspect Ratio & Voice Mode -->
+                <div class="flex items-center space-x-2 p-1 bg-neutral-900/50 rounded-full backdrop-blur-sm">
+                  <div class="flex space-x-1 ">
+                    <UButton :variant="selectedAspectRatio === '16:9' ? 'soft' : 'ghost'" size="xs"
+                      @click="changeAspectRatio('16:9')"
+                      class="text-xs px-4 rounded-full  h-8 grid place-content-center" rounded>
                       16:9
                     </UButton>
-                    <UButton :variant="selectedAspectRatio === '9:16' ? 'solid' : 'outline'" size="sm"
-                      @click="changeAspectRatio('9:16')" class="text-xs">
+                    <UButton :variant="selectedAspectRatio === '9:16' ? 'soft' : 'ghost'" size="xs" rounded
+                      @click="changeAspectRatio('9:16')"
+                      class="text-xs px-4 rounded-full  h-8 grid place-content-center">
                       9:16
                     </UButton>
-                    <UButton :variant="selectedAspectRatio === '1:1' ? 'solid' : 'outline'" size="sm"
-                      @click="changeAspectRatio('1:1')" class="text-xs">
+                    <UButton :variant="selectedAspectRatio === '1:1' ? 'soft' : 'ghost'" size="xs" rounded
+                      @click="changeAspectRatio('1:1')"
+                      class="text-xs px-4 rounded-full  h-8 grid place-content-center">
                       1:1
                     </UButton>
                   </div>
                 </div>
-              </div>
-
-              <!-- Center: Video Preview -->
-              <div
-                class="flex flex-col items-center space-y-4 col-span-4 relative transition-all duration-500 ease-in-out  rounded-[2rem]   overflow-hidden mx-auto w-full "
-                :class="{
-                  'max-w-5xl aspect-video': selectedAspectRatio === '16:9',
-                  'max-w-[400px] aspect-[9/16]': selectedAspectRatio === '9:16',
-                  'max-w-[600px] aspect-square': selectedAspectRatio === '1:1',
-                }">
-                <div class="relative w-full h-full bg-black group">
-                  <video ref="recordingVideo" autoplay playsinline muted="true"
-                    class="w-full h-full object-cover transition-transform duration-500 opacity-100"></video>
-
-                  <!-- Recording Indicator -->
-                  <div v-if="isRecording" class="absolute top-4 left-4 flex items-center space-x-2">
-                    <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-                    <span class="text-white text-sm font-medium">{{ formatDuration(recordingDuration) }}</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Right: Recording Controls -->
-              <div class="flex flex-col justify-center space-y-4">
-                <!-- Audio Control -->
-                <UButton :variant="isMuted ? 'solid' : 'outline'" color="secondary" @click="toggleMute" class="w-full">
-                  <UIcon :name="isMuted ? 'i-heroicons-microphone-slash' : 'i-heroicons-microphone'" class="mr-2" />
-                  {{ isMuted ? t('unmute') : t('mute') }}
-                </UButton>
 
                 <!-- Recording Controls -->
-                <div class="space-y-2">
-                  <UButton v-if="!isRecording" color="primary" @click="startRecording" class="w-full">
-                    <UIcon name="i-heroicons-video-camera" class="mr-2" />
-                    {{ t('start_recording') }}
+                <div class="flex items-center space-x-4">
+                  <UButton :variant="isMuted ? 'soft' : 'outline'" color="neutral" @click="toggleMute" size="lg" rounded
+                    class="w-14 h-14 grid place-content-center rounded-full">
+                    <Icon :name="isMuted ? 'lucide:mic-off' : 'lucide:mic'" size="24" />
                   </UButton>
 
-                  <UButton v-else-if="!isPaused" color="warning" @click="pauseRecording" class="w-full">
-                    <UIcon name="i-heroicons-pause" class="mr-2" />
-                    {{ t('pause_recording') }}
+                  <UButton icon="" v-if="!isRecording" color="error" @click="startRecording" size="xl" rounded
+                    class="w-20 h-20 grid place-content-center rounded-full border-4 border-white/50 animate-pulse text-white">
+                    <Icon name="lucide:play" size="26" />
                   </UButton>
 
-                  <UButton v-else color="success" @click="pauseRecording" class="w-full">
-                    <UIcon name="i-heroicons-play" class="mr-2" />
-                    {{ t('start_recording') }}
+                  <UButton icon="" v-else-if="!isPaused" color="error" @click="pauseRecording" size="xl" rounded
+                    class="w-20 h-20 grid place-content-center rounded-full border-4 border-white/50 animate-pulse text-white">
+                    <Icon name="lucide:pause" />
                   </UButton>
 
-                  <UButton v-if="isRecording" color="error" @click="stopRecording" class="w-full">
-                    <UIcon name="i-heroicons-stop" class="mr-2" />
-                    {{ t('stop_recording') }}
+                  <UButton icon="" v-else color="error" @click="pauseRecording" size="xl" rounded
+                    class="w-20 h-20 grid place-content-center rounded-full border-4 border-white/50 text-white">
+                    <Icon name="lucide:play" size="20" />
                   </UButton>
-                </div>
 
-                <!-- Status -->
-                <div class="text-center">
-                  <p v-if="isRecording && !isPaused" class="text-red-400 font-medium">
-                    {{ t('recording') }}
-                  </p>
-                  <p v-else-if="isRecording && isPaused" class="text-yellow-400 font-medium">
-                    {{ t('pause_recording') }}
-                  </p>
-                  <p v-else class="text-neutral-400">
-                    {{ t('ready_to_process') }}
-                  </p>
+                  <UButton icon="" color="neutral" @click="changeCamera(selectedCamera)" size="lg" rounded
+                    class="w-14 h-14 grid place-content-center rounded-full text-red-700 ">
+                    <Icon name="fluent:record-stop-12-filled" size="32" />
+                  </UButton>
                 </div>
               </div>
             </div>
