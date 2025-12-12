@@ -58,7 +58,7 @@ interface PostForm extends Omit<PostCreateBase, 'targetPlatforms' | 'mediaAssets
   isStory?: boolean;
   hasSound?: boolean;
   platformContent?: Record<string, PlatformContentOverride>; // NEW: Platform-specific content
-  postFormat?: PostFormat; // NEW: Selected post format
+  postFormat: PostFormat; // NEW: Selected post format
   platformSettings?: Record<string, PlatformSettings>;
 }
 
@@ -133,6 +133,8 @@ const previewsMap = {
 onMounted(async () => {
   await getAllSocialMediaAccounts();
   if (props.initialPost) {
+    console.log(props.initialPost);
+
     const platformPosts = props.initialPost.platformPosts;
 
     if (platformPosts && platformPosts.length > 0) {
@@ -149,7 +151,7 @@ onMounted(async () => {
       ? initialCommentsRaw
       : (initialCommentsRaw ? [initialCommentsRaw] : []);
 
-    const initialMediaAssetsRaw = JSON.parse(props.initialPost.mediaAssets as string);
+    const initialMediaAssetsRaw = JSON.parse(props.initialPost.mediaAssets as string || "[]");
     const processedMediaAssetsIds: string[] = Array.isArray(initialMediaAssetsRaw)
       ? initialMediaAssetsRaw
       : (initialMediaAssetsRaw ? [initialMediaAssetsRaw] : []);
@@ -159,7 +161,13 @@ onMounted(async () => {
       targetPlatforms: processedTargetPlatforms,
       mediaAssets: processedMediaAssetsIds,
       comment: processedComments,
+      platformContent: (props.initialPost as any).platformContent || {},
+      platformSettings: (props.initialPost as any).platformSettings || {},
     } as PostForm;
+    platformSettingsState.masterContent.value = postForm.value.content;
+    platformSettingsState.masterComments.value = postForm.value.comment;
+    platformSettingsState.platformContent.value = props.initialPost.platformContent as Record<string, PlatformContentOverride> || {};
+
 
     const scheduleAt = dayjs(postForm.value.scheduledAt).toDate();
     selectedTime.value = dayjs(postForm.value.scheduledAt).format('HH:mm');
@@ -258,9 +266,8 @@ const handleSavePost = async (status: 'pending' | 'published' | 'failed') => {
     status: status,
     targetPlatforms: postForm.value.targetPlatforms.map(platform => platform.accountId),
     businessId: activeBusinessId.value,
-    mediaAssets: postMediaAssets.value.map(asset => asset.id)
+    mediaAssets: postMediaAssets.value.map(asset => asset.id),
   };
-
   if (props.initialPost) {
     emit('update', postData);
   } else {
@@ -276,7 +283,9 @@ const ResetToBase = () => {
     mediaAssets: [],
     targetPlatforms: [],
     status: 'pending',
-    comment: []
+    comment: [],
+    postFormat: 'post',
+    platformSettings: {},
   }
   selectedDate.value = new CalendarDate(
     now.getFullYear(),
@@ -372,6 +381,9 @@ watch(platformSettingsState.platformContent, (val) => {
 }, { deep: true });
 
 watch(platformSettingsState.platformSettings, (val) => {
+  console.log("Platform settings changed");
+  console.log(val);
+
   postForm.value.platformSettings = val;
 }, { deep: true });
 
@@ -518,7 +530,7 @@ const handleAIAction = async (action: string) => {
     toast.add({
       title: 'AI Error',
       description: 'Failed to process AI request',
-      color: 'red'
+      color: 'error'
     });
   }
 };
@@ -531,12 +543,20 @@ const handleTemplateAction = async (templateContent: string) => {
       icon: 'i-heroicons-exclamation-triangle',
       title: 'Content Error',
       description: 'Content is required',
-      variant: 'destructive',
       color: "error"
     });
     return;
   };
   try {
+    if (!activeBusinessId.value || !businesses.value.data) {
+      toast.add({
+        icon: 'i-heroicons-exclamation-triangle',
+        title: 'Business Error',
+        description: 'Business is required',
+        color: "error"
+      });
+      return;
+    }
     const activeBusiness = businesses.value.data.find(b => b.isActive);
     console.log(activeBusiness);
     const finalContent = templateContent.replaceAll('{POSTCONTENT}', content).replaceAll('{BUSSINESID}', activeBusiness?.name || 'MagicSync');
@@ -547,10 +567,9 @@ const handleTemplateAction = async (templateContent: string) => {
 
   } catch (error) {
     toast.add({
-
       icon: 'i-heroicons-exclamation-triangle',
       title: 'Template Error',
-      description: error,
+      description: `${error}`,
       color: "error"
     });
   }
@@ -635,7 +654,8 @@ const handleVariableAction = (variable: string) => {
                   :platforms="postForm.targetPlatforms.map(p => p.platformType)" class="mt-4" />
 
                 <!-- Platform-Specific Settings Panel -->
-                <PlatformSettingsPanel v-model="postForm.platformSettings!" :platform="explicitPreviewPlatform" />
+                <PlatformSettingsPanel v-if="postForm.platformSettings" v-model="postForm.platformSettings"
+                  :platform="explicitPreviewPlatform" />
 
                 <div class="mt-4">
                   <h4 class="text-sm font-semibold mb-2">{{ t('newPostModal.commentsTitle') }}</h4>

@@ -9,12 +9,26 @@ export class TikTokPlugin extends BaseSchedulerPlugin {
     static readonly pluginName = 'tiktok';
     readonly pluginName = 'tiktok';
 
-    private getPlatformData(postDetails: PostWithAllData) {
+    private normalizeContent(content: string): string {
+        if (!content) return '';
+        return content
+            .replace(/\\n/g, '\n')
+            .replace(/\r\n/g, '\n')
+            .replace(/\r/g, '\n');
+    }
+
+    private getPlatformData(postDetails: PostWithAllData, platformPost?: any) {
         const platformName = this.pluginName;
-        const platformContent = (postDetails as any).platformContent?.[platformName];
-        const platformSettings = (postDetails as any).platformSettings?.[platformName] as TikTokSettings | undefined;
+        const platformPostSettings = platformPost?.platformSettings || {};
+        const platformContent = platformPostSettings?.platformContent ||
+            (postDetails as any).platformContent?.[platformName];
+        const platformSettings = platformPostSettings ||
+            (postDetails as any).platformSettings?.[platformName] as TikTokSettings | undefined;
+
+        const rawContent = platformContent?.content || postDetails.content;
+
         return {
-            content: platformContent?.content || postDetails.content,
+            content: this.normalizeContent(rawContent),
             settings: platformSettings,
             postFormat: (postDetails as any).postFormat || 'post'
         };

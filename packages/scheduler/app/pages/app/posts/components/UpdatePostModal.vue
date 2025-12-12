@@ -28,6 +28,7 @@ const postModalContentRef = ref<InstanceType<typeof PostModalContent> | null>(nu
 
 const handleUpdate = async (postData: PostCreateBase) => {
   if (postToUpdate.value?.id) {
+
     await updatePost(postToUpdate.value.id, postData);
     isOpen.value = false;
     $emit('refresh');

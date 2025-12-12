@@ -34,15 +34,9 @@ export default defineEventHandler(async (event) => {
     }
 
     // Handle scheduled date
-    if (body.scheduledAt) {
-      const scheduledDate = new Date(body.scheduledAt)
-      if (isNaN(scheduledDate.getTime())) {
-        throw createError({
-          statusCode: 400,
-          statusMessage: 'Invalid scheduled date format'
-        })
-      }
-      postData.scheduledAt = scheduledDate
+    const scheduledDate = new Date(body.scheduledAt)
+    if (body.status === 'published' && !isNaN(scheduledDate.getTime())) {
+      postData.scheduledAt = new Date()
     }
 
     // Create post

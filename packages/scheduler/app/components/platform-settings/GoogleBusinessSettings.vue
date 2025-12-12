@@ -36,48 +36,48 @@ const hasCTA = computed(() => !!settings.value.callToActionType);
 
 <template>
     <div class="space-y-4">
-        <UFormGroup label="Post Type">
+        <UFormField label="Post Type">
             <USelect v-model="settings.topicType" :items="topicTypes" placeholder="Select post type" />
-        </UFormGroup>
+        </UFormField>
 
-        <UFormGroup label="Call to Action">
+        <UFormField label="Call to Action">
             <USelect v-model="settings.callToActionType" :items="ctaTypes" placeholder="Select CTA type" />
-        </UFormGroup>
+        </UFormField>
 
-        <UFormGroup v-if="hasCTA" label="CTA URL">
+        <UFormField v-if="hasCTA" label="CTA URL">
             <UInput v-model="settings.callToActionUrl" placeholder="https://example.com/action" />
-        </UFormGroup>
+        </UFormField>
 
         <template v-if="isEvent">
-            <UFormGroup label="Event Title">
+            <UFormField label="Event Title">
                 <UInput v-model="settings.eventTitle" placeholder="Event title" />
-            </UFormGroup>
+            </UFormField>
             <div class="grid grid-cols-2 gap-4">
-                <UFormGroup label="Start Date">
+                <UFormField label="Start Date">
                     <UInput v-model="settings.eventStartDate" type="date" />
-                </UFormGroup>
-                <UFormGroup label="Start Time">
+                </UFormField>
+                <UFormField label="Start Time">
                     <UInput v-model="settings.eventStartTime" type="time" />
-                </UFormGroup>
-                <UFormGroup label="End Date">
+                </UFormField>
+                <UFormField label="End Date">
                     <UInput v-model="settings.eventEndDate" type="date" />
-                </UFormGroup>
-                <UFormGroup label="End Time">
+                </UFormField>
+                <UFormField label="End Time">
                     <UInput v-model="settings.eventEndTime" type="time" />
-                </UFormGroup>
+                </UFormField>
             </div>
         </template>
 
         <template v-if="isOffer">
-            <UFormGroup label="Coupon Code">
+            <UFormField label="Coupon Code">
                 <UInput v-model="settings.offerCouponCode" placeholder="SAVE20" />
-            </UFormGroup>
-            <UFormGroup label="Redeem URL">
+            </UFormField>
+            <UFormField label="Redeem URL">
                 <UInput v-model="settings.offerRedeemUrl" placeholder="https://example.com/redeem" />
-            </UFormGroup>
-            <UFormGroup label="Terms & Conditions">
+            </UFormField>
+            <UFormField label="Terms & Conditions">
                 <UTextarea v-model="settings.offerTerms" placeholder="Offer terms..." :rows="3" />
-            </UFormGroup>
+            </UFormField>
         </template>
     </div>
 </template>

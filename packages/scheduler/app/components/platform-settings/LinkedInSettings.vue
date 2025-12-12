@@ -17,10 +17,10 @@ const settings = defineModel<LinkedInSettings>({ required: true });
 
 <template>
     <div class="space-y-4">
-        <UFormGroup>
+        <UFormField>
             <UCheckbox v-model="settings.post_as_images_carousel" label="Post images as carousel"
                 help="When enabled, multiple images will be posted as a carousel/document" />
-        </UFormGroup>
+        </UFormField>
     </div>
 </template>
 

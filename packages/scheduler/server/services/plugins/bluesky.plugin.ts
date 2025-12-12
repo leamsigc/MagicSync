@@ -35,14 +35,31 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
   static readonly pluginName = 'bluesky';
   readonly pluginName = 'bluesky';
 
-  private getPlatformData(postDetails: PluginPostDetails) {
+  private normalizeContent(content: string): string {
+    if (!content) return '';
+    return content
+      .replace(/\\n/g, '\n')
+      .replace(/\r\n/g, '\n')
+      .replace(/\r/g, '\n');
+  }
+
+  private getPlatformData(postDetails: PluginPostDetails, platformPost?: any) {
     const platformName = this.pluginName;
-    const platformContent = (postDetails as any).platformContent?.[platformName];
-    const platformSettings = (postDetails as any).platformSettings?.[platformName] as BlueskySettings | undefined;
+    const platformPostSettings = platformPost?.platformSettings || {};
+    const platformContent = platformPostSettings?.platformContent ||
+      (postDetails as any).platformContent?.[platformName];
+    const platformSettings = platformPostSettings ||
+      (postDetails as any).platformSettings?.[platformName] as BlueskySettings | undefined;
+
+    const rawContent = platformContent?.content || postDetails.content;
+    const postFormat = platformSettings?.postFormat ||
+      platformPostSettings?.postFormat ||
+      (postDetails as any).postFormat || 'post';
+
     return {
-      content: platformContent?.content || postDetails.content,
+      content: this.normalizeContent(rawContent),
       settings: platformSettings,
-      postFormat: (postDetails as any).postFormat || 'post'
+      postFormat: postFormat
     };
   }
 

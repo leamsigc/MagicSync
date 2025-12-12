@@ -30,14 +30,25 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
   static readonly pluginName = 'facebook';
   readonly pluginName = 'facebook';
 
-  private getPlatformData(postDetails: PostWithAllData) {
+  private normalizeContent(content: string): string {
+    if (!content) return '';
+    return content
+      .replace(/\\n/g, '\n')
+      .replace(/\r\n/g, '\n')
+      .replace(/\r/g, '\n');
+  }
+
+  private getPlatformData(postDetails: PostWithAllData, platformPost?: any) {
     const platformName = this.pluginName;
-    const platformContent = (postDetails as any).platformContent?.[platformName];
-    const platformSettings = (postDetails as any).platformSettings?.[platformName] as FacebookSettings | undefined;
+    const platformContent = (postDetails.platformContent as any)[platformName];
+    const platformSettings = (postDetails.platformSettings as any)[platformName] as FacebookSettings | undefined;
+    const rawContent = platformContent?.content || postDetails.content;
+    const postFormat = (postDetails as any).postFormat || 'post';
+
     return {
-      content: platformContent?.content || postDetails.content,
+      content: this.normalizeContent(rawContent),
       settings: platformSettings,
-      postFormat: (postDetails as any).postFormat || 'post'
+      postFormat: postFormat
     };
   }
 
@@ -50,14 +61,26 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     'getPageInsights',
     'getPostInsights',
     'getComments',
+    'getLatestComments',
     'getCommentCount',
     'replyToComment',
     'deleteComment',
     'hideComment',
+    'updateComment',
+    'addCommentToPost',
     'getTaggedPosts',
     'getMentions',
     'getConversations',
     'replyToConversation',
+    'getPageImpressionsUnique',
+    'getPageReviews',
+    'createPost',
+    'postToGroup',
+    'publishPhoto',
+    'publishVideo',
+    'publishReel',
+    'getVideoInsights',
+    'getReelInsights',
   ] as const;
 
 
@@ -504,7 +527,6 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     picture: string;
     username: string;
   }> {
-    console.log(pageId, accessToken);
 
     const url = this._getGraphApiUrl(`/${pageId}?fields=username,access_token,name,picture.type(large)&access_token=${accessToken}`);
     const {
@@ -680,24 +702,35 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     mediaFbids: { media_fbid: string }[],
     link?: string
   ): Promise<{ id: string; permalink_url: string }> {
-    const url = this._getGraphApiUrl(`/${accountId}/feed?access_token=${accessToken}&fields=id,permalink_url`);
-    const response = await this.fetch(
-      url,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...(mediaFbids?.length ? { attached_media: mediaFbids } : {}),
-          ...(link ? { link: link } : {}),
-          message: message,
-          published: true,
-        }),
-      },
-      'finalize upload'
-    );
-    return response.json();
+    // const url = this._getGraphApiUrl(`/${accountId}/feed?access_token=${accessToken}&fields=id,permalink_url`);
+    // const response = await this.fetch(
+    //   url,
+    //   {
+    //     method: 'POST',
+    //     headers: {
+    //       'Content-Type': 'application/json',
+    //     },
+    //     body: JSON.stringify({
+    //       ...(mediaFbids?.length ? { attached_media: mediaFbids } : {}),
+    //       ...(link ? { link: link } : {}),
+    //       message: message,
+    //       published: true,
+    //     }),
+    //   },
+    //   'finalize upload'
+    // );
+    // return response.json();
+    return await this.createPost({
+      pageId: accountId,
+      message,
+      accessToken,
+      mediaFbids,
+      options: {
+        link,
+        formatting: 'MARKDOWN',
+        published: true,
+      }
+    });
   }
 
   override async post(
@@ -707,31 +740,116 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
   ): Promise<PostResponse> {
     try {
       const { content, settings, postFormat } = this.getPlatformData(postDetails);
+
       let finalId = '';
       let finalUrl = '';
 
-      const isVideo = postDetails.assets?.some(media => media.mimeType.includes('video') || media.filename.includes('.mp4'));
+      // Check for video/media assets
+      const videoAsset = postDetails.assets?.find(media =>
+        media.mimeType.includes('video') || media.filename.includes('.mp4')
+      );
+      const photoAssets = postDetails.assets?.filter(media =>
+        media.mimeType.includes('image') ||
+        media.filename.match(/\.(jpg|jpeg|png|gif|webp)$/i)
+      );
 
-      if (isVideo) {
-        // Pass content override to _uploadVideo
-        const { id: videoId } = await this._uploadVideo(socialMediaAccount.accountId, socialMediaAccount.accessToken, postDetails, content);
-        finalUrl = 'https://www.facebook.com/reel/' + videoId;
-        finalId = videoId;
-      } else {
-        const uploadPhotos = postDetails.assets?.length
-          ? await this._uploadPhotos(socialMediaAccount.accountId, socialMediaAccount.accessToken, postDetails.assets, socialMediaAccount.userId)
-          : [];
+      // Determine post type based on postFormat setting or media type
+      const effectiveFormat = postFormat || (videoAsset ? 'video' : 'post');
 
-        const { id: postId, permalink_url } = await this._createFeedPost(
-          socialMediaAccount.accountId,
-          socialMediaAccount.accessToken,
-          content, // Use platform-specific content
-          uploadPhotos,
-          settings?.url || "" // Use link from settings if available
-        );
+      switch (effectiveFormat) {
+        case 'reel': {
+          // Publish as a Facebook Reel
+          if (!videoAsset) {
+            throw new Error('Reel requires a video asset');
+          }
+          const videoUrl = `${this.baseUrl}${videoAsset.url.replace('/serve/', '/public/')}?userId=${postDetails.userId}`;
+          const { video_id, success } = await this.publishReel(
+            socialMediaAccount.accountId,
+            videoUrl,
+            socialMediaAccount.accessToken,
+            content
+          );
+          if (!success) {
+            throw new Error('Failed to publish reel');
+          }
+          finalId = video_id;
+          finalUrl = `https://www.facebook.com/reel/${video_id}`;
+          break;
+        }
 
-        finalUrl = permalink_url;
-        finalId = postId;
+        case 'video': {
+          // Publish as a regular Facebook Video
+          if (!videoAsset) {
+            throw new Error('Video post requires a video asset');
+          }
+          const videoUrl = `${this.baseUrl}${videoAsset.url.replace('/serve/', '/public/')}?userId=${postDetails.userId}`;
+          const { id: videoId, permalink_url } = await this.publishVideo(
+            socialMediaAccount.accountId,
+            videoUrl,
+            socialMediaAccount.accessToken,
+            content
+          );
+          finalId = videoId;
+          finalUrl = permalink_url || `https://www.facebook.com/watch/?v=${videoId}`;
+          break;
+        }
+
+        case 'photo': {
+          // Publish as a single photo post
+          if (!photoAssets?.length) {
+            throw new Error('Photo post requires an image asset');
+          }
+          // @ts-ignore
+          const photoUrl = `${this.baseUrl}${photoAssets![0].url.replace('/serve/', '/public/')}`;
+          const { id: photoId, post_id } = await this.publishPhoto(
+            socialMediaAccount.accountId,
+            photoUrl,
+            socialMediaAccount.accessToken,
+            content
+          );
+          finalId = post_id || photoId;
+          finalUrl = `https://www.facebook.com/photo/?fbid=${photoId}`;
+          break;
+        }
+
+        case 'post':
+        default: {
+          // Regular feed post (may include photos as attachments)
+          // Check if there's a video - if so, use the old video upload method for feed posts
+          if (videoAsset) {
+            const { id: videoId } = await this._uploadVideo(
+              socialMediaAccount.accountId,
+              socialMediaAccount.accessToken,
+              postDetails,
+              content
+            );
+            finalUrl = `https://www.facebook.com/watch/?v=${videoId}`;
+            finalId = videoId;
+          } else {
+            // Upload photos if any
+            const uploadPhotos = photoAssets?.length
+              ? await this._uploadPhotos(
+                socialMediaAccount.accountId,
+                socialMediaAccount.accessToken,
+                photoAssets,
+                socialMediaAccount.userId
+              )
+              : [];
+
+            // Create feed post with optional photos and link
+            const { id: postId, permalink_url } = await this._createFeedPost(
+              socialMediaAccount.accountId,
+              socialMediaAccount.accessToken,
+              content,
+              uploadPhotos,
+              settings?.url || ''
+            );
+
+            finalUrl = permalink_url;
+            finalId = postId;
+          }
+          break;
+        }
       }
 
       const response: PostResponse = {
@@ -741,7 +859,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
         status: 'published',
       };
 
-      this.emit('facebook:post:published', { postId: finalId, response });
+      this.emit('facebook:post:published', { postId: finalId, response, format: effectiveFormat });
       return response;
     } catch (error: unknown) {
       const errorResponse: PostResponse = {
@@ -877,5 +995,620 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
       this.emit('facebook:comment:failed', { error: (error as Error).message });
       return errorResponse;
     }
+  }
+
+  // ===========================================
+  // NEW METHODS - Comments Management
+  // ===========================================
+
+  /**
+   * Add a comment to a page post
+   * Supports markdown formatting: **bold**, *italic*, `code`, ```code block```, [link](url), * list, 1. numbered, > quote
+   * @param postId The page post ID to comment on
+   * @param message The comment message (supports markdown)
+   * @param accessToken The page access token
+   * @param options Additional options (formatting)
+   * @returns The comment ID and success status
+   */
+  async addCommentToPost(
+    postId: string,
+    message: string,
+    accessToken: string,
+    options?: {
+      /** Set to 'MARKDOWN' to enable markdown formatting in the comment */
+      formatting?: 'PLAINTEXT' | 'MARKDOWN';
+    }
+  ): Promise<{ id: string; success: boolean }> {
+    const url = this._getGraphApiUrl(`/${postId}/comments?access_token=${accessToken}`);
+
+    const body: Record<string, any> = {
+      message: message,
+    };
+
+    // Add formatting type if specified (MARKDOWN enables markdown support)
+    if (options?.formatting) {
+      body.formatting = options.formatting;
+    }
+
+    const response = await this.fetch(
+      url,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      },
+      'add comment to post'
+    );
+    const result = await response.json();
+    return { id: result.id, success: !!result.id };
+  }
+
+  /**
+   * Get the latest comments from a post (default: last 20)
+   * @param objectId The post or object ID to get comments from
+   * @param accessToken The page access token
+   * @param limit Number of comments to retrieve (default: 20)
+   * @returns Array of comments with their details
+   */
+  async getLatestComments(
+    objectId: string,
+    accessToken: string,
+    limit: number = 20
+  ): Promise<{
+    data: Array<{
+      id: string;
+      message: string;
+      from?: { name: string; id: string };
+      created_time: string;
+      like_count?: number;
+      comment_count?: number;
+    }>;
+    paging?: { cursors: { before: string; after: string } };
+  }> {
+    const params = new URLSearchParams({
+      access_token: accessToken,
+      fields: 'id,message,from,created_time,like_count,comment_count',
+      limit: String(limit),
+      order: 'reverse_chronological',
+    });
+
+    const url = this._getGraphApiUrl(`/${objectId}/comments?${params.toString()}`);
+    const response = await this.fetch(url, undefined, 'get latest comments');
+    return response.json();
+  }
+
+  /**
+   * Update an existing comment
+   * @param commentId The comment ID to update
+   * @param message The new message content
+   * @param accessToken The page access token
+   * @returns Success status
+   */
+  async updateComment(
+    commentId: string,
+    message: string,
+    accessToken: string
+  ): Promise<{ success: boolean }> {
+    const url = this._getGraphApiUrl(`/${commentId}?access_token=${accessToken}`);
+    const response = await this.fetch(
+      url,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: message,
+        }),
+      },
+      'update comment'
+    );
+    return response.json();
+  }
+
+  // ===========================================
+  // NEW METHODS - Page Insights
+  // ===========================================
+
+  /**
+   * Get page impressions unique metric (reach)
+   * @param pageId The page ID
+   * @param accessToken The page access token
+   * @param period The period: 'day', 'week', or 'days_28'
+   * @param days Number of days to look back (default: 30)
+   * @returns Page impressions unique data
+   */
+  async getPageImpressionsUnique(
+    pageId: string,
+    accessToken: string,
+    period: 'day' | 'week' | 'days_28' = 'day',
+    days: number = 30
+  ): Promise<{
+    name: string;
+    period: string;
+    values: Array<{ value: number; end_time: string }>;
+    title: string;
+    description: string;
+  }> {
+    const until = dayjs().endOf('day').unix();
+    const since = dayjs().subtract(days, 'day').unix();
+
+    const url = this._getGraphApiUrl(
+      `/${pageId}/insights/page_impressions_unique?access_token=${accessToken}&period=${period}&since=${since}&until=${until}`
+    );
+    const { data } = await (await this.fetch(url, undefined, 'get page impressions unique')).json();
+
+    // Return the data for the specified period
+    return data?.find((d: any) => d.period === period) || data?.[0] || {};
+  }
+
+  // ===========================================
+  // NEW METHODS - Page Reviews
+  // ===========================================
+
+  /**
+   * Get page reviews/ratings
+   * @param pageId The page ID
+   * @param accessToken The page access token
+   * @param options Pagination options
+   * @returns Array of reviews with reviewer details
+   */
+  async getPageReviews(
+    pageId: string,
+    accessToken: string,
+    options?: { limit?: number; after?: string }
+  ): Promise<{
+    data: Array<{
+      created_time: string;
+      recommendation_type: 'positive' | 'negative';
+      review_text?: string;
+      reviewer: { name: string; id: string };
+    }>;
+    paging?: { cursors: { before: string; after: string }; next?: string };
+  }> {
+    const params = new URLSearchParams({
+      access_token: accessToken,
+      fields: 'created_time,recommendation_type,review_text,reviewer',
+      limit: String(options?.limit || 25),
+      ...(options?.after ? { after: options.after } : {}),
+    });
+
+    const url = this._getGraphApiUrl(`/${pageId}/ratings?${params.toString()}`);
+    const response = await this.fetch(url, undefined, 'get page reviews');
+    return response.json();
+  }
+
+  // ===========================================
+  // NEW METHODS - Post Management
+  // ===========================================
+
+  /**
+   * Create a post on a Facebook page with automatic link detection
+   * Supports markdown formatting: **bold**, *italic*, `code`, ```code block```, [link](url), * list, 1. numbered, > quote
+   * @param pageId The page ID
+   * @param message The post message (supports markdown)
+   * @param accessToken The page access token
+   * @param options Additional options (link, scheduled_publish_time, published, formatting)
+   * @returns The post ID and permalink
+   */
+  async createPost({
+    pageId,
+    message,
+    accessToken,
+    mediaFbids,
+    options
+  }: {
+    pageId: string,
+    message: string,
+    accessToken: string,
+    mediaFbids: { media_fbid: string }[],
+    options?: {
+      link?: string;
+      published?: boolean;
+      scheduled_publish_time?: number;
+      /** Set to 'MARKDOWN' to enable markdown formatting in the post */
+      formatting?: 'PLAINTEXT' | 'MARKDOWN';
+    }
+  }
+  ): Promise<{ id: string; permalink_url: string }> {
+    // Auto-detect link in message if not explicitly provided
+    let link = options?.link;
+    if (!link) {
+      const urlRegex = /(https?:\/\/[^\s]+)/g;
+      const match = message.match(urlRegex);
+      if (match && match.length > 0) {
+        link = match[0];
+      }
+    }
+
+    const url = this._getGraphApiUrl(`/${pageId}/feed?access_token=${accessToken}&fields=id,permalink_url`);
+    const body: Record<string, any> = {
+      message: message,
+      published: options?.published ?? true,
+    };
+
+    // Add formatting type if specified (MARKDOWN enables markdown support)
+    if (options?.formatting) {
+      body.formatting = options.formatting;
+    }
+
+    if (link) {
+      body.link = link;
+    }
+
+    if (options?.scheduled_publish_time) {
+      body.published = false;
+      body.scheduled_publish_time = options.scheduled_publish_time;
+    }
+    if (mediaFbids?.length) {
+      body.attached_media = mediaFbids;
+    }
+
+    const response = await this.fetch(
+      url,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      },
+      'create post'
+    );
+    return response.json();
+  }
+
+  /**
+   * Post to a Facebook group
+   * Supports markdown formatting: **bold**, *italic*, `code`, ```code block```, [link](url), * list, 1. numbered, > quote
+   * @param groupId The group ID
+   * @param message The post message (supports markdown)
+   * @param accessToken The access token
+   * @param options Additional options (link, formatting)
+   * @returns The post ID
+   */
+  async postToGroup(
+    groupId: string,
+    message: string,
+    accessToken: string,
+    options?: {
+      link?: string;
+      /** Set to 'MARKDOWN' to enable markdown formatting in the post */
+      formatting?: 'PLAINTEXT' | 'MARKDOWN';
+    }
+  ): Promise<{ id: string }> {
+    // Auto-detect link in message if not explicitly provided
+    let link = options?.link;
+    if (!link) {
+      const urlRegex = /(https?:\/\/[^\s]+)/g;
+      const match = message.match(urlRegex);
+      if (match && match.length > 0) {
+        link = match[0];
+      }
+    }
+
+    const url = this._getGraphApiUrl(`/${groupId}/feed?access_token=${accessToken}`);
+    const body: Record<string, any> = {
+      message: message,
+    };
+
+    // Add formatting type if specified (MARKDOWN enables markdown support)
+    if (options?.formatting) {
+      body.formatting = options.formatting;
+    }
+
+    if (link) {
+      body.link = link;
+    }
+
+    const response = await this.fetch(
+      url,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      },
+      'post to group'
+    );
+    return response.json();
+  }
+
+  /**
+   * Publish a single photo to a Facebook page
+   * @param pageId The page ID
+   * @param photoUrl URL of the photo to publish
+   * @param accessToken The page access token
+   * @param caption Optional caption for the photo
+   * @returns The photo ID and post ID
+   */
+  async publishPhoto(
+    pageId: string,
+    photoUrl: string,
+    accessToken: string,
+    caption?: string
+  ): Promise<{ id: string; post_id?: string }> {
+    const url = this._getGraphApiUrl(`/${pageId}/photos?access_token=${accessToken}`);
+    const response = await this.fetch(
+      url,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          url: photoUrl,
+          caption: caption || '',
+          published: true,
+        }),
+      },
+      'publish photo'
+    );
+    return response.json();
+  }
+
+  // ===========================================
+  // NEW METHODS - Video Publishing
+  // ===========================================
+
+  /**
+   * Publish a video to a Facebook page
+   * @param pageId The page ID
+   * @param videoUrl URL of the video to publish
+   * @param accessToken The page access token
+   * @param description Optional description for the video
+   * @param title Optional title for the video
+   * @returns The video ID and permalink
+   */
+  async publishVideo(
+    pageId: string,
+    videoUrl: string,
+    accessToken: string,
+    description?: string,
+    title?: string
+  ): Promise<{ id: string; permalink_url?: string }> {
+    const url = this._getGraphApiUrl(`/${pageId}/videos?access_token=${accessToken}&fields=id,permalink_url`);
+    const response = await this.fetch(
+      url,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          file_url: videoUrl,
+          description: description || '',
+          title: title || '',
+          published: true,
+        }),
+      },
+      'publish video'
+    );
+    return response.json();
+  }
+
+  // ===========================================
+  // NEW METHODS - Reels Publishing
+  // ===========================================
+
+  /**
+   * Publish a reel to a Facebook page (3-step process)
+   * Step 1: Initialize upload session
+   * Step 2: Upload video to rupload.facebook.com
+   * Step 3: Publish the reel
+   * @param pageId The page ID
+   * @param videoUrl URL of the video file (hosted on public server)
+   * @param accessToken The page access token
+   * @param description Optional description/caption for the reel
+   * @returns The reel video ID and success status
+   */
+  async publishReel(
+    pageId: string,
+    videoUrl: string,
+    accessToken: string,
+    description?: string
+  ): Promise<{ video_id: string; success: boolean }> {
+    // Step 1: Initialize upload session
+    const initUrl = this._getGraphApiUrl(`/${pageId}/video_reels?access_token=${accessToken}`);
+    const initResponse = await this.fetch(
+      initUrl,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          upload_phase: 'start',
+        }),
+      },
+      'initialize reel upload'
+    );
+    const { video_id, upload_url } = await initResponse.json();
+
+    if (!video_id) {
+      throw new Error('Failed to initialize reel upload session');
+    }
+
+    // Step 2: Upload the video file to rupload.facebook.com
+    const uploadResponse = await fetch(upload_url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `OAuth ${accessToken}`,
+        'file_url': videoUrl,
+      },
+    });
+
+    if (!uploadResponse.ok) {
+      const errorText = await uploadResponse.text();
+      throw new Error(`Failed to upload reel video: ${errorText}`);
+    }
+
+    // Step 3: Publish the reel
+    const publishUrl = this._getGraphApiUrl(`/${pageId}/video_reels?access_token=${accessToken}`);
+    const publishResponse = await this.fetch(
+      publishUrl,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          video_id: video_id,
+          upload_phase: 'finish',
+          video_state: 'PUBLISHED',
+          description: description || '',
+        }),
+      },
+      'publish reel'
+    );
+    const publishResult = await publishResponse.json();
+
+    return { video_id, success: publishResult.success === true };
+  }
+
+  // ===========================================
+  // NEW METHODS - Video/Reels Insights
+  // ===========================================
+
+  /**
+   * Get video insights/metrics (non-ad related)
+   * @param videoId The video ID
+   * @param accessToken The page access token
+   * @returns Video performance metrics
+   */
+  async getVideoInsights(
+    videoId: string,
+    accessToken: string
+  ): Promise<{
+    total_video_views: number;
+    total_video_views_unique: number;
+    total_video_complete_views: number;
+    total_video_views_organic: number;
+    total_video_views_organic_unique: number;
+    total_video_views_sound_on: number;
+    total_video_views_autoplayed: number;
+    total_video_views_clicked_to_play: number;
+    raw_data: any[];
+  }> {
+    const metrics = [
+      'total_video_views',
+      'total_video_views_unique',
+      'total_video_complete_views',
+      'total_video_views_organic',
+      'total_video_views_organic_unique',
+      'total_video_views_sound_on',
+      'total_video_views_autoplayed',
+      'total_video_views_clicked_to_play',
+    ].join(',');
+
+    const url = this._getGraphApiUrl(
+      `/${videoId}/video_insights?metric=${metrics}&access_token=${accessToken}`
+    );
+    const { data } = await (await this.fetch(url, undefined, 'get video insights')).json();
+
+    // Parse the response into a structured object
+    const result: Record<string, number> = {
+    };
+    data?.forEach((metric: any) => {
+      result[metric.name] = metric.values?.[0]?.value || 0;
+    });
+
+    return {
+      total_video_views: result.total_video_views || 0,
+      total_video_views_unique: result.total_video_views_unique || 0,
+      total_video_complete_views: result.total_video_complete_views || 0,
+      total_video_views_organic: result.total_video_views_organic || 0,
+      total_video_views_organic_unique: result.total_video_views_organic_unique || 0,
+      total_video_views_sound_on: result.total_video_views_sound_on || 0,
+      total_video_views_autoplayed: result.total_video_views_autoplayed || 0,
+      total_video_views_clicked_to_play: result.total_video_views_clicked_to_play || 0,
+      raw_data: data || [],
+    };
+  }
+
+  /**
+   * Get reel insights/metrics (non-ad related)
+   * Useful to determine if a video is performing well for virality
+   * @param reelId The reel/video ID
+   * @param accessToken The page access token
+   * @returns Reel performance metrics
+   */
+  async getReelInsights(
+    reelId: string,
+    accessToken: string
+  ): Promise<{
+    blue_reels_play_count: number;
+    fb_reels_replay_count: number;
+    fb_reels_total_plays: number;
+    post_impressions_unique: number;
+    post_video_avg_time_watched: number;
+    post_video_view_time: number;
+    post_video_followers: number;
+    post_video_social_actions: { comments?: number; shares?: number };
+    post_video_likes_by_reaction_type: Record<string, number>;
+    post_video_retention_graph: number[];
+    virality_score: 'low' | 'medium' | 'high' | 'viral';
+    raw_data: any[];
+  }> {
+    const metrics = [
+      'blue_reels_play_count',
+      'fb_reels_replay_count',
+      'fb_reels_total_plays',
+      'post_impressions_unique',
+      'post_video_avg_time_watched',
+      'post_video_view_time',
+      'post_video_followers',
+      'post_video_social_actions',
+      'post_video_likes_by_reaction_type',
+      'post_video_retention_graph',
+    ].join(',');
+
+    const url = this._getGraphApiUrl(
+      `/${reelId}/video_insights?metric=${metrics}&access_token=${accessToken}`
+    );
+    const { data } = await (await this.fetch(url, undefined, 'get reel insights')).json();
+
+    // Parse the response into a structured object
+    const result: Record<string, any> = {
+    };
+    data?.forEach((metric: any) => {
+      result[metric.name] = metric.values?.[0]?.value;
+    });
+
+    // Calculate virality score based on engagement metrics
+    const playCount = result.fb_reels_total_plays || result.blue_reels_play_count || 0;
+    const replayCount = result.fb_reels_replay_count || 0;
+    const impressions = result.post_impressions_unique || 0;
+    const followers = result.post_video_followers || 0;
+
+    let viralityScore: 'low' | 'medium' | 'high' | 'viral' = 'low';
+    const replayRate = playCount > 0 ? (replayCount / playCount) : 0;
+    const followRate = impressions > 0 ? (followers / impressions) : 0;
+
+    if (replayRate > 0.3 && followRate > 0.05) {
+      viralityScore = 'viral';
+    } else if (replayRate > 0.2 || followRate > 0.03) {
+      viralityScore = 'high';
+    } else if (replayRate > 0.1 || followRate > 0.01) {
+      viralityScore = 'medium';
+    }
+
+    return {
+      blue_reels_play_count: result.blue_reels_play_count || 0,
+      fb_reels_replay_count: result.fb_reels_replay_count || 0,
+      fb_reels_total_plays: result.fb_reels_total_plays || 0,
+      post_impressions_unique: result.post_impressions_unique || 0,
+      post_video_avg_time_watched: result.post_video_avg_time_watched || 0,
+      post_video_view_time: result.post_video_view_time || 0,
+      post_video_followers: result.post_video_followers || 0,
+      post_video_social_actions: result.post_video_social_actions || {},
+      post_video_likes_by_reaction_type: result.post_video_likes_by_reaction_type || {},
+      post_video_retention_graph: result.post_video_retention_graph || [],
+      virality_score: viralityScore,
+      raw_data: data || [],
+    };
   }
 }

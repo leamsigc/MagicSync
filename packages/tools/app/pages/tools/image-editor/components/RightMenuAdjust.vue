@@ -104,25 +104,25 @@ const isItalic = computed({
 <template>
   <section>
     <div v-if="isTextLayerActive">
-      <UFormGroup label="Font Size" class="mb-4">
+      <UFormField label="Font Size" class="mb-4">
         <UInput v-model.number="localTextSettings.fontSize" type="number"
           @change="updateTextSettings(localTextSettings as ITextProps)" />
-      </UFormGroup>
+      </UFormField>
 
-      <UFormGroup label="Font Family" class="mb-4">
+      <UFormField label="Font Family" class="mb-4">
         <USelect v-model="localTextSettings.fontFamily" :options="fontFamilies"
           @change="updateTextSettings(localTextSettings as ITextProps)" />
-      </UFormGroup>
+      </UFormField>
 
-      <UFormGroup label="Fill Color" class="mb-4">
+      <UFormField label="Fill Color" class="mb-4">
         <UInput v-model="localTextSettings.fill" type="color"
           @change="updateTextSettings(localTextSettings as ITextProps)" />
-      </UFormGroup>
+      </UFormField>
 
-      <UFormGroup label="Text Align" class="mb-4">
+      <UFormField label="Text Align" class="mb-4">
         <USelect v-model="localTextSettings.textAlign" :options="textAlignOptions" option-attribute="label"
           value-attribute="value" @change="updateTextSettings(localTextSettings as ITextProps)" />
-      </UFormGroup>
+      </UFormField>
 
       <div class="flex items-center gap-4 mb-4">
         <UCheckbox v-model="isBold" label="Bold" @change="updateTextSettings(localTextSettings as ITextProps)" />

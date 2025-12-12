@@ -39,15 +39,15 @@ const canAddMoreTags = computed(() => (settings.value.tags?.length || 0) < 4);
 
 <template>
     <div class="space-y-4">
-        <UFormGroup label="Article Title" hint="Required for Dev.to posts">
+        <UFormField label="Article Title" hint="Required for Dev.to posts">
             <UInput v-model="settings.title" placeholder="My Awesome Article" />
-        </UFormGroup>
+        </UFormField>
 
-        <UFormGroup label="Canonical URL" hint="Original source if cross-posting">
+        <UFormField label="Canonical URL" hint="Original source if cross-posting">
             <UInput v-model="settings.canonical" placeholder="https://myblog.com/original-article" />
-        </UFormGroup>
+        </UFormField>
 
-        <UFormGroup label="Tags" :hint="`${settings.tags?.length || 0}/4 tags`">
+        <UFormField label="Tags" :hint="`${settings.tags?.length || 0}/4 tags`">
             <div class="space-y-2">
                 <div class="flex flex-wrap gap-2">
                     <UBadge v-for="(tag, index) in settings.tags" :key="index" color="primary" variant="subtle"
@@ -63,7 +63,7 @@ const canAddMoreTags = computed(() => (settings.value.tags?.length || 0) < 4);
                     <UButton icon="i-heroicons-plus" variant="ghost" @click="addTag" />
                 </div>
             </div>
-        </UFormGroup>
+        </UFormField>
     </div>
 </template>
 

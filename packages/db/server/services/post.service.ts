@@ -12,15 +12,11 @@ import {
 } from './types'
 import { socialMediaAccountService } from './social-media-account.service'
 import type { PostResponse } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
+import dayjs from 'dayjs';
 
 
-export interface UpdatePostData {
-  content?: string
-  mediaAssets?: string[]
-  scheduledAt?: Date
-  targetPlatforms?: string[]
-  status?: 'pending' | 'published' | 'failed'
-}
+
+export interface UpdatePostData extends Omit<PostCreateBase, 'businessId' | 'userId'> { }
 
 export interface CreatePlatformPostData {
   postId: string
@@ -42,7 +38,6 @@ export class PostService {
       const id = crypto.randomUUID()
       const now = new Date()
 
-      // Determine initial status
       let status: 'pending' = 'pending'
       if (data.scheduledAt && data.scheduledAt > now) {
         status = 'pending'
@@ -57,25 +52,41 @@ export class PostService {
         scheduledAt: data.scheduledAt,
         targetPlatforms: JSON.stringify(data.targetPlatforms),
         status,
+        platformContent: data.platformContent || null,
+        platformSettings: data.platformSettings || null,
+        postFormat: data.postFormat || 'post',
         createdAt: now,
         updatedAt: now
       }).returning()
 
-      // Create platform post entries
+      if (data.mediaAssets && data.mediaAssets.length > 0) {
+        await this.db
+          .update(assets)
+          .set({ isPublic: true })
+          .where(inArray(assets.id, data.mediaAssets))
+      }
+
       if (data.targetPlatforms.length > 0) {
         const platformPostData = data.targetPlatforms.map(async (accountId: string) => {
-          // Get the social media account by ID
           const account = await socialMediaAccountService.getAccountById(accountId)
+          const platformName = account?.platform || accountId
 
-          const data = {
+          const platformSpecificSettings = data.platformSettings?.[platformName] || data.platformSettings?.[accountId] || null
+          const platformSpecificContent = data.platformContent?.[platformName] || data.platformContent?.[accountId] || null
+
+          const platformPostEntry = {
             id: crypto.randomUUID(),
             postId: id,
             socialAccountId: accountId,
             status: 'pending' as const,
             createdAt: now,
-            platformPostId: account ? account.platform : null
+            platformPostId: account ? account.platform : null,
+            platformSettings: platformSpecificSettings ? {
+              ...platformSpecificSettings,
+              platformContent: platformSpecificContent
+            } : null
           }
-          await this.db.insert(platformPosts).values(data).returning()
+          await this.db.insert(platformPosts).values(platformPostEntry).returning()
         })
         await Promise.all(platformPostData).catch((error) => {
           console.error('Error creating platform posts:', error)
@@ -228,18 +239,21 @@ export class PostService {
     try {
       // Check if post exists and belongs to user
       const existingResult = await this.findById(id, userId)
+      if (!existingResult || existingResult.error) {
+        return { error: 'Post not found' }
+      }
 
 
       const updateData: any = {
         ...data,
-        updatedAt: new Date()
+        updatedAt: dayjs().toDate()
       }
 
       // Handle JSON fields
-      if (data.mediaAssets !== undefined) {
+      if (data.mediaAssets !== undefined && data.mediaAssets.length > 0) {
         updateData.mediaAssets = data.mediaAssets ? JSON.stringify(data.mediaAssets) : null
       }
-      if (data.targetPlatforms !== undefined) {
+      if (data.targetPlatforms !== undefined && data.targetPlatforms.length > 0) {
         updateData.targetPlatforms = JSON.stringify(data.targetPlatforms)
       }
 
@@ -249,35 +263,48 @@ export class PostService {
         .where(and(eq(posts.id, id), eq(posts.userId, userId)))
         .returning()
 
+      if (data.mediaAssets && data.mediaAssets.length > 0) {
+        await this.db
+          .update(assets)
+          .set({ isPublic: true })
+          .where(inArray(assets.id, data.mediaAssets))
+      }
       // Update platform posts if target platforms changed
       if (data.targetPlatforms) {
         // Remove existing platform posts
         await this.db
           .delete(platformPosts)
           .where(eq(platformPosts.postId, id))
-
         // Create new platform posts
         const platformPostData = data.targetPlatforms.map(async (accountId) => {
           // Get the social media account by ID
           const account = await socialMediaAccountService.getAccountById(accountId)
+          const platformName = account?.platform || accountId
+          const platformSpecificSettings = data.platformSettings?.[platformName] || data.platformSettings?.[accountId] || null
+          const platformSpecificContent = data.platformContent?.[platformName] || data.platformContent?.[accountId] || null
 
-          const data = {
+
+          const item = {
             id: crypto.randomUUID(),
             postId: id,
             socialAccountId: accountId,
             status: 'pending' as const,
             createdAt: updateData.updatedAt,
-            platformPostId: account ? account.platform : null
+            platformPostId: account ? account.platform : null,
+            platformSettings: platformSpecificSettings ? {
+              ...platformSpecificSettings,
+              platformContent: platformSpecificContent
+            } : null
           }
-          await this.db.insert(platformPosts).values(data).returning()
+          await this.db.insert(platformPosts).values(item).returning()
         })
         await Promise.all(platformPostData).catch((error) => {
           console.error('Error Updating platform posts:', error)
         })
       }
-
       return { data: updated }
     } catch (error) {
+      console.error('Error Updating post:', error)
       return { error: 'Failed to update post' }
     }
   }

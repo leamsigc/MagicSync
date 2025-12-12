@@ -25,12 +25,12 @@ const replyOptions = [
 
 <template>
     <div class="space-y-4">
-        <UFormGroup label="Who can reply">
+        <UFormField label="Who can reply">
             <USelect v-model="settings.who_can_reply" :items="replyOptions" placeholder="Select reply restrictions" />
-        </UFormGroup>
-        <UFormGroup label="Community URL" hint="Paste your X Community URL to post to a community">
+        </UFormField>
+        <UFormField label="Community URL" hint="Paste your X Community URL to post to a community">
             <UInput v-model="settings.community" placeholder="https://x.com/i/communities/..." />
-        </UFormGroup>
+        </UFormField>
     </div>
 </template>
 

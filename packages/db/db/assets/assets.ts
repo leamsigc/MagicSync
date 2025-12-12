@@ -15,6 +15,7 @@ export const assets = sqliteTable('assets', {
   url: text('url').notNull(),
   thumbnailUrl: text('thumbnail_url'),
   metadata: text('metadata'), // JSON
+  isPublic: integer('is_public', { mode: 'boolean' }).default(false).notNull(), // Public/Private visibility
   createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()).notNull()
 })
 

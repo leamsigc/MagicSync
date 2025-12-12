@@ -16,6 +16,14 @@ export class XPlugin extends BaseSchedulerPlugin {
     ] as const;
     override maxConcurrentJob = platformConfigurations.twitter.maxConcurrentJob; // X has strict rate limits (300 posts per 3 hours)
 
+    private normalizeContent(content: string): string {
+        if (!content) return '';
+        return content
+            .replace(/\\n/g, '\n')
+            .replace(/\r\n/g, '\n')
+            .replace(/\r/g, '\n');
+    }
+
     xMaxLength(isPremium: boolean = false) {
         return isPremium ? 4000 : 280;
     }
@@ -128,7 +136,8 @@ export class XPlugin extends BaseSchedulerPlugin {
             // Use platform-specific content if available, otherwise use master content
             const platformContent = (postDetails as any).platformContent?.twitter
                 || (postDetails as any).platformContent?.x;
-            const contentToPost = platformContent?.content || postDetails.content;
+            const rawContent = platformContent?.content || postDetails.content;
+            const contentToPost = this.normalizeContent(rawContent);
 
             const tweetOptions: any = {
                 text: contentToPost,

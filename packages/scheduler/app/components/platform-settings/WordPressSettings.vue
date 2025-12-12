@@ -22,13 +22,13 @@ const postTypes = [
 
 <template>
     <div class="space-y-4">
-        <UFormGroup label="Post Title" hint="Required for WordPress posts">
+        <UFormField label="Post Title" hint="Required for WordPress posts">
             <UInput v-model="settings.title" placeholder="My Blog Post Title" />
-        </UFormGroup>
+        </UFormField>
 
-        <UFormGroup label="Post Type">
+        <UFormField label="Post Type">
             <USelect v-model="settings.type" :items="postTypes" placeholder="Select post type" />
-        </UFormGroup>
+        </UFormField>
     </div>
 </template>
 

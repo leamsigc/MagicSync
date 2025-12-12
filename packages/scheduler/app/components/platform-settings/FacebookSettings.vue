@@ -17,9 +17,9 @@ const settings = defineModel<FacebookSettings>({ required: true });
 
 <template>
     <div class="space-y-4">
-        <UFormGroup label="Link Preview URL" hint="URL to show as a link preview in your post">
+        <UFormField label="Link Preview URL" hint="URL to show as a link preview in your post">
             <UInput v-model="settings.url" placeholder="https://example.com/article" />
-        </UFormGroup>
+        </UFormField>
     </div>
 </template>
 

@@ -28,7 +28,7 @@ const removeCollaborator = (index: number) => {
 
 <template>
     <div class="space-y-4">
-        <UFormGroup label="Collaborators" hint="Tag other Instagram accounts as collaborators">
+        <UFormField label="Collaborators" hint="Tag other Instagram accounts as collaborators">
             <div class="space-y-2">
                 <div v-for="(collaborator, index) in settings.collaborators" :key="index" class="flex gap-2">
                     <UInput v-model="collaborator.label" placeholder="@username" class="flex-1" />
@@ -39,7 +39,7 @@ const removeCollaborator = (index: number) => {
                     Add Collaborator
                 </UButton>
             </div>
-        </UFormGroup>
+        </UFormField>
     </div>
 </template>
 

@@ -78,33 +78,33 @@ const flairName = computed({
 
 <template>
     <div class="space-y-4">
-        <UFormGroup label="Post Type">
+        <UFormField label="Post Type">
             <USelect v-model="settings.type" :items="postTypes" placeholder="Select post type" />
-        </UFormGroup>
+        </UFormField>
 
-        <UFormGroup v-if="isLinkPost" label="Link URL">
+        <UFormField v-if="isLinkPost" label="Link URL">
             <UInput v-model="settings.url" placeholder="https://example.com/article" />
-        </UFormGroup>
+        </UFormField>
 
-        <UFormGroup label="Subreddit">
+        <UFormField label="Subreddit">
             <UInput v-model="subredditValue" placeholder="programming">
                 <template #leading>
                     <span class="text-muted">r/</span>
                 </template>
             </UInput>
-        </UFormGroup>
+        </UFormField>
 
-        <UFormGroup>
+        <UFormField>
             <UCheckbox v-model="flairRequired" label="This subreddit requires flair" />
-        </UFormGroup>
+        </UFormField>
 
         <template v-if="requiresFlair">
-            <UFormGroup label="Flair ID">
+            <UFormField label="Flair ID">
                 <UInput v-model="flairId" placeholder="Flair ID" />
-            </UFormGroup>
-            <UFormGroup label="Flair Name">
+            </UFormField>
+            <UFormField label="Flair Name">
                 <UInput v-model="flairName" placeholder="Flair name" />
-            </UFormGroup>
+            </UFormField>
         </template>
     </div>
 </template>

@@ -7,6 +7,7 @@
 import { AutoPostService } from '#layers/BaseScheduler/server/services/AutoPost.service';
 import { checkUserIsLogin } from "#layers/BaseAuth/server/utils/AuthHelpers"
 import { postService, type UpdatePostData } from "#layers/BaseDB/server/services/post.service"
+import dayjs from 'dayjs';
 
 
 export default defineEventHandler(async (event) => {
@@ -27,7 +28,18 @@ export default defineEventHandler(async (event) => {
     const body = await readBody(event)
 
     // Prepare update data
-    const updateData: UpdatePostData = {}
+    const updateData: UpdatePostData = {
+      content: body.content || '',
+      mediaAssets: body.mediaAssets || [],
+      targetPlatforms: body.targetPlatforms || [],
+      scheduledAt: dayjs(body.scheduledAt).toDate(),
+      status: body.status || 'pending',
+      comment: body.comment || [],
+      postFormat: body.postFormat || 'post',
+      platformContent: body.platformContent || {},
+      platformSettings: body.platformSettings || {}
+    }
+
 
     if (body.content !== undefined) {
       updateData.content = body.content
@@ -36,7 +48,6 @@ export default defineEventHandler(async (event) => {
     if (body.mediaAssets !== undefined) {
       updateData.mediaAssets = body.mediaAssets
     }
-
     if (body.targetPlatforms !== undefined) {
       if (!Array.isArray(body.targetPlatforms)) {
         throw createError({
@@ -48,7 +59,7 @@ export default defineEventHandler(async (event) => {
     }
 
     if (body.status !== undefined) {
-      const validStatuses = ['draft', 'scheduled', 'published', 'failed']
+      const validStatuses = ['pending', 'published', 'failed']
       if (!validStatuses.includes(body.status)) {
         throw createError({
           statusCode: 400,
@@ -57,31 +68,18 @@ export default defineEventHandler(async (event) => {
       }
       updateData.status = body.status
     }
-
-    // Handle scheduled date
-    if (body.scheduledAt !== undefined) {
-      if (body.scheduledAt === null) {
-        updateData.scheduledAt = undefined
-      } else {
-        const scheduledDate = new Date(body.scheduledAt)
-        if (isNaN(scheduledDate.getTime())) {
-          throw createError({
-            statusCode: 400,
-            statusMessage: 'Invalid scheduled date format'
-          })
-        }
-        updateData.scheduledAt = scheduledDate
-      }
+    if (dayjs(body.scheduledAt).isBefore(dayjs())) {
+      updateData.scheduledAt = dayjs().toDate()
     }
 
     // Update post
     const result = await postService.update(postId, user.id, updateData)
 
-    if (!result) {
 
+    if (!result || result.error) {
       throw createError({
         statusCode: 400,
-        statusMessage: result || 'Failed to update post'
+        statusMessage: result.error || 'Failed to update post'
       })
     }
     if (body.status === 'published' && result.data) {
@@ -94,7 +92,7 @@ export default defineEventHandler(async (event) => {
       }
       // Schedule post
       const trigger = new AutoPostService()
-      trigger.triggerSocialMediaPost(fullPost);
+      await trigger.triggerSocialMediaPost(fullPost);
     }
     return result.data;
   } catch (error: any) {

@@ -42,6 +42,12 @@ export interface ProcessedFile {
 export class AssetService {
   private db = useDrizzle();
 
+  async getAssetByFilename(filename: string) {
+    const asset = await this.db.query.assets.findFirst({
+      where: eq(assets.filename, filename)
+    })
+    return asset
+  }
   async findByUserId(id: string, { pagination }: { pagination: { page: number; limit: number; }; filters: { mimeType: string; } | {}; }) {
     return await this.db.query.assets.findMany({
       where: and(eq(assets.userId, id)),

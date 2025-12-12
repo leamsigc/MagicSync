@@ -9,7 +9,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   // console.log("Navigating:", to.fullPath);
   // console.log("App:", isUserNavigatingToTheApp);
 
-  if (!isUserNavigatingToTheApp || isNavigatingToLoginOrRegister) {
+  if (!isUserNavigatingToTheApp && !isNavigatingToLoginOrRegister) {
     return;
   }
 
@@ -20,7 +20,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   if (isUserNavigatingToTheApp && !loggedIn.value) {
     return navigateTo('/login')
   }
-  if (isNavigatingToLoginOrRegister && loggedIn.value) {
+  if (loggedIn.value && isNavigatingToLoginOrRegister || isNavigatingToLoginOrRegister && loggedIn.value) {
     return navigateTo('/app')
   }
 })

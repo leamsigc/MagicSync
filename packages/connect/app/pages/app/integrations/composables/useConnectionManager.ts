@@ -128,9 +128,6 @@ export const useConnectionManager = () => {
         method: 'POST',
         body: { ...page, platformId: 'facebook', businessId: activeBusinessId.value },
       });
-      console.log("######## Connect to Facebook #######");
-      console.log(res);
-
       toast.add({
         title: 'Success',
         description: 'Successfully connected to Facebook page ' + page.name,
