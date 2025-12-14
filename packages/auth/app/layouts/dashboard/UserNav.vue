@@ -192,7 +192,7 @@ const handleSignOut = async () => {
 
 <template>
   <UDropdownMenu :items="items" :ui="{ content: 'bg-gray-50 dark:bg-gray-950' }">
-    <UButton color="neutral" variant="ghost">
+    <UButton color="neutral" variant="ghost" class="w-full justify-start">
       <div v-if="props.collapsed">
         <UAvatar :src="user?.image || ''" :alt="user?.name" />
       </div>
@@ -227,14 +227,14 @@ const handleSignOut = async () => {
 
     <template #item="{ item }">
       <div class="flex items-center gap-2">
-        <UIcon v-if="'icon' in item" :name="item.icon" class="flex-shrink-0 h-4 w-4 text-gray-500" />
+        <UIcon v-if="'icon' in item" :name="item.icon" class="shrink-0 h-4 w-4 text-gray-500" />
         <span class="truncate">{{ item.label }}</span>
         <UBadge v-if="'badge' in item" :label="item.badge" variant="subtle" size="xs" class="ml-auto" />
       </div>
     </template>
 
     <template #item-leading="{ item }">
-      <UIcon v-if="'icon' in item" :name="item.icon" class="flex-shrink-0 h-4 w-4 text-gray-500" />
+      <UIcon v-if="'icon' in item" :name="item.icon" class="shrink-0 h-4 w-4 text-gray-500" />
     </template>
   </UDropdownMenu>
 </template>

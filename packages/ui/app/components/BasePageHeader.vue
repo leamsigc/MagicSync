@@ -22,20 +22,20 @@ const props = defineProps<Props>()
 
 <template>
   <div class="flex items-center justify-between">
-    <div class="mb-4">
+    <div class=" md:mb-4">
       <div class="flex items-center gap-2">
         <UButton variant="ghost" size="sm" as-child>
           <NuxtLink to="/app">
             <Icon name="lucide:arrow-left" size="32" />
           </NuxtLink>
         </UButton>
-        <div>
-          <h1 class="text-3xl font-bold">
+        <div class="">
+          <h1 class="  md:text-3xl font-bold">
             <slot name="title">
               {{ title }}
             </slot>
           </h1>
-          <p class="text-muted-foreground">
+          <p class="text-muted-foreground hidden md:block">
             <slot name="description">
               {{ description }}
             </slot>

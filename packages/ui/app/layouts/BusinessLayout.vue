@@ -13,7 +13,7 @@
 </script>
 
 <template>
-  <div class="container mx-auto  py-6 space-y-6">
+  <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-4">
     <slot />
   </div>
 </template>

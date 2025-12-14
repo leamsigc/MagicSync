@@ -56,6 +56,11 @@ export default defineNuxtConfig({
     content: true,
     mdc: true
   },
+  app: {
+    rootAttrs: {
+      'data-vaul-drawer-wrapper': '',
+    }
+  },
   hooks: {
     'pages:extend': function (pages) {
       const pagesToRemove: NuxtPage[] = []

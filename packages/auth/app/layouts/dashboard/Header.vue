@@ -19,18 +19,18 @@ const { t } = useI18n();
 <template>
   <header class="flex items-center justify-between px-6 py-4 ">
     <div class="flex items-center space-x-4">
-      <UDashboardSidebarCollapse />
+      <UDashboardSidebarToggle />
       <UBreadcrumb
         :links="[{ label: 'Overview' }, { label: 'Customers' }, { label: 'Products' }, { label: 'Settings' }]" />
     </div>
     <div class="flex items-center space-x-4">
-      <UInput icon="i-heroicons-magnifying-glass" placeholder="Search..." />
+      <UInput icon="i-heroicons-magnifying-glass" placeholder="Search..." class="hidden md:block" />
       <UColorModeButton />
       <UButton icon="i-heroicons-bell" variant="ghost" />
 
 
       <BaseTranslationMenu />
-      <DashboardUserNav collapsed />
+      <DashboardUserNav collapsed class="max-w-12" />
     </div>
   </header>
 </template>

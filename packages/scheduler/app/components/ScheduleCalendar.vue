@@ -79,7 +79,7 @@ const calendarOptions = computed((): CalendarOptions => ({
 }));
 </script>
 <template>
-  <FullCalendar :options="calendarOptions" :event-limit="true">
+  <FullCalendar :options="calendarOptions" :event-limit="true" class="min-h-[600px]">
     <template v-slot:eventContent='arg'>
       <PostCalendarPreview :post="arg.event.extendedProps.post" />
     </template>

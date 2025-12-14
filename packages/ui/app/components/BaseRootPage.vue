@@ -14,9 +14,11 @@
 
 <template>
   <UApp>
-    <NuxtLayout>
-      <NuxtPage />
-    </NuxtLayout>
+    <div class="data-vaul-drawer-wrapper" data-vaul-drawer-wrapper>
+      <NuxtLayout>
+        <NuxtPage />
+      </NuxtLayout>
+    </div>
   </UApp>
 </template>
 

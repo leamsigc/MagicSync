@@ -18,7 +18,10 @@
 <template>
   <main class="default relative">
     <BaseHeader />
-    <slot />
+    <div class="p-4 md:p-0">
+      <slot />
+    </div>
+
     <LazyBaseFooter />
   </main>
 </template>
