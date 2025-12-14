@@ -5,7 +5,7 @@ import { assetService } from '#layers/BaseAssets/server/services/asset.service'
 export default defineEventHandler(async (event) => {
   try {
     const filename = getRouterParam(event, 'filename')
-    const { FILE_STORAGE_MOUNT } = useRuntimeConfig(event)
+    const FILE_STORAGE_MOUNT = process.env.NUXT_FILE_STORAGE_MOUNT
 
     if (!filename) {
       throw createError({

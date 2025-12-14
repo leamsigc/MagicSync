@@ -2,8 +2,7 @@ import { generateText } from 'ai';
 import { google } from '@ai-sdk/google';
 
 export default defineLazyEventHandler(async () => {
-  const config = useRuntimeConfig();
-  const apiKey = config.googleGenerativeAiApiKey;
+  const apiKey = process.env.NUXT_GOOGLE_GENERATIVE_AI_API_KEY || '';
 
   if (!apiKey) {
     throw createError({

@@ -105,7 +105,7 @@ const HandleConnectTo = async (page: unknown) => {
     :description="$t('modal.select_page_description')" class="md:min-w-4xl">
 
     <template #body>
-      <section class="grid grid-cols-3 gap-2">
+      <section class="grid md:grid-cols-3 gap-2">
         <UPageCard
           :ui="{ body: 'sm:p-0 p-0', root: 'sm:p-0 p-0 cursor-pointer', wrapper: 'p-0', container: 'p-0 sm:p-0' }"
           v-for="page in facebookPages" :key="page.id" @click="HandleConnectTo(page)">

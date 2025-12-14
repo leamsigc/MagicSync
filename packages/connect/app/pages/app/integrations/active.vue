@@ -37,7 +37,7 @@ useHead({
 <template>
   <div class="container mx-auto py-6 space-y-6">
     <BasePageHeader :title="t('title')" :description="t('description')" />
-    <div class="grid grid-cols-5 gap-2">
+    <div class="grid lg:grid-cols-5 gap-2">
       <ConnectIntegrationCard v-for="social in pagesList" :name="social.accountName" :key="social.id"
         :image="social.entityDetail.details.picture ? social.entityDetail.details.picture : ''"
         :icon="`logos:${social.platform}`" :tags="[social.entityDetail.entityType]"

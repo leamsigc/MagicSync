@@ -3,7 +3,7 @@ import { checkUserIsLogin } from "#layers/BaseAuth/server/utils/AuthHelpers"
 
 
 export default defineEventHandler(async (event) => {
-  const { BASE_URL } = useRuntimeConfig(event)
+  const BASE_URL = process.env.NUXT_BASE_URL
 
   try {
     const platform = getRouterParam(event, 'platform') as SocialMediaPlatform

@@ -87,7 +87,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
   private readonly API_VERSION = 'v20.0';
   private readonly GRAPH_API_BASE_URL = 'https://graph.facebook.com';
   private readonly OAUTH_DIALOG_URL = 'https://www.facebook.com/v20.0/dialog/oauth';
-  private readonly baseUrl = useRuntimeConfig().APP_URL || 'http://localhost:3000'
+  private readonly baseUrl = process.env.NUXT_BASE_URL || 'http://localhost:3000'
 
   protected init(options?: any): void {
     // Initialize Facebook API client or settings

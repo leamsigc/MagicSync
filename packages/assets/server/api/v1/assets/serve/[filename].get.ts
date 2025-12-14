@@ -3,7 +3,8 @@ import { promises as fs } from 'node:fs'
 import { join } from 'node:path'
 
 export default defineEventHandler(async (event) => {
-  const { FILE_STORAGE_MOUNT } = useRuntimeConfig(event)
+  const FILE_STORAGE_MOUNT = process.env.NUXT_FILE_STORAGE_MOUNT
+
 
   try {
     // Get user from session
