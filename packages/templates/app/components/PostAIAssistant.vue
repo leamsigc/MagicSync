@@ -64,7 +64,7 @@ const aiActions = computed(() => [
     <UButton
       class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 hover:text-indigo-300 transition-colors border border-indigo-500/20"
       icon="lucide:wand-2" :loading="loading" variant="ghost">
-      <span class="text-sm font-medium">AI Tools</span>
+      <span class="text-sm font-medium hidden md:block">AI Tools</span>
     </UButton>
   </UDropdownMenu>
 </template>

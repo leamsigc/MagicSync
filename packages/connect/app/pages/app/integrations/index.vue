@@ -45,7 +45,7 @@ useHead({
 <template>
   <div class="container mx-auto py-6 space-y-6">
     <BasePageHeader :title="t('title')" :description="t('description')" />
-    <div class="grid grid-cols-5 gap-2">
+    <div class="grid grid-cols-2  md:grid-cols-5 gap-2">
       <ConnectAddAccount />
       <ConnectIntegrationCard v-for="connection in listAccounts" :name="connection.providerId" :key="connection.id"
         :image="user && user.image ? user.image : ''" :icon="`logos:${connection.providerId}`" :tags="[]"

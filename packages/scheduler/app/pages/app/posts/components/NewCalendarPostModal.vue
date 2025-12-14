@@ -51,7 +51,7 @@ defineExpose({
 </script>
 
 <template>
-  <UModal v-model:open="isOpen" :ui="{ content: 'min-w-6xl overflow-y-auto', }"
+  <UModal v-model:open="isOpen" :ui="{ content: 'md:min-w-6xl overflow-y-auto', }"
     @after:leave="postModalContentRef?.ResetToBase()" :dismissible="false">
     <template #content>
       <PostModalContent ref="postModalContentRef" @save="handleSave" @close="handleClose" />

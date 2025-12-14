@@ -31,7 +31,7 @@ const openModal = () => {
 <template>
 
   <UModal v-model:open="isOpen" @after:enter="postModalContentRef?.ResetToBase()" :dismissible="false"
-    :ui="{ content: 'min-w-6xl overflow-y-auto', }">
+    :ui="{ content: 'md:min-w-6xl overflow-y-auto', wrapper: 'w-full min-w-full' }">
     <UButton color="neutral" variant="solid" @click="openModal">
       <Icon name="lucide:edit" class="md:mr-2 h-4 w-4" />
       <div class="hidden md:inline">

@@ -121,24 +121,25 @@ const formatLabels: Record<PostFormat, string> = {
 <template>
   <div class="flex flex-col items-center">
     <div v-if="supportedFormats.length > 1"
-      class="mb-4 w-full max-w-[320px] flex items-center justify-between bg-zinc-900/80 p-2 rounded-xl border border-white/10 backdrop-blur shadow-xl">
+      class="mb-4 w-full md:max-w-[320px] flex items-center justify-between bg-zinc-900/80 p-2 rounded-xl border border-white/10 backdrop-blur shadow-xl">
       <div class="flex items-center gap-2">
-        <Icon :name="`logos:${platform}`" class="w-5 h-5" />
+        <Icon :name="`logos:${platform}`" class="w-5 h-5" v-if="platform !== 'default'" />
         <span class="text-sm font-bold text-zinc-200">{{ platformConfig?.logo || platform }}</span>
       </div>
-      <div class="flex bg-zinc-800 rounded-lg p-1 gap-1">
+      <div class="md:flex bg-zinc-800 rounded-lg p-1 gap-1 hidden">
         <button v-for="fmt in supportedFormats" :key="fmt" @click="handleFormatChange(fmt)" :class="[
           'px-3 py-1 text-[10px] font-bold uppercase rounded transition-all',
           selectedFormat === fmt
             ? 'bg-zinc-600 text-white shadow-sm'
             : 'text-zinc-500 hover:text-zinc-300'
         ]">
+
           {{ formatLabels[fmt] }}
         </button>
       </div>
     </div>
 
-    <PhoneShell :platform-config="platformConfig">
+    <PhoneShell :platform-config="platformConfig as any">
       <component :is="currentPreviewComponent" :postContent="postContent" :mediaAssets="mediaAssets"
         :platform="platform" :post="post" :format="selectedFormat" />
     </PhoneShell>

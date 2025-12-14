@@ -587,7 +587,7 @@ const handleVariableAction = (variable: string) => {
 </script>
 
 <template>
-  <section class="min-w-4xl">
+  <section class="md:min-w-4xl">
     <UCard>
       <div class="flex items-center justify-between">
         <h3 class="text-base font-semibold leading-6 text-gray-900 dark:text-white flex">
@@ -605,7 +605,7 @@ const handleVariableAction = (variable: string) => {
           @click="emit('close')" />
       </div>
 
-      <div class="flex flex-col lg:flex-row h-full">
+      <div class="md:flex flex-col lg:flex-row h-full">
         <!-- Left Side: Editor and Comments -->
         <div class="flex-1 p-4 border-r border-gray-200 dark:border-gray-800">
           <UTabs :items="tabs" variant="link" :ui="{ trigger: 'grow' }" class="gap-4 w-full">

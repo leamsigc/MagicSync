@@ -81,7 +81,7 @@ const HandleConnectTo = async (page: unknown) => {
 </script>
 
 <template>
-  <UPageCard :ui="{ body: 'flex-col p-0', root: 'size-56 p-0', wrapper: 'p-2', container: 'p-0 sm:p-2' }">
+  <UPageCard :ui="{ body: 'flex-col p-0', root: 'md:size-56 p-0', wrapper: 'p-2', container: 'p-0 sm:p-2' }">
     <section class="relative flex flex-col items-center justify-center p-2">
       <UAvatar :src="props.image" class="w-12 h-12 border border-primary relative" />
       <div v-if="props.icon" class="">
