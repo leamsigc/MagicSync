@@ -278,8 +278,8 @@ export const auth = betterAuth({
           clientSecret: process.env.NUXT_THREADS_CLIENT_SECRET as string,
           authorizationUrl: 'https://threads.net/oauth/authorize',
           tokenUrl: 'https://api.threads.net/oauth/access_token',
-          userInfoUrl: 'https://api.threads.net/me',
-          redirectURI: `${process?.env.NUXT_APP_URL?.indexOf('https') == -1 ? 'https://redirectmeto.com/' + process?.env.NUXT_APP_URL : process?.env.NUXT_APP_URL}/integrations/social/threads`,
+          // userInfoUrl: 'https://api.threads.net/me',
+          // redirectURI: `${process?.env.NUXT_APP_URL?.indexOf('https') == -1 ? 'https://redirectmeto.com/' + process?.env.NUXT_APP_URL : process?.env.NUXT_APP_URL}/integrations/social/threads`,
           scopes: [
             'threads_basic',
             'threads_content_publish',
