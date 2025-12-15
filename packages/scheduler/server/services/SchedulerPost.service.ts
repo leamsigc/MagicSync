@@ -232,7 +232,7 @@ export class SchedulerPost extends EventEmitter {
     const validationErrors = await this.validate(postDetails);
     if (Object.keys(validationErrors).length > 0) {
       this.emit('post:validation-failed', validationErrors);
-      throw new Error('Post validation failed');
+      throw new Error('Post validation failed' + JSON.stringify(validationErrors));
     }
 
     return this.executeOnPlugins('post', [postDetails, comments, socialMediaAccount], socialMediaAccount, 'post', { postDetails, comments });

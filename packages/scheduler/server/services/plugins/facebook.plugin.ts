@@ -1,6 +1,6 @@
 import type { Asset, PostWithAllData, SocialMediaAccount } from '#layers/BaseDB/db/schema';
 import type { PostResponse, } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
-import type { FacebookSettings } from '#layers/BaseScheduler/shared/platformSettings';
+import type { FacebookSettings, PlatformSettings } from '#layers/BaseScheduler/shared/platformSettings';
 import dayjs from 'dayjs';
 import { BaseSchedulerPlugin } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 
@@ -596,21 +596,9 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     }
     if (detail.assets) {
       for (const media of detail.assets) {
-        if (media.mimeType !== 'image' && media.mimeType !== 'video') {
+        if (!media.mimeType.includes('image') || !media.mimeType.includes('video')) {
           errors.push(`Unsupported media type: ${media.mimeType}, only image and video allowed`);
         }
-      }
-    }
-    // Check for Facebook.com links
-    if (detail.content && detail.content.includes('facebook.com')) {
-      errors.push('Cannot post Facebook.com links');
-    }
-    // Check URL format if settings.url
-    if ((detail as any).settings?.url) {
-      try {
-        new URL((detail as any).settings.url);
-      } catch {
-        errors.push('Invalid URL format in post content');
       }
     }
     return errors;
