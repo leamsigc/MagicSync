@@ -153,4 +153,13 @@ export default defineNuxtConfig({
     autoTrack: true,
     ignoreLocalhost: true
   },
+  vite: {
+    build: {
+      rollupOptions: {
+        external: [
+          "sharp"
+        ]
+      }
+    }
+  }
 })

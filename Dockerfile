@@ -7,14 +7,14 @@ RUN apk add --no-cache \
     python3 \
     vips-dev
 
-RUN npm install -g pnpm node-gyp
+RUN npm install -g pnpm node-gyp node-addon-api
 
 WORKDIR /usr/app
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY . .
 
-RUN pnpm install --frozen-lockfile
+RUN pnpm i
 
 RUN pnpm site
 
