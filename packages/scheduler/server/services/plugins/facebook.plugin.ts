@@ -596,7 +596,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     }
     if (detail.assets) {
       for (const media of detail.assets) {
-        if (!media.mimeType.includes('image') || !media.mimeType.includes('video')) {
+        if (!media.mimeType.includes('image') && !media.mimeType.includes('video')) {
           errors.push(`Unsupported media type: ${media.mimeType}, only image and video allowed`);
         }
       }
