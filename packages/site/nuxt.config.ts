@@ -14,6 +14,9 @@ export default defineNuxtConfig({
     "/app/**": { swr: false },
     '/api/v1/**': {
       cors: true
+    },
+    "/app": {
+      redirect: "/app/posts"
     }
   },
   // debug: true,
