@@ -1,6 +1,7 @@
 import { assetService } from '#layers/BaseAssets/server/services/asset.service';
 import { auth } from '#layers/BaseAuth/lib/auth';
 import { type ServerFile } from 'nuxt-file-storage'
+import dayjs from 'dayjs'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -49,7 +50,7 @@ export default defineEventHandler(async (event) => {
           size: fileSize,
           url: fileUrl, // URL to serve the file
           metadata: {
-            uploadedAt: new Date().toISOString(),
+            uploadedAt: dayjs().toDate(),
             originalSize: fileSize,
             storedPath: storedFile
           }

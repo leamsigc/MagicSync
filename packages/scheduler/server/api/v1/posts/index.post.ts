@@ -42,10 +42,10 @@ export default defineEventHandler(async (event) => {
     // Create post
     const result = await postService.create(user.id, postData)
 
-    if (!result) {
+    if (!result || result.error) {
       throw createError({
         statusCode: 400,
-        statusMessage: 'Failed to create post'
+        statusMessage: result.error || 'Failed to create post'
       })
     }
 

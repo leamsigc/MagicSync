@@ -21,8 +21,8 @@ export const posts = sqliteTable('posts', {
   platformContent: text('platform_content', { mode: 'json' }),
   platformSettings: text('platform_settings', { mode: 'json' }),
   postFormat: text('post_format', { enum: ['post', 'reel', 'story', 'short'] }).default('post'),
-  createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()).notNull(),
-  updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()).notNull()
+  createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => /* @__PURE__ */ new Date()).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => /* @__PURE__ */ new Date()).notNull()
 })
 
 // Platform-specific post tracking

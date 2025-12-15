@@ -36,7 +36,7 @@ export class PostService {
       this.validateCreateData(data)
 
       const id = crypto.randomUUID()
-      const now = new Date()
+      const now = dayjs().toDate()
 
       let status: 'pending' = 'pending'
       if (data.scheduledAt && data.scheduledAt > now) {
@@ -49,7 +49,7 @@ export class PostService {
         businessId: data.businessId,
         content: data.content,
         mediaAssets: data.mediaAssets ? JSON.stringify(data.mediaAssets) : null,
-        scheduledAt: data.scheduledAt,
+        scheduledAt: dayjs(data.scheduledAt).toDate(),
         targetPlatforms: JSON.stringify(data.targetPlatforms),
         status,
         platformContent: data.platformContent || null,
@@ -98,7 +98,7 @@ export class PostService {
       if (error instanceof ValidationError) {
         return { error: error.message, code: error.code }
       }
-      return { error: 'Failed to create post' }
+      return { error: 'Failed to create post' + error }
     }
   }
 
@@ -199,7 +199,7 @@ export class PostService {
 
   async findScheduledPosts(beforeDate?: Date): Promise<ServiceResponse<Post[]>> {
     try {
-      const cutoffDate = beforeDate || new Date()
+      const cutoffDate = beforeDate || dayjs().toDate()
 
       const scheduledPosts = await this.db
         .select()
@@ -313,12 +313,12 @@ export class PostService {
     try {
       const updateData: any = {
         status,
-        updatedAt: new Date()
+        updatedAt: dayjs().toDate()
       }
 
       if (status === 'published') {
-        updateData.publishedAt = new Date()
-        updateData.scheduledAt = new Date()
+        updateData.publishedAt = dayjs().toDate()
+        updateData.scheduledAt = dayjs().toDate()
       }
 
       const [updated] = await this.db
@@ -366,7 +366,7 @@ export class PostService {
         .update(platformPosts)
         .set({
           ...data,
-          publishedAt: data.status === 'published' ? new Date() : undefined
+          publishedAt: data.status === 'published' ? dayjs().toDate() : undefined
         })
         .where(eq(platformPosts.id, id))
         .returning()
@@ -468,10 +468,9 @@ export class PostService {
       }
 
       // Calculate date ranges for recent activity
-      const now = new Date()
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-      const next7Days = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
-      const last24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000)
+      const today = dayjs().startOf('day').toDate()
+      const next7Days = dayjs().add(7, 'day').startOf('day').toDate()
+      const last24Hours = dayjs().subtract(24, 'hour').toDate()
 
       // Process each post for detailed statistics
       for (const post of posts) {
@@ -529,9 +528,9 @@ export class PostService {
   }
 
   async getPostsToProcessNow() {
-    const now = new Date()
-    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
-    const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+    const now = dayjs().toDate()
+    const startOfToday = dayjs().startOf('day').toDate();
+    const endOfToday = dayjs().endOf('day').toDate();
 
     const list = await this.db.query.posts.findMany({
       where: and(
@@ -584,7 +583,7 @@ export class PostService {
       throw new ValidationError('At least one target platform is required', 'targetPlatforms')
     }
 
-    if ((data.status === 'pending') && (data.scheduledAt && data.scheduledAt <= new Date())) {
+    if ((data.status === 'pending') && (data.scheduledAt && data.scheduledAt <= dayjs().toDate())) {
       throw new ValidationError('Scheduled time must be in the future', 'scheduledAt')
     }
   }
