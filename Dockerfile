@@ -7,7 +7,7 @@ RUN apk add --no-cache \
     python3 \
     vips-dev
 
-RUN npm install -g pnpm
+RUN npm install -g pnpm node-gyp
 
 WORKDIR /usr/app
 
