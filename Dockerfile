@@ -3,7 +3,8 @@ ARG NODE_ENV=production
 
 # Install dependencies required for Sharp and other native modules (Alpine uses apk, not apt-get)
 RUN apk add --no-cache g++ make py3-pip vips-dev
-RUN corepack enable && corepack prepare pnpm@10.19.0 --activate
+
+RUN npm install -g pnpm
 
 WORKDIR /usr/app
 
@@ -11,7 +12,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
 COPY . .
 
-RUN pnpm i 
+RUN pnpm i && pnpm rebuild --arch=x64 --platform=linux --libc=musl sharp
 
 RUN pnpm site
 
