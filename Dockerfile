@@ -12,7 +12,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
 COPY . .
 
-RUN pnpm i && pnpm rebuild --arch=x64 --platform=linux --libc=musl sharp
+RUN pnpm i 
 
 RUN pnpm site
 
