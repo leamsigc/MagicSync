@@ -412,6 +412,18 @@ const formatDuration = (seconds: number) => {
 }
 
 const MAX_FILE_SIZE = 1000 * 1024 * 1024 // 1GB
+
+
+
+defineOgImage({
+  component: "BlogOgImage",
+  props: {
+    title: t('title'),
+    description: t('description'),
+    headline: "Free Tools",
+    imageUrl: "/img/home-dark.png"
+  }
+})
 </script>
 
 <template>

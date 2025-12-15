@@ -25,6 +25,16 @@ useHead({
     { name: 'description', content: t('description') }
   ]
 })
+
+defineOgImage({
+  component: "BlogOgImage",
+  props: {
+    title: t('title'),
+    description: t('description'),
+    headline: "Free Tools",
+    imageUrl: "/img/home-dark.png"
+  }
+})
 </script>
 
 <template>
