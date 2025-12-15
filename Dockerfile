@@ -4,6 +4,7 @@ ARG NODE_ENV=production
 # Install dependencies required for Sharp and other native modules (Alpine uses apk, not apt-get)
 RUN apk add --no-cache g++ make py3-pip vips-dev
 
+RUN corepack enable
 RUN npm install -g pnpm
 
 WORKDIR /usr/app
