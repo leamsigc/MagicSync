@@ -61,10 +61,10 @@ onlyBuiltDependencies:
   - esbuild
   - vue-demi
   - better-sqlite3
-  - '@parcel/watcher' 
-  - canvas 
   - onnxruntime-node
   - protobuf
   - protobufjs
-  - sharp
   - unrs-resolver
+ignoredBuiltDependencies:
+- fsevents
+- sharp
