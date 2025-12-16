@@ -6,8 +6,9 @@ export default defineEventHandler(async (event) => {
   try {
     const filename = getRouterParam(event, 'filename')
     const FILE_STORAGE_MOUNT = process.env.NUXT_FILE_STORAGE_MOUNT
+    const filenameId = filename?.split('.')[0]
 
-    if (!filename) {
+    if (!filenameId) {
       throw createError({
         statusCode: 400,
         statusMessage: 'Filename is required'
@@ -15,7 +16,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // Look up the asset by filename to check if it's public
-    const asset = await assetService.getAssetByFilename(filename)
+    const asset = await assetService.getAssetByFilename(filenameId)
 
     if (!asset) {
       throw createError({

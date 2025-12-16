@@ -662,7 +662,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              url: `${this.baseUrl}${m.url.replace('/serve/', '/public/')}?userId=${userId}`,
+              url: `${this.baseUrl}${m.url.replace('/serve/', '/public/')}`,
               published: false,
             }),
           },
