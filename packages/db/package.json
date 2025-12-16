@@ -15,6 +15,7 @@
     "db:studio": "drizzle-kit studio --config ./config/drizzle.config.ts"
   },
   "dependencies": {
+    "dayjs": "catalog:",
     "drizzle-orm": "catalog:"
   },
   "devDependencies": {

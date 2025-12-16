@@ -53,7 +53,6 @@ catalog:
   vue: ^3.5.25
   vue-router: ^4.6.3
   zod: ^4.1.13
-  zod-to-json-schema: ^3.25.0
   tailwindcss: 4.1.17
   "nuxt-umami": "^3.2.1"
 

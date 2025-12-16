@@ -17,4 +17,8 @@ export default defineNuxtConfig({
       openAPI: true,
     }
   },
+  alias: {
+    'dayjs/plugin/utc': 'dayjs/plugin/utc.js',
+    'dayjs/plugin/timezone': 'dayjs/plugin/timezone.js'
+  },
 })

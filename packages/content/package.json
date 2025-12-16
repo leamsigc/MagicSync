@@ -25,7 +25,6 @@
   },
   "dependencies": {
     "better-sqlite3": "catalog:",
-    "sass": "catalog:",
-    "zod-to-json-schema": "catalog:"
+    "sass": "catalog:"
   }
 }

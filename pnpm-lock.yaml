@@ -165,9 +165,6 @@ catalogs:
     zod:
       specifier: ^4.1.13
       version: 4.2.0
-    zod-to-json-schema:
-      specifier: ^3.25.0
-      version: 3.25.0
 
 importers:
 
@@ -352,9 +349,6 @@ importers:
       sass:
         specifier: 'catalog:'
         version: 1.96.0
-      zod-to-json-schema:
-        specifier: 'catalog:'
-        version: 3.25.0(zod@4.2.0)
     devDependencies:
       '@local-monorepo/ui':
         specifier: workspace:*
@@ -389,6 +383,9 @@ importers:
 
   packages/db:
     dependencies:
+      dayjs:
+        specifier: 'catalog:'
+        version: 1.11.19
       drizzle-orm:
         specifier: 'catalog:'
         version: 0.44.7(@libsql/client@0.15.15)(@opentelemetry/api@1.9.0)(better-sqlite3@12.5.0)(kysely@0.28.9)
@@ -19897,10 +19894,6 @@ snapshots:
   zod-to-json-schema@3.25.0(zod@3.25.76):
     dependencies:
       zod: 3.25.76
-
-  zod-to-json-schema@3.25.0(zod@4.2.0):
-    dependencies:
-      zod: 4.2.0
 
   zod@3.25.76: {}
 
