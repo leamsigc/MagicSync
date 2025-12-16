@@ -121,11 +121,13 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
       if (!response.ok) {
         const errorBody = await response.text();
         console.error(`Facebook API Error (${context}): ${response.status} - ${errorBody}`);
+        await this.logPluginEvent('fetch-error:response', 'failure', `Error: ${errorBody}, Context: ${context}`, url, { options });
         throw new Error(`Facebook API Error (${context}): ${errorBody}`);
       }
       return response;
     } catch (error) {
       console.error(`Network or Fetch Error (${context}):`, error);
+      await this.logPluginEvent('fetch-error', 'failure', `Error: ${(error as Error).message}, Context: ${context}`, url, { options });
       throw error;
     }
   }

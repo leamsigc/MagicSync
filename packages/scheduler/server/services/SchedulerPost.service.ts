@@ -1,6 +1,7 @@
 import { ValidationError } from '#layers/BaseAssets/server/shared/assetsTypes';
 import { type Post, type SocialMediaAccount as Integration, type Account, type SocialMediaAccount, type PostWithAllData } from '#layers/BaseDB/db/schema';
 import { EventEmitter } from 'events';
+import { logAuditService } from '#layers/BaseDB/server/services/auditLog.service';
 
 // Simplified types based on the core requirements for SchedulerPost
 export type { Integration };
@@ -108,6 +109,23 @@ export abstract class BaseSchedulerPlugin implements SchedulerPlugin {
 
   protected emit(event: string, ...args: unknown[]) {
     this.scheduler.emit(event, ...args);
+  }
+
+  protected async logPluginEvent(
+    action: string,
+    status: 'success' | 'failure' | 'pending',
+    details: string,
+    targetId?: string,
+    additionalDetails?: Record<string, any>
+  ) {
+    await logAuditService.logAuditEvent({
+      category: 'plugin',
+      action: `${this.pluginName}-${action}`,
+      targetType: this.pluginName,
+      targetId: targetId || action,
+      status,
+      details: `${details}${additionalDetails ? `, Additional: ${JSON.stringify(additionalDetails)}` : ''}`
+    });
   }
 
   abstract validate(postDetail: Post): Promise<string[]>;
