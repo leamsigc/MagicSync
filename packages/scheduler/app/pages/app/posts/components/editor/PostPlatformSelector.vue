@@ -32,7 +32,7 @@ const selectedIds = computed(() => props.selectedAccounts.map(acc => acc.id));
 </script>
 
 <template>
-  <div class="flex gap-2  pb-2 overflow-x-auto">
+  <div class="flex gap-2  pb-2 overflow-x-auto overflow-y-visible">
     <UPopover v-for="account in accounts" :key="account.id" mode="hover">
       <UChip
         :color="isSelected(account) ? getStatus(account).errors.length > 0 ? 'error' : getStatus(account).warnings.length > 0 ? 'warning' : 'primary' : 'neutral'"
