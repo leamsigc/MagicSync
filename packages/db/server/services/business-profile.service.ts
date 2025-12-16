@@ -16,6 +16,7 @@ import {
 import {
   ValidationError
 } from './types'
+import dayjs from '../utils/dayjs';
 
 export interface CreateBusinessProfileData {
   name: string
@@ -40,7 +41,7 @@ export class BusinessProfileService {
       this.validateCreateData(data)
 
       const id = crypto.randomUUID()
-      const now = new Date()
+      const now = dayjs.utc().toDate()
 
       const [profile] = await this.db.insert(businessProfiles).values({
         id,
@@ -136,7 +137,7 @@ export class BusinessProfileService {
         .update(businessProfiles)
         .set({
           ...data,
-          updatedAt: new Date()
+          updatedAt: dayjs.utc().toDate()
         })
         .where(and(eq(businessProfiles.id, id), eq(businessProfiles.userId, userId)))
         .returning()
@@ -175,7 +176,7 @@ export class BusinessProfileService {
         .update(businessProfiles)
         .set({
           isActive: data.isActive,
-          updatedAt: new Date()
+          updatedAt: dayjs.utc().toDate()
         })
         .where(and(eq(businessProfiles.id, data.id), eq(businessProfiles.userId, userId)))
         .returning()
@@ -184,7 +185,7 @@ export class BusinessProfileService {
         .update(businessProfiles)
         .set({
           isActive: false,
-          updatedAt: new Date()
+          updatedAt: dayjs.utc().toDate()
         })
         .where(and(not(eq(businessProfiles.id, data.id)), eq(businessProfiles.userId, userId)))
 

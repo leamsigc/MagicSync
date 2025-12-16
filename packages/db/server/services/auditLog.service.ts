@@ -1,5 +1,6 @@
 import { auditLog } from '#layers/BaseDB/db/schema'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle';
+import dayjs from '../utils/dayjs';
 export class LogAuditService {
 
   private db = useDrizzle();
@@ -27,7 +28,8 @@ export class LogAuditService {
         ipAddress: data.ipAddress,
         userAgent: data.userAgent,
         status: data.status || 'success',
-        details: data.details
+        details: data.details,
+        createdAt: dayjs.utc().toDate()
       })
     } catch (error) {
       console.error('Failed to log audit event:', error)

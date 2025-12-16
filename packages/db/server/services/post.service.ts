@@ -12,7 +12,7 @@ import {
 } from './types'
 import { socialMediaAccountService } from './social-media-account.service'
 import type { PostResponse } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
-import dayjs from 'dayjs';
+import dayjs from '../utils/dayjs';
 
 
 
@@ -36,7 +36,7 @@ export class PostService {
       this.validateCreateData(data)
 
       const id = crypto.randomUUID()
-      const now = dayjs().toDate()
+      const now = dayjs.utc().toDate()
 
       let status: 'pending' = 'pending'
       if (data.scheduledAt && data.scheduledAt > now) {
@@ -49,7 +49,7 @@ export class PostService {
         businessId: data.businessId,
         content: data.content,
         mediaAssets: data.mediaAssets ? JSON.stringify(data.mediaAssets) : null,
-        scheduledAt: dayjs(data.scheduledAt).toDate(),
+        scheduledAt: dayjs(data.scheduledAt).utc().toDate(),
         targetPlatforms: JSON.stringify(data.targetPlatforms),
         status,
         platformContent: data.platformContent || null,
@@ -199,7 +199,7 @@ export class PostService {
 
   async findScheduledPosts(beforeDate?: Date): Promise<ServiceResponse<Post[]>> {
     try {
-      const cutoffDate = beforeDate || dayjs().toDate()
+      const cutoffDate = beforeDate || dayjs.utc().toDate()
 
       const scheduledPosts = await this.db
         .select()
@@ -246,7 +246,7 @@ export class PostService {
 
       const updateData: any = {
         ...data,
-        updatedAt: dayjs().toDate()
+        updatedAt: dayjs.utc().toDate()
       }
 
       // Handle JSON fields
@@ -313,12 +313,12 @@ export class PostService {
     try {
       const updateData: any = {
         status,
-        updatedAt: dayjs().toDate()
+        updatedAt: dayjs.utc().toDate()
       }
 
       if (status === 'published') {
-        updateData.publishedAt = dayjs().toDate()
-        updateData.scheduledAt = dayjs().toDate()
+        updateData.publishedAt = dayjs.utc().toDate()
+        updateData.scheduledAt = dayjs.utc().toDate()
       }
 
       const [updated] = await this.db
@@ -366,7 +366,7 @@ export class PostService {
         .update(platformPosts)
         .set({
           ...data,
-          publishedAt: data.status === 'published' ? dayjs().toDate() : undefined
+          publishedAt: data.status === 'published' ? dayjs.utc().toDate() : undefined
         })
         .where(eq(platformPosts.id, id))
         .returning()
@@ -435,7 +435,7 @@ export class PostService {
     }
   }
 
-  async getPostStats(businessId: string, userId: string, filters: { startDate?: string; endDate?: string } = {}): Promise<ServiceResponse<any>> {
+  async getPostStats(businessId: string, userId: string, filters: { startDate?: string; endDate?: string, timezone?: string } = {}): Promise<ServiceResponse<any>> {
     try {
       // Get all posts for the business
       const postsResult = await this.findByBusinessId(businessId, userId, {
@@ -467,10 +467,12 @@ export class PostService {
         }
       }
 
+      const userTz = filters.timezone || 'UTC'
+
       // Calculate date ranges for recent activity
-      const today = dayjs().startOf('day').toDate()
-      const next7Days = dayjs().add(7, 'day').startOf('day').toDate()
-      const last24Hours = dayjs().subtract(24, 'hour').toDate()
+      const today = dayjs().tz(userTz).startOf('day').toDate()
+      const next7Days = dayjs().tz(userTz).add(7, 'day').startOf('day').toDate()
+      const last24Hours = dayjs.utc().subtract(24, 'hour').toDate()
 
       // Process each post for detailed statistics
       for (const post of posts) {
@@ -528,9 +530,9 @@ export class PostService {
   }
 
   async getPostsToProcessNow() {
-    const now = dayjs().toDate()
-    const startOfToday = dayjs().startOf('day').toDate();
-    const endOfToday = dayjs().endOf('day').toDate();
+    const now = dayjs.utc().toDate()
+    const startOfToday = dayjs.utc().startOf('day').toDate();
+    const endOfToday = dayjs.utc().endOf('day').toDate();
 
     const list = await this.db.query.posts.findMany({
       where: and(
