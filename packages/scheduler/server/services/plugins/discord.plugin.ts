@@ -102,7 +102,7 @@ export class DiscordPlugin extends BaseSchedulerPlugin {
         for (let i = 0; i < Math.min(postDetails.assets.length, 10); i++) {
           const asset = postDetails.assets[i];
           if (!asset) continue;
-          const fileResponse = await fetch(asset.url);
+          const fileResponse = await fetch(getPublicUrlForAsset(asset.url));
           const fileBlob = await fileResponse.blob();
           formData.append(`files[${i}]`, fileBlob, asset.filename);
         }

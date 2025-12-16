@@ -120,17 +120,17 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
       params.append('children', children.join(','));
     } else if (mediaType === 'VIDEO') {
       params.append('media_type', 'VIDEO');
-      params.append('video_url', mediaUrl);
+      params.append('video_url', getPublicUrlForAsset(mediaUrl));
     } else if (mediaType === 'STORIES') {
       params.append('media_type', 'STORIES');
-      params.append('image_url', mediaUrl); // Stories support image_url or video_url, assuming image for now or need logic
+      params.append('image_url', getPublicUrlForAsset(mediaUrl)); // Stories support image_url or video_url, assuming image for now or need logic
       // If video story, we need video_url. Let's handle generic logic:
       if (mediaUrl.includes('.mp4') || mediaUrl.includes('video')) {
         params.delete('image_url');
-        params.append('video_url', mediaUrl);
+        params.append('video_url', getPublicUrlForAsset(mediaUrl));
       }
     } else {
-      params.append('image_url', mediaUrl);
+      params.append('image_url', getPublicUrlForAsset(mediaUrl));
     }
 
     const response = await fetch(

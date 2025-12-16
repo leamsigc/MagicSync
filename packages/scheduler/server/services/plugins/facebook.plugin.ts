@@ -1,3 +1,4 @@
+import { assets } from './../../../../db/db/assets/assets';
 import type { Asset, PostWithAllData, SocialMediaAccount } from '#layers/BaseDB/db/schema';
 import type { PostResponse, } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import type { FacebookSettings, PlatformSettings } from '#layers/BaseScheduler/shared/platformSettings';
@@ -620,7 +621,9 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     description?: string
   ): Promise<{ id: string; permalink_url: string }> {
     const theFirstVideoFromThePost = postDetails.assets?.find((media) => media.mimeType.includes('video') || media.filename.includes('.mp4'));
-
+    if (!theFirstVideoFromThePost) {
+      throw new Error('No video found in the post');
+    }
     const url = this._getGraphApiUrl(`/${accountId}/videos?access_token=${accessToken}&fields=id,permalink_url`);
     const response = await this.fetch(
       url,
@@ -630,7 +633,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          file_url: `${this.baseUrl}${theFirstVideoFromThePost?.url.replace('/serve/', '/public/')}?userId=${postDetails.userId}`,
+          file_url: getPublicUrlForAsset(theFirstVideoFromThePost.url || ''),
           description: description || postDetails.content,
           published: true,
         }),
@@ -664,7 +667,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              url: `${this.baseUrl}${m.url.replace('/serve/', '/public/')}`,
+              url: getPublicUrlForAsset(m.url),
               published: false,
             }),
           },
@@ -752,7 +755,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
           if (!videoAsset) {
             throw new Error('Reel requires a video asset');
           }
-          const videoUrl = `${this.baseUrl}${videoAsset.url.replace('/serve/', '/public/')}?userId=${postDetails.userId}`;
+          const videoUrl = getPublicUrlForAsset(videoAsset.url);
           const { video_id, success } = await this.publishReel(
             socialMediaAccount.accountId,
             videoUrl,
@@ -772,7 +775,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
           if (!videoAsset) {
             throw new Error('Video post requires a video asset');
           }
-          const videoUrl = `${this.baseUrl}${videoAsset.url.replace('/serve/', '/public/')}?userId=${postDetails.userId}`;
+          const videoUrl = getPublicUrlForAsset(videoAsset.url);
           const { id: videoId, permalink_url } = await this.publishVideo(
             socialMediaAccount.accountId,
             videoUrl,
@@ -789,16 +792,19 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
           if (!photoAssets?.length) {
             throw new Error('Photo post requires an image asset');
           }
-          // @ts-ignore
-          const photoUrl = `${this.baseUrl}${photoAssets![0].url.replace('/serve/', '/public/')}`;
-          const { id: photoId, post_id } = await this.publishPhoto(
-            socialMediaAccount.accountId,
-            photoUrl,
-            socialMediaAccount.accessToken,
-            content
+          await Promise.all(
+            photoAssets.map(async (photoAsset) => {
+              const photoUrl = getPublicUrlForAsset(photoAsset.url);
+              const { id: photoId, post_id } = await this.publishPhoto(
+                socialMediaAccount.accountId,
+                photoUrl,
+                socialMediaAccount.accessToken,
+                content
+              );
+              finalId = post_id || photoId;
+              finalUrl = `https://www.facebook.com/photo/?fbid=${photoId}`;
+            })
           );
-          finalId = post_id || photoId;
-          finalUrl = `https://www.facebook.com/photo/?fbid=${photoId}`;
           break;
         }
 

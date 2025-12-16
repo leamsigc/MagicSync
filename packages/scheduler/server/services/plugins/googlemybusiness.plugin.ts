@@ -1,5 +1,5 @@
 import type { Asset, Post, PostWithAllData, SocialMediaAccount } from '#layers/BaseDB/db/schema';
-import type { PostResponse } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
+import type { PluginPostDetails, PluginSocialMediaAccount, PostResponse } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import { BaseSchedulerPlugin } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import dayjs from 'dayjs';
 import type { GoogleBusinessSettings } from '#layers/BaseScheduler/shared/platformSettings';
@@ -98,6 +98,9 @@ type GMBPostData = {
 };
 
 export class GoogleMyBusinessPlugin extends BaseSchedulerPlugin {
+  override getStatistic(postDetails: PluginPostDetails, socialMediaAccount: PluginSocialMediaAccount): Promise<any> {
+    throw new Error('Method not implemented.');
+  }
   static readonly pluginName = 'googlemybusiness';
   readonly pluginName = 'googlemybusiness';
 
@@ -544,7 +547,7 @@ export class GoogleMyBusinessPlugin extends BaseSchedulerPlugin {
         summary: content || '',
         media: postDetails.assets?.map((asset: Asset) => ({
           mediaFormat: asset.mimeType.includes('video') ? 'VIDEO' as const : 'PHOTO' as const,
-          sourceUrl: `${this.baseUrl}${asset.url.replace('/serve/', '/public/')}?userId=${postDetails.userId}`,
+          sourceUrl: getPublicUrlForAsset(asset.url),
         })),
       };
 

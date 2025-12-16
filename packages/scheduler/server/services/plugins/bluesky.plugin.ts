@@ -287,7 +287,7 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
       // Upload images
       const images = await Promise.all(
         imageAssets.map(async (asset: Asset) => {
-          const imageUrl = `${this.serviceUrl}${asset.url}`;
+          const imageUrl = getPublicUrlForAsset(asset.url);
           const { buffer, width, height } = await this.reduceImageBySize(imageUrl);
           return {
             width,
@@ -299,8 +299,8 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
 
       // Upload videos (only one video per post is supported by Bluesky)
       let videoEmbed: AppBskyEmbedVideo | null = null;
-      if (videoAssets.length > 0) {
-        const videoUrl = `${this.serviceUrl}${(videoAssets[0] as Asset).url}`;
+      if (videoAssets.length > 0 && videoAssets[0]) {
+        const videoUrl = getPublicUrlForAsset(videoAssets[0].url);
         videoEmbed = await this.uploadVideo(this.agent, videoUrl);
       }
 
@@ -394,7 +394,7 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
     const rkey = publishedPostId.split('/').pop();
     if (!rkey) throw new Error('Invalid post ID');
 
-    // Using com.atproto.repo.putRecord or generic put on the collection if convenient, 
+    // Using com.atproto.repo.putRecord or generic put on the collection if convenient,
     // but assuming agent.api.app.bsky.feed.post.put exists and follows standard repo put semantics
     // app.bsky.feed.post corresponds to a collection, so .put might expect { repo, rkey, record }
     const blueskyResponse = await this.agent.api.app.bsky.feed.post.put(

@@ -1,4 +1,4 @@
-import type { PostResponse, PluginPostDetails } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
+import type { PostResponse, PluginPostDetails, PluginSocialMediaAccount } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import { BaseSchedulerPlugin } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import type { Post, SocialMediaAccount, Asset } from '#layers/BaseDB/db/schema';
 import type { DevToSettings } from '#layers/BaseScheduler/shared/platformSettings';
@@ -6,6 +6,9 @@ import { platformConfigurations } from '#layers/BaseScheduler/shared/platformCon
 
 
 export class DevToPlugin extends BaseSchedulerPlugin {
+  override getStatistic(postDetails: PluginPostDetails, socialMediaAccount: PluginSocialMediaAccount): Promise<any> {
+    throw new Error('Method not implemented.');
+  }
   static readonly pluginName = 'devto';
   readonly pluginName = 'devto';
 

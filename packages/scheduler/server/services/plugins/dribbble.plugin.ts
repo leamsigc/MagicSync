@@ -7,6 +7,9 @@ import sharp from 'sharp';
 
 
 export class DribbblePlugin extends BaseSchedulerPlugin {
+  override getStatistic(postDetails: PluginPostDetails, socialMediaAccount: PluginSocialMediaAccount): Promise<any> {
+    throw new Error('Method not implemented.');
+  }
   static readonly pluginName = 'dribbble';
   readonly pluginName = 'dribbble';
 
@@ -67,7 +70,7 @@ export class DribbblePlugin extends BaseSchedulerPlugin {
    */
   private async processImage(asset: Asset): Promise<{ buffer: Buffer; width: number; height: number }> {
     try {
-      const response = await fetch(asset.url);
+      const response = await fetch(getPublicUrlForAsset(asset.url));
       const arrayBuffer = await response.arrayBuffer();
       let imageBuffer = Buffer.from(arrayBuffer as ArrayBuffer);
 
@@ -78,6 +81,7 @@ export class DribbblePlugin extends BaseSchedulerPlugin {
       // Dribbble requires exactly 400x300 or 800x600
       // We'll resize to 800x600 if image doesn't match
       if ((width !== 400 || height !== 300) && (width !== 800 || height !== 600)) {
+        // @ts-ignore
         imageBuffer = await sharp(imageBuffer)
           .resize(800, 600, { fit: 'cover' })
           .toBuffer();
@@ -90,6 +94,7 @@ export class DribbblePlugin extends BaseSchedulerPlugin {
         // Reduce quality iteratively
         let quality = 90;
         while (imageBuffer.length > 8 * 1024 * 1024 && quality > 10) {
+          // @ts-ignore
           imageBuffer = await sharp(imageBuffer)
             .jpeg({ quality })
             .toBuffer();
@@ -125,6 +130,7 @@ export class DribbblePlugin extends BaseSchedulerPlugin {
 
       // Prepare form data
       const formData = new FormData();
+      //@ts-ignore
       formData.append('image', new Blob([buffer], { type: imageAsset.mimeType }), imageAsset.filename);
       formData.append('title', postDetails.title || postDetails.content.substring(0, 100));
 
