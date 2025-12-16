@@ -16,7 +16,6 @@ import {
 import {
   ValidationError
 } from './types'
-import dayjs from '../utils/dayjs';
 
 export interface CreateBusinessProfileData {
   name: string

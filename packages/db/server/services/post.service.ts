@@ -12,7 +12,6 @@ import {
 } from './types'
 import { socialMediaAccountService } from './social-media-account.service'
 import type { PostResponse } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
-import dayjs from '../utils/dayjs';
 
 
 
