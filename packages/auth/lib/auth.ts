@@ -303,54 +303,104 @@ export const auth = betterAuth({
     account: {
       create: {
         after: async (account, ctx) => {
+          try {
+            if (account.providerId === "threads") {
+              //Get user information then create SocialMedia from the user details
+              const { id, username, threads_profile_picture_url } = await $fetch<{ id: string, username: string, threads_profile_picture_url: string }>(`https://graph.threads.net/v1.0/me?fields=id,username,threads_profile_picture_url&access_token=${account.accessToken}`);
 
-          if (account.providerId === "threads") {
-            //Get user information then create SocialMedia from the user details
-            const { id, username, threads_profile_picture_url } = await $fetch<{ id: string, username: string, threads_profile_picture_url: string }>(`https://graph.threads.net/v1.0/me?fields=id,username,threads_profile_picture_url&access_token=${account.accessToken}`);
 
+              await socialMediaAccountService.createOrUpdateAccountFromAuth({
+                id: id,
+                name: username,
+                access_token: account.accessToken as string,
+                picture: threads_profile_picture_url,
+                username: username,
+                platformId: 'threads',
+                user: ctx?.context.session?.user as schema.User
+              });
+              await logAuditService.logAuditEvent({
+                userId: ctx?.context.session?.user.id,
+                category: 'after:create',
+                action: 'AUTH_CREATE_SOCIAL_MEDIA',
+                targetType: 'threads',
+                targetId: account.id,
+                ipAddress: "",
+                userAgent: "",
+                status: 'success',
+                details: `${id} ${username} ${threads_profile_picture_url} from THREADS`,
+              })
 
-            socialMediaAccountService.createOrUpdateAccountFromAuth({
-              id: id,
-              name: username,
-              access_token: account.accessToken as string,
-              picture: threads_profile_picture_url,
-              username: username,
-              platformId: 'threads',
-              user: ctx?.context.session?.user as schema.User
-            });
-            return;
+              return;
+            }
+            if (account.providerId === "instagram") {
+
+              // Fetch user information then create SocialMedia from the user details
+              /*
+              "id",
+              "name",
+              "username",
+              "account_type",
+              "website",
+              "media_count",
+              "followers_count",
+              "follows_count",
+              "biography",
+              "profile_picture_url",
+              */
+
+              const response = await $fetch<{ id: string, name: string, username: string, account_type: string, website: string, media_count: number, followers_count: number, follows_count: number, biography: string, profile_picture_url: string }>(`https://graph.instagram.com/me?fields=id,name,username,account_type,website,media_count,followers_count,follows_count,biography,profile_picture_url`, {
+                headers: {
+                  Authorization: `Bearer ${account.accessToken}`,
+                },
+              });
+
+              await socialMediaAccountService.createOrUpdateAccountFromAuth({
+                id: response.id,
+                name: response.name,
+                access_token: account.accessToken as string,
+                picture: response.profile_picture_url,
+                username: response.username,
+                platformId: "instagram",
+                user: ctx?.context.session?.user as schema.User
+              });
+
+              await logAuditService.logAuditEvent({
+                userId: ctx?.context.session?.user.id,
+                category: 'after:create',
+                action: 'AUTH_CREATE_SOCIAL_MEDIA',
+                targetType: 'instagram',
+                targetId: account.id,
+                ipAddress: "",
+                userAgent: "",
+                status: 'success',
+                details: `${response.id} ${response.name} ${response.username} ${response.account_type} ${response.website} ${response.media_count} ${response.followers_count} ${response.follows_count} ${response.biography} ${response.profile_picture_url} from INSTAGRAM`,
+              })
+            }
+            await logAuditService.logAuditEvent({
+              userId: ctx?.context.session?.user.id,
+              category: 'after:create:no-configured',
+              action: 'AUTH_CREATE_SOCIAL_MEDIA',
+              targetType: account.providerId,
+              targetId: account.id,
+              ipAddress: "",
+              userAgent: "",
+              status: 'success',
+              details: `${JSON.stringify(account)} from ${account.providerId}`,
+            })
+
+          } catch (error) {
+            await logAuditService.logAuditEvent({
+              userId: ctx?.context.session?.user.id,
+              category: 'after:create:error',
+              action: 'AUTH_CREATE_SOCIAL_MEDIA',
+              targetType: account.providerId,
+              targetId: account.id,
+              ipAddress: "",
+              userAgent: "",
+              status: 'success',
+              details: `${JSON.stringify(account)} from ${account.providerId}`,
+            })
           }
-          if (account.providerId !== "instagram") return;
-          // Fetch user information then create SocialMedia from the user details
-          /*
-          "id",
-          "name",
-          "username",
-          "account_type",
-          "website",
-          "media_count",
-          "followers_count",
-          "follows_count",
-          "biography",
-          "profile_picture_url",
-          */
-
-          const response = await $fetch<{ id: string, name: string, username: string, account_type: string, website: string, media_count: number, followers_count: number, follows_count: number, biography: string, profile_picture_url: string }>(`https://graph.instagram.com/me?fields=id,name,username,account_type,website,media_count,followers_count,follows_count,biography,profile_picture_url`, {
-            headers: {
-              Authorization: `Bearer ${account.accessToken}`,
-            },
-          });
-
-          socialMediaAccountService.createOrUpdateAccountFromAuth({
-            id: response.id,
-            name: response.name,
-            access_token: account.accessToken as string,
-            picture: response.profile_picture_url,
-            username: response.username,
-            platformId: "instagram",
-            user: ctx?.context.session?.user as schema.User
-          });
-
         }
       }
     }
