@@ -412,11 +412,11 @@ const contextTabs = computed(() => {
 
     // Check if this platform has an override
     // We check via the composable helper or directly from the form state if synced
-    // The composable 'hasPlatformOverride' takes a platform *type* or *accountId*? 
+    // The composable 'hasPlatformOverride' takes a platform *type* or *accountId*?
     // Looking at usePlatformSettings, it uses selectedPlatform which can be anything used as key map.
-    // In TogglePlatform we seem to map by accountId? No, 'platformContent' usually keyed by platformName (like 'twitter', 'linkedin') 
+    // In TogglePlatform we seem to map by accountId? No, 'platformContent' usually keyed by platformName (like 'twitter', 'linkedin')
     // OR by accountId?
-    // Let's check usePlatformSettings usage. It seems to use 'selectedPlatform.value' as the key. 
+    // Let's check usePlatformSettings usage. It seems to use 'selectedPlatform.value' as the key.
     // In 'explicitPreviewPlatform' watcher, we set selectedPlatform.value = val. 'val' comes from 'explicitPreviewPlatform'.
     // 'explicitPreviewPlatform' is set to 'default' or 'platformType' (e.g. 'twitter').
     // So overrides are keyed by PLATFORM TYPE (e.g. 'twitter'), not accountId.
@@ -575,7 +575,7 @@ const handleTemplateAction = async (templateContent: string) => {
   }
 };
 /*
-Emoji related 
+Emoji related
  */
 const handleEmojiSelect = (emoji: string) => {
   postForm.value.content += emoji;
@@ -590,17 +590,8 @@ const handleVariableAction = (variable: string) => {
   <section class="md:min-w-4xl">
     <UCard>
       <div class="flex items-center justify-between">
-        <h3 class="text-base font-semibold leading-6 text-gray-900 dark:text-white flex">
-          <div class="flex items-center gap-2 ml-5">
-            <!-- Social Accounts Selection -->
-            <div class="flex -space-x-1">
-              <PostPlatformSelector :accounts="connectedSocialAccountsList"
-                :selectedAccounts="selectedSocialMediaAccounts" @toggle="togglePlatform"
-                :validationStatus="validationStatus" />
-            </div>
-          </div>
-
-        </h3>
+        <PostPlatformSelector :accounts="connectedSocialAccountsList" :selectedAccounts="selectedSocialMediaAccounts"
+          @toggle="togglePlatform" :validationStatus="validationStatus" />
         <UButton color="neutral" variant="ghost" icon="i-heroicons-x-mark-20-solid" class="-my-1"
           @click="emit('close')" />
       </div>

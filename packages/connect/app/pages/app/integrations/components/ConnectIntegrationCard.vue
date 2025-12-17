@@ -25,6 +25,7 @@ interface Props {
   icon?: string; // Optional icon for the integration, e.g., 'i-simple-icons-linkedin'
   tags: string[];
   showPages?: boolean;
+  showMenu?: boolean;
 }
 const { getPagesForIntegration, HandleConnectToFacebook, facebookPages } = useConnectionManager();
 
@@ -33,7 +34,7 @@ const toggleModal = () => {
   modalStatus.value = !modalStatus.value;
 };
 
-const props = withDefaults(defineProps<Props>(), { showPages: true });
+const props = withDefaults(defineProps<Props>(), { showPages: true, showMenu: true });
 
 const items = computed(() => [
   [
@@ -81,20 +82,21 @@ const HandleConnectTo = async (page: unknown) => {
 </script>
 
 <template>
-  <UPageCard :ui="{ body: 'flex-col p-0', root: 'md:size-56 p-0', wrapper: 'p-2', container: 'p-0 sm:p-2' }">
+  <UPageCard :ui="{ body: 'flex-col p-0', root: 'md:min-h-60 p-0', wrapper: 'p-2', container: 'p-0 sm:p-2' }">
     <section class="relative flex flex-col items-center justify-center p-2">
-      <UAvatar :src="props.image" class="w-12 h-12 border border-primary relative" />
+      <UAvatar :src="props.image" class="w-12 h-12 border-2 relative" :class="{ 'border-primary': connected }" />
       <div v-if="props.icon" class="">
         <UAvatar :icon="props.icon" size="2xl" class="bg-white dark:bg-gray-900" />
       </div>
       <section class="text-center">
         <h3 class="text-lg font-semibold">{{ props.name }}</h3>
         <p class="text-sm text-gray-500 dark:text-gray-400"> {{ props.time }}</p>
+        <p class="text-sm text-gray-500 dark:text-gray-400"> {{ props.tags.join(', ') }}</p>
         <UBadge v-if="props.connected" color="success" variant="subtle" class="mt-2">{{ $t('states.connected') }}
         </UBadge>
         <UBadge v-else color="error" variant="subtle" class="mt-2">{{ $t('states.not_connected') }}</UBadge>
       </section>
-      <div class="absolute top-1 right-1">
+      <div class="absolute top-1 right-1" v-if="props.showMenu">
         <UDropdownMenu :items="items" :popper="{ placement: 'bottom-start' }">
           <UButton color="neutral" variant="ghost" icon="i-heroicons-ellipsis-vertical-20-solid" />
         </UDropdownMenu>
@@ -110,7 +112,7 @@ const HandleConnectTo = async (page: unknown) => {
           :ui="{ body: 'sm:p-0 p-0', root: 'sm:p-0 p-0 cursor-pointer', wrapper: 'p-0', container: 'p-0 sm:p-0' }"
           v-for="page in facebookPages" :key="page.id" @click="HandleConnectTo(page)">
           <section class="relative flex flex-col items-center justify-center p-4">
-            <UAvatar :src="page.picture.data.url" class="size-20 border border-primary relative" />
+            <UAvatar :src="page.imageBase64 || page.picture.data.url" class="size-20 border border-primary relative" />
             <section class="text-center">
               <h3 class="text-lg font-semibold">{{ page.name }}</h3>
               <p class="text-sm text-gray-500 dark:text-gray-400">{{ $t('modal.id_label') }}{{ page.id }}</p>

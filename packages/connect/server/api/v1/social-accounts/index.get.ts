@@ -3,6 +3,7 @@ import { SchedulerPost, type SchedulerPluginConstructor } from '#layers/BaseSche
 import { FacebookPlugin } from '#layers/BaseScheduler/server/services/plugins/facebook.plugin';
 import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers';
 import { H3Error } from 'h3';
+import { entityDetailsService } from '#layers/BaseDB/server/services/entity-details.service';
 
 defineRouteMeta({
   openAPI: {
@@ -51,8 +52,18 @@ export default defineEventHandler(async (event) => {
         statusMessage: 'Invalid account'
       })
     }
+    // We should save the response in the database as well that way we can save the image url and all the data returned
+    // Should create a entity detail for the account to save all the pages related to the account
+
     //@ts-ignore
-    return await scheduler.pages(account.accessToken);
+    const pagesBaseOnTheAccount = await scheduler.pages(account.accessToken);
+
+    entityDetailsService.createOrUpdateDetails({
+      entityId: account.id,
+      entityType: 'accounts_pages',
+      pages: pagesBaseOnTheAccount
+    })
+    return pagesBaseOnTheAccount
   } catch (error) {
     console.error('Error fetching social media accounts:', error)
 

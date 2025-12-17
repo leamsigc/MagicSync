@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // Platform-specific validation and account creation
-    let accountInfo: { id: string; name: string; accessToken: string, baseUrl: string, username: string } | null = null
+    let accountInfo: { id: string; name: string; accessToken: string, baseUrl: string, username: string, picture: string } | null = null
 
     switch (platform) {
       case 'bluesky': {
@@ -50,7 +50,9 @@ export default defineEventHandler(async (event) => {
           await agent.login({ identifier: username, password })
 
           const toke = await encryptKey(password);
-          // console.log(agent.session);
+          // get user profile picture
+          const profile = await agent.getProfile({ actor: username });
+          const picture = profile.data.avatar || '';
 
 
           accountInfo = {
@@ -58,7 +60,8 @@ export default defineEventHandler(async (event) => {
             name: username,
             username,
             accessToken: toke,
-            baseUrl: baseUrl || 'https://bsky.social'
+            baseUrl: baseUrl || 'https://bsky.social',
+            picture
           }
         } catch (error) {
           throw createError({
@@ -94,7 +97,10 @@ export default defineEventHandler(async (event) => {
           accountInfo = {
             id: String(userData.id),
             name: userData.name || userData.username,
-            accessToken: apiKey
+            accessToken: apiKey,
+            username: userData.username,
+            baseUrl: 'https://dev.to',
+            picture: userData.profile_image
           }
         } catch (error) {
           throw createError({
@@ -131,7 +137,10 @@ export default defineEventHandler(async (event) => {
           accountInfo = {
             id: String(userData.id),
             name: userData.name || username,
-            accessToken: applicationPassword
+            accessToken: applicationPassword,
+            username,
+            baseUrl: siteUrl,
+            picture: userData.avatar
           }
         } catch (error) {
           throw createError({
@@ -158,7 +167,7 @@ export default defineEventHandler(async (event) => {
 
     const account = await socialMediaAccountService.createOrUpdateAccount({
       id: accountInfo.id,
-      picture: "",
+      picture: accountInfo.picture,
       name: accountInfo.username,
       username: accountInfo.baseUrl,
       access_token: accountInfo.accessToken,

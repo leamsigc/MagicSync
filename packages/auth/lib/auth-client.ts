@@ -16,5 +16,6 @@ export const {
   deleteUser,
   linkSocial,
   listAccounts,
-  accountInfo
+  accountInfo,
+  oauth2
 } = authClient

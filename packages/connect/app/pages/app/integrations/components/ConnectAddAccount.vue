@@ -22,6 +22,8 @@ setConnectionList();
 
 const { t } = useI18n();
 const toast = useToast();
+const blueskyModal = ref(false)
+const mainModal = ref(false)
 const HandleConnectBaseOnThePlatform = (connection: Connection) => {
   if (connection.platform == 'bluesky') {
     blueskyModal.value = true
@@ -29,7 +31,6 @@ const HandleConnectBaseOnThePlatform = (connection: Connection) => {
     HandleConnectTo(connection)
   }
 }
-const blueskyModal = ref(false)
 const schema = z.object({
   baseUrl: z.string().optional(),
   username: z.string('Username is required'),
@@ -68,13 +69,15 @@ const HandleConnectToBluesky = (payload: FormSubmitEvent<Schema>) => {
     authType: 'api-key'
   }, payload.data)
   blueskyModal.value = false
+  mainModal.value = false
 
 }
 </script>
 
 <template>
-  <UModal>
-    <UButton color="primary" variant="outline" class="grid place-content-center py-8 shadow cursor-pointer md:size-56">
+  <UModal v-model:open="mainModal">
+    <UButton color="primary" variant="outline" class="grid place-content-center py-8 shadow cursor-pointer md:min-h-60"
+      @click="mainModal = true">
       <section class="flex flex-col items-center gap-2 border-2 border-primary  rounded-full p-4 mb-2 w-24 h-24">
         <Icon name="lucide:plus" size="80" class="" />
       </section>
@@ -83,7 +86,7 @@ const HandleConnectToBluesky = (payload: FormSubmitEvent<Schema>) => {
     <template #content>
       <section class="grid grid-cols-2 md:grid-cols-3 gap-4 p-6 overflow-y-auto">
         <UButton color="neutral" variant="soft" v-for="connection in connectionList" :key="connection.name"
-          @click="HandleConnectBaseOnThePlatform(connection)"
+          :disabled="!connection.active" @click="HandleConnectBaseOnThePlatform(connection)"
           class="p-4   rounded grid place-content-center text-center">
           <template v-if="connection.platform == 'bluesky'">
             <UModal v-model:open="blueskyModal" title="Bluesky" :ui="{ footer: 'justify-end' }" size="small"

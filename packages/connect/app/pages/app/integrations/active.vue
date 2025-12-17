@@ -37,10 +37,10 @@ useHead({
 <template>
   <div class="container mx-auto py-6 space-y-6">
     <BasePageHeader :title="t('title')" :description="t('description')" />
-    <div class="grid lg:grid-cols-5 gap-2">
+    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
       <ConnectIntegrationCard v-for="social in pagesList" :name="social.accountName" :key="social.id"
         :image="social.entityDetail.details.picture ? social.entityDetail.details.picture : ''"
-        :icon="`logos:${social.platform}`" :tags="[social.entityDetail.entityType]"
+        :icon="`logos:${social.platform}`" :tags="[social.accountId]"
         :time="dayjs(social.createdAt as unknown as string).format('YYYY-MM-DD')" connected :show-pages="false" />
     </div>
   </div>

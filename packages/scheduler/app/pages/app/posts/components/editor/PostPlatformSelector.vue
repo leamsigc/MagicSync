@@ -32,7 +32,7 @@ const selectedIds = computed(() => props.selectedAccounts.map(acc => acc.id));
 </script>
 
 <template>
-  <div class="flex gap-2  pb-2 overflow-x-auto overflow-y-visible">
+  <div class="flex gap-2  py-2 overflow-x-auto overflow-y-visible w-full">
     <UPopover v-for="account in accounts" :key="account.id" mode="hover">
       <UChip
         :color="isSelected(account) ? getStatus(account).errors.length > 0 ? 'error' : getStatus(account).warnings.length > 0 ? 'warning' : 'primary' : 'neutral'"
@@ -43,7 +43,10 @@ const selectedIds = computed(() => props.selectedAccounts.map(acc => acc.id));
             ? 'bg-zinc-900 border-zinc-700'
             : 'bg-zinc-900/30 border-zinc-800 hover:border-zinc-700 opacity-60 hover:opacity-100'
         ]" :icon="`logos:${account.platform}`">
-        <UButton :icon="`logos:${account.platform}`" color="neutral" variant="ghost" @click="handleToggle(account)" />
+        <UAvatar :src='account.entityDetail.details.picture' :alt="account.accountName" @click="handleToggle(account)"
+          v-if="account.entityDetail.details.picture" />
+        <UButton :icon="`logos:${account.platform}`" color="neutral" variant="ghost" @click="handleToggle(account)"
+          v-else />
         <template #content>
           <Icon :name="getStatus(account)?.isValid ? 'heroicons:check' : 'heroicons:x-circle'" />
         </template>

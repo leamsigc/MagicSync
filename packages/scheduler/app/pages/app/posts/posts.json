@@ -46,6 +46,13 @@
       "postInvalidForPlatform": "Post is invalid for {platform}",
       "previewErrors": "Validation Errors:",
       "platformError": "{platform}: {message}"
+    },
+    "toast": {
+      "postCreated": "Post created successfully",
+      "postUpdated": "Post updated successfully",
+      "postDeleted": "Post deleted successfully",
+      "postScheduled": "Post scheduled successfully",
+      "postCreatedFailed": "Post creation failed"
     }
   },
   "es": {
@@ -93,6 +100,13 @@
       "postInvalidForPlatform": "La publicación no es válida para {platform}",
       "previewErrors": "Errores de validación:",
       "platformError": "{platform}: {message}"
+    },
+    "toast": {
+      "postCreated": "Publicación creada correctamente",
+      "postUpdated": "Publicación actualizada correctamente",
+      "postDeleted": "Publicación eliminada correctamente",
+      "postScheduled": "Publicación programada correctamente",
+      "postCreatedFailed": "La creación de la publicación falló"
     }
   },
   "fr": {
@@ -140,6 +154,13 @@
       "postInvalidForPlatform": "La publication est invalide pour {platform}",
       "previewErrors": "Erreurs de validation :",
       "platformError": "{platform} : {message}"
+    },
+    "toast": {
+      "postCreated": "Publication crée avec successe",
+      "postUpdated": "Publication mise à jour avec successe",
+      "postDeleted": "Publication supprimée avec successe",
+      "postScheduled": "Publication planifiée avec successe",
+      "postCreatedFailed": "Échec de la création de la publication"
     }
   },
   "de": {
@@ -187,6 +208,13 @@
       "postInvalidForPlatform": "Beitrag ist ungültig für {platform}",
       "previewErrors": "Validierungsfehler:",
       "platformError": "{platform}: {message}"
+    },
+    "toast": {
+      "postCreated": "Beitrag erfolgreich erstellt",
+      "postUpdated": "Beitrag erfolgreich aktualisiert",
+      "postDeleted": "Beitrag erfolgreich gelöscht",
+      "postScheduled": "Beitrag erfolgreich geplant",
+      "postCreatedFailed": "Beitragserstellung fehlgeschlagen"
     }
   }
 }

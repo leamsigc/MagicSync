@@ -1,5 +1,6 @@
 import type { InferSelectModel } from 'drizzle-orm'
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
+import type { EntityDetails } from '../schema'
 
 export const user = sqliteTable('user', {
   id: text('id').primaryKey(),
@@ -67,3 +68,7 @@ export const verification = sqliteTable('verification', {
 export type User = InferSelectModel<typeof user>
 
 export type Account = InferSelectModel<typeof account>
+
+export type AccountComplete = InferSelectModel<typeof account> & {
+  entityDetail?: EntityDetails
+}

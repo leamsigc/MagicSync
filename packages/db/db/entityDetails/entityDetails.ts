@@ -1,3 +1,4 @@
+import type { FacebookPage } from '#layers/BaseConnect/utils/FacebookPages';
 import type { InferSelectModel } from 'drizzle-orm'
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 
@@ -10,5 +11,5 @@ export const entityDetails = sqliteTable('entity_details', {
   updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()).notNull()
 })
 
-export type EntityDetails = InferSelectModel<typeof entityDetails> & { details: { username: string; picture: string; } }
+export type EntityDetails = InferSelectModel<typeof entityDetails> & { details: { pages: FacebookPage[], username: string; picture: string; } }
 export type NewEntityDetails = Omit<EntityDetails, 'id' | 'createdAt' | 'updatedAt'>

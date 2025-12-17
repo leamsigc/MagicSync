@@ -1,9 +1,9 @@
-import { assets } from './../../../../db/db/assets/assets';
 import type { Asset, PostWithAllData, SocialMediaAccount } from '#layers/BaseDB/db/schema';
 import type { PostResponse, } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import type { FacebookSettings, PlatformSettings } from '#layers/BaseScheduler/shared/platformSettings';
 import dayjs from 'dayjs';
 import { BaseSchedulerPlugin } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
+import type { FacebookPage } from '#layers/BaseConnect/utils/FacebookPages';
 
 // Placeholder types - these should ideally be imported from a shared types file
 type AuthTokenDetails = {
@@ -514,13 +514,31 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     };
   }
 
-  async pages(_: any, accessToken: string) {
+  async pages(_: any, accessToken: string): Promise<FacebookPage[]> {
     const url = this._getGraphApiUrl(`/me/accounts?fields=id,username,name,picture.type(large)&access_token=${accessToken}`);
-    const { data } = await (
+    const { data }: { data: FacebookPage[] } = await (
       await this.fetch(url, undefined, 'fetch pages')
     ).json();
 
-    return data;
+    // Fetch all images concurrently before returning the response
+    const imagePromises = data.map(page => fetchedImageBase64(page.picture.data.url));
+    const imageBase64s = await Promise.all(imagePromises);
+
+    const pages: FacebookPage[] = data.map((page, index) => ({
+      imageBase64: imageBase64s[index],
+      id: page.id,
+      name: page.name,
+      picture: {
+        data: {
+          height: page.picture.data.height,
+          is_silhouette: page.picture.data.is_silhouette,
+          width: page.picture.data.width,
+          url: page.picture.data.url,
+        },
+      },
+    }));
+
+    return pages;
   }
 
   async fetchPageInformation(_: FacebookPlugin, pageId: string, accessToken: string,): Promise<{
@@ -543,12 +561,13 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     } = await (
       await this.fetch(url, undefined, 'fetch page information')
     ).json();
+    const base64Picture = await fetchedImageBase64(pictureUrl);
 
     return {
       id,
       name,
       access_token,
-      picture: pictureUrl,
+      picture: base64Picture,
       username,
     };
   }
@@ -695,24 +714,6 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     mediaFbids: { media_fbid: string }[],
     link?: string
   ): Promise<{ id: string; permalink_url: string }> {
-    // const url = this._getGraphApiUrl(`/${accountId}/feed?access_token=${accessToken}&fields=id,permalink_url`);
-    // const response = await this.fetch(
-    //   url,
-    //   {
-    //     method: 'POST',
-    //     headers: {
-    //       'Content-Type': 'application/json',
-    //     },
-    //     body: JSON.stringify({
-    //       ...(mediaFbids?.length ? { attached_media: mediaFbids } : {}),
-    //       ...(link ? { link: link } : {}),
-    //       message: message,
-    //       published: true,
-    //     }),
-    //   },
-    //   'finalize upload'
-    // );
-    // return response.json();
     return await this.createPost({
       pageId: accountId,
       message,

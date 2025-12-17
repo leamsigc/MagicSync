@@ -78,6 +78,25 @@ export interface SocialMediaAccountFilters {
 export class SocialMediaAccountService {
   private db = useDrizzle()
 
+
+  async getUserAccountsCompleteDetails(id: string) {
+    const userAccounts = await this.db.query.account.findMany({
+      where: eq(account.userId, id),
+    });
+
+    const details = userAccounts.map((account) => {
+      return entityDetailsService.getDetailsByEntity(account.id, 'accounts_pages');
+    });
+
+    const results = await Promise.all(details);
+
+    userAccounts.forEach((account, index) => {
+      // @ts-ignore
+      account.entityDetail = results[index] || { details: { username: '', picture: '', pages: [] } };
+    });
+
+    return userAccounts;
+  }
   /**
    * Create a new social media account
    */
@@ -254,7 +273,7 @@ export class SocialMediaAccountService {
       entityDetails = await entityDetailsService.createDetails({
         entityId: id,
         entityType: 'social_media_account',
-        details: { username, picture },
+        details: { username, picture, pages: [] },
       });
     }
 

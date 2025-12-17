@@ -13,6 +13,8 @@ import type { ApiResponse, PostFilters, PostStats, ValidationResult } from '#lay
 
 
 export const usePostManager = () => {
+  const toast = useToast()
+  const { t } = useI18n()
   const isLoading = ref(false)
   const error = ref<string | null>(null)
   const postList = useState<PostWithAllData[]>('posts:list', () => [] as PostWithAllData[])
@@ -63,9 +65,11 @@ export const usePostManager = () => {
           scheduledAt: postData.scheduledAt?.toISOString()
         }
       })
+      toast.add({ title: t('toast.postCreated'), icon: 'i-heroicons-check-circle', color: 'success' })
       return response
     } catch (err: any) {
       error.value = err.data?.message || err.message || 'Failed to create post'
+      toast.add({ title: t('toast.postCreatedFailed'), icon: 'i-heroicons-x-circle', color: 'error' })
       throw err
     } finally {
       isLoading.value = false

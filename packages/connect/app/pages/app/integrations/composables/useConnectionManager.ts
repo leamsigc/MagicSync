@@ -1,7 +1,7 @@
 import type { FacebookPage } from '#layers/BaseConnect/utils/FacebookPages';
 
-import { linkSocial, signIn } from "#layers/BaseAuth/lib/auth-client";
-import type { SocialMediaAccount, SocialMediaComplete } from "#layers/BaseDB/db/schema";
+import { linkSocial, oauth2, signIn } from "#layers/BaseAuth/lib/auth-client";
+import type { AccountComplete, SocialMediaAccount, SocialMediaComplete } from "#layers/BaseDB/db/schema";
 import { useBusinessManager } from "../../business/composables/useBusinessManager";
 
 export interface Connection {
@@ -10,6 +10,7 @@ export interface Connection {
   url: string;
   platform: 'facebook' | 'instagram' | 'instagram-standalone' | 'twitter' | 'tiktok' | 'google' | 'googlemybusiness' | 'discord' | 'linkedin' | 'linkedin-page' | 'threads' | 'youtube' | 'bluesky' | 'devto' | 'dribbble' | 'reddit' | 'wordpress';
   authType?: 'better-auth' | 'manual-oauth' | 'api-key';
+  active?: boolean
 }
 
 
@@ -19,30 +20,31 @@ export const useConnectionManager = () => {
   const toast = useToast();
   const allConnections = ref<SocialMediaAccount[]>([]);
   const pagesList = useState<SocialMediaComplete[]>("socialMedia:List", () => []);
+  const accountsList = useState<AccountComplete[]>("accounts:List", () => []);
   const facebookPages = ref<FacebookPage[]>([]);
   const router = useRouter();
   const setConnectionList = () => {
     connectionList.value = [
       // Better Auth OAuth platforms (native support)
-      { name: 'Facebook', icon: 'logos:facebook', url: '#', platform: 'facebook', authType: 'better-auth' },
-      { name: 'Google Business', icon: 'logos:google', url: '#', platform: "googlemybusiness", authType: 'better-auth' },
-      { name: 'LinkedIn', icon: 'logos:linkedin-icon', url: '#', platform: "linkedin", authType: 'better-auth' },
-      { name: 'X (Twitter)', icon: 'logos:twitter', url: '#', platform: "twitter", authType: 'better-auth' },
-      { name: 'TikTok', icon: 'logos:tiktok-icon', url: '#', platform: "tiktok", authType: 'better-auth' },
-      { name: 'Discord', icon: 'logos:discord-icon', url: '#', platform: "discord", authType: 'better-auth' },
-      { name: 'Reddit', icon: 'logos:reddit-icon', url: '#', platform: "reddit", authType: 'better-auth' },
-      { name: 'YouTube', icon: 'logos:youtube-icon', url: '#', platform: "youtube", authType: 'better-auth' },
+      { name: 'Facebook', icon: 'logos:facebook', url: '#', platform: 'facebook', authType: 'better-auth', active: true },
+      { name: 'Google Business', icon: 'logos:google', url: '#', platform: "googlemybusiness", authType: 'better-auth', active: false },
+      { name: 'LinkedIn', icon: 'logos:linkedin-icon', url: '#', platform: "linkedin", authType: 'better-auth', active: false },
+      { name: 'X (Twitter)', icon: 'logos:twitter', url: '#', platform: "twitter", authType: 'better-auth', active: true },
+      { name: 'TikTok', icon: 'logos:tiktok-icon', url: '#', platform: "tiktok", authType: 'better-auth', active: false },
+      { name: 'Discord', icon: 'logos:discord-icon', url: '#', platform: "discord", authType: 'better-auth', active: false },
+      { name: 'Reddit', icon: 'logos:reddit-icon', url: '#', platform: "reddit", authType: 'better-auth', active: false },
+      { name: 'YouTube', icon: 'logos:youtube-icon', url: '#', platform: "youtube", authType: 'better-auth', active: false },
 
       // Better Auth Generic OAuth platforms
-      { name: 'Instagram', icon: 'logos:instagram-icon', url: '#', platform: "instagram", authType: 'manual-oauth' },
-      { name: 'LinkedIn Page', icon: 'logos:linkedin-icon', url: '#', platform: "linkedin-page", authType: 'manual-oauth' },
-      { name: 'Threads', icon: 'fa6-brands:square-threads', url: '#', platform: "threads", authType: 'manual-oauth' },
-      { name: 'Dribbble', icon: 'logos:dribbble-icon', url: '#', platform: "dribbble", authType: 'manual-oauth' },
+      { name: 'Instagram', icon: 'logos:instagram-icon', url: '#', platform: "instagram", authType: 'manual-oauth', active: true },
+      { name: 'LinkedIn Page', icon: 'logos:linkedin-icon', url: '#', platform: "linkedin-page", authType: 'manual-oauth', active: false },
+      { name: 'Threads', icon: 'fa6-brands:square-threads', url: '#', platform: "threads", authType: 'manual-oauth', active: true },
+      { name: 'Dribbble', icon: 'logos:dribbble-icon', url: '#', platform: "dribbble", authType: 'manual-oauth', active: false },
 
       // API Key / Credential-based platforms
-      { name: 'Bluesky', icon: 'fa6-brands:bluesky', url: '#', platform: "bluesky", authType: 'api-key' },
-      { name: 'Dev.to', icon: 'logos:dev-badge', url: '#', platform: "devto", authType: 'api-key' },
-      { name: 'WordPress', icon: 'logos:wordpress-icon', url: '#', platform: "wordpress", authType: 'api-key' },
+      { name: 'Bluesky', icon: 'fa6-brands:bluesky', url: '#', platform: "bluesky", authType: 'api-key', active: true },
+      { name: 'Dev.to', icon: 'logos:dev-badge', url: '#', platform: "devto", authType: 'api-key', active: false },
+      { name: 'WordPress', icon: 'logos:wordpress-icon', url: '#', platform: "wordpress", authType: 'api-key', active: false },
     ]
   }
   const getAllConnections = async (connections: SocialMediaAccount[]) => {
@@ -63,8 +65,6 @@ export const useConnectionManager = () => {
             method: 'POST',
             body: { ...credentials, ...connection, platformId: connection.platform, businessId: activeBusinessId.value },
           });
-          console.log("######## Connect to Bluesky #######");
-          console.log(response);
           toast.add({
             title: 'Success',
             description: 'Successfully connected to Bluesky',
@@ -83,7 +83,7 @@ export const useConnectionManager = () => {
           color: 'info',
         });
       } else if (connection.authType === 'manual-oauth') {
-        signIn.oauth2({
+        oauth2.link({
           providerId: connection.platform,
           callbackURL: `/api/v1/social-accounts/callback/${connection.platform}?businessId=${activeBusinessId.value}`,
         })
@@ -149,16 +149,28 @@ export const useConnectionManager = () => {
     }
   }
 
+  const getAllAccountDetails = async () => {
+    try {
+      const response = await $fetch<Promise<AccountComplete[]>>('/api/v1/accounts');
+      accountsList.value = response
+    } catch (error) {
+      console.error('Error adding business:', error);
+      throw error;
+    }
+  }
+
   return {
     connectionList,
     allConnections,
     pagesList,
     facebookPages,
+    accountsList,
     setConnectionList,
     getAllConnections,
     HandleConnectTo,
     getPagesForIntegration,
     HandleConnectToFacebook,
-    getAllSocialMediaAccounts
+    getAllSocialMediaAccounts,
+    getAllAccountDetails
   }
 };
