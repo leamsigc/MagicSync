@@ -77,11 +77,13 @@ const { list } = toRefs(props);
     </h4>
 
     <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      <div v-for="{ icon, title, description } in list" :key="title">
-        <UCard class="h-full bg-background border-0 shadow-none">
+      <BaseShinyCard v-for="{ icon, title, description } in list" :key="title" :show-bg="false">
+        <UCard
+          class="bg-muted/50 dark:bg-card hover:bg-background dark:hover:bg-background transition-all delay-75 group/number h-full p-4">
           <template #header>
             <div class="flex justify-center items-center">
-              <div class="bg-primary/20 p-2 rounded-full ring-8 ring-primary/10 mb-4">
+              <div
+                class="bg-primary/20 flex justify-center items-center rounded-full ring-8 ring-primary/10 mb-4 size-11 mr-4">
                 <Icon :name="icon" class="size-6 text-primary" />
               </div>
 
@@ -97,7 +99,7 @@ const { list } = toRefs(props);
             </section>
           </template>
         </UCard>
-      </div>
+      </BaseShinyCard>
     </div>
   </section>
 </template>

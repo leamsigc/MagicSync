@@ -2,7 +2,6 @@ import type { PostDetails, PostResponse, Integration, PluginPostDetails, PluginS
 import { BaseSchedulerPlugin, type MediaContent } from '../SchedulerPost.service';
 import type { Post, PostWithAllData, SocialMediaAccount, Asset } from '#layers/BaseDB/db/schema';
 import { TwitterApi } from 'twitter-api-v2';
-import sharp from 'sharp';
 import { platformConfigurations } from '../../../shared/platformConstants';
 import type { TwitterSettings } from '../../../shared/platformSettings';
 
@@ -52,13 +51,8 @@ export class XPlugin extends BaseSchedulerPlugin {
   /**
    * Get authenticated user information
    */
-  async getUser(accessToken: string, accessSecret: string): Promise<any> {
-    const client = new TwitterApi({
-      appKey: process.env.NUXT_X_API_KEY!,
-      appSecret: process.env.NUXT_X_API_SECRET!,
-      accessToken,
-      accessSecret,
-    });
+  async getUser(accessToken: string): Promise<any> {
+    const client = new TwitterApi(accessToken);
 
     const user = await client.v2.me();
     return user.data;
@@ -67,13 +61,8 @@ export class XPlugin extends BaseSchedulerPlugin {
   /**
    * Get tweet metrics
    */
-  async getTweetMetrics(tweetId: string, accessToken: string, accessSecret: string): Promise<any> {
-    const client = new TwitterApi({
-      appKey: process.env.NUXT_X_API_KEY!,
-      appSecret: process.env.NUXT_X_API_SECRET!,
-      accessToken,
-      accessSecret,
-    });
+  async getTweetMetrics(tweetId: string, accessToken: string): Promise<any> {
+    const client = new TwitterApi(accessToken);
 
     const tweet = await client.v2.singleTweet(tweetId, {
       'tweet.fields': ['public_metrics', 'created_at'],
@@ -86,31 +75,9 @@ export class XPlugin extends BaseSchedulerPlugin {
    * Process and optimize image for X
    */
   private async processImage(asset: Asset): Promise<Buffer> {
-    const response = await fetch(getPublicUrlForAsset(asset.url));
-    const arrayBuffer = await response.arrayBuffer();
-    let imageBuffer = Buffer.from(arrayBuffer);
-
-    // X image requirements: max 5MB
-    const maxSize = 5 * 1024 * 1024;
-
-    if (imageBuffer.length > maxSize) {
-      // Resize and compress
-      const metadata = await sharp(imageBuffer).metadata();
-      let width = metadata.width!;
-      let height = metadata.height!;
-
-      while (imageBuffer.length > maxSize && width > 100) {
-        width = Math.floor(width * 0.9);
-        height = Math.floor(height * 0.9);
-        // @ts-ignore
-        imageBuffer = await sharp(imageBuffer as unknown as Buffer)
-          .resize(width, height)
-          .jpeg({ quality: 85 })
-          .toBuffer();
-      }
-    }
-
-    return imageBuffer;
+    const imageUrl = getPublicUrlForAsset(asset.url);
+    const { buffer } = await reduceImageBySize(imageUrl, 5 * 1024); // 5MB = 5120 KB
+    return buffer;
   }
 
   override async post(
@@ -120,18 +87,13 @@ export class XPlugin extends BaseSchedulerPlugin {
   ): Promise<PostResponse> {
     try {
       // X stores token as "accessToken:accessSecret"
-      const [accessToken, accessSecret] = socialMediaAccount.accessToken.split(':');
+      const accessToken = socialMediaAccount.accessToken;
 
-      if (!accessToken || !accessSecret) {
+      if (!accessToken) {
         throw new Error('Invalid X authentication tokens');
       }
 
-      const client = new TwitterApi({
-        appKey: process.env.NUXT_X_API_KEY!,
-        appSecret: process.env.NUXT_X_API_SECRET!,
-        accessToken,
-        accessSecret,
-      });
+      const client = new TwitterApi(accessToken);
 
       // Use platform-specific content if available, otherwise use master content
       const platformContent = (postDetails as any).platformContent?.twitter
@@ -217,16 +179,34 @@ export class XPlugin extends BaseSchedulerPlugin {
         }
       }
 
-      const tweet = await client.v2.tweet(tweetOptions);
+      const postComments = (postDetails.platformContent as Record<string, string[]>).comments ?? [];
 
+      let tweet;
+      let isThread = false;
+      if (postComments.length > 0) {
+        // Create a thread with main content and comments
+        const threadTweets = [
+          tweetOptions, // Main tweet with media, poll, settings
+          ...postComments.map(comment => ({ text: this.normalizeContent(comment) }))
+        ];
+        tweet = await client.v2.tweetThread(threadTweets);
+        isThread = true;
+      } else {
+        // Single tweet
+        tweet = await client.v2.tweet(tweetOptions);
+      }
+
+      // Add comment to post
+
+      const tweetData = isThread ? (tweet as any)[0] : tweet;
       const postResponse: PostResponse = {
         id: postDetails.id,
-        postId: tweet.data.id,
-        releaseURL: `https://twitter.com/${socialMediaAccount.username}/status/${tweet.data.id}`,
+        postId: tweetData.data.id,
+        releaseURL: `https://twitter.com/${socialMediaAccount.username}/status/${tweetData.data.id}`,
         status: 'published',
       };
 
-      this.emit('x:post:published', { postId: postResponse.postId, response: tweet.data });
+      this.emit('x:post:published', { postId: postResponse.postId, response: tweetData.data });
       return postResponse;
     } catch (error: unknown) {
       const errorResponse: PostResponse = {
@@ -258,14 +238,8 @@ export class XPlugin extends BaseSchedulerPlugin {
         throw new Error('Tweet ID is required for updating');
       }
 
-      const [accessToken, accessSecret] = socialMediaAccount.accessToken.split(':');
-
-      const client = new TwitterApi({
-        appKey: process.env.NUXT_X_API_KEY!,
-        appSecret: process.env.NUXT_X_API_SECRET!,
-        accessToken,
-        accessSecret,
-      });
+      const accessToken = socialMediaAccount.accessToken;
+      const client = new TwitterApi(accessToken);
 
       // X (Free API) doesn't support editing.
       // Delete and recreate pattern changes the ID and URL which effectively is a new post.
@@ -310,11 +284,11 @@ export class XPlugin extends BaseSchedulerPlugin {
       throw new Error('Post details not found');
     }
 
-    const [accessToken, accessSecret] = socialMediaAccount.accessToken.split(':');
-    if (!accessToken || !accessSecret) {
+    const accessToken = socialMediaAccount.accessToken;
+    if (!accessToken) {
       throw new Error('Access token or access secret not found');
     }
-    return this.getTweetMetrics(postId, accessToken, accessSecret);
+    return this.getTweetMetrics(postId, accessToken);
   }
 
   override async addComment(
@@ -327,14 +301,9 @@ export class XPlugin extends BaseSchedulerPlugin {
         throw new Error('Tweet ID is required for replying');
       }
 
-      const [accessToken, accessSecret] = socialMediaAccount.accessToken.split(':');
+      const accessToken = socialMediaAccount.accessToken;
 
-      const client = new TwitterApi({
-        appKey: process.env.NUXT_X_API_KEY!,
-        appSecret: process.env.NUXT_X_API_SECRET!,
-        accessToken,
-        accessSecret,
-      });
+      const client = new TwitterApi(accessToken);
 
       const reply = await client.v2.reply(commentDetails.content, postDetails.postId);
 

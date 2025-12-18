@@ -333,21 +333,6 @@ export const auth = betterAuth({
               return;
             }
             if (account.providerId === "instagram") {
-
-              // Fetch user information then create SocialMedia from the user details
-              /*
-              "id",
-              "name",
-              "username",
-              "account_type",
-              "website",
-              "media_count",
-              "followers_count",
-              "follows_count",
-              "biography",
-              "profile_picture_url",
-              */
-
               const response = await $fetch<{ id: string, name: string, username: string, account_type: string, website: string, media_count: number, followers_count: number, follows_count: number, biography: string, profile_picture_url: string }>(`https://graph.instagram.com/me?fields=id,name,username,account_type,website,media_count,followers_count,follows_count,biography,profile_picture_url`, {
                 headers: {
                   Authorization: `Bearer ${account.accessToken}`,
@@ -374,6 +359,41 @@ export const auth = betterAuth({
                 userAgent: "",
                 status: 'success',
                 details: `${response.id} ${response.name} ${response.username} ${response.account_type} ${response.website} ${response.media_count} ${response.followers_count} ${response.follows_count} ${response.biography} ${response.profile_picture_url} from INSTAGRAM`,
+              })
+            }
+
+            if (account.providerId === "twitter") {
+              const response = await $fetch<{ data: { id: string, name: string, username: string, profile_image_url: string } }>(
+                `https://api.twitter.com/2/users/me?user.fields=profile_image_url,name,username`,
+                {
+                  headers: {
+                    Authorization: `Bearer ${account.accessToken}`,
+                  },
+                }
+              );
+
+              const twitterUser = response.data;
+
+              await socialMediaAccountService.createOrUpdateAccountFromAuth({
+                id: twitterUser.id,
+                name: twitterUser.name,
+                access_token: account.accessToken as string,
+                picture: twitterUser.profile_image_url,
+                username: twitterUser.username,
+                platformId: 'twitter',
+                user: ctx?.context.session?.user as schema.User
+              });
+
+              await logAuditService.logAuditEvent({
+                userId: ctx?.context.session?.user.id,
+                category: 'after:create',
+                action: 'AUTH_CREATE_SOCIAL_MEDIA',
+                targetType: 'twitter',
+                targetId: account.id,
+                ipAddress: "",
+                userAgent: "",
+                status: 'success',
+                details: `${twitterUser.id} ${twitterUser.username} from TWITTER`,
               })
             }
             await logAuditService.logAuditEvent({

@@ -28,7 +28,7 @@ export default defineEventHandler(async (event) => {
       scheduledAt: body.scheduledAt || new Date(),
       status: body.status || 'draft',
       comment: body.comment || [],
-      platformContent: body.platformContent || {},
+      platformContent: { ...body.platformContent, comment: body.comment || [] },
       platformSettings: body.platformSettings || {},
       postFormat: body.postFormat || 'post'
     }

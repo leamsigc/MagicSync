@@ -848,6 +848,15 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
           break;
         }
       }
+      // Post comment when the post is published
+      const postComments = (postDetails.platformContent as Record<string, string[]>).comments ?? [];
+      if (postComments?.length) {
+        await Promise.all(
+          postComments.map(async (comment) => {
+            await this.addCommentToPost(finalId, comment, socialMediaAccount.accessToken);
+          })
+        );
+      }
 
       const response: PostResponse = {
         id: postDetails.id,

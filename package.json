@@ -52,7 +52,7 @@
     "doc:start": "pnpm packages magicsync-docs preview"
   },
   "devDependencies": {
-    "dotenv-cli": "^7.4.4"
+    "dotenv-cli": "^11.0.0"
   },
   "workspaces": [
     "packages/*"

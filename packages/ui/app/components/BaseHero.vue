@@ -105,10 +105,10 @@ const mode = useColorMode()
         <div v-if="heroImage && showHeroImage" class="relative group mt-14">
           <!-- gradient shadow -->
           <div
-            class="absolute -top-6 right-12 w-[90%] h-12 lg:h-[80%] bg-neutral-900 dark:bg-neutral-900 blur-3xl rounded-full img-shadow-animation" />
+            class="absolute -top-6 right-12 w-[90%] h-12 lg:h-[80%] bg-primary dark:bg-primary/10 blur-3xl rounded-full img-shadow-animation" />
 
           <img
-            class="w-full lg:w-[1200px] mx-auto rounded-lg relative leading-none flex items-center border border-t-2 border-t-primary/30 img-border-animation"
+            class="w-full lg:w-[1200px] mx-auto rounded-lg relative leading-none flex items-center border-0 shadow  img-border-animation"
             :src="mode.value == 'light' ? heroImage.light : heroImage.dark" :alt="heroImage.alt" width="1300"
             height="900" loading="lazy" />
 
@@ -152,11 +152,11 @@ const mode = useColorMode()
 
 @keyframes img-border-animation {
   from {
-    border-top-color: rgb(var(--color-muted) / 0.1);
+    border-top-color: hsla(var(--primary) 0.1);
   }
 
   to {
-    border-top-color: rgb(var(--color-muted) / 0.6);
+    border-top-color: hsla(var(--destructive) 0.6);
   }
 }
 </style>

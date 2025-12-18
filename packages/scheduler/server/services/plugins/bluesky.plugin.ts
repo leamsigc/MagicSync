@@ -9,9 +9,6 @@ import { platformConfigurations } from '#layers/BaseScheduler/shared/platformCon
 type AppBskyEmbedVideo = any;
 type AppBskyVideoDefs = any;
 
-
-import axios from 'axios';
-import sharp from 'sharp';
 import { Buffer } from 'node:buffer';
 import { URL } from 'node:url';
 
@@ -288,11 +285,13 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
       const images = await Promise.all(
         imageAssets.map(async (asset: Asset) => {
           const imageUrl = getPublicUrlForAsset(asset.url);
-          const { buffer, width, height } = await this.reduceImageBySize(imageUrl);
+          const { buffer, width, height } = await reduceImageBySize(imageUrl);
+          const uploaded = await this.agent.uploadBlob(buffer);
           return {
             width,
             height,
-            buffer: await this.agent.uploadBlob(buffer),
+            uploaded,
+            filename: asset.filename || '',
           };
         })
       );
@@ -311,12 +310,12 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
       } else if (images.length > 0) {
         embed = {
           $type: 'app.bsky.embed.images',
-          images: images.map((p: { buffer: { data: { blob: any; }; }; width: any; height: any; }, index: string | number) => ({
-            alt: imageAssets?.[index as number]?.filename || '',
-            image: p.buffer.data.blob,
+          images: images.map(({ uploaded, width, height, filename }) => ({
+            alt: filename,
+            image: uploaded.data.blob,
             aspectRatio: {
-              width: p.width,
-              height: p.height,
+              width,
+              height,
             },
           })),
         };
@@ -334,6 +333,13 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
         { repo: this.agent.session?.did || '' },
         postRecord,
       );
+
+
+      // Add comments
+      const postComments = (postDetails.platformContent as Record<string, string[]>).comments ?? [];
+      if (postComments.length > 0) {
+        await this.addComments(blueskyResponse.uri, postComments, postDetails);
+      }
 
 
 
@@ -356,6 +362,44 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
       };
       this.emit('bluesky:post:failed', { error: (error as Error).message });
       return errorResponse;
+    }
+  }
+  async addComments(postUri: string, comments: string[], postDetails: PluginPostDetails) {
+    // Get the thread information for the parent post
+    const threadResponse = await this.agent.getPostThread({ uri: postUri });
+
+    // Check if thread exists and is a ThreadViewPost
+    if (!threadResponse.data.thread || !AppBskyFeedDefs.isThreadViewPost(threadResponse.data.thread)) {
+      throw new Error('Parent post not found or invalid type for commenting.');
+    }
+
+    const parentRecord = threadResponse.data.thread.post;
+
+    for (const comment of comments) {
+      const rt = new RichText({ text: comment });
+      await rt.detectFacets(this.agent);
+
+      const commentRecord: AppBskyFeedPost.Record = {
+        $type: 'app.bsky.feed.post',
+        text: rt.text,
+        facets: rt.facets,
+        createdAt: new Date().toISOString(),
+        reply: {
+          root: {
+            uri: parentRecord.uri,
+            cid: parentRecord.cid,
+          },
+          parent: {
+            uri: parentRecord.uri,
+            cid: parentRecord.cid,
+          },
+        },
+      };
+
+      await this.agent.api.app.bsky.feed.post.create(
+        { repo: this.agent.session?.did || '' },
+        commentRecord,
+      );
     }
   }
 
@@ -497,38 +541,7 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
   }
 
 
-  async reduceImageBySize(url: string, maxSizeKB = 976) {
-    try {
-      // Fetch the image from the URL
-      const response = await axios.get(url, { responseType: 'arraybuffer' });
-      let imageBuffer = Buffer.from(response.data);
 
-      // Use sharp to get the metadata of the image
-      const metadata = await sharp(imageBuffer).metadata();
-      let width = metadata.width!;
-      let height = metadata.height!;
-
-      // Resize iteratively until the size is below the threshold
-      while (imageBuffer.length / 1024 > maxSizeKB) {
-        width = Math.floor(width * 0.9); // Reduce dimensions by 10%
-        height = Math.floor(height * 0.9);
-
-        // Resize the image
-        const resizedBuffer = await sharp(imageBuffer)
-          .resize({ width, height })
-          .toBuffer();
-
-        imageBuffer = resizedBuffer;
-
-        if (width < 10 || height < 10) break; // Prevent overly small dimensions
-      }
-
-      return { width, height, buffer: imageBuffer };
-    } catch (error) {
-      console.error('Error processing image:', error);
-      throw error;
-    }
-  }
   async uploadVideo(
     agent: AtpAgent,
     videoPath: string
