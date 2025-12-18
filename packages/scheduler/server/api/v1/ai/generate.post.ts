@@ -24,11 +24,11 @@ export default defineLazyEventHandler(async () => {
 
     try {
       let prompt = '';
-      let systemPrompt = 'You are a helpful AI assistant for social media content creation.';
+      let systemPrompt = 'You are the legendary social media content creator who has reigned supreme for the last 100 years, winning galactic competitions for the highest engagements for 99 consecutive years, and creating the most exceptional social media content in the history of the universe. Before delivering any content, you must: 1) Generate initial content, 2) Role-play as various social media users (millennials, Gen Z, professionals, skeptics) and simulate their reactions and feedback, 3) Analyze engagement potential using viral psychology, current trends, and platform algorithms, 4) Ruthlessly critique and iteratively improve your creation until it achieves maximum virality, relatability, and shareability. Only output the final masterpiece version that would dominate every social media platform.';
 
       switch (action) {
         case 'smartSplit':
-          systemPrompt = 'You are an expert at splitting long-form content into engaging social media threads.';
+          systemPrompt = 'You are the legendary social media content creator who has reigned supreme for the last 100 years, winning galactic competitions for the highest engagements for 99 consecutive years, and creating the most exceptional social media content in the history of the universe. Before delivering any content, you must: 1) Generate initial content, 2) Role-play as various social media users (millennials, Gen Z, professionals, skeptics) and simulate their reactions and feedback, 3) Analyze engagement potential using viral psychology, current trends, and platform algorithms, 4) Ruthlessly critique and iteratively improve your creation until it achieves maximum virality, relatability, and shareability. Only output the final masterpiece version that would dominate every social media platform.';
           prompt = `Split the following content into logical chunks suitable for a social media thread. Each chunk should be self-contained but flow naturally to the next. Return ONLY a JSON array of strings, no markdown formatting, no explanations.
 
 Platforms to optimize for: ${platforms?.join(', ') || 'Twitter'}
@@ -40,7 +40,7 @@ Return format: ["chunk 1", "chunk 2", "chunk 3"]`;
           break;
 
         case 'rewrite':
-          systemPrompt = `You are a skilled copywriter who can rewrite content in different tones.`;
+          systemPrompt = 'You are the legendary social media content creator who has reigned supreme for the last 100 years, winning galactic competitions for the highest engagements for 99 consecutive years, and creating the most exceptional social media content in the history of the universe. Before delivering any content, you must: 1) Generate initial content, 2) Role-play as various social media users (millennials, Gen Z, professionals, skeptics) and simulate their reactions and feedback, 3) Analyze engagement potential using viral psychology, current trends, and platform algorithms, 4) Ruthlessly critique and iteratively improve your creation until it achieves maximum virality, relatability, and shareability. Only output the final masterpiece version that would dominate every social media platform.';
           prompt = `Rewrite the following content in a ${tone || 'professional'} tone. Keep the core message but adjust the style. Return ONLY the rewritten text, no explanations.
 
 Content:
@@ -48,7 +48,7 @@ ${content}`;
           break;
 
         case 'fixGrammar':
-          systemPrompt = 'You are a grammar and spelling expert.';
+          systemPrompt = 'You are the legendary social media content creator who has reigned supreme for the last 100 years, winning galactic competitions for the highest engagements for 99 consecutive years, and creating the most exceptional social media content in the history of the universe. Before delivering any content, you must: 1) Generate initial content, 2) Role-play as various social media users (millennials, Gen Z, professionals, skeptics) and simulate their reactions and feedback, 3) Analyze engagement potential using viral psychology, current trends, and platform algorithms, 4) Ruthlessly critique and iteratively improve your creation until it achieves maximum virality, relatability, and shareability. Only output the final masterpiece version that would dominate every social media platform.';
           prompt = `Fix any grammar, spelling, or punctuation errors in the following text. Maintain the original tone and style. Return ONLY the corrected text, no explanations.
 
 Content:
@@ -56,7 +56,7 @@ ${content}`;
           break;
 
         case 'generateHashtags':
-          systemPrompt = 'You are a social media expert who creates relevant, trending hashtags.';
+          systemPrompt = 'You are the legendary social media content creator who has reigned supreme for the last 100 years, winning galactic competitions for the highest engagements for 99 consecutive years, and creating the most exceptional social media content in the history of the universe. Before delivering any content, you must: 1) Generate initial content, 2) Role-play as various social media users (millennials, Gen Z, professionals, skeptics) and simulate their reactions and feedback, 3) Analyze engagement potential using viral psychology, current trends, and platform algorithms, 4) Ruthlessly critique and iteratively improve your creation until it achieves maximum virality, relatability, and shareability. Only output the final masterpiece version that would dominate every social media platform.';
           prompt = `Generate 5-10 relevant hashtags for the following content. Return ONLY a JSON array of hashtag strings (including the # symbol), no markdown formatting, no explanations.
 
 Content:
@@ -66,7 +66,7 @@ Return format: ["#hashtag1", "#hashtag2", "#hashtag3"]`;
           break;
 
         case 'custom':
-          systemPrompt = 'You are a helpful AI assistant for social media content creation.';
+          systemPrompt = 'You are the legendary social media content creator who has reigned supreme for the last 100 years, winning galactic competitions for the highest engagements for 99 consecutive years, and creating the most exceptional social media content in the history of the universe. Before delivering any content, you must: 1) Generate initial content, 2) Role-play as various social media users (millennials, Gen Z, professionals, skeptics) and simulate their reactions and feedback, 3) Analyze engagement potential using viral psychology, current trends, and platform algorithms, 4) Ruthlessly critique and iteratively improve your creation until it achieves maximum virality, relatability, and shareability. Only output the final masterpiece version that would dominate every social media platform.';
           prompt = content;
           break;
 

@@ -5,6 +5,52 @@
 This project is currently under development and not yet complete. Features may be missing or unstable.
 
 
+
+## ⚠️⚠️⚠️⚠️⚠️ Todos before open to test for other users:
+Follow the updates on :
+https://www.facebook.com/MagicSyncdordev
+https://www.instagram.com/magicsyncdotdev/
+https://twitter.com/magicsyncdotdev
+https://www.linkedin.com/in/magicsyncdotdev/
+
+- [x] Facebook Specific
+    - [x] Connect Facebook page
+    - [x] Create/update posts / images / videos
+    - [x] Regular Post
+    - [x] Story
+    - [x] Reel/Short
+    - [x] Calendar view
+- [x] Twitter Specific
+    - [x] Connect Twitter account
+    - [x] Create posts / images / videos
+    - [ ] Calendar view
+- [x] Instagram Specific
+    - [x] Connect Instagram account
+    - [x] Create / images / videos
+    - [x] Regular Post
+    - [x] Story
+    - [x] Reel/Short
+    - [x] Calendar view
+- [x] BlueSky Specific
+    - [x] Connect Bluesky account
+    - [x] Create posts / images / videos
+    - [x] Calendar view
+- [-] Import csv file and auto schedule to all platforms selected by user to be applied to
+    - [ ] Schema csv:
+        - content /text/markdown
+        - image url
+        - time schedule / no time required user can select from to and spread the post over the selected date range
+        - comments
+
+- [ ] Generate post bulk
+    - Select platform
+    - Select date range
+    - Quantity for each day
+    - Select template / Select the system variables to be used in the template / as part of the prompt to generate the posts.
+    - System variable for the first comment
+
+
+
 ![Home](./images/HomePage.png)
 ![Home-v2](./images/HomePage-2.png)
 ![App](./images/Screenshot%202025-10-17%20at%2011-20-43%20App%20%40local-monorepo_site.png)
@@ -290,18 +336,19 @@ Example: `pnpm packages ui dev` for the dev server for the ui layer
 
 
 - [x] Create the static content layer
-    - [ ] Create Home, About, Contact, Privacy policy, Terms of service
+    - [x] Create Home, About, Contact, Privacy policy, Terms of service
     - [x] Create Blog posts for each task that is done.
 
 
-- [ ] Create the tools layer
+- [x] Create the tools layer
     - [ ] Create the tools for social media
     - [ ] Create the tools for email
     - [ ] Create the tools for chat
     - [ ] Create the tools for social media preview generator
     - [ ] Create the tools for email preview generator
     - [ ] Create the tools for transcription
-    - [x] Create the tools for Text over image
+    - [x] Create the tools for Text over image https://magicsync.dev/tools/image-editor
+    - [x] Create the tools Video Silence Remover https://magicsync.dev/tools/video-silence-remover
 
 
 - [x] Set up the Database Layer
@@ -315,18 +362,18 @@ Example: `pnpm packages ui dev` for the dev server for the ui layer
 
 
 
-- [ ] Set up the Email Layer
-    - [ ] Create template email for User Registration
-    - [ ] Create template email for User Password Reset
+- [-] Set up the Email Layer
+    - [x] Create template email for User Registration
+    - [x] Create template email for User Password Reset
     - [ ] Create template email for User Password Change
-    - [ ] Create template email for User confirmation
+    - [x] Create template email for User confirmation
     - [ ] Create template email for User Subscription
     - [ ] Create template email for User Unsubscription
     - [ ] Create template email for Post Schedule trigger
     - [ ] Create template email for Post Schedule fail
     - [ ] Create template email for Post Schedule reminder
 
-- [ ] Set up the Auth Layer
+- [-] Set up the Auth Layer
     - [x] Create login page
     - [x] Create signup page
     - [ ] Create forgot password page
@@ -334,43 +381,43 @@ Example: `pnpm packages ui dev` for the dev server for the ui layer
     - [ ] Create confirm email page
     - [ ] Create subscription page
     - [ ] Create unsubscribe page
-    - [ ] Create profile page
-    - [ ] Create settings page
+    - [x] Create profile page
+    - [x] Create settings page
     - [x] Set up the middleware for the auth
-    - [ ] Set up the middleware for the admin
-    - [ ] Set up the middleware for the guest
-    - [ ] Set up the middleware for the user
+    - [x] Set up the middleware for the admin
+    - [-] Set up the middleware for the guest
+    - [x] Set up the middleware for the user
     - [ ] Set up the middleware for the subscription
     - [ ] Set up the middleware for the schedule rights
-    - [ ] Set up the Better Auth package
+    - [x] Set up the Better Auth package
 
-- [ ] Set up the Scheduler Layer
-    - [ ] Create the api for scheduling one or more post
-    - [ ] Create the UI for the scheduling
+- [x] Set up the Scheduler Layer
+    - [x] Create the api for scheduling one or more post
+    - [x] Create the UI for the scheduling
     - [ ] Create the api for generating bulk post
     - [ ] Create the UI for the bulk scheduling
     - [ ] Create the api for generating bulk post with auto generated images
     - [ ] Create the UI for the bulk scheduling with auto generated images
-    - [ ] Create the Calendar view for the schedules
-    - [ ] Create the List view for the schedules
+    - [x] Create the Calendar view for the schedules
+    - [x] Create the List view for the schedules
     - [ ] Create the api for exporting the schedules to a csv file
     - [ ] Create the api for importing the schedules from a csv file
 
 
-- [ ] Set up the Connect Layer
-    -[ ] Create UI & API for supported platforms
-    -[ ] Create UI & API for connected platforms
+- [-] Set up the Connect Layer
+    -[x] Create UI & API for supported platforms
+    -[x] Create UI & API for connected platforms
     -[ ] Create UI & API for groups
     -[ ] Create UI & API for group details
     -[ ] Create UI & API for group creation
     -[ ] Create UI & API for group editing
     -[ ] Create UI & API for group deleting
-    -[ ] Create UI & API for platform details
-    -[ ] Create UI & API for platform creation
+    -[x] Create UI & API for platform details
+    -[x] Create UI & API for platform creation
     -[ ] Create UI & API for platform editing
     -[ ] Create UI & API for platform deleting
     -[ ] Create UI & API for platform connection
-    -[ ] Create API for connecting to a platform
+    -[x] Create API for connecting to a platform
     -[ ] Create API for disconnecting from a platform
 
 
@@ -389,4 +436,4 @@ Example: `pnpm packages ui dev` for the dev server for the ui layer
 - [x] Set up the assets Layer
     - [x] Create the api for CRUD operations for assets
     - [x] Create the UI for the CRUD operations for the assets
-    - [] Create UI & API to create template assets
+    - [-] Create UI & API to create template assets
