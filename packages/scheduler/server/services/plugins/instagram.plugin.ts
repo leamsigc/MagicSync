@@ -19,8 +19,7 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
   private getPlatformData(postDetails: PostWithAllData, platformPost?: any) {
     const platformName = this.pluginName;
     const platformPostSettings = platformPost?.platformSettings || {};
-    const platformContent = platformPostSettings?.platformContent ||
-      (postDetails as any).platformContent?.[platformName];
+    const platformContent = (postDetails as any).platformContent?.[platformName];
     const platformSettings = platformPostSettings ||
       (postDetails as any).platformSettings?.[platformName] as InstagramSettings | undefined;
 

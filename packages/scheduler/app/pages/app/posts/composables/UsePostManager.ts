@@ -13,8 +13,8 @@ import type { ApiResponse, PostFilters, PostStats, ValidationResult } from '#lay
 
 
 export const usePostManager = () => {
-  const toast = useToast()
   const { t } = useI18n()
+  const toast = useToast()
   const isLoading = ref(false)
   const error = ref<string | null>(null)
   const postList = useState<PostWithAllData[]>('posts:list', () => [] as PostWithAllData[])
@@ -189,6 +189,7 @@ export const usePostManager = () => {
     getScheduledPosts,
     getPostStats,
     validatePostContent,
+    t,
 
     // Utilities
     clearError: () => error.value = null

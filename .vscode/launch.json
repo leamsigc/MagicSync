@@ -1,6 +1,14 @@
 {
     "version": "0.2.1",
     "configurations": [
+        // Create one for firefox
+        {
+            "type": "firefox",
+            "request": "launch",
+            "name": "client: firefox",
+            "url": "http://localhost:3000",
+            "webRoot": "${workspaceFolder}/packages/site"
+        },
         {
             "type": "chrome",
             "request": "launch",

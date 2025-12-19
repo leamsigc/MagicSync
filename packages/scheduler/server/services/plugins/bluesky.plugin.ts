@@ -82,7 +82,6 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
   protected init(options?: { serviceUrl: string }): void {
     this.serviceUrl = options?.serviceUrl || 'https://bsky.social';
     this.agent = new AtpAgent({ service: this.serviceUrl || 'https://bsky.social' })
-
     console.log('Bluesky plugin initialized', this.serviceUrl);
   }
 
@@ -252,7 +251,6 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
     await this.init();
     const pwd = await decryptKey(socialMediaAccount.accessToken);
 
-    console.log({ socialMediaAccount });
 
     await this.agent.login({
       identifier: socialMediaAccount.accountName,
@@ -566,7 +564,6 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
 
     const videoData = await downloadVideo(videoPath);
 
-    console.log('Downloaded video', videoPath, videoData.size);
 
     const uploadUrl = new URL(
       'https://video.bsky.app/xrpc/app.bsky.video.uploadVideo'
@@ -585,7 +582,6 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
     });
 
     const jobStatus = (await uploadResponse.json()) as AppBskyVideoDefs;
-    console.log('JobId:', jobStatus.jobId);
     let blob: BlobRef | undefined = jobStatus.blob;
     const videoAgent = new AtpAgent({ service: 'https://video.bsky.app' });
 
@@ -594,11 +590,6 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
       const { data: status } = await (videoAgent as any).app.bsky.video.getJobStatus({
         jobId: jobStatus.jobId,
       });
-      console.log(
-        'Status:',
-        status.jobStatus.state,
-        status.jobStatus.progress || ''
-      );
       if (status.jobStatus.blob) {
         blob = status.jobStatus.blob;
       }
@@ -614,9 +605,6 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
 
       await timer(5000); // 5 seconds check
     }
-
-    console.log('posting video...');
-
     return {
       $type: 'app.bsky.embed.video',
       video: blob,

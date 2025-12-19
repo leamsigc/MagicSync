@@ -36,7 +36,7 @@ export class AutoPostService {
     threads: ThreadsPlugin as unknown as SchedulerPluginConstructor,
     tiktok: TikTokPlugin as unknown as SchedulerPluginConstructor,
     wordpress: WordPressPlugin as unknown as SchedulerPluginConstructor,
-    x: XPlugin as unknown as SchedulerPluginConstructor,
+    twitter: XPlugin as unknown as SchedulerPluginConstructor,
     youtube: YouTubePlugin as unknown as SchedulerPluginConstructor,
   }
 

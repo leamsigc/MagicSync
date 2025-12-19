@@ -6,8 +6,8 @@ import { platformConfigurations } from '../../../shared/platformConstants';
 import type { TwitterSettings } from '../../../shared/platformSettings';
 
 export class XPlugin extends BaseSchedulerPlugin {
-  static readonly pluginName = 'x';
-  readonly pluginName = 'x';
+  static readonly pluginName = 'twitter';
+  readonly pluginName = 'twitter';
   public override exposedMethods = [
     'xMaxLength',
     'getUser',
@@ -94,6 +94,8 @@ export class XPlugin extends BaseSchedulerPlugin {
       }
 
       const client = new TwitterApi(accessToken);
+
+      const { data: userObject } = await client.v2.me();
 
       // Use platform-specific content if available, otherwise use master content
       const platformContent = (postDetails as any).platformContent?.twitter
@@ -209,6 +211,8 @@ export class XPlugin extends BaseSchedulerPlugin {
       this.emit('x:post:published', { postId: postResponse.postId, response: tweetData.data });
       return postResponse;
     } catch (error: unknown) {
+      console.log(error);
+
       const errorResponse: PostResponse = {
         id: postDetails.id,
         postId: '',

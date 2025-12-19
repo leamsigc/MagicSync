@@ -1,6 +1,6 @@
-import { defineContentConfig, defineCollection, z } from '@nuxt/content'
+import { defineContentConfig, defineCollection } from '@nuxt/content'
 import { asSeoCollection } from '@nuxtjs/seo/content'
-
+import { z } from 'zod'
 
 /*
  * @see https://content.nuxtjs.org/api/configuration

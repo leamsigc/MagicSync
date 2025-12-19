@@ -21,11 +21,9 @@ import PostsBoardView from './components/views/PostsBoardView.vue';
 import PostsTableView from './components/views/PostsTableView.vue';
 
 const activeBusinessId = useState<string>('business:id');
-
-const { getPosts, postList } = usePostManager();
+const { getPosts, postList, t } = usePostManager();
 getPosts(activeBusinessId.value);
 
-const { t } = useI18n();
 useHead({
   title: t('seo_title_all'),
   meta: [
