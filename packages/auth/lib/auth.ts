@@ -75,7 +75,7 @@ export const auth = betterAuth({
       allowDifferentEmails: true,
       updateUserInfoOnLink: true,
       allowUnlinkingAll: false,
-      trustedProviders: ['google', 'facebook', 'email-password', 'linkedin', 'twitter', 'tiktok', 'threads', 'youtube', 'reddit', 'discord', 'dribbble', 'instagram'],
+      trustedProviders: ['google', 'facebook', 'email-password', 'linkedin', 'twitter', 'tiktok', 'threads', 'youtube', 'reddit', 'discord', 'dribbble', 'instagram', 'x'],
     },
   },
   socialProviders: {
@@ -304,6 +304,7 @@ export const auth = betterAuth({
       create: {
         after: async (account, ctx) => {
           try {
+            const user = await socialMediaAccountService.getUserByAccountId(account.userId);
             if (account.providerId === "threads") {
               //Get user information then create SocialMedia from the user details
               const { id, username, threads_profile_picture_url } = await $fetch<{ id: string, username: string, threads_profile_picture_url: string }>(`https://graph.threads.net/v1.0/me?fields=id,username,threads_profile_picture_url&access_token=${account.accessToken}`);
@@ -316,7 +317,7 @@ export const auth = betterAuth({
                 picture: threads_profile_picture_url,
                 username: username,
                 platformId: 'threads',
-                user: ctx?.context.session?.user as schema.User
+                user: user as schema.User
               });
               await logAuditService.logAuditEvent({
                 userId: ctx?.context.session?.user.id,
@@ -346,7 +347,7 @@ export const auth = betterAuth({
                 picture: response.profile_picture_url,
                 username: response.username,
                 platformId: "instagram",
-                user: ctx?.context.session?.user as schema.User
+                user: user as schema.User
               });
 
               await logAuditService.logAuditEvent({
@@ -374,14 +375,15 @@ export const auth = betterAuth({
 
               const twitterUser = response.data;
 
+
               await socialMediaAccountService.createOrUpdateAccountFromAuth({
-                id: twitterUser.id,
+                id: account.accountId,
                 name: twitterUser.name,
                 access_token: account.accessToken as string,
                 picture: twitterUser.profile_image_url,
                 username: twitterUser.username,
                 platformId: 'twitter',
-                user: ctx?.context.session?.user as schema.User
+                user: user as schema.User
               });
 
               await logAuditService.logAuditEvent({
@@ -389,11 +391,11 @@ export const auth = betterAuth({
                 category: 'after:create',
                 action: 'AUTH_CREATE_SOCIAL_MEDIA',
                 targetType: 'twitter',
-                targetId: account.id,
+                targetId: account.accountId,
                 ipAddress: "",
                 userAgent: "",
                 status: 'success',
-                details: `${twitterUser.id} ${twitterUser.username} from TWITTER`,
+                details: `${twitterUser} from TWITTER`,
               })
             }
             await logAuditService.logAuditEvent({
@@ -418,7 +420,7 @@ export const auth = betterAuth({
               ipAddress: "",
               userAgent: "",
               status: 'success',
-              details: `${JSON.stringify(account)} from ${account.providerId}`,
+              details: `${JSON.stringify(account)} from ${account.providerId}, Error ${error}`,
             })
           }
         }

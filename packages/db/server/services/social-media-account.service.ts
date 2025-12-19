@@ -13,7 +13,7 @@ import { entityDetails } from '#layers/BaseDB/db/entityDetails/entityDetails';
 import { eq, and, desc } from 'drizzle-orm'
 import type { SocialMediaAccount } from '#layers/BaseDB/db/socialMedia/socialMedia'
 import { socialMediaAccounts } from '#layers/BaseDB/db/socialMedia/socialMedia'
-import { account, type Account, type User } from '#layers/BaseDB/db/auth/auth'
+import { account, type Account, type User, user } from '#layers/BaseDB/db/auth/auth'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
 import { entityDetailsService } from '#layers/BaseDB/server/services/entity-details.service' // Import new service
 import { businessProfiles } from '#layers/BaseDB/db/schema';
@@ -79,6 +79,13 @@ export class SocialMediaAccountService {
   private db = useDrizzle()
 
 
+  async getUserByAccountId(id: string) {
+    const userDetails = await this.db.query.user.findFirst({
+      where: eq(user.id, id),
+    });
+
+    return userDetails
+  }
   async getUserAccountsCompleteDetails(id: string) {
     const userAccounts = await this.db.query.account.findMany({
       where: eq(account.userId, id),
@@ -322,7 +329,7 @@ export class SocialMediaAccountService {
     });
 
 
-    return this.createOrUpdateAccount({ id, name, access_token, picture, username, user, businessId: businessFromUser?.id as string, platformId });
+    return this.createOrUpdateAccount({ id, name, access_token, picture, username, user, businessId: businessFromUser?.id as string || '', platformId });
 
   }
   async getAccountByAccountId(id: string) {
