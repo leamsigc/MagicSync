@@ -491,10 +491,10 @@ const currentPlatformConfig = computed(() => {
 
 /* Ai related need to move  */
 const { rewriteContent, fixGrammar, generateHashtags, smartSplit, isLoading: aiLoading, customPrompt } = useAI();
-const handleAIAction = async (action: string) => {
+const handleAIAction = async (action: string, prompt?: string) => {
   const content = postForm.value.content;
 
-  if (!content) return;
+  if (!content && !prompt) return;
   try {
     let result;
     switch (action) {
@@ -524,6 +524,9 @@ const handleAIAction = async (action: string) => {
           postForm.value.content = thread[0];
           postForm.value.comment = thread.slice(1);
         }
+      case 'custom-prompt':
+        result = await customPrompt(`Content:${content} - User Prompt:${prompt}`);
+        if (result) postForm.value.content = result;
         break;
     }
   } catch (error) {
@@ -560,10 +563,7 @@ const handleTemplateAction = async (templateContent: string) => {
     const activeBusiness = businesses.value.data.find(b => b.isActive);
     console.log(activeBusiness);
     const finalContent = templateContent.replaceAll('{POSTCONTENT}', content).replaceAll('{BUSSINESID}', activeBusiness?.name || 'MagicSync');
-    console.log(finalContent);
     const result = await customPrompt(finalContent);
-
-    console.log(result);
 
   } catch (error) {
     toast.add({

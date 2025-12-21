@@ -12,12 +12,30 @@ onMounted(() => {
   getTemplatesByType(TEMPLATE_TYPE)
 })
 
-
 const props = defineProps<Props>();
-const emit = defineEmits(['action', 'template-action']);
+const emit = defineEmits(['action', 'template-action', 'custom-prompt']);
+
+const isModalOpen = ref(false)
+const input = ref('')
+const chat = ref({ error: undefined as Error | undefined })
+
+const onSubmit = (): void => {
+  console.log("Value", input.value);
+
+  emit('action', 'custom-prompt', input.value)
+  isModalOpen.value = false
+  input.value = ''
+}
 
 const aiActions = computed(() => [
   [
+    {
+      label: 'Custom Prompt',
+      slot: 'custom-prompt' as const,
+      onSelect: () => {
+        isModalOpen.value = true
+      }
+    },
     {
       label: 'Rewrite Professional',
       onSelect: () => emit('action', 'rewrite-professional')
@@ -60,11 +78,20 @@ const aiActions = computed(() => [
 </script>
 
 <template>
-  <UDropdownMenu :items="aiActions" :popper="{ placement: 'top-start' }">
+  <UDropdownMenu :items="aiActions" :popper="{ placement: 'top-start' }" trigger="click">
     <UButton
       class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 hover:text-indigo-300 transition-colors border border-indigo-500/20"
       icon="lucide:wand-2" :loading="loading" variant="ghost">
       <span class="text-sm font-medium hidden md:block">AI Tools</span>
     </UButton>
   </UDropdownMenu>
+
+  <UModal v-model:open="isModalOpen">
+    <template #content>
+      <div class="p-6">
+        <h3 class="text-lg font-semibold mb-4">Custom Prompt</h3>
+        <UChatPrompt v-model="input" icon="i-lucide-search" variant="outline" :error="chat.error" @submit="onSubmit" />
+      </div>
+    </template>
+  </UModal>
 </template>

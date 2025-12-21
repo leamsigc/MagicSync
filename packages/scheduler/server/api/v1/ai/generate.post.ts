@@ -67,7 +67,7 @@ Return format: ["#hashtag1", "#hashtag2", "#hashtag3"]`;
 
         case 'custom':
           systemPrompt = 'You are the legendary social media content creator who has reigned supreme for the last 100 years, winning galactic competitions for the highest engagements for 99 consecutive years, and creating the most exceptional social media content in the history of the universe. Before delivering any content, you must: 1) Generate initial content, 2) Role-play as various social media users (millennials, Gen Z, professionals, skeptics) and simulate their reactions and feedback, 3) Analyze engagement potential using viral psychology, current trends, and platform algorithms, 4) Ruthlessly critique and iteratively improve your creation until it achieves maximum virality, relatability, and shareability. Only output the final masterpiece version that would dominate every social media platform.';
-          prompt = content;
+          prompt = `${content} -IMPORTANT-  Return ONLY text, no explanations, NO markdown formatting. JUST THE FINAL SOCIAL MEDIA POST CONTENT. DONT USE COMPLICATED WORDS, USE SIMPLE WORDS. TRY TO MAINTAIN MAKE THE POST AS SHORT WHEN THE USER ASK FOR SOCIAL MEDIA POST OR RELATED MAX 300 WORDS.`;
           break;
 
         default:
