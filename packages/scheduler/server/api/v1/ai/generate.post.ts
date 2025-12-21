@@ -78,7 +78,7 @@ Return format: ["#hashtag1", "#hashtag2", "#hashtag3"]`;
       }
 
       const { text } = await generateText({
-        model: google('gemini-2.5-flash'),
+        model: google('gemini-3-flash-preview'),
         system: systemPrompt,
         prompt: prompt,
         temperature: action === 'fixGrammar' ? 0.3 : 0.7,
