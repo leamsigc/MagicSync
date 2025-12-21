@@ -20,6 +20,20 @@
       "select_page_title": "Select a page",
       "select_page_description": "Here you can select a specific page to connect to base on the current connection",
       "id_label": "Id: "
+    },
+    "messages": {
+      "connect": {
+        "title": "Connected",
+        "description": "Connected successfully"
+      },
+      "disconnected": {
+        "title": "Disconnected",
+        "description": "Disconnected successfully"
+      },
+      "error": {
+        "title": "Error",
+        "description": "An error occurred while trying to connect/disconnect {error} {id}"
+      }
     }
   },
   "fr": {

@@ -17,6 +17,8 @@ export interface Connection {
 const connectionList = ref<Connection[]>([]);
 
 export const useConnectionManager = () => {
+
+  const { t } = useI18n();
   const toast = useToast();
   const allConnections = ref<SocialMediaAccount[]>([]);
   const pagesList = useState<SocialMediaComplete[]>("socialMedia:List", () => []);
@@ -159,12 +161,38 @@ export const useConnectionManager = () => {
     }
   }
 
+
+  const handleDisconnect = async (id: string) => {
+    try {
+      await $fetch(`/api/v1/social-accounts/${id}`, {
+        method: 'DELETE',
+      });
+      await getAllSocialMediaAccounts();
+      toast.add({
+        title: t('messages.disconnected.title'),
+        description: t('messages.disconnected.description'),
+        icon: 'i-heroicons-check-circle',
+        color: 'success',
+      })
+
+    } catch (error) {
+      toast.add({
+        title: t('messages.error.title'),
+        description: t('messages.error.description', { error, id }),
+        icon: 'i-heroicons-x-circle',
+        color: 'error',
+      })
+      console.error(`Error deleting business with ID ${id}:`, error);
+      throw error;
+    }
+  }
   return {
     connectionList,
     allConnections,
     pagesList,
     facebookPages,
     accountsList,
+    handleDisconnect,
     setConnectionList,
     getAllConnections,
     HandleConnectTo,

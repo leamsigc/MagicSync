@@ -61,7 +61,7 @@ watch(accountsList, () => {
       <ConnectAddAccount />
       <ConnectIntegrationCard v-for="connection in accountsList" :name="connection.providerId" :key="connection.id"
         :image="user && user.image ? user.image : ''" :icon="`logos:${connection.providerId}`" :tags="[]"
-        :time="dayjs(connection.createdAt as unknown as string).format('YYYY-MM-DD')" connected />
+        :id="connection.id" :time="dayjs(connection.createdAt as unknown as string).format('YYYY-MM-DD')" connected />
     </div>
     <h3>Pages</h3>
     <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
@@ -69,13 +69,13 @@ watch(accountsList, () => {
         <template v-if="account.entityDetail && account.entityDetail.details.pages">
           <ConnectIntegrationCard v-for="social in account.entityDetail.details.pages" :name="social.name"
             :key="social.id" :image="social.imageBase64 || ''" :icon="`logos:${account.providerId}`" :tags="[social.id]"
-            :time="dayjs(account.createdAt as unknown as string).format('YYYY-MM-DD')"
+            :time="dayjs(account.createdAt as unknown as string).format('YYYY-MM-DD')" :id="social.id"
             :connected="connectedAccounts.includes(social.id)" :show-pages="false" :show-menu="false" />
         </template>
       </template>
       <template v-for="social in pagesList" :key="social.id">
         <ConnectIntegrationCard :name="social.accountName" v-if="!accountPages.includes(social.accountId)"
-          :image="social.entityDetail.details.picture ? social.entityDetail.details.picture : ''"
+          :image="social.entityDetail.details.picture ? social.entityDetail.details.picture : ''" :id="social.id"
           :icon="`logos:${social.platform}`" :tags="[social.accountId]"
           :time="dayjs(social.createdAt as unknown as string).format('YYYY-MM-DD')" connected :show-pages="false" />
       </template>

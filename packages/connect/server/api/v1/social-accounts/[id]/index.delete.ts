@@ -4,7 +4,7 @@ import { socialMediaAccountService } from "#layers/BaseDB/server/services/social
 export default defineEventHandler(async (event) => {
   try {
     // Get user from session
-    const user = await requireUserSession(event)
+    const user = await checkUserIsLogin(event)
 
     const accountId = getRouterParam(event, 'id')
 

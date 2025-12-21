@@ -1,7 +1,6 @@
 <!--  Translation file -->
 <i18n src="../connect.json"></i18n>
 <script lang="ts" setup>
-import { pageList } from '#build/ui';
 import type { FacebookPage } from '#layers/BaseConnect/utils/FacebookPages';
 import { useConnectionManager } from '../composables/useConnectionManager';
 
@@ -18,6 +17,7 @@ import { useConnectionManager } from '../composables/useConnectionManager';
  */
 
 interface Props {
+  id: string;
   name: string;
   image: string;
   connected: boolean;
@@ -27,7 +27,7 @@ interface Props {
   showPages?: boolean;
   showMenu?: boolean;
 }
-const { getPagesForIntegration, HandleConnectToFacebook, facebookPages } = useConnectionManager();
+const { getPagesForIntegration, HandleConnectToFacebook, facebookPages, handleDisconnect } = useConnectionManager();
 
 const modalStatus = ref(false);
 const toggleModal = () => {
@@ -43,7 +43,6 @@ const items = computed(() => [
       icon: 'i-heroicons-viewfinder-circle',
       onSelect: async () => {
         console.log("Get all pages for the current user", props.name);
-
         //Get all pages for the integration
         await getPagesForIntegration(props.name);
         toggleModal();
@@ -61,7 +60,7 @@ const items = computed(() => [
       icon: 'i-heroicons-link-slash',
       onSelect: () => {
         // Handle disconnect action
-        console.log('Disconnect onSelected');
+        handleDisconnect(props.id);
       },
     }, {
       label: $t('menu.edit'),
