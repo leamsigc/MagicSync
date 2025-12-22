@@ -134,7 +134,7 @@ export const auth = betterAuth({
     twitter: {
       clientId: process.env.NUXT_TWITTER_CLIENT_ID as string,
       clientSecret: process.env.NUXT_TWITTER_CLIENT_SECRET as string,
-      scope: ['tweet.read', 'tweet.write', 'users.read', 'offline.access'],
+      scope: ['tweet.read', 'tweet.write', 'users.read', 'offline.access','media.write'],
     },
   },
   hooks: {
