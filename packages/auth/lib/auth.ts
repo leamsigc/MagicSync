@@ -134,7 +134,33 @@ export const auth = betterAuth({
     twitter: {
       clientId: process.env.NUXT_TWITTER_CLIENT_ID as string,
       clientSecret: process.env.NUXT_TWITTER_CLIENT_SECRET as string,
-      scope: ['tweet.read', 'tweet.write', 'users.read', 'offline.access','media.write'],
+      scope: ['tweet.read', 'tweet.write', 'users.read', 'offline.access', 'users.email'],
+      // getUserInfo: async (token: OAuth2Tokens) => {
+      //   const response = await $fetch<{ data: { id: string, name: string, username: string, profile_image_url: string, email?: string } }>(
+      //     `https://api.twitter.com/2/users/me?user.fields=profile_image_url,name,username,email`,
+      //     {
+      //       headers: {
+      //         Authorization: `Bearer ${token.accessToken}`,
+      //       },
+      //     }
+      //   );
+
+      //   const twitterUser = response.data;
+      //   console.log("Requesting user information from twitter:", twitterUser);
+
+
+      //   return {
+      //     user: {
+      //       id: twitterUser.id,
+      //       name: twitterUser.name,
+      //       email: twitterUser.email || null,
+      //       image: twitterUser.profile_image_url,
+      //       emailVerified: false
+      //     },
+      //     data: twitterUser
+      //   };
+
+      // }
     },
   },
   hooks: {

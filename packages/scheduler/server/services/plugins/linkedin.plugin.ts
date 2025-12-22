@@ -139,9 +139,9 @@ export class LinkedInPlugin extends BaseSchedulerPlugin {
 
       if (imageAsset) {
         // Fetch image buffer
-        const response = await fetch(getPublicUrlForAsset(imageAsset.url));
-        const arrayBuffer = await response.arrayBuffer();
-        const imageBuffer = Buffer.from(arrayBuffer as ArrayBuffer);
+        const path = getFileFromAsset(imageAsset);
+        const arrayBuffer = await reduceImageBySize(path, 8 * 1024 * 1024);
+        const imageBuffer = Buffer.from(arrayBuffer.buffer);
 
         // Upload image
         mediaUrn = await this.uploadImage(
@@ -217,6 +217,8 @@ export class LinkedInPlugin extends BaseSchedulerPlugin {
       this.emit('linkedin:post:published', { postId: postResponse.postId, response: data });
       return postResponse;
     } catch (error: unknown) {
+
+      this.logPluginEvent('LinkedIn:post-error', 'failure', `Error: ${(error as Error).message}`, postDetails.id);
       const errorResponse: PostResponse = {
         id: postDetails.id,
         postId: '',

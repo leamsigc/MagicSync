@@ -75,7 +75,7 @@ export class XPlugin extends BaseSchedulerPlugin {
    * Process and optimize image for X
    */
   private async processImage(asset: Asset): Promise<Buffer> {
-    const imageUrl = getPublicUrlForAsset(asset.url);
+    const imageUrl = getFileFromAsset(asset);
     const { buffer } = await reduceImageBySize(imageUrl, 5 * 1024); // 5MB = 5120 KB
     return buffer;
   }
@@ -94,8 +94,6 @@ export class XPlugin extends BaseSchedulerPlugin {
       }
 
       const client = new TwitterApi(accessToken);
-
-      const { data: userObject } = await client.v2.me();
 
       // Use platform-specific content if available, otherwise use master content
       const platformContent = (postDetails as any).platformContent?.twitter
@@ -135,7 +133,7 @@ export class XPlugin extends BaseSchedulerPlugin {
           for (const asset of imageAssets) {
             const imageBuffer = await this.processImage(asset);
             const mediaId = await client.v1.uploadMedia(imageBuffer, {
-              mimeType: 'image/jpeg',
+              mimeType: asset.mimeType,
             });
             mediaIds.push(mediaId);
           }
@@ -211,7 +209,7 @@ export class XPlugin extends BaseSchedulerPlugin {
       this.emit('x:post:published', { postId: postResponse.postId, response: tweetData.data });
       return postResponse;
     } catch (error: unknown) {
-      console.log(error);
+      this.logPluginEvent('post-error', 'failure', (error as Error).message);
 
       const errorResponse: PostResponse = {
         id: postDetails.id,

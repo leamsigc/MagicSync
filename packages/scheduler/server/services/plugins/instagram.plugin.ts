@@ -312,6 +312,7 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
       this.emit('instagram:post:published', { postId: postResponse.postId, response: publishedData });
       return postResponse;
     } catch (error: unknown) {
+      this.logPluginEvent('instagram:post-error', 'failure', (error as Error).message);
       const errorResponse: PostResponse = {
         id: postDetails.id,
         postId: '',

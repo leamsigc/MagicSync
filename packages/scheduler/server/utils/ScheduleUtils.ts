@@ -1,12 +1,12 @@
 import sharp from 'sharp';
-import axios from 'axios';
+import { promises as fs } from 'node:fs'
+
 
 const baseUrl = process.env.NUXT_BASE_URL
 export const getPublicUrlForAsset = (assetUrl: string) => {
 
   return `${baseUrl}${assetUrl.replace('/api/v1/assets/serve/', '/assets/public/')}`
 }
-
 export const fetchedImageBase64 = async (url: string) => {
   // Request the image then save to base64 in the server
   const response = await fetch(url)
@@ -29,8 +29,9 @@ export const fetchedImageBase64 = async (url: string) => {
 export async function reduceImageBySize(url: string, maxSizeKB = 976) {
   try {
     // Fetch the image from the URL
-    const response = await axios.get(url, { responseType: 'arraybuffer' });
-    let imageBuffer = Buffer.from(response.data);
+    const fileContent = await fs.readFile(url)
+
+    let imageBuffer = Buffer.from(fileContent);
 
     // Use sharp to get the metadata of the image
     const metadata = await sharp(imageBuffer).metadata();
