@@ -132,8 +132,8 @@ export class XPlugin extends BaseSchedulerPlugin {
           // Upload images
           for (const asset of imageAssets) {
             const imageBuffer = await this.processImage(asset);
-            const mediaId = await client.v1.uploadMedia(imageBuffer, {
-              mimeType: asset.mimeType,
+            const mediaId = await client.v2.uploadMedia(imageBuffer, {
+              media_type: asset.mimeType || 'image/jpeg' as any,
             });
             mediaIds.push(mediaId);
           }
