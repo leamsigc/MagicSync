@@ -5,6 +5,8 @@ import type { Post, SocialMediaAccount, Asset } from '#layers/BaseDB/db/schema';
 import { AtpAgent, RichText, AppBskyFeedPost, AppBskyFeedDefs, BlobRef } from '@atproto/api';
 import type { BlueskySettings } from '#layers/BaseScheduler/shared/platformSettings';
 import { platformConfigurations } from '#layers/BaseScheduler/shared/platformConstants';
+import { promises as fs } from 'node:fs'
+
 
 type AppBskyEmbedVideo = any;
 type AppBskyVideoDefs = any;
@@ -282,7 +284,7 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
       // Upload images
       const images = await Promise.all(
         imageAssets.map(async (asset: Asset) => {
-          const imageUrl = getPublicUrlForAsset(asset.url);
+          const imageUrl = getFileFromAsset(asset);
           const { buffer, width, height } = await reduceImageBySize(imageUrl);
           const uploaded = await this.agent.uploadBlob(buffer);
           return {
@@ -297,7 +299,7 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
       // Upload videos (only one video per post is supported by Bluesky)
       let videoEmbed: AppBskyEmbedVideo | null = null;
       if (videoAssets.length > 0 && videoAssets[0]) {
-        const videoUrl = getPublicUrlForAsset(videoAssets[0].url);
+        const videoUrl = getFileFromAsset(videoAssets[0]);
         videoEmbed = await this.uploadVideo(this.agent, videoUrl);
       }
 
@@ -549,20 +551,9 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
       lxm: 'com.atproto.repo.uploadBlob',
       exp: Date.now() / 1000 + 60 * 30, // 30 minutes
     });
+    const video = await fs.readFile(videoPath);
+    const videoData = Buffer.from(video);
 
-    // Helper to download video
-    const downloadVideo = async (url: string): Promise<{ video: Buffer; size: number }> => {
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch video: ${response.statusText}`);
-      }
-      const arrayBuffer = await response.arrayBuffer();
-      const video = Buffer.from(arrayBuffer);
-      const size = video.length;
-      return { video, size };
-    };
-
-    const videoData = await downloadVideo(videoPath);
 
 
     const uploadUrl = new URL(
@@ -576,9 +567,9 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
       headers: {
         Authorization: `Bearer ${serviceAuth.token}`,
         'Content-Type': 'video/mp4',
-        'Content-Length': videoData.size.toString(),
+        'Content-Length': videoData.byteLength.toString(),
       },
-      body: new Blob([new Uint8Array(videoData.video)], { type: 'video/mp4' }),
+      body: new Blob([new Uint8Array(videoData.buffer)], { type: 'video/mp4' }),
     });
 
     const jobStatus = (await uploadResponse.json()) as AppBskyVideoDefs;

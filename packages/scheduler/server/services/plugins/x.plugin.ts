@@ -4,6 +4,7 @@ import type { Post, PostWithAllData, SocialMediaAccount, Asset } from '#layers/B
 import { TwitterApi } from 'twitter-api-v2';
 import { platformConfigurations } from '../../../shared/platformConstants';
 import type { TwitterSettings } from '../../../shared/platformSettings';
+import { promises as fs } from 'node:fs'
 
 export class XPlugin extends BaseSchedulerPlugin {
   static readonly pluginName = 'twitter';
@@ -120,10 +121,10 @@ export class XPlugin extends BaseSchedulerPlugin {
 
         if (videoAsset) {
           // Upload video
-          const videoResponse = await fetch(getPublicUrlForAsset(videoAsset.url));
-          const videoBuffer = await videoResponse.arrayBuffer();
+          const videoUrl = getFileFromAsset(videoAsset);
+          const videoResponse = await fs.readFile(videoUrl);
 
-          const mediaId = await client.v1.uploadMedia(Buffer.from(videoBuffer), {
+          const mediaId = await client.v1.uploadMedia(Buffer.from(videoResponse), {
             mimeType: videoAsset.mimeType,
           });
 
