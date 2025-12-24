@@ -233,7 +233,6 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
       let containerId: string;
 
       if (isStory && !hasVideo && firstAsset) {
-        const asset = postDetails.assets[0];
         containerId = await this.createContainer(
           igUserId,
           firstAsset.url,
@@ -250,7 +249,7 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
             const childId = await this.createContainer(
               igUserId,
               asset.url,
-              '',
+              asset.originalName,
               'IMAGE',
               socialMediaAccount.accessToken
             );
@@ -312,7 +311,9 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
       this.emit('instagram:post:published', { postId: postResponse.postId, response: publishedData });
       return postResponse;
     } catch (error: unknown) {
-      this.logPluginEvent('instagram:post-error', 'failure', (error as Error).message);
+      this.logPluginEvent('post-error', 'failure', `Error: ${(error as Error).message}`, postDetails.id, {
+        error: `${error}`,
+      });
       const errorResponse: PostResponse = {
         id: postDetails.id,
         postId: '',
