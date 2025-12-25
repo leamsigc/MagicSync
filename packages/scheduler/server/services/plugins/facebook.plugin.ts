@@ -515,16 +515,17 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
   }
 
   async pages(_: any, accessToken: string): Promise<FacebookPage[]> {
-    const url = this._getGraphApiUrl(`/me/accounts?fields=id,username,name,picture.type(large)&access_token=${accessToken}`);
+    const url = this._getGraphApiUrl(`/me/accounts?fields=id,instagram_business_account,username,name,picture.type(large)&access_token=${accessToken}`);
     const { data }: { data: FacebookPage[] } = await (
       await this.fetch(url, undefined, 'fetch pages')
     ).json();
 
+
     // Fetch all images concurrently before returning the response
-    const imagePromises = data.map(page => fetchedImageBase64(page.picture.data.url));
+    const imagePromises = data.filter(page => !page.instagram_business_account).map(page => fetchedImageBase64(page.picture.data.url));
     const imageBase64s = await Promise.all(imagePromises);
 
-    const pages: FacebookPage[] = data.map((page, index) => ({
+    const pages: FacebookPage[] = data.filter(page => !page.instagram_business_account).map((page, index) => ({
       imageBase64: imageBase64s[index],
       id: page.id,
       name: page.name,
@@ -538,6 +539,20 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
       },
     }));
 
+    // Fetch instagram business accounts concurrently before returning the response
+    // const instagramPagesPromises = await Promise.all(
+    //   data.filter(page => page.instagram_business_account)
+    //     .map(async (page) => {
+    //       const url = this._getGraphApiUrl(`/${page.id}?fields=name,profile_picture_url&access_token=${accessToken}&limit=500`);
+    //       return {
+    //         id: page.id,
+    //         ...(await (
+    //           await fetch(
+    //             `https://graph.facebook.com/v20.0/${p.instagram_business_account.id}?fields=name,profile_picture_url&access_token=${accessToken}&limit=500`
+    //           )
+    //         ).json())
+    //       }
+    //     }));
     return pages;
   }
 

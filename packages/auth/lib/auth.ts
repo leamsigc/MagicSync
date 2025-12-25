@@ -288,7 +288,7 @@ export const auth = betterAuth({
           authorizationUrl: 'https://instagram.com/oauth/authorize',
           tokenUrl: 'https://api.instagram.com/oauth/access_token',
           userInfoUrl: 'https://graph.instagram.com/me?fields=id,name,username,profile_picture_url',
-          scopes: ['instagram_basic', 'instagram_content_publish', 'instagram_manage_insights', 'instagram_manage_comments',],
+          scopes: ['instagram_business_basic', "instagram_business_manage_messages", "instagram_business_content_publish", "instagram_business_manage_insights", "instagram_business_manage_comments  "],
           pkce: false,
           mapProfileToUser: (profile: any) => {
             return {
