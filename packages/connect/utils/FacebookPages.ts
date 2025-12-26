@@ -2,7 +2,9 @@ export interface FacebookPage {
   id: string;
   name: string;
   imageBase64?: string;
-  instagram_business_account?: string;
+  instagram_business_account?: {
+    id: string
+  };
   picture: {
     data:
     {

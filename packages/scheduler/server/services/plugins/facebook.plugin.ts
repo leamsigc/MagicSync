@@ -519,13 +519,11 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     const { data }: { data: FacebookPage[] } = await (
       await this.fetch(url, undefined, 'fetch pages')
     ).json();
-
-
     // Fetch all images concurrently before returning the response
-    const imagePromises = data.filter(page => !page.instagram_business_account).map(page => fetchedImageBase64(page.picture.data.url));
+    const imagePromises = data.map(page => fetchedImageBase64(page.picture.data.url));
     const imageBase64s = await Promise.all(imagePromises);
 
-    const pages: FacebookPage[] = data.filter(page => !page.instagram_business_account).map((page, index) => ({
+    const pages: FacebookPage[] = data.map((page, index) => ({
       imageBase64: imageBase64s[index],
       id: page.id,
       name: page.name,
@@ -540,23 +538,60 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     }));
 
     // Fetch instagram business accounts concurrently before returning the response
-    // const instagramPagesPromises = await Promise.all(
-    //   data.filter(page => page.instagram_business_account)
-    //     .map(async (page) => {
-    //       const url = this._getGraphApiUrl(`/${page.id}?fields=name,profile_picture_url&access_token=${accessToken}&limit=500`);
-    //       return {
-    //         id: page.id,
-    //         ...(await (
-    //           await fetch(
-    //             `https://graph.facebook.com/v20.0/${p.instagram_business_account.id}?fields=name,profile_picture_url&access_token=${accessToken}&limit=500`
-    //           )
-    //         ).json())
-    //       }
-    //     }));
+    const instagramPagesPromises = await Promise.all(
+      data.filter(page => page.instagram_business_account)
+        .map(async (page) => {
+
+          if (!page.instagram_business_account) {
+            return null;
+          }
+          const url = this._getGraphApiUrl(`/${page.instagram_business_account.id}?fields=name,profile_picture_url&access_token=${accessToken}&limit=500`);
+
+          const p: { name: string, profile_picture_url: string } = await (
+            await this.fetch(url, undefined, 'fetch instagram pages')
+          ).json();
+          return {
+            ...p,
+            id: page.id,
+            name: page.name,
+            instagram_business_account: page.instagram_business_account,
+            picture: {
+              data: {
+                height: page.picture.data.height,
+                is_silhouette: page.picture.data.is_silhouette,
+                width: page.picture.data.width,
+                url: p.profile_picture_url,
+              },
+            }
+          }
+        }));
+    //Get instagram images
+    const instagramImagePromises = instagramPagesPromises.filter(page => page !== null)
+      .map(page => fetchedImageBase64(page.picture.data.url));
+    const instagramImageBase64s = await Promise.all(instagramImagePromises);
+
+    const instagramPages = instagramPagesPromises.filter(page => page !== null)
+      .map((page, index) => ({
+        imageBase64: instagramImageBase64s[index],
+        id: page.id,
+        name: page.name,
+        instagram_business_account: page.instagram_business_account,
+        picture: {
+          data: {
+            height: page.picture.data.height,
+            is_silhouette: page.picture.data.is_silhouette,
+            width: page.picture.data.width,
+            url: page.picture.data.url,
+          },
+        },
+      }));
+
+    pages.push(...instagramPages);
+
     return pages;
   }
 
-  async fetchPageInformation(_: FacebookPlugin, pageId: string, accessToken: string,): Promise<{
+  async fetchPageInformation(_: FacebookPlugin, pageId: string, accessToken: string, options?: { instagramId?: string }): Promise<{
     id: string;
     name: string;
     access_token: string;
@@ -576,15 +611,38 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     } = await (
       await this.fetch(url, undefined, 'fetch page information')
     ).json();
-    const base64Picture = await fetchedImageBase64(pictureUrl);
+    // Check if options for instagram is set
+    const instagramId = options?.instagramId;
+    if (instagramId) {
+      const instagramUrl = this._getGraphApiUrl(`/${instagramId}?fields=username,name,profile_picture_url&access_token=${accessToken}`);
+      const {
+        name,
+        username,
+        profile_picture_url
+      } = await (
+        await this.fetch(instagramUrl, undefined, 'fetch page information')
+      ).json();
+      const base64Picture = await fetchedImageBase64(profile_picture_url);
 
-    return {
-      id,
-      name,
-      access_token,
-      picture: base64Picture,
-      username,
-    };
+      return {
+        id: instagramId,
+        name,
+        access_token,
+        picture: base64Picture,
+        username,
+      };
+    } else {
+      const base64Picture = await fetchedImageBase64(pictureUrl);
+
+      return {
+        id,
+        name,
+        access_token,
+        picture: base64Picture,
+        username,
+      };
+    }
+
   }
 
   async analytics(

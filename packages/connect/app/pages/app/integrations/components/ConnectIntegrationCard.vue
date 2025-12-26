@@ -115,6 +115,8 @@ const HandleConnectTo = async (page: unknown) => {
             <section class="text-center">
               <h3 class="text-lg font-semibold">{{ page.name }}</h3>
               <p class="text-sm text-gray-500 dark:text-gray-400">{{ $t('modal.id_label') }}{{ page.id }}</p>
+              <Icon v-if="page.instagram_business_account?.id" name="logos:instagram" />
+              <Icon v-else name="logos:facebook" class="mr-4" />
             </section>
           </section>
         </UPageCard>

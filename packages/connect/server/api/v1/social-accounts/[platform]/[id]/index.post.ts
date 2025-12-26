@@ -7,7 +7,9 @@ import { H3Error, readBody } from 'h3';
 interface ConnectSocialMediaAccountBody {
   id: string;
   name: string;
-  access_token: string;
+  instagram_business_account?: {
+    id: string
+  };
   platformId: SocialMediaPlatform;
   businessId: string;
 }
@@ -27,6 +29,7 @@ export default defineEventHandler(async (event) => {
     }
 
     const body = await readBody<ConnectSocialMediaAccountBody>(event);
+    const instagramId = body.instagram_business_account?.id;
 
     // Use the social media manager to get the page details
     const account = await socialMediaAccountService.getAccountsForPlatform(
@@ -57,7 +60,7 @@ export default defineEventHandler(async (event) => {
     }
 
     //@ts-ignore
-    const pageDetails = await scheduler.fetchPageInformation(pageId, platformAccount.accessToken) as {
+    const pageDetails = await scheduler.fetchPageInformation(pageId, platformAccount.accessToken, { instagramId: body.instagram_business_account?.id }) as {
       id: string;
       name: string;
       access_token: string;
@@ -84,7 +87,7 @@ export default defineEventHandler(async (event) => {
       ...pageDetails,
       user,
       businessId: body.businessId,
-      platformId: platform,
+      platformId: instagramId ? 'instagram' : platform,
     });
 
 
