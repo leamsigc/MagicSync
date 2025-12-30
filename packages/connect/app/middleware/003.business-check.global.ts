@@ -12,6 +12,9 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const { businesses } = useBusinessManager();
   const activeBusinessId = useState<string>('business:id');
 
+  if (activeBusinessId.value) {
+    return
+  }
 
   if (data.value?.data?.id) {
     activeBusinessId.value = data.value.data.id;

@@ -15,11 +15,14 @@ const businesses = ref<PaginatedResponse<BusinessProfile>>({
 
 export const useBusinessManager = () => {
 
-  const activeBusinessId = useState<string>('business:id');
+  const activeBusinessId = useState<string | undefined>('business:id');
   const getAllBusinesses = async () => {
     try {
       const data = await $fetch<Promise<PaginatedResponse<BusinessProfile>>>('/api/v1/business');
       businesses.value = data;
+      if (data.pagination?.total === 0) {
+        activeBusinessId.value = undefined
+      }
     } catch (error) {
       console.error('Error fetching businesses:', error);
     }
@@ -52,6 +55,9 @@ export const useBusinessManager = () => {
   };
 
   const deleteBusiness = async (id: string) => {
+    if (id === activeBusinessId.value) {
+      activeBusinessId.value = undefined
+    }
     try {
       await $fetch(`/api/v1/business/${id}`, {
         method: 'DELETE',
@@ -68,6 +74,7 @@ export const useBusinessManager = () => {
       method: 'POST',
       body: { businessId: id, isActive: true },
     });
+    getAllBusinesses();
   };
 
   return {

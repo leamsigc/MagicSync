@@ -11,7 +11,7 @@ const props = defineProps<{
 }>();
 const { t } = useI18n();
 
-const emit = defineEmits(['edit', 'delete']);
+const emit = defineEmits(['edit', 'delete', 'select']);
 const menuActions = [
   {
     label: t('actions.edit'),
@@ -21,16 +21,17 @@ const menuActions = [
   {
     label: t('actions.delete'),
     icon: 'i-heroicons-trash',
-    onClick: () => emit('delete'),
+    onClick: () => {
+      emit('delete', props.business.id);
+    },
   },
 ];
 const { setActiveBusiness, activeBusinessId } = useBusinessManager();
-const router = useRouter();
 
 
 const HandleSetActive = async (id: string) => {
   await setActiveBusiness(id);
-  router.push('/app');
+  emit('select', id);
 };
 </script>
 
@@ -38,7 +39,7 @@ const HandleSetActive = async (id: string) => {
   <UCard variant="soft" class="cursor-pointer size-56"
     :ui="{ header: 'p-0 sm:p-2', footer: 'p-0 sm:p-2', body: 'p-0 sm:p-0 h-full', root: 'p-0' }">
     <div class="relative  h-full">
-      <section class="flex justify-end z-10 absolute top-2 right-2">
+      <section class="flex justify-end z-50 absolute top-2 right-2 ">
         <UChip :color="activeBusinessId === business.id ? 'primary' : 'neutral'" class="mr-2">
           <UBadge :color="activeBusinessId === business.id ? 'primary' : 'neutral'" variant="subtle">
             {{ activeBusinessId === business.id ? t('states.active') : t('states.inactive') }}
@@ -49,7 +50,7 @@ const HandleSetActive = async (id: string) => {
         </UDropdownMenu>
       </section>
       <NuxtImg :src="'https://must-know-resources-for-programmers.giessen.dev/_ipx/q_75&s_160x60/logo.png'"
-        class="w-full h-full object-cover absolute inset-0 opacity-5" @click="HandleSetActive(business.id)" />
+        class="w-full h-full object-cover absolute inset-0 opacity-5 z-20" @click="HandleSetActive(business.id)" />
       <section class="flex mt-auto absolute bottom-0 left-0 right-0 bg-old-neutral-950/20 p-2 ">
         <div class="flex-1">
           <h3 class="text-lg font-semibold">{{ business.name }}</h3>

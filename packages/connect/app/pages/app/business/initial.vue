@@ -28,7 +28,13 @@ useHead({
 
 
 
-const { businesses } = useBusinessManager();
+const { businesses, getAllBusinesses } = useBusinessManager();
+
+getAllBusinesses();
+
+const HandleSelect = (id: string) => {
+  router.push(`/app/integrations`)
+}
 </script>
 
 <template>
@@ -36,7 +42,8 @@ const { businesses } = useBusinessManager();
     <BasePageHeader :title="t('title_initial')" :description="t('description_initial')" />
     <div class="grid grid-cols-5 gap-2 p-2 mt-6">
       <AddBusiness />
-      <BusinessCard v-for="business in businesses.data" :key="business.id" :business="business" />
+      <BusinessCard v-for="business in businesses.data" :key="business.id" :business="business"
+        @select="HandleSelect" />
       <div v-if="!businesses.data" class="text-center text-gray-500 grid place-content-center bg-accented rounded">
         {{ t('states.no_businesses') }}
       </div>

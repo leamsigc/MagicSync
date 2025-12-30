@@ -19,24 +19,35 @@ import type { BusinessProfile } from '#layers/BaseDB/db/schema';
 
 const { businesses, getAllBusinesses, updateBusiness, deleteBusiness } = useBusinessManager();
 const editingBusiness = ref<BusinessProfile | null>(null);
+const router = useRouter();
+const toast = useToast();
 
 const { data } = await useFetch<PaginatedResponse<BusinessProfile>>('/api/v1/business');
 
 if (data.value) {
-
   businesses.value = data.value;
 } else {
   getAllBusinesses();
 }
+
+watch(businesses, (newData) => {
+  if (newData.pagination?.total === 0) {
+    router.push('/app/business/initial')
+  }
+});
 
 const handleEditBusiness = (id: string) => {
   editingBusiness.value = businesses.value.data?.find(b => b.id === id) || null;
 };
 
 const handleDeleteBusiness = async (id: string) => {
-  if (confirm('Are you sure you want to delete this business?')) {
-    await deleteBusiness(id);
-  }
+  if (!id) return
+  toast.add({
+    title: 'Deleting Business',
+    description: 'Please wait...'
+  });
+  await deleteBusiness(id);
+
 };
 
 const { t } = useI18n();
