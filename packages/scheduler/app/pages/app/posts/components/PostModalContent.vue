@@ -131,6 +131,7 @@ const previewsMap = {
 };
 
 onMounted(async () => {
+  setConnectionList(); // Ensure connection list is initialized
   await getAllSocialMediaAccounts();
   if (props.initialPost) {
     console.log(props.initialPost);
@@ -437,9 +438,16 @@ const activeContextLabel = computed(() => {
 });
 
 /* Account selections  */
+const availableSocialAccounts = computed(() => {
+  return connectedSocialAccountsList.value.filter(account => {
+    const connection = connectionList.value.find(c => c.platform === account.platform);
+    return connection ? connection.active : true;
+  });
+});
+
 const selectedSocialMediaAccounts = computed(() => {
   const connectedIds = postForm.value.targetPlatforms.map(platform => platform.accountId);
-  return connectedSocialAccountsList.value.filter((account: { id: string; }) => connectedIds.includes(account.id));
+  return availableSocialAccounts.value.filter((account: { id: string; }) => connectedIds.includes(account.id));
 })
 
 const togglePlatform = (account: SocialMediaComplete) => {
@@ -590,7 +598,7 @@ const handleVariableAction = (variable: string) => {
   <section class="md:min-w-4xl">
     <UCard>
       <div class="flex items-center justify-between">
-        <PostPlatformSelector :accounts="connectedSocialAccountsList" :selectedAccounts="selectedSocialMediaAccounts"
+        <PostPlatformSelector :accounts="availableSocialAccounts" :selectedAccounts="selectedSocialMediaAccounts"
           @toggle="togglePlatform" :validationStatus="validationStatus" />
         <UButton color="neutral" variant="ghost" icon="i-heroicons-x-mark-20-solid" class="-my-1"
           @click="emit('close')" />

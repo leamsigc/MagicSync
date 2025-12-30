@@ -22,6 +22,7 @@
   "dependencies": {
     "@local-monorepo/auth": "workspace:*",
     "@local-monorepo/db": "workspace:*",
-    "@local-monorepo/ui": "workspace:*"
+    "@local-monorepo/ui": "workspace:*",
+    "twitter-api-v2": "catalog:"
   }
 }

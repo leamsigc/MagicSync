@@ -162,6 +162,12 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
       };
 
       this.emit('youtube:post:published', { postId: postResponse.postId, response: uploadResponse.data });
+
+      // Publish comments after the main post is ready
+      if (comments && comments.length > 0) {
+        await this.publishComments(postResponse, comments, socialMediaAccount);
+      }
+
       return postResponse;
     } catch (error: unknown) {
       const errorResponse: PostResponse = {

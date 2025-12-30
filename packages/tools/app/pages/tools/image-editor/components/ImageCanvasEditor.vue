@@ -1,23 +1,22 @@
 <script lang="ts" setup>
 import { CorePlugin } from '../composables/editor/CorePlugin';
-import { GroupPlugin } from '../composables/editor/GroupPlugin';
-import { HistoryPlugin } from '../composables/editor/HistoryPlugin';
 import { HooksPlugin } from '../composables/editor/HooksPlugin';
-import { ToolsPlugin } from '../composables/editor/ToolsPlugin';
+import { HistoryPlugin } from '../composables/editor/plugins/HistoryPlugin';
+import { AlignPlugin } from '../composables/editor/plugins/AlignPlugin';
+import { WorkspacePlugin } from '../composables/editor/plugins/WorkspacePlugin';
+import { LayerPlugin } from '../composables/editor/plugins/LayerPlugin';
+import { AddBaseTypePlugin } from '../composables/editor/plugins/AddBaseTypePlugin';
+import { FontPlugin } from '../composables/editor/plugins/FontPlugin';
+import { FilterPlugin } from '../composables/editor/plugins/FilterPlugin';
+import { ShadowPlugin } from '../composables/editor/plugins/ShadowPlugin';
+import { DrawPlugin } from '../composables/editor/plugins/DrawPlugin';
+import { ExportPlugin } from '../composables/editor/plugins/ExportPlugin';
+import { ClipboardPlugin } from '../composables/editor/plugins/ClipboardPlugin';
+import { HotkeyPlugin } from '../composables/editor/plugins/HotkeyPlugin';
+import { GroupPlugin } from '../composables/editor/plugins/GroupPlugin';
+import { LockPlugin } from '../composables/editor/plugins/LockPlugin';
+import { RulerPlugin } from '../composables/editor/plugins/RulerPlugin';
 import { useFabricJs } from '../composables/useFabricJs';
-
-
-/**
- *
- * Canvas Editor
- *
- * @author Reflect-Media <reflect.media GmbH>
- * @version 0.0.1
- *
- * @todo [ ] Test the component
- * @todo [ ] Integration test.
- * @todo [✔] Update the typescript.
- */
 const { run, addImageLayer, addImageLayerFromUrl, getCanvasPlugin, editor } = useFabricJs();
 const { start } = useImageTransformer();
 const canvas = useTemplateRef('canvas');
@@ -27,18 +26,12 @@ const files = ref<File>();
 const route = useRoute();
 
 
-run(canvas);
 
 onMounted(async () => {
+  run(canvas);
   if (editor.value) {
-
     // Start the image transformer if needed
     start();
-    editor.value.use(CorePlugin);
-    editor.value.use(ToolsPlugin);
-    editor.value.use(HistoryPlugin);
-    editor.value.use(HooksPlugin);
-    editor.value.use(GroupPlugin);
   }
   const imageId = route.query.imageId as string;
 
@@ -57,6 +50,27 @@ onMounted(async () => {
       console.error('Failed to load image from query param:', error);
     }
   }
+
+
+  // Register all modular plugins
+  editor.value
+    .use(CorePlugin)
+    .use(HooksPlugin)
+    .use(HistoryPlugin)
+    .use(AlignPlugin)
+    .use(WorkspacePlugin)
+    .use(LayerPlugin)
+    .use(AddBaseTypePlugin)
+    .use(FontPlugin)
+    .use(FilterPlugin)
+    .use(ShadowPlugin)
+    .use(DrawPlugin)
+    .use(ExportPlugin)
+    .use(ClipboardPlugin)
+    .use(HotkeyPlugin)
+    .use(GroupPlugin)
+    .use(LockPlugin)
+    .use(RulerPlugin);
 });
 
 const onFileDrop = async (f: File | File[] | null | undefined) => {

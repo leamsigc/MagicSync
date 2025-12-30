@@ -1,5 +1,6 @@
 import { auth } from "#layers/BaseAuth/lib/auth"
 import type { SocialMediaPlatform } from "#layers/BaseDB/server/services/social-media-account.service"
+import { TwitterApi } from 'twitter-api-v2'
 
 /**
  * Start OAuth flow by redirecting client to provider's authorization page
@@ -89,4 +90,22 @@ export async function getUserInfo(provider: SocialMediaPlatform, accountId: stri
     email: info?.user?.email ?? undefined,
     profilePicture: info?.user?.image ?? undefined
   }
+}
+
+/**
+ * Refresh Twitter OAuth 2.0 token
+ */
+export async function refreshTwitterToken(refreshToken: string) {
+  const client = new TwitterApi({
+    clientId: process.env.NUXT_TWITTER_CLIENT_ID as string,
+    clientSecret: process.env.NUXT_TWITTER_CLIENT_SECRET as string,
+  });
+
+  const { accessToken, refreshToken: newRefreshToken, expiresIn } = await client.refreshOAuth2Token(refreshToken);
+
+  return {
+    accessToken,
+    refreshToken: newRefreshToken,
+    tokenExpiresAt: new Date(Date.now() + (expiresIn * 1000))
+  };
 }

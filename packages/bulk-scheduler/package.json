@@ -14,7 +14,8 @@
   "dependencies": {
     "@local-monorepo/auth": "workspace:*",
     "@local-monorepo/db": "workspace:*",
-    "@local-monorepo/ui": "workspace:*"
+    "@local-monorepo/ui": "workspace:*",
+    "@local-monorepo/connect": "workspace:*"
   },
   "devDependencies": {
     "@nuxt/eslint": "catalog:",

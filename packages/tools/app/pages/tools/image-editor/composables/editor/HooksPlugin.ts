@@ -2,7 +2,7 @@ import { BaseFabricPlugin, FabricEditor, type EditorHookType } from './FabricEdi
 
 export class HooksPlugin extends BaseFabricPlugin {
   static readonly pluginName = 'hooks';
-  readonly pluginName = 'hooks'; // Instance property
+  override readonly pluginName = 'hooks';
 
   private hooks: Record<EditorHookType, Function[]> = {
     beforeSave: [],
@@ -13,9 +13,7 @@ export class HooksPlugin extends BaseFabricPlugin {
     afterExport: []
   };
 
-  protected init() {
-    // Initialize hook arrays (already done in declaration)
-  }
+  protected init() { }
 
   registerHook(hookType: EditorHookType, callback: Function) {
     this.hooks[hookType].push(callback);

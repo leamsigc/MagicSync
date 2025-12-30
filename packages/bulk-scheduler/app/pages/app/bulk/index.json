@@ -1,0 +1,45 @@
+{
+    "title": "Bulk Post Scheduler",
+    "steps": {
+        "import": "Import CSV",
+        "config": "Configuration",
+        "accounts": "Select Accounts",
+        "review": "Review & Schedule"
+    },
+    "import": {
+        "csvTab": "CSV Import",
+        "aiTab": "AI Generator",
+        "uploadText": "Upload a CSV file with columns: Content, Image URL (optional)",
+        "topicLabel": "Topic / Context",
+        "topicPlaceholder": "e.g. Tips for healthy eating, or Promotion for summer sale...",
+        "countLabel": "Number of Posts",
+        "generateBtn": "Generate Posts",
+        "previewTitle": "Preview ({count} posts)",
+        "clearBtn": "Clear",
+        "nextBtn": "Next: Configuration"
+    },
+    "config": {
+        "startDate": "Start Date",
+        "defaultTime": "Default Time",
+        "postsPerDay": "Posts Per Day",
+        "backBtn": "Back",
+        "nextBtn": "Next: Select Accounts"
+    },
+    "accounts": {
+        "noAccounts": "No connected accounts found. Please connect accounts first.",
+        "nextBtn": "Next: Review"
+    },
+    "review": {
+        "title": "Review Schedule ({count} posts)",
+        "summary": "Posts will be scheduled starting {date} at {time}, {count} per day.",
+        "accountCount": "{count} accounts",
+        "confirmBtn": "Confirm & Schedule"
+    },
+    "errors": {
+        "noBusinessId": "No business ID found",
+        "scheduleError": "Error scheduling posts",
+        "aiError": "Failed to generate posts with AI",
+        "aiFormatError": "AI returned unexpected format",
+        "success": "All posts scheduled!"
+    }
+}

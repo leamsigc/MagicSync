@@ -1,8 +1,10 @@
-import type { PostResponse, } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
+import type { PostResponse, PluginPostDetails, PluginSocialMediaAccount } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import { BaseSchedulerPlugin, } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import type { Post, PostWithAllData, SocialMediaAccount, Asset } from '#layers/BaseDB/db/schema';
 import type { InstagramSettings } from '#layers/BaseScheduler/shared/platformSettings';
 import { platformConfigurations } from '#layers/BaseScheduler/shared/platformConstants';
+import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service';
+import { getAccessToken } from '#layers/BaseConnect/server/utils/socialMedia';
 
 export class InstagramPlugin extends BaseSchedulerPlugin {
   static readonly pluginName = 'instagram';
@@ -99,6 +101,25 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
   }
 
   /**
+   * Ensure the social media account has a valid access token
+   */
+  private async ensureValidToken(socialMediaAccount: PluginSocialMediaAccount): Promise<string> {
+    if (socialMediaAccountService.isTokenExpired(socialMediaAccount as SocialMediaAccount)) {
+      console.log('Refreshing Instagram token for account:', socialMediaAccount.id);
+      // Better Auth handles token refresh for linked accounts
+      const newToken = await getAccessToken(this.pluginName as any, socialMediaAccount.id);
+
+      if (newToken) {
+        socialMediaAccount.accessToken = newToken;
+        await socialMediaAccountService.updateAccount(socialMediaAccount.id, {
+          accessToken: newToken,
+        });
+      }
+    }
+    return socialMediaAccount.accessToken;
+  }
+
+  /**
    * Create media container (step 1 of posting)
    */
   private async createContainer(
@@ -177,9 +198,9 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
   }
 
   /**
-   * Wait for video processing to complete
+   * Wait for media processing to complete
    */
-  private async waitForVideoProcessing(
+  private async waitForMediaReady(
     containerId: string,
     accessToken: string,
     maxAttempts: number = 30
@@ -193,22 +214,24 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
       if (data.status_code === 'FINISHED') {
         return;
       } else if (data.status_code === 'ERROR') {
-        throw new Error('Video processing failed');
+        throw new Error(`Media processing failed for container ${containerId}`);
       }
 
       // Wait 2 seconds before checking again
       await new Promise(resolve => setTimeout(resolve, 2000));
     }
 
-    throw new Error('Video processing timeout');
+    throw new Error(`Media processing timeout for container ${containerId}`);
   }
 
   override async post(
     postDetails: PostWithAllData,
-    comments: PostWithAllData[],
-    socialMediaAccount: SocialMediaAccount
+    comments: PluginPostDetails[],
+    socialMediaAccount: PluginSocialMediaAccount
   ): Promise<PostResponse> {
     try {
+      // Ensure token is valid
+      const accessToken = await this.ensureValidToken(socialMediaAccount);
       const igUserId = socialMediaAccount.accountId;
 
       if (!igUserId) {
@@ -240,6 +263,7 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
           'STORIES',
           socialMediaAccount.accessToken
         );
+        await this.waitForMediaReady(containerId, socialMediaAccount.accessToken);
       } else if (postDetails.assets.length > 1 && !hasVideo) {
         // Carousel post (multiple images)
         const childContainers: string[] = [];
@@ -253,6 +277,8 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
               'IMAGE',
               socialMediaAccount.accessToken
             );
+            // Wait for each child to be ready before including in carousel
+            await this.waitForMediaReady(childId, socialMediaAccount.accessToken);
             childContainers.push(childId);
           }
         }
@@ -281,7 +307,7 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
         );
 
         // Wait for video processing
-        await this.waitForVideoProcessing(containerId, socialMediaAccount.accessToken);
+        await this.waitForMediaReady(containerId, socialMediaAccount.accessToken);
       } else {
         // Single image post
         const imageAsset = postDetails.assets[0];
@@ -292,6 +318,7 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
           'IMAGE',
           socialMediaAccount.accessToken
         );
+        await this.waitForMediaReady(containerId, socialMediaAccount.accessToken);
       }
 
       // Publish the container
@@ -309,6 +336,12 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
       };
 
       this.emit('instagram:post:published', { postId: postResponse.postId, response: publishedData });
+
+      // Publish comments after the main post is ready
+      if (comments && comments.length > 0) {
+        await this.publishComments(postResponse, comments, socialMediaAccount);
+      }
+
       return postResponse;
     } catch (error: unknown) {
       this.logPluginEvent('post-error', 'failure', `Error: ${(error as Error).message}`, postDetails.id, {
@@ -393,11 +426,14 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
   }
 
   override async addComment(
-    postDetails: PostWithAllData,
-    commentDetails: PostWithAllData,
-    socialMediaAccount: SocialMediaAccount
+    postDetails: PluginPostDetails,
+    commentDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount
   ): Promise<PostResponse> {
     try {
+      // Ensure token is valid
+      const accessToken = await this.ensureValidToken(socialMediaAccount);
+
       // Get the post id from the publishDetails
       const publishedPlatformDetails = postDetails.platformPosts.find((platform) => platform.socialAccountId === socialMediaAccount.id);
 

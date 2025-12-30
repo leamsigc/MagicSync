@@ -258,7 +258,7 @@ export class SocialMediaAccountService {
   /**
    * Create or update social media account
    */
-  async createOrUpdateAccount({ id, name, access_token, picture, username, user, businessId, platformId }: {
+  async createOrUpdateAccount({ id, name, access_token, picture, username, user, businessId, platformId, refresh_token, token_expires_at }: {
     id: string;
     name: string;
     access_token: string;
@@ -267,6 +267,8 @@ export class SocialMediaAccountService {
     user: User,
     businessId: string
     platformId: SocialMediaPlatform
+    refresh_token?: string
+    token_expires_at?: Date
   }) {
     const account = await this.getAccountByAccountId(id);
 
@@ -292,6 +294,8 @@ export class SocialMediaAccountService {
         {
           accountName: name,
           accessToken: access_token,
+          refreshToken: refresh_token,
+          tokenExpiresAt: token_expires_at,
           lastSyncAt: new Date(),
           isActive: true,
           entityDetailId: entityDetails?.id
@@ -306,6 +310,8 @@ export class SocialMediaAccountService {
         accountId: id,
         accountName: name,
         accessToken: access_token,
+        refreshToken: refresh_token,
+        tokenExpiresAt: token_expires_at,
         entityDetailId: entityDetails?.id
       });
     }
@@ -313,7 +319,7 @@ export class SocialMediaAccountService {
     return socialMediaAccount;
   }
 
-  async createOrUpdateAccountFromAuth({ id, name, access_token, picture, username, platformId, user }: {
+  async createOrUpdateAccountFromAuth({ id, name, access_token, picture, username, platformId, user, refresh_token, token_expires_at }: {
     id: string;
     name: string;
     access_token: string;
@@ -321,6 +327,8 @@ export class SocialMediaAccountService {
     username: string;
     platformId: SocialMediaPlatform;
     user: User;
+    refresh_token?: string
+    token_expires_at?: Date
   }) {
     // get business if from current user
 
@@ -329,7 +337,7 @@ export class SocialMediaAccountService {
     });
 
 
-    return this.createOrUpdateAccount({ id, name, access_token, picture, username, user, businessId: businessFromUser?.id as string || '', platformId });
+    return this.createOrUpdateAccount({ id, name, access_token, picture, username, user, businessId: businessFromUser?.id as string || '', platformId, refresh_token, token_expires_at });
 
   }
   async getAccountByAccountId(id: string) {

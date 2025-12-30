@@ -4,6 +4,8 @@ import type { Post, PostWithAllData, SocialMediaAccount, Asset } from '#layers/B
 import type { ThreadsSettings } from '../../../shared/platformSettings';
 
 import { platformConfigurations } from '../../../shared/platformConstants';
+import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service';
+import { getAccessToken } from '#layers/BaseConnect/server/utils/socialMedia';
 
 export class ThreadsPlugin extends BaseSchedulerPlugin {
   override getStatistic(postDetails: PluginPostDetails, socialMediaAccount: PluginSocialMediaAccount): Promise<any> {
@@ -36,6 +38,24 @@ export class ThreadsPlugin extends BaseSchedulerPlugin {
 
   protected init(options?: any): void {
     console.log('Threads plugin initialized', options);
+  }
+
+  /**
+   * Ensure the social media account has a valid access token
+   */
+  private async ensureValidToken(socialMediaAccount: PluginSocialMediaAccount): Promise<string> {
+    if (socialMediaAccountService.isTokenExpired(socialMediaAccount as SocialMediaAccount)) {
+      console.log('Refreshing Threads token for account:', socialMediaAccount.id);
+      const newToken = await getAccessToken(this.pluginName as any, socialMediaAccount.id);
+
+      if (newToken) {
+        socialMediaAccount.accessToken = newToken;
+        await socialMediaAccountService.updateAccount(socialMediaAccount.id, {
+          accessToken: newToken,
+        });
+      }
+    }
+    return socialMediaAccount.accessToken;
   }
 
   override async validate(post: Post): Promise<string[]> {
@@ -135,8 +155,8 @@ export class ThreadsPlugin extends BaseSchedulerPlugin {
   ): Promise<PostResponse> {
     try {
       const { content, settings } = this.getPlatformData(postDetails);
-      const accessToken = socialMediaAccount.accessToken;
-      const userId = socialMediaAccount.accountId; // Assuming accountId is userId for Threads
+      const accessToken = await this.ensureValidToken(socialMediaAccount);
+      const userId = socialMediaAccount.accountId;
 
       // Determine Media Type
       let mediaType: 'TEXT' | 'IMAGE' | 'VIDEO' | 'CAROUSEL' = 'TEXT';
@@ -218,6 +238,12 @@ export class ThreadsPlugin extends BaseSchedulerPlugin {
       };
 
       this.emit('threads:post:published', { postId: postResponse.postId, response: publishedData });
+
+      // Publish comments after the main post is ready
+      if (comments && comments.length > 0) {
+        await this.publishComments(postResponse, comments, socialMediaAccount);
+      }
+
       return postResponse;
     } catch (error: unknown) {
       const errorResponse: PostResponse = {
@@ -250,14 +276,15 @@ export class ThreadsPlugin extends BaseSchedulerPlugin {
         throw new Error('Post ID is required for commenting');
       }
 
+      const accessToken = await this.ensureValidToken(socialMediaAccount);
       const userId = socialMediaAccount.metadata?.threadsUserId || socialMediaAccount.accountId;
 
       // Create reply container
       const params = new URLSearchParams({
         media_type: 'TEXT',
-        text: commentDetails.content, // Changed from message to content for PluginPostDetails
+        text: commentDetails.content,
         reply_to_id: postDetails.postId,
-        access_token: socialMediaAccount.accessToken,
+        access_token: accessToken,
       });
 
       const createResponse = await fetch(

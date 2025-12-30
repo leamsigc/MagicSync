@@ -16,7 +16,7 @@ import { useConnectionManager, type Connection } from '../composables/useConnect
  */
 import * as z from 'zod'
 import type { AuthFormField, FormSubmitEvent } from '@nuxt/ui'
-const { connectionList, setConnectionList, HandleConnectTo } = useConnectionManager();
+const { connectionList, setConnectionList, HandleConnectTo, toggleConnectionStatus, isAdmin } = useConnectionManager();
 
 setConnectionList();
 
@@ -85,22 +85,29 @@ const HandleConnectToBluesky = (payload: FormSubmitEvent<Schema>) => {
     </UButton>
     <template #content>
       <section class="grid grid-cols-2 md:grid-cols-3 gap-4 p-6 overflow-y-auto">
-        <UButton color="neutral" variant="soft" v-for="connection in connectionList" :key="connection.name"
-          :disabled="!connection.active" @click="HandleConnectBaseOnThePlatform(connection)"
-          class="p-4   rounded grid place-content-center text-center">
-          <template v-if="connection.platform == 'bluesky'">
-            <UModal v-model:open="blueskyModal" title="Bluesky" :ui="{ footer: 'justify-end' }" size="small"
-              class="max-w-sm">
-              <template #body>
-                <UAuthForm :schema="schema" title="Bluesky" description="Enter bluesky credentials" icon="i-lucide-user"
-                  :fields="fields" @submit="HandleConnectToBluesky" class="max-w-md" />
-              </template>
-            </UModal>
+        <div class="relative group" v-for="connection in connectionList" :key="connection.name">
+          <div v-if="isAdmin" class="absolute top-2 right-2 z-10" @click.stop>
+            <UTooltip text="Toggle Integration Status">
+              <USwitch :model-value="connection.active" @change="toggleConnectionStatus(connection.platform)" />
+            </UTooltip>
+          </div>
+          <UButton color="neutral" variant="soft" :disabled="!connection.active"
+            @click="HandleConnectBaseOnThePlatform(connection)"
+            class="p-4 w-full h-full rounded grid place-content-center text-center">
+            <template v-if="connection.platform == 'bluesky'">
+              <UModal v-model:open="blueskyModal" title="Bluesky" :ui="{ footer: 'justify-end' }" size="small"
+                class="max-w-sm">
+                <template #body>
+                  <UAuthForm :schema="schema" title="Bluesky" description="Enter bluesky credentials"
+                    icon="i-lucide-user" :fields="fields" @submit="HandleConnectToBluesky" class="max-w-md" />
+                </template>
+              </UModal>
 
-          </template>
-          <Icon :name="connection.icon" size="48" class="w-20" />
-          <h3>{{ connection.name }}</h3>
-        </UButton>
+            </template>
+            <Icon :name="connection.icon" size="48" class="w-20" />
+            <h3>{{ connection.name }}</h3>
+          </UButton>
+        </div>
         <UButton color="neutral" variant="soft" class="p-4  rounded grid place-content-center text-center" disabled>
           <h3>{{ t('states.coming_soon') }}</h3>
         </UButton>

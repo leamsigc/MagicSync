@@ -1,10 +1,12 @@
 import type { PostDetails, PostResponse, Integration, PluginPostDetails, PluginSocialMediaAccount } from '../SchedulerPost.service';
 import { BaseSchedulerPlugin, type MediaContent } from '../SchedulerPost.service';
-import type { Post, PostWithAllData, SocialMediaAccount, Asset } from '#layers/BaseDB/db/schema';
+import type { Post, PostWithAllData, SocialMediaAccount, Asset, User } from '#layers/BaseDB/db/schema';
 import { TwitterApi } from 'twitter-api-v2';
 import { platformConfigurations } from '../../../shared/platformConstants';
 import type { TwitterSettings } from '../../../shared/platformSettings';
 import { promises as fs } from 'node:fs'
+import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service';
+import { refreshTwitterToken } from '#layers/BaseConnect/server/utils/socialMedia';
 
 export class XPlugin extends BaseSchedulerPlugin {
   static readonly pluginName = 'twitter';
@@ -59,6 +61,57 @@ export class XPlugin extends BaseSchedulerPlugin {
     return user.data;
   }
 
+  override async getAuthUrl(businessId: string, callbackUrl?: string): Promise<{ url: string; state?: string; codeVerifier?: string }> {
+    const client = new TwitterApi({
+      clientId: process.env.NUXT_TWITTER_CLIENT_ID as string,
+      clientSecret: process.env.NUXT_TWITTER_CLIENT_SECRET as string,
+    });
+
+    const { url, codeVerifier, state } = client.generateOAuth2AuthLink(
+      callbackUrl || `${process.env.NUXT_BASE_URL}/api/v1/social-accounts/callback/twitter`,
+      { scope: ['tweet.read', 'tweet.write', 'users.read', 'offline.access', 'media.write'] }
+    );
+
+    return { url, state, codeVerifier };
+  }
+
+  override async handleCallback(queryParams: Record<string, any>, user: User, state?: string, codeVerifier?: string): Promise<any> {
+    const code = queryParams.code as string;
+    const incomingState = queryParams.state as string;
+
+    if (!code || !incomingState || incomingState !== state || !codeVerifier) {
+      throw new Error('Invalid OAuth state or verifier');
+    }
+
+    const client = new TwitterApi({
+      clientId: process.env.NUXT_TWITTER_CLIENT_ID as string,
+      clientSecret: process.env.NUXT_TWITTER_CLIENT_SECRET as string,
+    });
+
+    const { accessToken, refreshToken, expiresIn } = await client.loginWithOAuth2({
+      code,
+      codeVerifier,
+      redirectUri: `${process.env.NUXT_BASE_URL}/api/v1/social-accounts/callback/twitter`,
+    });
+
+    const twitterClient = new TwitterApi(accessToken);
+    const { data: twitterUser } = await twitterClient.v2.me({
+      'user.fields': ['profile_image_url', 'name', 'username'],
+    });
+
+    return socialMediaAccountService.createOrUpdateAccountFromAuth({
+      id: twitterUser.id,
+      name: twitterUser.name,
+      access_token: accessToken,
+      picture: twitterUser.profile_image_url || '',
+      username: twitterUser.username,
+      user: user,
+      platformId: 'twitter',
+      refresh_token: refreshToken,
+      token_expires_at: expiresIn ? new Date(Date.now() + (expiresIn * 1000)) : undefined,
+    });
+  }
+
   /**
    * Get tweet metrics
    */
@@ -70,6 +123,26 @@ export class XPlugin extends BaseSchedulerPlugin {
     });
 
     return tweet.data;
+  }
+
+  /**
+   * Ensure the social media account has a valid access token
+   */
+  private async ensureValidToken(socialMediaAccount: PluginSocialMediaAccount): Promise<string> {
+    if (socialMediaAccountService.isTokenExpired(socialMediaAccount as SocialMediaAccount)) {
+      if (!socialMediaAccount.refreshToken) {
+        throw new Error('Twitter token expired and no refresh token available');
+      }
+
+      console.log('Refreshing Twitter token for account:', socialMediaAccount.id);
+      const refreshed = await refreshTwitterToken(socialMediaAccount.refreshToken);
+      await socialMediaAccountService.refreshTokens(socialMediaAccount.id, refreshed);
+
+      // Update the local object
+      socialMediaAccount.accessToken = refreshed.accessToken;
+      socialMediaAccount.refreshToken = refreshed.refreshToken || socialMediaAccount.refreshToken;
+    }
+    return socialMediaAccount.accessToken;
   }
 
   /**
@@ -87,8 +160,8 @@ export class XPlugin extends BaseSchedulerPlugin {
     socialMediaAccount: PluginSocialMediaAccount
   ): Promise<PostResponse> {
     try {
-      // X stores token as "accessToken:accessSecret"
-      const accessToken = socialMediaAccount.accessToken;
+      // Ensure token is valid before proceeding
+      const accessToken = await this.ensureValidToken(socialMediaAccount);
 
       if (!accessToken) {
         throw new Error('Invalid X authentication tokens');
@@ -241,7 +314,7 @@ export class XPlugin extends BaseSchedulerPlugin {
         throw new Error('Tweet ID is required for updating');
       }
 
-      const accessToken = socialMediaAccount.accessToken;
+      const accessToken = await this.ensureValidToken(socialMediaAccount);
       const client = new TwitterApi(accessToken);
 
       // X (Free API) doesn't support editing.
@@ -304,7 +377,7 @@ export class XPlugin extends BaseSchedulerPlugin {
         throw new Error('Tweet ID is required for replying');
       }
 
-      const accessToken = socialMediaAccount.accessToken;
+      const accessToken = await this.ensureValidToken(socialMediaAccount);
 
       const client = new TwitterApi(accessToken);
 

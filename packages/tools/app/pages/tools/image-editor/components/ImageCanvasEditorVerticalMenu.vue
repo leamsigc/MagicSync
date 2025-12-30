@@ -18,6 +18,7 @@ const { t } = useI18n();
 const {
   selectLayer,
   cropLayer,
+  cropSquare,
   addBrushLayer,
   addTextLayer,
   eraseLayer,
@@ -53,7 +54,7 @@ const menuItems = computed<DropdownMenuItem[]>(() => [
         {
           label: t('menu.vertical.crop.square'),
           icon: 'lucide:square',
-          onSelect: () => cropLayer(), // Placeholder, actual square crop logic needed in useFabricJs
+          onSelect: () => cropSquare(),
         },
       ],
     ],

@@ -390,41 +390,7 @@ export const auth = betterAuth({
               })
             }
 
-            if (account.providerId === "twitter") {
-              const response = await $fetch<{ data: { id: string, name: string, username: string, profile_image_url: string } }>(
-                `https://api.twitter.com/2/users/me?user.fields=profile_image_url,name,username`,
-                {
-                  headers: {
-                    Authorization: `Bearer ${account.accessToken}`,
-                  },
-                }
-              );
-
-              const twitterUser = response.data;
-
-
-              await socialMediaAccountService.createOrUpdateAccountFromAuth({
-                id: account.accountId,
-                name: twitterUser.name,
-                access_token: account.accessToken as string,
-                picture: twitterUser.profile_image_url,
-                username: twitterUser.username,
-                platformId: 'twitter',
-                user: user as schema.User
-              });
-
-              await logAuditService.logAuditEvent({
-                userId: ctx?.context.session?.user.id,
-                category: 'after:create',
-                action: 'AUTH_CREATE_SOCIAL_MEDIA',
-                targetType: 'twitter',
-                targetId: account.accountId,
-                ipAddress: "",
-                userAgent: "",
-                status: 'success',
-                details: `${twitterUser} from TWITTER`,
-              })
-            }
+            // Twitter is now handled by the SchedulerPost plugin flow
             await logAuditService.logAuditEvent({
               userId: ctx?.context.session?.user.id,
               category: 'after:create:no-configured',
@@ -449,6 +415,16 @@ export const auth = betterAuth({
               status: 'success',
               details: `${JSON.stringify(account)} from ${account.providerId}, Error ${error}`,
             })
+          }
+        }
+      },
+      update: {
+        after: async (account, ctx) => {
+          try {
+            const user = await socialMediaAccountService.getUserByAccountId(account.userId);
+            // Twitter is now handled by the SchedulerPost plugin flow
+          } catch (error) {
+            console.error('Error in account update hook:', error);
           }
         }
       }

@@ -1,5 +1,5 @@
 import type { FacebookPage } from '#layers/BaseConnect/utils/FacebookPages';
-
+import { UseUser } from '#layers/BaseAuth/app/composables/UseUser';
 import { linkSocial, oauth2, signIn } from "#layers/BaseAuth/lib/auth-client";
 import type { AccountComplete, SocialMediaAccount, SocialMediaComplete } from "#layers/BaseDB/db/schema";
 import { useBusinessManager } from "../../business/composables/useBusinessManager";
@@ -14,9 +14,9 @@ export interface Connection {
 }
 
 
-const connectionList = ref<Connection[]>([]);
 
 export const useConnectionManager = () => {
+  const connectionList = useState<Connection[]>("connection:List", () => []);
 
   const { t } = useI18n();
   const toast = useToast();
@@ -31,7 +31,7 @@ export const useConnectionManager = () => {
       { name: 'Facebook', icon: 'logos:facebook', url: '#', platform: 'facebook', authType: 'better-auth', active: true },
       { name: 'Google Business', icon: 'logos:google', url: '#', platform: "googlemybusiness", authType: 'better-auth', active: false },
       { name: 'LinkedIn', icon: 'logos:linkedin-icon', url: '#', platform: "linkedin", authType: 'better-auth', active: false },
-      { name: 'X (Twitter)', icon: 'logos:twitter', url: '#', platform: "twitter", authType: 'better-auth', active: true },
+      { name: 'X (Twitter)', icon: 'logos:twitter', url: '#', platform: "twitter", authType: 'manual-oauth', active: true },
       { name: 'TikTok', icon: 'logos:tiktok-icon', url: '#', platform: "tiktok", authType: 'better-auth', active: false },
       { name: 'Discord', icon: 'logos:discord-icon', url: '#', platform: "discord", authType: 'better-auth', active: false },
       { name: 'Reddit', icon: 'logos:reddit-icon', url: '#', platform: "reddit", authType: 'better-auth', active: false },
@@ -52,6 +52,19 @@ export const useConnectionManager = () => {
   const getAllConnections = async (connections: SocialMediaAccount[]) => {
     allConnections.value = connections
   }
+
+  const { user } = UseUser();
+  const isAdmin = computed(() => user.value?.role === 'admin');
+
+  const toggleConnectionStatus = (platform: string) => {
+    if (!isAdmin.value) return;
+
+    const connection = connectionList.value.find(c => c.platform === platform);
+    if (connection) {
+      connection.active = !connection.active;
+    }
+  };
+
   const HandleConnectTo = async (connection: Connection, credentials?: { [key: string]: string }) => {
     try {
       const { activeBusinessId } = useBusinessManager()
@@ -85,10 +98,10 @@ export const useConnectionManager = () => {
           color: 'info',
         });
       } else if (connection.authType === 'manual-oauth') {
-        oauth2.link({
-          providerId: connection.platform,
-          callbackURL: `/api/v1/social-accounts/callback/${connection.platform}?businessId=${activeBusinessId.value}`,
-        })
+        const { data } = await useFetch<{ url: string }>(`/api/v1/social-accounts/auth-url?platform=${connection.platform}&businessId=${activeBusinessId.value}`)
+        if (data.value?.url) {
+          window.location.href = data.value.url
+        }
       }
 
     } catch (error) {
@@ -199,6 +212,8 @@ export const useConnectionManager = () => {
     getPagesForIntegration,
     HandleConnectToFacebook,
     getAllSocialMediaAccounts,
-    getAllAccountDetails
+    getAllAccountDetails,
+    toggleConnectionStatus,
+    isAdmin
   }
 };

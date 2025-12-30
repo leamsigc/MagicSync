@@ -58,7 +58,7 @@ const menu = [
 
 <template>
   <!-- Top Menu  -->
-  <header class="fixed top-10 left-6 z-40 backdrop-blur-md bg-background rounded-2xl shadow-2xl">
+  <header class="fixed top-10 left-6 z-40 backdrop-blur-md rounded-2xl shadow-2xl">
     <section class="flex items-center px-4 py-3 gap-4">
       <section class="flex items-center gap-2 ">
         <NuxtLink to="/">

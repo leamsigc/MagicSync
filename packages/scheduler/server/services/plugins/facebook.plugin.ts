@@ -4,6 +4,9 @@ import type { FacebookSettings, PlatformSettings } from '#layers/BaseScheduler/s
 import dayjs from 'dayjs';
 import { BaseSchedulerPlugin } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import type { FacebookPage } from '#layers/BaseConnect/utils/FacebookPages';
+import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service';
+import { getAccessToken } from '#layers/BaseConnect/server/utils/socialMedia';
+import type { PluginPostDetails, PluginSocialMediaAccount } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 
 // Placeholder types - these should ideally be imported from a shared types file
 type AuthTokenDetails = {
@@ -30,6 +33,24 @@ type FacebookDto = {
 export class FacebookPlugin extends BaseSchedulerPlugin {
   static readonly pluginName = 'facebook';
   readonly pluginName = 'facebook';
+
+  /**
+   * Ensure the social media account has a valid access token
+   */
+  private async ensureValidToken(socialMediaAccount: PluginSocialMediaAccount): Promise<string> {
+    if (socialMediaAccountService.isTokenExpired(socialMediaAccount as SocialMediaAccount)) {
+      console.log('Refreshing Facebook token for account:', socialMediaAccount.id);
+      const newToken = await getAccessToken(this.pluginName as any, socialMediaAccount.id);
+
+      if (newToken) {
+        socialMediaAccount.accessToken = newToken;
+        await socialMediaAccountService.updateAccount(socialMediaAccount.id, {
+          accessToken: newToken,
+        });
+      }
+    }
+    return socialMediaAccount.accessToken;
+  }
 
   private normalizeContent(content: string): string {
     if (!content) return '';
@@ -802,10 +823,12 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
 
   override async post(
     postDetails: PostWithAllData,
-    comments: PostWithAllData[],
-    socialMediaAccount: SocialMediaAccount
+    comments: PluginPostDetails[],
+    socialMediaAccount: PluginSocialMediaAccount
   ): Promise<PostResponse> {
     try {
+      // Ensure token is valid
+      await this.ensureValidToken(socialMediaAccount);
       const { content, settings, postFormat } = this.getPlatformData(postDetails);
 
       let finalId = '';
@@ -921,16 +944,6 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
           break;
         }
       }
-      // Post comment when the post is published
-      const postComments = (postDetails.platformContent as Record<string, string[]>).comments ?? [];
-      if (postComments?.length) {
-        await Promise.all(
-          postComments.map(async (comment) => {
-            await this.addCommentToPost(finalId, comment, socialMediaAccount.accessToken);
-          })
-        );
-      }
-
       const response: PostResponse = {
         id: postDetails.id,
         postId: finalId,
@@ -939,6 +952,12 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
       };
 
       this.emit('facebook:post:published', { postId: finalId, response, format: effectiveFormat });
+
+      // Publish comments after the main post is ready
+      if (comments && comments.length > 0) {
+        await this.publishComments(response, comments, socialMediaAccount);
+      }
+
       return response;
     } catch (error: unknown) {
       const errorResponse: PostResponse = {
@@ -1030,12 +1049,15 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
 
 
   override async addComment(
-    postDetails: PostWithAllData,
-    commentDetails: PostWithAllData,
-    socialMediaAccount: SocialMediaAccount
+    postDetails: PluginPostDetails,
+    commentDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount
   ): Promise<PostResponse> {
     try {
-      const url = this._getGraphApiUrl(`/${socialMediaAccount.accountId}/comments?access_token=${socialMediaAccount.accessToken}&fields=id,permalink_url`);
+      // Ensure token is valid
+      const accessToken = await this.ensureValidToken(socialMediaAccount);
+
+      const url = this._getGraphApiUrl(`/${postDetails.postId}/comments?access_token=${accessToken}&fields=id,permalink_url`);
       const { id: commentId, permalink_url } = await (
         await this.fetch(
           url,

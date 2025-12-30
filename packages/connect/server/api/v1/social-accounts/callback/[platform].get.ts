@@ -1,54 +1,38 @@
-import { socialMediaAccountService, type SocialMediaPlatform } from "#layers/BaseDB/server/services/social-media-account.service"
 import { checkUserIsLogin } from "#layers/BaseAuth/server/utils/AuthHelpers"
-
+import { SchedulerPost } from "#layers/BaseScheduler/server/services/SchedulerPost.service"
+import { getPluginForPlatform } from "#layers/BaseScheduler/server/utils/pluginLoader"
 
 export default defineEventHandler(async (event) => {
   const BASE_URL = process.env.NUXT_BASE_URL
 
   try {
-    const platform = getRouterParam(event, 'platform') as SocialMediaPlatform
+    const platform = getRouterParam(event, 'platform') as string
     const query = getQuery(event)
-
-    const businessId = query.businessId as string
-    const error = query.error as string
-
-    // Handle OAuth errors
-    if (error) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: `OAuth error: ${error}`
-      })
-    }
-
-    // Get current user session
     const user = await checkUserIsLogin(event)
 
-    if (!user) {
-      throw createError({
-        statusCode: 401,
-        statusMessage: 'User session not found after OAuth callback'
-      })
+    const state = getCookie(event, `${platform}_oauth_state`)
+    const codeVerifier = getCookie(event, `${platform}_oauth_code_verifier`)
+
+    const pluginClass = getPluginForPlatform(platform)
+    if (!pluginClass) {
+      throw new Error(`Platform ${platform} not supported by scheduler`)
     }
 
-    // Define Better Auth supported platforms (native + Generic OAuth)
-    const betterAuthPlatforms: SocialMediaPlatform[] = [
-      'facebook', 'instagram', 'threads', 'google', 'googlemybusiness',
-      'reddit', 'discord', 'linkedin', 'linkedin-page', 'twitter', 'youtube', 'tiktok', 'dribbble'
-    ]
+    const scheduler = new SchedulerPost({})
+    scheduler.use(pluginClass)
 
-    if (!betterAuthPlatforms.includes(platform)) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: `Platform ${platform} is not supported`
-      })
-    }
+    await scheduler.handleCallback(platform, query, user, state, codeVerifier)
 
+    // Clear cookies
+    deleteCookie(event, `${platform}_oauth_state`)
+    deleteCookie(event, `${platform}_oauth_code_verifier`)
 
+    const baseUrl = BASE_URL || 'http://localhost:3000'
+    return sendRedirect(event, `${baseUrl}/app/integrations`)
 
   } catch (error) {
     console.error('Error handling OAuth callback:', error)
 
-    // Redirect to error page
     const baseUrl = BASE_URL || 'http://localhost:3000'
     const errorMessage = error instanceof Error
       ? error.message

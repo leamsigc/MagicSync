@@ -9,7 +9,8 @@
     "build": "nuxt build .playground",
     "generate": "nuxt generate .playground",
     "preview": "nuxt preview .playground",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "vitest"
   },
   "dependencies": {
     "@ai-sdk/google": "^2.0.44",
@@ -37,6 +38,8 @@
     "@fullcalendar/core": "catalog:",
     "@fullcalendar/vue3": "catalog:",
     "@nuxt/eslint": "catalog:",
+    "@nuxt/test-utils": "catalog:",
+    "vitest": "catalog:",
     "@nuxtjs/i18n": "catalog:",
     "eslint": "catalog:",
     "nuxt": "catalog:",

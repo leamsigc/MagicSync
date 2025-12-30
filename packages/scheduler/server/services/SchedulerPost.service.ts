@@ -1,5 +1,4 @@
-import { ValidationError } from '#layers/BaseAssets/server/shared/assetsTypes';
-import { type Post, type SocialMediaAccount as Integration, type Account, type SocialMediaAccount, type PostWithAllData } from '#layers/BaseDB/db/schema';
+import { type Post, type SocialMediaAccount as Integration, type Account, type SocialMediaAccount, type PostWithAllData, type User } from '#layers/BaseDB/db/schema';
 import { EventEmitter } from 'events';
 import { logAuditService } from '#layers/BaseDB/server/services/auditLog.service';
 
@@ -82,6 +81,8 @@ export interface SchedulerPlugin {
     postDetails: PluginPostDetails,
     socialMediaAccount: PluginSocialMediaAccount
   ): Promise<any>;
+  getAuthUrl?(businessId: string, callbackUrl?: string): Promise<{ url: string; state?: string; codeVerifier?: string }>;
+  handleCallback?(queryParams: Record<string, any>, user: User, state?: string, codeVerifier?: string): Promise<any>;
 }
 
 export interface SchedulerPluginConstructor {
@@ -148,6 +149,49 @@ export abstract class BaseSchedulerPlugin implements SchedulerPlugin {
     postDetails: PluginPostDetails,
     socialMediaAccount: PluginSocialMediaAccount
   ): Promise<any>;
+
+  async getAuthUrl(businessId: string, callbackUrl?: string): Promise<{ url: string; state?: string; codeVerifier?: string }> {
+    throw new Error(`getAuthUrl not implemented for plugin ${this.pluginName}`);
+  }
+
+  async handleCallback(queryParams: Record<string, any>, user: User, state?: string, codeVerifier?: string): Promise<any> {
+    throw new Error(`handleCallback not implemented for plugin ${this.pluginName}`);
+  }
+
+  /**
+   * Helper to publish multiple comments sequentially
+   */
+  protected async publishComments(
+    postResponse: PostResponse,
+    comments: PluginPostDetails[],
+    socialMediaAccount: PluginSocialMediaAccount
+  ): Promise<PostResponse[]> {
+    const responses: PostResponse[] = [];
+
+    if (!comments || comments.length === 0) {
+      return responses;
+    }
+
+    // Pass the postId from the main post to postDetails
+    const postWithId = { ...postResponse, postId: postResponse.postId } as unknown as PluginPostDetails;
+
+    for (const comment of comments) {
+      try {
+        const response = await this.addComment(postWithId, comment, socialMediaAccount);
+        responses.push(response);
+      } catch (error) {
+        console.error(`Failed to add comment for ${this.pluginName}:`, error);
+        responses.push({
+          id: comment.id,
+          postId: '',
+          releaseURL: '',
+          status: 'failed',
+          error: (error as Error).message,
+        });
+      }
+    }
+    return responses;
+  }
 }
 
 export class SchedulerPost extends EventEmitter {
@@ -287,5 +331,27 @@ export class SchedulerPost extends EventEmitter {
     } else {
       throw new Error('Plugin not registered for this socialMediaAccount');
     }
+  }
+
+  async getAuthUrl(platform: string, businessId: string, callbackUrl?: string): Promise<{ url: string; state?: string; codeVerifier?: string }> {
+    const plugin = this.plugins.get(platform);
+    if (!plugin) {
+      throw new Error(`Plugin ${platform} not registered`);
+    }
+    if (!plugin.getAuthUrl) {
+      throw new Error(`Plugin ${platform} does not support getAuthUrl`);
+    }
+    return plugin.getAuthUrl(businessId, callbackUrl);
+  }
+
+  async handleCallback(platform: string, queryParams: Record<string, any>, user: User, state?: string, codeVerifier?: string): Promise<any> {
+    const plugin = this.plugins.get(platform);
+    if (!plugin) {
+      throw new Error(`Plugin ${platform} not registered`);
+    }
+    if (!plugin.handleCallback) {
+      throw new Error(`Plugin ${platform} does not support handleCallback`);
+    }
+    return plugin.handleCallback(queryParams, user, state, codeVerifier);
   }
 }

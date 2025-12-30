@@ -335,14 +335,6 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
       );
 
 
-      // Add comments
-      const postComments = (postDetails.platformContent as Record<string, string[]>).comments ?? [];
-      if (postComments.length > 0) {
-        await this.addComments(blueskyResponse.uri, postComments, postDetails);
-      }
-
-
-
       const response: PostResponse = {
         id: postDetails.id,
         postId: blueskyResponse.uri,
@@ -351,6 +343,12 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
       };
 
       this.emit('bluesky:post:published', { postId: response.postId, response });
+
+      // Publish comments after the main post is ready
+      if (comments && comments.length > 0) {
+        await this.publishComments(response, comments, socialMediaAccount);
+      }
+
       return response;
     } catch (error: unknown) {
       const errorResponse: PostResponse = {
