@@ -111,7 +111,8 @@ export default defineNuxtConfig({
     '@local-monorepo/tools',
     '@local-monorepo/scheduler',
     '@local-monorepo/connect',
-    '@local-monorepo/templates'
+    '@local-monorepo/templates',
+    '@local-monorepo/bulk-scheduler'
   ],
 
   modules: ['@nuxtjs/seo', '@nuxtjs/i18n', '@nuxt/hints', 'nuxt-umami'],
