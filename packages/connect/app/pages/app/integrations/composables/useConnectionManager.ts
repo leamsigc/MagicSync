@@ -30,7 +30,7 @@ export const useConnectionManager = () => {
       // Better Auth OAuth platforms (native support)
       { name: 'Facebook', icon: 'logos:facebook', url: '#', platform: 'facebook', authType: 'better-auth', active: true },
       { name: 'Google Business', icon: 'logos:google', url: '#', platform: "googlemybusiness", authType: 'better-auth', active: false },
-      { name: 'LinkedIn', icon: 'logos:linkedin-icon', url: '#', platform: "linkedin", authType: 'better-auth', active: false },
+      { name: 'LinkedIn', icon: 'logos:linkedin-icon', url: '#', platform: "linkedin", authType: 'better-auth', active: true },
       { name: 'X (Twitter)', icon: 'logos:twitter', url: '#', platform: "twitter", authType: 'better-auth', active: true },
       { name: 'TikTok', icon: 'logos:tiktok-icon', url: '#', platform: "tiktok", authType: 'better-auth', active: false },
       { name: 'Discord', icon: 'logos:discord-icon', url: '#', platform: "discord", authType: 'better-auth', active: false },

@@ -31,3 +31,23 @@ export const checkUserIsLogin = async (event: H3Event) => {
   }
   return user;
 }
+
+/**
+ * Generic method to get access token from Better Auth
+ */
+export const getAccessToken = async (options: {
+  providerId: string;
+  accountId?: string;
+  userId?: string;
+  headers?: any;
+}) => {
+  return await auth.api.getAccessToken({
+    body: {
+      providerId: options.providerId,
+      accountId: options.accountId,
+      userId: options.userId,
+    },
+    headers: options.headers
+  });
+};
+
