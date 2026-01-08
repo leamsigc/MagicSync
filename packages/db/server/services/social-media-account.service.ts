@@ -13,10 +13,10 @@ import { entityDetails } from '#layers/BaseDB/db/entityDetails/entityDetails';
 import { eq, and, desc } from 'drizzle-orm'
 import type { SocialMediaAccount } from '#layers/BaseDB/db/socialMedia/socialMedia'
 import { socialMediaAccounts } from '#layers/BaseDB/db/socialMedia/socialMedia'
-import { account, type Account, type User, user } from '#layers/BaseDB/db/auth/auth'
+import { type Account, type User, user } from '#layers/BaseDB/db/auth/auth'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
 import { entityDetailsService } from '#layers/BaseDB/server/services/entity-details.service' // Import new service
-import { businessProfiles } from '#layers/BaseDB/db/schema';
+import { businessProfiles, account } from '#layers/BaseDB/db/schema';
 
 export type SocialMediaPlatform =
   | 'facebook'
@@ -85,6 +85,14 @@ export class SocialMediaAccountService {
     });
 
     return userDetails
+  }
+  async getActualAccountByAccountId(id: string) {
+    const details = await this.db.query.socialMediaAccounts.findFirst({
+      where: eq(socialMediaAccounts.id, id),
+    });
+
+    return details
+
   }
   async getUserAccountsCompleteDetails(id: string) {
     const userAccounts = await this.db.query.account.findMany({

@@ -9,6 +9,15 @@ import { logAuditService } from '#layers/BaseDB/server/services/auditLog.service
 
 export const auth = betterAuth({
   baseURL: process.env.NUXT_BETTER_AUTH_URL || 'http://localhost:3000',
+  logger: {
+    disabled: false,
+    disableColors: false,
+    level: "debug",
+    log: (level, message, ...args) => {
+      // Custom logging implementation
+      console.log(`[${level}] ${message}`, ...args);
+    }
+  },
   trustedOrigins: [
     process.env.NUXT_BETTER_AUTH_URL || 'http://localhost:3000',
     "127.0.0.1:3000"
@@ -71,6 +80,7 @@ export const auth = betterAuth({
   },
   account: {
     accountLinking: {
+      updateAccountOnSignIn: false,
       enabled: true,
       allowDifferentEmails: true,
       updateUserInfoOnLink: true,

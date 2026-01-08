@@ -8,6 +8,7 @@ import { AutoPostService } from '#layers/BaseScheduler/server/services/AutoPost.
 import { checkUserIsLogin } from "#layers/BaseAuth/server/utils/AuthHelpers"
 import { postService, type UpdatePostData } from "#layers/BaseDB/server/services/post.service"
 import dayjs from 'dayjs';
+import { ScheduleRefreshSocialMediaTokens } from '../../../../utils/ScheduleUtils';
 
 
 export default defineEventHandler(async (event) => {
@@ -92,6 +93,10 @@ export default defineEventHandler(async (event) => {
       }
       // Schedule post
       const trigger = new AutoPostService()
+
+      // Refresh social media tokens if necessary
+      await ScheduleRefreshSocialMediaTokens(fullPost, user.id, getHeaders(event));
+
       await trigger.triggerSocialMediaPost(fullPost);
     }
     return result.data;

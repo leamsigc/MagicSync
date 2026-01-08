@@ -19,7 +19,7 @@ import { TikTokPlugin } from '#layers/BaseScheduler/server/services/plugins/tikt
 import { WordPressPlugin } from '#layers/BaseScheduler/server/services/plugins/wordpress.plugin';
 import { XPlugin } from '#layers/BaseScheduler/server/services/plugins/x.plugin';
 import { YouTubePlugin } from '#layers/BaseScheduler/server/services/plugins/youtube.plugin';
-import { getAccessToken } from '#layers/BaseAuth/server/utils/AuthHelpers';
+import { getAccessTokenHelper } from '#layers/BaseAuth/server/utils/AuthHelpers';
 export class AutoPostService {
 
   private matcher: Record<string, SchedulerPluginConstructor> = {
@@ -61,26 +61,6 @@ export class AutoPostService {
       if (!socialMediaAccount || !socialMediaAccount.accessToken) {
         throw new Error(`No access token found for platform ${platform}`);
       }
-
-      // Refresh token for x/twitter as it expires every 2 hours
-      if (['twitter', 'x'].includes(platform)) {
-        try {
-          const tokenData = await getAccessToken({
-            providerId: 'twitter',
-            userId: post.user.id,
-            accountId: socialMediaAccount.accountId
-          });
-
-          if (tokenData && tokenData.accessToken) {
-            await socialMediaAccountService.updateAccount(socialMediaAccount.id, {
-              accessToken: tokenData.accessToken
-            });
-            socialMediaAccount.accessToken = tokenData.accessToken;
-          }
-        } catch (error) {
-          console.error(`Failed to refresh token for ${platform}:`, error);
-        }
-      }
       //@ts-ignore
       scheduler.use(this.matcher[platform]);
 
@@ -99,7 +79,6 @@ export class AutoPostService {
           { status: 'failed', id: platformPost.id, releaseURL: '', error: 'Post failed to post ', postId: post.id },
           platformPost
         );
-
       }
     });
 

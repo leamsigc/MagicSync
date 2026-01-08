@@ -1,5 +1,9 @@
+import { account } from '#layers/BaseDB/db/schema';
 import sharp from 'sharp';
 import { promises as fs } from 'node:fs'
+import { getAccessTokenHelper } from "#layers/BaseAuth/server/utils/AuthHelpers"
+import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service';
+import type { PostWithAllData } from '#layers/BaseDB/db/posts/posts';
 
 
 const baseUrl = process.env.NUXT_BASE_URL
@@ -143,5 +147,35 @@ export async function compressImage(buffer: Buffer, format: string | undefined, 
       return await sharpInstance
         .jpeg({ quality, progressive: true, mozjpeg: true })
         .toBuffer();
+  }
+}
+
+/**
+ * Refreshes social media tokens for specific platforms (X/Twitter)
+ * before triggering the post.
+ */
+export const ScheduleRefreshSocialMediaTokens = async (fullPost: PostWithAllData, userId: string, headers: any) => {
+  const platformsToPost = fullPost.platformPosts.filter((platformPost) => {
+    return platformPost.platformPostId === 'x' || platformPost.platformPostId === 'twitter'
+  })
+
+  if (platformsToPost.length > 0) {
+    await Promise.all(platformsToPost.map(async (platformPost) => {
+      // We need to get the account details here
+      const account = await socialMediaAccountService.getActualAccountByAccountId(platformPost.socialAccountId)
+      if (!account) return Promise.reject('Account not found')
+      const tokenData = await getAccessTokenHelper({
+        providerId: 'twitter',
+        userId: userId,
+        accountId: account.accountId,
+        headers: headers
+      });
+
+      if (tokenData?.accessToken) {
+        await socialMediaAccountService.updateAccount(platformPost.socialAccountId, {
+          accessToken: tokenData.accessToken
+        });
+      }
+    }))
   }
 }

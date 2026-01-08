@@ -31,7 +31,7 @@ catalog:
   '@vueuse/motion': 3.0.3
   '@vueuse/nuxt': 14.1.0
   axios: 1.13.2
-  better-auth: 1.4.7
+  better-auth: 1.4.10
   better-sqlite3: 12.5.0
   dayjs: 1.11.19
   drizzle-kit: 0.31.8

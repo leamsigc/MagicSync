@@ -1,7 +1,9 @@
+import { ScheduleRefreshSocialMediaTokens } from './../../../utils/ScheduleUtils';
 import { AutoPostService } from '#layers/BaseScheduler/server/services/AutoPost.service';
-import { checkUserIsLogin } from "#layers/BaseAuth/server/utils/AuthHelpers"
+import { checkUserIsLogin, getAccessTokenHelper } from "#layers/BaseAuth/server/utils/AuthHelpers"
 import type { PostCreateBase, PostWithAllData } from "#layers/BaseDB/db/schema"
 import { postService } from "#layers/BaseDB/server/services/post.service"
+import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service';
 
 export default defineEventHandler(async (event) => {
   try {
@@ -59,6 +61,9 @@ export default defineEventHandler(async (event) => {
       }
       // Schedule post
       const trigger = new AutoPostService()
+      // Refresh social media tokens if necessary
+      await ScheduleRefreshSocialMediaTokens(fullPost, user.id, getHeaders(event));
+
       trigger.triggerSocialMediaPost(fullPost);
     }
 
