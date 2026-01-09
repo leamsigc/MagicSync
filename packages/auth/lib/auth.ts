@@ -9,15 +9,15 @@ import { logAuditService } from '#layers/BaseDB/server/services/auditLog.service
 
 export const auth = betterAuth({
   baseURL: process.env.NUXT_BETTER_AUTH_URL || 'http://localhost:3000',
-  logger: {
-    disabled: false,
-    disableColors: false,
-    level: "debug",
-    log: (level, message, ...args) => {
-      // Custom logging implementation
-      console.log(`[${level}] ${message}`, ...args);
-    }
-  },
+  // logger: {
+  //   disabled: false,
+  //   disableColors: false,
+  //   level: "debug",
+  //   log: (level, message, ...args) => {
+  //     // Custom logging implementation
+  //     console.log(`[${level}] ${message}`, ...args);
+  //   }
+  // },
   trustedOrigins: [
     process.env.NUXT_BETTER_AUTH_URL || 'http://localhost:3000',
     "127.0.0.1:3000"
@@ -80,7 +80,7 @@ export const auth = betterAuth({
   },
   account: {
     accountLinking: {
-      updateAccountOnSignIn: false,
+      updateAccountOnSignIn: true,
       enabled: true,
       allowDifferentEmails: true,
       updateUserInfoOnLink: true,
@@ -135,7 +135,13 @@ export const auth = betterAuth({
     linkedin: {
       clientId: process.env.NUXT_LINKEDIN_CLIENT_ID as string,
       clientSecret: process.env.NUXT_LINKEDIN_CLIENT_SECRET as string,
-      scopes: ['openid', 'profile', 'email', 'w_member_social'],
+      scopes: ['openid',
+        'profile',
+        'w_member_social',
+        'r_basicprofile',
+        'rw_organization_admin',
+        'w_organization_social',
+        'r_organization_social',],
     },
     tiktok: {
       clientKey: process.env.NUXT_TIKTOK_CLIENT_ID as string,
@@ -249,14 +255,29 @@ export const auth = betterAuth({
       config: [
         // LinkedIn Page (Organization) OAuth - not natively supported
         {
+          // http://localhost:3000/api/auth/oauth2/callback/linkedin-page
           providerId: 'linkedin-page',
           clientId: process.env.NUXT_LINKEDIN_CLIENT_ID as string,
           clientSecret: process.env.NUXT_LINKEDIN_CLIENT_SECRET as string,
           authorizationUrl: 'https://www.linkedin.com/oauth/v2/authorization',
           tokenUrl: 'https://www.linkedin.com/oauth/v2/accessToken',
           userInfoUrl: 'https://api.linkedin.com/v2/userinfo',
-          scopes: ['openid', 'profile', 'email', 'r_organization_social', 'w_organization_social', 'rw_organization_admin'],
-          pkce: false,
+          scopes: ['openid',
+            'profile',
+            'w_member_social',
+            'r_basicprofile',
+            'rw_organization_admin',
+            'w_organization_social',
+            'r_organization_social',],
+          mapProfileToUser: (profile: any) => {
+            return {
+              ...profile,
+              image: profile.profile_picture_url,
+              email: `${profile.id}@linkedin.com`,
+              emailVerified: true
+            };
+          },
+          // pkce: false,
         },
 
         // YouTube (uses Google OAuth with YouTube scopes) - not natively supported
@@ -435,6 +456,79 @@ export const auth = betterAuth({
                 details: `${twitterUser} from TWITTER`,
               })
             }
+            if (account.providerId === "linkedin") {
+              const linkedinUser = await $fetch<{ sub: string, name: string, picture: string, email: string, profile: string }>(
+                `https://api.linkedin.com/v2/userinfo`,
+                {
+                  headers: {
+                    Authorization: `Bearer ${account.accessToken}`,
+                  },
+                }
+              );
+
+              await socialMediaAccountService.createOrUpdateAccountFromAuth({
+                id: account.accountId,
+                name: linkedinUser.name,
+                access_token: account.accessToken as string,
+                picture: linkedinUser.picture,
+                username: linkedinUser.sub,
+                platformId: 'linkedin',
+                user: user as schema.User
+              });
+
+              await logAuditService.logAuditEvent({
+                userId: ctx?.context.session?.user.id,
+                category: 'after:create',
+                action: 'AUTH_CREATE_SOCIAL_MEDIA',
+                targetType: 'linkedin',
+                targetId: account.accountId,
+                ipAddress: "",
+                userAgent: "",
+                status: 'success',
+                details: `${linkedinUser.sub} ${linkedinUser.name} from LINKEDIN`,
+              })
+            }
+            // Handle link linkedin-page
+            if (account.providerId === "linkedin-page") {
+              const linkedinUser = await $fetch<{ sub: string, name: string, picture: string }>(
+                `https://api.linkedin.com/v2/userinfo`,
+                {
+                  headers: {
+                    Authorization: `Bearer ${account.accessToken}`,
+                  },
+                }
+              );
+              const { vanityName: username } = await (
+                await fetch('https://api.linkedin.com/v2/me', {
+                  headers: {
+                    Authorization: `Bearer ${account.accessToken}`,
+                  },
+                })
+              ).json();
+
+              await socialMediaAccountService.createOrUpdateAccountFromAuth({
+                id: `p_${linkedinUser.sub}`,
+                name: linkedinUser.name,
+                access_token: account.accessToken as string,
+                picture: linkedinUser.picture,
+                username: username,
+                platformId: 'linkedin-page',
+                user: user as schema.User
+              });
+
+              await logAuditService.logAuditEvent({
+                userId: ctx?.context.session?.user.id,
+                category: 'after:create',
+                action: 'AUTH_CREATE_SOCIAL_MEDIA',
+                targetType: 'linkedin-page',
+                targetId: account.accountId,
+                ipAddress: "",
+                userAgent: "",
+                status: 'success',
+                details: `${linkedinUser.sub} ${linkedinUser.name} ${username} from LINKEDIN-PAGE`,
+              })
+            }
+
             await logAuditService.logAuditEvent({
               userId: ctx?.context.session?.user.id,
               category: 'after:create:no-configured',

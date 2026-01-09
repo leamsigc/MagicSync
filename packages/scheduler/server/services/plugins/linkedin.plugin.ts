@@ -46,7 +46,7 @@ export class LinkedInPlugin extends BaseSchedulerPlugin {
   }
 
   protected init(options?: any): void {
-    console.log('LinkedIn plugin initialized', options);
+    console.log('LinkedIn Personal plugin initialized', options);
   }
 
   override async validate(post: Post): Promise<string[]> {

@@ -39,7 +39,7 @@ export const useConnectionManager = () => {
 
       // Better Auth Generic OAuth platforms
       { name: 'Instagram', icon: 'logos:instagram-icon', url: '#', platform: "instagram", authType: 'manual-oauth', active: true },
-      { name: 'LinkedIn Page', icon: 'logos:linkedin-icon', url: '#', platform: "linkedin-page", authType: 'manual-oauth', active: false },
+      { name: 'LinkedIn Page', icon: 'logos:linkedin-icon', url: '#', platform: "linkedin-page", authType: 'manual-oauth', active: true },
       { name: 'Threads', icon: 'fa6-brands:square-threads', url: '#', platform: "threads", authType: 'manual-oauth', active: true },
       { name: 'Dribbble', icon: 'logos:dribbble-icon', url: '#', platform: "dribbble", authType: 'manual-oauth', active: false },
 
