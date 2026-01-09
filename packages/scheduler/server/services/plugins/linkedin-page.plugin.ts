@@ -4,6 +4,7 @@ import sharp from 'sharp';
 import type { LinkedInSettings } from '#layers/BaseScheduler/shared/platformSettings';
 import { platformConfigurations } from '#layers/BaseScheduler/shared/platformConstants';
 import { BaseSchedulerPlugin, type PluginPostDetails, type PluginSocialMediaAccount, type PostResponse } from '../SchedulerPost.service';
+import type { FacebookPage } from '#layers/BaseConnect/utils/FacebookPages';
 
 /**
  * LinkedIn Page Plugin - Posts on behalf of LinkedIn Organization/Company pages
@@ -30,7 +31,8 @@ export class LinkedInPagePlugin extends BaseSchedulerPlugin {
 
   public override exposedMethods = [
     'linkedInMaxLength',
-    'getOrganizations',
+    'pages',
+    'fetchPageInformation',
   ] as const;
   override maxConcurrentJob = platformConfigurations['linkedin-page'].maxConcurrentJob;
 
@@ -59,17 +61,78 @@ export class LinkedInPagePlugin extends BaseSchedulerPlugin {
   /**
    * Get organization information
    */
-  async getOrganization(organizationId: string, accessToken: string): Promise<any> {
-    const response = await fetch(
-      `https://api.linkedin.com/v2/organizations/${organizationId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'LinkedIn-Version': '202401',
+  async pages(_: any, accessToken: string): Promise<FacebookPage[]> {
+    const { elements, ...all } = await (
+      await fetch(
+        'https://api.linkedin.com/v2/organizationalEntityAcls?q=roleAssignee&role=ADMINISTRATOR&projection=(elements*(organizationalTarget~(localizedName,vanityName,logoV2(original~:playableStreams))))',
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'X-Restli-Protocol-Version': '2.0.0',
+            'LinkedIn-Version': '202501',
+          },
+        }
+      )
+    ).json();
+    const imagePromises = await Promise.all(
+      (elements || []).map((e: any) => {
+        const url = e['organizationalTarget~'].logoV2?.['original~']?.elements?.[0]?.identifiers?.[0]?.identifier;
+        if (!url) {
+          return null;
+        }
+        return fetchedImageBase64(url);
+      }));
+    const imageBase64s = await Promise.all(imagePromises);
+
+    const pages: FacebookPage[] = (elements || []).map((e: any, index: number) => ({
+      imageBase64: imageBase64s[index],
+      id: e.organizationalTarget.split(':').pop(),
+      page: e.organizationalTarget.split(':').pop(),
+      username: e['organizationalTarget~'].vanityName,
+      name: e['organizationalTarget~'].localizedName,
+      picture: {
+        data: {
+          url: e['organizationalTarget~'].logoV2?.['original~']?.elements?.[0]?.identifiers?.[0]?.identifier || '',
         },
       }
-    );
-    return response.json();
+    }));
+
+    console.log(pages);
+
+    return pages;
+  }
+  async fetchPageInformation(accessToken: string, params: { page: string }): Promise<{
+    id: string;
+    name: string;
+    access_token: string;
+    picture: string;
+    username: string;
+  }> {
+    const pageId = params.page;
+    const data = await (
+      await fetch(
+        `https://api.linkedin.com/v2/organizations/${pageId}?projection=(id,localizedName,vanityName,logoV2(original~:playableStreams))`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      )
+    ).json();
+
+    if (!data) {
+      throw new Error('Page not found');
+    }
+    const imageBase64 = await fetchedImageBase64(data?.logoV2?.['original~']?.elements?.[0]?.identifiers?.[0].identifier);
+
+
+    return {
+      id: data.id,
+      name: data.localizedName,
+      picture: imageBase64,
+      username: data.vanityName,
+      access_token: accessToken,
+    };
   }
 
   /**

@@ -4,6 +4,7 @@ import { FacebookPlugin } from '#layers/BaseScheduler/server/services/plugins/fa
 import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers';
 import { H3Error } from 'h3';
 import { entityDetailsService } from '#layers/BaseDB/server/services/entity-details.service';
+import { LinkedInPagePlugin } from '#layers/BaseScheduler/server/services/plugins/linkedin-page.plugin';
 
 defineRouteMeta({
   openAPI: {
@@ -32,6 +33,7 @@ export default defineEventHandler(async (event) => {
     )
     const matcher: Record<string, SchedulerPluginConstructor> = {
       facebook: FacebookPlugin,
+      "linkedin-page": LinkedInPagePlugin
     }
     if (!matcher[platform] || !accounts.length) {
       throw createError({

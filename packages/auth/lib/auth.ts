@@ -135,8 +135,7 @@ export const auth = betterAuth({
     linkedin: {
       clientId: process.env.NUXT_LINKEDIN_CLIENT_ID as string,
       clientSecret: process.env.NUXT_LINKEDIN_CLIENT_SECRET as string,
-      scopes: ['openid',
-        'profile',
+      scopes: ['openid', 'profile',
         'w_member_social',
         'r_basicprofile',
         'rw_organization_admin',

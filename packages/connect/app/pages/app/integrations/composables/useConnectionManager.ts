@@ -106,7 +106,7 @@ export const useConnectionManager = () => {
     try {
       const response = await $fetch<Promise<SocialMediaAccount[]>>('/api/v1/social-accounts?platformId=' + connectionId);
 
-      if (connectionId === 'facebook') {
+      if (connectionId === 'facebook' || connectionId === 'linkedin-page') {
         facebookPages.value = (response as unknown as FacebookPage[])
       }
     } catch (error) {
