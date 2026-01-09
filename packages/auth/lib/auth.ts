@@ -106,7 +106,7 @@ export const auth = betterAuth({
       clientId: process.env.NUXT_FACEBOOK_CLIENT_ID as string,
       clientSecret: process.env.NUXT_FACEBOOK_CLIENT_SECRET as string,
       configId: process.env.NUXT_FACEBOOK_CONFIG_ID as string,
-      scopes: [
+      scope: [
         "email",
         "public_profile",
         'pages_show_list',
@@ -125,17 +125,17 @@ export const auth = betterAuth({
     discord: {
       clientId: process.env.NUXT_DISCORD_CLIENT_ID as string,
       clientSecret: process.env.NUXT_DISCORD_CLIENT_SECRET as string,
-      scopes: ['identify', 'guilds', 'guilds.members.read', 'messages.read'],
+      scope: ['identify', 'guilds', 'guilds.members.read', 'messages.read'],
     },
     reddit: {
       clientId: process.env.NUXT_REDDIT_CLIENT_ID as string,
       clientSecret: process.env.NUXT_REDDIT_CLIENT_SECRET as string,
-      scopes: ['identity', 'submit', 'edit', 'read', 'mysubreddits', 'vote', 'history'],
+      scope: ['identity', 'submit', 'edit', 'read', 'mysubreddits', 'vote', 'history'],
     },
     linkedin: {
       clientId: process.env.NUXT_LINKEDIN_CLIENT_ID as string,
       clientSecret: process.env.NUXT_LINKEDIN_CLIENT_SECRET as string,
-      scopes: ['openid', 'profile',
+      scope: ['openid', 'profile',
         'w_member_social',
         'r_basicprofile',
         'rw_organization_admin',
