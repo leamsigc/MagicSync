@@ -15,7 +15,14 @@ const items = computed(() => {
     [
       {
         label: 'System Variables',
-        icon: 'i-lucide-user'
+        icon: 'i-lucide-user',
+        children: [
+          { label: 'Current Date', onSelect: () => emit('action', '{{date}}') },
+          { label: 'Current Time', onSelect: () => emit('action', '{{time}}') },
+          { label: 'Current Day', onSelect: () => emit('action', '{{day}}') },
+          { label: 'Current Month', onSelect: () => emit('action', '{{month}}') },
+          { label: 'Current Year', onSelect: () => emit('action', '{{year}}') }
+        ]
       }
     ],
 

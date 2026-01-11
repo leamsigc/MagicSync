@@ -80,6 +80,14 @@ export default withMermaid(defineConfig({
             { text: 'Platform Keys', link: '/guide/platform-keys' },
           ],
         },
+        {
+          text: 'Bulk Scheduling',
+          collapsed: false,
+          items: [
+            { text: 'CSV Import', link: '/guide/csv-import' },
+            { text: 'Bulk Generation', link: '/guide/bulk-generation' },
+          ],
+        },
       ],
       '/ecosystem/': [
         {

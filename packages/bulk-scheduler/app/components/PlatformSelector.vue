@@ -16,6 +16,7 @@ interface Props {
   validationStatus?: Record<string, { isValid: boolean; errors: string[]; warnings: string[]; }>;
 }
 
+const { t } = useI18n()
 const props = withDefaults(defineProps<Props>(), {
   validationStatus: () => ({})
 });
@@ -40,7 +41,7 @@ const getStatus = (accountId: string) => {
 <template>
   <div class="flex flex-col gap-2">
     <label class="block text-sm font-medium">
-      {{ $t('platformSelector.title') || 'Select Platforms' }}
+      {{ t('platformSelector.title') || 'Select Platforms' }}
     </label>
 
     <div class="flex gap-2 py-2 overflow-x-auto overflow-y-visible w-full scrollbar-hide">
@@ -74,21 +75,23 @@ const getStatus = (accountId: string) => {
             <div class="p-3 space-y-2">
               <template v-if="isSelected(account.id)">
                 <div class="flex items-center justify-between text-xs">
-                  <span class="text-zinc-500">Status</span>
+                  <span class="text-zinc-500">{{ t('platformSelector.status') }}</span>
                   <span class="font-medium" :class="{
                     'text-red-400': !getStatus(account.id).isValid,
                     'text-yellow-400': getStatus(account.id).warnings.length > 0 && getStatus(account.id).isValid,
                     'text-green-400': getStatus(account.id).isValid && getStatus(account.id).warnings.length === 0
                   }">
-                    <template v-if="!getStatus(account.id).isValid">Issues Found</template>
-                    <template v-else-if="getStatus(account.id).warnings.length > 0">Warnings</template>
-                    <template v-else>Ready to Post</template>
+                    <template v-if="!getStatus(account.id).isValid">{{ t('platformSelector.issuesFound') }}</template>
+                    <template v-else-if="getStatus(account.id).warnings.length > 0">
+                      {{ t('platformSelector.warnings') }}
+                    </template>
+                    <template v-else>{{ t('platformSelector.readyToPost') }}</template>
                   </span>
                 </div>
               </template>
               <template v-else>
                 <div class="text-xs text-zinc-500 text-center py-2">
-                  Click to enable {{ account.accountName }}
+                  {{ t('platformSelector.clickToEnable', { name: account.accountName }) }}
                 </div>
               </template>
             </div>

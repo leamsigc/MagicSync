@@ -1,18 +1,28 @@
 {
-    "en": {
-        "platformSelector": {
-            "title": "Select Platforms",
-            "noAccounts": "No connected social media accounts found",
-            "connectAccounts": "Connect Accounts",
-            "selected": "{count} platform(s) selected"
-        }
-    },
-    "es": {
-        "platformSelector": {
-            "title": "Seleccionar Plataformas",
-            "noAccounts": "No se encontraron cuentas de redes sociales conectadas",
-            "connectAccounts": "Conectar Cuentas",
-            "selected": "{count} plataforma(s) seleccionada(s)"
-        }
+  "en": {
+    "platformSelector": {
+      "title": "Select Platforms",
+      "noAccounts": "No connected social media accounts found",
+      "connectAccounts": "Connect Accounts",
+      "selected": "{count} platform(s) selected",
+      "status": "Status",
+      "issuesFound": "Issues Found",
+      "warnings": "Warnings",
+      "readyToPost": "Ready to Post",
+      "clickToEnable": "Click to enable {name}"
     }
+  },
+  "es": {
+    "platformSelector": {
+      "title": "Seleccionar Plataformas",
+      "noAccounts": "No se encontraron cuentas de redes sociales conectadas",
+      "connectAccounts": "Conectar Cuentas",
+      "selected": "{count} plataforma(s) seleccionada(s)",
+      "status": "Estado",
+      "issuesFound": "Problemas Encontrados",
+      "warnings": "Advertencias",
+      "readyToPost": "Listo para Publicar",
+      "clickToEnable": "Haga clic para habilitar {name}"
+    }
+  }
 }

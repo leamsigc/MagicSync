@@ -68,19 +68,17 @@ export const useBulkScheduler = () => {
         }
     }
 
-    const generateBulkPosts = async (
-        templateContent: string,
-        variables: SystemVariable[],
-        platforms: string[],
-        businessId: string,
-        dateRange: { startDate: Date; endDate: Date },
-        postsPerDay: number,
-        options?: {
-            skipWeekends?: boolean
-            businessHoursOnly?: boolean
-            firstComment?: string
-        }
-    ) => {
+    const generateBulkPosts = async (request: {
+        templateContent: string
+        variables: string[]
+        contentRows: Record<string, string>[]
+        platforms: string[]
+        businessId: string
+        dateRange: { startDate: Date; endDate: Date }
+        skipWeekends?: boolean
+        businessHoursOnly?: boolean
+        firstComment?: string
+    }) => {
         isLoading.value = true
         error.value = null
 
@@ -91,14 +89,9 @@ export const useBulkScheduler = () => {
             }>('/api/v1/bulk-scheduler/generate', {
                 method: 'POST',
                 body: {
-                    templateContent,
-                    variables,
-                    platforms,
-                    businessId,
-                    startDate: dateRange.startDate.toISOString(),
-                    endDate: dateRange.endDate.toISOString(),
-                    postsPerDay,
-                    ...options
+                    ...request,
+                    startDate: request.dateRange.startDate.toISOString(),
+                    endDate: request.dateRange.endDate.toISOString()
                 }
             })
 

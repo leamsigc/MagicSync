@@ -36,23 +36,23 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    if (!body.postsPerDay || body.postsPerDay < 1) {
+    if (!body.contentRows || !Array.isArray(body.contentRows) || body.contentRows.length === 0) {
       throw createError({
         statusCode: 400,
-        statusMessage: 'Posts per day must be at least 1'
+        statusMessage: 'At least one content row is required'
       })
     }
 
     const request: BulkGenerateRequest = {
       templateContent: body.templateContent,
-      variables: body.variables as SystemVariable[] || [],
+      variables: body.variables || [],
+      contentRows: body.contentRows,
       platforms: body.platforms,
       businessId: body.businessId,
       dateRange: {
         startDate: new Date(body.startDate),
         endDate: new Date(body.endDate)
       },
-      postsPerDay: body.postsPerDay,
       skipWeekends: body.skipWeekends || false,
       businessHoursOnly: body.businessHoursOnly || false,
       firstComment: body.firstComment

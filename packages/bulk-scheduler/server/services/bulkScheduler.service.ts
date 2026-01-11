@@ -4,6 +4,9 @@ import { distributePostsAcrossDates, calculateTotalDays, type DateDistributionOp
 import { processTemplate, type SystemVariable } from '../../utils/templateProcessor'
 import { validateBulkPosts } from '../../utils/validators'
 import { notificationService } from '#layers/BaseAuth/server/services/notification.service'
+import { platformConfigurations } from '#layers/BaseScheduler/shared/platformConstants'
+import type { PlatformContentOverride } from '#layers/BaseDB/db/posts/posts'
+import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service'
 
 export type BulkScheduleResult = {
   success: boolean
@@ -15,14 +18,14 @@ export type BulkScheduleResult = {
 
 export type BulkGenerateRequest = {
   templateContent: string
-  variables: SystemVariable[]
+  variables: string[] // Variable keys to match with contentRows
+  contentRows: Record<string, string>[] // Data for each post
   platforms: string[]
   businessId: string
   dateRange: {
     startDate: Date
     endDate: Date
   }
-  postsPerDay: number
   skipWeekends?: boolean
   businessHoursOnly?: boolean
   firstComment?: string
@@ -97,18 +100,22 @@ export class BulkSchedulerService {
     try {
       const {
         templateContent,
-        variables,
+        contentRows,
         platforms,
         businessId,
         dateRange,
-        postsPerDay,
         skipWeekends = false,
         businessHoursOnly = false,
         firstComment
       } = request
 
+      if (!contentRows || contentRows.length === 0) {
+        return { success: false, errors: ['No content rows provided'] }
+      }
+
+      const totalPosts = contentRows.length
       const totalDays = calculateTotalDays(dateRange.startDate, dateRange.endDate, skipWeekends)
-      const totalPosts = totalDays * postsPerDay
+      const postsPerDay = totalDays > 0 ? Math.ceil(totalPosts / totalDays) : 1
 
       const distributedDates = distributePostsAcrossDates(totalPosts, {
         startDate: dateRange.startDate,
@@ -118,37 +125,67 @@ export class BulkSchedulerService {
         businessHoursOnly
       })
 
-      const posts: PostCreateBase[] = distributedDates.map((dist) => {
-        const dateVariables: SystemVariable[] = [
-          ...variables,
-          { key: 'date', value: dist.date.toLocaleDateString() },
-          { key: 'time', value: dist.date.toLocaleTimeString() },
-          { key: 'day', value: dist.date.toLocaleDateString('en-US', { weekday: 'long' }) }
-        ]
+      const accountPlatforms = await Promise.all(
+        platforms.map(async (id) => {
+          const account = await socialMediaAccountService.getAccountById(id)
+          return { id, platform: account?.platform || 'default' }
+        })
+      )
+
+      const posts: PostCreateBase[] = contentRows.map((row, index) => {
+        const dist = distributedDates[index]
+        const rowVariables: SystemVariable[] = Object.entries(row).map(([key, value]) => ({
+          key,
+          value
+        }))
+
+        if (dist) {
+          rowVariables.push(
+            { key: 'date', value: dist.date.toLocaleDateString() },
+            { key: 'time', value: dist.date.toLocaleTimeString() },
+            { key: 'day', value: dist.date.toLocaleDateString('en-US', { weekday: 'long' }) }
+          )
+        }
 
         const processed = processTemplate(templateContent, {
-          variables: dateVariables,
+          variables: rowVariables,
           strict: false
         })
 
         const comments: string[] = []
         if (firstComment) {
           const processedComment = processTemplate(firstComment, {
-            variables: dateVariables,
+            variables: rowVariables,
             strict: false
           })
           comments.push(processedComment.content)
         }
+
+        // Platform-specific content trimming
+        const platformContent: Record<string, PlatformContentOverride> = {}
+
+        accountPlatforms.forEach(({ id, platform }) => {
+          const { content: trimmedContent, comments: updatedComments } = this.trimContentForPlatform(
+            processed.content,
+            platform,
+            [...comments]
+          )
+
+          platformContent[id] = {
+            content: trimmedContent,
+            comments: updatedComments
+          }
+        })
 
         return {
           businessId,
           content: processed.content,
           mediaAssets: [],
           targetPlatforms: platforms,
-          scheduledAt: dist.date,
+          scheduledAt: dist?.date || null,
           status: 'pending',
           comment: comments,
-          platformContent: {},
+          platformContent,
           platformSettings: {},
           postFormat: 'post'
         }
@@ -211,6 +248,47 @@ export class BulkSchedulerService {
       errors: errors.length > 0 ? errors : undefined,
       postIds: createdIds
     }
+  }
+
+  private trimContentForPlatform(content: string, platform: string, currentComments: string[]): { content: string, comments: string[] } {
+    const config = platformConfigurations[platform as keyof typeof platformConfigurations] || platformConfigurations.default
+    const limit = config.maxPostLength
+
+    if (content.length <= limit) {
+      return { content, comments: currentComments }
+    }
+
+    // Smart trimming: try to find a paragraph or sentence break
+    let trimmed = content.substring(0, limit)
+    let remaining = content.substring(limit)
+
+    // Try to find the last double newline (paragraph break) within the limit
+    const lastParagraph = trimmed.lastIndexOf('\n\n')
+    if (lastParagraph > limit * 0.5) {
+      trimmed = content.substring(0, lastParagraph)
+      remaining = content.substring(lastParagraph).trim()
+    } else {
+      // Try single newline
+      const lastNewline = trimmed.lastIndexOf('\n')
+      if (lastNewline > limit * 0.7) {
+        trimmed = content.substring(0, lastNewline)
+        remaining = content.substring(lastNewline).trim()
+      } else {
+        // Try last space (word break)
+        const lastSpace = trimmed.lastIndexOf(' ')
+        if (lastSpace > limit * 0.8) {
+          trimmed = content.substring(0, lastSpace)
+          remaining = content.substring(lastSpace).trim()
+        }
+      }
+    }
+
+    const newComments = [...currentComments]
+    if (remaining) {
+      newComments.push(remaining)
+    }
+
+    return { content: trimmed.trim(), comments: newComments }
   }
 
   private async logOperationNotification(

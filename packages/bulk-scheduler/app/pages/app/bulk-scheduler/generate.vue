@@ -2,40 +2,50 @@
 <i18n src="./generate.json"></i18n>
 
 <script lang="ts" setup>
-/**
- * Component Description: Bulk post generation page with template editor
- *
- * @author Ismael Garcia <leamsigc@leamsigc.com>
- * @version 0.0.1
- *
- * @todo [ ] Test the component
- * @todo [ ] Integration test.
- * @todo [✔] Update the typescript.
- */
 import { useBusinessManager } from '#layers/BaseConnect/app/pages/app/business/composables/useBusinessManager'
 import { useSocialMediaManager } from '#layers/BaseConnect/app/composables/UseSocialMediaManager'
 import { extractVariablesFromTemplate } from '#layers/BaseBulkScheduler/utils/templateProcessor'
 import { getDefaultSystemVariables } from '#layers/BaseBulkScheduler/utils/templateProcessor'
 const { t } = useI18n()
-const { generateBulkPosts, isLoading } = useBulkScheduler()
+const { generateBulkPosts, isLoading: isGenerating } = useBulkScheduler()
+const { parseCsv, isLoading: isParsingCsv } = useCsvParser()
+const toast = useToast()
 const { businesses, activeBusinessId, getAllBusinesses } = useBusinessManager()
 const { connectedSocialAccountsList, getAllSocialMediaAccounts } = useSocialMediaManager()
 const router = useRouter()
 
+const isLoading = computed(() => isGenerating.value || isParsingCsv.value)
+
+const csvFileInput = ref<any>(null)
+
 const templateContent = ref('')
-const customVariables = ref<SystemVariable[]>([])
+const customVariables = ref<{ name: string; label: string }[]>([])
+const contentRows = ref<Record<string, string>[]>([{}])
 const selectedPlatforms = ref<string[]>([])
 const dateRange = ref<{ startDate: Date; endDate: Date }>({
   startDate: new Date(),
   endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
 })
-const postsPerDay = ref(2)
 const selectedBusinessId = ref(activeBusinessId.value || '')
 const skipWeekends = ref(false)
 const businessHoursOnly = ref(false)
 const firstComment = ref('')
 
+const isVariableModalOpen = ref(false)
+const editingVariableIndex = ref<number | null>(null)
+const variableForm = ref({
+  name: '',
+  label: ''
+})
+
+const isRowModalOpen = ref(false)
+const editingRowIndex = ref<number | null>(null)
+const rowForm = ref<Record<string, string>>({})
+
+const systemVariables = computed(() => getDefaultSystemVariables())
+
 const templateTextarea = ref<HTMLTextAreaElement | null>(null)
+const templateHintExample = '{{product_name}}'
 
 onMounted(async () => {
   await getAllSocialMediaAccounts()
@@ -64,37 +74,131 @@ const detectTemplateVariables = computed(() => {
   return extractVariablesFromTemplate(templateContent.value)
 })
 
-const allVariables = computed(() => {
-  const defaults = getDefaultSystemVariables()
-  return [...defaults, ...customVariables.value]
-})
+const openAddVariableModal = () => {
+  editingVariableIndex.value = null
+  variableForm.value = { name: '', label: '' }
+  isVariableModalOpen.value = true
+}
 
-const addCustomVariable = () => {
-  customVariables.value.push({
-    key: '',
-    value: '',
-    description: ''
-  })
+const openEditVariableModal = (index: number) => {
+  editingVariableIndex.value = index
+  const v = customVariables.value[index]
+  variableForm.value = { ...v }
+  isVariableModalOpen.value = true
+}
+
+const saveVariable = () => {
+  if (!variableForm.value.name) return
+
+  const v = { ...variableForm.value }
+  v.name = v.name.trim().toLowerCase().replace(/\s+/g, '_')
+
+  if (editingVariableIndex.value !== null) {
+    const oldName = customVariables.value[editingVariableIndex.value].name
+    customVariables.value[editingVariableIndex.value] = v
+
+    // Update data rows if name changed
+    if (oldName !== v.name) {
+      contentRows.value.forEach(row => {
+        row[v.name] = row[oldName] || ''
+        delete row[oldName]
+      })
+    }
+  } else {
+    // Check for duplicates
+    if (customVariables.value.some(existing => existing.name === v.name)) {
+      alert('Variable name already exists')
+      return
+    }
+    customVariables.value.push(v)
+    contentRows.value.forEach(row => {
+      row[v.name] = ''
+    })
+  }
+
+  isVariableModalOpen.value = false
 }
 
 const removeVariable = (index: number) => {
+  const v = customVariables.value[index]
   customVariables.value.splice(index, 1)
+  contentRows.value.forEach(row => {
+    delete row[v.name]
+  })
+}
+
+const openAddRowModal = () => {
+  editingRowIndex.value = null
+  const newRow: Record<string, string> = {}
+  customVariables.value.forEach(v => (newRow[v.name] = ''))
+  rowForm.value = newRow
+  isRowModalOpen.value = true
+}
+
+const openEditRowModal = (index: number) => {
+  editingRowIndex.value = index
+  rowForm.value = { ...contentRows.value[index] }
+  isRowModalOpen.value = true
+}
+
+const saveRow = () => {
+  if (editingRowIndex.value !== null) {
+    contentRows.value[editingRowIndex.value] = { ...rowForm.value }
+  } else {
+    contentRows.value.push({ ...rowForm.value })
+  }
+  isRowModalOpen.value = false
+}
+
+const removeRow = (index: number) => {
+  contentRows.value.splice(index, 1)
+}
+
+const handleCsvImport = async (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (!file) return
+
+  try {
+    const { variables, rows } = await parseCsv(file)
+
+    // Replace or merge? I'll replace for now to keep it clean, or merge if they already have data.
+    // Actually, user probably wants to replace if they are importing.
+    // I'll show a confirm if they have data.
+    if (customVariables.value.length > 0 || contentRows.value.length > 0) {
+      if (!confirm('This will replace your current custom variables and rows. Continue?')) {
+        return
+      }
+    }
+
+    customVariables.value = variables
+    contentRows.value = rows
+    toast.add({ title: 'Success', description: `Imported ${rows.length} rows successfully`, color: 'success' })
+  } catch (err: any) {
+    toast.add({ title: 'Error', description: err.message, color: 'error' })
+  } finally {
+    if (csvFileInput.value) csvFileInput.value.value = ''
+  }
+}
+
+const triggerCsvImport = () => {
+  csvFileInput.value?.click()
 }
 
 const handleVariableAction = (content: string) => {
   if (!templateTextarea.value) return
 
-  const start = templateTextarea.value.selectionStart
-  const end = templateTextarea.value.selectionEnd
+  const textarea = templateTextarea.value?.$el?.querySelector('textarea') || templateTextarea.value
   const text = templateContent.value
+  const start = textarea?.selectionStart ?? text.length
+  const end = textarea?.selectionEnd ?? text.length
 
   templateContent.value = text.substring(0, start) + content + text.substring(end)
 
-  // Reset cursor position after insertion
   nextTick(() => {
-    if (templateTextarea.value) {
-      templateTextarea.value.focus()
-      templateTextarea.value.setSelectionRange(start + content.length, start + content.length)
+    if (textarea) {
+      textarea.focus()
+      textarea.setSelectionRange(start + content.length, start + content.length)
     }
   })
 }
@@ -104,7 +208,7 @@ const canGenerate = computed(() => {
     templateContent.value.trim() !== '' &&
     selectedPlatforms.value.length > 0 &&
     selectedBusinessId.value.trim() !== '' &&
-    postsPerDay.value > 0
+    contentRows.value.length > 0
   )
 })
 
@@ -112,19 +216,17 @@ const handleGenerate = async () => {
   if (!canGenerate.value) return
 
   try {
-    await generateBulkPosts(
-      templateContent.value,
-      allVariables.value,
-      selectedPlatforms.value,
-      selectedBusinessId.value,
-      dateRange.value,
-      postsPerDay.value,
-      {
-        skipWeekends: skipWeekends.value,
-        businessHoursOnly: businessHoursOnly.value,
-        firstComment: firstComment.value || undefined
-      }
-    )
+    await generateBulkPosts({
+      templateContent: templateContent.value,
+      variables: customVariables.value.map(v => v.name),
+      contentRows: contentRows.value,
+      platforms: selectedPlatforms.value,
+      businessId: selectedBusinessId.value,
+      dateRange: dateRange.value,
+      skipWeekends: skipWeekends.value,
+      businessHoursOnly: businessHoursOnly.value,
+      firstComment: firstComment.value || undefined
+    })
 
     router.push('/app/bulk-scheduler')
   } catch (error) {
@@ -145,11 +247,104 @@ const handleGenerate = async () => {
       </UButton>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div class="space-y-6">
+    <!-- Data Table and Variables Grouped -->
+    <UCard :ui="{ body: 'p-0' }">
+      <template #header>
+        <div class="flex flex-col gap-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-xl font-semibold">{{ t('generate.contentData') }}</h2>
+              <p class="text-sm text-neutral-500">{{ t('generate.contentDataSubtitle') }}</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <UButton icon="i-heroicons-arrow-up-tray" color="neutral" variant="subtle" @click="triggerCsvImport">
+                {{ t('generate.importCsv') }}
+              </UButton>
+              <UButton icon="i-heroicons-plus" color="primary" @click="openAddRowModal">{{ t('generate.addRow') }}
+              </UButton>
+            </div>
+            <input ref="csvFileInput" type="file" accept=".csv" class="hidden" @change="handleCsvImport" />
+          </div>
+
+          <!-- Variables Toolbar -->
+          <div class="flex flex-wrap items-center gap-3 p-3  rounded-lg">
+            <span class="text-xs font-semibold uppercase tracking-wider text-neutral-500">
+              {{ t('generate.customVariablesTitle') }}
+            </span>
+            <div v-for="(v, i) in customVariables" :key="v.name"
+              class="flex items-center gap-1 px-2 py-1  rounded-md group">
+              <span class="text-sm font-medium text-neutral-700">{{ v.label || v.name }}</span>
+              <div class="flex items-center  ml-1 pl-1">
+                <UButton icon="i-heroicons-pencil-square" size="xs" variant="ghost" color="neutral" class="h-5 w-5 p-0"
+                  @click="openEditVariableModal(i)" />
+                <UButton icon="i-heroicons-trash" size="xs" variant="ghost" color="error" class="h-5 w-5 p-0"
+                  @click="removeVariable(i)" />
+              </div>
+            </div>
+            <UButton icon="i-heroicons-plus" size="xs" variant="subtle" color="neutral" @click="openAddVariableModal">
+              {{ t('generate.newVariable') }}
+            </UButton>
+          </div>
+        </div>
+      </template>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm text-left border-collapse">
+          <thead>
+            <tr class="">
+              <th v-for="v in customVariables" :key="v.name" class="p-3 font-medium   first:border-l-0">
+                <span class="capitalize">{{ v.label || v.name.replace(/_/g, ' ') }}</span>
+              </th>
+              <th class="p-3 w-20  ">{{ t('generate.actions') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(row, rowIndex) in contentRows" :key="rowIndex" class="">
+              <td v-for="v in customVariables" :key="v.name" class="p-3  first:border-l-0">
+                <span class="text-sm text-neutral-600">{{ row[v.name] || '-' }}</span>
+              </td>
+              <td class="p-2 text-center ">
+                <div class="flex items-center justify-center gap-1">
+                  <UButton icon="i-heroicons-pencil-square" size="xs" color="neutral" variant="ghost"
+                    @click="openEditRowModal(rowIndex)" />
+                  <UButton icon="i-heroicons-trash" size="xs" color="error" variant="ghost"
+                    @click="removeRow(rowIndex)" />
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div v-if="customVariables.length === 0" class="p-12 text-center  m-4 rounded-lg">
+          <Icon name="i-heroicons-variable" class="w-10 h-10 mx-auto text-neutral-300 mb-3" />
+          <h3 class="text-neutral-900 font-medium">{{ t('generate.noCustomVariables') }}</h3>
+          <p class="text-sm text-neutral-500 mt-1 mb-4">{{ t('generate.noCustomVariablesSubtitle') }}
+          </p>
+          <UButton icon="i-heroicons-plus" @click="openAddVariableModal">{{ t('generate.addFirstVariable') }}</UButton>
+        </div>
+        <div v-else-if="contentRows.length === 0" class="p-12 text-center  m-4 rounded-lg">
+          <Icon name="i-heroicons-table-cells" class="w-10 h-10 mx-auto text-neutral-300 mb-3" />
+          <h3 class="text-neutral-900 font-medium">{{ t('generate.noContentRows') }}</h3>
+          <p class="text-sm text-neutral-500 mt-1 mb-4">{{ t('generate.noContentRowsSubtitle') }}</p>
+          <UButton icon="i-heroicons-plus" @click="openAddRowModal">{{ t('generate.addFirstRow') }}</UButton>
+        </div>
+      </div>
+      <template #footer v-if="contentRows.length > 0">
+        <div class="flex items-center justify-between">
+          <p class="text-sm text-neutral-500">
+            {{ t('generate.postsBatchInfo', { count: contentRows.length }) }}
+          </p>
+          <UButton v-if="customVariables.length > 0" icon="i-heroicons-plus" variant="subtle" size="sm"
+            @click="openAddRowModal">
+            {{ t('generate.addAnotherRow') }}</UButton>
+        </div>
+      </template>
+    </UCard>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div class="lg:col-span-2 space-y-6">
         <UCard>
           <template #header>
-            <h2 class="text-lg font-semibold">{{ t('generate.templateConfig') }}</h2>
+            <h2 class="text-xl font-semibold">{{ t('generate.templateEditor') }}</h2>
           </template>
 
           <div class="space-y-4">
@@ -158,54 +353,49 @@ const handleGenerate = async () => {
                 option-attribute="label" class="w-full" :placeholder="t('generate.businessIdPlaceholder')" />
             </UFormField>
 
-            <UFormField name="template">
-              <template #label>
-                <div class="flex items-center justify-between w-full">
-                  <span class="text-sm font-medium">{{ t('generate.template') }}</span>
-                  <TemplateVariablePopUp @action="handleVariableAction" />
-                </div>
-              </template>
-              <UTextarea ref="templateTextarea" v-model="templateContent" :rows="6" class="w-full"
-                :placeholder="t('generate.templatePlaceholder')" />
-              <p class="text-xs text-gray-500 mt-1">{{ t('generate.templateHint') }}</p>
-            </UFormField>
-
-            <div v-if="detectTemplateVariables.length > 0" class="p-3 bg-blue-50 rounded-lg">
-              <p class="text-sm font-medium text-blue-900">{{ t('generate.detectedVariables') }}</p>
-              <div class="flex flex-wrap gap-2 mt-2">
-                <span v-for="variable in detectTemplateVariables" :key="variable"
-                  class="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
-                  {{ variable }}
-                </span>
+            <div class="space-y-2">
+              <div class="flex items-center justify-between">
+                <label class="block text-sm font-medium">{{ t('generate.templateContent') }}</label>
+                <TemplateVariablePopUp @action="handleVariableAction" />
               </div>
+
+              <div v-if="customVariables.length > 0 || systemVariables.length > 0"
+                class="space-y-4 p-4 border border-neutral-200/10 rounded-lg">
+                <div v-if="customVariables.length > 0">
+                  <span class="text-xs font-semibold uppercase tracking-wider text-neutral-500 block mb-2">
+                    {{ t('generate.clickToInsert') }}</span>
+                  <div class="flex flex-wrap gap-2">
+                    <UBadge v-for="v in customVariables" :key="v.name" color="neutral" variant="subtle" size="sm"
+                      class="cursor-pointer hover:bg-neutral-100 transition-colors"
+                      @click="handleVariableAction(`{{${v.name}}}`)">
+                      {{ v.label || v.name }}
+                    </UBadge>
+                  </div>
+                </div>
+
+                <div v-if="systemVariables.length > 0">
+                  <span class="text-xs font-semibold uppercase tracking-wider text-neutral-500 block mb-2">
+                    {{ t('generate.systemVariables') }}:</span>
+                  <div class="flex flex-wrap gap-2">
+                    <UBadge v-for="v in systemVariables" :key="v.key" color="primary" variant="subtle" size="sm"
+                      class="cursor-pointer hover:bg-primary-50 transition-colors"
+                      @click="handleVariableAction(`{{${v.key}}}`)">
+                      {{ v.key }}
+                    </UBadge>
+                  </div>
+                </div>
+              </div>
+
+              <UTextarea ref="templateTextarea" v-model="templateContent"
+                :placeholder="t('generate.template.placeholder')" class="w-full font-mono text-base" :rows="8" />
+              <p class="text-xs text-gray-400 italic">
+                {{ t('generate.templateHint', { example: templateHintExample }) }}
+              </p>
             </div>
 
             <UFormField :label="t('generate.firstComment')" name="firstComment">
-              <UInput v-model="firstComment" class="w-full" :placeholder="t('generate.firstCommentPlaceholder')" />
+              <UInput v-model="firstComment" :placeholder="t('generate.firstCommentPlaceholder')" class="w-full" />
             </UFormField>
-          </div>
-        </UCard>
-
-        <UCard>
-          <template #header>
-            <div class="flex items-center justify-between">
-              <h3 class="text-lg font-semibold">{{ t('generate.customVariables') }}</h3>
-              <UButton size="sm" icon="i-heroicons-plus" @click="addCustomVariable">
-                {{ t('generate.addVariable') }}
-              </UButton>
-            </div>
-          </template>
-
-          <div class="space-y-3">
-            <div v-for="(variable, index) in customVariables" :key="index" class="flex gap-2 items-start">
-              <UInput v-model="variable.key" class="flex-1" placeholder="Variable name" />
-              <UInput v-model="variable.value" class="flex-1" placeholder="Value" />
-              <UButton icon="i-heroicons-x-mark" color="red" variant="ghost" size="sm" @click="removeVariable(index)" />
-            </div>
-
-            <p v-if="customVariables.length === 0" class="text-sm text-gray-500 text-center py-4">
-              {{ t('generate.noCustomVariables') }}
-            </p>
           </div>
         </UCard>
       </div>
@@ -213,7 +403,7 @@ const handleGenerate = async () => {
       <div class="space-y-6">
         <UCard>
           <template #header>
-            <h2 class="text-lg font-semibold">{{ t('generate.schedulingConfig') }}</h2>
+            <h2 class="text-xl font-semibold">{{ t('generate.scheduling') }}</h2>
           </template>
 
           <div class="space-y-4">
@@ -227,22 +417,99 @@ const handleGenerate = async () => {
               <DateRangeSelector @update="(r) => (dateRange = r)" />
             </UFormField>
 
-            <UFormField :label="t('generate.postsPerDay')" name="postsPerDay">
-              <UInput v-model.number="postsPerDay" type="number" :min="1" :max="10" class="w-full" />
-            </UFormField>
-
-            <div class="space-y-2">
+            <div class="space-y-3 pt-2">
               <UCheckbox v-model="skipWeekends" :label="t('generate.skipWeekends')" />
               <UCheckbox v-model="businessHoursOnly" :label="t('generate.businessHoursOnly')" />
+            </div>
+
+            <div class="pt-4 border-t border-zinc-100">
+              <div class="flex items-center justify-between mb-4">
+                <span class="text-sm font-medium">{{ t('generate.readyToPost') }}</span>
+                <span class="text-lg font-bold text-primary">{{ contentRows.length }} {{ t('generate.items') }}</span>
+              </div>
+
+              <UButton color="primary" block size="lg" :loading="isLoading" :disabled="!canGenerate"
+                @click="handleGenerate">
+                {{ t('generate.submit') }}
+              </UButton>
             </div>
           </div>
         </UCard>
 
-        <UButton block color="primary" size="lg" :disabled="!canGenerate || isLoading" :loading="isLoading"
-          @click="handleGenerate">
-          {{ t('generate.generatePosts') }}
-        </UButton>
+        <BulkPostPreview :template="templateContent" :content-rows="contentRows" :platforms="selectedPlatforms"
+          :date-range="dateRange" :skip-weekends="skipWeekends" :business-hours-only="businessHoursOnly" />
       </div>
     </div>
+
+    <!-- Variable Management Modal -->
+    <UModal v-model:open="isVariableModalOpen">
+      <template #content>
+        <UCard>
+          <template #header>
+            <div class="flex items-center justify-between">
+              <h3 class="text-lg font-bold">
+                {{ editingVariableIndex !== null ? t('generate.editVariable') : t('generate.addCustomVariable') }}
+              </h3>
+              <UButton icon="i-heroicons-x-mark" color="neutral" variant="ghost" @click="isVariableModalOpen = false" />
+            </div>
+          </template>
+
+          <UForm :state="variableForm" class="space-y-4" @submit="saveVariable">
+            <UFormField :label="t('generate.variableNameLabel')" name="name" required
+              :help="t('generate.variableNameHelp')">
+              <UInput v-model="variableForm.name" :placeholder="t('generate.variableNamePlaceholder')" />
+            </UFormField>
+
+            <UFormField :label="t('generate.displayLabel')" name="label" required
+              :help="t('generate.displayLabelHelp')">
+              <UInput v-model="variableForm.label" :placeholder="t('generate.displayLabelPlaceholder')" />
+            </UFormField>
+
+            <div class="flex justify-end gap-3 pt-4">
+              <UButton color="neutral" variant="ghost" @click="isVariableModalOpen = false">{{ t('generate.cancel') }}
+              </UButton>
+              <UButton type="submit" color="primary">
+                {{ editingVariableIndex !== null ? t('generate.updateVariable') : t('generate.addVariable') }}
+              </UButton>
+            </div>
+          </UForm>
+        </UCard>
+      </template>
+    </UModal>
+
+    <!-- Row Management Modal -->
+    <UModal v-model:open="isRowModalOpen">
+      <template #content>
+        <UCard>
+          <template #header>
+            <div class="flex items-center justify-between">
+              <h3 class="text-lg font-bold">
+                {{ editingRowIndex !== null ? t('generate.editContentRow') : t('generate.addContentRow') }}
+              </h3>
+              <UButton icon="i-heroicons-x-mark" color="neutral" variant="ghost" @click="isRowModalOpen = false" />
+            </div>
+          </template>
+
+          <UForm :state="rowForm" class="space-y-4" @submit="saveRow">
+            <UFormField v-for="v in customVariables" :key="v.name" :label="v.label || v.name" :name="v.name">
+              <UTextarea v-model="rowForm[v.name]"
+                :placeholder="t('generate.enterValueFor', { name: v.label || v.name })" autoresize :rows="4" />
+            </UFormField>
+
+            <div v-if="customVariables.length === 0" class="text-center py-4 text-neutral-500">
+              {{ t('generate.addVariableFirst') }}
+            </div>
+
+            <div class="flex justify-end gap-3 pt-4">
+              <UButton color="neutral" variant="ghost" @click="isRowModalOpen = false">{{ t('generate.cancel') }}
+              </UButton>
+              <UButton type="submit" color="primary" :disabled="customVariables.length === 0">
+                {{ editingRowIndex !== null ? t('generate.updateRow') : t('generate.addRow') }}
+              </UButton>
+            </div>
+          </UForm>
+        </UCard>
+      </template>
+    </UModal>
   </div>
 </template>
