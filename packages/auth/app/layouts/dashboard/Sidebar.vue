@@ -205,7 +205,7 @@ const navigationItems = computed<NavigationMenuItem[][]>(() => {
           },
           {
             label: menuData.menu.bulkCreate,
-            to: '/app/posts/bulk-create'
+            to: '/app/bulk-scheduler'
           }
         ]
       }

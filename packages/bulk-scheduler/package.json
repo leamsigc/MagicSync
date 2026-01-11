@@ -9,19 +9,33 @@
     "build": "nuxt build .playground",
     "generate": "nuxt generate .playground",
     "preview": "nuxt preview .playground",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "vitest",
+    "test:unit": "vitest run",
+    "test:e2e": "playwright test",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@local-monorepo/auth": "workspace:*",
+    "@local-monorepo/connect": "workspace:*",
     "@local-monorepo/db": "workspace:*",
-    "@local-monorepo/ui": "workspace:*"
+    "@local-monorepo/scheduler": "workspace:*",
+    "@local-monorepo/ui": "workspace:*",
+    "papaparse": "catalog:"
   },
   "devDependencies": {
     "@nuxt/eslint": "catalog:",
+    "@nuxt/test-utils": "catalog:",
+    "@nuxtjs/i18n": "catalog:",
+    "@playwright/test": "catalog:",
+    "@types/papaparse": "catalog:",
+    "@vitejs/plugin-vue": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
     "eslint": "catalog:",
+    "happy-dom": "catalog:",
     "nuxt": "catalog:",
     "typescript": "catalog:",
-    "vue": "catalog:",
-    "@nuxtjs/i18n": "catalog:"
+    "vitest": "catalog:",
+    "vue": "catalog:"
   }
 }

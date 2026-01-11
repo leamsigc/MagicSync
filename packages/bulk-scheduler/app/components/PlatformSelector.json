@@ -1,0 +1,18 @@
+{
+    "en": {
+        "platformSelector": {
+            "title": "Select Platforms",
+            "noAccounts": "No connected social media accounts found",
+            "connectAccounts": "Connect Accounts",
+            "selected": "{count} platform(s) selected"
+        }
+    },
+    "es": {
+        "platformSelector": {
+            "title": "Seleccionar Plataformas",
+            "noAccounts": "No se encontraron cuentas de redes sociales conectadas",
+            "connectAccounts": "Conectar Cuentas",
+            "selected": "{count} plataforma(s) seleccionada(s)"
+        }
+    }
+}

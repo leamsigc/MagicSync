@@ -1,0 +1,56 @@
+{
+  "en": {
+    "generate": {
+      "title": "Bulk Generate Posts",
+      "subtitle": "Generate multiple posts using templates and variables",
+      "templateConfig": "Template Configuration",
+      "schedulingConfig": "Scheduling Configuration",
+      "businessId": "Business ID",
+      "businessIdPlaceholder": "Enter your business ID",
+      "template": "Post Template",
+      "templatePlaceholder": "Write your post template here. Use variableName for dynamic content.",
+      "templateHint": "Use double curly braces #{'{{}}'} for variables. Example: #{'{{business_name}}'}, #{'{{date}}'}, #{'{{product_name}}'}",
+      "firstComment": "First Comment Template (Optional)",
+      "firstCommentPlaceholder": "Template for the first comment on each post",
+      "customVariables": "Custom Variables",
+      "addVariable": "Add Variable",
+      "noCustomVariables": "No custom variables added yet",
+      "detectedVariables": "Detected variables in template:",
+      "dateRange": "Date Range",
+      "postsPerDay": "Posts Per Day",
+      "skipWeekends": "Skip weekends",
+      "businessHoursOnly": "Business hours only (9 AM - 5 PM)",
+      "generatePosts": "Generate Posts"
+    },
+    "common": {
+      "back": "Back"
+    }
+  },
+  "es": {
+    "generate": {
+      "title": "Generar Publicaciones Masivas",
+      "subtitle": "Generar múltiples publicaciones usando plantillas y variables",
+      "templateConfig": "Configuración de Plantilla",
+      "schedulingConfig": "Configuración de Programación",
+      "businessId": "ID de Negocio",
+      "businessIdPlaceholder": "Ingrese su ID de negocio",
+      "template": "Plantilla de Publicación",
+      "templatePlaceholder": "Escriba su plantilla de publicación aquí. Use nombreVariable para contenido dinámico.",
+      "templateHint": "Use dobles llaves #{'{{}}'} para variables. Ejemplo: #{'{{nombre_negocio}}'}, #{'{{fecha}}'}, #{'{{nombre_producto}}'}",
+      "firstComment": "Plantilla del Primer Comentario (Opcional)",
+      "firstCommentPlaceholder": "Plantilla para el primer comentario en cada publicación",
+      "customVariables": "Variables Personalizadas",
+      "addVariable": "Agregar Variable",
+      "noCustomVariables": "No se han agregado variables personalizadas aún",
+      "detectedVariables": "Variables detectadas en la plantilla:",
+      "dateRange": "Rango de Fechas",
+      "postsPerDay": "Publicaciones Por Día",
+      "skipWeekends": "Omitir fines de semana",
+      "businessHoursOnly": "Solo horario comercial (9 AM - 5 PM)",
+      "generatePosts": "Generar Publicaciones"
+    },
+    "common": {
+      "back": "Atrás"
+    }
+  }
+}

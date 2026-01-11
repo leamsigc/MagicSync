@@ -24,9 +24,13 @@ catalog:
   '@nuxt/ui': 4.3.0
   '@nuxtjs/i18n': 10.2.1
   '@nuxtjs/seo': 3.3.0
+  '@playwright/test': 1.57.0
   '@types/mjml': 4.7.4
+  '@types/papaparse': 5.5.2
   '@types/three': 0.182.0
   '@unhead/vue': 2.0.19
+  '@vitejs/plugin-vue': 5.2.4
+  '@vitest/coverage-v8': 1.6.1
   '@vueuse/core': 14.1.0
   '@vueuse/motion': 3.0.3
   '@vueuse/nuxt': 14.1.0
@@ -40,16 +44,19 @@ catalog:
   eslint: 9.39.2
   fabric: 6.9.1
   googleapis: 169.0.0
+  happy-dom: 13.10.1
   mjml: 4.18.0
   nuxt: 4.2.2
   nuxt-auth-utils: 0.5.26
   nuxt-file-storage: 0.3.0
+  papaparse: 5.5.3
   sass: 1.97.0
   sharp: 0.34.5
   three: 0.182.0
   tsx: 4.21.0
   twitter-api-v2: 1.28.0
   typescript: 5.9.3
+  vitest: 1.6.1
   vue: 3.5.26
   vue-router: 4.6.4
   zod: 4.2.1

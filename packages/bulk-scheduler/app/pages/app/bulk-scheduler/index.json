@@ -1,0 +1,82 @@
+{
+  "en": {
+    "index": {
+      "title": "Bulk Scheduler",
+      "subtitle": "Schedule multiple posts at once using CSV import or bulk generation",
+      "csvImport": {
+        "title": "CSV Import",
+        "description": "Import from spreadsheet",
+        "feature1": "Upload CSV file with your posts",
+        "feature2": "Auto-distribute across date range",
+        "feature3": "Schedule to multiple platforms",
+        "cta": "Import from CSV"
+      },
+      "bulkGenerate": {
+        "title": "Bulk Generate",
+        "description": "Generate with templates",
+        "feature1": "Use templates with variables",
+        "feature2": "Smart date distribution",
+        "feature3": "Customize for each platform",
+        "cta": "Generate Posts"
+      },
+      "howItWorks": {
+        "title": "How It Works",
+        "step1": {
+          "title": "Choose Method",
+          "description": "Select CSV import or bulk generation based on your needs"
+        },
+        "step2": {
+          "title": "Configure",
+          "description": "Set platforms, date range, and scheduling preferences"
+        },
+        "step3": {
+          "title": "Schedule",
+          "description": "Posts are automatically created and scheduled across your selected platforms"
+        }
+      }
+    },
+    "common": {
+      "back": "Back"
+    }
+  },
+  "es": {
+    "index": {
+      "title": "Programador Masivo",
+      "subtitle": "Programa múltiples publicaciones a la vez usando importación CSV o generación masiva",
+      "csvImport": {
+        "title": "Importar CSV",
+        "description": "Importar desde hoja de cálculo",
+        "feature1": "Sube archivo CSV con tus publicaciones",
+        "feature2": "Auto-distribuir en rango de fechas",
+        "feature3": "Programar en múltiples plataformas",
+        "cta": "Importar desde CSV"
+      },
+      "bulkGenerate": {
+        "title": "Generación Masiva",
+        "description": "Generar con plantillas",
+        "feature1": "Usa plantillas con variables",
+        "feature2": "Distribución inteligente de fechas",
+        "feature3": "Personalizar para cada plataforma",
+        "cta": "Generar Publicaciones"
+      },
+      "howItWorks": {
+        "title": "Cómo Funciona",
+        "step1": {
+          "title": "Elige Método",
+          "description": "Selecciona importación CSV o generación masiva según tus necesidades"
+        },
+        "step2": {
+          "title": "Configurar",
+          "description": "Establece plataformas, rango de fechas y preferencias de programación"
+        },
+        "step3": {
+          "title": "Programar",
+          "description": "Las publicaciones se crean y programan automáticamente en las plataformas seleccionadas"
+        }
+      }
+    },
+    "common": {
+      "back": "Atrás"
+    }
+  }
+}

@@ -512,3 +512,10 @@ example :
 IMPORTART
 
 AVOID COMMENTS IN THE CODE, IF YOU NEED TO EXPLAIN SOMETHING THEN USE THE DOCUMENTATION IN THE ./package/docs 
+AS WELL AS MAKE THE UI IMPLEMENTATION FROM MOBILE FIRST STAND POINT, AND DONT HARD CODE COLORS USE THE DESIGN SYSTEM
+
+
+
+For endpoints for create-update you can create zod validation objects of what we expect for the body and return the errors base on the validation as
+well the front end need to handle the validation errors as well with toast with the validation error details 
+or if there are any error the front end need to handle those with a toas notfication 

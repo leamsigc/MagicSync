@@ -1,0 +1,22 @@
+{
+    "en": {
+        "csvUploader": {
+            "title": "Drag and drop your CSV file here",
+            "subtitle": "or click to browse",
+            "browse": "Browse Files"
+        },
+        "errors": {
+            "csvOnly": "Please select a CSV file"
+        }
+    },
+    "es": {
+        "csvUploader": {
+            "title": "Arrastra y suelta tu archivo CSV aquí",
+            "subtitle": "o haz clic para explorar",
+            "browse": "Explorar Archivos"
+        },
+        "errors": {
+            "csvOnly": "Por favor seleccione un archivo CSV"
+        }
+    }
+}

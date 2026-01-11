@@ -1,0 +1,16 @@
+{
+    "en": {
+        "dateRange": {
+            "title": "Date Range",
+            "startDate": "Start Date",
+            "endDate": "End Date"
+        }
+    },
+    "es": {
+        "dateRange": {
+            "title": "Rango de Fechas",
+            "startDate": "Fecha de Inicio",
+            "endDate": "Fecha de Finalización"
+        }
+    }
+}

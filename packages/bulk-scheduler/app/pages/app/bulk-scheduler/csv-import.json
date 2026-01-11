@@ -1,0 +1,100 @@
+{
+    "en": {
+        "csvImport": {
+            "title": "CSV Import",
+            "subtitle": "Bulk schedule posts from a CSV file",
+            "businessId": "Business ID",
+            "businessIdPlaceholder": "Enter your business ID",
+            "distributeEvenly": "Distribute posts evenly across date range",
+            "dateRange": "Distribution Date Range",
+            "import": "Import & Schedule",
+            "step1": {
+                "title": "Upload CSV File",
+                "description": "Upload a CSV file containing your posts. The file should include columns: content, image_url (optional), scheduled_time (optional), and comments (optional)."
+            },
+            "step2": {
+                "title": "Configure Settings",
+                "description": "Select platforms and configure scheduling options for your imported posts."
+            }
+        },
+        "csvUploader": {
+            "title": "Drag and drop your CSV file here",
+            "subtitle": "or click to browse",
+            "browse": "Browse Files"
+        },
+        "platformSelector": {
+            "title": "Select Platforms",
+            "noAccounts": "No connected social media accounts found",
+            "connectAccounts": "Connect Accounts",
+            "selected": "{count} platform(s) selected"
+        },
+        "dateRange": {
+            "startDate": "Start Date",
+            "endDate": "End Date"
+        },
+        "common": {
+            "back": "Back",
+            "next": "Next",
+            "cancel": "Cancel",
+            "save": "Save"
+        },
+        "errors": {
+            "csvOnly": "Please select a CSV file"
+        },
+        "toast": {
+            "csvImportSuccess": "{count} posts imported successfully",
+            "csvImportFailed": "Failed to import CSV",
+            "bulkGenerateSuccess": "{count} posts generated successfully",
+            "bulkGenerateFailed": "Failed to generate posts"
+        }
+    },
+    "es": {
+        "csvImport": {
+            "title": "Importar CSV",
+            "subtitle": "Programar publicaciones masivas desde archivo CSV",
+            "businessId": "ID de Negocio",
+            "businessIdPlaceholder": "Ingrese su ID de negocio",
+            "distributeEvenly": "Distribuir publicaciones uniformemente en el rango de fechas",
+            "dateRange": "Rango de Fechas de Distribución",
+            "import": "Importar y Programar",
+            "step1": {
+                "title": "Subir Archivo CSV",
+                "description": "Suba un archivo CSV con sus publicaciones. El archivo debe incluir columnas: content, image_url (opcional), scheduled_time (opcional), y comments (opcional)."
+            },
+            "step2": {
+                "title": "Configurar Ajustes",
+                "description": "Seleccione plataformas y configure opciones de programación para sus publicaciones importadas."
+            }
+        },
+        "csvUploader": {
+            "title": "Arrastra y suelta tu archivo CSV aquí",
+            "subtitle": "o haz clic para explorar",
+            "browse": "Explorar Archivos"
+        },
+        "platformSelector": {
+            "title": "Seleccionar Plataformas",
+            "noAccounts": "No se encontraron cuentas de redes sociales conectadas",
+            "connectAccounts": "Conectar Cuentas",
+            "selected": "{count} plataforma(s) seleccionada(s)"
+        },
+        "dateRange": {
+            "startDate": "Fecha de Inicio",
+            "endDate": "Fecha de Fin"
+        },
+        "common": {
+            "back": "Atrás",
+            "next": "Siguiente",
+            "cancel": "Cancelar",
+            "save": "Guardar"
+        },
+        "errors": {
+            "csvOnly": "Por favor seleccione un archivo CSV"
+        },
+        "toast": {
+            "csvImportSuccess": "{count} publicaciones importadas exitosamente",
+            "csvImportFailed": "Error al importar CSV",
+            "bulkGenerateSuccess": "{count} publicaciones generadas exitosamente",
+            "bulkGenerateFailed": "Error al generar publicaciones"
+        }
+    }
+}
