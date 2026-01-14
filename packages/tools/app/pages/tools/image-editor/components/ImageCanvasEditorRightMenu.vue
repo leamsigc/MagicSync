@@ -56,8 +56,7 @@ const isCollapsed = ref(false);
 
 <template>
   <!-- Right Menu -->
-  <header
-    class="fixed top-40 right-6 z-40 backdrop-blur-md bg-background/20 border border-background-foreground/10 rounded-2xl shadow-2xl flex flex-col">
+  <header class="fixed top-40 right-6 z-40 backdrop-blur-md bg-black rounded-2xl shadow-2xl flex flex-col">
     <header class="flex items-center justify-between px-4 py-3 gap-4 border-background-foreground/10  max-w-md">
       <h3 class="text-lg font-semibold" v-if="!isCollapsed">
         Extra actions

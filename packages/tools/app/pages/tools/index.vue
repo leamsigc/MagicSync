@@ -18,21 +18,21 @@ const posts = ref([
   {
     title: 'Image Editor',
     description: 'Edit your images for free and use templates for social media',
-    image: 'https://nuxt.com/assets/blog/v3.14.png',
+    image: '/img/ImageEditor.png',
     date: '2024-11-25',
     to: "/tools/image-editor"
   },
   {
     title: 'Flutter clipper',
     description: 'Create Custom clippers for your flutter apps',
-    image: 'https://nuxt.com/assets/blog/v3.14.png',
+    image: '/img/flutter-clipper.png',
     date: '2024-11-04',
     to: "/tools/flutter-clipper"
   },
   {
     title: 'Video Silence Remover',
     description: 'Remove silent parts from your videos automatically with our free online tool',
-    image: 'https://nuxt.com/assets/blog/v3.14.png',
+    image: '/img/video-remover.png',
     date: '2024-12-11',
     to: "/tools/video-silence-remover"
   },

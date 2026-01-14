@@ -161,8 +161,7 @@ const menuItems = computed<DropdownMenuItem[]>(() => [
 </script>
 
 <template>
-  <header
-    class="fixed top-40 left-6 z-40 backdrop-blur-md bg-background/20 border border-background-foreground/10 rounded-2xl shadow-2xl flex flex-col">
+  <header class="fixed top-40 left-6 z-40 backdrop-blur-md bg-black   rounded-2xl shadow-2xl flex flex-col">
     <template v-for="(item, index) in menuItems" :key="`dropdown-${index}`">
       <UButton v-if="!item.children" variant="link" color="neutral"
         class="flex flex-col my-2 px-1 py-1 h-12 cursor-pointer" @click="item.onSelect">
