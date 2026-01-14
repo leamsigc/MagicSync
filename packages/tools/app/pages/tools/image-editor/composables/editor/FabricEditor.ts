@@ -96,11 +96,18 @@ export class FabricEditor extends EventEmitter {
 
   constructor(elementRef: Ref<HTMLCanvasElement | null>) {
     super();
-    onMounted(async () => {
-      if (elementRef.value) {
-        this.init(elementRef.value);
-      }
-    });
+
+    // Attempt immediate initialization if the ref is already populated (e.g., in onMounted)
+    if (elementRef.value) {
+      this.init(elementRef.value);
+    } else {
+      // Fallback for setup() usage where ref is not yet populated
+      onMounted(async () => {
+        if (elementRef.value) {
+          this.init(elementRef.value);
+        }
+      });
+    }
 
     onUnmounted(() => {
       this.destroy();
@@ -142,9 +149,6 @@ export class FabricEditor extends EventEmitter {
       this.activeLayer.value = null;
       this.plugins.forEach(plugin => plugin.onSelectionCleared?.());
     });
-    this.canvas.on('after:render', () => {
-      this.plugins.forEach(plugin => plugin.onCanvasInit?.(this.canvas!));
-    });
     this.plugins.forEach(plugin => plugin.onCanvasInit?.(this.canvas!));
 
   }
@@ -173,10 +177,19 @@ export class FabricEditor extends EventEmitter {
       if (!plugin[method]) {
         throw new Error(`Method ${method} not found on plugin ${pluginName}`);
       }
-      this[method] = plugin[method].bind(plugin, [...arguments]);
+      this[method] = plugin[method].bind(plugin);
     });
 
+    // If canvas is already initialized, trigger onCanvasInit for this new plugin
+    if (this.canvas) {
+      plugin.onCanvasInit?.(this.canvas);
+    }
+
     return this;
+  }
+
+  newEditor() {
+    this.initEditor();
   }
 
   getPlugin(name: string): FabricPlugin | undefined {

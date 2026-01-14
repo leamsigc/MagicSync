@@ -35,16 +35,16 @@ catalog:
   '@vueuse/motion': 3.0.3
   '@vueuse/nuxt': 14.1.0
   axios: 1.13.2
-  better-auth: 1.4.10
-  better-sqlite3: 12.5.0
+  better-auth: 1.4.12
+  better-sqlite3: 12.6.0
   dayjs: 1.11.19
   drizzle-kit: 0.31.8
   drizzle-orm: 0.45.1
   echarts: 6.0.0
   eslint: 9.39.2
-  fabric: 6.9.1
-  googleapis: 169.0.0
-  happy-dom: 13.10.1
+  fabric: 7.1.0
+  googleapis: 170.0.0
+  happy-dom: 20.1.0
   mjml: 4.18.0
   nuxt: 4.2.2
   nuxt-auth-utils: 0.5.26
@@ -54,12 +54,12 @@ catalog:
   sharp: 0.34.5
   three: 0.182.0
   tsx: 4.21.0
-  twitter-api-v2: 1.28.0
+  twitter-api-v2: 1.29.0
   typescript: 5.9.3
-  vitest: 1.6.1
+  vitest: 3.2.0
   vue: 3.5.26
   vue-router: 4.6.4
-  zod: 4.2.1
+  zod: 4.3.5
   tailwindcss: 4.1.18
   "nuxt-umami": "3.2.1"
 

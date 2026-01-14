@@ -1,5 +1,7 @@
 {
   "en": {
+    "title": "Image Editor",
+    "description": "Create and edit stunning images with our powerful editor",
     "menu": {
       "main": {
         "new": "New",
@@ -41,15 +43,83 @@
         "adjust": "Adjust",
         "filter": "Filter"
       }
+    },
+    "tools": {
+      "ruler": {
+        "title": "Ruler & Guidelines",
+        "toggleRulers": "Show Rulers",
+        "addHorizontal": "Add Horizontal Guide",
+        "addVertical": "Add Vertical Guide",
+        "snapToGuides": "Snap to Guides",
+        "clearGuides": "Clear All Guides"
+      },
+      "alignment": {
+        "title": "Alignment",
+        "alignLeft": "Left",
+        "alignCenter": "Center",
+        "alignRight": "Right",
+        "alignTop": "Top",
+        "alignMiddle": "Middle",
+        "alignBottom": "Bottom",
+        "distributeH": "Distribute H",
+        "distributeV": "Distribute V"
+      },
+      "transform": {
+        "title": "Transform",
+        "position": "Position",
+        "size": "Size",
+        "lockAspect": "Lock Aspect"
+      }
+    },
+    "adjust": {
+      "shadow": {
+        "title": "Shadow",
+        "offsetX": "Offset X",
+        "offsetY": "Offset Y",
+        "blur": "Blur",
+        "color": "Color"
+      },
+      "stroke": {
+        "title": "Stroke",
+        "width": "Width",
+        "color": "Color",
+        "style": "Style"
+      },
+      "background": {
+        "title": "Background",
+        "type": "Type",
+        "none": "None",
+        "solid": "Solid Color",
+        "gradient": "Gradient",
+        "gradientType": "Gradient Type",
+        "linear": "Linear",
+        "radial": "Radial",
+        "angle": "Angle"
+      },
+      "text": {
+        "title": "Text",
+        "fontSize": "Font Size",
+        "fontFamily": "Font Family",
+        "color": "Color",
+        "align": "Align",
+        "letterSpacing": "Letter Spacing",
+        "lineHeight": "Line Height"
+      },
+      "opacity": {
+        "title": "Opacity",
+        "value": "Opacity"
+      }
     }
   },
   "es": {
+    "title": "Editor de Imágenes",
+    "description": "Crea y edita imágenes impresionantes con nuestro potente editor",
     "menu": {
       "main": {
         "new": "Nuevo",
         "save": "Guardar",
         "export": "Exportar",
-        "templates": "Templates"
+        "templates": "Plantillas"
       },
       "vertical": {
         "select": "Seleccionar",
@@ -85,9 +155,77 @@
         "adjust": "Ajustar",
         "filter": "Filtro"
       }
+    },
+    "tools": {
+      "ruler": {
+        "title": "Regla y Guías",
+        "toggleRulers": "Mostrar Reglas",
+        "addHorizontal": "Añadir Guía Horizontal",
+        "addVertical": "Añadir Guía Vertical",
+        "snapToGuides": "Ajustar a Guías",
+        "clearGuides": "Limpiar Guías"
+      },
+      "alignment": {
+        "title": "Alineación",
+        "alignLeft": "Izquierda",
+        "alignCenter": "Centro",
+        "alignRight": "Derecha",
+        "alignTop": "Arriba",
+        "alignMiddle": "Medio",
+        "alignBottom": "Abajo",
+        "distributeH": "Distribuir H",
+        "distributeV": "Distribuir V"
+      },
+      "transform": {
+        "title": "Transformar",
+        "position": "Posición",
+        "size": "Tamaño",
+        "lockAspect": "Bloquear Aspecto"
+      }
+    },
+    "adjust": {
+      "shadow": {
+        "title": "Sombra",
+        "offsetX": "Desplazamiento X",
+        "offsetY": "Desplazamiento Y",
+        "blur": "Desenfoque",
+        "color": "Color"
+      },
+      "stroke": {
+        "title": "Trazo",
+        "width": "Ancho",
+        "color": "Color",
+        "style": "Estilo"
+      },
+      "background": {
+        "title": "Fondo",
+        "type": "Tipo",
+        "none": "Ninguno",
+        "solid": "Color Sólido",
+        "gradient": "Gradiente",
+        "gradientType": "Tipo de Gradiente",
+        "linear": "Lineal",
+        "radial": "Radial",
+        "angle": "Ángulo"
+      },
+      "text": {
+        "title": "Texto",
+        "fontSize": "Tamaño de Fuente",
+        "fontFamily": "Familia de Fuente",
+        "color": "Color",
+        "align": "Alinear",
+        "letterSpacing": "Espaciado de Letras",
+        "lineHeight": "Altura de Línea"
+      },
+      "opacity": {
+        "title": "Opacidad",
+        "value": "Opacidad"
+      }
     }
   },
   "de": {
+    "title": "Bildbearbeitung",
+    "description": "Erstellen und bearbeiten Sie beeindruckende Bilder mit unserem leistungsstarken Editor",
     "menu": {
       "main": {
         "new": "Neu",
@@ -123,15 +261,83 @@
         }
       },
       "rightMenu": {
-        "ai": "Ai",
+        "ai": "KI",
         "tools": "Werkzeuge",
         "layers": "Ebenen",
         "adjust": "Anpassen",
         "filter": "Filter"
       }
+    },
+    "tools": {
+      "ruler": {
+        "title": "Lineal und Hilfslinien",
+        "toggleRulers": "Lineale anzeigen",
+        "addHorizontal": "Horizontale Hilfslinie hinzufügen",
+        "addVertical": "Vertikale Hilfslinie hinzufügen",
+        "snapToGuides": "An Hilfslinien ausrichten",
+        "clearGuides": "Alle Hilfslinien löschen"
+      },
+      "alignment": {
+        "title": "Ausrichtung",
+        "alignLeft": "Links",
+        "alignCenter": "Zentriert",
+        "alignRight": "Rechts",
+        "alignTop": "Oben",
+        "alignMiddle": "Mitte",
+        "alignBottom": "Unten",
+        "distributeH": "Horizontal verteilen",
+        "distributeV": "Vertikal verteilen"
+      },
+      "transform": {
+        "title": "Transformieren",
+        "position": "Position",
+        "size": "Größe",
+        "lockAspect": "Seitenverhältnis sperren"
+      }
+    },
+    "adjust": {
+      "shadow": {
+        "title": "Schatten",
+        "offsetX": "Versatz X",
+        "offsetY": "Versatz Y",
+        "blur": "Unschärfe",
+        "color": "Farbe"
+      },
+      "stroke": {
+        "title": "Kontur",
+        "width": "Breite",
+        "color": "Farbe",
+        "style": "Stil"
+      },
+      "background": {
+        "title": "Hintergrund",
+        "type": "Typ",
+        "none": "Keine",
+        "solid": "Vollfarbe",
+        "gradient": "Farbverlauf",
+        "gradientType": "Farbverlaufstyp",
+        "linear": "Linear",
+        "radial": "Radial",
+        "angle": "Winkel"
+      },
+      "text": {
+        "title": "Text",
+        "fontSize": "Schriftgröße",
+        "fontFamily": "Schriftart",
+        "color": "Farbe",
+        "align": "Ausrichten",
+        "letterSpacing": "Buchstabenabstand",
+        "lineHeight": "Zeilenhöhe"
+      },
+      "opacity": {
+        "title": "Deckkraft",
+        "value": "Deckkraft"
+      }
     }
   },
   "fr": {
+    "title": "Éditeur d'Images",
+    "description": "Créez et modifiez de superbes images avec notre éditeur puissant",
     "menu": {
       "main": {
         "new": "Nouveau",
@@ -167,11 +373,77 @@
         }
       },
       "rightMenu": {
-        "ai": "Ai",
+        "ai": "IA",
         "tools": "Outils",
         "layers": "Calques",
         "adjust": "Ajuster",
         "filter": "Filtre"
+      }
+    },
+    "tools": {
+      "ruler": {
+        "title": "Règle et Repères",
+        "toggleRulers": "Afficher les règles",
+        "addHorizontal": "Ajouter un repère horizontal",
+        "addVertical": "Ajouter un repère vertical",
+        "snapToGuides": "Aligner sur les repères",
+        "clearGuides": "Effacer tous les repères"
+      },
+      "alignment": {
+        "title": "Alignement",
+        "alignLeft": "Gauche",
+        "alignCenter": "Centre",
+        "alignRight": "Droite",
+        "alignTop": "Haut",
+        "alignMiddle": "Milieu",
+        "alignBottom": "Bas",
+        "distributeH": "Distribuer H",
+        "distributeV": "Distribuer V"
+      },
+      "transform": {
+        "title": "Transformer",
+        "position": "Position",
+        "size": "Taille",
+        "lockAspect": "Verrouiller les proportions"
+      }
+    },
+    "adjust": {
+      "shadow": {
+        "title": "Ombre",
+        "offsetX": "Décalage X",
+        "offsetY": "Décalage Y",
+        "blur": "Flou",
+        "color": "Couleur"
+      },
+      "stroke": {
+        "title": "Contour",
+        "width": "Largeur",
+        "color": "Couleur",
+        "style": "Style"
+      },
+      "background": {
+        "title": "Arrière-plan",
+        "type": "Type",
+        "none": "Aucun",
+        "solid": "Couleur unie",
+        "gradient": "Dégradé",
+        "gradientType": "Type de dégradé",
+        "linear": "Linéaire",
+        "radial": "Radial",
+        "angle": "Angle"
+      },
+      "text": {
+        "title": "Texte",
+        "fontSize": "Taille de police",
+        "fontFamily": "Famille de police",
+        "color": "Couleur",
+        "align": "Aligner",
+        "letterSpacing": "Espacement des lettres",
+        "lineHeight": "Hauteur de ligne"
+      },
+      "opacity": {
+        "title": "Opacité",
+        "value": "Opacité"
       }
     }
   }

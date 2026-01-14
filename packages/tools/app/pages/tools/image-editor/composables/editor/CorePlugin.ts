@@ -25,8 +25,7 @@ function customThrottle<T extends (...args: any[]) => any>(func: T, delay: numbe
 
 export class CorePlugin extends BaseFabricPlugin {
   static readonly pluginName = 'core';
-  readonly pluginName = 'core';
-  readonly hooks = [""]; // Keep existing hooks property if it's intended
+  override readonly pluginName = 'core';
 
   override readonly exposedMethods = [
     'big',
@@ -37,6 +36,7 @@ export class CorePlugin extends BaseFabricPlugin {
     'getWorkspace',
     'getWorkspaceBg',
     'setCenterFromObject',
+    'setWorkspaceBg',
   ];
 
   workspaceEl!: HTMLElement;
@@ -53,12 +53,14 @@ export class CorePlugin extends BaseFabricPlugin {
   }
 
   protected init() {
-
     this.workspace = null;
     this.zoomRatio = 0.85;
-    // This method is now empty as canvas-dependent initialization moved to onCanvasInit
-    const workspaceEl = document.querySelector('#workspace') as HTMLElement;
+  }
 
+  override onCanvasInit(canvas: Canvas) {
+    this.canvas = canvas; // Ensure local reference is set if needed, though super should handle it.
+
+    const workspaceEl = document.querySelector('#workspace') as HTMLElement;
     if (!workspaceEl) {
       throw new Error('element #workspace is missing, plz check!');
     }
@@ -68,11 +70,6 @@ export class CorePlugin extends BaseFabricPlugin {
     this._initWorkspace();
     this._initResizeObserve();
     this._bindWheel();
-
-  }
-
-
-  override onCanvasInit(canvas: Canvas) {
   }
 
   _initBackground() {
@@ -99,10 +96,6 @@ export class CorePlugin extends BaseFabricPlugin {
     this.canvas.renderAll();
 
     this.workspace = workspace;
-    // Assuming clearHistory might be a custom method on canvas or editor
-    // if (this.canvas.clearHistory) {
-    //   this.canvas.clearHistory();
-    // }
 
     this.auto();
   }
@@ -118,7 +111,7 @@ export class CorePlugin extends BaseFabricPlugin {
   }
 
   _bindWheel() {
-    this.onCanvasEvent('mouse:wheel', (opt: any) => {
+    this.canvas.on('mouse:wheel', (opt: any) => {
       const delta = opt.e.deltaY;
 
       let zoom = this.canvas.getZoom();
@@ -157,7 +150,6 @@ export class CorePlugin extends BaseFabricPlugin {
       .find((item: FabricObjectWithName) => item.id === 'workspace') as Rect;
     this.workspace.set('width', width);
     this.workspace.set('height', height);
-    // this.editor.emit('sizeChange', this.workspace.width, this.workspace.height); // Assuming editor.emit for custom events
     this.auto();
   }
 
@@ -189,18 +181,20 @@ export class CorePlugin extends BaseFabricPlugin {
   big() {
     let zoomRatio = this.canvas.getZoom();
     zoomRatio += 0.05;
-    const center = this.canvas.getCenter();
-    this.canvas.zoomToPoint(new Point(center.left, center.top), zoomRatio);
+    const center = this.canvas.getCenterPoint();
+    this.canvas.zoomToPoint(center, zoomRatio);
+    this.canvas.requestRenderAll();
   }
 
   small() {
     let zoomRatio = this.canvas.getZoom();
     zoomRatio -= 0.05;
-    const center = this.canvas.getCenter();
+    const center = this.canvas.getCenterPoint();
     this.canvas.zoomToPoint(
-      new Point(center.left, center.top),
+      center,
       zoomRatio < 0 ? 0.01 : zoomRatio
     );
+    this.canvas.requestRenderAll();
   }
 
   auto() {
@@ -216,6 +210,7 @@ export class CorePlugin extends BaseFabricPlugin {
   setWorkspaceBg(color: string) {
     const workspace = this.getWorkspace();
     workspace?.set('fill', color);
+    this.canvas.requestRenderAll();
   }
   getWorkspaceBg() {
     const workspace = this.getWorkspace();

@@ -157,7 +157,7 @@ const handleDeleteAsset = (asset: Asset[]) => {
 </script>
 
 <template>
-  <div class="container mx-auto py-6 space-y-6">
+  <UContainer class="py-6 space-y-6 max-w-4xl">
     <!-- Header -->
     <MediaPageHeader :selected-assets-count="selectedAssets.length" @delete-selected="handleDeleteSelected"
       @upload-assets="showUploader = true" />
@@ -229,5 +229,5 @@ const handleDeleteAsset = (asset: Asset[]) => {
     <!-- Asset Editor Dialog -->
     <!-- <AssetEditor v-if="selectedAssetForEdit" v-model:open="showEditor" :asset="selectedAssetForEdit"
       @save="handleEditorSave" @close="handleEditorClose" /> -->
-  </div>
+  </UContainer>
 </template>
