@@ -20,10 +20,10 @@ export default defineNuxtConfig({
       openAPI: true,
       tasks: true,
     },
-    // scheduledTasks: {
-    //   // Run `cms:update` task every minute
-    //   '* * * * *': ['social:post']
-    // }
+    scheduledTasks: {
+      // Run `cms:update` task every 15 minute
+      '*/15 * * * *': ['social:post']
+    }
   },
   $meta: {
     name: 'BaseScheduler',
