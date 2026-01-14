@@ -57,6 +57,10 @@ const components = ref<ComponentInfo[]>([
       <p class="mt-4 text-lg text-muted-foreground">
         Browse and preview all available UI components
       </p>
+      <p class="mt-4 text-lg text-muted-foreground">
+        Documentation related to Magic Sync here <a href="https://leamsigc.github.io/MagicSync/">
+          https://leamsigc.github.io/MagicSync/</a>
+      </p>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
