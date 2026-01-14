@@ -31,7 +31,7 @@ useHead({
   ]
 });
 
-const currentView = ref<'Board' | 'Table' | 'Grid'>('Board');
+const currentView = ref<'Board' | 'Table' | 'Grid'>('Grid');
 const monthDate = ref(new Date());
 
 const currentMonthPosts = computed(() => {

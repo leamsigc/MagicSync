@@ -28,8 +28,10 @@ const props = defineProps<{
         <template #header>
           <div class="flex items-center gap-2 p-2">
             <template v-for="platform in post.platformPosts" :key="platform.id">
-              <UIcon :name="`logos:${platform.platformPostId}`" class="w-5 h-5" />
-              <span class="font-semibold">{{ platform.status }}</span>
+              <UChip
+                :color="platform.status === 'published' ? 'primary' : platform.status === 'pending' ? 'warning' : 'error'">
+                <UButton :icon="`logos:${platform.platformPostId}`" color="neutral" variant="ghost" />
+              </UChip>
             </template>
           </div>
         </template>

@@ -18,13 +18,14 @@ export const usePostManager = () => {
   const isLoading = ref(false)
   const error = ref<string | null>(null)
   const postList = useState<PostWithAllData[]>('posts:list', () => [] as PostWithAllData[])
+  const activeBusinessId = useState<string>('business:id');
 
   /**
    * Get posts with pagination and filtering
    */
   const getPosts = async (
     businessId: string,
-    pagination: PaginationOptions = { page: 1, limit: 10 },
+    pagination: PaginationOptions = { page: 1, limit: 100 },
     filters: PostFilters = {}
   ) => {
     isLoading.value = true
@@ -176,6 +177,24 @@ export const usePostManager = () => {
     }
   }
 
+  const deletePost = async (postId: string) => {
+    isLoading.value = true
+    error.value = null
+
+    try {
+      const response = await $fetch<ApiResponse<Post>>(`/api/v1/posts/${postId}`, {
+        method: 'DELETE'
+      })
+      await getPosts(activeBusinessId.value)
+      return response
+    } catch (err: any) {
+      error.value = err.data?.message || err.message || 'Failed to delete post'
+      throw err
+    } finally {
+      isLoading.value = false
+    }
+  }
+
   return {
     // State
     isLoading: readonly(isLoading),
@@ -186,6 +205,7 @@ export const usePostManager = () => {
     getPosts,
     createPost,
     updatePost,
+    deletePost,
     getScheduledPosts,
     getPostStats,
     validatePostContent,

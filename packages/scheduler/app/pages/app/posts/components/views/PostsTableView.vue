@@ -10,12 +10,12 @@
  * @todo [ ] Integration test.
  * @todo [✔] Update the typescript.
  */
-import { computed } from 'vue';
 import type { PostWithAllData } from '#layers/BaseDB/db/posts/posts';
 import { h, resolveComponent } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { Row } from '@tanstack/vue-table'
 import { useClipboard } from '@vueuse/core'
+import { usePostManager } from '../../composables/UsePostManager';
 
 const UButton = resolveComponent('UButton')
 const UBadge = resolveComponent('UBadge')
@@ -23,6 +23,7 @@ const UDropdownMenu = resolveComponent('UDropdownMenu')
 const toast = useToast()
 const { copy } = useClipboard()
 
+const { deletePost } = usePostManager();
 const props = defineProps<{
   posts: PostWithAllData[];
 }>();
@@ -97,6 +98,36 @@ function getRowItems(row: Row<PostWithAllData>) {
           description: 'Copied to clipboard',
           color: 'success',
           icon: 'i-lucide-circle-check'
+        })
+      }
+    },
+    {
+      label: 'Delete',
+      onSelect() {
+        toast.add({
+          title: 'Delete Post',
+          description: 'Are you sure you want to delete this post?',
+          color: 'error',
+          actions: [
+            {
+              label: 'Delete',
+              color: 'error',
+              variant: 'solid',
+              onClick: () => {
+                deletePost(row.original.id)
+                toast.add({
+                  title: 'The social media post has been deleted.',
+                  color: 'success',
+                  icon: 'i-heroicons-check-circle'
+                })
+              }
+            },
+            {
+              label: 'Cancel',
+              color: 'neutral',
+              variant: 'outline'
+            }
+          ]
         })
       }
     },
