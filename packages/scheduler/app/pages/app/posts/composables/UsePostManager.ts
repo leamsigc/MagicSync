@@ -200,6 +200,7 @@ export const usePostManager = () => {
     isLoading: readonly(isLoading),
     error: readonly(error),
     postList,
+    activeBusinessId,
 
     // Methods
     getPosts,

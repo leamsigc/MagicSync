@@ -16,6 +16,7 @@ import type { TableColumn } from '@nuxt/ui'
 import type { Row } from '@tanstack/vue-table'
 import { useClipboard } from '@vueuse/core'
 import { usePostManager } from '../../composables/UsePostManager';
+import UpdatePostModal from '../UpdatePostModal.vue';
 
 const UButton = resolveComponent('UButton')
 const UBadge = resolveComponent('UBadge')
@@ -23,7 +24,7 @@ const UDropdownMenu = resolveComponent('UDropdownMenu')
 const toast = useToast()
 const { copy } = useClipboard()
 
-const { deletePost } = usePostManager();
+const { deletePost, getPosts, activeBusinessId } = usePostManager();
 const props = defineProps<{
   posts: PostWithAllData[];
 }>();
@@ -91,14 +92,7 @@ function getRowItems(row: Row<PostWithAllData>) {
     {
       label: 'Update',
       onSelect() {
-        copy(row.original.id)
-
-        toast.add({
-          title: `Copy the id to update the post ${row.original.id}`,
-          description: 'Copied to clipboard',
-          color: 'success',
-          icon: 'i-lucide-circle-check'
-        })
+        HandleEventClicked(row.original)
       }
     },
     {
@@ -140,11 +134,27 @@ function getRowItems(row: Row<PostWithAllData>) {
   ]
 }
 
+const updatePostModalRef = ref<InstanceType<typeof UpdatePostModal> | null>(null);
+const HandleRefresh = async () => {
+  toast.add({
+    title: 'The social media post has been updated.',
+    color: 'success',
+    icon: 'i-heroicons-check-circle'
+  })
+  await getPosts(activeBusinessId.value, {
+    page: 1,
+    limit: 100
+  });
+}
+const HandleEventClicked = (post: PostWithAllData) => {
+  updatePostModalRef.value?.openModal(post);
+}
 </script>
 
 <template>
   <div class="mt-3">
     <UTable :data="posts" :columns="columns" class="flex-1" />
+    <UpdatePostModal ref="updatePostModalRef" @refresh="HandleRefresh" />
   </div>
 </template>
 
