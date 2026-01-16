@@ -12,7 +12,6 @@
  * @todo [ ] Integration test.
  * @todo [✔] Update the typescript.
  */
-import ImageCanvasEditorMainMenu from './image-editor/components/ImageCanvasEditorMainMenu.vue';
 
 const posts = ref([
   {

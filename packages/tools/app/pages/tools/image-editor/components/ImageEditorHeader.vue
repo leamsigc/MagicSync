@@ -9,14 +9,14 @@ defineProps<{
 }>();
 
 const { t } = useI18n();
-const { 
-  undo, 
-  redo, 
-  zoomIn, 
-  zoomOut, 
-  downloadCanvasImage, 
+const {
+  undo,
+  redo,
+  zoomIn,
+  zoomOut,
+  downloadCanvasImage,
   exportCurrentCanvas,
-  editor 
+  editor
 } = useFabricJs();
 
 const canvasZoom = computed(() => {
@@ -24,20 +24,21 @@ const canvasZoom = computed(() => {
 });
 
 const handleHomeClick = () => {
-    navigateTo('/');
+  navigateTo('/');
 }
 
 </script>
 
 <template>
-  <header class="h-14 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 flex items-center justify-between px-4 z-50">
+  <header
+    class="h-14 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 flex items-center justify-between px-4 z-50">
     <!-- Left: Logo & File Actions -->
     <div class="flex items-center gap-4">
       <UButton variant="ghost" color="neutral" icon="lucide:arrow-left" @click="handleHomeClick" />
       <span class="font-semibold text-sm hidden sm:block">Image Editor</span>
-      
-      <div class="h-4 w-[1px] bg-gray-300 dark:bg-gray-700 mx-2"></div>
-      
+
+      <div class="h-4 w-px bg-gray-300 dark:bg-gray-700 mx-2"></div>
+
       <!-- History Controls -->
       <UTooltip :text="t('menu.vertical.undo', 'Undo')">
         <UButton variant="ghost" color="neutral" icon="lucide:undo" size="sm" @click="undo" />
@@ -56,25 +57,12 @@ const handleHomeClick = () => {
 
     <!-- Right: Actions -->
     <div class="flex items-center gap-2">
-      <UButton 
-        color="neutral" 
-        variant="outline" 
-        size="sm" 
-        icon="lucide:download" 
-        :label="t('menu.main.save', 'Save')" 
-        @click="downloadCanvasImage" 
-      />
-      <UButton 
-        color="primary" 
-        variant="solid" 
-        size="sm" 
-        icon="lucide:share" 
-        :label="t('menu.main.export', 'Export')" 
-        @click="exportCurrentCanvas" 
-      />
+      <UButton color="neutral" variant="outline" size="sm" icon="lucide:download" :label="t('menu.main.save', 'Save')"
+        @click="downloadCanvasImage" />
+      <UButton color="primary" variant="solid" size="sm" icon="lucide:share" :label="t('menu.main.export', 'Export')"
+        @click="exportCurrentCanvas" />
     </div>
   </header>
 </template>
 
-<style scoped>
-</style>
+<style scoped></style>

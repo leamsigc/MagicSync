@@ -35,20 +35,20 @@ defineOgImage({
 
 <template>
   <main class="h-screen w-screen overflow-hidden flex flex-col bg-background text-foreground">
-      <!-- Top Bar -->
-      <ImageEditorHeader class="shrink-0" />
+    <!-- Top Bar -->
+    <ImageEditorHeader class="shrink-0" />
 
-      <!-- Main Content Area -->
-      <div class="flex-1 flex overflow-hidden">
-          <!-- Left Sidebar (Tools, Layers, Templates) -->
-          <ImageEditorSidebar class="shrink-0" />
+    <!-- Main Content Area -->
+    <div class="flex-1 flex overflow-hidden">
+      <!-- Left Sidebar (Tools, Layers, Templates) -->
+      <ImageEditorSidebar class="shrink-0" />
 
-          <!-- Middle Canvas Area -->
-          <ImageCanvasEditor class="flex-1 relative z-0" />
+      <!-- Middle Canvas Area -->
+      <ImageCanvasEditor class="flex-1 relative z-0" />
 
-          <!-- Right Sidebar (Properties) -->
-          <ImageEditorProperties class="shrink-0" />
-      </div>
+      <!-- Right Sidebar (Properties) -->
+      <ImageEditorProperties class="shrink-0" />
+    </div>
   </main>
 </template>
 <style scoped></style>

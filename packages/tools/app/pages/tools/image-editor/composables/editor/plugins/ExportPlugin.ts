@@ -1,4 +1,4 @@
-import { Canvas, Group } from 'fabric';
+import { Canvas, filters, Group } from 'fabric';
 import { BaseFabricPlugin, FabricEditor, type FabricObjectWithName } from '../FabricEditor';
 import { CorePlugin } from '../CorePlugin';
 
@@ -20,9 +20,9 @@ export class ExportPlugin extends BaseFabricPlugin {
     quality: number = 1,
   ) {
     if (this.canvas) {
-      const frame = this.canvas
-        .getObjects()
-        .find((obj: FabricObjectWithName) => obj.id === 'workspace');
+      const core = this.editor.getPlugin('core') as any;
+      const frame = core?.getWorkspace();
+
       if (!frame) {
         console.warn('Main frame not found for download.');
         return;
@@ -30,6 +30,8 @@ export class ExportPlugin extends BaseFabricPlugin {
       console.log('frame', frame);
 
 
+      //Get the layers
+      const layers = this.canvas.getObjects();
       // Store current viewport transform
       const vpt = this.canvas.viewportTransform;
       // Reset viewport to ensure 1:1 export scale relative to canvas 0,0
@@ -39,8 +41,9 @@ export class ExportPlugin extends BaseFabricPlugin {
         format,
         quality,
         multiplier: 2, // High resolution
-        left: frame.left,
-        top: frame.top,
+        left: frame.getBoundingRect().left,
+        top: frame.getBoundingRect().top,
+
         width: frame.width * frame.scaleX!, // Account for potential scaling
         height: frame.height * frame.scaleY!,
       });

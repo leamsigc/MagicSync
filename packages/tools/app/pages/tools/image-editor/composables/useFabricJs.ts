@@ -19,7 +19,7 @@ export const useFabricJs = () => {
     watch(result, (newFiles) => {
       if (newFiles && newFiles.length > 0) {
         const file = newFiles[0];
-        const url = URL.createObjectURL(file);
+        const url = URL.createObjectURL(file as Blob);
         editor.value?.addImageLayerFromUrl?.(url);
       }
     });
@@ -75,8 +75,50 @@ export const useFabricJs = () => {
     }
   };
 
+  const undo = () => {
+    if (editor.value) {
+      editor.value.undo();
+    }
+  };
+
+  const redo = () => {
+    if (editor.value) {
+      editor.value.redo();
+    }
+  };
+
+  const zoomIn = () => {
+    if (editor.value) {
+      editor.value.zoomIn();
+    }
+  };
+
+  const zoomOut = () => {
+    if (editor.value) {
+      editor.value.zoomOut();
+    }
+  };
+
+  const downloadCanvasImage = () => {
+    if (editor.value) {
+      editor.value.downloadCanvasImage();
+    }
+  };
+
+  const exportCurrentCanvas = () => {
+    if (editor.value) {
+      editor.value.exportCurrentCanvas();
+    }
+  };
+
   return {
     editor,
+    undo,
+    redo,
+    zoomIn,
+    zoomOut,
+    downloadCanvasImage,
+    exportCurrentCanvas,
     run,
     triggerRemoveBackground
   };

@@ -33,7 +33,7 @@ export class ToolsPlugin extends BaseFabricPlugin {
     'zoomIn',
     'zoomOut',
     'loadTemplateFromJson',
-    'exportCurrentCanvas',
+    // 'exportCurrentCanvas',
     'stopDrawingMode'
   ];
 
