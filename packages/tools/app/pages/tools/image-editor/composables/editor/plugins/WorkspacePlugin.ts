@@ -89,9 +89,17 @@ export class WorkspacePlugin extends BaseFabricPlugin {
     let coords: any = { x1: 0, y1: 0, x2: 0, y2: height }; // Default vertical
 
     if (gradient.type === 'linear') {
-      if (gradient.angle === 90) {
-        coords = { x1: 0, y1: 0, x2: width, y2: 0 }; // Horizontal
-      }
+      const angleRad = ((gradient.angle ?? 90) * Math.PI) / 180; // 90 degrees = vertical (top to bottom)
+      const centerX = width / 2;
+      const centerY = height / 2;
+      const length = Math.sqrt(width * width + height * height);
+
+      coords = {
+        x1: centerX - length * Math.cos(angleRad),
+        y1: centerY - length * Math.sin(angleRad),
+        x2: centerX + length * Math.cos(angleRad),
+        y2: centerY + length * Math.sin(angleRad)
+      };
     } else {
       coords = {
         r1: 0,

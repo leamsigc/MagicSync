@@ -194,7 +194,56 @@ onMounted(() => {
 
 const fontFamilies = ['Arial', 'Verdana', 'Helvetica', 'Times New Roman', 'Courier New', 'Roboto', 'Open Sans', 'Lato'];
 
+const HandleAlignObjects = (position: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom') => {
+  editor.value?.alignObjects?.(position)
+}
+const HandleDistributeObjects = (position: 'horizontal' | 'vertical') => {
+  editor.value?.distributeObjects?.(position)
+}
+const HandleFlipObjects = (position: 'horizontal' | 'vertical') => {
+  editor.value?.flipObjects?.(position)
+}
+const HandleRotateObjects = (position: 'left' | 'center' | 'right') => {
+  editor.value?.flipObjects?.(position)
+}
 
+const HandleSetCanvasSize = (width?: number, height?: number) => {
+  editor.value?.updateFrameSettings?.({ width, height })
+}
+const HandleToggleRulers = () => {
+  editor.value?.editorState.toggleRulers?.()
+  editor.value?.toggleRulers?.(showRulers.value)
+}
+const HandleToggleSnapToGuides = () => {
+  editor.value?.toggleGuidelineSnap?.(snapToGuides.value)
+}
+
+const HandleGradientColorAdd = (color: string) => {
+  background.value.gradientColors.push(color)
+  editor.value?.setBackgroundGradient?.({
+    type: background.value.gradientType,
+    colors: background.value.gradientColors,
+    angle: background.value.gradientAngle
+  });
+}
+
+const HandleUpdateGradientColorByPosition = (index: number, color?: string) => {
+  background.value.gradientColors[index] = color || background.value.gradientColors[index] || '#000000';
+  editor.value?.setBackgroundGradient?.({
+    type: background.value.gradientType,
+    colors: background.value.gradientColors,
+    angle: background.value.gradientAngle
+  });
+}
+const HandleUpdateGradientAngle = (angle?: number) => {
+
+  background.value.gradientAngle = angle || background.value.gradientAngle || 0;
+  editor.value?.setBackgroundGradient?.({
+    type: background.value.gradientType,
+    colors: background.value.gradientColors,
+    angle: background.value.gradientAngle
+  });
+}
 </script>
 
 <template>
@@ -223,20 +272,20 @@ const fontFamilies = ['Arial', 'Verdana', 'Helvetica', 'Times New Roman', 'Couri
         <div v-if="!isNoSelection">
           <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Align</h3>
           <div class="grid grid-cols-4 gap-1 mb-2">
-            <UButton size="xs" variant="outline" icon="lucide:align-start-vertical"
-              @click="editor.value?.alignObjects?.('left')" data-testid="align-left" />
+            <UButton size="xs" variant="outline" icon="lucide:align-start-vertical" @click="HandleAlignObjects('left')"
+              data-testid="align-left" />
             <UButton size="xs" variant="outline" icon="lucide:align-center-vertical"
-              @click="editor.value?.alignObjects?.('center')" data-testid="align-center" />
-            <UButton size="xs" variant="outline" icon="lucide:align-end-vertical"
-              @click="editor.value?.alignObjects?.('right')" data-testid="align-right" />
-            <UButton size="xs" variant="outline" icon="lucide:align-start-horizontal"
-              @click="editor.value?.alignObjects?.('top')" data-testid="align-top" />
+              @click="HandleAlignObjects('center')" data-testid="align-center" />
+            <UButton size="xs" variant="outline" icon="lucide:align-end-vertical" @click="HandleAlignObjects('right')"
+              data-testid="align-right" />
+            <UButton size="xs" variant="outline" icon="lucide:align-start-horizontal" @click="HandleAlignObjects('top')"
+              data-testid="align-top" />
           </div>
           <div class="grid grid-cols-2 gap-2">
-            <UButton size="xs" variant="ghost" class="text-[10px]"
-              @click="editor.value?.distributeObjects?.('horizontal')">Dist. Horiz</UButton>
-            <UButton size="xs" variant="ghost" class="text-[10px]"
-              @click="editor.value?.distributeObjects?.('vertical')">Dist. Vert</UButton>
+            <UButton size="xs" variant="ghost" class="text-[10px]" @click="HandleDistributeObjects('horizontal')">Dist.
+              Horiz</UButton>
+            <UButton size="xs" variant="ghost" class="text-[10px]" @click="HandleDistributeObjects('vertical')">Dist.
+              Vert</UButton>
           </div>
         </div>
 
@@ -269,14 +318,14 @@ const fontFamilies = ['Arial', 'Verdana', 'Helvetica', 'Times New Roman', 'Couri
             <USlider v-model="opacity" :min="0" :max="100" size="xs" @update:model-value="handleOpacityUpdate" />
           </div>
           <!-- Flip & Rotate -->
-          <div class="grid grid-cols-4 gap-1 mt-2">
-            <UButton size="xs" variant="outline" icon="lucide:flip-horizontal"
-              @click="editor.value?.flip?.('horizontal')" data-testid="btn-flip-h" />
-            <UButton size="xs" variant="outline" icon="lucide:flip-vertical" @click="editor.value?.flip?.('vertical')"
+          <div class="grid grid-cols-4 gap-1 my-4">
+            <UButton size="xs" variant="outline" icon="lucide:flip-horizontal" @click="HandleFlipObjects('horizontal')"
+              data-testid="btn-flip-h" />
+            <UButton size="xs" variant="outline" icon="lucide:flip-vertical" @click="HandleFlipObjects('vertical')"
               data-testid="btn-flip-v" />
-            <UButton size="xs" variant="outline" icon="lucide:rotate-ccw" @click="editor.value?.rotateObject?.('left')"
+            <UButton size="xs" variant="outline" icon="lucide:rotate-ccw" @click="HandleRotateObjects('left')"
               data-testid="btn-rotate-l" />
-            <UButton size="xs" variant="outline" icon="lucide:rotate-cw" @click="editor.value?.rotateObject?.('right')"
+            <UButton size="xs" variant="outline" icon="lucide:rotate-cw" @click="HandleRotateObjects('right')"
               data-testid="btn-rotate-r" />
           </div>
         </div>
@@ -424,30 +473,30 @@ const fontFamilies = ['Arial', 'Verdana', 'Helvetica', 'Times New Roman', 'Couri
             <!-- CANVAS RESIZE -->
             <div>
               <div class="flex justify-between items-center mb-2">
-                <span class="text-xs">Size</span>
+                <span class="text-xs">Size:
+                  {{ editor?.globalSettings.value.width }} x {{ editor?.globalSettings.value.height }}</span>
               </div>
-              <div class="grid grid-cols-2 gap-2 mb-2">
+              <div class="grid grid-cols-2 gap-2 mb-2" v-if="editor">
                 <div>
                   <label class="text-[10px] text-gray-500 block mb-1">W</label>
-                  <UInput :model-value="editor?.value?.globalSettings?.value?.width" type="number" size="xs"
-                    @change="(v) => editor?.value?.setSize(Number(v), editor?.value?.globalSettings.value.height)" />
+                  <UInputNumber v-model="editor.globalSettings.value.width"
+                    @update:modelValue="(n) => { HandleSetCanvasSize(n || 0, editor?.globalSettings.value.height) }" />
                 </div>
                 <div>
                   <label class="text-[10px] text-gray-500 block mb-1">H</label>
-                  <UInput :model-value="editor?.value?.globalSettings?.value?.height" type="number" size="xs"
-                    @change="(v) => editor?.value?.setSize(editor?.value?.globalSettings.value.width, Number(v))" />
+                  <UInputNumber v-model="editor.globalSettings.value.height"
+                    @update:modelValue="(n) => { HandleSetCanvasSize(editor?.globalSettings.value.width, n || 0) }" />
                 </div>
               </div>
               <div class="grid grid-cols-3 gap-1">
-                <UButton size="xs" variant="outline" class="text-[10px] px-1"
-                  @click="editor.value?.setSize(1080, 1080)">
+                <UButton size="xs" variant="outline" class="text-[10px] px-1" @click="HandleSetCanvasSize(1080, 1080)">
                   IG Post</UButton>
-                <UButton size="xs" variant="outline" class="text-[10px] px-1"
-                  @click="editor.value?.setSize(1080, 1920)">
+                <UButton size="xs" variant="outline" class="text-[10px] px-1" @click="HandleSetCanvasSize(1080, 1920)">
                   Story</UButton>
-                <UButton size="xs" variant="outline" class="text-[10px] px-1"
-                  @click="editor.value?.setSize(1920, 1080)">
+                <UButton size="xs" variant="outline" class="text-[10px] px-1" @click="HandleSetCanvasSize(1920, 1080)">
                   Full HD</UButton>
+                <UButton size="xs" variant="outline" class="text-[10px] px-1" @click="HandleSetCanvasSize(1080, 750)">
+                  Facebook Cover</UButton>
               </div>
             </div>
 
@@ -456,13 +505,13 @@ const fontFamilies = ['Arial', 'Verdana', 'Helvetica', 'Times New Roman', 'Couri
             <div class="space-y-2">
               <div class="flex justify-between items-center">
                 <span class="text-xs">Rulers</span>
-                <USwitch v-model="showRulers" size="xs" @update:model-value="editor.value?.toggleRulers?.(showRulers)"
+                <USwitch v-model="showRulers" size="xs" @update:model-value="HandleToggleRulers"
                   data-testid="toggle-rulers" />
               </div>
               <div class="flex justify-between items-center">
                 <span class="text-xs">Snap to Guides</span>
-                <USwitch v-model="snapToGuides" size="xs"
-                  @update:model-value="editor.value?.toggleGuidelineSnap?.(snapToGuides)" />
+                <USwitch v-model="snapToGuides" size="xs" @update:model-value="HandleToggleSnapToGuides"
+                  data-testid="toggle-snap-to-guides" />
               </div>
               <div class="flex gap-2">
                 <UButton size="xs" variant="outline" class="flex-1" @click="handleAddGuideline('horizontal')">+ H Guide
@@ -477,15 +526,23 @@ const fontFamilies = ['Arial', 'Verdana', 'Helvetica', 'Times New Roman', 'Couri
             <div>
               <label class="text-[10px] text-gray-500 block mb-1">Color</label>
               <div class="flex gap-2 items-center">
-                <USelect v-model="background.type" :options="['none', 'solid', 'gradient']" size="xs" class="flex-1"
+                <USelect v-model="background.type" :items="['none', 'solid', 'gradient']" size="xs" class="flex-1"
                   @change="handleBackgroundUpdate" data-testid="select-bg-type" />
 
-                <div v-if="background.type === 'solid'"
-                  class="relative w-8 h-8 rounded overflow-hidden border border-gray-200 dark:border-gray-700 shrink-0">
-                  <input type="color" v-model="background.solidColor"
-                    class="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] cursor-pointer p-0 border-0"
-                    @input="handleBackgroundUpdate" />
-                </div>
+              </div>
+              <div v-if="background.type === 'solid'" class="my-4  p-4">
+                <UColorPicker v-model="background.solidColor" v-if="background.type === 'solid'"
+                  @update:modelValue="handleBackgroundUpdate" />
+              </div>
+              <div v-if="background.type === 'gradient'" class="my-4  p-4">
+                <section class="flex mb-4 gap-1">
+                  <USlider v-model="background.gradientAngle" :min="0" :max="360" class=""
+                    @update:modelValue="HandleUpdateGradientAngle" />
+                  <span>{{ background.gradientAngle }}</span>
+                </section>
+                <UColorPicker v-for="(color, index) in background.gradientColors" :key="color" :default-value="color"
+                  class="mb-4" v-if="background.type === 'gradient'"
+                  @update:model-value="(c) => HandleUpdateGradientColorByPosition(index, c)" />
               </div>
             </div>
           </div>

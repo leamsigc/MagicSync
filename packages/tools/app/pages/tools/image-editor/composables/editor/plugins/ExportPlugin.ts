@@ -40,7 +40,7 @@ export class ExportPlugin extends BaseFabricPlugin {
       const dataURL = this.canvas.toDataURL({
         format,
         quality,
-        multiplier: 2, // High resolution
+        multiplier: 1 / frame.scaleX!, // Scale back to original frame size
         left: frame.getBoundingRect().left,
         top: frame.getBoundingRect().top,
 
@@ -67,9 +67,10 @@ export class ExportPlugin extends BaseFabricPlugin {
       if (!groupLayer) return;
 
       (groupLayer as any).id = 'workspace';
+      this.canvas.clear();
       this.canvas.add(groupLayer);
 
-      const json = this.canvas.toObject([
+      const json = groupLayer.toDatalessObject([
         'id',
         'gradientAngle',
         'selectable',
@@ -92,7 +93,10 @@ export class ExportPlugin extends BaseFabricPlugin {
       anchorEl.click();
       anchorEl.remove();
 
-      this.canvas.remove(groupLayer); // Clean up after export
+      this.canvas.remove(groupLayer);
+      const objects = groupLayer.getObjects();
+      objects.forEach((obj: FabricObjectWithName) => this.canvas.add(obj)); // Clean up after export
+
       this.canvas.requestRenderAll();
     }
   }
@@ -134,6 +138,7 @@ export class ExportPlugin extends BaseFabricPlugin {
     if (mainLayer) group.clipPath = mainLayer.clipPath;
 
     otherLayers.forEach((obj) => this.canvas?.remove(obj));
+    if (mainLayer) this.canvas?.remove(mainLayer);
 
     return group;
   }

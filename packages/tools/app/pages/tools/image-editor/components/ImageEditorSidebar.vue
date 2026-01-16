@@ -133,10 +133,10 @@ const templateJson = `
 `;
 
 // Simple example templates
-const templates = [
+const templates = ref([
   { title: 'Poster Simple', description: 'A basic white poster', json: templateJson },
   // Add more real templates here
-];
+]);
 
 const loadTemplate = (jsonStr: string) => {
   editor.value?.loadTemplateFromJson?.(jsonStr);
@@ -151,7 +151,19 @@ const onFileSelect = (files: FileList) => {
     updateLayers();
   }
 }
+const onTemplateSelect = async (files: FileList) => {
+  if (files.length > 0) {
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+      templates.value.push({ title: "Custom Template", description: 'Uploaded template', json: e.target.result });
+    }
+    await reader.readAsText(files[0] as Blob);
+  }
+}
 const fileInput = ref<HTMLInputElement>();
+const templateInput = ref<HTMLInputElement>();
+
+
 
 // --- TABS CONFIG ---
 const tabs = [
@@ -207,6 +219,18 @@ const HandleAddBrushLayer = () => {
 
         <!-- TEMPLATES TAB -->
         <div v-if="activeTab === 'templates'" class="space-y-4">
+          <!-- Import template json only -->
+          <section>
+            <UButton block icon="lucide:upload" @click="templateInput?.click()">
+              Upload Template
+            </UButton>
+            <input ref="templateInput" type="file" accept='application/json' class="hidden"
+              @change="(e) => onTemplateSelect((e.target as HTMLInputElement).files!)" />
+
+            <div class="text-xs text-center text-gray-500 mt-4">
+              Uploaded templates will appear here
+            </div>
+          </section>
           <div v-for="(tpl, idx) in templates" :key="idx"
             class="border border-gray-200 dark:border-gray-800 rounded-lg p-2 hover:border-primary cursor-pointer transition-colors"
             @click="loadTemplate(tpl.json)">
