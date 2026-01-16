@@ -15,7 +15,9 @@
             "step2": {
                 "title": "Configure Settings",
                 "description": "Select platforms and configure scheduling options for your imported posts."
-            }
+            },
+            "selectAssets": "Select Media Assets (Optional)",
+            "selectAssetsDescription": "Choose images from your gallery to attach to your posts. If your CSV contains image URLs, those will be downloaded automatically."
         },
         "csvUploader": {
             "title": "Drag and drop your CSV file here",
@@ -64,7 +66,9 @@
             "step2": {
                 "title": "Configurar Ajustes",
                 "description": "Seleccione plataformas y configure opciones de programación para sus publicaciones importadas."
-            }
+            },
+            "selectAssets": "Seleccionar Recursos Multimedia (Opcional)",
+            "selectAssetsDescription": "Elija imágenes de su galería para adjuntar a sus publicaciones. Si su CSV contiene URLs de imágenes, estas se descargarán automáticamente."
         },
         "csvUploader": {
             "title": "Arrastra y suelta tu archivo CSV aquí",

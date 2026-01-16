@@ -488,45 +488,45 @@ export const auth = betterAuth({
               })
             }
             // Handle link linkedin-page
-            if (account.providerId === "linkedin-page") {
-              const linkedinUser = await $fetch<{ sub: string, name: string, picture: string }>(
-                `https://api.linkedin.com/v2/userinfo`,
-                {
-                  headers: {
-                    Authorization: `Bearer ${account.accessToken}`,
-                  },
-                }
-              );
-              const { vanityName: username } = await (
-                await fetch('https://api.linkedin.com/v2/me', {
-                  headers: {
-                    Authorization: `Bearer ${account.accessToken}`,
-                  },
-                })
-              ).json();
+            // if (account.providerId === "linkedin-page") {
+            //   const linkedinUser = await $fetch<{ sub: string, name: string, picture: string }>(
+            //     `https://api.linkedin.com/v2/userinfo`,
+            //     {
+            //       headers: {
+            //         Authorization: `Bearer ${account.accessToken}`,
+            //       },
+            //     }
+            //   );
+            //   const { vanityName: username } = await (
+            //     await fetch('https://api.linkedin.com/v2/me', {
+            //       headers: {
+            //         Authorization: `Bearer ${account.accessToken}`,
+            //       },
+            //     })
+            //   ).json();
 
-              await socialMediaAccountService.createOrUpdateAccountFromAuth({
-                id: `p_${linkedinUser.sub}`,
-                name: linkedinUser.name,
-                access_token: account.accessToken as string,
-                picture: linkedinUser.picture,
-                username: username,
-                platformId: 'linkedin-page',
-                user: user as schema.User
-              });
+            //   await socialMediaAccountService.createOrUpdateAccountFromAuth({
+            //     id: `p_${linkedinUser.sub}`,
+            //     name: linkedinUser.name,
+            //     access_token: account.accessToken as string,
+            //     picture: linkedinUser.picture,
+            //     username: username,
+            //     platformId: 'linkedin-page',
+            //     user: user as schema.User
+            //   });
 
-              await logAuditService.logAuditEvent({
-                userId: ctx?.context.session?.user.id,
-                category: 'after:create',
-                action: 'AUTH_CREATE_SOCIAL_MEDIA',
-                targetType: 'linkedin-page',
-                targetId: account.accountId,
-                ipAddress: "",
-                userAgent: "",
-                status: 'success',
-                details: `${linkedinUser.sub} ${linkedinUser.name} ${username} from LINKEDIN-PAGE`,
-              })
-            }
+            //   await logAuditService.logAuditEvent({
+            //     userId: ctx?.context.session?.user.id,
+            //     category: 'after:create',
+            //     action: 'AUTH_CREATE_SOCIAL_MEDIA',
+            //     targetType: 'linkedin-page',
+            //     targetId: account.accountId,
+            //     ipAddress: "",
+            //     userAgent: "",
+            //     status: 'success',
+            //     details: `${linkedinUser.sub} ${linkedinUser.name} ${username} from LINKEDIN-PAGE`,
+            //   })
+            // }
 
             await logAuditService.logAuditEvent({
               userId: ctx?.context.session?.user.id,

@@ -18,24 +18,27 @@ export default defineEventHandler(async (event) => {
     let platforms: string[] = []
     let businessId = ''
     let startDate: Date | undefined
-    let endDate: Date | undefined
-    let distributeEvenly = false
+     let endDate: Date | undefined
+     let distributeEvenly = false
+     let selectedAssets: string[] = []
 
-    for (const field of formData) {
-      if (field.name === 'file' && field.data) {
-        csvData = field.data
-      } else if (field.name === 'platforms') {
-        platforms = JSON.parse(field.data.toString())
-      } else if (field.name === 'businessId') {
-        businessId = field.data.toString()
-      } else if (field.name === 'startDate') {
-        startDate = new Date(field.data.toString())
-      } else if (field.name === 'endDate') {
-        endDate = new Date(field.data.toString())
-      } else if (field.name === 'distributeEvenly') {
-        distributeEvenly = field.data.toString() === 'true'
-      }
-    }
+     for (const field of formData) {
+       if (field.name === 'file' && field.data) {
+         csvData = field.data
+       } else if (field.name === 'platforms') {
+         platforms = JSON.parse(field.data.toString())
+       } else if (field.name === 'businessId') {
+         businessId = field.data.toString()
+       } else if (field.name === 'startDate') {
+         startDate = new Date(field.data.toString())
+       } else if (field.name === 'endDate') {
+         endDate = new Date(field.data.toString())
+       } else if (field.name === 'distributeEvenly') {
+         distributeEvenly = field.data.toString() === 'true'
+       } else if (field.name === 'selectedAssets') {
+         selectedAssets = JSON.parse(field.data.toString())
+       }
+     }
 
     if (!csvData) {
       throw createError({
@@ -72,7 +75,8 @@ export default defineEventHandler(async (event) => {
       platforms,
       businessId,
       dateRange: startDate && endDate ? { startDate, endDate } : undefined,
-      distributeEvenly
+      distributeEvenly,
+      selectedAssets
     }
 
     const result = await bulkSchedulerService.bulkCreateFromCsv(user.id, request)

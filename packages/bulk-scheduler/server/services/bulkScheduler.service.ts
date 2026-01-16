@@ -7,6 +7,8 @@ import { notificationService } from '#layers/BaseAuth/server/services/notificati
 import { platformConfigurations } from '#layers/BaseScheduler/shared/platformConstants'
 import type { PlatformContentOverride } from '#layers/BaseDB/db/posts/posts'
 import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service'
+import { createAssetFromBuffer } from '#layers/BaseAssets/server/utils/AssetsUtils'
+import { assetService } from '#layers/BaseAssets/server/services/asset.service';
 
 export type BulkScheduleResult = {
   success: boolean
@@ -40,29 +42,85 @@ export type CsvImportRequest = {
     endDate: Date
   }
   distributeEvenly?: boolean
+  selectedAssets?: string[]
 }
 
 export class BulkSchedulerService {
   async bulkCreateFromCsv(userId: string, request: CsvImportRequest): Promise<BulkScheduleResult> {
     try {
-      const { posts, platforms, businessId, dateRange, distributeEvenly } = request
+      const { posts, platforms, businessId, dateRange, distributeEvenly, selectedAssets } = request
 
-      const enrichedPosts = posts.map((post, index) => {
-        const enriched = { ...post }
-        enriched.businessId = businessId
-        enriched.targetPlatforms = platforms
-
-        if (distributeEvenly && dateRange) {
-          const distributedDates = distributePostsAcrossDates(posts.length, {
-            startDate: dateRange.startDate,
-            endDate: dateRange.endDate,
-            postsPerDay: 1
+      // Get selected assets if provided
+      let availableAssets: any[] = []
+      if (selectedAssets && selectedAssets.length > 0) {
+        availableAssets = await Promise.all(
+          selectedAssets.map(async (assetId) => {
+            try {
+              const result = await assetService.findById(assetId, userId)
+              return result.success ? result.data : null
+            } catch {
+              return null
+            }
           })
-          enriched.scheduledAt = distributedDates[index]?.date || null
-        }
+        ).then(results => results.filter(Boolean))
+      }
 
-        return enriched
-      })
+      // Process posts and handle media assets
+      let selectedAssetIndex = 0
+      const processedPosts = await Promise.all(
+        posts.map(async (post, index) => {
+          const enriched = { ...post }
+          enriched.businessId = businessId
+          enriched.targetPlatforms = platforms
+
+          // Handle CSV image URLs in mediaAssets (they are URLs, not asset IDs)
+          const assetIds: string[] = []
+          if (post.mediaAssets && post.mediaAssets.length > 0) {
+            for (const mediaAsset of post.mediaAssets) {
+              // Check if it's a URL (starts with http)
+              if (mediaAsset.startsWith('http')) {
+                try {
+                  const asset = await this.downloadAndCreateAsset(mediaAsset, businessId, userId)
+                  if (asset) {
+                    assetIds.push(asset.id)
+                  }
+                } catch (error) {
+                  console.warn(`Failed to download image from ${mediaAsset}:`, error)
+                  // Skip this asset
+                }
+              } else {
+                // Assume it's already an asset ID
+                assetIds.push(mediaAsset)
+              }
+            }
+          }
+
+          // Assign selected assets to posts without CSV images
+          if (availableAssets.length > 0 && assetIds.length === 0) {
+            // Add one selected asset, cycling through available assets
+            const selectedAssetIds = availableAssets.map(a => a.id)
+            assetIds.push(selectedAssetIds[selectedAssetIndex % selectedAssetIds.length])
+            selectedAssetIndex++
+          }
+
+          enriched.mediaAssets = assetIds
+
+          if (distributeEvenly && dateRange) {
+            const totalDays = calculateTotalDays(dateRange.startDate, dateRange.endDate)
+            const postsPerDay = totalDays > 0 ? Math.ceil(posts.length / totalDays) : 1
+            const distributedDates = distributePostsAcrossDates(posts.length, {
+              startDate: dateRange.startDate,
+              endDate: dateRange.endDate,
+              postsPerDay
+            })
+            enriched.scheduledAt = distributedDates[index]?.date || null
+          }
+
+          return enriched
+        })
+      )
+
+      const enrichedPosts = processedPosts
 
       const validationErrors = validateBulkPosts(enrichedPosts)
       if (validationErrors.length > 0) {
@@ -289,6 +347,40 @@ export class BulkSchedulerService {
     }
 
     return { content: trimmed.trim(), comments: newComments }
+  }
+
+  private async downloadAndCreateAsset(imageUrl: string, businessId: string, userId: string): Promise<any | null> {
+    try {
+      // Download the image
+      const response = await fetch(imageUrl)
+      if (!response.ok) {
+        throw new Error(`Failed to download image: ${response.status}`)
+      }
+
+      const buffer = Buffer.from(await response.arrayBuffer())
+      const contentType = response.headers.get('content-type') || 'image/jpeg'
+      const extension = contentType.split('/')[1] || 'jpg'
+      const filename = `csv-import-${Date.now()}.${extension}`
+
+      // Use the assets util to create the asset
+      const result = await createAssetFromBuffer(
+        buffer,
+        filename,
+        contentType,
+        userId,
+        businessId,
+        { source: 'csv-import', originalUrl: imageUrl }
+      )
+
+      if (result.success) {
+        return result.data
+      } else {
+        throw new Error(result.error || 'Failed to create asset')
+      }
+    } catch (error) {
+      console.error('Error downloading and creating asset:', error)
+      return null
+    }
   }
 
   private async logOperationNotification(

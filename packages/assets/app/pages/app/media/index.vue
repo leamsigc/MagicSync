@@ -157,7 +157,7 @@ const handleDeleteAsset = (asset: Asset[]) => {
 </script>
 
 <template>
-  <UContainer class="py-6 space-y-6 max-w-4xl">
+  <UContainer class="py-6 space-y-6 ">
     <!-- Header -->
     <MediaPageHeader :selected-assets-count="selectedAssets.length" @delete-selected="handleDeleteSelected"
       @upload-assets="showUploader = true" />

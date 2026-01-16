@@ -14,6 +14,7 @@
  */
 import { useBusinessManager } from '#layers/BaseConnect/app/pages/app/business/composables/useBusinessManager'
 import { useSocialMediaManager } from '#layers/BaseConnect/app/composables/UseSocialMediaManager'
+import type { Asset } from '#layers/BaseDB/db/schema'
 
 const { t } = useI18n()
 const { importFromCsv, isLoading } = useBulkScheduler()
@@ -27,6 +28,7 @@ const selectedPlatforms = ref<string[]>([])
 const dateRange = ref<{ startDate: Date; endDate: Date } | null>(null)
 const distributeEvenly = ref(false)
 const selectedBusinessId = ref(activeBusinessId.value || '')
+const selectedAssets = ref<Asset[]>([])
 
 onMounted(async () => {
   await getAllSocialMediaAccounts()
@@ -73,25 +75,26 @@ const canProceed = computed(() => {
   return selectedFile.value && selectedPlatforms.value.length > 0 && selectedBusinessId.value
 })
 
-const handleImport = async () => {
-  if (!selectedFile.value || !selectedBusinessId.value || selectedPlatforms.value.length === 0) {
-    return
-  }
+  const handleImport = async () => {
+    if (!selectedFile.value || !selectedBusinessId.value || selectedPlatforms.value.length === 0) {
+      return
+    }
 
-  try {
-    await importFromCsv(
-      selectedFile.value,
-      selectedPlatforms.value,
-      selectedBusinessId.value,
-      dateRange.value || undefined,
-      distributeEvenly.value
-    )
+    try {
+      await importFromCsv(
+        selectedFile.value,
+        selectedPlatforms.value,
+        selectedBusinessId.value,
+        dateRange.value || undefined,
+        distributeEvenly.value,
+        selectedAssets.value
+      )
 
-    router.push('/app/bulk-scheduler')
-  } catch (error) {
-    console.error('Import failed:', error)
+      router.push('/app/bulk-scheduler')
+    } catch (error) {
+      console.error('Import failed:', error)
+    }
   }
-}
 </script>
 
 <template>
@@ -149,10 +152,16 @@ const handleImport = async () => {
 
           <UCheckbox v-model="distributeEvenly" :label="t('csvImport.distributeEvenly')" />
 
-          <div v-if="distributeEvenly">
-            <DateRangeSelector @update="handleDateRangeUpdate" />
-          </div>
-        </div>
+           <div v-if="distributeEvenly">
+             <DateRangeSelector @update="handleDateRangeUpdate" />
+           </div>
+
+           <div class="mt-6">
+             <h3 class="text-lg font-medium mb-2">{{ t('csvImport.selectAssets') }}</h3>
+             <p class="text-sm text-gray-600 mb-4">{{ t('csvImport.selectAssetsDescription') }}</p>
+             <MediaGalleryForUser v-model:selected="selectedAssets" />
+           </div>
+         </div>
 
         <div class="flex gap-2 justify-end">
           <UButton variant="soft" @click="currentStep = 1">
