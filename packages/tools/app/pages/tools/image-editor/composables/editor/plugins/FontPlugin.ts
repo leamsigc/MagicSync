@@ -36,40 +36,42 @@ export class FontPlugin extends BaseFabricPlugin {
   getFontList() {
     return FontPlugin.GOOGLE_FONTS;
   }
-
   addTextLayer(text: string = 'New Text', options?: any) {
+    console.log('addTextLayer called', text, options);
     if (this.canvas) {
+      const center = this.canvas.getVpCenter();
+      console.log('Center:', center);
       const textObject = new IText(text, {
-        left: this.canvas.width! / 2,
-        top: this.canvas.height! / 2,
-        fontSize: 40,
-        fontFamily: 'Inter',
-        fill: '#333333',
+        left: center.x,
+        top: center.y,
+        originX: 'center',
+        originY: 'center',
+        fontSize: 16,
+        fontFamily: 'Arial',
+        fill: '#000000',
         ...options,
       });
-      textObject.setControlsVisibility({
-          mt: true, mb: true, ml: true, mr: true,
-          bl: true, br: true, tl: true, tr: true,
-          mtr: true,
-      });
+      console.log('Created text object:', textObject);
       this.canvas.add(textObject);
       this.canvas.setActiveObject(textObject);
       this.canvas.requestRenderAll();
       this.editor.state.value = 'Editing';
+    } else {
+      console.error('Canvas not initialized in addTextLayer');
     }
   }
 
   updateTextProperties(props: {
-      fontSize?: number;
-      fontFamily?: string;
-      fill?: string;
-      fontWeight?: string | number;
-      fontStyle?: string;
-      underline?: boolean;
-      linethrough?: boolean;
-      textAlign?: string;
-      letterSpacing?: number;
-      lineHeight?: number
+    fontSize?: number;
+    fontFamily?: string;
+    fill?: string;
+    fontWeight?: string | number;
+    fontStyle?: string;
+    underline?: boolean;
+    linethrough?: boolean;
+    textAlign?: string;
+    letterSpacing?: number;
+    lineHeight?: number
   }) {
     if (this.canvas) {
       const activeObject = this.canvas.getActiveObject();

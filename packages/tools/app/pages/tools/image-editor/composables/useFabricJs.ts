@@ -1,16 +1,30 @@
-import { type Ref } from 'vue';
+import { type Ref, shallowRef, watch } from 'vue';
 import { FabricEditor } from './editor/FabricEditor';
-import { FabricImage, FabricObject } from 'fabric';
-
-const { start, run: imageRun } = useImageTransformer();
+import { FabricImage } from 'fabric';
 
 const editor = shallowRef<FabricEditor | null>(null);
 
 export const useFabricJs = () => {
 
-  const run = (elementRef: Ref<HTMLCanvasElement | null>) => {
+  const { run: imageRun, result } = useImageTransformer();
+
+
+  const run = (elementRef: Ref<HTMLCanvasElement | null>, plugins: any[] = []) => {
     editor.value = new FabricEditor(elementRef);
+    if (editor.value) {
+      plugins.forEach(plugin => editor.value?.use(plugin));
+    }
+
+    // Watch for background removal results (Single initialization)
+    watch(result, (newFiles) => {
+      if (newFiles && newFiles.length > 0) {
+        const file = newFiles[0];
+        const url = URL.createObjectURL(file);
+        editor.value?.addImageLayerFromUrl?.(url);
+      }
+    });
   };
+
 
   const triggerRemoveBackground = () => {
     if (!editor.value?.fabricCanvas) {
@@ -61,86 +75,9 @@ export const useFabricJs = () => {
     }
   };
 
-  const getCanvasPlugin = (pluginName: string) => {
-    if (editor.value) {
-      return editor.value.getPlugin(pluginName);
-    }
-  };
-
   return {
     editor,
     run,
-    // Base methods
-    initEditor: () => editor.value?.initEditor(),
-    newEditor: () => editor.value?.newEditor(),
-    getCanvasPlugin,
-    setEditingState: () => { if (editor.value) editor.value.state.value = 'Editing'; },
-    setExportState: () => { if (editor.value) editor.value.state.value = 'Export'; },
-
-    // Proxy methods to plugins
-    selectLayer: () => (editor.value as any)?.selectLayer?.(),
-    setActiveLayer: (layer: FabricObject) => (editor.value as any)?.setActiveLayer?.(layer),
-    deleteLayer: (layer?: FabricObject) => (editor.value as any)?.deleteLayer?.(layer),
-    cropLayer: () => (editor.value as any)?.cropLayer?.(),
-    cropSquare: () => (editor.value as any)?.cropSquare?.(),
-    rotateLayer: (angle: number) => (editor.value as any)?.rotateLayer?.(angle),
-    addBrushLayer: (color?: string, width?: number) => (editor.value as any)?.addBrushLayer?.(color, width),
-    addTextLayer: (text?: string, options?: any) => (editor.value as any)?.addTextLayer?.(text, options),
-    addShapeLayer: (type: 'rect' | 'circle' | 'triangle', options?: any) => (editor.value as any)?.addShapeLayer?.(type, options),
-    eraseLayer: (width?: number) => (editor.value as any)?.eraseLayer?.(width),
-    undo: () => (editor.value as any)?.undo?.(),
-    redo: () => (editor.value as any)?.redo?.(),
-    clearCanvas: () => (editor.value as any)?.clearCanvas?.(),
-    updateFrameSettings: (settings: any) => (editor.value as any)?.updateFrameSettings?.(settings),
-    flipHorizontal: () => (editor.value as any)?.flipHorizontal?.(),
-    flipVertical: () => (editor.value as any)?.flipVertical?.(),
-    rotateLeft: () => (editor.value as any)?.rotateLeft?.(),
-    rotateRight: () => (editor.value as any)?.rotateRight?.(),
-    arrangeFront: () => (editor.value as any)?.arrangeFront?.(),
-    arrangeBack: () => (editor.value as any)?.arrangeBack?.(),
-    setPosition: (x?: number, y?: number) => (editor.value as any)?.setPosition?.(x, y),
-    getLayers: () => (editor.value as any)?.getLayers?.() || [],
-    toggleLayerVisibility: (layer: FabricObject, visible: boolean) => (editor.value as any)?.toggleLayerVisibility?.(layer, visible),
-    addImageLayer: (imageFile: File) => (editor.value as any)?.addImageLayer?.(imageFile),
-    addImageLayerFromUrl: (url: string) => (editor.value as any)?.addImageLayerFromUrl?.(url),
-    applyImageAdjustment: (filterType: string, value: number) => (editor.value as any)?.applyImageAdjustment?.(filterType, value),
-    applyOpacity: (opacity: number) => (editor.value as any)?.applyOpacity?.(opacity),
-    applyPresetFilter: (preset: string) => (editor.value as any)?.applyPresetFilter?.(preset),
-    triggerRemoveBackground,
-    downloadCanvasImage: (format?: string, quality?: number) => (editor.value as any)?.downloadCanvasImage?.(format, quality),
-    updateCanvasDimensions: (width: number, height: number) => (editor.value as any)?.updateCanvasDimensions?.(width, height),
-    zoomIn: () => (editor.value as any)?.zoomIn?.(),
-    zoomOut: () => (editor.value as any)?.zoomOut?.(),
-    loadTemplateFromJson: (json: string) => (editor.value as any)?.loadTemplateFromJson?.(json),
-    exportCurrentCanvas: () => (editor.value as any)?.exportCurrentCanvas?.(),
-    groupLayers: () => (editor.value as any)?.groupLayers?.(),
-    updateFrameSettingsToImageDimension: () => (editor.value as any)?.updateFrameSettingsToImageDimension?.(),
-    updateShadow: (options: any) => (editor.value as any)?.updateShadow?.(options),
-    removeShadow: () => (editor.value as any)?.removeShadow?.(),
-    setBackgroundColor: (color: string) => (editor.value as any)?.setBackgroundColor?.(color),
-    setBackgroundGradient: (gradient: any) => (editor.value as any)?.setBackgroundGradient?.(gradient),
-    setBackgroundImage: (url: string) => (editor.value as any)?.setBackgroundImage?.(url),
-    clearBackground: () => (editor.value as any)?.clearBackground?.(),
-    updateTextProperties: (props: any) => (editor.value as any)?.updateTextProperties?.(props),
-    getFontList: () => (editor.value as any)?.getFontList?.() || [],
-    updateBrushSettings: (options: any) => (editor.value as any)?.updateBrushSettings?.(options),
-    stopDrawingMode: () => (editor.value as any)?.stopDrawingMode?.(),
-    updateTextShadow: (shadow: any) => (editor.value as any)?.updateTextShadow?.(shadow),
-    updateStroke: (options: any) => (editor.value as any)?.updateStroke?.(options),
-    alignObjects: (alignment: string) => (editor.value as any)?.alignObjects?.(alignment),
-    distributeObjects: (distribution: string) => (editor.value as any)?.distributeObjects?.(distribution),
-    addGuideline: (orientation: string, position: number) => (editor.value as any)?.addGuideline?.(orientation, position),
-    removeGuideline: (id: string) => (editor.value as any)?.removeGuideline?.(id),
-    toggleRulers: (visible: boolean) => (editor.value as any)?.toggleRulers?.(visible),
-    toggleGuidelineSnap: (enabled: boolean) => (editor.value as any)?.toggleGuidelineSnap?.(enabled),
-
-    // NEW methods
-    copy: () => (editor.value as any)?.copy?.(),
-    paste: () => (editor.value as any)?.paste?.(),
-    clone: () => (editor.value as any)?.clone?.(),
-    group: () => (editor.value as any)?.group?.(),
-    ungroup: () => (editor.value as any)?.ungroup?.(),
-    lock: (layer?: FabricObject) => (editor.value as any)?.lock?.(layer),
-    unlock: (layer: FabricObject) => (editor.value as any)?.unlock?.(layer),
+    triggerRemoveBackground
   };
 };

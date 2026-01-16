@@ -142,15 +142,20 @@ export class CorePlugin extends BaseFabricPlugin {
   }
 
   setSize(width: number, height: number) {
-    this._initBackground();
     this.editor.globalSettings.value.width = width;
     this.editor.globalSettings.value.height = height;
+    this._initBackground();
     this.workspace = this.canvas
       .getObjects()
       .find((item: FabricObjectWithName) => item.id === 'workspace') as Rect;
-    this.workspace.set('width', width);
-    this.workspace.set('height', height);
-    this.auto();
+    if (this.workspace) {
+      this.workspace.set('width', width);
+      this.workspace.set('height', height);
+      this.auto();
+    } else {
+      // Fallback if workspace not found?
+      this._initWorkspace();
+    }
   }
 
   async setZoomAuto(scale: number, cb?: (left?: number, top?: number) => void) {

@@ -16,56 +16,57 @@ import { HotkeyPlugin } from '../composables/editor/plugins/HotkeyPlugin';
 import { GroupPlugin } from '../composables/editor/plugins/GroupPlugin';
 import { LockPlugin } from '../composables/editor/plugins/LockPlugin';
 import { RulerPlugin } from '../composables/editor/plugins/RulerPlugin';
+import { TransformPlugin } from '../composables/editor/plugins/TransformPlugin';
 import { ToolsPlugin } from '../composables/editor/ToolsPlugin';
 import { useFabricJs } from '../composables/useFabricJs';
-const { run, addImageLayer, addImageLayerFromUrl, getCanvasPlugin, editor } = useFabricJs();
+
+const { run, editor } = useFabricJs();
 const { start } = useImageTransformer();
 const canvas = useTemplateRef('canvas');
-
-const files = ref<File>();
-
 const route = useRoute();
 
-
-
 onMounted(async () => {
-  run(canvas);
+  if (editor.value) {
+    // If already initialized (hm, unlikely with run pattern but safe check)
+  }
+
+  run(canvas, [
+    CorePlugin,
+    ToolsPlugin,
+    HooksPlugin,
+    HistoryPlugin,
+    AlignPlugin,
+    WorkspacePlugin,
+    LayerPlugin,
+    AddBaseTypePlugin,
+    FontPlugin,
+    FilterPlugin,
+    ShadowPlugin,
+    DrawPlugin,
+    ExportPlugin,
+    ClipboardPlugin,
+    HotkeyPlugin,
+    GroupPlugin,
+    LockPlugin,
+    RulerPlugin,
+    TransformPlugin
+  ]);
+
   if (editor.value) {
     // Start the image transformer if needed
     start();
-    // Register all modular plugins
-    editor.value
-      .use(CorePlugin)
-      .use(ToolsPlugin)
-      .use(HooksPlugin)
-      .use(HistoryPlugin)
-      .use(AlignPlugin)
-      .use(WorkspacePlugin)
-      .use(LayerPlugin)
-      .use(AddBaseTypePlugin)
-      .use(FontPlugin)
-      .use(FilterPlugin)
-      .use(ShadowPlugin)
-      .use(DrawPlugin)
-      .use(ExportPlugin)
-      .use(ClipboardPlugin)
-      .use(HotkeyPlugin)
-      .use(GroupPlugin)
-      .use(LockPlugin)
-      .use(RulerPlugin);
   }
+
+  // Handle query param image
   const imageId = route.query.imageId as string;
-
-
   if (imageId) {
     try {
       const url = `/api/v1/assets/serve/${imageId}.png`;
+      // We can directly add it via URL
+      // But checking validity first is good practice
       const response = await fetch(url);
       if (response.ok) {
-        const blob = await response.blob();
-        const file = new File([blob], `${imageId}.png`, { type: 'image/png' });
-        files.value = file;
-        addImageLayerFromUrl(url);
+        editor.value?.addImageLayerFromUrl(url);
       }
     } catch (error) {
       console.error('Failed to load image from query param:', error);
@@ -74,76 +75,48 @@ onMounted(async () => {
 
 });
 
-const onFileDrop = async (f: File | File[] | null | undefined) => {
-  if (files.value) return;
-  const isArray = Array.isArray(f);
-  if (!canvas.value || !f || isArray) return;
-  const file = f;
-  if (!file) return; // Ensure file is not undefined
-
-  files.value = file; // Update the files ref
-  // addImageLayer(file);
-  getCanvasPlugin('tools')?.addImageLayer(file);
-};
+// Handle Drag and Drop on the workspace to add images
+const onDrop = (e: DragEvent) => {
+  e.preventDefault();
+  if (e.dataTransfer?.files && e.dataTransfer.files[0]) {
+    const file = e.dataTransfer.files[0];
+    if (file.type.startsWith('image/')) {
+      editor.value?.addImageLayer(file);
+    }
+  }
+}
 </script>
 
 <template>
-  <div id="workspace">
-    <div class="canvas-box grid place-content-center">
-      <div class="inside-shadow"></div>
-      <canvas ref="canvas" class="m-auto editor" :class="{ 'opacity-0': !files }" />
+  <div id="workspace"
+    class="flex-1 overflow-hidden bg-gray-100 dark:bg-gray-950/50 relative flex items-center justify-center"
+    @dragover.prevent @drop="onDrop">
+    <div class="canvas-box shadow-2xl">
+      <canvas ref="canvas" class="editor" />
     </div>
   </div>
-  <section v-show="!files" class="w-screen h-screen absolute inset-0 bg-background/10 grid place-content-center">
-    <!-- Step 1 Select Image -->
-    <UFileUpload @update:model-value="onFileDrop" color="error" variant="area" label="Drop your image here"
-      description="SVG, PNG, JPG or GIF (max. 2MB)" class="w-96 min-h-48 " />
-  </section>
 </template>
-<style scoped>
-.canvas-container {
-  margin: auto 0;
-}
 
+<style scoped>
 .canvas-box {
   position: relative;
+  /* initial shadow or border can go here */
 }
 
-.inside-shadow {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  box-shadow: inset 0 0 9px 2px #0000001f;
-  z-index: 2;
-  pointer-events: none;
-}
-
-#canvas {
-  width: 300px;
-  height: 300px;
-  margin: 0 auto;
-}
-
-#workspace {
-  flex: 1;
-  width: 100%;
-  position: relative;
-  overflow: hidden;
-}
+/*
+   Fabric canvas wrapper usually gets set by the library,
+   but we ensure the container centers it.
+*/
 
 .editor {
-  --offsetX: 0px;
-  --offsetY: 0px;
-  --size: 16px;
-  --color: #dedcdc;
-  background-image: linear-gradient(45deg,
-      var(--color) 25%,
-      transparent 0,
-      transparent 75%,
-      var(--color) 0),
-    linear-gradient(45deg, var(--color) 25%, transparent 0, transparent 75%, var(--color) 0);
-  background-position: var(--offsetX) var(--offsetY),
-    calc(var(--size) + var(--offsetX)) calc(var(--size) + var(--offsetY));
-  background-size: calc(var(--size) * 2) calc(var(--size) * 2);
+  background-color: white;
+  /* Default canvas color */
+  /* Checkerboard pattern for transparency indication */
+  background-image: linear-gradient(45deg, #ccc 25%, transparent 25%),
+    linear-gradient(-45deg, #ccc 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #ccc 75%),
+    linear-gradient(-45deg, transparent 75%, #ccc 75%);
+  background-size: 20px 20px;
+  background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
 }
 </style>

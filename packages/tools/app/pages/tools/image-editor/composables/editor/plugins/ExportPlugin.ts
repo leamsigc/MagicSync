@@ -27,6 +27,8 @@ export class ExportPlugin extends BaseFabricPlugin {
         console.warn('Main frame not found for download.');
         return;
       }
+      console.log('frame', frame);
+
 
       // Store current viewport transform
       const vpt = this.canvas.viewportTransform;

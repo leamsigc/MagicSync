@@ -1,0 +1,70 @@
+# Page snapshot
+
+```yaml
+- main [ref=e4]:
+  - main [ref=e5]:
+    - generic [ref=e6]:
+      - generic [ref=e7]:
+        - button [ref=e8]
+        - generic [ref=e10]: Image Editor
+        - button [ref=e12]
+        - button [ref=e14]
+      - generic [ref=e16]:
+        - button [ref=e17]
+        - generic [ref=e19]: 100%
+        - button [ref=e20]
+      - generic [ref=e22]:
+        - button "Save" [ref=e23]:
+          - generic [ref=e25]: Save
+        - button "Export" [ref=e26]:
+          - generic [ref=e28]: Export
+    - generic [ref=e29]:
+      - generic [ref=e30]:
+        - generic [ref=e31]:
+          - button [ref=e32]
+          - button [ref=e34]
+          - button [ref=e36]
+          - button [ref=e38]
+          - button [ref=e40]
+        - generic [ref=e42]:
+          - heading "layers" [level=2] [ref=e44]
+          - generic [ref=e46]:
+            - generic [ref=e47]:
+              - generic [ref=e48]: 0 Layers
+              - button [ref=e49]
+            - generic [ref=e51]: No layers. Add something!
+      - generic [ref=e55]:
+        - generic [ref=e56]:
+          - button "Design" [ref=e57]
+          - button "Export" [ref=e58]
+        - generic [ref=e61]:
+          - heading "Canvas" [level=3] [ref=e62]
+          - generic [ref=e63]:
+            - generic [ref=e64]:
+              - generic [ref=e66]: Size
+              - generic [ref=e67]:
+                - generic [ref=e68]:
+                  - generic [ref=e69]: W
+                  - spinbutton [ref=e71]
+                - generic [ref=e72]:
+                  - generic [ref=e73]: H
+                  - spinbutton [ref=e75]
+              - generic [ref=e76]:
+                - button "IG Post" [ref=e77]
+                - button "Story" [ref=e78]
+                - button "Full HD" [ref=e79]
+            - separator [ref=e80]
+            - generic [ref=e81]:
+              - generic [ref=e83]: Rulers
+              - generic [ref=e85]: Snap to Guides
+              - generic [ref=e86]:
+                - button "+ H Guide" [ref=e87]
+                - button "+ V Guide" [ref=e88]
+            - separator [ref=e89]
+            - generic [ref=e90]:
+              - generic [ref=e91]: Color
+              - generic [ref=e92]:
+                - combobox [ref=e93]:
+                  - generic: none
+                - combobox [ref=e96]
+```

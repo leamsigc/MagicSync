@@ -7,8 +7,45 @@ export class ToolsPlugin extends BaseFabricPlugin {
   static readonly pluginName = 'tools';
   readonly pluginName = 'tools'; // Instance property
 
+  override readonly exposedMethods = [
+    'selectLayer',
+    'setActiveLayer',
+    'deleteLayer',
+    'cropLayer',
+    'rotateLayer',
+    'addBrushLayer',
+    'addShapeLayer',
+    'eraseLayer',
+    'clearCanvas',
+    'updateFrameSettings',
+    'flipHorizontal',
+    'flipVertical',
+    'rotateLeft',
+    'rotateRight',
+    'setPosition',
+    'addImageLayerFromUrl',
+    'addImageLayer',
+    'applyImageAdjustment',
+    'applyOpacity',
+    'applyPresetFilter',
+    // 'downloadCanvasImage',
+    'updateCanvasDimensions',
+    'zoomIn',
+    'zoomOut',
+    'loadTemplateFromJson',
+    'exportCurrentCanvas',
+    'stopDrawingMode'
+  ];
+
   protected init() {
     // No specific initialization needed for the plugin itself, methods are called on demand
+  }
+
+  stopDrawingMode() {
+    if (this.canvas) {
+      this.canvas.isDrawingMode = false;
+      this.canvas.requestRenderAll();
+    }
   }
 
   // Layer management
@@ -29,8 +66,17 @@ export class ToolsPlugin extends BaseFabricPlugin {
 
   async deleteLayer(layer?: FabricObject) {
     if (this.canvas) {
-      layer?.canvas?.remove(layer);
-      layer?.canvas?.requestRenderAll();
+      const target = layer || this.canvas.getActiveObject();
+      if (target) {
+        console.log('Deleting layer:', target);
+        this.canvas.remove(target);
+        this.canvas.discardActiveObject();
+        this.canvas.requestRenderAll();
+        // Force Vue update if tracking layers manually
+        this.editor.emit('layer:deleted', target);
+      } else {
+        console.warn('No target to datelete');
+      }
       await nextTick();
     }
   }
@@ -52,70 +98,61 @@ export class ToolsPlugin extends BaseFabricPlugin {
   addBrushLayer(color: string = '#000000', width: number = 5) {
     if (this.canvas) {
       this.canvas.isDrawingMode = true;
-      this.canvas.freeDrawingBrush = new PencilBrush(this.canvas as any);
-      if (this.canvas.freeDrawingBrush) {
-        this.canvas.freeDrawingBrush.color = color;
-        this.canvas.freeDrawingBrush.width = width;
+      // Ensure brush exists
+      if (!this.canvas.freeDrawingBrush) {
+        this.canvas.freeDrawingBrush = new PencilBrush(this.canvas as any);
       }
+      this.canvas.freeDrawingBrush.color = color;
+      this.canvas.freeDrawingBrush.width = width;
       this.editor.state.value = 'Editing';
     }
   }
 
-  addTextLayer(text: string = 'New Text', options?: any) {
-    if (this.canvas) {
-      const textObject = new IText(text, {
-        left: this.canvas.width! / 2,
-        top: this.canvas.height! / 2,
-        fontSize: 16,
-        fontFamily: 'Arial',
-        fill: '#000000',
-        ...options,
-      });
-      this.canvas.add(textObject);
-      this.canvas.setActiveObject(textObject);
-      this.canvas.requestRenderAll();
-      this.editor.state.value = 'Editing';
-    }
-  }
 
   addShapeLayer(
     type: 'rect' | 'circle' | 'triangle',
     options?: any,
   ) {
     if (this.canvas) {
+      this.stopDrawingMode();
+      const center = this.canvas.getVpCenter();
       let shape: FabricObject;
+      const commonOpts = {
+        left: center.x,
+        top: center.y,
+        originX: 'center' as const,
+        originY: 'center' as const,
+        ...options
+      };
+
       switch (type) {
         case 'rect':
           shape = new Rect({
-            left: 50,
-            top: 50,
             width: 100,
             height: 100,
             fill: 'red',
-            ...options,
+            ...commonOpts,
           });
           break;
         case 'circle':
           shape = new Circle({
-            left: 50,
-            top: 50,
             radius: 50,
             fill: 'blue',
-            ...options,
+            ...commonOpts,
           });
           break;
         case 'triangle':
           shape = new Triangle({
-            left: 50,
-            top: 50,
             width: 100,
             height: 100,
             fill: 'green',
-            ...options,
+            ...commonOpts,
           });
           break;
       }
+      // @ts-ignore
       this.canvas.add(shape);
+      // @ts-ignore
       this.canvas.setActiveObject(shape);
       this.canvas.requestRenderAll();
       this.editor.state.value = 'Editing';
@@ -183,25 +220,7 @@ export class ToolsPlugin extends BaseFabricPlugin {
   rotateLeft = () => this.rotateLayer(-90);
   rotateRight = () => this.rotateLayer(90);
 
-  arrangeFront() {
-    if (this.canvas) {
-      const activeObject = this.canvas.getActiveObject();
-      if (activeObject) {
-        (this.canvas as any).bringToFront(activeObject);
-        this.canvas.requestRenderAll();
-      }
-    }
-  }
 
-  arrangeBack() {
-    if (this.canvas) {
-      const activeObject = this.canvas.getActiveObject();
-      if (activeObject) {
-        (this.canvas as any).sendToBack(activeObject);
-        this.canvas.requestRenderAll();
-      }
-    }
-  }
 
   setPosition(x?: number, y?: number) {
     if (this.canvas) {
@@ -214,14 +233,7 @@ export class ToolsPlugin extends BaseFabricPlugin {
     }
   }
 
-  getLayers() {
-    return this.canvas ? this.canvas.getObjects() : [];
-  }
 
-  toggleLayerVisibility(layer: FabricObject, visible: boolean) {
-    layer.set('visible', visible);
-    this.canvas?.requestRenderAll();
-  }
 
   async addImageLayerFromUrl(url: string) {
     if (this.canvas) {
@@ -251,6 +263,7 @@ export class ToolsPlugin extends BaseFabricPlugin {
       | 'Invert',
     value: number,
   ) {
+    console.log('applyImageAdjustment', filterType, value);
     if (this.canvas) {
       const activeObject = this.canvas.getActiveObject();
       if (activeObject instanceof FabricImage) {
@@ -297,6 +310,8 @@ export class ToolsPlugin extends BaseFabricPlugin {
           activeObject.applyFilters();
           this.canvas.requestRenderAll();
         }
+      } else {
+        console.warn('Active object is not FabricImage', activeObject?.type);
       }
     }
   }
@@ -312,6 +327,7 @@ export class ToolsPlugin extends BaseFabricPlugin {
   }
 
   applyPresetFilter(preset: string) {
+    console.log('applyPresetFilter', preset);
     if (this.canvas) {
       const activeObject = this.canvas.getActiveObject();
       if (activeObject instanceof FabricImage) {
@@ -373,6 +389,8 @@ export class ToolsPlugin extends BaseFabricPlugin {
         }
         activeObject.applyFilters();
         this.canvas.requestRenderAll();
+      } else {
+        console.warn('Active object is not FabricImage', activeObject?.type);
       }
     }
   }
@@ -389,16 +407,33 @@ export class ToolsPlugin extends BaseFabricPlugin {
         console.warn('Main frame not found for download.');
         return;
       }
+
+      // Save current state
+      const originalViewport = this.canvas.viewportTransform;
+      const originalZoom = this.canvas.getZoom();
+
+      // Reset view to absolute 0,0 for export
       this.canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
+      this.canvas.renderAll(); // Force sync render to update coordinates
+
+      console.log('Exporting frame:', { left: frame.left, top: frame.top, width: frame.width, height: frame.height });
+
       const dataURL = this.canvas.toDataURL({
         format,
         quality,
-        multiplier: 1,
+        multiplier: 1, // Enforce 1x scale to avoid retina doubling/cropping issues
         left: frame.left,
         top: frame.top,
-        width: frame.width,
-        height: frame.height,
+        width: frame.width! * (frame.scaleX || 1),
+        height: frame.height! * (frame.scaleY || 1),
       });
+
+      // Restore view
+      if (originalViewport) {
+        this.canvas.setViewportTransform(originalViewport);
+      }
+      this.canvas.setZoom(originalZoom);
+      this.canvas.requestRenderAll();
 
       const link = document.createElement('a');
       link.href = dataURL;

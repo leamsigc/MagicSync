@@ -1,0 +1,93 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - main [ref=e4]:
+    - main [ref=e5]:
+      - generic [ref=e6]:
+        - generic [ref=e7]:
+          - button [ref=e8]
+          - generic [ref=e10]: Image Editor
+          - button [ref=e12]
+          - button [ref=e14]
+        - generic [ref=e16]:
+          - button [ref=e17]
+          - generic [ref=e19]: 34%
+          - button [ref=e20]
+        - generic [ref=e22]:
+          - button "Save" [ref=e23]:
+            - generic [ref=e25]: Save
+          - button "Export" [ref=e26]:
+            - generic [ref=e28]: Export
+      - generic [ref=e29]:
+        - generic [ref=e30]:
+          - generic [ref=e31]:
+            - button [ref=e32]
+            - button [ref=e34]
+            - button [ref=e36]
+            - button [ref=e38]
+            - button [ref=e40]
+          - generic [ref=e42]:
+            - heading "layers" [level=2] [ref=e44]
+            - generic [ref=e46]:
+              - generic [ref=e47]:
+                - generic [ref=e48]: 1 Layers
+                - button [ref=e49]
+              - generic [ref=e51] [cursor=pointer]:
+                - button [ref=e52]
+                - generic [ref=e57]: Rectangle
+                - generic [ref=e58]:
+                  - button [ref=e59]
+                  - button [ref=e61]
+                  - button [ref=e63]
+        - generic [ref=e70]:
+          - generic [ref=e71]:
+            - button "Design" [ref=e72]
+            - button "Export" [ref=e73]
+          - generic [ref=e76]:
+            - heading "Canvas" [level=3] [ref=e77]
+            - generic [ref=e78]:
+              - generic [ref=e79]:
+                - generic [ref=e81]: Size
+                - generic [ref=e82]:
+                  - generic [ref=e83]:
+                    - generic [ref=e84]: W
+                    - spinbutton [ref=e86]
+                  - generic [ref=e87]:
+                    - generic [ref=e88]: H
+                    - spinbutton [ref=e90]
+                - generic [ref=e91]:
+                  - button "IG Post" [ref=e92]
+                  - button "Story" [ref=e93]
+                  - button "Full HD" [ref=e94]
+              - separator [ref=e95]
+              - generic [ref=e96]:
+                - generic [ref=e98]: Rulers
+                - generic [ref=e100]: Snap to Guides
+                - generic [ref=e101]:
+                  - button "+ H Guide" [ref=e102]
+                  - button "+ V Guide" [ref=e103]
+              - separator [ref=e104]
+              - generic [ref=e105]:
+                - generic [ref=e106]: Color
+                - combobox [ref=e108]:
+                  - generic: none
+  - generic:
+    - img
+  - generic:
+    - generic:
+      - generic:
+        - button "Go to parent" [disabled]
+        - button "Open in editor"
+        - button "Close"
+  - generic [ref=e111]:
+    - button "Toggle Nuxt DevTools" [ref=e112] [cursor=pointer]:
+      - img [ref=e113]
+    - generic "Page load time" [ref=e116]:
+      - generic [ref=e117]: "428"
+      - generic [ref=e118]: ms
+    - button "Toggle Component Inspector" [ref=e120] [cursor=pointer]:
+      - img [ref=e121]
+  - region "Notifications (F8)":
+    - list
+```

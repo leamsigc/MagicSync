@@ -2,9 +2,9 @@
 <i18n src="./ImageEditor.json"></i18n>
 <script lang="ts" setup>
 import ImageCanvasEditor from './components/ImageCanvasEditor.vue';
-import ImageCanvasEditorRightMenu from './components/ImageCanvasEditorRightMenu.vue';
-import ImageCanvasEditorVerticalMenu from './components/ImageCanvasEditorVerticalMenu.vue';
-import ImageCanvasEditorMainMenu from './components/ImageCanvasEditorMainMenu.vue';
+import ImageEditorHeader from './components/ImageEditorHeader.vue';
+import ImageEditorSidebar from './components/ImageEditorSidebar.vue';
+import ImageEditorProperties from './components/ImageEditorProperties.vue';
 
 /**
  *
@@ -12,10 +12,6 @@ import ImageCanvasEditorMainMenu from './components/ImageCanvasEditorMainMenu.vu
  *
  * @author Reflect-Media <reflect.media GmbH>
  * @version 0.0.1
- *
- * @todo [ ] Test the component
- * @todo [ ] Integration test.
- * @todo [✔] Update the typescript.
  */
 
 const { t } = useI18n()
@@ -38,19 +34,21 @@ defineOgImage({
 </script>
 
 <template>
+  <main class="h-screen w-screen overflow-hidden flex flex-col bg-background text-foreground">
+      <!-- Top Bar -->
+      <ImageEditorHeader class="shrink-0" />
 
-  <section class="min-h-screen min-w-full relative" />
-  <main class="min-h-screen fixed inset-0">
-    <section class="min-h-screen relative p-10 bg-background-foreground">
-      <!-- Main menu -->
-      <ImageCanvasEditorMainMenu />
-      <!-- Vertical menu -->
-      <ImageCanvasEditorVerticalMenu />
-      <!-- Right menu -->
-      <ImageCanvasEditorRightMenu />
-      <!-- Fabricjs mount here -->
-      <ImageCanvasEditor />
-    </section>
+      <!-- Main Content Area -->
+      <div class="flex-1 flex overflow-hidden">
+          <!-- Left Sidebar (Tools, Layers, Templates) -->
+          <ImageEditorSidebar class="shrink-0" />
+
+          <!-- Middle Canvas Area -->
+          <ImageCanvasEditor class="flex-1 relative z-0" />
+
+          <!-- Right Sidebar (Properties) -->
+          <ImageEditorProperties class="shrink-0" />
+      </div>
   </main>
 </template>
 <style scoped></style>
