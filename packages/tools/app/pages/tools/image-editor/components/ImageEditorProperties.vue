@@ -266,7 +266,7 @@ const fontFamilies = ['Arial', 'Verdana', 'Helvetica', 'Times New Roman', 'Couri
           <!-- Rotation / Opacity -->
           <div class="mt-2">
             <label class="text-[10px] text-gray-500 block mb-1">Opacity {{ opacity.toFixed(0) }}%</label>
-            <URange v-model="opacity" :min="0" :max="100" size="xs" @update:model-value="handleOpacityUpdate" />
+            <USlider v-model="opacity" :min="0" :max="100" size="xs" @update:model-value="handleOpacityUpdate" />
           </div>
           <!-- Flip & Rotate -->
           <div class="grid grid-cols-4 gap-1 mt-2">
@@ -316,14 +316,14 @@ const fontFamilies = ['Arial', 'Verdana', 'Helvetica', 'Times New Roman', 'Couri
                 data-testid="btn-underline" />
             </div>
 
-            <UButtonGroup size="xs" class="w-full flex">
+            <section size="xs" class="w-full flex">
               <UButton :variant="localTextSettings.textAlign === 'left' ? 'solid' : 'outline'" icon="lucide:align-left"
                 class="flex-1" @click="updateTextSettings({ textAlign: 'left' })" />
               <UButton :variant="localTextSettings.textAlign === 'center' ? 'solid' : 'outline'"
                 icon="lucide:align-center" class="flex-1" @click="updateTextSettings({ textAlign: 'center' })" />
               <UButton :variant="localTextSettings.textAlign === 'right' ? 'solid' : 'outline'"
                 icon="lucide:align-right" class="flex-1" @click="updateTextSettings({ textAlign: 'right' })" />
-            </UButtonGroup>
+            </section>
           </div>
         </div>
 
@@ -370,7 +370,7 @@ const fontFamilies = ['Arial', 'Verdana', 'Helvetica', 'Times New Roman', 'Couri
           <div v-if="shadow.enabled" class="space-y-2 bg-gray-50 dark:bg-gray-800 p-2 rounded">
             <div class="flex justify-between items-center">
               <span class="text-xs">Shadow</span>
-              <UToggle size="xs" v-model="shadow.enabled" @update:model-value="handleShadowUpdate" />
+              <USwitch size="xs" v-model="shadow.enabled" @update:model-value="handleShadowUpdate" />
             </div>
             <div class="grid grid-cols-2 gap-2">
               <UInput v-model.number="shadow.offsetX" size="xs" placeholder="X" @change="handleShadowUpdate" />
@@ -409,7 +409,7 @@ const fontFamilies = ['Arial', 'Verdana', 'Helvetica', 'Times New Roman', 'Couri
               <div class="flex justify-between mb-1">
                 <label class="text-[10px] text-gray-500">{{ name }}</label>
               </div>
-              <URange v-model="(filtersRef as any)[name]" :min="-100" :max="100" size="xs"
+              <USlider v-model="(filtersRef as any)[name]" :min="-100" :max="100" size="xs"
                 @update:model-value="handleFilterUpdate(name)" />
             </div>
           </div>
@@ -456,12 +456,12 @@ const fontFamilies = ['Arial', 'Verdana', 'Helvetica', 'Times New Roman', 'Couri
             <div class="space-y-2">
               <div class="flex justify-between items-center">
                 <span class="text-xs">Rulers</span>
-                <UToggle v-model="showRulers" size="xs" @update:model-value="editor.value?.toggleRulers?.(showRulers)"
+                <USwitch v-model="showRulers" size="xs" @update:model-value="editor.value?.toggleRulers?.(showRulers)"
                   data-testid="toggle-rulers" />
               </div>
               <div class="flex justify-between items-center">
                 <span class="text-xs">Snap to Guides</span>
-                <UToggle v-model="snapToGuides" size="xs"
+                <USwitch v-model="snapToGuides" size="xs"
                   @update:model-value="editor.value?.toggleGuidelineSnap?.(snapToGuides)" />
               </div>
               <div class="flex gap-2">

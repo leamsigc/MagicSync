@@ -47,14 +47,14 @@ const handleToggleVisibility = (layer: any) => {
 };
 
 const moveLayerUp = (layer: any) => {
-  if (!layer || !layer.canvas) return;
-  layer.bringForward(); // standard fabric method
+  // @ts-ignore
+  editor.value?.arrangeFront?.(layer);
   updateLayers();
 };
 
 const moveLayerDown = (layer: any) => {
-  if (!layer || !layer.canvas) return;
-  layer.sendBackwards(); // standard fabric method
+  // @ts-ignore
+  editor.value?.arrangeBack?.(layer);
   updateLayers();
 };
 
@@ -166,6 +166,18 @@ const HandleAddTextLayer = ({ text = 'Add a heading', fontSize = 32, fontWeight 
   editor.value?.stopDrawingMode?.();
   editor.value?.addTextLayer?.(text, { fontSize, fontWeight });
 }
+const selectTab = (id: string) => {
+  activeTab.value = id;
+  editor.value?.stopDrawingMode?.();
+}
+const HandleAddShapeLayer = (type: string, options: any) => {
+  editor.value?.stopDrawingMode?.();
+  editor.value?.addShapeLayer?.(type, options);
+}
+const HandleAddBrushLayer = () => {
+  editor.value?.stopDrawingMode?.();
+  editor.value?.addBrushLayer?.('black', 5)
+}
 </script>
 
 <template>
@@ -178,7 +190,7 @@ const HandleAddTextLayer = ({ text = 'Add a heading', fontSize = 32, fontWeight 
         <UTooltip :text="tab.label" placement="right">
           <button class="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200"
             :class="activeTab === tab.id ? 'bg-primary text-primary-foreground shadow-sm' : 'text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800'"
-            @click="() => { activeTab = tab.id; editor.value?.stopDrawingMode?.(); }" :data-testid="`tab-${tab.id}`">
+            @click="selectTab(tab.id)" :data-testid="`tab-${tab.id}`">
             <Icon :name="tab.icon" class="w-5 h-5" />
           </button>
         </UTooltip>
@@ -198,7 +210,7 @@ const HandleAddTextLayer = ({ text = 'Add a heading', fontSize = 32, fontWeight 
           <div v-for="(tpl, idx) in templates" :key="idx"
             class="border border-gray-200 dark:border-gray-800 rounded-lg p-2 hover:border-primary cursor-pointer transition-colors"
             @click="loadTemplate(tpl.json)">
-            <div class="aspect-[3/4] bg-gray-100 dark:bg-gray-800 rounded-md mb-2 flex items-center justify-center">
+            <div class="aspect-3/4 bg-gray-100 dark:bg-gray-800 rounded-md mb-2 flex items-center justify-center">
               <Icon name="lucide:layout-template" class="w-8 h-8 text-gray-400" />
             </div>
             <div class="text-xs font-medium">{{ tpl.title }}</div>
@@ -211,33 +223,30 @@ const HandleAddTextLayer = ({ text = 'Add a heading', fontSize = 32, fontWeight 
           <div>
             <h3 class="text-xs font-semibold text-gray-500 mb-3 uppercase">Basic Shapes</h3>
             <div class="grid grid-cols-3 gap-3">
-              <button
+              <UButton
                 class="aspect-square border border-gray-200 dark:border-gray-800 rounded flex flex-col items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-600"
-                @click="() => { editor.value?.stopDrawingMode?.(); editor.value?.addShapeLayer?.('rect', { fill: '#333' }); }"
-                data-testid="add-rect">
+                @click="HandleAddShapeLayer('rect', { fill: '#333' })" data-testid="add-rect" variant="ghost">
                 <Icon name="lucide:square" class="w-6 h-6 mb-1" />
                 <span class="text-[10px]">Rect</span>
-              </button>
-              <button
+              </UButton>
+              <UButton
                 class="aspect-square border border-gray-200 dark:border-gray-800 rounded flex flex-col items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-600"
-                @click="() => { editor.value?.stopDrawingMode?.(); editor.value?.addShapeLayer?.('circle', { fill: '#333' }); }"
-                data-testid="add-circle">
+                @click="HandleAddShapeLayer('circle', { fill: '#333' })" variant="ghost" data-testid="add-circle">
                 <Icon name="lucide:circle" class="w-6 h-6 mb-1" />
                 <span class="text-[10px]">Circle</span>
-              </button>
-              <button
+              </UButton>
+              <UButton
                 class="aspect-square border border-gray-200 dark:border-gray-800 rounded flex flex-col items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-600"
-                @click="() => { editor.value?.stopDrawingMode?.(); editor.value?.addShapeLayer?.('triangle', { fill: '#333' }); }"
-                data-testid="add-triangle">
+                @click="HandleAddShapeLayer('triangle', { fill: '#333' })" data-testid="add-triangle" variant="ghost">
                 <Icon name="lucide:triangle" class="w-6 h-6 mb-1" />
                 <span class="text-[10px]">Triangle</span>
-              </button>
+              </UButton>
             </div>
           </div>
 
           <div>
             <h3 class="text-xs font-semibold text-gray-500 mb-3 uppercase">Drawing</h3>
-            <UButton block variant="outline" icon="lucide:pencil" @click="editor.value?.addBrushLayer?.('black', 5)">
+            <UButton block variant="outline" icon="lucide:pencil" @click="HandleAddBrushLayer">
               Enable Brush
             </UButton>
           </div>
@@ -287,13 +296,13 @@ const HandleAddTextLayer = ({ text = 'Add a heading', fontSize = 32, fontWeight 
             class="group flex items-center gap-2 p-2 rounded-md cursor-pointer border border-transparent hover:border-gray-200 dark:hover:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800"
             :class="{ 'bg-primary/5 border-primary/20': layer === activeLayer }" @click="handleLayerClick(layer)">
 
-            <button class="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+            <UButton class="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200" variant="ghost"
               @click.stop="handleToggleVisibility(layer)">
               <Icon :name="layer.visible !== false ? 'lucide:eye' : 'lucide:eye-off'" class="w-4 h-4" />
-            </button>
+            </UButton>
 
             <div
-              class="w-8 h-8 rounded bg-white dark:bg-gray-800 flex items-center justify-center border border-gray-100 dark:border-gray-700 flex-shrink-0">
+              class="w-8 h-8 rounded bg-white dark:bg-gray-800 flex items-center justify-center border border-gray-100 dark:border-gray-700 shrink-0">
               <Icon :name="getLayerIcon(layer)" class="w-4 h-4 text-gray-500" />
             </div>
 
@@ -301,17 +310,19 @@ const HandleAddTextLayer = ({ text = 'Add a heading', fontSize = 32, fontWeight 
               <div class="text-xs font-medium truncate select-none">{{ getLayerType(layer) }}</div>
             </div>
 
-            <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded" @click.stop="moveLayerUp(layer)">
+            <div class="flex gap-1 opacity-50 group-hover:opacity-100 transition-opacity">
+              <UButton class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded" @click.stop="moveLayerUp(layer)"
+                variant="ghost">
                 <Icon name="lucide:arrow-up" class="w-3 h-3 text-gray-500" />
-              </button>
-              <button class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded" @click.stop="moveLayerDown(layer)">
+              </UButton>
+              <UButton class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded" @click.stop="moveLayerDown(layer)"
+                variant="ghost">
                 <Icon name="lucide:arrow-down" class="w-3 h-3 text-gray-500" />
-              </button>
-              <button class="p-1 hover:bg-red-100 dark:hover:bg-red-900/30 rounded text-red-500"
-                @click.stop="handleDeleteLayer(layer)">
+              </UButton>
+              <UButton class="p-1 hover:bg-red-100 dark:hover:bg-red-900/30 rounded text-red-500"
+                @click.stop="handleDeleteLayer(layer)" variant="ghost">
                 <Icon name="lucide:trash-2" class="w-3 h-3" />
-              </button>
+              </UButton>
             </div>
           </div>
         </div>

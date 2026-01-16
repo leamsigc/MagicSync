@@ -14,7 +14,7 @@ export class ToolsPlugin extends BaseFabricPlugin {
     'cropLayer',
     'rotateLayer',
     'addBrushLayer',
-    'addShapeLayer',
+    // 'addShapeLayer',
     'eraseLayer',
     'clearCanvas',
     'updateFrameSettings',

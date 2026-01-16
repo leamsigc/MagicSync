@@ -1,5 +1,6 @@
 import { Canvas, Group, ActiveSelection, FabricObject } from 'fabric';
 import { BaseFabricPlugin, FabricEditor } from './FabricEditor';
+import type { EditorContext } from './PluginContext';
 
 // Simple uuid generator for now
 const uuid = () => Math.random().toString(36).substring(2, 9);
@@ -17,8 +18,8 @@ export class GroupPlugin extends BaseFabricPlugin {
   static readonly pluginName = 'GroupPlugin';
   readonly pluginName = 'GroupPlugin';
 
-  constructor(canvas: Canvas, editor: FabricEditor) {
-    super(canvas, editor);
+  constructor(canvas: Canvas, editor: FabricEditor, context: EditorContext, options?: any) {
+    super(canvas, editor, context, options);
   }
 
   protected init() {
@@ -62,4 +63,3 @@ export class GroupPlugin extends BaseFabricPlugin {
     console.log('GroupPlugin destroyed');
   }
 }
-

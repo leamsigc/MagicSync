@@ -1,5 +1,6 @@
 import { Canvas, iMatrix, Point, Rect, util } from 'fabric';
 import { BaseFabricPlugin, FabricEditor, type FabricObjectWithName } from './FabricEditor';
+import type { EditorContext } from './PluginContext';
 
 // Custom throttle implementation
 function customThrottle<T extends (...args: any[]) => any>(func: T, delay: number): T {
@@ -44,8 +45,8 @@ export class CorePlugin extends BaseFabricPlugin {
   resizeObserver!: ResizeObserver;
   zoomRatio: number;
 
-  constructor(canvas: Canvas, editor: FabricEditor) {
-    super(canvas, editor);
+  constructor(canvas: Canvas, editor: FabricEditor, context: EditorContext, options?: any) {
+    super(canvas, editor, context, options);
 
     this.workspace = null;
     this.zoomRatio = 0.85;
