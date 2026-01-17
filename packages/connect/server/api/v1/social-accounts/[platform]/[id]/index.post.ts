@@ -1,6 +1,7 @@
 import { logAuditService } from '#layers/BaseDB/server/services/auditLog.service';
 import { socialMediaAccountService, type CreateSocialMediaAccountData, type SocialMediaPlatform } from '#layers/BaseDB/server/services/social-media-account.service';
 import { FacebookPlugin } from '#layers/BaseScheduler/server/services/plugins/facebook.plugin';
+import { LinkedInPagePlugin } from '#layers/BaseScheduler/server/services/plugins/linkedin-page.plugin';
 import { SchedulerPost, type SchedulerPluginConstructor } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import { H3Error, readBody } from 'h3';
 
@@ -38,6 +39,7 @@ export default defineEventHandler(async (event) => {
     )
     const matcher: Record<string, SchedulerPluginConstructor> = {
       facebook: FacebookPlugin,
+      'linkedin-page': LinkedInPagePlugin,
     }
     if (!matcher[platform] || !account) {
       throw createError({

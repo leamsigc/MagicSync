@@ -27,7 +27,7 @@ interface Props {
   showPages?: boolean;
   showMenu?: boolean;
 }
-const { getPagesForIntegration, HandleConnectToFacebook, facebookPages, handleDisconnect } = useConnectionManager();
+const { getPagesForIntegration, HandleConnectToFacebook, facebookPages, handleDisconnect, HandleConnectToLinkedIn } = useConnectionManager();
 
 const modalStatus = ref(false);
 const toggleModal = () => {
@@ -73,8 +73,11 @@ const items = computed(() => [
 ]);
 
 const HandleConnectTo = async (page: unknown) => {
-  if (props.name === 'facebook')
+  if (props.name === 'facebook') {
     await HandleConnectToFacebook(page as FacebookPage);
+  } else if (props.name === 'linkedin-page') {
+    await HandleConnectToLinkedIn(page as LinkedInPage);
+  }
 
   toggleModal();
 };
@@ -85,7 +88,8 @@ const HandleConnectTo = async (page: unknown) => {
     <section class="relative flex flex-col items-center justify-center p-2">
       <UAvatar :src="props.image" class="w-12 h-12 border-2 relative" :class="{ 'border-primary': connected }" />
       <div v-if="props.icon" class="">
-        <UAvatar :icon="props.icon" size="2xl" class="bg-white dark:bg-gray-900" />
+        <UAvatar :icon="props.icon === 'logos:linkedin-page' ? 'logos:linkedin' : props.icon" size="2xl"
+          class="bg-white dark:bg-gray-900" />
       </div>
       <section class="text-center">
         <h3 class="text-lg font-semibold">{{ props.name }}</h3>
@@ -116,6 +120,7 @@ const HandleConnectTo = async (page: unknown) => {
               <h3 class="text-lg font-semibold">{{ page.name }}</h3>
               <p class="text-sm text-gray-500 dark:text-gray-400">{{ $t('modal.id_label') }}{{ page.id }}</p>
               <Icon v-if="page.instagram_business_account?.id" name="logos:instagram" />
+              <Icon v-else-if="props.icon === 'logos:linkedin-page'" name="logos:linkedin" class="mr-4" />
               <Icon v-else name="logos:facebook" class="mr-4" />
             </section>
           </section>

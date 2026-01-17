@@ -150,6 +150,33 @@ export const useConnectionManager = () => {
       throw error;
     }
   }
+  const HandleConnectToLinkedIn = async (page: FacebookPage) => {
+    try {
+      const { activeBusinessId } = useBusinessManager()
+      const res = await $fetch<Promise<SocialMediaAccount>>(`/api/v1/social-accounts/linkedin-page/${page.id}`, {
+        method: 'POST',
+        body: { ...page, platformId: 'linkedin-page', businessId: activeBusinessId.value },
+      });
+      toast.add({
+        title: 'Success',
+        description: 'Successfully connected to LinkedIn page ' + page.name,
+        icon: 'i-heroicons-check-circle',
+        color: 'success',
+      });
+
+      await getAllSocialMediaAccounts();
+
+    } catch (error) {
+      console.error('Error adding business:', error);
+      toast.add({
+        title: 'Error',
+        description: 'Failed to connect to LinkedIn page ' + page.name,
+        icon: 'i-heroicons-x-circle',
+        color: 'error',
+      });
+      throw error;
+    }
+  }
 
   const getAllAccountDetails = async () => {
     try {
@@ -198,6 +225,7 @@ export const useConnectionManager = () => {
     HandleConnectTo,
     getPagesForIntegration,
     HandleConnectToFacebook,
+    HandleConnectToLinkedIn,
     getAllSocialMediaAccounts,
     getAllAccountDetails
   }

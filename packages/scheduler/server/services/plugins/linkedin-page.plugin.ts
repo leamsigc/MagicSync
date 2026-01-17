@@ -101,14 +101,14 @@ export class LinkedInPagePlugin extends BaseSchedulerPlugin {
 
     return pages;
   }
-  async fetchPageInformation(accessToken: string, params: { page: string }): Promise<{
+  async fetchPageInformation(_: LinkedInPagePlugin, pageId: string, accessToken: string, params: { page: string }): Promise<{
     id: string;
     name: string;
     access_token: string;
     picture: string;
     username: string;
   }> {
-    const pageId = params.page;
+
     const data = await (
       await fetch(
         `https://api.linkedin.com/v2/organizations/${pageId}?projection=(id,localizedName,vanityName,logoV2(original~:playableStreams))`,
@@ -120,10 +120,13 @@ export class LinkedInPagePlugin extends BaseSchedulerPlugin {
       )
     ).json();
 
+
+
     if (!data) {
       throw new Error('Page not found');
     }
-    const imageBase64 = await fetchedImageBase64(data?.logoV2?.['original~']?.elements?.[0]?.identifiers?.[0].identifier);
+    const imageUrl = data?.logoV2?.['original~']?.elements?.[0]?.identifiers?.[0].identifier;
+    const imageBase64 = imageUrl ? await fetchedImageBase64(imageUrl) : '';
 
 
     return {
@@ -193,6 +196,8 @@ export class LinkedInPagePlugin extends BaseSchedulerPlugin {
       const author = socialMediaAccount.metadata?.organizationUrn ||
         `urn:li:organization:${socialMediaAccount.accountId}`;
 
+      console.log(author);
+
       // Check for media
       const imageAsset = postDetails.assets?.find(
         (asset) => asset.mimeType.includes('image')
@@ -202,9 +207,9 @@ export class LinkedInPagePlugin extends BaseSchedulerPlugin {
 
       if (imageAsset) {
         // Fetch image buffer
-        const response = await fetch(getPublicUrlForAsset(imageAsset.url));
-        const arrayBuffer = await response.arrayBuffer();
-        const imageBuffer = Buffer.from(arrayBuffer as ArrayBuffer);
+        const path = getFileFromAsset(imageAsset);
+        const arrayBuffer = await reduceImageBySize(path, 8 * 1024 * 1024);
+        const imageBuffer = Buffer.from(arrayBuffer.buffer);
 
         // Upload image
         mediaUrn = await this.uploadImage(
@@ -255,9 +260,14 @@ export class LinkedInPagePlugin extends BaseSchedulerPlugin {
         body: JSON.stringify(shareBody),
       });
 
+      // console.log(response);
+
       if (!response.ok) {
         const error = await response.text();
+        await this.logPluginEvent('post-error:response', 'failure', `Error: ${error}, Context: ${JSON.stringify(shareBody)}`);
+
         throw new Error(`LinkedIn Page API error: ${error}`);
+
       }
 
       const data = await response.json();
@@ -283,6 +293,7 @@ export class LinkedInPagePlugin extends BaseSchedulerPlugin {
         status: 'failed',
         error: (error as Error).message,
       };
+      await this.logPluginEvent('post-error:response', 'failure', `Error: ${error}, Context: ${errorResponse}`);
       this.emit('linkedin-page:post:failed', { error: (error as Error).message });
       return errorResponse;
     }
