@@ -76,24 +76,24 @@ Everything you need to succeed on social media, without the complexity or cost o
 
 ::BaseFaq
 ---
-items:
-  - question: How much does MagicSync cost?
-    answer: We offer a free self-hosted version and a Pro cloud-hosted plan at $29/month (save 17% with annual billing). No hidden fees, no per-user charges.
+list:
+  - label: How much does MagicSync cost?
+    content: We offer a free self-hosted version and a Pro cloud-hosted plan at $29/month (save 17% with annual billing). No hidden fees, no per-user charges.
     value: 1
-  - question: Which platforms are supported?
-    answer: Facebook, Instagram, X/Twitter, LinkedIn, TikTok, YouTube, Google My Business, Pinterest, Reddit, Discord, Threads, Bluesky, WordPress, and Dev.to.
+  - label: Which platforms are supported?
+    content: Facebook, Instagram, X/Twitter, LinkedIn, TikTok, YouTube, Google My Business, Pinterest, Reddit, Discord, Threads, Bluesky, WordPress, and Dev.to.
     value: 2
-  - question: Do I need technical skills?
-    answer: No! Our cloud-hosted version requires zero technical setup. If you choose self-hosting, we provide step-by-step guides.
+  - label: Do I need technical skills?
+    content: No! Our cloud-hosted version requires zero technical setup. If you choose self-hosting, we provide step-by-step guides.
     value: 3
-  - question: Can I try it for free?
-    answer: Yes! Get a 14-day free trial of our Pro plan. No credit card required. Or use our free self-hosted version forever.
+  - label: Can I try it for free?
+    content: Yes! Get a 14-day free trial of our Pro plan. No credit card required. Or use our free self-hosted version forever.
     value: 4
-  - question: How is this different from Hootsuite or Buffer?
-    answer: MagicSync costs less ($29 vs $60-99/month), offers unlimited accounts, includes AI content generation, and gives you the option to self-host for complete data ownership.
+  - label: How is this different from Hootsuite or Buffer?
+    content: MagicSync costs less ($29 vs $60-99/month), offers unlimited accounts, includes AI content generation, and gives you the option to self-host for complete data ownership.
     value: 5
-  - question: Can multiple team members use one account?
-    answer: Yes! Pro plans support up to 10 team members. Enterprise plans have unlimited users with role-based permissions.
+  - label: Can multiple team members use one account?
+    content: Yes! Pro plans support up to 10 team members. Enterprise plans have unlimited users with role-based permissions.
     value: 6
 ---
 
@@ -106,21 +106,21 @@ Got questions? We've got answers. Check out our complete FAQ or contact our team
 
 ::BaseTestimonials
 ---
-items:
+list:
   - name: Sarah Martinez
-    role: Owner, Bella's Bistro
-    avatar: "/avatars/sarah.jpg"
-    content: "MagicSync saved me 10 hours a week! I can now focus on running my restaurant while my social media runs on autopilot. Customer engagement is up 300%."
-    rating: 5
+    userName: Owner, Bella's Bistro
+    avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b7e6?w=150&h=150&fit=crop&crop=face"
+    comment: "MagicSync saved me 10 hours a week! I can now focus on running my restaurant while my social media runs on autopilot. Customer engagement is up 300%."
+    rating: 5.0
   - name: Michael Chen
-    role: Marketing Director, TechStart Agency
-    avatar: "/avatars/michael.jpg"
-    content: "We manage 25 client accounts with MagicSync. The team collaboration features and bulk scheduling are game-changers. Highly recommend!"
+    userName: Marketing Director, TechStart Agency
+    avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b7e6?w=150&h=150&fit=crop&crop=face"
+    comment: "We manage 25 client accounts with MagicSync. The team collaboration features and bulk scheduling are game-changers. Highly recommend!"
     rating: 5
   - name: Jessica Thompson
-    role: Real Estate Agent
-    avatar: "/avatars/jessica.jpg"
-    content: "Posting new listings across all platforms used to take hours. Now it takes minutes. I've closed 2 extra deals this month thanks to increased visibility."
+    userName: Real Estate Agent
+    avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b7e6?w=150&h=150&fit=crop&crop=face"
+    comment: "Posting new listings across all platforms used to take hours. Now it takes minutes. I've closed 2 extra deals this month thanks to increased visibility."
     rating: 5
 ---
 #title
@@ -132,7 +132,7 @@ See what business owners are saying about MagicSync.
 
 ::BaseFeatures
 ---
-items:
+list:
   - title: Schedule Across All Platforms
     description: Plan your content calendar weeks or months in advance. Post to all your social accounts with one click.
     icon: "lucide:calendar-check"
@@ -165,9 +165,9 @@ title: Ready to Transform Your Social Media?
 description: Join 10,000+ small businesses saving time and growing their audience with MagicSync.
 primaryAction:
   label: Start Free Trial
-  href: /register
+  href: /login
 secondaryAction:
   label: View Pricing
-  href: /pricing
+  href: /login
 ---
 ::

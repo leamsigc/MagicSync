@@ -111,6 +111,9 @@ catalogs:
     better-sqlite3:
       specifier: 12.6.0
       version: 12.6.0
+    cheerio:
+      specifier: ^1.1.2
+      version: 1.1.2
     dayjs:
       specifier: 1.11.19
       version: 1.11.19
@@ -138,6 +141,9 @@ catalogs:
     mjml:
       specifier: 4.18.0
       version: 4.18.0
+    modern-screenshot:
+      specifier: 4.6.7
+      version: 4.6.7
     nuxt:
       specifier: 4.2.2
       version: 4.2.2
@@ -206,6 +212,9 @@ importers:
       '@nuxtjs/i18n':
         specifier: 'catalog:'
         version: 10.2.1(@vue/compiler-dom@3.5.26)(db0@0.3.4(@libsql/client@0.15.15)(better-sqlite3@12.6.0)(drizzle-orm@0.45.1(@libsql/client@0.15.15)(@opentelemetry/api@1.9.0)(better-sqlite3@12.6.0)(kysely@0.28.9)))(eslint@9.39.2(jiti@2.6.1))(ioredis@5.9.1)(magicast@0.5.1)(rollup@4.55.1)(vue@3.5.26(typescript@5.9.3))
+      cheerio:
+        specifier: 'catalog:'
+        version: 1.1.2
     devDependencies:
       '@nuxt/eslint':
         specifier: 'catalog:'
@@ -749,6 +758,9 @@ importers:
       fabric:
         specifier: 'catalog:'
         version: 7.1.0
+      modern-screenshot:
+        specifier: 'catalog:'
+        version: 4.6.7
       nuxt:
         specifier: 'catalog:'
         version: 4.2.2(@libsql/client@0.15.15)(@parcel/watcher@2.5.4)(@types/node@22.19.6)(@vue/compiler-sfc@3.5.26)(better-sqlite3@12.6.0)(cac@6.7.14)(db0@0.3.4(@libsql/client@0.15.15)(better-sqlite3@12.6.0)(drizzle-orm@0.45.1(@libsql/client@0.15.15)(@opentelemetry/api@1.9.0)(better-sqlite3@12.6.0)(kysely@0.28.9)))(drizzle-orm@0.45.1(@libsql/client@0.15.15)(@opentelemetry/api@1.9.0)(better-sqlite3@12.6.0)(kysely@0.28.9))(eslint@9.39.2(jiti@2.6.1))(ioredis@5.9.1)(lightningcss@1.30.2)(magicast@0.5.1)(optionator@0.9.4)(rollup@4.55.1)(sass@1.97.0)(terser@5.44.1)(tsx@4.21.0)(typescript@5.9.3)(vite@7.3.1(@types/node@22.19.6)(jiti@2.6.1)(lightningcss@1.30.2)(sass@1.97.0)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2))(yaml@2.8.2)
@@ -4859,6 +4871,10 @@ packages:
     resolution: {integrity: sha512-VqR8m68vM46BNnuZ5NtnGBKIE/DfN0cRIzg9n40EIq9NOv90ayxLBXA8fXC5gquFRGJSTRqBq25Jt2ECLR431Q==}
     engines: {node: '>= 6'}
 
+  cheerio@1.1.2:
+    resolution: {integrity: sha512-IkxPpb5rS/d1IiLbHMgfPuS0FgiWTtFIm/Nj+2woXDLTZ7fOT2eqzgYbdMlLweqlHbsZjxEChoVK+7iph7jyQg==}
+    engines: {node: '>=20.18.1'}
+
   chevrotain-allstar@0.3.1:
     resolution: {integrity: sha512-b7g+y9A0v4mxCW1qUhf3BSVPg+/NvGErk/dOkrDaHA0nQIQGAtrOjlX//9OQtRlSCy+x9rfB5N8yC71lH1nvMw==}
     peerDependencies:
@@ -5668,6 +5684,9 @@ packages:
     resolution: {integrity: sha512-Q0n9HRi4m6JuGIV1eFlmvJB7ZEVxu93IrMyiMsGC0lrMJMWzRgx6WGquyfQgZVb31vhGgXnfmPNNXmxnOkRBrg==}
     engines: {node: '>= 0.8'}
 
+  encoding-sniffer@0.2.1:
+    resolution: {integrity: sha512-5gvq20T6vfpekVtqrYQsSCFZ1wEg5+wW0/QaZMWkFr6BqD3NfKs0rLCx4rrVlSWJeZb5NBJgVLswK/w2MWU+Gw==}
+
   end-of-stream@1.4.5:
     resolution: {integrity: sha512-ooEGc6HP26xXq/N+GCGOT0JKCLDGrq2bQUZrQ7gyrJiZANJ/8YDTxTpQBXGMn+WbIQXNVpyWymm7KYVICQnyOg==}
 
@@ -6426,6 +6445,9 @@ packages:
 
   html-whitespace-sensitive-tag-names@3.0.1:
     resolution: {integrity: sha512-q+310vW8zmymYHALr1da4HyXUQ0zgiIwIicEfotYPWGN0OJVEN/58IJ3A4GBYcEq3LGAZqKb+ugvP0GNB9CEAA==}
+
+  htmlparser2@10.0.0:
+    resolution: {integrity: sha512-TwAZM+zE5Tq3lrEHvOlvwgj1XLWQCtaaibSN11Q+gGBAS7Y1uZSWwXXRe4iF6OXnaq1riyQAPFOBtYc77Mxq0g==}
 
   htmlparser2@5.0.1:
     resolution: {integrity: sha512-vKZZra6CSe9qsJzh0BjBGXo8dvzNsq/oGvsjfRdOrrryfeD9UOBEEQdeoqCRmKZchF5h2zOBMQ6YuQ0uRUmdbQ==}
@@ -7422,6 +7444,9 @@ packages:
   mocked-exports@0.1.1:
     resolution: {integrity: sha512-aF7yRQr/Q0O2/4pIXm6PZ5G+jAd7QS4Yu8m+WEeEHGnbo+7mE36CbLSDQiXYV8bVL3NfmdeqPJct0tUlnjVSnA==}
 
+  modern-screenshot@4.6.7:
+    resolution: {integrity: sha512-0GhgI6i6le4AhKzCvLYjwEmsP47kTsX45iT5yuAzsLTi/7i3Rjxe8fbH2VjGJLuyOThwsa0CdQAPd4auoEtsZg==}
+
   modern-tar@0.7.3:
     resolution: {integrity: sha512-4W79zekKGyYU4JXVmB78DOscMFaJth2gGhgfTl2alWE4rNe3nf4N2pqenQ0rEtIewrnD79M687Ouba3YGTLOvg==}
     engines: {node: '>=18.0.0'}
@@ -7826,6 +7851,9 @@ packages:
 
   parse5-htmlparser2-tree-adapter@7.1.0:
     resolution: {integrity: sha512-ruw5xyKs6lrpo9x9rCZqZZnIUntICjQAd0Wsmp396Ul9lN/h+ifgVV1x1gZHi8euej6wTfpqX8j+BFQxF0NS/g==}
+
+  parse5-parser-stream@7.1.2:
+    resolution: {integrity: sha512-JyeQc9iwFLn5TbvvqACIF/VXG6abODeB3Fwmv/TGdLk2LfbWkaySGY72at4+Ty7EkPZj854u4CrICqNk2qIbow==}
 
   parse5@7.3.0:
     resolution: {integrity: sha512-IInvU7fabl34qmi9gY8XOVxhYyMyuH2xUNpb2q8/Y+7552KlejkRvqvD19nMoUW/uQGGbqNpA6Tufu5FL5BZgw==}
@@ -9101,6 +9129,10 @@ packages:
 
   undici-types@6.21.0:
     resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
+
+  undici@7.18.2:
+    resolution: {integrity: sha512-y+8YjDFzWdQlSE9N5nzKMT3g4a5UBX1HKowfdXh0uvAnTaqqwqB92Jt4UXBAeKekDs5IaDKyJFR4X1gYVCgXcw==}
+    engines: {node: '>=20.18.1'}
 
   unenv@2.0.0-rc.24:
     resolution: {integrity: sha512-i7qRCmY42zmCwnYlh9H2SvLEypEFGye5iRmEMKjcGi7zk9UquigRjFtTLz0TYqr0ZGLZhaMHl/foy1bZR+Cwlw==}
@@ -14261,6 +14293,20 @@ snapshots:
       parse5: 7.3.0
       parse5-htmlparser2-tree-adapter: 7.1.0
 
+  cheerio@1.1.2:
+    dependencies:
+      cheerio-select: 2.1.0
+      dom-serializer: 2.0.0
+      domhandler: 5.0.3
+      domutils: 3.2.2
+      encoding-sniffer: 0.2.1
+      htmlparser2: 10.0.0
+      parse5: 7.3.0
+      parse5-htmlparser2-tree-adapter: 7.1.0
+      parse5-parser-stream: 7.1.2
+      undici: 7.18.2
+      whatwg-mimetype: 4.0.0
+
   chevrotain-allstar@0.3.1(chevrotain@11.0.3):
     dependencies:
       chevrotain: 11.0.3
@@ -14982,6 +15028,11 @@ snapshots:
   emoticon@4.1.0: {}
 
   encodeurl@2.0.0: {}
+
+  encoding-sniffer@0.2.1:
+    dependencies:
+      iconv-lite: 0.6.3
+      whatwg-encoding: 3.1.1
 
   end-of-stream@1.4.5:
     dependencies:
@@ -16030,6 +16081,13 @@ snapshots:
   html-void-elements@3.0.0: {}
 
   html-whitespace-sensitive-tag-names@3.0.1: {}
+
+  htmlparser2@10.0.0:
+    dependencies:
+      domelementtype: 2.3.0
+      domhandler: 5.0.3
+      domutils: 3.2.2
+      entities: 6.0.1
 
   htmlparser2@5.0.1:
     dependencies:
@@ -17448,6 +17506,8 @@ snapshots:
 
   mocked-exports@0.1.1: {}
 
+  modern-screenshot@4.6.7: {}
+
   modern-tar@0.7.3: {}
 
   motion-dom@12.26.2:
@@ -18256,6 +18316,10 @@ snapshots:
   parse5-htmlparser2-tree-adapter@7.1.0:
     dependencies:
       domhandler: 5.0.3
+      parse5: 7.3.0
+
+  parse5-parser-stream@7.1.2:
+    dependencies:
       parse5: 7.3.0
 
   parse5@7.3.0:
@@ -19716,6 +19780,8 @@ snapshots:
 
   undici-types@6.21.0: {}
 
+  undici@7.18.2: {}
+
   unenv@2.0.0-rc.24:
     dependencies:
       pathe: 2.0.3
@@ -20411,12 +20477,10 @@ snapshots:
   whatwg-encoding@3.1.1:
     dependencies:
       iconv-lite: 0.6.3
-    optional: true
 
   whatwg-mimetype@3.0.0: {}
 
-  whatwg-mimetype@4.0.0:
-    optional: true
+  whatwg-mimetype@4.0.0: {}
 
   whatwg-url@14.2.0:
     dependencies:

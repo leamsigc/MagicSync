@@ -63,6 +63,7 @@ catalog:
   tailwindcss: 4.1.18
   "nuxt-umami": "3.2.1"
   cheerio: "^1.1.2"
+  modern-screenshot: 4.6.7
 
 onlyBuiltDependencies:
   - esbuild

@@ -23,6 +23,7 @@
     "fabric": "catalog:",
     "nuxt": "catalog:",
     "typescript": "catalog:",
-    "vue": "catalog:"
+    "vue": "catalog:",
+    "modern-screenshot": "catalog:"
   }
 }

@@ -35,6 +35,13 @@ const posts = ref([
     date: '2024-12-11',
     to: "/tools/video-silence-remover"
   },
+  {
+    title: 'Text Behind Image Free',
+    description: 'Create stunning text behind your images for free',
+    image: '/img/text-behind.png',
+    date: '2026-01-01',
+    to: "/tools/text-behind-image-free"
+  },
 ])
 const { t } = useI18n()
 useHead({
@@ -56,8 +63,8 @@ defineOgImage({
 </script>
 
 <template>
-  <section class="min-h-screen min-w-full relative">
-    <main class="min-h-screen fixed inset-0">
+  <section class="min-h-screen min-w-full ">
+    <main class="min-h-screen inset-0">
       <section class="min-h-screen relative p-10 bg-background-foreground">
         <BaseHeader />
         <section class="mt-24">
