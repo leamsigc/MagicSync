@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import TextBehindImageEditor from './TextBehindImageEditor.vue';
 /**
  *
  * Component Description:Desc
@@ -215,9 +216,9 @@ const benefits = ref([
 
             <!-- Fabric Editor Area -->
             <section v-if="viewState === 'EDITING'" class="min-h-full min-w-full  mt-5">
-              <!-- <TextBehindImageEditor v-if="editorProps.baseImage && editorProps.overlayImage && editorProps.text"
+              <TextBehindImageEditor v-if="editorProps.baseImage && editorProps.overlayImage && editorProps.text"
                 :base-image="editorProps.baseImage" :overlay-image="editorProps.overlayImage" :text="editorProps.text"
-                :text-over-image="editorProps.textOverImage" @reset="clear" /> -->
+                :text-over-image="editorProps.textOverImage" @reset="clear" />
             </section>
 
           </div>
