@@ -13,7 +13,7 @@ export interface LayerItem {
 export interface TextLayer {
   id: string;
   text: string;
-  fontSize: number[];
+  fontSize: number;
   fontFamily: string;
   fontWeight: string;
   fontStyle: string;
@@ -27,14 +27,14 @@ export interface TextLayer {
     enabled: boolean;
     color: string;
     multiShadow?: string;
-    blur: number[];
-    offsetX: number[];
-    offsetY: number[];
+    blur: number;
+    offsetX: number;
+    offsetY: number;
   };
-  scale: number[];
-  positionX: number[];
-  positionY: number[];
-  zIndex: number[];
+  scale: number;
+  positionX: number;
+  positionY: number;
+  zIndex: number;
 }
 
 export interface AspectRatios {
@@ -80,7 +80,7 @@ export type TextStyle = {
   name: string;
   style: {
     text?: string;
-    fontSize: number[];
+    fontSize: number;
     fontFamily: string;
     fontWeight: string;
     fontStyle: string;
@@ -94,11 +94,11 @@ export type TextStyle = {
       enabled: boolean;
       color: string;
       multiShadow?: string;
-      blur: number[];
-      offsetX: number[];
-      offsetY: number[];
+      blur: number;
+      offsetX: number;
+      offsetY: number;
     };
-    scale: number[];
+    scale: number;
   };
   category: 'headlines' | 'subtitles' | 'callouts' | 'quotes' | 'custom';
 };
@@ -114,7 +114,7 @@ export const useTextStyles = () => {
     {
       name: 'Bold Header',
       style: {
-        fontSize: [72],
+        fontSize: 72,
         fontFamily: 'Montserrat, sans-serif',
         fontWeight: 'bold',
         fontStyle: 'normal',
@@ -123,18 +123,18 @@ export const useTextStyles = () => {
         shadow: {
           enabled: true,
           color: '#000000',
-          blur: [4],
-          offsetX: [2],
-          offsetY: [2],
+          blur: 4,
+          offsetX: 2,
+          offsetY: 2,
         },
-        scale: [1],
+        scale: 1,
       },
       category: 'headlines',
     },
     {
       name: 'Elegant Title',
       style: {
-        fontSize: [64],
+        fontSize: 64,
         fontFamily: '"Playfair Display", serif',
         fontWeight: 'normal',
         fontStyle: 'normal',
@@ -143,18 +143,18 @@ export const useTextStyles = () => {
         shadow: {
           enabled: true,
           color: 'rgba(0,0,0,0.5)',
-          blur: [8],
-          offsetX: [0],
-          offsetY: [4],
+          blur: 8,
+          offsetX: 0,
+          offsetY: 4,
         },
-        scale: [1],
+        scale: 1,
       },
       category: 'headlines',
     },
     {
       name: 'Modern Subtitle',
       style: {
-        fontSize: [36],
+        fontSize: 36,
         fontFamily: 'Poppins, sans-serif',
         fontWeight: '500',
         fontStyle: 'normal',
@@ -163,18 +163,18 @@ export const useTextStyles = () => {
         shadow: {
           enabled: true,
           color: 'rgba(0,0,0,0.3)',
-          blur: [6],
-          offsetX: [1],
-          offsetY: [1],
+          blur: 6,
+          offsetX: 1,
+          offsetY: 1,
         },
-        scale: [1],
+        scale: 1,
       },
       category: 'subtitles',
     },
     {
       name: 'Impact Quote',
       style: {
-        fontSize: [48],
+        fontSize: 48,
         fontFamily: 'Impact, fantasy',
         fontWeight: 'normal',
         fontStyle: 'normal',
@@ -183,18 +183,18 @@ export const useTextStyles = () => {
         shadow: {
           enabled: true,
           color: '#000000',
-          blur: [0],
-          offsetX: [2],
-          offsetY: [2],
+          blur: 0,
+          offsetX: 2,
+          offsetY: 2,
         },
-        scale: [1],
+        scale: 1,
       },
       category: 'quotes',
     },
     {
       name: 'Neon Effect',
       style: {
-        fontSize: [56],
+        fontSize: 56,
         fontFamily: 'Arial, sans-serif',
         fontWeight: 'bold',
         fontStyle: 'normal',
@@ -203,18 +203,18 @@ export const useTextStyles = () => {
         shadow: {
           enabled: true,
           color: '#FF00FF',
-          blur: [15],
-          offsetX: [0],
-          offsetY: [0],
+          blur: 15,
+          offsetX: 0,
+          offsetY: 0,
         },
-        scale: [1],
+        scale: 1,
       },
       category: 'callouts',
     },
     {
       name: 'Minimal Clean',
       style: {
-        fontSize: [42],
+        fontSize: 42,
         fontFamily: 'Helvetica, sans-serif',
         fontWeight: 'normal',
         fontStyle: 'normal',
@@ -223,18 +223,18 @@ export const useTextStyles = () => {
         shadow: {
           enabled: false,
           color: '#000000',
-          blur: [0],
-          offsetX: [0],
-          offsetY: [0],
+          blur: 0,
+          offsetX: 0,
+          offsetY: 0,
         },
-        scale: [1],
+        scale: 1,
       },
       category: 'subtitles',
     },
     {
       name: 'Outlined Text',
       style: {
-        fontSize: [64],
+        fontSize: 64,
         fontFamily: 'Arial, sans-serif',
         fontWeight: '600',
         fontStyle: 'normal',
@@ -245,18 +245,18 @@ export const useTextStyles = () => {
         shadow: {
           enabled: true,
           color: 'white',
-          blur: [0],
-          offsetX: [-4],
-          offsetY: [-4],
+          blur: 0,
+          offsetX: -4,
+          offsetY: -4,
         },
-        scale: [1],
+        scale: 1,
       },
       category: 'headlines',
     },
     {
       name: 'Shadow Dance',
       style: {
-        fontSize: [64],
+        fontSize: 64,
         fontFamily: 'Arial, sans-serif',
         fontWeight: 'normal',
         fontStyle: 'normal',
@@ -266,18 +266,18 @@ export const useTextStyles = () => {
           enabled: true,
           color: 'transparent',
           multiShadow: '5px 5px 0 #ff005e, 10px 10px 0 #00d4ff',
-          blur: [0],
-          offsetX: [0],
-          offsetY: [0],
+          blur: 0,
+          offsetX: 0,
+          offsetY: 0,
         },
-        scale: [1],
+        scale: 1,
       },
       category: 'callouts',
     },
     {
       name: 'Neon Glow',
       style: {
-        fontSize: [64],
+        fontSize: 64,
         fontFamily: 'Arial, sans-serif',
         fontWeight: 'normal',
         fontStyle: 'normal',
@@ -289,18 +289,18 @@ export const useTextStyles = () => {
           color: 'transparent',
           multiShadow:
             '0 0 5px #0ff, 0 0 10px #0ff, 0 0 20px #00f, 0 0 30px #00f',
-          blur: [0],
-          offsetX: [0],
-          offsetY: [0],
+          blur: 0,
+          offsetX: 0,
+          offsetY: 0,
         },
-        scale: [1],
+        scale: 1,
       },
       category: 'callouts',
     },
     {
       name: 'Melting Gradient',
       style: {
-        fontSize: [96],
+        fontSize: 96,
         fontFamily: 'Arial, sans-serif',
         fontWeight: 'bold',
         fontStyle: 'normal',
@@ -309,13 +309,13 @@ export const useTextStyles = () => {
         textTransform: 'uppercase',
         backgroundGradient: 'linear-gradient(90deg, #ff6f61, #ffbd44, #ff6f61)',
         backgroundClip: 'text',
-        scale: [1],
+        scale: 1,
         shadow: {
           enabled: false,
           color: 'transparent',
-          blur: [0],
-          offsetX: [0],
-          offsetY: [0],
+          blur: 0,
+          offsetX: 0,
+          offsetY: 0,
         },
       },
       category: 'headlines',
@@ -323,7 +323,7 @@ export const useTextStyles = () => {
     {
       name: 'Sign Painted',
       style: {
-        fontSize: [96],
+        fontSize: 96,
         fontFamily: 'Rancho, cursive',
         fontWeight: 'bold',
         fontStyle: 'normal',
@@ -333,18 +333,18 @@ export const useTextStyles = () => {
           enabled: true,
           color: 'transparent',
           multiShadow: '0.02em 0.03em #fff, 0.05em 0.06em #1ba29a',
-          blur: [0],
-          offsetX: [0],
-          offsetY: [0],
+          blur: 0,
+          offsetX: 0,
+          offsetY: 0,
         },
-        scale: [1],
+        scale: 1,
       },
       category: 'quotes',
     },
     {
       name: '3D Text',
       style: {
-        fontSize: [64],
+        fontSize: 64,
         fontFamily: 'Arial, sans-serif',
         fontWeight: 'normal',
         fontStyle: 'normal',
@@ -358,18 +358,18 @@ export const useTextStyles = () => {
                       0 1px 3px rgba(0,0,0,.3), 0 3px 5px rgba(0,0,0,.2),
                       0 5px 10px rgba(0,0,0,.25), 0 10px 10px rgba(0,0,0,.2),
                       0 20px 20px rgba(0,0,0,.15)`,
-          blur: [0],
-          offsetX: [0],
-          offsetY: [0],
+          blur: 0,
+          offsetX: 0,
+          offsetY: 0,
         },
-        scale: [1],
+        scale: 1,
       },
       category: 'headlines',
     },
     {
       name: 'Layered Shadow',
       style: {
-        fontSize: [64],
+        fontSize: 64,
         fontFamily: '"Meta", sans-serif',
         fontWeight: '900',
         fontStyle: 'normal',
@@ -385,11 +385,11 @@ export const useTextStyles = () => {
                         20px 20px 0px #e9019a,
                         25px 25px 0px #f40468,
                         45px 45px 10px #482896`,
-          blur: [0],
-          offsetX: [0],
-          offsetY: [0],
+          blur: 0,
+          offsetX: 0,
+          offsetY: 0,
         },
-        scale: [1],
+        scale: 1,
       },
       category: 'headlines',
     },

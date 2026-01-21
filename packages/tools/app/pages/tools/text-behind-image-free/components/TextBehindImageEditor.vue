@@ -10,6 +10,8 @@
  * @todo [ ] Integration test.
  * @todo [✔] Update the typescript.
  */
+import TextBehindImageTextLayer from './TextBehindImageTextLayer.vue';
+import TextBehindImageEditorControls from './TextBehindImageEditorControls.vue';
 import { domToPng } from 'modern-screenshot';
 import { useMediaQuery } from '@vueuse/core';
 import {
@@ -50,7 +52,7 @@ const addTextLayer = (layerText = 'New Text Layer') => {
   const newLayer: TextLayer = {
     id: `text-layer-${Date.now()}`,
     text: layerText,
-    fontSize: [64],
+    fontSize: 64,
     fontFamily: 'Arial',
     fontWeight: 'bold',
     fontStyle: 'normal',
@@ -64,14 +66,14 @@ const addTextLayer = (layerText = 'New Text Layer') => {
       enabled: true,
       color: '#000000',
       multiShadow: undefined,
-      blur: [4],
-      offsetX: [2],
-      offsetY: [2],
+      blur: 4,
+      offsetX: 2,
+      offsetY: 2,
     },
-    scale: [1],
-    positionX: [50], // Default to center
-    positionY: [50], // Default to center
-    zIndex: [1], // Default z-index
+    scale: 1,
+    positionX: 50, // Default to center
+    positionY: 50, // Default to center
+    zIndex: 1, // Default z-index
   };
   textLayers.value.push(newLayer);
   activeTextLayerId.value = newLayer.id;
@@ -344,8 +346,8 @@ const positions = ref<{ top: string; left: string }[]>([
 const HandlePredefinedPosition = (position: { top: string; left: string }) => {
   if (activeTextLayer.value) {
     activePosition.value = position;
-    activeTextLayer.value.positionX = [parseInt(position.left)];
-    activeTextLayer.value.positionY = [parseInt(position.top)];
+    activeTextLayer.value.positionX = parseInt(position.left);
+    activeTextLayer.value.positionY = parseInt(position.top);
   }
 };
 
@@ -700,7 +702,7 @@ const editor = useTemplateRef('editor');
           class="absolute inset-0 w-full h-full object-contain">
 
         <!-- Text Layers -->
-        <DraggableTextLayer v-for="layer in textLayers" :key="layer.id" :layer="layer"
+        <TextBehindImageTextLayer v-for="layer in textLayers" :key="layer.id" :layer="layer"
           :editor-container="editorContainer" :is-active="activeTextLayerId === layer.id"
           :selected-font-class="selectedFont" @update:active-text-layer-id="activeTextLayerId = $event" />
 
@@ -713,464 +715,21 @@ const editor = useTemplateRef('editor');
     </div>
   </div>
   <!-- Editor Controls -->
-  <!-- Aspect Ratio Controls -->
-  <div
-    class="absolute bottom-4 left-1/2 -translate-x-1/2 p-4 flex gap-2 bg-slate-950/80 backdrop-blur-sm rounded-full px-5 z-50"
-    :class="{ 'bottom-16': isOverflowing }">
-    <div class="flex gap-2">
-      <UPopover>
-        <UButton variant="ghost" title="Change aspect ratio"
-          class="text-gray-400 hover:text-white p-2 rounded-full hover:bg-gray-700 flex items-center space-x-1 text-sm">
-          <Icon name="material-symbols-light:image-aspect-ratio-outline" class="h-4 w-4" />
-          <span class="hidden ">
-            {{ aspectRatios[aspectRatio].label }}
-          </span>
-        </UButton>
-        <template #content>
-          <div class="space-y-4">
-            <!-- Social Media Presets -->
-            <div class="space-y-2">
-              <ULabel>Social Media</ULabel>
-              <div class="grid grid-cols-2 gap-2">
-                <UButton v-for="(ratio, key) in aspectRatios" :key="key" variant="outline"
-                  :class="{ 'border-primary': aspectRatio === key }" @click="aspectRatio = key">
-                  <div class="flex flex-col items-start">
-                    <span class="text-sm">{{ ratio.label }}</span>
-                    <span class="text-xs text-muted-foreground">
-                      {{ ratio.width }}x{{ ratio.height }}</span>
-                  </div>
-                </UButton>
-              </div>
-            </div>
-
-            <!-- Custom Size Controls -->
-            <div v-if="aspectRatio === 'custom'" class="space-y-4">
-              <div class="flex gap-4">
-                <div class="flex-1">
-                  <ULabel>Width (px)</ULabel>
-                  <UInput type="number" v-model="customSize.width" min="1" :step="10" />
-                </div>
-                <div class="flex-1">
-                  <ULabel>Height (px)</ULabel>
-                  <UInput type="number" v-model="customSize.height" min="1" :step="10" />
-                </div>
-              </div>
-              <div class="flex gap-2">
-                <UButton variant="outline" @click="() => {
-                  customSize.width = 1080;
-                  customSize.height = 1080;
-                }">
-                  1:1
-                </UButton>
-                <UButton variant="outline" @click="() => {
-                  customSize.width = 1920;
-                  customSize.height = 1080;
-                }">
-                  16:9
-                </UButton>
-                <UButton variant="outline" @click="() => {
-                  if (optimizedBaseImage) {
-                    customSize.width = optimizedBaseImage.naturalWidth;
-                    customSize.height = optimizedBaseImage.naturalHeight;
-                  }
-                }">
-                  Image Size
-                </UButton>
-              </div>
-            </div>
-
-            <!-- Current Size Display -->
-            <div class="pt-2 border-t">
-              <p class="text-sm text-muted-foreground">
-                Current: {{ actualDimensions.width }}x{{ actualDimensions.height }}px
-              </p>
-            </div>
-          </div>
-        </template>
-      </UPopover>
-    </div>
-    <div>
-      <UPopover>
-        <UButton variant="ghost" title="Change text"
-          class="text-gray-400 hover:text-white p-2 rounded-full hover:bg-gray-700 flex items-center space-x-1 text-sm">
-          <Icon name="lucide:pen-tool" class=" h-4 w-4" />
-          <span class="hidden ">
-            Change text
-          </span>
-        </UButton>
-        <template #content>
-          <div class="grid gap-4">
-            <div class="grid gap-2">
-              <div class="grid items-center gap-4">
-                <ULabel class="block text-sm font-medium text-gray-700">Text content
-                </ULabel>
-                <UTextarea v-model="textControls.text" rows="3" />
-              </div>
-            </div>
-          </div>
-        </template>
-      </UPopover>
-    </div>
-    <div>
-      <UPopover v-if="!isMobile">
-        <UButton variant="ghost" title="Text controls"
-          class="text-gray-400 hover:text-white p-2 rounded-full hover:bg-gray-700 flex items-center space-x-1 text-sm">
-
-          <Icon name="material-symbols:text-ad" class=" h-4 w-4" />
-          <span class="hidden"> Text Controls </span>
-        </UButton>
-        <template #content>
-          <div class="space-y-4 max-w-2xl md:w-[500px] max-h-60 overflow-y-auto">
-            <!-- Text Style Presets -->
-            <div class="grid gap-2">
-              <ULabel>Style Presets</ULabel>
-              <div class="grid grid-cols-1 gap-2">
-                <!-- Categories -->
-                <div v-for="(styles, category) in stylesByCategory" :key="category" class="space-y-2">
-                  <ULabel class="capitalize text-xs text-muted-foreground">{{ category }}
-                  </ULabel>
-                  <div class="grid grid-cols-2 gap-2">
-                    <UButton v-for="style in styles" :key="style.name" variant="outline"
-                      class="h-auto p-2 justify-start relative group" @click="applyTextStyle(style)">
-                      <div class="text-left w-full">
-                        <div class="text-sm font-medium mb-2">{{ style.name }}</div>
-                        <div class="text-xs truncate mt-1" :style="{
-                          fontFamily: style.style.fontFamily,
-                          fontSize: '16px',
-                          fontWeight: style.style.fontWeight,
-                          fontStyle: style.style.fontStyle,
-                          color: style.style.color,
-                          textTransform: style.style.textTransform,
-                          WebkitTextStroke: style.style.textStroke,
-                          textShadow: style.style.shadow.multiShadow ||
-                            (style.style.shadow.enabled ?
-                              `${style.style.shadow.offsetX}px ${style.style.shadow.offsetY}px ${style.style.shadow.blur}px ${style.style.shadow.color}` :
-                              'none'),
-                          background: style.style.backgroundGradient,
-                          WebkitBackgroundClip: style.style.backgroundClip === 'text' ? 'text' : 'border-box',
-                          WebkitTextFillColor: style.style.backgroundClip === 'text' ? 'transparent' : 'inherit'
-                        } as CSSProperties">
-                          {{ textControls?.text || 'Preview Text' }}
-                        </div>
-                      </div>
-                      <div
-                        class="absolute inset-0 opacity-0 group-hover:opacity-100 bg-primary/10 transition-opacity" />
-                    </UButton>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Save Current Style -->
-              <div class="flex gap-2 mt-4">
-                <UInput v-model="newStyleName" placeholder="Style name..." class="flex-1" />
-                <UButton variant="outline"
-                  @click="saveCurrentAsCustomStyle(newStyleName || `Custom ${customStyles.length + 1}`)">
-                  Save Style
-                </UButton>
-              </div>
-            </div>
-
-            <USeparator class="my-4" />
-
-            <!-- Existing text controls continue here -->
-            <div class="grid gap-2 grid-cols-2">
-              <div class="grid items-center gap-4">
-                <ULabel>Font Family</ULabel>
-                <div class="space-y-4">
-                  <!-- Font Category Selection -->
-                  <div class="flex gap-2">
-                    <UButton variant="outline"
-                      :class="{ 'bg-primary text-primary-foreground': selectedFontCategory === 'system' }"
-                      @click="selectedFontCategory = 'system'">
-                      System
-                    </UButton>
-                    <UButton variant="outline"
-                      :class="{ 'bg-primary text-primary-foreground': selectedFontCategory === 'google' }"
-                      @click="selectedFontCategory = 'google'">
-                      Google
-                    </UButton>
-                  </div>
-
-                  <!-- Font Selection -->
-                  <USelect v-model="textControls.fontFamily">
-                    <USelectContent class="max-h-[300px]">
-                      <!-- System Fonts -->
-                      <div v-if="selectedFontCategory === 'system'">
-                        <USelectGroup label="Sans-serif">
-                          <USelectItem v-for="font in fontFamilies.system.filter(f => f.family.includes('sans-serif'))"
-                            :key="font.name" :value="font.family">
-                            <span :style="{ fontFamily: font.family }">
-                              {{ font.name }}
-                            </span>
-                          </USelectItem>
-                        </USelectGroup>
-
-                        <USelectGroup label="Serif">
-                          <USelectItem
-                            v-for="font in fontFamilies.system.filter(f => f.family.includes('serif') && !f.family.includes('sans-serif'))"
-                            :key="font.name" :value="font.family">
-                            <span :style="{ fontFamily: font.family }">
-                              {{ font.name }}
-                            </span>
-                          </USelectItem>
-                        </USelectGroup>
-
-                        <USelectGroup label="Monospace">
-                          <USelectItem v-for="font in fontFamilies.system.filter(f => f.family.includes('monospace'))"
-                            :key="font.name" :value="font.family">
-                            <span :style="{ fontFamily: font.family }">
-                              {{ font.name }}
-                            </span>
-                          </USelectItem>
-                        </USelectGroup>
-
-                        <USelectGroup label="Decorative">
-                          <USelectItem
-                            v-for="font in fontFamilies.system.filter(f => f.family.includes('cursive') || f.family.includes('fantasy'))"
-                            :key="font.name" :value="font.family">
-                            <span :style="{ fontFamily: font.family }">
-                              {{ font.name }}
-                            </span>
-                          </USelectItem>
-                        </USelectGroup>
-                      </div>
-
-                      <!-- Google Fonts -->
-                      <div v-else>
-                        <USelectItem v-for="font in fontFamilies.google" :key="font.name" :value="font.family">
-                          <span :style="{ fontFamily: font.family }">
-                            {{ font.name }}
-                          </span>
-                        </USelectItem>
-                      </div>
-                    </USelectContent>
-                  </USelect>
-
-                  <!-- Font Preview -->
-                  <div class="p-4 border rounded-lg text-center" :style="{ fontFamily: textControls?.fontFamily }">
-                    The quick brown fox jumps over the lazy dog
-                  </div>
-                </div>
-              </div>
-              <div class="grid  items-center gap-4">
-                <ULabel>Font Size</ULabel>
-                <div class="flex items-center gap-2">
-                  <USlider v-model="textControls.fontSize" :min="40" :max="550" :step="5" class="flex-1" />
-                  <span class="w-12 text-sm">{{ textControls?.fontSize?.[0] }}px</span>
-                </div>
-              </div>
-              <div class="grid  items-center gap-4">
-                <ULabel>Text Style</ULabel>
-                <div class="flex gap-2">
-                  <UButton size="sm" :variant="textControls?.fontWeight === 'bold' ? 'default' : 'outline'"
-                    @click="textControls.fontWeight = textControls.fontWeight === 'bold' ? 'normal' : 'bold'">
-                    <Icon name="material-symbols:format-bold" />
-                  </UButton>
-                  <UButton size="sm" :variant="textControls?.fontStyle === 'italic' ? 'default' : 'outline'"
-                    @click="textControls.fontStyle = textControls.fontStyle === 'italic' ? 'normal' : 'italic'">
-                    <Icon name="material-symbols:format-italic" />
-                  </UButton>
-                </div>
-              </div>
-              <div class="grid  items-center gap-4">
-                <ULabel>Text Color</ULabel>
-                <input type="color" v-model="textControls.color" class="w-full h-10" />
-              </div>
-              <div class="grid  items-center gap-4">
-                <div class="flex items-center justify-between">
-                  <ULabel>Text Shadow</ULabel>
-                  <USwitch v-model="textControls.shadow.enabled" />
-                </div>
-
-                <div v-if="textControls?.shadow?.enabled" class="space-y-4">
-                  <div class="space-y-2">
-                    <ULabel>Shadow Color</ULabel>
-                    <input type="color" v-model="textControls.shadow.color" class="w-full h-8" />
-                  </div>
-
-                  <div class="space-y-2">
-                    <ULabel>Blur</ULabel>
-                    <USlider v-model="textControls.shadow.blur" :min="0" :max="20" :step="1" />
-                  </div>
-
-                  <div class="space-y-2">
-                    <ULabel>Offset X</ULabel>
-                    <USlider v-model="textControls.shadow.offsetX" :min="-10" :max="10" :step="1" />
-                  </div>
-
-                  <div class="space-y-2">
-                    <ULabel>Offset Y</ULabel>
-                    <USlider v-model="textControls.shadow.offsetY" :min="-10" :max="10" :step="1" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </template>
-      </UPopover>
-
-      <!-- Mobile Text Controls -->
-      <UButton v-else variant="ghost"
-        class="text-gray-400 hover:text-white p-2 rounded-full hover:bg-gray-700 flex items-center space-x-1 text-sm"
-        @click="showTextControlModal = true">
-        <Icon name="material-symbols:text-fields" class=" h-4 w-4" />
-      </UButton>
-    </div>
-    <div>
-      <!-- Add position controller in popover -->
-      <UPopover>
-        <UButton variant="ghost" title="Change position and scale"
-          class="text-gray-400 hover:text-white p-2 rounded-full hover:bg-gray-700 flex items-center space-x-1 text-sm">
-          <Icon name="lucide:align-start-vertical" />
-        </UButton>
-        <template #content>
-          <div class="w-80">
-            <ULabel class="block text-sm font-medium text-gray-700">
-              Position/Scale
-            </ULabel>
-            <div class="grid gap-1 grid-cols-5 my-5">
-              <UButton class="size-14 p-1 " v-for="position in positions" :key="position.top + position.left"
-                @click="HandlePredefinedPosition(position)">
-                <span class="size-12 bg-black/40"
-                  v-if="activePosition.top === position.top && activePosition.left === position.left"></span>
-              </UButton>
-            </div>
-            <section class="space-y-4">
-              <div>
-                <ULabel>Scale</ULabel>
-                <div class="flex items-center gap-2">
-                  <USlider v-model="textControls.scale" :min="0" :max="10" :step="0.1" class="flex-1" />
-                  <span class="w-12 text-sm">{{ textControls?.scale?.[0] }}</span>
-                </div>
-              </div>
-              <div>
-                <ULabel>Position X (%)</ULabel>
-                <div class="flex items-center gap-2">
-                  <USlider v-model="textControls.positionX" :min="0" :max="100" :step="1" class="flex-1" />
-                  <span class="w-12 text-sm">{{ textControls?.positionX?.[0] }}%</span>
-                </div>
-              </div>
-              <div>
-                <ULabel>Position Y (%)</ULabel>
-                <div class="flex items-center gap-2">
-                  <USlider v-model="textControls.positionY" :min="0" :max="100" :step="1" class="flex-1" />
-                  <span class="w-12 text-sm">{{ textControls?.positionY?.[0] }}%</span>
-                </div>
-              </div>
-            </section>
-          </div>
-        </template>
-      </UPopover>
-    </div>
-    <div>
-      <!-- Main background popover and selection of base backgrounds -->
-      <UPopover>
-        <UButton variant="ghost" title="Change background"
-          class="text-gray-400 hover:text-white p-2 rounded-full hover:bg-gray-700 flex items-center space-x-1 text-sm">
-          <Icon name="lucide:image" class="h-4 w-4" />
-          <span class="hidden ">
-            Background
-          </span>
-        </UButton>
-        <template #content>
-          <div class="w-80 space-y-4">
-            <div>
-              <ULabel>Background Type</ULabel>
-              <USelect v-model="backgroundControls.type">
-                <USelectContent>
-                  <USelectItem value="none">None</USelectItem>
-                  <USelectItem value="gradient">Gradient</USelectItem>
-                  <USelectItem value="image">Image</USelectItem>
-                  <USelectItem value="gradient-image">Gradient + Image</USelectItem>
-                </USelectContent>
-              </USelect>
-            </div>
-
-            <!-- Gradient Controls -->
-            <div v-if="backgroundControls.type.includes('gradient')" class="space-y-4">
-              <div>
-                <ULabel>Gradient Direction</ULabel>
-                <UInput v-model="backgroundControls.gradient.direction" placeholder="45deg" />
-              </div>
-              <div>
-                <ULabel>Gradient Colors</ULabel>
-                <div class="flex gap-2">
-                  <input v-for="(color, index) in backgroundControls.gradient.colors" :key="index" type="color"
-                    v-model="backgroundControls.gradient.colors[index]" class="w-full h-10" />
-                </div>
-              </div>
-            </div>
-
-            <!-- Image Upload -->
-            <div v-if="backgroundControls.type.includes('image')" class="space-y-4">
-              <div>
-                <ULabel>Upload Image</ULabel>
-                <input type="file" accept="image/*" @change="onBackgroundImageUpload" class="w-full" />
-              </div>
-            </div>
-
-            <!-- Predefined Backgrounds -->
-            <div class="space-y-2">
-              <ULabel>Predefined Backgrounds</ULabel>
-              <div class="grid grid-cols-3 gap-2">
-                <UButton v-for="bg in backgroundControls.predefinedBackgrounds" :key="bg.name"
-                  class="h-20 rounded-lg overflow-hidden hover:ring-2 ring-primary" :style="{
-
-                    backgroundImage: bg.image ? `url(${bg.image})` : '',
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                    ...{
-
-                      background: bg.type.includes('gradient')
-                        ? `linear-gradient(${bg.gradient.direction}, ${bg.gradient.colors.join(', ')})`
-                        : '',
-                    }
-                  }" @click="() => {
-                    backgroundControls.type = bg.type;
-                    backgroundControls.gradient = bg.gradient;
-                    backgroundControls.image = bg.image || null;
-                  }">
-                  <span class="sr-only">{{ bg.name }}
-                    {{ bg }}
-                  </span>
-                </UButton>
-              </div>
-            </div>
-
-            <!-- Opacity Control -->
-            <div class="space-y-2">
-              <div class="flex items-center justify-between">
-                <ULabel>Opacity</ULabel>
-                <span class="text-sm">{{ Math.round((backgroundControls.opacity[0] || 1) * 100)
-                  }}%</span>
-              </div>
-              <USlider v-model="backgroundControls.opacity" :min="0" :max="1" :step="0.01" class="flex-1" />
-            </div>
-          </div>
-        </template>
-      </UPopover>
-    </div>
-    <div>
-      <UButton variant="ghost" title="Download"
-        class="text-gray-400 hover:text-white p-2 rounded-full hover:bg-gray-700 flex items-center space-x-1 text-sm"
-        @click="downloadCanvas">
-
-        <Icon name="lucide:download" class=" h-4 w-4" />
-        <span class="hidden ">
-          Download
-        </span>
-      </UButton>
-    </div>
-    <div class="flex items-center gap-2">
-      <div class="flex items-center space-x-3">
-        <UButton @click="$emit('reset')" variant="ghost" title="Reset"
-          class="text-gray-400 hover:text-white p-2 rounded hover:bg-gray-700 flex items-center space-x-1 text-sm">
-          <Icon name="lucide:rotate-ccw" class="w-4 h-4" />
-          <span class="hidden ">Reset</span>
-        </UButton>
-      </div>
-    </div>
-  </div>
+  <TextBehindImageEditorControls :is-overflowing="isOverflowing" :text-layers="textLayers"
+    :active-text-layer-id="activeTextLayerId" :aspect-ratios="aspectRatios" :aspect-ratio="aspectRatio"
+    :custom-size="customSize" :optimized-base-image="optimizedBaseImage"
+    :actual-dimensions="actualDimensions || { width: 0, height: 0 }" :text-controls="textControls" :is-mobile="isMobile"
+    :styles-by-category="stylesByCategory" :new-style-name="newStyleName" :custom-styles="customStyles"
+    :selected-font-category="selectedFontCategory" :font-families="fontFamilies" :positions="positions"
+    :active-position="activePosition" :background-controls="backgroundControls" :background-style="backgroundStyle"
+    :optimized-overlay-image="optimizedOverlayImage" :selected-font="selectedFont" @add-text-layer="addTextLayer"
+    @delete-text-layer="deleteTextLayer" @update:active-text-layer-id="activeTextLayerId = $event"
+    @update:aspect-ratio="aspectRatio = $event" @update:custom-size="customSize = $event"
+    @update:text-controls="textControls = $event" @update:selected-font-category="selectedFontCategory = $event"
+    @update:background-controls="backgroundControls = $event" @download-canvas="downloadCanvas" @reset="emit('reset')"
+    @update:show-text-control-modal="showTextControlModal = $event" @apply-text-style="applyTextStyle"
+    @save-current-as-custom-style="saveCurrentAsCustomStyle" @handle-predefined-position="HandlePredefinedPosition"
+    @on-background-image-upload="onBackgroundImageUpload" @apply-filter-by-name="imageFilter = $event" />
   <!-- Add a size indicator -->
   <div class="absolute top-2 right-2 text-xs text-muted-foreground">
     Original: {{ actualDimensions?.width }}x{{ actualDimensions?.height }}
