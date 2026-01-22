@@ -86,8 +86,11 @@ const saveCurrentAsCustomStyle = (name: string) =>
   emit('saveCurrentAsCustomStyle', name);
 const handlePredefinedPosition = (position: { top: string; left: string }) =>
   emit('handlePredefinedPosition', position);
-const onBackgroundImageUpload = (event: Event) =>
-  emit('onBackgroundImageUpload', event);
+const onBackgroundImageUpload = (file: File | null | undefined) => {
+  if (!file) return;
+  emit('onBackgroundImageUpload', file);
+
+}
 
 const textControlsModel = computed({
   get: () => props.textControls,
@@ -111,6 +114,7 @@ const newStyleNameModel = computed({
 const backgroundControlsModel = computed({
   get: () => props.backgroundControls,
   set: (value) => {
+
     updateBackgroundControls(value);
   },
 });
@@ -134,21 +138,22 @@ const { presets } = useImageFilterStyles();
 </script>
 
 <template>
-  <section ref="el" :style="style" class="fixed max-w-md w-[500px]  max-h-[900px]">
-    <div
-      class="flex flex-col gap-2 bg-slate-950/80 backdrop-blur-sm rounded px-5 z-50 max-w-md w-[500px]  max-h-[900px]">
-      <header ref="handler" class="text-center">
-        <h2>Text Behind Image Editor</h2>
-        <p>Drag to move the text or the Settings</p>
-      </header>
-      <section class="overflow-y-auto overflow-x-hidden p-4">
-        <div class="flex flex-col gap-2">
-          <div class="space-y-4">
-            <div class="flex justify-between items-center">
+  <div class="flex justify-center items-center mt-20 absolute bottom-5 left-0 right-0">
+    <div class="flex bg-black p-2 rounded-full gap-3 relative">
+      <UPopover
+        class="w-12 h-12 flex justify-center items-center rounded-full z-10 fill-white transition-color duration-500 ease-in-out">
+        <UButton icon="lucide:layers" color="neutral" variant="subtle" />
+        <template #content>
+          <section class="p-4 grid">
+            <header ref="handler" class="text-center">
+              <h2>Text Behind Image Editor</h2>
+              <p>Drag to move the text or the Settings</p>
+            </header>
+            <div class="flex justify-between items-center mt-10 mb-5">
               <label class="text-sm font-medium">Text Layers</label>
               <UButton size="sm" variant="outline" @click="addTextLayer()">Add Layer</UButton>
             </div>
-            <div class="space-y-2">
+            <div class="grid gap-2">
               <div v-for="layer in textLayers" :key="layer.id"
                 class="flex items-center justify-between p-2 border rounded-md"
                 :class="{ 'border-primary': activeTextLayerId === layer.id }">
@@ -160,156 +165,99 @@ const { presets } = useImageFilterStyles();
                 </UButton>
               </div>
             </div>
-          </div>
-        </div>
-        <div class="flex flex-col gap-2 my-10">
-          <!-- <UButton variant="ghost" title="Change aspect ratio"
-            class="text-gray-400 hover:text-white p-2 rounded-full hover:bg-gray-700 flex items-center space-x-1 text-sm">
-            <Icon name="material-symbols-light:image-aspect-ratio-outline" class="h-4 w-4" />
-            <span>
-              {{ aspectRatios[aspectRatio]?.label }}
-            </span>
-          </UButton> -->
-          <div class="space-y-4">
-            <!-- Social Media Presets -->
-            <div class="space-y-2">
-              <label class="text-sm font-medium">Social Media</label>
-              <div class="grid grid-cols-2 gap-2 my-4">
-                <UButton v-for="(ratio, key) in aspectRatios" :key="key" variant="outline"
-                  :class="{ 'border-primary': aspectRatio === key }" @click="updateAspectRatio(key)">
-                  <div class="flex flex-col items-start">
-                    <span class="text-sm">{{ ratio.label }}</span>
-                    <span class="text-xs text-muted-foreground">{{ ratio.width }}x{{ ratio.height }}
-                    </span>
-                  </div>
-                </UButton>
-              </div>
-            </div>
-
-            <!-- Custom Size Controls -->
-            <div v-if="aspectRatio === 'custom'" class="space-y-4">
-              <div class="flex gap-4">
-                <div class="flex-1">
-                  <label class="text-sm font-medium">Width (px)</label>
-                  <UInput type="number" v-model="customSize.width" min="1" :step="10"
-                    @update:model-value="(val: string | number) => updateCustomSize({ ...customSize, width: Number(val) })" />
-                </div>
-                <div class="flex-1">
-                  <label class="text-sm font-medium">Height (px)</label>
-                  <UInput type="number" v-model="customSize.height" min="1" :step="10"
-                    @update:model-value="(val: string | number) => updateCustomSize({ ...customSize, height: Number(val) })" />
-                </div>
-              </div>
-              <div class="flex gap-2">
-                <UButton variant="outline" @click="() => {
-                  updateCustomSize({ width: 1080, height: 1080 });
-                }">
-                  1:1
-                </UButton>
-                <UButton variant="outline" @click="() => {
-                  updateCustomSize({ width: 1920, height: 1080 });
-                }">
-                  16:9
-                </UButton>
-                <UButton variant="outline" @click="() => {
-                  if (optimizedBaseImage) {
-                    updateCustomSize({ width: optimizedBaseImage.naturalWidth, height: optimizedBaseImage.naturalHeight });
-                  }
-                }">
-                  Image Size
-                </UButton>
-              </div>
-            </div>
-
-            <!-- Current Size Display -->
-            <div class="pt-2 border-t">
-              <p class="text-sm text-muted-foreground">
-                Current: {{ actualDimensions.width }}x{{ actualDimensions.height }}px
-              </p>
-            </div>
-          </div>
-        </div>
-        <div>
-          <UButton variant="ghost" title="Change text"
-            class="text-gray-400 hover:text-white p-2 rounded-full hover:bg-gray-700 flex items-center space-x-1 text-sm">
-            <Icon name="lucide:pen-tool" class=" h-4 w-4" />
-            <span>
-              Change text
-            </span>
-          </UButton>
-          <div class="grid gap-4">
-            <div class="grid gap-2">
+            <section class="my-4">
               <div class="grid items-center gap-4">
-                <UButton variant="outline" @click="addTextLayer"> Add new layer</UButton>
                 <label class="block text-sm font-medium text-gray-700">Text content
                 </label>
                 <UTextarea v-if="textControlsModel" v-model="textControlsModel.text" :rows="3" />
               </div>
-            </div>
-          </div>
+            </section>
+          </section>
+        </template>
+      </UPopover>
 
-        </div>
-        <div>
-          <UButton variant="ghost" title="Text controls"
-            class="text-gray-400 hover:text-white p-2 rounded-full hover:bg-gray-700 flex items-center space-x-1 text-sm">
-            <Icon name="material-symbols:text-ad" class=" h-4 w-4" />
-            <span> Text Controls </span>
-          </UButton>
-          <div class="space-y-4">
-            <!-- Text Style Presets -->
-            <div class="grid gap-2">
-              <label class="text-sm font-medium">Style Presets</label>
-              <div class="grid grid-cols-1 gap-2">
-                <!-- Categories -->
-                <div v-for="(styles, category) in stylesByCategory" :key="category" class="space-y-2">
-                  <label class="capitalize text-xs text-muted-foreground">{{ category }}
-                  </label>
-                  <div class="grid grid-cols-2 gap-2">
-                    <UButton v-for="style in styles" :key="style.name" variant="outline"
-                      class="h-auto p-2 justify-start relative group" @click="applyTextStyle(style)">
-                      <div class="text-left w-full">
-                        <div class="text-sm font-medium mb-2">{{ style.name }}</div>
-                        <div class="text-xs truncate mt-1" :style="{
-                          fontFamily: style.style.fontFamily,
-                          fontSize: '16px',
-                          fontWeight: style.style.fontWeight,
-                          fontStyle: style.style.fontStyle,
-                          color: style.style.color,
-                          textTransform: style.style.textTransform,
-                          WebkitTextStroke: style.style.textStroke,
-                          textShadow: style.style.shadow.multiShadow ||
-                            (style.style.shadow.enabled ?
-                              `${style.style.shadow.offsetX}px ${style.style.shadow.offsetY}px ${style.style.shadow.blur}px ${style.style.shadow.color}` :
-                              'none'),
-                          background: style.style.backgroundGradient,
-                          WebkitBackgroundClip: style.style.backgroundClip === 'text' ? 'text' : 'border-box',
-                          WebkitTextFillColor: style.style.backgroundClip === 'text' ? 'transparent' : 'inherit'
-                        } as CSSProperties">
-                          {{ textControlsModel?.text || 'Preview Text' }}
-                        </div>
-                      </div>
-                      <div
-                        class="absolute inset-0 opacity-0 group-hover:opacity-100 bg-primary/10 transition-opacity" />
-                    </UButton>
+      <UPopover
+        class="w-12 h-12 flex justify-center items-center rounded-full z-10 fill-white transition-color duration-500 ease-in-out">
+        <UButton icon="lucide:ratio" color="neutral" variant="subtle" />
+        <template #content>
+          <section class="p-4 grid">
+            <header class="text-center">
+              <h2>Social Media Presets</h2>
+              <p>Social media aspect ratios and predefined positions</p>
+            </header>
+            <section class="grid grid-cols-2 gap-2 my-4">
+              <UButton v-for="(ratio, key) in aspectRatios" :key="key" variant="outline" color="neutral"
+                :class="{ 'border-primary': aspectRatios[aspectRatio]?.label === ratio.label }"
+                @click="updateAspectRatio(key)">
+                <div class="flex flex-col items-start">
+                  <span class="text-sm">{{ ratio.label }}</span>
+                  <span class="text-xs text-muted-foreground">{{ ratio.width }}x{{ ratio.height }}
+                  </span>
+                </div>
+              </UButton>
+            </section>
+            <section class="grid max-w-sm">
+              <div v-if="aspectRatio === 'custom'" class="space-y-4">
+                <div class="flex gap-4">
+                  <div class="flex-1">
+                    <label class="text-sm font-medium">Width (px)</label>
+                    <UInput type="number" v-model="customSize.width" min="1" :step="10"
+                      @update:model-value="(val: string | number) => updateCustomSize({ ...customSize, width: Number(val) })" />
+                  </div>
+                  <div class="flex-1">
+                    <label class="text-sm font-medium">Height (px)</label>
+                    <UInput type="number" v-model="customSize.height" min="1" :step="10"
+                      @update:model-value="(val: string | number) => updateCustomSize({ ...customSize, height: Number(val) })" />
                   </div>
                 </div>
+                <div class="flex gap-2">
+                  <UButton variant="outline" @click="() => {
+                    updateCustomSize({ width: 1080, height: 1080 });
+                  }">
+                    1:1
+                  </UButton>
+                  <UButton variant="outline" @click="() => {
+                    updateCustomSize({ width: 1920, height: 1080 });
+                  }">
+                    16:9
+                  </UButton>
+                  <UButton variant="outline" @click="() => {
+                    if (optimizedBaseImage) {
+                      updateCustomSize({ width: optimizedBaseImage.naturalWidth, height: optimizedBaseImage.naturalHeight });
+                    }
+                  }">
+                    Image Size
+                  </UButton>
+                </div>
               </div>
-
-              <!-- Save Current Style -->
-              <div class="flex gap-2 mt-4">
-                <UInput :model-value="newStyleNameModel" placeholder="Style name..." class="flex-1"
-                  @update:model-value="(val: string | number) => newStyleNameModel = String(val)" />
-                <UButton variant="outline"
-                  @click="saveCurrentAsCustomStyle(String(newStyleNameModel) || `Custom ${String(customStyles.length + 1)}`)">
-                  Save Style
-                </UButton>
+            </section>
+            <section class="my-4">
+              <header>Current aspect ratio:</header>
+              <div variant="ghost" title="Change aspect ratio"
+                class="text-gray-400 p-2 rounded-full  flex items-center space-x-1 text-sm">
+                <Icon name="material-symbols-light:image-aspect-ratio-outline" class="h-4 w-4" />
+                <span>
+                  {{ aspectRatios[aspectRatio]?.label }}
+                </span>
               </div>
-            </div>
+              <header class="">
+                Current: {{ actualDimensions.width }}x{{ actualDimensions.height }}px
+              </header>
+            </section>
+          </section>
+        </template>
+      </UPopover>
 
-            <USeparator class="my-4" />
-
-            <!-- Existing text controls continue here -->
-            <div class="grid gap-2 grid-cols-1">
+      <UPopover
+        class="w-12 h-12 flex justify-center items-center rounded-full z-10 fill-white transition-color duration-500 ease-in-out">
+        <UButton icon="lucide:text" color="neutral" variant="subtle" />
+        <template #content>
+          <section class="p-4 grid max-h-96 overflow-auto max-w-sm">
+            <header class="text-center">
+              <h2>Text Presets</h2>
+              <p>Edit the text related settings</p>
+            </header>
+            <section class="grid gap-2 grid-cols-1">
               <div class="grid items-center gap-4">
                 <label class="text-sm font-medium">Font Family</label>
                 <div class="space-y-4">
@@ -420,67 +368,141 @@ const { presets } = useImageFilterStyles();
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-        <div>
-          <!-- Add position controller in popover -->
-          <UButton variant="ghost" title="Change position and scale"
-            class="text-gray-400 hover:text-white p-2 rounded-full hover:bg-gray-700 flex items-center space-x-1 text-sm">
-            <Icon name="lucide:align-start-vertical" />
-          </UButton>
-          <label class="block text-sm font-medium text-gray-700">
-            Position/Scale
-          </label>
-          <div class="grid gap-1 grid-cols-5 my-5">
-            <UButton v-for="position in positions" :key="position.top + position.left" class="size-14 p-1 "
-              @click="handlePredefinedPosition(position)">
-              <span v-if="activePosition.top === position.top && activePosition.left === position.left"
-                class="size-12 bg-black/40" />
-            </UButton>
-          </div>
-          <section v-if="textControlsModel" class="space-y-4">
-            <div>
-              <label class="text-sm font-medium">Scale</label>
-              <div class="flex items-center gap-2">
-                <USlider v-model="textControlsModel.scale" :min="0" :max="10" :step="0.1" class="flex-1" />
-                <span class="w-12 text-sm">{{ textControlsModel!.scale }}</span>
+            </section>
+          </section>
+        </template>
+      </UPopover>
+
+      <UPopover
+        class="w-12 h-12 flex justify-center items-center rounded-full z-10 fill-white transition-color duration-500 ease-in-out">
+        <UButton icon="lucide:layout-template" color="neutral" variant="subtle" />
+        <template #content>
+          <section class="p-4 grid max-h-96 overflow-auto max-w-sm">
+            <header class="text-center">
+              <h2>Text preset templates</h2>
+              <p>Use text preset templates</p>
+            </header>
+            <section>
+              <div class="grid grid-cols-1 gap-2">
+                <!-- Categories -->
+                <div v-for="(styles, category) in stylesByCategory" :key="category" class="space-y-2">
+                  <label class="capitalize text-xs text-muted-foreground">{{ category }}
+                  </label>
+                  <div class="grid grid-cols-2 gap-2">
+                    <UButton v-for="style in styles" :key="style.name" variant="outline"
+                      class="h-auto p-2 justify-start relative group" @click="applyTextStyle(style)">
+                      <div class="text-left w-full">
+                        <div class="text-sm font-medium mb-2">{{ style.name }}</div>
+                        <div class="text-xs truncate mt-1" :style="{
+                          fontFamily: style.style.fontFamily,
+                          fontSize: '16px',
+                          fontWeight: style.style.fontWeight,
+                          fontStyle: style.style.fontStyle,
+                          color: style.style.color,
+                          textTransform: style.style.textTransform,
+                          WebkitTextStroke: style.style.textStroke,
+                          textShadow: style.style.shadow.multiShadow ||
+                            (style.style.shadow.enabled ?
+                              `${style.style.shadow.offsetX}px ${style.style.shadow.offsetY}px ${style.style.shadow.blur}px ${style.style.shadow.color}` :
+                              'none'),
+                          background: style.style.backgroundGradient,
+                          WebkitBackgroundClip: style.style.backgroundClip === 'text' ? 'text' : 'border-box',
+                          WebkitTextFillColor: style.style.backgroundClip === 'text' ? 'transparent' : 'inherit'
+                        } as CSSProperties">
+                          {{ textControlsModel?.text || 'Preview Text' }}
+                        </div>
+                      </div>
+                      <div
+                        class="absolute inset-0 opacity-0 group-hover:opacity-100 bg-primary/10 transition-opacity" />
+                    </UButton>
+                  </div>
+                </div>
               </div>
-            </div>
-            <div>
-              <label class="text-sm font-medium">Position X (%)</label>
-              <div class="flex items-center gap-2">
-                <USlider v-model="textControlsModel!.positionX" :min="0" :max="100" :step="1" class="flex-1" />
-                <span class="w-12 text-sm">{{ textControlsModel!.positionX }}%</span>
+            </section>
+            <section class="grid gap-2 mt-4">
+              <label class="text-xs text-muted-foreground">Save current style:</label>
+              <UInput :model-value="newStyleNameModel" placeholder="Style name..." class="flex-1"
+                @update:model-value="(val: string | number) => newStyleNameModel = String(val)" />
+              <UButton variant="outline"
+                @click="saveCurrentAsCustomStyle(String(newStyleNameModel) || `Custom ${String(customStyles.length + 1)}`)">
+                Save Style
+              </UButton>
+            </section>
+          </section>
+        </template>
+      </UPopover>
+
+      <UPopover
+        class="w-12 h-12 flex justify-center items-center rounded-full z-10 fill-white transition-color duration-500 ease-in-out">
+        <UButton icon="lucide:align-center" color="neutral" variant="subtle" />
+        <template #content>
+          <section class="p-4 grid max-h-96 overflow-auto max-w-sm">
+            <header class="text-center">
+              <h2>Text Position</h2>
+              <p>Drag to move the text</p>
+            </header>
+            <section v-if="textControlsModel" class="space-y-4">
+              <div>
+                <label class="text-sm font-medium">Scale</label>
+                <div class="flex items-center gap-2">
+                  <USlider v-model="textControlsModel.scale" :min="0" :max="10" :step="0.1" class="flex-1" />
+                  <span class="w-12 text-sm">{{ textControlsModel!.scale }}</span>
+                </div>
               </div>
-            </div>
-            <div>
-              <label class="text-sm font-medium">Position Y (%)</label>
-              <div class="flex items-center gap-2">
-                <USlider v-model="textControlsModel!.positionY" :min="0" :max="100" :step="1" class="flex-1" />
-                <span class="w-12 text-sm">{{ textControlsModel!.positionY }}%</span>
+              <div>
+                <label class="text-sm font-medium">Position X (%)</label>
+                <div class="flex items-center gap-2">
+                  <USlider v-model="textControlsModel!.positionX" :min="0" :max="100" :step="1" class="flex-1" />
+                  <span class="w-12 text-sm">{{ textControlsModel!.positionX }}%</span>
+                </div>
               </div>
-            </div>
-            <div>
-              <label class="text-sm font-medium">Z-Index</label>
-              <div class="flex items-center gap-2">
-                <USlider v-model="textControlsModel.zIndex" :min="0" :max="100" :step="1" class="flex-1" />
-                <span class="w-12 text-sm">{{ textControlsModel.zIndex }}</span>
+              <div>
+                <label class="text-sm font-medium">Position Y (%)</label>
+                <div class="flex items-center gap-2">
+                  <USlider v-model="textControlsModel!.positionY" :min="0" :max="100" :step="1" class="flex-1" />
+                  <span class="w-12 text-sm">{{ textControlsModel!.positionY }}%</span>
+                </div>
               </div>
+              <div>
+                <label class="text-sm font-medium">Z-Index</label>
+                <div class="flex items-center gap-2">
+                  <USlider v-model="textControlsModel.zIndex" :min="0" :max="100" :step="1" class="flex-1" />
+                  <span class="w-12 text-sm">{{ textControlsModel.zIndex }}</span>
+                </div>
+              </div>
+            </section>
+            <div class="grid gap-1 grid-cols-5 my-5">
+              <UButton v-for="position in positions" :key="position.top + position.left" class="size-14 p-1 "
+                @click="handlePredefinedPosition(position)">
+                <span v-if="activePosition.top === position.top && activePosition.left === position.left"
+                  class="size-12 bg-black/40" />
+              </UButton>
             </div>
           </section>
-        </div>
-        <div>
-          <!-- Main background popover and selection of base backgrounds -->
-          <UButton variant="ghost" title="Change background"
-            class="text-gray-400 hover:text-white p-2 rounded-full hover:bg-gray-700 flex items-center space-x-1 text-sm">
-            <Icon name="lucide:image" class="h-4 w-4" />
-            <span>
-              Background
-            </span>
-          </UButton>
-          <div class="space-y-4">
-            <div>
+        </template>
+      </UPopover>
+
+      <UPopover
+        class="w-12 h-12 flex justify-center items-center rounded-full z-10 fill-white transition-color duration-500 ease-in-out">
+        <UButton icon="lucide:paint-bucket" color="neutral" variant="subtle" />
+        <template #content>
+          <section class="p-4 grid max-h-96 overflow-auto max-w-sm">
+            <header class="text-center">
+              <h2>Background</h2>
+              <p>Update the main background</p>
+            </header>
+
+            <!-- Opacity Control -->
+            <div class="grid gap-2 my-4">
+              <div class="flex items-center justify-between">
+                <label class="text-sm font-medium">Opacity</label>
+                <span class="text-sm">
+                  {{ Math.round((backgroundControlsModel.opacity || 1) * 100) }}%
+                </span>
+              </div>
+              <USlider v-model="backgroundControlsModel.opacity" :min="0" :max="1" :step="0.01" class="flex-1" />
+            </div>
+            <section class="grid my-4 gap-2">
               <label class="text-sm font-medium">Background Type</label>
               <USelectMenu v-model="backgroundControlsModel.type" value-key="value" :items="[
                 { label: 'None', value: 'none' },
@@ -488,19 +510,18 @@ const { presets } = useImageFilterStyles();
                 { label: 'Image', value: 'image' },
                 { label: 'Gradient + Image', value: 'gradient-image' }
               ]" />
-            </div>
-
+            </section>
             <!-- Gradient Controls -->
-            <div v-if="backgroundControlsModel.type.includes('gradient')" class="space-y-4">
+            <div v-if="backgroundControlsModel.type.includes('gradient')" class="space-y-4 grid">
               <div>
                 <label class="text-sm font-medium">Gradient Direction</label>
                 <UInput v-model="backgroundControlsModel.gradient.direction" placeholder="45deg" />
               </div>
               <div>
                 <label class="text-sm font-medium">Gradient Colors</label>
-                <div class="flex gap-2">
+                <div class="grid gap-2">
                   <UColorPicker v-for="(color, index) in backgroundControlsModel.gradient.colors" :key="index"
-                    v-model="backgroundControlsModel.gradient.colors[index]" />
+                    v-model="backgroundControlsModel.gradient.colors[index]" class="" />
                 </div>
               </div>
             </div>
@@ -509,7 +530,7 @@ const { presets } = useImageFilterStyles();
             <div v-if="backgroundControlsModel.type.includes('image')" class="space-y-4">
               <div>
                 <label class="text-sm font-medium">Upload Image</label>
-                <UFileUpload type="file" accept="image/*" class="w-full" @change="onBackgroundImageUpload" />
+                <UFileUpload type="file" accept="image/*" class="w-full" @update:modelValue="onBackgroundImageUpload" />
               </div>
             </div>
 
@@ -540,43 +561,61 @@ const { presets } = useImageFilterStyles();
                 </UButton>
               </div>
             </div>
+          </section>
+        </template>
+      </UPopover>
 
-            <!-- Opacity Control -->
-            <div class="space-y-2">
-              <div class="flex items-center justify-between">
-                <label class="text-sm font-medium">Opacity</label>
-                <span class="text-sm">{{ Math.round((backgroundControlsModel.opacity[0] || 1) * 100)
-                }}%</span>
-              </div>
-              <USlider v-model="backgroundControlsModel.opacity" :min="0" :max="1" :step="0.01" class="flex-1" />
+      <UPopover
+        class="w-12 h-12 flex justify-center items-center rounded-full z-10 fill-white transition-color duration-500 ease-in-out">
+        <UButton icon="lucide:image" color="neutral" variant="subtle" />
+        <template #content>
+          <section class="p-4 grid max-h-96 overflow-auto max-w-sm">
+            <header class="text-center">
+              <h2>Image</h2>
+              <p>Overlay image settings</p>
+            </header>
+            <!-- Add custom Preset -->
+
+            <!-- Filters -->
+            <div class="my-4 grid grid-cols-4 gap-4">
+              <UButton v-for="filterPreset in presets" :title="filterPreset.name" class=" text-sm w-full"
+                @click="() => applyFilter(filterPreset.name)" variant="ghost" color="neutral">
+                <!-- Overlay image -->
+                <img v-if="optimizedOverlayImage" :src="optimizedOverlayImage.src"
+                  :style="{ 'filter': filterPreset?.style || 'none' }" class=" object-contain filter size-10">
+              </UButton>
             </div>
-          </div>
-        </div>
-        <div class="my-4 grid grid-cols-4 gap-4">
-          <UButton v-for="filterPreset in presets" :title="filterPreset.name" class=" text-sm w-full"
-            @click="() => applyFilter(filterPreset.name)">
-            <span class="text-sm">
-              {{ filterPreset.name }}
-            </span>
-          </UButton>
-        </div>
-        <div class="my-4 w-full">
-          <UButton title="Download" class=" text-sm w-full" @click="downloadCanvas">
-            <Icon name="lucide:download" class=" h-4 w-4" />
-            <span>
-              Download
-            </span>
-          </UButton>
-        </div>
-        <div class="flex items-center gap-2">
-          <UButton color="error" variant="solid" title="Reset" class="text-sm w-full" @click="reset">
-            <Icon name="lucide:rotate-ccw" class="w-4 h-4" />
-            <span>Reset</span>
-          </UButton>
-        </div>
-      </section>
+          </section>
+        </template>
+      </UPopover>
+      <UPopover
+        class="w-12 h-12 flex justify-center items-center rounded-full z-10 fill-white transition-color duration-500 ease-in-out">
+        <UButton icon="lucide:activity" color="neutral" variant="subtle" />
+        <template #content>
+          <section class="p-4 grid max-h-96 overflow-auto max-w-sm">
+            <header class="text-center">
+              <h2>Actions</h2>
+              <p>Actions for the editing view</p>
+            </header>
+            <div class="my-4 w-full">
+              <UButton icon="lucide:download" title="Download" class=" text-center w-full" @click="downloadCanvas">
+                <span>
+                  Download
+                </span>
+              </UButton>
+            </div>
+            <div class="flex items-center gap-2">
+              <UButton icon="lucide:refresh-cw" color="error" variant="outline" title="Reset" class="text-sm w-full"
+                @click="reset">
+                <span>Reset</span>
+              </UButton>
+            </div>
+          </section>
+        </template>
+      </UPopover>
+
     </div>
-  </section>
+  </div>
 </template>
 
 <style scoped>

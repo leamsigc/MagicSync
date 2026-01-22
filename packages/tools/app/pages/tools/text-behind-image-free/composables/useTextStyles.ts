@@ -52,7 +52,7 @@ export interface BackgroundControls {
     colors: string[];
   };
   image: string | null;
-  opacity: number[];
+  opacity: number;
   predefinedBackgrounds: Array<{
     type: 'gradient' | 'gradient-image';
     name: string;
@@ -105,7 +105,7 @@ export type TextStyle = {
 
 export type ImageFilterStyle = {
   name: string;
-  style: string; // CSS filter string
+  style: string;
   category: 'preset' | 'custom';
 };
 

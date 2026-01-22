@@ -361,7 +361,7 @@ const backgroundControls = ref<BackgroundControls>({
     colors: ['#4158D0', '#C850C0', '#FFCC70'],
   },
   image: null,
-  opacity: [1],
+  opacity: 1,
   predefinedBackgrounds: [
     {
       type: 'gradient',
@@ -415,25 +415,21 @@ const backgroundStyle = computed(() => {
       }
       break;
   }
-  styles.opacity = backgroundControls.value.opacity[0] + '' || '1';
+  styles.opacity = backgroundControls.value.opacity + '' || '1';
 
   return styles;
 });
 
 // Add method to handle file upload
-const onBackgroundImageUpload = (event: Event) => {
-  const input = event.target as HTMLInputElement;
-  if (input.files && input.files[0]) {
-    const file = input.files[0];
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      if (e.target?.result) {
-        backgroundControls.value.image = e.target.result as string;
-        backgroundControls.value.type = 'image';
-      }
-    };
-    reader.readAsDataURL(file);
-  }
+const onBackgroundImageUpload = (file: File) => {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    if (e.target?.result) {
+      backgroundControls.value.image = e.target.result as string;
+      backgroundControls.value.type = 'image';
+    }
+  };
+  reader.readAsDataURL(file);
 };
 
 // Add this computed property for scaled dimensions
@@ -733,7 +729,7 @@ watch(backgroundControls, (newConfig) => {
 
         <!-- Overlay image -->
         <img v-if="optimizedOverlayImage" :src="optimizedOverlayImage.src"
-          :style="{ 'filter': activePreset?.style || 'none' }"
+          :style="{ 'filter': activePreset?.style || 'none', }"
           class="absolute inset-0 w-full h-full object-contain filter">
       </section>
 
