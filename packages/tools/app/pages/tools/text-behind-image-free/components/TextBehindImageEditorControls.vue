@@ -13,7 +13,7 @@
 import type { CSSProperties } from 'vue';
 import { useDraggable } from '@vueuse/core';
 import { useImageFilterStyles, useTextStyles } from '../composables/useTextStyles';
-import type { AspectRatios, BackgroundControls, FontFamilies, TextLayer, TextStyle, ImageStyleControls } from '../composables/useTextStyles';
+import type { AspectRatios, BackgroundControls, FontFamilies, TextLayer, TextStyle, } from '../composables/useTextStyles';
 
 interface Props {
   isOverflowing: boolean;

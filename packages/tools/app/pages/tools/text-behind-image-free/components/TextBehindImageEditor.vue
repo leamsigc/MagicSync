@@ -25,7 +25,6 @@ import {
   type TextStyle,
   type ImageStyleControls,
 } from '../composables/useTextStyles';
-import type { CSSProperties } from 'vue';
 interface Props {
   text?: string;
   baseImage?: HTMLImageElement;
