@@ -690,6 +690,9 @@ importers:
       tsx:
         specifier: 'catalog:'
         version: 4.21.0
+      unhead:
+        specifier: ^2.1.2
+        version: 2.1.2
       vue:
         specifier: 'catalog:'
         version: 3.5.26(typescript@5.9.3)

@@ -33,6 +33,7 @@
     "nuxt-umami": "catalog:",
     "tailwindcss": "catalog:",
     "tsx": "catalog:",
+    "unhead": "^2.1.2",
     "vue": "catalog:",
     "vue-router": "catalog:"
   },
