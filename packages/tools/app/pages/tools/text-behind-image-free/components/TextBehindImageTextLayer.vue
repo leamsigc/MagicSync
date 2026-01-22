@@ -33,9 +33,15 @@ const { x, y, style } = useDraggable(el, {
     if (props.editorContainer) {
       const containerWidth = props.editorContainer.offsetWidth;
       const containerHeight = props.editorContainer.offsetHeight;
+      const calculatedX = Math.round((((props.layer.positionX ?? 0) / 100) * containerWidth) * 100) / 100;
+      const calculatedY = Math.round((((props.layer.positionY ?? 0) / 100) * containerHeight) * 100) / 100;
       return {
-        x: ((props.layer.positionX ?? 50) / 100) * containerWidth,
-        y: ((props.layer.positionY ?? 50) / 100) * containerHeight, // ((props.layer.positionY[0] ?? 50) / 100) * containerHeight,
+        x: Math.max(0, Math.min(containerWidth, calculatedX)),
+        y: Math.max(0, Math.min(containerHeight, calculatedY)),
+        style: {
+          top: `${Math.max(0, Math.min(containerHeight, calculatedY))}px`,
+          left: `${Math.max(0, Math.min(containerWidth, calculatedX))}px`,
+        }
       };
     }
     return { x: 0, y: 0 };
@@ -47,8 +53,8 @@ const { x, y, style } = useDraggable(el, {
       const containerHeight = props.editorContainer.offsetHeight;
 
       // Convert pixel position to percentage and update layer
-      props.layer.positionX = Math.max(0, Math.min(100, (newX / containerWidth) * 100));
-      props.layer.positionY = Math.max(0, Math.min(100, (newY / containerHeight) * 100));
+      // props.layer.positionX = Math.round(Math.max(0, Math.min(100, (newX / containerWidth) * 100)));
+      // props.layer.positionY = Math.round(Math.max(0, Math.min(100, (newY / containerHeight) * 100)));
     }
   },
   onEnd: ({ x: newX, y: newY }) => {
@@ -56,9 +62,10 @@ const { x, y, style } = useDraggable(el, {
       const containerWidth = props.editorContainer.offsetWidth;
       const containerHeight = props.editorContainer.offsetHeight;
 
+
       // Convert pixel position to percentage and update layer
-      props.layer.positionX = Math.max(0, Math.min(100, (newX / containerWidth) * 100));
-      props.layer.positionY = Math.max(0, Math.min(100, (newY / containerHeight) * 100));
+      // props.layer.positionX = Math.round(Math.max(0, Math.min(100, (newX / containerWidth) * 100)));
+      // props.layer.positionY = Math.round(Math.max(0, Math.min(100, (newY / containerHeight) * 100)));
     }
   },
 });
@@ -74,8 +81,8 @@ watch(
     if (props.editorContainer && newPx !== undefined && newPy !== undefined) {
       const containerWidth = props.editorContainer.offsetWidth;
       const containerHeight = props.editorContainer.offsetHeight;
-      x.value = (newPx / 100) * containerWidth;
-      y.value = (newPy / 100) * containerHeight;
+      x.value = Math.max(0, Math.min(containerWidth, Math.round((newPx / 100) * containerWidth)));
+      y.value = Math.max(0, Math.min(containerHeight, Math.round((newPy / 100) * containerHeight)));
     }
   },
   { immediate: true },

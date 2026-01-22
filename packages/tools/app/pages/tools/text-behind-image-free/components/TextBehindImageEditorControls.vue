@@ -134,9 +134,9 @@ const { presets } = useImageFilterStyles();
 </script>
 
 <template>
-  <section ref="el" :style="style" class="fixed max-w-md w-[500px]  max-h-[600px]">
+  <section ref="el" :style="style" class="fixed max-w-md w-[500px]  max-h-[900px]">
     <div
-      class="flex flex-col gap-2 bg-slate-950/80 backdrop-blur-sm rounded px-5 z-50 max-w-md w-[500px]  max-h-[600px]">
+      class="flex flex-col gap-2 bg-slate-950/80 backdrop-blur-sm rounded px-5 z-50 max-w-md w-[500px]  max-h-[900px]">
       <header ref="handler" class="text-center">
         <h2>Text Behind Image Editor</h2>
         <p>Drag to move the text or the Settings</p>
@@ -162,25 +162,25 @@ const { presets } = useImageFilterStyles();
             </div>
           </div>
         </div>
-        <div class="flex flex-col gap-2">
-          <UButton variant="ghost" title="Change aspect ratio"
+        <div class="flex flex-col gap-2 my-10">
+          <!-- <UButton variant="ghost" title="Change aspect ratio"
             class="text-gray-400 hover:text-white p-2 rounded-full hover:bg-gray-700 flex items-center space-x-1 text-sm">
             <Icon name="material-symbols-light:image-aspect-ratio-outline" class="h-4 w-4" />
             <span>
               {{ aspectRatios[aspectRatio]?.label }}
             </span>
-          </UButton>
+          </UButton> -->
           <div class="space-y-4">
             <!-- Social Media Presets -->
             <div class="space-y-2">
               <label class="text-sm font-medium">Social Media</label>
-              <div class="grid grid-cols-2 gap-2">
+              <div class="grid grid-cols-2 gap-2 my-4">
                 <UButton v-for="(ratio, key) in aspectRatios" :key="key" variant="outline"
                   :class="{ 'border-primary': aspectRatio === key }" @click="updateAspectRatio(key)">
                   <div class="flex flex-col items-start">
                     <span class="text-sm">{{ ratio.label }}</span>
-                    <span class="text-xs text-muted-foreground">{{ ratio.width }}x{{
-                      ratio.height }}</span>
+                    <span class="text-xs text-muted-foreground">{{ ratio.width }}x{{ ratio.height }}
+                    </span>
                   </div>
                 </UButton>
               </div>
@@ -191,12 +191,12 @@ const { presets } = useImageFilterStyles();
               <div class="flex gap-4">
                 <div class="flex-1">
                   <label class="text-sm font-medium">Width (px)</label>
-                  <UInput type="number" :model-value="customSize.width" min="1" :step="10"
+                  <UInput type="number" v-model="customSize.width" min="1" :step="10"
                     @update:model-value="(val: string | number) => updateCustomSize({ ...customSize, width: Number(val) })" />
                 </div>
                 <div class="flex-1">
                   <label class="text-sm font-medium">Height (px)</label>
-                  <UInput type="number" :model-value="customSize.height" min="1" :step="10"
+                  <UInput type="number" v-model="customSize.height" min="1" :step="10"
                     @update:model-value="(val: string | number) => updateCustomSize({ ...customSize, height: Number(val) })" />
                 </div>
               </div>
@@ -309,7 +309,7 @@ const { presets } = useImageFilterStyles();
             <USeparator class="my-4" />
 
             <!-- Existing text controls continue here -->
-            <div class="grid gap-2 grid-cols-2">
+            <div class="grid gap-2 grid-cols-1">
               <div class="grid items-center gap-4">
                 <label class="text-sm font-medium">Font Family</label>
                 <div class="space-y-4">
@@ -328,39 +328,42 @@ const { presets } = useImageFilterStyles();
                   </div>
 
                   <!-- Font Selection -->
-                  <USelectMenu v-if="textControlsModel?.fontFamily" v-model="textControlsModel.fontFamily" :items="selectedFontCategoryModel === 'system' ? [
-                    { type: 'label', label: 'Sans-serif' },
-                    ...fontFamilies.system.filter(f => f.family.includes('sans-serif')).map(font => ({
+                  <USelectMenu v-if="textControlsModel?.fontFamily" v-model="textControlsModel.fontFamily"
+                    value-key="value" :items="selectedFontCategoryModel === 'system' ? [
+                      { type: 'label', label: 'Sans-serif', style: { fontFamily: 'serif' } },
+                      ...fontFamilies.system.filter(f => f.family.includes('sans-serif')).map(font => ({
+                        label: font.name,
+                        value: font.family,
+                        style: { fontFamily: font.family },
+                      })),
+                      { type: 'label', label: 'Serif' },
+                      ...fontFamilies.system.filter(f => f.family.includes('serif') && !f.family.includes('sans-serif')).map(font => ({
+                        label: font.name,
+                        value: font.family,
+                        style: { fontFamily: font.family },
+                      })),
+                      { type: 'label', label: 'Monospace' },
+                      ...fontFamilies.system.filter(f => f.family.includes('monospace')).map(font => ({
+                        label: font.name,
+                        value: font.family,
+                        style: { fontFamily: font.family },
+                      })),
+                      { type: 'label', label: 'Decorative' },
+                      ...fontFamilies.system.filter(f => f.family.includes('cursive') || f.family.includes('fantasy')).map(font => ({
+                        label: font.name,
+                        value: font.family,
+                        style: { fontFamily: font.family },
+
+                      }))
+                    ] : fontFamilies.google.map(font => ({
                       label: font.name,
                       value: font.family,
-                      style: { fontFamily: font.family }
-                    })),
-                    { type: 'label', label: 'Serif' },
-                    ...fontFamilies.system.filter(f => f.family.includes('serif') && !f.family.includes('sans-serif')).map(font => ({
-                      label: font.name,
-                      value: font.family,
-                      style: { fontFamily: font.family }
-                    })),
-                    { type: 'label', label: 'Monospace' },
-                    ...fontFamilies.system.filter(f => f.family.includes('monospace')).map(font => ({
-                      label: font.name,
-                      value: font.family,
-                      style: { fontFamily: font.family }
-                    })),
-                    { type: 'label', label: 'Decorative' },
-                    ...fontFamilies.system.filter(f => f.family.includes('cursive') || f.family.includes('fantasy')).map(font => ({
-                      label: font.name,
-                      value: font.family,
-                      style: { fontFamily: font.family }
-                    }))
-                  ] : fontFamilies.google.map(font => ({
-                    label: font.name,
-                    value: font.family,
-                    style: { fontFamily: font.family }
-                  }))" />
+                      style: { fontFamily: font.family },
+                    }))" class="min-w-80 w-full" />
 
                   <!-- Font Preview -->
-                  <div class="p-4 border rounded-lg text-center" :style="{ fontFamily: textControlsModel?.fontFamily }">
+                  <div class="p-4 border rounded-lg text-center"
+                    :style="{ fontFamily: textControlsModel?.fontFamily, }">
                     The quick brown fox jumps over the lazy dog
                   </div>
                 </div>
@@ -479,7 +482,7 @@ const { presets } = useImageFilterStyles();
           <div class="space-y-4">
             <div>
               <label class="text-sm font-medium">Background Type</label>
-              <USelectMenu v-model="backgroundControlsModel.type" :items="[
+              <USelectMenu v-model="backgroundControlsModel.type" value-key="value" :items="[
                 { label: 'None', value: 'none' },
                 { label: 'Gradient', value: 'gradient' },
                 { label: 'Image', value: 'image' },
@@ -543,7 +546,7 @@ const { presets } = useImageFilterStyles();
               <div class="flex items-center justify-between">
                 <label class="text-sm font-medium">Opacity</label>
                 <span class="text-sm">{{ Math.round((backgroundControlsModel.opacity[0] || 1) * 100)
-                  }}%</span>
+                }}%</span>
               </div>
               <USlider v-model="backgroundControlsModel.opacity" :min="0" :max="1" :step="0.01" class="flex-1" />
             </div>
@@ -578,4 +581,120 @@ const { presets } = useImageFilterStyles();
 
 <style scoped>
 /* Add any specific styles for SidebarMenu here if needed */
+.font-roboto {
+  font-family: Roboto, sans-serif;
+
+}
+
+
+.font-open-sans {
+  font-family: "Open Sans", sans-serif;
+}
+
+
+.font-lato {
+  font-family: Lato, sans-serif;
+
+}
+
+
+.font-montserrat {
+  font-family: Montserrat, sans-serif;
+}
+
+
+.font-poppins {
+  font-family: Poppins, sans-serif;
+}
+
+.font-meta {
+  font-family: "Meta", sans-serif;
+}
+
+
+.font-playfair-display {
+  font-family: "Playfair Display", serif
+}
+
+
+
+.font-sigmar {
+  font-family: "Sigmar", serif;
+}
+
+
+.font-rancho {
+  font-family: Rancho, cursive,
+}
+
+.font-oswald {
+  font-family: "Oswald", sans-serif;
+}
+
+
+.font-bebas-neue {
+  font-family: "Bebas Neue", sans-serif;
+}
+
+.font-anton {
+  font-family: "Anton", sans-serif;
+}
+
+
+.font-playfair-display {
+
+  font-family: "Playfair Display", serif;
+}
+
+.font-raleway {
+  font-family: "Raleway", sans-serif;
+}
+
+.font-bungee {
+  font-family: "Bungee", cursive;
+}
+
+.font-abril-fatface {
+  font-family: "Abril Fatface", serif;
+}
+
+
+.font-fredoka-one {
+  font-family: "Fredoka One", sans-serif;
+}
+
+.font-amatic-sc {
+  font-family: "Amatic SC", cursive;
+}
+
+
+.font-lobster {
+  font-family: "Lobster", cursive;
+}
+
+.font-unica-one {
+  font-family: "Unica One", sans-serif;
+}
+
+
+.font-orbitron {
+  font-family: "Orbitron", sans-serif;
+}
+
+.font-exo-2 {
+  font-family: "Exo 2", sans-serif;
+}
+
+.font-chivo {
+  font-family: "Chivo", sans-serif;
+}
+
+.font-cinzel {
+  font-family: "Cinzel", serif;
+}
+
+
+.font-bangers {
+  font-family: "Bangers", cursive,
+}
 </style>

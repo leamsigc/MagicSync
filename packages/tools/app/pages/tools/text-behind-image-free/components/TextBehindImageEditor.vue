@@ -688,8 +688,6 @@ const editor = useTemplateRef('editor');
 // Sync watchers for external control
 watch(() => props.activeLayer, (newLayer) => {
   if (newLayer && activeTextLayer.value) {
-    // Only update if different to avoid potential loops/performance issues
-    // Using simple property check or Object.assign directly
     Object.assign(activeTextLayer.value, newLayer);
   }
 }, { deep: true });
