@@ -23,6 +23,7 @@ import {
   type BackgroundControls,
   type FontItem,
   type TextStyle,
+  type ImageStyleControls,
 } from '../composables/useTextStyles';
 import type { CSSProperties } from 'vue';
 interface Props {
@@ -636,7 +637,7 @@ watch(
 const isMobile = useMediaQuery('(max-width: 768px)');
 const showTextControlModal = ref(false);
 
-const { stylesByCategory, addCustomStyle, customStyles } = useTextStyles();
+const { stylesByCategory, addCustomStyle, customStyles, baseImageStyles, overlayImageStyles } = useTextStyles();
 
 // Add method to apply text style
 const applyTextStyle = (style: TextStyle) => {
@@ -679,6 +680,58 @@ const activePreset = computed(() => {
   return presets.value.find((preset) => preset.name === imageFilter.value);
 });
 
+// Computed properties for image styles
+const baseImageStyle = computed(() => {
+  const styles: Record<string, string> = {
+    opacity: baseImageStyles.value.opacity.toString(),
+  };
+
+  if (baseImageStyles.value.shadow.enabled) {
+    styles.filter = `drop-shadow(${baseImageStyles.value.shadow.offsetX}px ${baseImageStyles.value.shadow.offsetY}px ${baseImageStyles.value.shadow.blur}px ${baseImageStyles.value.shadow.color})`;
+  }
+
+  if (baseImageStyles.value.position.objectPosition !== 'center') {
+    styles.objectPosition = baseImageStyles.value.position.objectPosition;
+  }
+
+  if (baseImageStyles.value.position.transform !== 'none') {
+    styles.transform = baseImageStyles.value.position.transform;
+  }
+
+  if (baseImageStyles.value.customFilter) {
+    styles.filter = styles.filter
+      ? `${styles.filter} ${baseImageStyles.value.customFilter}`
+      : baseImageStyles.value.customFilter;
+  }
+
+  return styles;
+});
+
+const overlayImageStyle = computed(() => {
+  const styles: Record<string, string> = {
+    opacity: overlayImageStyles.value.opacity.toString(),
+    filter: activePreset.value?.style || 'none',
+  };
+
+  if (overlayImageStyles.value.shadow.enabled) {
+    styles.filter = `${styles.filter} drop-shadow(${overlayImageStyles.value.shadow.offsetX}px ${overlayImageStyles.value.shadow.offsetY}px ${overlayImageStyles.value.shadow.blur}px ${overlayImageStyles.value.shadow.color})`;
+  }
+
+  if (overlayImageStyles.value.position.objectPosition !== 'center') {
+    styles.objectPosition = overlayImageStyles.value.position.objectPosition;
+  }
+
+  if (overlayImageStyles.value.position.transform !== 'none') {
+    styles.transform = overlayImageStyles.value.position.transform;
+  }
+
+  if (overlayImageStyles.value.customFilter) {
+    styles.filter = `${styles.filter} ${overlayImageStyles.value.customFilter}`;
+  }
+
+  return styles;
+});
+
 const editor = useTemplateRef('editor');
 
 // Sync watchers for external control
@@ -719,7 +772,7 @@ watch(backgroundControls, (newConfig) => {
 
 
         <!-- Base image -->
-        <img v-if="optimizedBaseImage" :src="optimizedBaseImage.src"
+        <img v-if="optimizedBaseImage" :src="optimizedBaseImage.src" :style="baseImageStyle"
           class="absolute inset-0 w-full h-full object-contain">
 
         <!-- Text Layers -->
@@ -728,8 +781,7 @@ watch(backgroundControls, (newConfig) => {
           :selected-font-class="selectedFont" @update:active-text-layer-id="activeTextLayerId = $event" />
 
         <!-- Overlay image -->
-        <img v-if="optimizedOverlayImage" :src="optimizedOverlayImage.src"
-          :style="{ 'filter': activePreset?.style || 'none', }"
+        <img v-if="optimizedOverlayImage" :src="optimizedOverlayImage.src" :style="overlayImageStyle"
           class="absolute inset-0 w-full h-full object-contain filter">
       </section>
 

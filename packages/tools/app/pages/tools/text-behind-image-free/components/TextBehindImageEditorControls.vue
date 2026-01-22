@@ -12,8 +12,8 @@
  */
 import type { CSSProperties } from 'vue';
 import { useDraggable } from '@vueuse/core';
-import { useImageFilterStyles } from '../composables/useTextStyles';
-import type { AspectRatios, BackgroundControls, FontFamilies, TextLayer, TextStyle } from '../composables/useTextStyles';
+import { useImageFilterStyles, useTextStyles } from '../composables/useTextStyles';
+import type { AspectRatios, BackgroundControls, FontFamilies, TextLayer, TextStyle, ImageStyleControls } from '../composables/useTextStyles';
 
 interface Props {
   isOverflowing: boolean;
@@ -135,6 +135,10 @@ const { style } = useDraggable(el, {
 });
 
 const { presets } = useImageFilterStyles();
+const { baseImageStyles, overlayImageStyles } = useTextStyles();
+
+// Active image type for controls
+const activeImageType = ref<'base' | 'overlay'>('base');
 </script>
 
 <template>
@@ -571,23 +575,167 @@ const { presets } = useImageFilterStyles();
         <template #content>
           <section class="p-4 grid max-h-96 overflow-auto max-w-sm">
             <header class="text-center">
-              <h2>Image</h2>
-              <p>Overlay image settings</p>
+              <h2>Image Styles</h2>
+              <p>Base and overlay image controls</p>
             </header>
-            <!-- Add custom Preset -->
 
-            <!-- Filters -->
-            <div class="my-4 grid grid-cols-4 gap-4">
-              <UButton v-for="filterPreset in presets" :title="filterPreset.name" class=" text-sm w-full"
-                @click="() => applyFilter(filterPreset.name)" variant="ghost" color="neutral">
-                <!-- Overlay image -->
-                <img v-if="optimizedOverlayImage" :src="optimizedOverlayImage.src"
-                  :style="{ 'filter': filterPreset?.style || 'none' }" class=" object-contain filter size-10">
+            <!-- Image Type Selection -->
+            <div class="flex gap-2 my-4">
+              <UButton variant="outline" class="flex-1"
+                :class="{ 'bg-primary text-primary-foreground': activeImageType === 'base' }"
+                @click="activeImageType = 'base'">
+                Base Image
               </UButton>
+              <UButton variant="outline" class="flex-1"
+                :class="{ 'bg-primary text-primary-foreground': activeImageType === 'overlay' }"
+                @click="activeImageType = 'overlay'">
+                Overlay Image
+              </UButton>
+            </div>
+
+            <!-- Base Image Controls -->
+            <div v-if="activeImageType === 'base'" class="space-y-4">
+              <h3 class="text-sm font-medium">Base Image Styles</h3>
+
+              <!-- Opacity -->
+              <div class="space-y-2">
+                <div class="flex items-center justify-between">
+                  <label class="text-sm font-medium">Opacity</label>
+                  <span class="text-sm">{{ Math.round(baseImageStyles.opacity * 100) }}%</span>
+                </div>
+                <USlider v-model="baseImageStyles.opacity" :min="0" :max="1" :step="0.01" />
+              </div>
+
+              <!-- Shadow -->
+              <div class="space-y-2">
+                <div class="flex items-center justify-between">
+                  <label class="text-sm font-medium">Shadow</label>
+                  <USwitch v-model="baseImageStyles.shadow.enabled" />
+                </div>
+                <div v-if="baseImageStyles.shadow.enabled" class="space-y-3 grid gap-4">
+                  <div>
+                    <label class="text-sm">Color</label>
+                    <UColorPicker v-model="baseImageStyles.shadow.color" class="mt-1" />
+                  </div>
+                  <div>
+                    <label class="text-sm">Blur</label>
+                    <USlider v-model="baseImageStyles.shadow.blur" :min="0" :max="20" :step="1" />
+                  </div>
+                  <div>
+                    <label class="text-sm">Offset X</label>
+                    <USlider v-model="baseImageStyles.shadow.offsetX" :min="-10" :max="10" :step="1" />
+                  </div>
+                  <div>
+                    <label class="text-sm">Offset Y</label>
+                    <USlider v-model="baseImageStyles.shadow.offsetY" :min="-10" :max="10" :step="1" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Position -->
+              <div class="space-y-2 grid gap-4">
+                <label class="text-sm font-medium">Object Position</label>
+                <USelectMenu v-model="baseImageStyles.position.objectPosition" :items="[
+                  { label: 'Center', value: 'center' },
+                  { label: 'Top', value: 'top' },
+                  { label: 'Bottom', value: 'bottom' },
+                  { label: 'Left', value: 'left' },
+                  { label: 'Right', value: 'right' },
+                  { label: 'Top Left', value: 'top left' },
+                  { label: 'Top Right', value: 'top right' },
+                  { label: 'Bottom Left', value: 'bottom left' },
+                  { label: 'Bottom Right', value: 'bottom right' }
+                ]" value-key="value" />
+              </div>
+
+              <!-- Transform -->
+              <div class="space-y-2 grid gap-4">
+                <label class="text-sm font-medium">Transform</label>
+                <UInput v-model="baseImageStyles.position.transform" placeholder="e.g., scale(1.1) rotate(5deg)" />
+              </div>
+
+              <!-- Custom Filter -->
+              <div class="space-y-2 grid gap-4">
+                <label class="text-sm font-medium">Custom Filter</label>
+                <UInput v-model="baseImageStyles.customFilter" placeholder="e.g., brightness(1.2) contrast(1.1)" />
+              </div>
+            </div>
+
+            <!-- Overlay Image Controls -->
+            <div v-if="activeImageType === 'overlay'" class="space-y-4">
+              <h3 class="text-sm font-medium">Overlay Image Styles</h3>
+
+              <!-- Opacity -->
+              <div class="space-y-2">
+                <div class="flex items-center justify-between">
+                  <label class="text-sm font-medium">Opacity</label>
+                  <span class="text-sm">{{ Math.round(overlayImageStyles.opacity * 100) }}%</span>
+                </div>
+                <USlider v-model="overlayImageStyles.opacity" :min="0" :max="1" :step="0.01" />
+              </div>
+
+              <!-- Shadow -->
+              <div class="space-y-2">
+                <div class="flex items-center justify-between">
+                  <label class="text-sm font-medium">Shadow</label>
+                  <USwitch v-model="overlayImageStyles.shadow.enabled" />
+                </div>
+                <div v-if="overlayImageStyles.shadow.enabled" class="space-y-3  grid gap-4">
+                  <label class="text-sm mb-2">Color</label>
+                  <UColorPicker v-model="overlayImageStyles.shadow.color" class="mt-1" />
+                  <label class="text-sm mb-2">Blur</label>
+                  <USlider v-model="overlayImageStyles.shadow.blur" :min="0" :max="20" :step="1" />
+                  <label class="text-sm mb-2">Offset X</label>
+                  <USlider v-model="overlayImageStyles.shadow.offsetX" :min="-10" :max="10" :step="1" />
+                  <label class="text-sm mb-2">Offset Y</label>
+                  <USlider v-model="overlayImageStyles.shadow.offsetY" :min="-10" :max="10" :step="1" />
+                </div>
+              </div>
+
+              <!-- Position -->
+              <div class="space-y-2 grid gap-4">
+                <label class="text-sm font-medium">Object Position</label>
+                <USelectMenu v-model="overlayImageStyles.position.objectPosition" :items="[
+                  { label: 'Center', value: 'center' },
+                  { label: 'Top', value: 'top' },
+                  { label: 'Bottom', value: 'bottom' },
+                  { label: 'Left', value: 'left' },
+                  { label: 'Right', value: 'right' },
+                  { label: 'Top Left', value: 'top left' },
+                  { label: 'Top Right', value: 'top right' },
+                  { label: 'Bottom Left', value: 'bottom left' },
+                  { label: 'Bottom Right', value: 'bottom right' }
+                ]" value-key="value" />
+              </div>
+
+              <!-- Transform -->
+              <div class="space-y-2 grid gap-4">
+                <label class="text-sm font-medium">Transform</label>
+                <UInput v-model="overlayImageStyles.position.transform" placeholder="e.g., scale(1.1) rotate(5deg)" />
+              </div>
+
+              <!-- Custom Filter -->
+              <div class="space-y-2 grid gap-4">
+                <label class="text-sm font-medium">Custom Filter</label>
+                <UInput v-model="overlayImageStyles.customFilter" placeholder="e.g., brightness(1.2) contrast(1.1)" />
+              </div>
+
+              <!-- Filter Presets -->
+              <div class="space-y-2 grid gap-4">
+                <label class="text-sm font-medium">Filter Presets</label>
+                <div class="grid grid-cols-4 gap-2">
+                  <UButton v-for="filterPreset in presets" :key="filterPreset.name" :title="filterPreset.name"
+                    variant="ghost" class="p-2 h-auto" @click="() => applyFilter(filterPreset.name)">
+                    <img v-if="optimizedOverlayImage" :src="optimizedOverlayImage.src"
+                      :style="{ filter: filterPreset.style }" class="w-full h-8 object-contain rounded">
+                  </UButton>
+                </div>
+              </div>
             </div>
           </section>
         </template>
       </UPopover>
+
       <UPopover
         class="w-12 h-12 flex justify-center items-center rounded-full z-10 fill-white transition-color duration-500 ease-in-out">
         <UButton icon="lucide:activity" color="neutral" variant="subtle" />

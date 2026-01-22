@@ -109,6 +109,53 @@ export type ImageFilterStyle = {
   category: 'preset' | 'custom';
 };
 
+export interface ImageStyleControls {
+  opacity: number;
+  shadow: {
+    enabled: boolean;
+    color: string;
+    blur: number;
+    offsetX: number;
+    offsetY: number;
+  };
+  position: {
+    objectPosition: string; // CSS object-position
+    transform: string; // CSS transform (scale, rotate, etc.)
+  };
+  customFilter: string; // Additional custom filter beyond presets
+}
+// Image style controls
+const baseImageStyles = ref<ImageStyleControls>({
+  opacity: 1,
+  shadow: {
+    enabled: false,
+    color: '#000000',
+    blur: 0,
+    offsetX: 0,
+    offsetY: 0,
+  },
+  position: {
+    objectPosition: 'center',
+    transform: 'none',
+  },
+  customFilter: '',
+});
+
+const overlayImageStyles = ref<ImageStyleControls>({
+  opacity: 1,
+  shadow: {
+    enabled: false,
+    color: '#000000',
+    blur: 0,
+    offsetX: 0,
+    offsetY: 0,
+  },
+  position: {
+    objectPosition: 'center',
+    transform: 'none',
+  },
+  customFilter: '',
+});
 export const useTextStyles = () => {
   const presets = ref<TextStyle[]>([
     {
@@ -429,6 +476,7 @@ export const useTextStyles = () => {
     }
   };
 
+
   return {
     presets,
     customStyles,
@@ -436,6 +484,8 @@ export const useTextStyles = () => {
     stylesByCategory,
     addCustomStyle,
     removeCustomStyle,
+    baseImageStyles,
+    overlayImageStyles,
   };
 };
 
