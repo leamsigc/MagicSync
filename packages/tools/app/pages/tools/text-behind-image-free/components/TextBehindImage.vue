@@ -1,5 +1,17 @@
 <script lang="ts" setup>
 import TextBehindImageEditor from './TextBehindImageEditor.vue';
+import TextBehindImageCanvasPresets from "./TextBehindImageCanvasPresets.vue"
+import TextBehindImageRightSidebar from "./TextBehindImageRightSidebar.vue"
+import {
+  useTextStyles,
+  useImageFilterStyles,
+  type TextLayer,
+  type BackgroundControls,
+  type FontFamilies,
+  type TextStyle,
+  type AspectRatios,
+} from '../composables/useTextStyles';
+
 /**
  *
  * Component Description:Desc
@@ -35,12 +47,161 @@ const editorProps = ref<EditorProps>({
   textOverImage: false,
 });
 
+// Sidebar State
+const { stylesByCategory, customStyles, addCustomStyle } = useTextStyles();
+
+const textControls = ref<TextLayer>({
+  id: 'text-1',
+  text: 'Hello World',
+  fontSize: 72,
+  fontFamily: 'Roboto, sans-serif',
+  fontWeight: 'bold',
+  fontStyle: 'normal',
+  textAlign: 'center',
+  color: '#FFFFFF',
+  shadow: {
+    enabled: true,
+    color: '#000000',
+    blur: 4,
+    offsetX: 2,
+    offsetY: 2,
+  },
+  scale: 1,
+  positionX: 0,
+  positionY: 0,
+  zIndex: 1,
+});
+
+const backgroundControls = ref<BackgroundControls>({
+  type: 'none',
+  gradient: {
+    direction: 'to right',
+    colors: ['#3b82f6', '#8b5cf6'],
+  },
+  image: null,
+  opacity: [1],
+  predefinedBackgrounds: [],
+});
+
+const fontFamilies = ref<FontFamilies>({
+  system: [
+    { name: 'Arial', family: 'Arial, sans-serif', cssClass: 'font-arial' },
+    { name: 'Times New Roman', family: '"Times New Roman", serif', cssClass: 'font-times' },
+    { name: 'Courier New', family: '"Courier New", monospace', cssClass: 'font-courier' },
+    { name: 'Georgia', family: 'Georgia, serif', cssClass: 'font-georgia' },
+    { name: 'Verdana', family: 'Verdana, sans-serif', cssClass: 'font-verdana' },
+  ],
+  google: [
+    { name: 'Roboto', family: 'Roboto, sans-serif', cssClass: 'font-roboto' },
+    { name: 'Open Sans', family: '"Open Sans", sans-serif', cssClass: 'font-open-sans' },
+    { name: 'Lato', family: 'Lato, sans-serif', cssClass: 'font-lato' },
+    { name: 'Montserrat', family: 'Montserrat, sans-serif', cssClass: 'font-montserrat' },
+    { name: 'Poppins', family: 'Poppins, sans-serif', cssClass: 'font-poppins' },
+    { name: 'Playfair Display', family: '"Playfair Display", serif', cssClass: 'font-playfair-display' },
+    { name: 'Oswald', family: '"Oswald", sans-serif', cssClass: 'font-oswald' },
+    { name: 'Bebas Neue', family: '"Bebas Neue", sans-serif', cssClass: 'font-bebas-neue' },
+    { name: 'Anton', family: '"Anton", sans-serif', cssClass: 'font-anton' },
+    { name: 'Raleway', family: '"Raleway", sans-serif', cssClass: 'font-raleway' },
+    { name: 'Lobster', family: '"Lobster", cursive', cssClass: 'font-lobster' },
+    { name: 'Pacifico', family: '"Pacifico", cursive', cssClass: 'font-pacifico' },
+    { name: 'Abril Fatface', family: '"Abril Fatface", serif', cssClass: 'font-abril-fatface' },
+    { name: 'Bungee', family: '"Bungee", cursive', cssClass: 'font-bungee' },
+    { name: 'Fredoka One', family: '"Fredoka One", sans-serif', cssClass: 'font-fredoka-one' },
+  ]
+});
+
+const selectedFontCategory = ref<'system' | 'google'>('system');
+const imageFilter = ref('None');
+
+const aspectRatios = ref<AspectRatios>({
+  '1:1': { width: 1080, height: 1080, label: 'Square' },
+  '4:5': { width: 1080, height: 1350, label: 'Portrait' },
+  '16:9': { width: 1920, height: 1080, label: 'Landscape' },
+  '9:16': { width: 1080, height: 1920, label: 'Story' },
+  '1200:628': { width: 1200, height: 628, label: 'FB Share' },
+  '851:315': { width: 851, height: 315, label: 'FB Cover' },
+  '1500:500': { width: 1500, height: 500, label: 'Twitter Header' },
+  '1024:512': { width: 1024, height: 512, label: 'Twitter Post' },
+  '1584:396': { width: 1584, height: 396, label: 'LinkedIn Cover' },
+  '1200:627': { width: 1200, height: 627, label: 'LinkedIn Post' },
+  'custom': { width: 1080, height: 1080, label: 'Custom' },
+  'image': { width: 0, height: 0, label: 'Original' },
+});
+
+const aspectRatio = ref<keyof AspectRatios>('1:1');
+
 type ImageStatus = {
   id: number;
   isLoading: boolean;
 };
 
 const imageStatuses = ref<ImageStatus[]>([]);
+
+const optimizedOverlayImage = computed(() => {
+  return editorProps.value.overlayImage;
+});
+
+const updateTextControls = (newControls: TextLayer) => {
+  textControls.value = newControls;
+  // Sync with editorProps text if needed
+  if (editorProps.value) {
+    editorProps.value.text = newControls.text;
+  }
+};
+
+const updateBackgroundControls = (newControls: BackgroundControls) => {
+  backgroundControls.value = newControls;
+};
+
+const applyTextStyle = (style: TextStyle) => {
+  if (textControls.value) {
+    // Create a new object to trigger reactivity, preserving layout props
+    const { scale, positionX, positionY, zIndex, ...styleProps } = style.style;
+
+    textControls.value = {
+      ...textControls.value,
+      ...styleProps,
+    };
+  }
+};
+
+const saveCurrentAsCustomStyle = (name: string) => {
+  if (textControls.value) {
+    const {
+      text, fontSize, fontFamily, fontWeight, fontStyle, textAlign, color,
+      textTransform, textStroke, backgroundGradient, backgroundClip, shadow
+    } = textControls.value;
+
+    addCustomStyle({
+      name,
+      style: {
+        text, fontSize, fontFamily, fontWeight, fontStyle, textAlign, color,
+        textTransform, textStroke, backgroundGradient, backgroundClip, shadow: { ...shadow },
+        scale: 1
+      },
+      category: 'custom'
+    });
+  }
+};
+
+const onBackgroundImageUpload = (event: Event) => {
+  const file = (event.target as HTMLInputElement).files?.[0];
+  if (file) {
+    const url = URL.createObjectURL(file);
+    backgroundControls.value.image = url;
+    if (backgroundControls.value.type === 'none' || backgroundControls.value.type === 'gradient') {
+      backgroundControls.value.type = 'image';
+    }
+  }
+};
+
+const applyFilterByName = (name: string) => {
+  imageFilter.value = name;
+};
+
+const updateAspectRatio = (ratio: keyof AspectRatios) => {
+  aspectRatio.value = ratio;
+};
 
 const getPreview = (file: File) => {
   return URL.createObjectURL(file);
@@ -165,6 +326,13 @@ const benefits = ref([
     <div class="min-h-screen flex flex-col overflow-hidden w-full">
       <!-- Main Content Area -->
       <div class="flex flex-1 overflow-hidden w-full">
+        <TextBehindImageRightSidebar :textControls="textControls" :backgroundControls="backgroundControls"
+          :fontFamilies="fontFamilies" :selectedFontCategory="selectedFontCategory" :stylesByCategory="stylesByCategory"
+          :customStyles="customStyles" :optimizedOverlayImage="optimizedOverlayImage" :imageFilter="imageFilter"
+          @update:text-controls="updateTextControls" @update:background-controls="updateBackgroundControls"
+          @update:selected-font-category="selectedFontCategory = $event" @apply-text-style="applyTextStyle"
+          @save-current-as-custom-style="saveCurrentAsCustomStyle" @on-background-image-upload="onBackgroundImageUpload"
+          @apply-filter-by-name="applyFilterByName" />
         <!-- Center Canvas Area -->
         <main
           class="flex-1 flex items-center justify-center p-8 md:p-12 lg:p-16 bg-linear-to-br from-info via-primary to-secondary relative overflow-hidden">
@@ -218,7 +386,8 @@ const benefits = ref([
             <section v-if="viewState === 'EDITING'" class="min-h-full min-w-full  mt-5">
               <TextBehindImageEditor v-if="editorProps.baseImage && editorProps.overlayImage && editorProps.text"
                 :base-image="editorProps.baseImage" :overlay-image="editorProps.overlayImage" :text="editorProps.text"
-                :text-over-image="editorProps.textOverImage" @reset="clear" />
+                :text-over-image="editorProps.textOverImage" v-model:activeLayer="textControls"
+                v-model:backgroundConfig="backgroundControls" @reset="clear" />
             </section>
 
           </div>
@@ -226,7 +395,8 @@ const benefits = ref([
 
         </main>
 
-
+        <TextBehindImageCanvasPresets :aspectRatios="aspectRatios" :aspectRatio="aspectRatio"
+          @update:aspect-ratio="updateAspectRatio" />
       </div>
     </div>
   </section>
@@ -263,5 +433,124 @@ const benefits = ref([
 ::-webkit-scrollbar-thumb:hover {
   background: #718096;
   /* gray-500 */
+}
+
+
+
+.font-roboto {
+  font-family: Roboto, sans-serif;
+
+}
+
+
+.font-open-sans {
+  font-family: "Open Sans", sans-serif;
+}
+
+
+.font-lato {
+  font-family: Lato, sans-serif;
+
+}
+
+
+.font-montserrat {
+  font-family: Montserrat, sans-serif;
+}
+
+
+.font-poppins {
+  font-family: Poppins, sans-serif;
+}
+
+.font-meta {
+  font-family: "Meta", sans-serif;
+}
+
+
+.font-playfair-display {
+  font-family: "Playfair Display", serif
+}
+
+
+
+.font-sigmar {
+  font-family: "Sigmar", serif;
+}
+
+
+.font-rancho {
+  font-family: Rancho, cursive,
+}
+
+.font-oswald {
+  font-family: "Oswald", sans-serif;
+}
+
+
+.font-bebas-neue {
+  font-family: "Bebas Neue", sans-serif;
+}
+
+.font-anton {
+  font-family: "Anton", sans-serif;
+}
+
+
+.font-playfair-display {
+
+  font-family: "Playfair Display", serif;
+}
+
+.font-raleway {
+  font-family: "Raleway", sans-serif;
+}
+
+.font-bungee {
+  font-family: "Bungee", cursive;
+}
+
+.font-abril-fatface {
+  font-family: "Abril Fatface", serif;
+}
+
+
+.font-fredoka-one {
+  font-family: "Fredoka One", sans-serif;
+}
+
+.font-amatic-sc {
+  font-family: "Amatic SC", cursive;
+}
+
+
+.font-lobster {
+  font-family: "Lobster", cursive;
+}
+
+.font-unica-one {
+  font-family: "Unica One", sans-serif;
+}
+
+
+.font-orbitron {
+  font-family: "Orbitron", sans-serif;
+}
+
+.font-exo-2 {
+  font-family: "Exo 2", sans-serif;
+}
+
+.font-chivo {
+  font-family: "Chivo", sans-serif;
+}
+
+.font-cinzel {
+  font-family: "Cinzel", serif;
+}
+
+
+.font-bangers {
+  font-family: "Bangers", cursive,
 }
 </style>

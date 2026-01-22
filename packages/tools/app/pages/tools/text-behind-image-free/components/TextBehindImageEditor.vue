@@ -30,6 +30,8 @@ interface Props {
   baseImage?: HTMLImageElement;
   overlayImage?: HTMLImageElement;
   textOverImage?: boolean;
+  activeLayer?: TextLayer;
+  backgroundConfig?: BackgroundControls;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -37,7 +39,7 @@ const props = withDefaults(defineProps<Props>(), {
   textOverImage: false,
 });
 
-const emit = defineEmits(['update:text', 'reset']);
+const emit = defineEmits(['update:text', 'reset', 'update:activeLayer', 'update:backgroundConfig']);
 
 const textLayers = ref<TextLayer[]>([]);
 const activeTextLayerId = ref<string | null>(null);
@@ -682,6 +684,31 @@ const activePreset = computed(() => {
 });
 
 const editor = useTemplateRef('editor');
+
+// Sync watchers for external control
+watch(() => props.activeLayer, (newLayer) => {
+  if (newLayer && activeTextLayer.value) {
+    // Only update if different to avoid potential loops/performance issues
+    // Using simple property check or Object.assign directly
+    Object.assign(activeTextLayer.value, newLayer);
+  }
+}, { deep: true });
+
+watch(activeTextLayer, (newLayer) => {
+  if (newLayer) {
+    emit('update:activeLayer', newLayer);
+  }
+}, { deep: true });
+
+watch(() => props.backgroundConfig, (newConfig) => {
+  if (newConfig) {
+    backgroundControls.value = newConfig;
+  }
+}, { deep: true });
+
+watch(backgroundControls, (newConfig) => {
+  emit('update:backgroundConfig', newConfig);
+}, { deep: true });
 </script>
 
 <template>

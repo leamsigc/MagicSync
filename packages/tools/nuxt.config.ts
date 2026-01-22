@@ -24,7 +24,7 @@ export default defineNuxtConfig({
     name: 'BaseTools',
   },
   extends: ['@local-monorepo/ui', '@local-monorepo/db', '@local-monorepo/assets',],
-  modules: ['@nuxtjs/i18n'],
+  modules: ['@nuxtjs/i18n', '@nuxt/fonts'],
   i18n: {
     vueI18n: join(currentDir, './translations/i18n.config.ts'),
     baseUrl: process.env.NUXT_APP_URL,

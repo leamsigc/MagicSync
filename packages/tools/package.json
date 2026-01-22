@@ -19,6 +19,7 @@
     "@nuxt/eslint": "catalog:",
     "@nuxtjs/i18n": "catalog:",
     "@playwright/test": "catalog:",
+    "@nuxt/fonts": "catalog:",
     "eslint": "catalog:",
     "fabric": "catalog:",
     "nuxt": "catalog:",
