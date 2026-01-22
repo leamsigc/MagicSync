@@ -79,22 +79,22 @@ Everything you need to succeed on social media, without the complexity or cost o
 list:
   - label: How much does MagicSync cost?
     content: We offer a free self-hosted version and a Pro cloud-hosted plan at $29/month (save 17% with annual billing). No hidden fees, no per-user charges.
-    value: 1
+    value: '1'
   - label: Which platforms are supported?
     content: Facebook, Instagram, X/Twitter, LinkedIn, TikTok, YouTube, Google My Business, Pinterest, Reddit, Discord, Threads, Bluesky, WordPress, and Dev.to.
-    value: 2
+    value: '2'
   - label: Do I need technical skills?
     content: No! Our cloud-hosted version requires zero technical setup. If you choose self-hosting, we provide step-by-step guides.
-    value: 3
+    value: '3'
   - label: Can I try it for free?
     content: Yes! Get a 14-day free trial of our Pro plan. No credit card required. Or use our free self-hosted version forever.
-    value: 4
+    value: '4'
   - label: How is this different from Hootsuite or Buffer?
     content: MagicSync costs less ($29 vs $60-99/month), offers unlimited accounts, includes AI content generation, and gives you the option to self-host for complete data ownership.
-    value: 5
+    value: '5'
   - label: Can multiple team members use one account?
     content: Yes! Pro plans support up to 10 team members. Enterprise plans have unlimited users with role-based permissions.
-    value: 6
+    value: '6'
 ---
 
 #title

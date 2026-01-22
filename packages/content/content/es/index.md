@@ -76,29 +76,31 @@ Todo lo que necesitas para tener éxito en redes sociales, sin la complejidad ni
 
 ::BaseFaq
 ---
-items:
-  - question: ¿Cuánto cuesta MagicSync?
-    answer: Ofrecemos una versión gratuita auto-hospedada y un plan Pro en la nube por $29/mes (ahorra 17% con facturación anual). Sin tarifas ocultas, sin cargos por usuario.
-    value: 1
-  - question: ¿Qué plataformas están soportadas?
-    answer: Facebook, Instagram, X/Twitter, LinkedIn, TikTok, YouTube, Google My Business, Pinterest, Reddit, Discord, Threads, Bluesky, WordPress y Dev.to.
-    value: 2
-  - question: ¿Necesito habilidades técnicas?
-    answer: ¡No! Nuestra versión en la nube no requiere configuración técnica. Si eliges auto-hospedaje, proporcionamos guías paso a paso.
-    value: 3
-  - question: ¿Puedo probarlo gratis?
-    answer: ¡Sí! Obtén una prueba gratuita de 14 días de nuestro plan Pro. No se requiere tarjeta de crédito. O usa nuestra versión gratuita auto-hospedada para siempre.
-    value: 4
-  - question: ¿En qué se diferencia de Hootsuite o Buffer?
-    answer: MagicSync cuesta menos ($29 vs $60-99/mes), ofrece cuentas ilimitadas, incluye generación de contenido con IA y te da la opción de auto-hospedaje para propiedad completa de datos.
-    value: 5
-  - question: ¿Pueden varios miembros del equipo usar una cuenta?
-    answer: ¡Sí! Los planes Pro soportan hasta 10 miembros del equipo. Los planes Enterprise tienen usuarios ilimitados con permisos basados en roles.
-    value: 6
+list:
+  - label: ¿Cuánto cuesta MagicSync?
+    content: Ofrecemos una versión gratuita auto-hospedada y un plan Pro en la nube por $29/mes (ahorra 17% con facturación anual). Sin tarifas ocultas, sin cargos por usuario.
+    value: '1'
+  - label: ¿Qué plataformas están soportadas?
+    content: Facebook, Instagram, X/Twitter, LinkedIn, TikTok, YouTube, Google My Business, Pinterest, Reddit, Discord, Threads, Bluesky, WordPress y Dev.to.
+    value: '2'
+  - label: ¿Necesito habilidades técnicas?
+    content: ¡No! Nuestra versión en la nube no requiere configuración técnica. Si eliges auto-hospedaje, proporcionamos guías paso a paso.
+    value: '3'
+  - label: ¿Puedo probarlo gratis?
+    content: ¡Sí! Obtén una prueba gratuita de 14 días de nuestro plan Pro. No se requiere tarjeta de crédito. O usa nuestra versión gratuita auto-hospedada para siempre.
+    value: '4'
+  - label: ¿En qué se diferencia de Hootsuite o Buffer?
+    content: MagicSync cuesta menos ($29 vs $60-99/mes), ofrece cuentas ilimitadas, incluye generación de contenido con IA y te da la opción de auto-hospedaje para propiedad completa de datos.
+    value: '5'
+  - label: ¿Pueden varios miembros del equipo usar una cuenta?
+    content: ¡Sí! Los planes Pro soportan hasta 10 miembros del equipo. Los planes Enterprise tienen usuarios ilimitados con permisos basados en roles.
+    value: '6'
 ---
 
 #title
 Preguntas Frecuentes
+#subtitle
+Dudas sobre MagicSync
 #description
 ¿Tienes preguntas? Tenemos respuestas. Consulta nuestras FAQ completas o contacta a nuestro equipo.
 ::
@@ -106,33 +108,33 @@ Preguntas Frecuentes
 
 ::BaseTestimonials
 ---
-items:
+list:
   - name: Sarah Martínez
-    role: Propietaria, Bella's Bistro
-    avatar: "/avatars/sarah.jpg"
-    content: "¡MagicSync me ahorró 10 horas a la semana! Ahora puedo concentrarme en administrar mi restaurante mientras mis redes sociales funcionan en piloto automático. ¡La interacción con clientes aumentó un 300%!"
+    userName: Propietaria, Bella's Bistro
+    avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b7e6?w=150&h=150&fit=crop&crop=face"
+    comment: "¡MagicSync me ahorró 10 horas a la semana! Ahora puedo concentrarme en administrar mi restaurante mientras mis redes sociales funcionan en piloto automático. ¡La interacción con clientes aumentó un 300%!"
     rating: 5
   - name: Michael Chen
-    role: Director de Marketing, TechStart Agency
-    avatar: "/avatars/michael.jpg"
-    content: "Gestionamos 25 cuentas de clientes con MagicSync. Las funciones de colaboración en equipo y programación masiva son revolucionarias. ¡Altamente recomendado!"
+    userName: Director de Marketing, TechStart Agency
+    avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b7e6?w=150&h=150&fit=crop&crop=face"
+    comment: "Gestionamos 25 cuentas de clientes con MagicSync. Las funciones de colaboración en equipo y programación masiva son revolucionarias. ¡Altamente recomendado!"
     rating: 5
   - name: Jessica Thompson
-    role: Agente Inmobiliaria
-    avatar: "/avatars/jessica.jpg"
-    content: "Publicar nuevos listados en todas las plataformas solía tomar horas. Ahora toma minutos. He cerrado 2 ventas adicionales este mes gracias a la mayor visibilidad."
+    userName: Agente Inmobiliaria
+    avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b7e6?w=150&h=150&fit=crop&crop=face"
+    comment: "Publicar nuevos listados en todas las plataformas solía tomar horas. Ahora toma minutos. He cerrado 2 ventas adicionales este mes gracias a la mayor visibilidad."
     rating: 5
 ---
 #title
 Confiado por 10,000+ Pequeñas Empresas
-#description
+#subtitle
 Mira lo que los dueños de negocios dicen sobre MagicSync.
 ::
 
 
 ::BaseFeatures
 ---
-items:
+list:
   - title: Programa en Todas las Plataformas
     description: Planifica tu calendario de contenido con semanas o meses de anticipación. Publica en todas tus cuentas sociales con un clic.
     icon: "lucide:calendar-check"
@@ -154,6 +156,8 @@ items:
 ---
 #title
 Todo lo que Necesitas para Tener Éxito
+#subtitle
+Herramientas poderosas diseñadas para pequeñas empresas, sin complejidad empresarial.
 #description
 Funciones poderosas diseñadas para pequeñas empresas, sin complejidad empresarial.
 ::
