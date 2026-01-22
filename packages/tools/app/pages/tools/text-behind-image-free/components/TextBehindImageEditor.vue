@@ -762,7 +762,7 @@ watch(backgroundControls, (newConfig) => {
   <div ref="editor" class="flex gap-4 justify-items-center justify-center  max-h-[80vh]">
     <!-- Preview Area -->
     <div id="editor-container" ref="editorContainer" class="relative grid place-items-center overflow-hidden">
-      <section class="bg-white border border-gray-200 relative transition-transform duration-200"
+      <section class=" relative transition-transform duration-200 rounded-2xl overflow-hidden"
         :class="{ 'aspect-auto': aspectRatio === 'custom' || aspectRatio === 'image' }" :style="{
           width: `${scaledDimensions.width}px`,
           height: `${scaledDimensions.height}px`,

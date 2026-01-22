@@ -166,14 +166,12 @@ const benefits = ref([
       <!-- Main Content Area -->
       <div class="flex flex-1 overflow-hidden w-full">
         <!-- Center Canvas Area -->
-        <main
-          class="flex-1 flex items-center justify-center p-8 md:p-12 lg:p-16 bg-linear-to-br from-info via-primary to-secondary relative overflow-hidden">
+        <main class="flex-1 flex items-center justify-center p-8 md:p-12 lg:p-16 relative overflow-hidden">
           <!-- Outer Glow / Background Element -->
-          <div class="absolute inset-0 bg-linear-to-br from-info to-primary opacity-50 blur-3xl" />
+          <div class="absolute inset-0  opacity-50 blur-3xl" />
 
           <!-- Canvas Representation -->
-          <div
-            class="w-full h-full bg-gray-800/60  border border-gray-600/50 rounded-2xl shadow-2xl relative canvas-grid flex items-center justify-center">
+          <div class="w-full h-full  rounded-2xl shadow-2xl relative canvas-grid flex items-center justify-center">
 
             <!-- Loading Overlay -->
             <div v-if="isLoading || isAnyImageInProgress"
@@ -215,7 +213,7 @@ const benefits = ref([
             </div>
 
             <!-- Fabric Editor Area -->
-            <section v-if="viewState === 'EDITING'" class="min-h-full min-w-full  mt-5">
+            <section v-if="viewState === 'EDITING'" class="min-h-full min-w-full  mt-10">
               <TextBehindImageEditor v-if="editorProps.baseImage && editorProps.overlayImage && editorProps.text"
                 :base-image="editorProps.baseImage" :overlay-image="editorProps.overlayImage" :text="editorProps.text"
                 :text-over-image="editorProps.textOverImage" @reset="clear" />
