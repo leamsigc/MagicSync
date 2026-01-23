@@ -1,0 +1,22 @@
+diff --git a/dist/api/routes/account.mjs b/dist/api/routes/account.mjs
+index bb1c11ef07a4a85e972c581c0c98d3b4652dc48c..e5749aed66289708728d30e815aca10d1dcee8f6 100644
+--- a/dist/api/routes/account.mjs
++++ b/dist/api/routes/account.mjs
+@@ -252,7 +252,7 @@ const getAccessToken = createAuthEndpoint("/get-access-token", {
+ 	const accountData = await getAccountCookie(ctx);
+ 	let account = void 0;
+ 	if (accountData && providerId === accountData.providerId && (!accountId || accountData.id === accountId)) account = accountData;
+-	else account = (await ctx.context.internalAdapter.findAccounts(resolvedUserId)).find((acc) => accountId ? acc.id === accountId && acc.providerId === providerId : acc.providerId === providerId);
++	else account = (await ctx.context.internalAdapter.findAccounts(resolvedUserId)).find((acc) => accountId ? acc.accountId === accountId && acc.providerId === providerId : acc.providerId === providerId);
+ 	if (!account) throw new APIError("BAD_REQUEST", { message: "Account not found" });
+ 	const provider = ctx.context.socialProviders.find((p) => p.id === providerId);
+ 	if (!provider) throw new APIError("BAD_REQUEST", { message: `Provider ${providerId} not found.` });
+@@ -345,7 +345,7 @@ const refreshToken = createAuthEndpoint("/refresh-token", {
+ 	let account = void 0;
+ 	const accountData = await getAccountCookie(ctx);
+ 	if (accountData && (!providerId || providerId === accountData?.providerId)) account = accountData;
+-	else account = (await ctx.context.internalAdapter.findAccounts(resolvedUserId)).find((acc) => accountId ? acc.id === accountId && acc.providerId === providerId : acc.providerId === providerId);
++	else account = (await ctx.context.internalAdapter.findAccounts(resolvedUserId)).find((acc) => accountId ? acc.accountId === accountId && acc.providerId === providerId : acc.providerId === providerId);
+ 	if (!account) throw new APIError("BAD_REQUEST", { message: "Account not found" });
+ 	let refreshToken$1 = void 0;
+ 	if (accountData && providerId === accountData.providerId) refreshToken$1 = accountData.refreshToken ?? void 0;

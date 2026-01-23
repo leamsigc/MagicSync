@@ -97,8 +97,6 @@ export class LinkedInPagePlugin extends BaseSchedulerPlugin {
       }
     }));
 
-    console.log(pages);
-
     return pages;
   }
   async fetchPageInformation(_: LinkedInPagePlugin, pageId: string, accessToken: string, params: { page: string }): Promise<{
@@ -194,9 +192,7 @@ export class LinkedInPagePlugin extends BaseSchedulerPlugin {
       const { content } = this.getPlatformData(postDetails);
 
       const author = socialMediaAccount.metadata?.organizationUrn ||
-        `urn:li:organization:${socialMediaAccount.accountId}`;
-
-      console.log(author);
+        `urn:li:organization:${socialMediaAccount.accountId.replace('.0', '')}`;
 
       // Check for media
       const imageAsset = postDetails.assets?.find(
@@ -260,7 +256,6 @@ export class LinkedInPagePlugin extends BaseSchedulerPlugin {
         body: JSON.stringify(shareBody),
       });
 
-      // console.log(response);
 
       if (!response.ok) {
         const error = await response.text();
@@ -286,6 +281,7 @@ export class LinkedInPagePlugin extends BaseSchedulerPlugin {
       this.emit('linkedin-page:post:published', { postId: postResponse.postId, response: data });
       return postResponse;
     } catch (error: unknown) {
+
       const errorResponse: PostResponse = {
         id: postDetails.id,
         postId: '',
@@ -293,7 +289,7 @@ export class LinkedInPagePlugin extends BaseSchedulerPlugin {
         status: 'failed',
         error: (error as Error).message,
       };
-      await this.logPluginEvent('post-error:response', 'failure', `Error: ${error}, Context: ${errorResponse}`);
+      await this.logPluginEvent('post-error:response', 'failure', `Error: ${error}, Context: ${JSON.stringify(errorResponse)}`);
       this.emit('linkedin-page:post:failed', { error: (error as Error).message });
       return errorResponse;
     }

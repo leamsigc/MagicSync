@@ -41,12 +41,10 @@ export const getAccessTokenHelper = async (options: {
   userId?: string;
   headers?: any;
 }) => {
-  console.log(options.headers);
-
   return await auth.api.getAccessToken({
     body: {
       providerId: options.providerId,
-      // accountId: options.accountId,
+      accountId: options.accountId,
       userId: options.userId,
     },
     headers: options.headers

@@ -2,8 +2,8 @@ packages:
   - packages/*
 
 catalog:
-  '@better-auth/utils': 0.3.0
   '@atproto/api': 0.18.8
+  '@better-auth/utils': 0.3.0
   '@fullcalendar/core': 6.1.19
   '@fullcalendar/daygrid': 6.1.19
   '@fullcalendar/interaction': 6.1.19
@@ -35,8 +35,9 @@ catalog:
   '@vueuse/motion': 3.0.3
   '@vueuse/nuxt': 14.1.0
   axios: 1.13.2
-  better-auth: 1.4.12
-  better-sqlite3: 12.6.0
+  better-auth: 1.4.17
+  better-sqlite3: 12.6.2
+  cheerio: ^1.1.2
   dayjs: 1.11.19
   drizzle-kit: 0.31.8
   drizzle-orm: 0.45.1
@@ -46,12 +47,15 @@ catalog:
   googleapis: 170.0.0
   happy-dom: 20.1.0
   mjml: 4.18.0
+  modern-screenshot: 4.6.7
   nuxt: 4.2.2
   nuxt-auth-utils: 0.5.26
   nuxt-file-storage: 0.3.0
+  nuxt-umami: 3.2.1
   papaparse: 5.5.3
   sass: 1.97.0
   sharp: 0.34.5
+  tailwindcss: 4.1.18
   three: 0.182.0
   tsx: 4.21.0
   twitter-api-v2: 1.29.0
@@ -60,10 +64,10 @@ catalog:
   vue: 3.5.26
   vue-router: 4.6.4
   zod: 4.3.5
-  tailwindcss: 4.1.18
-  "nuxt-umami": "3.2.1"
-  cheerio: "^1.1.2"
-  modern-screenshot: 4.6.7
+
+ignoredBuiltDependencies:
+  - fsevents
+  - sharp
 
 onlyBuiltDependencies:
   - esbuild
@@ -73,6 +77,6 @@ onlyBuiltDependencies:
   - protobuf
   - protobufjs
   - unrs-resolver
-ignoredBuiltDependencies:
-- fsevents
-- sharp
+
+patchedDependencies:
+  better-auth: patches/better-auth.patch

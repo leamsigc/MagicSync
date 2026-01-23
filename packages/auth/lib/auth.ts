@@ -85,7 +85,7 @@ export const auth = betterAuth({
       allowDifferentEmails: true,
       updateUserInfoOnLink: true,
       allowUnlinkingAll: false,
-      trustedProviders: ['google', 'facebook', 'email-password', 'linkedin', 'twitter', 'tiktok', 'threads', 'youtube', 'reddit', 'discord', 'dribbble', 'instagram', 'x'],
+      trustedProviders: ['google', 'facebook', 'email-password', 'linkedin', 'linkedin-page', 'twitter', 'tiktok', 'threads', 'youtube', 'reddit', 'discord', 'dribbble', 'instagram', 'x'],
     },
   },
   socialProviders: {
