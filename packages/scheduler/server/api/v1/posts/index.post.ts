@@ -1,4 +1,4 @@
-import { ScheduleRefreshSocialMediaTokens } from './../../../utils/ScheduleUtils';
+import { ScheduleRefreshSocialMediaTokens } from '#layers/BaseScheduler/server/utils/ScheduleUtils';
 import { AutoPostService } from '#layers/BaseScheduler/server/services/AutoPost.service';
 import { checkUserIsLogin, getAccessTokenHelper } from "#layers/BaseAuth/server/utils/AuthHelpers"
 import type { PostCreateBase, PostWithAllData } from "#layers/BaseDB/db/schema"

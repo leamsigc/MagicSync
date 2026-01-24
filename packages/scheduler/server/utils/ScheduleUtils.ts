@@ -154,7 +154,7 @@ export async function compressImage(buffer: Buffer, format: string | undefined, 
  * Refreshes social media tokens for specific platforms (X/Twitter)
  * before triggering the post.
  */
-const platformsThatNeedTokenRefresh = ['x', 'twitter', 'linkedin', 'linkedin-page']
+const platformsThatNeedTokenRefresh = ['x', 'twitter', 'linkedin',]
 export const ScheduleRefreshSocialMediaTokens = async (fullPost: PostWithAllData, userId: string, headers: any) => {
   const platformsToPost = fullPost.platformPosts.filter((platformPost) => {
     return platformsThatNeedTokenRefresh.includes(platformPost.platformPostId || '')
@@ -166,7 +166,6 @@ export const ScheduleRefreshSocialMediaTokens = async (fullPost: PostWithAllData
       const account = await socialMediaAccountService.getActualAccountByAccountId(platformPost.socialAccountId)
       const providerId = platformPost.platformPostId === 'x' ? 'twitter' : platformPost.platformPostId
       if (!account || !providerId) return Promise.reject('Account not found')
-      console.log("Provider", providerId);
 
       const tokenData = await getAccessTokenHelper({
         providerId: providerId,

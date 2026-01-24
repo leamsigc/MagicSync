@@ -218,7 +218,7 @@ export const auth = betterAuth({
             ipAddress,
             userAgent,
             status: 'failure',
-            details: returned.body?.message
+            details: `Return: ${JSON.stringify(returned.body)}`
           })
         }
       } else {
