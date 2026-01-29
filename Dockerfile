@@ -13,6 +13,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY . .
 
 RUN pnpm i
+RUN pnpm dev:prepare
 
 RUN pnpm site
 
