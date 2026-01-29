@@ -32,7 +32,7 @@ const selectedAssets = ref<Asset[]>([])
 
 onMounted(async () => {
   await getAllSocialMediaAccounts()
-  if (businesses.value.data.length === 0) {
+  if ((businesses.value?.data?.length ?? 0) === 0) {
     await getAllBusinesses()
   }
   if (!selectedBusinessId.value && activeBusinessId.value) {
@@ -47,7 +47,7 @@ watch(activeBusinessId, (newId) => {
 })
 
 const businessOptions = computed(() => {
-  return businesses.value.data.map(b => ({
+  return businesses.value?.data?.map(b => ({
     label: b.name,
     value: b.id
   }))
@@ -58,7 +58,7 @@ const handleFileSelected = (file: File) => {
   currentStep.value = 2
 }
 
-const handleTogglePlatform = (account: any) => {
+const handleTogglePlatform = (account: { id: string }) => {
   const index = selectedPlatforms.value.indexOf(account.id)
   if (index > -1) {
     selectedPlatforms.value.splice(index, 1)
@@ -75,26 +75,26 @@ const canProceed = computed(() => {
   return selectedFile.value && selectedPlatforms.value.length > 0 && selectedBusinessId.value
 })
 
-  const handleImport = async () => {
-    if (!selectedFile.value || !selectedBusinessId.value || selectedPlatforms.value.length === 0) {
-      return
-    }
-
-    try {
-      await importFromCsv(
-        selectedFile.value,
-        selectedPlatforms.value,
-        selectedBusinessId.value,
-        dateRange.value || undefined,
-        distributeEvenly.value,
-        selectedAssets.value
-      )
-
-      router.push('/app/bulk-scheduler')
-    } catch (error) {
-      console.error('Import failed:', error)
-    }
+const handleImport = async () => {
+  if (!selectedFile.value || !selectedBusinessId.value || selectedPlatforms.value.length === 0) {
+    return
   }
+
+  try {
+    await importFromCsv(
+      selectedFile.value,
+      selectedPlatforms.value,
+      selectedBusinessId.value,
+      dateRange.value || undefined,
+      distributeEvenly.value,
+      selectedAssets.value
+    )
+
+    router.push('/app/bulk-scheduler')
+  } catch (error) {
+    console.error('Import failed:', error)
+  }
+}
 </script>
 
 <template>
@@ -152,16 +152,16 @@ const canProceed = computed(() => {
 
           <UCheckbox v-model="distributeEvenly" :label="t('csvImport.distributeEvenly')" />
 
-           <div v-if="distributeEvenly">
-             <DateRangeSelector @update="handleDateRangeUpdate" />
-           </div>
+          <div v-if="distributeEvenly">
+            <DateRangeSelector @update="handleDateRangeUpdate" />
+          </div>
 
-           <div class="mt-6">
-             <h3 class="text-lg font-medium mb-2">{{ t('csvImport.selectAssets') }}</h3>
-             <p class="text-sm text-gray-600 mb-4">{{ t('csvImport.selectAssetsDescription') }}</p>
-             <MediaGalleryForUser v-model:selected="selectedAssets" />
-           </div>
-         </div>
+          <div class="mt-6">
+            <h3 class="text-lg font-medium mb-2">{{ t('csvImport.selectAssets') }}</h3>
+            <p class="text-sm text-gray-600 mb-4">{{ t('csvImport.selectAssetsDescription') }}</p>
+            <MediaGalleryForUser v-model:selected="selectedAssets" />
+          </div>
+        </div>
 
         <div class="flex gap-2 justify-end">
           <UButton variant="soft" @click="currentStep = 1">

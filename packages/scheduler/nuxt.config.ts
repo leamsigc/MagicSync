@@ -32,7 +32,7 @@ export default defineNuxtConfig({
     APP_URL: process.env.NUXT_APP_URL,
     googleGenerativeAiApiKey: process.env.NUXT_GOOGLE_GENERATIVE_AI_API_KEY,
   },
-  extends: ['@local-monorepo/db', '@local-monorepo/ui', '@local-monorepo/auth', "@local-monorepo/connect", "@local-monorepo/assets", "@local-monorepo/templates"],
+  extends: ['@local-monorepo/db', '@local-monorepo/ui', '@local-monorepo/auth', "@local-monorepo/connect", "@local-monorepo/assets", "@local-monorepo/templates", "@local-monorepo/ai-tools"],
   modules: ['@nuxtjs/i18n'],
   i18n: {
     vueI18n: join(currentDir, './translations/i18n.config.ts'),

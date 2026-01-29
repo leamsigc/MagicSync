@@ -47,6 +47,7 @@
     "build": "dotenv -- pnpm -r build",
     "start": "pnpm --stream -r run dev",
     "clean": "pnpm -r run clean",
+    "dev:prepare": "pnpm -r run dev:prepare",
     "doc": "pnpm packages magicsync-docs dev",
     "doc:build": "pnpm packages magicsync-docs build",
     "doc:start": "pnpm packages magicsync-docs preview"

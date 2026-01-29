@@ -16,7 +16,7 @@ const router = useRouter()
 
 const isLoading = computed(() => isGenerating.value || isParsingCsv.value)
 
-const csvFileInput = ref<any>(null)
+const csvFileInput = ref<HTMLInputElement | null>(null)
 
 const templateContent = ref('')
 const customVariables = ref<{ name: string; label: string }[]>([])
@@ -49,7 +49,7 @@ const templateHintExample = '{{product_name}}'
 
 onMounted(async () => {
   await getAllSocialMediaAccounts()
-  if (businesses.value.data.length === 0) {
+  if ((businesses.value?.data?.length ?? 0) === 0) {
     await getAllBusinesses()
   }
   if (!selectedBusinessId.value && activeBusinessId.value) {
@@ -64,7 +64,7 @@ watch(activeBusinessId, (newId) => {
 })
 
 const businessOptions = computed(() => {
-  return businesses.value.data.map(b => ({
+  return businesses.value?.data?.map(b => ({
     label: b.name,
     value: b.id
   }))
@@ -83,6 +83,7 @@ const openAddVariableModal = () => {
 const openEditVariableModal = (index: number) => {
   editingVariableIndex.value = index
   const v = customVariables.value[index]
+  if (!v) return
   variableForm.value = { ...v }
   isVariableModalOpen.value = true
 }
@@ -94,7 +95,7 @@ const saveVariable = () => {
   v.name = v.name.trim().toLowerCase().replace(/\s+/g, '_')
 
   if (editingVariableIndex.value !== null) {
-    const oldName = customVariables.value[editingVariableIndex.value].name
+    const oldName = customVariables.value[editingVariableIndex.value]?.name || ''
     customVariables.value[editingVariableIndex.value] = v
 
     // Update data rows if name changed
@@ -121,6 +122,7 @@ const saveVariable = () => {
 
 const removeVariable = (index: number) => {
   const v = customVariables.value[index]
+  if (!v) return
   customVariables.value.splice(index, 1)
   contentRows.value.forEach(row => {
     delete row[v.name]
@@ -188,7 +190,7 @@ const triggerCsvImport = () => {
 const handleVariableAction = (content: string) => {
   if (!templateTextarea.value) return
 
-  const textarea = templateTextarea.value?.$el?.querySelector('textarea') || templateTextarea.value
+  const textarea = (templateTextarea.value as any)?.$el?.querySelector('textarea') || (templateTextarea.value as any)?.textarea
   const text = templateContent.value
   const start = textarea?.selectionStart ?? text.length
   const end = textarea?.selectionEnd ?? text.length

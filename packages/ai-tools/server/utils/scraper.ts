@@ -106,3 +106,61 @@ export async function downloadImage(imageUrl: string): Promise<Buffer> {
     throw new Error('Failed to download image');
   }
 }
+
+export interface ExtractedContent {
+  title: string;
+  content: string;
+  description: string;
+  url: string;
+}
+
+export async function extractMainContent(url: string): Promise<ExtractedContent> {
+  try {
+    const scraped = await scrapeWebsite(url);
+    const $ = cheerio.load(scraped.html);
+
+    $('script, style, nav, header, footer, aside, .sidebar, .menu, .navigation, .ads, .advertisement').remove();
+
+    const articleSelectors = [
+      'article',
+      '[role="main"]',
+      'main',
+      '.post-content',
+      '.article-content',
+      '.entry-content',
+      '.content',
+      '#content',
+      '.post',
+      '.article',
+    ];
+
+    let mainContent = '';
+    for (const selector of articleSelectors) {
+      const element = $(selector);
+      if (element.length > 0) {
+        mainContent = element.text();
+        break;
+      }
+    }
+
+    if (!mainContent) {
+      mainContent = $('body').text();
+    }
+
+    mainContent = mainContent
+      .replace(/\s+/g, ' ')
+      .replace(/\n\s*\n/g, '\n')
+      .trim();
+
+    return {
+      title: scraped.title,
+      content: mainContent,
+      description: scraped.description,
+      url: scraped.url,
+    };
+  } catch (error) {
+    console.error('Content extraction error:', error);
+    throw new Error(`Failed to extract content: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+

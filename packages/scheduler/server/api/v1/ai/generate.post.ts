@@ -12,6 +12,7 @@ export default defineLazyEventHandler(async () => {
   }
 
   return defineEventHandler(async (event) => {
+    await checkUserIsLogin(event)
     const body = await readBody(event);
     const { action, content, tone, platforms } = body;
 

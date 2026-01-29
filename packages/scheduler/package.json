@@ -20,6 +20,7 @@
     "@fullcalendar/multimonth": "catalog:",
     "@fullcalendar/scrollgrid": "catalog:",
     "@fullcalendar/timegrid": "catalog:",
+    "@local-monorepo/ai-tools": "workspace:*",
     "@local-monorepo/assets": "workspace:*",
     "@local-monorepo/auth": "workspace:*",
     "@local-monorepo/connect": "workspace:*",

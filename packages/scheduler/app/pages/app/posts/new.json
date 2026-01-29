@@ -1,0 +1,50 @@
+{
+  "en": {
+    "page": {
+      "title": "Create New Post",
+      "description": "Design, refine, and schedule your social media post.",
+      "back": "Back to Posts"
+    },
+    "toast": {
+      "postCreated": "Post created successfully",
+      "postUpdated": "Post updated successfully",
+      "postCreatedFailed": "Failed to create post"
+    }
+  },
+  "es": {
+    "page": {
+      "title": "Crear Nueva Publicación",
+      "description": "Diseña, refina y programa tu publicación en redes sociales.",
+      "back": "Volver a Publicaciones"
+    },
+    "toast": {
+      "postCreated": "Publicación creada correctamente",
+      "postUpdated": "Publicación actualizada correctamente",
+      "postCreatedFailed": "Error al crear la publicación"
+    }
+  },
+  "fr": {
+    "page": {
+      "title": "Créer une Nouvelle Publication",
+      "description": "Concevez, affinez et planifiez votre publication sur les réseaux sociaux.",
+      "back": "Retour aux Publications"
+    },
+    "toast": {
+      "postCreated": "Publication créée avec succès",
+      "postUpdated": "Publication mise à jour avec succès",
+      "postCreatedFailed": "Échec de la création de la publication"
+    }
+  },
+  "de": {
+    "page": {
+      "title": "Neuen Beitrag Erstellen",
+      "description": "Entwerfen, verfeinern und planen Sie Ihren Social-Media-Beitrag.",
+      "back": "Zurück zu Beiträgen"
+    },
+    "toast": {
+      "postCreated": "Beitrag erfolgreich erstellt",
+      "postUpdated": "Beitrag erfolgreich aktualisiert",
+      "postCreatedFailed": "Fehler beim Erstellen des Beitrags"
+    }
+  }
+}

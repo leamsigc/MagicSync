@@ -96,10 +96,6 @@ const navigationItems = computed<NavigationMenuItem[][]>(() => {
             to: '/app/integrations/active'
           },
           {
-            label: menuData.menu.inactive,
-            to: '/app/integrations/inactive'
-          },
-          {
             label: menuData.menu.new,
             to: '/app/integrations'
           }
@@ -119,6 +115,10 @@ const navigationItems = computed<NavigationMenuItem[][]>(() => {
         label: menuData.menu.tools,
         icon: 'i-lucide-box',
         children: [
+          {
+            label: menuData.menu.aitools,
+            to: '/app/ai-tools/content-split'
+          },
           {
             label: menuData.menu.textOverImage,
             to: '/app/tools/text-over-image'

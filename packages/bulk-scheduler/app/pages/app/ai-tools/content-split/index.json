@@ -1,0 +1,134 @@
+{
+  "en": {
+    "page": {
+      "title": "AI Content Repurpose",
+      "description": "Transform your long-form content into platform-optimized posts",
+      "back": "Back"
+    },
+    "input": {
+      "contentTab": "Long Form Content",
+      "urlTab": "From URL",
+      "contentPlaceholder": "Paste your blog post, article, or any long-form content here...",
+      "urlPlaceholder": "https://example.com/your-article",
+      "fetchButton": "Fetch Content"
+    },
+    "platforms": {
+      "title": "Select Platforms",
+      "description": "Choose the platforms to generate content for"
+    },
+    "tone": {
+      "title": "Tone of Voice",
+      "description": "Select the writing style for your content"
+    },
+    "generate": {
+      "button": "Generate Content",
+      "loading": "Generating..."
+    },
+    "results": {
+      "title": "Generated Content",
+      "copy": "Copy",
+      "useForPost": "Use for Post",
+      "noResults": "No content generated yet",
+      "schedulePost": "Schedule Post"
+    }
+  },
+  "es": {
+    "page": {
+      "title": "Reutilización de Contenido con IA",
+      "description": "Transforma tu contenido extenso en publicaciones optimizadas para cada plataforma",
+      "back": "Volver"
+    },
+    "input": {
+      "contentTab": "Contenido Extenso",
+      "urlTab": "Desde URL",
+      "contentPlaceholder": "Pega tu publicación de blog, artículo o cualquier contenido extenso aquí...",
+      "urlPlaceholder": "https://ejemplo.com/tu-articulo",
+      "fetchButton": "Obtener Contenido"
+    },
+    "platforms": {
+      "title": "Seleccionar Plataformas",
+      "description": "Elige las plataformas para generar contenido"
+    },
+    "tone": {
+      "title": "Tono de Voz",
+      "description": "Selecciona el estilo de escritura para tu contenido"
+    },
+    "generate": {
+      "button": "Generar Contenido",
+      "loading": "Generando..."
+    },
+    "results": {
+      "title": "Contenido Generado",
+      "copy": "Copiar",
+      "useForPost": "Usar para Publicación",
+      "noResults": "Aún no se ha generado contenido",
+      "schedulePost": "Programar Publicación"
+    }
+  },
+  "fr": {
+    "page": {
+      "title": "Réutilisation de Contenu IA",
+      "description": "Transformez votre contenu long en publications optimisées pour chaque plateforme",
+      "back": "Retour"
+    },
+    "input": {
+      "contentTab": "Contenu Long",
+      "urlTab": "Depuis URL",
+      "contentPlaceholder": "Collez votre article de blog, article ou tout contenu long ici...",
+      "urlPlaceholder": "https://exemple.com/votre-article",
+      "fetchButton": "Récupérer le Contenu"
+    },
+    "platforms": {
+      "title": "Sélectionner les Plateformes",
+      "description": "Choisissez les plateformes pour générer du contenu"
+    },
+    "tone": {
+      "title": "Ton de Voix",
+      "description": "Sélectionnez le style d'écriture pour votre contenu"
+    },
+    "generate": {
+      "button": "Générer le Contenu",
+      "loading": "Génération..."
+    },
+    "results": {
+      "title": "Contenu Généré",
+      "copy": "Copier",
+      "useForPost": "Utiliser pour Publication",
+      "noResults": "Aucun contenu généré pour le moment",
+      "schedulePost": "Programmer la Publication"
+    }
+  },
+  "de": {
+    "page": {
+      "title": "KI-Inhaltsumwandlung",
+      "description": "Verwandeln Sie Ihren langen Inhalt in plattformoptimierte Beiträge",
+      "back": "Zurück"
+    },
+    "input": {
+      "contentTab": "Langer Inhalt",
+      "urlTab": "Von URL",
+      "contentPlaceholder": "Fügen Sie hier Ihren Blogbeitrag, Artikel oder beliebigen langen Inhalt ein...",
+      "urlPlaceholder": "https://beispiel.com/ihr-artikel",
+      "fetchButton": "Inhalt Abrufen"
+    },
+    "platforms": {
+      "title": "Plattformen Auswählen",
+      "description": "Wählen Sie die Plattformen für die Inhaltsgenerierung"
+    },
+    "tone": {
+      "title": "Tonfall",
+      "description": "Wählen Sie den Schreibstil für Ihren Inhalt"
+    },
+    "generate": {
+      "button": "Inhalt Generieren",
+      "loading": "Generierung..."
+    },
+    "results": {
+      "title": "Generierter Inhalt",
+      "copy": "Kopieren",
+      "useForPost": "Für Beitrag Verwenden",
+      "noResults": "Noch kein Inhalt generiert",
+      "schedulePost": "Beitrag Planen"
+    }
+  }
+}

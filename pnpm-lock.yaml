@@ -580,6 +580,9 @@ importers:
       '@fullcalendar/timegrid':
         specifier: 'catalog:'
         version: 6.1.19(@fullcalendar/core@6.1.19)
+      '@local-monorepo/ai-tools':
+        specifier: workspace:*
+        version: link:../ai-tools
       '@local-monorepo/assets':
         specifier: workspace:*
         version: link:../assets
