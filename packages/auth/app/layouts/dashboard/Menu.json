@@ -1,6 +1,7 @@
 {
   "en": {
     "menu": {
+      "providers": "Providers",
       "general": "General",
       "dashboard": "Dashboard",
       "tasks": "Tasks",
@@ -32,7 +33,7 @@
       "integrations": "Integrations",
       "active": "Connected",
       "inactive": "Inactive",
-      "new": "Platforms",
+      "new": "New post",
       "tools": "Tools",
       "aitools": "Content repurpose",
       "textOverImage": "Text over image",
@@ -87,6 +88,7 @@
   },
   "es": {
     "menu": {
+      "providers": "Providers",
       "general": "General",
       "dashboard": "Tablero",
       "tasks": "Tareas",
@@ -173,6 +175,7 @@
   },
   "de": {
     "menu": {
+      "providers": "Providers",
       "general": "Allgemein",
       "dashboard": "Dashboard",
       "tasks": "Aufgaben",
@@ -259,6 +262,7 @@
   },
   "fr": {
     "menu": {
+      "providers": "Providers",
       "general": "Général",
       "dashboard": "Tableau de bord",
       "tasks": "Tâches",

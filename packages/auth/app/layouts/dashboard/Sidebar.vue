@@ -81,10 +81,10 @@ const navigationItems = computed<NavigationMenuItem[][]>(() => {
             label: menuData.menu.month,
             to: '/app/calendar/month'
           },
-          {
-            label: menuData.menu.day,
-            to: '/app/calendar/day'
-          }
+          // {
+          //   label: menuData.menu.day,
+          //   to: '/app/calendar/day'
+          // }
         ]
       },
       {
@@ -96,7 +96,7 @@ const navigationItems = computed<NavigationMenuItem[][]>(() => {
             to: '/app/integrations/active'
           },
           {
-            label: menuData.menu.new,
+            label: menuData.menu.providers,
             to: '/app/integrations'
           }
         ]
@@ -119,18 +119,18 @@ const navigationItems = computed<NavigationMenuItem[][]>(() => {
             label: menuData.menu.aitools,
             to: '/app/ai-tools/content-split'
           },
-          {
-            label: menuData.menu.textOverImage,
-            to: '/app/tools/text-over-image'
-          },
-          {
-            label: menuData.menu.audioToText,
-            to: '/app/tools/audio-to-text'
-          },
-          {
-            label: menuData.menu.videoCreation,
-            to: '/app/tools/video-creation'
-          }
+          // {
+          //   label: menuData.menu.textOverImage,
+          //   to: '/app/tools/text-over-image'
+          // },
+          // {
+          //   label: menuData.menu.audioToText,
+          //   to: '/app/tools/audio-to-text'
+          // },
+          // {
+          //   label: menuData.menu.videoCreation,
+          //   to: '/app/tools/video-creation'
+          // }
         ]
       },
       {
@@ -141,14 +141,14 @@ const navigationItems = computed<NavigationMenuItem[][]>(() => {
             label: menuData.menu.chat,
             to: '/app/templates/chat'
           },
-          {
-            label: menuData.menu.email,
-            to: '/app/templates/email'
-          },
-          {
-            label: menuData.menu.image,
-            to: '/app/templates/images'
-          },
+          // {
+          //   label: menuData.menu.email,
+          //   to: '/app/templates/email'
+          // },
+          // {
+          //   label: menuData.menu.image,
+          //   to: '/app/templates/images'
+          // },
           {
             label: menuData.menu.variables,
             to: '/app/templates/variables'
@@ -174,27 +174,19 @@ const navigationItems = computed<NavigationMenuItem[][]>(() => {
           {
             label: menuData.menu.notification,
             to: '/app/notifications'
-          },
-          {
-            label: menuData.menu.emailTemplate,
-            to: '/app/settings/email-template'
-          },
-          {
-            label: menuData.menu.imageTemplate,
-            to: '/app/settings/image-template'
           }
         ]
       },
-      {
-        label: menuData.menu.analytics,
-        icon: 'i-lucide-bar-chart-2',
-        children: [
-          {
-            label: menuData.menu.all,
-            to: '/app/analytics'
-          }
-        ]
-      },
+      // {
+      //   label: menuData.menu.analytics,
+      //   icon: 'i-lucide-bar-chart-2',
+      //   children: [
+      //     {
+      //       label: menuData.menu.all,
+      //       to: '/app/analytics'
+      //     }
+      //   ]
+      // },
       {
         label: menuData.menu.posts,
         icon: 'i-lucide-clipboard-list',
