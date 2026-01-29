@@ -44,21 +44,24 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
 
   private getPlatformData(postDetails: PluginPostDetails, platformPost?: any) {
     const platformName = this.pluginName;
-    const platformPostSettings = platformPost?.platformSettings || {};
-    const platformContent = platformPostSettings?.platformContent ||
-      (postDetails as any).platformContent?.[platformName];
-    const platformSettings = platformPostSettings ||
-      (postDetails as any).platformSettings?.[platformName] as BlueskySettings | undefined;
-
+    const platformContent = (postDetails.platformContent as any)[platformName];
+    const platformSettings = (postDetails.platformSettings as any)[platformName] as BlueskySettings | undefined;
     const rawContent = platformContent?.content || postDetails.content;
-    const postFormat = platformSettings?.postFormat ||
-      platformPostSettings?.postFormat ||
-      (postDetails as any).postFormat || 'post';
+    const postFormat = (postDetails as any).postFormat || 'post';
+    const comments = platformContent?.comments || [];
+    console.log({
+      content: rawContent,
+      settings: platformSettings,
+      postFormat: postFormat,
+      comments
+    });
+
 
     return {
       content: this.normalizeContent(rawContent),
       settings: platformSettings,
-      postFormat: postFormat
+      postFormat: postFormat,
+      comments
     };
   }
 
@@ -268,7 +271,7 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
     try {
       await this.login(socialMediaAccount); // Ensure agent is logged in
 
-      const { content, settings } = this.getPlatformData(postDetails);
+      const { content, settings, comments: postComments } = this.getPlatformData(postDetails);
 
       const richText = new RichText({ text: content });
       await richText.detectFacets(this.agent);
@@ -335,8 +338,9 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
       );
 
 
+      console.log("BlueskyPlugin Comments", postDetails.platformContent);
+
       // Add comments
-      const postComments = (postDetails.platformContent as Record<string, string[]>).comments ?? [];
       if (postComments.length > 0) {
         await this.addComments(blueskyResponse.uri, postComments, postDetails);
       }
