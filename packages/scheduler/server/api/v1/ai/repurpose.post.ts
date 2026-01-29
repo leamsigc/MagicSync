@@ -3,7 +3,7 @@ import { google } from '@ai-sdk/google';
 import { z } from 'zod';
 
 const expectedResponseSchema = z.object({
-  content: z.array(z.string()).optional().describe('For short content, the first item is the hook/start. For long content (like articles), this is the full content.'),
+  content: z.string().describe('For short content, the first item is the hook/start. For long content (like articles), this is the full content.'),
   comments: z.array(z.string()).optional().describe('Optional follow-up comments or thread continuation.'),
 });
 

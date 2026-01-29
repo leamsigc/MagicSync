@@ -34,6 +34,7 @@
       "inactive": "Inactive",
       "new": "Platforms",
       "tools": "Tools",
+      "aitools": "Content repurpose",
       "textOverImage": "Text over image",
       "audioToText": "Audio to text",
       "videoCreation": "Video creation",
@@ -137,7 +138,8 @@
       "components": "Componentes",
       "business": "Business",
       "variables": "Variables",
-      "chat": "Chat"
+      "chat": "Chat",
+      "aitools": "Content repurpose"
     },
     "userNav": {
       "upgradeToPro": "Actualizar a Pro",
@@ -222,7 +224,8 @@
       "components": "Komponenten",
       "business": "Business",
       "variables": "Variablen",
-      "chat": "Chat"
+      "chat": "Chat",
+      "aitools": "Content repurpose"
     },
     "userNav": {
       "upgradeToPro": "Auf Pro upgraden",
@@ -307,7 +310,8 @@
       "components": "Composants",
       "business": "Business",
       "variables": "Variables",
-      "chat": "Chat"
+      "chat": "Chat",
+      "aitools": "Content repurpose"
     },
     "userNav": {
       "upgradeToPro": "Mettre à niveau vers Pro",

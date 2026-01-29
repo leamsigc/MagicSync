@@ -2,7 +2,7 @@ type Platform = 'facebook' | 'googlemybusiness' | 'linkedin' | 'twitter' | 'tikt
 type Tone = 'professional' | 'casual' | 'witty' | 'inspirational' | 'direct' | 'angry' | 'clickbait' | 'humorous' | 'educational' | 'empathetic' | 'controversial' | 'exciting' | 'urgent';
 
 type RepurposeResult = {
-  content?: string[];
+  content: string;
   comments?: string[];
 };
 
@@ -149,7 +149,7 @@ export const useContentSplit = () => {
   const getContentAsString = (platform: string): string => {
     const result = results.value[platform];
     if (!result || !result.content) return '';
-    return result.content.join('\n\n');
+    return result.content;
   };
 
   const reset = () => {
