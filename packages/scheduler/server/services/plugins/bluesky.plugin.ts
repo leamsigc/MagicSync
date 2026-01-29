@@ -49,13 +49,6 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
     const rawContent = platformContent?.content || postDetails.content;
     const postFormat = (postDetails as any).postFormat || 'post';
     const comments = platformContent?.comments || [];
-    console.log({
-      content: rawContent,
-      settings: platformSettings,
-      postFormat: postFormat,
-      comments
-    });
-
 
     return {
       content: this.normalizeContent(rawContent),
@@ -336,9 +329,6 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
         { repo: this.agent.session?.did || '' },
         postRecord,
       );
-
-
-      console.log("BlueskyPlugin Comments", postDetails.platformContent);
 
       // Add comments
       if (postComments.length > 0) {

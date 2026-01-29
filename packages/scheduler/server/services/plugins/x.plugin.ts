@@ -80,6 +80,21 @@ export class XPlugin extends BaseSchedulerPlugin {
     const { buffer } = await reduceImageBySize(imageUrl, 5 * 1024); // 5MB = 5120 KB
     return buffer;
   }
+  private getPlatformData(postDetails: PostWithAllData, platformPost?: any) {
+    const platformName = this.pluginName;
+    const platformContent = (postDetails.platformContent as any)[platformName];
+    const platformSettings = (postDetails.platformSettings as any)[platformName] as TwitterSettings | undefined;
+    const rawContent = platformContent?.content || postDetails.content;
+    const postFormat = (postDetails as any).postFormat || 'post';
+    const comments = platformContent?.comments || [];
+
+    return {
+      content: this.normalizeContent(rawContent),
+      settings: platformSettings,
+      postFormat: postFormat,
+      comments
+    };
+  }
 
   override async post(
     postDetails: PluginPostDetails,
@@ -95,6 +110,8 @@ export class XPlugin extends BaseSchedulerPlugin {
       }
 
       const client = new TwitterApi(accessToken);
+
+      const { comments: postComments } = this.getPlatformData(postDetails);
 
       // Use platform-specific content if available, otherwise use master content
       const platformContent = (postDetails as any).platformContent?.twitter
@@ -146,13 +163,12 @@ export class XPlugin extends BaseSchedulerPlugin {
       }
 
       // Add poll if provided
-      const settings = postDetails.settings as any;
-      if (settings?.poll && settings.poll.options && settings.poll.options.length > 0) {
-        tweetOptions.poll = {
-          options: settings.poll.options,
-          duration_minutes: settings.poll.duration || 1440,
-        };
-      }
+      // if (settings?.poll && settings.poll.options && settings.poll.options.length > 0) {
+      //   tweetOptions.poll = {
+      //     options: settings.poll.options,
+      //     duration_minutes: settings.poll.duration || 1440,
+      //   };
+      // }
 
       // Platform-specific settings from platformSettings
       const postPlatformSettings = (postDetails as any).platformSettings as Record<string, TwitterSettings> | undefined;
@@ -180,7 +196,6 @@ export class XPlugin extends BaseSchedulerPlugin {
         }
       }
 
-      const postComments = (postDetails.platformContent as Record<string, string[]>).comments ?? [];
 
       let tweet;
       let isThread = false;
@@ -188,7 +203,7 @@ export class XPlugin extends BaseSchedulerPlugin {
         // Create a thread with main content and comments
         const threadTweets = [
           tweetOptions, // Main tweet with media, poll, settings
-          ...postComments.map(comment => ({ text: this.normalizeContent(comment) }))
+          ...postComments.map((comment: string) => ({ text: this.normalizeContent(comment) }))
         ];
         tweet = await client.v2.tweetThread(threadTweets);
         isThread = true;

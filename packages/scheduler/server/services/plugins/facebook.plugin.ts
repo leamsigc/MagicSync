@@ -1,6 +1,6 @@
 import type { Asset, PostWithAllData, SocialMediaAccount } from '#layers/BaseDB/db/schema';
 import type { PostResponse, } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
-import type { FacebookSettings, PlatformSettings } from '#layers/BaseScheduler/shared/platformSettings';
+import type { FacebookSettings } from '#layers/BaseScheduler/shared/platformSettings';
 import dayjs from 'dayjs';
 import { BaseSchedulerPlugin } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import type { FacebookPage } from '#layers/BaseConnect/utils/FacebookPages';
@@ -45,11 +45,13 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     const platformSettings = (postDetails.platformSettings as any)[platformName] as FacebookSettings | undefined;
     const rawContent = platformContent?.content || postDetails.content;
     const postFormat = (postDetails as any).postFormat || 'post';
+    const comments = platformContent?.comments || [];
 
     return {
       content: this.normalizeContent(rawContent),
       settings: platformSettings,
-      postFormat: postFormat
+      postFormat: postFormat,
+      comments
     };
   }
 
@@ -806,7 +808,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     socialMediaAccount: SocialMediaAccount
   ): Promise<PostResponse> {
     try {
-      const { content, settings, postFormat } = this.getPlatformData(postDetails);
+      const { content, settings, postFormat, comments: postComments } = this.getPlatformData(postDetails);
 
       let finalId = '';
       let finalUrl = '';
@@ -922,10 +924,9 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
         }
       }
       // Post comment when the post is published
-      const postComments = (postDetails.platformContent as Record<string, string[]>).comments ?? [];
       if (postComments?.length) {
         await Promise.all(
-          postComments.map(async (comment) => {
+          postComments.map(async (comment: string) => {
             await this.addCommentToPost(finalId, comment, socialMediaAccount.accessToken);
           })
         );
