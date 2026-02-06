@@ -22,8 +22,9 @@ const slug = computed(() => withLeadingSlash(String(route.params.slug)))
 
 const { data: page } = await useAsyncData(`page-${slug.value}`, async () => {
 
+  console.log(slug.value)
   const collection = (`${collectionType}_${locale.value}`) as keyof Collections
-  const path = collectionType === 'blog' ? `${route.path.replace('/blogs', '')}` : slug.value
+  const path = collectionType === 'blog' ? `${route.path.replace('/blogs', '')}` : slug.value.replace(',', '/')
 
 
   let content = await queryCollection(collection).path(`${path}`).first()

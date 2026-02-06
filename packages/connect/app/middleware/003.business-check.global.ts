@@ -6,6 +6,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   const isUserNavigatingToTheApp = to.path.startsWith('/app')
   const isUserSettingUpFirstBusiness = to.path.startsWith('/app/business/initial')
+  if (!isUserNavigatingToTheApp) return
 
   const { data } = await useFetch<ServiceResponse<BusinessProfile>>('/api/v1/business/active');
   const { data: businessesResponse } = await useFetch<PaginatedResponse<BusinessProfile>>('/api/v1/business');

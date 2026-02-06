@@ -49,12 +49,6 @@ list:
   - title: Bulk Upload
     description: Have a lot of products? Bulk upload images and schedule months of content in minutes using our CSV importer.
     icon: "lucide:upload-cloud"
-  - title: Pin Templates
-    description: Create beautiful, click-worthy Pins directly in the dashboard using our customizable templates. No design skills needed.
-    icon: "lucide:palette"
-  - title: Traffic Analytics
-    description: Track what matters: outbound clicks. See exactly which Pins and boards are driving the most visitors to your site.
-    icon: "lucide:mouse-pointer-click"
   - title: Content Calendar
     description: Visualize your Pin strategy. Drag and drop to reschedule and ensure a consistent flow of fresh content.
     icon: "lucide:calendar"

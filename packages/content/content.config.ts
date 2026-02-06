@@ -54,6 +54,7 @@ export const collections = {
     type: 'page',
     source: {
       include: 'en/**',
+      exclude: ["en/blogs/**"],
       prefix: '',
     },
     schema: blogSchema
@@ -71,6 +72,7 @@ export const collections = {
     type: 'page',
     source: {
       include: 'es/**',
+      exclude: ["es/blogs/**"],
       prefix: '',
     },
     schema: blogSchema
