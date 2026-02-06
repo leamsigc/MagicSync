@@ -22,7 +22,8 @@ export default defineNuxtConfig({
   // debug: true,
   experimental: {
     viteEnvironmentApi: true,
-    typescriptPlugin: true
+    typescriptPlugin: true,
+    nitroAutoImports: true
   },
   future: {
     compatibilityVersion: 5

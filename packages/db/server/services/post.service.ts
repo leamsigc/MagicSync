@@ -144,10 +144,10 @@ export class PostService {
 
       // Apply date range filters
       if (filters.startDate) {
-        whereConditions = and(whereConditions, gte(posts.createdAt, new Date(filters.startDate)))
+        whereConditions = and(whereConditions, gte(posts.scheduledAt, new Date(filters.startDate)))
       }
       if (filters.endDate) {
-        whereConditions = and(whereConditions, lte(posts.createdAt, new Date(filters.endDate)))
+        whereConditions = and(whereConditions, lte(posts.scheduledAt, new Date(filters.endDate)))
       }
       const postList = await this.db.query.posts.findMany({
         where: whereConditions,

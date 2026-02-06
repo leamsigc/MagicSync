@@ -39,14 +39,16 @@ const activeBusinessId = useState<string>('business:id');
 const { getPosts, postList } = usePostManager();
 
 // Fetch posts based on provided startDate and endDate
+const startDate = ref(props.startDate);
+const endDate = ref(props.endDate);
 const HandleRefresh = async () => {
   await getPosts(activeBusinessId.value, {
     page: 1,
     limit: 100
   },
     {
-      startDate: props.startDate,
-      endDate: props.endDate
+      startDate: startDate.value,
+      endDate: endDate.value
     }
   );
 }
@@ -91,12 +93,19 @@ const HandleEventClicked = (event: EventClickArg) => {
     updatePostModalRef.value?.openModal(event.event.extendedProps.post);
   }
 }
+const handleDateChange = ({ start, end }: { start: string, end: string }) => {
+  console.log({ start, end });
+
+  startDate.value = start;
+  endDate.value = end;
+  HandleRefresh();
+}
 </script>
 <template>
   <div class="container mx-auto py-6 space-y-6">
     <SchedulerPageHeader />
     <ScheduleCalendar :active-view="activeView" :events="events" @date-clicked="HandleDateClicked"
-      @event-clicked="HandleEventClicked" />
+      @event-clicked="HandleEventClicked" @time-frame-change="handleDateChange" />
     <UpdatePostModal ref="updatePostModalRef" @refresh="HandleRefresh" />
     <NewCalendarPostModal ref="newPostModalRef" @refresh="HandleRefresh" />
   </div>

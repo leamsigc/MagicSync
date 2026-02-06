@@ -32,10 +32,13 @@ const props = withDefaults(defineProps<Props>(), {
   events: () => []
 });
 const { activeView, events } = toRefs(props)
+const startDate = ref("")
+const endDate = ref("")
 
 const $emit = defineEmits({
   'date-clicked': (event: DateClickArg) => true,
-  'event-clicked': (event: EventClickArg) => true
+  'event-clicked': (event: EventClickArg) => true,
+  'time-frame-change': (event: { start: string, end: string }) => true
 })
 
 const { locale } = useI18n()
@@ -76,9 +79,21 @@ const calendarOptions = computed((): CalendarOptions => ({
     },
   },
   events: events.value,
+  initialEvents(arg, successCallback, failureCallback) {
+    const eventData =
+      { start: arg.startStr, end: arg.endStr }
+    startDate.value = eventData.start;
+    endDate.value = eventData.end;
+  },
 }));
+watch(endDate, (val) => {
+  console.log(startDate.value);
+
+  $emit('time-frame-change', { start: startDate.value, end: endDate.value })
+}, { immediate: true });
 </script>
 <template>
+  {{ startDate }}
   <FullCalendar :options="calendarOptions" :event-limit="true" class="min-h-[600px]">
     <template v-slot:eventContent='arg'>
       <PostCalendarPreview :post="arg.event.extendedProps.post" />
