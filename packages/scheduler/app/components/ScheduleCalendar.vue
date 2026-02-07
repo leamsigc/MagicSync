@@ -93,7 +93,6 @@ watch(endDate, (val) => {
 }, { immediate: true });
 </script>
 <template>
-  {{ startDate }}
   <FullCalendar :options="calendarOptions" :event-limit="true" class="min-h-[600px]">
     <template v-slot:eventContent='arg'>
       <PostCalendarPreview :post="arg.event.extendedProps.post" />
