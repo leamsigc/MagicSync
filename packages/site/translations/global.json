@@ -114,6 +114,54 @@
       "privacyPolicy": "Privacy Policy",
       "termsOfService": "Terms of Service",
       "cookiePolicy": "Cookie Policy"
+    },
+    "features": {
+      "multiPlatform": {
+        "title": "Multi-Platform Sync",
+        "subtitle": "Facebook, Instagram, X...",
+        "stats": "100% Connectivity"
+      },
+      "businessIsolation": {
+        "title": "Business Isolation",
+        "subtitle": "Manage accounts separately",
+        "stats": "Secure"
+      },
+      "mediaLibrary": {
+        "title": "Media Library",
+        "subtitle": "Centralized Assets",
+        "stats": "Fast Uploads"
+      },
+      "visualCalendar": {
+        "title": "Visual Calendar",
+        "subtitle": "Plan weeks ahead",
+        "stats": "Interactive"
+      },
+      "aiRepurposing": {
+        "title": "AI Repurposing",
+        "subtitle": "Text to optimized posts",
+        "stats": "Powered by AI"
+      },
+      "bulkCsvImport": {
+        "title": "Bulk CSV Import",
+        "subtitle": "Schedule hundreds at once",
+        "stats": "Time-saving"
+      },
+      "systemVariables": {
+        "title": "System Variables",
+        "subtitle": "Global placeholders",
+        "stats": "Consistent"
+      },
+      "aiPostAssistant": {
+        "title": "AI Post Assistant",
+        "subtitle": "Auto hashtags & formatting",
+        "stats": "Smart"
+      },
+      "masterPostEditor": {
+        "title": "Master Post Editor",
+        "subtitle": "Sync across all platforms",
+        "stats": "Overrides"
+      },
+      "exploreAll": "Explore all features"
     }
   },
   "es": {
@@ -231,6 +279,54 @@
       "privacyPolicy": "Política de privacidad",
       "termsOfService": "Términos del servicio",
       "cookiePolicy": "Política de cookies"
+    },
+    "features": {
+      "multiPlatform": {
+        "title": "Sincronización multiplataforma",
+        "subtitle": "Facebook, Instagram, X...",
+        "stats": "100% de conectividad"
+      },
+      "businessIsolation": {
+        "title": "Aislamiento de negocios",
+        "subtitle": "Gestiona cuentas por separado",
+        "stats": "Seguro"
+      },
+      "mediaLibrary": {
+        "title": "Biblioteca de medios",
+        "subtitle": "Activos centralizados",
+        "stats": "Cargas rápidas"
+      },
+      "visualCalendar": {
+        "title": "Calendario visual",
+        "subtitle": "Planifica con semanas de antelación",
+        "stats": "Interactivo"
+      },
+      "aiRepurposing": {
+        "title": "Reutilización por IA",
+        "subtitle": "Texto a publicaciones optimizadas",
+        "stats": "Impulsado por IA"
+      },
+      "bulkCsvImport": {
+        "title": "Importación masiva por CSV",
+        "subtitle": "Programa cientos a la vez",
+        "stats": "Ahorro de tiempo"
+      },
+      "systemVariables": {
+        "title": "Variables del sistema",
+        "subtitle": "Marcadores de posición globales",
+        "stats": "Consistente"
+      },
+      "aiPostAssistant": {
+        "title": "Asistente de publicaciones por IA",
+        "subtitle": "Hashtags y formato automáticos",
+        "stats": "Inteligente"
+      },
+      "masterPostEditor": {
+        "title": "Editor de publicaciones maestras",
+        "subtitle": "Sincroniza en todas las plataformas",
+        "stats": "Anulaciones"
+      },
+      "exploreAll": "Explora todas las características"
     }
   },
   "de": {
@@ -348,6 +444,54 @@
       "privacyPolicy": "Datenschutzrichtlinie",
       "termsOfService": "Nutzungsbedingungen",
       "cookiePolicy": "Cookie-Richtlinie"
+    },
+    "features": {
+      "multiPlatform": {
+        "title": "Multi-Plattform-Sync",
+        "subtitle": "Facebook, Instagram, X...",
+        "stats": "100% Konnektivität"
+      },
+      "businessIsolation": {
+        "title": "Geschäftstrennung",
+        "subtitle": "Accounts separat verwalten",
+        "stats": "Sicher"
+      },
+      "mediaLibrary": {
+        "title": "Medienbibliothek",
+        "subtitle": "Zentralisierte Assets",
+        "stats": "Schnelle Uploads"
+      },
+      "visualCalendar": {
+        "title": "Visueller Kalender",
+        "subtitle": "Wochen im Voraus planen",
+        "stats": "Interaktiv"
+      },
+      "aiRepurposing": {
+        "title": "KI-Content-Recycling",
+        "subtitle": "Text zu optimierten Posts",
+        "stats": "KI-gestützt"
+      },
+      "bulkCsvImport": {
+        "title": "Bulk-CSV-Import",
+        "subtitle": "Hunderte gleichzeitig planen",
+        "stats": "Zeitsparend"
+      },
+      "systemVariables": {
+        "title": "Systemvariablen",
+        "subtitle": "Globale Platzhalter",
+        "stats": "Konsistent"
+      },
+      "aiPostAssistant": {
+        "title": "KI-Post-Assistent",
+        "subtitle": "Auto-Hashtags & Formatierung",
+        "stats": "Smart"
+      },
+      "masterPostEditor": {
+        "title": "Master-Post-Editor",
+        "subtitle": "Über alle Plattformen hinweg synchronisieren",
+        "stats": "Overrides"
+      },
+      "exploreAll": "Alle Funktionen erkunden"
     }
   },
   "fr": {
@@ -465,6 +609,54 @@
       "privacyPolicy": "Politique de confidentialité",
       "termsOfService": "Conditions d'utilisation",
       "cookiePolicy": "Politique des cookies"
+    },
+    "features": {
+      "multiPlatform": {
+        "title": "Sync Multi-Plateforme",
+        "subtitle": "Facebook, Instagram, X...",
+        "stats": "100% Connectivité"
+      },
+      "businessIsolation": {
+        "title": "Isolation d'Entreprise",
+        "subtitle": "Gérer les comptes séparément",
+        "stats": "Sécurisé"
+      },
+      "mediaLibrary": {
+        "title": "Médiathèque",
+        "subtitle": "Actifs Centralisés",
+        "stats": "Uploads Rapides"
+      },
+      "visualCalendar": {
+        "title": "Calendrier Visuel",
+        "subtitle": "Planifier des semaines à l'avance",
+        "stats": "Interactif"
+      },
+      "aiRepurposing": {
+        "title": "Réutilisation IA",
+        "subtitle": "Texte en posts optimisés",
+        "stats": "Propulsé par l'IA"
+      },
+      "bulkCsvImport": {
+        "title": "Importation CSV en Masse",
+        "subtitle": "Planifier des centaines à la fois",
+        "stats": "Gain de Temps"
+      },
+      "systemVariables": {
+        "title": "Variables Système",
+        "subtitle": "Espaces réservés globaux",
+        "stats": "Cohérent"
+      },
+      "aiPostAssistant": {
+        "title": "Assistant de Post IA",
+        "subtitle": "Hashtags et formatage automatiques",
+        "stats": "Intelligent"
+      },
+      "masterPostEditor": {
+        "title": "Éditeur de Post Maître",
+        "subtitle": "Synchroniser sur toutes les plateformes",
+        "stats": "Overrides"
+      },
+      "exploreAll": "Explorer toutes les fonctionnalités"
     }
   }
 }

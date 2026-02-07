@@ -24,7 +24,7 @@ const props = defineProps<{
 <template>
   <div class="rounded-lg shadow-md p-4 max-w-md mx-auto">
     <div class="flex items-center mb-3">
-      <UAvatar src="https://avatars.githubusercontent.com/u/739984?v=4" alt="User" size="md" />
+      <UAvatar src="https://avatars.githubusercontent.com/u/23272293?s=96&v=4" alt="User" size="md" />
       <div class="ml-3">
         <p class="font-semibold text-gray-900 dark:text-white">User Name</p>
         <p class="text-xs text-gray-500 dark:text-gray-400">Just now</p>

@@ -41,7 +41,7 @@ const items = computed(() => [
       name: user.value?.name || 'User',
       email: user.value?.email || 'user@email',
       avatar: {
-        src: user.value?.image || "https://avatars.githubusercontent.com/u/739984?v=4",
+        src: user.value?.image || "https://avatars.githubusercontent.com/u/23272293?s=96&v=4",
         alt: user.value?.name || 'Avatar'
       },
       slot: 'account',

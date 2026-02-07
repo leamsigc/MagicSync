@@ -6,7 +6,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const isTools = routeStart.includes('/tools');
   const isUserSettingUpFirstBusiness = to.path.startsWith('/app/business/initial');
 
-  let layout = 'default';
+  let layout = to.meta.layout || 'default';
   if (isBlog) {
     layout = 'blog-layout';
   } else if (isAppRoute && !isUserSettingUpFirstBusiness) {
@@ -16,7 +16,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   } else if (isUserSettingUpFirstBusiness) {
     layout = 'business-layout';
   } else {
-    layout = 'default';
+    layout = to.meta.layout || 'default';
   }
 
   setPageLayout(layout as any,);

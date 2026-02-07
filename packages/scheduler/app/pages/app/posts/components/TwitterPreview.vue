@@ -31,7 +31,7 @@ const date = dayjs(Date.now()).format('hh:mm A · MMM D, YYYY');// 3:47 PM · No
     <!-- Header -->
     <div class="flex items-center justify-between mb-2">
       <div class="flex items-center">
-        <UAvatar src="https://avatars.githubusercontent.com/u/739984?v=4" alt="User" size="md" class="mr-3" />
+        <UAvatar src="https://avatars.githubusercontent.com/u/23272293?s=96&v=4" alt="User" size="md" class="mr-3" />
         <div>
           <div class="flex items-center">
             <p class="font-bold text-white">{{ user?.name }}</p>
@@ -89,7 +89,8 @@ const date = dayjs(Date.now()).format('hh:mm A · MMM D, YYYY');// 3:47 PM · No
     <div v-if="props.post.comment && props.post.comment.length > 0" class="">
       <div v-for="(comment, index) in props.post.comment" :key="index"
         class="flex items-start mb-3 border-t border-gray-700 pt-3">
-        <UAvatar src="https://avatars.githubusercontent.com/u/739984?v=4" alt="Commenter" size="sm" class="mr-3" />
+        <UAvatar src="https://avatars.githubusercontent.com/u/23272293?s=96&v=4" alt="Commenter" size="sm"
+          class="mr-3" />
         <div>
           <div class="flex items-center">
             <p class="font-bold text-white text-sm">{{ user?.name }}</p>
