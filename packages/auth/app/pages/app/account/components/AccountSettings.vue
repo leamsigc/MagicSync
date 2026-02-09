@@ -10,6 +10,7 @@
 
 import { z } from 'zod'
 import type { FormSubmitEvent } from '#ui/types'
+import type { NuxtLayouts } from '#app'
 
 const { t } = useI18n()
 const { user, client } = UseUser()
@@ -55,6 +56,18 @@ const handleSubmit = async (event: FormSubmitEvent<Schema>) => {
     loading.value = false
   }
 }
+
+const userLayoutSetting = useState("dashboard-layout", () => 'dashboard-layout');
+
+const HandleLayoutChange = async () => {
+
+  if (userLayoutSetting.value === "dashboard-layout") {
+    userLayoutSetting.value = "auth-twitter-layout";
+  } else {
+    userLayoutSetting.value = "dashboard-layout";
+  }
+  setPageLayout(userLayoutSetting.value as keyof NuxtLayouts);
+}
 </script>
 
 <template>
@@ -78,5 +91,11 @@ const handleSubmit = async (event: FormSubmitEvent<Schema>) => {
         {{ t('general.save') }}
       </UButton>
     </UForm>
+    <!-- Theme Settings -->
+    <section class="my-10">
+      <h2 class="text-xl font-semibold mt-4">Layout</h2>
+      <USwitch label="Twitter or Dashboard" :model-value="userLayoutSetting === 'dashboard-layout'"
+        @update:model-value="HandleLayoutChange" />
+    </section>
   </UCard>
 </template>

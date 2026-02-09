@@ -1,3 +1,4 @@
+import type { NuxtLayouts } from '#app';
 
 export default defineNuxtRouteMiddleware(async (to) => {
   const routeStart = to.path
@@ -5,12 +6,16 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const isAppRoute = routeStart.includes('/app');
   const isTools = routeStart.includes('/tools');
   const isUserSettingUpFirstBusiness = to.path.startsWith('/app/business/initial');
+  const userLayoutSetting = useState("dashboard-layout", () => 'dashboard-layout');
 
   let layout = to.meta.layout || 'default';
+  console.log(layout)
+  console.log(userLayoutSetting.value)
+  console.log(isAppRoute && !isUserSettingUpFirstBusiness)
   if (isBlog) {
     layout = 'blog-layout';
   } else if (isAppRoute && !isUserSettingUpFirstBusiness) {
-    layout = 'dashboard-layout';
+    layout = userLayoutSetting.value as keyof NuxtLayouts;
   } else if (isTools) {
     layout = 'tools-layout';
   } else if (isUserSettingUpFirstBusiness) {
