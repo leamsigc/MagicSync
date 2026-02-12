@@ -21,7 +21,8 @@
     "@local-monorepo/db": "workspace:*",
     "@local-monorepo/scheduler": "workspace:*",
     "@local-monorepo/ui": "workspace:*",
-    "papaparse": "catalog:"
+    "papaparse": "catalog:",
+    "evlog": "catalog:"
   },
   "devDependencies": {
     "@nuxt/eslint": "catalog:",

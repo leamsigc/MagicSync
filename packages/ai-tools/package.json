@@ -15,7 +15,8 @@
     "@local-monorepo/db": "workspace:*",
     "@local-monorepo/ui": "workspace:*",
     "@nuxtjs/i18n": "catalog:",
-    "cheerio": "catalog:"
+    "cheerio": "catalog:",
+    "evlog": "catalog:"
   },
   "devDependencies": {
     "@nuxt/eslint": "catalog:",

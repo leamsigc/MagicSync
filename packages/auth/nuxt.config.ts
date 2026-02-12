@@ -70,8 +70,8 @@ export default defineNuxtConfig({
     WORDPRESS_CLIENT_ID: process.env.NUXT_WORDPRESS_CLIENT_ID,
     WORDPRESS_CLIENT_SECRET: process.env.NUXT_WORDPRESS_CLIENT_SECRET,
   },
-  extends: ['@local-monorepo/db', '@local-monorepo/ui', '@local-monorepo/email'],
-  modules: ['@nuxtjs/i18n', 'nuxt-auth-utils',],
+  extends: ['@local-monorepo/db', '@local-monorepo/ui', '@local-monorepo/email',],
+  modules: ['@nuxtjs/i18n', 'nuxt-auth-utils', 'evlog/nuxt'],
   i18n: {
     vueI18n: join(currentDir, './translations/i18n.config.ts'),
     baseUrl: process.env.NUXT_APP_URL,
@@ -101,5 +101,14 @@ export default defineNuxtConfig({
       console.log(pages)
       console.log(`\n`) */
     }
+  },
+  evlog: {
+    env: {
+      service: 'layer-auth',
+    },
+    // Optional: only log specific routes (supports glob patterns)
+    include: ['/api/**'],
+    // Optional: exclude specific routes from logging
+    exclude: ['/api/_nuxt_icon/**'],
   },
 })

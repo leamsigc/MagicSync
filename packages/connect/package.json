@@ -17,7 +17,8 @@
     "nuxt": "catalog:",
     "typescript": "catalog:",
     "vue": "catalog:",
-    "@nuxtjs/i18n": "catalog:"
+    "@nuxtjs/i18n": "catalog:",
+    "evlog": "catalog:"
   },
   "dependencies": {
     "@local-monorepo/auth": "workspace:*",

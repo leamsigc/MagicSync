@@ -18,7 +18,8 @@
     "@nuxtjs/i18n": "catalog:",
     "better-auth": "catalog:",
     "better-sqlite3": "catalog:",
-    "@better-auth/utils": "catalog:"
+    "@better-auth/utils": "catalog:",
+    "evlog": "catalog:"
   },
   "devDependencies": {
     "@nuxt/eslint": "catalog:",

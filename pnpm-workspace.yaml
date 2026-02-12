@@ -2,7 +2,7 @@ packages:
   - packages/*
 
 catalog:
-  '@atproto/api': 0.18.20
+  '@atproto/api': 0.18.21
   '@better-auth/utils': 0.3.1
   '@fullcalendar/core': 6.1.20
   '@fullcalendar/daygrid': 6.1.20
@@ -14,41 +14,41 @@ catalog:
   '@fullcalendar/vue3': 6.1.20
   '@huggingface/transformers': 3.8.1
   '@libsql/client': 0.17.0
-  '@nuxt/content': 3.11.0
+  '@nuxt/content': 3.11.2
   '@nuxt/eslint': latest
   '@nuxt/fonts': 0.13.0
   '@nuxt/hints': 1.0.0-alpha.1
   '@nuxt/image': 2.0.0
   '@nuxt/scripts': 0.13.2
-  '@nuxt/test-utils': 3.23.0
+  '@nuxt/test-utils': 4.0.0
   '@nuxt/ui': 4.4.0
-  '@nuxtjs/i18n': 10.2.1
+  '@nuxtjs/i18n': 10.2.3
   '@nuxtjs/seo': 3.4.0
-  '@playwright/test': 1.58.1
+  '@playwright/test': 1.58.2
   '@types/mjml': 4.7.4
   '@types/papaparse': 5.5.2
   '@types/three': 0.182.0
-  '@unhead/vue': 2.1.2
-  '@vitejs/plugin-vue': 6.0.3
+  '@unhead/vue': 2.1.4
+  '@vitejs/plugin-vue': 6.0.4
   '@vitest/coverage-v8': 4.0.18
-  '@vueuse/core': 14.2.0
+  '@vueuse/core': 14.2.1
   '@vueuse/motion': 3.0.3
-  '@vueuse/nuxt': 14.2.0
-  axios: 1.13.4
+  '@vueuse/nuxt': 14.2.1
+  axios: 1.13.5
   better-auth: 1.4.18
   better-sqlite3: 12.6.2
   cheerio: ^1.2.0
   dayjs: 1.11.19
-  drizzle-kit: 0.31.8
+  drizzle-kit: 0.31.9
   drizzle-orm: 0.45.1
   echarts: 6.0.0
-  eslint: 9.39.2
+  eslint: 10.0.0
   fabric: 7.1.0
-  googleapis: 171.0.0
-  happy-dom: 20.4.0
+  googleapis: 171.4.0
+  happy-dom: 20.6.1
   mjml: 4.18.0
   modern-screenshot: 4.6.8
-  nuxt: 4.3.0
+  nuxt: 4.3.1
   nuxt-auth-utils: 0.5.28
   nuxt-file-storage: 0.3.2
   nuxt-umami: 3.2.1
@@ -61,9 +61,13 @@ catalog:
   twitter-api-v2: 1.29.0
   typescript: 5.9.3
   vitest: 4.0.18
-  vue: 3.5.27
-  vue-router: 5.0.1
+  vue: 3.5.28
+  vue-router: 5.0.2
   zod: 4.3.6
+  evlog: 1.7.0
+  "consola": "^3.4.2"
+  "unhead": "^2.1.2"
+  "ai": "^5.0.106"
 
 ignoredBuiltDependencies:
   - fsevents

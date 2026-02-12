@@ -114,10 +114,10 @@ export default defineNuxtConfig({
     '@local-monorepo/connect',
     '@local-monorepo/templates',
     '@local-monorepo/bulk-scheduler',
-    '@local-monorepo/ai-tools'
+    '@local-monorepo/ai-tools',
   ],
 
-  modules: ['@nuxtjs/seo', '@nuxtjs/i18n', '@nuxt/hints', 'nuxt-umami'],
+  modules: ['@nuxtjs/seo', '@nuxtjs/i18n', '@nuxt/hints', 'nuxt-umami', 'evlog/nuxt'],
   i18n: {
     vueI18n: join(currentDir, './translations/i18n.config.ts'),
     baseUrl: process.env.NUXT_APP_URL,
@@ -168,6 +168,15 @@ export default defineNuxtConfig({
     host: 'https://umami.giessen.dev',
     autoTrack: true,
     ignoreLocalhost: true
+  },
+  evlog: {
+    env: {
+      service: 'layer-site',
+    },
+    // Optional: only log specific routes (supports glob patterns)
+    include: ['/api/**'],
+    // Optional: exclude specific routes from logging
+    exclude: ['/api/_nuxt_icon/**'],
   },
   vite: {
     build: {

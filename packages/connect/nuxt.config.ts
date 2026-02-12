@@ -28,7 +28,7 @@ export default defineNuxtConfig({
     name: 'BaseConnect',
   },
   extends: ['@local-monorepo/db', '@local-monorepo/ui', '@local-monorepo/auth'],
-  modules: ['@nuxtjs/i18n'],
+  modules: ['@nuxtjs/i18n', 'evlog/nuxt'],
   i18n: {
     vueI18n: join(currentDir, './translations/i18n.config.ts'),
     baseUrl: process.env.NUXT_APP_URL,
@@ -58,5 +58,14 @@ export default defineNuxtConfig({
       console.log(pages)
       console.log(`\n`) */
     }
+  },
+  evlog: {
+    env: {
+      service: 'layer-connect',
+    },
+    // Optional: only log specific routes (supports glob patterns)
+    include: ['/api/**'],
+    // Optional: exclude specific routes from logging
+    exclude: ['/api/_nuxt_icon/**'],
   },
 })

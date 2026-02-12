@@ -33,9 +33,10 @@
     "nuxt-umami": "catalog:",
     "tailwindcss": "catalog:",
     "tsx": "catalog:",
-    "unhead": "^2.1.2",
+    "unhead": "catalog:",
     "vue": "catalog:",
-    "vue-router": "catalog:"
+    "vue-router": "catalog:",
+    "evlog": "catalog:"
   },
   "devDependencies": {
     "@nuxt/hints": "catalog:",

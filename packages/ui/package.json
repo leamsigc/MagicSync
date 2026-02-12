@@ -27,12 +27,13 @@
     "nuxt": "catalog:",
     "typescript": "catalog:",
     "vue": "catalog:",
-    "tailwindcss": "catalog:"
+    "tailwindcss": "catalog:",
+    "evlog": "catalog:"
   },
   "dependencies": {
     "@nuxt/fonts": "catalog:",
     "@types/three": "catalog:",
-    "consola": "^3.4.2",
+    "consola": "catalog:",
     "three": "catalog:"
   }
 }

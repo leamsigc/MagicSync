@@ -25,6 +25,7 @@
     "nuxt": "catalog:",
     "typescript": "catalog:",
     "vue": "catalog:",
-    "modern-screenshot": "catalog:"
+    "modern-screenshot": "catalog:",
+    "evlog": "catalog:"
   }
 }
