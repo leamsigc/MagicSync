@@ -14,7 +14,7 @@ const YoutubePreview = defineAsyncComponent(() => import('./YoutubePreview.vue')
 const PinterestPreview = defineAsyncComponent(() => import('./PinterestPreview.vue'));
 const MastodonPreview = defineAsyncComponent(() => import('./MastodonPreview.vue'));
 const BlueskyPreview = defineAsyncComponent(() => import('./BlueskyPreview.vue'));
-const DefaultPreview = defineAsyncComponent(() => import('./DefaultPreview.vue'));
+const DefaultPreview = defineAsyncComponent(() => import('./TwitterPreview.vue'));
 const VerticalVideoPreview = defineAsyncComponent(() => import('./VerticalVideoPreview.vue'));
 
 interface Props {

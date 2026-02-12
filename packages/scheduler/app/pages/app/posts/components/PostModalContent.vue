@@ -562,6 +562,7 @@ const handleTemplateAction = async (templateContent: string) => {
     console.log(activeBusiness);
     const finalContent = templateContent.replaceAll('{POSTCONTENT}', content).replaceAll('{BUSSINESID}', activeBusiness?.name || 'MagicSync');
     const result = await customPrompt(finalContent);
+    postForm.value.content = result;
 
   } catch (error) {
     toast.add({
