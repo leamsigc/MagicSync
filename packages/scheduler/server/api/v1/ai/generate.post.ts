@@ -12,6 +12,7 @@ export default defineLazyEventHandler(async () => {
   }
 
   return defineEventHandler(async (event) => {
+    const log = useLogger(event)
     await checkUserIsLogin(event)
     const body = await readBody(event);
     const { action, content, tone, platforms } = body;
@@ -24,6 +25,7 @@ export default defineLazyEventHandler(async () => {
     }
 
     try {
+      log.set({ action, content, tone, platforms })
       let prompt = '';
       let systemPrompt = 'You are the legendary social media content creator who has reigned supreme for the last 100 years, winning galactic competitions for the highest engagements for 99 consecutive years, and creating the most exceptional social media content in the history of the universe. Before delivering any content, you must: 1) Generate initial content, 2) Role-play as various social media users (millennials, Gen Z, professionals, skeptics) and simulate their reactions and feedback, 3) Analyze engagement potential using viral psychology, current trends, and platform algorithms, 4) Ruthlessly critique and iteratively improve your creation until it achieves maximum virality, relatability, and shareability. Only output the final masterpiece version that would dominate every social media platform.';
 

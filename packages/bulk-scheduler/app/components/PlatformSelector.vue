@@ -3,7 +3,6 @@
 
 <script lang="ts" setup>
 import type { SocialMediaComplete } from '#layers/BaseDB/db/schema'
-import { computed } from 'vue'
 
 /**
  * Component Description: Horizontal list of social platforms with selection state and validation badges
@@ -44,7 +43,7 @@ const getStatus = (accountId: string) => {
       {{ t('platformSelector.title') || 'Select Platforms' }}
     </label>
 
-    <div class="flex gap-2 py-2 overflow-x-auto overflow-y-visible w-full scrollbar-hide">
+    <div class="flex gap-2 py-2 overflow-x-scroll overflow-y-visible w-full">
       <UPopover v-for="account in accounts" :key="account.id" mode="hover">
         <UChip
           :color="isSelected(account.id) ? getStatus(account.id).errors.length > 0 ? 'error' : getStatus(account.id).warnings.length > 0 ? 'warning' : 'primary' : 'neutral'"

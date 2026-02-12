@@ -36,7 +36,8 @@ const selectTab = (value: string) => {
           : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50'
       ]" :disabled="tab.disabled"
       :style="{ borderColor: tab.value === modelValue ? props.currentPlatformConfig.color : 'transparent' }">
-      <div v-if="tab.hasOverride" class="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-blue-500 ring-2 ring-zinc-900" />
+      <div v-if="tab.hasOverride"
+        class="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-blue-500 ring-2 ring-zinc-900" />
       <Icon v-if="tab.icon" :name="tab.icon" class="w-4 h-4" />
       {{ tab.label }}
     </UButton>

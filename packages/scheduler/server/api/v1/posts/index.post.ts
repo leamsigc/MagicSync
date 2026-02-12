@@ -1,15 +1,14 @@
 import { ScheduleRefreshSocialMediaTokens } from '#layers/BaseScheduler/server/utils/ScheduleUtils';
 import { AutoPostService } from '#layers/BaseScheduler/server/services/AutoPost.service';
-import { checkUserIsLogin, getAccessTokenHelper } from "#layers/BaseAuth/server/utils/AuthHelpers"
-import type { PostCreateBase, PostWithAllData } from "#layers/BaseDB/db/schema"
+import { checkUserIsLogin } from "#layers/BaseAuth/server/utils/AuthHelpers"
+import type { PostCreateBase } from "#layers/BaseDB/db/schema"
 import { postService } from "#layers/BaseDB/server/services/post.service"
-import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service';
 
 export default defineEventHandler(async (event) => {
   try {
     // Get user from session
     const user = await checkUserIsLogin(event)
-
+    const log = useLogger(event)
     // Get request body
     const body = await readBody(event)
 
@@ -44,14 +43,16 @@ export default defineEventHandler(async (event) => {
     // Create post
     const result = await postService.create(user.id, postData)
 
-    if (!result || result.error) {
+    if (!result || result.error || !result.data) {
       throw createError({
         statusCode: 400,
         statusMessage: result.error || 'Failed to create post'
       })
     }
 
-    if (body.status === 'published' && result.data) {
+    log.set({ postId: result.data.id })
+
+    if (body.status === 'published') {
       const fullPost = await postService.findByIdFull({ postId: result.data.id });
       if (!fullPost || !fullPost) {
         throw createError({
@@ -68,9 +69,19 @@ export default defineEventHandler(async (event) => {
     }
 
 
+    // Fetch full post with platform statuses
+    const fullPost = await postService.findByIdFull({ postId: result.data.id })
+    const platformStatuses = fullPost.platformPosts?.map((pp: any) => ({
+      platform: pp.platformPostId || pp.socialAccountId,
+      status: pp.status,
+      errorMessage: pp.errorMessage || undefined,
+      publishedAt: pp.publishedAt?.toISOString?.() || pp.publishedAt
+    })) || []
+
     return {
       success: true,
-      data: result.data
+      data: result.data,
+      platformStatuses
     }
   } catch (error: any) {
     if (error.statusCode) {

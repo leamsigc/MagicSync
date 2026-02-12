@@ -65,7 +65,7 @@ interface PostForm extends Omit<PostCreateBase, 'targetPlatforms' | 'mediaAssets
 const props = defineProps<{
   initialPost?: PostWithAllData;
 }>();
-
+const { getPlatformIcon } = usePlatformIcons();
 const emit = defineEmits(['save', 'update', 'close']);
 
 const { t } = useI18n();
@@ -232,7 +232,19 @@ const handleSavePost = async (status: 'pending' | 'published' | 'failed') => {
   let firstInvalidPlatform: TargetPlatform | null = null;
 
   for (const targetPlatform of postForm.value.targetPlatforms) {
-    const { isValid, message } = validatePostForPlatform(postForm.value, postMediaAssets.value, targetPlatform.platformType);
+    // Get platform-specific content override if it exists
+    const platformOverride = postForm.value.platformContent?.[targetPlatform.platformType];
+    const contentToValidate = platformOverride?.content ?? postForm.value.content;
+    const commentsToValidate = platformOverride?.comments ?? postForm.value.comment;
+
+    // Create a post object with the correct content for validation
+    const postToValidate = {
+      ...postForm.value,
+      content: contentToValidate,
+      comment: commentsToValidate,
+    };
+
+    const { isValid, message } = validatePostForPlatform(postToValidate, postMediaAssets.value, targetPlatform.platformType);
     if (!isValid) {
       validationErrors.value.push({ platform: targetPlatform.platformType, message: message || t('validation.unknownError') });
       if (!firstInvalidPlatform) {
@@ -331,9 +343,6 @@ interface PlatformOverride {
 }
 
 const { validatePlatform } = useValidation();
-const masterMedia = ref<Asset[]>([]);
-
-// Removed unused platformOverrides ref used incorrectly before
 
 
 const platformSettingsState = usePlatformSettings();
@@ -410,23 +419,12 @@ const contextTabs = computed(() => {
       return;
     }
 
-    // Check if this platform has an override
-    // We check via the composable helper or directly from the form state if synced
-    // The composable 'hasPlatformOverride' takes a platform *type* or *accountId*?
-    // Looking at usePlatformSettings, it uses selectedPlatform which can be anything used as key map.
-    // In TogglePlatform we seem to map by accountId? No, 'platformContent' usually keyed by platformName (like 'twitter', 'linkedin')
-    // OR by accountId?
-    // Let's check usePlatformSettings usage. It seems to use 'selectedPlatform.value' as the key.
-    // In 'explicitPreviewPlatform' watcher, we set selectedPlatform.value = val. 'val' comes from 'explicitPreviewPlatform'.
-    // 'explicitPreviewPlatform' is set to 'default' or 'platformType' (e.g. 'twitter').
-    // So overrides are keyed by PLATFORM TYPE (e.g. 'twitter'), not accountId.
-
     const hasOverride = !!postForm.value.platformContent?.[platform.platformType]?.content;
 
     tabs.push({
       label: platform.platformType.charAt(0).toUpperCase() + platform.platformType.slice(1),
       value: platform.platformType,
-      icon: `logos:${platform.platformType}`,
+      icon: getPlatformIcon(platform.platformType as any),
       hasOverride
     });
   });
@@ -466,7 +464,7 @@ const validationStatus = computed(() => {
     const result = validatePlatform(
       platform.platformType,
       contentToValidate,
-      masterMedia.value,
+      postMediaAssets.value,
       commentsToValidate
     );
     status[platform.accountId] = {
@@ -596,9 +594,9 @@ const handleVariableAction = (variable: string) => {
           @click="emit('close')" />
       </div>
 
-      <div class="md:flex flex-col lg:flex-row h-full">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 h-full">
         <!-- Left Side: Editor and Comments -->
-        <div class="flex-1 p-4 border-r border-gray-200 dark:border-gray-800">
+        <div class="flex-1 p-4 border-r border-gray-200 dark:border-gray-800 ">
           <UTabs :items="tabs" variant="link" :ui="{ trigger: 'grow' }" class="gap-4 w-full">
 
             <template #editor>

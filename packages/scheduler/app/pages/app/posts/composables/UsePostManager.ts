@@ -3,7 +3,7 @@
 import type { Post, PostCreateBase, PostWithAllData } from '#layers/BaseDB/db/posts/posts'
 import type { PaginatedResponse, PaginationOptions, } from '#layers/BaseDB/server/services/types'
 
-import type { ApiResponse, PostFilters, PostStats, ValidationResult } from '#layers/BaseScheduler/server/utils/SchedulerTypes'
+import type { ApiResponse, PostFilters, PostStats, ValidationResult, PlatformPostStatus } from '#layers/BaseScheduler/server/utils/SchedulerTypes'
 /**
  * Post Manager Composable for handling post operations
  *
@@ -19,6 +19,74 @@ export const usePostManager = () => {
   const error = ref<string | null>(null)
   const postList = useState<PostWithAllData[]>('posts:list', () => [] as PostWithAllData[])
   const activeBusinessId = useState<string>('business:id');
+
+  /**
+   * Show platform status toasts
+   */
+  const showPlatformStatusToasts = (platformStatuses: PlatformPostStatus[], action: 'created' | 'updated') => {
+    if (!platformStatuses || platformStatuses.length === 0) {
+      const title = action === 'created' ? t('toast.postCreated') : t('toast.postUpdated')
+      toast.add({
+        title,
+        icon: 'i-heroicons-check-circle',
+        color: 'success'
+      })
+      return
+    }
+
+    const hasErrors = platformStatuses.some(ps => ps.status === 'failed')
+    const hasPending = platformStatuses.some(ps => ps.status === 'pending')
+    const allSuccess = platformStatuses.every(ps => ps.status === 'published')
+
+    if (allSuccess) {
+      const title = action === 'created' ? t('toast.postCreated') : t('toast.postUpdated')
+      const description = platformStatuses.map(ps => {
+        const platformName = ps.platform.charAt(0).toUpperCase() + ps.platform.slice(1)
+        return `✓ ${platformName}: ${t('toast.platformSuccess')}`
+      }).join('\n')
+
+      toast.add({
+        title,
+        description,
+        icon: 'i-heroicons-check-circle',
+        color: 'success',
+        timeout: 5000
+      })
+    } else if (hasErrors) {
+      platformStatuses.forEach(ps => {
+        const platformName = ps.platform.charAt(0).toUpperCase() + ps.platform.slice(1)
+
+        if (ps.status === 'published') {
+          toast.add({
+            title: `${platformName}: ${t('toast.platformSuccess')}`,
+            icon: 'i-heroicons-check-circle',
+            color: 'success'
+          })
+        } else if (ps.status === 'failed') {
+          toast.add({
+            title: `${platformName}: ${t('toast.platformFailed')}`,
+            description: ps.errorMessage || t('toast.platformError'),
+            icon: 'i-heroicons-x-circle',
+            color: 'error',
+            timeout: 8000
+          })
+        } else if (ps.status === 'pending') {
+          toast.add({
+            title: `${platformName}: ${t('toast.platformPending')}`,
+            icon: 'i-heroicons-clock',
+            color: 'warning'
+          })
+        }
+      })
+    } else {
+      const title = action === 'created' ? t('toast.postCreatedPending') : t('toast.postUpdatedPending')
+      toast.add({
+        title,
+        icon: 'i-heroicons-clock',
+        color: 'warning'
+      })
+    }
+  }
 
   /**
    * Get posts with pagination and filtering
@@ -66,7 +134,8 @@ export const usePostManager = () => {
           scheduledAt: postData.scheduledAt?.toISOString()
         }
       })
-      toast.add({ title: t('toast.postCreated'), icon: 'i-heroicons-check-circle', color: 'success' })
+
+      showPlatformStatusToasts(response.platformStatuses || [], 'created')
       return response
     } catch (err: any) {
       error.value = err.data?.message || err.message || 'Failed to create post'
@@ -92,9 +161,12 @@ export const usePostManager = () => {
           scheduledAt: postData.scheduledAt?.toISOString()
         }
       });
+
+      showPlatformStatusToasts(response.platformStatuses || [], 'updated');
       return response;
     } catch (err: any) {
       error.value = err.data?.message || err.message || 'Failed to update post';
+      toast.add({ title: t('toast.postUpdatedFailed'), icon: 'i-heroicons-x-circle', color: 'error' });
       throw err;
     } finally {
       isLoading.value = false;

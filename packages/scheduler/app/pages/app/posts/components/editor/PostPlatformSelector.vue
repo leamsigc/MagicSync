@@ -11,7 +11,7 @@ interface Props {
   selectedAccounts: SocialMediaComplete[];
   validationStatus: Record<string, { isValid: boolean; errors: string[]; warnings: string[]; }>;
 }
-
+const { getPlatformIcon } = usePlatformIcons();
 const props = defineProps<Props>();
 const emit = defineEmits(['toggle',]);
 
@@ -42,11 +42,11 @@ const selectedIds = computed(() => props.selectedAccounts.map(acc => acc.id));
           isSelected(account)
             ? 'bg-zinc-900 border-zinc-700'
             : 'bg-zinc-900/30 border-zinc-800 hover:border-zinc-700 opacity-60 hover:opacity-100'
-        ]" :icon="`logos:${account.platform}`">
+        ]" :icon="getPlatformIcon(account.platform)">
         <UAvatar :src='account.entityDetail.details.picture' :alt="account.accountName" @click="handleToggle(account)"
           v-if="account.entityDetail.details.picture" />
-        <UButton :icon="`logos:${account.platform}`" color="neutral" variant="ghost" @click="handleToggle(account)"
-          v-else />
+        <UButton :icon="getPlatformIcon(account.platform)" color="neutral" variant="ghost"
+          @click="handleToggle(account)" v-else />
         <template #content>
           <Icon :name="getStatus(account)?.isValid ? 'heroicons:check' : 'heroicons:x-circle'" />
         </template>
@@ -56,7 +56,7 @@ const selectedIds = computed(() => props.selectedAccounts.map(acc => acc.id));
           class="backdrop-blur-xl  rounded-xl shadow-2xl pointer-events-none animate-in fade-in zoom-in-95 duration-200">
 
           <div class="p-3 border-b border-white/5 flex items-center gap-2">
-            <Icon :name="`logos:${account.platform}`" class="w-4 h-4" />
+            <Icon :name="getPlatformIcon(account.platform)" class="w-4 h-4" />
             <span class="font-bold text-sm text-zinc-200">{{ account.accountName }}</span>
           </div>
 

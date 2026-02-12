@@ -8,13 +8,13 @@ import { AutoPostService } from '#layers/BaseScheduler/server/services/AutoPost.
 import { checkUserIsLogin } from "#layers/BaseAuth/server/utils/AuthHelpers"
 import { postService, type UpdatePostData } from "#layers/BaseDB/server/services/post.service"
 import dayjs from 'dayjs';
-import { ScheduleRefreshSocialMediaTokens } from '../../../../utils/ScheduleUtils';
 
 
 export default defineEventHandler(async (event) => {
   try {
     // Get user from session
     const user = await checkUserIsLogin(event)
+    const log = useLogger(event)
 
     // Get post ID from route params
     const postId = getRouterParam(event, 'id')
@@ -77,15 +77,18 @@ export default defineEventHandler(async (event) => {
     const result = await postService.update(postId, user.id, updateData)
 
 
-    if (!result || result.error) {
+    if (!result || result.error || !result.data) {
       throw createError({
         statusCode: 400,
         statusMessage: result.error || 'Failed to update post'
       })
     }
-    if (body.status === 'published' && result.data) {
+
+    if (body.status === 'published') {
+      log.set({ postId: result.data.id })
       const fullPost = await postService.findByIdFull({ postId: result.data.id });
       if (!fullPost || !fullPost) {
+        log.error('Failed to find post')
         throw createError({
           statusCode: 400,
           statusMessage: 'Failed to find post'
@@ -99,7 +102,20 @@ export default defineEventHandler(async (event) => {
 
       await trigger.triggerSocialMediaPost(fullPost);
     }
-    return result.data;
+    // Fetch full post with platform statuses
+    const fullPost = await postService.findByIdFull({ postId: result.data.id })
+    const platformStatuses = fullPost.platformPosts?.map((pp: any) => ({
+      platform: pp.platformPostId || pp.socialAccountId,
+      status: pp.status,
+      errorMessage: pp.errorMessage || undefined,
+      publishedAt: pp.publishedAt?.toISOString?.() || pp.publishedAt
+    })) || []
+
+    return {
+      success: true,
+      data: result.data,
+      platformStatuses
+    }
   } catch (error: any) {
     if (error.statusCode) {
       throw error

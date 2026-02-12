@@ -5,6 +5,17 @@ export interface PostFilters {
   endDate?: string
 }
 
+export interface PlatformPostStatus {
+  platform: string
+  status: 'pending' | 'published' | 'failed'
+  errorMessage?: string
+  publishedAt?: string
+}
+
+export interface PostWithPlatformStatus {
+  post: any
+  platformStatuses: PlatformPostStatus[]
+}
 
 export interface ApiResponse<T> {
   success: boolean
@@ -15,6 +26,7 @@ export interface ApiResponse<T> {
     total: number
     totalPages: number
   }
+  platformStatuses?: PlatformPostStatus[]
 }
 
 export interface PostStats {

@@ -52,7 +52,14 @@
       "postUpdated": "Post updated successfully",
       "postDeleted": "Post deleted successfully",
       "postScheduled": "Post scheduled successfully",
-      "postCreatedFailed": "Post creation failed"
+      "postCreatedFailed": "Post creation failed",
+      "postUpdatedFailed": "Post update failed",
+      "postCreatedPending": "Post created and scheduled",
+      "postUpdatedPending": "Post updated and scheduled",
+      "platformSuccess": "Posted successfully",
+      "platformFailed": "Failed to post",
+      "platformPending": "Scheduled",
+      "platformError": "An error occurred while posting"
     }
   },
   "es": {
@@ -106,7 +113,14 @@
       "postUpdated": "Publicación actualizada correctamente",
       "postDeleted": "Publicación eliminada correctamente",
       "postScheduled": "Publicación programada correctamente",
-      "postCreatedFailed": "La creación de la publicación falló"
+      "postCreatedFailed": "La creación de la publicación falló",
+      "postUpdatedFailed": "La actualización de la publicación falló",
+      "postCreatedPending": "Publicación creada y programada",
+      "postUpdatedPending": "Publicación actualizada y programada",
+      "platformSuccess": "Publicado correctamente",
+      "platformFailed": "Error al publicar",
+      "platformPending": "Programado",
+      "platformError": "Ocurrió un error al publicar"
     }
   },
   "fr": {
@@ -160,7 +174,14 @@
       "postUpdated": "Publication mise à jour avec successe",
       "postDeleted": "Publication supprimée avec successe",
       "postScheduled": "Publication planifiée avec successe",
-      "postCreatedFailed": "Échec de la création de la publication"
+      "postCreatedFailed": "Échec de la création de la publication",
+      "postUpdatedFailed": "Échec de la mise à jour de la publication",
+      "postCreatedPending": "Publication créée et planifiée",
+      "postUpdatedPending": "Publication mise à jour et planifiée",
+      "platformSuccess": "Publié avec succès",
+      "platformFailed": "Échec de la publication",
+      "platformPending": "Planifié",
+      "platformError": "Une erreur s'est produite lors de la publication"
     }
   },
   "de": {
@@ -214,7 +235,14 @@
       "postUpdated": "Beitrag erfolgreich aktualisiert",
       "postDeleted": "Beitrag erfolgreich gelöscht",
       "postScheduled": "Beitrag erfolgreich geplant",
-      "postCreatedFailed": "Beitragserstellung fehlgeschlagen"
+      "postCreatedFailed": "Beitragserstellung fehlgeschlagen",
+      "postUpdatedFailed": "Beitragsaktualisierung fehlgeschlagen",
+      "postCreatedPending": "Beitrag erstellt und geplant",
+      "postUpdatedPending": "Beitrag aktualisiert und geplant",
+      "platformSuccess": "Erfolgreich gepostet",
+      "platformFailed": "Posting fehlgeschlagen",
+      "platformPending": "Geplant",
+      "platformError": "Beim Posten ist ein Fehler aufgetreten"
     }
   }
 }
