@@ -98,7 +98,7 @@ const handleDateChange = ({ start, end }: { start: string, end: string }) => {
 
   startDate.value = start;
   endDate.value = end;
-  HandleRefresh();
+  //HandleRefresh();
 }
 </script>
 <template>

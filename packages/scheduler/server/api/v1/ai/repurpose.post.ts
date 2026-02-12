@@ -23,16 +23,18 @@ Rules:
 - Keep each tweet under 280 characters
 - Format as "1/" "2/" etc.`,
 
-  linkedin: `Turn the CONTENT into a LinkedIn post.
-Output Format: Plain Text (UTF-8)
+  linkedin: `
+  Turn the CONTENT into a high-performing LinkedIn post
 
-Rules:
-- Start with a hook (first line matters most)
-- Use short paragraphs (1-2 sentences each)
-- Include a clear takeaway or lesson
-- End with a question to drive engagement
-- 150-250 words ideal
-- Minimal emojis (0-2 max)`,
+  Output Format: Plain Text (UTF-8) or Markdown Supported by linkedin
+  Rules:
+    - Start with a hook (first line matters most)
+    - Use short paragraphs (1-2 sentences each)
+    - Include a clear takeaway or lesson
+    - End with a question to drive engagement
+    - 150-250 words ideal
+    - Minimal emojis (0-2 max)
+  `,
 
   instagram: `Turn the CONTENT into an Instagram caption.
 Output Format: Plain Text
@@ -261,7 +263,39 @@ export default defineLazyEventHandler(async () => {
     );
 
     // Build the prompt including instructions for all requested platforms
-    let combinedPrompt = `CONTENT:\n"${contentToProcess}"\n\nTONE: ${toneDescriptions[tone as Tone]}\n\nInstructions per platform:\n`;
+    let combinedPrompt = `
+  GLOBAL RULES:
+  - create different version for each platform
+  - review them each platform individually internally from a perspective of a social media user give feedback on the post
+  - then create the final base on the feedback,
+  - return the best of all of them just the end result no extra content that is not related to the post.
+  IMPORTANT: MUST  Return only the final post for each platform - no extra content OR THE INTERNAL REVIEW UNLESS THE USER ASK FOR THE ALL VERSIONS
+
+  HOOK (First 1-3 lines - most important part):
+    - Goal: Make the reader stop scrolling and click “see more” within 3 seconds make bold claims and give number stats when is possible.
+    - Length:
+      - Keep the hook section within ~200 characters so it shows before “see more”.
+      - Use 1-3 short lines; each sentence should be 5-12 words max.
+    - Triggers (choose ONE for each post):
+      - Curiosity gap: hint at a surprising insight without fully revealing it.
+    - Pattern interrupt: break the usual LinkedIn tone or expectation with an unexpected line.
+    - Contrarian claim: challenge a common belief your audience holds.
+    - Shock (with real data): use a strong, credible statistic or result.
+    - FOMO / loss aversion: highlight what they'll lose if they ignore the post.
+    - Open-loop story: start a short story but don't finish it in the first line(s).
+    - Reader focus:
+      - Make the hook about the reader's problem or goal, not about you.
+      - Avoid generic opens like “Here are 5 tips” or “In today's post”.
+    - Formatting:
+      - One sentence per line for the hook section.
+      - Use specific numbers and concrete language (e.g., “87% of outreach fails”).
+      - No emojis in the hook unless they clearly aid structure or emphasis.
+  CONTENT:\n"${contentToProcess}"\n\n
+
+  TONE: ${toneDescriptions[tone as Tone]}
+
+  Instructions per platform:\n
+    `;
 
     platforms.forEach(platform => {
       combinedPrompt += `\n--- ${platform.toUpperCase()} ---\n${platformPrompts[platform as Platform]}\n`;
