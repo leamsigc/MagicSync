@@ -20,6 +20,7 @@ import { usePostManager } from '../composables/UsePostManager';
 import dayjs from 'dayjs'
 import type { PostWithAllData } from '#layers/BaseDB/db/schema';
 import type { PaginatedResponse } from '#layers/BaseDB/server/services/types';
+import TwitterPostEditor from '../components/TwitterPostEditor.vue';
 
 
 const activeBusinessId = useState<string>('business:id');
@@ -85,22 +86,22 @@ useHead({
 
 setPageLayout('auth-twitter-layout')
 
-const observer = new IntersectionObserver(
-  (entries) => {
-    entries.forEach((entry) => {
-
-      if (entry.isIntersecting && hasMore.value && !isLoading.value) {
-        loadMore()
-      }
-    })
-  },
-  { rootMargin: '100px' }
-)
 
 onMounted(async () => {
   await fetchPosts(1)
 
   if (sentinelRef.value) {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+
+          if (entry.isIntersecting && hasMore.value && !isLoading.value) {
+            loadMore()
+          }
+        })
+      },
+      { rootMargin: '100px' }
+    )
     observer.observe(sentinelRef.value)
 
     onUnmounted(() => {
@@ -108,11 +109,18 @@ onMounted(async () => {
     })
   }
 })
+
+const HandleRefresh = async () => {
+  console.log("Should refresh....");
+
+  posts.value = []
+  await fetchPosts(1)
+}
 </script>
 
 <template>
   <div>
-    <TwitterMockEditor />
+    <TwitterPostEditor @refresh="HandleRefresh" />
     <div class="my-10">
       <TwitterPostCard v-for="(post, index) in posts" :key="post.id" :id="post.id" :avatar="post.user.image || ''"
         :name="post.user.name" :username="post.user.firstName" :content="post.content" :scheduledAt="post.scheduledAt"

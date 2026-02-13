@@ -62,8 +62,9 @@ interface PostForm extends Omit<PostCreateBase, 'targetPlatforms' | 'mediaAssets
   platformSettings?: Record<string, PlatformSettings>;
 }
 
-const props = defineProps<{
+const { initialPost, preview = true } = defineProps<{
   initialPost?: PostWithAllData;
+  preview?: boolean;
 }>();
 const { getPlatformIcon } = usePlatformIcons();
 const emit = defineEmits(['save', 'update', 'close']);
@@ -132,10 +133,10 @@ const previewsMap = {
 
 onMounted(async () => {
   await getAllSocialMediaAccounts();
-  if (props.initialPost) {
-    console.log(props.initialPost);
+  if (initialPost) {
+    console.log(initialPost);
 
-    const platformPosts = props.initialPost.platformPosts;
+    const platformPosts = initialPost.platformPosts;
 
     if (platformPosts && platformPosts.length > 0) {
       const firstPlatformPost = platformPosts[0];
@@ -146,27 +147,27 @@ onMounted(async () => {
       accountId: p.socialAccountId,
       platformType: p.platformPostId as keyof SocialMediaPlatformConfigurations,
     }));
-    const initialCommentsRaw = (props.initialPost as { comment?: string | string[] }).comment;
+    const initialCommentsRaw = (initialPost as { comment?: string | string[] }).comment;
     const processedComments: string[] = Array.isArray(initialCommentsRaw)
       ? initialCommentsRaw
       : (initialCommentsRaw ? [initialCommentsRaw] : []);
 
-    const initialMediaAssetsRaw = JSON.parse(props.initialPost.mediaAssets as string || "[]");
+    const initialMediaAssetsRaw = JSON.parse(initialPost.mediaAssets as string || "[]");
     const processedMediaAssetsIds: string[] = Array.isArray(initialMediaAssetsRaw)
       ? initialMediaAssetsRaw
       : (initialMediaAssetsRaw ? [initialMediaAssetsRaw] : []);
 
     postForm.value = {
-      ...props.initialPost,
+      ...initialPost,
       targetPlatforms: processedTargetPlatforms,
       mediaAssets: processedMediaAssetsIds,
       comment: processedComments,
-      platformContent: (props.initialPost as any).platformContent || {},
-      platformSettings: (props.initialPost as any).platformSettings || {},
+      platformContent: (initialPost as any).platformContent || {},
+      platformSettings: (initialPost as any).platformSettings || {},
     } as PostForm;
     platformSettingsState.masterContent.value = postForm.value.content;
     platformSettingsState.masterComments.value = postForm.value.comment;
-    platformSettingsState.platformContent.value = props.initialPost.platformContent as Record<string, PlatformContentOverride> || {};
+    platformSettingsState.platformContent.value = initialPost.platformContent as Record<string, PlatformContentOverride> || {};
 
 
     const scheduleAt = dayjs(postForm.value.scheduledAt).toDate();
@@ -280,7 +281,7 @@ const handleSavePost = async (status: 'pending' | 'published' | 'failed') => {
     businessId: activeBusinessId.value,
     mediaAssets: postMediaAssets.value.map(asset => asset.id),
   };
-  if (props.initialPost) {
+  if (initialPost) {
     emit('update', postData);
   } else {
     emit('save', postData);
@@ -586,16 +587,16 @@ const handleVariableAction = (variable: string) => {
 </script>
 
 <template>
-  <section class="md:min-w-4xl">
+  <section class="" :class="{ 'min-w-full': !preview, 'md:min-w-4xl': preview }">
     <UCard>
       <div class="flex items-center justify-between">
         <PostPlatformSelector :accounts="connectedSocialAccountsList" :selectedAccounts="selectedSocialMediaAccounts"
           @toggle="togglePlatform" :validationStatus="validationStatus" />
-        <UButton color="neutral" variant="ghost" icon="i-heroicons-x-mark-20-solid" class="-my-1"
+        <UButton v-if="preview" color="neutral" variant="ghost" icon="i-heroicons-x-mark-20-solid" class="-my-1"
           @click="emit('close')" />
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 h-full">
+      <div class="grid grid-cols-1 gap-4 h-full" :class="{ 'md:grid-cols-2': preview }">
         <!-- Left Side: Editor and Comments -->
         <div class="flex-1 p-4 border-r border-gray-200 dark:border-gray-800 ">
           <UTabs :items="tabs" variant="link" :ui="{ trigger: 'grow' }" class="gap-4 w-full">
@@ -672,7 +673,7 @@ const handleVariableAction = (variable: string) => {
         </div>
 
         <!-- Right Side: Preview -->
-        <div class=" p-4">
+        <div class=" p-4" v-if="preview">
           <PhonePreview :postContent="formatPostContent(postForm.content, currentPreviewPlatform)"
             :mediaAssets="postMediaAssets" :platform="currentPreviewPlatform"
             :post="(postForm as unknown as PostCreateBase)" :currentPlatformConfig="currentPlatformConfig"
