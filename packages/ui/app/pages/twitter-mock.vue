@@ -17,7 +17,9 @@ const posts = [
     likes: 1240,
     retweets: 89,
     replies: 45,
-    views: 12500
+    views: 12500,
+    id: '1',
+    comments: ["about now "]
   },
   {
     avatar: 'https://i.pravatar.cc/300?img=12',
@@ -28,7 +30,10 @@ const posts = [
     likes: 543,
     retweets: 12,
     replies: 5,
-    views: 3200
+    views: 3200,
+
+    id: '2',
+    comments: ["No way"]
   },
   {
     avatar: 'https://i.pravatar.cc/300?img=8',
@@ -39,7 +44,12 @@ const posts = [
     likes: 2100,
     retweets: 300,
     replies: 120,
-    views: 50000
+    views: 50000,
+
+    id: '3',
+    comments: [
+      "hello"
+    ]
   }
 
 ];
@@ -57,7 +67,8 @@ setPageLayout('twitter-layout')
     <div class="my-10">
       <TwitterPostCard v-for="(post, index) in posts" :key="index" v-bind="post" />
       <!-- Example with media slot -->
-      <TwitterPostCard avatar="https://i.pravatar.cc/300?img=1" name="Alex Rivera" handle="@arivera_tech" timestamp="4h"
+      <TwitterPostCard id="10" avatar="https://i.pravatar.cc/300?img=1" name="Alex Rivera" handle="@arivera_tech"
+        timestamp="4h"
         content="Thinking about how AI is changing the landscape of social media. It is not about automation, it is about augmentation."
         :likes="858" :retweets="230" :replies="120" :views="8900">
         <template #media>
@@ -68,7 +79,8 @@ setPageLayout('twitter-layout')
       </TwitterPostCard>
 
       <!-- Example with Image -->
-      <TwitterPostCard avatar="https://i.pravatar.cc/300?img=5" name="Orbit Official" handle="@orbit_app" timestamp="1d"
+      <TwitterPostCard id="20" avatar="https://i.pravatar.cc/300?img=5" name="Orbit Official" handle="@orbit_app"
+        timestamp="1d"
         content="We are launching our new bulk import feature today! Schedule 100 posts in under 5 minutes."
         :likes="4200" :retweets="1200" :replies="540" :views="120000">
         <template #media>

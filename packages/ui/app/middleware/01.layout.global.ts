@@ -9,9 +9,6 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const userLayoutSetting = useState("dashboard-layout", () => 'dashboard-layout');
 
   let layout = to.meta.layout || 'default';
-  console.log(layout)
-  console.log(userLayoutSetting.value)
-  console.log(isAppRoute && !isUserSettingUpFirstBusiness)
   if (isBlog) {
     layout = 'blog-layout';
   } else if (isAppRoute && !isUserSettingUpFirstBusiness) {

@@ -16,7 +16,7 @@ import TwitterSideBar from './dashboard/TwitterSideBar.vue';
 </script>
 
 <template>
-  <BaseTwitterLayout size="lg">
+  <BaseTwitterLayout>
     <template #left-sidebar>
       <TwitterSideBar />
     </template>

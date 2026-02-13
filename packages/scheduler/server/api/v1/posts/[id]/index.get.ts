@@ -23,23 +23,12 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // Get query parameters
-    const query = getQuery(event)
-    const includePlatforms = query.includePlatforms === 'true'
-
-    // Get post
-    const result = await postService.findById(postId, user.id, includePlatforms)
-
-    if (!result) {
-      throw createError({
-        statusCode: 500,
-        statusMessage: result || 'Failed to fetch post'
-      })
-    }
+    // Get full post with platforms and assets
+    const result = await postService.findByIdFull({ postId })
 
     return {
       success: true,
-      data: result.data
+      data: result
     }
   } catch (error: any) {
     if (error.statusCode) {

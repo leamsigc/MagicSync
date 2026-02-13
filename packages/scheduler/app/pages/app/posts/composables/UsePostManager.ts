@@ -50,7 +50,6 @@ export const usePostManager = () => {
         description,
         icon: 'i-heroicons-check-circle',
         color: 'success',
-        timeout: 5000
       })
     } else if (hasErrors) {
       platformStatuses.forEach(ps => {
@@ -68,7 +67,6 @@ export const usePostManager = () => {
             description: ps.errorMessage || t('toast.platformError'),
             icon: 'i-heroicons-x-circle',
             color: 'error',
-            timeout: 8000
           })
         } else if (ps.status === 'pending') {
           toast.add({
@@ -107,10 +105,10 @@ export const usePostManager = () => {
         ...filters
       })
 
-      const response = await $fetch<PaginatedResponse<PostWithAllData>>(`/api/v1/posts?${query}`)
+      const { data: response } = await useFetch<PaginatedResponse<PostWithAllData>>(`/api/v1/posts?${query}`)
 
 
-      postList.value = response.data ?? []
+      postList.value = response.value?.data ?? []
     } catch (err: any) {
       error.value = err.data?.message || err.message || 'Failed to fetch posts'
       throw err

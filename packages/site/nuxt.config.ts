@@ -16,7 +16,7 @@ export default defineNuxtConfig({
       cors: true
     },
     "/app": {
-      redirect: "/app/calendar"
+      redirect: "/app/posts/feeds"
     }
   },
   // debug: true,

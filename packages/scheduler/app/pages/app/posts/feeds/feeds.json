@@ -1,0 +1,102 @@
+{
+  "en": {
+    "postDetail": {
+      "title": "Post Details",
+      "back": "Back",
+      "post": "Post",
+      "platformStatus": "Platform Status",
+      "details": "Post Details",
+      "comments": "Comments",
+      "stats": {
+        "comments": "Comments",
+        "platforms": "Platforms",
+        "media": "Media"
+      },
+      "fields": {
+        "postId": "Post ID",
+        "format": "Format",
+        "status": "Status",
+        "published": "Published",
+        "scheduled": "Scheduled"
+      },
+      "empty": "No additional details available",
+      "loading": "Loading post...",
+      "viewRawData": "View Raw Data"
+    }
+  },
+  "es": {
+    "postDetail": {
+      "title": "Detalles de la publicación",
+      "back": "Atrás",
+      "post": "Publicación",
+      "platformStatus": "Estado de la plataforma",
+      "details": "Detalles de la publicación",
+      "comments": "Comentarios",
+      "stats": {
+        "comments": "Comentarios",
+        "platforms": "Plataformas",
+        "media": "Multimedia"
+      },
+      "fields": {
+        "postId": "ID de publicación",
+        "format": "Formato",
+        "status": "Estado",
+        "published": "Publicado",
+        "scheduled": "Programado"
+      },
+      "empty": "No hay detalles adicionales disponibles",
+      "loading": "Cargando publicación...",
+      "viewRawData": "Ver datos en bruto"
+    }
+  },
+  "fr": {
+    "postDetail": {
+      "title": "Détails de la publication",
+      "back": "Retour",
+      "post": "Publication",
+      "platformStatus": "Statut de la plateforme",
+      "details": "Détails de la publication",
+      "comments": "Commentaires",
+      "stats": {
+        "comments": "Commentaires",
+        "platforms": "Plateformes",
+        "media": "Médias"
+      },
+      "fields": {
+        "postId": "ID de publication",
+        "format": "Format",
+        "status": "Statut",
+        "published": "Publié",
+        "scheduled": "Planifié"
+      },
+      "empty": "Aucun détail supplémentaire disponible",
+      "loading": "Chargement de la publication...",
+      "viewRawData": "Voir les données brutes"
+    }
+  },
+  "de": {
+    "postDetail": {
+      "title": "Beitragsdetails",
+      "back": "Zurück",
+      "post": "Beitrag",
+      "platformStatus": "Plattformstatus",
+      "details": "Beitragsdetails",
+      "comments": "Kommentare",
+      "stats": {
+        "comments": "Kommentare",
+        "platforms": "Plattformen",
+        "media": "Medien"
+      },
+      "fields": {
+        "postId": "Beitrags-ID",
+        "format": "Format",
+        "status": "Status",
+        "published": "Veröffentlicht",
+        "scheduled": "Geplant"
+      },
+      "empty": "Keine weiteren Details verfügbar",
+      "loading": "Beitrag wird geladen...",
+      "viewRawData": "Rohdaten anzeigen"
+    }
+  }
+}
