@@ -60,6 +60,10 @@
       "platformFailed": "Failed to post",
       "platformPending": "Scheduled",
       "platformError": "An error occurred while posting"
+    },
+    "feeds": {
+      "noMorePosts": "No more posts to load",
+      "noPostsFound": "No posts found"
     }
   },
   "es": {
@@ -121,6 +125,10 @@
       "platformFailed": "Error al publicar",
       "platformPending": "Programado",
       "platformError": "Ocurrió un error al publicar"
+    },
+    "feeds": {
+      "noMorePosts": "No hay más publicaciones para cargar",
+      "noPostsFound": "No se encontraron publicaciones"
     }
   },
   "fr": {
@@ -182,6 +190,10 @@
       "platformFailed": "Échec de la publication",
       "platformPending": "Planifié",
       "platformError": "Une erreur s'est produite lors de la publication"
+    },
+    "feeds": {
+      "noMorePosts": "Plus de publications à charger",
+      "noPostsFound": "Aucune publication trouvée"
     }
   },
   "de": {
@@ -243,6 +255,10 @@
       "platformFailed": "Posting fehlgeschlagen",
       "platformPending": "Geplant",
       "platformError": "Beim Posten ist ein Fehler aufgetreten"
+    },
+    "feeds": {
+      "noMorePosts": "Keine weiteren Beiträge zum Laden",
+      "noPostsFound": "Keine Beiträge gefunden"
     }
   }
 }
