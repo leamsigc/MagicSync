@@ -28,7 +28,7 @@ export const useBusinessManager = () => {
     }
   };
 
-  const addBusiness = async (business: Omit<CreateBusinessProfileData, 'userId'>) => {
+  const addBusiness = async (business: any) => {
     try {
       await $fetch<BusinessProfile>('/api/v1/business', {
         method: 'POST',
@@ -37,6 +37,19 @@ export const useBusinessManager = () => {
       await getAllBusinesses();
     } catch (error) {
       console.error('Error adding business:', error);
+      throw error;
+    }
+  };
+
+  const extractBusinessInfo = async (payload: { url: string; explanation: string; competitors?: string[] }) => {
+    try {
+      const result = await $fetch<any>('/api/v1/ai/information', {
+        method: 'POST',
+        body: payload
+      });
+      return result;
+    } catch (error) {
+      console.error('Error extracting business info:', error);
       throw error;
     }
   };
@@ -82,6 +95,7 @@ export const useBusinessManager = () => {
     activeBusinessId,
     getAllBusinesses,
     addBusiness,
+    extractBusinessInfo,
     updateBusiness,
     deleteBusiness,
     setActiveBusiness
