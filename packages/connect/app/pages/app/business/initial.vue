@@ -33,7 +33,7 @@ const { businesses, getAllBusinesses } = useBusinessManager();
 getAllBusinesses();
 
 const HandleSelect = (id: string) => {
-  router.push(`/app/integrations`)
+  router.push(`/app/business/${id}`)
 }
 </script>
 
