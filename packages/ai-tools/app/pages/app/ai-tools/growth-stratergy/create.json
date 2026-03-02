@@ -1,0 +1,378 @@
+{
+  "en": {
+    "title": "Content Pipeline",
+    "subtitle": "From idea to published.",
+    "saveDraft": "Save Draft",
+    "ideaBank": {
+      "title": "Idea Bank",
+      "placeholder": "1. How to use Nuxt 3 for SEO\n2. Why Tailwind is better than CSS-in-JS\n3. ..."
+    },
+    "script": {
+      "title": "Script & Hook",
+      "topicLabel": "Topic / Keyword",
+      "topicPlaceholder": "e.g., Productivity for developers",
+      "hookLabel": "Select Hook Variation",
+      "duration30m": "⏱ 30m",
+      "customHook": "+ Custom Hook",
+      "hookNamePlaceholder": "Hook Name (e.g., The Storyteller)",
+      "hookTemplatePlaceholder": "Template (e.g., Once upon a time [X]...)",
+      "addHook": "Add Hook",
+      "scriptLabel": "Script Content",
+      "checkHealth": "Check Hook Health",
+      "overallScore": "Overall Score",
+      "metrics": {
+        "hookStrength": "Hook Strength",
+        "topicRelevance": "Topic Relevance",
+        "estRetention": "Est. Retention"
+      },
+      "analysis": "Analysis",
+      "adjustments": "Suggested Adjustments",
+      "improvedScript": "AI Improved Script (Current Hook)",
+      "acceptScript": "Accept & Replace Script",
+      "alternativeHooks": "Alternative High-Retention Hooks",
+      "useThisVersion": "Use This Version"
+    },
+    "record": {
+      "title": "Record (Teleprompter)",
+      "duration2h": "⏱ 2h",
+      "readyTitle": "Ready to record?",
+      "readySubtitle": "Select your aspect ratio and enter focus mode.",
+      "enterFocusMode": "Enter Focus Mode",
+      "latestRecording": "Latest Recording",
+      "clear": "Clear",
+      "speed": "SPEED",
+      "focusMode": "Focus Mode",
+      "noScript": "No script content available.",
+      "startRecording": "Start Recording",
+      "stopRecording": "Stop Recording"
+    },
+    "editChecklist": {
+      "title": "Edit Checklist",
+      "duration1h": "⏱ 1h",
+      "hook": "Hook: Is the first 3 seconds engaging?",
+      "value": "Value: Did I deliver on the hook's promise?",
+      "cta": "Call to Action: Is there a clear next step?"
+    },
+    "upload": {
+      "title": "Upload",
+      "durationNextSteps": "⏱ FAST",
+      "videoUrl": "Video URL",
+      "placeholder": "https://...",
+      "markPublished": "Mark as Published"
+    },
+    "defaults": {
+      "hooks": [
+        {
+          "id": "negative",
+          "name": "The Negative Hook",
+          "template": "Stop doing [X] if you want [Y]",
+          "usage": "45k",
+          "successRate": 82
+        },
+        {
+          "id": "curiosity",
+          "name": "The Curiosity Gap",
+          "template": "I tried [X] for 30 days and...",
+          "usage": "60k",
+          "successRate": 75
+        },
+        {
+          "id": "contrarian",
+          "name": "The Contrarian",
+          "template": "Why [X] is actually terrible for you",
+          "usage": "30k",
+          "successRate": 88
+        },
+        {
+          "id": "listicle",
+          "name": "The Listicle",
+          "template": "3 reasons why your [X] is failing",
+          "usage": "85k",
+          "successRate": 68
+        }
+      ]
+    }
+  },
+  "es": {
+    "title": "Canal de Contenido",
+    "subtitle": "De la idea a lo publicado.",
+    "saveDraft": "Guardar Borrador",
+    "ideaBank": {
+      "title": "Banco de Ideas",
+      "placeholder": "1. Cómo usar Nuxt 3 para SEO\n2. Por qué Tailwind es mejor que CSS-in-JS\n3. ..."
+    },
+    "script": {
+      "title": "Guion y Gancho",
+      "topicLabel": "Tema / Palabra Clave",
+      "topicPlaceholder": "ej., Productividad para desarrolladores",
+      "hookLabel": "Seleccionar Variación de Gancho",
+      "duration30m": "⏱ 30m",
+      "customHook": "+ Gancho Personalizado",
+      "hookNamePlaceholder": "Nombre del Gancho (ej., El Narrador)",
+      "hookTemplatePlaceholder": "Plantilla (ej., Érase una vez [X]...)",
+      "addHook": "Añadir Gancho",
+      "scriptLabel": "Contenido del Guion",
+      "checkHealth": "Comprobar Salud del Gancho",
+      "overallScore": "Puntuación General",
+      "metrics": {
+        "hookStrength": "Fuerza del Gancho",
+        "topicRelevance": "Relevancia del Tema",
+        "estRetention": "Retención Est."
+      },
+      "analysis": "Análisis",
+      "adjustments": "Ajustes Sugeridos",
+      "improvedScript": "Guion Mejorado por IA (Gancho Actual)",
+      "acceptScript": "Aceptar y Reemplazar Guion",
+      "alternativeHooks": "Ganchos Alternativos de Alta Retención",
+      "useThisVersion": "Usar esta Versión"
+    },
+    "record": {
+      "title": "Grabar (Teleprompter)",
+      "duration2h": "⏱ 2h",
+      "readyTitle": "¿Listo para grabar?",
+      "readySubtitle": "Selecciona tu relación de aspecto y entra en modo de enfoque.",
+      "enterFocusMode": "Entrar en Modo de Enfoque",
+      "latestRecording": "Última Grabación",
+      "clear": "Limpiar",
+      "speed": "VELOCIDAD",
+      "focusMode": "Modo de Enfoque",
+      "noScript": "No hay contenido de guion disponible.",
+      "startRecording": "Iniciar Grabación",
+      "stopRecording": "Detener Grabación"
+    },
+    "editChecklist": {
+      "title": "Lista de Verificación de Edición",
+      "duration1h": "⏱ 1h",
+      "hook": "Gancho: ¿Son atractivos los primeros 3 segundos?",
+      "value": "Valor: ¿Cumplí con la promesa del gancho?",
+      "cta": "Llamada a la Acción: ¿Hay un paso siguiente claro?"
+    },
+    "upload": {
+      "title": "Subir",
+      "durationNextSteps": "⏱ RÁPIDO",
+      "videoUrl": "URL del Video",
+      "placeholder": "https://...",
+      "markPublished": "Marcar como Publicado"
+    },
+    "defaults": {
+      "hooks": [
+        {
+          "id": "negative",
+          "name": "El Gancho Negativo",
+          "template": "Deja de hacer [X] si quieres [Y]",
+          "usage": "45k",
+          "successRate": 82
+        },
+        {
+          "id": "curiosity",
+          "name": "Brecha de Curiosidad",
+          "template": "Probé [X] durante 30 días y...",
+          "usage": "60k",
+          "successRate": 75
+        },
+        {
+          "id": "contrarian",
+          "name": "El Contrario",
+          "template": "Por qué [X] es realmente terrible para ti",
+          "usage": "30k",
+          "successRate": 88
+        },
+        {
+          "id": "listicle",
+          "name": "La Lista",
+          "template": "3 razones por las que tu [X] está fallando",
+          "usage": "85k",
+          "successRate": 68
+        }
+      ]
+    }
+  },
+  "de": {
+    "title": "Inhalts-Pipeline",
+    "subtitle": "Von der Idee zur Veröffentlichung.",
+    "saveDraft": "Entwurf speichern",
+    "ideaBank": {
+      "title": "Ideenbank",
+      "placeholder": "1. Wie man Nuxt 3 für SEO nutzt\n2. Warum Tailwind besser als CSS-in-JS ist\n3. ..."
+    },
+    "script": {
+      "title": "Skript & Hook",
+      "topicLabel": "Thema / Schlüsselwort",
+      "topicPlaceholder": "z.B. Produktivität für Entwickler",
+      "hookLabel": "Hook-Variation auswählen",
+      "duration30m": "⏱ 30m",
+      "customHook": "+ Benutzerdefinierter Hook",
+      "hookNamePlaceholder": "Hook-Name (z.B. Der Geschichtenerzähler)",
+      "hookTemplatePlaceholder": "Vorlage (z.B. Es war einmal [X]...)",
+      "addHook": "Hook hinzufügen",
+      "scriptLabel": "Skriptinhalt",
+      "checkHealth": "Hook-Status prüfen",
+      "overallScore": "Gesamtbewertung",
+      "metrics": {
+        "hookStrength": "Hook-Stärke",
+        "topicRelevance": "Themenrelevanz",
+        "estRetention": "Geschätzte Bindung"
+      },
+      "analysis": "Analyse",
+      "adjustments": "Vorgeschlagene Anpassungen",
+      "improvedScript": "KI-verbessertes Skript (Aktueller Hook)",
+      "acceptScript": "Akzeptieren & Skript ersetzen",
+      "alternativeHooks": "Alternative Hooks mit hoher Bindung",
+      "useThisVersion": "Diese Version verwenden"
+    },
+    "record": {
+      "title": "Aufnahme (Teleprompter)",
+      "duration2h": "⏱ 2h",
+      "readyTitle": "Bereit zur Aufnahme?",
+      "readySubtitle": "Wählen Sie Ihr Seitenverhältnis und wechseln Sie in den Fokusmodus.",
+      "enterFocusMode": "Fokusmodus aktivieren",
+      "latestRecording": "Letzte Aufnahme",
+      "clear": "Löschen",
+      "speed": "GESCHWINDIGKEIT",
+      "focusMode": "Fokusmodus",
+      "noScript": "Kein Skriptinhalt verfügbar.",
+      "startRecording": "Aufnahme starten",
+      "stopRecording": "Aufnahme stoppen"
+    },
+    "editChecklist": {
+      "title": "Checkliste bearbeiten",
+      "duration1h": "⏱ 1h",
+      "hook": "Hook: Sind die ersten 3 Sekunden ansprechend?",
+      "value": "Wert: Habe ich das Versprechen des Hooks eingehalten?",
+      "cta": "Handlungsaufforderung: Gibt es einen klaren nächsten Schritt?"
+    },
+    "upload": {
+      "title": "Hochladen",
+      "durationNextSteps": "⏱ SCHNELL",
+      "videoUrl": "Video-URL",
+      "placeholder": "https://...",
+      "markPublished": "Als veröffentlicht markieren"
+    },
+    "defaults": {
+      "hooks": [
+        {
+          "id": "negative",
+          "name": "Der negative Hook",
+          "template": "Höre auf [X] zu tun, wenn du [Y] willst",
+          "usage": "45k",
+          "successRate": 82
+        },
+        {
+          "id": "curiosity",
+          "name": "Die Neugier-Lücke",
+          "template": "Ich habe [X] 30 Tage lang ausprobiert und...",
+          "usage": "60k",
+          "successRate": 75
+        },
+        {
+          "id": "contrarian",
+          "name": "Der Querdenker",
+          "template": "Warum [X] eigentlich schrecklich für dich ist",
+          "usage": "30k",
+          "successRate": 88
+        },
+        {
+          "id": "listicle",
+          "name": "Die Liste",
+          "template": "3 Gründe, warum dein [X] scheitert",
+          "usage": "85k",
+          "successRate": 68
+        }
+      ]
+    }
+  },
+  "fr": {
+    "title": "Pipeline de Contenu",
+    "subtitle": "De l'idée à la publication.",
+    "saveDraft": "Enregistrer le brouillon",
+    "ideaBank": {
+      "title": "Banque d'Idées",
+      "placeholder": "1. Comment utiliser Nuxt 3 pour le SEO\n2. Pourquoi Tailwind est meilleur que CSS-in-JS\n3. ..."
+    },
+    "script": {
+      "title": "Script & Accroche",
+      "topicLabel": "Sujet / Mot-clé",
+      "topicPlaceholder": "ex: Productivité pour les développeurs",
+      "hookLabel": "Sélectionner une variation d'accroche",
+      "duration30m": "⏱ 30m",
+      "customHook": "+ Accroche personnalisée",
+      "hookNamePlaceholder": "Nom de l'accroche (ex: Le Narrateur)",
+      "hookTemplatePlaceholder": "Modèle (ex: Il était une fois [X]...)",
+      "addHook": "Ajouter l'accroche",
+      "scriptLabel": "Contenu du script",
+      "checkHealth": "Vérifier la santé de l'accroche",
+      "overallScore": "Score global",
+      "metrics": {
+        "hookStrength": "Force de l'accroche",
+        "topicRelevance": "Pertinence du sujet",
+        "estRetention": "Rétention est."
+      },
+      "analysis": "Analyse",
+      "adjustments": "Ajustements suggérés",
+      "improvedScript": "Script amélioré par l'IA (Accroche actuelle)",
+      "acceptScript": "Accepter et remplacer le script",
+      "alternativeHooks": "Accroches alternatives à haute rétention",
+      "useThisVersion": "Utiliser cette version"
+    },
+    "record": {
+      "title": "Enregistrer (Téléprompteur)",
+      "duration2h": "⏱ 2h",
+      "readyTitle": "Prêt à enregistrer ?",
+      "readySubtitle": "Sélectionnez votre rapport d'aspect et passez en mode focus.",
+      "enterFocusMode": "Entrer en mode Focus",
+      "latestRecording": "Dernière session",
+      "clear": "Effacer",
+      "speed": "VITESSE",
+      "focusMode": "Mode Focus",
+      "noScript": "Aucun contenu de script disponible.",
+      "startRecording": "Démarrer l'enregistrement",
+      "stopRecording": "Arrêter l'enregistrement"
+    },
+    "editChecklist": {
+      "title": "Liste de vérification",
+      "duration1h": "⏱ 1h",
+      "hook": "Accroche : Les 3 premières secondes sont-elles engageantes ?",
+      "value": "Valeur : Ai-je tenu la promesse de l'accroche ?",
+      "cta": "Appel à l'action : Y a-t-il une étape suivante claire ?"
+    },
+    "upload": {
+      "title": "Télécharger",
+      "durationNextSteps": "⏱ RAPIDE",
+      "videoUrl": "URL de la vidéo",
+      "placeholder": "https://...",
+      "markPublished": "Marquer comme publié"
+    },
+    "defaults": {
+      "hooks": [
+        {
+          "id": "negative",
+          "name": "L'accroche négative",
+          "template": "Arrêtez de faire [X] si vous voulez [Y]",
+          "usage": "45k",
+          "successRate": 82
+        },
+        {
+          "id": "curiosity",
+          "name": "Le fossé de la curiosité",
+          "template": "J'ai essayé [X] pendant 30 jours et...",
+          "usage": "60k",
+          "successRate": 75
+        },
+        {
+          "id": "contrarian",
+          "name": "Le contrarien",
+          "template": "Pourquoi [X] est en fait terrible pour vous",
+          "usage": "30k",
+          "successRate": 88
+        },
+        {
+          "id": "listicle",
+          "name": "La liste",
+          "template": "3 raisons pour lesquelles votre [X] échoue",
+          "usage": "85k",
+          "successRate": 68
+        }
+      ]
+    }
+  }
+}

@@ -88,6 +88,14 @@ export default withMermaid(defineConfig({
             { text: 'Bulk Generation', link: '/guide/bulk-generation' },
           ],
         },
+        {
+          text: 'AI Tools',
+          collapsed: false,
+          items: [
+            { text: 'Features Overview', link: '/guide/features' },
+            { text: 'Growth Strategy & Content Pipeline', link: '/guide/growth-strategy' },
+          ],
+        },
       ],
       '/ecosystem/': [
         {

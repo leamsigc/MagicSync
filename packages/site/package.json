@@ -36,7 +36,9 @@
     "unhead": "catalog:",
     "vue": "catalog:",
     "vue-router": "catalog:",
-    "evlog": "catalog:"
+    "evlog": "catalog:",
+    "consola": "catalog:",
+    "comark": "catalog:"
   },
   "devDependencies": {
     "@nuxt/hints": "catalog:",

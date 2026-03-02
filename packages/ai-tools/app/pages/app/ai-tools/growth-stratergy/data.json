@@ -1,0 +1,102 @@
+{
+  "en": {
+    "title": "Data Beats Opinion",
+    "subtitle": "Algorithmic feedback and diagnostics.",
+    "metrics": {
+      "title": "Latest Post Metrics",
+      "views": "Views",
+      "ctr": "CTR (%)",
+      "watchTime": "Watch Time (%)",
+      "engagement": "Engagement Rate (%)"
+    },
+    "diagnostics": {
+      "title": "Algorithmic Diagnostics",
+      "fastOption": "Fast Option:"
+    },
+    "alerts": {
+      "lowCtr": "LOW CTR",
+      "lowCtrAction": "Change thumbnail brightness & contrast.",
+      "lowRetention": "LOW RETENTION",
+      "lowRetentionAction": "Cut the first 5 seconds of intro.",
+      "lowEngagement": "LOW ENGAGEMENT",
+      "lowEngagementAction": "Reply to every comment with a question.",
+      "onTrack": "ON TRACK",
+      "onTrackAction": "Repurpose this video to Twitter/LinkedIn."
+    }
+  },
+  "es": {
+    "title": "Los Datos Superan las Opiniones",
+    "subtitle": "Retroalimentación algorítmica y diagnósticos.",
+    "metrics": {
+      "title": "Últimas Métricas del Post",
+      "views": "Vistas",
+      "ctr": "CTR (%)",
+      "watchTime": "Tiempo de Visualización (%)",
+      "engagement": "Tasa de Compromiso (%)"
+    },
+    "diagnostics": {
+      "title": "Diagnósticos Algorítmicos",
+      "fastOption": "Opción Rápida:"
+    },
+    "alerts": {
+      "lowCtr": "CTR BAJO",
+      "lowCtrAction": "Cambia el brillo y contraste de la miniatura.",
+      "lowRetention": "RETENCIÓN BAJA",
+      "lowRetentionAction": "Corta los primeros 5 segundos de la introducción.",
+      "lowEngagement": "COMPROMISO BAJO",
+      "lowEngagementAction": "Responde a cada comentario con una pregunta.",
+      "onTrack": "EN CAMINO",
+      "onTrackAction": "Reutiliza este video para Twitter/LinkedIn."
+    }
+  },
+  "de": {
+    "title": "Daten schlagen Meinung",
+    "subtitle": "Algorithmisches Feedback und Diagnostik.",
+    "metrics": {
+      "title": "Aktuelle Metriken",
+      "views": "Aufrufe",
+      "ctr": "CTR (%)",
+      "watchTime": "Wiedergabezeit (%)",
+      "engagement": "Interaktionsrate (%)"
+    },
+    "diagnostics": {
+      "title": "Algorithmische Diagnostik",
+      "fastOption": "Schnelle Option:"
+    },
+    "alerts": {
+      "lowCtr": "NIEDRIGE CTR",
+      "lowCtrAction": "Helligkeit und Kontrast des Thumbnails ändern.",
+      "lowRetention": "NIEDRIGE BINDUNG",
+      "lowRetentionAction": "Die ersten 5 Sekunden des Intros schneiden.",
+      "lowEngagement": "NIEDRIGES ENGAGEMENT",
+      "lowEngagementAction": "Auf jeden Kommentar mit einer Frage antworten.",
+      "onTrack": "AUF KURS",
+      "onTrackAction": "Dieses Video für Twitter/LinkedIn wiederverwenden."
+    }
+  },
+  "fr": {
+    "title": "Les Données Battent l'Opinion",
+    "subtitle": "Commentaires algorithmiques et diagnostics.",
+    "metrics": {
+      "title": "Dernières Métriques",
+      "views": "Vues",
+      "ctr": "CTR (%)",
+      "watchTime": "Temps de visionnage (%)",
+      "engagement": "Taux d'engagement (%)"
+    },
+    "diagnostics": {
+      "title": "Diagnostics Algorithmiques",
+      "fastOption": "Option Rapide :"
+    },
+    "alerts": {
+      "lowCtr": "CTR FAIBLE",
+      "lowCtrAction": "Modifier la luminosité et le contraste de la miniature.",
+      "lowRetention": "RÉTENTION FAIBLE",
+      "lowRetentionAction": "Couper les 5 premières secondes de l'intro.",
+      "lowEngagement": "ENGAGEMENT FAIBLE",
+      "lowEngagementAction": "Répondre à chaque commentaire par une question.",
+      "onTrack": "SUR LA BONNE VOIE",
+      "onTrackAction": "Réutiliser cette vidéo pour Twitter/LinkedIn."
+    }
+  }
+}

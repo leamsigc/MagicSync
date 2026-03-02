@@ -189,6 +189,52 @@ Built-in tools to help you reach more people and build engagement.
 
 ---
 
+## 🎯 Growth Strategy & Content Pipeline
+
+### End-to-End Content Workflow
+A complete system for planning, scripting, recording, and publishing content — from a single integrated dashboard.
+
+**Growth Strategy Dashboard** (`/app/ai-tools/growth-stratergy`):
+- **Next Steps Tab**: Interactive Today / This Week / This Month checklists to stay on track
+- **Key Principles Tab**: The 5 core rules for consistent social growth, always visible
+- **Action Plan Tab**: Editable 7 / 30 / 90-day markdown plans, persisted locally — edit inline, save, or reset to defaults
+
+**Content Pipeline** (`/app/ai-tools/growth-stratergy/create`):
+
+*Step 1 — Script & Hook*
+- Idea Bank: brainstorm 20+ content ideas at a time
+- Choose from 4 proven hook variations (Negative Hook, Curiosity Gap, Contrarian, Listicle) or create a custom hook
+- Script editor with hook template pre-filled
+
+*AI Hook Health Check (Powered by Gemini 2.0 Flash)*
+- Analyzes your script against your chosen hook and topic
+- Returns: Overall Score (0–100), Hook Strength, Topic Relevance, Retention Estimate
+- Provides: written feedback, suggested adjustments, AI-improved script, and top 3 alternative high-retention hooks
+- Accept the improved script or switch to a better-performing hook with one click
+
+*Step 2 — Record (Teleprompter)*
+- Select aspect ratio: **16:9**, **9:16**, or **1:1**
+- **Focus Mode**: fullscreen overlay with live camera preview at 40% opacity
+- Word-by-word teleprompter display, with the current word highlighted
+- Speed control (0.5× to 2.5×), manual ↑↓ line navigation, auto-scroll
+- Start/Stop recording — recorded video preview with clear option
+
+*Step 3 — Edit Checklist*
+- Hook engaging? Value delivered? Clear call to action? — Three quick checks before publishing
+
+*Step 4 — Upload*
+- Input video URL and mark content as Published
+
+**Data Analytics** (`/app/ai-tools/growth-stratergy/data`):
+- Input your latest post metrics: Views, CTR, Watch Time, Engagement Rate
+- Real-time algorithmic diagnostics with fast-action recommendations:
+  - `LOW CTR` → Change thumbnail brightness & contrast
+  - `LOW RETENTION` → Cut the first 5 seconds of intro
+  - `LOW ENGAGEMENT` → Reply to every comment with a question
+  - `ON TRACK` → Repurpose this video across platforms
+
+---
+
 ## 🔗 Integrations
 
 ### Connect Your Favorite Tools

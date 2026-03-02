@@ -61,6 +61,5 @@
   "keywords": [],
   "author": "Ismael Garcia <leamsigc@leamsigc.com>",
   "license": "MIT",
-  "packageManager": "pnpm@10.19.0",
-  "dependencies": {}
+  "packageManager": "pnpm@10.19.0"
 }

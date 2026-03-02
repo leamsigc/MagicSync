@@ -34,15 +34,19 @@ catalog:
   '@vueuse/core': 14.2.1
   '@vueuse/motion': 3.0.3
   '@vueuse/nuxt': 14.2.1
+  ai: 5.0.106
   axios: 1.13.5
   better-auth: 1.4.18
   better-sqlite3: 12.6.2
   cheerio: ^1.2.0
+  comark: ^0.0.1
+  consola: 3.4.2
   dayjs: 1.11.19
   drizzle-kit: 0.31.9
   drizzle-orm: 0.45.1
   echarts: 6.0.0
   eslint: 10.0.0
+  evlog: 1.7.0
   fabric: 7.1.0
   googleapis: 171.4.0
   happy-dom: 20.6.1
@@ -60,14 +64,11 @@ catalog:
   tsx: 4.21.0
   twitter-api-v2: 1.29.0
   typescript: 5.9.3
+  unhead: 2.1.2
   vitest: 4.0.18
   vue: 3.5.28
   vue-router: 5.0.2
   zod: 4.3.6
-  evlog: 1.7.0
-  "consola": "^3.4.2"
-  "unhead": "^2.1.2"
-  "ai": "^5.0.106"
 
 ignoredBuiltDependencies:
   - fsevents

@@ -1,0 +1,106 @@
+{
+  "en": {
+    "title": "Growth Strategy",
+    "subtitle": "Your roadmap to social media growth.",
+    "tabs": {
+      "nextSteps": "🎯 Next Steps",
+      "principles": "🔥 Key Principles",
+      "actionPlan": "📅 Action Plan"
+    },
+    "actionPlan": {
+      "day7": "7 Days",
+      "day30": "30 Days",
+      "day90": "90 Days",
+      "edit": "Edit",
+      "save": "Save",
+      "cancel": "Cancel",
+      "reset": "Reset to default"
+    },
+    "cta": "🚀 Open Content Pipeline",
+    "defaults": {
+      "nextStepsMd": "## 🎯 {nextSteps}\n\n### TODAY (30 minutes)\n- [ ] Open `Your_90_Day_Action_Plan.md`\n- [ ] Read \"Month 1: Foundation\"\n- [ ] Choose your first topic from the 20 NEW ideas list\n\n### THIS WEEK (4 hours total)\n- [ ] Write script using template (30 min)\n- [ ] Record video (2 hours)\n- [ ] Edit (1 hour)\n- [ ] Upload + publish (30 min)\n\n### THIS MONTH\n- [ ] Follow the weekly schedule consistently\n- [ ] Publish 9 pieces total (1 YouTube, 4 TikTok, 2 Twitter, 2 LinkedIn)\n- [ ] Track metrics in the Data dashboard\n",
+      "principlesMd": "## 🔥 {principles}\n\n1. **First 30 videos are learning curve** — Don't expect virality. Focus on metrics improvement.\n2. **Consistency > Perfection** — Ship weekly, optimize monthly.\n3. **Hook is 80% of the game** — Spend more time on the first 3 seconds than the rest of the script.\n4. **Repurpose everything** — One video = 8+ pieces across platforms.\n5. **Community grows you** — Reply to every comment in the first 60 minutes.\n",
+      "day7": "## 7-Day Action Plan\n\n### Day 1-2: Setup\n- [ ] Choose your niche and define your target audience\n- [ ] Set up all social media accounts\n- [ ] Install analytics tools (YouTube Studio, TikTok Analytics)\n\n### Day 3-4: Content Creation\n- [ ] Write your first 3 scripts using hook templates\n- [ ] Record your first video\n- [ ] Edit and optimize for each platform\n\n### Day 5-6: Publish & Engage\n- [ ] Publish your first piece of content\n- [ ] Reply to every comment within 60 minutes\n- [ ] Cross-post to all platforms\n\n### Day 7: Review & Plan\n- [ ] Review initial metrics (CTR, views, engagement)\n- [ ] Identify what worked and what didn't\n- [ ] Plan content for next week",
+      "day30": "## 30-Day Action Plan\n\n### Week 1: Foundation\n- [ ] Publish 1 YouTube video, 2 TikToks, 1 Twitter thread, 1 LinkedIn post\n- [ ] Build your script template library\n- [ ] Join 3 communities in your niche\n\n### Week 2: Iteration\n- [ ] Analyze Week 1 metrics\n- [ ] Double down on the format with highest CTR\n- [ ] Experiment with 1 new hook variation\n\n### Week 3: Scale\n- [ ] Increase to 2 YouTube videos\n- [ ] Start repurposing: 1 video = 8+ pieces\n- [ ] Collaborate with 1 creator in your niche\n\n### Week 4: Optimize\n- [ ] Full analytics review\n- [ ] A/B test thumbnails for top videos\n- [ ] Plan Month 2 content calendar",
+      "day90": "## 90-Day Action Plan\n\n### Month 1: Foundation (Publish 9 pieces)\n- [ ] 1 YouTube video per week (4 total)\n- [ ] 2 TikToks per week\n- [ ] 2 Twitter threads per week\n- [ ] 2 LinkedIn posts per week\n- [ ] Track all metrics in dashboard\n\n### Month 2: Growth (Publish 12+ pieces)\n- [ ] Optimize top-performing content formats\n- [ ] Start email list building\n- [ ] Introduce paid content or collaboration\n- [ ] A/B test thumbnails and hooks systematically\n\n### Month 3: Authority (Publish 15+ pieces)\n- [ ] Target 10k YouTube subscribers\n- [ ] Target 50k TikTok followers\n- [ ] Land first brand partnership or sponsorship\n- [ ] Create your first lead magnet or digital product"
+    }
+  },
+  "es": {
+    "title": "Estrategia de Crecimiento",
+    "subtitle": "Tu hoja de ruta para el crecimiento en redes sociales.",
+    "tabs": {
+      "nextSteps": "🎯 Próximos Pasos",
+      "principles": "🔥 Principios Clave",
+      "actionPlan": "📅 Plan de Acción"
+    },
+    "actionPlan": {
+      "day7": "7 Días",
+      "day30": "30 Días",
+      "day90": "90 Días",
+      "edit": "Editar",
+      "save": "Guardar",
+      "cancel": "Cancelar",
+      "reset": "Restablecer por defecto"
+    },
+    "cta": "🚀 Abrir Canal de Contenido",
+    "defaults": {
+      "nextStepsMd": "## 🎯 {nextSteps}\n\n### HOY (30 minutos)\n- [ ] Abre `Tu_Plan_de_Accion_de_90_Dias.md`\n- [ ] Lee \"Mes 1: Base\"\n- [ ] Elige tu primer tema de la lista de 20 ideas NUEVAS\n\n### ESTA SEMANA (4 horas en total)\n- [ ] Escribe el guion usando la plantilla (30 min)\n- [ ] Graba el video (2 horas)\n- [ ] Edita (1 hora)\n- [ ] Sube + publica (30 min)\n\n### ESTE MES\n- [ ] Sigue el horario semanal de manera constante\n- [ ] Publica 9 piezas en total (1 YouTube, 4 TikTok, 2 Twitter, 2 LinkedIn)\n- [ ] Haz un seguimiento de las métricas en el panel de datos\n",
+      "principlesMd": "## 🔥 {principles}\n\n1. **Los primeros 30 videos son una curva de aprendizaje** — No esperes viralidad. Céntrate en mejorar las métricas.\n2. **Consistencia > Perfección** — Envía semanalmente, optimiza mensualmente.\n3. **El gancho es el 80% del juego** — Dedica más tiempo a los primeros 3 segundos que al resto del guion.\n4. **Reutiliza todo** — Un video = más de 8 piezas en todas las plataformas.\n5. **La comunidad te hace crecer** — Responde a todos los comentarios en los primeros 60 minutos.\n",
+      "day7": "## Plan de Acción de 7 Días\n\n### Día 1-2: Configuración\n- [ ] Elige tu nicho y define tu público objetivo\n- [ ] Configura todas las cuentas de redes sociales\n- [ ] Instala herramientas de análisis (YouTube Studio, TikTok Analytics)\n\n### Día 3-4: Creación de Contenido\n- [ ] Escribe tus primeros 3 guiones usando plantillas de ganchos\n- [ ] Graba tu primer video\n- [ ] Edita y optimiza para cada plataforma\n\n### Día 5-6: Publicar e Interactuar\n- [ ] Publica tu primera pieza de contenido\n- [ ] Responde a todos los comentarios en 60 minutos\n- [ ] Publica de forma cruzada en todas las plataformas\n\n### Día 7: Revisar y Planificar\n- [ ] Revisa las métricas iniciales (CTR, vistas, compromiso)\n- [ ] Identifica qué funcionó y qué no\n- [ ] Planifica el contenido para la próxima semana",
+      "day30": "## Plan de Acción de 30 Días\n\n### Semana 1: Base\n- [ ] Publica 1 video de YouTube, 2 de TikTok, 1 hilo de Twitter, 1 publicación de LinkedIn\n- [ ] Crea tu biblioteca de plantillas de guiones\n- [ ] Únete a 3 comunidades de tu nicho\n\n### Semana 2: Iteración\n- [ ] Analiza las métricas de la semana 1\n- [ ] Apuesta doble por el formato con el CTR más alto\n- [ ] Experimenta con 1 nueva variación de gancho\n\n### Semana 3: Escalar\n- [ ] Aumenta a 2 videos de YouTube\n- [ ] Comienza a reutilizar: 1 video = más de 8 piezas\n- [ ] Colabora con 1 creador en tu nicho\n\n### Semana 4: Optimizar\n- [ ] Revisión completa de analíticas\n- [ ] Prueba A/B de miniaturas para los videos más populares\n- [ ] Planifica el calendario de contenido del Mes 2",
+      "day90": "## Plan de Acción de 90 Días\n\n### Mes 1: Base (Publica 9 piezas)\n- [ ] 1 video de YouTube por semana (4 en total)\n- [ ] 2 TikToks por semana\n- [ ] 2 hilos de Twitter por semana\n- [ ] 2 publicaciones de LinkedIn por semana\n- [ ] Haz un seguimiento de todas las métricas en el panel\n\n### Mes 2: Crecimiento (Publica más de 12 piezas)\n- [ ] Optimiza los formatos de contenido con mejor rendimiento\n- [ ] Comienza a crear una lista de correo electrónico\n- [ ] Introduce contenido pagado o colaboración\n- [ ] Prueba A/B de miniaturas y ganchos sistemáticamente\n\n### Mes 3: Autoridad (Publica más de 15 piezas)\n- [ ] Objetivo: 10k suscriptores en YouTube\n- [ ] Objetivo: 50k seguidores en TikTok\n- [ ] Consigue tu primera asociación de marca o patrocinio\n- [ ] Crea tu primer imán de clientes potenciales (lead magnet) o producto digital"
+    }
+  },
+  "de": {
+    "title": "Wachstumsstrategie",
+    "subtitle": "Ihr Fahrplan für Social-Media-Wachstum.",
+    "tabs": {
+      "nextSteps": "🎯 Nächste Schritte",
+      "principles": "🔥 Schlüsselprinzipien",
+      "actionPlan": "📅 Aktionsplan"
+    },
+    "actionPlan": {
+      "day7": "7 Tage",
+      "day30": "30 Tage",
+      "day90": "90 Tage",
+      "edit": "Bearbeiten",
+      "save": "Speichern",
+      "cancel": "Abbrechen",
+      "reset": "Auf Standard zurücksetzen"
+    },
+    "cta": "🚀 Content-Pipeline öffnen",
+    "defaults": {
+      "nextStepsMd": "## 🎯 {nextSteps}\n\n### HEUTE (30 Minuten)\n- [ ] Öffnen Sie `Ihr_90_Tage_Aktionsplan.md`\n- [ ] Lesen Sie \"Monat 1: Fundament\"\n- [ ] Wählen Sie Ihr erstes Thema aus der Liste der 20 NEUEN Ideen\n\n### DIESE WOCHE (insgesamt 4 Stunden)\n- [ ] Skript mit Vorlage schreiben (30 Min.)\n- [ ] Video aufnehmen (2 Stunden)\n- [ ] Bearbeiten (1 Stunde)\n- [ ] Hochladen + Veröffentlichen (30 Min.)\n\n### DIESEN MONAT\n- [ ] Befolgen Sie den wöchentlichen Zeitplan konsequent\n- [ ] Veröffentlichen Sie insgesamt 9 Beiträge (1 YouTube, 4 TikTok, 2 Twitter, 2 LinkedIn)\n- [ ] Verfolgen Sie Metriken im Daten-Dashboard\n",
+      "principlesMd": "## 🔥 {principles}\n\n1. **Die ersten 30 Videos sind eine Lernkurve** — Erwarten Sie keine Viralität. Konzentrieren Sie sich auf die Verbesserung der Metriken.\n2. **Konsistenz > Perfektion** — Wöchentlich veröffentlichen, monatlich optimieren.\n3. **Der Hook macht 80% des Spiels aus** — Verbringen Sie mehr Zeit mit den ersten 3 Sekunden als mit dem Rest des Skripts.\n4. **Alles wiederverwerten** — Ein Video = 8+ Beiträge auf verschiedenen Plattformen.\n5. **Community lässt Sie wachsen** — Antworten Sie auf jeden Kommentar innerhalb der ersten 60 Minuten.\n",
+      "day7": "## 7-Tage-Aktionsplan\n\n### Tag 1-2: Setup\n- [ ] Wählen Sie Ihre Nische und definieren Sie Ihre Zielgruppe\n- [ ] Richten Sie alle Social-Media-Konten ein\n- [ ] Installieren Sie Analysetools (YouTube Studio, TikTok Analytics)\n\n### Tag 3-4: Erstellung von Inhalten\n- [ ] Schreiben Sie Ihre ersten 3 Skripte mit Hook-Vorlagen\n- [ ] Nehmen Sie Ihr erstes Video auf\n- [ ] Bearbeiten und optimieren Sie für jede Plattform\n\n### Tag 5-6: Veröffentlichen & Interagieren\n- [ ] Veröffentlichen Sie Ihren ersten Beitrag\n- [ ] Antworten Sie auf jeden Kommentar innerhalb von 60 Minuten\n- [ ] Cross-Post auf allen Plattformen\n\n### Tag 7: Überprüfung & Planung\n- [ ] Überprüfen Sie die ersten Metriken (CTR, Aufrufe, Engagement)\n- [ ] Identifizieren Sie, was funktioniert hat und was nicht\n- [ ] Planen Sie Inhalte für die nächste Woche",
+      "day30": "## 30-Tage-Aktionsplan\n\n### Woche 1: Fundament\n- [ ] Veröffentlichen Sie 1 YouTube-Video, 2 TikToks, 1 Twitter-Thread, 1 LinkedIn-Beitrag\n- [ ] Erstellen Sie Ihre Skriptvorlagen-Bibliothek\n- [ ] Treten Sie 3 Communities in Ihrer Nische bei\n\n### Woche 2: Iteration\n- [ ] Analysieren Sie die Metriken von Woche 1\n- [ ] Setzen Sie verstärkt auf das Format mit der höchsten CTR\n- [ ] Experimentieren Sie mit 1 neuen Hook-Variation\n\n### Woche 3: Skalierung\n- [ ] Erhöhen Sie auf 2 YouTube-Videos\n- [ ] Beginnen Sie mit der Wiederverwertung: 1 Video = 8+ Beiträge\n- [ ] Arbeiten Sie mit 1 Creator in Ihrer Nische zusammen\n\n### Woche 4: Optimierung\n- [ ] Vollständige Analyseüberprüfung\n- [ ] A/B-Test von Thumbnails für Top-Videos\n- [ ] Planen Sie den Inhaltskalender für Monat 2",
+      "day90": "## 90-Tage-Aktionsplan\n\n### Monat 1: Fundament (9 Beiträge veröffentlichen)\n- [ ] 1 YouTube-Video pro Woche (insgesamt 4)\n- [ ] 2 TikToks pro Woche\n- [ ] 2 Twitter-Threads pro Woche\n- [ ] 2 LinkedIn-Beiträge pro Woche\n- [ ] Verfolgen Sie alle Metriken im Dashboard\n\n### Monat 2: Wachstum (12+ Beiträge veröffentlichen)\n- [ ] Optimieren Sie die leistungsstärksten Inhaltsformate\n- [ ] Beginnen Sie mit dem Aufbau einer E-Mail-Liste\n- [ ] Führen Sie bezahlte Inhalte oder Kooperationen ein\n- [ ] Führen Sie systematisch A/B-Tests für Thumbnails und Hooks durch\n\n### Monat 3: Autorität (15+ Beiträge veröffentlichen)\n- [ ] Ziel: 10k YouTube-Abonnenten\n- [ ] Ziel: 50k TikTok-Follower\n- [ ] Erste Markenpartnerschaft oder Sponsoring gewinnen\n- [ ] Erstellen Sie Ihren ersten Lead-Magneten oder Ihr erstes digitales Produkt"
+    }
+  },
+  "fr": {
+    "title": "Stratégie de Croissance",
+    "subtitle": "Votre feuille de route pour la croissance sur les réseaux sociaux.",
+    "tabs": {
+      "nextSteps": "🎯 Prochaines Étapes",
+      "principles": "🔥 Principes Clés",
+      "actionPlan": "📅 Plan d'Action"
+    },
+    "actionPlan": {
+      "day7": "7 Jours",
+      "day30": "30 Jours",
+      "day90": "90 Jours",
+      "edit": "Modifier",
+      "save": "Enregistrer",
+      "cancel": "Annuler",
+      "reset": "Réinitialiser par défaut"
+    },
+    "cta": "🚀 Ouvrir le Pipeline de Contenu",
+    "defaults": {
+      "nextStepsMd": "## 🎯 {nextSteps}\n\n### AUJOURD'HUI (30 minutes)\n- [ ] Ouvrez `Votre_Plan_d_Action_de_90_Jours.md`\n- [ ] Lisez \"Mois 1 : Fondations\"\n- [ ] Choisissez votre premier sujet dans la liste des 20 NOUVELLES idées\n\n### CETTE SEMAINE (4 heures au total)\n- [ ] Écrivez le script à l'aide du modèle (30 min)\n- [ ] Enregistrez la vidéo (2 heures)\n- [ ] Éditez (1 heure)\n- [ ] Téléchargez + publiez (30 min)\n\n### CE MOIS-CI\n- [ ] Suivez le programme hebdomadaire de manière cohérente\n- [ ] Publiez 9 pièces au total (1 YouTube, 4 TikTok, 2 Twitter, 2 LinkedIn)\n- [ ] Suivez les métriques dans le tableau de bord\n",
+      "principlesMd": "## 🔥 {principles}\n\n1. **Les 30 premières vidéos sont une courbe d'apprentissage** — Ne vous attendez pas à la viralité. Concentrez-vous sur l'amélioration des métriques.\n2. **Consistance > Perfection** — Publiez chaque semaine, optimisez chaque mois.\n3. **L'accroche (hook) représente 80% du jeu** — Passez plus de temps sur les 3 premières secondes que sur le reste du script.\n4. **Tout réutiliser** — Une vidéo = 8+ pièces sur toutes les plateformes.\n5. **La communauté vous fait grandir** — Répondez à chaque commentaire dans les 60 premières minutes.\n",
+      "day7": "## Plan d'Action de 7 Jours\n\n### Jour 1-2 : Configuration\n- [ ] Choisissez votre niche et définissez votre public cible\n- [ ] Configurez tous les comptes de réseaux sociaux\n- [ ] Installez des outils d'analyse (YouTube Studio, TikTok Analytics)\n\n### Jour 3-4 : Création de Contenu\n- [ ] Écrivez vos 3 premiers scripts à l'aide de modèles d'accroches\n- [ ] Enregistrez votre première vidéo\n- [ ] Éditez et optimisez pour chaque plateforme\n\n### Jour 5-6 : Publier & Engager\n- [ ] Publiez votre premier morceau de contenu\n- [ ] Répondez à chaque commentaire dans les 60 minutes\n- [ ] Publiez de manière croisée sur toutes les plateformes\n\n### Jour 7 : Révision & Planification\n- [ ] Examinez les métriques initiales (CTR, vues, engagement)\n- [ ] Identifiez ce qui a fonctionné et ce qui n'a pas fonctionné\n- [ ] Planifiez le contenu pour la semaine prochaine",
+      "day30": "## Plan d'Action de 30 Jours\n\n### Semaine 1 : Fondations\n- [ ] Publiez 1 vidéo YouTube, 2 TikToks, 1 fil Twitter, 1 publication LinkedIn\n- [ ] Construisez votre bibliothèque de modèles de scripts\n- [ ] Rejoignez 3 communautés dans votre niche\n\n### Semaine 2 : Itération\n- [ ] Analysez les métriques de la semaine 1\n- [ ] Doublez la mise sur le format avec le CTR le plus élevé\n- [ ] Expérimentez avec 1 nouvelle variation d'accroche\n\n### Semaine 3 : Échelle\n- [ ] Passez à 2 vidéos YouTube\n- [ ] Commencez à réutiliser : 1 vidéo = 8+ pièces\n- [ ] Collaborez avec 1 créateur dans votre niche\n\n### Semaine 4 : Optimisation\n- [ ] Examen complet des analytiques\n- [ ] Testez A/B les miniatures pour les meilleures vidéos\n- [ ] Planifiez le calendrier de contenu du Mois 2",
+      "day90": "## Plan d'Action de 90 Jours\n\n### Mois 1 : Fondations (Publier 9 pièces)\n- [ ] 1 vidéo YouTube par semaine (4 au total)\n- [ ] 2 TikToks par semaine\n- [ ] 2 fils Twitter par semaine\n- [ ] 2 publications LinkedIn par semaine\n- [ ] Suivez toutes les métriques dans le tableau de bord\n\n### Mois 2 : Croissance (Publier 12+ pièces)\n- [ ] Optimisez les formats de contenu les plus performants\n- [ ] Commencez à créer une liste de diffusion par e-mail\n- [ ] Introduisez du contenu payant ou de la collaboration\n- [ ] Testez A/B les miniatures et les accroches systématiquement\n\n### Mois 3 : Autorité (Publier 15+ pièces)\n- [ ] Objectif : 10k abonnés YouTube\n- [ ] Objectif : 50k followers TikTok\n- [ ] Obtenez votre premier partenariat de marque ou parrainage\n- [ ] Créez votre premier aimant à prospects (lead magnet) ou produit numérique"
+    }
+  }
+}
