@@ -53,27 +53,76 @@ const {
   markAsPublished,
 } = useContentPipelineManagement()
 
+// Video recorder composable using mediabunny for high-quality MP4 output
+const {
+  isCameraActive: isVideoCameraActive,
+  isRecording: isVideoRecording,
+  isProcessing: isVideoProcessing,
+  recordingState,
+  countdown,
+  isCountingDown,
+  timer: videoTimer,
+  error: videoError,
+  startCamera,
+  stopCamera,
+  startCountdown,
+  startRecording,
+  stopRecording,
+  downloadVideo,
+  clearVideo,
+  setAspectRatio,
+  reset: resetVideoRecorder,
+  frameRate,
+  previewUrl: videoPreviewUrl,
+  updateTeleprompterText,
+} = useVideoRecorder()
 
+// Refs for video and canvas elements
 const videoRef = ref<HTMLVideoElement | null>(null)
 const canvasRef = ref<HTMLCanvasElement | null>(null)
-const mediaRecorderRef = ref<MediaRecorder | null>(null)
-const recordedChunksRef = ref<Blob[]>([])
-const streamRef = ref<MediaStream | null>(null)
+
+// Sync aspect ratio with video recorder
+watch(aspectRatio, (newRatio) => {
+  setAspectRatio(newRatio)
+}, { immediate: true })
+
+// Sync preview URL from video recorder composable
+watch(() => previewUrl.value, (newUrl) => {
+  // This is handled by the composable returning previewUrl directly
+}, { immediate: true })
 
 let timerInterval: ReturnType<typeof setInterval> | null = null
 let scrollTimeout: ReturnType<typeof setTimeout> | null = null
 let countdownInterval: ReturnType<typeof setInterval> | null = null
 
-const countdown = ref(0)
-const isCountingDown = ref(false)
+// Sync timer with video recorder
+watch(videoTimer, (newTimer) => {
+  timer.value = newTimer
+}, { immediate: true })
 
-watch(isRecording, (recording: boolean) => {
+// Watch for recording state changes from the composable
+watch(isVideoRecording, (recording: boolean) => {
+  isRecording.value = recording
   if (recording) {
     timerInterval = setInterval(() => { timer.value++ }, 1000)
   } else {
     if (timerInterval) clearInterval(timerInterval)
+    isAutoScroll.value = false
   }
 })
+
+// Update teleprompter text on canvas during recording
+watch(currentWordIndex, () => {
+  if (words.value.length > 0) {
+    const lineIndex = Math.floor(currentWordIndex.value / WORDS_PER_LINE)
+    const line = lines.value[lineIndex] || []
+    const next = lines.value[lineIndex + 1] || []
+    const wordIdxInLine = currentWordIndex.value % WORDS_PER_LINE
+    if (line.length > 0) {
+      updateTeleprompterText(line, wordIdxInLine, next.join(' '))
+    }
+  }
+}, { immediate: true })
 
 watch([isRecording, isAutoScroll, currentWordIndex, speedMultiplier], () => {
   if (scrollTimeout) clearTimeout(scrollTimeout)
@@ -99,210 +148,43 @@ onUnmounted(() => {
   stopCamera()
 })
 
-const startCamera = async () => {
-  try {
-    const ratioMap: Record<string, number> = { '9:16': 9 / 16, '1:1': 1, '16:9': 16 / 9 }
-    const rawStream = await navigator.mediaDevices.getUserMedia({
-      video: { aspectRatio: { ideal: ratioMap[aspectRatio.value] || 16 / 9 } },
-      audio: true,
-    })
-    streamRef.value = rawStream
-
-    if (videoRef.value) {
-      videoRef.value.srcObject = rawStream
-      isCameraActive.value = true
-    }
-
-    startCanvasDrawing(rawStream)
-  } catch (err) {
-    console.error('Failed to start camera:', err)
-  }
-}
-
-const startCanvasDrawing = (_stream: MediaStream) => {
-  if (!videoRef.value || !canvasRef.value) return
-
-  const video = videoRef.value
-  const canvas = canvasRef.value
-  const ctx = canvas.getContext('2d')
-  if (!ctx) return
-
-  const draw = () => {
-    if (!isCameraActive.value) return
-    if (!video.videoWidth || !video.videoHeight) {
-      requestAnimationFrame(draw)
-      return
-    }
-
-    const targetRatio = aspectRatio.value === '9:16' ? 9 / 16 : aspectRatio.value === '1:1' ? 1 : 16 / 9
-    const videoAspect = video.videoWidth / video.videoHeight
-
-    let sx = 0, sy = 0, sw = video.videoWidth, sh = video.videoHeight
-
-    if (videoAspect > targetRatio) {
-      sw = video.videoHeight * targetRatio
-      sx = (video.videoWidth - sw) / 2
-    } else {
-      sh = video.videoWidth / targetRatio
-      sy = (video.videoHeight - sh) / 2
-    }
-
-    canvas.width = video.videoWidth
-    canvas.height = video.videoHeight
-
-    ctx.drawImage(video, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height)
-
-    requestAnimationFrame(draw)
-  }
-
-  if (video.readyState >= 1) {
-    draw()
-  }
-  video.onloadedmetadata = () => {
-    draw()
-  }
-}
-
-const stopCamera = () => {
-  if (streamRef.value) {
-    streamRef.value.getTracks().forEach(t => t.stop())
-    streamRef.value = null
-  }
-  if (videoRef.value?.srcObject) {
-    const stream = videoRef.value.srcObject as MediaStream
-    stream.getTracks().forEach(t => t.stop())
-    videoRef.value.srcObject = null
-  }
-  isCameraActive.value = false
-}
+// Remove old MediaRecorder-based functions - now handled by useVideoRecorder composable
 
 const enterFocusMode = async () => {
   isFocusMode.value = true
   countdown.value = 0
   isCountingDown.value = false
-  if (countdownInterval) clearInterval(countdownInterval)
+
+  resetVideoRecorder()
   await nextTick()
-  await startCamera()
+  // Start camera using the new composable
+  await startCamera(videoRef.value!, canvasRef.value!)
 }
 
 const exitFocusMode = () => {
-  if (countdownInterval) clearInterval(countdownInterval)
   countdown.value = 0
   isCountingDown.value = false
-  if (isRecording.value) stopRecording()
+  if (isVideoRecording.value) {
+    stopRecording()
+  }
   stopCamera()
+  // resetVideoRecorder()
   isFocusMode.value = false
 }
 
-const startRecording = async () => {
+// Wrapper to start recording with countdown
+const startRecordingWithCountdown = async () => {
   if (!canvasRef.value) return
 
-  // Start countdown from 3 to 0
-  countdown.value = 3
-  isCountingDown.value = true
+  // Use the composable's countdown
+  startCountdown(async () => {
+    // Reset word index and start auto-scroll
+    currentWordIndex.value = 0
+    isAutoScroll.value = true
 
-  countdownInterval = setInterval(() => {
-    countdown.value--
-    if (countdown.value <= 0) {
-      clearInterval(countdownInterval!)
-      isCountingDown.value = false
-      startActualRecording()
-    }
-  }, 1000)
-}
-
-const getSupportedMimeType = () => {
-  const candidates = [
-    'video/webm;codecs=vp9,opus',
-    'video/webm;codecs=vp8,opus',
-    'video/webm;codecs=vp9',
-    'video/webm;codecs=vp8',
-    'video/webm',
-    'video/mp4'
-  ]
-
-  for (const mimeType of candidates) {
-    if (MediaRecorder.isTypeSupported(mimeType)) {
-      return mimeType
-    }
-  }
-
-  // Fallback to basic webm if nothing else works
-  return 'video/webm'
-}
-
-const startActualRecording = async () => {
-  console.log('Starting actual recording...')
-  recordedChunksRef.value = []
-  previewUrl.value = null
-
-  if (!canvasRef.value || !videoRef.value) {
-    console.error('Canvas or video ref not available', { canvas: !!canvasRef.value, video: !!videoRef.value })
-    return
-  }
-
-  try {
-    await videoRef.value.play()
-    console.log('Video playing')
-  } catch (err) {
-    console.error('Failed to play video:', err)
-  }
-
-  await new Promise(resolve => setTimeout(resolve, 200))
-
-  console.log('Capturing canvas stream...')
-  const canvasStream = canvasRef.value.captureStream(30)
-  console.log('Canvas stream tracks:', canvasStream.getTracks())
-
-  const audioTrack = streamRef.value?.getAudioTracks()[0]
-  if (audioTrack) {
-    canvasStream.addTrack(audioTrack)
-    console.log('Added audio track')
-  }
-
-  const mimeType = getSupportedMimeType()
-  console.log('Using MIME type:', mimeType)
-
-  const recorder = new MediaRecorder(canvasStream, { mimeType })
-  mediaRecorderRef.value = recorder
-  recorder.ondataavailable = (e) => {
-    if (e.data.size > 0) recordedChunksRef.value.push(e.data)
-  }
-  recorder.onstop = () => {
-    const blob = new Blob(recordedChunksRef.value, { type: mimeType })
-    previewUrl.value = URL.createObjectURL(blob)
-    console.log('Recording stopped, blob size:', blob.size)
-  }
-
-  recorder.onstart = () => {
-    console.log('Recorder started!')
-  }
-
-  recorder.onerror = (e) => {
-    console.error('Recorder error:', e)
-  }
-
-  recorder.start(100)
-  console.log('Setting isRecording to true...')
-  isRecording.value = true
-  console.log('isRecording is now:', isRecording.value)
-  timer.value = 0
-  currentWordIndex.value = 0
-  isAutoScroll.value = true
-}
-
-const stopRecording = () => {
-  mediaRecorderRef.value?.stop()
-  isRecording.value = false
-  isAutoScroll.value = false
-}
-
-const downloadVideo = () => {
-  if (!previewUrl.value) return
-  const a = document.createElement('a')
-  a.href = previewUrl.value
-  a.download = `video-${aspectRatio.value}-${Date.now()}.webm`
-  a.click()
+    // Start recording using mediabunny
+    await startRecording()
+  })
 }
 
 const onCheckHookHealth = async () => {
@@ -538,23 +420,23 @@ useHead({
               </div>
 
               <div
-                v-if="previewUrl"
+                v-if="videoPreviewUrl"
                 class="w-full space-y-3 pt-6 border-t border-border">
                 <div class="flex justify-between items-center">
                   <span class="text-xs font-mono text-muted-foreground uppercase">{{
                     t('record.latestRecording') }}</span>
                   <div class="flex gap-2">
-                    <UButton color="primary" variant="link" size="xs" icon="i-lucide-download" @click="downloadVideo">
+                    <UButton color="primary" variant="link" size="xs" icon="i-lucide-download" @click="() => downloadVideo()">
                       {{ t('record.download') }}
                     </UButton>
-                    <UButton color="neutral" variant="link" size="xs" @click="previewUrl = null">
+                    <UButton color="neutral" variant="link" size="xs" @click="clearVideo">
                       {{ t('record.clear') }}
                     </UButton>
                   </div>
                 </div>
                 <div
                   :class="['mx-auto overflow-hidden rounded-xl border-4 border-muted shadow-2xl bg-black', aspectRatio === '9:16' ? 'w-1/2 aspect-9/16' : aspectRatio === '1:1' ? 'w-2/3 aspect-square' : 'w-full aspect-video']">
-                  <video :src="previewUrl" controls class="w-full h-full object-contain" />
+                  <video :src="videoPreviewUrl" controls class="w-full h-full object-contain" />
                 </div>
 
               </div>
@@ -683,19 +565,19 @@ useHead({
           </div>
 
           <div class="relative group">
-            <div v-if="!isRecording"
+            <div v-if="!isVideoRecording"
               class="absolute inset-0 bg-primary/20 rounded-full blur-xl group-hover:bg-primary/30 transition-all scale-110" />
-            <UButton v-if="!isRecording" size="xl" color="primary" variant="solid"
+            <UButton v-if="!isVideoRecording" size="xl" color="primary" variant="solid"
               class="rounded-full px-12 py-5 text-lg font-black uppercase tracking-[0.2em] shadow-2xl relative transition-transform active:scale-95"
-              @click="startRecording">
-              <UIcon name="i-lucide-video" class="mr-3" /> {{ t('record.startRecording')
-              }}
+              @click="startRecordingWithCountdown">
+              <UIcon name="i-lucide-video" class="mr-3" />
+              {{ t('record.startRecording')}}
             </UButton>
             <UButton v-else size="xl" color="error" variant="solid"
               class="rounded-full px-12 py-5 text-lg font-black uppercase tracking-[0.2em] shadow-2xl relative transition-transform active:scale-95 animate-pulse"
               @click="stopRecording">
-              <UIcon name="i-lucide-square" class="mr-3" /> {{ t('record.stopRecording')
-              }}
+              <UIcon name="i-lucide-square" class="mr-3" />
+              {{ t('record.stopRecording')}}
             </UButton>
           </div>
         </div>

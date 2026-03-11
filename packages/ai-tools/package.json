@@ -18,7 +18,8 @@
     "@nuxtjs/i18n": "catalog:",
     "cheerio": "catalog:",
     "evlog": "catalog:",
-    "comark": "catalog:"
+    "comark": "catalog:",
+    "mediabunny": "catalog:"
   },
   "devDependencies": {
     "@nuxt/eslint": "catalog:",
