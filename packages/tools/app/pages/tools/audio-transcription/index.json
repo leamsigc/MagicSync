@@ -33,7 +33,16 @@
     "copied": "Copied!",
     "model": "Model",
     "size": "Size",
-    "language": "Language"
+    "language": "Language",
+    "from_file": "From File",
+    "from_url": "From URL",
+    "record_audio": "Record Audio",
+    "enter_audio_url": "Enter audio URL",
+    "load_url": "Load URL",
+    "start_recording": "Start Recording",
+    "stop_recording": "Stop Recording",
+    "recording": "Recording...",
+    "click_to_transcribe": "Click on the audio to start transcription"
   },
   "es": {
     "title": "Transcripción de Audio Gratis - Convierte Voz a Texto",
@@ -62,14 +71,23 @@
     "model_loaded": "Modelo cargado",
     "idle": "Listo",
     "error": "Error",
-    "processing": "Procesando",
+    "processing": "Procesamiento",
     "ready": "Listo",
     "result": "Resultado",
     "copy_text": "Copiar Texto",
     "copied": "¡Copiado!",
     "model": "Modelo",
     "size": "Tamaño",
-    "language": "Idioma"
+    "language": "Idioma",
+    "from_file": "Desde Archivo",
+    "from_url": "Desde URL",
+    "record_audio": "Grabar Audio",
+    "enter_audio_url": "Ingresa URL de audio",
+    "load_url": "Cargar URL",
+    "start_recording": "Iniciar Grabación",
+    "stop_recording": "Detener Grabación",
+    "recording": "Grabando...",
+    "click_to_transcribe": "Haz clic en el audio para iniciar la transcripción"
   },
   "de": {
     "title": "Kostenlose Audio-Transkription - Sprache in Text umwandeln",
@@ -105,7 +123,16 @@
     "copied": "Kopiert!",
     "model": "Modell",
     "size": "Größe",
-    "language": "Sprache"
+    "language": "Sprache",
+    "from_file": "Von Datei",
+    "from_url": "Von URL",
+    "record_audio": "Audio Aufnehmen",
+    "enter_audio_url": "Audio-URL eingeben",
+    "load_url": "URL Laden",
+    "start_recording": "Aufnahme Starten",
+    "stop_recording": "Aufnahme Stoppen",
+    "recording": "Aufnahme...",
+    "click_to_transcribe": "Klicken Sie auf das Audio, um die Transkription zu starten"
   },
   "fr": {
     "title": "Transcription Audio Gratuite - Convertir la Parole en Texte",
@@ -141,6 +168,15 @@
     "copied": "Copié!",
     "model": "Modèle",
     "size": "Taille",
-    "language": "Langue"
+    "language": "Langue",
+    "from_file": "Depuis Fichier",
+    "from_url": "Depuis URL",
+    "record_audio": "Enregistrer Audio",
+    "enter_audio_url": "Entrez l'URL audio",
+    "load_url": "Charger URL",
+    "start_recording": "Démarrer l'Enregistrement",
+    "stop_recording": "Arrêter l'Enregistrement",
+    "recording": "Enregistrement...",
+    "click_to_transcribe": "Cliquez sur l'audio pour commencer la transcription"
   }
 }
