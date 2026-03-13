@@ -60,6 +60,7 @@ export default withMermaid(defineConfig({
           collapsed: false,
           items: [
             { text: 'Introduction', link: '/guide/introduction' },
+            { text: 'For Everyone', link: '/guide/for-everyone' },
             { text: 'Installation', link: '/guide/installation' },
             { text: 'Quick Start', link: '/guide/quick-start' },
           ],
