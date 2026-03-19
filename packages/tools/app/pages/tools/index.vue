@@ -49,6 +49,20 @@ const posts = ref([
     date: '2026-03-09',
     to: "/tools/audio-transcription"
   },
+  {
+    title: 'Audio Player',
+    description: 'Stream audio from Bunny CDN or play local files with waveform visualization',
+    image: '/img/audio-player.png',
+    date: '2026-03-19',
+    to: "/tools/audio-player"
+  },
+  {
+    title: 'Podcast Player',
+    description: 'Discover and listen to the best tech podcasts with a global player',
+    image: '/img/podcast-player.png',
+    date: '2026-03-19',
+    to: "/tools/podcast"
+  },
 ])
 const { t } = useI18n()
 useHead({
