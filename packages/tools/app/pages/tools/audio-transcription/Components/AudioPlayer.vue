@@ -25,6 +25,7 @@ const wavesurfer = ref<WaveSurfer | null>(null)
 const isPlaying = ref(false)
 const duration = ref(0)
 const playbackRate = ref(1)
+const hasError = ref(false)
 
 const formatTime = (seconds: number): string => {
   const h = Math.floor(seconds / 3600)
@@ -71,6 +72,28 @@ onMounted(async () => {
 
   wavesurfer.value.on('play', () => { isPlaying.value = true })
   wavesurfer.value.on('pause', () => { isPlaying.value = false })
+
+  wavesurfer.value.on('decodeError', () => {
+    hasError.value = true
+    isPlaying.value = false
+    useToast().add({
+      title: 'Audio Error',
+      description: 'Could not decode this audio file.',
+      color: 'error',
+      icon: 'i-lucide-alert-circle',
+    })
+  })
+
+  wavesurfer.value.on('mediaError', () => {
+    hasError.value = true
+    isPlaying.value = false
+    useToast().add({
+      title: 'Audio Error',
+      description: 'This audio file could not be played.',
+      color: 'error',
+      icon: 'i-lucide-alert-circle',
+    })
+  })
 })
 
 watch(() => props.currentTime, (newTime) => {
@@ -110,7 +133,7 @@ function setPlaybackRate(rate: number) {
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-4">
         <UButton :icon="isPlaying ? 'i-lucide-pause' : 'i-lucide-play'" color="success" size="lg" class="rounded-full"
-          @click="togglePlay" />
+          :disabled="hasError" @click="togglePlay" />
         <div>
           <div class="text-sm font-mono text-white">
             {{ formatTime(currentTime) }} <span class="text-gray-500">/ {{ formatTime(duration) }}</span>
