@@ -25,6 +25,7 @@ const truncatedDescription = computed(() => {
 <template>
   <div
     class="group cursor-pointer rounded-xl border border-white/5 bg-white/5 p-4 transition-all hover:border-orange-500/30 hover:bg-white/10"
+    data-testid="episode-card"
     @click="emit('play')"
   >
     <div class="flex items-start gap-4">

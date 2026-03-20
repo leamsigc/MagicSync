@@ -17,6 +17,7 @@ const emit = defineEmits<{
 <template>
   <div
     class="group cursor-pointer rounded-xl border border-white/5 bg-white/5 p-4 transition-all hover:border-orange-500/30 hover:bg-white/10"
+    data-testid="podcast-card"
     @click="emit('select', props.id)"
   >
     <div class="flex gap-4">

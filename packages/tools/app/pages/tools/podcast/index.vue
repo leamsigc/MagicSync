@@ -52,17 +52,18 @@ useHead({
           size="xl"
           class="w-full"
           :ui="{ base: 'rounded-xl' }"
+          data-testid="podcast-search-input"
         >
           <template #leading>
             <UIcon name="i-lucide-search" class="w-5 h-5 text-gray-500" />
           </template>
           <template v-if="isSearching" #trailing>
-            <UIcon name="i-lucide-loader-2" class="w-5 h-5 text-gray-400 animate-spin" />
+            <UIcon name="i-lucide-loader-2" class="w-5 h-5 text-gray-400 animate-spin" data-testid="podcast-search-loading" />
           </template>
         </UInput>
       </div>
 
-      <div v-if="results.length > 0" class="space-y-3">
+      <div v-if="results.length > 0" class="space-y-3" data-testid="podcast-results">
         <PodcastCard
           v-for="podcast in results"
           :key="podcast.id"
@@ -70,11 +71,12 @@ useHead({
           :title="podcast.title"
           :author="podcast.author"
           :artwork="podcast.artwork"
+          data-testid="podcast-card"
           @select="handleSelect"
         />
       </div>
 
-      <div v-else-if="hasSearched && !isSearching" class="text-center py-16">
+      <div v-else-if="hasSearched && !isSearching" class="text-center py-16" data-testid="podcast-no-results">
         <UIcon name="i-lucide-search-x" class="w-12 h-12 text-gray-600 mx-auto mb-4" />
         <p class="text-gray-500">No podcasts found for "{{ searchTerm }}"</p>
       </div>

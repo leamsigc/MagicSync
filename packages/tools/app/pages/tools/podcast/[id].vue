@@ -66,6 +66,7 @@ useHead({
         size="sm"
         icon="i-lucide-arrow-left"
         class="mb-6"
+        data-testid="podcast-back"
         @click="navigateTo('/tools/podcast')"
       >
         Back to Search
@@ -83,7 +84,7 @@ useHead({
           <UIcon name="i-lucide-microphone" class="w-12 h-12 text-gray-600" />
         </div>
         <div class="flex-1 min-w-0">
-          <h1 class="text-2xl font-bold text-white leading-tight line-clamp-2">{{ podcastTitle }}</h1>
+          <h1 class="text-2xl font-bold text-white leading-tight line-clamp-2" data-testid="podcast-title">{{ podcastTitle }}</h1>
           <p class="text-gray-400 mt-1">{{ podcastAuthor }}</p>
           <div class="flex items-center gap-3 mt-4">
             <UButton
@@ -91,6 +92,7 @@ useHead({
               :variant="isFavoriteState ? 'solid' : 'outline'"
               :color="isFavoriteState ? 'primary' : 'neutral'"
               size="sm"
+              data-testid="podcast-favorite-toggle"
               @click="handleToggleFavorite"
             >
               {{ isFavoriteState ? 'Saved' : 'Save' }}
@@ -105,7 +107,7 @@ useHead({
         <UIcon name="i-lucide-loader-2" class="w-8 h-8 text-orange-400 animate-spin" />
       </div>
 
-      <div v-else-if="episodes.length > 0" class="space-y-3">
+      <div v-else-if="episodes.length > 0" class="space-y-3" data-testid="podcast-episodes">
         <EpisodeCard
           v-for="episode in episodes"
           :key="episode.id"

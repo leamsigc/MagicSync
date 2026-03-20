@@ -140,7 +140,7 @@ function handleClose() {
 
 <template>
   <Teleport to="body">
-    <div v-if="currentEpisode" class="fixed bottom-4 right-4 z-50 w-80 rounded-xl border border-orange-500/30 bg-background-foreground shadow-2xl shadow-black/50 p-4 space-y-3">
+    <div v-if="currentEpisode" data-testid="podcast-mini-player" class="fixed bottom-4 right-4 z-50 w-80 rounded-xl border border-orange-500/30 bg-background-foreground shadow-2xl shadow-black/50 p-4 space-y-3">
       <div class="flex items-center gap-3">
         <img
           v-if="podcastInfo?.artwork"
