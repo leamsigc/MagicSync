@@ -1,10 +1,8 @@
 <script lang="ts" setup>
-import type { Episode } from '../../composables/usePodcastService'
 
 const route = useRoute()
 const { getPodcastFeed } = usePodcastService()
 const { currentEpisode, playEpisode } = usePodcastPlayer()
-const { saveFavorite, removeFavorite, isFavorite } = await import('../../utils/podcast-db')
 
 const feedUrl = computed(() => String(route.query.feed || ''))
 const podcastTitle = computed(() => String(route.query.title || 'Podcast'))
@@ -61,40 +59,25 @@ useHead({
   <div class="min-h-screen bg-background-foreground">
     <BaseHeader />
     <div class="max-w-3xl mx-auto p-6">
-      <UButton
-        variant="ghost"
-        size="sm"
-        icon="i-lucide-arrow-left"
-        class="mb-6"
-        data-testid="podcast-back"
-        @click="navigateTo('/tools/podcast')"
-      >
+      <UButton variant="ghost" size="sm" icon="i-lucide-arrow-left" class="mb-6" data-testid="podcast-back"
+        to="/tools/podcast">
         Back to Search
       </UButton>
 
       <div class="flex items-start gap-6 mb-8">
-        <img
-          v-if="podcastArtwork"
-          :src="podcastArtwork"
-          :alt="podcastTitle"
-          class="w-32 h-32 rounded-xl object-cover shrink-0"
-          loading="lazy"
-        >
+        <img v-if="podcastArtwork" :src="podcastArtwork" :alt="podcastTitle"
+          class="w-32 h-32 rounded-xl object-cover shrink-0" loading="lazy">
         <div v-else class="w-32 h-32 rounded-xl bg-gray-800 flex items-center justify-center shrink-0">
           <UIcon name="i-lucide-microphone" class="w-12 h-12 text-gray-600" />
         </div>
         <div class="flex-1 min-w-0">
-          <h1 class="text-2xl font-bold text-white leading-tight line-clamp-2" data-testid="podcast-title">{{ podcastTitle }}</h1>
+          <h1 class="text-2xl font-bold text-white leading-tight line-clamp-2" data-testid="podcast-title">{{
+            podcastTitle }}</h1>
           <p class="text-gray-400 mt-1">{{ podcastAuthor }}</p>
           <div class="flex items-center gap-3 mt-4">
-            <UButton
-              :icon="isFavoriteState ? 'i-lucide-bookmark-check' : 'i-lucide-bookmark'"
-              :variant="isFavoriteState ? 'solid' : 'outline'"
-              :color="isFavoriteState ? 'primary' : 'neutral'"
-              size="sm"
-              data-testid="podcast-favorite-toggle"
-              @click="handleToggleFavorite"
-            >
+            <UButton :icon="isFavoriteState ? 'i-lucide-bookmark-check' : 'i-lucide-bookmark'"
+              :variant="isFavoriteState ? 'solid' : 'outline'" :color="isFavoriteState ? 'primary' : 'neutral'"
+              size="sm" data-testid="podcast-favorite-toggle" @click="handleToggleFavorite">
               {{ isFavoriteState ? 'Saved' : 'Save' }}
             </UButton>
           </div>
@@ -108,17 +91,9 @@ useHead({
       </div>
 
       <div v-else-if="episodes.length > 0" class="space-y-3" data-testid="podcast-episodes">
-        <EpisodeCard
-          v-for="episode in episodes"
-          :key="episode.id"
-          :id="episode.id"
-          :title="episode.title"
-          :date="episode.date"
-          :duration="episode.duration"
-          :description="episode.description"
-          :is-playing="isCurrentlyPlaying(episode)"
-          @play="handlePlay(episode)"
-        />
+        <EpisodeCard v-for="episode in episodes" :key="episode.id" :id="episode.id" :title="episode.title"
+          :date="episode.date" :duration="episode.duration" :description="episode.description"
+          :is-playing="isCurrentlyPlaying(episode)" @play="handlePlay(episode)" />
       </div>
 
       <div v-else class="text-center py-16">

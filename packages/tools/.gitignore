@@ -22,3 +22,5 @@ dist
 
 # JetBrains/WebStorm
 .idea/
+
+/test-results

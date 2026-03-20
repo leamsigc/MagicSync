@@ -1,3 +1,5 @@
+import * as cheerio from 'cheerio'
+
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
   const feedUrl = String(query.url || '')
@@ -9,7 +11,7 @@ export default defineEventHandler(async (event) => {
   let xml: string
   try {
     xml = await $fetch<string>(feedUrl, {
-      headers: { Accept: 'application/rss+xml, application/xml, text/xml' },
+      responseType: 'text',
     })
   } catch {
     throw createError({ statusCode: 502, message: 'Failed to fetch podcast feed' })
@@ -29,35 +31,44 @@ interface EpisodeItem {
 }
 
 function parseRSS(xml: string): EpisodeItem[] {
-  const parser = new DOMParser()
-  const doc = parser.parseFromString(xml, 'text/xml')
-  if (doc.querySelector('parsererror')) {
-    throw createError({ statusCode: 422, message: 'Invalid feed format' })
-  }
-
-  const items = doc.querySelectorAll('item')
+  const $ = cheerio.load(xml, { xmlMode: true })
   const episodes: EpisodeItem[] = []
-  for (let i = 0; i < Math.min(items.length, 5); i++) {
-    const item = items[i]
-    const enclosure = item.querySelector('enclosure')
-    const audioUrl = enclosure?.getAttribute('url') || ''
-    if (!audioUrl) continue
 
-    const title = item.querySelector('title')?.textContent?.trim() || `Episode ${i + 1}`
-    const pubDate = item.querySelector('pubDate')?.textContent?.trim() || ''
-    const duration = item.querySelector('itunes\\:duration, duration')?.textContent?.trim() || ''
-    const description = item.querySelector('description, itunes\\:summary')?.textContent?.trim() || ''
+  $('item').slice(0, 5).each((_, el) => {
+    const item = $(el)
+    const enclosureUrl = item.find('enclosure').attr('url') || ''
+    if (!enclosureUrl) return
+
+    const title = item.find('title').first().text().trim() || 'Untitled Episode'
+    const pubDate = item.find('pubDate').text().trim()
+    const duration = getDuration(item, $)
+    const description = item.find('description').first().text().trim()
+      || item.find('summary').text().trim()
 
     episodes.push({
       id: crypto.randomUUID(),
       title,
       date: pubDate ? new Date(pubDate).toLocaleDateString() : '',
       duration: formatDuration(duration),
-      audioUrl,
+      audioUrl: enclosureUrl,
       description: description.replace(/<[^>]*>/g, '').slice(0, 300),
     })
-  }
+  })
+
   return episodes
+}
+
+function getDuration(item: any, $: any): string {
+  let duration = ''
+  item.children().each((_: any, el: any) => {
+    if (el.tagName === 'itunes:duration') {
+      duration = $(el).text().trim()
+    }
+  })
+  if (!duration) {
+    duration = item.find('duration').text().trim()
+  }
+  return duration
 }
 
 function formatDuration(raw: string): string {

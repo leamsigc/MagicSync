@@ -8,20 +8,21 @@ const hasSearched = ref(false)
 
 let debounceTimer: ReturnType<typeof setTimeout>
 
-watch(searchTerm, (val) => {
-  clearTimeout(debounceTimer)
-  if (!val.trim()) {
-    results.value = []
-    hasSearched.value = false
-    return
-  }
-  debounceTimer = setTimeout(async () => {
+
+watchDebounced(
+  searchTerm,
+  async () => {
     isSearching.value = true
     hasSearched.value = true
-    results.value = await searchPodcasts(val)
+
+    results.value = await searchPodcasts(searchTerm.value)
     isSearching.value = false
-  }, 400)
-})
+  },
+  {
+    debounce: 500,
+    maxWait: 1000
+  },
+)
 
 const handleSelect = (id: number) => {
   const podcast = results.value.find((p) => p.id === id)
@@ -46,34 +47,21 @@ useHead({
       </header>
 
       <div class="relative mb-8">
-        <UInput
-          v-model="searchTerm"
-          placeholder="Search for podcasts..."
-          size="xl"
-          class="w-full"
-          :ui="{ base: 'rounded-xl' }"
-          data-testid="podcast-search-input"
-        >
+        <UInput v-model="searchTerm" placeholder="Search for podcasts..." size="xl" class="w-full"
+          :ui="{ base: 'rounded-xl' }" data-testid="podcast-search-input">
           <template #leading>
             <UIcon name="i-lucide-search" class="w-5 h-5 text-gray-500" />
           </template>
           <template v-if="isSearching" #trailing>
-            <UIcon name="i-lucide-loader-2" class="w-5 h-5 text-gray-400 animate-spin" data-testid="podcast-search-loading" />
+            <UIcon name="i-lucide-loader-2" class="w-5 h-5 text-gray-400 animate-spin"
+              data-testid="podcast-search-loading" />
           </template>
         </UInput>
       </div>
 
       <div v-if="results.length > 0" class="space-y-3" data-testid="podcast-results">
-        <PodcastCard
-          v-for="podcast in results"
-          :key="podcast.id"
-          :id="podcast.id"
-          :title="podcast.title"
-          :author="podcast.author"
-          :artwork="podcast.artwork"
-          data-testid="podcast-card"
-          @select="handleSelect"
-        />
+        <PodcastCard v-for="podcast in results" :key="podcast.id" :id="podcast.id" :title="podcast.title"
+          :author="podcast.author" :artwork="podcast.artwork" data-testid="podcast-card" @select="handleSelect" />
       </div>
 
       <div v-else-if="hasSearched && !isSearching" class="text-center py-16" data-testid="podcast-no-results">

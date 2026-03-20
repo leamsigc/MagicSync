@@ -113,6 +113,10 @@ export interface ExtractedContent {
   description: string;
   url: string;
 }
+export async function renderHtml(html: string, options?: Record<string, unknown>){
+  const $ = cheerio.load(html, options);
+  return $;
+}
 
 export async function extractMainContent(url: string): Promise<ExtractedContent> {
   try {

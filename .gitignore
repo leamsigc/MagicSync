@@ -143,3 +143,4 @@ vite.config.ts.timestamp-*
 *.db
 
 upload/
+**/test-results
