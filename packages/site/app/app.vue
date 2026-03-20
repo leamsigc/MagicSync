@@ -1,3 +1,4 @@
 <template>
   <BaseRootPage />
+  <PodcastPlayer />
 </template>

@@ -15,6 +15,8 @@ export const usePodcastPlayer = () => {
   })
 
   const playEpisode = (episode: Episode, info: { title: string; artwork: string }) => {
+    console.log("Episode",episode);
+
     currentEpisode.value = episode
     podcastInfo.value = info
     audioUrl.value = episode.audioUrl
@@ -44,7 +46,7 @@ export const usePodcastPlayer = () => {
 
   return {
     currentEpisode: readonly(currentEpisode),
-    isPlaying: readonly(isPlaying),
+    isPlaying: isPlaying,
     currentTime: readonly(currentTime),
     audioUrl: readonly(audioUrl),
     proxiedAudioUrl: readonly(proxiedAudioUrl),

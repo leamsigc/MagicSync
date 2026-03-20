@@ -8,7 +8,6 @@
  * @version 0.0.1
  */
 
-import { getFavorites, removeFavorite, type FavoritePodcast } from '../../utils/podcast-db'
 
 const { t } = useI18n()
 const { searchPodcasts } = usePodcastService()
@@ -104,17 +103,9 @@ useHead({
         <div v-if="favorites.length > 0" class="mt-8" data-testid="podcast-favorites">
           <h2 class="text-lg font-semibold text-white mb-4">{{ t('podcast.saved.title') }}</h2>
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <SavedPodcastCard
-              v-for="podcast in favorites"
-              :key="podcast.id"
-              :id="podcast.id"
-              :title="podcast.title"
-              :author="podcast.author"
-              :artwork="podcast.artwork"
-              :feed-url="podcast.feedUrl"
-              @select="handleSelectFavorite(podcast)"
-              @remove="handleRemoveFavorite(podcast.id)"
-            />
+            <SavedPodcastCard v-for="podcast in favorites" :key="podcast.id" :id="podcast.id" :title="podcast.title"
+              :author="podcast.author" :artwork="podcast.artwork" :feed-url="podcast.feedUrl"
+              @select="handleSelectFavorite(podcast)" @remove="handleRemoveFavorite(podcast.id)" />
           </div>
         </div>
 
@@ -140,7 +131,5 @@ useHead({
         </div>
       </div>
     </div>
-
-    <PodcastPlayer />
   </div>
 </template>

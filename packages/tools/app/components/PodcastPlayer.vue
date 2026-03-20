@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import WaveSurfer from 'wavesurfer.js'
 
-const { currentEpisode, isPlaying, currentTime, proxiedAudioUrl, podcastInfo, togglePlay, stop, setCurrentTime, clearAudio } = usePodcastPlayer()
+const { currentEpisode, isPlaying, currentTime, proxiedAudioUrl, podcastInfo, togglePlay, stop, setCurrentTime, clearAudio, audioUrl } = usePodcastPlayer()
 
 const containerRef = ref<HTMLElement | null>(null)
 const wavesurfer = ref<WaveSurfer | null>(null)
@@ -33,11 +33,11 @@ const initWaveSurfer = async () => {
     waveColor: '#f97316',
     progressColor: '#ea6c0a',
     cursorColor: '#f97316',
-    barWidth: 2,
+    barWidth: 1,
     barGap: 1,
     barRadius: 2,
-    height: 48,
-    normalize: true,
+    height: 60,
+    normalize: false,
     url: proxiedAudioUrl.value,
   })
 
@@ -136,27 +136,18 @@ function handleClose() {
 
 <template>
   <Teleport to="body">
-    <div v-if="currentEpisode" data-testid="podcast-mini-player" class="fixed bottom-4 right-4 z-50 w-80 rounded-xl border border-orange-500/30 bg-background-foreground shadow-2xl shadow-black/50 p-4 space-y-3">
+    <div v-if="currentEpisode" data-testid="podcast-mini-player"
+      class="fixed bottom-4 right-4 z-50 w-80 rounded-xl border bg-black/80  border-orange-500/30  shadow-2xl shadow-black/50 p-4 space-y-3">
       <div class="flex items-center gap-3">
-        <img
-          v-if="podcastInfo?.artwork"
-          :src="podcastInfo.artwork"
-          :alt="podcastInfo.title"
-          class="w-10 h-10 rounded object-cover shrink-0"
-          loading="lazy"
-        >
+        <img v-if="podcastInfo?.artwork" :src="podcastInfo.artwork" :alt="podcastInfo.title"
+          class="w-10 h-10 rounded object-cover shrink-0" loading="lazy">
         <div class="flex-1 min-w-0">
           <p class="text-xs font-medium text-white truncate">{{ currentEpisode.title }}</p>
           <p class="text-xs text-gray-500 truncate">{{ podcastInfo?.title }}</p>
         </div>
-        <UButton
-          :icon="isLoading ? 'i-lucide-loader-2' : (isPlaying ? 'i-lucide-pause' : 'i-lucide-play')"
-          color="primary"
-          size="sm"
-          class="rounded-full shrink-0"
-          :disabled="isLoading || hasError"
-          @click="handleTogglePlay"
-        />
+        <UButton :icon="isLoading ? 'i-lucide-loader' : (isPlaying ? 'i-lucide-pause' : 'i-lucide-play')"
+          color="primary" size="sm" class="rounded-full shrink-0" :disabled="isLoading || hasError"
+          @click="handleTogglePlay" />
         <UButton icon="i-lucide-x" variant="ghost" size="sm" class="shrink-0" @click="handleClose" />
       </div>
 
@@ -165,7 +156,13 @@ function handleClose() {
       </div>
 
       <div v-else>
-        <div ref="containerRef" class="w-full" :class="{ 'opacity-50': isLoading }" />
+        <div ref="containerRef" class="w-full border border-white/5 rounded-2xl p-1"
+          :class="{ 'opacity-0 ': isLoading }" />
+        <div class="grid gap-2" v-if="isLoading">
+          <USkeleton class="h-4 w-[250px]" />
+          <USkeleton class="h-4 w-[200px]" />
+        </div>
+
         <div class="flex items-center justify-between text-xs font-mono text-gray-500 mt-1">
           <span>{{ formatTime(currentTime) }}</span>
           <span>{{ formatTime(duration) }}</span>
@@ -174,7 +171,7 @@ function handleClose() {
 
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-1">
-          <UButton variant="ghost" size="xs" icon="i-lucide-rotate-rewind" @click="handleSkip(-10)" />
+          <UButton variant="ghost" size="xs" icon="i-lucide-rewind" @click="handleSkip(-10)" />
           <UButton variant="ghost" size="xs" icon="i-lucide-rotate-ccw" @click="handleSkip(10)" />
         </div>
         <USelect v-model="playbackRate" :items="[
@@ -182,7 +179,7 @@ function handleClose() {
           { value: 1, label: '1.0x' },
           { value: 1.5, label: '1.5x' },
           { value: 2, label: '2.0x' }
-        ]" value-key="value" label-key="label" size="xs" class="w-20"
+        ]" value-key="value" label-key="label" size="xs" class="w-20 z-50"
           @update:model-value="(val: number) => handleSetRate(val)" />
       </div>
     </div>

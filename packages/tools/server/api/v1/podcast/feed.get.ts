@@ -34,7 +34,7 @@ function parseRSS(xml: string): EpisodeItem[] {
   const $ = cheerio.load(xml, { xmlMode: true })
   const episodes: EpisodeItem[] = []
 
-  $('item').slice(0, 5).each((_, el) => {
+  $('item').each((_, el) => {
     const item = $(el)
     const enclosureUrl = item.find('enclosure').attr('url') || ''
     if (!enclosureUrl) return

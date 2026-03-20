@@ -104,7 +104,7 @@ useHead({
           <UIcon name="i-lucide-microphone" class="w-12 h-12 text-gray-600" />
         </div>
         <div class="flex-1 min-w-0">
-          <h1 class="text-2xl font-bold text-white leading-tight line-clamp-2" data-testid="podcast-title">{{
+          <h1 class="text-2xl font-bold leading-tight line-clamp-2" data-testid="podcast-title">{{
             podcastTitle }}</h1>
           <p class="text-gray-400 mt-1">{{ podcastAuthor }}</p>
           <div class="flex items-center gap-3 mt-4">
@@ -117,7 +117,7 @@ useHead({
         </div>
       </div>
 
-      <h2 class="text-lg font-semibold text-white mb-4">{{ t('podcast.episode.title') }}</h2>
+      <h2 class="text-lg font-semibold mb-4">{{ t('podcast.episode.title') }}</h2>
 
       <div v-if="isLoading" class="flex items-center justify-center py-16" data-testid="podcast-episodes-loading">
         <UIcon name="i-lucide-loader-2" class="w-8 h-8 text-orange-400 animate-spin" />
@@ -134,7 +134,5 @@ useHead({
         <p class="text-gray-500">{{ t('podcast.episode.noEpisodes') }}</p>
       </div>
     </div>
-
-    <PodcastPlayer />
   </div>
 </template>
