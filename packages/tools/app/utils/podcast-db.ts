@@ -7,8 +7,20 @@ export interface FavoritePodcast {
   author: string
   artwork: string
   feedUrl: string
-  savedAt: number,
+  savedAt: number
   episodes?: Episode[]
+}
+
+export interface DownloadedEpisode {
+  id: string
+  podcastId: string
+  title: string
+  date: string
+  duration: string
+  audioUrl: string
+  description: string
+  audioBlob: Blob
+  downloadedAt: number
 }
 
 interface PodcastDB extends DBSchema {
@@ -17,20 +29,45 @@ interface PodcastDB extends DBSchema {
     value: FavoritePodcast
     indexes: { 'by-date': number }
   }
+  downloads: {
+    key: string
+    value: DownloadedEpisode
+    indexes: { 'by-podcast': string; 'by-date': number }
+  }
 }
 
 let dbPromise: Promise<IDBPDatabase<PodcastDB>>
 
 export const initPodcastDB = (): Promise<IDBPDatabase<PodcastDB>> => {
   if (!dbPromise) {
-    dbPromise = openDB<PodcastDB>('podcast-db', 1, {
-      upgrade(db: IDBPDatabase<PodcastDB>) {
-        const store = db.createObjectStore('favorites', { keyPath: 'id' })
-        store.createIndex('by-date', 'savedAt')
+    dbPromise = openDB<PodcastDB>('podcast-db', 2, {
+      upgrade(db: IDBPDatabase<PodcastDB>, oldVersion) {
+        if (oldVersion < 1) {
+          const store = db.createObjectStore('favorites', { keyPath: 'id' })
+          store.createIndex('by-date', 'savedAt')
+        }
+        if (oldVersion < 2) {
+          const dlStore = db.createObjectStore('downloads', { keyPath: 'id' })
+          dlStore.createIndex('by-podcast', 'podcastId')
+          dlStore.createIndex('by-date', 'downloadedAt')
+        }
       },
     })
   }
   return dbPromise
+}
+
+const handleStorageError = (error: unknown, action: string) => {
+  if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+    useToast().add({
+      title: 'Storage Full',
+      description: `Cannot ${action}. Browser storage is full.`,
+      color: 'error',
+      icon: 'i-lucide-alert-circle',
+    })
+  } else {
+    throw error
+  }
 }
 
 export const saveFavorite = async (podcast: FavoritePodcast): Promise<void> => {
@@ -38,16 +75,7 @@ export const saveFavorite = async (podcast: FavoritePodcast): Promise<void> => {
     const db = await initPodcastDB()
     await db.put('favorites', podcast)
   } catch (error) {
-    if (error instanceof DOMException && error.name === 'QuotaExceededError') {
-      useToast().add({
-        title: 'Storage Full',
-        description: 'Cannot save favorite. Browser storage is full.',
-        color: 'error',
-        icon: 'i-lucide-alert-circle',
-      })
-    } else {
-      throw error
-    }
+    handleStorageError(error, 'save favorite')
   }
 }
 
@@ -68,42 +96,28 @@ export const getFavorites = async (): Promise<FavoritePodcast[]> => {
 export const isFavorite = async (id: string): Promise<boolean> => {
   try {
     const db = await initPodcastDB()
-    const result = await db.get('favorites', id)
-    return !!result
+    return !!(await db.get('favorites', id))
   } catch {
     return false
   }
 }
 
-//Save the podcast feed to the db
 export const savePodcast = async (podcast: FavoritePodcast): Promise<void> => {
   try {
     const db = await initPodcastDB()
-    // check if the podcast already exists
-    const existingPodcast = await db.get('favorites', podcast.id)
-    if (existingPodcast) {
-      // update the savedAt timestamp
-      existingPodcast.savedAt = Date.now()
-      existingPodcast.episodes = podcast.episodes
-      await db.put('favorites', existingPodcast)
+    const existing = await db.get('favorites', podcast.id)
+    if (existing) {
+      existing.savedAt = Date.now()
+      existing.episodes = podcast.episodes
+      await db.put('favorites', existing)
       return
     }
     await db.put('favorites', podcast)
   } catch (error) {
-    if (error instanceof DOMException && error.name === 'QuotaExceededError') {
-      useToast().add({
-        title: 'Storage Full',
-        description: 'Cannot save favorite. Browser storage is full.',
-        color: 'error',
-        icon: 'i-lucide-alert-circle',
-      })
-    } else {
-      throw error
-    }
+    handleStorageError(error, 'save podcast')
   }
 }
 
-//get saved podcasts by id
 export const getPodcastsById = async (id: string): Promise<FavoritePodcast | undefined> => {
   try {
     const db = await initPodcastDB()
@@ -112,3 +126,79 @@ export const getPodcastsById = async (id: string): Promise<FavoritePodcast | und
     return undefined
   }
 }
+
+export const downloadEpisode = async (
+  episode: Episode,
+  podcastId: string,
+  proxiedUrl: string
+): Promise<boolean> => {
+  try {
+    const res = await fetch(proxiedUrl)
+    if (!res.ok) {
+      useToast().add({
+        title: 'Download Failed',
+        description: 'Could not download this episode.',
+        color: 'error',
+        icon: 'i-lucide-alert-circle',
+      })
+      return false
+    }
+    const blob = await res.blob()
+    const db = await initPodcastDB()
+    await db.put('downloads', {
+      id: episode.id,
+      podcastId,
+      title: episode.title,
+      date: episode.date,
+      duration: episode.duration,
+      audioUrl: episode.audioUrl,
+      description: episode.description,
+      audioBlob: blob,
+      downloadedAt: Date.now(),
+    })
+    useToast().add({
+      title: 'Episode Saved',
+      description: `"${episode.title}" saved for offline listening.`,
+      color: 'success',
+      icon: 'i-lucide-download',
+    })
+    return true
+  } catch (error) {
+    handleStorageError(error, 'download episode')
+    return false
+  }
+}
+
+export const removeDownload = async (episodeId: string): Promise<void> => {
+  const db = await initPodcastDB()
+  await db.delete('downloads', episodeId)
+}
+
+export const getDownload = async (episodeId: string): Promise<DownloadedEpisode | undefined> => {
+  try {
+    const db = await initPodcastDB()
+    return db.get('downloads', episodeId)
+  } catch {
+    return undefined
+  }
+}
+
+export const getDownloadsForPodcast = async (podcastId: string): Promise<DownloadedEpisode[]> => {
+  try {
+    const db = await initPodcastDB()
+    return db.getAllFromIndex('downloads', 'by-podcast', podcastId)
+  } catch {
+    return []
+  }
+}
+
+export const isEpisodeDownloaded = async (episodeId: string): Promise<boolean> => {
+  try {
+    const db = await initPodcastDB()
+    return !!(await db.get('downloads', episodeId))
+  } catch {
+    return false
+  }
+}
+
+export const getDownloadUrl = (blob: Blob): string => URL.createObjectURL(blob)

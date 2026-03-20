@@ -8,8 +8,7 @@
  * @version 0.0.1
  */
 
-
-const { t } = useI18n()
+import { getFavorites, removeFavorite, type FavoritePodcast } from '../../utils/podcast-db'const { t } = useI18n()
 const { searchPodcasts } = usePodcastService()
 
 const searchTerm = ref('')

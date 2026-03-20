@@ -1,4 +1,12 @@
 <script lang="ts" setup>
+/**
+ *
+ * PodcastCard — displays a search result podcast card
+ *
+ * @author Ismael Garcia <leamsigc@leamsigc.com>
+ * @version 0.0.1
+ */
+
 interface Props {
   id: number
   title: string

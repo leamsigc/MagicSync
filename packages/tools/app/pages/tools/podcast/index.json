@@ -29,7 +29,9 @@
       "player": {
         "episodeUnavailable": "Episode Unavailable",
         "episodeUnavailableBody": "This episode could not be loaded. Please try another.",
-        "unavailable": "Episode unavailable"
+        "unavailable": "Episode unavailable",
+        "showEpisodes": "Episodes ({count})",
+        "hideEpisodes": "Hide Episodes"
       },
       "back": "Back to Search",
       "notifications": {
@@ -70,7 +72,9 @@
       "player": {
         "episodeUnavailable": "Episodio No Disponible",
         "episodeUnavailableBody": "Este episodio no se pudo cargar. Prueba con otro.",
-        "unavailable": "Episodio no disponible"
+        "unavailable": "Episodio no disponible",
+        "showEpisodes": "Episodios ({count})",
+        "hideEpisodes": "Ocultar Episodios"
       },
       "back": "Volver a Buscar",
       "notifications": {
@@ -111,7 +115,9 @@
       "player": {
         "episodeUnavailable": "Folge Nicht Verfügbar",
         "episodeUnavailableBody": "Diese Folge konnte nicht geladen werden. Versuche eine andere.",
-        "unavailable": "Folge nicht verfügbar"
+        "unavailable": "Folge nicht verfügbar",
+        "showEpisodes": "Folgen ({count})",
+        "hideEpisodes": "Folgen Ausblenden"
       },
       "back": "Zurück zur Suche",
       "notifications": {
@@ -152,7 +158,9 @@
       "player": {
         "episodeUnavailable": "Épisode Indisponible",
         "episodeUnavailableBody": "Cet épisode n'a pas pu être chargé. Essayez-en un autre.",
-        "unavailable": "Épisode indisponible"
+        "unavailable": "Épisode indisponible",
+        "showEpisodes": "Épisodes ({count})",
+        "hideEpisodes": "Masquer les Épisodes"
       },
       "back": "Retour à la Recherche",
       "notifications": {

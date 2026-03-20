@@ -8,6 +8,12 @@
  * @version 0.0.1
  */
 
+import type { Episode } from '../../composables/usePodcastService'
+import {
+  saveFavorite, removeFavorite, isFavorite,
+  savePodcast, getPodcastsById,
+  downloadEpisode, removeDownload, isEpisodeDownloaded,
+} from '../../utils/podcast-db'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -18,13 +24,19 @@ const feedUrl = computed(() => String(route.query.feed || ''))
 const podcastTitle = computed(() => String(route.query.title || 'Podcast'))
 const podcastAuthor = computed(() => String(route.query.author || ''))
 const podcastArtwork = computed(() => String(route.query.artwork || ''))
+const podcastId = computed(() => String(route.params.id))
 
 const episodes = ref<Episode[]>([])
 const isLoading = ref(false)
 const isFavoriteState = ref(false)
+const downloadedIds = ref<Set<string>>(new Set())
 
-const podcastId = computed(() => String(route.params.id))
 const last24Hours = 24 * 60 * 60 * 1000
+
+const isPodcastSavedInLast24Hours = (savedAt: number) => {
+  const now = Date.now()
+  return now - savedAt < last24Hours
+}
 
 onMounted(async () => {
   if (feedUrl.value) {
@@ -34,31 +46,36 @@ onMounted(async () => {
     if (savedPodcast?.episodes?.length && isPodcastSavedInLast24Hours(savedPodcast.savedAt)) {
       episodes.value = savedPodcast.episodes
       isLoading.value = false
-      return
+    } else {
+      const episodesList = await getPodcastFeed(feedUrl.value)
+      episodes.value = episodesList
+      await savePodcast({
+        id: podcastId.value,
+        title: podcastTitle.value,
+        author: podcastAuthor.value,
+        artwork: podcastArtwork.value,
+        feedUrl: feedUrl.value,
+        savedAt: Date.now(),
+        episodes: episodesList,
+      })
+      isLoading.value = false
     }
-    const episodesList = await getPodcastFeed(feedUrl.value)
-    episodes.value = episodesList
-    await savePodcast({
-      id: podcastId.value,
-      title: podcastTitle.value,
-      author: podcastAuthor.value,
-      artwork: podcastArtwork.value,
-      feedUrl: feedUrl.value,
-      savedAt: Date.now(),
-      episodes: episodesList,
-    })
-    isLoading.value = false
   }
   isFavoriteState.value = await isFavorite(podcastId.value)
+
+  for (const ep of episodes.value) {
+    if (await isEpisodeDownloaded(ep.id)) {
+      downloadedIds.value.add(ep.id)
+    }
+  }
 })
 
-const isPodcastSavedInLast24Hours = (savedAt: number) => {
-  const now = Date.now()
-  return now - savedAt < last24Hours
-}
-
 const handlePlay = (episode: Episode) => {
-  playEpisode(episode, { title: podcastTitle.value, artwork: podcastArtwork.value })
+  playEpisode(
+    episode,
+    { title: podcastTitle.value, artwork: podcastArtwork.value, id: podcastId.value },
+    episodes.value,
+  )
 }
 
 const handleToggleFavorite = async () => {
@@ -78,9 +95,20 @@ const handleToggleFavorite = async () => {
   }
 }
 
-const isCurrentlyPlaying = (episode: Episode) => {
-  return currentEpisode.value?.id === episode.id
+const handleDownload = async (episode: Episode) => {
+  const proxyUrl = `/api/v1/podcast/audio?url=${encodeURIComponent(episode.audioUrl)}`
+  const success = await downloadEpisode(episode, podcastId.value, proxyUrl)
+  if (success) {
+    downloadedIds.value.add(episode.id)
+  }
 }
+
+const handleRemoveDownload = async (episode: Episode) => {
+  await removeDownload(episode.id)
+  downloadedIds.value.delete(episode.id)
+}
+
+const isCurrentlyPlaying = (episode: Episode) => currentEpisode.value?.id === episode.id
 
 useHead({
   title: `${podcastTitle.value} - ${t('podcast.title')}`,
@@ -124,9 +152,20 @@ useHead({
       </div>
 
       <div v-else-if="episodes.length > 0" class="space-y-3" data-testid="podcast-episodes">
-        <EpisodeCard v-for="episode in episodes" :key="episode.id" :id="episode.id" :title="episode.title"
-          :date="episode.date" :duration="episode.duration" :description="episode.description"
-          :is-playing="isCurrentlyPlaying(episode)" @play="handlePlay(episode)" />
+        <EpisodeCard
+          v-for="episode in episodes"
+          :key="episode.id"
+          :id="episode.id"
+          :title="episode.title"
+          :date="episode.date"
+          :duration="episode.duration"
+          :description="episode.description"
+          :is-playing="isCurrentlyPlaying(episode)"
+          :is-downloaded="downloadedIds.has(episode.id)"
+          @play="handlePlay(episode)"
+          @download="handleDownload(episode)"
+          @remove-download="handleRemoveDownload(episode)"
+        />
       </div>
 
       <div v-else class="text-center py-16">
