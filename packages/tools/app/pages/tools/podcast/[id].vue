@@ -8,12 +8,6 @@
  * @version 0.0.1
  */
 
-import type { Episode } from '../../composables/usePodcastService'
-import {
-  saveFavorite, removeFavorite, isFavorite,
-  savePodcast, getPodcastsById,
-  downloadEpisode, removeDownload, isEpisodeDownloaded,
-} from '../../utils/podcast-db'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -30,6 +24,7 @@ const episodes = ref<Episode[]>([])
 const isLoading = ref(false)
 const isFavoriteState = ref(false)
 const downloadedIds = ref<Set<string>>(new Set())
+const playedIds = ref<Set<string>>(new Set())
 
 const last24Hours = 24 * 60 * 60 * 1000
 
@@ -67,10 +62,15 @@ onMounted(async () => {
     if (await isEpisodeDownloaded(ep.id)) {
       downloadedIds.value.add(ep.id)
     }
+    if (await isEpisodePlayed(ep.id)) {
+      playedIds.value.add(ep.id)
+    }
   }
 })
 
-const handlePlay = (episode: Episode) => {
+const handlePlay = async (episode: Episode) => {
+  await markPlayed(episode.id, podcastId.value)
+  playedIds.value.add(episode.id)
   playEpisode(
     episode,
     { title: podcastTitle.value, artwork: podcastArtwork.value, id: podcastId.value },
@@ -132,8 +132,9 @@ useHead({
           <UIcon name="i-lucide-microphone" class="w-12 h-12 text-gray-600" />
         </div>
         <div class="flex-1 min-w-0">
-          <h1 class="text-2xl font-bold leading-tight line-clamp-2" data-testid="podcast-title">{{
-            podcastTitle }}</h1>
+          <h1 class="text-2xl font-bold leading-tight line-clamp-2" data-testid="podcast-title">
+            {{ podcastTitle }}
+          </h1>
           <p class="text-gray-400 mt-1">{{ podcastAuthor }}</p>
           <div class="flex items-center gap-3 mt-4">
             <UButton :icon="isFavoriteState ? 'i-lucide-bookmark-check' : 'i-lucide-bookmark'"
@@ -152,20 +153,11 @@ useHead({
       </div>
 
       <div v-else-if="episodes.length > 0" class="space-y-3" data-testid="podcast-episodes">
-        <EpisodeCard
-          v-for="episode in episodes"
-          :key="episode.id"
-          :id="episode.id"
-          :title="episode.title"
-          :date="episode.date"
-          :duration="episode.duration"
-          :description="episode.description"
-          :is-playing="isCurrentlyPlaying(episode)"
-          :is-downloaded="downloadedIds.has(episode.id)"
-          @play="handlePlay(episode)"
-          @download="handleDownload(episode)"
-          @remove-download="handleRemoveDownload(episode)"
-        />
+        <EpisodeCard v-for="episode in episodes" :key="episode.id" :id="episode.id" :title="episode.title"
+          :date="episode.date" :duration="episode.duration" :description="episode.description"
+          :is-playing="isCurrentlyPlaying(episode)" :is-downloaded="downloadedIds.has(episode.id)"
+          :is-played="playedIds.has(episode.id)" @play="handlePlay(episode)" @download="handleDownload(episode)"
+          @remove-download="handleRemoveDownload(episode)" />
       </div>
 
       <div v-else class="text-center py-16">

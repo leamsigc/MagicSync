@@ -17,7 +17,11 @@
         "title": "Latest Episodes",
         "noEpisodes": "No episodes found for this podcast",
         "play": "Play",
-        "pause": "Pause"
+        "pause": "Pause",
+        "downloadedForOffline": "Downloaded for offline",
+        "alreadyPlayed": "Already played",
+        "downloadForOffline": "Download for offline",
+        "removeDownload": "Remove download"
       },
       "favorite": {
         "save": "Save",
@@ -60,7 +64,11 @@
         "title": "Últimos Episodios",
         "noEpisodes": "No se encontraron episodios para este podcast",
         "play": "Reproducir",
-        "pause": "Pausar"
+        "pause": "Pausar",
+        "downloadedForOffline": "Descargado para escuchar sin conexión",
+        "alreadyPlayed": "Ya reproducido",
+        "downloadForOffline": "Descargar para escuchar sin conexión",
+        "removeDownload": "Eliminar descarga"
       },
       "favorite": {
         "save": "Guardar",
@@ -103,7 +111,11 @@
         "title": "Neueste Folgen",
         "noEpisodes": "Keine Folgen für diesen Podcast gefunden",
         "play": "Abspielen",
-        "pause": "Pausieren"
+        "pause": "Pausieren",
+        "downloadedForOffline": "Heruntergeladen für offline",
+        "alreadyPlayed": "Bereits abgespielt",
+        "downloadForOffline": "Herunterladen für offline",
+        "removeDownload": "Download entfernen"
       },
       "favorite": {
         "save": "Speichern",
@@ -146,7 +158,11 @@
         "title": "Derniers Épisodes",
         "noEpisodes": "Aucun épisode trouvé pour ce podcast",
         "play": "Écouter",
-        "pause": "Pause"
+        "pause": "Pause",
+        "downloadedForOffline": "Téléchargé pour écouter hors ligne",
+        "alreadyPlayed": "Déjà écouté",
+        "downloadForOffline": "Télécharger pour hors ligne",
+        "removeDownload": "Supprimer le téléchargement"
       },
       "favorite": {
         "save": "Sauvegarder",

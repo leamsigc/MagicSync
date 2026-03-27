@@ -23,6 +23,12 @@ export interface DownloadedEpisode {
   downloadedAt: number
 }
 
+export interface PlayedEpisode {
+  id: string
+  podcastId: string
+  playedAt: number
+}
+
 interface PodcastDB extends DBSchema {
   favorites: {
     key: string
@@ -34,13 +40,18 @@ interface PodcastDB extends DBSchema {
     value: DownloadedEpisode
     indexes: { 'by-podcast': string; 'by-date': number }
   }
+  played: {
+    key: string
+    value: PlayedEpisode
+    indexes: { 'by-podcast': string }
+  }
 }
 
 let dbPromise: Promise<IDBPDatabase<PodcastDB>>
 
 export const initPodcastDB = (): Promise<IDBPDatabase<PodcastDB>> => {
   if (!dbPromise) {
-    dbPromise = openDB<PodcastDB>('podcast-db', 2, {
+    dbPromise = openDB<PodcastDB>('podcast-db', 3, {
       upgrade(db: IDBPDatabase<PodcastDB>, oldVersion) {
         if (oldVersion < 1) {
           const store = db.createObjectStore('favorites', { keyPath: 'id' })
@@ -50,6 +61,10 @@ export const initPodcastDB = (): Promise<IDBPDatabase<PodcastDB>> => {
           const dlStore = db.createObjectStore('downloads', { keyPath: 'id' })
           dlStore.createIndex('by-podcast', 'podcastId')
           dlStore.createIndex('by-date', 'downloadedAt')
+        }
+        if (oldVersion < 3) {
+          const playedStore = db.createObjectStore('played', { keyPath: 'id' })
+          playedStore.createIndex('by-podcast', 'podcastId')
         }
       },
     })
@@ -202,3 +217,30 @@ export const isEpisodeDownloaded = async (episodeId: string): Promise<boolean> =
 }
 
 export const getDownloadUrl = (blob: Blob): string => URL.createObjectURL(blob)
+
+export const markPlayed = async (episodeId: string, podcastId: string): Promise<void> => {
+  try {
+    const db = await initPodcastDB()
+    await db.put('played', { id: episodeId, podcastId, playedAt: Date.now() })
+  } catch {
+    // Silently ignore — played tracking is non-critical
+  }
+}
+
+export const isEpisodePlayed = async (episodeId: string): Promise<boolean> => {
+  try {
+    const db = await initPodcastDB()
+    return !!(await db.get('played', episodeId))
+  } catch {
+    return false
+  }
+}
+
+export const getPlayedEpisodes = async (podcastId: string): Promise<PlayedEpisode[]> => {
+  try {
+    const db = await initPodcastDB()
+    return db.getAllFromIndex('played', 'by-podcast', podcastId)
+  } catch {
+    return []
+  }
+}

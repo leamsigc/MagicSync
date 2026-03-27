@@ -13,6 +13,7 @@ export const usePodcastPlayer = () => {
 
   const proxiedAudioUrl = computed(() => {
     if (!audioUrl.value) return ''
+    if (audioUrl.value.startsWith('blob:')) return audioUrl.value
     return `/api/v1/podcast/audio?url=${encodeURIComponent(audioUrl.value)}`
   })
 

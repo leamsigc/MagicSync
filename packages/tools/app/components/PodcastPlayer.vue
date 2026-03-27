@@ -69,7 +69,7 @@ const initWaveSurfer = async () => {
   wavesurfer.value.on('play', () => { isPlaying.value = true })
   wavesurfer.value.on('pause', () => { isPlaying.value = false })
 
-  wavesurfer.value.on('decodeError', () => {
+  wavesurfer.value.on('error', () => {
     isLoading.value = false
     hasError.value = true
     isPlaying.value = false
@@ -81,17 +81,6 @@ const initWaveSurfer = async () => {
     })
   })
 
-  wavesurfer.value.on('mediaError', () => {
-    isLoading.value = false
-    hasError.value = true
-    isPlaying.value = false
-    useToast().add({
-      title: t('podcast.player.episodeUnavailable'),
-      description: t('podcast.player.episodeUnavailableBody'),
-      color: 'error',
-      icon: 'i-lucide-alert-circle',
-    })
-  })
 
   wavesurfer.value.on('finish', () => {
     isPlaying.value = false
@@ -165,14 +154,9 @@ const toggleEpisodes = () => {
           <p class="text-xs font-medium text-white truncate">{{ currentEpisode.title }}</p>
           <p class="text-xs text-gray-500 truncate">{{ podcastInfo?.title }}</p>
         </div>
-        <UButton
-          :icon="isLoading ? 'i-lucide-loader' : (isPlaying ? 'i-lucide-pause' : 'i-lucide-play')"
-          color="primary"
-          size="sm"
-          class="rounded-full shrink-0"
-          :disabled="isLoading || hasError"
-          @click="handleTogglePlay"
-        />
+        <UButton :icon="isLoading ? 'i-lucide-loader' : (isPlaying ? 'i-lucide-pause' : 'i-lucide-play')"
+          color="primary" size="sm" class="rounded-full shrink-0" :disabled="isLoading || hasError"
+          @click="handleTogglePlay" />
         <UButton icon="i-lucide-x" variant="ghost" size="sm" class="shrink-0" @click="handleClose" />
       </div>
 
@@ -181,7 +165,8 @@ const toggleEpisodes = () => {
       </div>
 
       <div v-else>
-        <div ref="containerRef" class="w-full border border-white/5 rounded-2xl p-1" :class="{ 'opacity-0': isLoading }" />
+        <div ref="containerRef" class="w-full border border-white/5 rounded-2xl p-1"
+          :class="{ 'opacity-0': isLoading }" />
         <div v-if="isLoading" class="grid gap-2">
           <USkeleton class="h-4 w-[250px]" />
           <USkeleton class="h-4 w-[200px]" />
@@ -198,62 +183,36 @@ const toggleEpisodes = () => {
           <UButton variant="ghost" size="xs" icon="i-lucide-rotate-ccw" @click="handleSkip(10)" />
         </div>
         <div class="flex items-center gap-1">
-          <UButton
-            v-if="!isDownloaded"
-            :icon="isDownloading ? 'i-lucide-loader-2' : 'i-lucide-download'"
-            :disabled="isDownloading"
-            variant="ghost"
-            size="xs"
-            @click="saveForOffline"
-          />
-          <UButton
-            v-else
-            icon="i-lucide-check"
-            variant="ghost"
-            size="xs"
-            color="success"
-            @click="removeOffline"
-          />
-          <USelect
-            v-model="playbackRate"
-            :items="[
-              { value: 0.5, label: '0.5x' },
-              { value: 1, label: '1.0x' },
-              { value: 1.5, label: '1.5x' },
-              { value: 2, label: '2.0x' },
-            ]"
-            value-key="value"
-            label-key="label"
-            size="xs"
-            class="w-20"
-            :ui="{ content: 'z-50' }"
-            @update:model-value="(val: number) => handleSetRate(val)"
-          />
+          <UButton v-if="!isDownloaded" :icon="isDownloading ? 'i-lucide-loader-2' : 'i-lucide-download'"
+            :disabled="isDownloading" variant="ghost" size="xs" @click="saveForOffline" />
+          <UButton v-else icon="i-lucide-check" variant="ghost" size="xs" color="success" @click="removeOffline" />
+          <USelect v-model="playbackRate" :items="[
+            { value: 0.5, label: '0.5x' },
+            { value: 1, label: '1.0x' },
+            { value: 1.5, label: '1.5x' },
+            { value: 2, label: '2.0x' },
+          ]" value-key="value" label-key="label" size="xs" class="w-20" :ui="{ content: 'z-50' }"
+            @update:model-value="(val: number) => handleSetRate(val)" />
         </div>
       </div>
 
       <div v-if="podcastEpisodes.length > 0">
         <button
           class="w-full text-left text-xs text-gray-400 hover:text-gray-200 transition-colors flex items-center gap-1 py-1"
-          @click="toggleEpisodes"
-        >
+          @click="toggleEpisodes">
           <UIcon :name="showEpisodes ? 'i-lucide-chevron-down' : 'i-lucide-chevron-up'" class="w-3 h-3" />
-          {{ showEpisodes ? t('podcast.player.hideEpisodes') : t('podcast.player.showEpisodes', { count: podcastEpisodes.length }) }}
+          {{ showEpisodes ? t('podcast.player.hideEpisodes') : t('podcast.player.showEpisodes', {
+            count:
+              podcastEpisodes.length }) }}
         </button>
 
         <div v-if="showEpisodes" class="space-y-1 max-h-48 overflow-y-auto mt-1">
-          <button
-            v-for="ep in podcastEpisodes"
-            :key="ep.id"
-            class="w-full text-left p-2 rounded-lg transition-colors"
+          <button v-for="ep in podcastEpisodes" :key="ep.id" class="w-full text-left p-2 rounded-lg transition-colors"
             :class="currentEpisode?.id === ep.id ? 'bg-primary/20 text-primary' : 'hover:bg-white/5 text-gray-300'"
-            @click="handleSwitchEpisode(ep)"
-          >
+            @click="handleSwitchEpisode(ep)">
             <div class="flex items-center gap-2">
-              <UIcon
-                :name="currentEpisode?.id === ep.id && isPlaying ? 'i-lucide-pause' : 'i-lucide-play'"
-                class="w-3 h-3 shrink-0"
-              />
+              <UIcon :name="currentEpisode?.id === ep.id && isPlaying ? 'i-lucide-pause' : 'i-lucide-play'"
+                class="w-3 h-3 shrink-0" />
               <div class="flex-1 min-w-0">
                 <p class="text-xs font-medium truncate">{{ ep.title }}</p>
                 <p class="text-[10px] text-gray-500">{{ ep.duration }}</p>
