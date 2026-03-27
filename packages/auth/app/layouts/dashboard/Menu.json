@@ -55,7 +55,8 @@
       "components": "Components",
       "business": "Business",
       "variables": "Variables",
-      "chat": "Chat"
+      "chat": "Chat",
+      "apiKeys": "API Keys"
     },
     "userNav": {
       "upgradeToPro": "Upgrade to Pro",
@@ -143,7 +144,8 @@
       "variables": "Variables",
       "chat": "Chat",
       "aitools": "Content repurpose",
-      "growthStrategies": "Growth Strategies"
+      "growthStrategies": "Growth Strategies",
+      "apiKeys": "API Keys"
     },
     "userNav": {
       "upgradeToPro": "Actualizar a Pro",
@@ -231,7 +233,8 @@
       "variables": "Variablen",
       "chat": "Chat",
       "aitools": "Content repurpose",
-      "growthStrategies": "Growth Strategies"
+      "growthStrategies": "Growth Strategies",
+      "apiKeys": "API Keys"
     },
     "userNav": {
       "upgradeToPro": "Auf Pro upgraden",
@@ -319,7 +322,8 @@
       "variables": "Variables",
       "chat": "Chat",
       "aitools": "Content repurpose",
-      "growthStrategies": "Growth Strategies"
+      "growthStrategies": "Growth Strategies",
+      "apiKeys": "API Keys"
     },
     "userNav": {
       "upgradeToPro": "Mettre à niveau vers Pro",

@@ -1,0 +1,46 @@
+{
+  "en": {
+    "title": "API Keys",
+    "description": "Manage API keys for your business",
+    "heading": "API Keys",
+    "subheading": "Manage API keys to allow external systems to access your business",
+    "createButton": "Create API Key",
+    "noKeys": "No API keys yet",
+    "noKeysDescription": "Create an API key to allow external systems to access your business",
+    "keyName": "Key Name",
+    "keyNamePlaceholder": "Enter a name for this API key",
+    "expiresIn": "Expires In",
+    "expirationOptions": {
+      "30": "30 days",
+      "60": "60 days",
+      "90": "90 days",
+      "180": "6 months",
+      "365": "1 year",
+      "never": "Never"
+    },
+    "create": "Create",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "confirmDelete": "Are you sure you want to delete this API key?",
+    "deleteWarning": "This action cannot be undone. Any external systems using this key will lose access.",
+    "keyCreated": "API Key Created",
+    "keyCreatedDescription": "Copy this key now. You won't be able to see it again!",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "close": "Close",
+    "prefix": "Prefix",
+    "created": "Created",
+    "expires": "Expires",
+    "never": "Never",
+    "platforms": "Platforms",
+    "noBusiness": "No business selected",
+    "noBusinessDescription": "Please select a business to manage its API keys",
+    "columns": {
+      "name": "Name",
+      "prefix": "Prefix",
+      "created": "Created",
+      "expires": "Expires",
+      "actions": "Actions"
+    }
+  }
+}

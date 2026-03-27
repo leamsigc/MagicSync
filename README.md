@@ -437,3 +437,24 @@ Example: `pnpm packages ui dev` for the dev server for the ui layer
     - [x] Create the api for CRUD operations for assets
     - [x] Create the UI for the CRUD operations for the assets
     - [-] Create UI & API to create template assets
+
+
+## CLI Trigger post from 3dr party providers
+
+
+
+```json
+{
+    content:"" //Text content for the post
+    platforms:[
+        "instagram"
+    ] // the target platform or platforms
+    media:{
+        image:[] //images urls
+        video:"" //video url
+    },
+    scheduledAt:"" //time for the post to be trigger
+    comments:[""] // comments for the post if the platform support comments
+
+}
+```

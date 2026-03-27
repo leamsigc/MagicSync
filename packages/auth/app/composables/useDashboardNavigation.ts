@@ -1,3 +1,4 @@
+import { apiKey } from 'better-auth/plugins';
 import type { NavigationMenuItem } from '@nuxt/ui'
 import menu from '../layouts/dashboard/Menu.json'
 
@@ -111,6 +112,12 @@ export const useDashboardNavigation = () => {
         icon: 'i-lucide-users',
         to: '/app/business',
         active: route.path.startsWith('/app/business')
+      },
+      {
+        label: menuData.menu.apiKey,
+        icon: 'i-lucide-key',
+        to: '/app/keys',
+        active: route.path.startsWith('/app/keys')
       },
       {
         label: menuData.menu.tools,

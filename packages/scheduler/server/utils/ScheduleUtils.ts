@@ -183,3 +183,13 @@ export const ScheduleRefreshSocialMediaTokens = async (fullPost: PostWithAllData
     }))
   }
 }
+
+interface ValidationResult {
+  isValid: boolean
+  warnings: string[]
+  errors: string[]
+}
+
+export function validateContentForPlatform(platform: string, content: { text?: string; mediaUrls?: string[] }): ValidationResult {
+  return { isValid: true, warnings: [], errors: [] }
+}
