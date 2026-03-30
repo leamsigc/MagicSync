@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     # Ollama
     ollama_base_url: str = "http://localhost:11434"
     ollama_default_model: str = "llama3.2"
+    ollama_embedding_model: str = "nomic-embed-text"
 
     # LangSmith (optional)
     langsmith_api_key: str | None = None

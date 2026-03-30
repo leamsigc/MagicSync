@@ -17,12 +17,12 @@ Track your progress through the implementation. Claude Code reads this to unders
 - [x] LangSmith tracing setup
 
 ### Module 2: BYO Retrieval + Memory
-- [ ] Document ingestion endpoint
-- [ ] File storage (local/Postgres)
-- [ ] Chunking → embedding → pgvector
-- [ ] Retrieval tool
-- [ ] Chat history storage (stateless)
-- [ ] Realtime ingestion status
+- [x] Document ingestion endpoint
+- [x] File storage (local via assets pattern)
+- [x] Chunking → embedding → Turso vector storage
+- [x] Retrieval tool (vector similarity search)
+- [x] Chat history storage (threads + messages)
+- [x] Realtime ingestion status (SSE)
 
 ### Module 3: Record Manager
 - [ ] Content hashing

@@ -1,0 +1,150 @@
+{
+  "en": {
+    "title": "Knowledge Base",
+    "description": "Upload documents to build your AI knowledge base. Supported formats: PDF, TXT, MD, HTML, DOCX.",
+    "upload": "Upload Document",
+    "dropzone": "Drop files here or click to browse",
+    "supportedFormats": "PDF, TXT, MD, HTML, DOCX (max 10MB)",
+    "noDocuments": "No documents yet. Upload your first document to get started.",
+    "status": {
+      "pending": "Pending",
+      "processing": "Processing",
+      "storing": "Storing",
+      "completed": "Completed",
+      "failed": "Failed"
+    },
+    "actions": {
+      "ingest": "Ingest",
+      "reingest": "Re-ingest",
+      "delete": "Delete",
+      "cancel": "Cancel"
+    },
+    "columns": {
+      "name": "Name",
+      "type": "Type",
+      "size": "Size",
+      "chunks": "Chunks",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "ingestionProgress": "Ingesting...",
+    "uploadSuccess": "Document uploaded successfully",
+    "uploadError": "Failed to upload document",
+    "deleteConfirm": "Are you sure you want to delete this document and all its chunks?",
+    "deleteSuccess": "Document deleted",
+    "deleteError": "Failed to delete document",
+    "ingestSuccess": "Document ingested successfully",
+    "ingestError": "Ingestion failed"
+  },
+  "es": {
+    "title": "Base de Conocimiento",
+    "description": "Sube documentos para construir tu base de conocimiento AI. Formatos soportados: PDF, TXT, MD, HTML, DOCX.",
+    "upload": "Subir Documento",
+    "dropzone": "Arrastra archivos aquí o haz clic para explorar",
+    "supportedFormats": "PDF, TXT, MD, HTML, DOCX (máx 10MB)",
+    "noDocuments": "No hay documentos aún. Sube tu primer documento para comenzar.",
+    "status": {
+      "pending": "Pendiente",
+      "processing": "Procesando",
+      "storing": "Almacenando",
+      "completed": "Completado",
+      "failed": "Fallido"
+    },
+    "actions": {
+      "ingest": "Ingerir",
+      "reingest": "Re-ingerir",
+      "delete": "Eliminar",
+      "cancel": "Cancelar"
+    },
+    "columns": {
+      "name": "Nombre",
+      "type": "Tipo",
+      "size": "Tamaño",
+      "chunks": "Fragmentos",
+      "status": "Estado",
+      "actions": "Acciones"
+    },
+    "ingestionProgress": "Ingiriendo...",
+    "uploadSuccess": "Documento subido exitosamente",
+    "uploadError": "Error al subir documento",
+    "deleteConfirm": "¿Estás seguro de que quieres eliminar este documento y todos sus fragmentos?",
+    "deleteSuccess": "Documento eliminado",
+    "deleteError": "Error al eliminar documento",
+    "ingestSuccess": "Documento ingerido exitosamente",
+    "ingestError": "Error en la ingesta"
+  },
+  "de": {
+    "title": "Wissensdatenbank",
+    "description": "Laden Sie Dokumente hoch, um Ihre KI-Wissensdatenbank aufzubauen. Unterstützte Formate: PDF, TXT, MD, HTML, DOCX.",
+    "upload": "Dokument hochladen",
+    "dropzone": "Dateien hier ablegen oder klicken zum Durchsuchen",
+    "supportedFormats": "PDF, TXT, MD, HTML, DOCX (max 10MB)",
+    "noDocuments": "Noch keine Dokumente. Laden Sie Ihr erstes Dokument hoch.",
+    "status": {
+      "pending": "Ausstehend",
+      "processing": "Verarbeitung",
+      "storing": "Speichern",
+      "completed": "Abgeschlossen",
+      "failed": "Fehlgeschlagen"
+    },
+    "actions": {
+      "ingest": "Verarbeiten",
+      "reingest": "Erneut verarbeiten",
+      "delete": "Löschen",
+      "cancel": "Abbrechen"
+    },
+    "columns": {
+      "name": "Name",
+      "type": "Typ",
+      "size": "Größe",
+      "chunks": "Chunks",
+      "status": "Status",
+      "actions": "Aktionen"
+    },
+    "ingestionProgress": "Verarbeite...",
+    "uploadSuccess": "Dokument erfolgreich hochgeladen",
+    "uploadError": "Fehler beim Hochladen",
+    "deleteConfirm": "Möchten Sie dieses Dokument und alle Chunks wirklich löschen?",
+    "deleteSuccess": "Dokument gelöscht",
+    "deleteError": "Fehler beim Löschen",
+    "ingestSuccess": "Dokument erfolgreich verarbeitet",
+    "ingestError": "Verarbeitung fehlgeschlagen"
+  },
+  "fr": {
+    "title": "Base de Connaissances",
+    "description": "Téléchargez des documents pour construire votre base de connaissances AI. Formats supportés: PDF, TXT, MD, HTML, DOCX.",
+    "upload": "Télécharger un Document",
+    "dropzone": "Déposez les fichiers ici ou cliquez pour parcourir",
+    "supportedFormats": "PDF, TXT, MD, HTML, DOCX (max 10MB)",
+    "noDocuments": "Aucun document. Téléchargez votre premier document pour commencer.",
+    "status": {
+      "pending": "En attente",
+      "processing": "Traitement",
+      "storing": "Stockage",
+      "completed": "Terminé",
+      "failed": "Échoué"
+    },
+    "actions": {
+      "ingest": "Ingérer",
+      "reingest": "Ré-ingérer",
+      "delete": "Supprimer",
+      "cancel": "Annuler"
+    },
+    "columns": {
+      "name": "Nom",
+      "type": "Type",
+      "size": "Taille",
+      "chunks": "Chunks",
+      "status": "Statut",
+      "actions": "Actions"
+    },
+    "ingestionProgress": "Ingestion...",
+    "uploadSuccess": "Document téléchargé avec succès",
+    "uploadError": "Échec du téléchargement",
+    "deleteConfirm": "Êtes-vous sûr de vouloir supprimer ce document et tous ses chunks?",
+    "deleteSuccess": "Document supprimé",
+    "deleteError": "Échec de la suppression",
+    "ingestSuccess": "Document ingéré avec succès",
+    "ingestError": "Échec de l'ingestion"
+  }
+}

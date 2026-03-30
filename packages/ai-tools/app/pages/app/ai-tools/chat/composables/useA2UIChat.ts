@@ -38,7 +38,7 @@ export function useA2UIChat() {
     messages.value.push(assistantMessage.value)
 
     try {
-      const response = await fetch('/api/ai/chat', {
+      const response = await fetch('/api/ai-tools/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

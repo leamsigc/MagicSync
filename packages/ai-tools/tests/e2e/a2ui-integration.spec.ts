@@ -7,7 +7,7 @@ test.describe('A2UI Chat Integration', () => {
 
   test('should render A2UI text component', async ({ page }) => {
     // Mock chat API that returns A2UI components
-    await page.route('/api/v1/chat', async (route) => {
+    await page.route('/api/ai-tools/chat', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'text/event-stream',
@@ -32,7 +32,7 @@ test.describe('A2UI Chat Integration', () => {
 
   test('should render A2UI card component', async ({ page }) => {
     // Mock chat API that returns card component
-    await page.route('/api/v1/chat', async (route) => {
+    await page.route('/api/ai-tools/chat', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'text/event-stream',
@@ -57,7 +57,7 @@ test.describe('A2UI Chat Integration', () => {
 
   test('should render A2UI alert component', async ({ page }) => {
     // Mock chat API that returns alert component
-    await page.route('/api/v1/chat', async (route) => {
+    await page.route('/api/ai-tools/chat', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'text/event-stream',
@@ -81,7 +81,7 @@ test.describe('A2UI Chat Integration', () => {
 
   test('should render A2UI button and handle actions', async ({ page }) => {
     // Mock chat API
-    await page.route('/api/v1/chat', async (route) => {
+    await page.route('/api/ai-tools/chat', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'text/event-stream',
@@ -105,7 +105,7 @@ test.describe('A2UI Chat Integration', () => {
 
   test('should render A2UI progress component', async ({ page }) => {
     // Mock chat API that returns progress component
-    await page.route('/api/v1/chat', async (route) => {
+    await page.route('/api/ai-tools/chat', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'text/event-stream',
@@ -129,7 +129,7 @@ test.describe('A2UI Chat Integration', () => {
 
   test('should show unknown component fallback', async ({ page }) => {
     // Mock chat API that returns unknown component
-    await page.route('/api/v1/chat', async (route) => {
+    await page.route('/api/ai-tools/chat', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'text/event-stream',

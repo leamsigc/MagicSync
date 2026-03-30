@@ -48,7 +48,7 @@ test.describe('AI Chat Page', () => {
 
   test('should show loading state while AI is responding', async ({ page }) => {
     // Mock the chat API to simulate slow response
-    await page.route('/api/v1/chat', async (route) => {
+    await page.route('/api/ai-tools/chat', async (route) => {
       await new Promise(resolve => setTimeout(resolve, 1000))
       await route.fulfill({
         status: 200,

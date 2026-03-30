@@ -92,12 +92,12 @@ User Chat → TanStack AI → Python API → Ollama/OpenAI
 - [x] LangSmith tracing setup
 
 ### Module 2: BYO Retrieval + Memory
-- [ ] Document ingestion endpoint
-- [ ] File storage (local/Postgres)
-- [ ] Chunking → embedding → pgvector
-- [ ] Retrieval tool
-- [ ] Chat history storage (stateless)
-- [ ] Realtime ingestion status
+- [x] Document ingestion endpoint (Nuxt upload + Python ingest)
+- [x] File storage (local disk via assets pattern)
+- [x] Chunking → embedding → Turso vector storage (vector32 + vector_distance_cos)
+- [x] Retrieval tool (cosine similarity search in Turso)
+- [x] Chat history storage (chat_threads + chat_messages tables)
+- [x] Realtime ingestion status (SSE stream)
 
 ### Module 3: Record Manager
 - [ ] Content hashing

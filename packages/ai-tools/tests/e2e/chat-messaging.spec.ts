@@ -7,7 +7,7 @@ test.describe('Chat Messaging', () => {
 
   test('should send a message and display user message', async ({ page }) => {
     // Mock the chat API
-    await page.route('/api/v1/chat', async (route) => {
+    await page.route('/api/ai-tools/chat', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'text/event-stream',
@@ -25,7 +25,7 @@ test.describe('Chat Messaging', () => {
 
   test('should display AI response after sending', async ({ page }) => {
     // Mock the chat API with streaming response
-    await page.route('/api/v1/chat', async (route) => {
+    await page.route('/api/ai-tools/chat', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'text/event-stream',
@@ -43,7 +43,7 @@ test.describe('Chat Messaging', () => {
 
   test('should handle API error gracefully', async ({ page }) => {
     // Mock the chat API to return an error
-    await page.route('/api/v1/chat', async (route) => {
+    await page.route('/api/ai-tools/chat', async (route) => {
       await route.fulfill({
         status: 500,
         contentType: 'application/json',
@@ -61,7 +61,7 @@ test.describe('Chat Messaging', () => {
 
   test('should clear messages when clicking new chat', async ({ page }) => {
     // Mock the chat API
-    await page.route('/api/v1/chat', async (route) => {
+    await page.route('/api/ai-tools/chat', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'text/event-stream',
@@ -88,7 +88,7 @@ test.describe('Chat Messaging', () => {
 
   test('should use suggestion button to send message', async ({ page }) => {
     // Mock the chat API
-    await page.route('/api/v1/chat', async (route) => {
+    await page.route('/api/ai-tools/chat', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'text/event-stream',
@@ -104,7 +104,7 @@ test.describe('Chat Messaging', () => {
 
   test('should show error when network fails', async ({ page }) => {
     // Mock network failure
-    await page.route('/api/v1/chat', async (route) => {
+    await page.route('/api/ai-tools/chat', async (route) => {
       await route.abort('failed')
     })
 
