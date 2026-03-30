@@ -85,11 +85,11 @@ User Chat → TanStack AI → Python API → Ollama/OpenAI
 ## Modules
 
 ### Module 1: App Shell + Observability
-- [ ] Auth integration with existing Better Auth
-- [ ] Chat UI component
-- [ ] Basic LLM integration (Ollama)
-- [ ] Streaming responses
-- [ ] LangSmith tracing setup
+- [x] Auth integration with existing Better Auth (security module with session validation)
+- [x] Chat UI component (sidebar, streaming, A2UI, i18n)
+- [x] Basic LLM integration (Ollama)
+- [x] Streaming responses (SSE via sse-starlette)
+- [x] LangSmith tracing setup
 
 ### Module 2: BYO Retrieval + Memory
 - [ ] Document ingestion endpoint

@@ -35,7 +35,7 @@ Then read this file fully before doing anything else in this session.
 - Nuxt Content for blog pages
 
 **In Progress:**
-- Agentic RAG Layer (Module 1-8)
+- Agentic RAG Layer (Module 2-8) — Module 1 complete
 
 **Not yet built:**
 - Bulk post generation with AI templates

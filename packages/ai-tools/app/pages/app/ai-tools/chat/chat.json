@@ -1,0 +1,38 @@
+{
+  "en": {
+    "welcome": "Welcome to MagicSync AI",
+    "welcomeDescription": "I can help you create posts, analyze your audience, and manage your social media content with AI-powered tools.",
+    "suggestion1": "Create a post for Twitter",
+    "suggestion2": "Analyze my target audience",
+    "suggestion3": "Research trending topics",
+    "placeholder": "Ask me anything about your social media strategy...",
+    "error": "Something went wrong"
+  },
+  "es": {
+    "welcome": "Bienvenido a MagicSync AI",
+    "welcomeDescription": "Puedo ayudarte a crear publicaciones, analizar tu audiencia y gestionar el contenido de tus redes sociales con herramientas impulsadas por IA.",
+    "suggestion1": "Crear una publicación para Twitter",
+    "suggestion2": "Analizar mi audiencia objetivo",
+    "suggestion3": "Investigar temas de tendencia",
+    "placeholder": "Pregúntame sobre tu estrategia de redes sociales...",
+    "error": "Algo salió mal"
+  },
+  "de": {
+    "welcome": "Willkommen bei MagicSync AI",
+    "welcomeDescription": "Ich kann Ihnen helfen, Beiträge zu erstellen, Ihr Publikum zu analysieren und Ihre Social-Media-Inhalte mit KI-gestützten Tools zu verwalten.",
+    "suggestion1": "Einen Post für Twitter erstellen",
+    "suggestion2": "Meine Zielgruppe analysieren",
+    "suggestion3": "Aktuelle Themen recherchieren",
+    "placeholder": "Fragen Sie mich alles über Ihre Social-Media-Strategie...",
+    "error": "Etwas ist schief gelaufen"
+  },
+  "fr": {
+    "welcome": "Bienvenue sur MagicSync AI",
+    "welcomeDescription": "Je peux vous aider à créer des publications, analyser votre audience et gérer votre contenu de réseaux sociaux avec des outils alimentés par l'IA.",
+    "suggestion1": "Créer un post pour Twitter",
+    "suggestion2": "Analyser mon audience cible",
+    "suggestion3": "Rechercher les sujets tendance",
+    "placeholder": "Demandez-moi tout sur votre stratégie de réseaux sociaux...",
+    "error": "Quelque chose s'est mal passé"
+  }
+}

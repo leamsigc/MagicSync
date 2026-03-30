@@ -6,7 +6,7 @@
     "packages": "dotenv -- pnpm --filter",
     "install:all": "pnpm -r install",
     "site": "pnpm packages @local-monorepo/site build",
-    "site:profile":"pnpm packages @local-monorepo/site --profile ",
+    "site:profile": "pnpm packages @local-monorepo/site --profile ",
     "site:preview": "pnpm packages @local-monorepo/site preview",
     "site:start": "pnpm packages @local-monorepo/site start",
     "site:dev": "pnpm packages @local-monorepo/site dev",
@@ -54,7 +54,9 @@
     "doc:start": "pnpm packages magicsync-docs preview"
   },
   "devDependencies": {
-    "dotenv-cli": "^11.0.0"
+    "dotenv-cli": "^11.0.0",
+    "pnpm": "^10.33.0",
+    "python": "^0.0.4"
   },
   "workspaces": [
     "packages/*"

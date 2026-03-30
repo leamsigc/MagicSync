@@ -9,13 +9,18 @@
     "build": "nuxt build .playground",
     "generate": "nuxt generate .playground",
     "preview": "nuxt preview .playground",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:report": "playwright show-report"
   },
   "dependencies": {
     "@local-monorepo/db": "workspace:*",
     "@local-monorepo/ui": "workspace:*",
     "@local-monorepo/tools": "workspace:*",
     "@nuxtjs/i18n": "catalog:",
+    "@ai-sdk/vue": "^2.0.0",
+    "ai": "^5.0.0",
     "cheerio": "catalog:",
     "evlog": "catalog:",
     "comark": "catalog:",
@@ -23,6 +28,7 @@
   },
   "devDependencies": {
     "@nuxt/eslint": "catalog:",
+    "@playwright/test": "catalog:",
     "eslint": "catalog:",
     "nuxt": "catalog:",
     "typescript": "catalog:",

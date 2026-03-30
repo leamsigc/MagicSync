@@ -15,6 +15,9 @@ export default defineNuxtConfig({
   future: {
     compatibilityVersion: 5
   },
+  runtimeConfig: {
+    pythonBackendUrl: process.env.PYTHON_BACKEND_URL || 'http://localhost:8000',
+  },
   nitro: {
     experimental: {
       openAPI: true,

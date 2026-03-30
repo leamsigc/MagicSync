@@ -10,11 +10,11 @@ Track your progress through the implementation. Claude Code reads this to unders
 ## Modules
 
 ### Module 1: App Shell + Observability
-- [ ] Auth integration with existing Better Auth
-- [ ] Chat UI component
-- [ ] Basic LLM integration (Ollama)
-- [ ] Streaming responses via SSE
-- [ ] LangSmith tracing setup
+- [x] Auth integration with existing Better Auth
+- [x] Chat UI component
+- [x] Basic LLM integration (Ollama)
+- [x] Streaming responses via SSE
+- [x] LangSmith tracing setup
 
 ### Module 2: BYO Retrieval + Memory
 - [ ] Document ingestion endpoint
