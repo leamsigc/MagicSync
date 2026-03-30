@@ -12,6 +12,11 @@ dependencies = [
     "langsmith>=0.1.0",
     "pydantic>=2.10.0",
     "pydantic-settings>=2.7.0",
+    "pypdf>=4.0.0",
+    "python-docx>=1.1.0",
+    "beautifulsoup4>=4.12.0",
+    "lxml>=5.0.0",
+    "markdown>=3.6",
 ]
 
 [project.optional-dependencies]

@@ -37,7 +37,6 @@ export default defineEventHandler(async (event) => {
 
         const filePath = join(process.cwd(), 'upload', doc.storagePath)
         const fileBuffer = await readFile(filePath)
-        const text = fileBuffer.toString('utf-8')
 
         // Change detection: compute content hash and compare
         const fileContentHash = createHash('sha256').update(fileBuffer).digest('hex')
@@ -73,12 +72,14 @@ export default defineEventHandler(async (event) => {
             metadata: Record<string, any>
           }>
           total_chunks: number
+          extracted_text: string
         }>(`${backendUrl}/api/v1/rag/ingest`, {
           method: 'POST',
           body: {
             document_id: doc.id,
             filename: doc.originalName,
-            text,
+            file_content: fileBuffer.toString('base64'),
+            mime_type: doc.mimeType,
             chunk_size: 512,
             chunk_overlap: 64,
           },
@@ -175,7 +176,7 @@ export default defineEventHandler(async (event) => {
             document_type: string
           }>(`${backendUrl}/api/v1/rag/extract-metadata`, {
             method: 'POST',
-            body: { text },
+            body: { text: ingestResult.extracted_text },
             headers: { 'X-User-Id': user.id },
           })
 

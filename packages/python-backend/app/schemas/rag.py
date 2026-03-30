@@ -4,7 +4,9 @@ from pydantic import BaseModel, Field
 class IngestRequest(BaseModel):
     document_id: str
     filename: str = ""
-    text: str
+    text: str = ""
+    file_content: str = ""  # Base64-encoded file bytes (alternative to text)
+    mime_type: str = ""  # Required when using file_content
     chunk_size: int = Field(default=512, ge=64, le=2048)
     chunk_overlap: int = Field(default=64, ge=0, le=512)
     embedding_model: str = "nomic-embed-text"
@@ -23,6 +25,7 @@ class IngestResponse(BaseModel):
     document_id: str
     chunks: list[ChunkResult]
     total_chunks: int
+    extracted_text: str = ""
 
 
 class RetrieveRequest(BaseModel):
@@ -38,7 +41,9 @@ class RetrieveResponse(BaseModel):
 
 
 class ExtractMetadataRequest(BaseModel):
-    text: str
+    text: str = ""
+    file_content: str = ""  # Base64-encoded file bytes (alternative to text)
+    mime_type: str = ""  # Required when using file_content
     model: str = ""
 
 

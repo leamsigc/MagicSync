@@ -110,10 +110,10 @@ User Chat → TanStack AI → Python API → Ollama/OpenAI
 - [x] Filtered retrieval (chunkService.search returns metadata, supports documentId filter + metadata key/value filter via json_extract)
 
 ### Module 5: Multi-Format Support
-- [ ] PDF parsing
-- [ ] DOCX parsing
-- [ ] HTML parsing
-- [ ] Markdown parsing
+- [x] PDF parsing (pypdf via Python file_parser.py, Nuxt sends base64 + mime_type)
+- [x] DOCX parsing (python-docx via file_parser.py)
+- [x] HTML parsing (beautifulsoup4 + lxml via file_parser.py, strips scripts/styles/nav)
+- [x] Markdown parsing (markdown lib via file_parser.py, strips YAML frontmatter)
 
 ### Module 6: Hybrid Search & Reranking
 - [ ] Keyword search (BM25)

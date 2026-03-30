@@ -22,7 +22,6 @@ export default defineEventHandler(async (event) => {
   // Read file from disk
   const filePath = join(process.cwd(), 'upload', doc.storagePath)
   const fileBuffer = await readFile(filePath)
-  const text = fileBuffer.toString('utf-8')
 
   // Call Python backend for metadata extraction
   const config = useRuntimeConfig()
@@ -37,7 +36,10 @@ export default defineEventHandler(async (event) => {
     document_type: string
   }>(`${backendUrl}/api/v1/rag/extract-metadata`, {
     method: 'POST',
-    body: { text },
+    body: {
+      file_content: fileBuffer.toString('base64'),
+      mime_type: doc.mimeType,
+    },
     headers: {
       'X-User-Id': user.id,
     },

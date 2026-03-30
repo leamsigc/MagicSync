@@ -35,10 +35,10 @@ Track your progress through the implementation. Claude Code reads this to unders
 - [x] Filtered retrieval (search returns metadata, supports documentId and metadata key/value filters)
 
 ### Module 5: Multi-Format Support
-- [ ] PDF parsing
-- [ ] DOCX parsing
-- [ ] HTML parsing
-- [ ] Markdown parsing
+- [x] PDF parsing (pypdf — extracts text from all pages)
+- [x] DOCX parsing (python-docx — extracts paragraph text)
+- [x] HTML parsing (beautifulsoup4 + lxml — strips scripts/styles/nav, extracts content)
+- [x] Markdown parsing (markdown lib — strips frontmatter, converts to plain text)
 
 ### Module 6: Hybrid Search & Reranking
 - [ ] Keyword search (BM25)

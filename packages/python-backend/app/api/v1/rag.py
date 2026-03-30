@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
+import base64
 from app.schemas.rag import (
     IngestRequest, IngestResponse, ChunkResult,
     RetrieveRequest, RetrieveResponse,
     ExtractMetadataRequest, ExtractMetadataResponse,
 )
-from app.services.rag import embedding_service, chunk_text, extract_metadata
+from app.services.rag import embedding_service, chunk_text, extract_text, extract_metadata
 from app.core.security import get_current_user
 
 router = APIRouter()
@@ -16,13 +16,28 @@ async def ingest_document(
     request: IngestRequest,
     user: dict = Depends(get_current_user),
 ):
-    """Chunk text and generate embeddings. Returns chunks with embeddings for the caller to store."""
-    if not request.text.strip():
+    """Chunk text and generate embeddings. Returns chunks with embeddings for the caller to store.
+
+    Accepts either pre-extracted text or raw file bytes (base64) with a MIME type.
+    """
+    # Extract text from file if file_content is provided
+    if request.file_content and request.mime_type:
+        try:
+            file_bytes = base64.b64decode(request.file_content)
+            text = extract_text(file_bytes, request.mime_type)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Failed to parse file: {e}")
+    else:
+        text = request.text
+
+    if not text.strip():
         raise HTTPException(status_code=400, detail="Text content is empty")
 
     # Chunk the text
     chunks = chunk_text(
-        text=request.text,
+        text=text,
         chunk_size=request.chunk_size,
         chunk_overlap=request.chunk_overlap,
         metadata={"documentId": request.document_id, "source": request.filename},
@@ -52,6 +67,7 @@ async def ingest_document(
         document_id=request.document_id,
         chunks=results,
         total_chunks=len(results),
+        extracted_text=text[:5000],  # Return first 5000 chars for metadata extraction
     )
 
 
@@ -78,11 +94,23 @@ async def extract_document_metadata(
     user: dict = Depends(get_current_user),
 ):
     """Extract structured metadata from document text using LLM."""
-    if not request.text.strip():
+    # Extract text from file if file_content is provided
+    if request.file_content and request.mime_type:
+        try:
+            file_bytes = base64.b64decode(request.file_content)
+            text = extract_text(file_bytes, request.mime_type)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Failed to parse file: {e}")
+    else:
+        text = request.text
+
+    if not text.strip():
         raise HTTPException(status_code=400, detail="Text content is empty")
 
     model = request.model or None
-    metadata = await extract_metadata(request.text, model=model)
+    metadata = await extract_metadata(text, model=model)
 
     return ExtractMetadataResponse(
         title=metadata.title,

@@ -1,4 +1,4 @@
-import { eq, and, sql, desc } from 'drizzle-orm'
+import { eq, and, sql, desc, inArray } from 'drizzle-orm'
 import { type ServiceResponse, type PaginatedResponse, type QueryOptions } from './types'
 import { documents, documentChunks, type Document, type DocumentChunk } from '#layers/BaseDB/db/schema'
 import { useDrizzle, tursoClient } from '#layers/BaseDB/server/utils/drizzle'
@@ -231,11 +231,9 @@ export class ChunkService {
 
   async deleteByIds(ids: string[]): Promise<void> {
     if (ids.length === 0) return
-    for (const id of ids) {
-      await this.db
-        .delete(documentChunks)
-        .where(eq(documentChunks.id, id))
-    }
+    await this.db
+      .delete(documentChunks)
+      .where(inArray(documentChunks.id, ids))
   }
 
   async search(
