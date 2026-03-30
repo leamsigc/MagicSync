@@ -25,9 +25,9 @@ Track your progress through the implementation. Claude Code reads this to unders
 - [x] Realtime ingestion status (SSE)
 
 ### Module 3: Record Manager
-- [ ] Content hashing
-- [ ] Change detection
-- [ ] Incremental processing
+- [x] Content hashing (SHA-256 per chunk via Python backend, stored in document_chunks.content_hash)
+- [x] Change detection (compare file hash against stored hash, skip re-ingestion if unchanged)
+- [x] Incremental processing (diff chunk hashes, only insert new/changed chunks, delete removed ones)
 
 ### Module 4: Metadata Extraction
 - [ ] LLM metadata extraction

@@ -122,6 +122,54 @@ async function mockIngestionSSE(page: Page, docId: string, totalChunks: number =
 }
 
 /**
+ * Mocks ingestion SSE with skipped status (content unchanged).
+ */
+async function mockIngestionSkipped(page: Page, docId: string, totalChunks: number = 5) {
+  await page.route(`**/api/ai-tools/documents/${docId}/ingest`, async (route) => {
+    const sseBody = [
+      `data: {"status":"processing","message":"Reading file..."}\n\n`,
+      `data: {"status":"skipped","message":"Document content unchanged, skipping re-ingestion","total_chunks":${totalChunks}}\n\n`,
+      `data: [DONE]\n\n`,
+    ].join('')
+
+    await route.fulfill({
+      status: 200,
+      contentType: 'text/event-stream',
+      body: sseBody,
+    })
+  })
+}
+
+/**
+ * Mocks ingestion SSE with incremental update info.
+ */
+async function mockIngestionIncremental(
+  page: Page,
+  docId: string,
+  opts: { totalChunks: number; unchanged: number; changed: number; removed: number }
+) {
+  const { totalChunks, unchanged, changed, removed } = opts
+  await page.route(`**/api/ai-tools/documents/${docId}/ingest`, async (route) => {
+    const sseBody = [
+      `data: {"status":"processing","message":"Reading file..."}\n\n`,
+      `data: {"status":"processing","message":"Chunking and embedding..."}\n\n`,
+      `data: {"status":"storing","message":"${unchanged} unchanged, ${changed} new/changed, ${removed} removed","total_chunks":${totalChunks},"unchanged":${unchanged},"changed":${changed},"removed":${removed}}\n\n`,
+      changed > 0
+        ? `data: {"status":"storing","message":"Stored ${changed}/${changed} new chunks","progress":100}\n\n`
+        : '',
+      `data: {"status":"completed","message":"Ingested ${totalChunks} chunks (${changed} new, ${unchanged} unchanged)","total_chunks":${totalChunks},"new_chunks":${changed},"unchanged_chunks":${unchanged}}\n\n`,
+      `data: [DONE]\n\n`,
+    ].join('')
+
+    await route.fulfill({
+      status: 200,
+      contentType: 'text/event-stream',
+      body: sseBody,
+    })
+  })
+}
+
+/**
  * Mocks thread list endpoint.
  */
 async function mockThreadsList(page: Page, threads: any[] = []) {
@@ -166,5 +214,7 @@ export {
   mockDocumentUpload,
   mockDocumentDelete,
   mockIngestionSSE,
+  mockIngestionSkipped,
+  mockIngestionIncremental,
   mockThreadsList,
 }

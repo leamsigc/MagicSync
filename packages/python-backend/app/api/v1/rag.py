@@ -38,6 +38,7 @@ async def ingest_document(
         results.append(ChunkResult(
             chunk_index=chunk.index,
             content=chunk.content,
+            content_hash=chunk.content_hash,
             token_count=chunk.token_count,
             embedding=embedding,
             metadata=chunk.metadata,

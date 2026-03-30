@@ -100,9 +100,9 @@ User Chat → TanStack AI → Python API → Ollama/OpenAI
 - [x] Realtime ingestion status (SSE stream)
 
 ### Module 3: Record Manager
-- [ ] Content hashing
-- [ ] Change detection
-- [ ] Incremental processing
+- [x] Content hashing (SHA-256 per chunk via Python chunker, returned in ingest response)
+- [x] Change detection (compare file hash against stored hash on document, skip re-ingestion via SSE `skipped` event)
+- [x] Incremental processing (diff chunk hashes, only insert new/changed chunks, delete removed ones, update doc hash)
 
 ### Module 4: Metadata Extraction
 - [ ] LLM metadata extraction

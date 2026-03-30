@@ -34,7 +34,8 @@
     "deleteSuccess": "Document deleted",
     "deleteError": "Failed to delete document",
     "ingestSuccess": "Document ingested successfully",
-    "ingestError": "Ingestion failed"
+    "ingestError": "Ingestion failed",
+    "noChanges": "No changes detected"
   },
   "es": {
     "title": "Base de Conocimiento",
@@ -71,7 +72,8 @@
     "deleteSuccess": "Documento eliminado",
     "deleteError": "Error al eliminar documento",
     "ingestSuccess": "Documento ingerido exitosamente",
-    "ingestError": "Error en la ingesta"
+    "ingestError": "Error en la ingesta",
+    "noChanges": "No se detectaron cambios"
   },
   "de": {
     "title": "Wissensdatenbank",
@@ -108,7 +110,8 @@
     "deleteSuccess": "Dokument gelöscht",
     "deleteError": "Fehler beim Löschen",
     "ingestSuccess": "Dokument erfolgreich verarbeitet",
-    "ingestError": "Verarbeitung fehlgeschlagen"
+    "ingestError": "Verarbeitung fehlgeschlagen",
+    "noChanges": "Keine Änderungen erkannt"
   },
   "fr": {
     "title": "Base de Connaissances",
@@ -145,6 +148,7 @@
     "deleteSuccess": "Document supprimé",
     "deleteError": "Échec de la suppression",
     "ingestSuccess": "Document ingéré avec succès",
-    "ingestError": "Échec de l'ingestion"
+    "ingestError": "Échec de l'ingestion",
+    "noChanges": "Aucun changement détecté"
   }
 }

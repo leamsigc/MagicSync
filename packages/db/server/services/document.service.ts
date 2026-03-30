@@ -18,6 +18,7 @@ export interface CreateChunkData {
   userId: string
   chunkIndex: number
   content: string
+  contentHash?: string
   embedding?: number[]
   tokenCount?: number
   metadata?: Record<string, any>
@@ -127,6 +128,13 @@ export class DocumentService {
       .where(and(eq(documents.id, id), eq(documents.userId, userId)))
   }
 
+  async updateContentHash(id: string, userId: string, contentHash: string): Promise<void> {
+    await this.db
+      .update(documents)
+      .set({ contentHash, updatedAt: new Date() })
+      .where(and(eq(documents.id, id), eq(documents.userId, userId)))
+  }
+
   async delete(id: string, userId: string): Promise<ServiceResponse<Document>> {
     try {
       const [deleted] = await this.db
@@ -144,15 +152,20 @@ export class DocumentService {
     }
   }
 
-  async findByContentHash(hash: string, userId: string): Promise<ServiceResponse<Document>> {
+  async findByContentHash(hash: string, userId: string, excludeId?: string): Promise<ServiceResponse<Document>> {
     try {
+      const conditions = [
+        eq(documents.contentHash, hash),
+        eq(documents.userId, userId),
+      ]
+      if (excludeId) {
+        conditions.push(sql`${documents.id} != ${excludeId}`)
+      }
+
       const [doc] = await this.db
         .select()
         .from(documents)
-        .where(and(
-          eq(documents.contentHash, hash),
-          eq(documents.userId, userId)
-        ))
+        .where(and(...conditions))
         .limit(1)
 
       return { data: doc }
@@ -175,6 +188,7 @@ export class ChunkService {
         userId: c.userId,
         chunkIndex: c.chunkIndex,
         content: c.content,
+        contentHash: c.contentHash || null,
         embedding: c.embedding ? new Float32Array(c.embedding) : null,
         tokenCount: c.tokenCount,
         metadata: c.metadata ? JSON.stringify(c.metadata) : null,
@@ -192,6 +206,29 @@ export class ChunkService {
     await this.db
       .delete(documentChunks)
       .where(eq(documentChunks.documentId, documentId))
+  }
+
+  async findByDocument(documentId: string): Promise<ServiceResponse<DocumentChunk[]>> {
+    try {
+      const chunks = await this.db
+        .select()
+        .from(documentChunks)
+        .where(eq(documentChunks.documentId, documentId))
+        .orderBy(documentChunks.chunkIndex)
+
+      return { data: chunks }
+    } catch (error) {
+      return { error: 'Failed to fetch chunks' }
+    }
+  }
+
+  async deleteByIds(ids: string[]): Promise<void> {
+    if (ids.length === 0) return
+    for (const id of ids) {
+      await this.db
+        .delete(documentChunks)
+        .where(eq(documentChunks.id, id))
+    }
   }
 
   async search(

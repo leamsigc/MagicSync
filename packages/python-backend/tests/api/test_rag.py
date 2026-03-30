@@ -122,3 +122,60 @@ class TestRagEndpoints:
             headers={"Authorization": "Bearer test-token"},
         )
         assert response.status_code == 422
+
+    def test_ingest_returns_content_hash(self, client, api_prefix):
+        mock_embeddings = [[0.1, 0.2, 0.3] for _ in range(3)]
+
+        with patch(
+            "app.services.rag.embeddings.embedding_service.embed_batch",
+            new_callable=AsyncMock,
+            return_value=mock_embeddings,
+        ):
+            response = client.post(
+                f"{api_prefix}/rag/ingest",
+                json={
+                    "document_id": "doc-1",
+                    "filename": "test.txt",
+                    "text": "First paragraph.\n\nSecond paragraph.\n\nThird paragraph.",
+                    "chunk_size": 512,
+                    "chunk_overlap": 64,
+                },
+                headers={"Authorization": "Bearer test-token"},
+            )
+            assert response.status_code == 200
+            data = response.json()
+            for chunk in data["chunks"]:
+                assert "content_hash" in chunk
+                assert chunk["content_hash"]  # non-empty string
+                assert len(chunk["content_hash"]) == 64  # SHA-256 hex
+
+    def test_ingest_content_hash_deterministic(self, client, api_prefix):
+        mock_embeddings = [[0.1, 0.2] for _ in range(2)]
+
+        request_body = {
+            "document_id": "doc-1",
+            "filename": "test.txt",
+            "text": "Same content for both requests.",
+            "chunk_size": 512,
+            "chunk_overlap": 64,
+        }
+
+        with patch(
+            "app.services.rag.embeddings.embedding_service.embed_batch",
+            new_callable=AsyncMock,
+            return_value=mock_embeddings,
+        ):
+            response1 = client.post(
+                f"{api_prefix}/rag/ingest",
+                json=request_body,
+                headers={"Authorization": "Bearer test-token"},
+            )
+            response2 = client.post(
+                f"{api_prefix}/rag/ingest",
+                json=request_body,
+                headers={"Authorization": "Bearer test-token"},
+            )
+
+            chunks1 = response1.json()["chunks"]
+            chunks2 = response2.json()["chunks"]
+            assert chunks1[0]["content_hash"] == chunks2[0]["content_hash"]

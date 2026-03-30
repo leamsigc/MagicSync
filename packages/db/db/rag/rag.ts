@@ -30,6 +30,7 @@ export const documentChunks = sqliteTable('document_chunks', {
   userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
   chunkIndex: integer('chunk_index').notNull(),
   content: text('content').notNull(),
+  contentHash: text('content_hash'),
   embedding: blob('embedding'), // Vector stored as float32 blob for Turso vector_distance_cos
   tokenCount: integer('token_count'),
   metadata: text('metadata'), // JSON: page number, section, etc.

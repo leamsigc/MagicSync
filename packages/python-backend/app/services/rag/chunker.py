@@ -1,4 +1,5 @@
 import re
+import hashlib
 from dataclasses import dataclass, field
 
 
@@ -7,7 +8,13 @@ class Chunk:
     content: str
     index: int
     token_count: int
+    content_hash: str = ""
     metadata: dict = field(default_factory=dict)
+
+
+def compute_content_hash(text: str) -> str:
+    """Compute SHA-256 hash of text content for change detection."""
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
 def estimate_tokens(text: str) -> int:
@@ -49,11 +56,12 @@ def chunk_text(
             for sentence in sentences:
                 sent_tokens = estimate_tokens(sentence)
                 if current_tokens + sent_tokens > chunk_size and current_parts:
-                    chunk_text = '\n\n'.join(current_parts)
+                    chunk_content = '\n\n'.join(current_parts)
                     chunks.append(Chunk(
-                        content=chunk_text,
+                        content=chunk_content,
                         index=chunk_index,
                         token_count=current_tokens,
+                        content_hash=compute_content_hash(chunk_content),
                         metadata=metadata or {},
                     ))
                     chunk_index += 1
@@ -75,11 +83,12 @@ def chunk_text(
                 current_tokens += sent_tokens
         else:
             if current_tokens + para_tokens > chunk_size and current_parts:
-                chunk_text = '\n\n'.join(current_parts)
+                chunk_content = '\n\n'.join(current_parts)
                 chunks.append(Chunk(
-                    content=chunk_text,
+                    content=chunk_content,
                     index=chunk_index,
                     token_count=current_tokens,
+                    content_hash=compute_content_hash(chunk_content),
                     metadata=metadata or {},
                 ))
                 chunk_index += 1
@@ -101,11 +110,12 @@ def chunk_text(
 
     # Final chunk
     if current_parts:
-        chunk_text = '\n\n'.join(current_parts)
+        chunk_content = '\n\n'.join(current_parts)
         chunks.append(Chunk(
-            content=chunk_text,
+            content=chunk_content,
             index=chunk_index,
             token_count=current_tokens,
+            content_hash=compute_content_hash(chunk_content),
             metadata=metadata or {},
         ))
 

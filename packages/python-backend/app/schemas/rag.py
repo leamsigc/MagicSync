@@ -13,6 +13,7 @@ class IngestRequest(BaseModel):
 class ChunkResult(BaseModel):
     chunk_index: int
     content: str
+    content_hash: str = ""
     token_count: int
     embedding: list[float]
     metadata: dict = {}

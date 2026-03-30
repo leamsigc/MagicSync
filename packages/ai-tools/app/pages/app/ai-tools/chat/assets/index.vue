@@ -104,6 +104,12 @@ async function handleIngest(doc: Document) {
               message: event.message,
               progress: event.progress,
             }
+            if (event.status === 'skipped') {
+              delete ingesting.value[doc.id]
+              toast.add({ title: t('noChanges'), description: event.message, color: 'info' })
+              await fetchDocuments()
+              return
+            }
             if (event.status === 'failed') {
               delete ingesting.value[doc.id]
               toast.add({ title: event.message || t('ingestError'), color: 'error' })

@@ -2,6 +2,7 @@ import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
 import { documentService, chunkService } from '#layers/BaseDB/server/services/document.service'
 import { readFile } from 'fs/promises'
 import { join } from 'path'
+import { createHash } from 'crypto'
 
 export default defineEventHandler(async (event) => {
   const user = await checkUserIsLogin(event)
@@ -19,9 +20,6 @@ export default defineEventHandler(async (event) => {
 
   const doc = docResult.data
 
-  // Update status to processing
-  await documentService.updateStatus(id, user.id, 'processing')
-
   setResponseHeader(event, 'Content-Type', 'text/event-stream')
   setResponseHeader(event, 'Cache-Control', 'no-cache')
   setResponseHeader(event, 'Connection', 'keep-alive')
@@ -34,13 +32,29 @@ export default defineEventHandler(async (event) => {
   const stream = new ReadableStream({
     async start(controller) {
       try {
-        // Send initial status
+        // Read file from disk
         controller.enqueue(encoder.encode(sendEvent({ status: 'processing', message: 'Reading file...' })))
 
-        // Read file from disk
         const filePath = join(process.cwd(), 'upload', doc.storagePath)
         const fileBuffer = await readFile(filePath)
         const text = fileBuffer.toString('utf-8')
+
+        // Change detection: compute content hash and compare
+        const fileContentHash = createHash('sha256').update(fileBuffer).digest('hex')
+
+        if (doc.contentHash === fileContentHash && doc.status === 'completed') {
+          controller.enqueue(encoder.encode(sendEvent({
+            status: 'skipped',
+            message: 'Document content unchanged, skipping re-ingestion',
+            total_chunks: doc.chunkCount,
+          })))
+          controller.enqueue(encoder.encode('data: [DONE]\n\n'))
+          controller.close()
+          return
+        }
+
+        // Content changed or first ingestion — proceed
+        await documentService.updateStatus(id!, user.id, 'processing')
 
         controller.enqueue(encoder.encode(sendEvent({ status: 'processing', message: 'Chunking and embedding...' })))
 
@@ -53,6 +67,7 @@ export default defineEventHandler(async (event) => {
           chunks: Array<{
             chunk_index: number
             content: string
+            content_hash: string
             token_count: number
             embedding: number[]
             metadata: Record<string, any>
@@ -72,52 +87,92 @@ export default defineEventHandler(async (event) => {
           },
         })
 
-        controller.enqueue(encoder.encode(sendEvent({
-          status: 'storing',
-          message: `Storing ${ingestResult.total_chunks} chunks...`,
-          total_chunks: ingestResult.total_chunks,
-        })))
+        // Incremental processing: compare with existing chunks
+        const existingChunksResult = await chunkService.findByDocument(doc.id)
+        const existingChunks = existingChunksResult.data || []
 
-        // Delete existing chunks if re-ingesting
-        await chunkService.deleteByDocument(doc.id)
-
-        // Store chunks with embeddings in Turso
-        const chunkData = ingestResult.chunks.map(c => ({
-          documentId: doc.id,
-          userId: user.id,
-          chunkIndex: c.chunk_index,
-          content: c.content,
-          embedding: c.embedding,
-          tokenCount: c.token_count,
-          metadata: c.metadata,
-        }))
-
-        // Insert in batches of 50
-        for (let i = 0; i < chunkData.length; i += 50) {
-          const batch = chunkData.slice(i, i + 50)
-          await chunkService.createMany(batch)
-          controller.enqueue(encoder.encode(sendEvent({
-            status: 'storing',
-            message: `Stored ${Math.min(i + 50, chunkData.length)}/${chunkData.length} chunks`,
-            progress: Math.round(((i + 50) / chunkData.length) * 100),
-          })))
+        // Build a set of existing content hashes for quick lookup
+        const existingHashMap = new Map<string, string>() // contentHash -> chunkId
+        for (const chunk of existingChunks) {
+          if (chunk.contentHash) {
+            existingHashMap.set(chunk.contentHash, chunk.id)
+          }
         }
 
-        // Update document status
+        // Build a set of new content hashes
+        const newHashSet = new Set(ingestResult.chunks.map(c => c.content_hash))
+
+        // Find chunks to delete (exist in DB but not in new set)
+        const chunksToDelete: string[] = []
+        for (const chunk of existingChunks) {
+          if (chunk.contentHash && !newHashSet.has(chunk.contentHash)) {
+            chunksToDelete.push(chunk.id)
+          }
+        }
+
+        // Find chunks to insert (new hashes not in existing map)
+        const chunksToInsert = ingestResult.chunks.filter(
+          c => !existingHashMap.has(c.content_hash)
+        )
+
+        const unchangedCount = ingestResult.chunks.length - chunksToInsert.length
+
+        controller.enqueue(encoder.encode(sendEvent({
+          status: 'storing',
+          message: `${unchangedCount} unchanged, ${chunksToInsert.length} new/changed, ${chunksToDelete.length} removed`,
+          total_chunks: ingestResult.total_chunks,
+          unchanged: unchangedCount,
+          changed: chunksToInsert.length,
+          removed: chunksToDelete.length,
+        })))
+
+        // Delete removed chunks
+        if (chunksToDelete.length > 0) {
+          await chunkService.deleteByIds(chunksToDelete)
+        }
+
+        // Insert new/changed chunks with embeddings
+        if (chunksToInsert.length > 0) {
+          const chunkData = chunksToInsert.map(c => ({
+            documentId: doc.id,
+            userId: user.id,
+            chunkIndex: c.chunk_index,
+            content: c.content,
+            contentHash: c.content_hash,
+            embedding: c.embedding,
+            tokenCount: c.token_count,
+            metadata: c.metadata,
+          }))
+
+          for (let i = 0; i < chunkData.length; i += 50) {
+            const batch = chunkData.slice(i, i + 50)
+            await chunkService.createMany(batch)
+            controller.enqueue(encoder.encode(sendEvent({
+              status: 'storing',
+              message: `Stored ${Math.min(i + 50, chunkData.length)}/${chunkData.length} new chunks`,
+              progress: Math.round(((i + 50) / chunkData.length) * 100),
+            })))
+          }
+        }
+
+        // Update document content hash and chunk count
+        await documentService.updateContentHash(doc.id, user.id, fileContentHash)
         await documentService.updateChunkCount(doc.id, user.id, ingestResult.total_chunks)
-        await documentService.updateStatus(id, user.id, 'completed')
+        await documentService.updateStatus(id!, user.id, 'completed')
 
         controller.enqueue(encoder.encode(sendEvent({
           status: 'completed',
-          message: `Ingested ${ingestResult.total_chunks} chunks`,
+          message: `Ingested ${ingestResult.total_chunks} chunks (${chunksToInsert.length} new, ${unchangedCount} unchanged)`,
           total_chunks: ingestResult.total_chunks,
+          new_chunks: chunksToInsert.length,
+          unchanged_chunks: unchangedCount,
         })))
 
         controller.enqueue(encoder.encode('data: [DONE]\n\n'))
         controller.close()
 
       } catch (error: any) {
-        await documentService.updateStatus(id, user.id, 'failed', error.message)
+        await documentService.updateStatus(id!, user.id, 'failed', error.message)
         controller.enqueue(encoder.encode(sendEvent({
           status: 'failed',
           message: error.message || 'Ingestion failed',

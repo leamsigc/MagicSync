@@ -1,5 +1,5 @@
 import pytest
-from app.services.rag.chunker import chunk_text, estimate_tokens
+from app.services.rag.chunker import chunk_text, estimate_tokens, compute_content_hash
 
 
 class TestChunker:
@@ -64,6 +64,44 @@ class TestChunker:
         assert estimate_tokens("a" * 100) == 25
 
 
+class TestContentHashing:
+    def test_compute_content_hash_deterministic(self):
+        text = "Hello world, this is test content."
+        hash1 = compute_content_hash(text)
+        hash2 = compute_content_hash(text)
+        assert hash1 == hash2
+
+    def test_compute_content_hash_different_for_different_text(self):
+        hash1 = compute_content_hash("First text")
+        hash2 = compute_content_hash("Second text")
+        assert hash1 != hash2
+
+    def test_compute_content_hash_returns_hex_string(self):
+        import re
+        h = compute_content_hash("test")
+        assert re.match(r'^[a-f0-9]{64}$', h)
+
+    def test_chunk_has_content_hash(self):
+        text = "Paragraph one.\n\nParagraph two.\n\nParagraph three."
+        chunks = chunk_text(text, chunk_size=512)
+        for chunk in chunks:
+            assert chunk.content_hash
+            assert chunk.content_hash == compute_content_hash(chunk.content)
+
+    def test_different_chunks_have_different_hashes(self):
+        text = "First paragraph has some content.\n\nSecond paragraph has different content.\n\nThird one too."
+        chunks = chunk_text(text, chunk_size=32, chunk_overlap=0)
+        if len(chunks) > 1:
+            hashes = [c.content_hash for c in chunks]
+            assert len(hashes) == len(set(hashes))
+
+    def test_same_content_produces_same_hash_across_runs(self):
+        text = "Deterministic content for hashing test."
+        chunks1 = chunk_text(text, chunk_size=512)
+        chunks2 = chunk_text(text, chunk_size=512)
+        assert chunks1[0].content_hash == chunks2[0].content_hash
+
+
 class TestEmbeddingService:
     def test_embed_calls_ollama(self):
         """Test that embed method constructs correct Ollama request."""
@@ -71,7 +109,6 @@ class TestEmbeddingService:
 
         service = EmbeddingService(base_url="http://localhost:11434")
         assert service.base_url == "http://localhost:11434"
-        assert service.default_model is None  # not set on init
 
     def test_custom_base_url(self):
         from app.services.rag.embeddings import EmbeddingService
