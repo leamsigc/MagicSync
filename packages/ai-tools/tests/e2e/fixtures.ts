@@ -170,6 +170,91 @@ async function mockIngestionIncremental(
 }
 
 /**
+ * Mocks the ingestion SSE with metadata extraction step.
+ */
+async function mockIngestionWithMetadata(
+  page: Page,
+  docId: string,
+  totalChunks: number = 5,
+  metadata: Record<string, any> = {}
+) {
+  const defaultMeta = {
+    title: 'Test Document',
+    author: 'Test Author',
+    language: 'en',
+    topics: ['testing', 'metadata'],
+    summary: 'A test document for metadata extraction.',
+    document_type: 'technical',
+    ...metadata,
+  }
+
+  await page.route(`**/api/ai-tools/documents/${docId}/ingest`, async (route) => {
+    const sseBody = [
+      `data: {"status":"processing","message":"Reading file..."}\n\n`,
+      `data: {"status":"processing","message":"Chunking and embedding..."}\n\n`,
+      `data: {"status":"storing","message":"Storing ${totalChunks} chunks...","total_chunks":${totalChunks}}\n\n`,
+      `data: {"status":"storing","message":"Stored ${totalChunks}/${totalChunks} chunks","progress":100}\n\n`,
+      `data: {"status":"extracting","message":"Extracting document metadata..."}\n\n`,
+      `data: {"status":"extracting","message":"Metadata extracted: \\"${defaultMeta.title}\\"","metadata":${JSON.stringify(defaultMeta)}}\n\n`,
+      `data: {"status":"completed","message":"Ingested ${totalChunks} chunks","total_chunks":${totalChunks}}\n\n`,
+      `data: [DONE]\n\n`,
+    ].join('')
+
+    await route.fulfill({
+      status: 200,
+      contentType: 'text/event-stream',
+      body: sseBody,
+    })
+  })
+}
+
+/**
+ * Mocks the metadata extraction endpoint.
+ */
+async function mockMetadataExtraction(
+  page: Page,
+  docId: string,
+  metadata: Record<string, any> = {}
+) {
+  const defaultMeta = {
+    title: 'Test Document',
+    author: 'Test Author',
+    language: 'en',
+    topics: ['testing', 'metadata'],
+    summary: 'A test document.',
+    document_type: 'technical',
+    ...metadata,
+  }
+
+  await page.route(`**/api/ai-tools/documents/${docId}/extract-metadata`, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(defaultMeta),
+    })
+  })
+}
+
+/**
+ * Mocks the retrieval endpoint with metadata in results.
+ */
+async function mockRetrieval(
+  page: Page,
+  results: Array<{ content: string; documentId: string; similarity: number; metadata?: any }> = []
+) {
+  await page.route('**/api/ai-tools/retrieve', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        query: 'test query',
+        results,
+      }),
+    })
+  })
+}
+
+/**
  * Mocks thread list endpoint.
  */
 async function mockThreadsList(page: Page, threads: any[] = []) {
@@ -216,5 +301,8 @@ export {
   mockIngestionSSE,
   mockIngestionSkipped,
   mockIngestionIncremental,
+  mockIngestionWithMetadata,
+  mockMetadataExtraction,
+  mockRetrieval,
   mockThreadsList,
 }

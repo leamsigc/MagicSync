@@ -30,9 +30,9 @@ Track your progress through the implementation. Claude Code reads this to unders
 - [x] Incremental processing (diff chunk hashes, only insert new/changed chunks, delete removed ones)
 
 ### Module 4: Metadata Extraction
-- [ ] LLM metadata extraction
-- [ ] Metadata schema
-- [ ] Filtered retrieval
+- [x] LLM metadata extraction (Python service using chat_complete(), extracts title/author/topics/summary/language/document_type)
+- [x] Metadata schema (documents.metadata enriched with extracted fields, chunks retain source metadata)
+- [x] Filtered retrieval (search returns metadata, supports documentId and metadata key/value filters)
 
 ### Module 5: Multi-Format Support
 - [ ] PDF parsing

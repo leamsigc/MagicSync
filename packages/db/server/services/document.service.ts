@@ -135,6 +135,13 @@ export class DocumentService {
       .where(and(eq(documents.id, id), eq(documents.userId, userId)))
   }
 
+  async updateMetadata(id: string, userId: string, metadata: Record<string, any>): Promise<void> {
+    await this.db
+      .update(documents)
+      .set({ metadata: JSON.stringify(metadata), updatedAt: new Date() })
+      .where(and(eq(documents.id, id), eq(documents.userId, userId)))
+  }
+
   async delete(id: string, userId: string): Promise<ServiceResponse<Document>> {
     try {
       const [deleted] = await this.db
@@ -234,28 +241,54 @@ export class ChunkService {
   async search(
     userId: string,
     queryEmbedding: number[],
-    limit: number = 5
-  ): Promise<ServiceResponse<Array<{ content: string; documentId: string; similarity: number }>>> {
+    limit: number = 5,
+    filters?: { documentId?: string; metadataKey?: string; metadataValue?: string }
+  ): Promise<ServiceResponse<Array<{ content: string; documentId: string; similarity: number; metadata: Record<string, any> | null }>>> {
     try {
       const embeddingStr = `[${queryEmbedding.join(',')}]`
+
+      const whereClauses: string[] = ['dc.user_id = ?']
+      const args: any[] = [embeddingStr, userId]
+
+      if (filters?.documentId) {
+        whereClauses.push('dc.document_id = ?')
+        args.push(filters.documentId)
+      }
+
+      if (filters?.metadataKey && filters?.metadataValue) {
+        // Use json_extract for metadata filtering on JSON fields
+        whereClauses.push(`json_extract(dc.metadata, '$.${filters.metadataKey}') LIKE ?`)
+        args.push(`%${filters.metadataValue}%`)
+      }
+
+      args.push(limit)
 
       const results = await tursoClient.execute({
         sql: `
           SELECT dc.content, dc.document_id, dc.metadata,
                  vector_distance_cos(dc.embedding, vector32(?)) as similarity
           FROM document_chunks dc
-          WHERE dc.user_id = ?
+          WHERE ${whereClauses.join(' AND ')}
           ORDER BY similarity ASC
           LIMIT ?
         `,
-        args: [embeddingStr, userId, limit],
+        args,
       })
 
-      const rows = results.rows.map(r => ({
-        content: r.content as string,
-        documentId: r.document_id as string,
-        similarity: r.similarity as number,
-      }))
+      const rows = results.rows.map(r => {
+        let metadata: Record<string, any> | null = null
+        try {
+          metadata = r.metadata ? JSON.parse(r.metadata as string) : null
+        } catch {
+          // invalid JSON
+        }
+        return {
+          content: r.content as string,
+          documentId: r.document_id as string,
+          similarity: r.similarity as number,
+          metadata,
+        }
+      })
 
       return { data: rows }
     } catch (error) {

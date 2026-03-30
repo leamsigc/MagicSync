@@ -1,7 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
-from app.schemas.rag import IngestRequest, IngestResponse, ChunkResult, RetrieveRequest, RetrieveResponse
-from app.services.rag import embedding_service, chunk_text
+from app.schemas.rag import (
+    IngestRequest, IngestResponse, ChunkResult,
+    RetrieveRequest, RetrieveResponse,
+    ExtractMetadataRequest, ExtractMetadataResponse,
+)
+from app.services.rag import embedding_service, chunk_text, extract_metadata
 from app.core.security import get_current_user
 
 router = APIRouter()
@@ -65,4 +69,26 @@ async def retrieve(
         query=request.query,
         embedding=embedding,
         top_k=request.top_k,
+    )
+
+
+@router.post("/extract-metadata", response_model=ExtractMetadataResponse)
+async def extract_document_metadata(
+    request: ExtractMetadataRequest,
+    user: dict = Depends(get_current_user),
+):
+    """Extract structured metadata from document text using LLM."""
+    if not request.text.strip():
+        raise HTTPException(status_code=400, detail="Text content is empty")
+
+    model = request.model or None
+    metadata = await extract_metadata(request.text, model=model)
+
+    return ExtractMetadataResponse(
+        title=metadata.title,
+        author=metadata.author,
+        language=metadata.language,
+        topics=metadata.topics,
+        summary=metadata.summary,
+        document_type=metadata.document_type,
     )

@@ -35,3 +35,17 @@ class RetrieveResponse(BaseModel):
     query: str
     embedding: list[float]
     top_k: int
+
+
+class ExtractMetadataRequest(BaseModel):
+    text: str
+    model: str = ""
+
+
+class ExtractMetadataResponse(BaseModel):
+    title: str = ""
+    author: str = ""
+    language: str = "en"
+    topics: list[str] = []
+    summary: str = ""
+    document_type: str = ""

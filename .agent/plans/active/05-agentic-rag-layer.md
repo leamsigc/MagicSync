@@ -105,9 +105,9 @@ User Chat → TanStack AI → Python API → Ollama/OpenAI
 - [x] Incremental processing (diff chunk hashes, only insert new/changed chunks, delete removed ones, update doc hash)
 
 ### Module 4: Metadata Extraction
-- [ ] LLM metadata extraction
-- [ ] Metadata schema
-- [ ] Filtered retrieval
+- [x] LLM metadata extraction (Python: extract_metadata via chat_complete(), Nuxt proxy at /documents/:id/extract-metadata, integrated into ingestion SSE flow)
+- [x] Metadata schema (documents.metadata enriched: title, author, language, topics, summary, document_type, extractedAt)
+- [x] Filtered retrieval (chunkService.search returns metadata, supports documentId filter + metadata key/value filter via json_extract)
 
 ### Module 5: Multi-Format Support
 - [ ] PDF parsing

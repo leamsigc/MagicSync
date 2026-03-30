@@ -28,11 +28,22 @@ export default defineEventHandler(async (event) => {
     },
   })
 
-  // Search chunks in Turso using vector similarity
+  // Build optional filters
+  const filters: { documentId?: string; metadataKey?: string; metadataValue?: string } = {}
+  if (body.document_id) {
+    filters.documentId = body.document_id
+  }
+  if (body.metadata_key && body.metadata_value) {
+    filters.metadataKey = body.metadata_key
+    filters.metadataValue = body.metadata_value
+  }
+
+  // Search chunks in Turso using vector similarity with optional filters
   const searchResult = await chunkService.search(
     user.id,
     retrieveResult.embedding,
-    retrieveResult.top_k
+    retrieveResult.top_k,
+    Object.keys(filters).length > 0 ? filters : undefined
   )
 
   if (searchResult.error) {

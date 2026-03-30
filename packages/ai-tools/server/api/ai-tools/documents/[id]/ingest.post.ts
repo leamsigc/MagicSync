@@ -158,6 +158,57 @@ export default defineEventHandler(async (event) => {
         // Update document content hash and chunk count
         await documentService.updateContentHash(doc.id, user.id, fileContentHash)
         await documentService.updateChunkCount(doc.id, user.id, ingestResult.total_chunks)
+
+        // Extract document metadata via LLM (best-effort, don't block ingestion)
+        controller.enqueue(encoder.encode(sendEvent({
+          status: 'extracting',
+          message: 'Extracting document metadata...',
+        })))
+
+        try {
+          const metadataResult = await $fetch<{
+            title: string
+            author: string
+            language: string
+            topics: string[]
+            summary: string
+            document_type: string
+          }>(`${backendUrl}/api/v1/rag/extract-metadata`, {
+            method: 'POST',
+            body: { text },
+            headers: { 'X-User-Id': user.id },
+          })
+
+          // Merge with existing metadata
+          let existingMeta: Record<string, any> = {}
+          try {
+            existingMeta = doc.metadata ? JSON.parse(doc.metadata) : {}
+          } catch { /* invalid JSON */ }
+
+          await documentService.updateMetadata(doc.id, user.id, {
+            ...existingMeta,
+            title: metadataResult.title,
+            author: metadataResult.author,
+            language: metadataResult.language,
+            topics: metadataResult.topics,
+            summary: metadataResult.summary,
+            document_type: metadataResult.document_type,
+            extractedAt: new Date().toISOString(),
+          })
+
+          controller.enqueue(encoder.encode(sendEvent({
+            status: 'extracting',
+            message: `Metadata extracted: "${metadataResult.title}"`,
+            metadata: metadataResult,
+          })))
+        } catch (metaError: any) {
+          // Metadata extraction is non-critical — log but don't fail ingestion
+          controller.enqueue(encoder.encode(sendEvent({
+            status: 'extracting',
+            message: 'Metadata extraction skipped (LLM unavailable)',
+          })))
+        }
+
         await documentService.updateStatus(id!, user.id, 'completed')
 
         controller.enqueue(encoder.encode(sendEvent({
