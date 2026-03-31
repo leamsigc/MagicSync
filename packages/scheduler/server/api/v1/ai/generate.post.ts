@@ -1,17 +1,6 @@
-import { generateText } from 'ai';
-import { google } from '@ai-sdk/google';
+import { generateAIText, generateAIJSON } from '~/server/utils/ai';
 
-export default defineLazyEventHandler(async () => {
-  const apiKey = process.env.NUXT_GOOGLE_GENERATIVE_AI_API_KEY || '';
-
-  if (!apiKey) {
-    throw createError({
-      statusCode: 500,
-      message: 'Missing Google Generative AI API key. Please set GOOGLE_GENERATIVE_AI_API_KEY in your environment variables.',
-    });
-  }
-
-  return defineEventHandler(async (event) => {
+export default defineEventHandler(async (event) => {
     const log = useLogger(event)
     await checkUserIsLogin(event)
     const body = await readBody(event);
@@ -80,43 +69,50 @@ Return format: ["#hashtag1", "#hashtag2", "#hashtag3"]`;
           });
       }
 
-      const { text } = await generateText({
-        model: google('gemini-3-flash-preview'),
-        system: systemPrompt,
-        prompt: prompt,
-        temperature: action === 'fixGrammar' ? 0.3 : 0.7,
-      });
+      const { result } = await handleAIGeneration(
+        action,
+        prompt,
+        systemPrompt,
+        action === 'fixGrammar' ? 0.3 : 0.7
+      );
 
-      // For actions that return JSON arrays, parse them
-      if (action === 'smartSplit' || action === 'generateHashtags') {
-        try {
-          // Remove markdown code blocks if present
-          const cleanText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-          const parsed = JSON.parse(cleanText);
-          return { result: parsed };
-        } catch (parseError) {
-          // If parsing fails, try to extract array-like content
-          const arrayMatch = text.match(/\[[\s\S]*\]/);
-          if (arrayMatch) {
-            try {
-              const parsed = JSON.parse(arrayMatch[0]);
-              return { result: parsed };
-            } catch {
-              // Fallback: return as single item array
-              return { result: [text] };
-            }
-          }
-          return { result: [text] };
-        }
-      }
-
-      return { result: text };
+      return { result };
     } catch (error: any) {
       console.error('AI Generation Error:', error);
       throw createError({
         statusCode: 500,
-        message: error.message || 'Failed to generate AI content',
+        statusMessage: error.message || 'Failed to generate AI content'
       });
     }
-  });
 });
+
+async function handleAIGeneration(
+  action: string,
+  prompt: string,
+  systemPrompt: string,
+  temperature: number
+): Promise<{ result: any }> {
+  if (action === 'smartSplit' || action === 'generateHashtags') {
+    try {
+      const result = await generateAIJSON({
+        prompt,
+        system: systemPrompt,
+        temperature
+      });
+      return { result };
+    } catch (error) {
+      const text = await generateAIText({
+        prompt,
+        system: systemPrompt,
+        temperature
+      });
+      return { result: [text] };
+    }
+  }
+
+  const text = await generateAIText({
+    prompt,
+    system: systemPrompt,
+    temperature
+  });
+  return { result: text };
