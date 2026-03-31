@@ -38,7 +38,7 @@
     "vue-router": "catalog:",
     "evlog": "catalog:",
     "consola": "catalog:",
-    "comark": "catalog:"
+    "@comark/nuxt": "catalog:"
   },
   "devDependencies": {
     "@nuxt/hints": "catalog:",

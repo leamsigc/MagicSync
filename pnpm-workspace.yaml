@@ -2,8 +2,8 @@ packages:
   - packages/*
 
 catalog:
-  '@atproto/api': 0.18.21
-  '@better-auth/utils': 0.3.1
+  '@atproto/api': 0.19.5
+  '@better-auth/utils': 0.4.0
   '@fullcalendar/core': 6.1.20
   '@fullcalendar/daygrid': 6.1.20
   '@fullcalendar/interaction': 6.1.20
@@ -12,66 +12,68 @@ catalog:
   '@fullcalendar/scrollgrid': 6.1.20
   '@fullcalendar/timegrid': 6.1.20
   '@fullcalendar/vue3': 6.1.20
-  '@huggingface/transformers': 3.8.1
-  '@libsql/client': 0.17.0
-  '@nuxt/content': 3.11.2
+  '@huggingface/transformers': 4.0.0
+  '@libsql/client': 0.17.2
+  '@nuxt/content': 3.12.0
   '@nuxt/eslint': latest
-  '@nuxt/fonts': 0.13.0
-  '@nuxt/hints': 1.0.0-alpha.1
+  '@nuxt/fonts': 0.14.0
+  '@nuxt/hints': 1.0.2
   '@nuxt/image': 2.0.0
   '@nuxt/scripts': 0.13.2
   '@nuxt/test-utils': 4.0.0
-  '@nuxt/ui': 4.4.0
-  '@nuxtjs/i18n': 10.2.3
-  '@nuxtjs/seo': 3.4.0
+  '@nuxt/ui': 4.6.0
+  '@nuxtjs/i18n': 10.2.4
+  '@nuxtjs/seo': 5.1.0
   '@playwright/test': 1.58.2
   '@types/mjml': 4.7.4
   '@types/papaparse': 5.5.2
-  '@types/three': 0.182.0
-  '@unhead/vue': 2.1.4
-  '@vitejs/plugin-vue': 6.0.4
-  '@vitest/coverage-v8': 4.0.18
+  '@types/three': 0.183.1
+  '@unhead/vue': 2.1.12
+  '@vitejs/plugin-vue': 6.0.5
+  '@vitest/coverage-v8': 4.1.2
   '@vueuse/core': 14.2.1
   '@vueuse/motion': 3.0.3
   '@vueuse/nuxt': 14.2.1
-  ai: 5.0.106
-  axios: 1.13.5
-  better-auth: 1.4.18
-  better-sqlite3: 12.6.2
+  ai: 6.0.141
+  "@ai-sdk/vue": "3.0.141"
+  axios: 1.14.0
+  better-auth: 1.5.6
+  "@better-auth/api-key": 1.5.6
+  better-sqlite3: 12.8.0
   cheerio: ^1.2.0
   consola: 3.4.2
-  dayjs: 1.11.19
-  drizzle-kit: 0.31.9
-  drizzle-orm: 0.45.1
+  dayjs: 1.11.20
+  drizzle-kit: 0.31.10
+  drizzle-orm: 0.45.2
   echarts: 6.0.0
-  eslint: 10.0.0
-  evlog: 1.7.0
-  fabric: 7.1.0
+  eslint: 10.1.0
+  evlog: 2.10.0
+  fabric: 7.2.0
   googleapis: 171.4.0
-  happy-dom: 20.6.1
+  happy-dom: 20.8.9
   mjml: 4.18.0
   modern-screenshot: 4.6.8
-  nuxt: 4.3.1
-  nuxt-auth-utils: 0.5.28
+  nuxt: 4.4.2
+  nuxt-auth-utils: 0.5.29
   nuxt-file-storage: 0.3.2
   nuxt-umami: 3.2.1
   papaparse: 5.5.3
-  sass: 1.97.3
+  sass: 1.98.0
   sharp: 0.34.5
-  tailwindcss: 4.1.18
-  three: 0.182.0
+  tailwindcss: 4.2.2
+  three: 0.183.2
   tsx: 4.21.0
   twitter-api-v2: 1.29.0
-  typescript: 5.9.3
-  unhead: 2.1.2
-  vitest: 4.0.18
-  vue: 3.5.28
-  vue-router: 5.0.2
+  typescript: 6.0.2
+  unhead: 2.1.12
+  vitest: 4.1.2
+  vue: 3.5.31
+  vue-router: 5.0.4
   zod: 4.3.6
-  comark: https://pkg.pr.new/comarkdown/comark@9c1c9e3
-  mediabunny: 1.38.1
+  '@comark/nuxt': 0.1.2
+  mediabunny: 1.40.1
   idb: 8.0.3
-  "wavesurfer.js": 7.12.2
+  "wavesurfer.js": 7.12.5
 
 ignoredBuiltDependencies:
   - fsevents
@@ -86,5 +88,3 @@ onlyBuiltDependencies:
   - protobufjs
   - unrs-resolver
 
-patchedDependencies:
-  better-auth: patches/better-auth.patch

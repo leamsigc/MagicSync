@@ -7,98 +7,155 @@
 High
 
 ## Episode
-Episode 4 of the [Claude Code Agentic RAG Series](https://github.com/theaiautomators/claude-code-agentic-rag-series)
+Episode 4 of the [Claude Code Agentic RAG Series](https://github.com/theaiautomators/claude-code-agentic-rag-series/tree/main/ep4-skills-sandbox-video)
+
+## Source
+Adapted from [PRD-Skills-Sandbox.md](https://github.com/theaiautomators/claude-code-agentic-rag-series/blob/main/ep4-skills-sandbox-video/PRD-Skills-Sandbox.md)
+
+## What It Is
+
+Transforms the AI agent into a customizable platform with reusable skills, file attachments, and sandboxed code execution. Users teach the AI specialized behaviors. The AI can execute Python to generate files, process data, and run computations.
+
+## Feature 1: Agent Skills
+
+### Progressive Discovery Pattern
+1. **Lightweight catalog in system prompt** — Name + short description per skill (cheap on tokens)
+2. **On-demand loading** — LLM calls `load_skill` when query matches a skill description
+3. **Anti-speculation guardrail** — System prompt prevents unnecessary tool calls
+
+### Skill Properties
+| Property | Description |
+|----------|-------------|
+| name | Lowercase, hyphenated (e.g., `analyzing-sales-data`) |
+| description | 1-2 sentences — what it does AND when to use |
+| instructions | Full markdown, loaded on demand |
+| enabled | Toggle for discovery visibility |
+| isGlobal | Private vs shared with all users |
+
+### Three Creation Paths
+1. **Create with AI** — Skill-creator skill guides the user conversationally
+2. **Create Manually** — Form dialog with validated fields
+3. **Import from File** — ZIP in agentskills.io open standard format
+
+### LLM Tools
+| Tool | Purpose |
+|------|---------|
+| `load_skill` | Fetch full instructions on demand |
+| `save_skill` | Persist new skill from AI-guided creation |
+| `read_skill_file` | Read content of attached file |
+
+## Feature 2: Skill Building-Block Files
+
+Skills can have files attached — Python scripts, templates, data files, fonts. Stored in dedicated storage, loaded on demand, not indexed for RAG.
+
+## Feature 3: Code Execution Sandbox
+
+### Technical Approach
+- **Runtime**: Docker containers using `llm-sandbox` library
+- **Session persistence**: IPython kernel, variables survive across calls within a thread (TTL 30min)
+- **Streaming**: stdout/stderr via SSE events
+- **File output**: Generated files uploaded to storage, served via signed URLs
+- **Feature flag**: `SANDBOX_ENABLED=false` by default
+- **Security**: Blocks subprocess, os.system, socket, ctypes, filesystem outside sandbox
+
+### Custom Docker Image
+| Category | Packages |
+|----------|----------|
+| Documents | python-pptx, python-docx, openpyxl, fpdf2 |
+| Data | pandas, numpy |
+| Visualization | matplotlib, pillow |
+| Web | requests, beautifulsoup4 |
+
+### LLM Tool
+| Tool | Purpose |
+|------|---------|
+| `execute_code` | Run Python in sandboxed container |
+
+### SSE Events
+`code_execution_start` → `code_stdout` (streaming) → `code_stderr` (streaming) → `code_execution_complete`
+
+## Feature 4: Skills Open Standard
+
+Export/import skills as ZIP using agentskills.io format:
+```
+skill-name/
+  SKILL.md      # YAML frontmatter + markdown instructions
+  scripts/      # Code files
+  references/   # Text/document files
+  assets/       # Binary/media files
+```
+
+## Feature 5: Persistent Tool Memory
+
+Tool call results persisted across conversation turns. Reconstructed on load so AI can reference previous tool outputs without re-executing.
 
 ## Cluster
 
-- `packages/python-backend/app/services/skills/` — Skill registry and executor
-- `packages/python-backend/app/services/sandbox/` — Code execution sandbox
-- `packages/python-backend/app/api/v1/` — Skills and sandbox endpoints
-- `packages/db/db/` — Skills schema
-- `packages/db/server/services/` — Skills service layer
-- `packages/ai-tools/app/pages/app/ai-tools/` — Skills management UI
+- `packages/python-backend/app/services/skills/` — Skill registry, file management
+- `packages/python-backend/app/services/sandbox/` — Docker code execution
+- `packages/python-backend/app/api/v1/skills.py` — Skills endpoints
+- `packages/python-backend/app/api/v1/sandbox.py` — Sandbox endpoints
+- `packages/db/db/skills/` — skills, skill_files, code_executions, sandbox_files tables
+- `packages/db/server/services/skill.service.ts` — Skills CRUD
+- `packages/ai-tools/app/pages/app/ai-tools/skills/` — Skills management UI
 
-## Problem Statement
-
-The AI agent has fixed capabilities. Users cannot teach it specialized behaviors (legal review, sales analysis, report generation). There is no way to execute code to generate files or process data dynamically.
-
-### Current Friction
-- Agent capabilities are hardcoded
-- No way to create reusable AI behaviors
-- Cannot generate files (Excel, PowerPoint, charts)
-- No code execution for data processing
-- Tool results are ephemeral
-
-## Why Coupled
-
-1. Skills need a registry that the agent discovers at runtime
-2. Skill files (scripts, templates) need storage and retrieval
-3. Code sandbox requires Docker integration
-4. Generated files need serving via signed URLs
-5. Skills must integrate with the existing tool-calling system
-
-## Dependency Category
-
-- Vertical: Feature spans agent → sandbox → storage → UI
-
-## Test Impact
-
-**Currently:**
-- 171 Python tests, no skills/sandbox tests
-
-**After consolidation:**
-- Tests for skill CRUD and discovery
-- Tests for skill file management
-- Tests for sandbox code execution (Docker)
-- Tests for file generation and serving
-- Tests for skill import/export (agentskills.io format)
-
-## Proposed Solution
-
-A skills system with sandboxed code execution:
-
-### Modules
-
-#### Module 1: Skills Schema & Service
-- `skills` table (id, userId, name, description, instructions, isGlobal, createdAt)
-- `skill_files` table (id, skillId, filename, content, mimeType, createdAt)
-- Skills CRUD service
-- Skill discovery (lightweight catalog for system prompt)
-
-#### Module 2: Skill Tools
-- `load_skill(skill_name)` — Fetch full instructions on demand
-- `save_skill(name, description, instructions)` — Persist new skill
-- `read_skill_file(skill_id, filename)` — Read attached file content
-- Skills Open Standard format (agentskills.io) for import/export
-
-#### Module 3: Code Execution Sandbox
-- Docker-based sandbox using llm-sandbox
-- `execute_code(code, language)` tool
-- Session persistence (Python variables survive across calls)
-- Streaming stdout/stderr
-- File generation (Excel, PowerPoint, CSV, charts)
-- Signed URL serving for generated files
-
-#### Module 4: Frontend
-- Skills management page (create, edit, delete, import/export)
-- Code execution panel in chat
-- File browser for generated artifacts
-- Skill creation wizard (AI-guided, manual, import)
-
-## Tech Stack Adaptation
+## Stack Adaptation
 
 | Reference | Our Stack |
 |-----------|-----------|
-| Supabase Storage | Local filesystem + Nuxt serve |
+| Supabase Storage | Local filesystem |
 | React | Nuxt 4 + Vue 3 |
-| Docker sandbox | Same (llm-sandbox or custom) |
-| FastAPI | Same |
+| FastAPI | FastAPI (same) |
+| Docker sandbox | Docker + llm-sandbox (same) |
+| Supabase Auth | Better Auth |
 
-## Next Steps
+## New LLM Tools
 
-1. Design skills schema and migration
-2. Write TDD tests for skill CRUD
-3. Implement SkillRegistry service
-4. Set up Docker sandbox for code execution
-5. Build skill tools (load, save, read_file, execute_code)
-6. Create skills management UI
+| Tool | Purpose |
+|------|---------|
+| `load_skill` | Fetch full instructions when query matches |
+| `save_skill` | Persist new skill from AI creation |
+| `read_skill_file` | Read attached file content |
+| `execute_code` | Run Python in sandboxed Docker container |
+
+## Implementation Phases
+
+### Phase 1: Skills Schema & CRUD
+- skills table (id, userId, name, description, instructions, enabled, isGlobal)
+- skill_files table (id, skillId, filename, content, mimeType)
+- SkillService CRUD with global/private support
+- API endpoints (REST)
+
+### Phase 2: Skill Tools
+- load_skill, save_skill tool definitions
+- Progressive discovery in system prompt
+- Skill-creator global skill
+
+### Phase 3: Skill Files
+- File upload/download to skill
+- read_skill_file tool
+- File preview in UI
+
+### Phase 4: Code Sandbox
+- Docker container management
+- execute_code tool with session persistence
+- SSE streaming for stdout/stderr
+- File generation + signed URLs
+- Security policy
+
+### Phase 5: Open Standard
+- SKILL.md parser/generator
+- ZIP export with file categorization
+- ZIP import with validation
+
+### Phase 6: Persistent Tool Memory
+- Store tool results in message metadata
+- Reconstruct on conversation load
+
+### Phase 7: Frontend
+- Skills page (list, editor, file management)
+- Code execution panel in chat
+- Import/export UI
+
+---
+*Adapted: 2026-03-31*

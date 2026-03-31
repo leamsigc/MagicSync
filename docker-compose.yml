@@ -6,11 +6,28 @@ services:
       - .env
     environment:
       - NUXT_HOST=0.0.0.0
+      - NUXT_PYTHON_API_URL=http://python-backend:8000
     ports:
       - "3000:3000"
     build:
       dockerfile: Dockerfile
       context: .
+
+  python-backend:
+    depends_on:
+      - db
+    env_file:
+      - packages/python-backend/.env
+    environment:
+      - BETTER_AUTH_URL=http://site:3000
+      - CORS_ORIGINS=["http://localhost:3000","http://site:3000"]
+    ports:
+      - "8000:8000"
+    build:
+      dockerfile: Dockerfile
+      context: ./packages/python-backend
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
   db:
     image: ghcr.io/tursodatabase/libsql-server:latest
     env_file:
@@ -19,8 +36,6 @@ services:
     ports:
       - "8080:8080"
       - "5001:5001"
-    # environment:
-    #   - SQLD_NODE=primary
     volumes:
       - ./sqld:/var/lib/sqld
     environment:

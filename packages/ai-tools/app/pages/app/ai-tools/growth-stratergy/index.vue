@@ -1,6 +1,5 @@
 <i18n src="./index.json"></i18n>
 <script lang="ts" setup>
-import { Comark } from 'comark/vue'
 import type { EditorToolbarItem, EditorSuggestionMenuItem } from '@nuxt/ui'
 
 

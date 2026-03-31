@@ -1,5 +1,5 @@
 {
-  "name": "bussines-api",
+  "name": "magic-sync",
   "version": "0.0.1",
   "description": "Social media scheduler using Nuxt layers",
   "scripts": {
@@ -64,5 +64,5 @@
   "keywords": [],
   "author": "Ismael Garcia <leamsigc@leamsigc.com>",
   "license": "MIT",
-  "packageManager": "pnpm@10.19.0"
+  "packageManager": "pnpm@10.33.0"
 }

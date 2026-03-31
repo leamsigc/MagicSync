@@ -117,7 +117,7 @@ export default defineNuxtConfig({
     '@local-monorepo/ai-tools',
   ],
 
-  modules: ['@nuxtjs/seo', '@nuxtjs/i18n', '@nuxt/hints', 'nuxt-umami', 'evlog/nuxt'],
+  modules: ['@nuxtjs/seo', '@nuxtjs/i18n', '@nuxt/hints', 'nuxt-umami', 'evlog/nuxt','@comark/nuxt'],
   i18n: {
     vueI18n: join(currentDir, './translations/i18n.config.ts'),
     baseUrl: process.env.NUXT_APP_URL,

@@ -19,11 +19,11 @@
     "@local-monorepo/ui": "workspace:*",
     "@local-monorepo/tools": "workspace:*",
     "@nuxtjs/i18n": "catalog:",
-    "@ai-sdk/vue": "^2.0.0",
-    "ai": "^5.0.0",
+    "@ai-sdk/vue": "catalog:",
+    "ai": "catalog:",
     "cheerio": "catalog:",
     "evlog": "catalog:",
-    "comark": "catalog:",
+    "@comark/nuxt": "catalog:",
     "mediabunny": "catalog:"
   },
   "devDependencies": {

@@ -1,4 +1,4 @@
-import { apiKey } from 'better-auth/plugins';
+import { apiKey } from "@better-auth/api-key"
 import type { NavigationMenuItem } from '@nuxt/ui'
 import menu from '../layouts/dashboard/Menu.json'
 
