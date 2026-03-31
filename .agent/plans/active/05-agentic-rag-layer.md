@@ -95,9 +95,12 @@ User Chat → Nuxt API → Python FastAPI → Ollama
 - [x] 110 Python tests passing (all previous + 28 new Module 7 tests)
 
 ### Module 8: Sub-Agents
-- [ ] Sub-agent detection
-- [ ] Isolated context
-- [ ] Nested tool display
+- [x] Sub-agent detection (orchestrator with keyword/confidence scoring)
+- [x] Isolated context (SubAgentService with per-agent message history)
+- [x] Nested tool display (SubAgentRenderer component with expandable steps)
+- [x] Sub-agent API endpoints (spawn, step, stream, message, status, delete, detect)
+- [x] Agent sessions DB schema and service layer
+- [x] 171 Python tests passing (61 new Module 8 tests)
 
 ---
 
@@ -109,7 +112,7 @@ User Chat → Nuxt API → Python FastAPI → Ollama
 - [x] Schema validation (Pydantic model validators)
 - [x] Concurrent batch embeddings (semaphore-limited with retry)
 - [x] Structured extraction returns ParsedDocument with page metadata
-- [x] All 110 tests passing
+- [x] All 171 tests passing
 
 ### Database Layer
 - [x] All service methods return ServiceResponse<T> (no void returns)

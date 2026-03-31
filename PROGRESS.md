@@ -66,9 +66,23 @@ Track your progress through the implementation. Claude Code reads this to unders
 - [x] 110 Python tests passing (28 new tests for Module 7)
 
 ### Module 8: Sub-Agents
-- [ ] Sub-agent detection
-- [ ] Isolated context
-- [ ] Nested tool display
+- [x] Sub-agent detection (orchestrator with keyword/confidence scoring)
+- [x] Isolated context (SubAgentService with per-agent message history)
+- [x] Nested tool display (SubAgentRenderer component with expandable steps)
+- [x] Sub-agent API endpoints (spawn, step, stream, message, status, delete, detect)
+- [x] Agent sessions DB schema (agent_sessions table) and service layer
+- [x] 171 Python tests passing (61 new Module 8 tests)
+
+---
+
+## Next Episodes (Candidate Plans)
+
+See `.agent/plans/candidates/` for upcoming episode plans:
+- Episode 2: Knowledge Base Explorer (`06-knowledge-base-explorer.md`)
+- Episode 3: PII Redaction & Anonymization (`07-pii-redaction.md`)
+- Episode 4: Agent Skills & Sandbox (`08-agent-skills-sandbox.md`)
+- Episode 5: Advanced Tool Use (`09-advanced-tool-use.md`)
+- Episode 6: Agent Harness (`10-agent-harness.md`)
 
 ---
 

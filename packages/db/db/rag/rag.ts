@@ -92,8 +92,40 @@ export const chatMessagesRelations = relations(chatMessages, ({ one }) => ({
   })
 }))
 
+// Agent sessions (sub-agents)
+export const agentSessions = sqliteTable('agent_sessions', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  parentMessageId: text('parent_message_id').notNull(),
+  threadId: text('thread_id').references(() => chatThreads.id, { onDelete: 'cascade' }),
+  task: text('task').notNull(),
+  status: text('status', {
+    enum: ['created', 'running', 'completed', 'failed']
+  }).notNull().default('created'),
+  taskType: text('task_type'), // research, analysis, multi-step, complex
+  maxSteps: integer('max_steps').notNull().default(10),
+  stepCount: integer('step_count').notNull().default(0),
+  result: text('result'),
+  errorMessage: text('error_message'),
+  metadata: text('metadata'), // JSON: orchestrator decision, confidence, etc.
+  createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()).notNull()
+})
+
+export const agentSessionsRelations = relations(agentSessions, ({ one }) => ({
+  user: one(user, {
+    fields: [agentSessions.userId],
+    references: [user.id]
+  }),
+  thread: one(chatThreads, {
+    fields: [agentSessions.threadId],
+    references: [chatThreads.id]
+  })
+}))
+
 // Types
 export type Document = InferSelectModel<typeof documents>
 export type DocumentChunk = InferSelectModel<typeof documentChunks>
 export type ChatThread = InferSelectModel<typeof chatThreads>
 export type ChatMessage = InferSelectModel<typeof chatMessages>
+export type AgentSession = InferSelectModel<typeof agentSessions>

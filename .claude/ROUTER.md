@@ -29,13 +29,18 @@ Then read this file fully before doing anything else in this session.
 - User authentication with Better Auth
 - Social media platform connections (Facebook, Twitter/X, Instagram, Bluesky, LinkedIn, TikTok, YouTube, Threads, Reddit, Dribbble, WordPress)
 - Post creation with multi-platform targeting
-- Post scheduling with time-based triggers
+- Post scheduling with time-time triggers
 - Asset/media management
 - Basic dashboard with metrics
 - Nuxt Content for blog pages
+- **Agentic RAG Layer (Episodes 1-8 complete)** — Chat, document ingestion, hybrid search, tools, sub-agents
+- **171 Python tests passing**
 
-**In Progress:**
-- Agentic RAG Layer (Module 3-8) — Module 1-2 complete
+**Next Episode:**
+- Knowledge Base Explorer (Episode 2) — filesystem-like tools for hierarchical knowledge navigation
+
+**Future Episodes:**
+- PII Redaction (Ep 3), Agent Skills & Sandbox (Ep 4), Advanced Tool Use (Ep 5), Agent Harness (Ep 6)
 
 **Not yet built:**
 - Bulk post generation with AI templates

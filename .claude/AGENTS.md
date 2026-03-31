@@ -1,7 +1,7 @@
 ---
 name: agents
 description: Always-loaded project anchor. Read this first. Contains project identity, non-negotiables, commands, and pointer to ROUTER.md for full context.
-last_updated: 2026-03-30
+last_updated: 2026-03-31
 ---
 
 # MagicSync
@@ -9,14 +9,21 @@ last_updated: 2026-03-30
 ## What This Is
 A social media scheduling platform built with Nuxt 4 monorepo — enables scheduling posts across multiple social platforms (Facebook, Twitter, Instagram, Bluesky, LinkedIn, etc.) with AI-powered content generation.
 
-## Current Focus: Agentic RAG Layer
+## Current Focus: Episode 1 Complete — Next: Knowledge Base Explorer
 
-We are building an Agentic RAG layer that enables:
-- Chat with AI using TanStack AI
-- AI-powered post generation via dynamic skills
-- Document ingestion with local embeddings (Ollama)
-- Platform research capabilities
-- Target audience extraction from business documents
+Episode 1 (Agentic RAG Layer) is complete with 171 Python tests passing.
+
+Next up: **Episode 2 - Knowledge Base Explorer** — filesystem-like tools (ls, tree, grep, glob, read) for hierarchical knowledge navigation.
+
+See `.agent/plans/candidates/06-knowledge-base-explorer.md` for the plan.
+
+**Episode Roadmap:** [Claude Code Agentic RAG Series](https://github.com/theaiautomators/claude-code-agentic-rag-series)
+- Ep 1: Agentic RAG Layer (complete)
+- Ep 2: Knowledge Base Explorer (next)
+- Ep 3: PII Redaction
+- Ep 4: Agent Skills & Sandbox
+- Ep 5: Advanced Tool Use
+- Ep 6: Agent Harness
 
 **Database:** Using Turso (libSQL) with native vector support - no separate PostgreSQL needed
 

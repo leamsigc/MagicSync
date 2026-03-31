@@ -155,7 +155,7 @@ Social media managers, marketers, and businesses who want AI-assisted social med
 
 ## Success Criteria
 
-By the end, we should have:
+By the end of Episode 1, we have:
 - ✅ A working Agentic RAG application integrated with MagicSync
 - ✅ Deep understanding of RAG concepts (chunking, embedding, retrieval, reranking)
 - ✅ AI that understands business documents to extract target audience
@@ -164,6 +164,35 @@ By the end, we should have:
 - ✅ Platform research capabilities
 - ✅ Full offline capability with local embeddings
 - ✅ Observability set up from day one
+- ✅ 171 Python tests passing
+
+---
+
+## Next Episodes
+
+Based on the [Claude Code Agentic RAG Series](https://github.com/theaiautomators/claude-code-agentic-rag-series), adapted for Nuxt 4 + FastAPI + Turso:
+
+### Episode 2: Knowledge Base Explorer
+**Build:** Filesystem-like tools (ls, tree, grep, glob, read) for hierarchical knowledge navigation
+**Learn:** Agent tool design, hierarchical data exploration, scoped retrieval
+
+### Episode 3: PII Redaction & Anonymization
+**Build:** NER-based PII detection, reversible anonymization, entity resolution, pipeline integration
+**Learn:** Privacy-first architecture, surrogate generation, entity clustering
+
+### Episode 4: Agent Skills & Code Sandbox
+**Build:** Reusable skill system, Docker sandbox, file generation, skill import/export
+**Learn:** Dynamic tool discovery, code execution security, skill composition
+
+### Episode 5: Advanced Tool Calling & MCP
+**Build:** Dynamic tool registry, sandbox bridge, MCP client integration, context window indicator
+**Learn:** Token optimization, external tool servers, multi-tool workflows
+
+### Episode 6: Agent Harness & Workflows
+**Build:** Deep Mode autonomous agent, harness engine state machine, contract review workflow, DOCX generation
+**Learn:** Deterministic workflows, human-in-the-loop, domain-specific harness design
+
+See `.agent/plans/candidates/` for detailed PRDs of each episode.
 
 ---
 
