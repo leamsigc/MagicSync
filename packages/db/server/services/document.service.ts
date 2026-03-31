@@ -2,6 +2,7 @@ import { eq, and, sql, desc, inArray } from 'drizzle-orm'
 import { type ServiceResponse, type PaginatedResponse, type QueryOptions } from './types'
 import { documents, documentChunks, type Document, type DocumentChunk } from '#layers/BaseDB/db/schema'
 import { useDrizzle, tursoClient } from '#layers/BaseDB/server/utils/drizzle'
+import { searchService, type SearchResult } from './search.service'
 
 export interface CreateDocumentData {
   filename: string
@@ -121,25 +122,58 @@ export class DocumentService {
     }
   }
 
-  async updateChunkCount(id: string, userId: string, chunkCount: number): Promise<void> {
-    await this.db
-      .update(documents)
-      .set({ chunkCount, updatedAt: new Date() })
-      .where(and(eq(documents.id, id), eq(documents.userId, userId)))
+  async updateChunkCount(id: string, userId: string, chunkCount: number): Promise<ServiceResponse<Document>> {
+    try {
+      const [updated] = await this.db
+        .update(documents)
+        .set({ chunkCount, updatedAt: new Date() })
+        .where(and(eq(documents.id, id), eq(documents.userId, userId)))
+        .returning()
+
+      if (!updated) {
+        return { error: 'Document not found', code: 'NOT_FOUND' }
+      }
+
+      return { data: updated }
+    } catch (error) {
+      return { error: 'Failed to update chunk count' }
+    }
   }
 
-  async updateContentHash(id: string, userId: string, contentHash: string): Promise<void> {
-    await this.db
-      .update(documents)
-      .set({ contentHash, updatedAt: new Date() })
-      .where(and(eq(documents.id, id), eq(documents.userId, userId)))
+  async updateContentHash(id: string, userId: string, contentHash: string): Promise<ServiceResponse<Document>> {
+    try {
+      const [updated] = await this.db
+        .update(documents)
+        .set({ contentHash, updatedAt: new Date() })
+        .where(and(eq(documents.id, id), eq(documents.userId, userId)))
+        .returning()
+
+      if (!updated) {
+        return { error: 'Document not found', code: 'NOT_FOUND' }
+      }
+
+      return { data: updated }
+    } catch (error) {
+      return { error: 'Failed to update content hash' }
+    }
   }
 
-  async updateMetadata(id: string, userId: string, metadata: Record<string, any>): Promise<void> {
-    await this.db
-      .update(documents)
-      .set({ metadata: JSON.stringify(metadata), updatedAt: new Date() })
-      .where(and(eq(documents.id, id), eq(documents.userId, userId)))
+  async updateMetadata(id: string, userId: string, metadata: Record<string, any>): Promise<ServiceResponse<Document>> {
+    try {
+      const [updated] = await this.db
+        .update(documents)
+        .set({ metadata: JSON.stringify(metadata), updatedAt: new Date() })
+        .where(and(eq(documents.id, id), eq(documents.userId, userId)))
+        .returning()
+
+      if (!updated) {
+        return { error: 'Document not found', code: 'NOT_FOUND' }
+      }
+
+      return { data: updated }
+    } catch (error) {
+      return { error: 'Failed to update metadata' }
+    }
   }
 
   async delete(id: string, userId: string): Promise<ServiceResponse<Document>> {
@@ -209,10 +243,15 @@ export class ChunkService {
     }
   }
 
-  async deleteByDocument(documentId: string): Promise<void> {
-    await this.db
-      .delete(documentChunks)
-      .where(eq(documentChunks.documentId, documentId))
+  async deleteByDocument(documentId: string): Promise<ServiceResponse<number>> {
+    try {
+      const result = await this.db
+        .delete(documentChunks)
+        .where(eq(documentChunks.documentId, documentId))
+      return { data: 0 }
+    } catch (error) {
+      return { error: 'Failed to delete chunks' }
+    }
   }
 
   async findByDocument(documentId: string): Promise<ServiceResponse<DocumentChunk[]>> {
@@ -229,11 +268,16 @@ export class ChunkService {
     }
   }
 
-  async deleteByIds(ids: string[]): Promise<void> {
-    if (ids.length === 0) return
-    await this.db
-      .delete(documentChunks)
-      .where(inArray(documentChunks.id, ids))
+  async deleteByIds(ids: string[]): Promise<ServiceResponse<number>> {
+    try {
+      if (ids.length === 0) return { data: 0 }
+      await this.db
+        .delete(documentChunks)
+        .where(inArray(documentChunks.id, ids))
+      return { data: ids.length }
+    } catch (error) {
+      return { error: 'Failed to delete chunks' }
+    }
   }
 
   async search(
@@ -246,7 +290,7 @@ export class ChunkService {
       const embeddingStr = `[${queryEmbedding.join(',')}]`
 
       const whereClauses: string[] = ['dc.user_id = ?']
-      const args: any[] = [embeddingStr, userId]
+      const args: any[] = [userId, embeddingStr]
 
       if (filters?.documentId) {
         whereClauses.push('dc.document_id = ?')
@@ -254,7 +298,6 @@ export class ChunkService {
       }
 
       if (filters?.metadataKey && filters?.metadataValue) {
-        // Use json_extract for metadata filtering on JSON fields
         whereClauses.push(`json_extract(dc.metadata, '$.${filters.metadataKey}') LIKE ?`)
         args.push(`%${filters.metadataValue}%`)
       }

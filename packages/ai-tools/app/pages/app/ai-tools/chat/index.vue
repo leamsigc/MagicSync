@@ -1,59 +1,69 @@
 <i18n src="./json"></i18n>
 
 <script setup lang="ts">
-import type { UIMessage } from 'ai'
 import { useA2UIChat } from './composables/useA2UIChat';
-import { useA2UI } from './composables/useA2UI';
 
 const { t } = useI18n()
 const input = ref('')
 
-const threads = ref<Array<{ id: string; title: string; lastMessage: string }>>([])
-const activeThreadId = ref<string | undefined>()
+const {
+  messages,
+  threads,
+  sendMessage,
+  clearMessages,
+  isLoading,
+  isLoadingThreads,
+  error,
+  regenerateLast,
+  loadThreads,
+  loadThreadMessages,
+  createNewThread,
+  deleteThread,
+  threadId: activeThreadId,
+} = useA2UIChat()
 
-const { messages, sendMessage, clearMessages, isLoading, error, regenerateLast } = useA2UIChat()
-const { components: a2uiComponents, connect: connectA2UI, isConnected } = useA2UI()
-
-const showA2UI = computed(() => a2uiComponents.value.length > 0)
+// Load threads on mount
+onMounted(() => {
+  loadThreads()
+})
 
 function onSubmit() {
+  if (!input.value.trim()) return
   sendMessage(input.value)
   input.value = ''
 }
 
 function handleNewThread() {
-  clearMessages()
-  activeThreadId.value = undefined
+  createNewThread()
 }
 
 function handleSelectThread(id: string) {
-  activeThreadId.value = id
-  // Load thread messages from backend
+  loadThreadMessages(id)
 }
 
 function handleDeleteThread(id: string) {
-  threads.value = threads.value.filter(t => t.id !== id)
-  if (activeThreadId.value === id) {
-    handleNewThread()
-  }
+  deleteThread(id)
 }
 
-function handleA2UIAction(action: any) {
-  const { components: a2uiComp, sendAction } = useA2UI()
-  sendAction({
-    action: action.action,
-    surfaceId: 'chat-surface',
-    componentId: action.componentId,
-    payload: action.payload,
-  })
+function handleSuggestionClick(suggestion: string) {
+  sendMessage(suggestion)
 }
 </script>
 
 <template>
   <div class="flex h-[calc(100vh-4rem)] overflow-hidden">
     <!-- Chat Sidebar -->
-    <ChatSidebar :threads="threads" :active-thread-id="activeThreadId" @select="handleSelectThread"
-      @delete="handleDeleteThread" @new-thread="handleNewThread" />
+    <ChatSidebar
+      :threads="threads.map(t => ({
+        id: t.id,
+        title: t.title,
+        lastMessage: t.lastMessageAt ? new Date(t.lastMessageAt).toLocaleDateString() : '',
+      }))"
+      :active-thread-id="activeThreadId ?? undefined"
+      @select="handleSelectThread"
+      @delete="handleDeleteThread"
+      @new-thread="handleNewThread"
+    />
 
     <!-- Main Chat Area -->
     <div class="flex-1 flex flex-col bg-white dark:bg-neutral-950">
@@ -64,32 +74,39 @@ function handleA2UIAction(action: any) {
           <div>
             <h1 class="text-lg font-semibold">MagicSync AI Assistant</h1>
             <p class="text-xs text-neutral-500">
-              {{ isConnected ? 'Connected' : 'Ready' }}
+              {{ activeThreadId ? 'Thread active' : 'New conversation' }}
             </p>
           </div>
         </div>
         <div class="flex items-center gap-2">
-          <UBadge v-if="showA2UI" label="A2UI" color="primary" variant="soft" />
           <UButton icon="i-heroicons-arrow-path" color="neutral" variant="ghost" size="sm" @click="clearMessages()" />
         </div>
       </div>
 
       <!-- Messages Area -->
       <div class="flex-1 overflow-y-auto px-6 py-4">
+        <!-- Loading threads -->
+        <div v-if="isLoadingThreads" class="flex items-center justify-center h-full">
+          <UIcon name="i-heroicons-arrow-path" class="w-8 h-8 animate-spin text-neutral-400" />
+        </div>
+
         <!-- Empty State -->
-        <div v-if="!messages.length" class="flex flex-col items-center justify-center h-full">
+        <div v-else-if="!messages.length" class="flex flex-col items-center justify-center h-full">
           <UIcon name="i-heroicons-sparkles" class="w-16 h-16 text-primary-500 mb-4" />
           <h2 class="text-xl font-semibold mb-2">{{ t('welcome') }}</h2>
           <p class="text-neutral-500 mb-6 text-center max-w-md">
             {{ t('welcomeDescription') }}
           </p>
           <div class="flex flex-wrap gap-2 justify-center">
-            <UButton v-for="suggestion in [
-              t('suggestion1'),
-              t('suggestion2'),
-              t('suggestion3'),
-            ]" :key="suggestion" :label="suggestion" color="neutral" variant="outline" size="sm"
-              @click="sendMessage(suggestion)" />
+            <UButton
+              v-for="suggestion in [t('suggestion1'), t('suggestion2'), t('suggestion3')]"
+              :key="suggestion"
+              :label="suggestion"
+              color="neutral"
+              variant="outline"
+              size="sm"
+              @click="handleSuggestionClick(suggestion)"
+            />
           </div>
         </div>
 
@@ -114,7 +131,7 @@ function handleA2UIAction(action: any) {
                 </div>
                 <!-- A2UI Components -->
                 <div v-if="message.a2uiComponents?.length" class="mt-3">
-                  <A2UIChatRenderer :components="message.a2uiComponents" @action="handleA2UIAction" />
+                  <A2UIChatRenderer :components="message.a2uiComponents" />
                 </div>
               </div>
             </div>
@@ -137,10 +154,17 @@ function handleA2UIAction(action: any) {
 
       <!-- Chat Input -->
       <div class="px-6 py-4 border-t border-neutral-200 dark:border-neutral-700">
-        <UChatPrompt v-model="input" :placeholder="t('placeholder')" :error="error ? error : undefined"
-          @submit="onSubmit">
-          <UChatPromptSubmit :status="isLoading ? 'streaming' : 'ready'" @stop="() => isLoading = false"
-            @reload="regenerateLast()" />
+        <UChatPrompt
+          v-model="input"
+          :placeholder="t('placeholder')"
+          :error="error ? error : undefined"
+          @submit="onSubmit"
+        >
+          <UChatPromptSubmit
+            :status="isLoading ? 'streaming' : 'ready'"
+            @stop="() => isLoading = false"
+            @reload="regenerateLast()"
+          />
         </UChatPrompt>
       </div>
     </div>

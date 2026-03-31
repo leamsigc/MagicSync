@@ -41,7 +41,8 @@ class TestRagEndpoints:
             },
             headers={"Authorization": "Bearer test-token"},
         )
-        assert response.status_code == 400
+        # Pydantic validator rejects empty text before reaching the handler
+        assert response.status_code == 422
 
     def test_ingest_whitespace_only(self, client, api_prefix):
         response = client.post(
@@ -179,3 +180,63 @@ class TestRagEndpoints:
             chunks1 = response1.json()["chunks"]
             chunks2 = response2.json()["chunks"]
             assert chunks1[0]["content_hash"] == chunks2[0]["content_hash"]
+
+    def test_hybrid_search_with_embedding(self, client, api_prefix):
+        response = client.post(
+            f"{api_prefix}/rag/hybrid-search",
+            json={
+                "query": "social media tips",
+                "query_embedding": [0.1, 0.2, 0.3, 0.4, 0.5],
+                "top_k": 5,
+            },
+            headers={"Authorization": "Bearer test-token"},
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["query"] == "social media tips"
+        assert "results" in data
+        assert "total_results" in data
+        assert "reranked" in data
+
+    def test_hybrid_search_with_reranking(self, client, api_prefix):
+        """Reranking is now handled by the dedicated /rerank endpoint."""
+        response = client.post(
+            f"{api_prefix}/rag/hybrid-search",
+            json={
+                "query": "marketing strategy",
+                "query_embedding": [0.1, 0.2, 0.3],
+                "top_k": 3,
+                "use_rerank": True,
+                "rerank_model": "llama3.2",
+            },
+            headers={"Authorization": "Bearer test-token"},
+        )
+        # Hybrid-search returns 501 for reranking — callers should use /rerank endpoint
+        assert response.status_code == 501
+
+    def test_hybrid_search_missing_query_and_embedding(self, client, api_prefix):
+        response = client.post(
+            f"{api_prefix}/rag/hybrid-search",
+            json={
+                "query": "",
+                "query_embedding": [],
+            },
+            headers={"Authorization": "Bearer test-token"},
+        )
+        assert response.status_code == 400
+
+    def test_hybrid_search_with_document_filter(self, client, api_prefix):
+        response = client.post(
+            f"{api_prefix}/rag/hybrid-search",
+            json={
+                "query": "test query",
+                "query_embedding": [0.1, 0.2, 0.3],
+                "top_k": 5,
+                "document_id": "doc-123",
+                "metadata_filters": {"topic": "marketing"},
+            },
+            headers={"Authorization": "Bearer test-token"},
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["query"] == "test query"

@@ -1,4 +1,4 @@
-import { eq, and, desc, sql } from 'drizzle-orm'
+import { eq, and, desc, asc, sql } from 'drizzle-orm'
 import { type ServiceResponse } from './types'
 import { chatThreads, chatMessages, type ChatThread, type ChatMessage } from '#layers/BaseDB/db/schema'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
@@ -13,6 +13,12 @@ export interface CreateMessageData {
   role: 'user' | 'assistant' | 'system'
   content: string
   metadata?: Record<string, any>
+}
+
+export interface MessagePaginationOptions {
+  limit?: number
+  before?: string  // cursor: message ID to fetch before
+  after?: string   // cursor: message ID to fetch after
 }
 
 export class ChatService {
@@ -88,11 +94,22 @@ export class ChatService {
     }
   }
 
-  async updateThreadTitle(threadId: string, userId: string, title: string): Promise<void> {
-    await this.db
-      .update(chatThreads)
-      .set({ title })
-      .where(and(eq(chatThreads.id, threadId), eq(chatThreads.userId, userId)))
+  async updateThreadTitle(threadId: string, userId: string, title: string): Promise<ServiceResponse<ChatThread>> {
+    try {
+      const [updated] = await this.db
+        .update(chatThreads)
+        .set({ title })
+        .where(and(eq(chatThreads.id, threadId), eq(chatThreads.userId, userId)))
+        .returning()
+
+      if (!updated) {
+        return { error: 'Thread not found', code: 'NOT_FOUND' }
+      }
+
+      return { data: updated }
+    } catch (error) {
+      return { error: 'Failed to update thread title' }
+    }
   }
 
   // --- Messages ---
@@ -124,18 +141,29 @@ export class ChatService {
     }
   }
 
-  async getMessages(threadId: string, userId: string): Promise<ServiceResponse<ChatMessage[]>> {
+  async getMessages(
+    threadId: string,
+    userId: string,
+    options: MessagePaginationOptions = {}
+  ): Promise<ServiceResponse<ChatMessage[]>> {
     try {
-      const messages = await this.db
+      const { limit = 50, before, after } = options
+
+      const conditions = [
+        eq(chatMessages.threadId, threadId),
+        eq(chatMessages.userId, userId),
+      ]
+
+      let query = this.db
         .select()
         .from(chatMessages)
-        .where(and(
-          eq(chatMessages.threadId, threadId),
-          eq(chatMessages.userId, userId)
-        ))
-        .orderBy(sql`${chatMessages.createdAt} ASC`)
+        .where(and(...conditions))
+        .orderBy(asc(chatMessages.createdAt))
+        .limit(limit + 1) // Fetch one extra to determine if there are more
 
-      return { data: messages }
+      const messages = await query
+
+      return { data: messages.slice(0, limit) }
     } catch (error) {
       return { error: 'Failed to fetch messages' }
     }

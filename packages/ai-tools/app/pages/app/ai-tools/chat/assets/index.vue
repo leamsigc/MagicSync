@@ -166,6 +166,8 @@ function getMimeTypeLabel(mime: string): string {
   if (mime.includes('markdown')) return 'MD'
   if (mime.includes('html')) return 'HTML'
   if (mime.includes('wordprocessingml')) return 'DOCX'
+  if (mime.includes('csv')) return 'CSV'
+  if (mime.includes('json')) return 'JSON'
   return mime.split('/').pop()?.toUpperCase() || 'FILE'
 }
 
@@ -195,7 +197,7 @@ onMounted(fetchDocuments)
         ref="fileInput"
         type="file"
         class="hidden"
-        accept=".pdf,.txt,.md,.html,.docx"
+        accept=".pdf,.txt,.md,.html,.docx,.csv,.json"
         multiple
         @change="handleUpload(($event.target as HTMLInputElement).files)"
       />

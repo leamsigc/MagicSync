@@ -87,7 +87,6 @@ export function useA2UI() {
   }
 
   function sendAction(action: A2UIAction) {
-    // Send action via POST to the agent
     $fetch('/api/a2ui/action', {
       method: 'POST',
       body: action,

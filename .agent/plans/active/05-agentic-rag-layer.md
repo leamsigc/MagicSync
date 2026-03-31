@@ -1,4 +1,4 @@
-# Agentic RAG Layer - PRD
+# Agentic RAG Layer - Implementation Plan
 
 ## Overview
 
@@ -14,70 +14,23 @@ MagicSync users who want AI-assisted social media management with:
 
 ---
 
-## Requirements
-
-### Core Features
-
-1. **Chat Interface**
-   - Threaded conversations with retrieval-augmented responses
-   - Streaming responses via SSE
-   - Per-user chat history (isolated)
-   - Memory/facts extraction from conversations
-
-2. **Document Ingestion**
-   - Manual file upload (drag-and-drop)
-   - Multi-format support: PDF, DOCX, HTML, Markdown
-   - Document processing status via realtime
-   - Content hashing for deduplication
-   - Metadata extraction (LLM-powered)
-
-3. **RAG Pipeline**
-   - Chunking strategies (semantic, fixed-size)
-   - Embedding generation (local Ollama + cloud fallback)
-   - Vector storage (pgvector)
-   - Hybrid search (keyword + vector + RRF)
-   - Reranking
-   - Multi-hop retrieval
-
-4. **AI Skills System**
-   - Dynamic skill discovery
-   - Skill registry (stored in DB)
-   - Pluggable tools
-   - Sub-agents with isolated context
-
-5. **Tools**
-   - Generate social media post
-   - Schedule post
-   - Fetch trending topics (platform research)
-   - Analyze target audience from documents
-   - Text-to-SQL (query user data)
-   - Web search fallback
-
-6. **Social Media Integration**
-   - Post creation from chat
-   - Multi-platform support (existing)
-   - Draft/Schedule workflow
-
----
-
 ## Architecture
 
 ### Stack
 | Layer | Choice |
 |-------|--------|
-| Frontend | Nuxt 4 + TanStack AI |
-| Backend | Python + FastAPI |
-| Database | Turso (existing) + PostgreSQL + pgvector |
-| LLM | Ollama (local) + OpenAI-compatible (cloud) |
-| Embeddings | Ollama + Cloud fallback |
+| Frontend | Nuxt 4 + Vue 3 Composition API |
+| Backend | Python FastAPI + Nuxt server routes |
+| Database | Turso (libSQL) with native vector support |
+| LLM | Ollama (local) |
+| Embeddings | Ollama nomic-embed-text (local) |
 
 ### Data Flow
 ```
-User Chat → TanStack AI → Python API → Ollama/OpenAI
-                                    ↓
-                              RAG Pipeline
-                                    ↓
-                              pgvector + Postgres
+User Chat → Nuxt API → Python FastAPI → Ollama
+    ↓              ↓
+  Turso       RAG Pipeline
+(chunks)    (parse→chunk→embed)
 ```
 
 ---
@@ -85,45 +38,61 @@ User Chat → TanStack AI → Python API → Ollama/OpenAI
 ## Modules
 
 ### Module 1: App Shell + Observability
-- [x] Auth integration with existing Better Auth (security module with session validation)
-- [x] Chat UI component (sidebar, streaming, A2UI, i18n)
-- [x] Basic LLM integration (Ollama)
+- [x] Auth integration with existing Better Auth (require_user enforced on all Python endpoints)
+- [x] Chat UI component (sidebar, streaming, thread management, A2UI renderer)
+- [x] Basic LLM integration (Ollama via httpx)
 - [x] Streaming responses (SSE via sse-starlette)
 - [x] LangSmith tracing setup
+- [x] Chat thread CRUD wired to frontend (load, create, select, delete)
+- [x] Chat message persistence (user + assistant saved via chatService)
+- [x] A2UI action endpoint (`/api/a2ui/action` — forwards component button clicks to LLM)
 
 ### Module 2: BYO Retrieval + Memory
-- [x] Document ingestion endpoint (Nuxt upload + Python ingest)
+- [x] Document ingestion endpoint (SSE streaming with real-time progress)
 - [x] File storage (local disk via assets pattern)
 - [x] Chunking → embedding → Turso vector storage (vector32 + vector_distance_cos)
-- [x] Retrieval tool (cosine similarity search in Turso)
+- [x] Retrieval tool (cosine similarity search)
 - [x] Chat history storage (chat_threads + chat_messages tables)
-- [x] Realtime ingestion status (SSE stream)
+- [x] Realtime ingestion status (SSE)
+- [x] DB indexes for all RAG tables (migration 0006: documents, chunks, threads, messages)
+- [x] FTS5 virtual table with INSERT/UPDATE/DELETE sync triggers (migration 0006)
 
 ### Module 3: Record Manager
-- [x] Content hashing (SHA-256 per chunk via Python chunker, returned in ingest response)
-- [x] Change detection (compare file hash against stored hash on document, skip re-ingestion via SSE `skipped` event)
-- [x] Incremental processing (diff chunk hashes, only insert new/changed chunks, delete removed ones, update doc hash)
+- [x] Content hashing (SHA-256 per chunk via Python chunker)
+- [x] Change detection (compare file hash against stored hash, skip if unchanged)
+- [x] Incremental processing (diff chunk hashes, insert/delete only changed)
 
 ### Module 4: Metadata Extraction
-- [x] LLM metadata extraction (Python: extract_metadata via chat_complete(), Nuxt proxy at /documents/:id/extract-metadata, integrated into ingestion SSE flow)
-- [x] Metadata schema (documents.metadata enriched: title, author, language, topics, summary, document_type, extractedAt)
-- [x] Filtered retrieval (chunkService.search returns metadata, supports documentId filter + metadata key/value filter via json_extract)
+- [x] LLM metadata extraction (Python extract_metadata via chat_complete())
+- [x] Metadata schema (documents.metadata enriched with extracted fields)
+- [x] Filtered retrieval (documentId + metadata key/value filters via json_extract)
+- [x] Structured metadata from file parser (page count, author, headings, PDF metadata)
 
-### Module 5: Multi-Format Support
-- [x] PDF parsing (pypdf via Python file_parser.py, Nuxt sends base64 + mime_type)
-- [x] DOCX parsing (python-docx via file_parser.py)
-- [x] HTML parsing (beautifulsoup4 + lxml via file_parser.py, strips scripts/styles/nav)
-- [x] Markdown parsing (markdown lib via file_parser.py, strips YAML frontmatter)
+### Module 5: Multi-Format Support (Production-Grade)
+- [x] PDF parsing (pypdf — per-page extraction with page numbers and PDF metadata)
+- [x] DOCX parsing (python-docx — heading-based section extraction)
+- [x] HTML parsing (beautifulsoup4 + lxml — heading-based sections, noise removal)
+- [x] Markdown parsing (heading structure preservation, YAML frontmatter extraction)
+- [x] CSV parsing (row-based natural language conversion, header extraction)
+- [x] JSON parsing (structured flattening, array-of-objects support)
+- [x] Structured extraction API (ParsedDocument with per-page metadata)
+- [x] Format-aware chunking (page numbers, section titles preserved in chunk metadata)
 
 ### Module 6: Hybrid Search & Reranking
-- [ ] Keyword search (BM25)
-- [ ] Vector search
-- [ ] RRF fusion
-- [ ] Reranking
+- [x] Keyword search (BM25 via FTS5 with sync triggers)
+- [x] Vector search (cosine similarity via Turso vector_distance_cos)
+- [x] RRF fusion (reciprocal rank fusion combining keyword + vector results)
+- [x] Reranking (LLM-based via Python /rerank endpoint with local fallback)
+- [x] Concurrent batch embeddings (asyncio.gather with semaphore, sequential retry)
+- [x] Hybrid search endpoint (generates query embedding for caller-side execution)
 
 ### Module 7: Additional Tools
-- [ ] Text-to-SQL tool
-- [ ] Web search fallback
+- [x] Text-to-SQL tool (LLM generates SELECT queries from natural language, full MagicSync schema context, SQL safety validation)
+- [x] Web search fallback (DuckDuckGo integration, returns structured results)
+- [x] Tools API endpoints (/tools/text-to-sql, /tools/web-search, /tools/text-to-sql/validate)
+- [x] Tools frontend page (Text-to-SQL and Web Search tabs)
+- [x] A2UI action endpoint (/api/a2ui/action)
+- [x] 110 Python tests passing (all previous + 28 new Module 7 tests)
 
 ### Module 8: Sub-Agents
 - [ ] Sub-agent detection
@@ -132,22 +101,37 @@ User Chat → TanStack AI → Python API → Ollama/OpenAI
 
 ---
 
-## Complexity
+## Production Quality Applied
 
-🔴 **Complex** - This is a multi-module implementation that requires:
-- Python backend development
-- Vector database setup
-- Multi-hop RAG implementation
-- Dynamic skill system
+### Python Backend
+- [x] httpx client lifecycle management (lifespan cleanup on shutdown)
+- [x] Auth enforcement on all endpoints (require_user dependency)
+- [x] Schema validation (Pydantic model validators)
+- [x] Concurrent batch embeddings (semaphore-limited with retry)
+- [x] Structured extraction returns ParsedDocument with page metadata
+- [x] All 110 tests passing
 
-Should be broken into sub-plans for each module.
+### Database Layer
+- [x] All service methods return ServiceResponse<T> (no void returns)
+- [x] Chat message pagination support (limit parameter)
+- [x] SearchService.rerank supports LLM-based reranking via Python backend
+- [x] Indexes on all foreign keys and common query patterns
+- [x] FTS5 virtual table with automatic sync triggers
+
+### Frontend
+- [x] Thread management fully wired (load, create, select, delete)
+- [x] Messages persisted to database (user + assistant)
+- [x] A2UI action endpoint created (/api/a2ui/action)
+- [x] SSE stream parsing with buffering
+- [x] Upload accepts CSV and JSON file types
+- [x] Real-time ingestion progress display
 
 ---
 
 ## Dependencies
 
 - Existing MagicSync codebase
-- PostgreSQL with pgvector
+- Turso (libSQL) with vector support
 - Ollama (local inference)
 - Python FastAPI
 

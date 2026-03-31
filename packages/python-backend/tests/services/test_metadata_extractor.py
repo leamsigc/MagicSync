@@ -136,7 +136,8 @@ class TestExtractMetadataEndpoint:
             json={"text": ""},
             headers={"Authorization": "Bearer test-token"},
         )
-        assert response.status_code == 400
+        # Pydantic validator rejects empty text before reaching the handler
+        assert response.status_code == 422
 
     def test_extract_metadata_whitespace_only(self, client, api_prefix):
         response = client.post(

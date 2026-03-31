@@ -73,6 +73,7 @@ export default defineEventHandler(async (event) => {
           }>
           total_chunks: number
           extracted_text: string
+          document_metadata: Record<string, any>
         }>(`${backendUrl}/api/v1/rag/ingest`, {
           method: 'POST',
           body: {
@@ -160,6 +161,17 @@ export default defineEventHandler(async (event) => {
         await documentService.updateContentHash(doc.id, user.id, fileContentHash)
         await documentService.updateChunkCount(doc.id, user.id, ingestResult.total_chunks)
 
+        // Merge document-level metadata from structured extraction
+        let existingMeta: Record<string, any> = {}
+        try {
+          existingMeta = doc.metadata ? JSON.parse(doc.metadata) : {}
+        } catch { /* invalid JSON */ }
+
+        const mergedMeta = {
+          ...existingMeta,
+          ...ingestResult.document_metadata,
+        }
+
         // Extract document metadata via LLM (best-effort, don't block ingestion)
         controller.enqueue(encoder.encode(sendEvent({
           status: 'extracting',
@@ -180,14 +192,8 @@ export default defineEventHandler(async (event) => {
             headers: { 'X-User-Id': user.id },
           })
 
-          // Merge with existing metadata
-          let existingMeta: Record<string, any> = {}
-          try {
-            existingMeta = doc.metadata ? JSON.parse(doc.metadata) : {}
-          } catch { /* invalid JSON */ }
-
           await documentService.updateMetadata(doc.id, user.id, {
-            ...existingMeta,
+            ...mergedMeta,
             title: metadataResult.title,
             author: metadataResult.author,
             language: metadataResult.language,
@@ -203,7 +209,9 @@ export default defineEventHandler(async (event) => {
             metadata: metadataResult,
           })))
         } catch (metaError: any) {
-          // Metadata extraction is non-critical — log but don't fail ingestion
+          // Still save the structured metadata even if LLM extraction fails
+          await documentService.updateMetadata(doc.id, user.id, mergedMeta)
+
           controller.enqueue(encoder.encode(sendEvent({
             status: 'extracting',
             message: 'Metadata extraction skipped (LLM unavailable)',

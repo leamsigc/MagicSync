@@ -10,6 +10,8 @@ const ALLOWED_TYPES = [
   'text/plain',
   'text/markdown',
   'text/html',
+  'text/csv',
+  'application/json',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ]
 const MAX_SIZE = 10 * 1024 * 1024 // 10MB
