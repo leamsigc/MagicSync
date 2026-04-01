@@ -1,7 +1,6 @@
 <i18n src="./Menu.json"></i18n>
 
 <script lang="ts" setup>
-import type { User } from '#layers/BaseDB/db/auth/auth';
 
 /**
  *

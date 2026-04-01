@@ -74,6 +74,7 @@ catalog:
   mediabunny: 1.40.1
   idb: 8.0.3
   "wavesurfer.js": 7.12.5
+  "@takumi-rs/core": "0.73.1"
 
 ignoredBuiltDependencies:
   - fsevents

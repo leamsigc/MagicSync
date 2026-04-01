@@ -12,13 +12,13 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@better-auth/api-key": "^1.5.6",
     "@better-auth/utils": "catalog:",
     "@local-monorepo/db": "workspace:*",
     "@local-monorepo/email": "workspace:*",
     "@local-monorepo/ui": "workspace:*",
     "@nuxtjs/i18n": "catalog:",
     "better-auth": "catalog:",
+    "@better-auth/api-key": "catalog:",
     "better-sqlite3": "catalog:",
     "evlog": "catalog:"
   },

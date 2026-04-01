@@ -1,7 +1,9 @@
 import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service';
 import { APIError, betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
-import { admin, createAuthMiddleware, genericOAuth, organization, apiKey } from 'better-auth/plugins'
+import { apiKey } from "@better-auth/api-key"
+import { createAuthMiddleware } from "better-auth/api"
+import { admin,  genericOAuth, organization } from 'better-auth/plugins'
 import * as schema from '#layers/BaseDB/db/schema'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
 import { logAuditService } from '#layers/BaseDB/server/services/auditLog.service'
@@ -80,7 +82,6 @@ export const auth = betterAuth({
   },
   account: {
     accountLinking: {
-      updateAccountOnSignIn: true,
       enabled: true,
       allowDifferentEmails: true,
       updateUserInfoOnLink: true,
@@ -360,7 +361,16 @@ export const auth = betterAuth({
         // Invitation emails handled via notifications
       }
     }),
-    apiKey()
+    apiKey({
+      permissions: {
+        defaultPermissions: async (referenceId, ctx) => {
+                    return {
+                        files: ["read"],
+                        users: ["read"],
+                    };
+                },
+      }
+    })
   ],
   databaseHooks: {
     account: {

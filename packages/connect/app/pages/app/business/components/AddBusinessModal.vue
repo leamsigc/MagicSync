@@ -13,8 +13,10 @@ import type { BodySchemaCreateBusinessType } from '#layers/BaseConnect/server/ap
 const emit = defineEmits(['add', 'cancel'])
 const { t } = useI18n()
 const modalOpen = defineModel<boolean>('open')
-const { addBusiness, extractBusinessInfo } = useBusinessManager()
+const initialSetup = defineModel<boolean>('initialSetup', { default: false })
+const { addBusiness, extractBusinessInfo, setActiveBusiness } = useBusinessManager()
 const toast = useToast()
+const router = useRouter()
 
 const step = ref<0 | 1 | 2 | 3>(0)
 
@@ -78,10 +80,19 @@ const handleExtractionSubmit = async (payload: FormSubmitEvent<ExtractionForm>) 
 
 const submitFinalForm = async (payload: BodySchemaCreateBusinessType) => {
   try {
+    const response = await addBusiness(payload);
+    
+    if (!response) {
+      throw new Error('No response from server');
+    }
+    
+    if (!response.id) {
+      console.error('Invalid response:', response);
+      throw new Error('Failed to create business - invalid response');
+    }
 
-    await addBusiness(payload);
+    await setActiveBusiness(response.id);
 
-    // Reset wizard
     step.value = 1;
     extractionState.value = { url: '', competitors: [''], channels: [] };
     responseResult.value = undefined;
@@ -93,11 +104,15 @@ const submitFinalForm = async (payload: BodySchemaCreateBusinessType) => {
       color: 'success'
     })
 
-  } catch (error) {
+    if (initialSetup.value) {
+      router.push('/app/integrations');
+    }
+
+  } catch (error: any) {
     console.error('Form submit error:', error);
     toast.add({
       title: t('states.error'),
-      description: t('states.something_went_wrong'),
+      description: error?.message || t('states.something_went_wrong'),
       color: 'error'
     })
   }

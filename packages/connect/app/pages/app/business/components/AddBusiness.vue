@@ -4,8 +4,9 @@ import AddBusinessModal from './AddBusinessModal.vue'
 
 const emit = defineEmits(['add', 'cancel'])
 const modalOpen = defineModel<boolean>('open')
+const initialSetup = defineModel<boolean>('initialSetup', { default: false })
 </script>
 
 <template>
-  <AddBusinessModal v-model:open="modalOpen" @add="emit('add')" @cancel="emit('cancel')" />
+  <AddBusinessModal v-model:open="modalOpen" v-model:initial-setup="initialSetup" @add="emit('add')" @cancel="emit('cancel')" />
 </template>

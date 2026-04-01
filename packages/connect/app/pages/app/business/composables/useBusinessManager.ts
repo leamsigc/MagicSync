@@ -1,5 +1,6 @@
 import type { BusinessProfile, CreateBusinessProfileData } from '#layers/BaseDB/db/schema';
 import type { InformationSchemaBusinessResponse } from '#layers/BaseScheduler/server/api/v1/ai/information/index.post';
+import type { ServiceResponse } from '#layers/BaseDB/server/services/types';
 import { ref } from 'vue';
 
 
@@ -9,8 +10,8 @@ const businesses = ref<PaginatedResponse<BusinessProfile>>({
   pagination: {
     page: 1,
     limit: 10,
-    total: 1,
-    totalPages: 1
+    total: 0,
+    totalPages: 0
   }
 });
 
@@ -19,7 +20,7 @@ export const useBusinessManager = () => {
   const activeBusinessId = useState<string | undefined>('business:id');
   const getAllBusinesses = async () => {
     try {
-      const data = await $fetch<Promise<PaginatedResponse<BusinessProfile>>>('/api/v1/business');
+      const data = await $fetch<PaginatedResponse<BusinessProfile>>('/api/v1/business');
       businesses.value = data;
       if (data.pagination?.total === 0) {
         activeBusinessId.value = undefined
@@ -29,13 +30,19 @@ export const useBusinessManager = () => {
     }
   };
 
-  const addBusiness = async (business: any) => {
+  const addBusiness = async (business: any): Promise<BusinessProfile | undefined> => {
     try {
-      await $fetch<BusinessProfile>('/api/v1/business', {
+      const response = await $fetch<ServiceResponse<BusinessProfile>>('/api/v1/business', {
         method: 'POST',
         body: { ...business },
       });
+      
+      if (response.error) {
+        throw new Error(response.error);
+      }
+      
       await getAllBusinesses();
+      return response.data;
     } catch (error) {
       console.error('Error adding business:', error);
       throw error;

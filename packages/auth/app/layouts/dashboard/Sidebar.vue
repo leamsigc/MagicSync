@@ -119,18 +119,18 @@ const navigationItems = computed<NavigationMenuItem[][]>(() => {
             label: menuData.menu.aitools,
             to: '/app/ai-tools/content-split'
           },
-          // {
-          //   label: menuData.menu.textOverImage,
-          //   to: '/app/tools/text-over-image'
-          // },
-          // {
-          //   label: menuData.menu.audioToText,
-          //   to: '/app/tools/audio-to-text'
-          // },
-          // {
-          //   label: menuData.menu.videoCreation,
-          //   to: '/app/tools/video-creation'
-          // }
+          {
+            label: menuData.menu.chat,
+            to: '/app/ai-tools/chat'
+          },
+          {
+            label: menuData.menu.growthStrategies,
+            to: '/app/ai-tools/growth-strategies'
+          },
+          {
+            label: menuData.menu.tools,
+            to: '/app/ai-tools/tools'
+          }
         ]
       },
       {
@@ -169,7 +169,7 @@ const navigationItems = computed<NavigationMenuItem[][]>(() => {
           },
           {
             label: menuData.userNav.appearance,
-            to: '/app/settings/appearance'
+            to: '/app/keys'
           },
           {
             label: menuData.menu.notification,

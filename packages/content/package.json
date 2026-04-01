@@ -21,7 +21,8 @@
     "typescript": "catalog:",
     "vue": "catalog:",
     "zod": "catalog:",
-    "@nuxtjs/i18n": "catalog:"
+    "@nuxtjs/i18n": "catalog:",
+    "@takumi-rs/core": "catalog:"
   },
   "dependencies": {
     "better-sqlite3": "catalog:",

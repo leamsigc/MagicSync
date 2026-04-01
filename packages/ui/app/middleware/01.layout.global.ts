@@ -8,18 +8,24 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const isUserSettingUpFirstBusiness = to.path.startsWith('/app/business/initial');
   const userLayoutSetting = useState("dashboard-layout", () => 'dashboard-layout');
 
-  let layout = to.meta.layout || 'default';
+  let layout: keyof NuxtLayouts =  to.meta.layout as keyof NuxtLayouts || 'default';
+
+  console.log(to.meta.layout);
+  console.log(userLayoutSetting.value);
+
   if (isBlog) {
     layout = 'blog-layout';
-  } else if (isAppRoute && !isUserSettingUpFirstBusiness) {
-    layout = userLayoutSetting.value as keyof NuxtLayouts;
+  } else if (isAppRoute && !isUserSettingUpFirstBusiness && (to.meta.layout === 'default' || to.meta.layout === undefined)) {
+    layout = userLayoutSetting.value as keyof NuxtLayouts || 'dashboard-layout';
   } else if (isTools) {
     layout = 'tools-layout';
   } else if (isUserSettingUpFirstBusiness) {
     layout = 'business-layout';
-  } else {
-    layout = to.meta.layout || 'default';
+  } else if (to.meta.layout !== 'default' && to.meta.layout !== undefined) {
+    layout = to.meta.layout as keyof NuxtLayouts || 'default';
   }
+  console.log("LAYOUT:", layout);
+
 
   setPageLayout(layout as any,);
 });

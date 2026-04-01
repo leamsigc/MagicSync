@@ -72,14 +72,11 @@ useHead({
   ]
 })
 
-defineOgImage({
-  component: "BlogOgImage",
-  props: {
-    title: t('title'),
-    description: t('description'),
-    headline: "Free Tools",
-    imageUrl: "https://raw.githubusercontent.com/leamsigc/MagicSync/refs/heads/main/images/HomePage.png"
-  }
+defineOgImage("BlogOgImage", {
+  title: t('title'),
+  description: t('description'),
+  headline: "Free Tools",
+  imageUrl: "https://raw.githubusercontent.com/leamsigc/MagicSync/refs/heads/main/images/HomePage.png"
 })
 </script>
 

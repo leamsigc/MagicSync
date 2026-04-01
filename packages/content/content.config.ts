@@ -1,5 +1,8 @@
 import { defineContentConfig, defineCollection } from '@nuxt/content'
-import { asSeoCollection } from '@nuxtjs/seo/content'
+import { defineRobotsSchema } from '@nuxtjs/robots/content'
+import { defineSitemapSchema } from '@nuxtjs/sitemap/content'
+import { defineOgImageSchema } from 'nuxt-og-image/content'
+import { defineSchemaOrgSchema } from 'nuxt-schema-org/content'
 import { z } from 'zod'
 
 /*
@@ -9,6 +12,10 @@ import { z } from 'zod'
  */
 
 const blogSchema = z.object({
+  robots: defineRobotsSchema(),
+  sitemap: defineSitemapSchema(),
+  ogImage: defineOgImageSchema(),
+  schemaOrg: defineSchemaOrgSchema(),
   layout: z.enum(['default', 'blog-layout']).default('blog-layout'),
   title: z.string(),
   description: z.string(),
@@ -39,18 +46,18 @@ const blogSchema = z.object({
     avatar: z.string(),
     social: z.string()
   }),
-  ogImage: z.object({
-    component: z.enum(['BlogOgImage', 'Video']).default('BlogOgImage'),
-    props: z.object({
-      title: z.string(),
-      description: z.string(),
-      image: z.string()
-    })
-  })
+  // ogImage: z.object({
+  //   component: z.enum(['BlogOgImage', 'Video']).default('BlogOgImage'),
+  //   props: z.object({
+  //     title: z.string(),
+  //     description: z.string(),
+  //     image: z.string()
+  //   })
+  // })
 });
 
 export const collections = {
-  content_en: defineCollection(asSeoCollection({
+  content_en: defineCollection({
     type: 'page',
     source: {
       include: 'en/**',
@@ -58,17 +65,17 @@ export const collections = {
       prefix: '',
     },
     schema: blogSchema
-  })),
+  }),
 
-  blog_en: defineCollection(asSeoCollection({
+  blog_en: defineCollection({
     type: 'page',
     source: {
       include: 'en/blogs/**',
       prefix: '',
     },
     schema: blogSchema
-  })),
-  content_es: defineCollection(asSeoCollection({
+  }),
+  content_es: defineCollection({
     type: 'page',
     source: {
       include: 'es/**',
@@ -76,14 +83,14 @@ export const collections = {
       prefix: '',
     },
     schema: blogSchema
-  })),
+  }),
 
-  blog_es: defineCollection(asSeoCollection({
+  blog_es: defineCollection({
     type: 'page',
     source: {
       include: 'es/blogs/**',
       prefix: '',
     },
     schema: blogSchema
-  }))
+  })
 }

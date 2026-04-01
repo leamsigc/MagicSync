@@ -25,7 +25,7 @@ useSeoMeta({
   title: 'Text behind image for free',
   description: 'Best text over image tool for free!',
 });
-defineOgImageComponent('BlogOgImage', {
+defineOgImage('BlogOgImage', {
   title: `${'Text behind image for free '.slice(0, 50)}...`,
   description: `${'Best text over image tool for free!'.slice(0, 200)}...`,
   headline: '👋 Human Ideas...!',

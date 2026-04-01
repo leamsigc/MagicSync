@@ -13,7 +13,6 @@
  * @todo [✔] Update the typescript.
  */
 import DashboardUserNav from './UserNav.vue';
-const { t } = useI18n();
 </script>
 
 <template>

@@ -11,7 +11,7 @@ router = APIRouter()
 @router.post("/chat")
 async def chat_stream(
     request: ChatRequest,
-    user: dict = Depends(require_user),
+    # user: dict = Depends(require_user),
 ):
     messages = [{"role": m.role, "content": m.content} for m in request.messages]
 

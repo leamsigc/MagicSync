@@ -163,6 +163,9 @@ export default defineNuxtConfig({
       '/app/**',
     ]
   },
+  ogImage: {
+    zeroRuntime: true
+  },
   umami: {
     id: '55b75e65-727f-44ae-9f58-c2d67c2f3b4b',
     host: 'https://umami.giessen.dev',

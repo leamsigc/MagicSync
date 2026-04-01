@@ -10,7 +10,7 @@ export const tursoClient = createClient({
 })
 
 export const useDrizzle = () => {
-  consola.info('Connected to LibSQL')
+  consola.info('Connected to LibSQL', tursoConfig.url)
   return drizzle(tursoClient, { schema })
 }
 

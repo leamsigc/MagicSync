@@ -102,7 +102,7 @@ onMounted(async () => {
       },
       { rootMargin: '100px' }
     )
-    observer.observe(sentinelRef.value)
+    observer.observe(sentinelRef.value as any)
 
     onUnmounted(() => {
       observer.disconnect()

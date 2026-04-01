@@ -43,6 +43,13 @@
       "when": 1774901404313,
       "tag": "0005_flat_marten_broadcloak",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1775032557984,
+      "tag": "0006_exotic_micromacro",
+      "breakpoints": true
     }
   ]
 }

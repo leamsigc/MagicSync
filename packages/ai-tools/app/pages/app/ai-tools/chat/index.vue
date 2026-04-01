@@ -1,7 +1,8 @@
-<i18n src="./json"></i18n>
+<i18n src="./chat.json"></i18n>
 
 <script setup lang="ts">
 import { useA2UIChat } from './composables/useA2UIChat';
+import ChatSidebar from './components/ChatSidebar.vue';
 
 const { t } = useI18n()
 const input = ref('')
@@ -53,17 +54,12 @@ function handleSuggestionClick(suggestion: string) {
 <template>
   <div class="flex h-[calc(100vh-4rem)] overflow-hidden">
     <!-- Chat Sidebar -->
-    <ChatSidebar
-      :threads="threads.map(t => ({
-        id: t.id,
-        title: t.title,
-        lastMessage: t.lastMessageAt ? new Date(t.lastMessageAt).toLocaleDateString() : '',
-      }))"
-      :active-thread-id="activeThreadId ?? undefined"
-      @select="handleSelectThread"
-      @delete="handleDeleteThread"
-      @new-thread="handleNewThread"
-    />
+    <ChatSidebar :threads="threads.map(t => ({
+      id: t.id,
+      title: t.title,
+      lastMessage: t.lastMessageAt ? new Date(t.lastMessageAt).toLocaleDateString() : '',
+    }))" :active-thread-id="activeThreadId ?? undefined" @select="handleSelectThread" @delete="handleDeleteThread"
+      @new-thread="handleNewThread" />
 
     <!-- Main Chat Area -->
     <div class="flex-1 flex flex-col bg-white dark:bg-neutral-950">
@@ -98,15 +94,9 @@ function handleSuggestionClick(suggestion: string) {
             {{ t('welcomeDescription') }}
           </p>
           <div class="flex flex-wrap gap-2 justify-center">
-            <UButton
-              v-for="suggestion in [t('suggestion1'), t('suggestion2'), t('suggestion3')]"
-              :key="suggestion"
-              :label="suggestion"
-              color="neutral"
-              variant="outline"
-              size="sm"
-              @click="handleSuggestionClick(suggestion)"
-            />
+            <UButton v-for="suggestion in [t('suggestion1'), t('suggestion2'), t('suggestion3')]" :key="suggestion"
+              :label="suggestion" color="neutral" variant="outline" size="sm"
+              @click="handleSuggestionClick(suggestion)" />
           </div>
         </div>
 
@@ -141,7 +131,7 @@ function handleSuggestionClick(suggestion: string) {
           <div v-if="isLoading" class="flex gap-3">
             <UAvatar icon="i-heroicons-sparkles" size="sm" color="primary" />
             <div class="flex items-center gap-2">
-              <UChatShimmer />
+              <Icon name="i-heroicons-arrow-path" class="w-4 h-4 animate-spin text-neutral-400" />
             </div>
           </div>
         </div>
@@ -154,17 +144,10 @@ function handleSuggestionClick(suggestion: string) {
 
       <!-- Chat Input -->
       <div class="px-6 py-4 border-t border-neutral-200 dark:border-neutral-700">
-        <UChatPrompt
-          v-model="input"
-          :placeholder="t('placeholder')"
-          :error="error ? error : undefined"
-          @submit="onSubmit"
-        >
-          <UChatPromptSubmit
-            :status="isLoading ? 'streaming' : 'ready'"
-            @stop="() => isLoading = false"
-            @reload="regenerateLast()"
-          />
+        <UChatPrompt v-model="input" :placeholder="t('placeholder')" :error="error ? error : undefined"
+          @submit="onSubmit">
+          <UChatPromptSubmit :status="isLoading ? 'streaming' : 'ready'" @stop="() => isLoading = false"
+            @reload="regenerateLast()" />
         </UChatPrompt>
       </div>
     </div>

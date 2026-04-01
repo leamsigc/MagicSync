@@ -14,18 +14,7 @@ import UserNav from './dashboard/UserNav.vue';
  * @todo [ ] Integration test.
  * @todo [✔] Update the typescript.
  */
-const items = [
-  {
-    label: 'Dashboard',
-    icon: 'i-heroicons-home',
-    to: '/'
-  },
-  {
-    label: 'Settings',
-    icon: 'i-heroicons-gear',
-    to: '/settings'
-  }
-]
+
 </script>
 
 <template>

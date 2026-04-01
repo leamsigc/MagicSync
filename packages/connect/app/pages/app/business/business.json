@@ -4,6 +4,10 @@
     "description": "Manage your businesses here",
     "seo_title_all": "Business Management",
     "seo_description_all": "Manage your businesses here",
+    "title_edit": "Edit Business",
+    "description_edit": "Update your business details",
+    "seo_title_edit": "Edit Business",
+    "seo_description_edit": "Update your business details",
     "title_initial": "Organization Management",
     "description_initial": "Organization are a way to group your social media accounts, Google My Business, and content creation. You can create multiple organizations and manage them separately.",
     "seo_title_initial": "Organization Management",
@@ -15,8 +19,16 @@
       "inactive": "Inactive",
       "business_added": "Business Added",
       "business_added_successfully": "Business has been added successfully.",
+      "business_updated": "Business Updated",
+      "business_updated_successfully": "Business has been updated successfully.",
       "error": "Error",
-      "something_went_wrong": "Something went wrong. Please try again."
+      "something_went_wrong": "Something went wrong. Please try again.",
+      "deleting": "Deleting Business",
+      "deleting_business": "Please wait while we delete the business...",
+      "deleted": "Business Deleted",
+      "business_deleted": "The business has been deleted successfully.",
+      "confirm_delete": "Are you sure you want to delete this business?",
+      "confirm_delete_desc": "This action cannot be undone. All associated data will be permanently removed."
     },
     "form": {
       "name": "Business Name",
