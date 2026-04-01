@@ -173,7 +173,7 @@ class TestSubAgentStepExecution:
         }
 
         with patch(
-            "app.services.agent.sub_agent.ollama_service.chat_complete",
+            "app.services.agent.sub_agent.llm_service.chat_complete",
             new_callable=AsyncMock,
             return_value=mock_response,
         ):
@@ -190,7 +190,7 @@ class TestSubAgentStepExecution:
         service.add_message(agent.id, "user", "Test")
 
         with patch(
-            "app.services.agent.sub_agent.ollama_service.chat_complete",
+            "app.services.agent.sub_agent.llm_service.chat_complete",
             new_callable=AsyncMock,
             side_effect=Exception("LLM unavailable"),
         ):
@@ -214,7 +214,7 @@ class TestSubAgentStepExecution:
         }
 
         with patch(
-            "app.services.agent.sub_agent.ollama_service.chat_complete",
+            "app.services.agent.sub_agent.llm_service.chat_complete",
             new_callable=AsyncMock,
             return_value=mock_response,
         ):
@@ -238,7 +238,7 @@ class TestSubAgentStepExecution:
         }
 
         with patch(
-            "app.services.agent.sub_agent.ollama_service.chat_complete",
+            "app.services.agent.sub_agent.llm_service.chat_complete",
             new_callable=AsyncMock,
             return_value=mock_response,
         ):
@@ -263,7 +263,7 @@ class TestSubAgentStepExecution:
         }
 
         with patch(
-            "app.services.agent.sub_agent.ollama_service.chat_complete",
+            "app.services.agent.sub_agent.llm_service.chat_complete",
             new_callable=AsyncMock,
             return_value=tool_response,
         ):
@@ -356,7 +356,7 @@ class TestSubAgentMaxSteps:
         mock_response = {"message": {"role": "assistant", "content": "Step result"}}
 
         with patch(
-            "app.services.agent.sub_agent.ollama_service.chat_complete",
+            "app.services.agent.sub_agent.llm_service.chat_complete",
             new_callable=AsyncMock,
             return_value=mock_response,
         ):
@@ -377,7 +377,7 @@ class TestSubAgentMaxSteps:
         mock_response = {"message": {"role": "assistant", "content": "Result"}}
 
         with patch(
-            "app.services.agent.sub_agent.ollama_service.chat_complete",
+            "app.services.agent.sub_agent.llm_service.chat_complete",
             new_callable=AsyncMock,
             return_value=mock_response,
         ):

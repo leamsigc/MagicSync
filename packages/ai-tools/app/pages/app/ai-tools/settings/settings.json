@@ -1,0 +1,25 @@
+{
+  "en": {
+    "title": "LLM Settings",
+    "subtitle": "Configure which AI provider and model to use for chat and AI features",
+    "savedConfigs": "Saved Configurations",
+    "default": "Default",
+    "temp": "Temp",
+    "tokens": "Tokens",
+    "addConfig": "Add Configuration",
+    "provider": "Provider",
+    "model": "Model",
+    "selectModel": "Select a model",
+    "apiKey": "API Key",
+    "apiKeyPlaceholder": "Enter your API key",
+    "apiKeyHelp": "Your API key is stored encrypted and used only for your requests",
+    "baseUrl": "Base URL (Ollama)",
+    "temperature": "Creativity (Temperature)",
+    "temperatureHelp": "Lower = more focused, Higher = more creative",
+    "maxTokens": "Max Tokens",
+    "setDefault": "Set as default configuration",
+    "save": "Save Configuration",
+    "saved": "Saved!",
+    "saveError": "Failed to save"
+  }
+}

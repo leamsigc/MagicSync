@@ -183,31 +183,16 @@ onMounted(fetchDocuments)
     </div>
 
     <!-- Upload Zone -->
-    <div
-      class="border-2 border-dashed rounded-lg p-8 text-center mb-6 transition-colors"
+    <div class="border-2 border-dashed rounded-lg p-8 text-center mb-6 transition-colors"
       :class="dragOver ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-neutral-300 dark:border-neutral-700'"
-      @drop.prevent="onDrop"
-      @dragover="onDragOver"
-      @dragleave="onDragLeave"
-    >
+      @drop.prevent="onDrop" @dragover="onDragOver" @dragleave="onDragLeave">
       <UIcon name="i-heroicons-document-arrow-up" class="w-10 h-10 text-neutral-400 mb-3" />
       <p class="text-sm text-neutral-600 dark:text-neutral-400 mb-2">{{ t('dropzone') }}</p>
       <p class="text-xs text-neutral-400 mb-4">{{ t('supportedFormats') }}</p>
-      <input
-        ref="fileInput"
-        type="file"
-        class="hidden"
-        accept=".pdf,.txt,.md,.html,.docx,.csv,.json"
-        multiple
-        @change="handleUpload(($event.target as HTMLInputElement).files)"
-      />
-      <UButton
-        :label="t('upload')"
-        icon="i-heroicons-arrow-up-tray"
-        color="primary"
-        :loading="uploading"
-        @click="fileInput?.click()"
-      />
+      <input ref="fileInput" type="file" class="hidden" accept=".pdf,.txt,.md,.html,.docx,.csv,.json" multiple
+        @change="handleUpload(($event.target as HTMLInputElement).files)" />
+      <UButton :label="t('upload')" icon="i-heroicons-arrow-up-tray" color="primary" :loading="uploading"
+        @click="fileInput?.click()" />
     </div>
 
     <!-- Documents Table -->
@@ -233,11 +218,7 @@ onMounted(fetchDocuments)
           </tr>
         </thead>
         <tbody>
-          <tr
-            v-for="doc in documents"
-            :key="doc.id"
-            class="border-b border-neutral-100 dark:border-neutral-800"
-          >
+          <tr v-for="doc in documents" :key="doc.id" class="border-b border-neutral-100 dark:border-neutral-800">
             <td class="py-4 pr-4">
               <div class="flex items-center gap-2">
                 <UIcon name="i-heroicons-document-text" class="w-5 h-5 text-neutral-400 shrink-0" />
@@ -254,51 +235,20 @@ onMounted(fetchDocuments)
                 <UProgress :value="ingesting[doc.id].progress" size="xs" class="w-24" />
                 <span class="text-xs text-neutral-500">{{ ingesting[doc.id].message }}</span>
               </div>
-              <UBadge
-                v-else
-                :label="t(`status.${doc.status}`)"
-                :color="getStatusColor(doc.status)"
-                variant="soft"
-                size="sm"
-              />
+              <UBadge v-else :label="t(`status.${doc.status}`)" :color="getStatusColor(doc.status)" variant="soft"
+                size="sm" />
             </td>
             <td class="py-4">
               <div class="flex items-center justify-end gap-1">
-                <UButton
-                  v-if="doc.status === 'pending' || doc.status === 'failed'"
+                <UButton v-if="doc.status === 'pending' || doc.status === 'failed'"
                   :label="doc.status === 'failed' ? t('actions.reingest') : t('actions.ingest')"
-                  icon="i-heroicons-sparkles"
-                  color="primary"
-                  variant="soft"
-                  size="xs"
-                  :disabled="!!ingesting[doc.id]"
-                  @click="handleIngest(doc)"
-                />
-                <UButton
-                  v-if="ingesting[doc.id]"
-                  :label="t('actions.cancel')"
-                  icon="i-heroicons-x-mark"
-                  color="neutral"
-                  variant="soft"
-                  size="xs"
-                  @click="cancelIngest(doc.id)"
-                />
-                <UButton
-                  v-if="doc.status === 'completed'"
-                  :label="t('actions.reingest')"
-                  icon="i-heroicons-arrow-path"
-                  color="neutral"
-                  variant="ghost"
-                  size="xs"
-                  @click="handleIngest(doc)"
-                />
-                <UButton
-                  icon="i-heroicons-trash"
-                  color="error"
-                  variant="ghost"
-                  size="xs"
-                  @click="handleDelete(doc)"
-                />
+                  icon="i-heroicons-sparkles" color="primary" variant="soft" size="xs" :disabled="!!ingesting[doc.id]"
+                  @click="handleIngest(doc)" />
+                <UButton v-if="ingesting[doc.id]" :label="t('actions.cancel')" icon="i-heroicons-x-mark" color="neutral"
+                  variant="soft" size="xs" @click="cancelIngest(doc.id)" />
+                <UButton v-if="doc.status === 'completed'" :label="t('actions.reingest')" icon="i-heroicons-arrow-path"
+                  color="neutral" variant="ghost" size="xs" @click="handleIngest(doc)" />
+                <UButton icon="i-heroicons-trash" color="error" variant="ghost" size="xs" @click="handleDelete(doc)" />
               </div>
             </td>
           </tr>

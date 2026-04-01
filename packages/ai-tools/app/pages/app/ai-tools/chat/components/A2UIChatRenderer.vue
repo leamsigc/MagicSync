@@ -93,17 +93,10 @@ const rootComponents = computed(() => {
 <template>
   <div class="a2ui-chat-renderer space-y-3">
     <template v-for="comp in rootComponents" :key="comp.id">
-      <component
-        v-if="resolveComponent(getComponentType(comp)!)"
-        :is="resolveComponent(getComponentType(comp)!)"
-        :definition="getNormalizedDef(comp)"
-        :components="componentRegistry"
-        @action="handleAction"
-      />
-      <div
-        v-else-if="getComponentType(comp)"
-        class="p-2 text-xs rounded border border-dashed border-neutral-300 text-neutral-500"
-      >
+      <component v-if="resolveComponent(getComponentType(comp)!)" :is="resolveComponent(getComponentType(comp)!)"
+        :definition="getNormalizedDef(comp)" :components="componentRegistry" @action="handleAction" />
+      <div v-else-if="getComponentType(comp)"
+        class="p-2 text-xs rounded border border-dashed border-neutral-300 text-neutral-500">
         Unknown component: {{ getComponentType(comp) }}
       </div>
     </template>

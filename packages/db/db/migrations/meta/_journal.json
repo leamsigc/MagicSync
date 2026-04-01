@@ -50,6 +50,13 @@
       "when": 1775032557984,
       "tag": "0006_exotic_micromacro",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1775060136409,
+      "tag": "0007_brave_emma_frost",
+      "breakpoints": true
     }
   ]
 }

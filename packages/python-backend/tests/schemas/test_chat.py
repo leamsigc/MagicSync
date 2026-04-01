@@ -11,9 +11,9 @@ class TestChatSchemas:
     def test_chat_request_defaults(self):
         req = ChatRequest(messages=[])
         assert req.messages == []
-        assert req.model == "llama3.2"
-        assert req.temperature == 0.7
-        assert req.max_tokens == 2048
+        assert req.model == "qwen3.5"
+        assert req.temperature is None
+        assert req.max_tokens is None
         assert req.thread_id is None
 
     def test_chat_request_custom_values(self):
@@ -43,10 +43,10 @@ class TestChatSchemas:
     def test_chat_response_schema(self):
         resp = ChatResponse(
             message=Message(role="assistant", content="Hello"),
-            model="llama3.2",
+            model="qwen3.5",
             trace_url="https://example.com",
         )
         assert resp.message.role == "assistant"
         assert resp.message.content == "Hello"
-        assert resp.model == "llama3.2"
+        assert resp.model == "qwen3.5"
         assert resp.trace_url == "https://example.com"

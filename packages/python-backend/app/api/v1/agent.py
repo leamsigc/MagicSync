@@ -11,7 +11,7 @@ from app.schemas.agent import (
 )
 from app.services.agent import sub_agent_service
 from app.services.agent.orchestrator import AgentOrchestrator
-from app.core.security import require_user
+from app.core.security import require_user, UserContext
 
 logger = logging.getLogger(__name__)
 
@@ -22,13 +22,13 @@ orchestrator = AgentOrchestrator()
 @router.post("/spawn", response_model=AgentSpawnResponse)
 async def spawn_agent(
     request: AgentSpawnRequest,
-    user: dict = Depends(require_user),
+    user: UserContext = Depends(require_user),
 ):
     """Spawn a new sub-agent with isolated context."""
     agent = sub_agent_service.spawn(
         task=request.task,
         parent_message_id=request.parent_message_id,
-        user_id=user["id"],
+        user_id=user.user_id,
         context=request.context,
         max_steps=request.max_steps,
     )
@@ -45,11 +45,11 @@ async def spawn_agent(
 @router.get("", response_model=AgentListResponse)
 async def list_agents(
     parent_message_id: str | None = Query(None),
-    user: dict = Depends(require_user),
+    user: UserContext = Depends(require_user),
 ):
     """List all sub-agents for the current user."""
     agents = sub_agent_service.list_agents(
-        user_id=user["id"],
+        user_id=user.user_id,
         parent_message_id=parent_message_id,
     )
     return AgentListResponse(
@@ -69,13 +69,13 @@ async def list_agents(
 @router.get("/{agent_id}/status", response_model=AgentStatusResponse)
 async def get_agent_status(
     agent_id: str,
-    user: dict = Depends(require_user),
+    user: UserContext = Depends(require_user),
 ):
     """Get the current status of a sub-agent."""
     agent = sub_agent_service.get_agent(agent_id)
     if agent is None:
         raise HTTPException(status_code=404, detail="Agent not found")
-    if agent.user_id != user["id"]:
+    if agent.user_id != user.user_id:
         raise HTTPException(status_code=403, detail="Access denied")
 
     return AgentStatusResponse(
@@ -94,13 +94,13 @@ async def get_agent_status(
 @router.post("/{agent_id}/step", response_model=AgentStepResponse)
 async def execute_step(
     agent_id: str,
-    user: dict = Depends(require_user),
+    user: UserContext = Depends(require_user),
 ):
     """Execute one step of a sub-agent."""
     agent = sub_agent_service.get_agent(agent_id)
     if agent is None:
         raise HTTPException(status_code=404, detail="Agent not found")
-    if agent.user_id != user["id"]:
+    if agent.user_id != user.user_id:
         raise HTTPException(status_code=403, detail="Access denied")
 
     result = await sub_agent_service.step(agent_id)
@@ -111,13 +111,13 @@ async def execute_step(
 async def add_message(
     agent_id: str,
     request: AgentMessageRequest,
-    user: dict = Depends(require_user),
+    user: UserContext = Depends(require_user),
 ):
     """Add a message to a sub-agent's isolated context."""
     agent = sub_agent_service.get_agent(agent_id)
     if agent is None:
         raise HTTPException(status_code=404, detail="Agent not found")
-    if agent.user_id != user["id"]:
+    if agent.user_id != user.user_id:
         raise HTTPException(status_code=403, detail="Access denied")
 
     if request.role == "tool" and request.tool_name:
@@ -132,13 +132,13 @@ async def add_message(
 @router.get("/{agent_id}/stream")
 async def stream_agent(
     agent_id: str,
-    user: dict = Depends(require_user),
+    user: UserContext = Depends(require_user),
 ):
     """Stream sub-agent execution via SSE."""
     agent = sub_agent_service.get_agent(agent_id)
     if agent is None:
         raise HTTPException(status_code=404, detail="Agent not found")
-    if agent.user_id != user["id"]:
+    if agent.user_id != user.user_id:
         raise HTTPException(status_code=403, detail="Access denied")
 
     async def generate():
@@ -169,13 +169,13 @@ async def stream_agent(
 @router.delete("/{agent_id}")
 async def delete_agent(
     agent_id: str,
-    user: dict = Depends(require_user),
+    user: UserContext = Depends(require_user),
 ):
     """Delete a sub-agent and its context."""
     agent = sub_agent_service.get_agent(agent_id)
     if agent is None:
         raise HTTPException(status_code=404, detail="Agent not found")
-    if agent.user_id != user["id"]:
+    if agent.user_id != user.user_id:
         raise HTTPException(status_code=403, detail="Access denied")
 
     sub_agent_service.delete_agent(agent_id)
@@ -185,7 +185,7 @@ async def delete_agent(
 @router.post("/detect", response_model=SpawnDecisionResponse)
 async def detect_sub_agent_need(
     body: dict,
-    user: dict = Depends(require_user),
+    user: UserContext = Depends(require_user),
 ):
     """Analyze a message to determine if a sub-agent should be spawned."""
     message = body.get("message", "")

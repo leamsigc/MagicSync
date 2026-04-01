@@ -7,7 +7,7 @@ from app.schemas.tools import (
 )
 from app.services.tools import text_to_sql_service
 from app.services.tools.web_search import web_search_service
-from app.core.security import require_user
+from app.core.security import require_user, UserContext
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +17,7 @@ router = APIRouter()
 @router.post("/text-to-sql", response_model=TextToSQLResponse)
 async def generate_sql(
     request: TextToSQLRequest,
-    user: dict = Depends(require_user),
+    user: UserContext = Depends(require_user),
 ):
     """Generate a SQL SELECT query from a natural language question."""
     if not request.query.strip():
@@ -40,7 +40,7 @@ async def generate_sql(
 @router.post("/text-to-sql/validate")
 async def validate_sql(
     body: dict,
-    user: dict = Depends(require_user),
+    user: UserContext = Depends(require_user),
 ):
     """Validate that a SQL query is safe to execute."""
     sql = body.get("sql", "")
@@ -54,7 +54,7 @@ async def validate_sql(
 @router.post("/web-search", response_model=WebSearchResponse)
 async def web_search(
     request: WebSearchRequest,
-    user: dict = Depends(require_user),
+    user: UserContext = Depends(require_user),
 ):
     """Search the web using DuckDuckGo."""
     if not request.query.strip():

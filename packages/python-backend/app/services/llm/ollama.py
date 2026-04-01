@@ -1,70 +1,125 @@
-import json
-import httpx
 from typing import AsyncGenerator
+import litellm
 from app.core.config import settings
-from app.services.tracing.decorators import traceable
 
 
-class OllamaService:
-    def __init__(self, base_url: str | None = None):
-        self.base_url = base_url or settings.ollama_base_url
-        self.client = httpx.AsyncClient(timeout=120.0)
-        self.default_model = settings.ollama_default_model
+class LLMService:
+    """
+    Unified LLM service using LiteLLM.
 
-    @traceable(project_name=settings.langsmith_project)
+    Supports: Ollama, OpenAI, Anthropic, OpenRouter, Google, etc.
+
+    Defaults to Ollama (platform default for Python backend).
+    User config overrides are passed via headers from Nuxt.
+    """
+
+    def __init__(self):
+        # Configure LiteLLM
+        litellm.set_verbose = settings.debug
+
     async def chat(
         self,
-        model: str,
         messages: list[dict],
+        model: str | None = None,
         temperature: float = 0.7,
-        stream: bool = True,
+        max_tokens: int = 2048,
+        provider: str | None = None,
+        api_key: str | None = None,
+        api_base: str | None = None,
+        **kwargs,
     ) -> AsyncGenerator[str, None]:
-        url = f"{self.base_url}/api/chat"
-        payload = {
-            "model": model,
-            "messages": messages,
-            "temperature": temperature,
-            "stream": stream,
-        }
+        """
+        Stream chat responses from any LLM provider.
 
-        async with self.client.stream("POST", url, json=payload) as response:
-            response.raise_for_status()
-            async for line in response.aiter_lines():
-                if line.strip():
-                    data = json.loads(line)
-                    if "message" in data:
-                        yield data["message"].get("content", "")
-                    if data.get("done", False):
-                        break
+        Falls back to platform defaults if no provider/model specified.
+        """
+        provider = provider or "ollama"
+        model = model or settings.ollama_default_model
+        api_base = api_base or (
+            settings.ollama_base_url if provider == "ollama" else None
+        )
 
-    @traceable(project_name=settings.langsmith_project)
+        litellm_model = self._format_model(model, provider)
+
+        response = await litellm.acompletion(
+            model=litellm_model,
+            messages=messages,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            api_key=api_key,
+            api_base=api_base,
+            stream=True,
+            **kwargs,
+        )
+
+        async for chunk in response:
+            delta = chunk.choices[0].delta
+            if delta and delta.content:
+                yield delta.content
+
     async def chat_complete(
         self,
-        model: str,
         messages: list[dict],
+        model: str | None = None,
         temperature: float = 0.7,
+        max_tokens: int = 2048,
+        provider: str | None = None,
+        api_key: str | None = None,
+        api_base: str | None = None,
+        **kwargs,
     ) -> dict:
-        url = f"{self.base_url}/api/chat"
-        payload = {
-            "model": model,
-            "messages": messages,
-            "temperature": temperature,
-            "stream": False,
+        """
+        Complete chat without streaming.
+
+        Falls back to platform defaults if no provider/model specified.
+        """
+        provider = provider or "ollama"
+        model = model or settings.ollama_default_model
+        api_base = api_base or (
+            settings.ollama_base_url if provider == "ollama" else None
+        )
+
+        litellm_model = self._format_model(model, provider)
+
+        response = await litellm.acompletion(
+            model=litellm_model,
+            messages=messages,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            api_key=api_key,
+            api_base=api_base,
+            stream=False,
+            **kwargs,
+        )
+
+        return {
+            "message": {
+                "role": "assistant",
+                "content": response.choices[0].message.content,
+            },
+            "model": response.model,
         }
 
-        response = await self.client.post(url, json=payload)
-        response.raise_for_status()
-        return response.json()
+    def _format_model(self, model: str, provider: str) -> str:
+        """Format model string for LiteLLM based on provider."""
+        # If model already has provider prefix, use as-is
+        if "/" in model:
+            return model
 
-    async def list_models(self) -> list[dict]:
-        url = f"{self.base_url}/api/tags"
-        response = await self.client.get(url)
-        response.raise_for_status()
-        data = response.json()
-        return data.get("models", [])
+        provider_prefix_map = {
+            "ollama": f"ollama/{model}",
+            "openai": model,
+            "anthropic": f"anthropic/{model}",
+            "openrouter": f"openrouter/{model}",
+            "google": f"google/{model}",
+        }
+
+        return provider_prefix_map.get(provider, model)
 
     async def close(self):
-        await self.client.aclose()
+        """LiteLLM doesn't need explicit cleanup."""
+        pass
 
 
-ollama_service = OllamaService()
+# Single instance - this is THE llm service for the entire backend
+llm_service = LLMService()

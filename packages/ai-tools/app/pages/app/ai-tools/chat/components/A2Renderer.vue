@@ -74,17 +74,9 @@ const weightStyle = computed(() => {
 </script>
 
 <template>
-  <component
-    v-if="resolvedComponent && normalizedDef"
-    :is="resolvedComponent"
-    :definition="normalizedDef"
-    :surface-id="surfaceId"
-    :style="weightStyle"
-  />
-  <div
-    v-else-if="componentType"
-    class="p-2 text-xs rounded border border-dashed border-neutral-300 text-neutral-500"
-  >
+  <component v-if="resolvedComponent && normalizedDef" :is="resolvedComponent" :definition="normalizedDef"
+    :surface-id="surfaceId" :style="weightStyle" />
+  <div v-else-if="componentType" class="p-2 text-xs rounded border border-dashed border-neutral-300 text-neutral-500">
     Unknown component: {{ componentType }}
   </div>
 </template>

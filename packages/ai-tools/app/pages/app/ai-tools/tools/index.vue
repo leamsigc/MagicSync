@@ -39,38 +39,20 @@ async function onSearchSubmit() {
 
     <!-- Tabs -->
     <div class="flex gap-2 mb-6">
-      <UButton
-        :variant="activeTab === 'sql' ? 'solid' : 'outline'"
-        :color="activeTab === 'sql' ? 'primary' : 'neutral'"
-        icon="i-heroicons-circle-stack"
-        label="Text-to-SQL"
-        @click="activeTab = 'sql'"
-      />
-      <UButton
-        :variant="activeTab === 'search' ? 'solid' : 'outline'"
-        :color="activeTab === 'search' ? 'primary' : 'neutral'"
-        icon="i-heroicons-globe-alt"
-        label="Web Search"
-        @click="activeTab = 'search'"
-      />
+      <UButton :variant="activeTab === 'sql' ? 'solid' : 'outline'" :color="activeTab === 'sql' ? 'primary' : 'neutral'"
+        icon="i-heroicons-circle-stack" label="Text-to-SQL" @click="activeTab = 'sql'" />
+      <UButton :variant="activeTab === 'search' ? 'solid' : 'outline'"
+        :color="activeTab === 'search' ? 'primary' : 'neutral'" icon="i-heroicons-globe-alt" label="Web Search"
+        @click="activeTab = 'search'" />
     </div>
 
     <!-- Text-to-SQL Tab -->
     <div v-if="activeTab === 'sql'">
       <div class="flex gap-2 mb-4">
-        <UInput
-          v-model="sqlQuery"
-          placeholder="e.g. How many posts did I schedule this week?"
-          class="flex-1"
-          @keydown.enter="onSQLSubmit"
-        />
-        <UButton
-          icon="i-heroicons-sparkles"
-          label="Generate"
-          color="primary"
-          :loading="sqlLoading"
-          @click="onSQLSubmit"
-        />
+        <UInput v-model="sqlQuery" placeholder="e.g. How many posts did I schedule this week?" class="flex-1"
+          @keydown.enter="onSQLSubmit" />
+        <UButton icon="i-heroicons-sparkles" label="Generate" color="primary" :loading="sqlLoading"
+          @click="onSQLSubmit" />
       </div>
 
       <div v-if="sqlError" class="mb-4">
@@ -84,14 +66,8 @@ async function onSearchSubmit() {
         </div>
         <div class="relative">
           <pre class="bg-neutral-900 text-green-400 p-4 rounded-lg text-sm overflow-x-auto font-mono">{{ sql }}</pre>
-          <UButton
-            icon="i-heroicons-clipboard"
-            size="xs"
-            variant="solid"
-            color="neutral"
-            class="absolute top-2 right-2"
-            @click="copySQL"
-          />
+          <UButton icon="i-heroicons-clipboard" size="xs" variant="solid" color="neutral" class="absolute top-2 right-2"
+            @click="copySQL" />
         </div>
       </div>
     </div>
@@ -99,19 +75,9 @@ async function onSearchSubmit() {
     <!-- Web Search Tab -->
     <div v-if="activeTab === 'search'">
       <div class="flex gap-2 mb-4">
-        <UInput
-          v-model="searchQuery"
-          placeholder="Search the web..."
-          class="flex-1"
-          @keydown.enter="onSearchSubmit"
-        />
-        <UButton
-          icon="i-heroicons-magnifying-glass"
-          label="Search"
-          color="primary"
-          :loading="searchLoading"
-          @click="onSearchSubmit"
-        />
+        <UInput v-model="searchQuery" placeholder="Search the web..." class="flex-1" @keydown.enter="onSearchSubmit" />
+        <UButton icon="i-heroicons-magnifying-glass" label="Search" color="primary" :loading="searchLoading"
+          @click="onSearchSubmit" />
       </div>
 
       <div v-if="searchError" class="mb-4">
@@ -119,12 +85,10 @@ async function onSearchSubmit() {
       </div>
 
       <div v-if="results.length" class="space-y-4">
-        <div
-          v-for="result in results"
-          :key="result.url"
-          class="border border-neutral-200 dark:border-neutral-700 rounded-lg p-4 hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors"
-        >
-          <a :href="result.url" target="_blank" rel="noopener" class="text-primary-600 dark:text-primary-400 font-medium hover:underline">
+        <div v-for="result in results" :key="result.url"
+          class="border border-neutral-200 dark:border-neutral-700 rounded-lg p-4 hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors">
+          <a :href="result.url" target="_blank" rel="noopener"
+            class="text-primary-600 dark:text-primary-400 font-medium hover:underline">
             {{ result.title }}
           </a>
           <p class="text-xs text-neutral-400 mt-1 truncate">{{ result.url }}</p>

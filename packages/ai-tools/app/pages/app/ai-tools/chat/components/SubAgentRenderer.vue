@@ -45,18 +45,12 @@ const taskTypeBadge = computed(() => {
     <!-- Header -->
     <button
       class="w-full flex items-center gap-3 px-4 py-3 bg-neutral-50 dark:bg-neutral-900 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
-      @click="emit('toggle', agent.id)"
-    >
+      @click="emit('toggle', agent.id)">
       <UIcon :name="statusIcon" :class="['w-4 h-4', statusColor]" />
       <div class="flex-1 text-left">
         <div class="flex items-center gap-2">
           <span class="text-sm font-medium truncate">{{ agent.task }}</span>
-          <UBadge
-            v-if="taskTypeBadge"
-            :label="taskTypeBadge.label"
-            :color="taskTypeBadge.color"
-            size="xs"
-          />
+          <UBadge v-if="taskTypeBadge" :label="taskTypeBadge.label" :color="taskTypeBadge.color" size="xs" />
         </div>
         <div class="flex items-center gap-2 mt-0.5">
           <span class="text-xs text-neutral-500">
@@ -66,21 +60,15 @@ const taskTypeBadge = computed(() => {
           <span class="text-xs text-neutral-500 capitalize">{{ agent.status }}</span>
         </div>
       </div>
-      <UIcon
-        name="i-heroicons-chevron-down"
-        :class="['w-4 h-4 text-neutral-400 transition-transform', { 'rotate-180': agent.isExpanded }]"
-      />
+      <UIcon name="i-heroicons-chevron-down"
+        :class="['w-4 h-4 text-neutral-400 transition-transform', { 'rotate-180': agent.isExpanded }]" />
     </button>
 
     <!-- Expanded Content -->
     <div v-if="agent.isExpanded" class="border-t border-neutral-200 dark:border-neutral-700">
       <!-- Steps -->
       <div v-if="agent.steps.length" class="divide-y divide-neutral-100 dark:divide-neutral-800">
-        <div
-          v-for="(step, idx) in agent.steps"
-          :key="idx"
-          class="px-4 py-3"
-        >
+        <div v-for="(step, idx) in agent.steps" :key="idx" class="px-4 py-3">
           <div class="flex items-start gap-2">
             <span class="text-xs text-neutral-400 font-mono mt-0.5 shrink-0">
               {{ idx + 1 }}.
@@ -97,7 +85,8 @@ const taskTypeBadge = computed(() => {
                 </div>
                 <div v-if="step.toolCall.result" class="mt-2">
                   <span class="text-xs text-neutral-500 block mb-1">Result:</span>
-                  <div class="bg-green-50 dark:bg-green-900/20 rounded p-2 text-xs overflow-x-auto max-h-32 overflow-y-auto">
+                  <div
+                    class="bg-green-50 dark:bg-green-900/20 rounded p-2 text-xs overflow-x-auto max-h-32 overflow-y-auto">
                     <p class="whitespace-pre-wrap">{{ step.toolCall.result }}</p>
                   </div>
                 </div>
@@ -116,7 +105,8 @@ const taskTypeBadge = computed(() => {
       </div>
 
       <!-- Result -->
-      <div v-if="agent.result && agent.status === 'completed'" class="px-4 py-3 bg-green-50 dark:bg-green-900/20 border-t border-green-100 dark:border-green-900/40">
+      <div v-if="agent.result && agent.status === 'completed'"
+        class="px-4 py-3 bg-green-50 dark:bg-green-900/20 border-t border-green-100 dark:border-green-900/40">
         <div class="flex items-start gap-2">
           <UIcon name="i-heroicons-check-circle" class="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
           <div>
@@ -127,7 +117,8 @@ const taskTypeBadge = computed(() => {
       </div>
 
       <!-- Error -->
-      <div v-if="agent.error && agent.status === 'failed'" class="px-4 py-3 bg-red-50 dark:bg-red-900/20 border-t border-red-100 dark:border-red-900/40">
+      <div v-if="agent.error && agent.status === 'failed'"
+        class="px-4 py-3 bg-red-50 dark:bg-red-900/20 border-t border-red-100 dark:border-red-900/40">
         <div class="flex items-start gap-2">
           <UIcon name="i-heroicons-x-circle" class="w-4 h-4 text-red-500 mt-0.5 shrink-0" />
           <div>

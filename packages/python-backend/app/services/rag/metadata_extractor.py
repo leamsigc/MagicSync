@@ -1,7 +1,6 @@
 import json
 from dataclasses import dataclass, field
-from app.services.llm import ollama_service
-from app.core.config import settings
+from app.services.llm import llm_service
 
 
 @dataclass
@@ -33,8 +32,6 @@ async def extract_metadata(
     model: str | None = None,
 ) -> DocumentMetadata:
     """Extract structured metadata from document text using LLM."""
-    model = model or settings.ollama_default_model
-
     # Truncate to first 3000 chars for metadata extraction
     sample = text[:3000]
 
@@ -49,9 +46,9 @@ async def extract_metadata(
     ]
 
     try:
-        response = await ollama_service.chat_complete(
-            model=model,
+        response = await llm_service.chat_complete(
             messages=messages,
+            model=model,
             temperature=0.1,
         )
 

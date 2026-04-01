@@ -53,7 +53,7 @@ class TestWebSearchService:
 class TestWebSearchEndpoint:
     """Test the /tools/web-search API endpoint."""
 
-    def test_search_endpoint_returns_results(self, client, api_prefix):
+    def test_search_endpoint_returns_results(self, client, api_prefix, test_headers):
         mock_results = [{"title": "Test", "href": "https://example.com", "body": "A result."}]
 
         mock_ddgs = MagicMock()
@@ -65,25 +65,25 @@ class TestWebSearchEndpoint:
             response = client.post(
                 f"{api_prefix}/tools/web-search",
                 json={"query": "test search", "max_results": 3},
-                headers={"Authorization": "Bearer test-token"},
+                headers=test_headers,
             )
             assert response.status_code == 200
             data = response.json()
             assert data["query"] == "test search"
             assert len(data["results"]) == 1
 
-    def test_search_empty_query_rejected(self, client, api_prefix):
+    def test_search_empty_query_rejected(self, client, api_prefix, test_headers):
         response = client.post(
             f"{api_prefix}/tools/web-search",
             json={"query": ""},
-            headers={"Authorization": "Bearer test-token"},
+            headers=test_headers,
         )
         assert response.status_code in (400, 422)
 
-    def test_search_no_query_rejected(self, client, api_prefix):
+    def test_search_no_query_rejected(self, client, api_prefix, test_headers):
         response = client.post(
             f"{api_prefix}/tools/web-search",
             json={},
-            headers={"Authorization": "Bearer test-token"},
+            headers=test_headers,
         )
         assert response.status_code in (400, 422)

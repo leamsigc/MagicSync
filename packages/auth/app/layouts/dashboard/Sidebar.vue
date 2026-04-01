@@ -125,11 +125,15 @@ const navigationItems = computed<NavigationMenuItem[][]>(() => {
           },
           {
             label: menuData.menu.growthStrategies,
-            to: '/app/ai-tools/growth-strategies'
+            to: '/app/ai-tools/growth-stratergy'
           },
           {
-            label: menuData.menu.tools,
+            label: menuData.menu.aiToolsTools,
             to: '/app/ai-tools/tools'
+          },
+          {
+            label: menuData.menu.aiToolsSettings,
+            to: '/app/ai-tools/settings'
           }
         ]
       },

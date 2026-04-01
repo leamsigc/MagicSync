@@ -11,7 +11,8 @@ import { reviews } from './reviews/reviews'
 import { socialMediaAccountManagers, socialMediaAccounts } from './socialMedia/socialMedia'
 import { subscriptions } from './subscriptions/subscriptions'
 import { templates, templateAssets } from './templates/templates'
-import { documents, documentChunks, chatThreads, chatMessages } from './rag/rag'
+import { documents, documentChunks, chatThreads, chatMessages, agentSessions } from './rag/rag'
+import { userLlmConfigs } from './llm/llm'
 
 export * from './assets/assets'
 
@@ -29,6 +30,7 @@ export * from './entityDetails/entityDetails'
 export * from './socialMedia/socialMedia'
 export * from './notifications/notifications'
 export * from './rag/rag'
+export * from './llm/llm'
 
 /***
 * Cross-feature relationships
@@ -45,7 +47,8 @@ export const userRelations = relations(user, ({ many }) => ({
   notifications: many(notifications),
   templates: many(templates),
   documents: many(documents),
-  chatThreads: many(chatThreads)
+  chatThreads: many(chatThreads),
+  llmConfigs: many(userLlmConfigs)
 }))
 
 // Business profile relations - connecting to dependent features

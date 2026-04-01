@@ -83,7 +83,7 @@ class TestFileParser:
 
 
 class TestFileParserAPI:
-    def test_ingest_with_base64_text_file(self, client, api_prefix):
+    def test_ingest_with_base64_text_file(self, client, api_prefix, test_headers):
         import base64 as b64
         text_content = "Hello world from a text file."
         encoded = b64.b64encode(text_content.encode()).decode()
@@ -107,7 +107,7 @@ class TestFileParserAPI:
                     "chunk_size": 512,
                     "chunk_overlap": 64,
                 },
-                headers={"Authorization": "Bearer test-token"},
+                headers=test_headers,
             )
             assert response.status_code == 200
             data = response.json()
@@ -115,7 +115,7 @@ class TestFileParserAPI:
             assert data["total_chunks"] > 0
             assert data["extracted_text"]  # Should have extracted text
 
-    def test_ingest_with_base64_html_file(self, client, api_prefix):
+    def test_ingest_with_base64_html_file(self, client, api_prefix, test_headers):
         import base64 as b64
         html_content = "<html><body><h1>Test</h1><p>Content here.</p></body></html>"
         encoded = b64.b64encode(html_content.encode()).decode()
@@ -139,14 +139,14 @@ class TestFileParserAPI:
                     "chunk_size": 512,
                     "chunk_overlap": 64,
                 },
-                headers={"Authorization": "Bearer test-token"},
+                headers=test_headers,
             )
             assert response.status_code == 200
             data = response.json()
             assert "Test" in data["extracted_text"]
             assert "Content here." in data["extracted_text"]
 
-    def test_ingest_with_base64_unsupported_type(self, client, api_prefix):
+    def test_ingest_with_base64_unsupported_type(self, client, api_prefix, test_headers):
         import base64 as b64
         encoded = b64.b64encode(b"data").decode()
 
@@ -158,6 +158,6 @@ class TestFileParserAPI:
                 "file_content": encoded,
                 "mime_type": "application/octet-stream",
             },
-            headers={"Authorization": "Bearer test-token"},
+            headers=test_headers,
         )
         assert response.status_code == 400

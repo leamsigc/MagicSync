@@ -1,3 +1,3 @@
-from .ollama import OllamaService, ollama_service
+from .ollama import LLMService, llm_service
 
-__all__ = ["OllamaService", "ollama_service"]
+__all__ = ["LLMService", "llm_service"]

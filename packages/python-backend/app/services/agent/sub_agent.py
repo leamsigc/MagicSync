@@ -4,7 +4,7 @@ import re
 import logging
 from dataclasses import dataclass, field
 from enum import Enum
-from app.services.llm import ollama_service
+from app.services.llm import llm_service
 
 logger = logging.getLogger(__name__)
 
@@ -149,11 +149,7 @@ class SubAgentService:
 
         try:
             messages = self.get_llm_messages(agent_id)
-            response = await ollama_service.chat_complete(
-                model="llama3.2",
-                messages=messages,
-                temperature=0.7,
-            )
+            response = await llm_service.chat_complete(messages=messages)
             content = response.get("message", {}).get("content", "")
             agent.step_count += 1
 

@@ -11,7 +11,7 @@ from app.services.rag import (
     embedding_service, chunk_text, chunk_structured,
     extract_structured, extract_metadata, reranker_service,
 )
-from app.core.security import require_user
+from app.core.security import require_user, UserContext
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +21,7 @@ router = APIRouter()
 @router.post("/ingest", response_model=IngestResponse)
 async def ingest_document(
     request: IngestRequest,
-    user: dict = Depends(require_user),
+    user: UserContext = Depends(require_user),
 ):
     """Chunk text and generate embeddings. Returns chunks with embeddings for the caller to store.
 
@@ -101,7 +101,7 @@ async def ingest_document(
 @router.post("/retrieve", response_model=RetrieveResponse)
 async def retrieve(
     request: RetrieveRequest,
-    user: dict = Depends(require_user),
+    user: UserContext = Depends(require_user),
 ):
     """Generate embedding for query and return it for the caller to search."""
     model = request.embedding_model or None
@@ -117,7 +117,7 @@ async def retrieve(
 @router.post("/extract-metadata", response_model=ExtractMetadataResponse)
 async def extract_document_metadata(
     request: ExtractMetadataRequest,
-    user: dict = Depends(require_user),
+    user: UserContext = Depends(require_user),
 ):
     """Extract structured metadata from document text using LLM."""
     if request.file_content and request.mime_type:
@@ -151,7 +151,7 @@ async def extract_document_metadata(
 @router.post("/hybrid-search", response_model=HybridSearchResponse)
 async def hybrid_search(
     request: HybridSearchRequest,
-    user: dict = Depends(require_user),
+    user: UserContext = Depends(require_user),
 ):
     """Perform hybrid search combining keyword and vector results with optional reranking.
 
@@ -186,7 +186,7 @@ async def hybrid_search(
 @router.post("/rerank")
 async def rerank(
     body: dict,
-    user: dict = Depends(require_user),
+    user: UserContext = Depends(require_user),
 ):
     """Rerank search results using LLM-based reranking.
 
@@ -196,7 +196,7 @@ async def rerank(
     query = body.get("query", "")
     documents = body.get("documents", [])
     top_k = body.get("top_k", 5)
-    model = body.get("model", "llama3.2")
+    model = body.get("model", "qwen3.5")
 
     if not query or not documents:
         raise HTTPException(status_code=400, detail="Query and documents are required")

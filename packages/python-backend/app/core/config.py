@@ -18,12 +18,15 @@ class Settings(BaseSettings):
     # CORS
     cors_origins: list[str] = ["http://localhost:3000"]
 
-    # Better Auth (Nuxt server)
+    # Better Auth (Nuxt server) - kept for backward compatibility
     better_auth_url: str = "http://localhost:3000"
 
-    # Ollama
+    # JWT for service-to-service auth
+    llm_jwt_secret: str = "magicsync-llm-secret-change-me"
+
+    # Ollama (platform defaults)
     ollama_base_url: str = "http://localhost:11434"
-    ollama_default_model: str = "llama3.2"
+    ollama_default_model: str = "qwen3.5"
     ollama_embedding_model: str = "nomic-embed-text"
 
     # LangSmith (optional)

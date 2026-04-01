@@ -1,7 +1,6 @@
 import logging
 import re
-from app.services.llm import ollama_service
-from app.core.config import settings
+from app.services.llm import llm_service
 
 logger = logging.getLogger(__name__)
 
@@ -57,9 +56,6 @@ Notes:
 class TextToSQLService:
     """Converts natural language queries to SQL using the LLM."""
 
-    def __init__(self):
-        self.default_model = settings.ollama_default_model
-
     def get_schema_context(self, custom_context: str = "") -> str:
         """Get the database schema context for the LLM prompt."""
         if custom_context:
@@ -77,7 +73,6 @@ class TextToSQLService:
         Returns:
             dict with keys: sql, explanation, tables_used
         """
-        model = model or self.default_model
         schema = self.get_schema_context(schema_context)
 
         prompt = f"""You are a SQL expert for a SQLite database.
@@ -102,10 +97,10 @@ Respond with ONLY a JSON object (no markdown fences):
 """
 
         try:
-            response = await ollama_service.chat_complete(
-                model=model,
+            response = await llm_service.chat_complete(
                 messages=[{"role": "user", "content": prompt}],
-                temperature=0.1,  # Low temperature for deterministic SQL
+                model=model,
+                temperature=0.1,
             )
 
             content = response.get("message", {}).get("content", "")

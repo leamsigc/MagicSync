@@ -56,7 +56,12 @@
       "business": "Business",
       "variables": "Variables",
       "chat": "Chat",
-      "apiKeys": "API Keys"
+      "apiKeys": "API Keys",
+      "aiToolsSettings": "Settings",
+      "aiToolsTools": "AI Tools",
+      "aiToolsAssets": "Assets",
+      "aiToolsCreate": "Create",
+      "aiToolsData": "Data"
     },
     "userNav": {
       "upgradeToPro": "Upgrade to Pro",
@@ -145,7 +150,12 @@
       "chat": "Chat",
       "aitools": "Content repurpose",
       "growthStrategies": "Growth Strategies",
-      "apiKeys": "API Keys"
+      "apiKeys": "API Keys",
+      "aiToolsSettings": "Configuración",
+      "aiToolsTools": "Herramientas IA",
+      "aiToolsAssets": "Recursos",
+      "aiToolsCreate": "Crear",
+      "aiToolsData": "Datos"
     },
     "userNav": {
       "upgradeToPro": "Actualizar a Pro",
@@ -234,7 +244,12 @@
       "chat": "Chat",
       "aitools": "Content repurpose",
       "growthStrategies": "Growth Strategies",
-      "apiKeys": "API Keys"
+      "apiKeys": "API Keys",
+      "aiToolsSettings": "Einstellungen",
+      "aiToolsTools": "KI-Werkzeuge",
+      "aiToolsAssets": "Ressourcen",
+      "aiToolsCreate": "Erstellen",
+      "aiToolsData": "Daten"
     },
     "userNav": {
       "upgradeToPro": "Auf Pro upgraden",
@@ -323,7 +338,12 @@
       "chat": "Chat",
       "aitools": "Content repurpose",
       "growthStrategies": "Growth Strategies",
-      "apiKeys": "API Keys"
+      "apiKeys": "API Keys",
+      "aiToolsSettings": "Paramètres",
+      "aiToolsTools": "Outils IA",
+      "aiToolsAssets": "Ressources",
+      "aiToolsCreate": "Créer",
+      "aiToolsData": "Données"
     },
     "userNav": {
       "upgradeToPro": "Mettre à niveau vers Pro",

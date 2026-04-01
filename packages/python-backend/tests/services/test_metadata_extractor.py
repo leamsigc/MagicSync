@@ -13,7 +13,7 @@ class TestMetadataExtractor:
         }
 
         with patch(
-            "app.services.rag.metadata_extractor.ollama_service.chat_complete",
+            "app.services.rag.metadata_extractor.llm_service.chat_complete",
             new_callable=AsyncMock,
             return_value=mock_response,
         ):
@@ -35,7 +35,7 @@ class TestMetadataExtractor:
         }
 
         with patch(
-            "app.services.rag.metadata_extractor.ollama_service.chat_complete",
+            "app.services.rag.metadata_extractor.llm_service.chat_complete",
             new_callable=AsyncMock,
             return_value=mock_response,
         ):
@@ -51,7 +51,7 @@ class TestMetadataExtractor:
         }
 
         with patch(
-            "app.services.rag.metadata_extractor.ollama_service.chat_complete",
+            "app.services.rag.metadata_extractor.llm_service.chat_complete",
             new_callable=AsyncMock,
             return_value=mock_response,
         ):
@@ -74,7 +74,7 @@ class TestMetadataExtractor:
     @pytest.mark.asyncio
     async def test_extract_metadata_handles_llm_error(self):
         with patch(
-            "app.services.rag.metadata_extractor.ollama_service.chat_complete",
+            "app.services.rag.metadata_extractor.llm_service.chat_complete",
             new_callable=AsyncMock,
             side_effect=Exception("Ollama unavailable"),
         ):
@@ -93,7 +93,7 @@ class TestMetadataExtractor:
         long_text = "A" * 10000
 
         with patch(
-            "app.services.rag.metadata_extractor.ollama_service.chat_complete",
+            "app.services.rag.metadata_extractor.llm_service.chat_complete",
             new_callable=AsyncMock,
             return_value=mock_response,
         ) as mock_llm:
@@ -106,7 +106,7 @@ class TestMetadataExtractor:
 
 
 class TestExtractMetadataEndpoint:
-    def test_extract_metadata_success(self, client, api_prefix):
+    def test_extract_metadata_success(self, client, api_prefix, test_headers):
         mock_response = {
             "message": {
                 "content": '{"title":"API Test","author":"Tester","language":"en","topics":["testing"],"summary":"A test.","document_type":"technical"}'
@@ -114,14 +114,14 @@ class TestExtractMetadataEndpoint:
         }
 
         with patch(
-            "app.services.rag.metadata_extractor.ollama_service.chat_complete",
+            "app.services.rag.metadata_extractor.llm_service.chat_complete",
             new_callable=AsyncMock,
             return_value=mock_response,
         ):
             response = client.post(
                 f"{api_prefix}/rag/extract-metadata",
                 json={"text": "This is test content for metadata extraction."},
-                headers={"Authorization": "Bearer test-token"},
+                headers=test_headers,
             )
             assert response.status_code == 200
             data = response.json()
@@ -130,19 +130,19 @@ class TestExtractMetadataEndpoint:
             assert data["topics"] == ["testing"]
             assert data["document_type"] == "technical"
 
-    def test_extract_metadata_empty_text(self, client, api_prefix):
+    def test_extract_metadata_empty_text(self, client, api_prefix, test_headers):
         response = client.post(
             f"{api_prefix}/rag/extract-metadata",
             json={"text": ""},
-            headers={"Authorization": "Bearer test-token"},
+            headers=test_headers,
         )
         # Pydantic validator rejects empty text before reaching the handler
         assert response.status_code == 422
 
-    def test_extract_metadata_whitespace_only(self, client, api_prefix):
+    def test_extract_metadata_whitespace_only(self, client, api_prefix, test_headers):
         response = client.post(
             f"{api_prefix}/rag/extract-metadata",
             json={"text": "   \n   "},
-            headers={"Authorization": "Bearer test-token"},
+            headers=test_headers,
         )
         assert response.status_code == 400

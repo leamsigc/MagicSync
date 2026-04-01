@@ -16,11 +16,13 @@
   },
   "dependencies": {
     "dayjs": "catalog:",
-    "drizzle-orm": "catalog:"
+    "drizzle-orm": "catalog:",
+    "jsonwebtoken": "^9.0.3"
   },
   "devDependencies": {
     "@libsql/client": "catalog:",
     "@nuxt/eslint": "catalog:",
+    "@types/jsonwebtoken": "^9.0.10",
     "drizzle-kit": "catalog:",
     "eslint": "catalog:",
     "nuxt": "catalog:",

@@ -15,13 +15,13 @@ async def lifespan(app: FastAPI):
     logger.info("MagicSync AI Backend starting up")
     yield
     # Cleanup httpx clients
-    from app.services.llm.ollama import ollama_service
+    from app.services.llm import llm_service
     from app.services.rag.embeddings import embedding_service
     from app.services.rag.reranker import reranker_service
     from app.core.security import _auth_client
 
     for service, name in [
-        (ollama_service, "ollama"),
+        (llm_service, "llm"),
         (embedding_service, "embeddings"),
         (reranker_service, "reranker"),
     ]:

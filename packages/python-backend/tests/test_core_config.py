@@ -10,8 +10,9 @@ class TestSettings:
         assert s.debug is False
         assert s.better_auth_url == "http://localhost:3000"
         assert s.ollama_base_url == "http://localhost:11434"
-        assert s.ollama_default_model == "llama3.2"
+        assert s.ollama_default_model == "qwen3.5"
         assert s.langsmith_project == "magicsync-ai"
+        assert s.llm_jwt_secret == "magicsync-llm-secret-change-me"
 
     def test_cors_origins(self):
         s = Settings(_env_file=None)

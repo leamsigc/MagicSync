@@ -114,7 +114,7 @@ export const useDashboardNavigation = () => {
         active: route.path.startsWith('/app/business')
       },
       {
-        label: menuData.menu.apiKey,
+        label: menuData.menu.apiKeys,
         icon: 'i-lucide-key',
         to: '/app/keys',
         active: route.path.startsWith('/app/keys')
@@ -131,9 +131,24 @@ export const useDashboardNavigation = () => {
             icon: 'i-lucide-sparkles'
           },
           {
+            label: menuData.menu.chat,
+            to: '/app/ai-tools/chat',
+            icon: 'i-lucide-message-square'
+          },
+          {
             label: menuData.menu.growthStrategies,
             to: '/app/ai-tools/growth-stratergy',
             icon: 'i-lucide-box'
+          },
+          {
+            label: menuData.menu.aiToolsTools,
+            to: '/app/ai-tools/tools',
+            icon: 'i-lucide-wrench'
+          },
+          {
+            label: menuData.menu.aiToolsSettings,
+            to: '/app/ai-tools/settings',
+            icon: 'i-lucide-settings'
           }
         ]
       },

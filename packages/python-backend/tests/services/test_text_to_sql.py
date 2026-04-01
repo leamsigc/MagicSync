@@ -114,7 +114,7 @@ class TestGenerateSQL:
         }
 
         with patch(
-            "app.services.tools.ollama_service.chat_complete",
+            "app.services.tools.llm_service.chat_complete",
             new_callable=AsyncMock,
             return_value=mock_response,
         ):
@@ -128,7 +128,7 @@ class TestGenerateSQL:
         from app.services.tools import text_to_sql_service
 
         with patch(
-            "app.services.tools.ollama_service.chat_complete",
+            "app.services.tools.llm_service.chat_complete",
             new_callable=AsyncMock,
             side_effect=Exception("Ollama unavailable"),
         ):
@@ -147,7 +147,7 @@ class TestGenerateSQL:
         }
 
         with patch(
-            "app.services.tools.ollama_service.chat_complete",
+            "app.services.tools.llm_service.chat_complete",
             new_callable=AsyncMock,
             return_value=mock_response,
         ) as mock_llm:
@@ -159,7 +159,7 @@ class TestGenerateSQL:
 class TestTextToSQLEndpoint:
     """Test the /tools/text-to-sql API endpoint."""
 
-    def test_generate_sql_endpoint(self, client, api_prefix):
+    def test_generate_sql_endpoint(self, client, api_prefix, test_headers):
         mock_response = {
             "message": {
                 "content": '{"sql": "SELECT * FROM posts WHERE user_id = ?", "explanation": "All posts", "tables_used": ["posts"]}'
@@ -167,32 +167,32 @@ class TestTextToSQLEndpoint:
         }
 
         with patch(
-            "app.services.tools.ollama_service.chat_complete",
+            "app.services.tools.llm_service.chat_complete",
             new_callable=AsyncMock,
             return_value=mock_response,
         ):
             response = client.post(
                 f"{api_prefix}/tools/text-to-sql",
                 json={"query": "show me all posts"},
-                headers={"Authorization": "Bearer test-token"},
+                headers=test_headers,
             )
             assert response.status_code == 200
             data = response.json()
             assert data["query"] == "show me all posts"
             assert "SELECT" in data["sql"]
 
-    def test_generate_sql_empty_query_rejected(self, client, api_prefix):
+    def test_generate_sql_empty_query_rejected(self, client, api_prefix, test_headers):
         response = client.post(
             f"{api_prefix}/tools/text-to-sql",
             json={"query": ""},
-            headers={"Authorization": "Bearer test-token"},
+            headers=test_headers,
         )
         assert response.status_code in (400, 422)
 
-    def test_generate_sql_no_query_rejected(self, client, api_prefix):
+    def test_generate_sql_no_query_rejected(self, client, api_prefix, test_headers):
         response = client.post(
             f"{api_prefix}/tools/text-to-sql",
             json={},
-            headers={"Authorization": "Bearer test-token"},
+            headers=test_headers,
         )
         assert response.status_code in (400, 422)

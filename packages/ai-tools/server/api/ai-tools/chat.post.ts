@@ -1,5 +1,7 @@
 import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
 import { chatService } from '#layers/BaseDB/server/services/chat.service'
+import { userLlmConfigService } from '#layers/BaseDB/server/services/user-llm-config.service'
+import { createLlmJwt } from '#layers/BaseDB/server/utils/llm-jwt'
 
 export default defineEventHandler(async (event) => {
   const user = await checkUserIsLogin(event)
@@ -11,6 +13,13 @@ export default defineEventHandler(async (event) => {
 
   const config = useRuntimeConfig()
   const backendUrl = config.pythonBackendUrl || 'http://localhost:8000'
+
+  // Get user's LLM config (or platform defaults)
+  const llmConfigResult = await userLlmConfigService.getDefaultConfig(user.id)
+  const llmConfig = llmConfigResult.data
+
+  // Create JWT with user's LLM config
+  const llmJwt = createLlmJwt(user.id, user.email || '', llmConfig)
 
   // Ensure thread exists or create one
   let threadId = body.thread_id as string | undefined
@@ -35,19 +44,15 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // Stream response from Python backend
+  // Stream response from Python backend with JWT
   const response = await $fetch(`${backendUrl}/api/v1/chat`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-User-Id': user.id,
-      'X-User-Email': user.email || '',
+      'Authorization': `Bearer ${llmJwt}`,
     },
     body: {
       messages: body.messages,
-      model: body.model || 'llama3.2',
-      temperature: body.temperature ?? 0.7,
-      max_tokens: body.max_tokens ?? 2048,
       thread_id: threadId,
     },
     responseType: 'stream',
