@@ -1,4 +1,4 @@
-import { ref, computed } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { Chat } from '@ai-sdk/vue'
 import { DefaultChatTransport } from 'ai'
 import type { UIMessage } from 'ai'
@@ -9,16 +9,24 @@ interface Thread {
   lastMessageAt: string | null
 }
 
+const THREAD_ID_STORAGE_KEY = 'ai-chat-thread-id'
+
 export function useA2UIChat() {
   const threads = ref<Thread[]>([])
   const isLoadingThreads = ref(false)
   const threadId = ref<string | null>(null)
 
+  // Forward declarations for mutual references
+  let loadThreads: () => Promise<void>
+  let loadThreadMessages: (id: string) => Promise<void>
+
+  const bodyRef = computed(() => ({
+    thread_id: threadId.value || null,
+  }))
+
   const transport = new DefaultChatTransport<UIMessage>({
     api: '/api/ai-tools/chat',
-    headers: () => ({
-      'X-Thread-Id': threadId.value || '',
-    }),
+    body: () => bodyRef.value,
   })
 
   const chat = new Chat<UIMessage>({
@@ -26,15 +34,22 @@ export function useA2UIChat() {
     onError(error) {
       console.error('Chat error:', error)
     },
-    onData(data) {
-      isLoadingThreads.value = true
-    },
-    onFinish() {
+    onFinish(event) {
       isLoadingThreads.value = false
+      // After message is sent, reload threads to find any new thread or use the current thread
+      if (!threadId.value) {
+        loadThreads().then(() => {
+          // If there's only one thread, use it
+          if (threads.value.length === 1 && threads.value[0]) {
+            threadId.value = threads.value[0].id
+            localStorage.setItem(THREAD_ID_STORAGE_KEY, threadId.value)
+          }
+        })
+      }
     },
   })
 
-  async function loadThreads() {
+  loadThreads = async function() {
     isLoadingThreads.value = true
     try {
       const data = await $fetch<Thread[]>('/api/ai-tools/chat/threads')
@@ -46,7 +61,7 @@ export function useA2UIChat() {
     }
   }
 
-  async function loadThreadMessages(id: string) {
+  loadThreadMessages = async function(id: string) {
     try {
       const data = await $fetch<Array<{
         id: string
@@ -70,6 +85,7 @@ export function useA2UIChat() {
   async function createNewThread() {
     chat.messages = []
     threadId.value = null
+    localStorage.removeItem(THREAD_ID_STORAGE_KEY)
   }
 
   async function deleteThread(id: string) {
@@ -87,6 +103,28 @@ export function useA2UIChat() {
   function handleSuggestionClick(suggestion: string) {
     chat.sendMessage({ text: suggestion })
   }
+
+  // Restore thread ID from localStorage on mount
+  onMounted(async () => {
+    const savedThreadId = localStorage.getItem(THREAD_ID_STORAGE_KEY)
+    console.log('[useA2UIChat] onMounted, savedThreadId:', savedThreadId)
+    if (savedThreadId) {
+      threadId.value = savedThreadId
+      console.log('[useA2UIChat] Restored threadId:', threadId.value)
+      // Load the thread messages if there's a saved thread
+      await loadThreadMessages(savedThreadId)
+      console.log('[useA2UIChat] Loaded messages, chat.messages:', chat.messages.length)
+    }
+  })
+
+  // Save thread ID to localStorage when it changes
+  watch(threadId, (newThreadId) => {
+    if (newThreadId) {
+      localStorage.setItem(THREAD_ID_STORAGE_KEY, newThreadId)
+    } else {
+      localStorage.removeItem(THREAD_ID_STORAGE_KEY)
+    }
+  })
 
   return {
     chat,

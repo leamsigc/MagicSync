@@ -1,7 +1,7 @@
-# Candidate: Knowledge Base Explorer
+# Knowledge Base Explorer
 
 ## Status
-`pending`
+`complete`
 
 ## Priority
 High
@@ -57,27 +57,30 @@ Build filesystem-like tools that let the agent navigate a hierarchical knowledge
 ### Modules
 
 #### Module 1: Knowledge Base Schema
-- Add `knowledge_folders` table (id, userId, name, parentId, path, createdAt)
-- Add `folderId` to documents table
-- Folder CRUD service
+- [x] Add `knowledge_folders` table (id, userId, name, parentId, path, createdAt)
+- [x] Add `folderId` to documents table
+- [x] Folder CRUD service
 
 #### Module 2: Agent KB Tools
-- `kb_ls(folder_path)` — List contents of a folder
-- `kb_tree(folder_path)` — Show full tree structure
-- `kb_grep(pattern, folder_path)` — Search within folder contents
-- `kb_glob(pattern)` — Find files by name pattern
-- `kb_read(document_id)` — Read full document content
+- [x] `kb_ls(folder_path)` — List contents of a folder
+- [x] `kb_tree(folder_path)` — Show full tree structure
+- [x] `kb_grep(pattern, folder_path)` — Search within folder contents
+- [x] `kb_glob(pattern)` — Find files by name pattern
+- [x] `kb_read(document_id)` — Read full document content
+- [x] KB Tools API endpoints (Python backend)
+- [x] Folder CRUD API endpoints (Nuxt server)
+- [x] Tool executor for chat integration (keyword detection)
 
 #### Module 3: Frontend Explorer
-- Tree view component for folder navigation
-- Drag-and-drop document organization
-- Breadcrumb navigation
-- Scoped search within folders
+- [x] Tree view component for folder navigation
+- [x] Drag-and-drop document organization
+- [x] Breadcrumb navigation
+- [x] Scoped search within folders
 
 #### Module 4: Scoped Retrieval
-- Retrieval accepts optional folder scope
-- Hybrid search scoped to folder subtree
-- Agent uses KB tools before retrieval to narrow search
+- [x] Retrieval accepts optional folder scope
+- [x] Hybrid search scoped to folder subtree
+- [x] Agent uses KB tools before retrieval to narrow search (keyword detection + tool executor)
 
 ## Tech Stack Adaptation
 

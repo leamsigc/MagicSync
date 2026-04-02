@@ -31,6 +31,7 @@ export * from './socialMedia/socialMedia'
 export * from './notifications/notifications'
 export * from './rag/rag'
 export * from './llm/llm'
+export * from './skills/skills'
 
 /***
 * Cross-feature relationships

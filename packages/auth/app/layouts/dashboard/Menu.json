@@ -61,7 +61,8 @@
       "aiToolsTools": "AI Tools",
       "aiToolsAssets": "Assets",
       "aiToolsCreate": "Create",
-      "aiToolsData": "Data"
+      "aiToolsData": "Data",
+      "aiToolsSkills": "Skills"
     },
     "userNav": {
       "upgradeToPro": "Upgrade to Pro",
@@ -155,7 +156,8 @@
       "aiToolsTools": "Herramientas IA",
       "aiToolsAssets": "Recursos",
       "aiToolsCreate": "Crear",
-      "aiToolsData": "Datos"
+      "aiToolsData": "Datos",
+      "aiToolsSkills": "Skills"
     },
     "userNav": {
       "upgradeToPro": "Actualizar a Pro",
@@ -249,7 +251,8 @@
       "aiToolsTools": "KI-Werkzeuge",
       "aiToolsAssets": "Ressourcen",
       "aiToolsCreate": "Erstellen",
-      "aiToolsData": "Daten"
+      "aiToolsData": "Daten",
+      "aiToolsSkills": "Skills"
     },
     "userNav": {
       "upgradeToPro": "Auf Pro upgraden",
@@ -343,7 +346,8 @@
       "aiToolsTools": "Outils IA",
       "aiToolsAssets": "Ressources",
       "aiToolsCreate": "Créer",
-      "aiToolsData": "Données"
+      "aiToolsData": "Données",
+      "aiToolsSkills": "Skills"
     },
     "userNav": {
       "upgradeToPro": "Mettre à niveau vers Pro",

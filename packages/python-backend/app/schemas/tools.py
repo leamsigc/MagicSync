@@ -42,3 +42,57 @@ class WebSearchResponse(BaseModel):
     query: str
     results: list[WebSearchResult]
     total_results: int
+
+
+# Knowledge Base Tool Schemas
+
+class KbLsRequest(BaseModel):
+    folder_path: str | None = None
+
+
+class KbLsResponse(BaseModel):
+    folder_path: str
+    folders: list[dict]
+    documents: list[dict]
+
+
+class KbTreeRequest(BaseModel):
+    folder_path: str | None = None
+
+
+class KbTreeResponse(BaseModel):
+    tree: dict
+
+
+class KbGrepRequest(BaseModel):
+    pattern: str
+    folder_path: str | None = None
+    limit: int = Field(default=10, ge=1, le=50)
+
+
+class KbGrepResponse(BaseModel):
+    pattern: str
+    folder_path: str | None = None
+    matches: list[dict]
+    error: str | None = None
+
+
+class KbGlobRequest(BaseModel):
+    pattern: str
+
+
+class KbGlobResponse(BaseModel):
+    pattern: str
+    matches: list[dict]
+    error: str | None = None
+
+
+class KbReadRequest(BaseModel):
+    document_id: str
+
+
+class KbReadResponse(BaseModel):
+    document: dict | None
+    chunks: list[dict]
+    full_content: str
+    error: str | None = None

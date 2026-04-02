@@ -18,6 +18,7 @@ export interface HybridSearchRequest {
   queryEmbedding?: number[]
   limit?: number
   documentId?: string
+  folderId?: string
   metadataFilters?: Record<string, string>
 }
 
@@ -93,7 +94,7 @@ export class SearchService {
     userId: string,
     queryEmbedding: number[],
     limit: number = 10,
-    filters?: { documentId?: string; metadataKey?: string; metadataValue?: string }
+    filters?: { documentId?: string; folderId?: string; metadataKey?: string; metadataValue?: string }
   ): Promise<ServiceResponse<SearchResult[]>> {
     try {
       const embeddingStr = `[${queryEmbedding.join(',')}]`
@@ -104,6 +105,11 @@ export class SearchService {
       if (filters?.documentId) {
         whereClauses.push('dc.document_id = ?')
         args.push(filters.documentId)
+      }
+
+      if (filters?.folderId) {
+        whereClauses.push('d.folder_id = ?')
+        args.push(filters.folderId)
       }
 
       if (filters?.metadataKey && filters?.metadataValue) {
@@ -118,6 +124,7 @@ export class SearchService {
           SELECT dc.content, dc.document_id, dc.metadata,
                  vector_distance_cos(dc.embedding, vector32(?)) as similarity
           FROM document_chunks dc
+          JOIN documents d ON dc.document_id = d.id
           WHERE ${whereClauses.join(' AND ')}
           ORDER BY similarity ASC
           LIMIT ?
@@ -195,7 +202,7 @@ export class SearchService {
     request: HybridSearchRequest
   ): Promise<ServiceResponse<SearchResult[]>> {
     try {
-      const { userId, query, queryEmbedding, limit = 10, documentId, metadataFilters } = request
+      const { userId, query, queryEmbedding, limit = 10, documentId, folderId, metadataFilters } = request
 
       const keywordLimit = limit * 2
       const keywordResults = await this.keywordSearch(userId, query, keywordLimit, documentId)
@@ -206,9 +213,12 @@ export class SearchService {
 
       let vectorResults: SearchResult[] = []
       if (queryEmbedding && queryEmbedding.length > 0) {
-        const vectorFilters = documentId
-          ? { documentId, metadataKey: metadataFilters ? Object.keys(metadataFilters)[0] : undefined, metadataValue: metadataFilters ? Object.values(metadataFilters)[0] : undefined }
-          : { metadataKey: metadataFilters ? Object.keys(metadataFilters)[0] : undefined, metadataValue: metadataFilters ? Object.values(metadataFilters)[0] : undefined }
+        const vectorFilters = {
+          documentId: documentId,
+          folderId: folderId,
+          metadataKey: metadataFilters ? Object.keys(metadataFilters)[0] : undefined,
+          metadataValue: metadataFilters ? Object.values(metadataFilters)[0] : undefined
+        }
 
         const vectorResult = await this.vectorSearch(userId, queryEmbedding, keywordLimit, vectorFilters)
         if (vectorResult.error) {

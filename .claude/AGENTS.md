@@ -9,20 +9,20 @@ last_updated: 2026-03-31
 ## What This Is
 A social media scheduling platform built with Nuxt 4 monorepo — enables scheduling posts across multiple social platforms (Facebook, Twitter, Instagram, Bluesky, LinkedIn, etc.) with AI-powered content generation.
 
-## Current Focus: Episode 1 Complete — Next: Knowledge Base Explorer
+## Current Focus: Episode 5 - Advanced Tool Use
 
-Episode 1 (Agentic RAG Layer) is complete with 171 Python tests passing.
+Episode 4 (Agent Skills & Sandbox) is complete with 193 Python tests passing.
 
-Next up: **Episode 2 - Knowledge Base Explorer** — filesystem-like tools (ls, tree, grep, glob, read) for hierarchical knowledge navigation.
+Now implementing **Episode 5 - Advanced Tool Use** — enhanced tool capabilities for agents.
 
-See `.agent/plans/candidates/06-knowledge-base-explorer.md` for the plan.
+See `.agent/plans/candidates/09-advanced-tool-use.md` for the plan.
 
 **Episode Roadmap:** [Claude Code Agentic RAG Series](https://github.com/theaiautomators/claude-code-agentic-rag-series)
 - Ep 1: Agentic RAG Layer (complete)
-- Ep 2: Knowledge Base Explorer (next)
-- Ep 3: PII Redaction
-- Ep 4: Agent Skills & Sandbox
-- Ep 5: Advanced Tool Use
+- Ep 2: Knowledge Base Explorer (complete)
+- Ep 3: PII Redaction (complete)
+- Ep 4: Agent Skills & Sandbox (complete)
+- Ep 5: Advanced Tool Use (in_progress)
 - Ep 6: Agent Harness
 
 **Database:** Using Turso (libSQL) with native vector support - no separate PostgreSQL needed

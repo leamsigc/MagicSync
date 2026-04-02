@@ -78,6 +78,7 @@
       "pinterestDesc": "Grow your Pinterest audience with use of AI",
       "tools": "Tools",
       "playground": "Playground",
+      "aiTools": "AI Tools",
       "home": "Home",
       "login": "Login",
       "openOnGitHub": "Open on GitHub"
@@ -243,6 +244,7 @@
       "pinterestDesc": "Haz crecer tu audiencia de Pinterest con el uso de IA",
       "tools": "Herramientas",
       "playground": "Campo de juego",
+      "aiTools": "Herramientas de IA",
       "home": "Inicio",
       "login": "Iniciar sesión",
       "openOnGitHub": "Abrir en GitHub"
@@ -408,6 +410,7 @@
       "pinterestDesc": "Erweitern Sie Ihre Pinterest-Zielgruppe mit Hilfe von KI",
       "tools": "Tools",
       "playground": "Spielplatz",
+      "aiTools": "KI-Tools",
       "home": "Startseite",
       "login": "Anmelden",
       "openOnGitHub": "Auf GitHub öffnen"
@@ -573,6 +576,7 @@
       "pinterestDesc": "Développez votre audience Pinterest avec l'utilisation de l'IA",
       "tools": "Outils",
       "playground": "Terrain de jeu",
+      "aiTools": "Outils IA",
       "home": "Accueil",
       "login": "Connexion",
       "openOnGitHub": "Ouvrir sur GitHub"

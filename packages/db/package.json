@@ -11,7 +11,9 @@
     "preview": "nuxt preview .playground",
     "lint": "eslint .",
     "db:generate": "drizzle-kit generate --config ./config/drizzle.config.ts",
+    "db:generate:local": "npx dotenv -e ../../.env -- drizzle-kit generate --config ./config/drizzle.config.ts",
     "db:migrate": "drizzle-kit migrate --config ./config/drizzle.config.ts",
+    "db:migrate:local": "npx dotenv -e ../../.env -- drizzle-kit migrate --config ./config/drizzle.config.ts",
     "db:studio": "drizzle-kit studio --config ./config/drizzle.config.ts"
   },
   "dependencies": {
@@ -27,6 +29,7 @@
     "eslint": "catalog:",
     "nuxt": "catalog:",
     "typescript": "catalog:",
-    "vue": "catalog:"
+    "vue": "catalog:",
+    "dotenv-cli": "^11.0.0"
   }
 }

@@ -3,6 +3,16 @@ import { integer, sqliteTable, text, blob } from 'drizzle-orm/sqlite-core'
 import { relations } from 'drizzle-orm'
 import { user } from '../auth/auth'
 
+// Knowledge base folders for hierarchical navigation
+export const knowledgeFolders = sqliteTable('knowledge_folders', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  parentId: text('parent_id').references(() => knowledgeFolders.id, { onDelete: 'cascade' }),
+  path: text('path').notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()).notNull()
+})
+
 // Documents uploaded for RAG
 export const documents = sqliteTable('documents', {
   id: text('id').primaryKey(),
@@ -19,6 +29,7 @@ export const documents = sqliteTable('documents', {
   errorMessage: text('error_message'),
   chunkCount: integer('chunk_count').default(0),
   metadata: text('metadata'), // JSON: page count, author, etc.
+  folderId: text('folder_id').references(() => knowledgeFolders.id, { onDelete: 'set null' }),
   createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()).notNull()
 })
@@ -58,10 +69,29 @@ export const chatMessages = sqliteTable('chat_messages', {
 })
 
 // Relations
+export const knowledgeFoldersRelations = relations(knowledgeFolders, ({ one, many }) => ({
+  user: one(user, {
+    fields: [knowledgeFolders.userId],
+    references: [user.id]
+  }),
+  parent: one(knowledgeFolders, {
+    fields: [knowledgeFolders.parentId],
+    references: [knowledgeFolders.id]
+  }),
+  documents: many(documents),
+  children: many(knowledgeFolders, {
+    relationName: 'child_folders'
+  })
+}))
+
 export const documentsRelations = relations(documents, ({ one, many }) => ({
   user: one(user, {
     fields: [documents.userId],
     references: [user.id]
+  }),
+  folder: one(knowledgeFolders, {
+    fields: [documents.folderId],
+    references: [knowledgeFolders.id]
   }),
   chunks: many(documentChunks)
 }))
@@ -129,3 +159,4 @@ export type DocumentChunk = InferSelectModel<typeof documentChunks>
 export type ChatThread = InferSelectModel<typeof chatThreads>
 export type ChatMessage = InferSelectModel<typeof chatMessages>
 export type AgentSession = InferSelectModel<typeof agentSessions>
+export type KnowledgeFolder = InferSelectModel<typeof knowledgeFolders>

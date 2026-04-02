@@ -96,6 +96,49 @@ export const useNavigationLinks = () => {
       icon: 'i-heroicons-play',
       to: `/playground`,
       active: route.path.startsWith(`/playground`)
+    },
+    {
+      label: t('navigation.aiTools'),
+      icon: 'i-lucide-sparkles',
+      to: `/app/ai-tools/chat`,
+      active: route.path.startsWith(`/app/ai-tools`),
+      children: [
+        {
+          label: 'Chat',
+          to: `/app/ai-tools/chat`,
+          icon: 'i-lucide-message-square'
+        },
+        {
+          label: 'Assets',
+          to: `/app/ai-tools/chat/assets`,
+          icon: 'i-lucide-file-image'
+        },
+        {
+          label: 'Knowledge',
+          to: `/app/ai-tools/knowledge`,
+          icon: 'i-lucide-book-open'
+        },
+        {
+          label: 'Skills',
+          to: `/app/ai-tools/skills`,
+          icon: 'i-lucide-wrench'
+        },
+        {
+          label: 'Tools',
+          to: `/app/ai-tools/tools`,
+          icon: 'i-lucide-hammer'
+        },
+        {
+          label: 'Growth Strategy',
+          to: `/app/ai-tools/growth-stratergy`,
+          icon: 'i-lucide-rocket'
+        },
+        {
+          label: 'Settings',
+          to: `/app/ai-tools/settings`,
+          icon: 'i-lucide-settings'
+        }
+      ]
     }
   ])
 

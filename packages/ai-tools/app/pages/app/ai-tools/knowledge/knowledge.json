@@ -1,0 +1,62 @@
+{
+  "en": {
+    "title": "Knowledge Base",
+    "description": "Organize your documents in folders",
+    "allDocuments": "All Documents",
+    "newFolder": "New Folder",
+    "root": "Root",
+    "emptyFolder": "No documents in this folder",
+    "createFolder": "Create Folder",
+    "folderNamePlaceholder": "Enter folder name",
+    "folderCreated": "Folder created successfully",
+    "folderDeleted": "Folder deleted successfully",
+    "cancel": "Cancel",
+    "create": "Create",
+    "delete": "Delete"
+  },
+  "es": {
+    "title": "Base de Conocimiento",
+    "description": "Organiza tus documentos en carpetas",
+    "allDocuments": "Todos los Documentos",
+    "newFolder": "Nueva Carpeta",
+    "root": "Raíz",
+    "emptyFolder": "No hay documentos en esta carpeta",
+    "createFolder": "Crear Carpeta",
+    "folderNamePlaceholder": "Ingresa nombre de carpeta",
+    "folderCreated": "Carpeta creada exitosamente",
+    "folderDeleted": "Carpeta eliminada exitosamente",
+    "cancel": "Cancelar",
+    "create": "Crear",
+    "delete": "Eliminar"
+  },
+  "de": {
+    "title": "Wissensdatenbank",
+    "description": "Organisieren Sie Ihre Dokumente in Ordnern",
+    "allDocuments": "Alle Dokumente",
+    "newFolder": "Neuer Ordner",
+    "root": "Wurzel",
+    "emptyFolder": "Keine Dokumente in diesem Ordner",
+    "createFolder": "Ordner erstellen",
+    "folderNamePlaceholder": "Ordnername eingeben",
+    "folderCreated": "Ordner erfolgreich erstellt",
+    "folderDeleted": "Ordner erfolgreich gelöscht",
+    "cancel": "Abbrechen",
+    "create": "Erstellen",
+    "delete": "Löschen"
+  },
+  "fr": {
+    "title": "Base de Connaissances",
+    "description": "Organisez vos documents en dossiers",
+    "allDocuments": "Tous les Documents",
+    "newFolder": "Nouveau Dossier",
+    "root": "Racine",
+    "emptyFolder": "Aucun document dans ce dossier",
+    "createFolder": "Créer un Dossier",
+    "folderNamePlaceholder": "Entrez le nom du dossier",
+    "folderCreated": "Dossier créé avec succès",
+    "folderDeleted": "Dossier supprimé avec succès",
+    "cancel": "Annuler",
+    "create": "Créer",
+    "delete": "Supprimer"
+  }
+}

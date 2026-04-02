@@ -136,6 +136,11 @@ export const useDashboardNavigation = () => {
             icon: 'i-lucide-message-square'
           },
           {
+            label: menuData.menu.all,
+            to: '/app/ai-tools/chat/assets',
+            icon: 'i-lucide-image'
+          },
+          {
             label: menuData.menu.growthStrategies,
             to: '/app/ai-tools/growth-stratergy',
             icon: 'i-lucide-box'
@@ -149,7 +154,17 @@ export const useDashboardNavigation = () => {
             label: menuData.menu.aiToolsSettings,
             to: '/app/ai-tools/settings',
             icon: 'i-lucide-settings'
-          }
+          },
+          {
+            label: menuData.menu.analytics,
+            to: '/app/ai-tools/knowledge',
+            icon: 'i-lucide-folder'
+          },
+          {
+            label: menuData.menu.aiToolsSkills,
+            to: '/app/ai-tools/skills',
+            icon: 'i-lucide-sparkles'
+          },
         ]
       },
       {

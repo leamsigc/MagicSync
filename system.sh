@@ -181,6 +181,40 @@ cmd_db_studio() {
     pnpm packages @local-monorepo/db db:studio
 }
 
+cmd_install_pnpm() {
+    check_deps
+    info "Installing pnpm dependencies..."
+    cd "$SCRIPT_DIR"
+    pnpm install
+    ok "pnpm dependencies installed."
+}
+
+cmd_install_python() {
+    check_deps
+    info "Installing Python dependencies..."
+    cd "$SCRIPT_DIR/packages/python-backend"
+    
+    if [[ -d "venv" ]]; then
+        info "Using existing virtual environment..."
+        source venv/bin/activate
+        pip install -e .
+    else
+        info "Creating virtual environment and installing dependencies..."
+        uv sync
+    fi
+    
+    ok "Python dependencies installed."
+}
+
+cmd_install_all() {
+    info "Installing all dependencies..."
+    
+    cmd_install_pnpm
+    cmd_install_python
+    
+    ok "All dependencies installed!"
+}
+
 cmd_setup() {
     info "Setting up environment files..."
     ensure_env
@@ -198,8 +232,9 @@ cmd_setup() {
     echo ""
     echo "Next steps:"
     echo "  1. Edit .env with your API keys (social logins, email, AI services)"
-    echo "  2. Run ./system.sh dev to start local development"
-    echo "  3. Or run ./system.sh dev:docker for full Docker stack"
+    echo "  2. Run ./system.sh install to install all dependencies"
+    echo "  3. Run ./system.sh dev to start local development"
+    echo "  4. Or run ./system.sh dev:docker for full Docker stack"
 }
 
 cmd_help() {
@@ -210,6 +245,9 @@ cmd_help() {
     echo ""
     echo -e "${GREEN}Commands:${NC}"
     echo -e "  ${YELLOW}setup${NC}                  Generate .env files and secrets (run first!)"
+    echo -e "  ${YELLOW}install${NC}                Install all dependencies (pnpm + Python)"
+    echo -e "  ${YELLOW}install:pnpm${NC}           Install only pnpm dependencies"
+    echo -e "  ${YELLOW}install:python${NC}         Install only Python dependencies"
     echo -e "  ${YELLOW}dev${NC}                    Start site + python-backend locally (hot reload)"
     echo -e "  ${YELLOW}dev:site${NC}               Start only Nuxt site locally (port 3000)"
     echo -e "  ${YELLOW}dev:python${NC}             Start only Python backend locally (port 8000)"
@@ -223,9 +261,10 @@ cmd_help() {
     echo ""
     echo -e "${GREEN}Quick Start:${NC}"
     echo -e "  1. ${YELLOW}./system.sh setup${NC}           Generate .env files + secrets"
-    echo -e "  2. ${YELLOW}./system.sh dev${NC}              Start local dev (site + python)"
-    echo -e "  3. Or run separate: ${YELLOW}./system.sh dev:site${NC} or ${YELLOW}./system.sh dev:python${NC}"
-    echo "  4. Open http://localhost:3000"
+    echo -e "  2. ${YELLOW}./system.sh install${NC}         Install all dependencies"
+    echo -e "  3. ${YELLOW}./system.sh dev${NC}              Start local dev (site + python)"
+    echo -e "  4. Or run separate: ${YELLOW}./system.sh dev:site${NC} or ${YELLOW}./system.sh dev:python${NC}"
+    echo "  5. Open http://localhost:3000"
     echo ""
     echo -e "${GREEN}Docker Quick Start:${NC}"
     echo -e "  1. ${YELLOW}./system.sh setup${NC}           Generate .env files + secrets"
@@ -240,6 +279,9 @@ cmd_help() {
 
 case "${1:-help}" in
     setup)           cmd_setup ;;
+    install)         cmd_install_all ;;
+    install:pnpm)    cmd_install_pnpm ;;
+    install:python)  cmd_install_python ;;
     dev)             cmd_dev ;;
     dev:site)        cmd_site ;;
     dev:python)      cmd_python ;;

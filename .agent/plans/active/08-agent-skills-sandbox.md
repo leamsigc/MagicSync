@@ -1,7 +1,7 @@
-# Candidate: Agent Skills & Code Execution Sandbox
+# Agent Skills & Code Execution Sandbox
 
 ## Status
-`pending`
+`complete`
 
 ## Priority
 High

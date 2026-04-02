@@ -1,7 +1,7 @@
-# Candidate: PII Redaction & Anonymization
+# PII Redaction & Anonymization
 
 ## Status
-`pending`
+`complete`
 
 ## Priority
 High
@@ -88,25 +88,28 @@ A PII redaction system using Microsoft Presidio for NER-based detection, Faker f
 ## Implementation Phases
 
 ### Phase 1: Detection Service
-- TDD: Tests for Presidio detection, two-pass thresholds, UUID filter
-- Add dependencies to pyproject.toml
-- Implement PiiDetectionService with Presidio + spaCy
-- UUID post-filter
+- [x] TDD: Tests for Presidio detection, two-pass thresholds, UUID filter
+- [x] Add dependencies to pyproject.toml
+- [x] Implement PiiDetectionService with Presidio + spaCy
+- [x] UUID post-filter
 
 ### Phase 2: Anonymization Engine
-- TDD: Tests for surrogate generation, collision avoidance, gender matching
-- Implement AnonymizationEngine with Faker
-- Conversation-scoped entity registry (DB schema + service)
-- 3-phase de-anonymization pipeline
+- [x] TDD: Tests for surrogate generation, collision avoidance, gender matching
+- [x] Implement AnonymizationEngine with Faker
+- [x] Conversation-scoped entity registry (DB schema + service)
+- [x] 3-phase de-anonymization pipeline
 
 ### Phase 3: Entity Resolution
-- TDD: Tests for algorithmic and LLM modes
-- Algorithmic: nameparser + Union-Find + nickname dictionary
-- LLM: Ollama local inference for clustering
-- Configurable via ENTITY_RESOLUTION_MODE
+- [x] TDD: Tests for algorithmic and LLM modes
+- [x] Algorithmic: nameparser + Union-Find + nickname dictionary
+- [x] LLM: Ollama local inference for clustering
+- [x] Configurable via ENTITY_RESOLUTION_MODE
 
 ### Phase 4: Pipeline Integration
-- TDD: Tests for chat, sub-agent, tool call integration
+- [x] TDD: Tests for chat, sub-agent, tool call integration
+- [x] Main chat (anonymize input, de-anonymize output)
+- [x] Sub-agents (suppress reasoning events, buffer results)
+- [x] Tool calls (de-anonymize SQL, anonymize results)
 - Pre-LLM anonymization hook in Python backend
 - Post-LLM de-anonymization hook
 - Buffer-and-de-anonymize for sub-agents

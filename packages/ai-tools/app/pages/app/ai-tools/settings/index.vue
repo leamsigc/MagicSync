@@ -106,7 +106,7 @@ function loadConfig(config: any) {
       </header>
 
       <!-- Current Configs -->
-      <div v-if="configs?.length" class="mb-6">
+      <div v-if="configs && configs?.length" class="mb-6">
         <h2 class="text-lg font-semibold text-white mb-3">{{ t('savedConfigs') }}</h2>
 
         <div class="space-y-3">
@@ -164,7 +164,7 @@ function loadConfig(config: any) {
           <!-- Model Selection -->
           <div>
             <label class="block text-sm font-medium text-gray-200 mb-2">{{ t('model') }}</label>
-            <USelectMenu v-model="selectedModel" :items="availableModels" :placeholder="t('selectModel')" />
+            <USelect v-model="selectedModel" :items="availableModels" :placeholder="t('selectModel')" />
           </div>
 
           <!-- API Key (for cloud providers) -->

@@ -20,6 +20,9 @@ dependencies = [
     "duckduckgo-search>=7.0.0",
     "litellm>=1.55.0",
     "pyjwt>=2.10.0",
+    "presidio-analyzer>=2.1.0",
+    "presidio-anonymizer>=2.1.0",
+    "faker>=30.0.0",
 ]
 
 [project.optional-dependencies]

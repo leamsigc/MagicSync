@@ -1,7 +1,7 @@
-# Candidate: Advanced Tool Calling & MCP Integration
+# Advanced Tool Calling & MCP Integration
 
 ## Status
-`pending`
+`in_progress`
 
 ## Priority
 Medium

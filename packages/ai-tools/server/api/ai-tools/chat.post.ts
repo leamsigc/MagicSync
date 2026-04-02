@@ -102,15 +102,12 @@ export default defineEventHandler(async (event) => {
           buffer = lines.pop() || ''
 
           for (const line of lines) {
-            console.log("LINE:", line);
-
             if (!line.startsWith('data: ')) continue
             const json = line.slice(12)
             if (json === '[DONE]') continue
 
             try {
               const data = JSON.parse(json)
-              console.log('DATA', data)
               if (data.error) {
                 writer.write({ type: 'error', errorText: data.error })
               } else if (data.done) {
@@ -147,9 +144,6 @@ export default defineEventHandler(async (event) => {
       }
     },
   })
-
-
-  console.log('stream', stream)
 
   return createUIMessageStreamResponse({ stream })
 })

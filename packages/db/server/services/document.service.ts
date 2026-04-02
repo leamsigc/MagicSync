@@ -12,6 +12,7 @@ export interface CreateDocumentData {
   storagePath: string
   contentHash?: string
   metadata?: Record<string, any>
+  folderId?: string
 }
 
 export interface CreateChunkData {
@@ -96,6 +97,72 @@ export class DocumentService {
       }
     } catch (error) {
       return { error: 'Failed to fetch documents' }
+    }
+  }
+
+  async findByFolder(folderId: string, userId: string, options: QueryOptions = {}): Promise<PaginatedResponse<Document>> {
+    try {
+      const { pagination = { page: 1, limit: 20 } } = options
+      const offset = ((pagination.page || 1) - 1) * (pagination.limit || 20)
+
+      const docList = await this.db
+        .select()
+        .from(documents)
+        .where(and(eq(documents.userId, userId), eq(documents.folderId, folderId)))
+        .limit(pagination.limit || 20)
+        .offset(offset)
+        .orderBy(desc(documents.createdAt))
+
+      const result = await this.db
+        .select({ count: sql<number>`count(*)` })
+        .from(documents)
+        .where(and(eq(documents.userId, userId), eq(documents.folderId, folderId)))
+      const count = result[0]?.count ?? 0
+
+      return {
+        data: docList,
+        pagination: {
+          page: pagination.page || 1,
+          limit: pagination.limit || 20,
+          total: count,
+          totalPages: Math.ceil(count / (pagination.limit || 20)),
+        },
+      }
+    } catch (error) {
+      return { error: 'Failed to fetch documents by folder' }
+    }
+  }
+
+  async findUnfiled(userId: string, options: QueryOptions = {}): Promise<PaginatedResponse<Document>> {
+    try {
+      const { pagination = { page: 1, limit: 20 } } = options
+      const offset = ((pagination.page || 1) - 1) * (pagination.limit || 20)
+
+      const docList = await this.db
+        .select()
+        .from(documents)
+        .where(and(eq(documents.userId, userId), sql`${documents.folderId} IS NULL`))
+        .limit(pagination.limit || 20)
+        .offset(offset)
+        .orderBy(desc(documents.createdAt))
+
+      const result = await this.db
+        .select({ count: sql<number>`count(*)` })
+        .from(documents)
+        .where(and(eq(documents.userId, userId), sql`${documents.folderId} IS NULL`))
+      const count = result[0]?.count ?? 0
+
+      return {
+        data: docList,
+        pagination: {
+          page: pagination.page || 1,
+          limit: pagination.limit || 20,
+          total: count,
+          totalPages: Math.ceil(count / (pagination.limit || 20)),
+        },
+      }
+    } catch (error) {
+      return { error: 'Failed to fetch unfiled documents' }
     }
   }
 

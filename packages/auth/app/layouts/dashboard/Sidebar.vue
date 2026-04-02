@@ -134,7 +134,19 @@ const navigationItems = computed<NavigationMenuItem[][]>(() => {
           {
             label: menuData.menu.aiToolsSettings,
             to: '/app/ai-tools/settings'
-          }
+          },
+          {
+            label: menuData.menu.aiToolsAssets,
+            to: '/app/ai-tools/chat/assets'
+          },
+          {
+            label: menuData.menu.aiToolsTools,
+            to: '/app/ai-tools/knowledge'
+          },
+          {
+            label: menuData.menu.aiToolsSkills,
+            to: '/app/ai-tools/skills'
+          },
         ]
       },
       {
