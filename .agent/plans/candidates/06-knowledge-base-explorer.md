@@ -87,6 +87,65 @@ Build filesystem-like tools that let the agent navigate a hierarchical knowledge
 | React + shadcn/ui | Nuxt 4 + Vue 3 + Nuxt UI |
 | FastAPI (unchanged) | FastAPI (unchanged) |
 
+## Reference Links
+
+- **Episode 2 PRD & Planning:** https://github.com/theaiautomators/claude-code-agentic-rag-series/tree/main/ep2-knowledgebase-video
+- **GSD Planning Files:** https://github.com/glittercowboy/get-shit-done
+- **Full Series:** https://github.com/theaiautomators/claude-code-agentic-rag-series
+- **YouTube Episode:** https://www.youtube.com/playlist?list=PLmc6yUBIbca9ALRkJtz2Z4zLjkYXy1Y1n
+
+## Python Backend Dependencies
+
+Add to `packages/python-backend/pyproject.toml`:
+```toml
+# No new external deps needed - uses existing FastAPI + Turso
+```
+
+## KB Tool Implementations (Python)
+
+Each tool goes in `packages/python-backend/app/services/tools/knowledge_base.py`:
+
+```python
+# Tool signatures for LLM function calling
+tools = [
+    {
+        "name": "kb_ls",
+        "description": "List documents and subfolders in a knowledge folder",
+        "parameters": {"folder_path": "string (optional, defaults to root)"}
+    },
+    {
+        "name": "kb_tree", 
+        "description": "Show full hierarchical tree of knowledge base",
+        "parameters": {"folder_path": "string (optional)"}
+    },
+    {
+        "name": "kb_grep",
+        "description": "Search for pattern within folder documents",
+        "parameters": {"pattern": "string", "folder_path": "string (optional)"}
+    },
+    {
+        "name": "kb_glob",
+        "description": "Find documents matching filename pattern",
+        "parameters": {"pattern": "string"}
+    },
+    {
+        "name": "kb_read",
+        "description": "Read full content of a specific document",
+        "parameters": {"document_id": "string"}
+    }
+]
+```
+
+## Optimized System Prompt (for KB Explorer)
+
+```
+You have access to a knowledge base with hierarchical folders.
+Before searching, explore the structure using kb_ls and kb_tree.
+Use kb_grep to search within specific folders.
+Use kb_read to examine individual documents.
+Always start broad, then narrow down based on findings.
+```
+
 ## Next Steps
 
 1. Design knowledge_folders schema

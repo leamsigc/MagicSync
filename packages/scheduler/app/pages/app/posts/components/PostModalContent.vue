@@ -603,7 +603,7 @@ const handleVariableAction = (variable: string) => {
 
             <template #editor>
               <div class="py-3">
-                <div class="flex items-center justify-between overflow-x-scroll">
+                <div class="flex items-center justify-between overflow-x-auto">
                   <PostContextSwitcher v-model="explicitPreviewPlatform" :tabs="contextTabs"
                     :currentPlatformConfig="currentPlatformConfig" />
                   <UButton v-if="explicitPreviewPlatform !== 'default'" @click="revertToMaster" variant="ghost"

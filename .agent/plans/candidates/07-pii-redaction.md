@@ -129,5 +129,54 @@ A PII redaction system using Microsoft Presidio for NER-based detection, Faker f
 | rapidfuzz | Jaro-Winkler similarity |
 | gender-guesser | Gender-matched surrogates |
 
+## Reference Links
+
+- **Episode 3 PRD:** https://github.com/theaiautomators/claude-code-agentic-rag-series/blob/main/ep3-redaction-anonymization-video/PRD-PII-Redaction-System.md
+- **Episode 3 README:** https://github.com/theaiautomators/claude-code-agentic-rag-series/tree/main/ep3-redaction-anonymization-video
+- **Full Series:** https://github.com/theaiautomators/claude-code-agentic-rag-series
+
+## Python Backend Dependencies
+
+Add to `packages/python-backend/pyproject.toml`:
+```toml
+[project.optional-dependencies]
+privacy = [
+    "presidio-analyzer>=2.2.0",
+    "presidio-anonymizer>=2.2.0",
+    "spacy>=3.7.0",
+    "faker>=24.0.0",
+    "nameparser>=1.1.0",
+    "rapidfuzz>=3.6.0",
+    "gender-guesser>=0.4.0",
+]
+```
+
+After adding: `cd packages/python-backend && pnpm add presidio-analyzer presidio-anonymizer spacy faker nameparser rapidfuzz gender-guesser`
+Then: `python -m spacy download en_core_web_trf`
+
+## Privacy Service Structure (Python)
+
+```
+packages/python-backend/app/services/privacy/
+├── __init__.py
+├── pii_detection.py      # Presidio-based detection
+├── anonymization.py      # Faker surrogate generation
+├── entity_resolution.py  # Name clustering
+├── deanonymization.py    # Reverse mapping
+└── pipeline.py           # Full anonymize→LLM→deanonymize flow
+```
+
+## Optimized System Prompt (for PII Redaction)
+
+```
+IMPORTANT: All user messages are anonymized before processing.
+- Names are replaced with realistic fake names (gender-matched)
+- Emails/phones replaced with valid-format fakes
+- SSNs, credit cards replaced with [CREDIT_CARD], [SSN] placeholders
+- When responding, use the fake names as they appear in the context
+- The system will de-anonymize your response before showing to user
+- Do NOT mention that data has been anonymized
+```
+
 ---
 *Adapted: 2026-03-31*

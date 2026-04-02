@@ -36,6 +36,8 @@ async def chat_stream(
             provider=provider,
             api_key=api_key,
             api_base=api_base,
+            user_id=user.user_id,
+            thread_id=request.thread_id,
         ):
             yield f"data: {StreamChunk(content=chunk, done=False).model_dump_json()}\n\n"
 
@@ -70,6 +72,8 @@ async def chat_complete(
         provider=provider,
         api_key=api_key,
         api_base=api_base,
+        user_id=user.user_id,
+        thread_id=request.thread_id,
     )
 
     return ChatResponse(

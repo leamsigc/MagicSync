@@ -16,6 +16,7 @@ This directory contains RFC candidates for deepening modules and improving codeb
 | 8 | Agent Skills & Sandbox | `pending` | High | Episode 4 |
 | 9 | Advanced Tool Calling & MCP | `pending` | Medium | Episode 5 |
 | 10 | Agent Harness & Workflows | `pending` | High | Episode 6 |
+| 11 | Python Backend Infrastructure | `pending` | Medium | Cross-cutting |
 
 ## Current Status
 

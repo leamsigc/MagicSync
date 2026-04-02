@@ -19,7 +19,7 @@ const user = {
 </script>
 
 <template>
-  <div class="flex flex-col h-screen justify-between p-4 sticky top-0 overflow-y-auto">
+  <div class="flex flex-col h-screen justify-between p-4 sticky top-0">
     <div class="space-y-4">
       <!-- Logo -->
       <div class="px-4 py-2">

@@ -15,10 +15,10 @@ const { size = 'md' } = defineProps<Props>();
 </script>
 
 <template>
-  <div class="min-h-screen bg-white dark:bg-default text-black dark:text-gray-100">
+  <div class="min-h-screen  text-black dark:text-gray-100">
     <div class="container mx-auto max-w-7xl flex">
       <!-- Left Sidebar (Navigation) -->
-      <header class="w-20 xl:w-72 shrink-0 border-r border-gray-200 dark:border-zinc-800">
+      <header class="w-20 xl:w-72 shrink-0 border-r border-gray-200 dark:border-zinc-800 ">
         <slot name="left-sidebar">
           <BaseSidebarNavigation />
         </slot>

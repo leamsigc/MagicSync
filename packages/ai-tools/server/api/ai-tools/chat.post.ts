@@ -2,30 +2,41 @@ import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
 import { chatService } from '#layers/BaseDB/server/services/chat.service'
 import { userLlmConfigService } from '#layers/BaseDB/server/services/user-llm-config.service'
 import { createLlmJwt } from '#layers/BaseDB/server/utils/llm-jwt'
+import { createUIMessageStream, createUIMessageStreamResponse } from 'ai'
+import { generateId } from '@ai-sdk/provider-utils'
 
 export default defineEventHandler(async (event) => {
   const user = await checkUserIsLogin(event)
   const body = await readBody(event)
 
-  if (!body?.messages?.length) {
+  const messages = body?.messages || []
+  if (!messages.length) {
     throw createError({ statusCode: 400, statusMessage: 'Messages are required' })
   }
+
+  // Convert AI SDK UIMessage format to Python backend format
+  const convertedMessages = messages
+    .map((m: any) => {
+      const content = m.parts
+        ? m.parts
+            .filter((p: any) => p.type === 'text')
+            .map((p: any) => p.text)
+            .join('')
+        : m.content || ''
+      return { role: m.role, content }
+    })
+    .filter((m: any) => !(m.role === 'assistant' && !m.content?.trim()))
 
   const config = useRuntimeConfig()
   const backendUrl = config.pythonBackendUrl || 'http://localhost:8000'
 
-  // Get user's LLM config (or platform defaults)
   const llmConfigResult = await userLlmConfigService.getDefaultConfig(user.id)
-  const llmConfig = llmConfigResult.data
-
-  // Create JWT with user's LLM config
+  const llmConfig = llmConfigResult.data ?? null
   const llmJwt = createLlmJwt(user.id, user.email || '', llmConfig)
 
-  // Ensure thread exists or create one
   let threadId = body.thread_id as string | undefined
   if (!threadId) {
-    // Auto-create thread from first user message
-    const firstUserMsg = body.messages.find((m: any) => m.role === 'user')
+    const firstUserMsg = convertedMessages.find((m: any) => m.role === 'user')
     const title = firstUserMsg?.content?.slice(0, 80) || 'New Chat'
     const threadResult = await chatService.createThread(user.id, { title })
     if (threadResult.data) {
@@ -34,7 +45,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Persist user message
-  const lastMessage = body.messages[body.messages.length - 1]
+  const lastMessage = convertedMessages[convertedMessages.length - 1]
   if (threadId && lastMessage?.role === 'user') {
     await chatService.addMessage({
       threadId,
@@ -44,90 +55,101 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // Stream response from Python backend with JWT
-  const response = await $fetch(`${backendUrl}/api/v1/chat`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${llmJwt}`,
-    },
-    body: {
-      messages: body.messages,
-      thread_id: threadId,
-    },
-    responseType: 'stream',
-  })
+  if (threadId) {
+    setResponseHeader(event, 'X-Thread-Id', threadId)
+  }
 
-  // Collect assistant response for persistence
-  let assistantContent = ''
+  const stream = createUIMessageStream({
+    execute: async ({ writer }) => {
+      let assistantContent = ''
 
-  setResponseHeader(event, 'Content-Type', 'text/event-stream')
-  setResponseHeader(event, 'Cache-Control', 'no-cache')
-  setResponseHeader(event, 'Connection', 'keep-alive')
-
-  // Wrap the stream to collect assistant content while streaming
-  const encoder = new TextEncoder()
-  const decoder = new TextDecoder()
-  const originalStream = response as ReadableStream
-
-  const wrappedStream = new ReadableStream({
-    async start(controller) {
-      const reader = originalStream.getReader()
       try {
+        const backendResponse = await fetch(`${backendUrl}/api/v1/chat`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${llmJwt}`,
+          },
+          body: JSON.stringify({ messages: convertedMessages, thread_id: threadId }),
+        })
+
+        if (!backendResponse.ok) {
+          const errorText = await backendResponse.text()
+          writer.write({ type: 'error', errorText })
+          return
+        }
+
+        if (!backendResponse.body) {
+          writer.write({ type: 'error', errorText: 'No response body' })
+          return
+        }
+
+        writer.write({ type: 'start-step' })
+
+        const textId = generateId()
+        writer.write({ type: 'text-start', id: textId })
+
+        const reader = backendResponse.body.getReader()
+        const decoder = new TextDecoder()
+        let buffer = ''
+
         while (true) {
           const { done, value } = await reader.read()
           if (done) break
 
-          const text = decoder.decode(value, { stream: true })
-          // Parse SSE events to extract assistant content
-          const lines = text.split('\n')
+          buffer += decoder.decode(value, { stream: true })
+          const lines = buffer.split('\n')
+          buffer = lines.pop() || ''
+
           for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              try {
-                const chunk = JSON.parse(line.slice(6))
-                if (chunk.content) {
-                  assistantContent += chunk.content
-                }
-              } catch {
-                // Not JSON, pass through
+            console.log("LINE:", line);
+
+            if (!line.startsWith('data: ')) continue
+            const json = line.slice(12)
+            if (json === '[DONE]') continue
+
+            try {
+              const data = JSON.parse(json)
+              console.log('DATA', data)
+              if (data.error) {
+                writer.write({ type: 'error', errorText: data.error })
+              } else if (data.done) {
+                // stream done
+              } else if (data.content) {
+                assistantContent += data.content
+                writer.write({ type: 'text-delta', delta: data.content, id: textId })
               }
+            } catch {
+              // skip invalid JSON
             }
           }
-
-          controller.enqueue(value)
         }
 
-        // Persist assistant message after stream completes
-        if (threadId && assistantContent) {
+        writer.write({ type: 'text-end', id: textId })
+        writer.write({ type: 'finish-step' })
+        writer.write({ type: 'finish', finishReason: 'stop' })
+      } catch (err: any) {
+        writer.write({ type: 'error', errorText: err.message })
+      }
+
+      // Persist assistant message (best-effort)
+      if (threadId && assistantContent) {
+        try {
           await chatService.addMessage({
             threadId,
             userId: user.id,
             role: 'assistant',
             content: assistantContent,
           })
+        } catch {
+          // best-effort persistence
         }
-      } catch (error: any) {
-        // Stream error — still try to persist what we have
-        if (threadId && assistantContent) {
-          await chatService.addMessage({
-            threadId,
-            userId: user.id,
-            role: 'assistant',
-            content: assistantContent,
-          })
-        }
-      } finally {
-        controller.close()
       }
     },
   })
 
-  return new Response(wrappedStream, {
-    headers: {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive',
-      'X-Thread-Id': threadId || '',
-    },
-  })
+
+  console.log('stream', stream)
+
+  return createUIMessageStreamResponse({ stream })
 })

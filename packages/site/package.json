@@ -13,7 +13,10 @@
     "db:generate": "drizzle-kit generate --config ../db/config/drizzle.config.ts",
     "db:migrate": "drizzle-kit migrate --config ../db/config/drizzle.config.ts",
     "db:studio": "drizzle-kit studio --config ../db/config/drizzle.config.ts",
-    "start": "node .output/server/index.mjs"
+    "start": "node .output/server/index.mjs",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:report": "playwright show-report"
   },
   "dependencies": {
     "@local-monorepo/ai-tools": "workspace:*",
@@ -42,6 +45,7 @@
   },
   "devDependencies": {
     "@nuxt/hints": "catalog:",
-    "@nuxtjs/seo": "catalog:"
+    "@nuxtjs/seo": "catalog:",
+    "@playwright/test": "catalog:"
   }
 }

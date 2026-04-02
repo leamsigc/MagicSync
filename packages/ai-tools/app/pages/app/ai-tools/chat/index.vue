@@ -1,36 +1,37 @@
 <i18n src="./chat.json"></i18n>
 
 <script setup lang="ts">
-import { useA2UIChat } from './composables/useA2UIChat';
-import ChatSidebar from './components/ChatSidebar.vue';
+import { useA2UIChat } from './composables/useA2UIChat'
+import ChatSidebar from './components/ChatSidebar.vue'
+import { isReasoningStreaming } from '@nuxt/ui/utils/ai'
+import { isReasoningUIPart, isTextUIPart } from 'ai'
+
+
+// @ts-ignore
+definePageMeta({ layout: 'ai-tools' })
 
 const { t } = useI18n()
 const input = ref('')
 
 const {
-  messages,
+  chat,
   threads,
-  sendMessage,
-  clearMessages,
-  isLoading,
   isLoadingThreads,
-  error,
-  regenerateLast,
+  threadId: activeThreadId,
   loadThreads,
   loadThreadMessages,
   createNewThread,
   deleteThread,
-  threadId: activeThreadId,
+  handleSuggestionClick,
 } = useA2UIChat()
 
-// Load threads on mount
 onMounted(() => {
   loadThreads()
 })
 
 function onSubmit() {
   if (!input.value.trim()) return
-  sendMessage(input.value)
+  chat.sendMessage({ text: input.value })
   input.value = ''
 }
 
@@ -45,15 +46,10 @@ function handleSelectThread(id: string) {
 function handleDeleteThread(id: string) {
   deleteThread(id)
 }
-
-function handleSuggestionClick(suggestion: string) {
-  sendMessage(suggestion)
-}
 </script>
 
 <template>
-  <div class="flex h-[calc(100vh-4rem)] overflow-hidden">
-    <!-- Chat Sidebar -->
+  <div class="flex h-screen overflow-hidden">
     <ChatSidebar :threads="threads.map(t => ({
       id: t.id,
       title: t.title,
@@ -61,36 +57,56 @@ function handleSuggestionClick(suggestion: string) {
     }))" :active-thread-id="activeThreadId ?? undefined" @select="handleSelectThread" @delete="handleDeleteThread"
       @new-thread="handleNewThread" />
 
-    <!-- Main Chat Area -->
-    <div class="flex-1 flex flex-col bg-white dark:bg-neutral-950">
-      <!-- Chat Header -->
-      <div class="flex items-center justify-between px-6 py-4 border-b border-neutral-200 dark:border-neutral-700">
+    <div class="flex-1 flex flex-col">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-muted">
         <div class="flex items-center gap-3">
-          <UAvatar icon="i-heroicons-sparkles" color="primary" />
+          <div class="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+            <UIcon name="i-lucide-sparkles" class="w-5 h-5 text-primary" />
+          </div>
           <div>
-            <h1 class="text-lg font-semibold">MagicSync AI Assistant</h1>
-            <p class="text-xs text-neutral-500">
+            <h1 class="text-lg font-semibold">{{ t('welcome') }}</h1>
+            <p class="text-xs text-muted">
               {{ activeThreadId ? 'Thread active' : 'New conversation' }}
             </p>
           </div>
         </div>
         <div class="flex items-center gap-2">
-          <UButton icon="i-heroicons-arrow-path" color="neutral" variant="ghost" size="sm" @click="clearMessages()" />
+          <UButton icon="i-lucide-rotate-cw" color="neutral" variant="ghost" size="sm" @click="chat.messages = []" />
         </div>
       </div>
 
-      <!-- Messages Area -->
       <div class="flex-1 overflow-y-auto px-6 py-4">
-        <!-- Loading threads -->
-        <div v-if="isLoadingThreads" class="flex items-center justify-center h-full">
-          <UIcon name="i-heroicons-arrow-path" class="w-8 h-8 animate-spin text-neutral-400" />
-        </div>
 
-        <!-- Empty State -->
-        <div v-else-if="!messages.length" class="flex flex-col items-center justify-center h-full">
-          <UIcon name="i-heroicons-sparkles" class="w-16 h-16 text-primary-500 mb-4" />
+        <UChatMessages :messages="chat.messages" :status="chat.status" should-auto-scroll class="flex-1">
+          <template #content="{ message }">
+            <template v-for="(part, index) in message.parts" :key="`${message.id}-${part.type}-${index}`">
+              <UChatReasoning v-if="isReasoningUIPart(part)" :text="part.text" :streaming="chat.status === 'streaming'">
+                <MDC :value="part.text" :cache-key="`reasoning-${message.id}-${index}`"
+                  class="*:first:mt-0 *:last:mb-0" />
+              </UChatReasoning>
+
+              <template v-else-if="isTextUIPart(part)">
+                <MDC v-if="message.role === 'assistant'" :value="part.text" :cache-key="`${message.id}-${index}`"
+                  class="*:first:mt-0 *:last:mb-0" />
+                <p v-else-if="message.role === 'user'" class="whitespace-pre-wrap">
+                  {{ part.text }}
+                </p>
+                <template
+                  v-if="chat.status === 'streaming' && message.role === 'assistant' && part.state === 'streaming'">
+                  <UIcon name="i-lucide-ellipsis" class="w-8 h-8 animate-bounce text-muted" />
+                </template>
+              </template>
+
+            </template>
+          </template>
+        </UChatMessages>
+
+        <div v-if="!chat.messages.length" class="flex flex-col items-center justify-center h-full">
+          <div class="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+            <UIcon name="i-lucide-sparkles" class="w-8 h-8 text-primary" />
+          </div>
           <h2 class="text-xl font-semibold mb-2">{{ t('welcome') }}</h2>
-          <p class="text-neutral-500 mb-6 text-center max-w-md">
+          <p class="text-muted mb-6 text-center max-w-md">
             {{ t('welcomeDescription') }}
           </p>
           <div class="flex flex-wrap gap-2 justify-center">
@@ -99,56 +115,14 @@ function handleSuggestionClick(suggestion: string) {
               @click="handleSuggestionClick(suggestion)" />
           </div>
         </div>
-
-        <!-- Messages -->
-        <div v-else class="space-y-4">
-          <template v-for="message in messages" :key="message.id">
-            <!-- User Message -->
-            <div v-if="message.role === 'user'" class="flex justify-end">
-              <div class="max-w-[70%]">
-                <UCard class="bg-primary-500 text-white rounded-2xl rounded-br-sm">
-                  <p class="whitespace-pre-wrap">{{ message.content }}</p>
-                </UCard>
-              </div>
-            </div>
-
-            <!-- Assistant Message -->
-            <div v-else class="flex gap-3">
-              <UAvatar icon="i-heroicons-sparkles" size="sm" color="primary" />
-              <div class="flex-1 max-w-[80%]">
-                <div class="prose dark:prose-invert max-w-none">
-                  <p class="whitespace-pre-wrap">{{ message.content }}</p>
-                </div>
-                <!-- A2UI Components -->
-                <div v-if="message.a2uiComponents?.length" class="mt-3">
-                  <A2UIChatRenderer :components="message.a2uiComponents" />
-                </div>
-              </div>
-            </div>
-          </template>
-
-          <!-- Loading State -->
-          <div v-if="isLoading" class="flex gap-3">
-            <UAvatar icon="i-heroicons-sparkles" size="sm" color="primary" />
-            <div class="flex items-center gap-2">
-              <Icon name="i-heroicons-arrow-path" class="w-4 h-4 animate-spin text-neutral-400" />
-            </div>
-          </div>
-        </div>
-
-        <!-- Error State -->
-        <div v-if="error" class="flex justify-center py-4">
-          <UAlert :title="t('error')" :description="error.message" color="error" variant="soft" />
-        </div>
       </div>
 
-      <!-- Chat Input -->
-      <div class="px-6 py-4 border-t border-neutral-200 dark:border-neutral-700">
-        <UChatPrompt v-model="input" :placeholder="t('placeholder')" :error="error ? error : undefined"
-          @submit="onSubmit">
-          <UChatPromptSubmit :status="isLoading ? 'streaming' : 'ready'" @stop="() => isLoading = false"
-            @reload="regenerateLast()" />
-        </UChatPrompt>
+      <div class="px-6 py-4 border-t border-muted">
+        <div class="max-w-3xl mx-auto">
+          <UChatPrompt v-model="input" :placeholder="t('placeholder')" :error="chat.error" @submit="onSubmit">
+            <UChatPromptSubmit :status="chat.status" @stop="chat.stop()" @reload="chat.regenerate()" />
+          </UChatPrompt>
+        </div>
       </div>
     </div>
   </div>

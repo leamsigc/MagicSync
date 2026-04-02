@@ -136,5 +136,67 @@ Preserve rich component state across page reloads:
 - Re-render A2UI from saved state
 - Sub-agent and code execution state preservation
 
+## Reference Links
+
+- **Episode 5 PRD:** https://github.com/theaiautomators/claude-code-agentic-rag-series/blob/main/ep5-advanced-tool-use/PRD-Tool-Calls-v2.md
+- **Episode 5 README:** https://github.com/theaiautomators/claude-code-agentic-rag-series/tree/main/ep5-advanced-tool-use
+- **MCP Python SDK:** https://github.com/modelcontextprotocol/python-sdk
+- **Full Series:** https://github.com/theaiautomators/claude-code-agentic-rag-series
+
+## Python Backend Dependencies
+
+Add to `packages/python-backend/pyproject.toml`:
+```toml
+[project.optional-dependencies]
+mcp = [
+    "mcp>=1.0.0",
+    "tiktoken>=0.7.0",
+]
+```
+
+## Tool Registry Service Structure (Python)
+
+```
+packages/python-backend/app/services/tools/
+├── __init__.py
+├── registry.py         # Dynamic tool registry with search
+├── catalog.py          # Compact tool catalog generation
+└── mcp_client.py       # MCP server connection and tool discovery
+```
+
+## Token Counting Implementation
+
+```python
+import tiktoken
+
+def count_tokens(text: str, model: str = "gpt-4o") -> int:
+    enc = tiktoken.encoding_for_model(model)
+    return len(enc.encode(text))
+
+def calculate_context_usage(messages: list, max_tokens: int) -> dict:
+    total = sum(count_tokens(msg["content"]) for msg in messages)
+    return {
+        "used": total,
+        "max": max_tokens,
+        "remaining": max_tokens - total,
+        "percentage": (total / max_tokens) * 100
+    }
+```
+
+## Optimized System Prompt (for Dynamic Tools)
+
+```
+TOOLS (compact catalog — load full schemas on demand):
+- retrieval: Search knowledge base (vector + keyword)
+- text_to_sql: Query database with natural language
+- web_search: Search the web for current info
+- sub_agent: Delegate specialized tasks
+- kb_ls, kb_tree, kb_grep, kb_glob, kb_read: Browse knowledge base
+- tool_search: Search this tool catalog by keyword/regex
+
+When you need a tool, call tool_search(query) first to get the full schema.
+Do NOT assume tool parameters — always load the schema first.
+```
+
 ---
 *Adapted: 2026-03-31*

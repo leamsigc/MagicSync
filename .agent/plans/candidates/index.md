@@ -12,6 +12,7 @@
 | 8 | [08-agent-skills-sandbox.md](./08-agent-skills-sandbox.md) | High | `pending` | Episode 4 |
 | 9 | [09-advanced-tool-use.md](./09-advanced-tool-use.md) | Medium | `pending` | Episode 5 |
 | 10 | [10-agent-harness.md](./10-agent-harness.md) | High | `pending` | Episode 6 |
+| 11 | [11-python-backend-infrastructure.md](./11-python-backend-infrastructure.md) | Medium | `pending` | Infrastructure |
 
 ## Episode Series
 

@@ -103,8 +103,8 @@ html {
 /* Base styles */
 
 body {
-  background-color: hsl(var(--background));
-  color: hsl(var(--foreground));
+  /* background-color: hsl(var(--background)); */
+  /* color: hsl(var(--foreground)); */
 }
 
 /* Custom gradient text utility */

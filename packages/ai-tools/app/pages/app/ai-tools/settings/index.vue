@@ -98,121 +98,123 @@ function loadConfig(config: any) {
 </script>
 
 <template>
-  <div class="max-w-4xl mx-auto p-6">
-    <div class="mb-8">
-      <h1 class="text-2xl font-bold">{{ t('title') }}</h1>
-      <p class="text-neutral-500 mt-1">{{ t('subtitle') }}</p>
-    </div>
+  <div class="min-h-screen bg-[#0a0a0a]">
+    <div class="max-w-6xl mx-auto p-6">
+      <header class="mb-12 mt-8">
+        <h1 class="text-3xl font-semibold tracking-tight text-white mb-2">{{ t('title') }}</h1>
+        <p class="text-gray-400">{{ t('subtitle') }}</p>
+      </header>
 
-    <!-- Current Configs -->
-    <UCard v-if="configs?.length" class="mb-6">
-      <template #header>
-        <h2 class="text-lg font-semibold">{{ t('savedConfigs') }}</h2>
-      </template>
+      <!-- Current Configs -->
+      <div v-if="configs?.length" class="mb-6">
+        <h2 class="text-lg font-semibold text-white mb-3">{{ t('savedConfigs') }}</h2>
 
-      <div class="space-y-3">
-        <div v-for="config in configs" :key="config.id" class="flex items-center justify-between p-3 rounded-lg border"
-          :class="config.isDefault ? 'border-primary-500 bg-primary-50 dark:bg-primary-950' : 'border-neutral-200 dark:border-neutral-700'">
-          <div>
+        <div class="space-y-3">
+          <div v-for="config in configs" :key="config.id"
+            class="flex items-center justify-between p-4 rounded-lg border border-gray-700/50"
+            :class="config.isDefault ? 'bg-emerald-500/5 border-emerald-500/30' : 'hover:bg-gray-800/30'">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="font-medium text-gray-200">{{ config.model }}</span>
+                <UBadge v-if="config.isDefault" color="primary" variant="subtle" size="sm">
+                  {{ t('default') }}
+                </UBadge>
+                <UBadge color="neutral" variant="outline" size="sm">
+                  {{ config.provider }}
+                </UBadge>
+              </div>
+              <p class="text-sm text-gray-500 mt-1">
+                {{ t('temp') }}: {{ config.temperature }} · {{ t('tokens') }}: {{ config.maxTokens }}
+              </p>
+            </div>
             <div class="flex items-center gap-2">
-              <span class="font-medium">{{ config.model }}</span>
-              <UBadge v-if="config.isDefault" color="primary" variant="subtle" size="sm">
-                {{ t('default') }}
-              </UBadge>
-              <UBadge color="neutral" variant="outline" size="sm">
-                {{ config.provider }}
-              </UBadge>
-            </div>
-            <p class="text-sm text-neutral-500 mt-1">
-              {{ t('temp') }}: {{ config.temperature }} · {{ t('tokens') }}: {{ config.maxTokens }}
-            </p>
-          </div>
-          <div class="flex items-center gap-2">
-            <UButton v-if="!config.isDefault" icon="i-heroicons-star" color="neutral" variant="ghost" size="sm"
-              @click="setDefault(config.id)" />
-            <UButton icon="i-heroicons-pencil" color="neutral" variant="ghost" size="sm" @click="loadConfig(config)" />
-            <UButton icon="i-heroicons-trash" color="error" variant="ghost" size="sm"
-              @click="deleteConfig(config.id)" />
-          </div>
-        </div>
-      </div>
-    </UCard>
-
-    <!-- Config Form -->
-    <UCard>
-      <template #header>
-        <h2 class="text-lg font-semibold">{{ t('addConfig') }}</h2>
-      </template>
-
-      <div class="space-y-6">
-        <!-- Provider Selection -->
-        <div>
-          <label class="block text-sm font-medium mb-2">{{ t('provider') }}</label>
-          <div class="grid grid-cols-2 gap-3">
-            <div v-for="option in providerOptions" :key="option.value"
-              class="p-3 rounded-lg border cursor-pointer transition-colors" :class="selectedProvider === option.value
-                ? 'border-primary-500 bg-primary-50 dark:bg-primary-950'
-                : 'border-neutral-200 dark:border-neutral-700 hover:border-neutral-300'"
-              @click="selectedProvider = option.value; selectedModel = availableModels[0] || ''">
-              <div class="font-medium">{{ option.label }}</div>
-              <p class="text-xs text-neutral-500 mt-1">{{ option.description }}</p>
+              <UButton v-if="!config.isDefault" icon="i-heroicons-star" color="neutral" variant="ghost" size="sm"
+                @click="setDefault(config.id)" />
+              <UButton icon="i-heroicons-pencil" color="neutral" variant="ghost" size="sm"
+                @click="loadConfig(config)" />
+              <UButton icon="i-heroicons-trash" color="error" variant="ghost" size="sm"
+                @click="deleteConfig(config.id)" />
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- Model Selection -->
-        <div>
-          <label class="block text-sm font-medium mb-2">{{ t('model') }}</label>
-          <USelectMenu v-model="selectedModel" :items="availableModels" :placeholder="t('selectModel')" />
+      <!-- Config Form -->
+      <div class="border border-gray-700/50 rounded-lg">
+        <div class="p-4 border-b border-gray-700/50">
+          <h2 class="text-lg font-semibold text-white">{{ t('addConfig') }}</h2>
         </div>
 
-        <!-- API Key (for cloud providers) -->
-        <div v-if="showApiKeyField">
-          <label class="block text-sm font-medium mb-2">{{ t('apiKey') }}</label>
-          <UInput v-model="apiKey" type="password" :placeholder="t('apiKeyPlaceholder')" />
-          <p class="text-xs text-neutral-500 mt-1">{{ t('apiKeyHelp') }}</p>
-        </div>
+        <div class="p-6 space-y-6">
+          <!-- Provider Selection -->
+          <div>
+            <label class="block text-sm font-medium text-gray-200 mb-2">{{ t('provider') }}</label>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div v-for="option in providerOptions" :key="option.value"
+                class="p-3 rounded-lg border cursor-pointer transition-colors" :class="selectedProvider === option.value
+                  ? 'border-emerald-500/50 bg-emerald-500/5'
+                  : 'border-gray-700/50 hover:border-gray-600'"
+                @click="selectedProvider = option.value; selectedModel = availableModels[0] || ''">
+                <div class="font-medium text-gray-200">{{ option.label }}</div>
+                <p class="text-xs text-gray-500 mt-1">{{ option.description }}</p>
+              </div>
+            </div>
+          </div>
 
-        <!-- Base URL (for Ollama) -->
-        <div v-if="showBaseUrlField">
-          <label class="block text-sm font-medium mb-2">{{ t('baseUrl') }}</label>
-          <UInput v-model="apiBaseUrl" placeholder="http://localhost:11434" />
-        </div>
+          <!-- Model Selection -->
+          <div>
+            <label class="block text-sm font-medium text-gray-200 mb-2">{{ t('model') }}</label>
+            <USelectMenu v-model="selectedModel" :items="availableModels" :placeholder="t('selectModel')" />
+          </div>
 
-        <!-- Temperature -->
-        <div>
-          <label class="block text-sm font-medium mb-2">
-            {{ t('temperature') }}: {{ temperature }}
-          </label>
-          <URange v-model="temperature" :min="0" :max="2" :step="0.1" />
-          <p class="text-xs text-neutral-500 mt-1">{{ t('temperatureHelp') }}</p>
-        </div>
+          <!-- API Key (for cloud providers) -->
+          <div v-if="showApiKeyField">
+            <label class="block text-sm font-medium text-gray-200 mb-2">{{ t('apiKey') }}</label>
+            <UInput v-model="apiKey" type="password" :placeholder="t('apiKeyPlaceholder')" />
+            <p class="text-xs text-gray-500 mt-1">{{ t('apiKeyHelp') }}</p>
+          </div>
 
-        <!-- Max Tokens -->
-        <div>
-          <label class="block text-sm font-medium mb-2">{{ t('maxTokens') }}</label>
-          <UInput v-model="maxTokens" type="number" :min="256" :max="8192" />
-        </div>
+          <!-- Base URL (for Ollama) -->
+          <div v-if="showBaseUrlField">
+            <label class="block text-sm font-medium text-gray-200 mb-2">{{ t('baseUrl') }}</label>
+            <UInput v-model="apiBaseUrl" placeholder="http://localhost:11434" />
+          </div>
 
-        <!-- Set as Default -->
-        <div class="flex items-center gap-3">
-          <USwitch v-model="isDefault" />
-          <label class="text-sm">{{ t('setDefault') }}</label>
-        </div>
+          <!-- Temperature -->
+          <div>
+            <label class="block text-sm font-medium text-gray-200 mb-2">
+              {{ t('temperature') }}: {{ temperature }}
+            </label>
+            <URange v-model="temperature" :min="0" :max="2" :step="0.1" />
+            <p class="text-xs text-gray-500 mt-1">{{ t('temperatureHelp') }}</p>
+          </div>
 
-        <!-- Save Button -->
-        <div class="flex items-center gap-3">
-          <UButton :loading="isSaving" @click="saveConfig">
-            {{ t('save') }}
-          </UButton>
+          <!-- Max Tokens -->
+          <div>
+            <label class="block text-sm font-medium text-gray-200 mb-2">{{ t('maxTokens') }}</label>
+            <UInput v-model="maxTokens" type="number" :min="256" :max="8192" />
+          </div>
 
-          <Transition name="fade">
-            <UAlert v-if="saveSuccess" :title="t('saved')" color="success" variant="soft" class="ml-auto" />
-          </Transition>
+          <!-- Set as Default -->
+          <div class="flex items-center gap-3">
+            <USwitch v-model="isDefault" />
+            <label class="text-sm text-gray-300">{{ t('setDefault') }}</label>
+          </div>
 
-          <UAlert v-if="saveError" :title="saveError" color="error" variant="soft" class="ml-auto" />
+          <!-- Save Button -->
+          <div class="flex items-center gap-3">
+            <UButton :loading="isSaving" @click="saveConfig">
+              {{ t('save') }}
+            </UButton>
+
+            <Transition name="fade">
+              <UAlert v-if="saveSuccess" :title="t('saved')" color="success" variant="soft" class="ml-auto" />
+            </Transition>
+
+            <UAlert v-if="saveError" :title="saveError" color="error" variant="soft" class="ml-auto" />
+          </div>
         </div>
       </div>
-    </UCard>
+    </div>
   </div>
 </template>

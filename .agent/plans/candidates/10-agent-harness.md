@@ -153,5 +153,97 @@ Backend state machine with deterministic phases:
 - File upload to workspace (DOCX/PDF with extraction)
 - Contract review UI flow
 
+## Reference Links
+
+- **Episode 6 PRD:** https://github.com/theaiautomators/claude-code-agentic-rag-series/blob/main/ep6-agent-harness/PRD-Agent-Harness.md
+- **Episode 6 README:** https://github.com/theaiautomators/claude-code-agentic-rag-series/tree/main/ep6-agent-harness
+- **Full Series:** https://github.com/theaiautomators/claude-code-agentic-rag-series
+
+## Python Backend Dependencies
+
+Add to `packages/python-backend/pyproject.toml`:
+```toml
+[project.optional-dependencies]
+harness = [
+    "python-docx>=1.1.0",
+    "pypdf>=4.0.0",
+]
+```
+
+## Harness Engine Structure (Python)
+
+```
+packages/python-backend/app/services/harness/
+├── __init__.py
+├── engine.py           # Main state machine
+├── phases.py           # Phase type executors
+├── gatekeeper.py       # Pre/post harness LLM validation
+├── registry.py         # Phase type registry
+└── harnesses/
+    ├── __init__.py
+    └── contract_review.py  # First domain-specific harness
+```
+
+## Deep Mode Agent Structure (Python)
+
+```
+packages/python-backend/app/services/agent/
+├── deep_mode.py        # Deep mode agent loop
+├── workspace.py        # Virtual filesystem
+├── todo_manager.py     # Todo list management
+└── sub_agent.py        # Already exists - extend for task delegation
+```
+
+## Optimized System Prompt (for Deep Mode)
+
+```
+DEEP MODE is now ACTIVE. You have the following capabilities:
+
+PLANNING:
+- write_todos(todos): Create/replace your task list
+- read_todos(): Check your current plan
+- Always plan before acting. Break complex tasks into steps.
+
+WORKSPACE:
+- write_file(path, content): Create or overwrite files
+- read_file(path): Read file contents
+- edit_file(path, old_string, new_string): Precise string replacement
+- list_files(): See all workspace files
+- Use the workspace to store intermediate results and drafts
+
+DELEGATION:
+- task(description, sub_agent_type): Delegate work to isolated sub-agents
+- Sub-agents have their own context and tool access
+- Use for parallel work or specialized tasks
+
+CLARIFICATION:
+- ask_user(question): Ask the user for input mid-task
+- Use when requirements are unclear or choices need human judgment
+
+ERROR RECOVERY:
+- If a tool fails, log the error and try a different approach
+- Do NOT retry the same failing operation more than twice
+- Append errors to workspace/error.log for tracking
+
+You control the flow. Plan, execute, evaluate, repeat until complete.
+```
+
+## Optimized System Prompt (for Harness Mode)
+
+```
+HARNESS MODE is now ACTIVE. The system controls the flow — you execute within phases.
+
+Current harness: CONTRACT_REVIEW
+Phase {N}/8: {phase_name}
+
+YOUR ROLE:
+- Execute the current phase's task
+- Output structured JSON matching the phase schema
+- Do NOT skip phases or jump ahead
+- Do NOT modify the plan
+
+Available tools for this phase: {phase_tools}
+```
+
 ---
 *Adapted: 2026-03-31*

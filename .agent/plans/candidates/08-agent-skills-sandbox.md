@@ -157,5 +157,74 @@ Tool call results persisted across conversation turns. Reconstructed on load so 
 - Code execution panel in chat
 - Import/export UI
 
+## Reference Links
+
+- **Episode 4 PRD:** https://github.com/theaiautomators/claude-code-agentic-rag-series/blob/main/ep4-skills-sandbox-video/PRD-Skills-Sandbox.md
+- **Episode 4 README:** https://github.com/theaiautomators/claude-code-agentic-rag-series/tree/main/ep4-skills-sandbox-video
+- **llm-sandbox:** https://github.com/agentica-project/llm-sandbox
+- **agentskills.io format:** https://agentskills.io
+- **Full Series:** https://github.com/theaiautomators/claude-code-agentic-rag-series
+
+## Python Backend Dependencies
+
+Add to `packages/python-backend/pyproject.toml`:
+```toml
+[project.optional-dependencies]
+sandbox = [
+    "llm-sandbox>=0.1.0",
+    "docker>=7.0.0",
+    "python-pptx>=0.6.23",
+    "openpyxl>=3.1.0",
+    "fpdf2>=2.7.0",
+    "pandas>=2.2.0",
+    "numpy>=1.26.0",
+    "matplotlib>=3.8.0",
+    "pillow>=10.0.0",
+    "requests>=2.31.0",
+    "beautifulsoup4>=4.12.0",
+]
+```
+
+## Sandbox Service Structure (Python)
+
+```
+packages/python-backend/app/services/sandbox/
+├── __init__.py
+├── container.py        # Docker container lifecycle
+├── session.py          # IPython kernel session management
+├── executor.py         # Code execution with streaming
+├── security.py         # Blocked modules, filesystem restrictions
+└── file_manager.py     # File upload/download from sandbox
+```
+
+## Custom Dockerfile for Sandbox
+
+```dockerfile
+FROM python:3.11-slim
+RUN pip install pandas numpy matplotlib pillow requests beautifulsoup4 \
+    python-pptx python-docx openpyxl fpdf2 ipython
+WORKDIR /sandbox
+```
+
+## Optimized System Prompt (for Skills & Sandbox)
+
+```
+You have access to reusable skills and a code execution sandbox.
+
+SKILLS:
+- Use load_skill(name) when a query matches a skill's description
+- Skills contain specialized instructions and reference files
+- After loading, follow the skill's instructions precisely
+- Do NOT call load_skill speculatively
+
+CODE EXECUTION:
+- Use execute_code(python_code) for data processing, file generation, computations
+- Code runs in an isolated Docker container with IPython
+- Variables persist across calls within the same conversation
+- Generated files are available via signed URLs
+- You can import: pandas, numpy, matplotlib, requests, bs4, python-docx, openpyxl, pptx
+- Do NOT use: subprocess, os.system, socket, ctypes
+```
+
 ---
 *Adapted: 2026-03-31*
