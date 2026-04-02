@@ -43,7 +43,7 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-
+    sendRedirect(event, '/app/integrations')
 
   } catch (error) {
     console.error('Error handling OAuth callback:', error)

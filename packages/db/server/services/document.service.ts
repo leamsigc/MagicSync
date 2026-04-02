@@ -12,7 +12,7 @@ export interface CreateDocumentData {
   storagePath: string
   contentHash?: string
   metadata?: Record<string, any>
-  folderId?: string
+  folderId?: string | null
 }
 
 export interface CreateChunkData {
@@ -240,6 +240,24 @@ export class DocumentService {
       return { data: updated }
     } catch (error) {
       return { error: 'Failed to update metadata' }
+    }
+  }
+
+  async updateFolder(id: string, userId: string, folderId: string | null): Promise<ServiceResponse<Document>> {
+    try {
+      const [updated] = await this.db
+        .update(documents)
+        .set({ folderId, updatedAt: new Date() })
+        .where(and(eq(documents.id, id), eq(documents.userId, userId)))
+        .returning()
+
+      if (!updated) {
+        return { error: 'Document not found', code: 'NOT_FOUND' }
+      }
+
+      return { data: updated }
+    } catch (error) {
+      return { error: 'Failed to update document folder' }
     }
   }
 

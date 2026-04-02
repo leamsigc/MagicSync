@@ -1,6 +1,10 @@
 <i18n src="./knowledge.json"></i18n>
 
 <script setup lang="ts">
+import type { TreeItem } from '@nuxt/ui'
+import { useSortable } from '@vueuse/integrations/useSortable'
+import { useTemplateRef } from 'vue'
+
 interface Folder {
   id: string
   name: string
@@ -17,19 +21,83 @@ interface KBDocument {
   size: number
   folderId: string | null
   createdAt: string
+  metadata?: Record<string, unknown>
+  content?: string
 }
 
 const { t } = useI18n()
 const toast = useToast()
+const uploading = ref(false)
+const fileInput = ref<HTMLInputElement | null>(null)
+const dragOver = ref(false)
 
 const folders = ref<Folder[]>([])
 const documents = ref<KBDocument[]>([])
 const loading = ref(true)
-const selectedFolderId = ref<string | null>(null)
-const expandedFolders = ref<Set<string>>(new Set())
+const selectedItem = ref<TreeItem | null>(null)
+const showDetailPanel = ref(false)
 const newFolderName = ref('')
 const showNewFolderModal = ref(false)
-const breadcrumbs = ref<Folder[]>([])
+const treeRef = useTemplateRef<HTMLElement>('tree')
+
+function getDocumentsInFolder(folderId: string | null) {
+  return documents.value.filter(d => d.folderId === folderId)
+}
+
+function getChildFolders(parentId: string | null) {
+  return folders.value.filter(f => f.parentId === parentId)
+}
+
+function buildTreeItems(): TreeItem[] {
+  const rootFolders = getChildFolders(null)
+  const rootDocs = getDocumentsInFolder(null)
+
+  function buildFolderItem(folder: Folder): TreeItem {
+    const children = getChildFolders(folder.id)
+    const folderDocs = getDocumentsInFolder(folder.id)
+
+    const treeChildren: TreeItem[] = [
+      ...children.map(buildFolderItem),
+      ...folderDocs.map(doc => ({
+        id: doc.id,
+        label: doc.originalName,
+        icon: getFileIcon(doc.mimeType),
+        isLeaf: true,
+        data: { type: 'document', ...doc }
+      }))
+    ]
+
+    return {
+      id: folder.id,
+      label: folder.name,
+      icon: 'i-heroicons-folder',
+      children: treeChildren.length > 0 ? treeChildren : undefined,
+      data: { type: 'folder', ...folder }
+    }
+  }
+
+  const rootChildren: TreeItem[] = [
+    ...rootFolders.map(folder => buildFolderItem(folder)),
+    ...rootDocs.map(doc => ({
+      id: doc.id,
+      label: doc.originalName,
+      icon: getFileIcon(doc.mimeType),
+      isLeaf: true,
+      data: { type: 'document', ...doc }
+    }))
+  ]
+
+  return [{
+    id: 'root',
+    label: 'All Documents',
+    icon: 'i-heroicons-home',
+    defaultExpanded: true,
+    children: rootChildren,
+    data: { type: 'root' }
+  }]
+}
+
+const items = ref<TreeItem[]>([])
 
 async function fetchFolders() {
   try {
@@ -52,35 +120,79 @@ async function fetchDocuments() {
 async function loadData() {
   loading.value = true
   await Promise.all([fetchFolders(), fetchDocuments()])
+  items.value = buildTreeItems()
   loading.value = false
 }
 
-function getDocumentsInFolder(folderId: string | null) {
-  return documents.value.filter(d => d.folderId === folderId)
+function flatten(
+  treeItems: TreeItem[],
+  parent = treeItems
+): { item: TreeItem; parent: TreeItem[]; index: number }[] {
+  return treeItems.flatMap((item, index) => [
+    { item, parent, index },
+    ...(item.children?.length && item.defaultExpanded ? flatten(item.children, item.children) : [])
+  ])
 }
 
-function getChildFolders(parentId: string | null) {
-  return folders.value.filter(f => f.parentId === parentId)
-}
 
-function getBreadcrumbs(): Folder[] {
-  const crumbs: Folder[] = []
-  let current = selectedFolderId.value ? folders.value.find(f => f.id === selectedFolderId.value) : null
+async function moveItem(oldIndex: number, newIndex: number) {
+  if (oldIndex === newIndex) return
 
-  while (current) {
-    crumbs.unshift(current)
-    current = current.parentId ? folders.value.find(f => f.id === current!.parentId) : null
+  const flat = flatten(items.value)
+  const source = flat[oldIndex]
+  const target = flat[newIndex]
+
+  if (!source || !target) return
+
+  const sourceItem = source.item
+  const targetItem = target.item
+
+  if (sourceItem.data?.type !== 'document') return
+  if (targetItem.data?.type !== 'folder') return
+
+  const doc = sourceItem.data as KBDocument
+  const targetFolder = targetItem.data as Folder
+
+  try {
+    await $fetch(`/api/ai-tools/documents/${doc.id}/move`, {
+      method: 'PATCH',
+      body: { folderId: targetFolder.id }
+    })
+    await loadData()
+    toast.add({ title: t('fileMoved'), color: 'success' })
+  } catch (e) {
+    toast.add({ title: 'Error', description: 'Failed to move file', color: 'error' })
   }
-
-  return crumbs
 }
 
-function selectFolder(folderId: string | null) {
-  selectedFolderId.value = folderId
-  breadcrumbs.value = getBreadcrumbs()
+function onTreeSelect(item: TreeItem) {
+  selectedItem.value = item
+
+  if (item.data?.type === 'document') {
+    showDetailPanel.value = true
+  } else if (item.data?.type === 'folder') {
+    showDetailPanel.value = false
+  }
+}
+
+function getSelectedDocument(): KBDocument | null {
+  if (selectedItem.value?.data?.type === 'document') {
+    return selectedItem.value.data as KBDocument
+  }
+  return null
+}
+
+function getSelectedFolder(): Folder | null {
+  if (selectedItem.value?.data?.type === 'folder') {
+    return selectedItem.value.data as Folder
+  }
+  return null
 }
 
 async function createFolder() {
+  const folder = getSelectedFolder()
+  const parentId = folder?.id ?? null
+
   if (!newFolderName.value.trim()) {
     toast.add({ title: 'Error', description: 'Folder name is required', color: 'error' })
     return
@@ -91,15 +203,16 @@ async function createFolder() {
       method: 'POST',
       body: {
         name: newFolderName.value,
-        parentId: selectedFolderId.value,
-        path: selectedFolderId.value
-          ? `${folders.value.find(f => f.id === selectedFolderId.value)?.path}/${newFolderName.value}`
+        parentId,
+        path: parentId
+          ? `${folders.value.find(f => f.id === parentId)?.path}/${newFolderName.value}`
           : `/${newFolderName.value}`
       }
     })
     showNewFolderModal.value = false
     newFolderName.value = ''
     await fetchFolders()
+    items.value = buildTreeItems()
     toast.add({ title: t('folderCreated'), color: 'success' })
   } catch (e) {
     toast.add({ title: 'Error', description: 'Failed to create folder', color: 'error' })
@@ -109,15 +222,67 @@ async function createFolder() {
 async function deleteFolder(folderId: string) {
   try {
     await $fetch(`/api/ai-tools/folders/${folderId}`, { method: 'DELETE' })
-    if (selectedFolderId.value === folderId) {
-      selectFolder(null)
+    if (selectedItem.value?.id === folderId) {
+      selectedItem.value = null
+      showDetailPanel.value = false
     }
     await fetchFolders()
+    items.value = buildTreeItems()
     toast.add({ title: t('folderDeleted'), color: 'success' })
   } catch (e) {
     toast.add({ title: 'Error', description: 'Failed to delete folder', color: 'error' })
   }
 }
+
+function getSelectedFolderId(): string | null {
+  const folder = getSelectedFolder()
+  if (folder) return folder.id
+  if (selectedItem.value?.data?.type === 'root') return null
+  return null
+}
+
+async function handleUpload(files: FileList | null) {
+  if (!files?.length) return
+
+  const folderId = getSelectedFolderId()
+  uploading.value = true
+
+  for (const file of files) {
+    const formData = new FormData()
+    formData.append('file', file)
+    if (folderId) {
+      formData.append('folderId', folderId)
+    }
+
+    try {
+      await $fetch('/api/ai-tools/documents/upload', {
+        method: 'POST',
+        body: formData,
+      })
+      toast.add({ title: t('uploadSuccess'), color: 'success' })
+    } catch (e: any) {
+      const msg = e?.data?.statusMessage || t('uploadError')
+      toast.add({ title: msg, color: 'error' })
+    }
+  }
+  uploading.value = false
+  await loadData()
+}
+
+function onDrop(event: DragEvent) {
+  event.preventDefault()
+  handleUpload(event.dataTransfer?.files || null)
+}
+
+function onDragOver(event: DragEvent) {
+  event.preventDefault()
+  dragOver.value = true
+}
+
+function onDragLeave() {
+  dragOver.value = false
+}
+
 
 function formatSize(bytes: number): string {
   if (bytes < 1024) return bytes + ' B'
@@ -126,23 +291,23 @@ function formatSize(bytes: number): string {
 }
 
 function getFileIcon(mimeType: string): string {
-  if (mimeType.includes('pdf')) return 'i-heroicons-document-text'
-  if (mimeType.includes('word') || mimeType.includes('docx')) return 'i-heroicons-document'
-  if (mimeType.includes('image')) return 'i-heroicons-photo'
-  if (mimeType.includes('text')) return 'i-heroicons-document-text'
+  const type = mimeType.toLowerCase()
+  if (type.includes('pdf')) return 'i-heroicons-document-text'
+  if (type.includes('word') || type.includes('docx')) return 'i-heroicons-document'
+  if (type.includes('image')) return 'i-heroicons-photo'
+  if (type.includes('text') || type.includes('txt') || type === 'application/octet-stream') return 'i-heroicons-document-text'
+  if (type.includes('markdown') || type.includes('md')) return 'i-heroicons-document-text'
   return 'i-heroicons-document'
-}
-
-function toggleFolderExpand(folderId: string) {
-  if (expandedFolders.value.has(folderId)) {
-    expandedFolders.value.delete(folderId)
-  } else {
-    expandedFolders.value.add(folderId)
-  }
 }
 
 onMounted(() => {
   loadData()
+})
+
+useSortable(treeRef, items, {
+  animation: 150,
+  ghostClass: 'opacity-50',
+  onUpdate: (e: any) => moveItem(e.oldIndex, e.newIndex)
 })
 </script>
 
@@ -152,10 +317,18 @@ onMounted(() => {
       <div class="flex items-center gap-2">
         <h1 class="text-xl font-semibold">{{ t('title') }}</h1>
       </div>
-      <UButton color="primary" @click="showNewFolderModal = true">
-        <UIcon name="i-heroicons-folder-plus" class="mr-1" />
-        {{ t('newFolder') }}
-      </UButton>
+      <div class="flex items-center gap-2">
+        <input ref="fileInput" type="file" class="hidden" accept=".pdf,.txt,.md,.html,.docx,.csv,.json" multiple
+          @change="handleUpload(($event.target as HTMLInputElement).files)" />
+        <UButton color="primary" :loading="uploading" @click="fileInput?.click()">
+          <UIcon name="i-heroicons-arrow-up-tray" class="mr-1" />
+          {{ t('upload') }}
+        </UButton>
+        <UButton color="primary" @click="showNewFolderModal = true">
+          <UIcon name="i-heroicons-folder-plus" class="mr-1" />
+          {{ t('newFolder') }}
+        </UButton>
+      </div>
     </div>
 
     <div v-if="loading" class="flex-1 flex items-center justify-center">
@@ -163,76 +336,69 @@ onMounted(() => {
     </div>
 
     <div v-else class="flex-1 flex overflow-hidden">
-      <div class="w-64 border-r border-gray-200 dark:border-gray-700 flex flex-col">
-        <div class="p-2">
-          <UButton variant="ghost" :color="selectedFolderId === null ? 'primary' : 'neutral'"
-            class="w-full justify-start" @click="selectFolder(null)">
-            <UIcon name="i-heroicons-home" class="mr-2" />
-            {{ t('allDocuments') }}
-          </UButton>
+      <div class="w-80 border-r border-gray-200 dark:border-gray-700 flex flex-col" @drop.prevent="onDrop"
+        @dragover="onDragOver" @dragleave="onDragLeave">
+        <UTree ref="tree" :items="items" @select="onTreeSelect" class="flex-1 overflow-y-auto p-2" />
+        <div v-if="dragOver"
+          class="absolute inset-0 bg-primary-50/90 dark:bg-primary-900/50 flex items-center justify-center border-2 border-dashed border-primary-500 rounded-lg m-2">
+          <p class="text-primary-600 dark:text-primary-400 font-medium">{{ t('dropHere') }}</p>
+        </div>
+      </div>
+
+      <div v-if="showDetailPanel"
+        class="w-96 border-l border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden">
+        <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+          <h2 class="text-lg font-semibold">File Details</h2>
         </div>
 
-        <div class="flex-1 overflow-y-auto p-2">
-          <div v-for="folder in getChildFolders(null)" :key="folder.id" class="mb-1">
-            <div class="flex items-center gap-1 p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
-              :class="{ 'bg-primary-50 dark:bg-primary-900/20': selectedFolderId === folder.id }"
-              @click="selectFolder(folder.id)">
-              <button v-if="getChildFolders(folder.id).length > 0" @click.stop="toggleFolderExpand(folder.id)"
-                class="p-0.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded">
-                <UIcon :name="expandedFolders.has(folder.id) ? 'i-heroicons-chevron-down' : 'i-heroicons-chevron-right'"
-                  class="w-4 h-4" />
-              </button>
-              <UIcon v-else name="i-heroicons-blank" class="w-4" />
-              <UIcon name="i-heroicons-folder" class="w-5 h-5 text-yellow-500" />
-              <span class="flex-1 truncate">{{ folder.name }}</span>
+        <div class="flex-1 overflow-y-auto p-4 space-y-4">
+          <div v-if="getSelectedDocument()">
+            <div class="flex items-center gap-3 mb-4">
+              <UIcon :name="getFileIcon(getSelectedDocument()!.mimeType)" class="w-12 h-12 text-gray-400" />
+              <div>
+                <p class="font-medium">{{ getSelectedDocument()!.originalName }}</p>
+                <p class="text-sm text-gray-500">{{ getSelectedDocument()!.filename }}</p>
+              </div>
             </div>
 
-            <div v-if="expandedFolders.has(folder.id)" class="ml-4">
-              <div v-for="child in getChildFolders(folder.id)" :key="child.id"
-                class="flex items-center gap-1 p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
-                :class="{ 'bg-primary-50 dark:bg-primary-900/20': selectedFolderId === child.id }"
-                @click="selectFolder(child.id)">
-                <UIcon name="i-heroicons-folder" class="w-5 h-5 text-yellow-500" />
-                <span class="flex-1 truncate">{{ child.name }}</span>
+            <div class="space-y-3 text-sm">
+              <div class="flex justify-between">
+                <span class="text-gray-500">Size</span>
+                <span>{{ formatSize(getSelectedDocument()!.size) }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-500">Type</span>
+                <span>{{ getSelectedDocument()!.mimeType }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-500">Created</span>
+                <span>{{ new Date(getSelectedDocument()!.createdAt).toLocaleString() }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-500">Path</span>
+                <span class="truncate">{{getSelectedDocument()!.folderId ? folders.find(f => f.id ===
+                  getSelectedDocument()!.folderId)?.path : '/'}}</span>
+              </div>
+            </div>
+
+            <div v-if="getSelectedDocument()!.metadata" class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <h3 class="font-medium mb-2">Metadata</h3>
+              <div class="space-y-2 text-sm">
+                <div v-for="(value, key) in getSelectedDocument()!.metadata" :key="key" class="flex justify-between">
+                  <span class="text-gray-500">{{ key }}</span>
+                  <span>{{ value }}</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="flex-1 flex flex-col overflow-hidden">
-        <div v-if="breadcrumbs.length > 0"
-          class="flex items-center gap-1 p-3 border-b border-gray-200 dark:border-gray-700 text-sm">
-          <button class="hover:text-primary-500" @click="selectFolder(null)">
-            {{ t('root') }}
-          </button>
-          <template v-for="crumb in breadcrumbs" :key="crumb.id">
-            <UIcon name="i-heroicons-chevron-right" class="w-4 h-4 text-gray-400" />
-            <button class="hover:text-primary-500" @click="selectFolder(crumb.id)">
-              {{ crumb.name }}
-            </button>
-          </template>
-        </div>
-
-        <div class="p-4 flex-1 overflow-y-auto">
-          <div v-if="getDocumentsInFolder(selectedFolderId).length === 0" class="text-center py-12">
-            <UIcon name="i-heroicons-folder-open" class="w-12 h-12 text-gray-400 mx-auto mb-3" />
-            <p class="text-gray-500">{{ t('emptyFolder') }}</p>
-          </div>
-
-          <div v-else class="grid gap-2">
-            <div v-for="doc in getDocumentsInFolder(selectedFolderId)" :key="doc.id"
-              class="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
-              <UIcon :name="getFileIcon(doc.mimeType)" class="w-8 h-8 text-gray-400" />
-              <div class="flex-1 min-w-0">
-                <p class="font-medium truncate">{{ doc.originalName }}</p>
-                <p class="text-sm text-gray-500">{{ formatSize(doc.size) }}</p>
-              </div>
-              <span class="text-xs text-gray-400">
-                {{ new Date(doc.createdAt).toLocaleDateString() }}
-              </span>
-            </div>
-          </div>
+      <div v-else class="flex-1 flex items-center justify-center text-gray-500">
+        <div class="text-center">
+          <UIcon name="i-heroicons-folder-open" class="w-16 h-16 text-gray-400 mx-auto mb-3" />
+          <p>Select a file to view details</p>
+          <p class="text-sm mt-2">Drag and drop files to move them to folders</p>
         </div>
       </div>
     </div>
@@ -242,7 +408,7 @@ onMounted(() => {
         <div class="p-4">
           <UInput v-model="newFolderName" :placeholder="t('folderNamePlaceholder')" @keyup.enter="createFolder" />
         </div>
-        <section class="flex gap-4 justify-end  p-4 border-t border-gray-200 dark:border-gray-700">
+        <section class="flex gap-4 justify-end p-4 border-t border-gray-200 dark:border-gray-700">
           <UButton @click="showNewFolderModal = false" variant="ghost">
             {{ t('cancel') }}
           </UButton>

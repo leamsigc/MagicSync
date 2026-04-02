@@ -20,12 +20,22 @@ Read and execute a saved plan from the `.agent/plans/` folder.
    - Check if any dependencies need to be completed first
    - Assess if this can realistically be completed in one pass
 
-3. **Execute tasks in order**
+3. **Track current task**
+   - Read `.agent/plans/active/*.md` to find in-progress plan
+   - Check PROGRESS.md for current module and task status
+   - Use Nuxt UI skill (`/nuxt-ui`) for UI-related tasks
+
+4. **Execute tasks in order**
    - Implement each task following project conventions
    - Verify syntax and imports after each major change
    - Run validation steps as specified in the plan
 
-4. **Report completion**
+5. **Update progress**
+   - Mark completed tasks in PROGRESS.md
+   - Move completed PRDs to `.agent/plans/done/`
+   - Verify implementation quality
+
+6. **Report completion**
    - Summarize what was done:
      - Tasks completed
      - Files created/modified
@@ -45,3 +55,4 @@ Read and execute a saved plan from the `.agent/plans/` folder.
 - Plans are stored in `.agent/plans/candidates/` (pending) and `.agent/plans/active/` (in progress)
 - After completion, update PROGRESS.md with completed tasks
 - If plan complexity is 🔴 Complex, suggest breaking into smaller sub-plans
+- Use `/nuxt-ui` skill for Nuxt UI component implementation

@@ -1,6 +1,13 @@
 <i18n src="./assets.json"></i18n>
 
 <script setup lang="ts">
+interface Folder {
+  id: string
+  name: string
+  parentId: string | null
+  path: string
+}
+
 interface Document {
   id: string
   originalName: string
@@ -15,6 +22,8 @@ interface Document {
 const { t } = useI18n()
 const toast = useToast()
 
+const folders = ref<Folder[]>([])
+const selectedFolderId = ref<string | null>(null)
 const documents = ref<Document[]>([])
 const loading = ref(true)
 const uploading = ref(false)
@@ -22,16 +31,30 @@ const ingesting = ref<Record<string, { message: string; progress?: number }>>({}
 const fileInput = ref<HTMLInputElement | null>(null)
 const dragOver = ref(false)
 
+async function fetchFolders() {
+  try {
+    const data = await $fetch<Folder[]>('/api/ai-tools/folders')
+    folders.value = data || []
+  } catch (e) {
+    // ignore
+  }
+}
+
 async function fetchDocuments() {
   loading.value = true
   try {
-    const data = await $fetch<Document[]>('/api/ai-tools/documents')
+    const params = selectedFolderId.value ? { folderId: selectedFolderId.value } : {}
+    const data = await $fetch<Document[]>('/api/ai-tools/documents', { query: params })
     documents.value = data || []
   } catch (e) {
     toast.add({ title: 'Error', description: 'Failed to load documents', color: 'error' })
   } finally {
     loading.value = false
   }
+}
+
+async function loadData() {
+  await Promise.all([fetchFolders(), fetchDocuments()])
 }
 
 async function handleUpload(files: FileList | null) {
@@ -41,6 +64,9 @@ async function handleUpload(files: FileList | null) {
   for (const file of files) {
     const formData = new FormData()
     formData.append('file', file)
+    if (selectedFolderId.value) {
+      formData.append('folderId', selectedFolderId.value)
+    }
 
     try {
       await $fetch('/api/ai-tools/documents/upload', {
@@ -171,15 +197,30 @@ function getMimeTypeLabel(mime: string): string {
   return mime.split('/').pop()?.toUpperCase() || 'FILE'
 }
 
-onMounted(fetchDocuments)
+const folderOptions = computed(() => [
+  { id: null, label: t('allFolders') },
+  ...folders.value.map(f => ({ id: f.id, label: f.path }))
+])
+
+watch(selectedFolderId, () => {
+  fetchDocuments()
+})
+
+onMounted(loadData)
 </script>
 
 <template>
   <div class="max-w-5xl mx-auto p-6">
     <!-- Header -->
-    <div class="mb-6">
-      <h1 class="text-2xl font-bold">{{ t('title') }}</h1>
-      <p class="text-neutral-500 mt-1">{{ t('description') }}</p>
+    <div class="mb-6 flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold">{{ t('title') }}</h1>
+        <p class="text-neutral-500 mt-1">{{ t('description') }}</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <USelect v-model="selectedFolderId" :items="folderOptions" labelKey="label" valueKey="id"
+          :placeholder="t('selectFolder')" class="w-48" />
+      </div>
     </div>
 
     <!-- Upload Zone -->

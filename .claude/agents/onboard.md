@@ -31,6 +31,35 @@ Onboard Claude Code into the codebase. Scan structure, read key files, and provi
    - Check `python-backend/` directory
    - Look for `requirements.txt` or `pyproject.toml`
 
+5. **Check active PRD implementations**
+   - Review `.agent/plans/active/*.md` for in-progress PRDs
+   - Mark PRDs as complete when all tasks are done
+   - Move completed PRDs to `.agent/plans/done/`
+
+---
+
+## PRD Tracking
+
+### In PROGRESS.md
+Track completion status:
+- `[ ]` = Not started
+- `[-]` = In progress
+- `[x]` = Completed
+
+### In Active Plans
+Check `.agent/plans/active/*.md` for status field:
+- Status: `in_progress`, `complete`, or `pending`
+- Move completed PRDs to `.agent/plans/done/` directory
+- Create `done` directory if it doesn't exist
+- Review each completed PRD for implementation quality
+
+### Implementation Verification
+When marking a PRD complete:
+1. Verify all implementation matches plan
+2. Check for best practices and edge cases
+3. Ensure tests pass (run test commands)
+4. Verify database migrations are applied
+
 ## Output
 
 Provide a brief summary:

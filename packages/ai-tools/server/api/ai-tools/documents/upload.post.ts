@@ -29,6 +29,13 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'File field required' })
   }
 
+  let folderId: string | undefined = undefined
+  const folderIdField = formData.find(f => f.name === 'folderId')
+  if (folderIdField?.data) {
+    const val = folderIdField.data.toString()
+    folderId = val && val.trim() ? val : undefined
+  }
+
   const filename = fileField.filename || 'unknown'
   const mimeType = fileField.type || 'application/octet-stream'
   const size = fileField.data.length
@@ -67,6 +74,7 @@ export default defineEventHandler(async (event) => {
     size,
     storagePath: `documents/${user.id}/${storageName}`,
     contentHash,
+    folderId,
     metadata: { uploadedAt: new Date().toISOString() },
   })
 

@@ -10,9 +10,15 @@
     "folderNamePlaceholder": "Enter folder name",
     "folderCreated": "Folder created successfully",
     "folderDeleted": "Folder deleted successfully",
+    "fileMoved": "File moved successfully",
+    "move": "Move",
     "cancel": "Cancel",
     "create": "Create",
-    "delete": "Delete"
+    "delete": "Delete",
+    "upload": "Upload",
+    "uploadSuccess": "File uploaded successfully",
+    "uploadError": "Failed to upload file",
+    "dropHere": "Drop files here to upload"
   },
   "es": {
     "title": "Base de Conocimiento",
@@ -25,6 +31,8 @@
     "folderNamePlaceholder": "Ingresa nombre de carpeta",
     "folderCreated": "Carpeta creada exitosamente",
     "folderDeleted": "Carpeta eliminada exitosamente",
+    "fileMoved": "Archivo movido exitosamente",
+    "move": "Mover",
     "cancel": "Cancelar",
     "create": "Crear",
     "delete": "Eliminar"
@@ -40,6 +48,8 @@
     "folderNamePlaceholder": "Ordnername eingeben",
     "folderCreated": "Ordner erfolgreich erstellt",
     "folderDeleted": "Ordner erfolgreich gelöscht",
+    "fileMoved": "Datei erfolgreich verschoben",
+    "move": "Verschieben",
     "cancel": "Abbrechen",
     "create": "Erstellen",
     "delete": "Löschen"
@@ -55,6 +65,8 @@
     "folderNamePlaceholder": "Entrez le nom du dossier",
     "folderCreated": "Dossier créé avec succès",
     "folderDeleted": "Dossier supprimé avec succès",
+    "fileMoved": "Fichier déplacé avec succès",
+    "move": "Déplacer",
     "cancel": "Annuler",
     "create": "Créer",
     "delete": "Supprimer"

@@ -594,13 +594,13 @@ importers:
         version: 4.21.0
       vitepress:
         specifier: 2.0.0-alpha.13
-        version: 2.0.0-alpha.13(@algolia/client-search@5.46.3)(@types/node@22.19.6)(axios@1.14.0)(change-case@5.4.4)(fuse.js@7.1.0)(jiti@1.21.7)(lightningcss@1.32.0)(oxc-minify@0.117.0)(postcss@8.5.6)(react@19.2.3)(sass@1.98.0)(search-insights@2.17.3)(terser@5.44.1)(tsx@4.21.0)(typescript@6.0.2)(yaml@2.8.2)
+        version: 2.0.0-alpha.13(@algolia/client-search@5.46.3)(@types/node@22.19.6)(axios@1.14.0)(change-case@5.4.4)(fuse.js@7.1.0)(jiti@1.21.7)(lightningcss@1.32.0)(oxc-minify@0.117.0)(postcss@8.5.6)(react@19.2.3)(sass@1.98.0)(search-insights@2.17.3)(sortablejs@1.15.7)(terser@5.44.1)(tsx@4.21.0)(typescript@6.0.2)(yaml@2.8.2)
       vitepress-plugin-llms:
         specifier: ^1.9.3
         version: 1.10.0
       vitepress-plugin-mermaid:
         specifier: ^2.0.17
-        version: 2.0.17(mermaid@11.12.2)(vitepress@2.0.0-alpha.13(@algolia/client-search@5.46.3)(@types/node@22.19.6)(axios@1.14.0)(change-case@5.4.4)(fuse.js@7.1.0)(jiti@1.21.7)(lightningcss@1.32.0)(oxc-minify@0.117.0)(postcss@8.5.6)(react@19.2.3)(sass@1.98.0)(search-insights@2.17.3)(terser@5.44.1)(tsx@4.21.0)(typescript@6.0.2)(yaml@2.8.2))
+        version: 2.0.17(mermaid@11.12.2)(vitepress@2.0.0-alpha.13(@algolia/client-search@5.46.3)(@types/node@22.19.6)(axios@1.14.0)(change-case@5.4.4)(fuse.js@7.1.0)(jiti@1.21.7)(lightningcss@1.32.0)(oxc-minify@0.117.0)(postcss@8.5.6)(react@19.2.3)(sass@1.98.0)(search-insights@2.17.3)(sortablejs@1.15.7)(terser@5.44.1)(tsx@4.21.0)(typescript@6.0.2)(yaml@2.8.2))
 
   packages/email:
     dependencies:
@@ -911,6 +911,9 @@ importers:
       consola:
         specifier: 'catalog:'
         version: 3.4.2
+      sortablejs:
+        specifier: ^1.15.7
+        version: 1.15.7
       three:
         specifier: 'catalog:'
         version: 0.183.2
@@ -929,7 +932,7 @@ importers:
         version: 4.0.0(@playwright/test@1.58.2)(happy-dom@20.8.9)(jsdom@26.1.0(canvas@3.2.1))(magicast@0.5.2)(playwright-core@1.58.2)(typescript@6.0.2)(vite@7.3.1(@types/node@22.19.6)(jiti@2.6.1)(lightningcss@1.32.0)(sass@1.98.0)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.1.2(@opentelemetry/api@1.9.0)(@types/node@22.19.6)(happy-dom@20.8.9)(jsdom@26.1.0(canvas@3.2.1))(vite@7.3.1(@types/node@22.19.6)(jiti@2.6.1)(lightningcss@1.32.0)(sass@1.98.0)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2)))
       '@nuxt/ui':
         specifier: 'catalog:'
-        version: 4.6.0(41481a2828f1c631e02a026aec55b61b)
+        version: 4.6.0(128e2dc52023c49ca51be346bb56cdd1)
       '@nuxtjs/i18n':
         specifier: 'catalog:'
         version: 10.2.4(@vue/compiler-dom@3.5.31)(db0@0.3.4(@libsql/client@0.17.2)(better-sqlite3@12.8.0)(drizzle-orm@0.45.2(@libsql/client@0.17.2)(@opentelemetry/api@1.9.0)(better-sqlite3@12.8.0)(kysely@0.28.15)))(eslint@10.1.0(jiti@2.6.1))(ioredis@5.9.1)(magicast@0.5.2)(rollup@4.55.1)(typescript@6.0.2)(vue@3.5.31(typescript@6.0.2))
@@ -10315,6 +10318,9 @@ packages:
     resolution: {integrity: sha512-bPMmpy/5WWKHea5Y/jYAP6k74A+hvmRCQaJuJB6I/ML5JZq/KfNieUVo/3Mh7SAqn7TyFdIo6wqYHInG1MU1bQ==}
     engines: {node: '>=10.0.0'}
 
+  sortablejs@1.15.7:
+    resolution: {integrity: sha512-Kk8wLQPlS+yi1ZEf48a4+fzHa4yxjC30M/Sr2AnQu+f/MPwvvX9XjZ6OWejiz8crBsLwSq8GHqaxaET7u6ux0A==}
+
   source-map-js@1.2.1:
     resolution: {integrity: sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==}
     engines: {node: '>=0.10.0'}
@@ -14364,7 +14370,7 @@ snapshots:
       - typescript
       - vite
 
-  '@nuxt/ui@4.6.0(41481a2828f1c631e02a026aec55b61b)':
+  '@nuxt/ui@4.6.0(128e2dc52023c49ca51be346bb56cdd1)':
     dependencies:
       '@floating-ui/dom': 1.7.6
       '@iconify/vue': 5.0.0(vue@3.5.31(typescript@6.0.2))
@@ -14399,7 +14405,7 @@ snapshots:
       '@tiptap/vue-3': 3.21.0(@floating-ui/dom@1.7.6)(@tiptap/core@3.21.0(@tiptap/pm@3.21.0))(@tiptap/pm@3.21.0)(vue@3.5.31(typescript@6.0.2))
       '@unhead/vue': 2.1.12(vue@3.5.31(typescript@6.0.2))
       '@vueuse/core': 14.2.1(vue@3.5.31(typescript@6.0.2))
-      '@vueuse/integrations': 14.2.1(axios@1.14.0)(change-case@5.4.4)(focus-trap@7.8.0)(fuse.js@7.1.0)(vue@3.5.31(typescript@6.0.2))
+      '@vueuse/integrations': 14.2.1(axios@1.14.0)(change-case@5.4.4)(focus-trap@7.8.0)(fuse.js@7.1.0)(sortablejs@1.15.7)(vue@3.5.31(typescript@6.0.2))
       '@vueuse/shared': 14.2.1(vue@3.5.31(typescript@6.0.2))
       colortranslator: 5.0.0
       consola: 3.4.2
@@ -14514,7 +14520,7 @@ snapshots:
       '@tiptap/vue-3': 3.21.0(@floating-ui/dom@1.7.6)(@tiptap/core@3.21.0(@tiptap/pm@3.21.0))(@tiptap/pm@3.21.0)(vue@3.5.31(typescript@6.0.2))
       '@unhead/vue': 2.1.12(vue@3.5.31(typescript@6.0.2))
       '@vueuse/core': 14.2.1(vue@3.5.31(typescript@6.0.2))
-      '@vueuse/integrations': 14.2.1(axios@1.14.0)(change-case@5.4.4)(focus-trap@7.8.0)(fuse.js@7.1.0)(vue@3.5.31(typescript@6.0.2))
+      '@vueuse/integrations': 14.2.1(axios@1.14.0)(change-case@5.4.4)(focus-trap@7.8.0)(fuse.js@7.1.0)(sortablejs@1.15.7)(vue@3.5.31(typescript@6.0.2))
       '@vueuse/shared': 14.2.1(vue@3.5.31(typescript@6.0.2))
       colortranslator: 5.0.0
       consola: 3.4.2
@@ -14629,7 +14635,7 @@ snapshots:
       '@tiptap/vue-3': 3.21.0(@floating-ui/dom@1.7.6)(@tiptap/core@3.21.0(@tiptap/pm@3.21.0))(@tiptap/pm@3.21.0)(vue@3.5.31(typescript@6.0.2))
       '@unhead/vue': 2.1.12(vue@3.5.31(typescript@6.0.2))
       '@vueuse/core': 14.2.1(vue@3.5.31(typescript@6.0.2))
-      '@vueuse/integrations': 14.2.1(axios@1.14.0)(change-case@5.4.4)(focus-trap@7.8.0)(fuse.js@7.1.0)(vue@3.5.31(typescript@6.0.2))
+      '@vueuse/integrations': 14.2.1(axios@1.14.0)(change-case@5.4.4)(focus-trap@7.8.0)(fuse.js@7.1.0)(sortablejs@1.15.7)(vue@3.5.31(typescript@6.0.2))
       '@vueuse/shared': 14.2.1(vue@3.5.31(typescript@6.0.2))
       colortranslator: 5.0.0
       consola: 3.4.2
@@ -14744,7 +14750,7 @@ snapshots:
       '@tiptap/vue-3': 3.21.0(@floating-ui/dom@1.7.6)(@tiptap/core@3.21.0(@tiptap/pm@3.21.0))(@tiptap/pm@3.21.0)(vue@3.5.31(typescript@6.0.2))
       '@unhead/vue': 2.1.12(vue@3.5.31(typescript@6.0.2))
       '@vueuse/core': 14.2.1(vue@3.5.31(typescript@6.0.2))
-      '@vueuse/integrations': 14.2.1(axios@1.14.0)(change-case@5.4.4)(focus-trap@7.8.0)(fuse.js@7.1.0)(vue@3.5.31(typescript@6.0.2))
+      '@vueuse/integrations': 14.2.1(axios@1.14.0)(change-case@5.4.4)(focus-trap@7.8.0)(fuse.js@7.1.0)(sortablejs@1.15.7)(vue@3.5.31(typescript@6.0.2))
       '@vueuse/shared': 14.2.1(vue@3.5.31(typescript@6.0.2))
       colortranslator: 5.0.0
       consola: 3.4.2
@@ -17698,7 +17704,7 @@ snapshots:
       '@vueuse/shared': 14.2.1(vue@3.5.31(typescript@6.0.2))
       vue: 3.5.31(typescript@6.0.2)
 
-  '@vueuse/integrations@14.1.0(axios@1.14.0)(change-case@5.4.4)(focus-trap@7.8.0)(fuse.js@7.1.0)(vue@3.5.26(typescript@6.0.2))':
+  '@vueuse/integrations@14.1.0(axios@1.14.0)(change-case@5.4.4)(focus-trap@7.8.0)(fuse.js@7.1.0)(sortablejs@1.15.7)(vue@3.5.26(typescript@6.0.2))':
     dependencies:
       '@vueuse/core': 14.1.0(vue@3.5.26(typescript@6.0.2))
       '@vueuse/shared': 14.1.0(vue@3.5.26(typescript@6.0.2))
@@ -17708,8 +17714,9 @@ snapshots:
       change-case: 5.4.4
       focus-trap: 7.8.0
       fuse.js: 7.1.0
+      sortablejs: 1.15.7
 
-  '@vueuse/integrations@14.2.1(axios@1.14.0)(change-case@5.4.4)(focus-trap@7.8.0)(fuse.js@7.1.0)(vue@3.5.31(typescript@6.0.2))':
+  '@vueuse/integrations@14.2.1(axios@1.14.0)(change-case@5.4.4)(focus-trap@7.8.0)(fuse.js@7.1.0)(sortablejs@1.15.7)(vue@3.5.31(typescript@6.0.2))':
     dependencies:
       '@vueuse/core': 14.2.1(vue@3.5.31(typescript@6.0.2))
       '@vueuse/shared': 14.2.1(vue@3.5.31(typescript@6.0.2))
@@ -17719,6 +17726,7 @@ snapshots:
       change-case: 5.4.4
       focus-trap: 7.8.0
       fuse.js: 7.1.0
+      sortablejs: 1.15.7
 
   '@vueuse/metadata@10.11.1': {}
 
@@ -24759,6 +24767,8 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  sortablejs@1.15.7: {}
+
   source-map-js@1.2.1: {}
 
   source-map-support@0.5.21:
@@ -25645,14 +25655,14 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  vitepress-plugin-mermaid@2.0.17(mermaid@11.12.2)(vitepress@2.0.0-alpha.13(@algolia/client-search@5.46.3)(@types/node@22.19.6)(axios@1.14.0)(change-case@5.4.4)(fuse.js@7.1.0)(jiti@1.21.7)(lightningcss@1.32.0)(oxc-minify@0.117.0)(postcss@8.5.6)(react@19.2.3)(sass@1.98.0)(search-insights@2.17.3)(terser@5.44.1)(tsx@4.21.0)(typescript@6.0.2)(yaml@2.8.2)):
+  vitepress-plugin-mermaid@2.0.17(mermaid@11.12.2)(vitepress@2.0.0-alpha.13(@algolia/client-search@5.46.3)(@types/node@22.19.6)(axios@1.14.0)(change-case@5.4.4)(fuse.js@7.1.0)(jiti@1.21.7)(lightningcss@1.32.0)(oxc-minify@0.117.0)(postcss@8.5.6)(react@19.2.3)(sass@1.98.0)(search-insights@2.17.3)(sortablejs@1.15.7)(terser@5.44.1)(tsx@4.21.0)(typescript@6.0.2)(yaml@2.8.2)):
     dependencies:
       mermaid: 11.12.2
-      vitepress: 2.0.0-alpha.13(@algolia/client-search@5.46.3)(@types/node@22.19.6)(axios@1.14.0)(change-case@5.4.4)(fuse.js@7.1.0)(jiti@1.21.7)(lightningcss@1.32.0)(oxc-minify@0.117.0)(postcss@8.5.6)(react@19.2.3)(sass@1.98.0)(search-insights@2.17.3)(terser@5.44.1)(tsx@4.21.0)(typescript@6.0.2)(yaml@2.8.2)
+      vitepress: 2.0.0-alpha.13(@algolia/client-search@5.46.3)(@types/node@22.19.6)(axios@1.14.0)(change-case@5.4.4)(fuse.js@7.1.0)(jiti@1.21.7)(lightningcss@1.32.0)(oxc-minify@0.117.0)(postcss@8.5.6)(react@19.2.3)(sass@1.98.0)(search-insights@2.17.3)(sortablejs@1.15.7)(terser@5.44.1)(tsx@4.21.0)(typescript@6.0.2)(yaml@2.8.2)
     optionalDependencies:
       '@mermaid-js/mermaid-mindmap': 9.3.0
 
-  vitepress@2.0.0-alpha.13(@algolia/client-search@5.46.3)(@types/node@22.19.6)(axios@1.14.0)(change-case@5.4.4)(fuse.js@7.1.0)(jiti@1.21.7)(lightningcss@1.32.0)(oxc-minify@0.117.0)(postcss@8.5.6)(react@19.2.3)(sass@1.98.0)(search-insights@2.17.3)(terser@5.44.1)(tsx@4.21.0)(typescript@6.0.2)(yaml@2.8.2):
+  vitepress@2.0.0-alpha.13(@algolia/client-search@5.46.3)(@types/node@22.19.6)(axios@1.14.0)(change-case@5.4.4)(fuse.js@7.1.0)(jiti@1.21.7)(lightningcss@1.32.0)(oxc-minify@0.117.0)(postcss@8.5.6)(react@19.2.3)(sass@1.98.0)(search-insights@2.17.3)(sortablejs@1.15.7)(terser@5.44.1)(tsx@4.21.0)(typescript@6.0.2)(yaml@2.8.2):
     dependencies:
       '@docsearch/css': 4.4.0
       '@docsearch/js': 4.4.0(@algolia/client-search@5.46.3)(react@19.2.3)(search-insights@2.17.3)
@@ -25665,7 +25675,7 @@ snapshots:
       '@vue/devtools-api': 8.0.5
       '@vue/shared': 3.5.26
       '@vueuse/core': 14.1.0(vue@3.5.26(typescript@6.0.2))
-      '@vueuse/integrations': 14.1.0(axios@1.14.0)(change-case@5.4.4)(focus-trap@7.8.0)(fuse.js@7.1.0)(vue@3.5.26(typescript@6.0.2))
+      '@vueuse/integrations': 14.1.0(axios@1.14.0)(change-case@5.4.4)(focus-trap@7.8.0)(fuse.js@7.1.0)(sortablejs@1.15.7)(vue@3.5.26(typescript@6.0.2))
       focus-trap: 7.8.0
       mark.js: 8.11.1
       minisearch: 7.2.0

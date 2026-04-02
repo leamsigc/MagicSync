@@ -15,15 +15,15 @@
     "test:e2e:report": "playwright show-report"
   },
   "dependencies": {
-    "@local-monorepo/db": "workspace:*",
-    "@local-monorepo/ui": "workspace:*",
-    "@local-monorepo/tools": "workspace:*",
-    "@nuxtjs/i18n": "catalog:",
     "@ai-sdk/vue": "catalog:",
+    "@comark/nuxt": "catalog:",
+    "@local-monorepo/db": "workspace:*",
+    "@local-monorepo/tools": "workspace:*",
+    "@local-monorepo/ui": "workspace:*",
+    "@nuxtjs/i18n": "catalog:",
     "ai": "catalog:",
     "cheerio": "catalog:",
     "evlog": "catalog:",
-    "@comark/nuxt": "catalog:",
     "mediabunny": "catalog:"
   },
   "devDependencies": {

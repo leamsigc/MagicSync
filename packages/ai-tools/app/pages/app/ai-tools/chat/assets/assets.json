@@ -6,6 +6,8 @@
     "dropzone": "Drop files here or click to browse",
     "supportedFormats": "PDF, TXT, MD, HTML, DOCX (max 10MB)",
     "noDocuments": "No documents yet. Upload your first document to get started.",
+    "selectFolder": "Select folder",
+    "allFolders": "All folders",
     "status": {
       "pending": "Pending",
       "processing": "Processing",
@@ -44,6 +46,8 @@
     "dropzone": "Arrastra archivos aquí o haz clic para explorar",
     "supportedFormats": "PDF, TXT, MD, HTML, DOCX (máx 10MB)",
     "noDocuments": "No hay documentos aún. Sube tu primer documento para comenzar.",
+    "selectFolder": "Seleccionar carpeta",
+    "allFolders": "Todas las carpetas",
     "status": {
       "pending": "Pendiente",
       "processing": "Procesando",
@@ -82,6 +86,8 @@
     "dropzone": "Dateien hier ablegen oder klicken zum Durchsuchen",
     "supportedFormats": "PDF, TXT, MD, HTML, DOCX (max 10MB)",
     "noDocuments": "Noch keine Dokumente. Laden Sie Ihr erstes Dokument hoch.",
+    "selectFolder": "Ordner auswählen",
+    "allFolders": "Alle Ordner",
     "status": {
       "pending": "Ausstehend",
       "processing": "Verarbeitung",
@@ -120,6 +126,8 @@
     "dropzone": "Déposez les fichiers ici ou cliquez pour parcourir",
     "supportedFormats": "PDF, TXT, MD, HTML, DOCX (max 10MB)",
     "noDocuments": "Aucun document. Téléchargez votre premier document pour commencer.",
+    "selectFolder": "Sélectionner dossier",
+    "allFolders": "Tous les dossiers",
     "status": {
       "pending": "En attente",
       "processing": "Traitement",
