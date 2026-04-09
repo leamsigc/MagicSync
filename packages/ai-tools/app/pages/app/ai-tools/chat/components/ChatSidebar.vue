@@ -22,8 +22,8 @@ const threadItems = (threadId: string) => [
 </script>
 
 <template>
-  <div class="w-64 border-r border-muted bg-elevated flex flex-col">
-    <div class="p-3 grid grid-cols-2 gap-4">
+  <div class="w-64 border-r border-muted flex flex-col">
+    <div class="p-3 grid  gap-4">
       <UButton label="New Chat" icon="i-lucide-plus" color="primary" variant="solid" @click="emit('newThread')" />
     </div>
     <div class="overflow-y-auto flex-1">

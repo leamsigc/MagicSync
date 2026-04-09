@@ -102,23 +102,38 @@ export default defineEventHandler(async (event) => {
 
         while (true) {
           const { done, value } = await reader.read()
-          if (done) {
+            if (done) {
+            // Process any remaining buffer
+            if (buffer.startsWith('data: ')) {
+              const json = buffer.slice(6).trim()
+              if (json) {
+                try {
+                  const data = JSON.parse(json)
+                  if (data.done) break
+                } catch (e) {
+                  logger.error('Failed to parse final SSE data:', e, json)
+                }
+              }
+            }
             logger.info('Stream completed (done)')
             break
           }
 
           buffer += decoder.decode(value, { stream: true })
-          const lines = buffer.split('\n')
-          buffer = lines.pop() || ''
-
-          for (const line of lines) {
+          
+          // Process all complete SSE messages
+          let newlineIndex
+          while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
+            const line = buffer.slice(0, newlineIndex)
+            buffer = buffer.slice(newlineIndex + 1)
+            
             if (!line.startsWith('data: ')) continue
             const json = line.slice(6).trim()
             if (!json) continue
 
             try {
               const data = JSON.parse(json)
-
+              
               if (data.type === 'thinking') {
                 if (!reasoningId) {
                   reasoningId = generateId()

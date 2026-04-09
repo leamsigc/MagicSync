@@ -4,7 +4,8 @@
 import { useA2UIChat } from './composables/useA2UIChat'
 import ChatSidebar from './components/ChatSidebar.vue'
 import ToolCallCard from './components/ToolCallCard.vue'
-import { isReasoningUIPart, isTextUIPart, isToolUIPart, isDynamicToolUIPart } from 'ai'
+import { isReasoningUIPart, isTextUIPart, isToolUIPart, isStaticToolUIPart } from 'ai'
+
 
 definePageMeta({ layout: 'ai-tools-layout' })
 
@@ -71,7 +72,7 @@ function getToolCallState(part: any): 'input-available' | 'output-available' | '
 }
 
 function getToolName(part: any): string {
-  // if (isDynamicToolUIPart(part)) return part.toolName
+  if (isStaticToolUIPart(part)) return part.toolName
   if (isToolUIPart(part)) {
     const type = part.type
     return type.replace('tool-', '')
@@ -134,7 +135,7 @@ function getToolName(part: any): string {
                   class="*:first:mt-0 *:last:mb-0" />
               </UChatReasoning>
 
-              <template v-else-if="isToolUIPart(part) || isDynamicToolUIPart(part)">
+              <template v-else-if="isToolUIPart(part) || isStaticToolUIPart(part)">
                 <ToolCallCard :tool-call-id="part.toolCallId" :tool-name="getToolName(part)" :input="part.input"
                   :output="part.output as string" :error="part.errorText" :state="getToolCallState(part)" />
               </template>
