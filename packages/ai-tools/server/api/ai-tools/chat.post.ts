@@ -17,6 +17,14 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Messages are required' })
   }
 
+  // Convert frontend message format to backend format
+  const convertedMessages = messages.map((m: any) => {
+    const content = m.parts
+      ? m.parts.filter((p: any) => p.type === 'text').map((p: any) => p.text).join('')
+      : m.content || ''
+    return { role: m.role, content }
+  }).filter((m: any) => m.content)
+
   const config = useRuntimeConfig()
   const backendUrl = config.pythonBackendUrl || 'http://localhost:8000'
 
@@ -26,28 +34,22 @@ export default defineEventHandler(async (event) => {
 
   let threadId = body.thread_id as string | undefined
 
-  if (!threadId && messages.length > 0) {
-    const firstUserMsg = messages.find((m: any) => m.role === 'user')
-    const content = firstUserMsg?.parts
-      ? firstUserMsg.parts.filter((p: any) => p.type === 'text').map((p: any) => p.text).join('')
-      : firstUserMsg?.content || ''
-    const title = content?.slice(0, 80) || 'New Chat'
+  if (!threadId && convertedMessages.length > 0) {
+    const firstUserMsg = convertedMessages.find((m: any) => m.role === 'user')
+    const title = firstUserMsg?.content?.slice(0, 80) || 'New Chat'
     const threadResult = await chatService.createThread(user.id, { title })
     if (threadResult.data) {
       threadId = threadResult.data.id
     }
   }
 
-  const lastMessage = messages[messages.length - 1]
+  const lastMessage = convertedMessages[convertedMessages.length - 1]
   if (threadId && lastMessage?.role === 'user') {
-    const content = lastMessage.parts
-      ? lastMessage.parts.filter((p: any) => p.type === 'text').map((p: any) => p.text).join('')
-      : lastMessage.content || ''
     await chatService.addMessage({
       threadId,
       userId: user.id,
       role: 'user',
-      content,
+      content: lastMessage.content,
     })
   }
 
@@ -59,7 +61,7 @@ export default defineEventHandler(async (event) => {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${llmJwt}`,
     },
-    body: JSON.stringify({ messages: body.messages, thread_id: threadId }),
+    body: JSON.stringify({ messages: convertedMessages, thread_id: threadId }),
   })
 
   if (!backendResponse.ok) {
