@@ -3,15 +3,28 @@
 <script setup lang="ts">
 import { useA2UIChat } from './composables/useA2UIChat'
 import ChatSidebar from './components/ChatSidebar.vue'
-import { isReasoningStreaming } from '@nuxt/ui/utils/ai'
-import { isReasoningUIPart, isTextUIPart } from 'ai'
+import ToolCallCard from './components/ToolCallCard.vue'
+import { isReasoningUIPart, isTextUIPart, isToolUIPart, isDynamicToolUIPart } from 'ai'
 
-
-// @ts-ignore
-definePageMeta({ layout: 'ai-tools' })
+definePageMeta({ layout: 'ai-tools-layout' })
 
 const { t } = useI18n()
 const input = ref('')
+const showToolsPanel = ref(false)
+
+const availableTools = [
+  { name: 'retrieve', description: 'Search your knowledge base', category: 'RAG' },
+  { name: 'hybrid_search', description: 'Hybrid search across documents', category: 'RAG' },
+  { name: 'kb_ls', description: 'List documents in a folder', category: 'Knowledge Base' },
+  { name: 'kb_tree', description: 'Show folder tree structure', category: 'Knowledge Base' },
+  { name: 'kb_grep', description: 'Search pattern in documents', category: 'Knowledge Base' },
+  { name: 'kb_glob', description: 'Find files by name pattern', category: 'Knowledge Base' },
+  { name: 'kb_read', description: 'Read document content', category: 'Knowledge Base' },
+  { name: 'load_skill', description: 'Load skill instructions', category: 'Skills' },
+  { name: 'save_skill', description: 'Save a new skill', category: 'Skills' },
+  { name: 'list_skills', description: 'List available skills', category: 'Skills' },
+  { name: 'execute_code', description: 'Run Python code (sandbox)', category: 'Tools' },
+]
 
 const {
   chat,
@@ -46,6 +59,25 @@ function handleSelectThread(id: string) {
 function handleDeleteThread(id: string) {
   deleteThread(id)
 }
+
+function insertTool(toolName: string) {
+  input.value += `[${toolName}] `
+}
+
+function getToolCallState(part: any): 'input-available' | 'output-available' | 'error' {
+  if (part.state === 'output-available') return 'output-available'
+  if (part.errorText || part.state === 'error') return 'error'
+  return 'input-available'
+}
+
+function getToolName(part: any): string {
+  // if (isDynamicToolUIPart(part)) return part.toolName
+  if (isToolUIPart(part)) {
+    const type = part.type
+    return type.replace('tool-', '')
+  }
+  return 'unknown'
+}
 </script>
 
 <template>
@@ -71,7 +103,24 @@ function handleDeleteThread(id: string) {
           </div>
         </div>
         <div class="flex items-center gap-2">
+          <UTooltip :text="'Available Tools'">
+            <UButton icon="i-lucide-wrench" color="neutral" variant="ghost" size="sm"
+              @click="showToolsPanel = !showToolsPanel" />
+          </UTooltip>
           <UButton icon="i-lucide-rotate-cw" color="neutral" variant="ghost" size="sm" @click="chat.messages = []" />
+        </div>
+      </div>
+
+      <div v-if="showToolsPanel" class="border-b border-muted bg-muted/20 p-4">
+        <div class="max-w-3xl mx-auto">
+          <h3 class="text-sm font-semibold mb-2">Available Tools</h3>
+          <p class="text-xs text-muted mb-3">Click to insert tool reference into your message</p>
+          <div class="flex flex-wrap gap-2">
+            <UButton v-for="tool in availableTools" :key="tool.name" size="xs" variant="outline"
+              @click="insertTool(tool.name)">
+              {{ tool.name }}
+            </UButton>
+          </div>
         </div>
       </div>
 
@@ -84,6 +133,11 @@ function handleDeleteThread(id: string) {
                 <MDC :value="part.text" :cache-key="`reasoning-${message.id}-${index}`"
                   class="*:first:mt-0 *:last:mb-0" />
               </UChatReasoning>
+
+              <template v-else-if="isToolUIPart(part) || isDynamicToolUIPart(part)">
+                <ToolCallCard :tool-call-id="part.toolCallId" :tool-name="getToolName(part)" :input="part.input"
+                  :output="part.output as string" :error="part.errorText" :state="getToolCallState(part)" />
+              </template>
 
               <template v-else-if="isTextUIPart(part)">
                 <MDC v-if="message.role === 'assistant'" :value="part.text" :cache-key="`${message.id}-${index}`"

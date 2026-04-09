@@ -2,6 +2,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { Chat } from '@ai-sdk/vue'
 import { DefaultChatTransport } from 'ai'
 import type { UIMessage } from 'ai'
+import { useChatHistoryState } from './useChatHistoryState'
 
 interface Thread {
   id: string
@@ -15,6 +16,7 @@ export function useA2UIChat() {
   const threads = ref<Thread[]>([])
   const isLoadingThreads = ref(false)
   const threadId = ref<string | null>(null)
+  const { saveMessageState, getMessageState } = useChatHistoryState()
 
   // Forward declarations for mutual references
   let loadThreads: () => Promise<void>
@@ -68,14 +70,34 @@ export function useA2UIChat() {
         role: string
         content: string
         createdAt: string
+        metadata?: string
       }>>(`/api/ai-tools/chat/threads/${id}`)
 
       threadId.value = id
-      const uiMessages: UIMessage[] = (data || []).map(m => ({
-        id: m.id,
-        role: m.role as 'user' | 'assistant' | 'system',
-        parts: [{ type: 'text', text: m.content }],
-      }))
+      const uiMessages: UIMessage[] = (data || []).map(m => {
+        let metadata: any = undefined
+        let uiState: any = undefined
+        
+        if (m.metadata) {
+          try {
+            const parsed = JSON.parse(m.metadata)
+            metadata = parsed
+            if (parsed.componentStates) {
+              uiState = { componentStates: parsed.componentStates }
+            }
+          } catch {}
+        }
+        
+        const messageState = getMessageState(m.id)
+        
+        return {
+          id: m.id,
+          role: m.role as 'user' | 'assistant' | 'system',
+          parts: [{ type: 'text', text: m.content }],
+          metadata,
+          uiState: uiState || (messageState ? { componentStates: messageState.components } : undefined)
+        }
+      })
       chat.messages = uiMessages
     } catch (e) {
       console.error('Failed to load thread messages:', e)

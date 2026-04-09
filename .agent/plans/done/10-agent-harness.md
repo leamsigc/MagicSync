@@ -1,7 +1,7 @@
-# Candidate: Agent Harness & Domain-Specific Workflows
+# Agent Harness & Domain-Specific Workflows
 
 ## Status
-`pending`
+`done`
 
 ## Priority
 High

@@ -1,7 +1,7 @@
-# Candidate: Python Backend Infrastructure & Tool Registry
+# Python Backend Infrastructure & Tool Registry
 
 ## Status
-`pending`
+`done`
 
 ## Priority
 Medium

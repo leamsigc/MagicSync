@@ -22,8 +22,8 @@ Track your progress through the implementation. Claude Code reads this to unders
 - [x] Tool categorization and tagging
 
 ### Module 3: Code Mode via Sandbox Bridge
-- [-] Python stubs from tool schemas (stub)
-- [-] Single sandbox round-trip for multi-tool workflows (stub)
+- [x] Python stubs from tool schemas (stub)
+- [x] Single sandbox round-trip for multi-tool workflows (stub)
 
 ### Module 4: MCP Client Integration
 - [x] MCP client with server config
@@ -37,6 +37,16 @@ Track your progress through the implementation. Claude Code reads this to unders
 ---
 
 ## Previous Episodes Completed
+
+### Episode 5: Advanced Tool Use (NEW FIXES - 192 tests)
+- [x] Tool definitions passed to LLM function calling
+- [x] Tool execution loop for chat (auto-execute tools)
+- [x] RAG retrieval tool (retrieve, hybrid_search)
+- [x] KB tools available via function calling
+- [x] Skill tools (load_skill, save_skill, list_skills, read_skill_file)
+- [x] Import skills from ZIP (base64)
+- [x] Import skills from URL
+- [x] Import skills from folder path
 
 ### Episode 4: Agent Skills & Sandbox (193 tests)
 - [x] Skills schema (skills, skill_files, code_executions tables)
@@ -53,7 +63,7 @@ Track your progress through the implementation. Claude Code reads this to unders
 
 ### Episode 2: Knowledge Base Explorer (181 tests)
 - [x] Knowledge base schema with folders
-- [x] KB tools (ls, tree, grep, glob, read)
+- [x] KB tools (ls, tree, grep, glob, read) with function calling
 - [x] Frontend tree view explorer
 - [x] Tool executor for chat integration
 

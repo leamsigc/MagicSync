@@ -33,7 +33,7 @@ class PIIEngine:
         Returns list of detected entities with type, start, end, score.
         """
         try:
-            results = self.analyzer.analyze(text=text, language='en', threshold=threshold)
+            results = self.analyzer.analyze(text=text, language='en', score_threshold=threshold)
             return [
                 {
                     "entity_type": r.entity_type,

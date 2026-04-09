@@ -23,6 +23,7 @@ dependencies = [
     "presidio-analyzer>=2.1.0",
     "presidio-anonymizer>=2.1.0",
     "faker>=30.0.0",
+    "pyyaml>=6.0.0",
 ]
 
 [project.optional-dependencies]
@@ -31,8 +32,33 @@ dev = [
     "pytest-asyncio>=0.24.0",
     "ruff>=0.8.0",
 ]
+knowledge-base = []
+privacy = [
+    "spacy>=3.7.0",
+    "nameparser>=1.1.0",
+    "rapidfuzz>=3.6.0",
+    "gender-guesser>=0.4.0",
+]
+sandbox = [
+    "docker>=7.0.0",
+    "python-pptx>=0.6.23",
+    "openpyxl>=3.1.0",
+    "fpdf2>=2.7.0",
+    "pandas>=2.2.0",
+    "numpy>=1.26.0",
+    "matplotlib>=3.8.0",
+    "pillow>=10.0.0",
+]
+mcp = [
+    "mcp>=1.0.0",
+    "tiktoken>=0.7.0",
+]
+harness = []
 pdf-enhanced = [
     "pdfplumber>=0.11.0",
+]
+agents = [
+    "python-pptx>=1.1.0",
 ]
 
 [build-system]

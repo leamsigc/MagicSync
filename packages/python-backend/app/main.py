@@ -19,12 +19,18 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     setup_langsmith()
     logger.info("MagicSync AI Backend starting up")
+    
+    # Initialize database
+    from app.core.db import init_db
+    await init_db()
+    
     yield
     # Cleanup httpx clients
     from app.services.llm import llm_service
     from app.services.rag.embeddings import embedding_service
     from app.services.rag.reranker import reranker_service
     from app.core.security import _auth_client
+    from app.core.db import close_db
 
     for service, name in [
         (llm_service, "llm"),
@@ -41,7 +47,8 @@ async def lifespan(app: FastAPI):
             await _auth_client.aclose()
         except Exception:
             pass
-
+    
+    await close_db()
     logger.info("MagicSync AI Backend shutting down")
 
 

@@ -19,6 +19,8 @@ const skills = ref<Skill[]>([])
 const loading = ref(true)
 const showCreateModal = ref(false)
 const showEditModal = ref(false)
+const showImportModal = ref(false)
+const importMode = ref<'zip' | 'url' | 'folder'>('zip')
 const selectedSkill = ref<Skill | null>(null)
 
 const newSkill = ref({
@@ -26,6 +28,12 @@ const newSkill = ref({
   description: '',
   instructions: '',
   isGlobal: false
+})
+
+const importData = ref({
+  zipFile: null as File | null,
+  url: '',
+  folderPath: ''
 })
 
 async function fetchSkills() {
@@ -57,6 +65,74 @@ async function createSkill() {
     toast.add({ title: t('skillCreated'), color: 'success' })
   } catch (e) {
     toast.add({ title: 'Error', description: 'Failed to create skill', color: 'error' })
+  }
+}
+
+async function importFromZip() {
+  if (!importData.value.zipFile) {
+    toast.add({ title: 'Error', description: 'Please select a ZIP file', color: 'error' })
+    return
+  }
+
+  try {
+    const reader = new FileReader()
+    reader.onload = async () => {
+      const base64 = (reader.result as string).split(',')[1]
+      await $fetch('/api/ai-tools/skills/pull-from?importFrom=zip', {
+        method: 'POST',
+        body: { zip_base64: base64 }
+      })
+      showImportModal.value = false
+      importData.value.zipFile = null
+      await fetchSkills()
+      toast.add({ title: t('skillImported'), color: 'success' })
+    }
+    reader.onerror = () => {
+      toast.add({ title: t('importError'), color: 'error' })
+    }
+    reader.readAsDataURL(importData.value.zipFile)
+  } catch (e) {
+    toast.add({ title: t('importError'), color: 'error' })
+  }
+}
+
+async function importFromUrl() {
+  if (!importData.value.url) {
+    toast.add({ title: 'Error', description: 'Please enter a URL', color: 'error' })
+    return
+  }
+
+  try {
+    await $fetch('/api/ai-tools/skills/pull-from?importFrom=url', {
+      method: 'POST',
+      body: { url: importData.value.url }
+    })
+    showImportModal.value = false
+    importData.value.url = ''
+    await fetchSkills()
+    toast.add({ title: t('skillImported'), color: 'success' })
+  } catch (e) {
+    toast.add({ title: t('importError'), color: 'error' })
+  }
+}
+
+async function importFromFolder() {
+  if (!importData.value.folderPath) {
+    toast.add({ title: 'Error', description: 'Please enter a folder path', color: 'error' })
+    return
+  }
+
+  try {
+    await $fetch('/api/ai-tools/skills/pull-from?importFrom=folder', {
+      method: 'POST',
+      body: { folder_path: importData.value.folderPath }
+    })
+    showImportModal.value = false
+    importData.value.folderPath = ''
+    await fetchSkills()
+    toast.add({ title: t('skillImported'), color: 'success' })
+  } catch (e) {
+    toast.add({ title: t('importError'), color: 'error' })
   }
 }
 
@@ -119,10 +195,16 @@ onMounted(() => {
       <div class="flex items-center gap-2">
         <h1 class="text-xl font-semibold">{{ t('title') }}</h1>
       </div>
-      <UButton color="primary" @click="showCreateModal = true">
-        <UIcon name="i-heroicons-plus" class="mr-1" />
-        {{ t('newSkill') }}
-      </UButton>
+      <div class="flex items-center gap-2">
+        <UButton color="neutral" variant="outline" @click="showImportModal = true">
+          <UIcon name="i-heroicons-arrow-down-tray" class="mr-1" />
+          {{ t('importSkill') }}
+        </UButton>
+        <UButton color="primary" @click="showCreateModal = true">
+          <UIcon name="i-heroicons-plus" class="mr-1" />
+          {{ t('newSkill') }}
+        </UButton>
+      </div>
     </div>
 
     <div v-if="loading" class="flex-1 flex items-center justify-center">
@@ -223,6 +305,57 @@ onMounted(() => {
         </div>
         <UButton @click="showEditModal = false" variant="ghost">{{ t('cancel') }}</UButton>
         <UButton @click="updateSkill" color="primary">{{ t('save') }}</UButton>
+      </template>
+    </UModal>
+
+    <UModal v-model:open="showImportModal" :title="t('importSkillTitle')">
+      <template #content>
+        <div class="p-4 space-y-4">
+          <div class="flex gap-2 mb-4">
+            <UButton :color="importMode === 'zip' ? 'primary' : 'neutral'" variant="outline" size="sm"
+              @click="importMode = 'zip'">
+              {{ t('importFromZip') }}
+            </UButton>
+            <UButton :color="importMode === 'url' ? 'primary' : 'neutral'" variant="outline" size="sm"
+              @click="importMode = 'url'">
+              {{ t('importFromUrl') }}
+            </UButton>
+            <UButton :color="importMode === 'folder' ? 'primary' : 'neutral'" variant="outline" size="sm"
+              @click="importMode = 'folder'">
+              {{ t('importFromFolder') }}
+            </UButton>
+          </div>
+
+          <div v-if="importMode === 'zip'">
+            <label class="block text-sm font-medium mb-1">{{ t('zipFile') }}</label>
+            <input type="file" accept=".zip"
+              @change="(e) => importData.zipFile = (e.target as HTMLInputElement).files?.[0] || null"
+              class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20" />
+          </div>
+
+          <div v-if="importMode === 'url'">
+            <label class="block text-sm font-medium mb-1">{{ t('url') }}</label>
+            <UInput v-model="importData.url" :placeholder="t('urlPlaceholder')" />
+          </div>
+
+          <div v-if="importMode === 'folder'">
+            <label class="block text-sm font-medium mb-1">{{ t('folderPath') }}</label>
+            <UInput v-model="importData.folderPath" :placeholder="t('folderPlaceholder')" />
+          </div>
+        </div>
+        <section class="flex justify-end gap-2 p-4">
+          <UButton @click="showImportModal = false" variant="ghost">{{ t('cancel') }}</UButton>
+          <UButton v-if="importMode === 'zip'" @click="importFromZip" color="primary" :disabled="!importData.zipFile">
+            {{ t('import') }}
+          </UButton>
+          <UButton v-if="importMode === 'url'" @click="importFromUrl" color="primary" :disabled="!importData.url">
+            {{ t('import') }}
+          </UButton>
+          <UButton v-if="importMode === 'folder'" @click="importFromFolder" color="primary"
+            :disabled="!importData.folderPath">
+            {{ t('import') }}
+          </UButton>
+        </section>
       </template>
     </UModal>
   </div>

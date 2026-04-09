@@ -44,6 +44,12 @@ Tables:
 
 17. entity_details (id TEXT PK, entity_type TEXT, external_id TEXT, name TEXT, data TEXT JSON, synced_at INTEGER, created_at INTEGER)
 
+18. agent_todos (id TEXT PK, thread_id TEXT FK->chat_threads, user_id TEXT FK->user, content TEXT JSON, status TEXT ENUM(pending,in_progress,completed), order_index INTEGER, created_at INTEGER, updated_at INTEGER)
+
+19. workspace_files (id TEXT PK, thread_id TEXT FK->chat_threads, user_id TEXT FK->user, filename TEXT, content TEXT, mime_type TEXT, created_at INTEGER, updated_at INTEGER)
+
+20. harness_runs (id TEXT PK, thread_id TEXT FK->chat_threads, user_id TEXT FK->user, harness_type TEXT, status TEXT ENUM(running,paused,completed,failed), current_phase INTEGER, phase_results TEXT JSON, metadata TEXT JSON, started_at INTEGER, completed_at INTEGER, created_at INTEGER)
+
 Notes:
 - All timestamps are Unix epoch integers (seconds since 1970-01-01)
 - All IDs are TEXT UUIDs

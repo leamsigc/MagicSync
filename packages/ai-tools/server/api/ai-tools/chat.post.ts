@@ -5,6 +5,11 @@ import { createLlmJwt } from '#layers/BaseDB/server/utils/llm-jwt'
 import { createUIMessageStream, createUIMessageStreamResponse } from 'ai'
 import { generateId } from '@ai-sdk/provider-utils'
 
+const logger = {
+  info: (...args: any[]) => console.log('[chat.api]', ...args),
+  error: (...args: any[]) => console.error('[chat.api]', ...args),
+}
+
 export default defineEventHandler(async (event) => {
   const user = await checkUserIsLogin(event)
   const body = await readBody(event)
@@ -14,7 +19,6 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Messages are required' })
   }
 
-  // Convert AI SDK UIMessage format to Python backend format
   const convertedMessages = messages
     .map((m: any) => {
       const content = m.parts
@@ -44,7 +48,6 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // Persist user message
   const lastMessage = convertedMessages[convertedMessages.length - 1]
   if (threadId && lastMessage?.role === 'user') {
     await chatService.addMessage({
@@ -62,6 +65,11 @@ export default defineEventHandler(async (event) => {
   const stream = createUIMessageStream({
     execute: async ({ writer }) => {
       let assistantContent = ''
+      let reasoningContent = ''
+      let reasoningId: string | null = null
+      let textId: string | null = null
+      let toolCallIds: string[] = []
+      const componentStates: { id: string; type: string; data: any }[] = []
 
       try {
         const backendResponse = await fetch(`${backendUrl}/api/v1/chat`, {
@@ -72,9 +80,11 @@ export default defineEventHandler(async (event) => {
           },
           body: JSON.stringify({ messages: convertedMessages, thread_id: threadId }),
         })
+        logger.info('Backend response status:', backendResponse.status)
 
         if (!backendResponse.ok) {
           const errorText = await backendResponse.text()
+          logger.error('Backend error:', errorText)
           writer.write({ type: 'error', errorText })
           return
         }
@@ -84,18 +94,18 @@ export default defineEventHandler(async (event) => {
           return
         }
 
-        writer.write({ type: 'start-step' })
-
-        const textId = generateId()
-        writer.write({ type: 'text-start', id: textId })
-
         const reader = backendResponse.body.getReader()
         const decoder = new TextDecoder()
         let buffer = ''
 
+        logger.info('Starting to read stream from backend')
+
         while (true) {
           const { done, value } = await reader.read()
-          if (done) break
+          if (done) {
+            logger.info('Stream completed (done)')
+            break
+          }
 
           buffer += decoder.decode(value, { stream: true })
           const lines = buffer.split('\n')
@@ -103,33 +113,67 @@ export default defineEventHandler(async (event) => {
 
           for (const line of lines) {
             if (!line.startsWith('data: ')) continue
-            const json = line.slice(12)
-            if (json === '[DONE]') continue
+            const json = line.slice(6).trim()
+            if (!json) continue
 
             try {
               const data = JSON.parse(json)
-              if (data.error) {
-                writer.write({ type: 'error', errorText: data.error })
-              } else if (data.done) {
-                // stream done
-              } else if (data.content) {
+
+              if (data.type === 'thinking') {
+                if (!reasoningId) {
+                  reasoningId = generateId()
+                  writer.write({ type: 'reasoning-start', id: reasoningId })
+                }
+                reasoningContent += data.content
+                writer.write({ type: 'reasoning-delta', delta: data.content, id: reasoningId })
+              } else if (data.type === 'text' && data.content) {
+                if (!textId) {
+                  textId = generateId()
+                  writer.write({ type: 'text-start', id: textId })
+                }
                 assistantContent += data.content
                 writer.write({ type: 'text-delta', delta: data.content, id: textId })
+              } else if (data.type === 'tool_call' && data.tool_call) {
+                const toolCallId = generateId()
+                toolCallIds.push(toolCallId)
+                componentStates.push({ id: toolCallId, type: 'tool-call', data: { name: data.tool_call.name, args: data.tool_call.arguments } })
+                writer.write({
+                  type: 'tool-call',
+                  toolCallId,
+                  toolName: data.tool_call.name,
+                  args: JSON.parse(data.tool_call.arguments),
+                } as any)
+              } else if (data.type === 'tool_result' && data.tool_result) {
+                writer.write({
+                  type: 'tool-result',
+                  toolCallId: data.tool_result.id,
+                  toolName: 'unknown',
+                  input: {},
+                  output: data.tool_result.result,
+                } as any)
+              } else if (data.type === 'error') {
+                writer.write({ type: 'error', errorText: data.content })
+              } else if (data.done) {
+                // End current step
               }
-            } catch {
-              // skip invalid JSON
+            } catch (e) {
+              logger.error('Failed to parse SSE data:', e, json)
             }
           }
         }
 
-        writer.write({ type: 'text-end', id: textId })
-        writer.write({ type: 'finish-step' })
+        if (reasoningId) {
+          writer.write({ type: 'reasoning-end', id: reasoningId })
+        }
+        if (textId) {
+          writer.write({ type: 'text-end', id: textId })
+        }
         writer.write({ type: 'finish', finishReason: 'stop' })
       } catch (err: any) {
+        logger.error('Stream error:', err)
         writer.write({ type: 'error', errorText: err.message })
       }
 
-      // Persist assistant message (best-effort)
       if (threadId && assistantContent) {
         try {
           await chatService.addMessage({
@@ -137,9 +181,10 @@ export default defineEventHandler(async (event) => {
             userId: user.id,
             role: 'assistant',
             content: assistantContent,
+            metadata: componentStates.length > 0 ? { componentStates } : undefined,
           })
         } catch {
-          // best-effort persistence
+          // best-effort
         }
       }
     },

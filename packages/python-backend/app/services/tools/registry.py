@@ -1,4 +1,3 @@
-import json
 import logging
 from typing import Optional
 from dataclasses import dataclass, field
@@ -140,6 +139,32 @@ class ToolRegistry:
 
 
 tool_registry = ToolRegistry()
+
+
+def generate_tool_stubs() -> str:
+    """Generate Python stubs for all registered tools (for sandbox bridge)."""
+    stubs = []
+    stubs.append("# Auto-generated tool stubs for sandbox bridge")
+    stubs.append("# These can be used in execute_code to call platform tools\n")
+    
+    for name, tool in tool_registry._tools.items():
+        stub_name = name.replace("-", "_")
+        
+        params = tool.parameters.get("properties", {})
+        required = tool.parameters.get("required", [])
+        
+        args_list = []
+        for param_name, param_info in params.items():
+            default = '""' if param_name not in required else '...'
+            args_list.append(f"{param_name}={default}")
+        
+        args_str = ", ".join(args_list) if args_list else ""
+        
+        stubs.append(f"def {stub_name}({args_str}) -> dict:")
+        stubs.append(f'    """{tool.description}"""')
+        stubs.append(f'    return {{"stub": "{name}", "args": locals()}}\n')
+    
+    return "\n".join(stubs)
 
 
 class ToolSearchTool:

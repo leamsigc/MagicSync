@@ -1,13 +1,13 @@
 # Advanced Tool Calling & MCP Integration
 
 ## Status
-`in_progress`
+`done`
 
 ## Priority
 Medium
 
 ## Episode
-Episode 5 of the [Claude Code Agentic RAG Series](https://github.com/theaiautomators/claude-code-agentic-rag-series/tree/main/ep5-advanced-tool-use)
+Episode 9 (Advanced Tool Use)
 
 ## Source
 Adapted from [PRD-Tool-Calls-v2.md](https://github.com/theaiautomators/claude-code-agentic-rag-series/blob/main/ep5-advanced-tool-use/PRD-Tool-Calls-v2.md)

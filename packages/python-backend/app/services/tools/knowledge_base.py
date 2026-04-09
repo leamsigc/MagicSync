@@ -22,10 +22,9 @@ class KnowledgeBaseTools:
             dict with folders and documents lists
         """
         from app.core.db import get_db_pool
-        from app.core.security import turso_client
         
         try:
-            pool = get_db_pool()
+            pool = await get_db_pool()
             async with pool.acquire() as conn:
                 # Get folder by path
                 folder_id = None
@@ -91,7 +90,7 @@ class KnowledgeBaseTools:
         from app.core.db import get_db_pool
         
         try:
-            pool = get_db_pool()
+            pool = await get_db_pool()
             async with pool.acquire() as conn:
                 # Get all folders for user
                 folders_result = await conn.execute(
@@ -173,7 +172,7 @@ class KnowledgeBaseTools:
         from app.core.db import get_db_pool
         
         try:
-            pool = get_db_pool()
+            pool = await get_db_pool()
             async with pool.acquire() as conn:
                 # Get document IDs in folder scope
                 if folder_path:
@@ -278,7 +277,7 @@ class KnowledgeBaseTools:
         import fnmatch
         
         try:
-            pool = get_db_pool()
+            pool = await get_db_pool()
             async with pool.acquire() as conn:
                 result = await conn.execute(
                     """SELECT id, filename, original_name, mime_type, size, folder_id
@@ -312,7 +311,7 @@ class KnowledgeBaseTools:
         import os
         
         try:
-            pool = get_db_pool()
+            pool = await get_db_pool()
             async with pool.acquire() as conn:
                 # Get document metadata
                 doc_result = await conn.execute(
