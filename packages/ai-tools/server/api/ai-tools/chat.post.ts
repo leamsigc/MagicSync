@@ -131,6 +131,15 @@ export default defineEventHandler(async (event) => {
             const json = line.slice(6).trim()
             if (!json) continue
 
+            // Skip if JSON looks incomplete (unclosed braces, cut-off strings)
+            const openBraces = (json.match(/{/g) || []).length
+            const closeBraces = (json.match(/}/g) || []).length
+            if (openBraces > closeBraces || json.endsWith('"')) {
+              // Put it back to buffer and wait for more data
+              buffer = 'data: ' + json + '\n' + buffer
+              break
+            }
+
             try {
               const data = JSON.parse(json)
               
