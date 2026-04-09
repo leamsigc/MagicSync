@@ -70,6 +70,7 @@ export default defineEventHandler(async (event) => {
       let textId: string | null = null
       let toolCallIds: string[] = []
       const componentStates: { id: string; type: string; data: any }[] = []
+      let chunksWritten = 0
 
       try {
         const backendResponse = await fetch(`${backendUrl}/api/v1/chat`, {
@@ -109,13 +110,14 @@ export default defineEventHandler(async (event) => {
               if (json) {
                 try {
                   const data = JSON.parse(json)
+                  logger.info('Final chunk:', data.type)
                   if (data.done) break
                 } catch (e) {
                   logger.error('Failed to parse final SSE data:', e, json)
                 }
               }
             }
-            logger.info('Stream completed (done)')
+            logger.info('Stream completed (done), chunks written:', chunksWritten)
             break
           }
 
@@ -142,21 +144,26 @@ export default defineEventHandler(async (event) => {
 
             try {
               const data = JSON.parse(json)
+              logger.info('Processing chunk:', data.type)
               
               if (data.type === 'thinking') {
                 if (!reasoningId) {
                   reasoningId = generateId()
                   writer.write({ type: 'reasoning-start', id: reasoningId })
+                  chunksWritten++
                 }
                 reasoningContent += data.content
                 writer.write({ type: 'reasoning-delta', delta: data.content, id: reasoningId })
+                chunksWritten++
               } else if (data.type === 'text' && data.content) {
                 if (!textId) {
                   textId = generateId()
                   writer.write({ type: 'text-start', id: textId })
+                  chunksWritten++
                 }
                 assistantContent += data.content
                 writer.write({ type: 'text-delta', delta: data.content, id: textId })
+                chunksWritten++
               } else if (data.type === 'tool_call' && data.tool_call) {
                 const toolCallId = generateId()
                 toolCallIds.push(toolCallId)
@@ -167,6 +174,7 @@ export default defineEventHandler(async (event) => {
                   toolName: data.tool_call.name,
                   args: JSON.parse(data.tool_call.arguments),
                 } as any)
+                chunksWritten++
               } else if (data.type === 'tool_result' && data.tool_result) {
                 writer.write({
                   type: 'tool-result',
@@ -175,10 +183,12 @@ export default defineEventHandler(async (event) => {
                   input: {},
                   output: data.tool_result.result,
                 } as any)
+                chunksWritten++
               } else if (data.type === 'error') {
                 writer.write({ type: 'error', errorText: data.content })
+                chunksWritten++
               } else if (data.done) {
-                // End current step
+                logger.info('Received done signal')
               }
             } catch (e) {
               logger.error('Failed to parse SSE data:', e, json)
@@ -188,11 +198,15 @@ export default defineEventHandler(async (event) => {
 
         if (reasoningId) {
           writer.write({ type: 'reasoning-end', id: reasoningId })
+          chunksWritten++
         }
         if (textId) {
           writer.write({ type: 'text-end', id: textId })
+          chunksWritten++
         }
         writer.write({ type: 'finish', finishReason: 'stop' })
+        chunksWritten++
+        logger.info('Total chunks written:', chunksWritten)
       } catch (err: any) {
         logger.error('Stream error:', err)
         writer.write({ type: 'error', errorText: err.message })
