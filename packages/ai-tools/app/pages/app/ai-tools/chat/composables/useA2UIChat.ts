@@ -18,7 +18,6 @@ export function useA2UIChat() {
   const threadId = ref<string | null>(null)
   const { saveMessageState, getMessageState } = useChatHistoryState()
 
-  // Forward declarations for mutual references
   let loadThreads: () => Promise<void>
   let loadThreadMessages: (id: string) => Promise<void>
 
@@ -38,10 +37,8 @@ export function useA2UIChat() {
     },
     onFinish(event) {
       isLoadingThreads.value = false
-      // After message is sent, reload threads to find any new thread or use the current thread
       if (!threadId.value) {
         loadThreads().then(() => {
-          // If there's only one thread, use it
           if (threads.value.length === 1 && threads.value[0]) {
             threadId.value = threads.value[0].id
             localStorage.setItem(THREAD_ID_STORAGE_KEY, threadId.value)
@@ -126,20 +123,17 @@ export function useA2UIChat() {
     chat.sendMessage({ text: suggestion })
   }
 
-  // Restore thread ID from localStorage on mount
   onMounted(async () => {
     const savedThreadId = localStorage.getItem(THREAD_ID_STORAGE_KEY)
     console.log('[useA2UIChat] onMounted, savedThreadId:', savedThreadId)
     if (savedThreadId) {
       threadId.value = savedThreadId
       console.log('[useA2UIChat] Restored threadId:', threadId.value)
-      // Load the thread messages if there's a saved thread
       await loadThreadMessages(savedThreadId)
       console.log('[useA2UIChat] Loaded messages, chat.messages:', chat.messages.length)
     }
   })
 
-  // Save thread ID to localStorage when it changes
   watch(threadId, (newThreadId) => {
     if (newThreadId) {
       localStorage.setItem(THREAD_ID_STORAGE_KEY, newThreadId)
