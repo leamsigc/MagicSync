@@ -230,11 +230,33 @@ cmd_setup() {
 
     ok "Setup complete!"
     echo ""
+    info "Pulling Ollama models (this may take a few minutes)..."
+    cmd_models &
+    
+    echo ""
     echo "Next steps:"
     echo "  1. Edit .env with your API keys (social logins, email, AI services)"
     echo "  2. Run ./system.sh install to install all dependencies"
     echo "  3. Run ./system.sh dev to start local development"
     echo "  4. Or run ./system.sh dev:docker for full Docker stack"
+}
+
+cmd_models() {
+    check_deps
+    info "Pulling Ollama models..."
+    
+    if ! command -v ollama &>/dev/null; then
+        err "Ollama is not installed. Install from https://ollama.com/"
+        exit 1
+    fi
+    
+    info "Pulling qwen3.5 (chat model)..."
+    ollama pull qwen3.5
+    
+    info "Pulling mxbai-embed-large (embedding model)..."
+    ollama pull mxbai-embed-large
+    
+    ok "Ollama models ready!"
 }
 
 cmd_help() {
@@ -257,6 +279,7 @@ cmd_help() {
     echo -e "  ${YELLOW}stop:local${NC}             Stop local dev processes"
     echo -e "  ${YELLOW}db:migrate${NC}             Run database migrations"
     echo -e "  ${YELLOW}db:studio${NC}              Open Drizzle Studio"
+    echo -e "  ${YELLOW}models${NC}                Pull Ollama models (qwen3.5 + mxbai-embed-large)"
     echo -e "  ${YELLOW}help${NC}                   Show this help"
     echo ""
     echo -e "${GREEN}Quick Start:${NC}"
@@ -291,6 +314,7 @@ case "${1:-help}" in
     stop:local)      cmd_stop_local ;;
     db:migrate)     cmd_db_migrate ;;
     db:studio)      cmd_db_studio ;;
+    models)        cmd_models ;;
     help|--help|-h) cmd_help ;;
     *)
         err "Unknown command: $1"
