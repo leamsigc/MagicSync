@@ -71,33 +71,84 @@ export default defineEventHandler(async (event) => {
         const existingChunksResult = await chunkService.findByDocument(doc.id)
         const existingChunks = existingChunksResult.data || []
 
-        const ingestResult = await $fetch<{
-          document_id: string
-          chunks: Array<{
-            chunk_index: number
-            content: string
-            content_hash: string
-            token_count: number
-            embedding: number[]
-            metadata: Record<string, any>
-          }>
-          total_chunks: number
-          extracted_text: string
-          document_metadata: Record<string, any>
-        }>(`${backendUrl}/api/v1/rag/ingest`, {
+        controller.enqueue(encoder.encode(sendEvent({ status: 'processing', message: 'Calling backend...' })))
+
+        // Call Python backend with streaming
+        const backendResponse = await fetch(`${backendUrl}/api/v1/rag/ingest`, {
           method: 'POST',
-          body: {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${llmJwt}`,
+          },
+          body: JSON.stringify({
             document_id: doc.id,
             filename: doc.originalName,
             file_content: fileBuffer.toString('base64'),
             mime_type: doc.mimeType,
-            chunk_size: 512,
-            chunk_overlap: 64,
-          },
-          headers: {
-            'Authorization': `Bearer ${llmJwt}`,
-          },
+            chunk_size: 256,
+            chunk_overlap: 32,
+          }),
         })
+
+        if (!backendResponse.ok) {
+          const errorText = await backendResponse.text()
+          throw new Error(`Backend error: ${errorText}`)
+        }
+
+        if (!backendResponse.body) {
+          throw new Error('No response body from backend')
+        }
+
+        // Parse SSE stream from Python backend
+        const reader = backendResponse.body.getReader()
+        const decoder = new TextDecoder()
+        let buffer = ''
+        let finalChunks: any[] = []
+        let totalChunks = 0
+        let extractedText = ''
+        let documentMetadata: Record<string, any> = {}
+
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+
+          buffer += decoder.decode(value, { stream: true })
+          const lines = buffer.split('\n')
+          buffer = lines.pop() || ''
+
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue
+            const jsonStr = line.slice(6)
+            if (jsonStr === '[DONE]') continue
+
+            try {
+              const event = JSON.parse(jsonStr)
+
+              // Forward event to frontend
+              controller.enqueue(encoder.encode(sendEvent(event)))
+
+              // Collect chunks when received
+              if (event.status === 'chunks' && event.chunks) {
+                finalChunks = event.chunks
+                totalChunks = event.total_chunks || finalChunks.length
+              }
+
+              // Collect final data when done
+              if (event.status === 'done') {
+                totalChunks = event.total_chunks || 0
+                extractedText = event.extracted_text || ''
+                documentMetadata = event.document_metadata || {}
+              }
+            } catch { /* skip invalid JSON */ }
+          }
+        }
+
+        const ingestResult = {
+          chunks: finalChunks,
+          total_chunks: totalChunks,
+          extracted_text: extractedText,
+          document_metadata: documentMetadata,
+        }
 
         // Build a set of existing content hashes for quick lookup
         const existingHashMap = new Map<string, string>() // contentHash -> chunkId

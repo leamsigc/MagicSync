@@ -23,7 +23,7 @@ MagicSync users who want AI-assisted social media management with:
 | Backend | Python FastAPI + Nuxt server routes |
 | Database | Turso (libSQL) with native vector support |
 | LLM | Ollama (local) |
-| Embeddings | Ollama nomic-embed-text (local) |
+| Embeddings | Ollama mxbai-embed-large (local) |
 
 ### Data Flow
 ```

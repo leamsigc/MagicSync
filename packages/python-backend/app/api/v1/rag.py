@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 import base64
+import json
 import logging
+from sse_starlette.sse import EventSourceResponse
 from app.schemas.rag import (
     IngestRequest, IngestResponse, ChunkResult,
     RetrieveRequest, RetrieveResponse,
@@ -18,84 +20,113 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.post("/ingest", response_model=IngestResponse)
+@router.post("/ingest")
 async def ingest_document(
     request: IngestRequest,
     user: UserContext = Depends(require_user),
 ):
-    """Chunk text and generate embeddings. Returns chunks with embeddings for the caller to store.
+    """Chunk text and generate embeddings. Streams progress events for large file processing.
 
     Accepts either pre-extracted text or raw file bytes (base64) with a MIME type.
     Uses structured extraction to preserve page/section metadata.
+
+    Emits SSE events:
+    - status: "parsing" - when file parsing starts
+    - status: "chunk_progress" - after each chunk is embedded
+    - status: "done" - on completion with document_id and total_chunks
     """
-    document_metadata = {}
 
-    # Extract text from file if file_content is provided
-    if request.file_content and request.mime_type:
-        try:
-            file_bytes = base64.b64decode(request.file_content)
-            parsed = extract_structured(file_bytes, request.mime_type)
-            text = parsed.text
-            document_metadata = parsed.metadata
+    async def generate():
+        nonlocal user
 
-            # Use structured pages for better chunking
-            pages = [
-                {
-                    "content": page.content,
-                    "page_number": page.page_number,
-                    "section_title": page.section_title,
-                    "metadata": {**page.metadata, "documentId": request.document_id, "source": request.filename},
-                }
-                for page in parsed.pages
-            ]
-            chunks = chunk_structured(
-                pages=pages,
+        # Emit parsing status
+        yield f"data: {json.dumps({'status': 'parsing'})}\n\n"
+
+        document_metadata = {}
+
+        # Extract text from file if file_content is provided
+        if request.file_content and request.mime_type:
+            try:
+                file_bytes = base64.b64decode(request.file_content)
+                parsed = extract_structured(file_bytes, request.mime_type)
+                text = parsed.text
+                document_metadata = parsed.metadata
+
+                # Use structured pages for better chunking
+                pages = [
+                    {
+                        "content": page.content,
+                        "page_number": page.page_number,
+                        "section_title": page.section_title,
+                        "metadata": {**page.metadata, "documentId": request.document_id, "source": request.filename},
+                    }
+                    for page in parsed.pages
+                ]
+                chunks = chunk_structured(
+                    pages=pages,
+                    chunk_size=request.chunk_size,
+                    chunk_overlap=request.chunk_overlap,
+                )
+            except ValueError as e:
+                yield f"data: {json.dumps({'status': 'error', 'error': str(e)})}\n\n"
+                return
+            except Exception as e:
+                logger.exception(f"Failed to parse file for document {request.document_id}")
+                yield f"data: {json.dumps({'status': 'error', 'error': f'Failed to parse file: {e}'})}\n\n"
+                return
+        else:
+            text = request.text
+            chunks = chunk_text(
+                text=text,
                 chunk_size=request.chunk_size,
                 chunk_overlap=request.chunk_overlap,
+                metadata={"documentId": request.document_id, "source": request.filename},
             )
-        except ValueError as e:
-            raise HTTPException(status_code=400, detail=str(e))
-        except Exception as e:
-            logger.exception(f"Failed to parse file for document {request.document_id}")
-            raise HTTPException(status_code=400, detail=f"Failed to parse file: {e}")
-    else:
-        text = request.text
-        chunks = chunk_text(
-            text=text,
-            chunk_size=request.chunk_size,
-            chunk_overlap=request.chunk_overlap,
-            metadata={"documentId": request.document_id, "source": request.filename},
-        )
 
-    if not text.strip():
-        raise HTTPException(status_code=400, detail="Text content is empty")
+        if not text.strip():
+            yield f"data: {json.dumps({'status': 'error', 'error': 'Text content is empty'})}\n\n"
+            return
 
-    if not chunks:
-        raise HTTPException(status_code=400, detail="No chunks generated from text")
+        if not chunks:
+            yield f"data: {json.dumps({'status': 'error', 'error': 'No chunks generated from text'})}\n\n"
+            return
 
-    # Generate embeddings concurrently
-    chunk_texts = [c.content for c in chunks]
-    model = request.embedding_model or None  # Use default from settings if empty
-    embeddings = await embedding_service.embed_batch(chunk_texts, model=model)
+        # Generate embeddings concurrently
+        chunk_texts = [c.content for c in chunks]
+        model = request.embedding_model or None
 
-    results = []
-    for chunk, embedding in zip(chunks, embeddings):
-        results.append(ChunkResult(
-            chunk_index=chunk.index,
-            content=chunk.content,
-            content_hash=chunk.content_hash,
-            token_count=chunk.token_count,
-            embedding=embedding,
-            metadata=chunk.metadata,
-        ))
+        # Embed in batches of 10 to emit progress events
+        total_chunks = len(chunk_texts)
+        all_embeddings = []
 
-    return IngestResponse(
-        document_id=request.document_id,
-        chunks=results,
-        total_chunks=len(results),
-        extracted_text=text[:5000],
-        document_metadata=document_metadata,
-    )
+        for i in range(0, len(chunk_texts), 10):
+            batch = chunk_texts[i:i + 10]
+            batch_embeddings = await embedding_service.embed_batch(batch, model=model)
+            all_embeddings.extend(batch_embeddings)
+
+            # Emit chunk progress
+            current_idx = min(i + 10, total_chunks)
+            yield f"data: {json.dumps({'status': 'chunk_progress', 'chunk_index': current_idx, 'total_chunks': total_chunks})}\n\n"
+
+        # Build results
+        results = []
+        for chunk, embedding in zip(chunks, all_embeddings):
+            results.append(ChunkResult(
+                chunk_index=chunk.index,
+                content=chunk.content,
+                content_hash=chunk.content_hash,
+                token_count=chunk.token_count,
+                embedding=embedding,
+                metadata=chunk.metadata,
+            ))
+
+        # Emit all chunks at once before completion
+        yield f"data: {json.dumps({'status': 'chunks', 'chunks': results, 'total_chunks': len(results)})}\n\n"
+
+        # Emit completion status
+        yield f"data: {json.dumps({'status': 'done', 'document_id': request.document_id, 'total_chunks': len(results), 'extracted_text': text[:5000], 'document_metadata': document_metadata})}\n\n"
+
+    return EventSourceResponse(generate())
 
 
 @router.post("/retrieve", response_model=RetrieveResponse)

@@ -243,20 +243,56 @@ cmd_setup() {
 
 cmd_models() {
     check_deps
-    info "Pulling Ollama models..."
+    info "Pulling Ollama models (qwen3.5 + mxbai-embed-large)..."
     
     if ! command -v ollama &>/dev/null; then
         err "Ollama is not installed. Install from https://ollama.com/"
         exit 1
     fi
     
-    info "Pulling qwen3.5 (chat model)..."
     ollama pull qwen3.5
-    
-    info "Pulling mxbai-embed-large (embedding model)..."
     ollama pull mxbai-embed-large
     
     ok "Ollama models ready!"
+}
+
+cmd_ollama_start() {
+    check_deps
+    info "Starting Ollama (qwen3.5 + mxbai-embed-large)..."
+    
+    if ! command -v ollama &>/dev/null; then
+        err "Ollama is not installed. Install from https://ollama.com/"
+        exit 1
+    fi
+    
+    local chat_model="qwen3.5"
+    local embed_model="mxbai-embed-large"
+    
+    for model in $chat_model $embed_model; do
+        if ! ollama list | grep -q "^$model "; then
+            info "Pulling $model..."
+            ollama pull $model
+        fi
+    done
+    
+    info "Starting Ollama daemon..."
+    ollama serve &
+    
+    local retries=10
+    while [[ $retries -gt 0 ]]; do
+        if curl -s http://localhost:11434/api/tags >/dev/null 2>&1; then
+            info "Pre-loading models..."
+            ollama run $chat_model "hello" 2>/dev/null &
+            ollama run $embed_model "test" 2>/dev/null &
+            ok "Ollama running on http://localhost:11434"
+            return 0
+        fi
+        sleep 1
+        ((retries--))
+    done
+    
+    err "Failed to start Ollama"
+    return 1
 }
 
 cmd_help() {
@@ -280,6 +316,7 @@ cmd_help() {
     echo -e "  ${YELLOW}db:migrate${NC}             Run database migrations"
     echo -e "  ${YELLOW}db:studio${NC}              Open Drizzle Studio"
     echo -e "  ${YELLOW}models${NC}                Pull Ollama models (qwen3.5 + mxbai-embed-large)"
+    echo -e "  ${YELLOW}ollama:start${NC}            Start Ollama daemon with models loaded"
     echo -e "  ${YELLOW}help${NC}                   Show this help"
     echo ""
     echo -e "${GREEN}Quick Start:${NC}"
@@ -315,6 +352,7 @@ case "${1:-help}" in
     db:migrate)     cmd_db_migrate ;;
     db:studio)      cmd_db_studio ;;
     models)        cmd_models ;;
+    ollama:start)   cmd_ollama_start ;;
     help|--help|-h) cmd_help ;;
     *)
         err "Unknown command: $1"

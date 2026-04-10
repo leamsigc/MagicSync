@@ -16,13 +16,18 @@ class EmbeddingService:
     async def embed(self, text: str, model: str | None = None) -> list[float]:
         """Generate embedding for a single text."""
         model = model or self.default_model
+        logger.info(f"[embed] model={model} base_url={self.base_url}")
         url = f"{self.base_url}/api/embeddings"
         payload = {"model": model, "prompt": text}
 
-        response = await self.client.post(url, json=payload)
-        response.raise_for_status()
-        data = response.json()
-        return data["embedding"]
+        try:
+            response = await self.client.post(url, json=payload)
+            response.raise_for_status()
+            data = response.json()
+            return data["embedding"]
+        except Exception as e:
+            logger.error(f"[embed] ERROR: model={model} url={url} error={e}")
+            raise
 
     async def embed_batch(
         self, texts: list[str], model: str | None = None
