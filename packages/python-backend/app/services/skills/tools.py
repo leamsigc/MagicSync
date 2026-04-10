@@ -356,7 +356,7 @@ class CodeSandbox:
 
     def __init__(self, user_id: str):
         self.user_id = user_id
-        self.enabled = False  # Disabled by default per plan
+        self.enabled = True  # Enabled for code execution
         self.include_stubs = True
 
     async def execute_code(self, code: str, session_id: Optional[str] = None, include_tools: bool = True) -> dict:
@@ -526,7 +526,7 @@ SKILL_TOOLS = [
             "required": ["url"],
         },
     },
-    {
+{
         "name": "import_skill_from_folder",
         "description": "Import a skill from a local folder path in agentskills.io format.",
         "parameters": {
@@ -534,10 +534,28 @@ SKILL_TOOLS = [
             "properties": {
                 "folder_path": {
                     "type": "string",
-                    "description": "Path to the local folder containing SKILL.md",
+                    "description": "Path to the local folder containing SKILL.md"
                 }
             },
             "required": ["folder_path"],
+        },
+    },
+    {
+        "name": "generate_twitter_post",
+        "description": "Generate Twitter post content with text and hashtags. Use when user wants to create a tweet.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "text": {
+                    "type": "string",
+                    "description": "The tweet text content (leave empty for auto-generation)",
+                },
+                "hashtags": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of hashtags (leave empty for defaults)",
+                },
+            },
         },
     },
 ]

@@ -4,7 +4,6 @@
 import { useA2UIChat } from './composables/useA2UIChat'
 import ChatSidebar from './components/ChatSidebar.vue'
 import ToolCallCard from './components/ToolCallCard.vue'
-import { isReasoningUIPart, isTextUIPart, isToolUIPart, isStaticToolUIPart } from 'ai'
 
 
 definePageMeta({ layout: 'ai-tools-layout' })
@@ -21,6 +20,7 @@ const availableTools = [
   { name: 'kb_grep', description: 'Search pattern in documents', category: 'Knowledge Base' },
   { name: 'kb_glob', description: 'Find files by name pattern', category: 'Knowledge Base' },
   { name: 'kb_read', description: 'Read document content', category: 'Knowledge Base' },
+  { name: 'generate_twitter_post', description: 'Generate Twitter post content', category: 'Social' },
   { name: 'load_skill', description: 'Load skill instructions', category: 'Skills' },
   { name: 'save_skill', description: 'Save a new skill', category: 'Skills' },
   { name: 'list_skills', description: 'List available skills', category: 'Skills' },
@@ -28,10 +28,12 @@ const availableTools = [
 ]
 
 const {
-  chat,
+  messages,
+  isStreaming,
   threads,
   isLoadingThreads,
   threadId: activeThreadId,
+  sendMessage,
   loadThreads,
   loadThreadMessages,
   createNewThread,
@@ -45,7 +47,7 @@ onMounted(() => {
 
 function onSubmit() {
   if (!input.value.trim()) return
-  chat.sendMessage({ text: input.value })
+  sendMessage(input.value)
   input.value = ''
 }
 
@@ -72,12 +74,19 @@ function getToolCallState(part: any): 'input-available' | 'output-available' | '
 }
 
 function getToolName(part: any): string {
-  if (isStaticToolUIPart(part)) return part.toolName
-  if (isToolUIPart(part)) {
-    const type = part.type
-    return type.replace('tool-', '')
-  }
-  return 'unknown'
+  return part.tool || 'unknown'
+}
+
+function isReasoningPart(part: any): boolean {
+  return part.type === 'thinking'
+}
+
+function isToolPart(part: any): boolean {
+  return part.type === 'tool'
+}
+
+function isTextPart(part: any): boolean {
+  return part.type === 'text'
 }
 </script>
 
@@ -108,7 +117,7 @@ function getToolName(part: any): string {
             <UButton icon="i-lucide-wrench" color="neutral" variant="ghost" size="sm"
               @click="showToolsPanel = !showToolsPanel" />
           </UTooltip>
-          <UButton icon="i-lucide-rotate-cw" color="neutral" variant="ghost" size="sm" @click="chat.messages = []" />
+          <UButton icon="i-lucide-rotate-cw" color="neutral" variant="ghost" size="sm" @click="createNewThread" />
         </div>
       </div>
 
@@ -126,37 +135,47 @@ function getToolName(part: any): string {
       </div>
 
       <div class="flex-1 overflow-y-auto px-6 py-4">
-
-        <UChatMessages :messages="chat.messages" :status="chat.status" should-auto-scroll class="flex-1">
-          <template #content="{ message }">
-            <template v-for="(part, index) in message.parts" :key="`${message.id}-${part.type}-${index}`">
-              <UChatReasoning v-if="isReasoningUIPart(part)" :text="part.text" :streaming="chat.status === 'streaming'">
-                <MDC :value="part.text" :cache-key="`reasoning-${message.id}-${index}`"
-                  class="*:first:mt-0 *:last:mb-0" />
-              </UChatReasoning>
-
-              <template v-else-if="isToolUIPart(part) || isStaticToolUIPart(part)">
-                <ToolCallCard :tool-call-id="part.toolCallId" :tool-name="getToolName(part)" :input="part.input"
-                  :output="part.output as string" :error="part.errorText" :state="getToolCallState(part)" />
-              </template>
-
-              <template v-else-if="isTextUIPart(part)">
-                <MDC v-if="message.role === 'assistant'" :value="part.text" :cache-key="`${message.id}-${index}`"
-                  class="*:first:mt-0 *:last:mb-0" />
-                <p v-else-if="message.role === 'user'" class="whitespace-pre-wrap">
-                  {{ part.text }}
-                </p>
-                <template
-                  v-if="chat.status === 'streaming' && message.role === 'assistant' && part.state === 'streaming'">
-                  <UIcon name="i-lucide-ellipsis" class="w-8 h-8 animate-bounce text-muted" />
+        <div class="flex flex-col gap-4">
+          <div v-for="message in messages" :key="message.id" class="flex flex-col gap-2">
+            <div v-if="message.role === 'user'" class="flex justify-end">
+              <div class="bg-primary text-primary-foreground px-4 py-2 rounded-lg max-w-[80%]">
+                {{ message.content }}
+              </div>
+            </div>
+            
+            <div v-else-if="message.role === 'assistant'" class="flex flex-col gap-2">
+              <div v-if="message.reasoningContent" class="bg-muted/50 p-3 rounded text-sm">
+                <p class="text-xs text-muted mb-1">Reasoning</p>
+                <MDC :value="message.reasoningContent" class="*first:mt-0 *last:mb-0" />
+              </div>
+              
+              <template v-for="(part, index) in message.parts" :key="`${message.id}-${part.type}-${index}`">
+                <template v-if="isToolPart(part)">
+                  <ToolCallCard 
+                    :tool-call-id="message.toolCalls?.[index]?.id || ''" 
+                    :tool-name="getToolName(part)" 
+                    :input="message.toolCalls?.[index]?.args || {}"
+                    :output="message.toolCalls?.[index]?.result || ''"
+                    :error="message.toolCalls?.[index]?.error"
+                    :state="message.toolCalls?.[index]?.error ? 'error' : 'output-available'" 
+                  />
+                </template>
+                
+                <template v-else-if="isTextPart(part)">
+                  <MDC v-if="part.text" :value="part.text" :cache-key="`${message.id}-${index}`"
+                    class="prose prose-sm max-w-none" />
                 </template>
               </template>
+              
+              <div v-if="isStreaming && message.id === messages[messages.length - 1].id" class="flex items-center gap-2 text-muted">
+                <UIcon name="i-lucide-ellipsis" class="w-6 h-6 animate-bounce" />
+                <span class="text-sm">Thinking...</span>
+              </div>
+            </div>
+          </div>
+        </div>
 
-            </template>
-          </template>
-        </UChatMessages>
-
-        <div v-if="!chat.messages.length" class="flex flex-col items-center justify-center h-full">
+        <div v-if="!messages.length" class="flex flex-col items-center justify-center h-full">
           <div class="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
             <UIcon name="i-lucide-sparkles" class="w-8 h-8 text-primary" />
           </div>
@@ -174,9 +193,20 @@ function getToolName(part: any): string {
 
       <div class="px-6 py-4 border-t border-muted">
         <div class="max-w-3xl mx-auto">
-          <UChatPrompt v-model="input" :placeholder="t('placeholder')" :error="chat.error" @submit="onSubmit">
-            <UChatPromptSubmit :status="chat.status" @stop="chat.stop()" @reload="chat.regenerate()" />
-          </UChatPrompt>
+          <form @submit.prevent="onSubmit" class="flex gap-2">
+            <UInput 
+              v-model="input" 
+              :placeholder="t('placeholder')" 
+              class="flex-1"
+              :disabled="isStreaming"
+              @keydown.enter.prevent="onSubmit"
+            />
+            <UButton 
+              type="submit" 
+              :label="isStreaming ? 'Sending...' : 'Send'"
+              :disabled="isStreaming || !input.trim()"
+            />
+          </form>
         </div>
       </div>
     </div>

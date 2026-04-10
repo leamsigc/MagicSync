@@ -217,6 +217,22 @@ async def chat_stream(
 
                 yield f"data: {StreamChunk(type='tool_result', content=formatted_result, tool_result={'id': tc.id, 'result': formatted_result}).model_dump_json()}\n\n"
 
+                # If tool result is the final output (not an error), format it as text for the user
+                if not formatted_result.startswith('[Tool Error:'):
+                    # Format tool result as readable text
+                    try:
+                        result_data = json.loads(formatted_result)
+                        if isinstance(result_data, dict):
+                            text_output = f"Generated {result_data.get('platform', 'post')} post:\n\n"
+                            text_output += f"Text: {result_data.get('text', '')}\n"
+                            text_output += f"Hashtags: {', '.join(result_data.get('hashtags', []))}"
+                            yield f"data: {StreamChunk(type='text', content=text_output, done=False).model_dump_json()}\n\n"
+                            # Output done and exit - skip further LLM calls
+                            yield f"data: {StreamChunk(type='text', content='', done=True).model_dump_json()}\n\n"
+                            return
+                    except (json.JSONDecodeError, TypeError):
+                        pass
+
                 messages.append(
                     {
                         "role": "assistant",

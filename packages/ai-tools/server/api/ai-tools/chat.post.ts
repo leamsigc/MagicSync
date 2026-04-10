@@ -2,7 +2,6 @@ import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
 import { chatService } from '#layers/BaseDB/server/services/chat.service'
 import { userLlmConfigService } from '#layers/BaseDB/server/services/user-llm-config.service'
 import { createLlmJwt } from '#layers/BaseDB/server/utils/llm-jwt'
-import { createUIMessageStream, createUIMessageStreamResponse } from 'ai'
 import { generateId } from '@ai-sdk/provider-utils'
 
 const logger = {
@@ -62,16 +61,21 @@ export default defineEventHandler(async (event) => {
     setResponseHeader(event, 'X-Thread-Id', threadId)
   }
 
-  const stream = createUIMessageStream({
-    execute: async ({ writer }) => {
-      let assistantContent = ''
-      let reasoningContent = ''
-      let reasoningId: string | null = null
-      let textId: string | null = null
-      let toolCallIds: string[] = []
-      const componentStates: { id: string; type: string; data: any }[] = []
-      let chunksWritten = 0
+  setResponseHeader(event, 'Content-Type', 'text/event-stream')
+  setResponseHeader(event, 'Cache-Control', 'no-cache')
+  setResponseHeader(event, 'Connection', 'keep-alive')
+  setResponseHeader(event, 'X-Accel-Buffering', 'no')
 
+  const encoder = new TextEncoder()
+  let assistantContent = ''
+  const componentStates: { id: string; type: string; data: any }[] = []
+
+  const sendChunk = (data: Record<string, unknown>) => {
+    return `data: ${JSON.stringify(data)}\n\n`
+  }
+
+  const stream = new ReadableStream({
+    async start(controller) {
       try {
         const backendResponse = await fetch(`${backendUrl}/api/v1/chat`, {
           method: 'POST',
@@ -81,17 +85,20 @@ export default defineEventHandler(async (event) => {
           },
           body: JSON.stringify({ messages: convertedMessages, thread_id: threadId }),
         })
+
         logger.info('Backend response status:', backendResponse.status)
 
         if (!backendResponse.ok) {
           const errorText = await backendResponse.text()
           logger.error('Backend error:', errorText)
-          writer.write({ type: 'error', errorText })
+          controller.enqueue(encoder.encode(sendChunk({ type: 'error', content: errorText })))
+          controller.close()
           return
         }
 
         if (!backendResponse.body) {
-          writer.write({ type: 'error', errorText: 'No response body' })
+          controller.enqueue(encoder.encode(sendChunk({ type: 'error', content: 'No response body' })))
+          controller.close()
           return
         }
 
@@ -104,91 +111,83 @@ export default defineEventHandler(async (event) => {
         while (true) {
           const { done, value } = await reader.read()
           if (done) {
-            // Process any remaining buffer
             if (buffer.startsWith('data: ')) {
-              const json = buffer.slice(6).trim()
+              const json = buffer.slice(12).trim()
               if (json) {
                 try {
                   const data = JSON.parse(json)
-                  logger.info('Final chunk:', data.type)
                   if (data.done) break
                 } catch (e) {
-                  logger.error('Failed to parse final SSE data:', e, json)
+                  logger.error('Failed to parse final SSE data:', e)
                 }
               }
             }
-            logger.info('Stream completed (done), chunks written:', chunksWritten)
+            logger.info('Stream completed (done)')
             break
           }
 
           buffer += decoder.decode(value, { stream: true })
-          
-          // Process all complete SSE messages
+
           let newlineIndex
           while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
             const line = buffer.slice(0, newlineIndex)
             buffer = buffer.slice(newlineIndex + 1)
-            
+
             if (!line.startsWith('data: ')) continue
-            const json = line.slice(6).trim()
+            const json = line.slice(12).trim()
             if (!json) continue
 
-            // Skip if JSON looks incomplete (unclosed braces, cut-off strings)
             const openBraces = (json.match(/{/g) || []).length
             const closeBraces = (json.match(/}/g) || []).length
             if (openBraces > closeBraces || json.endsWith('"')) {
-              // Put it back to buffer and wait for more data
               buffer = 'data: ' + json + '\n' + buffer
               break
             }
 
             try {
               const data = JSON.parse(json)
-              logger.info('Processing chunk:', data.type)
-              
-              if (data.type === 'thinking') {
-                if (!reasoningId) {
-                  reasoningId = generateId()
-                  writer.write({ type: 'reasoning-start', id: reasoningId })
-                  chunksWritten++
-                }
-                reasoningContent += data.content
-                writer.write({ type: 'reasoning-delta', delta: data.content, id: reasoningId })
-                chunksWritten++
-              } else if (data.type === 'text' && data.content) {
-                if (!textId) {
-                  textId = generateId()
-                  writer.write({ type: 'text-start', id: textId })
-                  chunksWritten++
-                }
+              logger.info('Passing through chunk:', data.type)
+
+              if (data.type === 'thinking' && data.content) {
                 assistantContent += data.content
-                writer.write({ type: 'text-delta', delta: data.content, id: textId })
-                chunksWritten++
+                controller.enqueue(encoder.encode(sendChunk({
+                  type: 'thinking',
+                  id: generateId(),
+                  content: data.content,
+                })))
+              } else if (data.type === 'text' && data.content) {
+                assistantContent += data.content
+                controller.enqueue(encoder.encode(sendChunk({
+                  type: 'text',
+                  id: generateId(),
+                  content: data.content,
+                })))
               } else if (data.type === 'tool_call' && data.tool_call) {
                 const toolCallId = generateId()
-                toolCallIds.push(toolCallId)
                 componentStates.push({ id: toolCallId, type: 'tool-call', data: { name: data.tool_call.name, args: data.tool_call.arguments } })
-                writer.write({
-                  type: 'tool-call',
-                  toolCallId,
+                controller.enqueue(encoder.encode(sendChunk({
+                  type: 'tool',
+                  id: toolCallId,
                   toolName: data.tool_call.name,
                   args: JSON.parse(data.tool_call.arguments),
-                } as any)
-                chunksWritten++
+                })))
               } else if (data.type === 'tool_result' && data.tool_result) {
-                writer.write({
-                  type: 'tool-result',
+                const resultStr = data.tool_result.result
+                const isError = resultStr?.includes('[Tool Error:')
+                controller.enqueue(encoder.encode(sendChunk({
+                  type: 'tool_result',
+                  id: generateId(),
                   toolCallId: data.tool_result.id,
-                  toolName: 'unknown',
+                  toolName: isError ? 'error' : 'unknown',
                   input: {},
-                  output: data.tool_result.result,
-                } as any)
-                chunksWritten++
+                  output: resultStr,
+                  errorText: isError ? resultStr : undefined,
+                })))
               } else if (data.type === 'error') {
-                writer.write({ type: 'error', errorText: data.content })
-                chunksWritten++
+                controller.enqueue(encoder.encode(sendChunk({ type: 'error', id: generateId(), content: data.content })))
               } else if (data.done) {
                 logger.info('Received done signal')
+                controller.enqueue(encoder.encode(sendChunk({ type: 'done', id: generateId() })))
               }
             } catch (e) {
               logger.error('Failed to parse SSE data:', e, json)
@@ -196,20 +195,11 @@ export default defineEventHandler(async (event) => {
           }
         }
 
-        if (reasoningId) {
-          writer.write({ type: 'reasoning-end', id: reasoningId })
-          chunksWritten++
-        }
-        if (textId) {
-          writer.write({ type: 'text-end', id: textId })
-          chunksWritten++
-        }
-        writer.write({ type: 'finish', finishReason: 'stop' })
-        chunksWritten++
-        logger.info('Total chunks written:', chunksWritten)
+        controller.enqueue(encoder.encode(sendChunk({ type: 'finish', id: generateId(), finishReason: 'stop' })))
+        logger.info('Stream finished')
       } catch (err: any) {
         logger.error('Stream error:', err)
-        writer.write({ type: 'error', errorText: err.message })
+        controller.enqueue(encoder.encode(sendChunk({ type: 'error', id: generateId(), content: err.message })))
       }
 
       if (threadId && assistantContent) {
@@ -225,8 +215,10 @@ export default defineEventHandler(async (event) => {
           // best-effort
         }
       }
+
+      controller.close()
     },
   })
 
-  return createUIMessageStreamResponse({ stream })
+  return sendStream(event, stream)
 })

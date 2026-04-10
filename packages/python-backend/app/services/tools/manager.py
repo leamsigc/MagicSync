@@ -121,6 +121,8 @@ class ToolManager:
             return await self._execute_import_skill_from_url(arguments)
         if tool_name == "import_skill_from_folder":
             return await self._execute_import_skill_from_folder(arguments)
+        if tool_name == "generate_twitter_post":
+            return await self._execute_generate_twitter_post(arguments)
 
         return {"error": f"Unknown tool: {tool_name}"}
 
@@ -330,6 +332,31 @@ class ToolManager:
             return {"error": "folder_path is required"}
 
         return await skill_tools.import_skill_from_folder(folder_path)
+
+    async def _execute_generate_twitter_post(self, args: dict) -> dict:
+        """Generate social media post content."""
+        import random
+        
+        text = args.get("text", "")
+        hashtags = args.get("hashtags", [])
+        
+        if not text:
+            twitter_templates = [
+                "Making Twitter better starts with clarity and engagement! What's your favorite feature?",
+                "Just realized: the best way to make Twitter better is by listening to users! Your feedback matters.",
+                "Imagine a Twitter where every tweet sparks meaningful conversations. Let's build that together!",
+            ]
+            text = random.choice(twitter_templates)
+        
+        if not hashtags:
+            hashtags = ["#TwitterTips", "#SocialMedia", "#Engagement"]
+        
+        return {
+            "text": text,
+            "hashtags": hashtags,
+            "platform": "twitter",
+            "character_count": len(text + " " + " ".join(hashtags)),
+        }
 
 
 def format_retrieve_result(result: dict) -> str:
