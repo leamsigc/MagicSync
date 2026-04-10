@@ -53,7 +53,10 @@ async def chat_stream(
     )
 
     litellm_model = _format_model(model, provider)
-    tools = tool_manager.get_tool_definitions()
+    
+    # Only enable tools if explicitly requested (default True for backwards compatibility)
+    enable_tools = getattr(request, 'enable_tools', True)
+    tools = tool_manager.get_tool_definitions() if enable_tools else []
 
     output_buffer = []
 
@@ -92,6 +95,88 @@ async def chat_stream(
         ):
             return False
         return True
+
+    def _format_tool_result_as_text(tool_name: str, formatted_result: str) -> str | None:
+        """Format tool result as readable text for the user."""
+        logger.info(f"_format_tool_result_as_text called for {tool_name}")
+        logger.info(f"formatted_result: {formatted_result[:300]}...")
+        
+        try:
+            result_data = json.loads(formatted_result)
+            logger.info(f"result_data keys: {result_data.keys()}")
+            if not isinstance(result_data, dict):
+                return None
+            
+            # Handle generate_twitter_post
+            if tool_name == 'generate_twitter_post' and 'text' in result_data:
+                text_output = f"Generated {result_data.get('platform', 'post')} post:\n\n"
+                text_output += f"Text: {result_data.get('text', '')}\n"
+                if result_data.get('hashtags'):
+                    text_output += f"Hashtags: {', '.join(result_data.get('hashtags', []))}"
+                return text_output
+            
+            # Handle execute_code
+            if tool_name == 'execute_code' and 'output' in result_data:
+                output = result_data.get('output', '(no output)')
+                error = result_data.get('error')
+                status = result_data.get('status', 'unknown')
+                
+                # Check for "(no output)" - the code ran but produced no visible output
+                # This often happens when user writes "2+2" instead of "print(2+2)"
+                isNoOutput = output == '(no output)' and not error
+                
+                # Only treat as error if error key has actual value
+                if error:
+                    return f"[Code Execution Error]\n{error}"
+                elif status == 'disabled':
+                    return f"[Code Execution Disabled]\n{result_data.get('code', 'Code execution is disabled')}"
+                elif isNoOutput:
+                    # Add helpful hint about print()
+                    return f"[Code Execution Result]\n(No output returned)\n\n💡 Hint: Use print() to output results, e.g., `print(2 + 2 + 4)`"
+                else:
+                    return f"[Code Execution Result]\n{output}"
+            
+            # Handle retrieve/hybrid_search
+            if tool_name in ('retrieve', 'hybrid_search') and 'results' in result_data:
+                results = result_data.get('results', [])
+                if results:
+                    lines = ["[Search Results]\n"]
+                    for i, r in enumerate(results[:5], 1):
+                        content = r.get('content', '')[:200]
+                        lines.append(f"{i}. {content}...")
+                    return '\n'.join(lines)
+            
+            # Handle web_search
+            if tool_name == 'web_search':
+                logger.info(f"Processing web_search result, keys: {result_data.keys()}")
+                # Check for error (including rate limiting)
+                error = result_data.get('error')
+                if error:
+                    return f"[Web Search Error]\n{error}\n\n💡 Tip: Wait a few seconds and try again."
+                results = result_data.get('results', [])
+                source = result_data.get('source', 'unknown')
+                logger.info(f"Web search results count: {len(results)}, source: {source}")
+                if results:
+                    source_label = f" (via {source})" if source != 'unknown' else ""
+                    lines = [f"[Web Search Results]{source_label}\n"]
+                    for i, r in enumerate(results, 1):
+                        title = r.get('title', 'No title')
+                        url = r.get('url', '')
+                        snippet = r.get('snippet', '')[:150]
+                        lines.append(f"{i}. {title}")
+                        lines.append(f"   {snippet}")
+                        if url:
+                            lines.append(f"   🔗 {url}")
+                        lines.append("")
+                    return '\n'.join(lines)
+                # Return something even when no results
+                return "[Web Search] No results found for query"
+            
+            # Default: return JSON as formatted text for other tools
+            return f"[{tool_name} Result]\n{json.dumps(result_data, indent=2)[:500]}"
+            
+        except (json.JSONDecodeError, TypeError):
+            return None
 
     async def generate():
         nonlocal output_buffer, messages
@@ -215,23 +300,25 @@ async def chat_stream(
                 result = await tool_manager.execute_tool(func.name, args)
                 formatted_result = format_tool_result(func.name, result)
 
+                logger.info(f"Tool {func.name} result: {formatted_result[:200]}...")
                 yield f"data: {StreamChunk(type='tool_result', content=formatted_result, tool_result={'id': tc.id, 'result': formatted_result}).model_dump_json()}\n\n"
 
-                # If tool result is the final output (not an error), format it as text for the user
+                # If tool result is successful (not an error), format it as text for the user and END the stream
                 if not formatted_result.startswith('[Tool Error:'):
-                    # Format tool result as readable text
-                    try:
-                        result_data = json.loads(formatted_result)
-                        if isinstance(result_data, dict):
-                            text_output = f"Generated {result_data.get('platform', 'post')} post:\n\n"
-                            text_output += f"Text: {result_data.get('text', '')}\n"
-                            text_output += f"Hashtags: {', '.join(result_data.get('hashtags', []))}"
-                            yield f"data: {StreamChunk(type='text', content=text_output, done=False).model_dump_json()}\n\n"
-                            # Output done and exit - skip further LLM calls
-                            yield f"data: {StreamChunk(type='text', content='', done=True).model_dump_json()}\n\n"
-                            return
-                    except (json.JSONDecodeError, TypeError):
-                        pass
+                    text_output = _format_tool_result_as_text(func.name, formatted_result)
+                    logger.info(f"Formatted text output: {text_output[:200] if text_output else 'None'}...")
+                    if text_output:
+                        yield f"data: {StreamChunk(type='text', content=text_output, done=False).model_dump_json()}\n\n"
+                        yield f"data: {StreamChunk(type='text', content='', done=True).model_dump_json()}\n\n"
+                        logger.info(f"Tool {func.name} executed, returning final response")
+                        return  # EXIT - don't make more LLM calls
+                    else:
+                        # Fallback: return the raw tool result
+                        logger.warning(f"Formatting returned None for {func.name}, using fallback")
+                        fallback_text = f"[{func.name} Result]\n{formatted_result}"
+                        yield f"data: {StreamChunk(type='text', content=fallback_text, done=False).model_dump_json()}\n\n"
+                        yield f"data: {StreamChunk(type='text', content='', done=True).model_dump_json()}\n\n"
+                        return
 
                 messages.append(
                     {

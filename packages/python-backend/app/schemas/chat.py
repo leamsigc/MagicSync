@@ -16,6 +16,7 @@ class ChatRequest(BaseModel):
     provider: str | None = None  # ollama, openai, anthropic, openrouter
     api_key: str | None = None
     api_base: str | None = None
+    enable_tools: bool = True  # Enable/disable function calling
 
 
 class ChatResponse(BaseModel):

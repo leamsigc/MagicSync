@@ -11,10 +11,12 @@ definePageMeta({ layout: 'ai-tools-layout' })
 const { t } = useI18n()
 const input = ref('')
 const showToolsPanel = ref(false)
+const enableTools = ref(true)
 
 const availableTools = [
   { name: 'retrieve', description: 'Search your knowledge base', category: 'RAG' },
   { name: 'hybrid_search', description: 'Hybrid search across documents', category: 'RAG' },
+  { name: 'web_search', description: 'Search the web for current info', category: 'Search' },
   { name: 'kb_ls', description: 'List documents in a folder', category: 'Knowledge Base' },
   { name: 'kb_tree', description: 'Show folder tree structure', category: 'Knowledge Base' },
   { name: 'kb_grep', description: 'Search pattern in documents', category: 'Knowledge Base' },
@@ -47,7 +49,7 @@ onMounted(() => {
 
 function onSubmit() {
   if (!input.value.trim()) return
-  sendMessage(input.value)
+  sendMessage(input.value, enableTools.value)
   input.value = ''
 }
 
@@ -67,9 +69,19 @@ function insertTool(toolName: string) {
   input.value += `[${toolName}] `
 }
 
-function getToolCallState(part: any): 'input-available' | 'output-available' | 'error' {
-  if (part.state === 'output-available') return 'output-available'
-  if (part.errorText || part.state === 'error') return 'error'
+function getToolCallForPart(part: any, index: number, toolCalls: any[] = []): any {
+  // First try to find by matching tool name
+  const toolName = part.tool || ''
+  const matchingToolCall = toolCalls?.find((tc: any) => tc.name === toolName)
+  if (matchingToolCall) return matchingToolCall
+  // Fallback to index-based access
+  return toolCalls?.[index]
+}
+
+function getToolCallState(part: any, index: number, toolCalls: any[] = []): 'input-available' | 'output-available' | 'error' {
+  const tc = getToolCallForPart(part, index, toolCalls)
+  if (tc?.error) return 'error'
+  if (tc?.result) return 'output-available'
   return 'input-available'
 }
 
@@ -113,8 +125,16 @@ function isTextPart(part: any): boolean {
           </div>
         </div>
         <div class="flex items-center gap-2">
-          <UTooltip :text="'Available Tools'">
-            <UButton icon="i-lucide-wrench" color="neutral" variant="ghost" size="sm"
+          <UTooltip :text="enableTools ? 'Disable AI Tools' : 'Enable AI Tools'">
+            <div class="flex items-center gap-1">
+              <UButton :icon="enableTools ? 'i-lucide-wrench' : 'i-lucide-wrench'"
+                :color="enableTools ? 'primary' : 'neutral'" variant="ghost" size="sm"
+                @click="enableTools = !enableTools" />
+              <span v-if="!enableTools" class="text-xs text-muted">Off</span>
+            </div>
+          </UTooltip>
+          <UTooltip :text="'Show Available Tools'">
+            <UButton icon="i-lucide-list" color="neutral" variant="ghost" size="sm"
               @click="showToolsPanel = !showToolsPanel" />
           </UTooltip>
           <UButton icon="i-lucide-rotate-cw" color="neutral" variant="ghost" size="sm" @click="createNewThread" />
@@ -142,32 +162,30 @@ function isTextPart(part: any): boolean {
                 {{ message.content }}
               </div>
             </div>
-            
+
             <div v-else-if="message.role === 'assistant'" class="flex flex-col gap-2">
               <div v-if="message.reasoningContent" class="bg-muted/50 p-3 rounded text-sm">
                 <p class="text-xs text-muted mb-1">Reasoning</p>
                 <MDC :value="message.reasoningContent" class="*first:mt-0 *last:mb-0" />
               </div>
-              
+
               <template v-for="(part, index) in message.parts" :key="`${message.id}-${part.type}-${index}`">
                 <template v-if="isToolPart(part)">
-                  <ToolCallCard 
-                    :tool-call-id="message.toolCalls?.[index]?.id || ''" 
-                    :tool-name="getToolName(part)" 
-                    :input="message.toolCalls?.[index]?.args || {}"
-                    :output="message.toolCalls?.[index]?.result || ''"
-                    :error="message.toolCalls?.[index]?.error"
-                    :state="message.toolCalls?.[index]?.error ? 'error' : 'output-available'" 
-                  />
+                  <ToolCallCard :tool-call-id="getToolCallForPart(part, index, message.toolCalls)?.id || ''"
+                    :tool-name="getToolName(part)"
+                    :input="getToolCallForPart(part, index, message.toolCalls)?.args || {}"
+                    :output="getToolCallForPart(part, index, message.toolCalls)?.result || ''"
+                    :error="getToolCallForPart(part, index, message.toolCalls)?.error"
+                    :state="getToolCallState(part, index, message.toolCalls)" />
                 </template>
-                
                 <template v-else-if="isTextPart(part)">
                   <MDC v-if="part.text" :value="part.text" :cache-key="`${message.id}-${index}`"
                     class="prose prose-sm max-w-none" />
                 </template>
               </template>
-              
-              <div v-if="isStreaming && message.id === messages[messages.length - 1].id" class="flex items-center gap-2 text-muted">
+
+              <div v-if="isStreaming && message.id === messages[messages.length - 1]?.id"
+                class="flex items-center gap-2 text-muted">
                 <UIcon name="i-lucide-ellipsis" class="w-6 h-6 animate-bounce" />
                 <span class="text-sm">Thinking...</span>
               </div>
@@ -194,18 +212,10 @@ function isTextPart(part: any): boolean {
       <div class="px-6 py-4 border-t border-muted">
         <div class="max-w-3xl mx-auto">
           <form @submit.prevent="onSubmit" class="flex gap-2">
-            <UInput 
-              v-model="input" 
-              :placeholder="t('placeholder')" 
-              class="flex-1"
-              :disabled="isStreaming"
-              @keydown.enter.prevent="onSubmit"
-            />
-            <UButton 
-              type="submit" 
-              :label="isStreaming ? 'Sending...' : 'Send'"
-              :disabled="isStreaming || !input.trim()"
-            />
+            <UInput v-model="input" :placeholder="t('placeholder')" class="flex-1" :disabled="isStreaming"
+              @keydown.enter.prevent="onSubmit" />
+            <UButton type="submit" :label="isStreaming ? 'Sending...' : 'Send'"
+              :disabled="isStreaming || !input.trim()" />
           </form>
         </div>
       </div>

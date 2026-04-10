@@ -1,7 +1,9 @@
 import { test, expect } from '@playwright/test'
+import { mockAuthSession } from './fixtures'
 
 test.describe('AI Chat Page', () => {
   test.beforeEach(async ({ page }) => {
+    await mockAuthSession(page)
     await page.goto('/app/ai-tools/chat')
   })
 
@@ -35,15 +37,11 @@ test.describe('AI Chat Page', () => {
     await expect(submitButton).toBeDisabled()
   })
 
-  test('should show A2UI badge when A2UI components are present', async ({ page }) => {
-    const a2uiBadge = page.locator('.UBadge:has-text("A2UI")')
-    // Badge only shows when A2UI components are rendered
-    await expect(a2uiBadge).not.toBeVisible()
-  })
-
-  test('should have a clear/reset button', async ({ page }) => {
-    const resetButton = page.locator('button[aria-label="Reset"]')
-    await expect(resetButton).toBeVisible()
+  test('should enable submit when input has text', async ({ page }) => {
+    const chatInput = page.getByPlaceholder('Ask me anything about your social media strategy...')
+    await chatInput.fill('Hello AI')
+    const submitButton = page.getByRole('button', { name: 'Send' })
+    await expect(submitButton).toBeEnabled()
   })
 
   test('should show loading state while AI is responding', async ({ page }) => {
@@ -53,7 +51,7 @@ test.describe('AI Chat Page', () => {
       await route.fulfill({
         status: 200,
         contentType: 'text/event-stream',
-        body: 'data: {"content":"Hello","done":false}\n\ndata: {"content":"","done":true}\n\n',
+        body: 'data: {"type":"text","content":"Hello","done":false}\n\ndata: {"type":"finish","finishReason":"stop"}\n\n',
       })
     })
 
@@ -64,6 +62,62 @@ test.describe('AI Chat Page', () => {
     await submitButton.click()
 
     // Check loading indicator appears
-    await expect(page.locator('.animate-pulse')).toBeVisible()
+    await expect(page.locator('.animate-bounce')).toBeVisible()
+  })
+
+  test('should send message on Enter key', async ({ page }) => {
+    await page.route('/api/ai-tools/chat', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream',
+        body: 'data: {"type":"text","content":"Response","done":false}\n\ndata: {"type":"finish","finishReason":"stop"}\n\n',
+      })
+    })
+
+    const chatInput = page.getByPlaceholder('Ask me anything about your social media strategy...')
+    await chatInput.fill('Test')
+    await chatInput.press('Enter')
+
+    await expect(page.getByText('Test')).toBeVisible()
+    await expect(page.getByText('Response')).toBeVisible({ timeout: 10000 })
+  })
+
+  test('should show thinking indicator during reasoning', async ({ page }) => {
+    await page.route('/api/ai-tools/chat', async (route) => {
+      const chunks = [
+        { type: 'thinking', content: 'Analyzing...' },
+        { type: 'text', content: 'Answer here', done: false },
+        { type: 'finish', finishReason: 'stop' },
+      ]
+      const body = chunks.map(c => `data: ${JSON.stringify(c)}\n\n`).join('')
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream',
+        body,
+      })
+    })
+
+    const chatInput = page.getByPlaceholder('Ask me anything about your social media strategy...')
+    await chatInput.fill('Complex question')
+    await chatInput.press('Enter')
+
+    await expect(page.getByText('Reasoning')).toBeVisible({ timeout: 10000 })
+  })
+
+  test('should handle API error gracefully', async ({ page }) => {
+    await page.route('/api/ai-tools/chat', async (route) => {
+      await route.fulfill({
+        status: 500,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: 'Internal Server Error' }),
+      })
+    })
+
+    const chatInput = page.getByPlaceholder('Ask me anything about your social media strategy...')
+    await chatInput.fill('Test')
+    await chatInput.press('Enter')
+
+    // Should show error state without crashing
+    await expect(page.getByPlaceholder('Ask me anything about your social media strategy...')).toBeVisible()
   })
 })

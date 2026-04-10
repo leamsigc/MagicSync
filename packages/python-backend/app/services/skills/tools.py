@@ -370,7 +370,10 @@ class CodeSandbox:
             session_id: Optional session ID for stateful execution
             include_tools: Whether to include tool stubs in the execution
         """
+        logger.info(f"execute_code called with enabled={self.enabled}")
+        
         if not self.enabled:
+            logger.warning("Code execution is disabled")
             return {
                 "error": "Code execution sandbox is disabled",
                 "code": code[:100] + "..." if len(code) > 100 else code,
@@ -398,8 +401,19 @@ class CodeSandbox:
                 logger.warning(f"Failed to generate tool stubs: {e}")
 
         try:
+            # Auto-wrap expressions in print() if no print() statement exists
+            # Check in the ORIGINAL user code, not in the stubs
+            wrapped_code = full_code
+            if 'print(' not in code:
+                # Check if user code is a simple expression (single line, no assignments)
+                user_lines = code.strip().split('\n')
+                if len(user_lines) == 1 and '=' not in user_lines[0] and not user_lines[0].startswith('#'):
+                    # Wrap the expression in print()
+                    wrapped_code = f"print({user_lines[0].strip()})"
+                    logger.info(f"Auto-wrapped code: {code} -> {wrapped_code}")
+            
             with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
-                f.write(full_code)
+                f.write(wrapped_code)
                 temp_path = f.name
 
             result = subprocess.run(

@@ -2,6 +2,8 @@ import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
 import { documentService } from '#layers/BaseDB/server/services/document.service'
 import { readFile } from 'fs/promises'
 import { join } from 'path'
+import { createLlmJwt } from '#layers/BaseDB/server/utils/llm-jwt'
+import { userLlmConfigService } from '#layers/BaseDB/server/services/user-llm-config.service'
 
 export default defineEventHandler(async (event) => {
   const user = await checkUserIsLogin(event)
@@ -23,9 +25,13 @@ export default defineEventHandler(async (event) => {
   const filePath = join(process.cwd(), 'upload', doc.storagePath)
   const fileBuffer = await readFile(filePath)
 
-  // Call Python backend for metadata extraction
+  // Get LLM config and create JWT for Python backend auth
   const config = useRuntimeConfig()
   const backendUrl = config.pythonBackendUrl || 'http://localhost:8000'
+
+  const llmConfigResult = await userLlmConfigService.getDefaultConfig(user.id)
+  const llmConfig = llmConfigResult.data ?? null
+  const llmJwt = createLlmJwt(user.id, user.email || '', llmConfig)
 
   const metadata = await $fetch<{
     title: string
@@ -41,7 +47,7 @@ export default defineEventHandler(async (event) => {
       mime_type: doc.mimeType,
     },
     headers: {
-      'X-User-Id': user.id,
+      'Authorization': `Bearer ${llmJwt}`,
     },
   })
 

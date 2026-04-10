@@ -31,8 +31,17 @@ Track your progress through the implementation. Claude Code reads this to unders
 - [-] Auto-discover tools from MCP servers (stub)
 
 ### Module 5: Chat History Interleaved Rendering
-- [-] Component state in message metadata (in progress)
+- [x] Component state in message metadata
 - [x] Sidebar navigation with all AI Tools pages accessible from UI
+- [x] Streaming finish response handling
+- [x] Delete confirmation modal (replaced browser confirm with UModal)
+- [x] JWT auth for Python backend (fixed 401 on rag/ingest)
+- [x] E2E tests for streaming, tool calls, and auth
+- [x] Code execution output handling (fixed no end response)
+- [x] Tools toggle (enable/disable AI tools)
+- [x] Available tools list button
+- [x] Fixed tool loop (now returns after single tool execution)
+- [x] web_search tool added (DuckDuckGo integration)
 
 ---
 

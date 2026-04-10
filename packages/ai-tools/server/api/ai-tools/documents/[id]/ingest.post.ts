@@ -3,6 +3,8 @@ import { documentService, chunkService } from '#layers/BaseDB/server/services/do
 import { readFile } from 'fs/promises'
 import { join } from 'path'
 import { createHash } from 'crypto'
+import { createLlmJwt } from '#layers/BaseDB/server/utils/llm-jwt'
+import { userLlmConfigService } from '#layers/BaseDB/server/services/user-llm-config.service'
 
 export default defineEventHandler(async (event) => {
   const user = await checkUserIsLogin(event)
@@ -57,9 +59,17 @@ export default defineEventHandler(async (event) => {
 
         controller.enqueue(encoder.encode(sendEvent({ status: 'processing', message: 'Chunking and embedding...' })))
 
-        // Send to Python backend for chunking + embedding
+        // Get LLM config and create JWT for Python backend auth
         const config = useRuntimeConfig()
         const backendUrl = config.pythonBackendUrl || 'http://localhost:8000'
+        
+        const llmConfigResult = await userLlmConfigService.getDefaultConfig(user.id)
+        const llmConfig = llmConfigResult.data ?? null
+        const llmJwt = createLlmJwt(user.id, user.email || '', llmConfig)
+
+        // Get existing chunks before new ingestion
+        const existingChunksResult = await chunkService.findByDocument(doc.id)
+        const existingChunks = existingChunksResult.data || []
 
         const ingestResult = await $fetch<{
           document_id: string
@@ -85,13 +95,9 @@ export default defineEventHandler(async (event) => {
             chunk_overlap: 64,
           },
           headers: {
-            'X-User-Id': user.id,
+            'Authorization': `Bearer ${llmJwt}`,
           },
         })
-
-        // Incremental processing: compare with existing chunks
-        const existingChunksResult = await chunkService.findByDocument(doc.id)
-        const existingChunks = existingChunksResult.data || []
 
         // Build a set of existing content hashes for quick lookup
         const existingHashMap = new Map<string, string>() // contentHash -> chunkId

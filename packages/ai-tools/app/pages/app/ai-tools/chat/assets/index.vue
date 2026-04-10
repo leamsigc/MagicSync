@@ -30,6 +30,8 @@ const uploading = ref(false)
 const ingesting = ref<Record<string, { message: string; progress?: number }>>({})
 const fileInput = ref<HTMLInputElement | null>(null)
 const dragOver = ref(false)
+const showDeleteModal = ref(false)
+const documentToDelete = ref<Document | null>(null)
 
 async function fetchFolders() {
   try {
@@ -160,15 +162,28 @@ function cancelIngest(docId: string) {
 }
 
 async function handleDelete(doc: Document) {
-  if (!confirm(t('deleteConfirm'))) return
+  documentToDelete.value = doc
+  showDeleteModal.value = true
+}
 
+async function confirmDelete() {
+  if (!documentToDelete.value) return
+  
   try {
-    await $fetch(`/api/ai-tools/documents/${doc.id}`, { method: 'DELETE' })
+    await $fetch(`/api/ai-tools/documents/${documentToDelete.value.id}`, { method: 'DELETE' })
     toast.add({ title: t('deleteSuccess'), color: 'success' })
-    documents.value = documents.value.filter(d => d.id !== doc.id)
+    documents.value = documents.value.filter(d => d.id !== documentToDelete.value!.id)
   } catch (e) {
     toast.add({ title: t('deleteError'), color: 'error' })
+  } finally {
+    showDeleteModal.value = false
+    documentToDelete.value = null
   }
+}
+
+function cancelDelete() {
+  showDeleteModal.value = false
+  documentToDelete.value = null
 }
 
 function formatSize(bytes: number): string {
@@ -296,5 +311,13 @@ onMounted(loadData)
         </tbody>
       </table>
     </div>
+
+    <!-- Delete Confirmation Modal -->
+    <UModal v-model:open="showDeleteModal" :title="t('deleteConfirmTitle')" :description="t('deleteConfirmDescription')">
+      <template #footer>
+        <UButton color="neutral" variant="ghost" @click="cancelDelete">{{ t('cancel') }}</UButton>
+        <UButton color="error" @click="confirmDelete">{{ t('delete') }}</UButton>
+      </template>
+    </UModal>
   </div>
 </template>

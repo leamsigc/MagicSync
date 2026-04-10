@@ -230,32 +230,47 @@ test.describe('Assets Page - Delete', () => {
     await expect(deleteButtons).toHaveCount(1)
   })
 
-  test('should show confirm dialog before deleting', async ({ authPage: page }) => {
+  test('should show confirm modal before deleting', async ({ authPage: page }) => {
     await mockDocumentsList(page, [mockDoc])
-
-    // Listen for dialog
-    page.on('dialog', async (dialog) => {
-      expect(dialog.message()).toContain('delete this document')
-      await dialog.dismiss()
-    })
 
     await page.goto('/app/ai-tools/chat/assets')
     await page.locator('button:has(i-heroicons-trash)').click()
+
+    // Should show the modal with confirmation text
+    await expect(page.getByText('Delete Document?')).toBeVisible()
+    await expect(page.getByText('This will permanently delete the document and all its chunks. This action cannot be undone.')).toBeVisible()
+    // Cancel button should be visible
+    await expect(page.getByRole('button', { name: 'Cancel' })).toBeVisible()
   })
 
-  test('should delete document after confirmation', async ({ authPage: page }) => {
+  test('should delete document after clicking delete in modal', async ({ authPage: page }) => {
     await mockDocumentsList(page, [mockDoc])
     mockDocumentDelete(page, mockDoc.id)
 
-    page.on('dialog', async (dialog) => {
-      await dialog.accept()
-    })
+    await page.goto('/app/ai-tools/chat/assets')
+    await page.locator('button:has(i-heroicons-trash)').click()
+
+    // Click delete button in modal
+    await page.getByRole('button', { name: 'Delete' }).click()
+
+    // Document should be removed from the list
+    await expect(page.getByText('business-plan.pdf')).not.toBeVisible()
+  })
+
+  test('should close modal when clicking cancel', async ({ authPage: page }) => {
+    await mockDocumentsList(page, [mockDoc])
 
     await page.goto('/app/ai-tools/chat/assets')
     await page.locator('button:has(i-heroicons-trash)').click()
 
-    // Document should be removed from the list
-    await expect(page.getByText('business-plan.pdf')).not.toBeVisible()
+    // Should show the modal
+    await expect(page.getByText('Delete Document?')).toBeVisible()
+
+    // Click cancel
+    await page.getByRole('button', { name: 'Cancel' }).click()
+
+    // Modal should be closed - the document should still be visible
+    await expect(page.getByText('business-plan.pdf')).toBeVisible()
   })
 })
 

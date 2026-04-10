@@ -54,7 +54,7 @@ export function useA2UIChat() {
   let loadThreads: () => Promise<void>
   let loadThreadMessages: (id: string) => Promise<void>
 
-  async function sendMessage(content: string) {
+  async function sendMessage(content: string, enableTools: boolean = true) {
     const userMessage: ChatMessage = {
       id: generateId(),
       role: 'user',
@@ -86,6 +86,7 @@ export function useA2UIChat() {
               parts: m.parts?.map((p) => ({ type: p.type, text: p.text || '' })),
             })),
           thread_id: threadId.value,
+          enable_tools: enableTools,
         }),
         signal: abortController.signal,
       })
@@ -120,6 +121,7 @@ export function useA2UIChat() {
 
           try {
             const chunk: StreamChunk = JSON.parse(jsonStr)
+            console.log('[Chat] Received chunk type:', chunk.type, 'toolName:', chunk.toolName, 'toolCallId:', chunk.toolCallId)
 
             if (chunk.type === 'thinking' && chunk.content) {
               currentReasoning += chunk.content
@@ -143,20 +145,64 @@ export function useA2UIChat() {
               assistantMessage.parts = assistantMessage.parts || []
               assistantMessage.parts.push({ type: 'tool', tool: chunk.toolName })
             } else if (chunk.type === 'tool_result' && chunk.output) {
-              const toolCall = assistantMessage.toolCalls?.find((tc) => tc.id === chunk.toolCallId)
+              console.log('[Chat] tool_result chunk:', chunk)
+              // Find tool call - try by ID first, then by toolName
+              let toolCall = null
+              
+              // First try to find by ID from the chunk itself (id field)
+              toolCall = assistantMessage.toolCalls?.find((tc) => tc.id === chunk.id)
+              
+              // If not found, try by toolCallId from backend
+              if (!toolCall && chunk.toolCallId) {
+                toolCall = assistantMessage.toolCalls?.find((tc) => tc.id === chunk.toolCallId)
+              }
+              
+              // Last resort: find by toolName (chunk.toolName when not error/unknown)
+              if (!toolCall && chunk.toolName && chunk.toolName !== 'error' && chunk.toolName !== 'unknown') {
+                toolCall = assistantMessage.toolCalls?.find((tc) => tc.name === chunk.toolName)
+              }
+              
+              console.log('[Chat] Found toolCall:', toolCall, 'id:', chunk.id, 'toolCallId:', chunk.toolCallId, 'toolName:', chunk.toolName)
+              console.log('[Chat] Available toolCalls:', assistantMessage.toolCalls?.map(tc => ({ id: tc.id, name: tc.name })))
               if (toolCall) {
                 toolCall.result = chunk.output
                 if (chunk.errorText) toolCall.error = chunk.errorText
+                console.log('[Chat] Updated toolCall result:', toolCall.result)
+              } else {
+                console.log('[Chat] Warning: Could not find tool call for result')
               }
             } else if (chunk.type === 'error') {
               console.error('Stream error:', chunk.content)
+            } else if (chunk.type === 'done') {
+              console.log('[Chat] Received done signal')
             }
           } catch {
             // Skip malformed JSON
           }
         }
+
+        // Check if we got a done signal
+        if (buffer.includes('"done":true') || buffer.includes('"done" : true')) {
+          console.log('[Chat] Stream completed with done signal')
+          break
+        }
       }
 
+      // If stream ended without explicit done signal, check if we have results
+      const toolCalls = assistantMessage.toolCalls || []
+      const hasToolCalls = toolCalls.length > 0
+      const hasTextContent = assistantMessage.content && assistantMessage.content.length > 0
+      
+      if (hasToolCalls && !hasTextContent) {
+        // Tools ran but no final text - show tool results as final content
+        console.log('[Chat] Tools executed but no text response, showing tool results')
+        const toolOutputs = toolCalls
+          .filter(tc => tc.result)
+          .map(tc => `${tc.name}: ${tc.result}`)
+          .join('\n')
+        assistantMessage.content = `[Tool Results]\n${toolOutputs}`
+      }
+      
       isLoadingThreads.value = false
       if (!threadId.value) {
         loadThreads().then(() => {
@@ -213,7 +259,9 @@ export function useA2UIChat() {
               toolCalls = parsed.componentStates.map((cs: any) => ({
                 id: cs.id,
                 name: cs.data?.name || 'unknown',
-                args: cs.data?.args || {},
+                args: cs.data?.args || cs.data?.arguments || {},
+                result: cs.data?.output || '',  // Include tool result
+                error: cs.data?.isError ? cs.data?.output : undefined,
               }))
             }
           } catch {
@@ -223,11 +271,26 @@ export function useA2UIChat() {
 
         const messageState = getMessageState(m.id)
 
+        // Build parts - include tool parts if there are tool calls
+        let parts: ChatMessage['parts'] = []
+        if (toolCalls && toolCalls.length > 0) {
+          // Add tool parts for each tool call
+          parts = toolCalls.map((tc) => ({ type: 'tool' as const, tool: tc.name }))
+        }
+        // Add text part if there's content
+        if (m.content) {
+          parts.push({ type: 'text' as const, text: m.content })
+        }
+        // If no parts, at least add the content as text
+        if (parts.length === 0) {
+          parts = [{ type: 'text' as const, text: m.content || '' }]
+        }
+
         return {
           id: m.id,
           role: m.role as 'user' | 'assistant' | 'system',
           content: m.content,
-          parts: [{ type: 'text' as const, text: m.content }],
+          parts,
           toolCalls: toolCalls || (messageState?.components ? messageState.components.map((c: any) => ({
             id: c.id,
             name: c.data?.name || 'unknown',

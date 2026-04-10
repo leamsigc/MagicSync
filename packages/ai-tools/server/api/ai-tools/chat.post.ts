@@ -48,6 +48,8 @@ export default defineEventHandler(async (event) => {
   }
 
   const lastMessage = convertedMessages[convertedMessages.length - 1]
+  const enableTools = body?.enable_tools !== false // Default to true
+
   if (threadId && lastMessage?.role === 'user') {
     await chatService.addMessage({
       threadId,
@@ -83,7 +85,11 @@ export default defineEventHandler(async (event) => {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${llmJwt}`,
           },
-          body: JSON.stringify({ messages: convertedMessages, thread_id: threadId }),
+          body: JSON.stringify({ 
+            messages: convertedMessages, 
+            thread_id: threadId,
+            enable_tools: enableTools,
+          }),
         })
 
         logger.info('Backend response status:', backendResponse.status)
@@ -146,7 +152,9 @@ export default defineEventHandler(async (event) => {
 
             try {
               const data = JSON.parse(json)
-              logger.info('Passing through chunk:', data.type)
+              const toolName = data.tool_call?.name || ''
+              const resultPreview = data.tool_result?.result?.substring(0, 50) || ''
+              logger.info(`Passing through chunk: ${data.type} ${toolName} ${resultPreview}`)
 
               if (data.type === 'thinking' && data.content) {
                 assistantContent += data.content
@@ -172,12 +180,27 @@ export default defineEventHandler(async (event) => {
                   args: JSON.parse(data.tool_call.arguments),
                 })))
               } else if (data.type === 'tool_result' && data.tool_result) {
+                logger.info('Received tool_result from backend:', data.tool_result.result?.substring(0, 100))
                 const resultStr = data.tool_result.result
                 const isError = resultStr?.includes('[Tool Error:')
+                // Use the SAME id as the tool_call so frontend can match them
+                const toolCallId = data.tool_result.id  // Use the id from backend
+                
+                // Add tool_result to componentStates so it's saved in DB
+                componentStates.push({ 
+                  id: toolCallId, 
+                  type: 'tool-result', 
+                  data: { 
+                    name: data.tool_call?.name || 'unknown', // Try to get tool name from tool_call
+                    output: resultStr,
+                    isError 
+                  } 
+                })
+                
                 controller.enqueue(encoder.encode(sendChunk({
                   type: 'tool_result',
-                  id: generateId(),
-                  toolCallId: data.tool_result.id,
+                  id: toolCallId,  // Use same ID as tool_call
+                  toolCallId: toolCallId,
                   toolName: isError ? 'error' : 'unknown',
                   input: {},
                   output: resultStr,

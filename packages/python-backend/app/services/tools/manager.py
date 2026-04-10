@@ -24,6 +24,7 @@ class ToolManager:
             *MCP_TOOL_DEFINITIONS,
             *self._get_retrieve_tool(),
             *self._get_rag_search_tool(),
+            *self._get_web_search_tool(),
         ]
 
         return [
@@ -36,6 +37,30 @@ class ToolManager:
                 },
             }
             for tool in all_tools
+        ]
+
+    def _get_web_search_tool(self) -> list[dict]:
+        """Get web search tool definition."""
+        return [
+            {
+                "name": "web_search",
+                "description": "Search the web for current information, trends, news, or anything not in your documents. Use this when you need up-to-date information or don't have the answer in your knowledge base.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "The search query",
+                        },
+                        "max_results": {
+                            "type": "integer",
+                            "description": "Maximum number of results to return",
+                            "default": 5,
+                        },
+                    },
+                    "required": ["query"],
+                },
+            }
         ]
 
     def _get_retrieve_tool(self) -> list[dict]:
@@ -123,8 +148,27 @@ class ToolManager:
             return await self._execute_import_skill_from_folder(arguments)
         if tool_name == "generate_twitter_post":
             return await self._execute_generate_twitter_post(arguments)
+        if tool_name == "web_search":
+            return await self._execute_web_search(arguments)
 
         return {"error": f"Unknown tool: {tool_name}"}
+
+    async def _execute_web_search(self, args: dict) -> dict:
+        """Execute web search."""
+        from app.services.tools.web_search import web_search_service
+
+        query = args.get("query", "")
+        max_results = args.get("max_results", 5)
+
+        logger.info(f"Executing web search for: {query}")
+        
+        try:
+            result = await web_search_service.search(query, max_results)
+            logger.info(f"Web search returned {len(result.get('results', []))} results")
+            return result
+        except Exception as e:
+            logger.error(f"Web search failed: {e}")
+            return {"error": str(e), "results": []}
 
     async def _execute_retrieve(self, args: dict) -> dict:
         """Execute RAG retrieval."""
@@ -379,10 +423,12 @@ def format_retrieve_result(result: dict) -> str:
 
 def format_tool_result(tool_name: str, result: dict) -> str:
     """Format tool execution result for LLM context."""
-    if "error" in result:
+    # Only treat as error if error key has a non-None value
+    if "error" in result and result.get("error"):
         return f"[Tool Error: {tool_name}] {result.get('error')}"
 
     if tool_name in ("retrieve", "hybrid_search"):
         return format_retrieve_result(result)
 
+    # Return as-is for execute_code, web_search, generate_twitter_post, etc.
     return json.dumps(result, indent=2)[:2000]
