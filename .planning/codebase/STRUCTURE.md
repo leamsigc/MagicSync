@@ -1,6 +1,6 @@
 # Codebase Structure
 
-**Analysis Date:** 2026-04-09
+**Analysis Date:** 2026-04-10
 
 ## Directory Layout
 
@@ -176,4 +176,4 @@ packages/assets/server/api/v1/assets/index.post.ts
 
 ---
 
-*Structure analysis: 2026-04-09*
+*Structure analysis: 2026-04-10*
