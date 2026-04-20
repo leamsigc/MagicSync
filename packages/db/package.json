@@ -25,11 +25,12 @@
     "@libsql/client": "catalog:",
     "@nuxt/eslint": "catalog:",
     "@types/jsonwebtoken": "^9.0.10",
+    "dotenv-cli": "^11.0.0",
     "drizzle-kit": "catalog:",
     "eslint": "catalog:",
+    "jose": "^6.2.2",
     "nuxt": "catalog:",
     "typescript": "catalog:",
-    "vue": "catalog:",
-    "dotenv-cli": "^11.0.0"
+    "vue": "catalog:"
   }
 }
