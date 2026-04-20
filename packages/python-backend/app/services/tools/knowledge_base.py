@@ -25,7 +25,8 @@ class KnowledgeBaseTools:
         
         try:
             pool = await get_db_pool()
-            async with pool.acquire() as conn:
+            conn = await pool.acquire()
+            async with conn:
                 # Get folder by path
                 folder_id = None
                 if folder_path and folder_path != '/':
@@ -91,7 +92,8 @@ class KnowledgeBaseTools:
         
         try:
             pool = await get_db_pool()
-            async with pool.acquire() as conn:
+            conn = await pool.acquire()
+            async with conn:
                 # Get all folders for user
                 folders_result = await conn.execute(
                     """SELECT id, name, parent_id, path FROM knowledge_folders 
@@ -173,7 +175,8 @@ class KnowledgeBaseTools:
         
         try:
             pool = await get_db_pool()
-            async with pool.acquire() as conn:
+            conn = await pool.acquire()
+            async with conn:
                 # Get document IDs in folder scope
                 if folder_path:
                     folder_result = await conn.execute(
@@ -278,7 +281,8 @@ class KnowledgeBaseTools:
         
         try:
             pool = await get_db_pool()
-            async with pool.acquire() as conn:
+            conn = await pool.acquire()
+            async with conn:
                 result = await conn.execute(
                     """SELECT id, filename, original_name, mime_type, size, folder_id
                        FROM documents WHERE user_id = ? ORDER BY filename""",
@@ -312,7 +316,8 @@ class KnowledgeBaseTools:
         
         try:
             pool = await get_db_pool()
-            async with pool.acquire() as conn:
+            conn = await pool.acquire()
+            async with conn:
                 # Get document metadata
                 doc_result = await conn.execute(
                     """SELECT id, filename, original_name, mime_type, storage_path, metadata, folder_id

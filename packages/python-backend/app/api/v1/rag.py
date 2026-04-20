@@ -121,7 +121,8 @@ async def ingest_document(
             ))
 
         # Emit all chunks at once before completion
-        yield f"data: {json.dumps({'status': 'chunks', 'chunks': results, 'total_chunks': len(results)})}\n\n"
+        chunks_dict = [c.model_dump() for c in results]
+        yield f"data: {json.dumps({'status': 'chunks', 'chunks': chunks_dict, 'total_chunks': len(results)})}\n\n"
 
         # Emit completion status
         yield f"data: {json.dumps({'status': 'done', 'document_id': request.document_id, 'total_chunks': len(results), 'extracted_text': text[:5000], 'document_metadata': document_metadata})}\n\n"

@@ -182,8 +182,9 @@ class ToolManager:
             from app.core.db import get_db_pool
             from app.services.rag import chunk_text
 
-            pool = get_db_pool()
-            async with pool.acquire() as conn:
+            pool = await get_db_pool()
+            conn = await pool.acquire()
+            async with conn:
                 embedding_str = f"[{','.join(map(str, embedding))}]"
                 results = await conn.execute(
                     """
@@ -225,8 +226,9 @@ class ToolManager:
             embedding = await embedding_service.embed(query)
             from app.core.db import get_db_pool
 
-            pool = get_db_pool()
-            async with pool.acquire() as conn:
+            pool = await get_db_pool()
+            conn = await pool.acquire()
+            async with conn:
                 embedding_str = f"[{','.join(map(str, embedding))}]"
 
                 results = await conn.execute(

@@ -211,6 +211,7 @@ export default defineEventHandler(async (event) => {
               } else if (data.done) {
                 logger.info('Received done signal')
                 controller.enqueue(encoder.encode(sendChunk({ type: 'done', id: generateId() })))
+                break
               }
             } catch (e) {
               logger.error('Failed to parse SSE data:', e, json)
@@ -218,7 +219,6 @@ export default defineEventHandler(async (event) => {
           }
         }
 
-        controller.enqueue(encoder.encode(sendChunk({ type: 'finish', id: generateId(), finishReason: 'stop' })))
         logger.info('Stream finished')
       } catch (err: any) {
         logger.error('Stream error:', err)

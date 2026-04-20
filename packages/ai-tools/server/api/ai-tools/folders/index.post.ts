@@ -13,6 +13,7 @@ export default defineEventHandler(async (event) => {
     name: body.name,
     parentId: body.parentId,
     path: body.path || `/${body.name}`,
+    isGlobal: body.isGlobal ?? false,
   })
 
   if (result.error) {

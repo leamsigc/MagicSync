@@ -287,13 +287,16 @@ export default defineEventHandler(async (event) => {
 
         controller.enqueue(encoder.encode('data: [DONE]\n\n'))
         controller.close()
+        return
 
       } catch (error: any) {
+        console.error('[Ingest] Error:', error)
         await documentService.updateStatus(id!, user.id, 'failed', error.message)
         controller.enqueue(encoder.encode(sendEvent({
           status: 'failed',
           message: error.message || 'Ingestion failed',
         })))
+        controller.enqueue(encoder.encode('data: [DONE]\n\n'))
         controller.close()
       }
     },

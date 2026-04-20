@@ -6,10 +6,11 @@ import { user } from '../auth/auth'
 // Knowledge base folders for hierarchical navigation
 export const knowledgeFolders = sqliteTable('knowledge_folders', {
   id: text('id').primaryKey(),
-  userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  userId: text('user_id').references(() => user.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
   parentId: text('parent_id').references(() => knowledgeFolders.id, { onDelete: 'cascade' }),
   path: text('path').notNull(),
+  isGlobal: integer('is_global', { mode: 'boolean' }).notNull().default(false),
   createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()).notNull()
 })
 

@@ -1,4 +1,4 @@
-import { eq, and, sql, desc } from 'drizzle-orm'
+import { eq, and, or, sql, desc } from 'drizzle-orm'
 import { type ServiceResponse, type QueryOptions } from './types'
 import { knowledgeFolders, documents, type KnowledgeFolder } from '#layers/BaseDB/db/rag/rag'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
@@ -7,6 +7,7 @@ export interface CreateFolderData {
   name: string
   parentId?: string
   path: string
+  isGlobal?: boolean
 }
 
 export interface UpdateFolderData {
@@ -21,13 +22,15 @@ export class FolderService {
     try {
       const id = crypto.randomUUID()
       const now = new Date()
+      const isGlobal = data.isGlobal ?? false
 
       const [folder] = await this.db.insert(knowledgeFolders).values({
         id,
-        userId,
+        userId: isGlobal ? 'global' : userId,
         name: data.name,
         parentId: data.parentId || null,
         path: data.path,
+        isGlobal,
         createdAt: now
       }).returning()
 
@@ -77,26 +80,25 @@ export class FolderService {
     try {
       let folders: KnowledgeFolder[]
       
+      // Simple query - fetch user folders without isGlobal check
       if (parentId === undefined) {
         folders = await this.db
           .select()
           .from(knowledgeFolders)
           .where(eq(knowledgeFolders.userId, userId))
-          .orderBy(knowledgeFolders.name)
       } else {
         folders = await this.db
           .select()
           .from(knowledgeFolders)
-          .where(
-            parentId 
-              ? and(eq(knowledgeFolders.userId, userId), eq(knowledgeFolders.parentId, parentId))
-              : and(eq(knowledgeFolders.userId, userId), sql`${knowledgeFolders.parentId} IS NULL`)
+          .where(parentId 
+            ? and(eq(knowledgeFolders.userId, userId), eq(knowledgeFolders.parentId, parentId))
+            : and(eq(knowledgeFolders.userId, userId))
           )
-          .orderBy(knowledgeFolders.name)
       }
 
       return { data: folders }
     } catch (error) {
+      console.error('[FolderService.findByUser] Error:', error)
       return { error: 'Failed to fetch folders' }
     }
   }
@@ -120,11 +122,11 @@ export class FolderService {
       const folders = await this.db
         .select()
         .from(knowledgeFolders)
-        .where(and(eq(knowledgeFolders.userId, userId), sql`${knowledgeFolders.parentId} IS NULL`))
-        .orderBy(knowledgeFolders.name)
+        .where(eq(knowledgeFolders.userId, userId))
 
       return { data: folders }
     } catch (error) {
+      console.error('[FolderService.getRootFolders] Error:', error)
       return { error: 'Failed to fetch root folders' }
     }
   }
@@ -135,7 +137,6 @@ export class FolderService {
         .select()
         .from(knowledgeFolders)
         .where(eq(knowledgeFolders.userId, userId))
-        .orderBy(knowledgeFolders.path)
 
       return { data: folders }
     } catch (error) {

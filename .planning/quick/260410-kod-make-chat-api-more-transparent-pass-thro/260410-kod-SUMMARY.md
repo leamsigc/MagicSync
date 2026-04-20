@@ -19,7 +19,7 @@ Simplified the chat API to pass through Python response directly and replaced UI
   - `tool_result` - tool execution result
   - `error` - error messages
   - `done` - stream completed
-  - `finish` - final finish signal
+- **Removed `finish` chunk** - only `done` used for stream termination
 - Each chunk now includes an `id` field for correlation instead of start/delta/end pattern
 
 ### 2. Frontend Changes (`packages/ai-tools/app/pages/app/ai-tools/chat/composables/useA2UIChat.ts`)
@@ -28,6 +28,7 @@ Simplified the chat API to pass through Python response directly and replaced UI
 - Created custom `ChatMessage` interface with fields:
   - `id`, `role`, `content`, `parts`, `reasoningContent`, `toolCalls`
 - Implemented custom SSE stream handling with `fetch` + `ReadableStream`
+- Handles only `done` for stream termination (not `finish`)
 - Returns `messages`, `isStreaming`, and `sendMessage` instead of `chat` object
 
 ### 3. Template Changes (`packages/ai-tools/app/pages/app/ai-tools/chat/index.vue`)
@@ -41,10 +42,11 @@ Simplified the chat API to pass through Python response directly and replaced UI
 1. **More transparent** - API now passes through chunk types that match the Python backend directly
 2. **More control** - Custom message types give full control over rendering
 3. **Simpler** - Removed unnecessary wrapper chunks (start/delta/end pattern)
-4. **No UIMessage dependency** - Frontend no longer relies on rigid `UIMessage` type from `ai` package
+4. **Single termination** - Only `done` used for stream end (removed redundant `finish`)
+5. **No UIMessage dependency** - Frontend no longer relies on rigid `UIMessage` type from `ai` package
 
 ## Files Modified
 
-- `packages/ai-tools/server/api/ai-tools/chat.post.ts` (224 lines)
-- `packages/ai-tools/app/pages/app/ai-tools/chat/composables/useA2UIChat.ts` (294 lines)
-- `packages/ai-tools/app/pages/app/ai-tools/chat/index.vue` (158 lines)
+- `packages/ai-tools/server/api/ai-tools/chat.post.ts` (~220 lines)
+- `packages/ai-tools/app/pages/app/ai-tools/chat/composables/useA2UIChat.ts` (~357 lines)
+- `packages/ai-tools/app/pages/app/ai-tools/chat/index.vue` (~160 lines)

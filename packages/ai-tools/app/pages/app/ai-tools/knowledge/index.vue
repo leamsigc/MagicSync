@@ -28,6 +28,7 @@ interface KBDocument {
 const { t } = useI18n()
 const toast = useToast()
 const uploading = ref(false)
+const moveToFolderId = ref<string>('')
 const fileInput = ref<HTMLInputElement | null>(null)
 const dragOver = ref(false)
 
@@ -290,6 +291,31 @@ function formatSize(bytes: number): string {
   return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
 }
 
+const folderOptions = computed(() => {
+  const opts = [{ label: 'Root (No Folder)', value: '' }]
+  for (const folder of folders.value) {
+    opts.push({ label: folder.name, value: folder.id })
+  }
+  return opts
+})
+
+async function handleMoveToFolder() {
+  const doc = getSelectedDocument()
+  if (!doc || !moveToFolderId.value) return
+
+  try {
+    await $fetch(`/api/ai-tools/documents/${doc.id}/move`, {
+      method: 'PATCH',
+      body: { folderId: moveToFolderId.value || null }
+    })
+    await loadData()
+    toast.add({ title: t('fileMoved'), color: 'success' })
+    moveToFolderId.value = ''
+  } catch (e) {
+    toast.add({ title: 'Error', description: 'Failed to move file', color: 'error' })
+  }
+}
+
 function getFileIcon(mimeType: string): string {
   const type = mimeType.toLowerCase()
   if (type.includes('pdf')) return 'i-heroicons-document-text'
@@ -378,6 +404,12 @@ useSortable(treeRef, items, {
                 <span class="text-gray-500">Path</span>
                 <span class="truncate">{{getSelectedDocument()!.folderId ? folders.find(f => f.id ===
                   getSelectedDocument()!.folderId)?.path : '/'}}</span>
+              </div>
+
+              <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <label class="text-sm text-gray-500 block mb-2">Move to folder</label>
+                <USelect v-model="moveToFolderId" :items="folderOptions" :placeholder="t('selectFolder')"
+                  @update:model-value="handleMoveToFolder" />
               </div>
             </div>
 

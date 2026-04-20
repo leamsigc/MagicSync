@@ -12,6 +12,7 @@
     "folderDeleted": "Folder deleted successfully",
     "fileMoved": "File moved successfully",
     "move": "Move",
+    "selectFolder": "Select folder...",
     "cancel": "Cancel",
     "create": "Create",
     "delete": "Delete",

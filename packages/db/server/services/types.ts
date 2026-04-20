@@ -8,6 +8,29 @@ export interface ServiceResponse<T = any> {
   code?: string
 }
 
+// Folder types
+export type Folder = {
+  id: string
+  userId: string | null
+  name: string
+  parentId: string | null
+  path: string
+  isGlobal: boolean
+  createdAt: Date
+}
+
+export interface FolderCreateInput {
+  name: string
+  parentId?: string
+  path: string
+  isGlobal?: boolean
+}
+
+export interface FolderUpdateInput {
+  name?: string
+  parentId?: string
+}
+
 export interface PaginationOptions {
   page: number
   limit: number
