@@ -142,12 +142,29 @@ export class PostService {
         whereConditions = and(whereConditions, eq(posts.status, filters.status))
       }
 
+      // Apply post format filter
+      if (filters.postFormat) {
+        whereConditions = and(whereConditions, eq(posts.postFormat, filters.postFormat))
+      }
+
+      // Determine which date field to filter by
+      const dateField = filters.dateType === 'createdAt' ? posts.createdAt 
+        : filters.dateType === 'publishedAt' ? posts.publishedAt 
+        : posts.scheduledAt
+
       // Apply date range filters
       if (filters.startDate) {
-        whereConditions = and(whereConditions, gte(posts.scheduledAt, new Date(filters.startDate)))
+        whereConditions = and(whereConditions, gte(dateField, new Date(filters.startDate)))
       }
       if (filters.endDate) {
-        whereConditions = and(whereConditions, lte(posts.scheduledAt, new Date(filters.endDate)))
+        whereConditions = and(whereConditions, lte(dateField, new Date(filters.endDate)))
+      }
+
+      // Apply platform filter (filter by target platforms)
+      if (filters.platforms && filters.platforms.length > 0) {
+        whereConditions = and(whereConditions, sql`
+          ${posts.targetPlatforms} LIKE ${'%' + filters.platforms[0] + '%'}
+        `)
       }
       const postList = await this.db.query.posts.findMany({
         where: whereConditions,

@@ -20,7 +20,14 @@ const startDate = dayjs().startOf('month').format('YYYY-MM-DD');
 const endDate = dayjs().endOf('month').format('YYYY-MM-DD');
 </script>
 <template>
-  <CalendarViewWrapper active-view="dayGridMonth" :start-date="startDate" :end-date="endDate" seo-end-label="month" />
+  <CalendarViewWrapper 
+    active-view="dayGridMonth" 
+    :start-date="startDate" 
+    :end-date="endDate" 
+    seo-end-label="month"
+    show-platform-filter
+    show-post-format-filter
+  />
 </template>
 
 <style></style>

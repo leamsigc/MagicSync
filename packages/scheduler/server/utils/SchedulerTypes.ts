@@ -1,8 +1,15 @@
 
+export type DateFilterType = 'scheduledAt' | 'createdAt' | 'publishedAt'
+export type PostStatusFilter = 'pending' | 'published' | 'failed'
+export type PostFormatFilter = 'post' | 'reel' | 'story' | 'short'
+
 export interface PostFilters {
-  status?: string
+  status?: PostStatusFilter
   startDate?: string
   endDate?: string
+  dateType?: DateFilterType
+  postFormat?: PostFormatFilter
+  platforms?: string[]
 }
 
 export interface PlatformPostStatus {

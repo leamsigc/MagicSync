@@ -20,7 +20,14 @@ const startDate = dayjs().startOf('week').format('YYYY-MM-DD');
 const endDate = dayjs().endOf('week').format('YYYY-MM-DD');
 </script>
 <template>
-  <CalendarViewWrapper active-view="timeGridWeek" :start-date="startDate" :end-date="endDate" seo-end-label="week" />
+  <CalendarViewWrapper 
+    active-view="timeGridWeek" 
+    :start-date="startDate" 
+    :end-date="endDate" 
+    seo-end-label="week"
+    show-platform-filter
+    show-post-format-filter
+  />
 </template>
 
 <style></style>

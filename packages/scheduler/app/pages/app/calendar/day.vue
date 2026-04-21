@@ -21,7 +21,14 @@ const startDate = today.format('YYYY-MM-DD');
 const endDate = today.format('YYYY-MM-DD');
 </script>
 <template>
-  <CalendarViewWrapper active-view="timeGridDay" :start-date="startDate" :end-date="endDate" seo-end-label="day" />
+  <CalendarViewWrapper 
+    active-view="timeGridDay" 
+    :start-date="startDate" 
+    :end-date="endDate" 
+    seo-end-label="day"
+    show-platform-filter
+    show-post-format-filter
+  />
 </template>
 
 <style></style>

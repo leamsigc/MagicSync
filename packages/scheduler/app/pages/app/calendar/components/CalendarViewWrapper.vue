@@ -3,12 +3,14 @@
 <script lang="ts" setup>
 import type { DateClickArg } from '@fullcalendar/interaction/index.js';
 import SchedulerPageHeader from './SchedulerPageHeader.vue';
+import PostFiltersBar from './PostFiltersBar.vue';
 import type { EventClickArg } from '@fullcalendar/core/index.js';
 import { usePostManager } from '../../posts/composables/UsePostManager';
 import UpdatePostModal from '../../posts/components/UpdatePostModal.vue';
 import NewCalendarPostModal from '../../posts/components/NewCalendarPostModal.vue';
 import dayjs from 'dayjs';
 import type { PostWithAllData } from '#layers/BaseDB/db/schema';
+import type { PostFilters } from '#layers/BaseScheduler/server/utils/SchedulerTypes';
 
 /**
  *
@@ -23,6 +25,8 @@ const props = defineProps<{
   startDate?: string;
   endDate?: string;
   seoEndLabel: 'day' | 'week' | 'month' | 'all';
+  showPlatformFilter?: boolean
+  showPostFormatFilter?: boolean
 }>();
 
 const { t } = useI18n()
@@ -41,15 +45,31 @@ const { getPosts, postList } = usePostManager();
 // Fetch posts based on provided startDate and endDate
 const startDate = ref(props.startDate);
 const endDate = ref(props.endDate);
+
+const handleFilterChange = async (filters: PostFilters & { page: number, limit: number }) => {
+  await getPosts(
+    activeBusinessId.value,
+    { page: filters.page, limit: filters.limit },
+    {
+      status: filters.status,
+      startDate: filters.startDate || startDate.value,
+      endDate: filters.endDate || endDate.value,
+      dateType: filters.dateType,
+      postFormat: filters.postFormat,
+      platforms: filters.platforms
+    }
+  )
+}
+
 const HandleRefresh = async () => {
   await getPosts(activeBusinessId.value, {
     page: 1,
     limit: 100
   },
-    {
-      startDate: startDate.value,
-      endDate: endDate.value
-    }
+  {
+    startDate: startDate.value,
+    endDate: endDate.value
+  }
   );
 }
 HandleRefresh();
@@ -104,6 +124,12 @@ const handleDateChange = ({ start, end }: { start: string, end: string }) => {
 <template>
   <div class="container mx-auto py-6 space-y-6">
     <SchedulerPageHeader />
+    <PostFiltersBar 
+      :show-platform-filter="showPlatformFilter"
+      :show-post-format-filter="showPostFormatFilter"
+      @filter-change="handleFilterChange"
+      @refresh="HandleRefresh"
+    />
     <ScheduleCalendar :active-view="activeView" :events="events" @date-clicked="HandleDateClicked"
       @event-clicked="HandleEventClicked" @time-frame-change="handleDateChange" />
     <UpdatePostModal ref="updatePostModalRef" @refresh="HandleRefresh" />

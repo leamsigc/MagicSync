@@ -40,6 +40,15 @@ export default defineEventHandler(async (event) => {
     if (query.endDate) {
       filters.endDate = query.endDate as string
     }
+    if (query.dateType) {
+      filters.dateType = query.dateType as string
+    }
+    if (query.postFormat) {
+      filters.postFormat = query.postFormat as string
+    }
+    if (query.platforms) {
+      filters.platforms = (query.platforms as string).split(',')
+    }
 
     // Get posts
     const result = await postService.findByBusinessId(businessId, user.id, {

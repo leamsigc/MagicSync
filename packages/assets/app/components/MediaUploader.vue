@@ -275,13 +275,6 @@ watchEffect(() => {
           </div>
         </div>
 
-        <!-- Enhanced Border Animation -->
-        <div
-          class="absolute inset-0 rounded-xl border-2 border-dashed border-transparent group-hover:border-primary/40 transition-all duration-300">
-        </div>
-        <div
-          class="absolute inset-0 rounded-xl border border-border/30 group-hover:border-primary/30 transition-all duration-300 group-hover:shadow-lg group-hover:shadow-primary/10">
-        </div>
 
         <!-- Corner Accents -->
         <div
@@ -315,7 +308,7 @@ watchEffect(() => {
           :class="`animate-stagger-${Math.min(index % 3 + 1, 3)}`">
           <!-- File Preview -->
           <div class="flex items-center gap-4 p-4">
-            <div class="relative flex-shrink-0">
+            <div class="relative shrink-0">
               <!-- Status Icon with Animation -->
               <div
                 class="w-12 h-12 rounded-lg bg-linear-to-br from-muted to-muted/50 flex items-center justify-center relative overflow-hidden">
@@ -343,9 +336,9 @@ watchEffect(() => {
             </div>
 
             <!-- File Details -->
-            <div class="flex-1 min-w-0 space-y-2">
-              <div class="flex items-center justify-between">
-                <h5 class="font-medium truncate text-sm">{{ item.file.name }}</h5>
+            <div class="flex-1 min-w-0 space-y-2 max-w-full">
+              <div class="flex items-center justify-between ">
+                <h5 class="font-medium truncate text-sm max-w-32 md:max-w-full">{{ item.file.name }}</h5>
                 <span class="text-xs text-muted-foreground">{{ formatFileSize(item.file.size) }}</span>
               </div>
 
