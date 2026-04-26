@@ -16,12 +16,12 @@ const menuActions = [
   {
     label: t('actions.edit'),
     icon: 'i-heroicons-pencil',
-    onClick: () => emit('edit'),
+    onSelect: () => emit('edit', props.business.id),
   },
   {
     label: t('actions.delete'),
     icon: 'i-heroicons-trash',
-    onClick: () => {
+    onSelect: () => {
       emit('delete', props.business.id);
     },
   },

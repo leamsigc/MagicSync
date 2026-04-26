@@ -68,6 +68,11 @@ export const useDashboardNavigation = () => {
             label: menuData.menu.month,
             to: '/app/calendar/month',
             icon: 'i-lucide-calendar-check'
+          },
+          {
+            label: menuData.menu.day,
+            to: '/app/calendar/day',
+            icon: 'i-lucide-calendar'
           }
         ]
       },
@@ -111,7 +116,14 @@ export const useDashboardNavigation = () => {
         label: menuData.menu.business,
         icon: 'i-lucide-users',
         to: '/app/business',
-        active: route.path.startsWith('/app/business')
+        active: route.path.startsWith('/app/business'),
+        children: [
+          {
+            label: menuData.menu.all,
+            to: '/app/business',
+            icon: 'i-lucide-users'
+          }
+        ]
       },
       {
         label: menuData.menu.apiKeys,
@@ -123,7 +135,7 @@ export const useDashboardNavigation = () => {
         label: menuData.menu.tools,
         icon: 'i-lucide-box',
         to: '/app/ai-tools',
-        active: route.path.startsWith('/app/ai-tools') || route.path.startsWith('/app/tools'),
+        active: route.path.startsWith('/app/ai-tools') || route.path.startsWith('/tools'),
         children: [
           {
             label: menuData.menu.aitools,
@@ -136,14 +148,9 @@ export const useDashboardNavigation = () => {
             icon: 'i-lucide-message-square'
           },
           {
-            label: menuData.menu.all,
-            to: '/app/ai-tools/chat/assets',
-            icon: 'i-lucide-image'
-          },
-          {
             label: menuData.menu.growthStrategies,
             to: '/app/ai-tools/growth-stratergy',
-            icon: 'i-lucide-box'
+            icon: 'i-lucide-trending-up'
           },
           {
             label: menuData.menu.aiToolsTools,
@@ -164,7 +171,7 @@ export const useDashboardNavigation = () => {
             label: menuData.menu.aiToolsSkills,
             to: '/app/ai-tools/skills',
             icon: 'i-lucide-sparkles'
-          },
+          }
         ]
       },
       {
@@ -177,6 +184,16 @@ export const useDashboardNavigation = () => {
             label: menuData.menu.chat,
             to: '/app/templates/chat',
             icon: 'i-lucide-message-square'
+          },
+          {
+            label: menuData.menu.email,
+            to: '/app/templates/email',
+            icon: 'i-lucide-mail'
+          },
+          {
+            label: menuData.menu.image,
+            to: '/app/templates/images',
+            icon: 'i-lucide-image'
           },
           {
             label: menuData.menu.variables,
@@ -203,8 +220,8 @@ export const useDashboardNavigation = () => {
           },
           {
             label: menuData.userNav.appearance,
-            to: '/app/settings/appearance',
-            icon: 'i-lucide-palette'
+            to: '/app/keys',
+            icon: 'i-lucide-key'
           },
           {
             label: menuData.menu.notification,

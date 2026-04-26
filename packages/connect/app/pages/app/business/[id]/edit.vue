@@ -2,7 +2,7 @@
 <script lang="ts" setup>
 import { useBusinessManager } from '../composables/useBusinessManager';
 import BusinessFormStep from '../components/BusinessFormStep.vue';
-import type { BusinessProfile } from '#layers/BaseDB/db/schema';
+import type { BusinessProfile, EntityDetails } from '#layers/BaseDB/db/schema';
 import type { InformationSchemaBusinessResponse } from '#layers/BaseScheduler/server/api/v1/ai/information/index.post';
 import type { BodySchemaCreateBusinessType } from '#layers/BaseConnect/server/api/v1/business/index.post';
 
@@ -21,10 +21,13 @@ const responseResult = ref<InformationSchemaBusinessResponse | null>(null);
 
 onMounted(async () => {
   try {
-    const { data } = await useFetch<{ data: BusinessProfile }>(`/api/v1/business/${businessId}`);
-    
+    const { data } = await useFetch<{ data: BusinessProfile, entityDetails: EntityDetails }>(`/api/v1/business/${businessId}`);
+    console.log(data.value);
+
+
     if (data.value?.data) {
       const business = data.value.data;
+      const details = JSON.parse(data.value.entityDetails.details || {});
       responseResult.value = {
         businessProfile: {
           name: business.name || '',
@@ -34,11 +37,8 @@ onMounted(async () => {
           website: business.website || '',
           category: business.category || ''
         },
-        companyInformation: '',
-        brandDetails: {
-          colors: {},
-          colorScheme: '{}'
-        }
+        companyInformation: details.companyInformation,
+        brandDetails: JSON.parse(details.brandDetails || {})
       };
     } else {
       toast.add({
@@ -106,21 +106,14 @@ useHead({
 
 <template>
   <div>
-    <BasePageHeader 
-      :title="t('title_edit')" 
-      :description="t('description_edit')"
-    />
+    <BasePageHeader :title="t('title_edit')" :description="t('description_edit')" />
 
     <div v-if="isLoading" class="flex justify-center py-12">
       <UProgress indicator />
     </div>
 
     <div v-else-if="responseResult" class="mt-6">
-      <BusinessFormStep 
-        :result="responseResult" 
-        @submit="handleSubmit"
-        @cancel="handleCancel"
-      />
+      <BusinessFormStep :result="responseResult" @submit="handleSubmit" @cancel="handleCancel" />
     </div>
   </div>
 </template>

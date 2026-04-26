@@ -38,6 +38,7 @@ watch(businesses, (newData) => {
 
 const handleEditBusiness = (id: string) => {
   editingBusiness.value = businesses.value.data?.find(b => b.id === id) || null;
+  router.push(`/app/business/${id}/edit`)
 };
 
 const handleDeleteBusiness = async (id: string) => {
