@@ -128,12 +128,13 @@ export const useProject = () => {
       currentTranscriptionId.value = newProject.id
 
       startTranscription(newProject.id, buffer, model, language, duration)
+      return newProject;
     } catch (err) {
       console.error(err)
       isProcessing.value = false
       processingStatus.value = 'Error extracting audio'
       currentTranscriptionId.value = null
-      
+
       useToast().add({
         title: 'Error',
         description: 'Failed to extract audio from file',
@@ -173,8 +174,8 @@ export const useProject = () => {
         }
       } else if (type === 'chunk') {
         if (activeProject.value) {
-          const updatedProject = { 
-            ...activeProject.value, 
+          const updatedProject = {
+            ...activeProject.value,
             segments: segments?.map((c: { id: number; text: string; start: number; end: number }, idx: number) => ({
               id: idx,
               text: c.text,
@@ -183,7 +184,7 @@ export const useProject = () => {
             })) || []
           }
           activeProject.value = updatedProject
-          
+
           if (duration > 0 && segments?.length > 0) {
             const lastEnd = segments[segments.length - 1].end
             const estimatedProgress = Math.min(99, (lastEnd / duration) * 100)
@@ -192,9 +193,9 @@ export const useProject = () => {
         }
       } else if (type === 'partial') {
         if (activeProject.value) {
-          activeProject.value = { 
-            ...activeProject.value, 
-            partialText: text 
+          activeProject.value = {
+            ...activeProject.value,
+            partialText: text
           }
         }
         if (processingProgress.value < 95) {
@@ -203,7 +204,7 @@ export const useProject = () => {
       } else if (type === 'complete') {
         const projectId = id
         const finalSegments = segments
-        
+
         try {
           const project = await getProject(projectId)
           if (project) {
@@ -216,9 +217,11 @@ export const useProject = () => {
                 end: c.end
               }))
             }
-            project.partialText = undefined
+
+            const text = finalSegments.map((c: { text: string }) => c.text).join(' ')
+            project.partialText = text
             project.progress = 100
-            
+
             await saveProject(project)
             activeProject.value = { ...project }
 
@@ -228,7 +231,7 @@ export const useProject = () => {
               color: 'success',
               icon: 'i-lucide-check-circle'
             })
-            
+
             isProcessing.value = false
             processingStatus.value = ''
 
@@ -356,12 +359,12 @@ export const useProject = () => {
 
   const stopTranscription = async () => {
     const projectId = currentTranscriptionId.value
-    
+
     if (transcriptionWorker) {
       transcriptionWorker.terminate()
       transcriptionWorker = null
     }
-    
+
     if (projectId) {
       const project = await getProject(projectId)
       if (project && project.status === 'processing') {
@@ -372,12 +375,12 @@ export const useProject = () => {
         }
       }
     }
-    
+
     isProcessing.value = false
     processingProgress.value = 0
     processingStatus.value = ''
     currentTranscriptionId.value = null
-    
+
     useToast().add({
       title: 'Transcription Stopped',
       description: 'The transcription has been cancelled.',

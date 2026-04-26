@@ -41,7 +41,7 @@ export type TranscriptionFile = {
   error: string | null
 }
 
-export type ModelKey =  'tiny' | 'tinyEn' | 'base' | 'baseEn' | 'small' | 'smallEn' | 'medium' | 'mediumEn' | 'large' | 'largeV2' | 'largeV3' | 'timestamped' | 'distilMediumEn' | 'distilLargeV2'
+export type ModelKey = 'tiny' | 'tinyEn' | 'base' | 'baseEn' | 'small' | 'smallEn' | 'medium' | 'mediumEn' | 'large' | 'largeV2' | 'largeV3' | 'timestamped' | 'distilMediumEn' | 'distilLargeV2'
 
 export const AVAILABLE_MODELS: Record<ModelKey, { name: string; lang: string | null; size: string; isDistil?: boolean }> = {
   tiny: { name: 'onnx-community/whisper-tiny', lang: 'en', size: '39 MB' },
@@ -138,7 +138,7 @@ export const useTranscription = () => {
         if (status === 'loading') {
           isModelLoaded.value = false
         }
-        else if (status === 'loaded') {
+        else if (status === 'loaded' || type === 'ready') {
           isModelLoaded.value = true
         } else if (status === 'unloaded') {
           isModelLoaded.value = false
@@ -287,10 +287,13 @@ export const useTranscription = () => {
 
   const transcribeFile = async (fileId: string, language?: string) => {
     const file = files.value.find(f => f.id === fileId)
+    console.log("FILE:", file);
+
     if (!file || !workerRef.value) {
       return
     }
 
+    console.log("MODEL-LOADED:", isModelLoaded.value);
 
     if (!isModelLoaded.value) {
       await loadModel(currentModel.value)

@@ -26,7 +26,7 @@ class TranscriptionPipeline {
   private currentModel: string = '';
   private hasWebGPU: boolean | null = null;
 
-  private constructor() {}
+  private constructor() { }
 
   public static getInstance(): TranscriptionPipeline {
     if (!TranscriptionPipeline.instance) {
@@ -157,6 +157,7 @@ const processNextMessage = async () => {
 
       case 'init':
       case 'change_model':
+      case 'loadModel':
         await pipelineInstance.loadModel(model || 'onnx-community/whisper-tiny');
         self.postMessage({ type: 'ready' });
         break;

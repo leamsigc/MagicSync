@@ -11,7 +11,7 @@ export default defineEventHandler(async (event) => {
     const query = getQuery(event)
     const businessId = query.businessId as string
     const page = parseInt(query.page as string) || 1
-    const limit = parseInt(query.limit as string) || 20
+    const limit = parseInt(query.limit as string) || 200
     const mimeType = query.mimeType as string
 
     const own = query.own as string

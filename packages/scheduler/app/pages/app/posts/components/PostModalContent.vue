@@ -33,6 +33,7 @@ import { usePlatformSettings } from '../composables/usePlatformSettings';
 import EmojiPicker from '#layers/BaseScheduler/app/components/EmojiPicker.vue';
 import { useBusinessManager } from '#layers/BaseConnect/app/pages/app/business/composables/useBusinessManager';
 import PlatformSettingsPanel from '#layers/BaseScheduler/app/components/PlatformSettingsPanel.vue';
+import MicRecorder from '#layers/BaseTools/app/components/MicRecorder.vue';
 
 interface TargetPlatform {
   accountId: string;
@@ -584,6 +585,19 @@ const handleEmojiSelect = (emoji: string) => {
 const handleVariableAction = (variable: string) => {
   postForm.value.content += variable;
 };
+
+/* Mic Recorder */
+const handleTranscriptFromRecorder = (text: string) => {
+  if (explicitPreviewPlatform.value === 'default') {
+    platformSettingsState.masterContent.value += '\n' + text;
+  } else {
+    const current = platformSettingsState.getContentForPlatform(explicitPreviewPlatform.value);
+    platformSettingsState.platformContent.value[explicitPreviewPlatform.value] = {
+      content: current + '\n' + text,
+      comments: platformSettingsState.getCommentsForPlatform(explicitPreviewPlatform.value)
+    };
+  }
+};
 </script>
 
 <template>
@@ -631,6 +645,9 @@ const handleVariableAction = (variable: string) => {
                     </template>
                     <template #emoji>
                       <EmojiPicker @select="handleEmojiSelect" />
+                    </template>
+                    <template #mic-recorder>
+                      <MicRecorder @transcript="handleTranscriptFromRecorder" />
                     </template>
                     <template #assetsList>
                       <section v-for="asset in postMediaAssets">

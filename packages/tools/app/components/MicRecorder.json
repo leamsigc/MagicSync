@@ -1,0 +1,78 @@
+{
+  "en": {
+    "micRecorder": {
+      "loading": "Loading...",
+      "noMicrophone": "No microphone",
+      "loadingDevices": "Loading devices...",
+      "microphoneAccessRequired": "Microphone access required",
+      "grantPermission": "Grant Permission",
+      "selectMicrophone": "Select Microphone",
+      "startRecording": "Start Recording",
+      "stopRecording": "Stop Recording",
+      "recordingReady": "Recording ready",
+      "transcribeAudio": "Transcribe Audio",
+      "transcribing": "Transcribing...",
+      "transcript": "Transcript",
+      "useTranscript": "Use Transcript",
+      "reRecord": "Re-record",
+      "loadingAiModel": "Loading AI model..."
+    }
+  },
+  "es": {
+    "micRecorder": {
+      "loading": "Cargando...",
+      "noMicrophone": "Sin micrófono",
+      "loadingDevices": "Cargando dispositivos...",
+      "microphoneAccessRequired": "Se requiere acceso al micrófono",
+      "grantPermission": "Otorgar Permiso",
+      "selectMicrophone": "Seleccionar Micrófono",
+      "startRecording": "Iniciar Grabación",
+      "stopRecording": "Detener Grabación",
+      "recordingReady": "Grabación lista",
+      "transcribeAudio": "Transcribir Audio",
+      "transcribing": "Transcribiendo...",
+      "transcript": "Transcripción",
+      "useTranscript": "Usar Transcripción",
+      "reRecord": "Volver a Grabar",
+      "loadingAiModel": "Cargando modelo de IA..."
+    }
+  },
+  "de": {
+    "micRecorder": {
+      "loading": "Laden...",
+      "noMicrophone": "Kein Mikrofon",
+      "loadingDevices": "Geräte werden geladen...",
+      "microphoneAccessRequired": "Mikrofonzugriff erforderlich",
+      "grantPermission": "Berechtigung erteilen",
+      "selectMicrophone": "Mikrofon auswählen",
+      "startRecording": "Aufnahme starten",
+      "stopRecording": "Aufnahme stoppen",
+      "recordingReady": "Aufnahme bereit",
+      "transcribeAudio": "Audio transkribieren",
+      "transcribing": "Transkribieren...",
+      "transcript": "Transkript",
+      "useTranscript": "Transkript verwenden",
+      "reRecord": "Neu aufnehmen",
+      "loadingAiModel": "KI-Modell wird geladen..."
+    }
+  },
+  "fr": {
+    "micRecorder": {
+      "loading": "Chargement...",
+      "noMicrophone": "Pas de microphone",
+      "loadingDevices": "Chargement des appareils...",
+      "microphoneAccessRequired": "Accès au microphone requis",
+      "grantPermission": "Accorder la permission",
+      "selectMicrophone": "Sélectionner le microphone",
+      "startRecording": "Démarrer l'enregistrement",
+      "stopRecording": "Arrêter l'enregistrement",
+      "recordingReady": "Enregistrement prêt",
+      "transcribeAudio": "Transcrire l'audio",
+      "transcribing": "Transcription...",
+      "transcript": "Transcription",
+      "useTranscript": "Utiliser la transcription",
+      "reRecord": "Ré-enregistrer",
+      "loadingAiModel": "Chargement du modèle IA..."
+    }
+  }
+}

@@ -322,7 +322,7 @@ const handleDeleteAsset = (asset: Asset) => {
 
         <div class="flex items-center gap-3">
           <!-- View Mode Toggle -->
-          <div class="flex border rounded-lg glass-button-group">
+          <div class="flex  rounded-lg glass-button-group">
             <UButton variant="ghost" size="sm" class="glass-button-item hover-scale-105"
               :class="{ 'bg-primary text-white dark:text-primary-foreground': viewMode === 'masonry' }"
               @click="viewMode = 'masonry'">
@@ -381,7 +381,7 @@ const handleDeleteAsset = (asset: Asset) => {
           <!-- Premium Shimmer Effect -->
           <div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
             <div
-              class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12 animate-shimmer">
+              class="absolute inset-0 bg-linear-to-r from-transparent via-white/10 to-transparent -skew-x-12 animate-shimmer">
             </div>
           </div>
 

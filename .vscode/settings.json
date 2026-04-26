@@ -17,6 +17,7 @@
     ],
     "i18n-ally.localesPaths": [],
     "js/ts.tsdk.path": "node_modules/typescript/lib",
-    "search.useGlobalIgnoreFiles": false,
-    "search.useIgnoreFiles": false,
+    "search.useGlobalIgnoreFiles": true,
+    "search.useIgnoreFiles": true,
+    "search.useParentIgnoreFiles": true,
 }

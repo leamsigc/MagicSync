@@ -54,6 +54,7 @@ const progressColor = computed(() => {
 
         <slot name="ai-tools" />
         <slot name="emoji" />
+        <slot name="mic-recorder" />
       </div>
 
       <div class="flex items-center gap-3">
