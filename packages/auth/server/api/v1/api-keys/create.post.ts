@@ -71,9 +71,9 @@ export default defineEventHandler(async (event) => {
   } catch (err) {
     log.error(err);
 
-     return  createError({
-        statusCode: 400,
-        statusMessage: 'Business ID and name are required'
-      })
-    }
+    return createError({
+      statusCode: 500,
+      statusMessage: 'Generic Error here..'
+    })
+  }
 })

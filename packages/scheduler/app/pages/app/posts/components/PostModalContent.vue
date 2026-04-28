@@ -491,25 +491,32 @@ const currentPlatformConfig = computed(() => {
 
 /* Ai related need to move  */
 const { rewriteContent, fixGrammar, generateHashtags, smartSplit, isLoading: aiLoading, customPrompt } = useAI();
+
+// All supported tones matching backend schedulerGeneratePrompts.ts
+const supportedTones = [
+  'professional', 'casual', 'witty', 'inspirational', 'direct', 'angry',
+  'clickbait', 'humorous', 'educational', 'empathetic', 'controversial', 'exciting', 'urgent'
+] as const;
+
 const handleAIAction = async (action: string, prompt?: string) => {
   const content = postForm.value.content;
+  const selectedPlatforms = postForm.value.targetPlatforms.map(p => p.platformType) || [];
 
   if (!content && !prompt) return;
   try {
     let result;
+
+    // Handle all rewrite tones generically
+    if (action.startsWith('rewrite-')) {
+      const tone = action.replace('rewrite-', '') as typeof supportedTones[number];
+      if (supportedTones.includes(tone)) {
+        result = await rewriteContent(content, tone, selectedPlatforms);
+        if (result) postForm.value.content = result;
+        return;
+      }
+    }
+
     switch (action) {
-      case 'rewrite-professional':
-        result = await rewriteContent(content, 'professional');
-        if (result) postForm.value.content = result;
-        break;
-      case 'rewrite-fun':
-        result = await rewriteContent(content, 'fun');
-        if (result) postForm.value.content = result;
-        break;
-      case 'rewrite-concise':
-        result = await rewriteContent(content, 'concise');
-        if (result) postForm.value.content = result;
-        break;
       case 'fix-grammar':
         result = await fixGrammar(content);
         if (result) postForm.value.content = result;

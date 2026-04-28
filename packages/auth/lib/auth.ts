@@ -3,7 +3,7 @@ import { APIError, betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { apiKey } from "@better-auth/api-key"
 import { createAuthMiddleware } from "better-auth/api"
-import { admin,  genericOAuth, organization } from 'better-auth/plugins'
+import { admin, genericOAuth, organization } from 'better-auth/plugins'
 import * as schema from '#layers/BaseDB/db/schema'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
 import { logAuditService } from '#layers/BaseDB/server/services/auditLog.service'
@@ -361,16 +361,7 @@ export const auth = betterAuth({
         // Invitation emails handled via notifications
       }
     }),
-    apiKey({
-      permissions: {
-        defaultPermissions: async (referenceId, ctx) => {
-                    return {
-                        files: ["read"],
-                        users: ["read"],
-                    };
-                },
-      }
-    })
+    apiKey()
   ],
   databaseHooks: {
     account: {

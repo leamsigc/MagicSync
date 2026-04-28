@@ -15,7 +15,6 @@
  * @todo [✔] Update the typescript.
  */
 
-
 import { usePostManager } from '../composables/UsePostManager';
 import dayjs from 'dayjs'
 import type { PostWithAllData } from '#layers/BaseDB/db/schema';
@@ -25,6 +24,7 @@ import TwitterPostEditor from '../components/TwitterPostEditor.vue';
 
 const activeBusinessId = useState<string>('business:id');
 const { t } = usePostManager();
+setPageLayout('auth-twitter-layout')
 
 const router = useRouter()
 const currentPage = ref(1)
@@ -83,8 +83,6 @@ useHead({
     { name: 'description', content: t('seo_description_all') }
   ]
 });
-
-setPageLayout('auth-twitter-layout')
 
 
 onMounted(async () => {

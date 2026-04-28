@@ -13,6 +13,24 @@
 import type { SocialMediaPlatformConfigurations } from "./usePlatformConfiguration";
 
 
+/**
+ * Supported AI rewrite tones - matches backend schedulerGeneratePrompts.ts
+ */
+export type AITone =
+  | 'professional'
+  | 'casual'
+  | 'witty'
+  | 'inspirational'
+  | 'direct'
+  | 'angry'
+  | 'clickbait'
+  | 'humorous'
+  | 'educational'
+  | 'empathetic'
+  | 'controversial'
+  | 'exciting'
+  | 'urgent';
+
 export const useAI = () => {
   const isLoading = ref(false);
   const error = ref<string | null>(null);
@@ -53,8 +71,8 @@ export const useAI = () => {
     return Array.isArray(result) ? result : [result];
   };
 
-  const rewriteContent = async (content: string, tone: 'fun' | 'professional' | 'concise') => {
-    const result = await callAI('rewrite', content, { tone });
+  const rewriteContent = async (content: string, tone: AITone, platforms: any) => {
+    const result = await callAI('rewrite', content, { tone, platforms });
     return typeof result === 'string' ? result : result[0] || content;
   };
 

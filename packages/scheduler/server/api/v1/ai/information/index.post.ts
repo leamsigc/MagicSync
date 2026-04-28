@@ -1,8 +1,5 @@
-import { generateObject, generateText, tool } from 'ai';
-import { google } from '@ai-sdk/google';
 import { z } from 'zod';
 import { checkUserIsLogin } from "#layers/BaseAuth/server/utils/AuthHelpers";
-import { CreateBusinessProfileSchema } from '#layers/BaseDB/db/schema';
 
 // This matches the simplified expected keys from prompt
 const brandDetailsSchema = z.object({
@@ -38,15 +35,6 @@ const requestSchema = z.object({
 });
 
 export default defineLazyEventHandler(async () => {
-  const apiKey = process.env.NUXT_GOOGLE_GENERATIVE_AI_API_KEY || '';
-
-  if (!apiKey) {
-    throw createError({
-      statusCode: 500,
-      message: 'Missing Google Generative AI API key',
-    });
-  }
-
   return defineEventHandler(async (event) => {
     await checkUserIsLogin(event);
     const body = await readBody(event);
@@ -63,37 +51,12 @@ export default defineLazyEventHandler(async () => {
     const { url, explanation, competitors } = validation.data;
 
     try {
-      const content = await scrapeWebsite(url);
+      const prompt = schedulerInformationPrompts.extractBusinessInfo(url, explanation, competitors);
 
-      const systemPrompt = `
-You are an expert business researcher and competitive analyst. Your goal is to extract detailed information about a business from its website and format it for our system.
-The user needs this website to get all the information related to the user business for:
-${url}.
-
-DIRECT COMPETITORS URLS:
-${competitors?.join('\n') || 'No competitors provided'}.
-
-
-
-We need 3 things from you:
-1. 'businessProfile': Basic profile data (name, description, address, phone, website, category) filling in as much as reasonably possible.
-2. 'companyInformation': A deeply detailed Markdown report titled "# Product Research Report". Include sections like Company Information (Background, Story & Mission, Founders & Team, Brand & Visual Identity), Product Information (Overview, Value Proposition, How it works, Key Features, Use Cases, Tech Stack, Target Audience, Pricing, Industry), and Customer Information.
-3. 'brandDetails': A robust JSON matching the brand details extraction structure, guessing color palettes and typography if exact values can't be scraped but styles are implied. Includes colors, typography, spacing, etc. Make it as complete as possible.
-4. 'competitors': A list of competitors and their URLs base on the content of the website.
-WEBSITE:
-${url}
-
-WEBSITE CONTENT:
-${explanation}
-
-`;
-
-      const { object } = await generateObject({
-        model: google('gemini-3-flash-preview'),
-        system: systemPrompt,
+      const { object } = await schedulerUnifiedAI.generateObject({
+        prompt,
         schema: informationSchemaBusinessResponse,
-        prompt: 'Generate the structured business extraction object.',
-        temperature: 2,
+        temperature: SCHEDULER_INFORMATION_TEMPERATURE,
       });
 
       return object;

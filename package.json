@@ -55,8 +55,7 @@
   },
   "devDependencies": {
     "dotenv-cli": "^11.0.0",
-    "pnpm": "^10.33.0",
-    "python": "^0.0.4"
+    "pnpm": "^10.33.0"
   },
   "workspaces": [
     "packages/*"
