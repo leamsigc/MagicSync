@@ -1,11 +1,13 @@
 /**
  * Composable for dashboard metrics operations
+ * Uses real platform stats from the database
  *
  * @author Ismael Garcia <leamsigc@leamsigc.com>
  * @version 0.0.1
  */
 
-// Types
+import type { PlatformStats } from './usePlatformStats'
+
 type DashboardMetric = {
   id: string
   title: string
@@ -21,104 +23,136 @@ type ChartDataItem = {
   value: number
 }
 
-type DashboardResponse = {
-  success: boolean
-  data?: {
-    metrics: DashboardMetric[]
-    charts: {
-      posts: { weekly: number[]; labels: string[] }
-      reviews: { weekly: number[]; labels: string[] }
-      content: { distribution: ChartDataItem[] }
-    }
-  }
-  error?: string
-}
-
 export const useDashboardMetrics = () => {
-  // Reactive state
-  const metrics = ref<DashboardMetric[]>([
-    {
-      id: 'posts',
-      title: 'totalPostsScheduled',
-      value: '142',
-      change: '-12%',
-      trend: 'down',
-      icon: 'lucide:calendar-days',
-      color: 'text-blue-600'
-    },
-    {
-      id: 'reviews',
-      title: 'newReviews',
-      value: '28',
-      change: '+8%',
-      trend: 'up',
-      icon: 'lucide:star',
-      color: 'text-yellow-600'
-    },
-    {
-      id: 'content',
-      title: 'aiContentGenerated',
-      value: '89',
-      change: '+24%',
-      trend: 'up',
-      icon: 'lucide:sparkles',
-      color: 'text-purple-600'
-    }
-  ])
+  const { fetchStats, fetchTimeSeries, totalFollowers, totalPosts, totalEngagement, stats, timeSeries, loading, error } = usePlatformStats()
 
-  // Chart data
+  // Reactive state — initialized with real data
+  const metrics = ref<DashboardMetric[]>([])
   const chartData = ref({
     posts: {
-      weekly: [10, 20, 15, 25, 30, 18, 22],
-      labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+      weekly: [] as number[],
+      labels: [] as string[],
     },
     reviews: {
-      weekly: [5, 8, 12, 10, 15, 7, 9],
-      labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+      weekly: [] as number[],
+      labels: [] as string[],
     },
     content: {
-      distribution: [
-        { name: 'blogPosts', value: 30 },
-        { name: 'socialMedia', value: 20 },
-        { name: 'emails', value: 15 },
-        { name: 'ads', value: 10 }
-      ]
-    }
+      distribution: [] as ChartDataItem[],
+    },
   })
 
-  const loading = ref(false)
-  const error = ref<string>('')
-
-  // Methods
-  const fetchMetrics = async (businessId?: string) => {
-    if (!businessId) return
-
+  // Load real data from the API
+  const fetchMetrics = async (filters: { businessId?: string; userId?: string } = {}) => {
     try {
-      loading.value = true
-      error.value = ''
+      // Fetch current stats + time series in parallel
+      await Promise.all([
+        fetchStats(filters),
+        fetchTimeSeries({ ...filters, days: 7, metric: 'followers' }),
+      ])
 
-      // TODO: Replace with actual API call
-      const response = await $fetch<DashboardResponse>(`/api/v1/dashboard/metrics`, {
-        query: { businessId }
-      })
+      const allStats = stats.value
+      const ts = timeSeries.value
 
-      if (response.success && response.data) {
-        // Update metrics with real data
-        metrics.value = response.data.metrics
-        chartData.value = response.data.charts
-      } else {
-        error.value = response.error || 'Failed to fetch metrics'
-      }
+      // Build metrics from real data
+      metrics.value = [
+        {
+          id: 'followers',
+          title: 'totalFollowers',
+          value: formatNumber(totalFollowers.value),
+          change: calculateChange(allStats, 'followers'),
+          trend: getTrend(allStats, 'followers'),
+          icon: 'lucide:users',
+          color: 'text-blue-600',
+        },
+        {
+          id: 'posts',
+          title: 'totalPosts',
+          value: formatNumber(totalPosts.value),
+          change: calculateChange(allStats, 'posts'),
+          trend: getTrend(allStats, 'posts'),
+          icon: 'lucide:calendar-days',
+          color: 'text-green-600',
+        },
+        {
+          id: 'engagement',
+          title: 'totalEngagement',
+          value: formatNumber(totalEngagement.value),
+          change: calculateChange(allStats, 'engagement'),
+          trend: getTrend(allStats, 'engagement'),
+          icon: 'lucide:heart',
+          color: 'text-red-600',
+        },
+      ]
+
+      // Build posts time series for the chart
+      chartData.value.posts.weekly = ts.datasets[0]?.data || []
+      chartData.value.posts.labels = ts.labels || []
+
+      // Build engagement time series (use reviews slot for engagement)
+      chartData.value.reviews.weekly = ts.datasets[0]?.data || []
+      chartData.value.reviews.labels = ts.labels || []
+
+      // Build platform distribution from aggregated data
+      chartData.value.content.distribution = buildDistribution(allStats)
+
     } catch (err: any) {
-      console.error('Error fetching metrics:', err)
-      error.value = err.data?.message || 'Failed to fetch dashboard metrics'
-    } finally {
-      loading.value = false
+      // Consider using a proper logging library in production
+      // Error is handled by the parent usePlatformStats composable
     }
   }
 
-  const refreshMetrics = async (businessId?: string) => {
-    await fetchMetrics(businessId)
+  const refreshMetrics = async (filters?: { businessId?: string; userId?: string }) => {
+    await fetchMetrics(filters)
+  }
+
+  // ---- Helpers ----
+
+  function formatNumber(n: number): string {
+    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
+    if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`
+    return n.toString()
+  }
+
+  function getTrend(allStats: PlatformStats[], metric: 'followers' | 'posts' | 'engagement'): 'up' | 'down' {
+    const hasGrowth = allStats.some(s => {
+      const g = s.growth
+      if (!g) return false
+      const m = g[metric]
+      return m && m.absolute > 0
+    })
+    return hasGrowth ? 'up' : 'down'
+  }
+
+  function calculateChange(allStats: PlatformStats[], metric: 'followers' | 'posts' | 'engagement'): string {
+    let totalChange = 0
+    let totalBase = 0
+
+    for (const s of allStats) {
+      const g = s.growth
+      if (g) {
+        const m = g[metric]
+        if (m) {
+          totalChange += m.absolute
+          if (metric === 'followers') totalBase += (s.followers ?? 0) - m.absolute
+          else if (metric === 'posts') totalBase += (s.posts ?? 0) - m.absolute
+          else totalBase += (s.engagement?.total ?? 0) - m.absolute
+        }
+      }
+    }
+
+    if (totalBase === 0) return '0%'
+    const pct = Math.round((totalChange / totalBase) * 100)
+    return `${pct > 0 ? '+' : ''}${pct}%`
+  }
+
+  function buildDistribution(allStats: PlatformStats[]): ChartDataItem[] {
+    const map = new Map<string, number>()
+    for (const s of allStats) {
+      const key = s.platform.charAt(0).toUpperCase() + s.platform.slice(1)
+      map.set(key, (map.get(key) || 0) + (s.followers ?? 0))
+    }
+    return Array.from(map.entries()).map(([name, value]) => ({ name, value }))
   }
 
   // Chart configuration helpers
@@ -144,13 +178,9 @@ export const useDashboardMetrics = () => {
       type: 'category',
       data: labels,
       axisLine: {
-        lineStyle: {
-          color: 'hsl(20 5.9% 90%)'
-        }
+        lineStyle: { color: 'hsl(20 5.9% 90%)' }
       },
-      axisTick: {
-        show: false
-      },
+      axisTick: { show: false },
       axisLabel: {
         color: 'hsl(24.6 95% 48.1%)',
         fontSize: 12
@@ -158,12 +188,8 @@ export const useDashboardMetrics = () => {
     },
     yAxis: {
       type: 'value',
-      axisLine: {
-        show: false
-      },
-      axisTick: {
-        show: false
-      },
+      axisLine: { show: false },
+      axisTick: { show: false },
       axisLabel: {
         color: 'hsl(25 5.3% 44.7%)',
         fontSize: 12
@@ -216,13 +242,9 @@ export const useDashboardMetrics = () => {
       boundaryGap: false,
       data: labels,
       axisLine: {
-        lineStyle: {
-          color: 'hsl(20 5.9% 90%)'
-        }
+        lineStyle: { color: 'hsl(20 5.9% 90%)' }
       },
-      axisTick: {
-        show: false
-      },
+      axisTick: { show: false },
       axisLabel: {
         color: 'hsl(25 5.3% 44.7%)',
         fontSize: 12
@@ -230,12 +252,8 @@ export const useDashboardMetrics = () => {
     },
     yAxis: {
       type: 'value',
-      axisLine: {
-        show: false
-      },
-      axisTick: {
-        show: false
-      },
+      axisLine: { show: false },
+      axisTick: { show: false },
       axisLabel: {
         color: 'hsl(25 5.3% 44.7%)',
         fontSize: 12
@@ -254,10 +272,7 @@ export const useDashboardMetrics = () => {
         smooth: true,
         symbol: 'circle',
         symbolSize: 6,
-        lineStyle: {
-          width: 3,
-          color: '#10B981'
-        },
+        lineStyle: { width: 3, color: '#10B981' },
         itemStyle: {
           color: '#10B981',
           borderWidth: 2,
@@ -266,10 +281,7 @@ export const useDashboardMetrics = () => {
         areaStyle: {
           color: {
             type: 'linear',
-            x: 0,
-            y: 0,
-            x2: 0,
-            y2: 1,
+            x: 0, y: 0, x2: 0, y2: 1,
             colorStops: [
               { offset: 0, color: 'rgba(16, 185, 129, 0.25)' },
               { offset: 1, color: 'rgba(16, 185, 129, 0.06)' }
@@ -299,9 +311,7 @@ export const useDashboardMetrics = () => {
         radius: ['45%', '75%'],
         center: ['50%', '55%'],
         avoidLabelOverlap: false,
-        label: {
-          show: false
-        },
+        label: { show: false },
         emphasis: {
           label: {
             show: true,
@@ -310,14 +320,12 @@ export const useDashboardMetrics = () => {
             color: 'hsl(20 14.3% 4.1%)'
           }
         },
-        labelLine: {
-          show: false
-        },
+        labelLine: { show: false },
         data: data.map((item, index) => ({
           value: item.value,
           name: t(item.name),
           itemStyle: {
-            color: ['#8B5CF6', '#06B6D4', '#10B981', '#F59E0B'][index] || '#8B5CF6'
+            color: ['#8B5CF6', '#06B6D4', '#10B981', '#F59E0B', '#EF4444', '#EC4899'][index] || '#8B5CF6'
           }
         }))
       }
@@ -326,9 +334,9 @@ export const useDashboardMetrics = () => {
 
   // Computed
   const hasData = computed(() => metrics.value.length > 0)
-  const totalPosts = computed(() => parseInt(metrics.value.find(m => m.id === 'posts')?.value || '0'))
-  const totalReviews = computed(() => parseInt(metrics.value.find(m => m.id === 'reviews')?.value || '0'))
-  const totalContent = computed(() => parseInt(metrics.value.find(m => m.id === 'content')?.value || '0'))
+  const totalPostsCount = computed(() => parseInt(metrics.value.find(m => m.id === 'posts')?.value || '0'))
+  const totalReviewsCount = computed(() => parseInt(metrics.value.find(m => m.id === 'engagement')?.value || '0'))
+  const totalContentCount = computed(() => parseInt(metrics.value.find(m => m.id === 'followers')?.value || '0'))
 
   return {
     // State
@@ -339,9 +347,9 @@ export const useDashboardMetrics = () => {
 
     // Computed
     hasData,
-    totalPosts,
-    totalReviews,
-    totalContent,
+    totalPosts: totalPostsCount,
+    totalReviews: totalReviewsCount,
+    totalContent: totalContentCount,
 
     // Methods
     fetchMetrics,

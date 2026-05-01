@@ -3,7 +3,10 @@ import { checkUserIsLogin } from "#layers/BaseAuth/server/utils/AuthHelpers"
 import { entityDetailsService } from '#layers/BaseDB/server/services/entity-details.service';
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event)
   const user = await checkUserIsLogin(event);
+  log.set({ userId: user.id })
+
   const id = getRouterParam(event, 'id');
 
   if (!id) {
@@ -13,18 +16,21 @@ export default defineEventHandler(async (event) => {
     });
   }
 
+  log.set({ businessId: id })
+
   const business = await businessProfileService.findById(id, user.id);
   // Get entity related to the business
   const entityDetails = await entityDetailsService.getDetailsByEntity(id, 'business_details');
-  console.log(entityDetails);
-
 
   if (business.error) {
+    log.error('Business not found or access denied', { businessId: id })
     throw createError({
       statusCode: 404,
       message: business.error
     });
   }
+
+  log.info('Business profile retrieved', { businessId: id })
 
   return { ...business, entityDetails };
 });

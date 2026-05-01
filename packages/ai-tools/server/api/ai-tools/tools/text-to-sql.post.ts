@@ -1,8 +1,11 @@
 import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event)
   const user = await checkUserIsLogin(event)
   const body = await readBody(event)
+
+  log.set({ query: body.query?.substring(0, 100) })
 
   if (!body?.query?.trim()) {
     throw createError({ statusCode: 400, statusMessage: 'Query is required' })

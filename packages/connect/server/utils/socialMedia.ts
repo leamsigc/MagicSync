@@ -1,8 +1,11 @@
-import { auth } from "#layers/BaseAuth/lib/auth"
-import type { SocialMediaPlatform } from "#layers/BaseDB/server/services/social-media-account.service"
+import type { H3Event } from 'h3'
+import { auth } from '#layers/BaseAuth/lib/auth'
+import { useAuthApi } from '#layers/BaseAuth/server/utils/useAuthApi'
+import type { SocialMediaPlatform } from '#layers/BaseDB/server/services/social-media-account.service'
 
 /**
- * Start OAuth flow by redirecting client to provider's authorization page
+ * Start OAuth flow by redirecting client to provider's authorization page.
+ * This is a server-side redirect — no session headers needed.
  */
 export function getAuthUrl(platform: SocialMediaPlatform, callbackUrl?: string) {
   return auth.api.signInSocial({
@@ -11,11 +14,10 @@ export function getAuthUrl(platform: SocialMediaPlatform, callbackUrl?: string) 
 }
 
 /**
- * Check if platform is supported by Better Auth (native or Generic OAuth)
+ * Check if platform is supported by Better Auth (native or Generic OAuth).
  */
 export function isBetterAuthPlatform(platform: SocialMediaPlatform): boolean {
   const betterAuthPlatforms: SocialMediaPlatform[] = [
-    // Native Better Auth providers
     'facebook',
     'instagram',
     'threads',
@@ -26,7 +28,6 @@ export function isBetterAuthPlatform(platform: SocialMediaPlatform): boolean {
     'linkedin',
     'twitter',
     'tiktok',
-    // Generic OAuth providers
     'linkedin-page',
     'youtube',
     'dribbble'
@@ -35,35 +36,32 @@ export function isBetterAuthPlatform(platform: SocialMediaPlatform): boolean {
 }
 
 /**
- * Link a social account to the current authenticated user
+ * Link a social account to the current authenticated user.
+ * Headers auto-extracted from event via useAuthApi.
  */
-export function linkAccount(platform: SocialMediaPlatform, callbackUrl?: string) {
-  return auth.api.linkSocialAccount({
+export function linkAccount(event: H3Event, platform: SocialMediaPlatform, callbackUrl?: string) {
+  return useAuthApi(event).linkSocialAccount({
     body: {
       provider: platform,
       callbackURL: callbackUrl
-    },
-    headers: {
-      'Content-Type': 'application/json'
     }
-
   })
 }
 
 /**
- * Exchange code and retrieve tokens + user info
- * Better Auth handles this internally; you can fetch the linked account info
+ * Exchange code and retrieve tokens + user info.
+ * Better Auth handles this internally.
  */
-export async function getAccountInfo(accountId: string) {
-  return auth.api.accountInfo({ body: { accountId } })
+export async function getAccountInfo(event: H3Event, accountId: string) {
+  return useAuthApi(event).accountInfo({ body: { accountId } })
 }
 
 /**
  * Fetch a valid access token for an existing linked account.
  * Automatically refreshes if needed.
  */
-export async function getAccessToken(provider: SocialMediaPlatform, accountId?: string) {
-  const resp = await auth.api.getAccessToken({
+export async function getAccessToken(event: H3Event, provider: SocialMediaPlatform, accountId?: string) {
+  const resp = await useAuthApi(event).getAccessToken({
     body: { providerId: provider, accountId }
   })
   return resp.accessToken
@@ -78,10 +76,10 @@ export interface PlatformUserInfo {
 }
 
 /**
- * Fetch user profile from linked account
+ * Fetch user profile from linked account.
  */
-export async function getUserInfo(provider: SocialMediaPlatform, accountId: string): Promise<PlatformUserInfo> {
-  const info = await auth.api.accountInfo({ body: { accountId } })
+export async function getUserInfo(event: H3Event, provider: SocialMediaPlatform, accountId: string): Promise<PlatformUserInfo> {
+  const info = await useAuthApi(event).accountInfo({ body: { accountId } })
   return {
     id: info?.user.id,
     name: info?.user.name ?? '',

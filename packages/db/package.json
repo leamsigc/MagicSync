@@ -14,7 +14,7 @@
     "db:generate:local": "npx dotenv -e ../../.env -- drizzle-kit generate --config ./config/drizzle.config.ts",
     "db:migrate": "drizzle-kit migrate --config ./config/drizzle.config.ts",
     "db:migrate:local": "npx dotenv -e ../../.env -- drizzle-kit migrate --config ./config/drizzle.config.ts",
-    "db:studio": "drizzle-kit studio --config ./config/drizzle.config.ts"
+    "db:studio": "npx dotenv -e ../../.env -- drizzle-kit studio --config ./config/drizzle.config.ts"
   },
   "dependencies": {
     "dayjs": "catalog:",

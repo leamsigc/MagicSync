@@ -1,5 +1,5 @@
 import type { Asset, Post, PostWithAllData, SocialMediaAccount } from '#layers/BaseDB/db/schema';
-import type { PluginPostDetails, PluginSocialMediaAccount, PostResponse } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
+import type { PluginPostDetails, PluginSocialMediaAccount, PostResponse, GetCommentsResponse, ReplyCommentResponse, PlatformComment, PlatformStats } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import { BaseSchedulerPlugin } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import dayjs from 'dayjs';
 import type { GoogleBusinessSettings } from '#layers/BaseScheduler/shared/platformSettings';
@@ -98,9 +98,86 @@ type GMBPostData = {
 };
 
 export class GoogleMyBusinessPlugin extends BaseSchedulerPlugin {
-  override getStatistic(postDetails: PluginPostDetails, socialMediaAccount: PluginSocialMediaAccount): Promise<any> {
-    throw new Error('Method not implemented.');
+  override async getStatistic(_postDetails: PluginPostDetails, socialMediaAccount: PluginSocialMediaAccount): Promise<PlatformStats> {
+    try {
+      const accessToken = socialMediaAccount.accessToken;
+
+      if (!accessToken) {
+        console.error('[GoogleMyBusiness] No access token found');
+        return this.createZeroStats(socialMediaAccount);
+      }
+
+      // Step 1: Get accounts to retrieve the account name
+      const accountsResponse = await fetch(
+        `${this.BUSINESS_INFO_API_BASE}/accounts`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      if (!accountsResponse.ok) {
+        const errorBody = await accountsResponse.text();
+        console.error(`[GoogleMyBusiness] Failed to fetch accounts: ${accountsResponse.status} - ${errorBody}`);
+        return this.createZeroStats(socialMediaAccount);
+      }
+
+      const accountsData = await accountsResponse.json();
+      const accounts = accountsData.accounts || [];
+
+      if (accounts.length === 0) {
+        return this.createZeroStats(socialMediaAccount);
+      }
+
+      // Use the first account's name
+      const accountName = accounts[0].name;
+
+      // Step 2: Get locations for the account to count them
+      const locationsResponse = await fetch(
+        `${this.ACCOUNT_MANAGEMENT_API_BASE}/${accountName}/locations`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      if (!locationsResponse.ok) {
+        const errorBody = await locationsResponse.text();
+        console.error(`[GoogleMyBusiness] Failed to fetch locations: ${locationsResponse.status} - ${errorBody}`);
+        return this.createZeroStats(socialMediaAccount);
+      }
+
+      const locationsData = await locationsResponse.json();
+      const locationCount = locationsData.locations?.length || 0;
+
+      // Map location count to followers/posts as a reasonable proxy for GMB
+      return {
+        platform: 'googlemybusiness',
+        accountId: socialMediaAccount.accountId || '',
+        username: socialMediaAccount.username || socialMediaAccount.accountName || '',
+        fetchedAt: new Date().toISOString(),
+        followers: locationCount,
+        posts: locationCount,
+      };
+    } catch (error) {
+      console.error('[GoogleMyBusiness] Error fetching stats:', error);
+      return this.createZeroStats(socialMediaAccount);
+    }
   }
+
+  private createZeroStats(socialMediaAccount: PluginSocialMediaAccount): PlatformStats {
+    return {
+      platform: 'googlemybusiness',
+      accountId: socialMediaAccount.accountId || '',
+      username: socialMediaAccount.username || socialMediaAccount.accountName || '',
+      fetchedAt: new Date().toISOString(),
+      followers: 0,
+      posts: 0,
+    };
+  }
+
   static readonly pluginName = 'googlemybusiness';
   readonly pluginName = 'googlemybusiness';
 
@@ -660,6 +737,39 @@ export class GoogleMyBusinessPlugin extends BaseSchedulerPlugin {
       releaseURL: '',
       status: 'failed',
       error: 'Google My Business does not support comments on posts',
+    };
+  }
+
+  /**
+   * Get comments for a Google My Business post
+   * Note: GMB does not support comments API
+   */
+  async getComments(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount,
+    options?: { limit?: number; cursor?: string }
+  ): Promise<GetCommentsResponse> {
+    return Promise.resolve({
+      platform: this.pluginName,
+      postId: '',
+      comments: [],
+      hasMore: false,
+    });
+  }
+
+  /**
+   * Reply to a comment on Google My Business
+   * Note: GMB does not support comments API
+   */
+  async replyToComment(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount,
+    commentId: string,
+    replyText: string
+  ): Promise<ReplyCommentResponse> {
+    return {
+      success: false,
+      error: 'Google My Business does not support comments API',
     };
   }
 }

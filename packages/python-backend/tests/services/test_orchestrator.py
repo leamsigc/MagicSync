@@ -1,4 +1,5 @@
 import pytest
+from unittest.mock import AsyncMock, patch
 from app.services.agent.orchestrator import AgentOrchestrator, SpawnDecision
 
 
@@ -146,3 +147,178 @@ class TestSpawnDecisionModel:
         )
         assert decision.should_spawn is False
         assert decision.sub_agent_task is None
+
+
+class TestLLMDecision:
+    """Test LLM-powered decision-making for ambiguous cases."""
+
+    @pytest.mark.asyncio
+    async def test_llm_decides_complex_task(self):
+        """Test that LLM correctly identifies complex tasks."""
+        orchestrator = AgentOrchestrator()
+
+        # Mock LLM response for complex task
+        mock_response = {
+            "message": {
+                "content": '{"should_spawn": true, "task_type": "research", "confidence": 0.8}'
+            }
+        }
+
+        with patch('app.services.agent.orchestrator.llm_service') as mock_llm:
+            mock_llm.chat_complete = AsyncMock(return_value=mock_response)
+            decision = await orchestrator.should_spawn_sub_agent_async(
+                message="Look into the best practices for viral content and summarize key insights",
+                context=[],
+            )
+
+        assert decision.should_spawn is True
+        assert decision.task_type == "research"
+        assert decision.confidence >= 0.7
+
+    @pytest.mark.asyncio
+    async def test_llm_decides_simple_task(self):
+        """Test that LLM correctly identifies simple tasks."""
+        orchestrator = AgentOrchestrator()
+
+        # Mock LLM response for simple task
+        mock_response = {
+            "message": {
+                "content": '{"should_spawn": false, "task_type": null, "confidence": 0.3}'
+            }
+        }
+
+        with patch('app.services.agent.orchestrator.llm_service') as mock_llm:
+            mock_llm.chat_complete = AsyncMock(return_value=mock_response)
+            decision = await orchestrator.should_spawn_sub_agent_async(
+                message="Can you explain what engagement means?",
+                context=[],
+            )
+
+        assert decision.should_spawn is False
+        assert decision.confidence <= 0.5
+
+    @pytest.mark.asyncio
+    async def test_llm_fallback_on_error(self):
+        """Test that orchestrator falls back gracefully when LLM fails."""
+        orchestrator = AgentOrchestrator()
+
+        with patch('app.services.agent.orchestrator.llm_service') as mock_llm:
+            mock_llm.chat_complete = AsyncMock(side_effect=Exception("LLM unavailable"))
+            decision = await orchestrator.should_spawn_sub_agent_async(
+                message="Help me understand this topic in depth",
+                context=[],
+            )
+
+        # Should fall back to conservative decision
+        assert decision.should_spawn is False
+        assert decision.confidence == 0.3
+
+    @pytest.mark.asyncio
+    async def test_llm_handles_malformed_json(self):
+        """Test that orchestrator handles malformed LLM responses."""
+        orchestrator = AgentOrchestrator()
+
+        with patch('app.services.agent.orchestrator.llm_service') as mock_llm:
+            mock_llm.chat_complete = AsyncMock(return_value={
+                "message": {"content": "Here's my analysis: spawn=true"}
+            })
+            decision = await orchestrator.should_spawn_sub_agent_async(
+                message="This is a moderately complex request",
+                context=[],
+            )
+
+        # Should fall back gracefully
+        assert decision.should_spawn is False
+        assert decision.confidence == 0.3
+
+    @pytest.mark.asyncio
+    async def test_llm_disabled_fallback(self):
+        """Test that disabling LLM uses keyword fallback."""
+        orchestrator = AgentOrchestrator()
+        orchestrator.disable_llm()
+
+        decision = await orchestrator.should_spawn_sub_agent_async(
+            message="Some ambiguous message that needs LLM",
+            context=[],
+        )
+
+        # Should return conservative keyword-based decision
+        assert decision.should_spawn is False
+        assert decision.confidence == 0.3
+
+        orchestrator.enable_llm()
+
+
+class TestComplexVsSimpleTasks:
+    """Test verification that complex tasks trigger sub-agents while simple questions don't."""
+
+    def test_complex_research_task_spawns(self):
+        """Complex research tasks should spawn sub-agents."""
+        orchestrator = AgentOrchestrator()
+        decision = orchestrator.should_spawn_sub_agent(
+            message="I need you to deeply research the competitive landscape for social media scheduling tools. Look at at least 10 competitors and create a detailed analysis report.",
+            context=[],
+        )
+        assert decision.should_spawn is True
+        assert decision.confidence > 0.6
+
+    def test_simple_question_no_spawn(self):
+        """Simple questions should NOT spawn sub-agents."""
+        orchestrator = AgentOrchestrator()
+        decision = orchestrator.should_spawn_sub_agent(
+            message="What is MagicSync?",
+            context=[],
+        )
+        assert decision.should_spawn is False
+        assert decision.confidence < 0.5
+
+    def test_multi_component_task_spawns(self):
+        """Tasks with multiple components should spawn sub-agents."""
+        orchestrator = AgentOrchestrator()
+        decision = orchestrator.should_spawn_sub_agent(
+            message="Analyze my last 10 posts, identify patterns in engagement, and suggest improvements.",
+            context=[],
+        )
+        assert decision.should_spawn is True
+        assert decision.confidence > 0.6
+
+    def test_greeting_no_spawn(self):
+        """Greetings should never spawn sub-agents."""
+        orchestrator = AgentOrchestrator()
+        decision = orchestrator.should_spawn_sub_agent(
+            message="Hey there!",
+            context=[],
+        )
+        assert decision.should_spawn is False
+        assert decision.confidence == 0.1
+
+
+class TestTaskGeneration:
+    """Test task generation with various task types."""
+
+    def test_generates_research_task(self):
+        orchestrator = AgentOrchestrator()
+        decision = orchestrator.should_spawn_sub_agent(
+            message="Research the best time to post on social media",
+            context=[],
+        )
+        assert decision.sub_agent_task is not None
+        assert "Research and investigate" in decision.sub_agent_task
+
+    def test_generates_analysis_task(self):
+        orchestrator = AgentOrchestrator()
+        decision = orchestrator.should_spawn_sub_agent(
+            message="Analyze my engagement rates across all platforms",
+            context=[],
+        )
+        assert decision.sub_agent_task is not None
+        assert "Analyze and evaluate" in decision.sub_agent_task
+
+    def test_removes_leading_please(self):
+        orchestrator = AgentOrchestrator()
+        decision = orchestrator.should_spawn_sub_agent(
+            message="Please research AI tools for content generation",
+            context=[],
+        )
+        assert decision.sub_agent_task is not None
+        assert not decision.sub_agent_task.startswith("please")

@@ -2,8 +2,11 @@ import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
 import { agentService } from '#layers/BaseDB/server/services/agent.service'
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event)
   const user = await checkUserIsLogin(event)
   const body = await readBody(event)
+
+  log.set({ task: body.task?.substring(0, 100), parentMessageId: body.parent_message_id })
 
   if (!body?.task?.trim()) {
     throw createError({ statusCode: 400, statusMessage: 'Task is required' })

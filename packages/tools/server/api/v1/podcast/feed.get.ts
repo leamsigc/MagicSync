@@ -1,12 +1,17 @@
 import * as cheerio from 'cheerio'
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event)
   const query = getQuery(event)
   const feedUrl = String(query.url || '')
+  log.set({ feedUrl })
 
   if (!feedUrl) {
+    log.error('feedUrl parameter is required', {})
     throw createError({ statusCode: 400, message: 'feedUrl is required' })
   }
+
+  log.info('Fetching podcast feed', { feedUrl })
 
   let xml: string
   try {
@@ -14,10 +19,12 @@ export default defineEventHandler(async (event) => {
       responseType: 'text',
     })
   } catch {
+    log.error('Failed to fetch podcast feed', { feedUrl })
     throw createError({ statusCode: 502, message: 'Failed to fetch podcast feed' })
   }
 
   const episodes = parseRSS(xml)
+  log.info('Podcast feed parsed', { feedUrl, episodeCount: episodes.length })
   return { episodes }
 })
 

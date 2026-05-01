@@ -18,6 +18,7 @@
 import type { PostWithAllData } from '#layers/BaseDB/db/schema';
 import { usePlatformIcons } from '#layers/BaseUI/app/composables/usePlatformIcons';
 import dayjs from 'dayjs';
+import PostCommentsView from '../components/views/PostCommentsView.vue';
 
 const { t } = useI18n()
 const route = useRoute()
@@ -25,6 +26,8 @@ const router = useRouter()
 const postId = route.params.id as string
 const { getPlatformIcon } = usePlatformIcons()
 const post = useState<{ success: boolean, data: PostWithAllData } | null>()
+
+const activeTab = ref<'post' | 'details' | 'comments'>('post')
 
 callOnce(async () => {
   console.log('This will only be logged once and then on every client side navigation')
@@ -97,8 +100,47 @@ useHead({
       <Icon name="i-heroicons-arrow-path" size="lg" class="animate-spin" />
     </div>
 
+    <!-- Tab Navigation -->
+    <div class="border-b border-zinc-800 px-4" v-if="postData">
+      <nav class="flex gap-1 -mb-px">
+        <button
+          class="px-4 py-3 text-sm font-medium border-b-2 transition-colors"
+          :class="activeTab === 'post'
+            ? 'border-blue-500 text-blue-500'
+            : 'border-transparent text-zinc-500 hover:text-zinc-300'"
+          @click="activeTab = 'post'"
+        >
+          {{ t('feeds.tabs.post') }}
+        </button>
+        <button
+          class="px-4 py-3 text-sm font-medium border-b-2 transition-colors"
+          :class="activeTab === 'details'
+            ? 'border-blue-500 text-blue-500'
+            : 'border-transparent text-zinc-500 hover:text-zinc-300'"
+          @click="activeTab = 'details'"
+        >
+          {{ t('feeds.tabs.details') }}
+        </button>
+        <button
+          class="px-4 py-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-1"
+          :class="activeTab === 'comments'
+            ? 'border-blue-500 text-blue-500'
+            : 'border-transparent text-zinc-500 hover:text-zinc-300'"
+          @click="activeTab = 'comments'"
+        >
+          {{ t('feeds.tabs.comments') }}
+          <span v-if="postData?.platformPosts?.length > 0"
+            class="ml-1 text-xs bg-zinc-700 text-zinc-300 rounded-full px-1.5 py-0.5">
+            {{ postData.platformPosts.filter((pp: any) => pp.status === 'published').length }}
+          </span>
+        </button>
+      </nav>
+    </div>
+
+    <!-- Tab: Post Content -->
+    <div v-if="activeTab === 'post'">
     <!-- Post Content -->
-    <div v-else-if="postData" class="border-b border-zinc-800">
+    <div v-if="postData" class="border-b border-zinc-800">
       <!-- User Header -->
       <div class="p-4">
         <div class="flex gap-3 mb-4">
@@ -139,10 +181,6 @@ useHead({
         <!-- Stats -->
         <div class="border-y border-zinc-800 py-3 flex gap-6">
           <div class="flex items-center gap-1">
-            <span class="font-bold text-white">{{ comments.length }}</span>
-            <span class="text-zinc-500">{{ t('postDetail.stats.comments') }}</span>
-          </div>
-          <div class="flex items-center gap-1">
             <span class="font-bold text-white">{{ platformStatuses.length }}</span>
             <span class="text-zinc-500">{{ t('postDetail.stats.platforms') }}</span>
           </div>
@@ -155,7 +193,7 @@ useHead({
         <!-- Action Buttons -->
         <div class="flex justify-between pt-3">
           <UButton icon="i-heroicons-chat-bubble-oval-left" color="neutral" variant="ghost" size="sm"
-            class="text-zinc-500 hover:text-blue-500" />
+            class="text-zinc-500 hover:text-blue-500" @click="activeTab = 'comments'" />
           <UButton icon="i-heroicons-arrow-path-rounded-square" color="neutral" variant="ghost" size="sm"
             class="text-zinc-500 hover:text-green-500" />
           <UButton icon="i-heroicons-heart" color="neutral" variant="ghost" size="sm"
@@ -165,6 +203,10 @@ useHead({
         </div>
       </div>
     </div>
+    </div>
+
+    <!-- Tab: Details -->
+    <div v-if="activeTab === 'details'">
 
     <!-- Platform Status Section -->
     <div v-if="platformStatuses.length > 0" class="border-b border-zinc-800 p-4">
@@ -221,33 +263,6 @@ useHead({
       </div>
     </div>
 
-    <!-- Comments Section -->
-    <div v-if="comments.length > 0 && postData" class="p-4">
-      <h3 class="font-bold text-white mb-3">{{ t('postDetail.comments') }}</h3>
-      <div class="space-y-4">
-        <div v-for="(comment, index) in comments" :key="index" class="border-b border-zinc-800 pb-4 last:border-0">
-          <div class="flex gap-3">
-            <UAvatar :src="postData.user?.image || ''" :alt="postData.user?.name" size="sm" class="shrink-0" />
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-1 mb-1">
-                <span class="font-bold text-white">{{ postData.user?.name }}</span>
-                <span class="text-zinc-500">@{{ postData.user?.firstName }}</span>
-                <span class="text-zinc-500">·</span>
-                <span class="text-zinc-500">{{ formattedDate }}</span>
-              </div>
-              <p class="text-white whitespace-pre-wrap">{{ comment }}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Empty State -->
-    <div v-else class="p-4 text-center">
-      <UIcon name="i-heroicons-document-text" class="w-12 h-12 text-zinc-600 mx-auto mb-2" />
-      <p class="text-zinc-500">{{ t('postDetail.empty') }}</p>
-    </div>
-
     <!-- Raw Data Toggle Section -->
     <div v-if="postData" class="border-t border-zinc-800 p-4">
       <UButton :icon="showRawData ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down'" color="neutral"
@@ -262,6 +277,13 @@ useHead({
         </div>
       </div>
     </div>
+    </div>
+
+    <!-- Tab: Comments -->
+    <div v-if="activeTab === 'comments'" class="p-4">
+      <PostCommentsView v-if="postData" :post="postData" />
+    </div>
+
   </div>
 </template>
 

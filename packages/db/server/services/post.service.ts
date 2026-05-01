@@ -2,16 +2,17 @@ import type { PlatformPost, Post, PostCreateBase, PostWithAllData, SocialMediaAc
 import type {
   PaginatedResponse,
   QueryOptions,
-  ServiceResponse
+  ServiceResponse,
+  PostResponse,
 } from './types'
-import { and, eq, gte, inArray, lte, sql, notExists, exists, or, not, between } from 'drizzle-orm'
-import { assets, platformPosts, posts } from '#layers/BaseDB/db/schema'
+import { and, eq, gte, inArray, isNull, isNotNull, lte, sql, notExists, exists, or, not, between } from 'drizzle-orm'
+import { assets, platformPosts, posts, socialMediaAccounts } from '#layers/BaseDB/db/schema'
+import { socialMediaAccounts as socialMediaAccountsTable } from '#layers/BaseDB/db/socialMedia/socialMedia'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
 import {
   ValidationError
 } from './types'
 import { socialMediaAccountService } from './social-media-account.service'
-import type { PostResponse } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 
 
 
@@ -42,57 +43,61 @@ export class PostService {
         status = 'pending'
       }
 
-      const [post] = await this.db.insert(posts).values({
-        id,
-        userId,
-        businessId: data.businessId,
-        content: data.content,
-        mediaAssets: data.mediaAssets ? JSON.stringify(data.mediaAssets) : null,
-        scheduledAt: dayjs(data.scheduledAt).utc().toDate(),
-        targetPlatforms: JSON.stringify(data.targetPlatforms),
-        status,
-        platformContent: data.platformContent || null,
-        platformSettings: data.platformSettings || null,
-        postFormat: data.postFormat || 'post',
-        createdAt: now,
-        updatedAt: now
-      }).returning()
+      return await this.db.transaction(async (tx) => {
+        const [post] = await tx.insert(posts).values({
+          id,
+          userId,
+          businessId: data.businessId,
+          content: data.content,
+          mediaAssets: data.mediaAssets ? JSON.stringify(data.mediaAssets) : null,
+          scheduledAt: dayjs(data.scheduledAt).utc().toDate(),
+          targetPlatforms: JSON.stringify(data.targetPlatforms),
+          status,
+          platformContent: data.platformContent || null,
+          platformSettings: data.platformSettings || null,
+          postFormat: data.postFormat || 'post',
+          createdAt: now,
+          updatedAt: now
+        }).returning()
 
-      if (data.mediaAssets && data.mediaAssets.length > 0) {
-        await this.db
-          .update(assets)
-          .set({ isPublic: true })
-          .where(inArray(assets.id, data.mediaAssets))
-      }
+        if (data.mediaAssets && data.mediaAssets.length > 0) {
+          await tx
+            .update(assets)
+            .set({ isPublic: true })
+            .where(inArray(assets.id, data.mediaAssets))
+        }
 
-      if (data.targetPlatforms.length > 0) {
-        const platformPostData = data.targetPlatforms.map(async (accountId: string) => {
-          const account = await socialMediaAccountService.getAccountById(accountId)
-          const platformName = account?.platform || accountId
+        if (data.targetPlatforms.length > 0) {
+          // Batch-fetch all accounts in a single query instead of N individual calls
+          const accountRows = await tx.query.socialMediaAccounts.findMany({
+            where: inArray(socialMediaAccounts.id, data.targetPlatforms)
+          })
+          const accountMap = new Map(accountRows.map(a => [a.id, a.platform]))
 
-          const platformSpecificSettings = data.platformSettings?.[platformName] || data.platformSettings?.[accountId] || null
-          const platformSpecificContent = data.platformContent?.[platformName] || data.platformContent?.[accountId] || null
+          const platformPostEntries = data.targetPlatforms.map((accountId: string) => {
+            const platformName = accountMap.get(accountId) ?? accountId
+            const platformSpecificSettings = data.platformSettings?.[platformName] || data.platformSettings?.[accountId] || null
+            const platformSpecificContent = data.platformContent?.[platformName] || data.platformContent?.[accountId] || null
 
-          const platformPostEntry = {
-            id: crypto.randomUUID(),
-            postId: id,
-            socialAccountId: accountId,
-            status: 'pending' as const,
-            createdAt: now,
-            platformPostId: account ? account.platform : null,
-            platformSettings: platformSpecificSettings ? {
-              ...platformSpecificSettings,
-              platformContent: platformSpecificContent
-            } : null
-          }
-          await this.db.insert(platformPosts).values(platformPostEntry).returning()
-        })
-        await Promise.all(platformPostData).catch((error) => {
-          console.error('Error creating platform posts:', error)
-        })
-      }
+            return {
+              id: crypto.randomUUID(),
+              postId: id,
+              socialAccountId: accountId,
+              status: 'pending' as const,
+              createdAt: now,
+              platformPostId: accountMap.get(accountId) ?? null,
+              platformSettings: platformSpecificSettings ? {
+                ...platformSpecificSettings,
+                platformContent: platformSpecificContent
+              } : null
+            }
+          })
 
-      return { data: post }
+          await tx.insert(platformPosts).values(platformPostEntries)
+        }
+
+        return { data: post }
+      })
     } catch (error) {
       if (error instanceof ValidationError) {
         return { error: error.message, code: error.code }
@@ -177,19 +182,33 @@ export class PostService {
         orderBy: sql`${posts.createdAt} DESC`,
       })
 
-      const postWithAssetsPromises = postList.map(async (post) => {
-        const assetsIds: string[] = post.mediaAssets ? JSON.parse(post.mediaAssets) : []
+      // Batch fetch all asset IDs from all posts to avoid N+1
+      const allAssetIds = postList
+        .flatMap(post => {
+          try {
+            return post.mediaAssets ? JSON.parse(post.mediaAssets) : []
+          } catch {
+            return []
+          }
+        })
+        .filter((id): id is string => typeof id === 'string')
 
-        const assetResult = await this.db.query.assets.findMany({
-          where: inArray(assets.id, assetsIds),
-        });
+      const assetsMap = new Map<string, Asset>()
+      if (allAssetIds.length > 0) {
+        const allAssets = await this.db.query.assets.findMany({
+          where: inArray(assets.id, allAssetIds),
+        })
+        allAssets.forEach(asset => assetsMap.set(asset.id, asset))
+      }
+
+      // Map assets back to posts
+      const postWithAssets = postList.map(post => {
+        const assetIds: string[] = post.mediaAssets ? JSON.parse(post.mediaAssets) : []
         return {
           ...post,
-          assets: assetResult, // Ensure assets is always an array
+          assets: assetIds.map(id => assetsMap.get(id)).filter((a): a is Asset => !!a),
         }
       })
-
-      const postWithAssets = await Promise.all(postWithAssetsPromises)
       // Get total count for pagination
       const result = await this.db
         .select({ count: sql<number>`count(*)` })
@@ -253,72 +272,77 @@ export class PostService {
 
   async update(id: string, userId: string, data: UpdatePostData): Promise<ServiceResponse<Post>> {
     try {
-      // Check if post exists and belongs to user
-      const existingResult = await this.findById(id, userId)
-      if (!existingResult || existingResult.error) {
-        return { error: 'Post not found' }
-      }
-
-
-      const updateData: any = {
-        ...data,
-        updatedAt: dayjs.utc().toDate()
-      }
-
-      // Handle JSON fields
-      if (data.mediaAssets !== undefined && data.mediaAssets.length > 0) {
-        updateData.mediaAssets = data.mediaAssets ? JSON.stringify(data.mediaAssets) : null
-      }
-      if (data.targetPlatforms !== undefined && data.targetPlatforms.length > 0) {
-        updateData.targetPlatforms = JSON.stringify(data.targetPlatforms)
-      }
-
-      const [updated] = await this.db
-        .update(posts)
-        .set(updateData)
-        .where(and(eq(posts.id, id), eq(posts.userId, userId)))
-        .returning()
-
-      if (data.mediaAssets && data.mediaAssets.length > 0) {
-        await this.db
-          .update(assets)
-          .set({ isPublic: true })
-          .where(inArray(assets.id, data.mediaAssets))
-      }
-      // Update platform posts if target platforms changed
-      if (data.targetPlatforms) {
-        // Remove existing platform posts
-        await this.db
-          .delete(platformPosts)
-          .where(eq(platformPosts.postId, id))
-        // Create new platform posts
-        const platformPostData = data.targetPlatforms.map(async (accountId) => {
-          // Get the social media account by ID
-          const account = await socialMediaAccountService.getAccountById(accountId)
-          const platformName = account?.platform || accountId
-          const platformSpecificSettings = data.platformSettings?.[platformName] || data.platformSettings?.[accountId] || null
-          const platformSpecificContent = data.platformContent?.[platformName] || data.platformContent?.[accountId] || null
-
-
-          const item = {
-            id: crypto.randomUUID(),
-            postId: id,
-            socialAccountId: accountId,
-            status: 'pending' as const,
-            createdAt: updateData.updatedAt,
-            platformPostId: account ? account.platform : null,
-            platformSettings: platformSpecificSettings ? {
-              ...platformSpecificSettings,
-              platformContent: platformSpecificContent
-            } : null
-          }
-          await this.db.insert(platformPosts).values(item).returning()
+      return await this.db.transaction(async (tx) => {
+        // Check if post exists and belongs to user INSIDE transaction to prevent race condition
+        const existingPost = await tx.query.posts.findFirst({
+          where: and(eq(posts.id, id), eq(posts.userId, userId))
         })
-        await Promise.all(platformPostData).catch((error) => {
-          console.error('Error Updating platform posts:', error)
-        })
-      }
-      return { data: updated }
+        if (!existingPost) {
+          return { error: 'Post not found' }
+        }
+
+        const updateData: any = {
+          ...data,
+          updatedAt: dayjs.utc().toDate()
+        }
+
+        // Handle JSON fields
+        if (data.mediaAssets !== undefined && data.mediaAssets.length > 0) {
+          updateData.mediaAssets = data.mediaAssets ? JSON.stringify(data.mediaAssets) : null
+        }
+        if (data.targetPlatforms !== undefined && data.targetPlatforms.length > 0) {
+          updateData.targetPlatforms = JSON.stringify(data.targetPlatforms)
+        }
+
+        const [updated] = await tx
+          .update(posts)
+          .set(updateData)
+          .where(and(eq(posts.id, id), eq(posts.userId, userId)))
+          .returning()
+
+        if (data.mediaAssets && data.mediaAssets.length > 0) {
+          await tx
+            .update(assets)
+            .set({ isPublic: true })
+            .where(inArray(assets.id, data.mediaAssets))
+        }
+        // Update platform posts if target platforms changed
+        if (data.targetPlatforms) {
+          // Remove existing platform posts
+          await tx
+            .delete(platformPosts)
+            .where(eq(platformPosts.postId, id))
+
+          // Batch-fetch all accounts in a single query instead of N individual calls
+          const accountRows = await tx.query.socialMediaAccounts.findMany({
+            where: inArray(socialMediaAccounts.id, data.targetPlatforms)
+          })
+          const accountMap = new Map(accountRows.map(a => [a.id, a.platform]))
+
+          // Create new platform posts
+          const platformPostEntries = data.targetPlatforms.map((accountId: string) => {
+            const platformName = accountMap.get(accountId) ?? accountId
+            const platformSpecificSettings = data.platformSettings?.[platformName] || data.platformSettings?.[accountId] || null
+            const platformSpecificContent = data.platformContent?.[platformName] || data.platformContent?.[accountId] || null
+
+            return {
+              id: crypto.randomUUID(),
+              postId: id,
+              socialAccountId: accountId,
+              status: 'pending' as const,
+              createdAt: updateData.updatedAt,
+              platformPostId: accountMap.get(accountId) ?? null,
+              platformSettings: platformSpecificSettings ? {
+                ...platformSpecificSettings,
+                platformContent: platformSpecificContent
+              } : null
+            }
+          })
+
+          await tx.insert(platformPosts).values(platformPostEntries)
+        }
+        return { data: updated }
+      })
     } catch (error) {
       console.error('Error Updating post:', error)
       return { error: 'Failed to update post' }
@@ -429,23 +453,26 @@ export class PostService {
 
       // Reset post status if it was failed
       if (post.status === 'failed') {
-        const updateResult = await this.updateStatus(id, userId, 'pending')
+        await this.updateStatus(id, userId, 'pending')
       }
 
-      // Reset failed platform posts to pending
-      if (post.platformPosts) {
-        for (const platformPost of post.platformPosts) {
-          if (platformPost.status === 'failed') {
-            await this.updatePlatformPost(platformPost.id, {
-              status: 'pending',
-              errorMessage: undefined
-            })
-          }
-        }
+      // Batch reset all failed platform posts to pending in a single query
+      const failedPlatformPostIds = post.platformPosts
+        .filter(p => p.status === 'failed')
+        .map(p => p.id)
+
+      if (failedPlatformPostIds.length > 0) {
+        await this.db
+          .update(platformPosts)
+          .set({
+            status: 'pending',
+            errorMessage: null
+          })
+          .where(inArray(platformPosts.id, failedPlatformPostIds))
       }
-      const item = await this.findById(id, userId, true);
+
       // Return updated item
-      return item as ServiceResponse<PostWithAllData>
+      return await this.findById(id, userId, true) as ServiceResponse<PostWithAllData>
     } catch (error) {
       return { error: 'Failed to retry post' }
     }
@@ -545,46 +572,125 @@ export class PostService {
     }
   }
 
-  async getPostsToProcessNow() {
+  /**
+   * Get posts that are due for processing now (catch-up + scheduled).
+   * - Includes posts from ANY day where scheduledAt <= now (catch-up for server downtime)
+   * - Excludes posts with active retry backoff (nextRetryAt IS NOT NULL AND nextRetryAt > now)
+   * - Orders by scheduledAt ASC (oldest first)
+   * - Limits to 100 posts per run to prevent overwhelming
+   */
+  async getPostsToProcessNow(): Promise<PostWithAllData[]> {
     const now = dayjs.utc().toDate()
-    const startOfToday = dayjs.utc().startOf('day').toDate();
 
     const list = await this.db.query.posts.findMany({
       where: and(
         eq(posts.status, 'pending'),
-        between(posts.scheduledAt, startOfToday, now)
+        lte(posts.scheduledAt, now),
+        or(
+          isNull(posts.nextRetryAt),
+          lte(posts.nextRetryAt, now)
+        )
       ),
       with: {
         platformPosts: true,
         user: true
-      }
+      },
+      orderBy: (posts, { asc }) => [asc(posts.scheduledAt)],
+      limit: 100
     })
 
-    // Fetch assets for each post based on mediaAssets field
-    const postsWithAssets = await Promise.all(
-      list.map(async (post) => {
-        let assetsList: Asset[] = [];
-        if (post.mediaAssets) {
-          try {
-            const assetIds = JSON.parse(post.mediaAssets as unknown as string) as string[];
-            if (assetIds && assetIds.length > 0) {
-              const assetsResult = await this.db.query.assets.findMany({
-                where: inArray(assets.id, assetIds)
-              });
-              assetsList = assetsResult;
-            }
-          } catch (e) {
-            // Invalid JSON, return empty assets
-          }
+    // Batch fetch all asset IDs from all posts to avoid N+1
+    const allAssetIds = list
+      .flatMap(post => {
+        try {
+          return post.mediaAssets ? JSON.parse(post.mediaAssets as unknown as string) : []
+        } catch {
+          return []
         }
-        return {
-          ...post,
-          assets: assetsList
-        } as PostWithAllData;
       })
-    );
+      .filter((id): id is string => typeof id === 'string')
 
-    return postsWithAssets;
+    const assetsMap = new Map<string, Asset>()
+    if (allAssetIds.length > 0) {
+      const allAssets = await this.db.query.assets.findMany({
+        where: inArray(assets.id, allAssetIds)
+      })
+      allAssets.forEach(asset => assetsMap.set(asset.id, asset))
+    }
+
+    // Map assets back to posts
+    const postsWithAssets = list.map(post => {
+      let assetsList: Asset[] = []
+      if (post.mediaAssets) {
+        try {
+          const assetIds = JSON.parse(post.mediaAssets as unknown as string) as string[]
+          if (assetIds && assetIds.length > 0) {
+            assetsList = assetIds.map(id => assetsMap.get(id)).filter((a): a is Asset => !!a)
+          }
+        } catch (e) {
+          // Invalid JSON, return empty assets
+        }
+      }
+      return {
+        ...post,
+        assets: assetsList
+      } as PostWithAllData
+    })
+
+    return postsWithAssets
+  }
+
+  /**
+   * Schedule an automatic retry for a failed post using exponential backoff.
+   * @param postId - The post ID to schedule retry for
+   * @param currentRetryCount - The current retry count (0-based, so this is the attempt number being started)
+   * @param error - The error message to store
+   * @returns ServiceResponse with the updated post
+   *
+   * Backoff schedule (5 retries max):
+   *   Retry 1 (count=0):  5 min  -> nextRetryAt = now + 5min
+   *   Retry 2 (count=1): 10 min  -> nextRetryAt = now + 10min
+   *   Retry 3 (count=2): 20 min  -> nextRetryAt = now + 20min
+   *   Retry 4 (count=3): 40 min  -> nextRetryAt = now + 40min
+   *   Retry 5 (count=4): 80 min  -> nextRetryAt = now + 80min
+   *   After count=4 (5th attempt fails): no more retry, stays failed
+   */
+  async scheduleRetry(postId: string, currentRetryCount: number, error: string): Promise<ServiceResponse<Post>> {
+    const MAX_RETRIES = 5
+    const newRetryCount = currentRetryCount + 1
+
+    // Cap at MAX_RETRIES — after 5 failures, the post stays permanently failed
+    if (newRetryCount >= MAX_RETRIES) {
+      const [updated] = await this.db
+        .update(posts)
+        .set({
+          status: 'failed',
+          lastError: error,
+          nextRetryAt: null,
+          updatedAt: dayjs.utc().toDate()
+        })
+        .where(eq(posts.id, postId))
+        .returning()
+      return { data: updated, code: 'RETRY_EXHAUSTED' }
+    }
+
+    // Exponential backoff: 5min * 2^retryCount
+    // Capped at 80 minutes (5 * 2^4 = 80)
+    const backoffMs = 5 * 60 * 1000 * Math.pow(2, currentRetryCount)
+    const nextRetryAt = dayjs.utc().add(backoffMs, 'ms').toDate()
+
+    const [updated] = await this.db
+      .update(posts)
+      .set({
+        retryCount: newRetryCount,
+        nextRetryAt,
+        lastError: error,
+        updatedAt: dayjs.utc().toDate()
+      })
+      .where(eq(posts.id, postId))
+      .returning()
+
+    return { data: updated }
   }
 
   async updatePostBaseOnResponse(post: PostWithAllData, response: PostResponse, socialPlatform: PlatformPost) {

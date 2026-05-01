@@ -28,8 +28,5 @@ export default defineNuxtRouteMiddleware(async (to) => {
     layout = to.meta.layout as keyof NuxtLayouts || 'default';
   }
 
-  console.log("LAYOUT", layout);
-
-
   setPageLayout(layout as any,);
 });

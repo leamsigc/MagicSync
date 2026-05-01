@@ -63,7 +63,7 @@ const generateGridPattern = ({
   const svg = svgTemplates[pattern];
   if (!svg) return 'none';
 
-  console.log(svg);
+  // SVG pattern generated successfully
 
 
   const encoded = encodeURIComponent(svg)

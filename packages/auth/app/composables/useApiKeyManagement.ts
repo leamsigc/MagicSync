@@ -25,11 +25,12 @@ export function useApiKeyManagement() {
   const { user } = UseUser()
   const activeBusinessId = useState<string>('business:id');
 
-  const apiKeys = ref<ApiKeyListItem[]>([])
-  const loading = ref(false)
-  const error = ref<string | null>(null)
-  const newApiKey = ref<CreatedApiKey | null>(null)
-  const showKeyModal = ref(false)
+  // SSR-safe state management using useState
+  const apiKeys = useState<ApiKeyListItem[]>('api-keys:list', () => [])
+  const loading = useState<boolean>('api-keys:loading', () => false)
+  const error = useState<string | null>('api-keys:error', () => null)
+  const newApiKey = useState<CreatedApiKey | null>('api-keys:new', () => null)
+  const showKeyModal = useState<boolean>('api-keys:show-modal', () => false)
 
   const fetchApiKeys = async (businessId?: string) => {
     const targetBusinessId = businessId || activeBusinessId.value

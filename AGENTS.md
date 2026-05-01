@@ -19,7 +19,7 @@ A social media scheduling platform built with Nuxt 4 monorepo — enables schedu
 
 ## Commands
 
-- **Dev server:** `pnpm site:dev` — starts on port 3000
+- **Dev server:** `pnpm packages site dev` — starts on port 3000
 - **Build all:** `pnpm build`
 - **Build site:** `pnpm site:build`
 - **Database:** `cd packages/db && pnpm db:generate` / `db:migrate`

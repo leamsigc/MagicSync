@@ -2,9 +2,9 @@
 <script lang="ts" setup>
 /**
 *
-* Component Description:Desc
+* Component Description: Dashboard page showing real platform stats
 *
-* @author Reflect-Media <reflect.media GmbH>
+* @author Ismael Garcia <leamsigc@leamsigc.com>
 * @version 0.0.1
 *
 * @todo [ ] Test the component
@@ -13,9 +13,17 @@
 */
 import { type EChartsOption } from 'echarts'
 
-
 const { t } = useI18n()
-const { metrics, chartData, getLineChartConfig, getBarChartConfig, getPieChartConfig } = useDashboardMetrics()
+const { metrics, chartData, getLineChartConfig, getBarChartConfig, getPieChartConfig, fetchMetrics, loading } = useDashboardMetrics()
+
+// Load real data on mount
+onMounted(async () => {
+  // Get current business from session/user
+  const { user } = UseUser()
+  if (user.value?.id) {
+    await fetchMetrics({ userId: user.value.id })
+  }
+})
 
 const displayMetrics = computed(() =>
   metrics.value.map(metric => ({
@@ -25,32 +33,33 @@ const displayMetrics = computed(() =>
 )
 
 const postOptions = computed((): EChartsOption => {
+  if (!chartData.value.posts.weekly.length) return {} as EChartsOption
   const config = getBarChartConfig(
-    chartData.value.reviews.weekly,
-    chartData.value.reviews.labels,
-    t('post')
+    chartData.value.posts.weekly,
+    chartData.value.posts.labels,
+    t('followers')
   )
-
   return config as EChartsOption
 })
+
 const reviewOptions = computed((): EChartsOption => {
+  if (!chartData.value.reviews.weekly.length) return {} as EChartsOption
   const config = getLineChartConfig(
     chartData.value.reviews.weekly,
     chartData.value.reviews.labels,
-    t('review')
+    t('engagement')
   )
-
   return config as EChartsOption
 })
+
 const contentOptions = computed((): EChartsOption => {
+  if (!chartData.value.content.distribution.length) return {} as EChartsOption
   const config = getPieChartConfig(
     chartData.value.content.distribution,
     t
   )
-
   return config as EChartsOption
 })
-
 </script>
 
 <template>

@@ -59,7 +59,7 @@ const togglePlatform = (id: string) => {
 };
 
 const revertToMaster = () => { explicitPreviewPlatform.value = 'default'; };
-const handleAIAction = () => console.log('AI Action triggered');
+const handleAIAction = () => { /* AI Action placeholder */ };
 
 </script>
 

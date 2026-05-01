@@ -3,8 +3,13 @@ import { checkUserIsLogin } from "#layers/BaseAuth/server/utils/AuthHelpers"
 
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event)
   const user = await checkUserIsLogin(event)
+  log.set({ userId: user.id })
 
+  const result = await businessProfileService.getActive(user.id);
 
-  return await businessProfileService.getActive(user.id);
+  log.info('Active business retrieved', { businessId: result?.data || '' })
+
+  return result;
 });

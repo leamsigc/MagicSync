@@ -10,6 +10,7 @@ import { postService } from "#layers/BaseDB/server/services/post.service"
 
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event)
   try {
     // Get user from session
     const user = await checkUserIsLogin(event)
@@ -19,12 +20,14 @@ export default defineEventHandler(async (event) => {
     const businessId = query.businessId as string
 
     if (!businessId) {
+      log.set({ validationError: true, message: 'Business ID is required' })
       throw createError({
         statusCode: 400,
         statusMessage: 'Business ID is required'
       })
     }
 
+    log.set({ businessId, userId: user.id })
     // Parse pagination parameters
     const page = parseInt(query.page as string) || 1
     const limit = parseInt(query.limit as string) || 10
@@ -50,6 +53,7 @@ export default defineEventHandler(async (event) => {
       filters.platforms = (query.platforms as string).split(',')
     }
 
+    log.set({ page, limit, filters })
     // Get posts
     const result = await postService.findByBusinessId(businessId, user.id, {
       pagination: { page, limit },
@@ -62,6 +66,7 @@ export default defineEventHandler(async (event) => {
       throw error
     }
 
+    log.error({ content: 'List posts error', error: String(error) })
     throw createError({
       statusCode: 500,
       statusMessage: 'Internal server error'

@@ -1,13 +1,74 @@
-import type { PluginPostDetails, PostResponse, Integration, PluginSocialMediaAccount } from '../SchedulerPost.service';
-import { BaseSchedulerPlugin, type MediaContent } from '../SchedulerPost.service';
+import type { PluginPostDetails, PostResponse, Integration, PluginSocialMediaAccount, GetCommentsResponse, ReplyCommentResponse, PlatformComment } from '../SchedulerPost.service';
+import { BaseSchedulerPlugin, type MediaContent, type PlatformStats } from '../SchedulerPost.service';
 import type { Post, SocialMediaAccount, Asset } from '#layers/BaseDB/db/schema';
 import type { TikTokSettings } from '../../../shared/platformSettings';
 
 import { platformConfigurations } from '../../../shared/platformConstants';
 
 export class TikTokPlugin extends BaseSchedulerPlugin {
-  override getStatistic(postDetails: PluginPostDetails, socialMediaAccount: PluginSocialMediaAccount): Promise<any> {
-    throw new Error('Method not implemented.');
+  override async getStatistic(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount
+  ): Promise<PlatformStats> {
+    try {
+      const accessToken = socialMediaAccount.accessToken;
+      if (!accessToken) {
+        return this.fallbackStats(socialMediaAccount);
+      }
+
+      const response = await fetch(
+        'https://open.tiktokapis.com/v2/user/info/?fields=open_id,avatar_url,display_name,username,followers_count,following_count,likes_count,video_count',
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        console.error('TikTok getStatistic failed:', response.status, await response.text());
+        return this.fallbackStats(socialMediaAccount);
+      }
+
+      const data = await response.json();
+      const user = data.data || {};
+
+      return {
+        platform: 'tiktok',
+        accountId: user.open_id || socialMediaAccount.id,
+        username: user.username || socialMediaAccount.accountName || '',
+        picture: user.avatar_url || undefined,
+        fetchedAt: new Date().toISOString(),
+        followers: user.followers_count || 0,
+        following: user.following_count || 0,
+        posts: user.video_count || 0,
+        engagement: {
+          total: user.likes_count || 0,
+          likes: user.likes_count || 0,
+        },
+      };
+    } catch (error) {
+      console.error('TikTok getStatistic error:', error);
+      return this.fallbackStats(socialMediaAccount);
+    }
+  }
+
+  private fallbackStats(socialMediaAccount: PluginSocialMediaAccount): PlatformStats {
+    return {
+      platform: 'tiktok',
+      accountId: socialMediaAccount.id,
+      username: socialMediaAccount.accountName || '',
+      picture: undefined,
+      fetchedAt: new Date().toISOString(),
+      followers: 0,
+      following: 0,
+      posts: 0,
+      engagement: {
+        total: 0,
+        likes: 0,
+      },
+    };
   }
   static readonly pluginName = 'tiktok';
   readonly pluginName = 'tiktok';
@@ -307,6 +368,132 @@ export class TikTokPlugin extends BaseSchedulerPlugin {
       };
       this.emit('tiktok:comment:failed', { error: (error as Error).message });
       return errorResponse;
+    }
+  }
+
+  /**
+   * Transform TikTok comment to PlatformComment format
+   */
+  private transformComment(comment: any): PlatformComment {
+    return {
+      id: comment.comment_id,
+      text: comment.text || '',
+      authorName: comment.user?.nickname || comment.commenter_info?.nickname || 'Unknown',
+      authorId: comment.user?.open_id || comment.commenter_info?.open_id,
+      authorPicture: comment.user?.avatar_url || comment.commenter_info?.avatar_url,
+      createdAt: comment.create_time ? new Date(comment.create_time * 1000).toISOString() : '',
+      likeCount: comment.like_count,
+      replyCount: comment.reply_comment_total || 0,
+      parentId: comment.parent_id,
+    };
+  }
+
+  /**
+   * Get comments for a TikTok video
+   */
+  async getComments(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount,
+    options?: { limit?: number; cursor?: string }
+  ): Promise<GetCommentsResponse> {
+    const platformPost = postDetails.platformPosts?.find((pp: any) => pp.socialAccountId === socialMediaAccount.id);
+    const publishDetail = platformPost?.publishDetail ? JSON.parse(platformPost.publishDetail) : {};
+    const externalPostId = publishDetail[socialMediaAccount.id]?.publishedId || publishDetail.postId;
+
+    if (!externalPostId) {
+      return Promise.resolve({ platform: this.pluginName, postId: '', comments: [], hasMore: false });
+    }
+
+    try {
+      const response = await fetch(
+        `https://open.tiktokapis.com/v2/comment/list/?fields=id,text,create_time,like_count,reply_count,parent_id,user{display_name,avatar_url,open_id}`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${socialMediaAccount.accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            video_id: externalPostId,
+            max_count: options?.limit || 50,
+            cursor: options?.cursor || 0,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`TikTok get comments failed: ${error}`);
+      }
+
+      const data = await response.json();
+      const comments: PlatformComment[] = (data.comments || []).map((c: any) => this.transformComment(c));
+
+      return {
+        platform: this.pluginName,
+        postId: externalPostId,
+        comments,
+        hasMore: data.has_more || false,
+        nextCursor: data.cursor ? String(data.cursor) : undefined,
+      };
+    } catch (error) {
+      console.error('Error fetching TikTok comments:', error);
+      return {
+        platform: this.pluginName,
+        postId: externalPostId,
+        comments: [],
+        hasMore: false,
+      };
+    }
+  }
+
+  /**
+   * Reply to a comment on TikTok
+   */
+  async replyToComment(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount,
+    commentId: string,
+    replyText: string
+  ): Promise<ReplyCommentResponse> {
+    try {
+      const platformPost = postDetails.platformPosts?.find((pp: any) => pp.socialAccountId === socialMediaAccount.id);
+      const publishDetail = platformPost?.publishDetail ? JSON.parse(platformPost.publishDetail) : {};
+      const videoId = publishDetail[socialMediaAccount.id]?.publishedId || publishDetail.postId;
+
+      const response = await fetch(
+        'https://open.tiktokapis.com/v2/comment/publish/',
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${socialMediaAccount.accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            video_id: videoId,
+            parent_comment_id: commentId, // Reply to the parent comment
+            text: replyText,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`TikTok reply failed: ${error}`);
+      }
+
+      const data = await response.json();
+
+      return {
+        success: true,
+        comment: this.transformComment(data.data || { comment_id: data.comment_id, text: replyText }),
+      };
+    } catch (error) {
+      console.error('Error replying to TikTok comment:', error);
+      return {
+        success: false,
+        error: (error as Error).message || 'Failed to reply to comment',
+      };
     }
   }
 }

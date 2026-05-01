@@ -8,16 +8,22 @@ const querySchema = z.object({
 })
 
 export default defineEventHandler(async (event) => {
+    const log = useLogger(event)
     try {
         // Get authenticated user
         const user = await checkUserIsLogin(event)
+        log.set({ userId: user.id })
 
         // Parse and validate query parameters
         const query = getQuery(event)
         const validatedQuery = querySchema.parse(query)
 
+        log.set({ unreadOnly: validatedQuery.unreadOnly })
+
         // Get notifications
         const notifications = await notificationService.getNotifications(user.id, validatedQuery)
+
+        log.info({ content: 'Notifications retrieved', count: notifications.length })
 
         return {
             success: true,
@@ -28,6 +34,8 @@ export default defineEventHandler(async (event) => {
             }
         }
     } catch (error: any) {
+        log.error({ content: 'Failed to get notifications', error: error.message })
+
         if (error instanceof z.ZodError) {
             throw createError({
                 statusCode: 400,

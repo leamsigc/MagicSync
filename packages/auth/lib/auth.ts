@@ -11,19 +11,28 @@ import { logAuditService } from '#layers/BaseDB/server/services/auditLog.service
 
 export const auth = betterAuth({
   baseURL: process.env.NUXT_BETTER_AUTH_URL || 'http://localhost:3000',
-  // logger: {
-  //   disabled: false,
-  //   disableColors: false,
-  //   level: "debug",
-  //   log: (level, message, ...args) => {
-  //     // Custom logging implementation
-  //     console.log(`[${level}] ${message}`, ...args);
-  //   }
-  // },
-  trustedOrigins: [
-    process.env.NUXT_BETTER_AUTH_URL || 'http://localhost:3000',
-    "127.0.0.1:3000"
-  ],
+  logger: {
+    disabled: false,
+    disableColors: false,
+    level: "debug",
+    log: (level, message, ...args) => {
+      // Custom logging implementation
+      console.log(`[${level}] ${message}`, ...args);
+    }
+  },
+  trustedOrigins: (() => {
+    const baseUrl = process.env.NUXT_BETTER_AUTH_URL
+    if (!baseUrl) {
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error('[auth] NUXT_BETTER_AUTH_URL is required in production — cannot use insecure fallback')
+      }
+      // Only allow localhost fallback in development
+      console.warn('[auth] NUXT_BETTER_AUTH_URL not set — using http://localhost:3000 (dev only)')
+      return ['http://localhost:3000']
+    }
+    // Remove insecure 127.0.0.1 fallback that bypasses HTTPS requirement in production
+    return [baseUrl]
+  })(),
   database: drizzleAdapter(useDrizzle(), {
     provider: 'sqlite',
     schema: {
@@ -287,7 +296,7 @@ export const auth = betterAuth({
           clientSecret: process.env.NUXT_GOOGLE_CLIENT_SECRET as string,
           discoveryUrl: 'https://accounts.google.com/.well-known/openid-configuration',
           scopes: ['openid', 'email', 'profile', 'https://www.googleapis.com/auth/youtube.upload', 'https://www.googleapis.com/auth/youtube'],
-          pkce: false,
+          pkce: true,
         },
         // Dribbble OAuth - not natively supported
         {
@@ -298,7 +307,7 @@ export const auth = betterAuth({
           tokenUrl: 'https://dribbble.com/oauth/token',
           userInfoUrl: 'https://api.dribbble.com/v2/user',
           scopes: ['public', 'upload'],
-          pkce: false,
+          pkce: true,
         },
         // Wordpress OAuth - not natively supported
         {
@@ -309,7 +318,7 @@ export const auth = betterAuth({
           tokenUrl: 'https://wordpress.com/oauth/token',
           userInfoUrl: 'https://public-api.wordpress.com/rest/v1/me',
           scopes: ['public', 'upload'],
-          pkce: false,
+          pkce: true,
         },
         // Instagram OAuth - not natively supported
         {
@@ -320,7 +329,7 @@ export const auth = betterAuth({
           tokenUrl: 'https://api.instagram.com/oauth/access_token',
           userInfoUrl: 'https://graph.instagram.com/me?fields=id,name,username,profile_picture_url',
           scopes: ['instagram_business_basic', "instagram_business_manage_messages", "instagram_business_content_publish", "instagram_business_manage_insights", "instagram_business_manage_comments  "],
-          pkce: false,
+          pkce: true,
           mapProfileToUser: (profile: any) => {
             return {
               ...profile,
@@ -345,7 +354,7 @@ export const auth = betterAuth({
             'threads_manage_insights',
             'threads_profile_discovery',
           ],
-          pkce: false,
+          pkce: true,
           mapProfileToUser: (profile: any) => {
             return {
               ...profile,
@@ -392,7 +401,8 @@ export const auth = betterAuth({
                 ipAddress: "",
                 userAgent: "",
                 status: 'success',
-                details: `${id} ${username} ${threads_profile_picture_url} from THREADS`,
+                // SAFE: only log non-sensitive profile fields, never tokens or full account object
+                details: `threads_user_id=${id} username=${username} from THREADS`,
               })
 
               return;
@@ -423,7 +433,8 @@ export const auth = betterAuth({
                 ipAddress: "",
                 userAgent: "",
                 status: 'success',
-                details: `${response.id} ${response.name} ${response.username} ${response.account_type} ${response.website} ${response.media_count} ${response.followers_count} ${response.follows_count} ${response.biography} ${response.profile_picture_url} from INSTAGRAM`,
+                // SAFE: only log non-sensitive profile fields, never tokens or full account object
+                details: `ig_user_id=${response.id} username=${response.username} from INSTAGRAM`,
               })
             }
 
@@ -459,7 +470,8 @@ export const auth = betterAuth({
                 ipAddress: "",
                 userAgent: "",
                 status: 'success',
-                details: `${twitterUser} from TWITTER`,
+                // SAFE: only log non-sensitive profile fields, never tokens or full account object
+                details: `twitter_user_id=${account.accountId} username=${twitterUser.username} from TWITTER`,
               })
             }
             if (account.providerId === "linkedin") {
@@ -491,7 +503,8 @@ export const auth = betterAuth({
                 ipAddress: "",
                 userAgent: "",
                 status: 'success',
-                details: `${linkedinUser.sub} ${linkedinUser.name} from LINKEDIN`,
+                // SAFE: only log non-sensitive profile fields, never tokens or full account object
+                details: `linkedin_sub=${linkedinUser.sub} name=${linkedinUser.name} from LINKEDIN`,
               })
             }
             // Handle link linkedin-page
@@ -544,7 +557,8 @@ export const auth = betterAuth({
               ipAddress: "",
               userAgent: "",
               status: 'success',
-              details: `${JSON.stringify(account)} from ${account.providerId}`,
+              // SAFE: only log non-sensitive fields, NEVER log tokens, accessToken, refreshToken, or accountId
+              details: `provider=${account.providerId} accountId=${account.id} from ${account.providerId} (unconfigured handler)`,
             })
 
           } catch (error) {
@@ -557,7 +571,8 @@ export const auth = betterAuth({
               ipAddress: "",
               userAgent: "",
               status: 'success',
-              details: `${JSON.stringify(account)} from ${account.providerId}, Error ${error}`,
+              // SAFE: never log tokens or full account in error paths
+              details: `provider=${account.providerId} accountId=${account.id} from ${account.providerId} (error=${error instanceof Error ? error.message : String(error)})`,
             })
           }
         }

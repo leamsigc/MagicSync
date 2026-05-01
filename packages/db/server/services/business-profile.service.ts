@@ -1,3 +1,4 @@
+import type { H3Event } from 'h3'
 import type { BusinessProfile } from '#layers/BaseDB/db/schema'
 import type { GMBLocation } from '#layers/BaseDB/server/utils/googleMyBusiness'
 import type {
@@ -6,7 +7,7 @@ import type {
   ServiceResponse
 } from './types'
 import { and, eq, not, sql } from 'drizzle-orm'
-import { businessProfiles } from '#layers/BaseDB/db/schema'
+import { businessProfiles, entityDetails } from '#layers/BaseDB/db/schema'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
 import {
   createGMBClient,
@@ -60,12 +61,93 @@ export class BusinessProfileService {
     }
   }
 
-  async findById(id: string, userId: string): Promise<ServiceResponse<BusinessProfile>> {
+  /**
+   * Find a business profile by ID.
+   *
+   * Access is granted if the user is either:
+   * 1. The direct owner (businessProfiles.userId === userId), OR
+   * 2. A member of the business's organization (via better-auth org membership).
+   *
+   * The org membership check is skipped when `event` is omitted (e.g. internal calls).
+   * When `event` is provided, it uses `useAuthApi` (auto-imported by Nuxt from
+   * `#layers/BaseAuth/server/utils/useAuthApi`) to look up the org members list.
+   */
+  async findById(
+    id: string,
+    userId: string,
+    event?: H3Event
+  ): Promise<ServiceResponse<BusinessProfile>> {
     try {
       const [profile] = await this.db
         .select()
         .from(businessProfiles)
         .where(and(eq(businessProfiles.id, id), eq(businessProfiles.userId, userId)))
+        .limit(1)
+
+      if (profile) return { data: profile }
+
+      // No direct owner match — fall back to org membership check if event is available.
+      if (!event) {
+        return { error: 'Business profile not found', code: 'NOT_FOUND' }
+      }
+
+      const entity = await this.db
+        .select()
+        .from(entityDetails)
+        .where(and(
+          eq(entityDetails.entityId, id),
+          eq(entityDetails.entityType, 'business_details')
+        ))
+        .get()
+
+      if (!entity) {
+        return { error: 'Business profile not found', code: 'NOT_FOUND' }
+      }
+
+      const orgMetadata = (entity.details ?? {}) as Record<string, unknown>
+      const orgId = orgMetadata.organizationId as string | undefined
+      if (!orgId) {
+        return { error: 'Business profile not found', code: 'NOT_FOUND' }
+      }
+
+      // useAuthApi is auto-imported globally by Nuxt from
+      // packages/auth/server/utils/useAuthApi — no static import needed.
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-expect-error Nuxt auto-imports composables from server/utils/
+      // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-variables
+      const authApi = (useAuthApi as (e: H3Event) => ReturnType<typeof useAuthApi>)(event)
+      const org = await authApi.getFullOrganization({ query: { organizationId: orgId } }).catch(() => null)
+
+      if (!org) {
+        return { error: 'Business profile not found', code: 'NOT_FOUND' }
+      }
+
+      const isMember = org.members.some((m: { userId: string }) => m.userId === userId)
+      if (!isMember) {
+        return { error: 'Business profile not found', code: 'NOT_FOUND' }
+      }
+
+      const [profileFromOrg] = await this.db
+        .select()
+        .from(businessProfiles)
+        .where(eq(businessProfiles.id, id))
+        .limit(1)
+
+      if (!profileFromOrg) {
+        return { error: 'Business profile not found', code: 'NOT_FOUND' }
+      }
+
+      return { data: profileFromOrg }
+    } catch (error) {
+      return { error: 'Failed to fetch business profile' }
+    }
+  }
+  async findByIdOnly(id: string,): Promise<ServiceResponse<BusinessProfile>> {
+    try {
+      const [profile] = await this.db
+        .select()
+        .from(businessProfiles)
+        .where(and(eq(businessProfiles.id, id)))
         .limit(1)
 
       if (!profile) {
@@ -112,15 +194,16 @@ export class BusinessProfileService {
     }
   }
 
-  async findAll(): Promise<ServiceResponse<BusinessProfile[]>> {
+  async findAll(userId: string): Promise<ServiceResponse<BusinessProfile[]>> {
     try {
       const profiles = await this.db
         .select()
         .from(businessProfiles)
+        .where(eq(businessProfiles.userId, userId))
 
       return { data: profiles }
     } catch (error) {
-      return { error: 'Failed to fetch all business profiles' }
+      return { error: 'Failed to fetch business profiles' }
     }
   }
 
@@ -142,6 +225,24 @@ export class BusinessProfileService {
         .returning()
 
       return { data: updated }
+    } catch (error) {
+      return { error: 'Failed to update business profile' }
+    }
+  }
+
+  /**
+   * Like update() but skips the findById ownership check.
+   * Use only when the caller already verified ownership.
+   */
+  async updateRaw(id: string, data: UpdateBusinessProfileData): Promise<ServiceResponse<BusinessProfile>> {
+    try {
+      const [updated] = await this.db
+        .update(businessProfiles)
+        .set({ ...data, updatedAt: dayjs.utc().toDate() })
+        .where(eq(businessProfiles.id, id))
+        .returning()
+
+      return updated ? { data: updated } : { error: 'Business profile not found', code: '404' }
     } catch (error) {
       return { error: 'Failed to update business profile' }
     }
@@ -298,16 +399,22 @@ export class BusinessProfileService {
   }
 
   /**
-   * Get GMB location details for a business profile
+   * Get GMB location details for a business profile.
+   *
+   * @param business  Optional pre-fetched business. If provided, skips the internal findById call.
    */
-  async getGMBLocationDetails(businessId: string, userId: string, accessToken: string): Promise<ServiceResponse<GMBLocation>> {
+  async getGMBLocationDetails(
+    businessId: string,
+    userId: string,
+    accessToken: string,
+    business?: BusinessProfile
+  ): Promise<ServiceResponse<GMBLocation>> {
     try {
-      const profileResult = await this.findById(businessId, userId)
-      if (!profileResult) {
-        return { error: "Business profile not found", code: "404" }
+      const profile = business ?? (await this.findById(businessId, userId))?.data
+      if (!profile) {
+        return { error: 'Business profile not found', code: '404' }
       }
 
-      const profile = profileResult.data!
       if (!profile.googleBusinessId) {
         return { error: 'Business profile is not connected to Google My Business', code: 'NOT_CONNECTED' }
       }
@@ -323,16 +430,22 @@ export class BusinessProfileService {
   }
 
   /**
-   * Check if a business profile is connected to Google My Business
+   * Check if a business profile is connected to Google My Business.
+   *
+   * @param business  Optional pre-fetched business. If provided, skips the internal findById call.
    */
-  async isConnectedToGMB(businessId: string, userId: string): Promise<ServiceResponse<boolean>> {
+  async isConnectedToGMB(
+    businessId: string,
+    userId: string,
+    business?: BusinessProfile
+  ): Promise<ServiceResponse<boolean>> {
     try {
-      const profileResult = await this.findById(businessId, userId)
-      if (!profileResult) {
-        return { error: "Business profile not found", code: "404" }
+      const profile = business ?? (await this.findById(businessId, userId))?.data
+      if (!profile) {
+        return { error: 'Business profile not found', code: '404' }
       }
 
-      const isConnected = !!profileResult.data!.googleBusinessId
+      const isConnected = !!profile.googleBusinessId
       return { data: isConnected }
     } catch (error) {
       return { error: 'Failed to check GMB connection status' }
@@ -340,13 +453,20 @@ export class BusinessProfileService {
   }
 
   /**
-   * Disconnect a business profile from Google My Business
+   * Disconnect a business profile from Google My Business.
+   *
+   * @param business  Optional pre-fetched business. If provided, skips the internal findById call.
    */
-  async disconnectFromGMB(businessId: string, userId: string): Promise<ServiceResponse<BusinessProfile>> {
+  async disconnectFromGMB(
+    businessId: string,
+    userId: string,
+    business?: BusinessProfile
+  ): Promise<ServiceResponse<BusinessProfile>> {
     try {
-      const updateResult = await this.update(businessId, userId, {
-        googleBusinessId: undefined
-      })
+      // Reuse the business if passed; otherwise update() will verify ownership.
+      const updateResult = business
+        ? await this.updateRaw(businessId, { googleBusinessId: undefined })
+        : await this.update(businessId, userId, { googleBusinessId: undefined })
 
       return updateResult
     } catch (error) {

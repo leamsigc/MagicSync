@@ -25,6 +25,7 @@ class ToolManager:
             *self._get_retrieve_tool(),
             *self._get_rag_search_tool(),
             *self._get_web_search_tool(),
+            *self._get_social_media_tools(),
         ]
 
         return [
@@ -148,6 +149,12 @@ class ToolManager:
             return await self._execute_import_skill_from_folder(arguments)
         if tool_name == "generate_twitter_post":
             return await self._execute_generate_twitter_post(arguments)
+        if tool_name == "generate_social_post":
+            return await self._execute_generate_social_post(arguments)
+        if tool_name == "generate_thread":
+            return await self._execute_generate_thread(arguments)
+        if tool_name == "generate_hashtags":
+            return await self._execute_generate_hashtags(arguments)
         if tool_name == "web_search":
             return await self._execute_web_search(arguments)
 
@@ -379,30 +386,219 @@ class ToolManager:
 
         return await skill_tools.import_skill_from_folder(folder_path)
 
+    def _get_social_media_tools(self) -> list[dict]:
+        """Get social media generation tool definitions."""
+        return [
+            {
+                "name": "generate_social_post",
+                "description": "Generate a social media post for a specific platform. Use when user wants to create content for Twitter, LinkedIn, Instagram, Facebook, Threads, Bluesky, or other platforms.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "topic": {
+                            "type": "string",
+                            "description": "The main topic or theme of the post",
+                        },
+                        "platform": {
+                            "type": "string",
+                            "description": "Target platform (twitter, linkedin, instagram, facebook, threads, bluesky, etc.)",
+                        },
+                        "tone": {
+                            "type": "string",
+                            "description": "Tone of voice",
+                            "enum": ["professional", "casual", "humorous", "informative", "inspirational"],
+                            "default": "professional",
+                        },
+                        "include_hashtags": {
+                            "type": "boolean",
+                            "description": "Whether to include relevant hashtags",
+                            "default": True,
+                        },
+                        "include_cta": {
+                            "type": "boolean",
+                            "description": "Whether to include a call-to-action",
+                            "default": False,
+                        },
+                        "additional_context": {
+                            "type": "string",
+                            "description": "Additional context or specific requirements",
+                            "default": "",
+                        },
+                    },
+                    "required": ["topic", "platform"],
+                },
+            },
+            {
+                "name": "generate_thread",
+                "description": "Generate a thread/tweetstorm for platforms that support it (Twitter/X, Threads, Bluesky). Use when user wants to create multiple connected posts on a topic.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "topic": {
+                            "type": "string",
+                            "description": "The thread topic or theme",
+                        },
+                        "platform": {
+                            "type": "string",
+                            "description": "Base platform (twitter, threads, bluesky)",
+                            "default": "twitter",
+                        },
+                        "tweet_count": {
+                            "type": "integer",
+                            "description": "Number of tweets in the thread",
+                            "default": 5,
+                        },
+                        "hook_first": {
+                            "type": "boolean",
+                            "description": "Start with a compelling hook",
+                            "default": True,
+                        },
+                    },
+                    "required": ["topic"],
+                },
+            },
+            {
+                "name": "generate_hashtags",
+                "description": "Generate optimized hashtags for a topic and platform. Use when user wants hashtag suggestions.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "topic": {
+                            "type": "string",
+                            "description": "The post topic",
+                        },
+                        "platform": {
+                            "type": "string",
+                            "description": "Target platform",
+                        },
+                        "count": {
+                            "type": "integer",
+                            "description": "Number of hashtags to generate",
+                            "default": 5,
+                        },
+                        "style": {
+                            "type": "string",
+                            "description": "Hashtag style",
+                            "enum": ["popular", "niche", "mixed", "trending"],
+                            "default": "mixed",
+                        },
+                    },
+                    "required": ["topic", "platform"],
+                },
+            },
+        ]
+
     async def _execute_generate_twitter_post(self, args: dict) -> dict:
-        """Generate social media post content."""
-        import random
+        """Generate social media post content using AI."""
+        from app.services.social_media.generator import get_social_media_generator
+
+        topic = args.get("topic", args.get("text", ""))
+        platform = args.get("platform", "twitter")
+        tone = args.get("tone", "professional")
+        include_hashtags = args.get("include_hashtags", True)
+        include_cta = args.get("include_cta", False)
+        additional_context = args.get("additional_context", "")
+
+        if not topic:
+            return {"error": "Topic is required for post generation"}
+
+        generator = get_social_media_generator(self.user_id)
         
-        text = args.get("text", "")
-        hashtags = args.get("hashtags", [])
+        try:
+            result = await generator.generate_post(
+                topic=topic,
+                platform=platform,
+                tone=tone,
+                include_hashtags=include_hashtags,
+                include_cta=include_cta,
+                additional_context=additional_context,
+            )
+            return result
+        except Exception as e:
+            logger.error(f"Social media generation failed: {e}")
+            return {"error": f"Generation failed: {str(e)}"}
+
+    async def _execute_generate_social_post(self, args: dict) -> dict:
+        """Generate a social media post for any supported platform."""
+        from app.services.social_media.generator import get_social_media_generator
+
+        topic = args.get("topic", args.get("text", ""))
+        platform = args.get("platform", "twitter")
+        tone = args.get("tone", "professional")
+        include_hashtags = args.get("include_hashtags", True)
+        include_cta = args.get("include_cta", False)
+        additional_context = args.get("additional_context", "")
+
+        if not topic:
+            return {"error": "Topic is required for post generation"}
+
+        generator = get_social_media_generator(self.user_id)
+
+        try:
+            result = await generator.generate_post(
+                topic=topic,
+                platform=platform,
+                tone=tone,
+                include_hashtags=include_hashtags,
+                include_cta=include_cta,
+                additional_context=additional_context,
+            )
+            return result
+        except Exception as e:
+            logger.error(f"Social media generation failed: {e}")
+            return {"error": f"Generation failed: {str(e)}"}
+
+    async def _execute_generate_thread(self, args: dict) -> dict:
+        """Generate a thread/tweetstorm."""
+        from app.services.social_media.generator import get_social_media_generator
+
+        topic = args.get("topic", "")
+        platform = args.get("platform", "twitter")
+        tweet_count = args.get("tweet_count", 5)
+        hook_first = args.get("hook_first", True)
+
+        if not topic:
+            return {"error": "Topic is required for thread generation"}
+
+        generator = get_social_media_generator(self.user_id)
         
-        if not text:
-            twitter_templates = [
-                "Making Twitter better starts with clarity and engagement! What's your favorite feature?",
-                "Just realized: the best way to make Twitter better is by listening to users! Your feedback matters.",
-                "Imagine a Twitter where every tweet sparks meaningful conversations. Let's build that together!",
-            ]
-            text = random.choice(twitter_templates)
+        try:
+            result = await generator.generate_thread(
+                topic=topic,
+                platform=platform,
+                tweet_count=tweet_count,
+                hook_first=hook_first,
+            )
+            return result
+        except Exception as e:
+            logger.error(f"Thread generation failed: {e}")
+            return {"error": f"Thread generation failed: {str(e)}"}
+
+    async def _execute_generate_hashtags(self, args: dict) -> dict:
+        """Generate hashtags for a topic."""
+        from app.services.social_media.generator import get_social_media_generator
+
+        topic = args.get("topic", "")
+        platform = args.get("platform", "twitter")
+        count = args.get("count", 5)
+        style = args.get("style", "mixed")
+
+        if not topic:
+            return {"error": "Topic is required for hashtag generation"}
+
+        generator = get_social_media_generator(self.user_id)
         
-        if not hashtags:
-            hashtags = ["#TwitterTips", "#SocialMedia", "#Engagement"]
-        
-        return {
-            "text": text,
-            "hashtags": hashtags,
-            "platform": "twitter",
-            "character_count": len(text + " " + " ".join(hashtags)),
-        }
+        try:
+            result = await generator.generate_hashtags(
+                topic=topic,
+                platform=platform,
+                count=count,
+                style=style,
+            )
+            return result
+        except Exception as e:
+            logger.error(f"Hashtag generation failed: {e}")
+            return {"error": f"Hashtag generation failed: {str(e)}"}
 
 
 def format_retrieve_result(result: dict) -> str:

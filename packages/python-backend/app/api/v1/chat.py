@@ -17,6 +17,202 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 MAX_TOOL_CALLS = 5
+MAX_FALLBACKS = 2
+
+
+def _is_retryable_error(error: Exception) -> bool:
+    """Determine if an error is retryable (connection, rate limit, auth, model not found)."""
+    error_str = str(error).lower()
+    error_type = type(error).__name__
+
+    # Connection errors
+    if any(
+        keyword in error_str
+        for keyword in [
+            "connection",
+            "timeout",
+            "connect",
+            "unreachable",
+            "dns",
+            "network",
+        ]
+    ):
+        return True
+
+    # Rate limiting (429)
+    if "429" in error_str or "rate limit" in error_str:
+        return True
+
+    # Authentication errors (401, 403)
+    if any(keyword in error_str for keyword in ["401", "403", "unauthorized", "forbidden", "invalid api key", "api key"]):
+        return True
+
+    # Model not found / not supported
+    if any(
+        keyword in error_str
+        for keyword in [
+            "model not found",
+            "not found",
+            "does not support",
+            "not supported",
+            "invalid model",
+            "unknown model",
+        ]
+    ):
+        return True
+
+    # litellm specific errors
+    if error_type in ["AuthenticationError", "RateLimitError", "TimeoutError"]:
+        return True
+
+    return False
+
+
+def _format_fallback_provider_config(
+    fallback_provider: dict,
+) -> tuple[str, str, str | None, str | None]:
+    """Extract fallback provider config: (provider, model, api_key, api_base)."""
+    fb_provider = fallback_provider.get("provider", "ollama")
+    fb_model = fallback_provider.get("model", settings.ollama_default_model)
+    fb_api_key = fallback_provider.get("api_key")
+    fb_api_base = fallback_provider.get("api_base")
+
+    # Use default Ollama config if provider is ollama
+    if fb_provider == "ollama":
+        fb_api_base = fb_api_base or settings.ollama_base_url
+        fb_model = fb_model or settings.ollama_default_model
+
+    return fb_provider, fb_model, fb_api_key, fb_api_base
+
+
+async def try_fallback_chain(
+    messages: list,
+    tools: list,
+    primary_provider: str,
+    primary_model: str,
+    primary_api_key: str | None,
+    primary_api_base: str | None,
+    temperature: float,
+    max_tokens: int,
+    user_id: str,
+    thread_id: str | None,
+    enable_thinking: bool,
+    fallback_providers: list | None = None,
+    stream: bool = True,
+):
+    """
+    Try LLM completion with fallback chain.
+
+    Args:
+        messages: Chat messages
+        tools: Tool definitions
+        primary_provider: Primary LLM provider
+        primary_model: Primary model name
+        primary_api_key: API key for primary provider
+        primary_api_base: API base URL for primary provider
+        temperature: Temperature setting
+        max_tokens: Max tokens setting
+        user_id: User ID for metadata
+        thread_id: Thread ID for metadata
+        enable_thinking: Whether to enable thinking (for ollama qwen/deepseek)
+        fallback_providers: List of fallback configs [{"provider": "...", "model": "...", ...}]
+        stream: Whether to stream response
+
+    Yields:
+        Stream chunks or returns response object
+
+    Returns:
+        Tuple of (response, used_fallback_provider_name or None)
+    """
+    # Build the provider chain: primary + fallbacks (max 2 total)
+    provider_configs = [
+        {
+            "provider": primary_provider,
+            "model": primary_model,
+            "api_key": primary_api_key,
+            "api_base": primary_api_base,
+            "is_primary": True,
+        }
+    ]
+
+    if fallback_providers:
+        for fb in fallback_providers[:MAX_FALLBACKS]:
+            provider, model, api_key, api_base = _format_fallback_provider_config(fb)
+            provider_configs.append(
+                {
+                    "provider": provider,
+                    "model": model,
+                    "api_key": api_key,
+                    "api_base": api_base,
+                    "is_primary": False,
+                }
+            )
+
+    last_error = None
+    used_fallback = None
+
+    for i, config in enumerate(provider_configs):
+        provider = config["provider"]
+        model = config["model"]
+        api_key = config["api_key"]
+        api_base = config["api_base"]
+        is_primary = config["is_primary"]
+
+        litellm_model = _format_model(model, provider)
+
+        extra_body = {}
+        if provider == "ollama" and model and ("qwen" in model.lower() or "deepseek" in model.lower()):
+            extra_body["think"] = enable_thinking
+
+        log_prefix = "Primary" if is_primary else f"Fallback {i}"
+        logger.info(
+            f"{log_prefix} LLM attempt - provider: {provider}, model: {litellm_model}"
+        )
+
+        try:
+            response = await litellm.acompletion(
+                model=litellm_model,
+                messages=messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                api_key=api_key,
+                api_base=api_base,
+                stream=stream,
+                tools=tools if tools else None,
+                metadata={"user_id": user_id, "thread_id": thread_id},
+                extra_body=extra_body if extra_body else None,
+            )
+
+            if not is_primary:
+                used_fallback = f"{provider}/{model}"
+                logger.warning(
+                    f"Primary LLM failed, using fallback: {used_fallback}"
+                )
+
+            return response, used_fallback
+
+        except Exception as e:
+            last_error = e
+
+            if _is_retryable_error(e):
+                if is_primary:
+                    logger.warning(
+                        f"Primary LLM failed ({type(e).__name__}: {str(e)[:100]}), trying fallback chain..."
+                    )
+                else:
+                    logger.warning(
+                        f"Fallback {provider}/{model} failed ({type(e).__name__}: {str(e)[:100]}), trying next..."
+                    )
+                continue
+            else:
+                # Non-retryable error, don't try fallbacks
+                logger.error(f"Non-retryable LLM error: {type(e).__name__}: {str(e)[:200]}")
+                raise
+
+    # All providers failed
+    error_msg = f"All LLM providers failed. Last error: {last_error}"
+    logger.error(error_msg)
+    raise Exception(error_msg)
 
 
 @router.post("/chat")
@@ -52,8 +248,6 @@ async def chat_stream(
         request.max_tokens if request.max_tokens is not None else llm_config.max_tokens
     )
 
-    litellm_model = _format_model(model, provider)
-    
     # Only enable tools if explicitly requested (default True for backwards compatibility)
     enable_tools = getattr(request, 'enable_tools', True)
     tools = tool_manager.get_tool_definitions() if enable_tools else []
@@ -107,12 +301,25 @@ async def chat_stream(
             if not isinstance(result_data, dict):
                 return None
             
-            # Handle generate_twitter_post
-            if tool_name == 'generate_twitter_post' and 'text' in result_data:
+            # Handle generate_twitter_post and generate_social_post
+            if tool_name in ('generate_twitter_post', 'generate_social_post') and 'text' in result_data:
                 text_output = f"Generated {result_data.get('platform', 'post')} post:\n\n"
                 text_output += f"Text: {result_data.get('text', '')}\n"
                 if result_data.get('hashtags'):
                     text_output += f"Hashtags: {', '.join(result_data.get('hashtags', []))}"
+                if result_data.get('warning'):
+                    text_output += f"\n⚠️ {result_data.get('warning')}"
+                return text_output
+            
+            # Handle generate_thread
+            if tool_name == 'generate_thread' and 'thread' in result_data:
+                thread = result_data.get('thread', [])
+                text_output = f"Generated thread ({len(thread)} tweets):\n\n"
+                for i, tweet in enumerate(thread, 1):
+                    text_output += f"Tweet {i}: {tweet.get('text', '')}\n"
+                    if tweet.get('hashtags'):
+                        text_output += f"  Hashtags: {', '.join(tweet.get('hashtags', []))}\n"
+                    text_output += "\n"
                 return text_output
             
             # Handle execute_code
@@ -185,8 +392,10 @@ async def chat_stream(
         tool_calls = []
         tool_call_count = 0
 
+        # Get fallback providers from request or user config
+        fallback_providers = request.provider_fallback or llm_config.provider_fallback
+
         while tool_call_count < MAX_TOOL_CALLS:
-            extra_body = {}
             thinking_enabled = False  # Default disabled for cleaner tool calls
             if (
                 provider == "ollama"
@@ -194,27 +403,29 @@ async def chat_stream(
                 and ("qwen" in model.lower() or "deepseek" in model.lower())
             ):
                 thinking_enabled = False
-                extra_body["think"] = False
 
             try:
-                logger.info(
-                    f"Calling LLM - model: {litellm_model}, messages: {len(messages)}"
-                )
-                response = await litellm.acompletion(
-                    model=litellm_model,
+                # Use fallback chain for LLM calls
+                response, used_fallback = await try_fallback_chain(
                     messages=messages,
+                    tools=tools,
+                    primary_provider=provider,
+                    primary_model=model,
+                    primary_api_key=api_key,
+                    primary_api_base=api_base,
                     temperature=temperature,
                     max_tokens=max_tokens,
-                    api_key=api_key,
-                    api_base=api_base,
+                    user_id=user.user_id,
+                    thread_id=request.thread_id,
+                    enable_thinking=thinking_enabled,
+                    fallback_providers=fallback_providers,
                     stream=True,
-                    tools=tools if tools else None,
-                    metadata={"user_id": user.user_id, "thread_id": request.thread_id},
-                    extra_body=extra_body if extra_body else None,
                 )
-            except Exception as e:
-                logger.error(f"LLM completion error: {e}")
-                yield f"data: {StreamChunk(type='error', content=str(e), done=True).model_dump_json()}\n\n"
+                if used_fallback:
+                    logger.info(f"Using fallback provider: {used_fallback}")
+            except Exception as llm_error:
+                logger.error(f"LLM completion error: {llm_error}")
+                yield f"data: {StreamChunk(type='error', content=str(llm_error), done=True).model_dump_json()}\n\n"
                 return
 
             chunk_buffer = []
@@ -375,35 +586,43 @@ async def chat_complete(
         request.max_tokens if request.max_tokens is not None else llm_config.max_tokens
     )
 
-    litellm_model = _format_model(model, provider)
     tools = tool_manager.get_tool_definitions()
 
-    extra_body = {}
+    # Get fallback providers from request or user config
+    fallback_providers = request.provider_fallback or llm_config.provider_fallback
+
+    enable_thinking = False
     if (
         provider == "ollama"
         and model
         and ("qwen" in model.lower() or "deepseek" in model.lower())
     ):
-        extra_body["think"] = False
+        enable_thinking = False
 
     tool_call_count = 0
     while tool_call_count < MAX_TOOL_CALLS:
         try:
-            response = await litellm.acompletion(
-                model=litellm_model,
+            # Use fallback chain for LLM calls
+            response, used_fallback = await try_fallback_chain(
                 messages=messages,
+                tools=tools,
+                primary_provider=provider,
+                primary_model=model,
+                primary_api_key=api_key,
+                primary_api_base=api_base,
                 temperature=temperature,
                 max_tokens=max_tokens,
-                api_key=api_key,
-                api_base=api_base,
+                user_id=user.user_id,
+                thread_id=request.thread_id,
+                enable_thinking=enable_thinking,
+                fallback_providers=fallback_providers,
                 stream=False,
-                tools=tools if tools else None,
-                metadata={"user_id": user.user_id, "thread_id": request.thread_id},
-                extra_body=extra_body if extra_body else None,
             )
-        except Exception as e:
-            logger.error(f"LLM completion error: {e}")
-            raise HTTPException(status_code=500, detail=str(e))
+            if used_fallback:
+                logger.info(f"Using fallback provider: {used_fallback}")
+        except Exception as llm_error:
+            logger.error(f"LLM completion error: {llm_error}")
+            raise HTTPException(status_code=500, detail=str(llm_error))
 
         message = response.choices[0].message
         content = message.content

@@ -8,6 +8,19 @@ export interface ServiceResponse<T = any> {
   code?: string
 }
 
+/**
+ * Result from a platform plugin's post/update/addComment operation.
+ * Lives in the db layer so scheduler's PluginPost.service.ts can import it
+ * without creating a circular dependency (scheduler → db, not db → scheduler).
+ */
+export type PostResponse = {
+  id: string;
+  postId: string;
+  releaseURL: string;
+  status: 'pending' | 'published' | 'failed';
+  error?: string;
+};
+
 // Folder types
 export type Folder = {
   id: string

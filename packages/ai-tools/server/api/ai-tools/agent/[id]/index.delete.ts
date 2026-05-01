@@ -2,8 +2,11 @@ import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
 import { agentService } from '#layers/BaseDB/server/services/agent.service'
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event)
   const user = await checkUserIsLogin(event)
   const id = getRouterParam(event, 'id')
+
+  log.set({ agentId: id })
 
   if (!id) {
     throw createError({ statusCode: 400, statusMessage: 'Agent ID required' })

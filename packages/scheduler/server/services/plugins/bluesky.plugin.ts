@@ -1,5 +1,5 @@
 import { decryptKey } from '#layers/BaseAuth/server/utils/AuthHelpers';
-import type { PostResponse } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
+import type { PostResponse, GetCommentsResponse, ReplyCommentResponse, PlatformComment } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import { BaseSchedulerPlugin, type PluginPostDetails, type PluginSocialMediaAccount } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import type { Post, SocialMediaAccount, Asset } from '#layers/BaseDB/db/schema';
 import { AtpAgent, RichText, AppBskyFeedPost, AppBskyFeedDefs, BlobRef } from '@atproto/api';
@@ -599,19 +599,184 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
   async getStatistic(
     postDetails: PluginPostDetails,
     socialMediaAccount: PluginSocialMediaAccount
-  ): Promise<any> {
-    const publishedPlatformDetails = postDetails.platformPosts.find((platform) => platform.socialAccountId === socialMediaAccount.id);
-    if (!publishedPlatformDetails) {
-      throw new Error('Published platform details not found');
+  ): Promise<PlatformStats> {
+    const handle = socialMediaAccount.accountId
+
+    // Get profile with stats
+    const profile = await this.getProfile(handle, socialMediaAccount.accessToken)
+    const profileStats = profile as any
+
+    // Get recent posts for engagement
+    let totalEngagement = 0
+    let totalPosts = 0
+    try {
+      const authorFeed = await this.agent.api.app.bsky.feed.getAuthorFeed({
+        actor: handle,
+        limit: 50,
+      })
+      const feedItems = authorFeed.data.feed || []
+      totalPosts = feedItems.length
+      for (const item of feedItems) {
+        const metrics = item.post?.viewer || {}
+        totalEngagement += (metrics.like || 0) + (metrics.repost || 0)
+      }
+    } catch {
+      // Feed fetch failed
     }
 
-    const publishedDetails = publishedPlatformDetails.publishDetail ? JSON.parse(publishedPlatformDetails.publishDetail as string) as PostResponse : null;
-    if (!publishedDetails) {
-      throw new Error('Published details not found');
+    return {
+      platform: 'bluesky',
+      accountId: profileStats.did || socialMediaAccount.accountId,
+      username: profileStats.handle || socialMediaAccount.accountName || '',
+      picture: profileStats.avatar || undefined,
+      fetchedAt: new Date().toISOString(),
+      followers: profileStats.followersCount || 0,
+      following: profileStats.followsCount || 0,
+      posts: profileStats.postsCount || totalPosts,
+      engagement: {
+        total: totalEngagement,
+        likes: 0,
+        shares: 0,
+      },
+      growth: undefined,
+      extra: {
+        displayName: profileStats.displayName,
+      },
     }
-    const publishedPostId = publishedDetails.postId;
+  }
 
-    const thread = await this.getPostThread(publishedPostId, socialMediaAccount.accessToken);
-    return thread;
+  /**
+   * Transform Bluesky record to PlatformComment format
+   */
+  private transformComment(record: any): PlatformComment {
+    return {
+      id: record.uri,
+      text: record.value?.text || '',
+      authorName: record.author?.handle || 'Unknown',
+      authorId: record.author?.did,
+      authorPicture: record.author?.avatar,
+      createdAt: record.value?.createdAt,
+      likeCount: record.likeCount || 0,
+      replyCount: record.replyCount || 0,
+      parentId: record.value?.reply?.parent?.uri,
+    };
+  }
+
+  /**
+   * Get comments (posts in a thread) for a Bluesky post
+   * Bluesky uses AT Protocol for data storage
+   */
+  async getComments(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount,
+    options?: { limit?: number; cursor?: string }
+  ): Promise<GetCommentsResponse> {
+    const platformPost = postDetails.platformPosts?.find((pp: any) => pp.socialAccountId === socialMediaAccount.id);
+    const publishDetail = platformPost?.publishDetail ? JSON.parse(platformPost.publishDetail) : {};
+    const externalPostId = publishDetail[socialMediaAccount.id]?.publishedId || publishDetail.postId;
+
+    if (!externalPostId) {
+      return Promise.resolve({ platform: this.pluginName, postId: '', comments: [], hasMore: false });
+    }
+
+    try {
+      const agent = await this.getAuthenticatedAgent(socialMediaAccount);
+
+      // Get post thread with replies
+      const thread = await agent.api.app.bsky.feed.getPostThread({
+        uri: externalPostId,
+        depth: 1,
+      });
+
+      const comments: PlatformComment[] = [];
+      const threadData = thread.data.thread;
+
+      // Get replies from the thread
+      if (threadData.replies && Array.isArray(threadData.replies)) {
+        for (const reply of threadData.replies) {
+          comments.push(this.transformComment(reply.post));
+        }
+      }
+
+      return {
+        platform: this.pluginName,
+        postId: externalPostId,
+        comments,
+        hasMore: false,
+      };
+    } catch (error) {
+      console.error('Error fetching Bluesky comments:', error);
+      return {
+        platform: this.pluginName,
+        postId: externalPostId,
+        comments: [],
+        hasMore: false,
+      };
+    }
+  }
+
+  /**
+   * Reply to a comment (post) on Bluesky
+   */
+  async replyToComment(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount,
+    commentId: string,
+    replyText: string
+  ): Promise<ReplyCommentResponse> {
+    try {
+      const agent = await this.getAuthenticatedAgent(socialMediaAccount);
+      const parentUri = commentId;
+
+      const { data: parentRecord } = await agent.api.com.atproto.repo.getRecord({
+        repo: parentUri.split('/')[2],
+        collection: 'app.bsky.feed.post',
+        rkey: parentUri.split('/').pop() || '',
+      });
+
+      const rt = new RichText({ text: replyText });
+      await rt.detectFacets(agent);
+
+      const replyRecord = {
+        $type: 'app.bsky.feed.post',
+        text: rt.text,
+        facets: rt.facets,
+        reply: {
+          root: parentRecord.value?.reply?.root || {
+            uri: parentRecord.uri,
+            cid: parentRecord.cid,
+          },
+          parent: {
+            uri: parentRecord.uri,
+            cid: parentRecord.cid,
+          },
+        },
+        createdAt: new Date().toISOString(),
+      };
+
+      const response = await agent.api.app.bsky.feed.post.create(
+        { repo: agent.session?.did || '' },
+        replyRecord as any,
+      );
+
+      return {
+        success: true,
+        comment: this.transformComment({
+          uri: response.uri,
+          cid: response.cid,
+          author: {
+            did: agent.session?.did,
+            handle: agent.session?.handle,
+          },
+          value: replyRecord,
+        }),
+      };
+    } catch (error) {
+      console.error('Error replying to Bluesky comment:', error);
+      return {
+        success: false,
+        error: (error as Error).message || 'Failed to reply to comment',
+      };
+    }
   }
 }

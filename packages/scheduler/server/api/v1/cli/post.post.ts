@@ -1,37 +1,87 @@
-import { ScheduleRefreshSocialMediaTokens } from '#layers/BaseScheduler/server/utils/ScheduleUtils';
-import { AutoPostService } from '#layers/BaseScheduler/server/services/AutoPost.service';
-import { assetService } from '#layers/BaseAssets/server/services/asset.service';
-import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service';
-import { postService } from '#layers/BaseDB/server/services/post.service';
-import { businessProfileService } from '#layers/BaseDB/server/services/business-profile.service';
-import { validateContentForPlatform } from '#layers/BaseScheduler/server/utils/ScheduleUtils';
+import { ScheduleRefreshSocialMediaTokens } from '#layers/BaseScheduler/server/utils/ScheduleUtils'
+import { AutoPostService } from '#layers/BaseScheduler/server/services/AutoPost.service'
+import { assetService } from '#layers/BaseAssets/server/services/asset.service'
+import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service'
+import { postService } from '#layers/BaseDB/server/services/post.service'
+import { platformConfigurations } from '../../../../shared/platformConstants'
 
 const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:3000/api/v1/ai/generate'
 
 interface ExternalPostBody {
-  content: string;
-  platforms: string[];
+  /** Default content for all platforms (can be overridden per-platform) */
+  content: string
+  /** Specific platforms to post to */
+  platforms: string[]
+  /** Media attachments */
   media?: {
-    image?: string[];
-    video?: string;
-  };
-  scheduledAt?: string;
-  comments?: string[];
+    image?: string[]
+    video?: string
+  }
+  /** ISO date string — if in the past or omitted, posts immediately */
+  scheduledAt?: string
+  /** Array of comment prompts for AI to generate platform-specific comments */
+  commentPrompts?: string[]
+  /** Per-platform content overrides */
+  platformContent?: Record<string, {
+    content?: string
+    image?: string[]
+    video?: string
+    commentPrompt?: string
+  }>
 }
 
-async function downloadAndCreateAssets(userId: string, businessId: string, media: ExternalPostBody['media']) {
+function getPlatformConfig(platform: string) {
+  const key = platform as keyof typeof platformConfigurations
+  return platformConfigurations[key] ?? platformConfigurations.default
+}
+
+function validatePlatformContent(platform: string, text: string, imageCount: number, videoCount: number): { isValid: boolean; errors: string[]; warnings: string[] } {
+  const config = getPlatformConfig(platform)
+  const errors: string[] = []
+  const warnings: string[] = []
+
+  if (!text?.trim()) {
+    errors.push('Content text is required')
+    return { isValid: false, errors, warnings }
+  }
+
+  if (text.length > config.maxPostLength) {
+    errors.push(`Content exceeds ${config.maxPostLength} character limit for ${platform} (currently ${text.length})`)
+  }
+
+  if (imageCount > config.maxImages) {
+    errors.push(`Too many images: ${imageCount} provided, max ${config.maxImages} for ${platform}`)
+  }
+
+  if (!config.supportsVideo && videoCount > 0) {
+    errors.push(`${platform} does not support video`)
+  }
+
+  if (imageCount > 1 && !config.supportsCarousel) {
+    errors.push(`${platform} does not support image carousels`)
+  }
+
+  // Warnings for tight character limits
+  if (config.maxPostLength <= 300 && text.length > config.maxPostLength * 0.85) {
+    warnings.push(`Content is ${Math.round((text.length / config.maxPostLength) * 100)}% of ${config.maxPostLength} char limit`)
+  }
+
+  return { isValid: errors.length === 0, errors, warnings }
+}
+
+async function downloadAndCreateAssets(userId: string, businessId: string, media: ExternalPostBody['media'], log?: ReturnType<typeof useLogger>) {
   const createdAssets: Array<{ id: string; url: string; type: string }> = []
-  
+
   if (media?.image && media.image.length > 0) {
     for (const imageUrl of media.image) {
       try {
         const response = await fetch(imageUrl)
         if (!response.ok) continue
-        
+
         const buffer = await response.arrayBuffer()
         const blob = new Blob([buffer])
         const filename = `external_${crypto.randomUUID()}.jpg`
-        
+
         const result = await assetService.create(userId, {
           businessId,
           filename,
@@ -39,33 +89,27 @@ async function downloadAndCreateAssets(userId: string, businessId: string, media
           mimeType: blob.type || 'image/jpeg',
           size: blob.size,
           url: imageUrl,
-          metadata: { source: 'external', originalUrl: imageUrl }
+          metadata: { source: 'external', originalUrl: imageUrl },
         })
-        
+
         if (result.success && result.data) {
-          createdAssets.push({
-            id: result.data.id,
-            url: result.data.url,
-            type: 'image'
-          })
+          createdAssets.push({ id: result.data.id, url: result.data.url, type: 'image' })
         }
       } catch (error) {
-        console.error('Failed to download image:', imageUrl, error)
+        log?.error('Failed to download image:', imageUrl, error)
       }
     }
   }
-  
+
   if (media?.video) {
     try {
       const response = await fetch(media.video)
-      if (!response.ok) {
-        throw new Error(`Failed to fetch video: ${response.status}`)
-      }
-      
+      if (!response.ok) throw new Error(`Failed to fetch video: ${response.status}`)
+
       const buffer = await response.arrayBuffer()
       const blob = new Blob([buffer])
       const filename = `external_${crypto.randomUUID()}.mp4`
-      
+
       const result = await assetService.create(userId, {
         businessId,
         filename,
@@ -73,134 +117,148 @@ async function downloadAndCreateAssets(userId: string, businessId: string, media
         mimeType: blob.type || 'video/mp4',
         size: blob.size,
         url: media.video,
-        metadata: { source: 'external', originalUrl: media.video }
+        metadata: { source: 'external', originalUrl: media.video },
       })
-      
+
       if (result.success && result.data) {
-        createdAssets.push({
-          id: result.data.id,
-          url: result.data.url,
-          type: 'video'
-        })
+        createdAssets.push({ id: result.data.id, url: result.data.url, type: 'video' })
       }
     } catch (error) {
-      console.error('Failed to download video:', media.video, error)
+      log?.error('Failed to download video:', media.video, error)
     }
   }
-  
+
   return createdAssets
 }
 
-async function formatContentWithAI(content: string, platform: string): Promise<string> {
+async function generateComment(text: string, platform: string, commentPrompt?: string): Promise<string[]> {
   try {
     const response = await $fetch(AI_SERVICE_URL, {
       method: 'POST',
       body: {
-        prompt: `Format the following content to be valid for ${platform}. Keep the core message but adjust length and format as needed. Return only the formatted content, nothing else:\n\n${content}`,
-        platform
-      }
+        prompt: commentPrompt || `Generate a reply prompt/hook for a post on ${platform}. Return 3 short, engaging variations (1-2 sentences each) that could be used as conversation starters. Return ONLY the 3 options, separated by newlines.`,
+        platform,
+        type: 'comment',
+      },
     })
-    
+
     if (response && typeof response === 'object' && 'content' in response) {
-      return (response as { content: string }).content
+      const content = (response as { content: string }).content
+      return content.split('\n').map(s => s.trim()).filter(Boolean).slice(0, 3)
     }
-  } catch (error) {
-    console.error('AI formatting failed:', error)
-  }
-  
-  return content
+  } catch {}
+
+  return []
 }
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event)
   const apiKeyContext = event.context.apiKey
-  
+
   if (!apiKeyContext?.valid || !apiKeyContext.businessId) {
-    throw createError({
-      statusCode: 401,
-      statusMessage: 'Invalid or missing API key'
-    })
+    log.set({ invalidApiKey: true })
+    throw createError({ statusCode: 401, statusMessage: 'Invalid or missing API key' })
   }
 
   const body = await readBody(event) as ExternalPostBody
-  
+  const { businessId } = apiKeyContext
+
   if (!body.content || !body.platforms || !Array.isArray(body.platforms) || body.platforms.length === 0) {
+    throw createError({ statusCode: 400, statusMessage: 'content and platforms are required' })
+  }
+
+  log.set({ businessId, platforms: body.platforms, hasScheduledAt: !!body.scheduledAt })
+
+  // Get connected accounts
+  const accounts = await socialMediaAccountService.getAccountsByBusinessId(businessId)
+  const connectedPlatforms = new Set(accounts.map(a => a.platform))
+  const disconnectedPlatforms = body.platforms.filter(p => !connectedPlatforms.has(p))
+
+  if (disconnectedPlatforms.length > 0) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'content and platforms are required'
+      statusMessage: `Platforms not connected: ${disconnectedPlatforms.join(', ')}. Connect them in your MagicSync dashboard first.`,
     })
   }
 
-  const { businessId, connectedPlatforms } = apiKeyContext
-  
-  const businessResult = await businessProfileService.findById(businessId, '')
+  // Validate all platforms before creating the post
+  const validationResults: Record<string, { isValid: boolean; errors: string[]; warnings: string[] }> = {}
+  const imageCount = body.media?.image?.length ?? 0
+  const videoCount = body.media?.video ? 1 : 0
 
-  if (!businessResult.success || !businessResult.data) {
-    throw createError({
-      statusCode: 404,
-      statusMessage: 'Business not found'
-    })
-  }
-
-  const connectedAccounts = await socialMediaAccountService.getAccountsByBusinessId(businessId)
-  const accountsForPlatforms = connectedAccounts.filter(acc => 
-    body.platforms.includes(acc.platform)
-  )
-
-  if (accountsForPlatforms.length === 0) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: `No connected accounts found for platforms: ${body.platforms.join(', ')}. Please connect these platforms in your business settings first.`
-    })
-  }
-
-  const validationResults: Record<string, { isValid: boolean; errors?: string[] }> = {}
-  let formattedContent = body.content
-  
   for (const platform of body.platforms) {
-    const validation = validateContentForPlatform(platform, { text: body.content, mediaUrls: [] })
-    validationResults[platform] = { isValid: validation.isValid, errors: validation.errors }
-    
-    if (!validation.isValid && validation.errors && validation.errors.length > 0) {
-      formattedContent = await formatContentWithAI(body.content, platform)
-      const revalidation = validateContentForPlatform(platform, { text: formattedContent, mediaUrls: [] })
-      validationResults[platform] = { isValid: revalidation.isValid, errors: revalidation.errors }
-      
-      if (!revalidation.isValid) {
-        throw createError({
-          statusCode: 400,
-          statusMessage: `Content validation failed for ${platform}: ${validation.errors.join(', ')}. Please adjust your content to meet ${platform}'s requirements.`
-        })
-      }
+    const platformText = body.platformContent?.[platform]?.content ?? body.content
+    const validation = validatePlatformContent(platform, platformText, imageCount, videoCount)
+    validationResults[platform] = validation
+
+    if (!validation.isValid) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: `Validation failed for ${platform}: ${validation.errors.join('; ')}`,
+      })
     }
   }
 
-  const userId = accountsForPlatforms[0].userId
-  
-  const mediaAssets = await downloadAndCreateAssets(userId, businessId, body.media)
+  // Get the first account's userId for post creation
+  const relevantAccounts = accounts.filter(acc => body.platforms.includes(acc.platform))
+  if (relevantAccounts.length === 0) {
+    throw createError({ statusCode: 400, statusMessage: 'No connected accounts for requested platforms' })
+  }
+  const userId = relevantAccounts[0].userId
 
+  // Build platform-specific content object
+  const platformContent: Record<string, any> = {}
+  for (const platform of body.platforms) {
+    const override = body.platformContent?.[platform]
+    platformContent[platform] = {
+      content: override?.content ?? body.content,
+      image: override?.image ?? body.media?.image,
+      video: override?.video ?? body.media?.video,
+    }
+  }
+
+  // Generate comments if prompts provided
+  const comments: string[] = []
+  if (body.commentPrompts && body.commentPrompts.length > 0) {
+    for (const platform of body.platforms) {
+      const commentPrompt = body.platformContent?.[platform]?.commentPrompt ?? body.commentPrompts[0]
+      const platformComments = await generateComment(body.content, platform, commentPrompt)
+      comments.push(...platformComments)
+    }
+  }
+
+  // Download and create media assets
+  const mediaAssets = await downloadAndCreateAssets(userId, businessId, body.media, log)
+
+  // Determine scheduling
   const scheduledAt = body.scheduledAt ? new Date(body.scheduledAt) : new Date()
   const isImmediate = !body.scheduledAt || scheduledAt <= new Date()
 
+  // Build unified content (use first platform's content as base)
+  const primaryPlatform = body.platforms[0]
+  const unifiedContent = platformContent[primaryPlatform]?.content ?? body.content
+
   const postData = {
     businessId,
-    content: formattedContent,
+    content: unifiedContent,
     mediaAssets: mediaAssets.map(a => a.id),
     targetPlatforms: body.platforms,
     scheduledAt,
     status: isImmediate ? 'published' : 'scheduled',
-    comment: body.comments || [],
-    platformContent: body.comments?.length ? { comment: body.comments } : {}
+    comment: comments,
+    platformContent,
   }
 
   const result = await postService.create(userId, postData)
 
   if (!result || result.error || !result.data) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: result.error || 'Failed to create post'
-    })
+    log.set({ error: result?.error || 'Unknown error' })
+    throw createError({ statusCode: 400, statusMessage: result.error || 'Failed to create post' })
   }
 
+  log.set({ postId: result.data.id, status: isImmediate ? 'published' : 'scheduled' })
+
+  // Trigger immediate publish
   if (isImmediate) {
     const fullPost = await postService.findByIdFull({ postId: result.data.id })
     if (fullPost) {
@@ -210,12 +268,14 @@ export default defineEventHandler(async (event) => {
     }
   }
 
+  // Build response with per-platform content used
   const fullPost = await postService.findByIdFull({ postId: result.data.id })
   const platformStatuses = fullPost?.platformPosts?.map((pp: any) => ({
-    platform: pp.platformPostId || pp.socialAccountId,
+    platform: pp.platform,
+    accountId: pp.socialAccountId,
     status: pp.status,
     errorMessage: pp.errorMessage || undefined,
-    publishedAt: pp.publishedAt?.toISOString?.() || pp.publishedAt
+    publishedAt: pp.publishedAt?.toISOString?.() || pp.publishedAt,
   })) || []
 
   return {
@@ -223,9 +283,8 @@ export default defineEventHandler(async (event) => {
     postId: result.data.id,
     status: isImmediate ? 'published' : 'scheduled',
     scheduledAt: scheduledAt.toISOString(),
-    content: formattedContent,
-    platforms: body.platforms,
+    contentUsed: platformContent,
     validationResults,
-    platformStatuses
+    platformStatuses,
   }
 })

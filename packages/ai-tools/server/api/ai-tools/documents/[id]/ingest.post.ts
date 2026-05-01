@@ -7,8 +7,12 @@ import { createLlmJwt } from '#layers/BaseDB/server/utils/llm-jwt'
 import { userLlmConfigService } from '#layers/BaseDB/server/services/user-llm-config.service'
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event)
   const user = await checkUserIsLogin(event)
   const id = getRouterParam(event, 'id')
+
+  log.set({ documentId: id })
+  log.info('Starting document ingestion', {})
 
   if (!id) {
     throw createError({ statusCode: 400, statusMessage: 'Document ID required' })
@@ -290,7 +294,7 @@ export default defineEventHandler(async (event) => {
         return
 
       } catch (error: any) {
-        console.error('[Ingest] Error:', error)
+        log.error('Ingest error', { error: String(error) })
         await documentService.updateStatus(id!, user.id, 'failed', error.message)
         controller.enqueue(encoder.encode(sendEvent({
           status: 'failed',

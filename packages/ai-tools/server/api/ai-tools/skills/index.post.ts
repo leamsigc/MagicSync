@@ -2,8 +2,11 @@ import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
 import { skillService } from '#layers/BaseDB/server/services/skill.service'
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event)
   const user = await checkUserIsLogin(event)
   const body = await readBody(event)
+
+  log.set({ skillName: body.name })
 
   if (!body.name || !body.description || !body.instructions) {
     throw createError({ statusCode: 400, statusMessage: 'Name, description, and instructions are required' })

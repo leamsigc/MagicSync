@@ -1,5 +1,10 @@
 {
   "en": {
+    "totalFollowers": "Total Followers",
+    "totalPosts": "Total Posts",
+    "totalEngagement": "Total Engagement",
+    "followers": "Followers",
+    "engagement": "Engagement",
     "totalPostsScheduled": "Total Posts Scheduled",
     "newReviews": "New Reviews",
     "aiContentGenerated": "AI Content Generated",

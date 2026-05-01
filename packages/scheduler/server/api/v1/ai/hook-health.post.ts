@@ -30,11 +30,13 @@ const responseSchema = z.object({
 
 export default defineLazyEventHandler(async () => {
   return defineEventHandler(async (event) => {
+    const log = useLogger(event)
     await checkUserIsLogin(event);
     const body = await readBody(event);
 
     const validation = bodySchema.safeParse(body);
     if (!validation.success) {
+      log.set({ validationError: true })
       throw createError({
         statusCode: 400,
         message: 'Validation failed',
@@ -45,6 +47,7 @@ export default defineLazyEventHandler(async () => {
     const { topic, hookName, hooks, script } = validation.data;
 
     try {
+      log.set({ hookName, scriptLength: script.length })
       const prompt = schedulerHookHealthPrompts.analyzeScript(topic, hookName, hooks, script);
 
       const { object } = await schedulerUnifiedAI.generateObject({
@@ -54,9 +57,10 @@ export default defineLazyEventHandler(async () => {
         temperature: SCHEDULER_HOOK_HEALTH_TEMPERATURE,
       });
 
+      log.set({ success: true, overallScore: object.overallScore })
       return object;
     } catch (error: any) {
-      console.error('Hook Health Check Error:', error);
+      log.error({ content: 'Hook Health Check Error', error: String(error) })
       throw createError({
         statusCode: 500,
         message: error.message || 'Failed to analyze hook health',

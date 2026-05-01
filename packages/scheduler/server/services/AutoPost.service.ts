@@ -20,6 +20,7 @@ import { WordPressPlugin } from '#layers/BaseScheduler/server/services/plugins/w
 import { XPlugin } from '#layers/BaseScheduler/server/services/plugins/x.plugin';
 import { YouTubePlugin } from '#layers/BaseScheduler/server/services/plugins/youtube.plugin';
 import { getAccessTokenHelper } from '#layers/BaseAuth/server/utils/AuthHelpers';
+import { platformRateLimiter } from './RateLimiter.service';
 export class AutoPostService {
 
   private matcher: Record<string, SchedulerPluginConstructor> = {
@@ -42,44 +43,63 @@ export class AutoPostService {
   }
 
   async triggerSocialMediaPost(post: PostWithAllData): Promise<void> {
-    // Implement the logic to trigger a social media post
-    for (const platformPost of post.platformPosts) {
-      const platform = platformPost.platformPostId
-      if (!platform) {
-        continue;
-      }
-      const user = post.user;
-      const accounts = await socialMediaAccountService.getAccountsForPlatform(
-        platform,
-        user.id
-      )
-      const scheduler = new SchedulerPost({
-        post: post,
-        accounts: accounts
-      });
-      const socialMediaAccount = await socialMediaAccountService.getAccountById(platformPost.socialAccountId);
-      if (!socialMediaAccount || !socialMediaAccount.accessToken) {
-        throw new Error(`No access token found for platform ${platform}`);
-      }
-      //@ts-ignore
-      scheduler.use(this.matcher[platform]);
+    await Promise.all(
+      post.platformPosts.map(async (platformPost) => {
+        const platform = platformPost.platformPostId
+        if (!platform) return
 
-      try {
-        const response = await scheduler.publish(
-          post,
-          [],
-          socialMediaAccount
-        );
+        // Check rate limit before attempting to publish
+        const rateCheck = platformRateLimiter.canMakeRequest(platform)
+        if (!rateCheck.allowed) {
+          console.warn(
+            `[RateLimit] Platform '${platform}' is rate-limited. ` +
+            `Retry in ${Math.round((rateCheck.retryAfterMs ?? 0) / 1000)}s. ` +
+            `Post ID: ${post.id}`
+          )
+          await postService.scheduleRetry(
+            post.id,
+            post.retryCount ?? 0,
+            `Rate limited on platform '${platform}'. Retry after ${Math.round((rateCheck.retryAfterMs ?? 0) / 1000)}s.`
+          )
+          return
+        }
 
-        await postService.updatePostBaseOnResponse(post, response, platformPost);
-      } catch (e) {
-        console.error(e);
-        await postService.updatePostBaseOnResponse(
-          post,
-          { status: 'failed', id: platformPost.id, releaseURL: '', error: 'Post failed to post', postId: post.id },
-          platformPost
-        );
-      }
-    }
+        const user = post.user
+        const accounts = await socialMediaAccountService.getAccountsForPlatform(
+          platform,
+          user.id
+        )
+        const scheduler = new SchedulerPost({
+          post: post,
+          accounts: accounts
+        })
+        const socialMediaAccount = await socialMediaAccountService.getAccountById(platformPost.socialAccountId)
+        if (!socialMediaAccount || !socialMediaAccount.accessToken) {
+          const err = `No access token found for platform ${platform}`
+          console.error(`[AutoPost] ${err} | Post ID: ${post.id}`)
+          await postService.scheduleRetry(post.id, post.retryCount ?? 0, err)
+          return
+        }
+        // @ts-ignore - dynamic plugin resolution
+        scheduler.use(this.matcher[platform])
+
+        try {
+          const response = await scheduler.publish(
+            post,
+            [],
+            socialMediaAccount
+          );
+
+          await postService.updatePostBaseOnResponse(post, response, platformPost);
+        } catch (e) {
+          console.error(e);
+          await postService.updatePostBaseOnResponse(
+            post,
+            { status: 'failed', id: platformPost.id, releaseURL: '', error: 'Post failed to post ', postId: post.id },
+            platformPost
+          );
+        }
+      }))
+
   }
 }

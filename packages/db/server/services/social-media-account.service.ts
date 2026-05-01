@@ -10,7 +10,8 @@ import { entityDetails } from '#layers/BaseDB/db/entityDetails/entityDetails';
  * @version 0.0.1
  */
 
-import { eq, and, desc } from 'drizzle-orm'
+import { eq, and, desc, inArray } from 'drizzle-orm'
+import { encryptKey, decryptKey } from '#layers/BaseAuth/server/utils/AuthHelpers'
 import type { SocialMediaAccount } from '#layers/BaseDB/db/socialMedia/socialMedia'
 import { socialMediaAccounts } from '#layers/BaseDB/db/socialMedia/socialMedia'
 import { type Account, type User, user } from '#layers/BaseDB/db/auth/auth'
@@ -99,29 +100,55 @@ export class SocialMediaAccountService {
       where: eq(account.userId, id),
     });
 
-    const details = userAccounts.map((account) => {
-      return entityDetailsService.getDetailsByEntity(account.id, 'accounts_pages');
-    });
+    if (userAccounts.length === 0) {
+      return []
+    }
 
-    const results = await Promise.all(details);
+    // FIX: batch-fetch all entity details in a single query instead of N individual calls
+    const accountIds = userAccounts.map((a: typeof userAccounts[number]) => a.id)
+    const allEntityDetails = await this.db.query.entityDetails.findMany({
+      where: and(
+        inArray(entityDetails.entityId, accountIds),
+        eq(entityDetails.entityType, 'accounts_pages')
+      )
+    })
+    const detailsMap = new Map(allEntityDetails.map((d: typeof allEntityDetails[number]) => [d.entityId, d]))
 
-    userAccounts.forEach((account, index) => {
-      // @ts-ignore
-      account.entityDetail = results[index] || { details: { username: '', picture: '', pages: [] } };
-    });
-
-    return userAccounts;
+    return userAccounts.map((account: typeof userAccounts[number]) => ({
+      ...account,
+      ...(detailsMap.get(account.id) ?? null)
+    }))
   }
+
   /**
    * Create a new social media account
    */
   async createAccount(data: CreateSocialMediaAccountData): Promise<SocialMediaAccount> {
-    const accountData = {
+    // Encrypt tokens before storage
+    const accessTokenEncrypted = data.accessToken
+      ? await encryptKey(data.accessToken)
+      : null
+    const refreshTokenEncrypted = data.refreshToken
+      ? await encryptKey(data.refreshToken)
+      : null
+
+    const accountData: SocialMediaAccount = {
       id: crypto.randomUUID(),
-      ...data,
+      userId: data.userId,
+      businessId: data.businessId,
+      platform: data.platform,
+      accountId: data.accountId,
+      accountName: data.accountName,
+      accessToken: data.accessToken,
+      accessTokenEncrypted: accessTokenEncrypted,
+      refreshTokenEncrypted: refreshTokenEncrypted,
       tokenExpiresAt: data.tokenExpiresAt || null,
+      entityDetailId: data.entityDetailId || null,
       createdAt: new Date(),
       updatedAt: new Date(),
+      isActive: true,
+      refreshToken: null,
+      lastSyncAt: null
     }
 
     const result = await this.db
@@ -140,15 +167,23 @@ export class SocialMediaAccountService {
 
   /**
    * Get social media account by ID
+   * SECURITY: Requires userId ownership check
    */
-  async getAccountById(id: string) {
-    return await this.db.query.socialMediaAccounts.findFirst({
+  async getAccountById(id: string, userId?: string) {
+    const account = await this.db.query.socialMediaAccounts.findFirst({
       where: eq(socialMediaAccounts.id, id),
       with: {
         entityDetail: true,
         user: true
       },
     });
+
+    // Ownership verification: if userId is provided, verify the account belongs to that user
+    if (userId && (!account || account.userId !== userId)) {
+      return null;
+    }
+
+    return account;
   }
 
   /**
@@ -243,16 +278,43 @@ export class SocialMediaAccountService {
 
   /**
    * Update social media account
+   * SECURITY: Requires userId ownership check
    */
-  async updateAccount(id: string, data: UpdateSocialMediaAccountData): Promise<SocialMediaAccount | null> {
-    const updateData = {
-      ...data,
-      updatedAt: new Date(),
+  async updateAccount(id: string, data: UpdateSocialMediaAccountData, userId?: string): Promise<SocialMediaAccount | null> {
+    // Ownership verification: if userId is provided, verify the account belongs to that user
+    if (userId) {
+      const existing = await this.db.query.socialMediaAccounts.findFirst({
+        where: eq(socialMediaAccounts.id, id),
+      })
+      if (!existing || existing.userId !== userId) {
+        return null
+      }
     }
+
+    // Encrypt tokens before storage
+    const encryptedData: Record<string, unknown> = { updatedAt: new Date() }
+
+    if (data.accessToken !== undefined) {
+      encryptedData.access_token_encrypted = data.accessToken
+        ? await encryptKey(data.accessToken)
+        : null
+    }
+
+    if (data.refreshToken !== undefined) {
+      encryptedData.refresh_token_encrypted = data.refreshToken
+        ? await encryptKey(data.refreshToken)
+        : null
+    }
+
+    if (data.accountName !== undefined) encryptedData.accountName = data.accountName
+    if (data.tokenExpiresAt !== undefined) encryptedData.tokenExpiresAt = data.tokenExpiresAt
+    if (data.isActive !== undefined) encryptedData.isActive = data.isActive
+    if (data.lastSyncAt !== undefined) encryptedData.lastSyncAt = data.lastSyncAt
+    if (data.entityDetailId !== undefined) encryptedData.entityDetailId = data.entityDetailId
 
     const [account] = await this.db
       .update(socialMediaAccounts)
-      .set(updateData)
+      .set(encryptedData)
       .where(eq(socialMediaAccounts.id, id))
       .returning()
 
@@ -295,7 +357,7 @@ export class SocialMediaAccountService {
 
     if (account) {
 
-      socialMediaAccount = this.updateAccount(
+      socialMediaAccount = await this.updateAccount(
         account.id,
         {
           accountName: name,
@@ -307,7 +369,7 @@ export class SocialMediaAccountService {
       );
     } else {
       // create account
-      socialMediaAccount = this.createAccount({
+      socialMediaAccount = await this.createAccount({
         userId: user.id,
         businessId: businessId,
         platform: platformId,
@@ -340,39 +402,58 @@ export class SocialMediaAccountService {
     return this.createOrUpdateAccount({ id, name, access_token, picture, username, user, businessId: businessFromUser?.id as string || '', platformId });
 
   }
-  async getAccountByAccountId(id: string) {
-    return this.db.query.socialMediaAccounts.findFirst({
+  async getAccountByAccountId(id: string, userId?: string) {
+    const account = await this.db.query.socialMediaAccounts.findFirst({
       where: eq(socialMediaAccounts.accountId, id),
       with: {
         entityDetail: true
       },
     });
+
+    // Ownership verification: if userId is provided, verify the account belongs to that user
+    if (userId && (!account || account.userId !== userId)) {
+      return null;
+    }
+
+    return account;
   }
 
   /**
    * Refresh OAuth tokens for an account
+   * SECURITY: Requires userId ownership check
    */
-  async refreshTokens(id: string, tokenData: TokenRefreshData): Promise<SocialMediaAccount | null> {
+  async refreshTokens(id: string, tokenData: TokenRefreshData, userId?: string): Promise<SocialMediaAccount | null> {
     return this.updateAccount(id, {
       accessToken: tokenData.accessToken,
       refreshToken: tokenData.refreshToken,
       tokenExpiresAt: tokenData.tokenExpiresAt,
       lastSyncAt: new Date(),
-    })
+    }, userId)
   }
 
   /**
    * Deactivate social media account (soft delete)
+   * SECURITY: Requires userId ownership check
    */
-  async deactivateAccount(id: string): Promise<SocialMediaAccount | null> {
-    return this.updateAccount(id, { isActive: false })
+  async deactivateAccount(id: string, userId?: string): Promise<SocialMediaAccount | null> {
+    return this.updateAccount(id, { isActive: false }, userId)
   }
 
   /**
    * Delete social media account (hard delete)
    */
-  async deleteAccount(id: string): Promise<boolean> {
+  async deleteAccount(id: string, userId?: string): Promise<boolean> {
     try {
+      // FIX: ownership check — prevent users from deleting other users' accounts
+      if (userId) {
+        const existing = await this.db.query.socialMediaAccounts.findFirst({
+          where: eq(socialMediaAccounts.id, id),
+        })
+        if (!existing || existing.userId !== userId) {
+          return false
+        }
+      }
+
       await this.db
         .delete(socialMediaAccounts)
         .where(eq(socialMediaAccounts.id, id))
@@ -399,6 +480,18 @@ export class SocialMediaAccountService {
   }
 
   /**
+   * Decrypt OAuth tokens from stored encrypted values.
+   * Returns plain-text tokens for API usage.
+   */
+  async getDecryptedTokens(account: SocialMediaAccount): Promise<{ accessToken: string | null; refreshToken: string | null }> {
+    const [accessToken, refreshToken] = await Promise.all([
+      account.accessToken ? decryptKey(account.accessToken) : null,
+      account.refreshToken ? decryptKey(account.refreshToken) : null,
+    ])
+    return { accessToken, refreshToken }
+  }
+
+  /**
    * Get accounts that need token refresh
    */
   async getAccountsNeedingRefresh(): Promise<SocialMediaAccount[]> {
@@ -408,9 +501,10 @@ export class SocialMediaAccountService {
 
   /**
    * Validate account connection by checking token validity
+   * SECURITY: Requires userId ownership check
    */
-  async validateAccountConnection(id: string): Promise<{ isValid: boolean; needsRefresh: boolean }> {
-    const account = await this.getAccountById(id)
+  async validateAccountConnection(id: string, userId?: string): Promise<{ isValid: boolean; needsRefresh: boolean }> {
+    const account = await this.getAccountById(id, userId)
 
     if (!account || !account.isActive) {
       return { isValid: false, needsRefresh: false }

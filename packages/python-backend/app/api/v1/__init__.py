@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.v1 import health, chat, rag, tools, agent, skills, agent_extended
+from app.api.v1 import health, chat, rag, tools, agent, skills, agent_extended, social_media
 
 router = APIRouter()
 
@@ -10,3 +10,4 @@ router.include_router(tools.router, prefix="/tools", tags=["tools"])
 router.include_router(agent.router, prefix="/agent", tags=["agent"])
 router.include_router(skills.router, prefix="/skills", tags=["skills"])
 router.include_router(agent_extended.router, prefix="/agent-extended", tags=["agent-extended"])
+router.include_router(social_media.router, prefix="/social-media", tags=["social-media"])

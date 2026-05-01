@@ -126,6 +126,79 @@ The scheduler package provides a CLI-compatible endpoint for creating posts prog
 - Schedules posts for future publishing or publishes immediately
 - Adds comments to posts on supported platforms
 
+## Service Layer Rules
+
+### Rule 1: Endpoint Orchestration — Never Look Up What the Caller Already Has
+
+The endpoint owns the orchestration. Services do one thing. The caller (endpoint) should never pass data to a service that the service then looks up again internally.
+
+**Anti-pattern (don't do this):**
+```ts
+// Endpoint
+const business = await businessProfileService.findById(businessId, userId)
+// ...
+const gmbStatus = await businessProfileService.isConnectedToGMB(businessId, userId)
+//                     ↑ internally calls findById AGAIN — redundant DB query
+```
+
+**Correct pattern:**
+```ts
+// Endpoint fetches once, passes to service
+const business = await businessProfileService.findById(businessId, userId)
+// ...
+const gmbStatus = await businessProfileService.isConnectedToGMB(businessId, userId, business)
+//                     ↑ optional business param skips the redundant findById
+```
+
+**Implementation pattern:**
+Services that need data the caller already has should accept an optional parameter:
+
+```ts
+// Anti-pattern: service always calls findById internally
+async isConnectedToGMB(businessId: string, userId: string): Promise<ServiceResponse<boolean>> {
+  const profileResult = await this.findById(businessId, userId) // ← redundant
+  // ...
+}
+
+// Correct: optional param skips the lookup
+async isConnectedToGMB(
+  businessId: string,
+  userId: string,
+  business?: BusinessProfile  // ← optional, caller provides if already fetched
+): Promise<ServiceResponse<boolean>> {
+  const profile = business ?? (await this.findById(businessId, userId))?.data
+  // ...
+}
+```
+
+**When `findById` in `update`/`delete` is fine:** Those methods need to verify existence AND ownership — that's their actual work, not a redundant lookup.
+
+**Rationale:** Each internal `findById` call is a DB round-trip. In a request that already fetched the data at the top, a service doing it again multiplies latency and DB load unnecessarily.
+
+### Rule 2: Use `ServiceResponse<T>`, Never Throw
+
+All service methods return `ServiceResponse<T>`. Never `throw` from a service — the endpoint decides how to translate errors into HTTP responses.
+
+### Rule 3: No Database Queries in Route Handlers
+
+Route handlers (endpoints) must not write raw SQL or use `db` directly. All DB access goes through a service in `packages/db/server/services/`.
+
+### Rule 4: Idempotent Upsert Pattern for External Resources
+
+When calling external services (like Better Auth's `createOrganization`), race conditions cause `ORGANIZATION_ALREADY_EXISTS`. Always catch the error and fetch instead:
+
+```ts
+try {
+  org = await authApi.createOrganization({ body: { name, slug, metadata } })
+} catch (err) {
+  if (isOrgAlreadyExistsError(err)) {
+    org = await authApi.getFullOrganization({ query: { organizationId: slug } })
+  } else {
+    throw err
+  }
+}
+```
+
 ## Setup
 
 Make sure to install the dependencies:

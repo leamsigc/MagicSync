@@ -15,9 +15,6 @@ export default defineNuxtConfig({
     '/api/v1/**': {
       cors: true
     },
-    "/app": {
-      redirect: "/app/posts/feeds"
-    }
   },
   // debug: true,
   experimental: {
@@ -117,7 +114,7 @@ export default defineNuxtConfig({
     '@local-monorepo/ai-tools',
   ],
 
-  modules: ['@nuxtjs/seo', '@nuxtjs/i18n', '@nuxt/hints', 'nuxt-umami', 'evlog/nuxt','@comark/nuxt'],
+  modules: ['@nuxtjs/seo', '@nuxtjs/i18n', '@nuxt/hints', 'nuxt-umami', 'evlog/nuxt', '@comark/nuxt'],
   i18n: {
     vueI18n: join(currentDir, './translations/i18n.config.ts'),
     baseUrl: process.env.NUXT_APP_URL,
@@ -164,7 +161,8 @@ export default defineNuxtConfig({
     ]
   },
   ogImage: {
-    zeroRuntime: true
+    // zeroRuntime: true causes issues with dynamic content pages that use
+    // defineOgImage(page.value?.ogImage) — disable for stability
   },
   umami: {
     id: '55b75e65-727f-44ae-9f58-c2d67c2f3b4b',

@@ -20,7 +20,7 @@ const logoUrl = appConfig.BaseUiLayer.main.logo
 </script>
 
 <template>
-  <UFooter class="px-10">
+  <UFooter class="px-10 z-50 relative">
     <template #top>
       <div class="grid grid-cols-1 gap-12 lg:grid-cols-12">
         <!-- Left Section - About -->

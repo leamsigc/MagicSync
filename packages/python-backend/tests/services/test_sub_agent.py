@@ -6,9 +6,10 @@ from app.services.agent.sub_agent import SubAgentService, SubAgentStatus
 class TestSubAgentLifecycle:
     """Test sub-agent creation, status transitions, and cleanup."""
 
-    def test_spawn_creates_agent_with_isolated_context(self):
+    @pytest.mark.asyncio
+    async def test_spawn_creates_agent_with_isolated_context(self):
         service = SubAgentService()
-        agent = service.spawn(
+        agent = await service.spawn(
             task="Research the best posting times for Instagram",
             parent_message_id="msg-123",
             user_id="user-1",
@@ -20,13 +21,14 @@ class TestSubAgentLifecycle:
         assert agent.status == SubAgentStatus.CREATED
         assert agent.messages == []  # Isolated context starts empty
 
-    def test_spawn_with_initial_context(self):
+    @pytest.mark.asyncio
+    async def test_spawn_with_initial_context(self):
         service = SubAgentService()
         context = [
             {"role": "system", "content": "You are a social media expert."},
             {"role": "user", "content": "Research Instagram best practices."},
         ]
-        agent = service.spawn(
+        agent = await service.spawn(
             task="Research Instagram",
             parent_message_id="msg-123",
             user_id="user-1",
@@ -35,15 +37,17 @@ class TestSubAgentLifecycle:
         assert len(agent.messages) == 2
         assert agent.messages[0]["role"] == "system"
 
-    def test_spawn_generates_unique_ids(self):
+    @pytest.mark.asyncio
+    async def test_spawn_generates_unique_ids(self):
         service = SubAgentService()
-        agent1 = service.spawn(task="Task 1", parent_message_id="msg-1", user_id="user-1")
-        agent2 = service.spawn(task="Task 2", parent_message_id="msg-1", user_id="user-1")
+        agent1 = await service.spawn(task="Task 1", parent_message_id="msg-1", user_id="user-1")
+        agent2 = await service.spawn(task="Task 2", parent_message_id="msg-1", user_id="user-1")
         assert agent1.id != agent2.id
 
-    def test_get_agent_by_id(self):
+    @pytest.mark.asyncio
+    async def test_get_agent_by_id(self):
         service = SubAgentService()
-        agent = service.spawn(task="Test", parent_message_id="msg-1", user_id="user-1")
+        agent = await service.spawn(task="Test", parent_message_id="msg-1", user_id="user-1")
         retrieved = service.get_agent(agent.id)
         assert retrieved is not None
         assert retrieved.id == agent.id
@@ -52,104 +56,115 @@ class TestSubAgentLifecycle:
         service = SubAgentService()
         assert service.get_agent("nonexistent") is None
 
-    def test_list_agents_for_user(self):
+    @pytest.mark.asyncio
+    async def test_list_agents_for_user(self):
         service = SubAgentService()
-        service.spawn(task="Task 1", parent_message_id="msg-1", user_id="user-1")
-        service.spawn(task="Task 2", parent_message_id="msg-2", user_id="user-1")
-        service.spawn(task="Task 3", parent_message_id="msg-3", user_id="user-2")
-        agents = service.list_agents(user_id="user-1")
+        await service.spawn(task="Task 1", parent_message_id="msg-1", user_id="user-1")
+        await service.spawn(task="Task 2", parent_message_id="msg-2", user_id="user-1")
+        await service.spawn(task="Task 3", parent_message_id="msg-3", user_id="user-2")
+        agents = await service.list_agents(user_id="user-1")
         assert len(agents) == 2
 
-    def test_list_agents_filters_by_parent_message(self):
+    @pytest.mark.asyncio
+    async def test_list_agents_filters_by_parent_message(self):
         service = SubAgentService()
-        service.spawn(task="Task 1", parent_message_id="msg-1", user_id="user-1")
-        service.spawn(task="Task 2", parent_message_id="msg-2", user_id="user-1")
-        agents = service.list_agents(user_id="user-1", parent_message_id="msg-1")
+        await service.spawn(task="Task 1", parent_message_id="msg-1", user_id="user-1")
+        await service.spawn(task="Task 2", parent_message_id="msg-2", user_id="user-1")
+        agents = await service.list_agents(user_id="user-1", parent_message_id="msg-1")
         assert len(agents) == 1
 
-    def test_delete_agent(self):
+    @pytest.mark.asyncio
+    async def test_delete_agent(self):
         service = SubAgentService()
-        agent = service.spawn(task="Test", parent_message_id="msg-1", user_id="user-1")
+        agent = await service.spawn(task="Test", parent_message_id="msg-1", user_id="user-1")
         assert service.get_agent(agent.id) is not None
-        service.delete_agent(agent.id)
+        await service.delete_agent(agent.id)
         assert service.get_agent(agent.id) is None
 
 
 class TestSubAgentStatusTransitions:
     """Test sub-agent status transitions during execution."""
 
-    def test_start_transitions_to_running(self):
+    @pytest.mark.asyncio
+    async def test_start_transitions_to_running(self):
         service = SubAgentService()
-        agent = service.spawn(task="Test", parent_message_id="msg-1", user_id="user-1")
-        service.start_agent(agent.id)
+        agent = await service.spawn(task="Test", parent_message_id="msg-1", user_id="user-1")
+        await service.start_agent(agent.id)
         updated = service.get_agent(agent.id)
         assert updated.status == SubAgentStatus.RUNNING
 
-    def test_complete_transitions_to_completed(self):
+    @pytest.mark.asyncio
+    async def test_complete_transitions_to_completed(self):
         service = SubAgentService()
-        agent = service.spawn(task="Test", parent_message_id="msg-1", user_id="user-1")
-        service.start_agent(agent.id)
-        service.complete_agent(agent.id, result="Done")
+        agent = await service.spawn(task="Test", parent_message_id="msg-1", user_id="user-1")
+        await service.start_agent(agent.id)
+        await service.complete_agent(agent.id, result="Done")
         updated = service.get_agent(agent.id)
         assert updated.status == SubAgentStatus.COMPLETED
         assert updated.result == "Done"
 
-    def test_fail_transitions_to_failed(self):
+    @pytest.mark.asyncio
+    async def test_fail_transitions_to_failed(self):
         service = SubAgentService()
-        agent = service.spawn(task="Test", parent_message_id="msg-1", user_id="user-1")
-        service.start_agent(agent.id)
-        service.fail_agent(agent.id, error="Something went wrong")
+        agent = await service.spawn(task="Test", parent_message_id="msg-1", user_id="user-1")
+        await service.start_agent(agent.id)
+        await service.fail_agent(agent.id, error="Something went wrong")
         updated = service.get_agent(agent.id)
         assert updated.status == SubAgentStatus.FAILED
         assert updated.error == "Something went wrong"
 
-    def test_cannot_start_completed_agent(self):
+    @pytest.mark.asyncio
+    async def test_cannot_start_completed_agent(self):
         service = SubAgentService()
-        agent = service.spawn(task="Test", parent_message_id="msg-1", user_id="user-1")
-        service.start_agent(agent.id)
-        service.complete_agent(agent.id, result="Done")
+        agent = await service.spawn(task="Test", parent_message_id="msg-1", user_id="user-1")
+        await service.start_agent(agent.id)
+        await service.complete_agent(agent.id, result="Done")
         with pytest.raises(ValueError, match="Cannot start agent"):
-            service.start_agent(agent.id)
+            await service.start_agent(agent.id)
 
 
 class TestSubAgentContextIsolation:
     """Test that sub-agents maintain isolated message contexts."""
 
-    def test_add_message_to_agent_context(self):
+    @pytest.mark.asyncio
+    async def test_add_message_to_agent_context(self):
         service = SubAgentService()
-        agent = service.spawn(task="Test", parent_message_id="msg-1", user_id="user-1")
-        service.add_message(agent.id, "user", "Hello sub-agent")
+        agent = await service.spawn(task="Test", parent_message_id="msg-1", user_id="user-1")
+        await service.add_message(agent.id, "user", "Hello sub-agent")
         updated = service.get_agent(agent.id)
         assert len(updated.messages) == 1
         assert updated.messages[0]["content"] == "Hello sub-agent"
 
-    def test_agent_context_does_not_leak(self):
+    @pytest.mark.asyncio
+    async def test_agent_context_does_not_leak(self):
         service = SubAgentService()
-        agent1 = service.spawn(task="Task 1", parent_message_id="msg-1", user_id="user-1")
-        agent2 = service.spawn(task="Task 2", parent_message_id="msg-2", user_id="user-1")
-        service.add_message(agent1.id, "user", "Secret info for agent 1")
+        agent1 = await service.spawn(task="Task 1", parent_message_id="msg-1", user_id="user-1")
+        agent2 = await service.spawn(task="Task 2", parent_message_id="msg-2", user_id="user-1")
+        await service.add_message(agent1.id, "user", "Secret info for agent 1")
         updated2 = service.get_agent(agent2.id)
         assert len(updated2.messages) == 0
 
-    def test_agent_context_accumulates_messages(self):
+    @pytest.mark.asyncio
+    async def test_agent_context_accumulates_messages(self):
         service = SubAgentService()
-        agent = service.spawn(task="Test", parent_message_id="msg-1", user_id="user-1")
-        service.add_message(agent.id, "user", "First message")
-        service.add_message(agent.id, "assistant", "Response 1")
-        service.add_message(agent.id, "user", "Follow-up")
+        agent = await service.spawn(task="Test", parent_message_id="msg-1", user_id="user-1")
+        await service.add_message(agent.id, "user", "First message")
+        await service.add_message(agent.id, "assistant", "Response 1")
+        await service.add_message(agent.id, "user", "Follow-up")
         updated = service.get_agent(agent.id)
         assert len(updated.messages) == 3
 
-    def test_get_isolated_messages_for_llm(self):
+    @pytest.mark.asyncio
+    async def test_get_isolated_messages_for_llm(self):
         """Messages returned for LLM should include system prompt + context."""
         service = SubAgentService()
-        agent = service.spawn(
+        agent = await service.spawn(
             task="Analyze post performance",
             parent_message_id="msg-1",
             user_id="user-1",
             context=[{"role": "system", "content": "You are a data analyst."}],
         )
-        service.add_message(agent.id, "user", "Show me metrics")
+        await service.add_message(agent.id, "user", "Show me metrics")
         messages = service.get_llm_messages(agent.id)
         assert messages[0]["role"] == "system"
         assert messages[1]["content"] == "Show me metrics"
@@ -162,8 +177,8 @@ class TestSubAgentStepExecution:
     @pytest.mark.asyncio
     async def test_step_executes_llm_and_updates_context(self):
         service = SubAgentService()
-        agent = service.spawn(task="Test", parent_message_id="msg-1", user_id="user-1")
-        service.add_message(agent.id, "user", "What are best posting times?")
+        agent = await service.spawn(task="Test", parent_message_id="msg-1", user_id="user-1")
+        await service.add_message(agent.id, "user", "What are best posting times?")
 
         mock_response = {
             "message": {
@@ -186,8 +201,8 @@ class TestSubAgentStepExecution:
     @pytest.mark.asyncio
     async def test_step_handles_llm_error(self):
         service = SubAgentService()
-        agent = service.spawn(task="Test", parent_message_id="msg-1", user_id="user-1")
-        service.add_message(agent.id, "user", "Test")
+        agent = await service.spawn(task="Test", parent_message_id="msg-1", user_id="user-1")
+        await service.add_message(agent.id, "user", "Test")
 
         with patch(
             "app.services.agent.sub_agent.llm_service.chat_complete",
@@ -203,8 +218,8 @@ class TestSubAgentStepExecution:
     async def test_step_detects_completion_signal(self):
         """When the LLM signals task completion, agent should transition."""
         service = SubAgentService()
-        agent = service.spawn(task="Test", parent_message_id="msg-1", user_id="user-1")
-        service.add_message(agent.id, "user", "Summarize this.")
+        agent = await service.spawn(task="Test", parent_message_id="msg-1", user_id="user-1")
+        await service.add_message(agent.id, "user", "Summarize this.")
 
         mock_response = {
             "message": {
@@ -227,8 +242,8 @@ class TestSubAgentStepExecution:
     async def test_step_detects_tool_use(self):
         """When the LLM wants to use a tool, step should return tool call."""
         service = SubAgentService()
-        agent = service.spawn(task="Test", parent_message_id="msg-1", user_id="user-1")
-        service.add_message(agent.id, "user", "Search for posting times.")
+        agent = await service.spawn(task="Test", parent_message_id="msg-1", user_id="user-1")
+        await service.add_message(agent.id, "user", "Search for posting times.")
 
         mock_response = {
             "message": {
@@ -251,8 +266,8 @@ class TestSubAgentStepExecution:
     async def test_step_with_tool_result(self):
         """After tool execution, result should be fed back into context."""
         service = SubAgentService()
-        agent = service.spawn(task="Test", parent_message_id="msg-1", user_id="user-1")
-        service.add_message(agent.id, "user", "Search for best times.")
+        agent = await service.spawn(task="Test", parent_message_id="msg-1", user_id="user-1")
+        await service.add_message(agent.id, "user", "Search for best times.")
 
         # First step: LLM wants to use tool
         tool_response = {
@@ -271,7 +286,7 @@ class TestSubAgentStepExecution:
 
         # Feed tool result back
         tool_result = "Studies show 9am and 7pm are optimal."
-        service.add_tool_result(agent.id, "web-search", tool_result)
+        await service.add_tool_result(agent.id, "web-search", tool_result)
 
         updated = service.get_agent(agent.id)
         assert len(updated.messages) == 3  # user + assistant(tool call) + tool result
@@ -335,14 +350,16 @@ class TestSubAgentOrchestrator:
 class TestSubAgentMaxSteps:
     """Test that sub-agents have a maximum step limit to prevent infinite loops."""
 
-    def test_max_steps_default(self):
+    @pytest.mark.asyncio
+    async def test_max_steps_default(self):
         service = SubAgentService()
-        agent = service.spawn(task="Test", parent_message_id="msg-1", user_id="user-1")
+        agent = await service.spawn(task="Test", parent_message_id="msg-1", user_id="user-1")
         assert agent.max_steps == 10
 
-    def test_custom_max_steps(self):
+    @pytest.mark.asyncio
+    async def test_custom_max_steps(self):
         service = SubAgentService()
-        agent = service.spawn(
+        agent = await service.spawn(
             task="Test", parent_message_id="msg-1", user_id="user-1", max_steps=5,
         )
         assert agent.max_steps == 5
@@ -350,8 +367,8 @@ class TestSubAgentMaxSteps:
     @pytest.mark.asyncio
     async def test_step_increments_counter(self):
         service = SubAgentService()
-        agent = service.spawn(task="Test", parent_message_id="msg-1", user_id="user-1", max_steps=2)
-        service.add_message(agent.id, "user", "Test")
+        agent = await service.spawn(task="Test", parent_message_id="msg-1", user_id="user-1", max_steps=2)
+        await service.add_message(agent.id, "user", "Test")
 
         mock_response = {"message": {"role": "assistant", "content": "Step result"}}
 
@@ -371,8 +388,8 @@ class TestSubAgentMaxSteps:
     @pytest.mark.asyncio
     async def test_exceeding_max_steps_completes_agent(self):
         service = SubAgentService()
-        agent = service.spawn(task="Test", parent_message_id="msg-1", user_id="user-1", max_steps=1)
-        service.add_message(agent.id, "user", "Test")
+        agent = await service.spawn(task="Test", parent_message_id="msg-1", user_id="user-1", max_steps=1)
+        await service.add_message(agent.id, "user", "Test")
 
         mock_response = {"message": {"role": "assistant", "content": "Result"}}
 

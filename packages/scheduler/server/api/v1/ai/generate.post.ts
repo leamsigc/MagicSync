@@ -79,7 +79,7 @@ export default defineLazyEventHandler(async () => {
 
       return { result: text };
     } catch (error: any) {
-      console.error('AI Generation Error:', error);
+      log.error({ content: 'AI Generation Error', error: String(error) })
       throw createError({
         statusCode: 500,
         message: error.message || 'Failed to generate AI content',

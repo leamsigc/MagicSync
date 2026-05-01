@@ -1,9 +1,12 @@
 import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event)
   const user = await checkUserIsLogin(event)
   const query = getQuery(event)
   const threadId = query.thread_id as string | undefined
+  
+  log.set({ threadId })
   
   if (!threadId) {
     throw createError({
@@ -54,7 +57,7 @@ export default defineEventHandler(async (event) => {
         })
 
       } catch (error) {
-        console.error('SSE error:', error)
+        log.error('SSE error', { error: String(error) })
         cleanup()
         controller.close()
       }

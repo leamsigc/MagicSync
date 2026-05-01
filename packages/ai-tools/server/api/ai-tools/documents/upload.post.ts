@@ -17,9 +17,11 @@ const ALLOWED_TYPES = [
 const MAX_SIZE = 10 * 1024 * 1024 // 10MB
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event)
   const user = await checkUserIsLogin(event)
 
   const formData = await readMultipartFormData(event)
+  log.set({ hasFile: !!formData?.find(f => f.name === 'file') })
   if (!formData) {
     throw createError({ statusCode: 400, statusMessage: 'No file uploaded' })
   }

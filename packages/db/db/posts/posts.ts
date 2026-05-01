@@ -22,7 +22,10 @@ export const posts = sqliteTable('posts', {
   platformSettings: text('platform_settings', { mode: 'json' }),
   postFormat: text('post_format', { enum: ['post', 'reel', 'story', 'short'] }).default('post'),
   createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => /* @__PURE__ */ new Date()).notNull(),
-  updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => /* @__PURE__ */ new Date()).notNull()
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => /* @__PURE__ */ new Date()).notNull(),
+  retryCount: integer('retry_count').notNull().default(0),
+  nextRetryAt: integer('next_retry_at', { mode: 'timestamp' }),
+  lastError: text('last_error')
 })
 
 // Platform-specific post tracking

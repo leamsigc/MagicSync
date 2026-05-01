@@ -1,4 +1,4 @@
-import { eq, and, sql, or } from 'drizzle-orm';
+import { eq, and, sql, or, inArray } from 'drizzle-orm';
 import {
   type ServiceResponse,
   ValidationError,
@@ -150,7 +150,7 @@ export class AssetService {
         .select()
         .from(assets)
         .where(and(
-          sql`${assets.id} IN (${ids.map(id => `'${id}'`).join(',')})`,
+          inArray(assets.id, ids),
           eq(assets.userId, userId)
         ));
 
@@ -229,7 +229,7 @@ export class AssetService {
       const deleted = await this.db
         .delete(assets)
         .where(and(
-          sql`${assets.id} IN (${ids.map(id => `'${id}'`).join(',')})`,
+          inArray(assets.id, ids),
           eq(assets.userId, userId)
         ))
         .returning();

@@ -8,6 +8,7 @@ interface ValidationResult {
 }
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event)
   try {
     // Get user from session
     const session = await getUserSessionFromEvent(event)
@@ -16,6 +17,7 @@ export default defineEventHandler(async (event) => {
     const body = await readBody(event)
 
     if (!body.content) {
+      log.set({ validationError: true, message: 'Content is required for validation' })
       throw createError({
         statusCode: 400,
         statusMessage: 'Content is required for validation'
@@ -23,12 +25,19 @@ export default defineEventHandler(async (event) => {
     }
 
     if (!body.platforms && !body.socialAccountIds) {
+      log.set({ validationError: true, message: 'Either platforms or socialAccountIds must be provided' })
       throw createError({
         statusCode: 400,
         statusMessage: 'Either platforms or socialAccountIds must be provided'
       })
     }
 
+    log.set({ 
+      userId: session?.user?.id, 
+      platforms: body.platforms, 
+      socialAccountIds: body.socialAccountIds,
+      contentLength: body.content?.length 
+    })
     // Prepare content for validation
     const content: PostContent = {
       text: body.content,
@@ -80,6 +89,7 @@ export default defineEventHandler(async (event) => {
     const overallValid = allValidations.every((v: any) => v.isValid)
     const hasWarnings = allValidations.some((v: any) => v.warnings && v.warnings.length > 0)
 
+    log.set({ success: true, overallValid, hasWarnings })
     return {
       success: true,
       data: {
@@ -98,6 +108,7 @@ export default defineEventHandler(async (event) => {
       throw error
     }
 
+    log.error({ content: 'Validate post error', error: String(error) })
     throw createError({
       statusCode: 500,
       statusMessage: 'Internal server error'

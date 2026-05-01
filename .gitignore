@@ -143,6 +143,7 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
 .data
+data/
 *.db
 
 upload/

@@ -1,7 +1,13 @@
 import { socialMediaAccountService } from "#layers/BaseDB/server/services/social-media-account.service";
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event)
   const user = await checkUserIsLogin(event)
+  log.set({ userId: user.id })
 
-  return await socialMediaAccountService.getUserAccountsCompleteDetails(user.id);
+  const result = await socialMediaAccountService.getUserAccountsCompleteDetails(user.id);
+
+  log.info('User accounts retrieved', { accountCount: result.length })
+
+  return result;
 });

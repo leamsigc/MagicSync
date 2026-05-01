@@ -88,7 +88,7 @@ export default defineEventHandler(async (event) => {
       log.set({ postId: result.data.id })
       const fullPost = await postService.findByIdFull({ postId: result.data.id });
       if (!fullPost || !fullPost) {
-        log.error('Failed to find post')
+        log.error({ content: 'Failed to find post' })
         throw createError({
           statusCode: 400,
           statusMessage: 'Failed to find post'

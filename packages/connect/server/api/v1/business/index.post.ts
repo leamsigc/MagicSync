@@ -16,9 +16,13 @@ const BodySchema = z.intersection(
 );
 export type BodySchemaCreateBusinessType = z.infer<typeof BodySchema>;
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event)
   const user = await checkUserIsLogin(event);
+  log.set({ userId: user.id })
 
   const body = await readValidatedBody(event, BodySchema.parse);
+
+  log.set({ businessName: body.name })
 
   const newBusiness = await businessProfileService.create(user.id, {
     name: body.name,
@@ -37,6 +41,8 @@ export default defineEventHandler(async (event) => {
       details: JSON.stringify(body.entityDetails) as any,
     })
   }
+
+  log.info('Business profile created', { businessId: newBusiness.data?.id })
 
   return newBusiness;
 });

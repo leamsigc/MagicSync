@@ -22,6 +22,25 @@
       "empty": "No additional details available",
       "loading": "Loading post...",
       "viewRawData": "View Raw Data"
+    },
+    "feeds": {
+      "tabs": {
+        "post": "Post",
+        "details": "Details",
+        "comments": "Comments"
+      }
+    },
+    "postComments": {
+      "noPublishedPlatforms": "No published platforms yet. Comments will appear after posts are published.",
+      "noComments": "No comments yet",
+      "comments": "Comments",
+      "reply": "Reply",
+      "replyPlaceholder": "Write a reply...",
+      "send": "Send",
+      "cancel": "Cancel",
+      "loadMore": "Load more",
+      "retry": "Retry",
+      "replySent": "Reply sent!"
     }
   },
   "es": {

@@ -1,9 +1,12 @@
+import type { H3Event } from 'h3'
 import { auth } from '#layers/BaseAuth/lib/auth'
-import { businessOrgService } from '#layers/BaseAuth/server/services/business-org.service'
+import { businessOrgService } from './business-org.service'
+import { useAuthApi } from '../utils/useAuthApi'
 
 export interface ApiKeyContext {
   valid: boolean
   keyId: string
+  userId: string
   orgId: string
   businessId: string
   connectedPlatforms: string[]
@@ -17,13 +20,6 @@ export interface ApiKeyVerificationResult {
     statusCode: number
     message: string
   }
-}
-
-export interface CreateApiKeyOptions {
-  name: string
-  businessId: string
-  userId: string
-  expiresIn?: number
 }
 
 export interface ApiKeyWithSecret {
@@ -45,46 +41,36 @@ export interface ApiKeyListItem {
 }
 
 export const apiKeyService = {
+  /**
+   * Verify an API key string (used for incoming external requests).
+   * The key is read from the request body, not headers.
+   */
   async verifyApiKey(apiKey: string): Promise<ApiKeyVerificationResult> {
     if (!apiKey) {
       return {
         success: false,
-        error: {
-          statusCode: 401,
-          message: 'Missing API key. Include x-api-key header.'
-        }
+        error: { statusCode: 401, message: 'Missing API key. Include x-api-key header.' }
       }
     }
 
     try {
-      const result = await auth.api.verifyApiKey({
-        body: {
-          key: apiKey
-        }
-      })
+      const result = await auth.api.verifyApiKey({ body: { key: apiKey } })
 
       if (!result.valid || !result.key) {
         return {
           success: false,
-          error: {
-            statusCode: 401,
-            message: 'Invalid API key'
-          }
+          error: { statusCode: 401, message: 'Invalid API key' }
         }
       }
 
       const keyData = result.key
       const orgId = keyData.referenceId
-
       const businessId = await businessOrgService.getBusinessIdFromOrg(orgId)
 
       if (!businessId) {
         return {
           success: false,
-          error: {
-            statusCode: 401,
-            message: 'API key not associated with a business'
-          }
+          error: { statusCode: 401, message: 'API key not associated with a business' }
         }
       }
 
@@ -92,15 +78,24 @@ export const apiKeyService = {
       if (!isActive) {
         return {
           success: false,
-          error: {
-            statusCode: 401,
-            message: 'Business is inactive'
-          }
+          error: { statusCode: 401, message: 'Business is inactive' }
         }
       }
 
-      const metadata = keyData.metadata ? JSON.parse(keyData.metadata as string) : {}
+      // SAFE: wrap JSON.parse in try/catch to handle malformed metadata
+      let metadata = {}
+      if (keyData.metadata) {
+        try {
+          metadata = JSON.parse(keyData.metadata)
+        } catch {
+          // If metadata is malformed, use empty object
+          metadata = {}
+        }
+      }
       const connectedPlatforms = metadata.connectedPlatforms || []
+
+      // userId may be undefined for org-level keys
+      const userId = (keyData as any).userId ?? undefined
 
       return {
         success: true,
@@ -108,54 +103,45 @@ export const apiKeyService = {
           valid: true,
           keyId: keyData.id,
           orgId,
+          userId,
           businessId,
           connectedPlatforms,
-          name: keyData.name
-        }
+          name: keyData.name,
+        },
       }
-    } catch (error) {
+    } catch {
       return {
         success: false,
-        error: {
-          statusCode: 401,
-          message: 'API key verification failed'
-        }
+        error: { statusCode: 401, message: 'API key verification failed' }
       }
     }
   },
 
+  /**
+   * Verify that an API key grants access to a specific business.
+   */
   async verifyApiKeyForBusiness(apiKey: string, requiredBusinessId: string): Promise<ApiKeyVerificationResult> {
     const result = await this.verifyApiKey(apiKey)
-
-    if (!result.success || !result.context) {
-      return result
-    }
+    if (!result.success || !result.context) return result
 
     if (result.context.businessId !== requiredBusinessId) {
       return {
         success: false,
-        error: {
-          statusCode: 403,
-          message: 'API key does not have access to this business'
-        }
+        error: { statusCode: 403, message: 'API key does not have access to this business' }
       }
     }
-
     return result
   },
 
+  /**
+   * Verify that an API key has access to the required platforms.
+   */
   async verifyApiKeyForPlatforms(apiKey: string, requiredPlatforms: string[]): Promise<ApiKeyVerificationResult> {
     const result = await this.verifyApiKey(apiKey)
-
-    if (!result.success || !result.context) {
-      return result
-    }
+    if (!result.success || !result.context) return result
 
     const { connectedPlatforms } = result.context
-
-    const missingPlatforms = requiredPlatforms.filter(
-      platform => !connectedPlatforms.includes(platform)
-    )
+    const missingPlatforms = requiredPlatforms.filter(p => !connectedPlatforms.includes(p))
 
     if (missingPlatforms.length > 0) {
       return {
@@ -166,62 +152,43 @@ export const apiKeyService = {
         }
       }
     }
-
     return result
   },
 
-  async createApiKey(options: CreateApiKeyOptions): Promise<ApiKeyWithSecret> {
-    const { name, businessId, userId, expiresIn } = options
+  /**
+   * Create a new API key for an organization.
+   * Does NOT check membership or fetch/create the org — the caller handles that.
+   */
+  async createApiKey(event: H3Event, orgId: string, name: string, expiresIn?: number): Promise<ApiKeyWithSecret> {
+    const authApi = useAuthApi(event)
 
-    const isMember = await businessOrgService.isUserMemberOfBusinessOrg(userId, businessId)
-    if (!isMember) {
-      throw createError({
-        statusCode: 403,
-        statusMessage: 'You are not a member of this business'
-      })
-    }
-
-    const orgId = await businessOrgService.getOrCreateOrgForBusiness(businessId)
-    console.log({orgId})
-
-    const apiKey = await auth.api.createApiKey({
+    const apiKey = await authApi.createApiKey({
       body: {
         name,
         organizationId: orgId,
-        expiresIn: expiresIn || (90 * 24 * 60 * 60)
-      },
-      headers: new Headers()
+        expiresIn: expiresIn ?? (90 * 24 * 60 * 60)
+      }
     })
 
     return {
       id: apiKey.id,
-      name: apiKey.name,
+      name: apiKey.name || name,
       key: apiKey.key,
-      prefix: apiKey.prefix,
+      prefix: apiKey.prefix || 'MG-',
       expiresAt: apiKey.expiresAt,
       createdAt: apiKey.createdAt
     }
   },
 
-  async listApiKeys(businessId: string, userId: string): Promise<ApiKeyListItem[]> {
-    const isMember = await businessOrgService.isUserMemberOfBusinessOrg(userId, businessId)
-    if (!isMember) {
-      throw createError({
-        statusCode: 403,
-        statusMessage: 'You are not a member of this business'
-      })
-    }
+  /**
+   * List all API keys for an organization.
+   * Does NOT check membership or fetch/create the org — the caller handles that.
+   */
+  async listApiKeys(event: H3Event, orgId: string): Promise<ApiKeyListItem[]> {
+    const authApi = useAuthApi(event)
+    const result = await authApi.listApiKeys({ query: { organizationId: orgId } })
 
-    const orgId = await businessOrgService.getOrCreateOrgForBusiness(businessId)
-
-    const result = await auth.api.listApiKeys({
-      query: {
-        organizationId: orgId
-      },
-      headers: new Headers()
-    })
-
-    return result.apiKeys.map(key => ({
+    return result.apiKeys.map((key: { id: string; name: string; prefix: string; expiresAt: Date | null; createdAt: Date; enabled: boolean }) => ({
       id: key.id,
       name: key.name,
       prefix: key.prefix,
@@ -231,20 +198,12 @@ export const apiKeyService = {
     }))
   },
 
-  async deleteApiKey(keyId: string, businessId: string, userId: string): Promise<void> {
-    const isMember = await businessOrgService.isUserMemberOfBusinessOrg(userId, businessId)
-    if (!isMember) {
-      throw createError({
-        statusCode: 403,
-        statusMessage: 'You are not a member of this business'
-      })
-    }
-
-    await auth.api.deleteApiKey({
-      body: {
-        keyId
-      },
-      headers: new Headers()
-    })
+  /**
+   * Delete (revoke) an API key.
+   * Does NOT check membership or fetch/create the org — the caller handles that.
+   */
+  async deleteApiKey(event: H3Event, keyId: string): Promise<void> {
+    const authApi = useAuthApi(event)
+    await authApi.deleteApiKey({ body: { keyId } })
   }
 }

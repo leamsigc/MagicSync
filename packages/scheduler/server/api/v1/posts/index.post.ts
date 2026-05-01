@@ -3,6 +3,7 @@ import { AutoPostService } from '#layers/BaseScheduler/server/services/AutoPost.
 import { checkUserIsLogin } from "#layers/BaseAuth/server/utils/AuthHelpers"
 import type { PostCreateBase } from "#layers/BaseDB/db/schema"
 import { postService } from "#layers/BaseDB/server/services/post.service"
+import { businessProfileService } from "#layers/BaseDB/server/services/business-profile.service"
 
 export default defineEventHandler(async (event) => {
   try {
@@ -11,12 +12,22 @@ export default defineEventHandler(async (event) => {
     const log = useLogger(event)
     // Get request body
     const body = await readBody(event)
+    const header = useAuthApi(event).headers()
 
     // Validate required fields
     if (!body.businessId || !body.content || !body.targetPlatforms || !Array.isArray(body.targetPlatforms) || body.targetPlatforms.length === 0) {
       throw createError({
         statusCode: 400,
         statusMessage: 'Missing required fields'
+      })
+    }
+
+    // Verify business ownership before creating post
+    const business = await businessProfileService.findById(body.businessId, user.id)
+    if (!business || !business.data) {
+      throw createError({
+        statusCode: 403,
+        statusMessage: 'You do not have permission to create posts for this business'
       })
     }
 
@@ -31,7 +42,8 @@ export default defineEventHandler(async (event) => {
       comment: body.comment || [],
       platformContent: { ...body.platformContent, comment: body.comment || [] },
       platformSettings: body.platformSettings || {},
-      postFormat: body.postFormat || 'post'
+      postFormat: body.postFormat || 'post',
+      retryCount: 0,
     }
 
     // Handle scheduled date
@@ -63,7 +75,7 @@ export default defineEventHandler(async (event) => {
       // Schedule post
       const trigger = new AutoPostService()
       // Refresh social media tokens if necessary
-      await ScheduleRefreshSocialMediaTokens(fullPost, user.id, getHeaders(event));
+      await ScheduleRefreshSocialMediaTokens(fullPost, user.id, header);
 
       trigger.triggerSocialMediaPost(fullPost);
     }

@@ -17,6 +17,7 @@ class ChatRequest(BaseModel):
     api_key: str | None = None
     api_base: str | None = None
     enable_tools: bool = True  # Enable/disable function calling
+    provider_fallback: list | None = None  # List of fallback providers [{"provider": "ollama", "model": "qwen3.5"}]
 
 
 class ChatResponse(BaseModel):

@@ -36,11 +36,13 @@ const requestSchema = z.object({
 
 export default defineLazyEventHandler(async () => {
   return defineEventHandler(async (event) => {
+    const log = useLogger(event)
     await checkUserIsLogin(event);
     const body = await readBody(event);
 
     const validation = requestSchema.safeParse(body);
     if (!validation.success) {
+      log.set({ validationError: true })
       throw createError({
         statusCode: 400,
         message: 'Validation failed',
@@ -51,6 +53,7 @@ export default defineLazyEventHandler(async () => {
     const { url, explanation, competitors } = validation.data;
 
     try {
+      log.set({ url, hasCompetitors: !!competitors?.length })
       const prompt = schedulerInformationPrompts.extractBusinessInfo(url, explanation, competitors);
 
       const { object } = await schedulerUnifiedAI.generateObject({
@@ -59,9 +62,10 @@ export default defineLazyEventHandler(async () => {
         temperature: SCHEDULER_INFORMATION_TEMPERATURE,
       });
 
+      log.set({ success: true, businessName: object.businessProfile.name })
       return object;
     } catch (error: any) {
-      console.error('AI Extraction Error:', error);
+      log.error({ content: 'AI Extraction Error', error: String(error) })
       throw createError({
         statusCode: 500,
         message: error.message || 'Failed to extract business information via AI',

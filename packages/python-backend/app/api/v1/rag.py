@@ -187,9 +187,7 @@ async def hybrid_search(
 ):
     """Perform hybrid search combining keyword and vector results with optional reranking.
 
-    This endpoint returns the query embedding and search parameters for the caller
-    (Nuxt server) to execute the actual search against Turso. If reranking is requested,
-    it reranks the provided results.
+    Executes vector search server-side against Turso database.
     """
     if not request.query:
         raise HTTPException(status_code=400, detail="Query is required")
@@ -199,20 +197,50 @@ async def hybrid_search(
     if not query_embedding:
         query_embedding = await embedding_service.embed(request.query)
 
-    # If results are provided by the caller for reranking, rerank them
-    if request.use_rerank:
-        raise HTTPException(
-            status_code=501,
-            detail="Reranking should be performed by the caller. Send results to /rerank endpoint.",
-        )
+    # Execute vector search server-side
+    try:
+        from app.core.db import get_db_pool
 
-    # Return the embedding and search parameters for the caller to execute
-    return HybridSearchResponse(
-        query=request.query,
-        results=[],
-        total_results=0,
-        reranked=False,
-    )
+        pool = await get_db_pool()
+        conn = await pool.acquire()
+        async with conn:
+            embedding_str = f"[{','.join(map(str, query_embedding))}]"
+            results = await conn.execute(
+                """
+                SELECT dc.content, dc.document_id, d.filename,
+                       vector_distance_cos(dc.embedding, vector32(?)) as similarity,
+                       dc.metadata
+                FROM document_chunks dc
+                JOIN documents d ON dc.document_id = d.id
+                WHERE dc.user_id = ?
+                ORDER BY similarity ASC
+                LIMIT ?
+                """,
+                (embedding_str, user.user_id, request.top_k),
+            )
+
+            chunks = []
+            for idx, row in enumerate(results.fetchall()):
+                chunks.append(
+                    SearchResultItem(
+                        content=row[0],
+                        document_id=row[1],
+                        score=1 - row[3] if row[3] is not None else 0.0,
+                        rank=idx + 1,
+                        metadata=row[4] or {},
+                        source="hybrid",
+                    )
+                )
+
+            return HybridSearchResponse(
+                query=request.query,
+                results=chunks,
+                total_results=len(chunks),
+                reranked=False,
+            )
+    except Exception as e:
+        logger.exception("Hybrid search failed")
+        raise HTTPException(status_code=500, detail=f"Search failed: {e}")
 
 
 @router.post("/rerank")

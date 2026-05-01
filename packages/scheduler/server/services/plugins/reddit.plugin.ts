@@ -1,4 +1,4 @@
-import type { PostDetails, PostResponse, Integration, PluginPostDetails, PluginSocialMediaAccount } from '../SchedulerPost.service';
+import type { PostDetails, PostResponse, Integration, PluginPostDetails, PluginSocialMediaAccount, GetCommentsResponse, ReplyCommentResponse, PlatformComment } from '../SchedulerPost.service';
 import { BaseSchedulerPlugin, type MediaContent } from '../SchedulerPost.service';
 import type { Post, PostWithAllData, SocialMediaAccount, Asset } from '#layers/BaseDB/db/schema';
 import type { RedditSettings } from '../../../shared/platformSettings';
@@ -309,25 +309,59 @@ export class RedditPlugin extends BaseSchedulerPlugin {
   async getStatistic(
     postDetails: PluginPostDetails,
     socialMediaAccount: PluginSocialMediaAccount
-  ): Promise<any> {
-    const publicationDetails = postDetails.platformPosts.find((platform) => platform.socialAccountId === socialMediaAccount.id);
-    if (!publicationDetails) {
-      throw new Error('Published platform details not found');
-    }
-    const details = JSON.parse(publicationDetails.publishDetail as unknown as string || '{}') as PostResponse;
-    const postId = details.postId;
-    if (!postId) {
-      throw new Error('Post details not found');
-    }
-
-    const response = await fetch(`https://oauth.reddit.com/api/info?id=${postId}`, {
+  ): Promise<PlatformStats> {
+    // Fetch Reddit user profile
+    const userResponse = await fetch('https://oauth.reddit.com/api/v1/me', {
       headers: {
         Authorization: `Bearer ${socialMediaAccount.accessToken}`,
         'User-Agent': 'PostScheduler/1.0',
       },
-    });
-    const data = await response.json();
-    return data?.data?.children?.[0]?.data || {};
+    })
+    const profile = await userResponse.json()
+
+    // Fetch user's recent submissions for engagement stats
+    let totalEngagement = 0
+    let totalPosts = 0
+    try {
+      const submissionsResponse = await fetch(
+        `https://oauth.reddit.com/user/${profile.name}/submitted?limit=100&raw_json=1`,
+        {
+          headers: {
+            Authorization: `Bearer ${socialMediaAccount.accessToken}`,
+            'User-Agent': 'PostScheduler/1.0',
+          },
+        }
+      )
+      const submissions = await submissionsResponse.json()
+      const posts = submissions.data?.children || []
+      totalPosts = posts.length
+      for (const post of posts) {
+        const d = post.data || {}
+        totalEngagement += (d.score || 0) + (d.num_comments || 0)
+      }
+    } catch {
+      // Submissions fetch failed
+    }
+
+    return {
+      platform: 'reddit',
+      accountId: profile.id || socialMediaAccount.accountId,
+      username: profile.name || socialMediaAccount.accountName || '',
+      picture: profile.icon_img?.split('?')[0] || undefined,
+      fetchedAt: new Date().toISOString(),
+      followers: profile.num_friends || 0,
+      posts: totalPosts,
+      engagement: {
+        total: totalEngagement,
+        likes: 0,
+        comments: 0,
+      },
+      growth: undefined,
+      extra: {
+        karma: profile.link_karma || 0,
+        commentKarma: profile.comment_karma || 0,
+      },
+    }
   }
 
   override async addComment(
@@ -384,6 +418,133 @@ export class RedditPlugin extends BaseSchedulerPlugin {
       };
       this.emit('reddit:comment:failed', { error: (error as Error).message });
       return errorResponse;
+    }
+  }
+
+  /**
+   * Transform Reddit comment to PlatformComment format
+   */
+  private transformComment(comment: any): PlatformComment {
+    return {
+      id: comment.data?.name || comment.id,
+      text: comment.data?.body || comment.body || '',
+      authorName: comment.data?.author || comment.author || 'Unknown',
+      authorId: comment.data?.author_fullname || comment.author,
+      createdAt: comment.data?.created_utc ? new Date(comment.data.created_utc * 1000).toISOString() : '',
+      likeCount: comment.data?.ups || 0,
+      replyCount: comment.data?.num_comments || 0,
+      parentId: comment.data?.parent_id,
+    };
+  }
+
+  /**
+   * Get comments for a Reddit post
+   */
+  async getComments(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount,
+    options?: { limit?: number; cursor?: string }
+  ): Promise<GetCommentsResponse> {
+    const platformPost = postDetails.platformPosts?.find((pp: any) => pp.socialAccountId === socialMediaAccount.id);
+    const publishDetail = platformPost?.publishDetail ? JSON.parse(platformPost.publishDetail) : {};
+    const externalPostId = publishDetail[socialMediaAccount.id]?.publishedId || publishDetail.postId;
+
+    if (!externalPostId) {
+      return Promise.resolve({ platform: this.pluginName, postId: '', comments: [], hasMore: false });
+    }
+
+    try {
+      // Extract article ID from fullname (e.g., t3_abc123 -> abc123)
+      const articleId = externalPostId.replace('t3_', '');
+
+      const params = new URLSearchParams({
+        limit: String(options?.limit || 50),
+        raw_json: '1',
+      });
+
+      if (options?.cursor) {
+        params.append('after', options.cursor);
+      }
+
+      const response = await fetch(
+        `https://oauth.reddit.com/r/all/comments/${articleId}.json?${params.toString()}`,
+        {
+          headers: {
+            Authorization: `Bearer ${socialMediaAccount.accessToken}`,
+            'User-Agent': 'PostScheduler/1.0',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`Reddit get comments failed: ${error}`);
+      }
+
+      const data = await response.json();
+      // Reddit returns [post_data, comments_data] structure
+      const commentsData = data[1]?.data?.children || [];
+      const comments: PlatformComment[] = commentsData.map((c: any) => this.transformComment(c));
+
+      return {
+        platform: this.pluginName,
+        postId: externalPostId,
+        comments,
+        hasMore: !!data[1]?.data?.after,
+        nextCursor: data[1]?.data?.after,
+      };
+    } catch (error) {
+      console.error('Error fetching Reddit comments:', error);
+      return {
+        platform: this.pluginName,
+        postId: externalPostId,
+        comments: [],
+        hasMore: false,
+      };
+    }
+  }
+
+  /**
+   * Reply to a comment on Reddit
+   */
+  async replyToComment(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount,
+    commentId: string,
+    replyText: string
+  ): Promise<ReplyCommentResponse> {
+    try {
+      const response = await fetch('https://oauth.reddit.com/api/comment', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${socialMediaAccount.accessToken}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'User-Agent': 'PostScheduler/1.0',
+        },
+        body: new URLSearchParams({
+          thing_id: commentId, // Reply to the parent comment
+          text: replyText,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`Reddit reply failed: ${error}`);
+      }
+
+      const data = await response.json();
+      const newComment = data.json.data.things[0].data;
+
+      return {
+        success: true,
+        comment: this.transformComment(newComment),
+      };
+    } catch (error) {
+      console.error('Error replying to Reddit comment:', error);
+      return {
+        success: false,
+        error: (error as Error).message || 'Failed to reply to comment',
+      };
     }
   }
 }

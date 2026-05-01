@@ -6,8 +6,11 @@ import { createLlmJwt } from '#layers/BaseDB/server/utils/llm-jwt'
 import { userLlmConfigService } from '#layers/BaseDB/server/services/user-llm-config.service'
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event)
   const user = await checkUserIsLogin(event)
   const id = getRouterParam(event, 'id')
+
+  log.set({ documentId: id })
 
   if (!id) {
     throw createError({ statusCode: 400, statusMessage: 'Document ID required' })

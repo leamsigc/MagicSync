@@ -1,5 +1,5 @@
-import type { PostDetails, PostResponse, Integration, PluginPostDetails, PluginSocialMediaAccount } from '../SchedulerPost.service';
-import { BaseSchedulerPlugin, type MediaContent } from '../SchedulerPost.service';
+import type { PostDetails, PostResponse, Integration, PluginPostDetails, PluginSocialMediaAccount, GetCommentsResponse, ReplyCommentResponse, PlatformComment } from '../SchedulerPost.service';
+import { BaseSchedulerPlugin, type MediaContent, type PlatformStats } from '../SchedulerPost.service';
 import type { Post, PostWithAllData, SocialMediaAccount, Asset } from '#layers/BaseDB/db/schema';
 import { TwitterApi } from 'twitter-api-v2';
 import { platformConfigurations } from '../../../shared/platformConstants';
@@ -291,22 +291,55 @@ export class XPlugin extends BaseSchedulerPlugin {
   async getStatistic(
     postDetails: PostWithAllData,
     socialMediaAccount: SocialMediaAccount
-  ): Promise<any> {
-    const publicationDetails = postDetails.platformPosts.find((platform) => platform.socialAccountId === socialMediaAccount.id);
-    if (!publicationDetails) {
-      throw new Error('Published platform details not found');
-    }
-    const details = JSON.parse(publicationDetails.publishDetail as unknown as string || '{}') as PostResponse;
-    const postId = details.postId;
-    if (!postId) {
-      throw new Error('Post details not found');
+  ): Promise<PlatformStats> {
+    const accessToken = socialMediaAccount.accessToken
+    if (!accessToken) {
+      throw new Error('Access token not found')
     }
 
-    const accessToken = socialMediaAccount.accessToken;
-    if (!accessToken) {
-      throw new Error('Access token or access secret not found');
+    // Get user profile with public metrics
+    const profile = await this.getUser(accessToken)
+
+    // Get recent tweets for engagement data
+    let totalEngagement = 0
+    let totalPosts = 0
+    try {
+      const client = new TwitterApi(accessToken)
+      const tweets = await client.v2.userTimeline(profile.id, {
+        'tweet.fields': ['public_metrics', 'created_at'],
+        max_results: 100,
+      })
+      const tweetList = tweets.tweets || []
+      totalPosts = tweetList.length
+
+      for (const tweet of tweetList) {
+        const metrics = (tweet as any).public_metrics || {}
+        totalEngagement += (metrics.retweet_count || 0) + (metrics.like_count || 0) + (metrics.reply_count || 0) + (metrics.quote_count || 0)
+      }
+    } catch {
+      // Timeline fetch failed
     }
-    return this.getTweetMetrics(postId, accessToken);
+
+    return {
+      platform: 'twitter',
+      accountId: profile.id,
+      username: profile.username || socialMediaAccount.accountName || '',
+      picture: profile.profile_image_url || undefined,
+      fetchedAt: new Date().toISOString(),
+      followers: profile.public_metrics?.followers_count,
+      following: profile.public_metrics?.following_count,
+      posts: profile.public_metrics?.tweet_count,
+      engagement: {
+        total: totalEngagement,
+        likes: 0,
+        comments: 0,
+        shares: 0,
+      },
+      growth: undefined,
+      extra: {
+        name: profile.name,
+      },
+    }
   }
 
   override async addComment(
@@ -344,6 +377,127 @@ export class XPlugin extends BaseSchedulerPlugin {
       };
       this.emit('x:comment:failed', { error: (error as Error).message });
       return errorResponse;
+    }
+  }
+
+  /**
+   * Extract tweet ID from postDetails.platformPosts
+   */
+  private extractTweetId(postDetails: PluginPostDetails, socialMediaAccount: PluginSocialMediaAccount): string | null {
+    const platformPost = postDetails.platformPosts?.find(
+      (pp) => pp.socialAccountId === socialMediaAccount.id
+    );
+    if (!platformPost) return null;
+    
+    // Parse the publishDetail which is stored as JSON string
+    try {
+      const detail = JSON.parse(platformPost.publishDetail as unknown as string || '{}');
+      return detail.postId || null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Transform Twitter API tweet/reply to PlatformComment format
+   */
+  private transformTweetToComment(tweet: any): PlatformComment {
+    return {
+      id: tweet.id,
+      text: tweet.text || '',
+      authorName: tweet.author?.username || tweet.author?.name || 'Unknown',
+      authorId: tweet.author?.id,
+      authorPicture: tweet.author?.profile_image_url,
+      createdAt: tweet.created_at,
+      likeCount: tweet.public_metrics?.like_count,
+      replyCount: tweet.public_metrics?.reply_count,
+      parentId: tweet.conversation_id !== tweet.id ? tweet.conversation_id : undefined,
+    };
+  }
+
+  /**
+   * Get comments for a tweet
+   * Note: Twitter's standard API doesn't expose all replies without elevated access.
+   * This implementation returns an empty comments array with a note about API limitations.
+   */
+  async getComments(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount,
+    options?: { limit?: number; cursor?: string }
+  ): Promise<GetCommentsResponse> {
+    const tweetId = this.extractTweetId(postDetails, socialMediaAccount);
+
+    if (!tweetId) {
+      return {
+        platform: this.pluginName,
+        postId: postDetails.id,
+        comments: [],
+        hasMore: false,
+      };
+    }
+
+    const accessToken = socialMediaAccount.accessToken;
+
+    try {
+      const client = new TwitterApi(accessToken);
+
+      // Try to fetch tweet info with conversation context
+      // Twitter API v2 standard doesn't expose all replies without elevated access
+      // We can only get the original tweet info
+      const tweet = await client.v2.singleTweet(tweetId, {
+        'tweet.fields': ['conversation_id', 'created_at', 'public_metrics', 'author_id'],
+        expansions: ['author_id'],
+        'user.fields': ['name', 'username', 'profile_image_url'],
+      });
+
+      // Twitter standard API doesn't return all replies/comments without elevated access
+      // Return empty comments array with hasMore: false to indicate API limitation
+      return {
+        platform: this.pluginName,
+        postId: tweetId,
+        comments: [],
+        hasMore: false,
+      };
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+      // Return empty on error rather than throwing, consistent with Facebook plugin behavior
+      return {
+        platform: this.pluginName,
+        postId: tweetId,
+        comments: [],
+        hasMore: false,
+      };
+    }
+  }
+
+  /**
+   * Reply to a comment (tweet)
+   * commentId is the tweet ID to reply to
+   */
+  async replyToComment(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount,
+    commentId: string,
+    replyText: string
+  ): Promise<ReplyCommentResponse> {
+    const accessToken = socialMediaAccount.accessToken;
+
+    try {
+      const client = new TwitterApi(accessToken);
+
+      // commentId here IS the tweet ID to reply to
+      const reply = await client.v2.reply(replyText, commentId);
+
+      return {
+        success: true,
+        comment: this.transformTweetToComment(reply.data),
+      };
+    } catch (error) {
+      console.error('Error replying to comment:', error);
+      return {
+        success: false,
+        error: (error as Error).message || 'Failed to reply to comment',
+      };
     }
   }
 }

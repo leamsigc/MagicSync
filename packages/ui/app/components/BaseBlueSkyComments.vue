@@ -54,7 +54,7 @@ const loadComments = async () => {
       post.value = baseTreat as unknown as DisplayThread;
     }
   } catch (e) {
-    console.error('Error loading comments:', e)
+    // Error is set to display user-friendly message
     error.value = true
   }
 }
@@ -100,7 +100,7 @@ const resolvePostUrl = async (postUrl: string) => {
         did = handleData.did
       } catch (e) {
         const error = e as Error
-        console.error(`Failed to resolve handle: ${error.message || error}`)
+        // Error handled silently - URL resolution failed
         return undefined
       }
     }

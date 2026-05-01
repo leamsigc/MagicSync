@@ -7,22 +7,28 @@ const markReadSchema = z.object({
 })
 
 export default defineEventHandler(async (event) => {
+    const log = useLogger(event)
     try {
         // Get authenticated user
         const user = await checkUserIsLogin(event)
+        log.set({ userId: user.id })
 
         // Parse and validate request body
         const body = await readBody(event)
         const validatedData = markReadSchema.parse(body)
+
+        log.set({ markAll: validatedData.markAll, notificationId: validatedData.notificationId })
 
         let result
 
         if (validatedData.markAll) {
             // Mark all notifications as read
             result = await notificationService.markAllAsRead(user.id)
+            log.info({ content: 'All notifications marked as read' })
         } else if (validatedData.notificationId) {
             // Mark single notification as read
             result = await notificationService.markAsRead(validatedData.notificationId, user.id)
+            log.info({ content: 'Notification marked as read', notificationId: validatedData.notificationId })
         } else {
             throw createError({
                 statusCode: 400,
@@ -36,6 +42,8 @@ export default defineEventHandler(async (event) => {
             data: result
         }
     } catch (error: any) {
+        log.error({ content: 'Failed to mark notification as read', error: error.message })
+
         if (error instanceof z.ZodError) {
             throw createError({
                 statusCode: 400,

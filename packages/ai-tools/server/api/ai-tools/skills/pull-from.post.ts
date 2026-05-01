@@ -9,12 +9,15 @@ interface ImportBody {
 }
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event)
   const user = await checkUserIsLogin(event)
   const config = useRuntimeConfig()
 
   const body = await readBody<ImportBody>(event)
   const queryParams = getQuery(event)
   const targetImportFrom: ImportFrom = (queryParams.importFrom as ImportFrom) || 'folder'
+
+  log.set({ importFrom: targetImportFrom })
 
   const response = await $fetch(`${config.public.pythonBackendUrl}/skills/import/${targetImportFrom}`, {
     method: 'POST',

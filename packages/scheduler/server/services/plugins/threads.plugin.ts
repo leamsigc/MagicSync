@@ -1,4 +1,4 @@
-import type { PostResponse, Integration, PluginPostDetails, PluginSocialMediaAccount } from '../SchedulerPost.service';
+import type { PostResponse, Integration, PluginPostDetails, PluginSocialMediaAccount, GetCommentsResponse, ReplyCommentResponse, PlatformComment, PlatformStats } from '../SchedulerPost.service';
 import { BaseSchedulerPlugin, type MediaContent } from '../SchedulerPost.service';
 import type { Post, PostWithAllData, SocialMediaAccount, Asset } from '#layers/BaseDB/db/schema';
 import type { ThreadsSettings } from '../../../shared/platformSettings';
@@ -6,8 +6,54 @@ import type { ThreadsSettings } from '../../../shared/platformSettings';
 import { platformConfigurations } from '../../../shared/platformConstants';
 
 export class ThreadsPlugin extends BaseSchedulerPlugin {
-  override getStatistic(postDetails: PluginPostDetails, socialMediaAccount: PluginSocialMediaAccount): Promise<any> {
-    throw new Error('Method not implemented.');
+  override async getStatistic(postDetails: PluginPostDetails, socialMediaAccount: PluginSocialMediaAccount): Promise<PlatformStats> {
+    try {
+      const accessToken = socialMediaAccount.accessToken;
+      const response = await fetch(
+        `https://graph.threads.net/v1.0/me?fields=id,username,name,profile_picture_url,followers_count,following_count,biography`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.text();
+        console.error(`[Threads] Failed to fetch stats: ${error}`);
+        return this.createZeroStats(socialMediaAccount);
+      }
+
+      const profile = await response.json();
+
+      return {
+        platform: 'threads',
+        accountId: profile.id || socialMediaAccount.accountId || '',
+        username: profile.username || socialMediaAccount.username || socialMediaAccount.accountName || '',
+        picture: profile.profile_picture_url,
+        fetchedAt: new Date().toISOString(),
+        followers: profile.followers_count || 0,
+        following: profile.following_count || 0,
+        extra: {
+          name: profile.name,
+          biography: profile.biography,
+        },
+      };
+    } catch (error) {
+      console.error('[Threads] Error fetching stats:', error);
+      return this.createZeroStats(socialMediaAccount);
+    }
+  }
+
+  private createZeroStats(socialMediaAccount: PluginSocialMediaAccount): PlatformStats {
+    return {
+      platform: 'threads',
+      accountId: socialMediaAccount.accountId || '',
+      username: socialMediaAccount.username || socialMediaAccount.accountName || '',
+      fetchedAt: new Date().toISOString(),
+      followers: 0,
+      following: 0,
+    };
   }
   static readonly pluginName = 'threads';
   readonly pluginName = 'threads';
@@ -298,6 +344,145 @@ export class ThreadsPlugin extends BaseSchedulerPlugin {
       };
       this.emit('threads:comment:failed', { error: (error as Error).message });
       return errorResponse;
+    }
+  }
+
+  /**
+   * Transform Threads API comment to PlatformComment format
+   */
+  private transformComment(comment: any): PlatformComment {
+    return {
+      id: comment.id,
+      text: comment.text || '',
+      authorName: comment.from?.username || 'Unknown',
+      authorId: comment.from?.id,
+      authorPicture: comment.from?.profile_picture_url,
+      createdAt: comment.timestamp || comment.created_time,
+      likeCount: comment.like_count,
+      replyCount: comment.replies?.data?.length || 0,
+      parentId: comment.parent_id,
+    };
+  }
+
+  /**
+   * Get comments for a Threads post
+   * Note: Threads API has limited public access for fetching comments
+   */
+  async getComments(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount,
+    options?: { limit?: number; cursor?: string }
+  ): Promise<GetCommentsResponse> {
+    const platformPost = postDetails.platformPosts?.find((pp: any) => pp.socialAccountId === socialMediaAccount.id);
+    const publishDetail = platformPost?.publishDetail ? JSON.parse(platformPost.publishDetail) : {};
+    const externalPostId = publishDetail[socialMediaAccount.id]?.publishedId || publishDetail.postId;
+
+    if (!externalPostId) {
+      return Promise.resolve({ platform: this.pluginName, postId: '', comments: [], hasMore: false });
+    }
+
+    try {
+      const userId = socialMediaAccount.metadata?.threadsUserId || socialMediaAccount.accountId;
+      const params = new URLSearchParams({
+        access_token: socialMediaAccount.accessToken,
+        fields: 'id,text,timestamp,like_count,replies{id,text,timestamp,from,like_count},from',
+        limit: String(options?.limit || 50),
+      });
+
+      if (options?.cursor) {
+        params.append('after', options.cursor);
+      }
+
+      const response = await fetch(
+        `https://graph.threads.net/${userId}/threads?${params.toString()}`,
+        {
+          headers: {
+            Authorization: `Bearer ${socialMediaAccount.accessToken}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`Threads get comments failed: ${error}`);
+      }
+
+      const data = await response.json();
+      // Threads API may not return comments directly; return empty if not available
+      const comments: PlatformComment[] = (data.data || []).map((c: any) => this.transformComment(c));
+
+      return {
+        platform: this.pluginName,
+        postId: externalPostId,
+        comments,
+        hasMore: !!data.paging?.cursors?.after,
+        nextCursor: data.paging?.cursors?.after,
+      };
+    } catch (error) {
+      console.error('Error fetching Threads comments:', error);
+      return {
+        platform: this.pluginName,
+        postId: externalPostId,
+        comments: [],
+        hasMore: false,
+      };
+    }
+  }
+
+  /**
+   * Reply to a comment on Threads
+   */
+  async replyToComment(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount,
+    commentId: string,
+    replyText: string
+  ): Promise<ReplyCommentResponse> {
+    try {
+      const userId = socialMediaAccount.metadata?.threadsUserId || socialMediaAccount.accountId;
+
+      // Create reply container
+      const params = new URLSearchParams({
+        media_type: 'TEXT',
+        text: replyText,
+        reply_to_id: commentId, // Reply to the parent comment
+        access_token: socialMediaAccount.accessToken,
+      });
+
+      const createResponse = await fetch(
+        `https://graph.threads.net/${userId}/threads?${params.toString()}`,
+        { method: 'POST' }
+      );
+
+      if (!createResponse.ok) {
+        const error = await createResponse.text();
+        throw new Error(`Threads reply creation failed: ${error}`);
+      }
+
+      const createData = await createResponse.json();
+
+      // Publish reply
+      const publishData = await this.publishThreadContainer(
+        userId,
+        createData.id,
+        socialMediaAccount.accessToken
+      );
+
+      return {
+        success: true,
+        comment: {
+          id: publishData.id,
+          text: replyText,
+          authorName: socialMediaAccount.username || socialMediaAccount.accountName || 'Unknown',
+          createdAt: new Date().toISOString(),
+        },
+      };
+    } catch (error) {
+      console.error('Error replying to Threads comment:', error);
+      return {
+        success: false,
+        error: (error as Error).message || 'Failed to reply to comment',
+      };
     }
   }
 }

@@ -1,5 +1,5 @@
-import type { auth } from './auth'
-import { apiKeyClient } from "@better-auth/api-key/client"
+import type { auth } from './auth';
+import { apiKeyClient } from "@better-auth/api-key/client";
 import { adminClient, inferAdditionalFields, genericOAuthClient, organizationClient, } from 'better-auth/client/plugins'
 import { createAuthClient } from "better-auth/client"
 

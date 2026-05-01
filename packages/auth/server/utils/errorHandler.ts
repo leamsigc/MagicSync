@@ -187,8 +187,10 @@ export function createErrorHandler() {
       endpoint: event.node.req.url,
       context: {
         method: event.node.req.method,
-        headers: event.node.req.headers,
-        userAgent: event.node.req.headers['user-agent']
+        // SAFE: whitelist only non-sensitive headers — never log authorization, cookie, set-cookie, x-api-key
+        userAgent: event.node.req.headers['user-agent'],
+        contentType: event.node.req.headers['content-type'],
+        referer: event.node.req.headers['referer'],
       }
     })
 

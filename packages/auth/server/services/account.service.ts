@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
 import { account } from '#layers/BaseDB/db/schema'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
 
@@ -29,7 +29,10 @@ export const accountService = {
 
         const result = await db
             .delete(account)
-            .where(eq(account.id, accountId))
+            .where(and(
+                eq(account.id, accountId),
+                eq(account.userId, userId)  // Ownership check: only delete if account belongs to user
+            ))
             .returning()
 
         if (!result || result.length === 0) {

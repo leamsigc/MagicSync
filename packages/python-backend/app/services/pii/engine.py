@@ -4,6 +4,8 @@ from typing import Optional
 from presidio_analyzer import AnalyzerEngine
 from presidio_anonymizer import AnonymizerEngine
 
+from .persistence import save_mapping, load_mappings, clear_mappings
+
 logger = logging.getLogger(__name__)
 
 SURROGATE_TYPES = {
@@ -25,6 +27,10 @@ class PIIEngine:
         self.anonymizer = AnonymizerEngine()
         self._surrogate_map: dict[str, dict[str, str]] = {}
         self._reverse_map: dict[str, dict[str, str]] = {}
+
+    def load_user_mappings(self, user_id: str):
+        """Load persisted mappings from DB for a user."""
+        self._reverse_map[user_id] = load_mappings(user_id)
 
     def detect(self, text: str, threshold: float = 0.5) -> list[dict]:
         """
@@ -157,7 +163,7 @@ class PIIEngine:
         return fake.word()
 
     def _store_mapping(self, user_id: str, fake_value: str, original: str, pii_type: str):
-        """Store mapping for de-anonymization."""
+        """Store mapping for de-anonymization (in-memory + DB)."""
         if user_id not in self._reverse_map:
             self._reverse_map[user_id] = {}
         
@@ -165,11 +171,19 @@ class PIIEngine:
             self._reverse_map[user_id][pii_type] = {}
         
         self._reverse_map[user_id][pii_type][fake_value.lower()] = original
+        
+        # Persist to database for durability
+        save_mapping(user_id, pii_type, fake_value, original)
 
     def de_anonymize(self, text: str, user_id: str) -> str:
         """
         Reverse anonymization: replace surrogates with original values.
+        Loads from DB if mappings not in memory.
         """
+        # Load from DB if not in memory
+        if user_id not in self._reverse_map:
+            self.load_user_mappings(user_id)
+        
         if user_id not in self._reverse_map:
             return text
         
@@ -186,11 +200,14 @@ class PIIEngine:
         return result
 
     def clear_mappings(self, user_id: str):
-        """Clear stored mappings for a user."""
+        """Clear stored mappings for a user (in-memory + DB)."""
         if user_id in self._surrogate_map:
             del self._surrogate_map[user_id]
         if user_id in self._reverse_map:
             del self._reverse_map[user_id]
+        
+        # Clear from database as well
+        clear_mappings(user_id)
 
 
 pii_engine = PIIEngine()

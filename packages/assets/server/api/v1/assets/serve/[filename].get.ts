@@ -2,14 +2,17 @@ import { promises as fs } from 'node:fs'
 import { join } from 'node:path'
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event)
   const FILE_STORAGE_MOUNT = process.env.NUXT_FILE_STORAGE_MOUNT
 
 
   try {
     // Get user from session
     const user = await checkUserIsLogin(event)
+    log.set({ userId: user.id })
 
     const filename = getRouterParam(event, 'filename')
+    log.set({ filename })
 
     if (!filename) {
       throw createError({
@@ -55,6 +58,7 @@ export default defineEventHandler(async (event) => {
     }
 
     console.error('Error serving asset:', error)
+    log.error('Failed to serve asset', { error })
     throw createError({
       statusCode: 500,
       statusMessage: 'Internal server error'

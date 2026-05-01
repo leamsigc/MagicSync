@@ -2,7 +2,7 @@
 import { and, eq, sql } from 'drizzle-orm'
 import { subscriptions, type Subscription } from '#layers/BaseDB/db/schema'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
-import { ValidationError, type ServiceResponse } from './types'
+import { ValidationError, UnauthorizedError, type ServiceResponse } from './types'
 
 export interface CreateSubscriptionData {
   tier: 'trial' | 'basic' | 'normal' | 'gold' | 'god_mode'
@@ -41,8 +41,8 @@ export class SubscriptionService {
 
       // Check if user already has an active subscription
       const existingResult = await this.findByUserId(userId)
-      if (existingResult.success && existingResult.data) {
-        return { success: false, error: 'User already has a subscription', code: 'SUBSCRIPTION_EXISTS' }
+      if (existingResult.data) {
+        return { error: 'User already has a subscription', code: 'SUBSCRIPTION_EXISTS' }
       }
 
       const id = crypto.randomUUID()
@@ -56,16 +56,16 @@ export class SubscriptionService {
         updatedAt: now
       }).returning()
 
-      return { success: true, data: subscription }
+      return { data: subscription }
     } catch (error) {
       if (error instanceof ValidationError) {
-        return { success: false, error: error.message, code: error.code }
+        return { error: error.message, code: error.code }
       }
-      return { success: false, error: 'Failed to create subscription' }
+      return { error: 'Failed to create subscription' }
     }
   }
 
-  async findById(id: string): Promise<ServiceResponse<Subscription>> {
+  async findById(id: string, userId: string): Promise<ServiceResponse<Subscription>> {
     try {
       const [subscription] = await this.db
         .select()
@@ -74,12 +74,17 @@ export class SubscriptionService {
         .limit(1)
 
       if (!subscription) {
-        return { success: false, error: 'Subscription not found', code: 'NOT_FOUND' }
+        return { error: 'Subscription not found', code: 'NOT_FOUND' }
       }
 
-      return { success: true, data: subscription }
+      // Ownership check
+      if (subscription.userId !== userId) {
+        return { error: 'Unauthorized', code: 'UNAUTHORIZED' }
+      }
+
+      return { data: subscription }
     } catch (error) {
-      return { success: false, error: 'Failed to fetch subscription' }
+      return { error: 'Failed to fetch subscription' }
     }
   }
 
@@ -92,12 +97,12 @@ export class SubscriptionService {
         .limit(1)
 
       if (!subscription) {
-        return { success: false, error: 'Subscription not found', code: 'NOT_FOUND' }
+        return { error: 'Subscription not found', code: 'NOT_FOUND' }
       }
 
-      return { success: true, data: subscription }
+      return { data: subscription }
     } catch (error) {
-      return { success: false, error: 'Failed to fetch subscription' }
+      return { error: 'Failed to fetch subscription' }
     }
   }
 
@@ -110,17 +115,28 @@ export class SubscriptionService {
         .limit(1)
 
       if (!subscription) {
-        return { success: false, error: 'Subscription not found', code: 'NOT_FOUND' }
+        return { error: 'Subscription not found', code: 'NOT_FOUND' }
       }
 
-      return { success: true, data: subscription }
+      return { data: subscription }
     } catch (error) {
-      return { success: false, error: 'Failed to fetch subscription' }
+      return { error: 'Failed to fetch subscription' }
     }
   }
 
-  async update(id: string, data: UpdateSubscriptionData): Promise<ServiceResponse<Subscription>> {
+  async update(id: string, userId: string, data: UpdateSubscriptionData): Promise<ServiceResponse<Subscription>> {
     try {
+      // Fetch subscription first to verify ownership
+      const existingResult = await this.findById(id, userId)
+      if (existingResult.error || !existingResult.data) {
+        return { error: existingResult.error || 'Subscription not found', code: 'NOT_FOUND' }
+      }
+
+      // Ownership check
+      if (existingResult.data.userId !== userId) {
+        return { error: 'Unauthorized', code: 'UNAUTHORIZED' }
+      }
+
       const [updated] = await this.db
         .update(subscriptions)
         .set({
@@ -131,17 +147,27 @@ export class SubscriptionService {
         .returning()
 
       if (!updated) {
-        return { success: false, error: 'Subscription not found', code: 'NOT_FOUND' }
+        return { error: 'Subscription not found', code: 'NOT_FOUND' }
       }
 
-      return { success: true, data: updated }
+      return { data: updated }
     } catch (error) {
-      return { success: false, error: 'Failed to update subscription' }
+      return { error: 'Failed to update subscription' }
     }
   }
 
   async updateByUserId(userId: string, data: UpdateSubscriptionData): Promise<ServiceResponse<Subscription>> {
     try {
+      // Fetch subscription first to verify ownership
+      const existingResult = await this.findByUserId(userId)
+      if (existingResult.error && existingResult.code !== 'NOT_FOUND') {
+        return existingResult
+      }
+
+      if (!existingResult.data) {
+        return { error: 'Subscription not found', code: 'NOT_FOUND' }
+      }
+
       const [updated] = await this.db
         .update(subscriptions)
         .set({
@@ -152,17 +178,27 @@ export class SubscriptionService {
         .returning()
 
       if (!updated) {
-        return { success: false, error: 'Subscription not found', code: 'NOT_FOUND' }
+        return { error: 'Subscription not found', code: 'NOT_FOUND' }
       }
 
-      return { success: true, data: updated }
+      return { data: updated }
     } catch (error) {
-      return { success: false, error: 'Failed to update subscription' }
+      return { error: 'Failed to update subscription' }
     }
   }
 
   async cancel(userId: string): Promise<ServiceResponse<Subscription>> {
     try {
+      // Fetch subscription first to verify ownership
+      const existingResult = await this.findByUserId(userId)
+      if (existingResult.error && existingResult.code !== 'NOT_FOUND') {
+        return existingResult
+      }
+
+      if (!existingResult.data) {
+        return { error: 'Subscription not found', code: 'NOT_FOUND' }
+      }
+
       const [updated] = await this.db
         .update(subscriptions)
         .set({
@@ -173,17 +209,27 @@ export class SubscriptionService {
         .returning()
 
       if (!updated) {
-        return { success: false, error: 'Subscription not found', code: 'NOT_FOUND' }
+        return { error: 'Subscription not found', code: 'NOT_FOUND' }
       }
 
-      return { success: true, data: updated }
+      return { data: updated }
     } catch (error) {
-      return { success: false, error: 'Failed to cancel subscription' }
+      return { error: 'Failed to cancel subscription' }
     }
   }
 
   async reactivate(userId: string): Promise<ServiceResponse<Subscription>> {
     try {
+      // Fetch subscription first to verify ownership
+      const existingResult = await this.findByUserId(userId)
+      if (existingResult.error && existingResult.code !== 'NOT_FOUND') {
+        return existingResult
+      }
+
+      if (!existingResult.data) {
+        return { error: 'Subscription not found', code: 'NOT_FOUND' }
+      }
+
       const [updated] = await this.db
         .update(subscriptions)
         .set({
@@ -194,12 +240,12 @@ export class SubscriptionService {
         .returning()
 
       if (!updated) {
-        return { success: false, error: 'Subscription not found', code: 'NOT_FOUND' }
+        return { error: 'Subscription not found', code: 'NOT_FOUND' }
       }
 
-      return { success: true, data: updated }
+      return { data: updated }
     } catch (error) {
-      return { success: false, error: 'Failed to reactivate subscription' }
+      return { error: 'Failed to reactivate subscription' }
     }
   }
 
@@ -216,9 +262,9 @@ export class SubscriptionService {
           sql`${subscriptions.currentPeriodEnd} <= ${thresholdDate.getTime()}`
         ))
 
-      return { success: true, data: expiring }
+      return { data: expiring }
     } catch (error) {
-      return { success: false, error: 'Failed to fetch expiring subscriptions' }
+      return { error: 'Failed to fetch expiring subscriptions' }
     }
   }
 
@@ -235,9 +281,9 @@ export class SubscriptionService {
           sql`${subscriptions.trialEndsAt} <= ${thresholdDate.getTime()}`
         ))
 
-      return { success: true, data: expiring }
+      return { data: expiring }
     } catch (error) {
-      return { success: false, error: 'Failed to fetch expiring trials' }
+      return { error: 'Failed to fetch expiring trials' }
     }
   }
 
@@ -296,11 +342,10 @@ export class SubscriptionService {
   async checkLimit(userId: string, limitType: keyof SubscriptionLimits): Promise<ServiceResponse<{ allowed: boolean, current: number, limit: number }>> {
     try {
       const subscriptionResult = await this.findByUserId(userId)
-      if (!subscriptionResult.success) {
+      if (!subscriptionResult.data) {
         // Default to trial limits if no subscription found
         const limits = this.getLimits('trial')
         return {
-          success: true,
           data: {
             allowed: false,
             current: 0,
@@ -309,13 +354,12 @@ export class SubscriptionService {
         }
       }
 
-      const limits = this.getLimits(subscriptionResult.data!.tier)
+      const limits = this.getLimits(subscriptionResult.data.tier)
       const limit = limits[limitType] as number
 
       // If limit is -1, it's unlimited
       if (limit === -1) {
         return {
-          success: true,
           data: {
             allowed: true,
             current: 0,
@@ -327,7 +371,6 @@ export class SubscriptionService {
       // For boolean limits, just return the value
       if (typeof limits[limitType] === 'boolean') {
         return {
-          success: true,
           data: {
             allowed: limits[limitType] as boolean,
             current: 0,
@@ -341,7 +384,6 @@ export class SubscriptionService {
       const current = 0 // Placeholder
 
       return {
-        success: true,
         data: {
           allowed: current < limit,
           current,
@@ -349,19 +391,25 @@ export class SubscriptionService {
         }
       }
     } catch (error) {
-      return { success: false, error: 'Failed to check subscription limit' }
+      return { error: 'Failed to check subscription limit' }
     }
   }
 
-  async delete(id: string): Promise<ServiceResponse<void>> {
+  async delete(id: string, userId: string): Promise<ServiceResponse<void>> {
     try {
+      // Fetch subscription first to verify ownership
+      const existingResult = await this.findById(id, userId)
+      if (existingResult.error || !existingResult.data) {
+        return { error: existingResult.error || 'Subscription not found', code: existingResult.code || 'NOT_FOUND' }
+      }
+
       await this.db
         .delete(subscriptions)
         .where(eq(subscriptions.id, id))
 
-      return { success: true }
+      return {}
     } catch (error) {
-      return { success: false, error: 'Failed to delete subscription' }
+      return { error: 'Failed to delete subscription' }
     }
   }
 

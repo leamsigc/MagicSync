@@ -2,8 +2,11 @@ import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
 import { userLlmConfigService } from '#layers/BaseDB/server/services/user-llm-config.service'
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event)
   const user = await checkUserIsLogin(event)
   const body = await readBody(event)
+
+  log.set({ provider: body.provider, model: body.model })
 
   if (!body?.provider || !body?.model) {
     throw createError({ statusCode: 400, statusMessage: 'Provider and model are required' })

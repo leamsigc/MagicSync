@@ -46,9 +46,9 @@ export function UseUser() {
       ? Object.assign({}, userDefaults, data.user)
       : null
     sessionFetching.value = false
+    // Session fetched successfully
     return data
   }
-
   if (import.meta.client) {
     client.$store.listen('$sessionSignal', async (signal) => {
       if (!signal)

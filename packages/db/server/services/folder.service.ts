@@ -1,4 +1,4 @@
-import { eq, and, or, sql, desc } from 'drizzle-orm'
+import { eq, and, or, sql, desc, inArray } from 'drizzle-orm'
 import { type ServiceResponse, type QueryOptions } from './types'
 import { knowledgeFolders, documents, type KnowledgeFolder } from '#layers/BaseDB/db/rag/rag'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
@@ -188,12 +188,11 @@ export class FolderService {
         return { data: 0 }
       }
 
-      for (const docId of documentIds) {
-        await this.db
-          .update(documents)
-          .set({ folderId })
-          .where(and(eq(documents.id, docId), eq(documents.userId, userId)))
-      }
+      // FIX: batch update in single query instead of N individual updates
+      await this.db
+        .update(documents)
+        .set({ folderId })
+        .where(and(inArray(documents.id, documentIds), eq(documents.userId, userId)))
 
       return { data: documentIds.length }
     } catch (error) {

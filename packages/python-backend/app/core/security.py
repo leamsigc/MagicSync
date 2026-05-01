@@ -20,6 +20,7 @@ class LlmConfig:
     api_base: str | None = None
     temperature: float = 0.7
     max_tokens: int = 120000
+    provider_fallback: list | None = None  # List of fallback providers [{"provider": "ollama", "model": "qwen3.5"}, ...]
 
 
 @dataclass
@@ -60,6 +61,7 @@ def decode_llm_jwt(token: str) -> UserContext | None:
             api_base=payload.get("apiBaseUrl"),
             temperature=payload.get("temperature", 0.7),
             max_tokens=payload.get("maxTokens", 2048),
+            provider_fallback=payload.get("providerFallback"),
         )
 
         return UserContext(

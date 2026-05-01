@@ -5,12 +5,16 @@ import { checkUserIsLogin, encryptKey } from "#layers/BaseAuth/server/utils/Auth
  * Handles: bluesky, devto, wordpress
  */
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event)
   try {
     const platform = getRouterParam(event, 'platform') as SocialMediaPlatform
+    log.set({ platform })
+
     const body = await readBody(event)
 
     // Verify user is logged in
     const user = await checkUserIsLogin(event)
+    log.set({ userId: user.id })
 
     const { businessId, ...credentials } = body
 
@@ -20,6 +24,8 @@ export default defineEventHandler(async (event) => {
         statusMessage: 'Business ID is required'
       })
     }
+
+    log.set({ businessId })
 
     if (!credentials) {
       throw createError({
@@ -64,6 +70,7 @@ export default defineEventHandler(async (event) => {
             picture
           }
         } catch (error) {
+          log.error('Bluesky authentication failed', { platform, error })
           throw createError({
             statusCode: 401,
             statusMessage: 'Invalid Bluesky credentials'
@@ -103,6 +110,7 @@ export default defineEventHandler(async (event) => {
             picture: userData.profile_image
           }
         } catch (error) {
+          log.error('Dev.to authentication failed', { platform, error })
           throw createError({
             statusCode: 401,
             statusMessage: 'Invalid Dev.to API key'
@@ -143,6 +151,7 @@ export default defineEventHandler(async (event) => {
             picture: userData.avatar
           }
         } catch (error) {
+          log.error('WordPress authentication failed', { platform, error })
           throw createError({
             statusCode: 401,
             statusMessage: 'Invalid WordPress credentials'
@@ -176,13 +185,15 @@ export default defineEventHandler(async (event) => {
       platformId: platform
     })
 
+    log.info('API key authentication successful', { platform, accountId: account?.accountId })
+
     return {
       success: true,
       account
     }
 
   } catch (error) {
-    console.error('Error handling API key authentication:', error)
+    log.error('API key authentication failed', { error })
 
     throw createError({
       statusCode: (error as any)?.statusCode || 500,

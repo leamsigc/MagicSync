@@ -1,4 +1,4 @@
-import type { PostResponse, Integration, PluginPostDetails, PluginSocialMediaAccount } from '../SchedulerPost.service';
+import type { PostResponse, Integration, PluginPostDetails, PluginSocialMediaAccount, GetCommentsResponse, ReplyCommentResponse, PlatformComment, PlatformStats } from '../SchedulerPost.service';
 import { BaseSchedulerPlugin } from '../SchedulerPost.service';
 import type { Post, PostWithAllData, SocialMediaAccount } from '#layers/BaseDB/db/schema';
 
@@ -11,8 +11,97 @@ import type { Post, PostWithAllData, SocialMediaAccount } from '#layers/BaseDB/d
 import { platformConfigurations } from '../../../shared/platformConstants';
 
 export class InstagramStandalonePlugin extends BaseSchedulerPlugin {
-  override getStatistic(postDetails: PluginPostDetails, socialMediaAccount: PluginSocialMediaAccount): Promise<any> {
-    throw new Error('Method not implemented.');
+  override async getStatistic(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount
+  ): Promise<PlatformStats> {
+    const { accessToken, accountId, accountName } = socialMediaAccount;
+
+    try {
+      // 1. Fetch basic account info
+      const basicUrl = `https://graph.instagram.com/me?fields=id,username,account_type,media_count&access_token=${accessToken}`;
+      const basicRes = await fetch(basicUrl);
+
+      if (!basicRes.ok) {
+        console.warn(`Instagram-standalone basic info API error: ${basicRes.status} ${basicRes.statusText}`);
+        return this.getZeroStats(accountId, accountName);
+      }
+
+      const basic: { id?: string; username?: string; account_type?: string; media_count?: number } = await basicRes.json();
+      const igId = basic.id || accountId;
+
+      // 2. Fetch insights (follower_count, impressions, reach, engagement)
+      let followers = 0;
+      let impressions = 0;
+      let reach = 0;
+      let engagement = 0;
+
+      try {
+        const insightsUrl = `https://graph.instagram.com/${igId}/insights?metric=follower_count,impressions,reach,engagement&access_token=${accessToken}`;
+        const insightsRes = await fetch(insightsUrl);
+
+        if (insightsRes.ok) {
+          const insights: { data?: Array<{ name: string; values: Array<{ value: number }> }> } = await insightsRes.json();
+
+          for (const metric of insights.data || []) {
+            const value = metric.values?.[0]?.value ?? 0;
+            switch (metric.name) {
+              case 'follower_count':
+                followers = value;
+                break;
+              case 'impressions':
+                impressions = value;
+                break;
+              case 'reach':
+                reach = value;
+                break;
+              case 'engagement':
+                engagement = value;
+                break;
+            }
+          }
+        }
+      } catch (insightsErr) {
+        console.warn('Instagram-standalone insights fetch failed, using zero fallback:', insightsErr);
+      }
+
+      return {
+        platform: 'instagram-standalone',
+        accountId: igId,
+        username: basic.username || accountName || accountId,
+        fetchedAt: new Date().toISOString(),
+        posts: basic.media_count || 0,
+        followers,
+        engagement: {
+          total: engagement,
+          impressions,
+          reach,
+        },
+        extra: {
+          account_type: basic.account_type,
+        },
+      };
+    } catch (error) {
+      console.error('Instagram-standalone getStatistic error:', error);
+      return this.getZeroStats(accountId, accountName);
+    }
+  }
+
+  private getZeroStats(accountId: string, accountName?: string): PlatformStats {
+    return {
+      platform: 'instagram-standalone',
+      accountId,
+      username: accountName || accountId,
+      fetchedAt: new Date().toISOString(),
+      followers: 0,
+      following: 0,
+      posts: 0,
+      engagement: {
+        total: 0,
+        impressions: 0,
+        reach: 0,
+      },
+    };
   }
   static readonly pluginName = 'instagram-standalone';
   readonly pluginName = 'instagram-standalone';
@@ -94,5 +183,38 @@ export class InstagramStandalonePlugin extends BaseSchedulerPlugin {
       error: 'Instagram Basic Display API deprecated'
     });
     return Promise.resolve(errorResponse);
+  }
+
+  /**
+   * Get comments for an Instagram standalone post
+   * Note: Instagram standalone does not support comments API
+   */
+  async getComments(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount,
+    options?: { limit?: number; cursor?: string }
+  ): Promise<GetCommentsResponse> {
+    return Promise.resolve({
+      platform: this.pluginName,
+      postId: '',
+      comments: [],
+      hasMore: false,
+    });
+  }
+
+  /**
+   * Reply to a comment on Instagram standalone
+   * Note: Instagram standalone does not support comments API
+   */
+  async replyToComment(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount,
+    commentId: string,
+    replyText: string
+  ): Promise<ReplyCommentResponse> {
+    return {
+      success: false,
+      error: 'Instagram standalone does not support comments API',
+    };
   }
 }

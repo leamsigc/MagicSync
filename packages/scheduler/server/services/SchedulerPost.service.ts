@@ -2,6 +2,7 @@ import { ValidationError } from '#layers/BaseAssets/server/shared/assetsTypes';
 import { type Post, type SocialMediaAccount as Integration, type Account, type SocialMediaAccount, type PostWithAllData } from '#layers/BaseDB/db/schema';
 import { EventEmitter } from 'events';
 import { logAuditService } from '#layers/BaseDB/server/services/auditLog.service';
+import type { PostResponse } from '#layers/BaseDB/server/services/types';
 
 // Simplified types based on the core requirements for SchedulerPost
 export type { Integration };
@@ -19,13 +20,67 @@ export type PluginSocialMediaAccount = SocialMediaAccount & {
   picture?: string;
 };
 
-export type PostResponse = {
+// PostResponse is now imported from '#layers/BaseDB/server/services/types'
+// to avoid circular dependency (db → scheduler)
+
+// Unified comment shape — all plugin getComments() methods return this
+export interface PlatformComment {
   id: string;
+  text: string;
+  authorName: string;
+  authorId?: string;
+  authorPicture?: string;
+  createdAt: string;
+  likeCount?: number;
+  replyCount?: number;
+  parentId?: string; // if this is a reply, parentId is the root comment id
+}
+
+export interface GetCommentsResponse {
+  platform: string;
   postId: string;
-  releaseURL: string;
-  status: 'pending' | 'published' | 'failed';
+  comments: PlatformComment[];
+  hasMore: boolean;
+  nextCursor?: string;
+}
+
+export interface ReplyCommentResponse {
+  success: boolean;
+  comment?: PlatformComment;
   error?: string;
-};
+}
+
+// Unified platform statistics interface — all plugin getStatistic() methods return this shape
+export interface PlatformStats {
+  platform: string
+  accountId: string
+  username: string
+  picture?: string
+  fetchedAt: string
+  // Core social metrics
+  followers?: number
+  following?: number
+  posts?: number
+  // Engagement metrics
+  engagement?: {
+    total: number
+    likes?: number
+    comments?: number
+    shares?: number
+    views?: number
+    reach?: number
+    impressions?: number
+  }
+  // Growth metrics (change over last 7 days or available period)
+  growth?: {
+    followers?: { absolute: number; percentage: number }
+    following?: { absolute: number; percentage: number }
+    posts?: { absolute: number; percentage: number }
+    engagement?: { absolute: number; percentage: number }
+  }
+  // Platform-specific extra data
+  extra?: Record<string, unknown>
+}
 
 export type PollDetails = {
   options: string[]; // Array of poll options
@@ -57,7 +112,7 @@ export interface SchedulerPlugin {
   readonly pluginName: string;
   readonly exposedMethods?: readonly string[];
   maxConcurrentJob?: number;
-  [key: string]: unknown; // Allow for additional properties
+  [key: string]: unknown;
 
   onRegister?(scheduler: SchedulerPost): void;
   onDestroy?(): void;
@@ -81,7 +136,18 @@ export interface SchedulerPlugin {
   getStatistic(
     postDetails: PluginPostDetails,
     socialMediaAccount: PluginSocialMediaAccount
-  ): Promise<any>;
+  ): Promise<PlatformStats>;
+  getComments(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount,
+    options?: { limit?: number; cursor?: string }
+  ): Promise<GetCommentsResponse>;
+  replyToComment(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount,
+    commentId: string,
+    replyText: string
+  ): Promise<ReplyCommentResponse>;
 }
 
 export interface SchedulerPluginConstructor {
@@ -147,7 +213,18 @@ export abstract class BaseSchedulerPlugin implements SchedulerPlugin {
   abstract getStatistic(
     postDetails: PluginPostDetails,
     socialMediaAccount: PluginSocialMediaAccount
-  ): Promise<any>;
+  ): Promise<PlatformStats>;
+  abstract getComments(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount,
+    options?: { limit?: number; cursor?: string }
+  ): Promise<GetCommentsResponse>;
+  abstract replyToComment(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount,
+    commentId: string,
+    replyText: string
+  ): Promise<ReplyCommentResponse>;
 }
 
 export class SchedulerPost extends EventEmitter {
@@ -275,7 +352,7 @@ export class SchedulerPost extends EventEmitter {
   async getStatistic(
     postDetails: PluginPostDetails,
     socialMediaAccount: PluginSocialMediaAccount
-  ): Promise<any> {
+  ): Promise<PlatformStats> {
     const plugin = this.plugins.get(socialMediaAccount.platform);
     if (plugin) {
       try {
@@ -287,5 +364,30 @@ export class SchedulerPost extends EventEmitter {
     } else {
       throw new Error('Plugin not registered for this socialMediaAccount');
     }
+  }
+
+  async getComments(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount,
+    options?: { limit?: number; cursor?: string }
+  ): Promise<GetCommentsResponse> {
+    const plugin = this.plugins.get(socialMediaAccount.platform);
+    if (plugin) {
+      return plugin.getComments(postDetails, socialMediaAccount, options);
+    }
+    throw new Error('Plugin not registered for this socialMediaAccount');
+  }
+
+  async replyToComment(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount,
+    commentId: string,
+    replyText: string
+  ): Promise<ReplyCommentResponse> {
+    const plugin = this.plugins.get(socialMediaAccount.platform);
+    if (plugin) {
+      return plugin.replyToComment(postDetails, socialMediaAccount, commentId, replyText);
+    }
+    throw new Error('Plugin not registered for this socialMediaAccount');
   }
 }

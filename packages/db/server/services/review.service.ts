@@ -1,3 +1,4 @@
+import type { H3Event } from 'h3'
 import type { Review } from '#layers/BaseDB/db/schema'
 import type {
   PaginatedResponse,
@@ -5,7 +6,7 @@ import type {
   ServiceResponse
 } from './types'
 import { and, desc, eq, gte, lte, sql, type SQL } from 'drizzle-orm'
-import { reviews } from '#layers/BaseDB/db/schema'
+import { businessProfiles, reviews } from '#layers/BaseDB/db/schema'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
 import {
   createGMBClient,
@@ -14,6 +15,7 @@ import {
 import {
   ValidationError
 } from './types'
+import { businessProfileService } from './business-profile.service'
 
 export interface CreateReviewData {
   businessId: string
@@ -63,16 +65,59 @@ export class ReviewService {
         updatedAt: now
       }).returning()
 
-      return { success: true, data: review }
+      return { data: review }
     } catch (error) {
       if (error instanceof ValidationError) {
-        return { success: false, error: error.message, code: error.code }
+        return { error: error.message, code: error.code }
       }
-      return { success: false, error: 'Failed to create review' }
+      return { error: 'Failed to create review' }
     }
   }
 
-  async findById(id: string): Promise<ServiceResponse<Review>> {
+  /**
+   * Verify that the user owns the business associated with a review.
+   * Returns the business profile if owned, null otherwise.
+   */
+  private async verifyBusinessOwnership(
+    review: Review,
+    userId: string,
+    event?: H3Event
+  ): Promise<ServiceResponse<void>> {
+    try {
+      // Check direct ownership via businessProfiles
+      const [profile] = await this.db
+        .select()
+        .from(businessProfiles)
+        .where(and(
+          eq(businessProfiles.id, review.businessId),
+          eq(businessProfiles.userId, userId)
+        ))
+        .limit(1)
+
+      if (profile) return { data: undefined }
+
+      // Fall back to org membership check if event is available
+      if (!event) {
+        return { error: 'Not authorized to access this review', code: 'UNAUTHORIZED' }
+      }
+
+      // useAuthApi is auto-imported globally by Nuxt from
+      // packages/auth/server/utils/useAuthApi — no static import needed.
+      const authApi = (useAuthApi as (e: H3Event) => ReturnType<typeof useAuthApi>)(event)
+      const orgMembers = await authApi.listOrgMembers(userId)
+      const isOrgMember = orgMembers.some(member => member.userId === review.businessId)
+
+      if (!isOrgMember) {
+        return { error: 'Not authorized to access this review', code: 'UNAUTHORIZED' }
+      }
+
+      return { data: undefined }
+    } catch (error) {
+      return { error: 'Failed to verify business ownership' }
+    }
+  }
+
+  async findById(id: string, userId: string, event?: H3Event): Promise<ServiceResponse<Review>> {
     try {
       const [review] = await this.db
         .select()
@@ -81,17 +126,29 @@ export class ReviewService {
         .limit(1)
 
       if (!review) {
-        return { success: false, error: 'Review not found', code: 'NOT_FOUND' }
+        return { error: 'Review not found', code: 'NOT_FOUND' }
       }
 
-      return { success: true, data: review }
+      // Verify user owns the business
+      const ownershipCheck = await this.verifyBusinessOwnership(review, userId, event)
+      if (ownershipCheck.error) {
+        return { error: ownershipCheck.error, code: ownershipCheck.code }
+      }
+
+      return { data: review }
     } catch (error) {
-      return { success: false, error: 'Failed to fetch review' }
+      return { error: 'Failed to fetch review' }
     }
   }
 
-  async findByBusinessId(businessId: string, options: QueryOptions = {}): Promise<PaginatedResponse<Review>> {
+  async findByBusinessId(businessId: string, userId: string, options: QueryOptions = {}, event?: H3Event): Promise<PaginatedResponse<Review>> {
     try {
+      // Verify user owns the business
+      const ownershipCheck = await businessProfileService.findById(businessId, userId, event)
+      if (ownershipCheck.error) {
+        return { error: ownershipCheck.error, code: ownershipCheck.code }
+      }
+
       const { pagination = { page: 1, limit: 10 }, filters = {}, sort } = options
       const offset = ((pagination.page || 1) - 1) * (pagination.limit || 10)
 
@@ -160,7 +217,6 @@ export class ReviewService {
       const total = countResult[0]?.count || 0
 
       return {
-        success: true,
         data: reviewList,
         pagination: {
           page: pagination.page || 1,
@@ -170,7 +226,7 @@ export class ReviewService {
         }
       }
     } catch (error) {
-      return { success: false, error: 'Failed to fetch reviews' }
+      return { error: 'Failed to fetch reviews' }
     }
   }
 
@@ -186,17 +242,33 @@ export class ReviewService {
         .limit(1)
 
       if (!review) {
-        return { success: false, error: 'Review not found', code: 'NOT_FOUND' }
+        return { error: 'Review not found', code: 'NOT_FOUND' }
       }
 
-      return { success: true, data: review }
+      return { data: review }
     } catch (error) {
-      return { success: false, error: 'Failed to fetch review' }
+      return { error: 'Failed to fetch review' }
     }
   }
 
-  async update(id: string, data: UpdateReviewData): Promise<ServiceResponse<Review>> {
+  async update(id: string, userId: string, data: UpdateReviewData, event?: H3Event): Promise<ServiceResponse<Review>> {
     try {
+      // First verify ownership
+      const [review] = await this.db
+        .select()
+        .from(reviews)
+        .where(eq(reviews.id, id))
+        .limit(1)
+
+      if (!review) {
+        return { error: 'Review not found', code: 'NOT_FOUND' }
+      }
+
+      const ownershipCheck = await this.verifyBusinessOwnership(review, userId, event)
+      if (ownershipCheck.error) {
+        return { error: ownershipCheck.error, code: ownershipCheck.code }
+      }
+
       const [updated] = await this.db
         .update(reviews)
         .set({
@@ -207,19 +279,35 @@ export class ReviewService {
         .returning()
 
       if (!updated) {
-        return { success: false, error: 'Review not found', code: 'NOT_FOUND' }
+        return { error: 'Review not found', code: 'NOT_FOUND' }
       }
 
-      return { success: true, data: updated }
+      return { data: updated }
     } catch (error) {
-      return { success: false, error: 'Failed to update review' }
+      return { error: 'Failed to update review' }
     }
   }
 
-  async addResponse(id: string, responseContent: string): Promise<ServiceResponse<Review>> {
+  async addResponse(id: string, userId: string, responseContent: string, event?: H3Event): Promise<ServiceResponse<Review>> {
     try {
       if (!responseContent || responseContent.trim().length === 0) {
-        return { success: false, error: 'Response content is required', code: 'VALIDATION_ERROR' }
+        return { error: 'Response content is required', code: 'VALIDATION_ERROR' }
+      }
+
+      // First verify ownership
+      const [review] = await this.db
+        .select()
+        .from(reviews)
+        .where(eq(reviews.id, id))
+        .limit(1)
+
+      if (!review) {
+        return { error: 'Review not found', code: 'NOT_FOUND' }
+      }
+
+      const ownershipCheck = await this.verifyBusinessOwnership(review, userId, event)
+      if (ownershipCheck.error) {
+        return { error: ownershipCheck.error, code: ownershipCheck.code }
       }
 
       const [updated] = await this.db
@@ -233,21 +321,21 @@ export class ReviewService {
         .returning()
 
       if (!updated) {
-        return { success: false, error: 'Review not found', code: 'NOT_FOUND' }
+        return { error: 'Review not found', code: 'NOT_FOUND' }
       }
 
-      return { success: true, data: updated }
+      return { data: updated }
     } catch (error) {
-      return { success: false, error: 'Failed to add response' }
+      return { error: 'Failed to add response' }
     }
   }
 
-  async toggleShare(id: string): Promise<ServiceResponse<Review>> {
+  async toggleShare(id: string, userId: string, event?: H3Event): Promise<ServiceResponse<Review>> {
     try {
-      // First get the current state
-      const currentResult = await this.findById(id)
-      if (!currentResult.success) {
-        return currentResult
+      // First get the current state with ownership verification
+      const currentResult = await this.findById(id, userId, event)
+      if (currentResult.error) {
+        return { error: currentResult.error, code: currentResult.code }
       }
 
       const [updated] = await this.db
@@ -259,14 +347,20 @@ export class ReviewService {
         .where(eq(reviews.id, id))
         .returning()
 
-      return { success: true, data: updated }
+      return { data: updated }
     } catch (error) {
-      return { success: false, error: 'Failed to toggle share status' }
+      return { error: 'Failed to toggle share status' }
     }
   }
 
-  async getStats(businessId: string, options: { startDate?: Date, endDate?: Date } = {}): Promise<ServiceResponse<ReviewStats>> {
+  async getStats(businessId: string, userId: string, options: { startDate?: Date, endDate?: Date } = {}, event?: H3Event): Promise<ServiceResponse<ReviewStats>> {
     try {
+      // Verify user owns the business
+      const ownershipCheck = await businessProfileService.findById(businessId, userId, event)
+      if (ownershipCheck.error) {
+        return { error: ownershipCheck.error, code: ownershipCheck.code }
+      }
+
       let whereConditions: SQL<unknown> = eq(reviews.businessId, businessId)
       const conditions: SQL<unknown>[] = [whereConditions]
 
@@ -322,14 +416,20 @@ export class ReviewService {
           : 0
       }
 
-      return { success: true, data: stats }
+      return { data: stats }
     } catch (error) {
-      return { success: false, error: 'Failed to get review stats' }
+      return { error: 'Failed to get review stats' }
     }
   }
 
-  async getRecentReviews(businessId: string, limit: number = 5): Promise<ServiceResponse<Review[]>> {
+  async getRecentReviews(businessId: string, userId: string, limit: number = 5, event?: H3Event): Promise<ServiceResponse<Review[]>> {
     try {
+      // Verify user owns the business
+      const ownershipCheck = await businessProfileService.findById(businessId, userId, event)
+      if (ownershipCheck.error) {
+        return { error: ownershipCheck.error, code: ownershipCheck.code }
+      }
+
       const recentReviews = await this.db
         .select()
         .from(reviews)
@@ -337,21 +437,37 @@ export class ReviewService {
         .orderBy(desc(reviews.reviewDate))
         .limit(limit)
 
-      return { success: true, data: recentReviews }
+      return { data: recentReviews }
     } catch (error) {
-      return { success: false, error: 'Failed to fetch recent reviews' }
+      return { error: 'Failed to fetch recent reviews' }
     }
   }
 
-  async delete(id: string): Promise<ServiceResponse<void>> {
+  async delete(id: string, userId: string, event?: H3Event): Promise<ServiceResponse<void>> {
     try {
-      const result = await this.db
+      // First verify ownership
+      const [review] = await this.db
+        .select()
+        .from(reviews)
+        .where(eq(reviews.id, id))
+        .limit(1)
+
+      if (!review) {
+        return { error: 'Review not found', code: 'NOT_FOUND' }
+      }
+
+      const ownershipCheck = await this.verifyBusinessOwnership(review, userId, event)
+      if (ownershipCheck.error) {
+        return { error: ownershipCheck.error, code: ownershipCheck.code }
+      }
+
+      await this.db
         .delete(reviews)
         .where(eq(reviews.id, id))
 
-      return { success: true }
+      return { data: undefined }
     } catch (error) {
-      return { success: false, error: 'Failed to delete review' }
+      return { error: 'Failed to delete review' }
     }
   }
 
@@ -372,8 +488,8 @@ export class ReviewService {
         // Check if review already exists
         const existingResult = await this.findByPlatformReviewId('google_my_business', formattedReview.platformReviewId)
 
-        if (existingResult.success) {
-          // Update existing review
+        if (existingResult.data) {
+          // Update existing review (internal call - no ownership check)
           const updateData: UpdateReviewData = {}
           if (formattedReview.responseContent !== null) {
             updateData.responseContent = formattedReview.responseContent
@@ -381,10 +497,17 @@ export class ReviewService {
           if (formattedReview.responseDate !== null) {
             updateData.responseDate = formattedReview.responseDate
           }
-          const updateResult = await this.update(existingResult.data!.id, updateData)
-
-          if (updateResult.success) {
-            syncedReviews.push(updateResult.data!)
+          // Direct update without ownership check for internal sync
+          const [updated] = await this.db
+            .update(reviews)
+            .set({
+              ...updateData,
+              updatedAt: new Date()
+            })
+            .where(eq(reviews.id, existingResult.data.id))
+            .returning()
+          if (updated) {
+            syncedReviews.push(updated)
           }
         } else {
           // Create new review
@@ -399,17 +522,16 @@ export class ReviewService {
             reviewDate: formattedReview.reviewDate,
           }
           const createResult = await this.create(createData)
-
-          if (createResult.success) {
-            syncedReviews.push(createResult.data!)
+          if (createResult.data) {
+            syncedReviews.push(createResult.data)
           }
         }
       }
 
-      return { success: true, data: syncedReviews }
+      return { data: syncedReviews }
     } catch (error) {
       console.error('Error syncing GMB reviews:', error)
-      return { success: false, error: 'Failed to sync reviews from Google My Business' }
+      return { error: 'Failed to sync reviews from Google My Business' }
     }
   }
 
@@ -418,17 +540,20 @@ export class ReviewService {
    */
   async replyToGMBReview(reviewId: string, responseContent: string, accessToken: string): Promise<ServiceResponse<Review>> {
     try {
-      // Get the review from local database
-      const reviewResult = await this.findById(reviewId)
-      if (!reviewResult.success) {
-        return reviewResult
-      }
+      // Get the review from local database (internal call - no userId needed for read)
+      const [review] = await this.db
+        .select()
+        .from(reviews)
+        .where(eq(reviews.id, reviewId))
+        .limit(1)
 
-      const review = reviewResult.data!
+      if (!review) {
+        return { error: 'Review not found', code: 'NOT_FOUND' }
+      }
 
       // Validate that this is a GMB review
       if (review.platform !== 'google_my_business') {
-        return { success: false, error: 'This is not a Google My Business review', code: 'INVALID_PLATFORM' }
+        return { error: 'This is not a Google My Business review', code: 'INVALID_PLATFORM' }
       }
 
       // Reply to the review on GMB
@@ -437,13 +562,21 @@ export class ReviewService {
 
       await gmbClient.replyToReview(reviewName, responseContent)
 
-      // Update local database
-      const updateResult = await this.addResponse(reviewId, responseContent)
+      // Update local database (direct query - internal call)
+      const [updated] = await this.db
+        .update(reviews)
+        .set({
+          responseContent: responseContent.trim(),
+          responseDate: new Date(),
+          updatedAt: new Date()
+        })
+        .where(eq(reviews.id, reviewId))
+        .returning()
 
-      return updateResult
+      return { data: updated }
     } catch (error) {
       console.error('Error replying to GMB review:', error)
-      return { success: false, error: 'Failed to reply to Google My Business review' }
+      return { error: 'Failed to reply to Google My Business review' }
     }
   }
 
@@ -452,12 +585,16 @@ export class ReviewService {
    */
   async generateAIResponse(reviewId: string, businessContext?: string): Promise<ServiceResponse<string>> {
     try {
-      const reviewResult = await this.findById(reviewId)
-      if (!reviewResult.success) {
-        return { success: false, error: reviewResult.error, code: reviewResult.code }
-      }
+      // Get review directly (internal call - no userId needed for read)
+      const [review] = await this.db
+        .select()
+        .from(reviews)
+        .where(eq(reviews.id, reviewId))
+        .limit(1)
 
-      const review = reviewResult.data!
+      if (!review) {
+        return { error: 'Review not found', code: 'NOT_FOUND' }
+      }
 
       // Simple AI response generation based on rating
       // In a real implementation, this would use an AI service like OpenAI
@@ -496,9 +633,9 @@ export class ReviewService {
         response += ` ${businessContext}`
       }
 
-      return { success: true, data: response }
+      return { data: response }
     } catch (error) {
-      return { success: false, error: 'Failed to generate AI response' }
+      return { error: 'Failed to generate AI response' }
     }
   }
 
@@ -522,9 +659,9 @@ export class ReviewService {
         .where(whereConditions)
         .orderBy(desc(reviews.reviewDate))
 
-      return { success: true, data: reviewsNeedingResponse }
+      return { data: reviewsNeedingResponse }
     } catch (error) {
-      return { success: false, error: 'Failed to fetch reviews needing response' }
+      return { error: 'Failed to fetch reviews needing response' }
     }
   }
 
@@ -544,21 +681,21 @@ export class ReviewService {
         .orderBy(desc(reviews.reviewDate))
         .limit(limit)
 
-      return { success: true, data: fiveStarReviews }
+      return { data: fiveStarReviews }
     } catch (error) {
-      return { success: false, error: 'Failed to fetch 5-star reviews for sharing' }
+      return { error: 'Failed to fetch 5-star reviews for sharing' }
     }
   }
 
   /**
    * Mark a review as shared and optionally create a social media post
    */
-  async markAsShared(reviewId: string): Promise<ServiceResponse<Review>> {
+  async markAsShared(reviewId: string, userId: string, event?: H3Event): Promise<ServiceResponse<Review>> {
     try {
-      const updateResult = await this.update(reviewId, { isShared: true })
+      const updateResult = await this.update(reviewId, userId, { isShared: true }, event)
       return updateResult
     } catch (error) {
-      return { success: false, error: 'Failed to mark review as shared' }
+      return { error: 'Failed to mark review as shared' }
     }
   }
 

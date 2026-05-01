@@ -2,9 +2,11 @@ import { socialMediaAccountService } from "#layers/BaseDB/server/services/social
 
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event)
   try {
     // Get user from session
     const user = await checkUserIsLogin(event)
+    log.set({ userId: user.id })
 
     const accountId = getRouterParam(event, 'id')
 
@@ -14,6 +16,8 @@ export default defineEventHandler(async (event) => {
         statusMessage: 'Account ID is required'
       })
     }
+
+    log.set({ accountId })
 
     // Get the account to verify ownership
     const account = await socialMediaAccountService.getAccountById(accountId)
@@ -43,12 +47,14 @@ export default defineEventHandler(async (event) => {
       })
     }
 
+    log.info('Social media account deleted', { accountId, platform: account.platform })
+
     return {
       success: true,
       message: 'Social media account disconnected successfully'
     }
   } catch (error) {
-    console.error('Error deleting social media account:', error)
+    log.error('Failed to delete social media account', { error })
 
     if (error && typeof error === 'object' && 'statusCode' in error) {
       throw error

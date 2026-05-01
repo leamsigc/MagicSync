@@ -3,11 +3,14 @@ import { bulkSchedulerService, type CsvImportRequest } from '#layers/BaseBulkSch
 import { parseFromBuffer } from '#layers/BaseBulkScheduler/utils/csvParser'
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event)
   try {
     const user = await checkUserIsLogin(event)
+    log.set({ userId: user.id })
 
     const formData = await readMultipartFormData(event)
     if (!formData) {
+      log.error('No form data provided', {})
       throw createError({
         statusCode: 400,
         statusMessage: 'No form data provided'
@@ -40,7 +43,10 @@ export default defineEventHandler(async (event) => {
       }
     }
 
+    log.set({ businessId, platforms, distributeEvenly })
+
     if (!csvData) {
+      log.error('CSV file is required', {})
       throw createError({
         statusCode: 400,
         statusMessage: 'CSV file is required'
@@ -48,6 +54,7 @@ export default defineEventHandler(async (event) => {
     }
 
     if (!businessId) {
+      log.error('Business ID is required', {})
       throw createError({
         statusCode: 400,
         statusMessage: 'Business ID is required'
@@ -55,6 +62,7 @@ export default defineEventHandler(async (event) => {
     }
 
     if (!platforms || platforms.length === 0) {
+      log.error('At least one platform is required', {})
       throw createError({
         statusCode: 400,
         statusMessage: 'At least one platform is required'
@@ -63,12 +71,15 @@ export default defineEventHandler(async (event) => {
 
     const parseResult = await parseFromBuffer(csvData)
     if (!parseResult.success || !parseResult.data) {
+      log.error('CSV parsing failed', { errors: parseResult.errors })
       throw createError({
         statusCode: 400,
         statusMessage: 'CSV parsing failed',
         data: { errors: parseResult.errors }
       })
     }
+
+    log.info('CSV parsed successfully', { rowsCount: parseResult.data.length })
 
     const request: CsvImportRequest = {
       posts: parseResult.data,
@@ -82,6 +93,7 @@ export default defineEventHandler(async (event) => {
     const result = await bulkSchedulerService.bulkCreateFromCsv(user.id, request)
 
     if (!result.success) {
+      log.error('Failed to import posts from CSV', { errors: result.errors })
       throw createError({
         statusCode: 400,
         statusMessage: 'Failed to import posts from CSV',
@@ -89,6 +101,7 @@ export default defineEventHandler(async (event) => {
       })
     }
 
+    log.info('CSV import completed', { created: result.created, failed: result.failed })
     return {
       success: true,
       data: {
@@ -103,6 +116,7 @@ export default defineEventHandler(async (event) => {
     }
 
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    log.error('Internal server error', { error: errorMessage })
     throw createError({
       statusCode: 500,
       statusMessage: `Internal server error: ${errorMessage}`

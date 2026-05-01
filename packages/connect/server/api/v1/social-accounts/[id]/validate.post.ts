@@ -2,9 +2,11 @@ import { socialMediaAccountService, type SocialMediaPlatform } from "#layers/Bas
 
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event)
   try {
     // Get user from session
     const user = await requireUserSession(event)
+    log.set({ userId: user.id })
 
     const accountId = getRouterParam(event, 'id')
 
@@ -14,6 +16,8 @@ export default defineEventHandler(async (event) => {
         statusMessage: 'Account ID is required'
       })
     }
+
+    log.set({ accountId })
 
     // Get the account to verify ownership
     const account = await socialMediaAccountService.getAccountById(accountId)
@@ -39,7 +43,7 @@ export default defineEventHandler(async (event) => {
 
     try {
       // Try to get a valid access token - Better Auth will handle refresh if needed
-      const accessToken = await getAccessToken(account.platform as SocialMediaPlatform, accountId)
+      const accessToken = await getAccessToken(event, account.platform as SocialMediaPlatform, accountId)
       isValid = !!accessToken
 
       // Update account status if validation successful
@@ -50,7 +54,7 @@ export default defineEventHandler(async (event) => {
         })
       }
     } catch (error) {
-      console.error('Token validation failed:', error)
+      log.error('Token validation failed', { accountId, error })
       isValid = false
       needsRefresh = true
 
@@ -59,6 +63,8 @@ export default defineEventHandler(async (event) => {
         isActive: false
       })
     }
+
+    log.info('Social media account validated', { accountId, isValid, needsRefresh })
 
     return {
       success: true,
@@ -74,7 +80,7 @@ export default defineEventHandler(async (event) => {
       }
     }
   } catch (error) {
-    console.error('Error validating social media account:', error)
+    log.error('Failed to validate social media account', { error })
 
     if (error && typeof error === 'object' && 'statusCode' in error) {
       throw error

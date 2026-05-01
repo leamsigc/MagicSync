@@ -24,11 +24,15 @@ interface PexelsPhoto {
 }
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event)
   try {
     const user = await checkUserIsLogin(event)
+    log.set({ userId: user.id })
     const { photos } = await readBody<{ photos: PexelsPhoto[] }>(event)
+    log.set({ photosCount: photos?.length || 0 })
 
     if (!photos || photos.length === 0) {
+      log.error('No photos provided for download', {})
       throw createError({
         statusCode: 400,
         statusMessage: 'No photos provided for download.',
@@ -62,7 +66,7 @@ export default defineEventHandler(async (event) => {
           uniqueFilename,
           userFolder,
         )
-        console.log(storedFile);
+        log.debug('File stored', { storedFile })
 
 
         const fileUrl = `/api/v1/assets/serve/${uniqueFilename}.${fileExtension}`
@@ -88,18 +92,20 @@ export default defineEventHandler(async (event) => {
           uploadedAssets.push(result.data)
         }
       } catch (fileError) {
-        console.error('Error processing Pexels photo:', photo.id, fileError)
+        log.error('Error processing Pexels photo', { photoId: photo.id, error: fileError })
         // Continue processing other files
       }
     }
 
     if (uploadedAssets.length === 0) {
+      log.error('No Pexels images were successfully uploaded as assets', {})
       throw createError({
         statusCode: 400,
         statusMessage: 'No Pexels images were successfully uploaded as assets.',
       })
     }
 
+    log.info('Pexels images downloaded successfully', { count: uploadedAssets.length })
     return {
       success: true,
       data: uploadedAssets,
@@ -110,7 +116,7 @@ export default defineEventHandler(async (event) => {
       throw error
     }
 
-    console.error('Pexels download API error:', error)
+    log.error('Pexels download API error', { error })
     throw createError({
       statusCode: 500,
       statusMessage: 'Internal server error during Pexels image processing.',

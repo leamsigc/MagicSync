@@ -2,8 +2,11 @@ import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
 import { userLlmConfigService } from '#layers/BaseDB/server/services/user-llm-config.service'
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event)
   const user = await checkUserIsLogin(event)
   const configId = getRouterParam(event, 'id')
+
+  log.set({ configId })
 
   if (!configId) {
     throw createError({ statusCode: 400, statusMessage: 'Config ID is required' })

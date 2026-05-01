@@ -15,16 +15,21 @@ defineRouteMeta({
   },
 });
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event)
   try {
     const user = await checkUserIsLogin(event)
+    log.set({ userId: user.id })
 
     const query = getQuery(event)
     const platform = query.platformId as string;
 
     if (!platform) {
-      return socialMediaAccountService.getAccountsByUserId(user.id)
+      const accounts = await socialMediaAccountService.getAccountsByUserId(user.id)
+      log.info('Retrieved all social media accounts', { count: accounts.length })
+      return accounts
     }
 
+    log.set({ platform })
 
     // Get social media accounts with filters
     const accounts = await socialMediaAccountService.getAccountsForPlatform(
@@ -65,9 +70,12 @@ export default defineEventHandler(async (event) => {
       entityType: 'accounts_pages',
       pages: pagesBaseOnTheAccount
     })
+
+    log.info('Social media pages retrieved', { platform, pageCount: pagesBaseOnTheAccount.length })
+
     return pagesBaseOnTheAccount
   } catch (error) {
-    console.error('Error fetching social media accounts:', error)
+    log.error('Failed to fetch social media accounts', { error })
 
     if (error instanceof H3Error) {
       throw error

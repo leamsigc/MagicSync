@@ -1,4 +1,3 @@
-import { apiKey } from "@better-auth/api-key"
 import type { NavigationMenuItem } from '@nuxt/ui'
 import menu from '../layouts/dashboard/Menu.json'
 
@@ -74,6 +73,7 @@ export const useDashboardNavigation = () => {
             to: '/app/calendar/day',
             icon: 'i-lucide-calendar'
           }
+          // TODO:Should show the post in board/table/grid/Twitter feed like
         ]
       },
       {

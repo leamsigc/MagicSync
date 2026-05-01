@@ -1,4 +1,4 @@
-import type { PostResponse, PluginPostDetails, PluginSocialMediaAccount } from '../SchedulerPost.service';
+import type { PostResponse, PluginPostDetails, PluginSocialMediaAccount, GetCommentsResponse, ReplyCommentResponse, PlatformComment, PlatformStats } from '../SchedulerPost.service';
 import type { Post, Asset } from '#layers/BaseDB/db/schema';
 import type { DribbbleSettings } from '#layers/BaseScheduler/shared/platformSettings';
 import { platformConfigurations } from '#layers/BaseScheduler/shared/platformConstants';
@@ -7,9 +7,71 @@ import sharp from 'sharp';
 
 
 export class DribbblePlugin extends BaseSchedulerPlugin {
-  override getStatistic(postDetails: PluginPostDetails, socialMediaAccount: PluginSocialMediaAccount): Promise<any> {
-    throw new Error('Method not implemented.');
+  override async getStatistic(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount
+  ): Promise<PlatformStats> {
+    try {
+      const response = await fetch('https://api.dribbble.com/v2/user', {
+        headers: {
+          Authorization: `Bearer ${socialMediaAccount.accessToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        console.warn(`Dribbble API error: ${response.statusText}`);
+        return this.getZeroStats(socialMediaAccount);
+      }
+
+      const data = await response.json();
+
+      return {
+        platform: 'dribbble',
+        accountId: socialMediaAccount.accountId,
+        username: data.name || data.username || socialMediaAccount.accountName || socialMediaAccount.accountId,
+        picture: data.avatar_url,
+        fetchedAt: new Date().toISOString(),
+        followers: data.followers_count || 0,
+        following: data.following_count || 0,
+        posts: data.shots_count || 0,
+        engagement: {
+          total: data.likes_received_count || 0,
+          likes: data.likes_received_count || 0,
+          comments: data.comments_received_count || 0,
+        },
+        extra: {
+          following_count: data.following_count,
+          likes_received_count: data.likes_received_count,
+          shots_count: data.shots_count,
+          comments_received_count: data.comments_received_count,
+          projects_created_count: data.projects_created_count,
+          bio: data.bio,
+          location: data.location,
+        },
+      };
+    } catch (error) {
+      console.error('Error fetching Dribbble stats:', error);
+      return this.getZeroStats(socialMediaAccount);
+    }
   }
+
+  private getZeroStats(socialMediaAccount: PluginSocialMediaAccount): PlatformStats {
+    return {
+      platform: 'dribbble',
+      accountId: socialMediaAccount.accountId,
+      username: socialMediaAccount.accountName || socialMediaAccount.accountId,
+      fetchedAt: new Date().toISOString(),
+      followers: 0,
+      following: 0,
+      posts: 0,
+      engagement: {
+        total: 0,
+        likes: 0,
+        comments: 0,
+      },
+    };
+  }
+
   static readonly pluginName = 'dribbble';
   readonly pluginName = 'dribbble';
 
@@ -322,5 +384,38 @@ export class DribbblePlugin extends BaseSchedulerPlugin {
       this.emit('dribbble:comment:failed', { error: (error as Error).message });
       return errorResponse;
     }
+  }
+
+  /**
+   * Get comments for a Dribbble shot
+   * Note: Dribbble does not have a public comments API
+   */
+  async getComments(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount,
+    options?: { limit?: number; cursor?: string }
+  ): Promise<GetCommentsResponse> {
+    return Promise.resolve({
+      platform: this.pluginName,
+      postId: '',
+      comments: [],
+      hasMore: false,
+    });
+  }
+
+  /**
+   * Reply to a comment on Dribbble
+   * Note: Dribbble does not have a public comments API
+   */
+  async replyToComment(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount,
+    commentId: string,
+    replyText: string
+  ): Promise<ReplyCommentResponse> {
+    return {
+      success: false,
+      error: 'Dribbble does not have a public comments API',
+    };
   }
 }

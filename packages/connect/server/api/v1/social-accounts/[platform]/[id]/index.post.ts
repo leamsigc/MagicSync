@@ -17,8 +17,11 @@ interface ConnectSocialMediaAccountBody {
 
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event)
   try {
     const user = await checkUserIsLogin(event);
+    log.set({ userId: user.id })
+
     const platform = getRouterParam(event, 'platform') as SocialMediaPlatform;
     const pageId = getRouterParam(event, 'id') as string;
 
@@ -29,8 +32,12 @@ export default defineEventHandler(async (event) => {
       });
     }
 
+    log.set({ platform, pageId })
+
     const body = await readBody<ConnectSocialMediaAccountBody>(event);
     const instagramId = body.instagram_business_account?.id;
+
+    log.set({ businessId: body.businessId })
 
     // Use the social media manager to get the page details
     const account = await socialMediaAccountService.getAccountsForPlatform(
@@ -79,10 +86,10 @@ export default defineEventHandler(async (event) => {
       ipAddress: event.node.req.socket.remoteAddress,
       userAgent: event.node.req.headers['user-agent'],
       status: 'success',
-      details: JSON.stringify({ ...pageDetails, access_token: '***' }),
+      details: JSON.stringify({ id: pageDetails.id, name: pageDetails.name, picture: pageDetails.picture, username: pageDetails.username }),
     })
 
-
+    log.info('Social media page connected', { platform, pageId, pageName: pageDetails.name })
 
     // handle to the social media  service to create or update
     const socialMediaAccount = socialMediaAccountService.createOrUpdateAccount({
@@ -97,6 +104,7 @@ export default defineEventHandler(async (event) => {
     return socialMediaAccount;
 
   } catch (error) {
+    log.error('Failed to connect social media account', { error })
 
     if (error instanceof H3Error) {
       throw error;

@@ -1,4 +1,4 @@
-import type { PostResponse, PluginPostDetails, PluginSocialMediaAccount } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
+import type { PostResponse, PluginPostDetails, PluginSocialMediaAccount, GetCommentsResponse, ReplyCommentResponse, PlatformComment, PlatformStats } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import type { Post } from '#layers/BaseDB/db/schema';
 import type { DiscordSettings } from '#layers/BaseScheduler/shared/platformSettings';
 import { BaseSchedulerPlugin, } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
@@ -181,32 +181,78 @@ export class DiscordPlugin extends BaseSchedulerPlugin {
   async getStatistic(
     postDetails: PluginPostDetails,
     socialMediaAccount: PluginSocialMediaAccount
-  ): Promise<any> {
-    const publicationDetails = postDetails.platformPosts.find((platform) => platform.socialAccountId === socialMediaAccount.id);
-    if (!publicationDetails) {
-      throw new Error('Published platform details not found');
-    }
-    const details = JSON.parse(publicationDetails.publishDetail as unknown as string || '{}') as PostResponse;
-    const postId = details.postId;
-    if (!postId) {
-      throw new Error('Post details not found');
-    }
+  ): Promise<PlatformStats> {
+    try {
+      // Use metadata.guildCount if available (stored server count)
+      const metadataGuildCount = socialMediaAccount.metadata?.guildCount;
+      if (metadataGuildCount !== undefined) {
+        return {
+          platform: 'discord',
+          accountId: socialMediaAccount.accountId,
+          username: socialMediaAccount.accountName || '',
+          fetchedAt: new Date().toISOString(),
+          followers: metadataGuildCount,
+          posts: 0,
+          engagement: { total: 0 },
+          growth: undefined,
+          extra: {
+            serverCount: metadataGuildCount,
+          },
+        };
+      }
 
-    const match = details.releaseURL.match(/channels\/[\w@]+\/(\d+)\/\d+/);
-    // Try to extract channelId from releaseURL if possible, or fallback
-    // Release URL format: https://discord.com/channels/{guildId}/{channelId}/{messageId}
-    const channelId = match ? match[1] : (postDetails.settings as any)?.channelId || socialMediaAccount.metadata?.channelId || socialMediaAccount.accountId;
+      // Fetch bot user info from Discord API with Bot authorization
+      const response = await fetch('https://discord.com/api/v10/users/@me', {
+        headers: {
+          Authorization: `Bot ${socialMediaAccount.accessToken}`,
+        },
+      });
 
-    if (!channelId) {
-      throw new Error('Channel ID not found for statistics');
+      if (!response.ok) {
+        // Return graceful zero fallback on API failure
+        return {
+          platform: 'discord',
+          accountId: socialMediaAccount.accountId,
+          username: socialMediaAccount.accountName || '',
+          fetchedAt: new Date().toISOString(),
+          followers: 0,
+          posts: 0,
+          engagement: { total: 0 },
+          growth: undefined,
+          extra: {},
+        };
+      }
+
+      const botUser = await response.json();
+
+      return {
+        platform: 'discord',
+        accountId: socialMediaAccount.accountId,
+        username: botUser.username || socialMediaAccount.accountName || '',
+        fetchedAt: new Date().toISOString(),
+        followers: 0, // Discord bots don't have followers
+        posts: 0,
+        engagement: { total: 0 },
+        growth: undefined,
+        extra: {
+          botId: botUser.id,
+          avatar: botUser.avatar,
+        },
+      };
+    } catch {
+      // Return graceful zero fallback on any error
+      return {
+        platform: 'discord',
+        accountId: socialMediaAccount.accountId,
+        username: socialMediaAccount.accountName || '',
+        fetchedAt: new Date().toISOString(),
+        followers: 0,
+        posts: 0,
+        engagement: { total: 0 },
+        growth: undefined,
+        extra: {},
+      };
     }
-
-    const response = await fetch(`https://discord.com/api/v10/channels/${channelId}/messages/${postId}`, {
-      headers: {
-        Authorization: `Bot ${socialMediaAccount.accessToken}`,
-      },
-    });
-    return response.json();
   }
 
   override async update(
@@ -357,5 +403,99 @@ export class DiscordPlugin extends BaseSchedulerPlugin {
       this.emit('discord:comment:failed', { error: (error as Error).message });
       return errorResponse;
     }
+  }
+
+  /**
+   * Transform Discord message to PlatformComment format
+   */
+  private transformComment(message: any): PlatformComment {
+    return {
+      id: message.id,
+      text: message.content || '',
+      authorName: message.author?.username || 'Unknown',
+      authorId: message.author?.id,
+      authorPicture: message.author?.avatar ? `https://cdn.discordapp.com/avatars/${message.author.id}/${message.author.avatar}.png` : undefined,
+      createdAt: message.timestamp,
+      likeCount: 0,
+      replyCount: 0,
+      parentId: undefined,
+    };
+  }
+
+  /**
+   * Get comments for a Discord message
+   * Note: Discord doesn't have traditional comments - uses threads
+   */
+  async getComments(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount,
+    options?: { limit?: number; cursor?: string }
+  ): Promise<GetCommentsResponse> {
+    const platformPost = postDetails.platformPosts?.find((pp: any) => pp.socialAccountId === socialMediaAccount.id);
+    const publishDetail = platformPost?.publishDetail ? JSON.parse(platformPost.publishDetail) : {};
+    const externalPostId = publishDetail[socialMediaAccount.id]?.publishedId || publishDetail.postId;
+
+    if (!externalPostId) {
+      return Promise.resolve({ platform: this.pluginName, postId: '', comments: [], hasMore: false });
+    }
+
+    try {
+      const { channelId, messageId } = this.parseDiscordMessageId(externalPostId);
+      const settings = this.getSettings() as DiscordSettings;
+      const botToken = settings.botToken;
+
+      const response = await fetch(
+        `https://discord.com/api/v10/channels/${channelId}/messages/${messageId}/threads`,
+        {
+          headers: {
+            Authorization: `Bot ${botToken}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        return {
+          platform: this.pluginName,
+          postId: externalPostId,
+          comments: [],
+          hasMore: false,
+        };
+      }
+
+      const threadMessages = await response.json();
+      const comments: PlatformComment[] = (threadMessages.messages || []).map((m: any) => this.transformComment(m));
+
+      return {
+        platform: this.pluginName,
+        postId: externalPostId,
+        comments,
+        hasMore: false,
+      };
+    } catch (error) {
+      console.error('Error fetching Discord comments:', error);
+      return {
+        platform: this.pluginName,
+        postId: externalPostId,
+        comments: [],
+        hasMore: false,
+      };
+    }
+  }
+
+  /**
+   * Reply to a message on Discord
+   * Note: Discord doesn't have traditional comment replies
+   */
+  async replyToComment(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount,
+    commentId: string,
+    replyText: string
+  ): Promise<ReplyCommentResponse> {
+    return {
+      success: false,
+      error: 'Discord does not support comment replies. Use messages/channels instead.',
+    };
   }
 }

@@ -4,14 +4,18 @@ import { type ServerFile } from 'nuxt-file-storage'
 import dayjs from 'dayjs'
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event)
   try {
     // Get user from session
     const user = await checkUserIsLogin(event)
+    log.set({ userId: user.id })
 
     // Handle nuxt-file-storage files
     const { files } = await readBody<{ files: ServerFile[] }>(event)
+    log.set({ filesCount: files?.length || 0 })
 
     if (!files || files.length === 0) {
+      log.error('No files uploaded', {})
       throw createError({
         statusCode: 400,
         statusMessage: 'No files uploaded'
@@ -62,18 +66,20 @@ export default defineEventHandler(async (event) => {
           uploadedAssets.push(result.data)
         }
       } catch (fileError) {
-        console.error('Error processing file:', file.name, fileError)
+        log.error('Error processing file', { fileName: file.name, error: fileError })
         // Continue processing other files
       }
     }
 
     if (uploadedAssets.length === 0) {
+      log.error('No files were successfully uploaded', {})
       throw createError({
         statusCode: 400,
         statusMessage: 'No files were successfully uploaded'
       })
     }
 
+    log.info('Files uploaded successfully', { count: uploadedAssets.length })
     return {
       success: true,
       data: uploadedAssets,
@@ -84,7 +90,7 @@ export default defineEventHandler(async (event) => {
       throw error
     }
 
-    console.error('Asset upload error:', error)
+    log.error('Asset upload error', { error })
     throw createError({
       statusCode: 500,
       statusMessage: 'Internal server error'

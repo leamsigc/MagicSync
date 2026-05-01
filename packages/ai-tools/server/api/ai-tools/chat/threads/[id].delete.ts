@@ -2,8 +2,11 @@ import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
 import { chatService } from '#layers/BaseDB/server/services/chat.service'
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event)
   const user = await checkUserIsLogin(event)
   const threadId = getRouterParam(event, 'id')
+
+  log.set({ threadId })
 
   if (!threadId) {
     throw createError({ statusCode: 400, statusMessage: 'Thread ID required' })

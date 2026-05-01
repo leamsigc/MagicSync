@@ -1,4 +1,4 @@
-import type { PostResponse, PluginPostDetails, PluginSocialMediaAccount } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
+import type { PostResponse, PluginPostDetails, PluginSocialMediaAccount, GetCommentsResponse, ReplyCommentResponse, PlatformComment, PlatformStats } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import { BaseSchedulerPlugin } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import type { Post, SocialMediaAccount, Asset } from '#layers/BaseDB/db/schema';
 import type { DevToSettings } from '#layers/BaseScheduler/shared/platformSettings';
@@ -6,8 +6,63 @@ import { platformConfigurations } from '#layers/BaseScheduler/shared/platformCon
 
 
 export class DevToPlugin extends BaseSchedulerPlugin {
-  override getStatistic(postDetails: PluginPostDetails, socialMediaAccount: PluginSocialMediaAccount): Promise<any> {
-    throw new Error('Method not implemented.');
+  override async getStatistic(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount
+  ): Promise<PlatformStats> {
+    try {
+      const username = socialMediaAccount.accountId;
+
+      const response = await fetch(`https://dev.to/api/users/${username}`);
+
+      if (!response.ok) {
+        console.warn(`Dev.to API error: ${response.statusText}`);
+        return this.getZeroStats(socialMediaAccount);
+      }
+
+      const data = await response.json();
+
+      return {
+        platform: 'devto',
+        accountId: String(data.user_id || username),
+        username: data.username || username,
+        fetchedAt: new Date().toISOString(),
+        followers: data.followers_count || 0,
+        following: data.following || 0,
+        posts: data.articles_count || 0,
+        engagement: {
+          total: (data.public_reactions_count || 0) + (data.public_comments_count || 0),
+          likes: data.public_reactions_count || 0,
+          comments: data.public_comments_count || 0,
+        },
+        extra: {
+          name: data.name,
+          twitter_username: data.twitter_username,
+          github_username: data.github_username,
+          user_id: data.user_id,
+        },
+      };
+    } catch (error) {
+      console.error('Error fetching Dev.to stats:', error);
+      return this.getZeroStats(socialMediaAccount);
+    }
+  }
+
+  private getZeroStats(socialMediaAccount: PluginSocialMediaAccount): PlatformStats {
+    return {
+      platform: 'devto',
+      accountId: socialMediaAccount.accountId,
+      username: socialMediaAccount.accountName || socialMediaAccount.accountId,
+      fetchedAt: new Date().toISOString(),
+      followers: 0,
+      following: 0,
+      posts: 0,
+      engagement: {
+        total: 0,
+        likes: 0,
+        comments: 0,
+      },
+    };
   }
   static readonly pluginName = 'devto';
   readonly pluginName = 'devto';
@@ -280,6 +335,133 @@ export class DevToPlugin extends BaseSchedulerPlugin {
       };
       this.emit('devto:comment:failed', { error: (error as Error).message });
       return errorResponse;
+    }
+  }
+
+  /**
+   * Transform Dev.to comment to PlatformComment format
+   */
+  private transformComment(comment: any): PlatformComment {
+    return {
+      id: String(comment.id_code || comment.id),
+      text: comment.body_html || comment.body_markdown || '',
+      authorName: comment.user?.name || comment.author?.name || 'Unknown',
+      authorId: String(comment.user_id || comment.author_id),
+      authorPicture: comment.user?.profile_image || comment.author?.profile_image,
+      createdAt: comment.created_at,
+      likeCount: comment.public_reactions_count || 0,
+      replyCount: comment.replies_count || 0,
+      parentId: comment.parent_id ? String(comment.parent_id) : undefined,
+    };
+  }
+
+  /**
+   * Get comments for a Dev.to article
+   */
+  async getComments(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount,
+    options?: { limit?: number; cursor?: string }
+  ): Promise<GetCommentsResponse> {
+    const platformPost = postDetails.platformPosts?.find((pp: any) => pp.socialAccountId === socialMediaAccount.id);
+    const publishDetail = platformPost?.publishDetail ? JSON.parse(platformPost.publishDetail) : {};
+    const externalPostId = publishDetail[socialMediaAccount.id]?.publishedId || publishDetail.postId;
+
+    if (!externalPostId) {
+      return Promise.resolve({ platform: this.pluginName, postId: '', comments: [], hasMore: false });
+    }
+
+    try {
+      const settings = this.getSettings() as DevToSettings;
+      const apiKey = settings.apiKey;
+
+      const params = new URLSearchParams({
+        article_id: externalPostId,
+        per_page: String(options?.limit || 50),
+      });
+
+      const response = await fetch(`https://dev.to/api/comments?${params.toString()}`, {
+        headers: {
+          'api-key': apiKey,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`Dev.to get comments failed: ${error}`);
+      }
+
+      const data = await response.json();
+      const comments: PlatformComment[] = (data || [])
+        .filter((c: any) => !c.parent_id)
+        .map((c: any) => this.transformComment(c));
+
+      return {
+        platform: this.pluginName,
+        postId: externalPostId,
+        comments,
+        hasMore: false,
+      };
+    } catch (error) {
+      console.error('Error fetching Dev.to comments:', error);
+      return {
+        platform: this.pluginName,
+        postId: externalPostId,
+        comments: [],
+        hasMore: false,
+      };
+    }
+  }
+
+  /**
+   * Reply to a comment on Dev.to
+   */
+  async replyToComment(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount,
+    commentId: string,
+    replyText: string
+  ): Promise<ReplyCommentResponse> {
+    try {
+      const platformPost = postDetails.platformPosts?.find((pp: any) => pp.socialAccountId === socialMediaAccount.id);
+      const publishDetail = platformPost?.publishDetail ? JSON.parse(platformPost.publishDetail) : {};
+      const externalPostId = publishDetail[socialMediaAccount.id]?.publishedId || publishDetail.postId;
+
+      const settings = this.getSettings() as DevToSettings;
+      const apiKey = settings.apiKey;
+
+      const response = await fetch('https://dev.to/api/comments', {
+        method: 'POST',
+        headers: {
+          'api-key': apiKey,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          body_markdown: replyText,
+          commentable_id: externalPostId,
+          commentable_type: 'Article',
+          parent_id: commentId,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`Dev.to reply failed: ${error}`);
+      }
+
+      const data = await response.json();
+
+      return {
+        success: true,
+        comment: this.transformComment(data),
+      };
+    } catch (error) {
+      console.error('Error replying to Dev.to comment:', error);
+      return {
+        success: false,
+        error: (error as Error).message || 'Failed to reply to comment',
+      };
     }
   }
 }

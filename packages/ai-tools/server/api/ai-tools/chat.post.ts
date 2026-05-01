@@ -4,16 +4,14 @@ import { userLlmConfigService } from '#layers/BaseDB/server/services/user-llm-co
 import { createLlmJwt } from '#layers/BaseDB/server/utils/llm-jwt'
 import { generateId } from '@ai-sdk/provider-utils'
 
-const logger = {
-  info: (...args: any[]) => console.log('[chat.api]', ...args),
-  error: (...args: any[]) => console.error('[chat.api]', ...args),
-}
-
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event)
   const user = await checkUserIsLogin(event)
   const body = await readBody(event)
 
   const messages = body?.messages || []
+  const messageCount = messages.length
+  log.set({ messageCount, threadId: body.thread_id })
   if (!messages.length) {
     throw createError({ statusCode: 400, statusMessage: 'Messages are required' })
   }
@@ -92,11 +90,11 @@ export default defineEventHandler(async (event) => {
           }),
         })
 
-        logger.info('Backend response status:', backendResponse.status)
+        log.info('Backend response status', { status: backendResponse.status })
 
         if (!backendResponse.ok) {
           const errorText = await backendResponse.text()
-          logger.error('Backend error:', errorText)
+          log.error('Backend error', { status: backendResponse.status, error: errorText })
           controller.enqueue(encoder.encode(sendChunk({ type: 'error', content: errorText })))
           controller.close()
           return
@@ -112,7 +110,7 @@ export default defineEventHandler(async (event) => {
         const decoder = new TextDecoder()
         let buffer = ''
 
-        logger.info('Starting to read stream from backend')
+        log.info('Starting to read stream from backend', {})
 
         while (true) {
           const { done, value } = await reader.read()
@@ -124,11 +122,11 @@ export default defineEventHandler(async (event) => {
                   const data = JSON.parse(json)
                   if (data.done) break
                 } catch (e) {
-                  logger.error('Failed to parse final SSE data:', e)
+                  log.error('Failed to parse final SSE data', { error: String(e) })
                 }
               }
             }
-            logger.info('Stream completed (done)')
+            log.info('Stream completed', {})
             break
           }
 
@@ -154,7 +152,7 @@ export default defineEventHandler(async (event) => {
               const data = JSON.parse(json)
               const toolName = data.tool_call?.name || ''
               const resultPreview = data.tool_result?.result?.substring(0, 50) || ''
-              logger.info(`Passing through chunk: ${data.type} ${toolName} ${resultPreview}`)
+              log.info('Passing through chunk', { type: data.type, toolName, resultPreview })
 
               if (data.type === 'thinking' && data.content) {
                 assistantContent += data.content
@@ -180,7 +178,7 @@ export default defineEventHandler(async (event) => {
                   args: JSON.parse(data.tool_call.arguments),
                 })))
               } else if (data.type === 'tool_result' && data.tool_result) {
-                logger.info('Received tool_result from backend:', data.tool_result.result?.substring(0, 100))
+                log.info('Received tool_result from backend', { resultPreview: data.tool_result.result?.substring(0, 100) })
                 const resultStr = data.tool_result.result
                 const isError = resultStr?.includes('[Tool Error:')
                 // Use the SAME id as the tool_call so frontend can match them
@@ -209,19 +207,19 @@ export default defineEventHandler(async (event) => {
               } else if (data.type === 'error') {
                 controller.enqueue(encoder.encode(sendChunk({ type: 'error', id: generateId(), content: data.content })))
               } else if (data.done) {
-                logger.info('Received done signal')
+                logger.info('Received done signal', {})
                 controller.enqueue(encoder.encode(sendChunk({ type: 'done', id: generateId() })))
                 break
               }
             } catch (e) {
-              logger.error('Failed to parse SSE data:', e, json)
+              log.error('Failed to parse SSE data', { error: String(e), json })
             }
           }
         }
 
-        logger.info('Stream finished')
+        log.info('Stream finished', {})
       } catch (err: any) {
-        logger.error('Stream error:', err)
+        log.error('Stream error', { error: String(err) })
         controller.enqueue(encoder.encode(sendChunk({ type: 'error', id: generateId(), content: err.message })))
       }
 

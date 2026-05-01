@@ -1,10 +1,15 @@
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event)
   const query = getQuery(event)
   const audioUrl = String(query.url || '')
+  log.set({ audioUrl })
 
   if (!audioUrl) {
+    log.error('url parameter is required', {})
     throw createError({ statusCode: 400, message: 'url is required' })
   }
+
+  log.info('Fetching audio', { audioUrl })
 
   const upstreamRes = await fetch(audioUrl, {
     headers: { 'User-Agent': 'Mozilla/5.0' },
@@ -12,6 +17,7 @@ export default defineEventHandler(async (event) => {
   })
 
   if (!upstreamRes.ok) {
+    log.error('Failed to fetch audio', { status: upstreamRes.status, audioUrl })
     throw createError({ statusCode: 502, message: 'Failed to fetch audio' })
   }
 
@@ -26,5 +32,6 @@ export default defineEventHandler(async (event) => {
     ...(contentLength ? { 'Content-Length': contentLength } : {}),
   })
 
+  log.info('Audio streamed successfully', { audioUrl, contentType })
   return sendStream(event, upstreamRes.body!)
 })

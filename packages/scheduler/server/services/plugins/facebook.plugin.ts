@@ -1,8 +1,9 @@
 import type { Asset, PostWithAllData, SocialMediaAccount } from '#layers/BaseDB/db/schema';
-import type { PostResponse, } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
+import type { PostResponse, GetCommentsResponse, ReplyCommentResponse, PlatformComment, PluginPostDetails, PluginSocialMediaAccount } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import type { FacebookSettings } from '#layers/BaseScheduler/shared/platformSettings';
 import dayjs from 'dayjs';
 import { BaseSchedulerPlugin } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
+import type { PlatformStats } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import type { FacebookPage } from '#layers/BaseConnect/utils/FacebookPages';
 
 // Placeholder types - these should ideally be imported from a shared types file
@@ -314,9 +315,9 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
   }
 
   /**
-   * Get comments on a post or page object
+   * Get comments on a post or page object (raw API call)
    */
-  async getComments(
+  async getCommentsRaw(
     objectId: string,
     accessToken: string,
     options?: { limit?: number; after?: string }
@@ -351,9 +352,9 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
   }
 
   /**
-   * Reply to a comment
+   * Reply to a comment (raw API call)
    */
-  async replyToComment(
+  async replyToCommentRaw(
     commentId: string,
     replyText: string,
     accessToken: string
@@ -373,6 +374,117 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
       'reply to comment'
     );
     return response.json();
+  }
+
+  /**
+   * Extract external post ID from postDetails
+   */
+  private extractExternalPostId(postDetails: any, socialMediaAccount: any): string | null {
+    const platformPost = postDetails.platformPosts?.find(
+      (pp: any) => pp.socialAccountId === socialMediaAccount.id
+    );
+    if (!platformPost) return null;
+    
+    const publishDetail = platformPost.publishDetail 
+      ? JSON.parse(platformPost.publishDetail) 
+      : {};
+    
+    return publishDetail[socialMediaAccount.id]?.publishedId || null;
+  }
+
+  /**
+   * Transform Facebook API comment to PlatformComment format
+   */
+  private transformComment(fbComment: any): PlatformComment {
+    return {
+      id: fbComment.id,
+      text: fbComment.message || '',
+      authorName: fbComment.from?.name || 'Unknown',
+      authorId: fbComment.from?.id,
+      authorPicture: fbComment.from?.picture?.data?.url,
+      createdAt: fbComment.created_time,
+      likeCount: fbComment.like_count,
+      replyCount: fbComment.comment_count,
+      parentId: fbComment.parent?.id,
+    };
+  }
+
+  /**
+   * Get comments - implements BaseSchedulerPlugin interface
+   */
+  async getComments(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount,
+    options?: { limit?: number; cursor?: string }
+  ): Promise<GetCommentsResponse> {
+    const externalPostId = this.extractExternalPostId(postDetails, socialMediaAccount);
+    
+    if (!externalPostId) {
+      return {
+        platform: this.pluginName,
+        postId: postDetails.id,
+        comments: [],
+        hasMore: false,
+      };
+    }
+
+    const accessToken = socialMediaAccount.accessToken;
+    
+    try {
+      const result = await this.getCommentsRaw(externalPostId, accessToken, {
+        limit: options?.limit,
+        after: options?.cursor,
+      });
+
+      const comments: PlatformComment[] = (result.data || []).map((c: any) => 
+        this.transformComment(c)
+      );
+
+      return {
+        platform: this.pluginName,
+        postId: externalPostId,
+        comments,
+        hasMore: !!result.paging?.cursors?.after,
+        nextCursor: result.paging?.cursors?.after,
+      };
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Reply to comment - implements BaseSchedulerPlugin interface
+   */
+  async replyToComment(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount,
+    commentId: string,
+    replyText: string
+  ): Promise<ReplyCommentResponse> {
+    const accessToken = socialMediaAccount.accessToken;
+    
+    try {
+      const result = await this.replyToCommentRaw(commentId, replyText, accessToken);
+      
+      if (result.error) {
+        return {
+          success: false,
+          error: result.error.message || 'Failed to reply to comment',
+        };
+      }
+
+      return {
+        success: true,
+        comment: this.transformComment(result),
+      };
+    } catch (error) {
+      console.error('Error replying to comment:', error);
+      return {
+        success: false,
+        error: (error as Error).message || 'Failed to reply to comment',
+      };
+    }
   }
 
   /**
@@ -1015,18 +1127,65 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
   async getStatistic(
     postDetails: PostWithAllData,
     socialMediaAccount: SocialMediaAccount
-  ): Promise<any> {
-    const publicationDetails = postDetails.platformPosts.find((platform) => platform.socialAccountId === socialMediaAccount.id);
-    if (!publicationDetails) {
-      throw new Error('Published platform details not found');
-    }
-    const details = JSON.parse(publicationDetails.publishDetail as unknown as string || '{}') as PostResponse;
-    const postId = details.postId;
-    if (!postId) {
-      throw new Error('Post details not found');
+  ): Promise<PlatformStats> {
+    const pageId = socialMediaAccount.accountId
+
+    // Fetch profile info and page insights in parallel
+    const [profileData, insightsData] = await Promise.all([
+      this.fetch(
+        this._getGraphApiUrl(`/${pageId}?fields=id,name,picture&access_token=${socialMediaAccount.accessToken}`),
+        undefined,
+        'fetch page profile'
+      ).then(r => r.json()),
+      this.getPageInsights(pageId, socialMediaAccount.accessToken, 7),
+    ])
+
+    // Calculate total engagement from insights
+    let totalEngagement = 0
+    let totalImpressions = 0
+    let currentFollowers = 0
+    let previousFollowers = 0
+
+    for (const metric of insightsData) {
+      if (metric.label === 'Post Engagements' || metric.label === 'Engaged Users') {
+        totalEngagement += metric.data?.reduce((sum, d) => sum + d.total, 0) || 0
+      }
+      if (metric.label === 'Page Impressions' || metric.label === 'Unique Impressions') {
+        totalImpressions += metric.data?.reduce((sum, d) => sum + d.total, 0) || 0
+      }
+      if (metric.label === 'Page Fans' && metric.data?.length >= 2) {
+        previousFollowers = metric.data[0]?.total || 0
+        currentFollowers = metric.data[metric.data.length - 1]?.total || 0
+      }
     }
 
-    return this.getPostInsights(postId, socialMediaAccount.accessToken);
+    const followerAbsolute = currentFollowers - previousFollowers
+    const followerPercentage = previousFollowers > 0
+      ? Math.round((followerAbsolute / previousFollowers) * 10000) / 100
+      : 0
+
+    return {
+      platform: 'facebook',
+      accountId: pageId,
+      username: profileData.name || socialMediaAccount.accountName || '',
+      picture: profileData.picture?.data?.url || undefined,
+      fetchedAt: new Date().toISOString(),
+      followers: currentFollowers,
+      posts: undefined,
+      engagement: {
+        total: totalEngagement,
+        impressions: totalImpressions,
+      },
+      growth: {
+        followers: {
+          absolute: followerAbsolute,
+          percentage: followerPercentage,
+        },
+      },
+      extra: {
+        name: profileData.name,
+      },
+    }
   }
 
 

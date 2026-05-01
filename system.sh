@@ -49,25 +49,62 @@ check_docker_deps() {
 generate_secrets() {
     info "Generating secrets..."
     local jwt sql_key session_key auth_secret llm_jwt
+    local sqld_key turso_token
 
-    jwt=$(openssl rand -hex 32 2>/dev/null || head -c 64 /dev/urandom | xxd -p)
+    # Generate standard hex secrets
     sql_key=$(openssl rand -hex 32 2>/dev/null || head -c 64 /dev/urandom | xxd -p)
     session_key=$(openssl rand -hex 32 2>/dev/null || head -c 64 /dev/urandom | xxd -p)
     auth_secret=$(openssl rand -hex 32 2>/dev/null || head -c 64 /dev/urandom | xxd -p)
     llm_jwt=$(openssl rand -hex 32 2>/dev/null || head -c 64 /dev/urandom | xxd -p)
 
+    # Generate Ed25519 keypair + JWT for sqld / Turso via Node.js
+    if command -v node &>/dev/null; then
+        if [[ -f "$SCRIPT_DIR/scripts/generate-db-keys.mjs" ]]; then
+            info "Generating Ed25519 keypair + JWT for sqld..."
+            local db_keys db_exitcode=0
+            db_keys=$(node "$SCRIPT_DIR/scripts/generate-db-keys.mjs" 2>&1) || db_exitcode=$?
+            if [[ $db_exitcode -ne 0 ]]; then
+                err "Node script failed (exit $db_exitcode): $db_keys"
+                err "Ensure node and jose are available: npm install jose"
+                exit 1
+            fi
+            if [[ -z "$db_keys" ]]; then
+                err "Node script produced no output — check jose installation"
+                err "Run: npm install jose"
+                exit 1
+            fi
+            sqld_key=$(echo "$db_keys" | grep '^SQLD_AUTH_JWT_KEY=' | cut -d= -f2-)
+            turso_token=$(echo "$db_keys" | grep '^NUXT_TURSO_AUTH_TOKEN=' | cut -d= -f2-)
+            jwt=$(echo "$db_keys" | grep '^NUXT_TURSO_AUTH_TOKEN=')
+            if [[ -z "$sqld_key" || -z "$turso_token" ]]; then
+                err "Failed to parse key output from node script"
+                err "Raw output: $db_keys"
+                exit 1
+            fi
+            ok "Ed25519 keypair + JWT generated successfully"
+        else
+            err "Missing: $SCRIPT_DIR/scripts/generate-db-keys.mjs"
+            exit 1
+        fi
+    else
+        err "node is not installed — Ed25519 JWT requires Node.js"
+        exit 1
+    fi
+
     # Generate secrets in root .env (only if not already set)
     if [[ -f "$SCRIPT_DIR/.env" ]]; then
         sed -i "s|^JWT=.*|JWT=$jwt|" "$SCRIPT_DIR/.env"
-        sed -i "s|^SQLD_AUTH_JWT_KEY=.*|SQLD_AUTH_JWT_KEY=$sql_key|" "$SCRIPT_DIR/.env"
-        sed -i "s|^NUXT_SESSION_PASSWORD=<generate-openssl-rand-hex-32>|NUXT_SESSION_PASSWORD=$session_key|" "$SCRIPT_DIR/.env"
-        sed -i "s|^NUXT_BETTER_AUTH_SECRET=<generate-openssl-rand-hex-32>|NUXT_BETTER_AUTH_SECRET=$auth_secret|" "$SCRIPT_DIR/.env"
-        sed -i "s|^BETTER_AUTH_SECRET=<generate-openssl-rand-hex-32>|BETTER_AUTH_SECRET=$auth_secret|" "$SCRIPT_DIR/.env"
-        
+        sed -i "s|^SQLD_AUTH_JWT_KEY=.*|SQLD_AUTH_JWT_KEY=$sqld_key|" "$SCRIPT_DIR/.env"
+        sed -i "s|^NUXT_TURSO_AUTH_TOKEN=.*|NUXT_TURSO_AUTH_TOKEN=$turso_token|" "$SCRIPT_DIR/.env"
+        sed -i "s|^NUXT_SESSION_PASSWORD=.*|NUXT_SESSION_PASSWORD=$session_key|" "$SCRIPT_DIR/.env"
+        sed -i "s|^NUXT_BETTER_AUTH_SECRET=.*|NUXT_BETTER_AUTH_SECRET=$auth_secret|" "$SCRIPT_DIR/.env"
+        sed -i "s|^BETTER_AUTH_SECRET=.*|BETTER_AUTH_SECRET=$auth_secret|" "$SCRIPT_DIR/.env"
+
         # Set NUXT_LLM_JWT_SECRET only if not already set (preserve existing value)
-        if ! grep -q "^NUXT_LLM_JWT_SECRET=" "$SCRIPT_DIR/.env"; then
-            sed -i "s|^#.*NUXT_LLM_JWT_SECRET=.*|NUXT_LLM_JWT_SECRET=$llm_jwt|" "$SCRIPT_DIR/.env"
-            if ! grep -q "^NUXT_LLM_JWT_SECRET=" "$SCRIPT_DIR/.env"; then
+        if ! grep -q "^NUXT_LLM_JWT_SECRET=$llm_jwt" "$SCRIPT_DIR/.env" 2>/dev/null; then
+            if grep -q "^#.*NUXT_LLM_JWT_SECRET=" "$SCRIPT_DIR/.env" 2>/dev/null; then
+                sed -i "s|^#.*NUXT_LLM_JWT_SECRET=.*|NUXT_LLM_JWT_SECRET=$llm_jwt|" "$SCRIPT_DIR/.env"
+            elif ! grep -q "^NUXT_LLM_JWT_SECRET=" "$SCRIPT_DIR/.env" 2>/dev/null; then
                 echo "NUXT_LLM_JWT_SECRET=$llm_jwt" >> "$SCRIPT_DIR/.env"
             fi
         fi
@@ -76,7 +113,7 @@ generate_secrets() {
 
     # Generate LLM_JWT_SECRET in python-backend/.env (only if not already set)
     if [[ -f "$SCRIPT_DIR/packages/python-backend/.env" ]]; then
-        if ! grep -q "^LLM_JWT_SECRET=" "$SCRIPT_DIR/packages/python-backend/.env"; then
+        if ! grep -q "^LLM_JWT_SECRET=$llm_jwt" "$SCRIPT_DIR/packages/python-backend/.env" 2>/dev/null; then
             echo "" >> "$SCRIPT_DIR/packages/python-backend/.env"
             echo "# =============================================================================" >> "$SCRIPT_DIR/packages/python-backend/.env"
             echo "# JWT AUTH (Service-to-service communication with Nuxt)" >> "$SCRIPT_DIR/packages/python-backend/.env"

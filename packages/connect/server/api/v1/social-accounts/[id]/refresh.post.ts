@@ -1,9 +1,11 @@
 import { socialMediaAccountService, type SocialMediaPlatform } from "#layers/BaseDB/server/services/social-media-account.service"
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event)
   try {
     // Get user from session
     const user = await requireUserSession(event)
+    log.set({ userId: user.id })
 
     const accountId = getRouterParam(event, 'id')
 
@@ -13,6 +15,8 @@ export default defineEventHandler(async (event) => {
         statusMessage: 'Account ID is required'
       })
     }
+
+    log.set({ accountId })
 
     // Get the account to verify ownership and get refresh token
     const account = await socialMediaAccountService.getAccountById(accountId)
@@ -35,7 +39,7 @@ export default defineEventHandler(async (event) => {
     try {
       // Get fresh access token using Better Auth
       // Better Auth automatically handles token refresh internally
-      const accessToken = await getAccessToken(account.platform as SocialMediaPlatform, accountId)
+      const accessToken = await getAccessToken(event, account.platform as SocialMediaPlatform, accountId)
 
       if (!accessToken) {
         throw new Error('Failed to retrieve access token')
@@ -54,6 +58,8 @@ export default defineEventHandler(async (event) => {
         })
       }
 
+      log.info('Access token refreshed', { accountId, platform: account.platform })
+
       return {
         success: true,
         message: 'Access token refreshed successfully',
@@ -67,7 +73,7 @@ export default defineEventHandler(async (event) => {
         }
       }
     } catch (refreshError) {
-      console.error('Token refresh failed:', refreshError)
+      log.error('Token refresh failed', { accountId, error: refreshError })
 
       // Mark account as inactive if refresh fails
       await socialMediaAccountService.updateAccount(accountId, { isActive: false })
@@ -78,7 +84,7 @@ export default defineEventHandler(async (event) => {
       })
     }
   } catch (error) {
-    console.error('Error refreshing social media account tokens:', error)
+    log.error('Failed to refresh social media account tokens', { error })
 
     if (error && typeof error === 'object' && 'statusCode' in error) {
       throw error

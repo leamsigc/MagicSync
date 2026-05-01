@@ -11,13 +11,17 @@ const updateProfileSchema = z.object({
 })
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event)
   try {
     // Get user from session
     const user = await checkUserIsLogin(event)
+    log.set({ userId: user.id })
 
     // Parse and validate the request body
     const body = await readBody(event)
     const validatedData = updateProfileSchema.parse(body)
+
+    log.set({ action: 'update_profile', email: validatedData.email })
 
     // Update user profile using Better Auth
     await authClient.updateUser({
@@ -27,11 +31,15 @@ export default defineEventHandler(async (event) => {
       image: validatedData.image
     })
 
+    log.info({ content: 'Profile updated successfully', success: true })
+
     return {
       success: true,
       message: 'Profile updated successfully'
     }
   } catch (error: any) {
+    log.error({ content: 'Failed to update profile', error: error.message })
+
     if (error instanceof z.ZodError) {
       throw createError({
         statusCode: 400,

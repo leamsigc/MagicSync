@@ -3,15 +3,18 @@ import { readFile } from 'fs/promises'
 import { join } from 'path'
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event)
   const FILE_STORAGE_MOUNT = process.env.NUXT_FILE_STORAGE_MOUNT
 
 
   try {
     // Get user from session
     const user = await checkUserIsLogin(event)
+    log.set({ userId: user.id })
 
     // Get the file path from the route parameters
     const path = getRouterParam(event, 'path')
+    log.set({ path })
 
     if (!path) {
       throw createError({
@@ -70,6 +73,7 @@ export default defineEventHandler(async (event) => {
     }
 
     console.error('File serving error:', error)
+    log.error('Failed to serve file', { error })
     throw createError({
       statusCode: 500,
       statusMessage: 'Internal server error'

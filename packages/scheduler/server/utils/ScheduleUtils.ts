@@ -167,11 +167,10 @@ export const ScheduleRefreshSocialMediaTokens = async (fullPost: PostWithAllData
       const providerId = platformPost.platformPostId === 'x' ? 'twitter' : platformPost.platformPostId
       if (!account || !providerId) return Promise.reject('Account not found')
 
-      const tokenData = await getAccessTokenHelper({
+      const tokenData = await getAccessTokenHelper(headers, {
         providerId: providerId,
         userId: userId,
         accountId: account.accountId,
-        headers: headers
       });
 
 
@@ -190,6 +189,27 @@ interface ValidationResult {
   errors: string[]
 }
 
+import { platformConfigurations } from '../../shared/platformConstants'
+import type { PlatformConfig } from '../../shared/platformConstants'
+
 export function validateContentForPlatform(platform: string, content: { text?: string; mediaUrls?: string[] }): ValidationResult {
-  return { isValid: true, warnings: [], errors: [] }
+  const config: PlatformConfig = (platformConfigurations as any)[platform] ?? platformConfigurations.default
+  const errors: string[] = []
+  const warnings: string[] = []
+
+  if (!content.text?.trim()) {
+    errors.push('Content text is required')
+    return { isValid: false, warnings, errors }
+  }
+
+  const length = content.text.length
+  if (length > config.maxPostLength) {
+    errors.push(`Content exceeds ${config.maxPostLength} character limit for ${platform} (currently ${length})`)
+  }
+
+  if (config.maxPostLength <= 300 && length > config.maxPostLength * 0.85) {
+    warnings.push(`Content is ${Math.round((length / config.maxPostLength) * 100)}% of ${config.maxPostLength} char limit`)
+  }
+
+  return { isValid: errors.length === 0, warnings, errors }
 }

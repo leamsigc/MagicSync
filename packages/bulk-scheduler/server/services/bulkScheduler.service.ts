@@ -282,22 +282,26 @@ export class BulkSchedulerService {
   }
 
   private async createPostsBatch(userId: string, posts: PostCreateBase[]): Promise<BulkScheduleResult> {
+    const results = await Promise.allSettled(
+      posts.map(post => postService.create(userId, post))
+    )
+
     const createdIds: string[] = []
     const errors: string[] = []
 
-    for (const post of posts) {
-      try {
-        const result = await postService.create(userId, post)
-        if (result.data) {
-          createdIds.push(result.data.id)
-        } else if (result.error) {
-          errors.push(result.error)
+    results.forEach((result) => {
+      if (result.status === 'fulfilled') {
+        const value = result.value
+        if (value.data) {
+          createdIds.push(value.data.id)
+        } else if (value.error) {
+          errors.push(value.error)
         }
-      } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : 'Failed to create post'
+      } else {
+        const errorMessage = result.reason instanceof Error ? result.reason.message : 'Failed to create post'
         errors.push(errorMessage)
       }
-    }
+    })
 
     return {
       success: errors.length === 0,

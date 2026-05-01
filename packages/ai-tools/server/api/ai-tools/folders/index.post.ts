@@ -2,8 +2,11 @@ import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
 import { folderService } from '#layers/BaseDB/server/services/folder.service'
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event)
   const user = await checkUserIsLogin(event)
   const body = await readBody(event)
+
+  log.set({ folderName: body.name })
 
   if (!body.name) {
     throw createError({ statusCode: 400, statusMessage: 'Folder name is required' })

@@ -3,12 +3,16 @@ import type { SystemVariable } from '#layers/BaseBulkScheduler/utils/templatePro
 import { bulkSchedulerService, type BulkGenerateRequest } from '#layers/BaseBulkScheduler/server/services/bulkScheduler.service'
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event)
   try {
     const user = await checkUserIsLogin(event)
+    log.set({ userId: user.id })
 
     const body = await readBody(event)
+    log.set({ platforms: body.platforms, businessId: body.businessId })
 
     if (!body.templateContent) {
+      log.error('Template content is required', {})
       throw createError({
         statusCode: 400,
         statusMessage: 'Template content is required'
@@ -16,6 +20,7 @@ export default defineEventHandler(async (event) => {
     }
 
     if (!body.platforms || !Array.isArray(body.platforms) || body.platforms.length === 0) {
+      log.error('At least one platform is required', {})
       throw createError({
         statusCode: 400,
         statusMessage: 'At least one platform is required'
@@ -23,6 +28,7 @@ export default defineEventHandler(async (event) => {
     }
 
     if (!body.businessId) {
+      log.error('Business ID is required', {})
       throw createError({
         statusCode: 400,
         statusMessage: 'Business ID is required'
@@ -30,6 +36,7 @@ export default defineEventHandler(async (event) => {
     }
 
     if (!body.startDate || !body.endDate) {
+      log.error('Date range (startDate and endDate) is required', {})
       throw createError({
         statusCode: 400,
         statusMessage: 'Date range (startDate and endDate) is required'
@@ -37,11 +44,14 @@ export default defineEventHandler(async (event) => {
     }
 
     if (!body.contentRows || !Array.isArray(body.contentRows) || body.contentRows.length === 0) {
+      log.error('At least one content row is required', {})
       throw createError({
         statusCode: 400,
         statusMessage: 'At least one content row is required'
       })
     }
+
+    log.info('Generating bulk posts', { contentRowsCount: body.contentRows.length })
 
     const request: BulkGenerateRequest = {
       templateContent: body.templateContent,
@@ -61,6 +71,7 @@ export default defineEventHandler(async (event) => {
     const result = await bulkSchedulerService.bulkGenerate(user.id, request)
 
     if (!result.success) {
+      log.error('Failed to generate bulk posts', { errors: result.errors })
       throw createError({
         statusCode: 400,
         statusMessage: 'Failed to generate bulk posts',
@@ -68,6 +79,7 @@ export default defineEventHandler(async (event) => {
       })
     }
 
+    log.info('Bulk posts generated', { created: result.created, failed: result.failed })
     return {
       success: true,
       data: {
@@ -82,6 +94,7 @@ export default defineEventHandler(async (event) => {
     }
 
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    log.error('Internal server error', { error: errorMessage })
     throw createError({
       statusCode: 500,
       statusMessage: `Internal server error: ${errorMessage}`

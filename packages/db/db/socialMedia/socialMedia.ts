@@ -35,6 +35,9 @@ export const socialMediaAccounts = sqliteTable('social_media_accounts', {
   accountName: text('account_name').notNull(),
   accessToken: text('access_token').notNull(),
   refreshToken: text('refresh_token'),
+  // Encrypted token columns (for storing tokens encrypted at rest)
+  accessTokenEncrypted: text('access_token_encrypted'),
+  refreshTokenEncrypted: text('refresh_token_encrypted'),
   tokenExpiresAt: integer('token_expires_at', { mode: 'timestamp' }),
   isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true),
   lastSyncAt: integer('last_sync_at', { mode: 'timestamp' }),
