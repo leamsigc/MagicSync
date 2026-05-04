@@ -1,4 +1,4 @@
-import type { PlatformPost, Post, PostCreateBase, PostWithAllData, SocialMediaAccount, PublishDetail } from '#layers/BaseDB/db/schema'
+import type { PlatformPost, Post, PostCreateBase, PostWithAllData, SocialMediaAccount, PublishDetail, Asset } from '#layers/BaseDB/db/schema'
 import type {
   PaginatedResponse,
   QueryOptions,
@@ -148,9 +148,9 @@ export class PostService {
       }
 
       // Determine which date field to filter by
-      const dateField = filters.dateType === 'createdAt' ? posts.createdAt 
-        : filters.dateType === 'publishedAt' ? posts.publishedAt 
-        : posts.scheduledAt
+      const dateField = filters.dateType === 'createdAt' ? posts.createdAt
+        : filters.dateType === 'publishedAt' ? posts.publishedAt
+          : posts.scheduledAt
 
       // Apply date range filters
       if (filters.startDate) {
@@ -200,7 +200,7 @@ export class PostService {
 
 
       return {
-        data: postWithAssets,
+        data: postWithAssets as PostWithAllData[],
         pagination: {
           page: pagination.page || 1,
           limit: pagination.limit || 10,
@@ -548,7 +548,6 @@ export class PostService {
   async getPostsToProcessNow() {
     const now = dayjs.utc().toDate()
     const startOfToday = dayjs.utc().startOf('day').toDate();
-    const endOfToday = dayjs.utc().endOf('day').toDate();
 
     const list = await this.db.query.posts.findMany({
       where: and(
@@ -560,7 +559,32 @@ export class PostService {
         user: true
       }
     })
-    return list
+
+    // Fetch assets for each post based on mediaAssets field
+    const postsWithAssets = await Promise.all(
+      list.map(async (post) => {
+        let assetsList: Asset[] = [];
+        if (post.mediaAssets) {
+          try {
+            const assetIds = JSON.parse(post.mediaAssets as unknown as string) as string[];
+            if (assetIds && assetIds.length > 0) {
+              const assetsResult = await this.db.query.assets.findMany({
+                where: inArray(assets.id, assetIds)
+              });
+              assetsList = assetsResult;
+            }
+          } catch (e) {
+            // Invalid JSON, return empty assets
+          }
+        }
+        return {
+          ...post,
+          assets: assetsList
+        } as PostWithAllData;
+      })
+    );
+
+    return postsWithAssets;
   }
 
   async updatePostBaseOnResponse(post: PostWithAllData, response: PostResponse, socialPlatform: PlatformPost) {

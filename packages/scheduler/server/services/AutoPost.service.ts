@@ -43,10 +43,10 @@ export class AutoPostService {
 
   async triggerSocialMediaPost(post: PostWithAllData): Promise<void> {
     // Implement the logic to trigger a social media post
-    post.platformPosts.forEach(async (platformPost) => {
+    for (const platformPost of post.platformPosts) {
       const platform = platformPost.platformPostId
       if (!platform) {
-        return;
+        continue;
       }
       const user = post.user;
       const accounts = await socialMediaAccountService.getAccountsForPlatform(
@@ -76,11 +76,10 @@ export class AutoPostService {
         console.error(e);
         await postService.updatePostBaseOnResponse(
           post,
-          { status: 'failed', id: platformPost.id, releaseURL: '', error: 'Post failed to post ', postId: post.id },
+          { status: 'failed', id: platformPost.id, releaseURL: '', error: 'Post failed to post', postId: post.id },
           platformPost
         );
       }
-    });
-
+    }
   }
 }

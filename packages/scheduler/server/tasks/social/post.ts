@@ -11,8 +11,9 @@ export default defineTask({
     const autoScheduler = new AutoPostService();
 
     const postToProcess = listOfPostToProcess.map((post) => {
-      autoScheduler.triggerSocialMediaPost(post);
+      return autoScheduler.triggerSocialMediaPost(post);
     });
+    await Promise.all(postToProcess);
     console.log("#### Trigger auto post for old post  ", listOfPostToProcess.length);
 
     return { result: "Success" };
