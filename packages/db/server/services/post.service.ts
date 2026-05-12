@@ -137,19 +137,19 @@ export class PostService {
       const { pagination = { page: 1, limit: 10 }, filters = {} } = options
       const offset = ((pagination.page || 1) - 1) * (pagination.limit || 10)
 
-      let whereConditions = and(
+      const whereConditions = [
         eq(posts.businessId, businessId),
         eq(posts.userId, userId)
-      )
+      ]
 
       // Apply status filter if provided
       if (filters.status) {
-        whereConditions = and(whereConditions, eq(posts.status, filters.status))
+        whereConditions.push(eq(posts.status, filters.status))
       }
 
       // Apply post format filter
       if (filters.postFormat) {
-        whereConditions = and(whereConditions, eq(posts.postFormat, filters.postFormat))
+        whereConditions.push(eq(posts.postFormat, filters.postFormat))
       }
 
       // Determine which date field to filter by
@@ -159,20 +159,20 @@ export class PostService {
 
       // Apply date range filters
       if (filters.startDate) {
-        whereConditions = and(whereConditions, gte(dateField, new Date(filters.startDate)))
+        whereConditions.push(gte(dateField, new Date(filters.startDate)))
       }
       if (filters.endDate) {
-        whereConditions = and(whereConditions, lte(dateField, new Date(filters.endDate)))
+        whereConditions.push(lte(dateField, new Date(filters.endDate)))
       }
 
       // Apply platform filter (filter by target platforms)
       if (filters.platforms && filters.platforms.length > 0) {
-        whereConditions = and(whereConditions, sql`
+        whereConditions.push(sql`
           ${posts.targetPlatforms} LIKE ${'%' + filters.platforms[0] + '%'}
         `)
       }
       const postList = await this.db.query.posts.findMany({
-        where: whereConditions,
+        where: and(...whereConditions),
         with: {
           platformPosts: true,
           user: true,
@@ -213,7 +213,7 @@ export class PostService {
       const result = await this.db
         .select({ count: sql<number>`count(*)` })
         .from(posts)
-        .where(whereConditions)
+        .where(and(...whereConditions))
 
       const count = result[0]?.count || 0
 
@@ -475,6 +475,41 @@ export class PostService {
       return await this.findById(id, userId, true) as ServiceResponse<PostWithAllData>
     } catch (error) {
       return { error: 'Failed to retry post' }
+    }
+  }
+
+  /**
+   * Count posts for a user within a date range
+   */
+  async countPosts(filters: {
+    userId: string
+    businessId?: string
+    startDate?: string
+    endDate?: string
+  }): Promise<number> {
+    try {
+      const whereConditions = [eq(posts.userId, filters.userId)]
+
+      if (filters.businessId) {
+        whereConditions.push(eq(posts.businessId, filters.businessId))
+      }
+
+      if (filters.startDate) {
+        whereConditions.push(gte(posts.createdAt, new Date(filters.startDate)))
+      }
+
+      if (filters.endDate) {
+        whereConditions.push(lte(posts.createdAt, new Date(filters.endDate)))
+      }
+
+      const result = await this.db
+        .select({ count: sql<number>`count(*)` })
+        .from(posts)
+        .where(and(...whereConditions))
+
+      return result[0]?.count || 0
+    } catch (error) {
+      return 0
     }
   }
 

@@ -5,7 +5,8 @@ import { logAuditService } from '#layers/BaseDB/server/services/auditLog.service
 import type { PostResponse } from '#layers/BaseDB/server/services/types';
 
 // Simplified types based on the core requirements for SchedulerPost
-export type { Integration };
+// Simplified types based on the core requirements for SchedulerPost
+export type { Integration, PostResponse };
 
 export type PluginPostDetails = PostWithAllData & {
   title?: string;
@@ -389,5 +390,20 @@ export class SchedulerPost extends EventEmitter {
       return plugin.replyToComment(postDetails, socialMediaAccount, commentId, replyText);
     }
     throw new Error('Plugin not registered for this socialMediaAccount');
+  }
+
+  async getPostInsights(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount
+  ): Promise<any> {
+    const plugin = this.plugins.get(socialMediaAccount.platform);
+    if (!plugin) {
+      throw new Error('Plugin not registered for this socialMediaAccount');
+    }
+    const method = plugin['getPostInsights'];
+    if (typeof method !== 'function') {
+      throw new Error(`Platform ${socialMediaAccount.platform} does not support getPostInsights`);
+    }
+    return method.call(plugin, postDetails, socialMediaAccount);
   }
 }

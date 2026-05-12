@@ -1,4 +1,4 @@
-import type { PostResponse, GetCommentsResponse, ReplyCommentResponse, PlatformComment } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
+import type { PostResponse, GetCommentsResponse, ReplyCommentResponse, PlatformComment, PluginPostDetails, PluginSocialMediaAccount } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import { BaseSchedulerPlugin, type PlatformStats } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import type { Post, PostWithAllData, SocialMediaAccount, Asset } from '#layers/BaseDB/db/schema';
 import type { InstagramSettings } from '#layers/BaseScheduler/shared/platformSettings';
@@ -7,6 +7,13 @@ import { platformConfigurations } from '#layers/BaseScheduler/shared/platformCon
 export class InstagramPlugin extends BaseSchedulerPlugin {
   static readonly pluginName = 'instagram';
   readonly pluginName = 'instagram';
+
+  private readonly API_VERSION = 'v25.0';
+  private readonly GRAPH_API_BASE_URL = 'https://graph.facebook.com';
+
+  private _getGraphApiUrl(path: string): string {
+    return `${this.GRAPH_API_BASE_URL}/${this.API_VERSION}/${path.replace(/^\//, '')}`;
+  }
 
   private normalizeContent(content: string): string {
     if (!content) return '';
@@ -68,30 +75,29 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
    * Get Instagram business account profile
    */
   async getProfile(accountId: string, accessToken: string): Promise<any> {
-    const response = await fetch(
-      `https://graph.facebook.com/v21.0/${accountId}?fields=id,username,name,profile_picture_url,followers_count,follows_count,media_count`,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
-    );
-    return response.json();
+    const url = this._getGraphApiUrl(`${accountId}?fields=id,username,name,profile_picture_url,followers_count,follows_count,media_count&access_token=${accessToken}`)
+    const response = await fetch(url)
+    return response.json()
   }
 
   /**
    * Get media insights (engagement metrics)
+   * Updated to use current valid Instagram Graph API metrics
    */
   async getMediaInsights(mediaId: string, accessToken: string): Promise<any> {
-    const response = await fetch(
-      `https://graph.facebook.com/v21.0/${mediaId}/insights?metric=views,reach,saved,likes,comments,shares`,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
+    try {
+      const url = this._getGraphApiUrl(`${mediaId}/insights?metric=reach,views,saved,likes,comments,shares,engagement&access_token=${accessToken}`)
+      const response = await fetch(url)
+      if (!response.ok) {
+        const error = await response.json()
+        console.warn('[Instagram] Media insights error:', error)
+        return { data: [] }
       }
-    );
-    return response.json();
+      return response.json()
+    } catch (error) {
+      console.warn('[Instagram] Media insights fetch failed:', error)
+      return { data: [] }
+    }
   }
 
   /**
@@ -142,12 +148,8 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
       params.append('image_url', getPublicUrlForAsset(mediaUrl));
     }
 
-    const response = await fetch(
-      `https://graph.facebook.com/v21.0/${igUserId}/media?${params.toString()}`,
-      {
-        method: 'POST',
-      }
-    );
+    const url = this._getGraphApiUrl(`${igUserId}/media?${params.toString()}`)
+    const response = await fetch(url, { method: 'POST' })
 
     if (!response.ok) {
       const error = await response.text();
@@ -174,12 +176,8 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
     });
 
     for (let i = 0; i < retries; i++) {
-      const response = await fetch(
-        `https://graph.facebook.com/v21.0/${igUserId}/media_publish?${params.toString()}`,
-        {
-          method: 'POST',
-        }
-      );
+      const url = this._getGraphApiUrl(`${igUserId}/media_publish?${params.toString()}`)
+      const response = await fetch(url, { method: 'POST' });
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -212,9 +210,8 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
     for (let i = 0; i < maxAttempts; i++) {
       let response;
       try {
-        response = await fetch(
-          `https://graph.facebook.com/v21.0/${containerId}?fields=status_code&access_token=${accessToken}`
-        );
+        const url = this._getGraphApiUrl(`${containerId}?fields=status_code&access_token=${accessToken}`)
+        response = await fetch(url)
       } catch (err) {
         // network error, let's keep waiting
       }
@@ -415,9 +412,8 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
       caption: content || '',
     });
 
-    const response = await fetch(`https://graph.facebook.com/v21.0/${publishedPostId}?${params.toString()}`, {
-      method: 'POST',
-    });
+    const url = this._getGraphApiUrl(`${publishedPostId}?${params.toString()}`)
+    const response = await fetch(url, { method: 'POST' })
 
     if (!response.ok) {
       const error = await response.text();
@@ -444,7 +440,19 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
     const igUserId = socialMediaAccount.accountId
 
     // Fetch account-level profile stats (followers, following, media_count)
-    const profile = await this.getProfile(igUserId, socialMediaAccount.accessToken)
+    let profile: any = {}
+    try {
+      const profileUrl = this._getGraphApiUrl(`${igUserId}?fields=id,username,name,profile_picture_url,followers_count,follows_count,media_count&access_token=${socialMediaAccount.accessToken}`)
+      const profileResponse = await fetch(profileUrl)
+      if (!profileResponse.ok) {
+        const error = await profileResponse.json()
+        console.warn('[Instagram] Profile fetch error:', error)
+      } else {
+        profile = await profileResponse.json()
+      }
+    } catch (error) {
+      console.warn('[Instagram] Profile fetch failed:', error)
+    }
 
     // Fetch latest media for engagement stats
     let totalEngagement = 0
@@ -452,37 +460,47 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
     let totalPosts = 0
 
     try {
-      const mediaUrl = `https://graph.facebook.com/v21.0/${igUserId}/media?fields=id,caption,media_type,like_count,comments_count,views&limit=50&access_token=${socialMediaAccount.accessToken}`
+      const mediaUrl = this._getGraphApiUrl(`${igUserId}/media?fields=id,caption,media_type,like_count,comments_count,reach,views,saved,share_count&limit=50&access_token=${socialMediaAccount.accessToken}`)
       const mediaResponse = await fetch(mediaUrl)
-      const mediaData = await mediaResponse.json()
-      const mediaItems = mediaData.data || []
+      if (!mediaResponse.ok) {
+        const error = await mediaResponse.json()
+        console.warn('[Instagram] Media fetch error:', error)
+      } else {
+        const mediaData = await mediaResponse.json()
+        const mediaItems = mediaData.data || []
 
-      totalPosts = mediaItems.length
+        totalPosts = mediaItems.length
 
-      for (const media of mediaItems) {
-        totalEngagement += (media.like_count || 0) + (media.comments_count || 0)
-        totalViews += media.views || 0
+        for (const media of mediaItems) {
+          totalEngagement += (media.like_count || 0) + (media.comments_count || 0) + (media.share_count || 0) + (media.saved || 0)
+          totalViews += media.views || 0
+        }
       }
-    } catch {
-      // Media fetch failed — proceed with profile data only
+    } catch (error) {
+      console.warn('[Instagram] Media fetch failed:', error)
     }
 
     // Fetch 7-day follower change if available
     let followerGrowth = undefined
     try {
-      const insightsUrl = `https://graph.facebook.com/v21.0/${igUserId}/insights?metric=follower_count&access_token=${socialMediaAccount.accessToken}`
+      const insightsUrl = this._getGraphApiUrl(`${igUserId}/insights?metric=follower_count&period=day&access_token=${socialMediaAccount.accessToken}`)
       const insightsResponse = await fetch(insightsUrl)
-      const insightsData = await insightsResponse.json()
-      const values = insightsData.data?.[0]?.values || []
-      if (values.length >= 2) {
-        const current = values[values.length - 1].value
-        const previous = values[0].value
-        const absolute = current - previous
-        const percentage = previous > 0 ? Math.round((absolute / previous) * 10000) / 100 : 0
-        followerGrowth = { absolute, percentage }
+      if (!insightsResponse.ok) {
+        const error = await insightsResponse.json()
+        console.warn('[Instagram] Follower insights error:', error)
+      } else {
+        const insightsData = await insightsResponse.json()
+        const values = insightsData.data?.[0]?.values || []
+        if (values.length >= 2) {
+          const current = values[values.length - 1].value
+          const previous = values[0].value
+          const absolute = current - previous
+          const percentage = previous > 0 ? Math.round((absolute / previous) * 10000) / 100 : 0
+          followerGrowth = { absolute, percentage }
+        }
       }
-    } catch {
-      // Insights not available
+    } catch (error) {
+      console.warn('[Instagram] Follower insights fetch failed:', error)
     }
 
     return {
@@ -532,12 +550,8 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
         message: commentDetails.content,
       });
 
-      const response = await fetch(
-        `https://graph.facebook.com/v21.0/${postId}/comments?${params.toString()}`,
-        {
-          method: 'POST',
-        }
-      );
+      const url = this._getGraphApiUrl(`${postId}/comments?${params.toString()}`)
+      const response = await fetch(url, { method: 'POST' })
 
       if (!response.ok) {
         const error = await response.text();
@@ -594,7 +608,7 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
     options?: { limit?: number; cursor?: string }
   ): Promise<GetCommentsResponse> {
     const platformPost = postDetails.platformPosts?.find((pp: any) => pp.socialAccountId === socialMediaAccount.id);
-    const publishDetail = platformPost?.publishDetail ? JSON.parse(platformPost.publishDetail) : {};
+    const publishDetail = platformPost?.publishDetail ? JSON.parse(platformPost.publishDetail as unknown as string) : {};
     const externalPostId = publishDetail[socialMediaAccount.id]?.publishedId || publishDetail.postId;
 
     if (!externalPostId) {
@@ -612,14 +626,8 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
         params.append('after', options.cursor);
       }
 
-      const response = await fetch(
-        `https://graph.facebook.com/v21.0/${externalPostId}/comments?${params.toString()}`,
-        {
-          headers: {
-            Authorization: `Bearer ${socialMediaAccount.accessToken}`,
-          },
-        }
-      );
+      const url = this._getGraphApiUrl(`${externalPostId}/comments?${params.toString()}`)
+      const response = await fetch(url)
 
       if (!response.ok) {
         const error = await response.text();
@@ -662,12 +670,8 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
         message: replyText,
       });
 
-      const response = await fetch(
-        `https://graph.facebook.com/v21.0/${commentId}/replies?${params.toString()}`,
-        {
-          method: 'POST',
-        }
-      );
+      const url = this._getGraphApiUrl(`${commentId}/replies?${params.toString()}`)
+      const response = await fetch(url, { method: 'POST' })
 
       if (!response.ok) {
         const error = await response.text();

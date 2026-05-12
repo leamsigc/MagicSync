@@ -19,6 +19,7 @@ import type { PostWithAllData } from '#layers/BaseDB/db/schema';
 import { usePlatformIcons } from '#layers/BaseUI/app/composables/usePlatformIcons';
 import dayjs from 'dayjs';
 import PostCommentsView from '../components/views/PostCommentsView.vue';
+import PostStatsView from '../components/views/PostStatsView.vue';
 
 const { t } = useI18n()
 const route = useRoute()
@@ -27,7 +28,7 @@ const postId = route.params.id as string
 const { getPlatformIcon } = usePlatformIcons()
 const post = useState<{ success: boolean, data: PostWithAllData } | null>()
 
-const activeTab = ref<'post' | 'details' | 'comments'>('post')
+const activeTab = ref<'post' | 'details' | 'comments' | 'stats'>('post')
 
 callOnce(async () => {
   console.log('This will only be logged once and then on every client side navigation')
@@ -133,6 +134,15 @@ useHead({
             class="ml-1 text-xs bg-zinc-700 text-zinc-300 rounded-full px-1.5 py-0.5">
             {{ postData.platformPosts.filter((pp: any) => pp.status === 'published').length }}
           </span>
+        </button>
+        <button
+          class="px-4 py-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-1"
+          :class="activeTab === 'stats'
+            ? 'border-blue-500 text-blue-500'
+            : 'border-transparent text-zinc-500 hover:text-zinc-300'"
+          @click="activeTab = 'stats'"
+        >
+          {{ t('feeds.tabs.stats') }}
         </button>
       </nav>
     </div>
@@ -282,6 +292,11 @@ useHead({
     <!-- Tab: Comments -->
     <div v-if="activeTab === 'comments'" class="p-4">
       <PostCommentsView v-if="postData" :post="postData" />
+    </div>
+
+    <!-- Tab: Stats -->
+    <div v-if="activeTab === 'stats'" class="p-4">
+      <PostStatsView v-if="postData" :post="postData" />
     </div>
 
   </div>

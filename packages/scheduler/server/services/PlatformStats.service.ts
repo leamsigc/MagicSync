@@ -8,54 +8,16 @@
  */
 
 import type { PlatformStats } from '#layers/BaseScheduler/server/services/SchedulerPost.service'
-import type { PluginPostDetails, PluginSocialMediaAccount } from '#layers/BaseScheduler/server/services/SchedulerPost.service'
-import { SchedulerPost } from '#layers/BaseScheduler/server/services/SchedulerPost.service'
-import type { SchedulerPluginConstructor } from '#layers/BaseScheduler/server/services/SchedulerPost.service'
-import { socialMediaAccountService, type SocialMediaPlatform } from '#layers/BaseDB/server/services/social-media-account.service'
+import type { SocialMediaPlatform } from '#layers/BaseDB/server/services/social-media-account.service'
+import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service'
 import { entityDetails } from '#layers/BaseDB/db/entityDetails/entityDetails'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
-import { eq, and, desc, gte, inArray, sql } from 'drizzle-orm'
+import { eq, and, desc, gte, inArray } from 'drizzle-orm'
 import dayjs from 'dayjs'
-
-// Plugin imports (same matcher as AutoPostService)
-import { FacebookPlugin } from '#layers/BaseScheduler/server/services/plugins/facebook.plugin'
-import { BlueskyPlugin } from '#layers/BaseScheduler/server/services/plugins/bluesky.plugin'
-import { DevToPlugin } from '#layers/BaseScheduler/server/services/plugins/devto.plugin'
-import { DiscordPlugin } from '#layers/BaseScheduler/server/services/plugins/discord.plugin'
-import { DribbblePlugin } from '#layers/BaseScheduler/server/services/plugins/dribbble.plugin'
-import { GoogleMyBusinessPlugin } from '#layers/BaseScheduler/server/services/plugins/googlemybusiness.plugin'
-import { InstagramPlugin } from '#layers/BaseScheduler/server/services/plugins/instagram.plugin'
-import { InstagramStandalonePlugin } from '#layers/BaseScheduler/server/services/plugins/instagram-standalone.plugin'
-import { LinkedInPlugin } from '#layers/BaseScheduler/server/services/plugins/linkedin.plugin'
-import { LinkedInPagePlugin } from '#layers/BaseScheduler/server/services/plugins/linkedin-page.plugin'
-import { RedditPlugin } from '#layers/BaseScheduler/server/services/plugins/reddit.plugin'
-import { ThreadsPlugin } from '#layers/BaseScheduler/server/services/plugins/threads.plugin'
-import { TikTokPlugin } from '#layers/BaseScheduler/server/services/plugins/tiktok.plugin'
-import { WordPressPlugin } from '#layers/BaseScheduler/server/services/plugins/wordpress.plugin'
-import { XPlugin } from '#layers/BaseScheduler/server/services/plugins/x.plugin'
-import { YouTubePlugin } from '#layers/BaseScheduler/server/services/plugins/youtube.plugin'
-
-const PLUGIN_MATCHER: Record<string, SchedulerPluginConstructor> = {
-  facebook: FacebookPlugin as unknown as SchedulerPluginConstructor,
-  bluesky: BlueskyPlugin as unknown as SchedulerPluginConstructor,
-  devto: DevToPlugin as unknown as SchedulerPluginConstructor,
-  discord: DiscordPlugin as unknown as SchedulerPluginConstructor,
-  dribbble: DribbblePlugin as unknown as SchedulerPluginConstructor,
-  googlemybusiness: GoogleMyBusinessPlugin as unknown as SchedulerPluginConstructor,
-  instagram: InstagramPlugin as unknown as SchedulerPluginConstructor,
-  'instagram-standalone': InstagramStandalonePlugin as unknown as SchedulerPluginConstructor,
-  linkedin: LinkedInPlugin as unknown as SchedulerPluginConstructor,
-  'linkedin-page': LinkedInPagePlugin as unknown as SchedulerPluginConstructor,
-  reddit: RedditPlugin as unknown as SchedulerPluginConstructor,
-  threads: ThreadsPlugin as unknown as SchedulerPluginConstructor,
-  tiktok: TikTokPlugin as unknown as SchedulerPluginConstructor,
-  wordpress: WordPressPlugin as unknown as SchedulerPluginConstructor,
-  twitter: XPlugin as unknown as SchedulerPluginConstructor,
-  youtube: YouTubePlugin as unknown as SchedulerPluginConstructor,
-}
+import { AutoPostService } from './AutoPost.service'
 
 const ENTITY_TYPE = 'platform_stats'
-const SNAPSHOT_DAYS = 7 // Only create new snapshot if older than 7 days
+const SNAPSHOT_DAYS = 30 // Keep 30 days of historical snapshots
 
 export interface StatsSnapshot {
   id: string
@@ -117,13 +79,14 @@ export class PlatformStatsService {
   }
 
   /**
-   * Check if a new snapshot should be created (older than SNAPSHOT_DAYS)
+   * Check if a new snapshot should be created (new day vs update existing)
+   * Always create a new snapshot each day for 30-day history
    */
   private shouldCreateSnapshot(snapshot: any): boolean {
     if (!snapshot) return true
-    const createdAt = new Date(snapshot.createdAt)
-    const cutoff = dayjs().subtract(SNAPSHOT_DAYS, 'day').toDate()
-    return createdAt < cutoff
+    const snapshotDate = dayjs(snapshot.createdAt).format('YYYY-MM-DD')
+    const today = dayjs().format('YYYY-MM-DD')
+    return snapshotDate !== today
   }
 
   /**
@@ -181,42 +144,21 @@ export class PlatformStatsService {
   }
 
   /**
-   * Fetch stats for a single social media account via its plugin
+   * Fetch stats for a single social media account via AutoPostService
    */
-  async fetchAccountStats(account: any): Promise<PlatformStats | null> {
-    const pluginClass = PLUGIN_MATCHER[account.platform]
-    if (!pluginClass) return null
+  private autoPostService = new AutoPostService();
 
-    const scheduler = new SchedulerPost({})
-    scheduler.use(pluginClass)
-
+  async fetchAccountStats(account: any): Promise<{ stats: PlatformStats | null; error?: string }> {
     try {
-      // Build a minimal PluginPostDetails (stats don't need a specific post)
-      const dummyPost: PluginPostDetails = {
-        id: '',
-        title: '',
-        message: '',
-        settings: {},
-        platformPosts: [],
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        status: 'draft',
-        userId: '',
-        businessId: '',
-      } as PluginPostDetails
-
-      const socialAccount: PluginSocialMediaAccount = {
-        ...account,
-        metadata: account.metadata || {},
-      } as PluginSocialMediaAccount
-
-      const stats = await scheduler.getStatistic(dummyPost, socialAccount)
-      return stats
-    } catch (error) {
-      console.error(`[PlatformStats] Failed to fetch stats for ${account.platform}/${account.accountId}:`, error)
-      return null
-    } finally {
-      scheduler.destroy()
+      const stats = await this.autoPostService.getStatisticForAccount({
+        platform: account.platform,
+        account,
+      });
+      return { stats };
+    } catch (error: any) {
+      const errorMessage = error?.message || error?.response?.data?.error?.message || String(error)
+      console.error(`[PlatformStats] Failed to fetch stats for ${account.platform}/${account.accountId}:`, errorMessage)
+      return { stats: null, error: errorMessage }
     }
   }
 
@@ -234,33 +176,24 @@ export class PlatformStatsService {
     const results: CollectStatsResult[] = []
 
     for (const account of accounts) {
-      try {
-        const stats = await this.fetchAccountStats(account)
-        if (stats) {
-          await this.saveSnapshot(account.id, stats)
-          results.push({
-            accountId: account.id,
-            platform: account.platform,
-            username: stats.username || account.accountName,
-            success: true,
-            stats,
-          })
-        } else {
-          results.push({
-            accountId: account.id,
-            platform: account.platform,
-            username: account.accountName,
-            success: false,
-            error: 'No plugin or API available',
-          })
-        }
-      } catch (error: any) {
+      const { stats, error } = await this.fetchAccountStats(account)
+      if (stats) {
+        await this.saveSnapshot(account.id, stats)
+        results.push({
+          accountId: account.id,
+          platform: account.platform,
+          username: stats.username || account.accountName,
+          success: true,
+          stats,
+        })
+      } else {
+        const errorMessage = error || 'No plugin or API available'
         results.push({
           accountId: account.id,
           platform: account.platform,
           username: account.accountName,
           success: false,
-          error: error.message,
+          error: errorMessage,
         })
       }
     }
@@ -409,7 +342,7 @@ export class PlatformStatsService {
       const metric = filters.metric || 'followers'
       const value = metric === 'followers' ? point.followers
         : metric === 'posts' ? point.posts
-        : point.totalEngagement
+          : point.totalEngagement
       if (point.platform) {
         platformMap.set(point.platform, value)
       }

@@ -1,7 +1,7 @@
-import type { PostWithAllData } from '#layers/BaseDB/db/schema';
+import type { PostWithAllData, Account } from '#layers/BaseDB/db/schema';
 import { postService } from '#layers/BaseDB/server/services/post.service';
-import { socialMediaAccountService, type SocialMediaPlatform } from '#layers/BaseDB/server/services/social-media-account.service';
-import { SchedulerPost } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
+import { socialMediaAccountService, } from '#layers/BaseDB/server/services/social-media-account.service';
+import { SchedulerPos, SchedulerPost } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import type { SchedulerPluginConstructor } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import { FacebookPlugin } from '#layers/BaseScheduler/server/services/plugins/facebook.plugin';
 import { BlueskyPlugin } from '#layers/BaseScheduler/server/services/plugins/bluesky.plugin';
@@ -19,7 +19,6 @@ import { TikTokPlugin } from '#layers/BaseScheduler/server/services/plugins/tikt
 import { WordPressPlugin } from '#layers/BaseScheduler/server/services/plugins/wordpress.plugin';
 import { XPlugin } from '#layers/BaseScheduler/server/services/plugins/x.plugin';
 import { YouTubePlugin } from '#layers/BaseScheduler/server/services/plugins/youtube.plugin';
-import { getAccessTokenHelper } from '#layers/BaseAuth/server/utils/AuthHelpers';
 import { platformRateLimiter } from './RateLimiter.service';
 export class AutoPostService {
 
@@ -81,7 +80,11 @@ export class AutoPostService {
           return
         }
         // @ts-ignore - dynamic plugin resolution
-        scheduler.use(this.matcher[platform])
+        const plugin = this.matcher[platform];
+        if (!plugin) {
+          throw new Error(`Unsupported platform: ${platform}`);
+        }
+        scheduler.use(plugin);
 
         try {
           const response = await scheduler.publish(
@@ -100,6 +103,112 @@ export class AutoPostService {
           );
         }
       }))
+  }
 
+  async getCommentsFromPost({
+    post,
+    socialAccount,
+    platform,
+    pagination
+
+  }: {
+    post: PostWithAllData;
+    socialAccount: Account[];
+    platform: string;
+    pagination: { limit: number; cursor: string | undefined; };
+  }) {
+    const scheduler = new SchedulerPost({
+      post,
+      accounts: socialAccount,
+    });
+
+    const plugin = this.matcher[platform];
+    if (!plugin) {
+      throw new Error(`Unsupported platform: ${platform}`);
+    }
+    scheduler.use(plugin);
+
+    return await scheduler.getComments(post, socialAccount as any, pagination);
+
+  }
+
+  isSupportedPlatform(platform: string) {
+    return platform in this.matcher
+  }
+
+  async replyToComment({
+    post,
+    socialAccount,
+    platform,
+    commentId,
+    replyText,
+  }: {
+    post: PostWithAllData;
+    socialAccount: Account;
+    platform: string;
+    commentId: string;
+    replyText: string;
+  }) {
+    const scheduler = new SchedulerPost({
+      post,
+      accounts: [socialAccount],
+    });
+
+    const plugin = this.matcher[platform];
+    if (!plugin) {
+      throw new Error(`Unsupported platform: ${platform}`);
+    }
+    scheduler.use(plugin);
+
+    return await scheduler.replyToComment(
+      post,
+      socialAccount as any,
+      commentId,
+      replyText
+    );
+  }
+
+  async getPostInsights({
+    post,
+    socialAccount,
+    platform,
+  }: {
+    post: PostWithAllData;
+    socialAccount: Account;
+    platform: string;
+  }) {
+    const scheduler = new SchedulerPost({
+      post,
+      accounts: [socialAccount],
+    });
+
+    const plugin = this.matcher[platform];
+    if (!plugin) {
+      throw new Error(`Unsupported platform: ${platform}`);
+    }
+    scheduler.use(plugin);
+
+    return await scheduler.getPostInsights(post, socialAccount as any);
+  }
+
+  async getStatisticForAccount({
+    platform,
+    account,
+  }: {
+    platform: string;
+    account: Account;
+  }) {
+    const scheduler = new SchedulerPost({
+      post: undefined as any,
+      accounts: [account],
+    });
+
+    const plugin = this.matcher[platform];
+    if (!plugin) {
+      throw new Error(`Unsupported platform: ${platform}`);
+    }
+    scheduler.use(plugin);
+
+    return await scheduler.getStatistic({} as any, account as any);
   }
 }

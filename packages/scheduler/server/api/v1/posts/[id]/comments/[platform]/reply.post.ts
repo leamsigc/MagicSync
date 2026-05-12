@@ -8,44 +8,9 @@
 
 import { postService } from '#layers/BaseDB/server/services/post.service';
 import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service';
-import { SchedulerPost } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
-import type { SchedulerPluginConstructor } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
-import { FacebookPlugin } from '#layers/BaseScheduler/server/services/plugins/facebook.plugin';
-import { BlueskyPlugin } from '#layers/BaseScheduler/server/services/plugins/bluesky.plugin';
-import { DevToPlugin } from '#layers/BaseScheduler/server/services/plugins/devto.plugin';
-import { DiscordPlugin } from '#layers/BaseScheduler/server/services/plugins/discord.plugin';
-import { DribbblePlugin } from '#layers/BaseScheduler/server/services/plugins/dribbble.plugin';
-import { GoogleMyBusinessPlugin } from '#layers/BaseScheduler/server/services/plugins/googlemybusiness.plugin';
-import { InstagramPlugin } from '#layers/BaseScheduler/server/services/plugins/instagram.plugin';
-import { InstagramStandalonePlugin } from '#layers/BaseScheduler/server/services/plugins/instagram-standalone.plugin';
-import { LinkedInPlugin } from '#layers/BaseScheduler/server/services/plugins/linkedin.plugin';
-import { LinkedInPagePlugin } from '#layers/BaseScheduler/server/services/plugins/linkedin-page.plugin';
-import { RedditPlugin } from '#layers/BaseScheduler/server/services/plugins/reddit.plugin';
-import { ThreadsPlugin } from '#layers/BaseScheduler/server/services/plugins/threads.plugin';
-import { TikTokPlugin } from '#layers/BaseScheduler/server/services/plugins/tiktok.plugin';
-import { WordPressPlugin } from '#layers/BaseScheduler/server/services/plugins/wordpress.plugin';
-import { XPlugin } from '#layers/BaseScheduler/server/services/plugins/x.plugin';
-import { YouTubePlugin } from '#layers/BaseScheduler/server/services/plugins/youtube.plugin';
 import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers';
+import { AutoPostService } from '#layers/BaseScheduler/server/services/AutoPost.service';
 
-const pluginMatcher: Record<string, SchedulerPluginConstructor> = {
-  facebook: FacebookPlugin as unknown as SchedulerPluginConstructor,
-  bluesky: BlueskyPlugin as unknown as SchedulerPluginConstructor,
-  devto: DevToPlugin as unknown as SchedulerPluginConstructor,
-  discord: DiscordPlugin as unknown as SchedulerPluginConstructor,
-  dribbble: DribbblePlugin as unknown as SchedulerPluginConstructor,
-  googlemybusiness: GoogleMyBusinessPlugin as unknown as SchedulerPluginConstructor,
-  instagram: InstagramPlugin as unknown as SchedulerPluginConstructor,
-  'instagram-standalone': InstagramStandalonePlugin as unknown as SchedulerPluginConstructor,
-  linkedin: LinkedInPlugin as unknown as SchedulerPluginConstructor,
-  'linkedin-page': LinkedInPagePlugin as unknown as SchedulerPluginConstructor,
-  reddit: RedditPlugin as unknown as SchedulerPluginConstructor,
-  threads: ThreadsPlugin as unknown as SchedulerPluginConstructor,
-  tiktok: TikTokPlugin as unknown as SchedulerPluginConstructor,
-  wordpress: WordPressPlugin as unknown as SchedulerPluginConstructor,
-  twitter: XPlugin as unknown as SchedulerPluginConstructor,
-  youtube: YouTubePlugin as unknown as SchedulerPluginConstructor,
-};
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event);
@@ -87,20 +52,20 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 404, statusMessage: 'Social media account not found' });
     }
 
-    const PluginClass = pluginMatcher[platform];
-    if (!PluginClass) {
+    const trigger = new AutoPostService();
+    const isSupportedPlatform = trigger.isSupportedPlatform(platform);
+
+    if (!isSupportedPlatform) {
       throw createError({ statusCode: 400, statusMessage: `Unsupported platform: ${platform}` });
     }
 
-    const scheduler = new SchedulerPost({ post, accounts: [] });
-    scheduler.use(PluginClass);
-
-    const result = await scheduler.replyToComment(
-      post as any,
-      socialAccount as any,
+    const result = await trigger.replyToComment({
+      post,
+      socialAccount: socialAccount as unknown as any,
+      platform,
       commentId,
-      replyText
-    );
+      replyText,
+    });
 
     return { success: true, data: result };
   } catch (error: any) {

@@ -4,6 +4,22 @@
 
 This design system uses a **dual color mode**: `light` and `dark`, toggled via user preference. The system is built on Tailwind CSS v4 with CSS custom properties for theming.
 
+### Implementation Requirements
+
+**All components and pages MUST support both light and dark themes.**
+
+- Use design token classes (e.g., `bg-background`, `text-foreground`, `text-muted-foreground`) instead of hardcoded colors
+- Avoid using fixed color values like `text-zinc-500` or `bg-gray-900` — use semantic tokens
+- Test all implementations in both light and dark modes
+- Use Nuxt UI components which handle theming automatically
+- Design tokens to use:
+  - Background: `bg-background`, `bg-background-foreground`
+  - Text: `text-foreground`, `text-muted-foreground`, `text-primary`
+  - Borders: `border-border`, `border-input`
+  - Cards: `bg-card`, `text-card-foreground`
+  - Accent: `bg-accent`, `text-accent-foreground`
+  - Secondary: `bg-secondary`, `text-secondary-foreground`
+
 ---
 
 ## Typography
@@ -142,27 +158,27 @@ Standard Tailwind spacing scale (`normal` density). Tools pages use `max-w-6xl m
 All tools pages (`/tools/*`) follow this structure:
 
 ```vue
-<div class="min-h-screen bg-background-foreground">
+<div class="min-h-screen bg-background">
   <BaseHeader />
   <div class="max-w-6xl mx-auto p-6">
     <header class="mb-12 mt-8">
-      <h1 class="text-3xl font-semibold tracking-tight text-white mb-2">
+      <h1 class="text-3xl font-semibold tracking-tight text-foreground mb-2">
         {Title}
       </h1>
-      <p class="text-gray-400">{Description}</p>
+      <p class="text-muted-foreground">{Description}</p>
     </header>
     <!-- Content -->
   </div>
 </div>
 ```
 
-### Colors for Tool Pages (dark theme)
-- Background: `bg-[#0a0a0a]` or `bg-background-foreground`
-- Text: `text-gray-200`, `text-gray-400`
-- Headings: `text-white`
-- Borders: `border-gray-700/50` or `hsl(var(--border))`
-- Accent: `text-emerald-500` (used in existing tools)
-- Error: `text-red-400`
+### Colors for Tool Pages (use design tokens)
+- Background: `bg-background`, `bg-background-foreground`
+- Text: `text-foreground`, `text-muted-foreground`
+- Headings: `text-foreground` (never use hardcoded white)
+- Borders: `border-border`
+- Accent: `text-primary`
+- Error: `text-destructive`
 
 ---
 

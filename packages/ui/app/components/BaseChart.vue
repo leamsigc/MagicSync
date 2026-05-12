@@ -54,9 +54,9 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <UCard>
+  <UCard :ui="{ root: 'border-0 ring-0 p-0', body: 'p-0 sm:px-0', header: 'p-0 sm:px-0', }">
     <template #header>
-      <div class="flex items-center gap-3">
+      <div class=" flex items-center gap-3">
         <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary">
           <UIcon :name="icon" class="w-4 h-4" />
         </div>

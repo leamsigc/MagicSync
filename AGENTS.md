@@ -16,6 +16,7 @@ A social media scheduling platform built with Nuxt 4 monorepo — enables schedu
 - All new Vue components must use Composition API (`<script setup>`)
 - Never commit secrets or API keys — use `.env` files only
 - Follow the layer package structure — pages go in layer packages, not in site
+- Use the nuxt shared/utils || shared/types for types and functions that are re used across layers
 
 ## Commands
 
@@ -29,6 +30,6 @@ A social media scheduling platform built with Nuxt 4 monorepo — enables schedu
 After every task: if no pattern exists for the task type you just completed, create one. If a pattern or context file is now out of date, update it. The scaffold grows from real work, not just setup. See the GROW step in `ROUTER.md` for details.
 
 ## Navigation
-At the start of every session, read `ROUTER.md` before doing anything else.
+At the start of every session, read `./.claude/ROUTER.md` before doing anything else.
 For full project context, patterns, and task guidance — everything is there.
 

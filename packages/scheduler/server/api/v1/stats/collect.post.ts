@@ -8,17 +8,14 @@ export default defineEventHandler(async (event) => {
   const log = useLogger(event)
 
   try {
-    const session = await getUserSessionFromEvent(event)
-    if (!session?.user?.id) {
-      throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })
-    }
+    const user = await checkUserIsLogin(event)
 
     const body = await readBody(event).catch(() => ({}))
     const { businessId, platform, accountId } = body
 
-    log.set({ userId: session.user.id, businessId, platform, accountId })
+    log.set({ userId: user.id, businessId, platform, accountId })
 
-    const filters: any = { userId: session.user.id }
+    const filters: any = { userId: user.id }
     if (businessId) filters.businessId = businessId
     if (platform) filters.platform = platform
     if (accountId) filters.accountId = accountId

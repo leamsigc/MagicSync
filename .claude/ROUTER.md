@@ -33,26 +33,7 @@ Then read this file fully before doing anything else in this session.
 - Asset/media management
 - Basic dashboard with metrics
 - Nuxt Content for blog pages
-- **Agentic RAG Layer (Episodes 1-8 complete)** — Chat, document ingestion, hybrid search, tools, sub-agents
-- **171 Python tests passing**
-
-**Next Episode:**
-- Knowledge Base Explorer (Episode 2) — filesystem-like tools for hierarchical knowledge navigation
-
-**Future Episodes:**
-- PII Redaction (Ep 3), Agent Skills & Sandbox (Ep 4), Advanced Tool Use (Ep 5), Agent Harness (Ep 6)
-
-**Not yet built:**
-- Bulk post generation with AI templates
-- CSV import for bulk scheduling
-- Complete subscription/payment flow
-- Advanced analytics dashboard
-- Google Business Profile integration (schema exists)
-
-**Known issues:**
-- Better Auth not fully integrated across all features
-- Some social media OAuth flows need testing
-- Bulk scheduler package exists but features incomplete
+- **Agentic RAG Layer** — Chat, document ingestion, hybrid search, tools, sub-Agents
 
 ## Session Commands
 
@@ -71,9 +52,12 @@ Load the relevant file based on the current task. Always load `context/architect
 | Understanding how the system works | `context/architecture.md` |
 | Working with a specific technology | `context/stack.md` |
 | Writing or reviewing code | `context/conventions.md` |
+| Following project conventions | `RULES.md` |
+| Ui changes need to follow the Design | `./../.aiContext/DESIGN.md` |
 | Making a design decision | `context/decisions.md` |
 | Setting up or running the project | `context/setup.md` |
 | Any specific task | Check `patterns/INDEX.md` for a matching pattern |
+| Use the progress file | Check `./../.aiContext/PROGRESS.md` for the current task progress |
 
 ## Behavioural Contract
 

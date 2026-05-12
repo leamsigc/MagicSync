@@ -39,16 +39,13 @@ export const checkUserIsLogin = async (event: H3Event): Promise<User> => {
  * Headers are auto-extracted from event, or passed directly for scheduler/cron contexts.
  */
 export const getAccessTokenHelper = async (
-  eventOrHeaders: H3Event | Headers,
+  eventOrHeaders: Headers,
   options: {
     providerId: string
     accountId?: string
     userId?: string
   }
 ) => {
-  const headers = eventOrHeaders instanceof Headers
-    ? eventOrHeaders
-    : useAuthApi(eventOrHeaders).headers()
 
   return await auth.api.getAccessToken({
     body: {
@@ -56,7 +53,7 @@ export const getAccessTokenHelper = async (
       accountId: options.accountId,
       userId: options.userId
     },
-    headers
+    headers: eventOrHeaders // headers containing the user's session token
   })
 }
 

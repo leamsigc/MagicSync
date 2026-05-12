@@ -27,7 +27,8 @@
       "tabs": {
         "post": "Post",
         "details": "Details",
-        "comments": "Comments"
+        "comments": "Comments",
+        "stats": "Stats"
       }
     },
     "postComments": {
@@ -41,6 +42,16 @@
       "loadMore": "Load more",
       "retry": "Retry",
       "replySent": "Reply sent!"
+    },
+    "postStats": {
+      "noPublishedPlatforms": "No published platforms yet. Stats will appear after posts are published.",
+      "noStats": "No stats available for this platform",
+      "metrics": "metrics",
+      "lastUpdated": "Last updated",
+      "cached": "Cached",
+      "freshData": "Fresh data from platform",
+      "loadedFromCache": "Loaded from cache",
+      "retry": "Retry"
     }
   },
   "es": {

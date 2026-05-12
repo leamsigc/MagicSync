@@ -1,3 +1,6 @@
+<!-- Translation file -->
+<i18n src="../../feeds/feeds.json"></i18n>
+
 <!--
 PostCommentsView.vue
 Displays collapsible comments per platform for a published post.
@@ -58,10 +61,11 @@ const { getPlatformIcon } = usePlatformIcons();
 const toast = useToast();
 
 // Build initial platform sections from post.platformPosts (only published posts)
-const platformSections = computed<PlatformSection[]>(() => {
+const platformSections = ref<PlatformSection[]>([])
+watch(props.post, () => {
   if (!props.post?.platformPosts) return [];
 
-  return props.post.platformPosts
+  platformSections.value = props.post.platformPosts
     .filter((pp: any) => pp.status === 'published')
     .map((pp: any) => ({
       platform: pp.platformPostId || pp.platform || 'unknown',
@@ -80,10 +84,18 @@ const platformSections = computed<PlatformSection[]>(() => {
       replyError: undefined,
       isSendingReply: false,
     }));
-});
+}, { immediate: true });
+
+const updatePlatformSection = (section: PlatformSection) => {
+  const index = platformSections.value.findIndex(s => s.socialAccountId === section.socialAccountId);
+  if (index !== -1) {
+    platformSections.value[index] = section;
+  }
+};
 
 // Load comments for a specific platform
 async function loadComments(section: PlatformSection) {
+
   if (section.isExpanded) {
     section.isExpanded = false;
     return;
@@ -96,12 +108,13 @@ async function loadComments(section: PlatformSection) {
   section.error = undefined;
 
   try {
-    const data = await $fetch<GetCommentsResponse>(
+    const data = await $fetch<{ data: GetCommentsResponse }>(
       `/api/v1/posts/${props.post.id}/comments/${section.platform}`,
       {
         query: { limit: 25 },
       }
     );
+    console.log(data);
 
     section.comments = data?.data?.comments || [];
     section.hasMore = data?.data?.hasMore || false;
@@ -110,6 +123,7 @@ async function loadComments(section: PlatformSection) {
     section.error = err?.data?.statusMessage || err?.message || 'Failed to load comments';
   } finally {
     section.isLoading = false;
+    updatePlatformSection(section);
   }
 }
 
@@ -119,7 +133,7 @@ async function loadMore(section: PlatformSection) {
 
   section.isLoading = true;
   try {
-    const data = await $fetch<GetCommentsResponse>(
+    const data = await $fetch<{ data: GetCommentsResponse }>(
       `/api/v1/posts/${props.post.id}/comments/${section.platform}`,
       {
         query: { limit: 25, cursor: section.nextCursor },
@@ -133,6 +147,7 @@ async function loadMore(section: PlatformSection) {
     toast.add({ title: 'Failed to load more', color: 'error' });
   } finally {
     section.isLoading = false;
+    updatePlatformSection(section);
   }
 }
 
@@ -141,6 +156,7 @@ function startReply(section: PlatformSection, comment: PlatformComment) {
   section.replyingTo = comment.id;
   section.replyText = '';
   section.replyError = undefined;
+  updatePlatformSection(section);
 }
 
 // Cancel reply
@@ -148,6 +164,7 @@ function cancelReply(section: PlatformSection) {
   section.replyingTo = null;
   section.replyText = '';
   section.replyError = undefined;
+  updatePlatformSection(section);
 }
 
 // Send reply
@@ -184,6 +201,7 @@ async function sendReply(section: PlatformSection, parentComment: PlatformCommen
     section.replyError = err?.data?.statusMessage || 'Failed to send reply';
   } finally {
     section.isSendingReply = false;
+    updatePlatformSection(section);
   }
 }
 
@@ -212,28 +230,26 @@ function getReplies(section: PlatformSection, parentId: string): PlatformComment
     </div>
 
     <!-- Platform sections -->
-    <div v-for="section in platformSections" :key="section.socialAccountId" class="border border-zinc-800 rounded-2xl overflow-hidden">
+    <div v-for="section in platformSections" :key="section.socialAccountId"
+      class="border border-zinc-800 rounded-2xl overflow-hidden">
 
       <!-- Platform header (always visible) -->
-      <button
-        class="w-full flex items-center justify-between p-4 hover:bg-zinc-900/50 transition-colors"
-        @click="loadComments(section)"
-      >
+      <button class="w-full flex items-center justify-between p-4 hover:bg-zinc-900/50 transition-colors"
+        @click="loadComments(section)">
         <div class="flex items-center gap-3">
           <UIcon :name="getPlatformIcon(section.platform as any)" class="w-5 h-5 text-zinc-400 shrink-0" />
           <div class="text-left">
             <span class="font-bold text-white capitalize">{{ section.platform }}</span>
-            <span class="text-zinc-500 text-sm ml-2">{{ getTopLevelComments(section).length }} {{ t('postComments.comments') }}</span>
+            <span class="text-zinc-500 text-sm ml-2">{{ getTopLevelComments(section).length }} {{
+              t('postComments.comments') }}</span>
           </div>
         </div>
         <div class="flex items-center gap-2">
           <UBadge :color="section.status === 'published' ? 'success' : 'warning'" variant="subtle" size="sm">
             {{ section.status }}
           </UBadge>
-          <UIcon
-            :name="section.isExpanded ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down'"
-            class="w-4 h-4 text-zinc-500 transition-transform"
-          />
+          <UIcon :name="section.isExpanded ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down'"
+            class="w-4 h-4 text-zinc-500 transition-transform" />
         </div>
       </button>
 
@@ -264,19 +280,10 @@ function getReplies(section: PlatformSection, parentId: string): PlatformComment
 
         <!-- Comments list -->
         <div v-else class="divide-y divide-zinc-800/50">
-          <div
-            v-for="comment in getTopLevelComments(section)"
-            :key="comment.id"
-            class="p-4"
-          >
+          <div v-for="comment in getTopLevelComments(section)" :key="comment.id" class="p-4">
             <!-- Comment item -->
             <div class="flex gap-3">
-              <UAvatar
-                :src="comment.authorPicture || ''"
-                :alt="comment.authorName"
-                size="sm"
-                class="shrink-0"
-              />
+              <UAvatar :src="comment.authorPicture || ''" :alt="comment.authorName" size="sm" class="shrink-0" />
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2 mb-1">
                   <span class="font-bold text-white text-sm">{{ comment.authorName }}</span>
@@ -287,10 +294,8 @@ function getReplies(section: PlatformSection, parentId: string): PlatformComment
 
                 <!-- Comment actions -->
                 <div class="flex items-center gap-3 mt-2">
-                  <button
-                    class="text-zinc-500 hover:text-blue-400 text-xs flex items-center gap-1 transition-colors"
-                    @click="startReply(section, comment)"
-                  >
+                  <button class="text-zinc-500 hover:text-blue-400 text-xs flex items-center gap-1 transition-colors"
+                    @click="startReply(section, comment)">
                     <UIcon name="i-heroicons-arrow-uturn-left" class="w-3 h-3" />
                     {{ t('postComments.reply') }}
                   </button>
@@ -302,53 +307,29 @@ function getReplies(section: PlatformSection, parentId: string): PlatformComment
 
                 <!-- Reply input -->
                 <div v-if="section.replyingTo === comment.id" class="mt-3">
-                  <UTextarea
-                    v-model="section.replyText"
-                    :placeholder="t('postComments.replyPlaceholder')"
-                    :rows="2"
-                    size="sm"
-                    class="mb-2"
-                    autoresize
-                    :disabled="section.isSendingReply"
-                  />
+                  <UTextarea v-model="section.replyText" :placeholder="t('postComments.replyPlaceholder')" :rows="10"
+                    size="sm" class="mb-2 w-full" autoresize :disabled="section.isSendingReply" />
                   <div v-if="section.replyError" class="text-red-400 text-xs mb-2">
                     {{ section.replyError }}
                   </div>
                   <div class="flex gap-2">
-                    <UButton
-                      size="xs"
-                      color="primary"
-                      :loading="section.isSendingReply"
-                      :disabled="!section.replyText.trim()"
-                      @click="sendReply(section, comment)"
-                    >
+                    <UButton size="xs" color="primary" :loading="section.isSendingReply"
+                      :disabled="!section.replyText.trim()" @click="sendReply(section, comment)">
                       {{ t('postComments.send') }}
                     </UButton>
-                    <UButton
-                      size="xs"
-                      variant="ghost"
-                      color="neutral"
-                      :disabled="section.isSendingReply"
-                      @click="cancelReply(section)"
-                    >
+                    <UButton size="xs" variant="ghost" color="neutral" :disabled="section.isSendingReply"
+                      @click="cancelReply(section)">
                       {{ t('postComments.cancel') }}
                     </UButton>
                   </div>
                 </div>
 
                 <!-- Nested replies -->
-                <div v-if="getReplies(section, comment.id).length > 0" class="mt-3 pl-3 border-l-2 border-zinc-800 space-y-3">
-                  <div
-                    v-for="reply in getReplies(section, comment.id)"
-                    :key="reply.id"
-                    class="flex gap-2"
-                  >
-                    <UAvatar
-                      :src="reply.authorPicture || ''"
-                      :alt="reply.authorName"
-                      size="xs"
-                      class="shrink-0 mt-0.5"
-                    />
+                <div v-if="getReplies(section, comment.id).length > 0"
+                  class="mt-3 pl-3 border-l-2 border-zinc-800 space-y-3">
+                  <div v-for="reply in getReplies(section, comment.id)" :key="reply.id" class="flex gap-2">
+                    <UAvatar :src="reply.authorPicture || ''" :alt="reply.authorName" size="xs"
+                      class="shrink-0 mt-0.5" />
                     <div class="flex-1 min-w-0">
                       <div class="flex items-center gap-2 mb-0.5">
                         <span class="font-bold text-white text-xs">{{ reply.authorName }}</span>
@@ -365,13 +346,7 @@ function getReplies(section: PlatformSection, parentId: string): PlatformComment
 
           <!-- Load more -->
           <div v-if="section.hasMore" class="p-3 text-center">
-            <UButton
-              variant="ghost"
-              size="sm"
-              color="neutral"
-              :loading="section.isLoading"
-              @click="loadMore(section)"
-            >
+            <UButton variant="ghost" size="sm" color="neutral" :loading="section.isLoading" @click="loadMore(section)">
               {{ t('postComments.loadMore') }}
             </UButton>
           </div>

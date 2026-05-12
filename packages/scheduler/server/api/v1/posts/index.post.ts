@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
     const log = useLogger(event)
     // Get request body
     const body = await readBody(event)
-    const header = useAuthApi(event).headers()
+    const header = getRequestHeaders(event)
 
     // Validate required fields
     if (!body.businessId || !body.content || !body.targetPlatforms || !Array.isArray(body.targetPlatforms) || body.targetPlatforms.length === 0) {

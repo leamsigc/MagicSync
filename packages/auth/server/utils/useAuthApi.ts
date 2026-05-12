@@ -51,7 +51,7 @@ export function useAuthApi(event: H3Event) {
     headers,
 
     // --- Session ---
-    getSession: async ()=> {
+    getSession: async () => {
       return await auth.api.getSession({ headers: headers() })
     },
 

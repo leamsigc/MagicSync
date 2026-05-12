@@ -50,10 +50,47 @@ export interface AggregatedPlatform {
   accounts: number
 }
 
+export interface PlatformGraph {
+  platform: string
+  accountId?: string
+  accountName?: string
+  labels: string[]
+  followers: number[]
+  posts: number[]
+  engagement: number[]
+  current: {
+    followers: number
+    following: number
+    posts: number
+    engagement: number
+  }
+}
+
+export interface DashboardData {
+  summary: {
+    postsLast30Days: number
+    totalFollowers: number
+    totalEngagement: number
+    totalPosts: number
+  }
+  currentStats: PlatformStats[]
+  platformGraphs: PlatformGraph[]
+}
+
+export interface CollectStatsResult {
+  accountId: string
+  platform: string
+  username: string
+  success: boolean
+  stats?: PlatformStats
+  error?: string
+}
+
 export const usePlatformStats = () => {
   const stats = ref<PlatformStats[]>([])
   const aggregated = ref<Record<string, AggregatedPlatform>>({})
   const timeSeries = ref<TimeSeriesData>({ labels: [], datasets: [] })
+  const dashboard = ref<DashboardData | null>(null)
   const loading = ref(false)
   const collecting = ref(false)
   const error = ref<string>('')
@@ -71,7 +108,6 @@ export const usePlatformStats = () => {
       if (res.success) stats.value = res.data
     } catch (err: any) {
       error.value = err.data?.message || 'Failed to fetch stats'
-      // Consider using a proper logging library in production
     } finally {
       loading.value = false
     }
@@ -88,7 +124,6 @@ export const usePlatformStats = () => {
       if (res.success) aggregated.value = res.data
     } catch (err: any) {
       error.value = err.data?.message || 'Failed to fetch aggregated stats'
-      // Consider using a proper logging library in production
     } finally {
       loading.value = false
     }
@@ -107,7 +142,22 @@ export const usePlatformStats = () => {
       if (res.success) timeSeries.value = res.data
     } catch (err: any) {
       error.value = err.data?.message || 'Failed to fetch time series'
-      // Consider using a proper logging library in production
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // Fetch dashboard overview data
+  const fetchDashboard = async (filters: StatsFilters & { days?: number } = {}) => {
+    try {
+      loading.value = true
+      error.value = ''
+      const res = await $fetch<{ success: boolean; data: DashboardData }>('/api/v1/stats/dashboard', {
+        query: filters,
+      })
+      if (res.success) dashboard.value = res.data
+    } catch (err: any) {
+      error.value = err.data?.message || 'Failed to fetch dashboard'
     } finally {
       loading.value = false
     }
@@ -120,19 +170,17 @@ export const usePlatformStats = () => {
       error.value = ''
       const res = await $fetch<{
         success: boolean
-        data: { total: number; successful: number; failed: number }
+        data: { total: number; successful: number; failed: number; results: CollectStatsResult[] }
       }>('/api/v1/stats/collect', {
         method: 'POST',
         body: filters,
       })
       if (res.success) {
-        // Refresh current stats after collection
         await fetchStats(filters)
       }
       return res.data
     } catch (err: any) {
       error.value = err.data?.message || 'Failed to collect stats'
-      // Consider using a proper logging library in production
       return null
     } finally {
       collecting.value = false
@@ -159,6 +207,7 @@ export const usePlatformStats = () => {
     stats: readonly(stats),
     aggregated: readonly(aggregated),
     timeSeries: readonly(timeSeries),
+    dashboard: readonly(dashboard),
     loading: readonly(loading),
     collecting: readonly(collecting),
     error: readonly(error),
@@ -173,6 +222,7 @@ export const usePlatformStats = () => {
     fetchStats,
     fetchAggregated,
     fetchTimeSeries,
+    fetchDashboard,
     collectStats,
   }
 }

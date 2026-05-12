@@ -294,7 +294,9 @@ export class SocialMediaAccountService {
     // Encrypt tokens before storage
     const encryptedData: Record<string, unknown> = { updatedAt: new Date() }
 
+    encryptedData.accessToken = data.accessToken
     if (data.accessToken !== undefined) {
+
       encryptedData.access_token_encrypted = data.accessToken
         ? await encryptKey(data.accessToken)
         : null

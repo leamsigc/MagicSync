@@ -18,6 +18,8 @@ export default defineEventHandler(async (event) => {
 
     // Get post ID from route params
     const postId = getRouterParam(event, 'id')
+
+    const header = getRequestHeaders(event)
     if (!postId) {
       throw createError({
         statusCode: 400,
@@ -98,7 +100,7 @@ export default defineEventHandler(async (event) => {
       const trigger = new AutoPostService()
 
       // Refresh social media tokens if necessary
-      await ScheduleRefreshSocialMediaTokens(fullPost, user.id, getHeaders(event));
+      await ScheduleRefreshSocialMediaTokens(fullPost, user.id, header);
 
       await trigger.triggerSocialMediaPost(fullPost);
     }

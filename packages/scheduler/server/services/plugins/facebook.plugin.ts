@@ -6,7 +6,6 @@ import { BaseSchedulerPlugin } from '#layers/BaseScheduler/server/services/Sched
 import type { PlatformStats } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import type { FacebookPage } from '#layers/BaseConnect/utils/FacebookPages';
 
-// Placeholder types - these should ideally be imported from a shared types file
 type AuthTokenDetails = {
   refreshToken: string;
   expiresIn: number;
@@ -23,7 +22,6 @@ type AnalyticsData = {
   data: { total: number; date: string }[];
 };
 
-// Placeholder for FacebookDto - define its structure if known
 type FacebookDto = {
   url?: string;
 };
@@ -87,14 +85,12 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     'getReelInsights',
   ] as const;
 
-
-  private readonly API_VERSION = 'v24.0';
+  private readonly API_VERSION = 'v25.0';
   private readonly GRAPH_API_BASE_URL = 'https://graph.facebook.com';
   private readonly OAUTH_DIALOG_URL = 'https://www.facebook.com/v20.0/dialog/oauth';
   private readonly baseUrl = process.env.NUXT_BASE_URL || 'http://localhost:3000'
 
   protected init(options?: any): void {
-    // Initialize Facebook API client or settings
     console.log('Facebook plugin initialized', options);
   }
 
@@ -142,7 +138,6 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
       value: string;
     }
     | undefined {
-    // Access token validation errors - require re-authentication
     if (body.indexOf('Error validating access token') > -1) {
       return {
         type: 'refresh-token' as const,
@@ -178,7 +173,6 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
       };
     }
 
-    // Content policy violations
     if (body.indexOf('1346003') > -1) {
       return {
         type: 'bad-body' as const,
@@ -201,7 +195,6 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
       };
     }
 
-    // Permission errors
     if (body.indexOf('1404078') > -1) {
       return {
         type: 'refresh-token' as const,
@@ -216,7 +209,6 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
       };
     }
 
-    // Parameter validation errors
     if (body.indexOf('2061006') > -1) {
       return {
         type: 'bad-body' as const,
@@ -238,7 +230,6 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
       };
     }
 
-    // Service errors - checking specific subcodes first
     if (body.indexOf('1363047') > -1) {
       return {
         type: 'bad-body' as const,
@@ -268,20 +259,26 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     const since = dayjs().subtract(days, 'day').unix();
 
     const url = this._getGraphApiUrl(
-      `/${pageId}/insights?metric=page_impressions,page_impressions_unique,page_engaged_users,page_post_engagements,page_fans,page_views_total&access_token=${accessToken}&period=day&since=${since}&until=${until}`
+      `/${pageId}/insights?metric=page_impressions,page_views_total,page_post_engagements,page_fan_adds_unique,page_follows&period=day&since=${since}&until=${until}&access_token=${accessToken}`
     );
-    const { data } = await (
-      await this.fetch(url, undefined, 'fetch page insights')
-    ).json();
+    const response = await this.fetch(url, undefined, 'fetch page insights')
+    const { data, error } = await response.json();
+
+    if (error) {
+      console.warn('[Facebook] Page insights error:', error)
+      return []
+    }
+
+    const labelMap: Record<string, string> = {
+      page_impressions: 'Reach',
+      page_follows: 'Followers',
+      page_views_total: 'Profile Views',
+      page_post_engagements: 'Post Engagements',
+      page_fan_adds_unique: 'New Likes',
+    }
 
     return data?.map((d: any) => ({
-      label:
-        d.name === 'page_impressions' ? 'Page Impressions' :
-          d.name === 'page_impressions_unique' ? 'Unique Impressions' :
-            d.name === 'page_engaged_users' ? 'Engaged Users' :
-              d.name === 'page_post_engagements' ? 'Post Engagements' :
-                d.name === 'page_fans' ? 'Page Fans' :
-                  'Page Views',
+      label: labelMap[d.name] || d.name,
       data: d?.values?.map((v: any) => ({
         total: v.value,
         date: dayjs(v.end_time).format('YYYY-MM-DD'),
@@ -289,27 +286,36 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     })) || [];
   }
 
-  /**
-   * Get post-level insights/statistics
-   */
   async getPostInsights(
     postId: string,
     accessToken: string
   ): Promise<any> {
     const url = this._getGraphApiUrl(
-      `/${postId}/insights?metric=post_impressions,post_impressions_unique,post_engaged_users,post_clicks,post_reactions_by_type_total&access_token=${accessToken}`
+      `/${postId}/insights?metric=post_impressions,post_impressions_unique,post_engaged_users,post_clicks,post_reactions_like,post_reactions_love,post_reactions_haha,post_reactions_sorry,post_reactions_anger&access_token=${accessToken}`
     );
-    const { data } = await (
+    const { data, error } = await (
       await this.fetch(url, undefined, 'fetch post insights')
     ).json();
 
+    if (error) {
+      console.warn('[Facebook] Post insights error:', error)
+      return []
+    }
+
+    const labelMap: Record<string, string> = {
+      post_impressions: 'Impressions',
+      post_impressions_unique: 'Reach',
+      post_engaged_users: 'Engaged Users',
+      post_clicks: 'Link Clicks',
+      post_reactions_like: 'Likes',
+      post_reactions_love: 'Love',
+      post_reactions_haha: 'Haha',
+      post_reactions_sorry: 'Sorry',
+      post_reactions_anger: 'Angry',
+    }
+
     return data?.map((d: any) => ({
-      label:
-        d.name === 'post_impressions' ? 'Post Impressions' :
-          d.name === 'post_impressions_unique' ? 'Unique Impressions' :
-            d.name === 'post_engaged_users' ? 'Engaged Users' :
-              d.name === 'post_clicks' ? 'Post Clicks' :
-                'Reactions',
+      label: labelMap[d.name] || d.name,
       value: d.values?.[0]?.value || 0,
     })) || [];
   }
@@ -384,11 +390,11 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
       (pp: any) => pp.socialAccountId === socialMediaAccount.id
     );
     if (!platformPost) return null;
-    
-    const publishDetail = platformPost.publishDetail 
-      ? JSON.parse(platformPost.publishDetail) 
+
+    const publishDetail = platformPost.publishDetail
+      ? JSON.parse(platformPost.publishDetail)
       : {};
-    
+
     return publishDetail[socialMediaAccount.id]?.publishedId || null;
   }
 
@@ -412,13 +418,15 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
   /**
    * Get comments - implements BaseSchedulerPlugin interface
    */
+  // @ts-ignore
   async getComments(
+    _: any,
     postDetails: PluginPostDetails,
     socialMediaAccount: PluginSocialMediaAccount,
     options?: { limit?: number; cursor?: string }
   ): Promise<GetCommentsResponse> {
     const externalPostId = this.extractExternalPostId(postDetails, socialMediaAccount);
-    
+
     if (!externalPostId) {
       return {
         platform: this.pluginName,
@@ -429,14 +437,14 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     }
 
     const accessToken = socialMediaAccount.accessToken;
-    
+
     try {
       const result = await this.getCommentsRaw(externalPostId, accessToken, {
         limit: options?.limit,
         after: options?.cursor,
       });
 
-      const comments: PlatformComment[] = (result.data || []).map((c: any) => 
+      const comments: PlatformComment[] = (result.data || []).map((c: any) =>
         this.transformComment(c)
       );
 
@@ -456,17 +464,19 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
   /**
    * Reply to comment - implements BaseSchedulerPlugin interface
    */
+  // @ts-ignore
   async replyToComment(
+    _: any,
     postDetails: PluginPostDetails,
     socialMediaAccount: PluginSocialMediaAccount,
     commentId: string,
     replyText: string
   ): Promise<ReplyCommentResponse> {
     const accessToken = socialMediaAccount.accessToken;
-    
+
     try {
       const result = await this.replyToCommentRaw(commentId, replyText, accessToken);
-      
+
       if (result.error) {
         return {
           success: false,
@@ -487,9 +497,6 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     }
   }
 
-  /**
-   * Delete a comment
-   */
   async deleteComment(
     commentId: string,
     accessToken: string
@@ -633,7 +640,6 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     const { data }: { data: FacebookPage[] } = await (
       await this.fetch(url, undefined, 'fetch pages')
     ).json();
-    // Fetch all images concurrently before returning the response
     const imagePromises = data.map(page => fetchedImageBase64(page.picture.data.url));
     const imageBase64s = await Promise.all(imagePromises);
 
@@ -651,7 +657,6 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
       },
     }));
 
-    // Fetch instagram business accounts concurrently before returning the response
     const instagramPagesPromises = await Promise.all(
       data.filter(page => page.instagram_business_account)
         .map(async (page) => {
@@ -679,7 +684,6 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
             }
           }
         }));
-    //Get instagram images
     const instagramImagePromises = instagramPagesPromises.filter(page => page !== null)
       .map(page => fetchedImageBase64(page.picture.data.url));
     const instagramImageBase64s = await Promise.all(instagramImagePromises);
@@ -725,7 +729,6 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     } = await (
       await this.fetch(url, undefined, 'fetch page information')
     ).json();
-    // Check if options for instagram is set
     const instagramId = options?.instagramId;
     if (instagramId) {
       const instagramUrl = this._getGraphApiUrl(`/${instagramId}?fields=username,name,profile_picture_url&access_token=${accessToken}`);
@@ -768,25 +771,24 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     const since = dayjs().subtract(date, 'day').unix();
 
     const url = this._getGraphApiUrl(
-      `/${id}/insights?metric=page_impressions_unique,page_posts_impressions_unique,page_post_engagements,page_daily_follows,page_video_views&access_token=${accessToken}&period=day&since=${since}&until=${until}`
+      `/${id}/insights?metric=page_impressions,page_views_total,page_post_engagements,page_fan_adds_unique,page_follows&period=day&since=${since}&until=${until}&access_token=${accessToken}`
     );
     const { data } = await (
       await this.fetch(url, undefined, 'fetch analytics')
     ).json();
 
+    const labelMap: Record<string, string> = {
+      page_impressions: 'Reach',
+      page_follows: 'Followers',
+      page_views_total: 'Profile Views',
+      page_post_engagements: 'Post Engagements',
+      page_fan_adds_unique: 'New Likes',
+    }
+
     return (
       data?.map((d: any) => ({
-        label:
-          d.name === 'page_impressions_unique'
-            ? 'Page Impressions'
-            : d.name === 'page_post_engagements'
-              ? 'Posts Engagement'
-              : d.name === 'page_daily_follows'
-                ? 'Page followers'
-                : d.name === 'page_video_views'
-                  ? 'Videos views'
-                  : 'Posts Impressions',
-        percentageChange: 5, // This seems to be a static value in the example, consider if it should be dynamic
+        label: labelMap[d.name] || d.name,
+        percentageChange: 5,
         data: d?.values?.map((v: any) => ({
           total: v.value,
           date: dayjs(v.end_time).format('YYYY-MM-DD'),
@@ -794,7 +796,6 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
       })) || []
     );
   }
-
 
   override async validate(post: PostWithAllData): Promise<string[]> {
 
@@ -925,7 +926,6 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
       let finalId = '';
       let finalUrl = '';
 
-      // Check for video/media assets
       const videoAsset = postDetails.assets?.find(media =>
         media.mimeType.includes('video') || media.filename.includes('.mp4')
       );
@@ -934,12 +934,10 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
         media.filename.match(/\.(jpg|jpeg|png|gif|webp)$/i)
       );
 
-      // Determine post type based on postFormat setting or media type
       const effectiveFormat = postFormat || (videoAsset ? 'video' : 'post');
 
       switch (effectiveFormat) {
         case 'reel': {
-          // Publish as a Facebook Reel
           if (!videoAsset) {
             throw new Error('Reel requires a video asset');
           }
@@ -959,7 +957,6 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
         }
 
         case 'video': {
-          // Publish as a regular Facebook Video
           if (!videoAsset) {
             throw new Error('Video post requires a video asset');
           }
@@ -976,7 +973,6 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
         }
 
         case 'photo': {
-          // Publish as a single photo post
           if (!photoAssets?.length) {
             throw new Error('Photo post requires an image asset');
           }
@@ -998,8 +994,6 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
 
         case 'post':
         default: {
-          // Regular feed post (may include photos as attachments)
-          // Check if there's a video - if so, use the old video upload method for feed posts
           if (videoAsset) {
             const { id: videoId } = await this._uploadVideo(
               socialMediaAccount.accountId,
@@ -1010,7 +1004,6 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
             finalUrl = `https://www.facebook.com/watch/?v=${videoId}`;
             finalId = videoId;
           } else {
-            // Upload photos if any
             const uploadPhotos = photoAssets?.length
               ? await this._uploadPhotos(
                 socialMediaAccount.accountId,
@@ -1020,7 +1013,6 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
               )
               : [];
 
-            // Create feed post with optional photos and link
             const { id: postId, permalink_url } = await this._createFeedPost(
               socialMediaAccount.accountId,
               socialMediaAccount.accessToken,
@@ -1035,7 +1027,6 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
           break;
         }
       }
-      // Post comment when the post is published
       if (postComments?.length) {
         await Promise.all(
           postComments.map(async (comment: string) => {
@@ -1083,25 +1074,18 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
 
     console.log(`Attempting to update Facebook post ${postId} with details:`, postDetails);
 
-    // Facebook Page Post Update
-    // POST /{post_id} with message
     const { content, settings } = this.getPlatformData(postDetails);
 
-    // Correct URL for updating: /{post-id}
     const url = this._getGraphApiUrl(`/${postId}?access_token=${socialMediaAccount.accessToken}`);
 
-    // Note: Link updating might not be supported via simple update call depending on post type,
-    // but 'message' usually is.
     const body: any = { message: content };
     if (settings?.url) {
-      // Trying to update link might fail or be ignored if it wasn't a link post
-      // body.link = settings.url;
     }
 
     const requestApi = await this.fetch(
       url,
       {
-        method: 'POST', // Updating post uses POST to the node
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -1111,8 +1095,6 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     );
 
     const responseJson = await requestApi.json();
-    // Facebook update response usually just { success: true } or { id: ... }?
-    // Actually typically just success, ID doesn't change.
 
     const response: PostResponse = {
       id: postDetails.id,
@@ -1130,7 +1112,6 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
   ): Promise<PlatformStats> {
     const pageId = socialMediaAccount.accountId
 
-    // Fetch profile info and page insights in parallel
     const [profileData, insightsData] = await Promise.all([
       this.fetch(
         this._getGraphApiUrl(`/${pageId}?fields=id,name,picture&access_token=${socialMediaAccount.accessToken}`),
@@ -1140,20 +1121,21 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
       this.getPageInsights(pageId, socialMediaAccount.accessToken, 7),
     ])
 
-    // Calculate total engagement from insights
     let totalEngagement = 0
-    let totalImpressions = 0
+    let totalReach = 0
     let currentFollowers = 0
     let previousFollowers = 0
 
     for (const metric of insightsData) {
-      if (metric.label === 'Post Engagements' || metric.label === 'Engaged Users') {
+      if (metric.label === 'Post Engagements' || metric.label === 'New Likes') {
+        // @ts-ignore
         totalEngagement += metric.data?.reduce((sum, d) => sum + d.total, 0) || 0
       }
-      if (metric.label === 'Page Impressions' || metric.label === 'Unique Impressions') {
-        totalImpressions += metric.data?.reduce((sum, d) => sum + d.total, 0) || 0
+      if (metric.label === 'Reach') {
+        // @ts-ignore
+        totalReach += metric.data?.reduce((sum, d) => sum + d.total, 0) || 0
       }
-      if (metric.label === 'Page Fans' && metric.data?.length >= 2) {
+      if (metric.label === 'Followers' && metric.data?.length >= 2) {
         previousFollowers = metric.data[0]?.total || 0
         currentFollowers = metric.data[metric.data.length - 1]?.total || 0
       }
@@ -1174,7 +1156,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
       posts: undefined,
       engagement: {
         total: totalEngagement,
-        impressions: totalImpressions,
+        reach: totalReach,
       },
       growth: {
         followers: {
@@ -1187,7 +1169,6 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
       },
     }
   }
-
 
   override async addComment(
     postDetails: PostWithAllData,
@@ -1254,7 +1235,6 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     message: string,
     accessToken: string,
     options?: {
-      /** Set to 'MARKDOWN' to enable markdown formatting in the comment */
       formatting?: 'PLAINTEXT' | 'MARKDOWN';
     }
   ): Promise<{ id: string; success: boolean }> {
@@ -1264,7 +1244,6 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
       message: message,
     };
 
-    // Add formatting type if specified (MARKDOWN enables markdown support)
     if (options?.formatting) {
       body.formatting = options.formatting;
     }
@@ -1375,11 +1354,10 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     const since = dayjs().subtract(days, 'day').unix();
 
     const url = this._getGraphApiUrl(
-      `/${pageId}/insights/page_impressions_unique?access_token=${accessToken}&period=${period}&since=${since}&until=${until}`
+      `/${pageId}/insights?metric=page_impressions_unique&access_token=${accessToken}&period=${period}&since=${since}&until=${until}`
     );
     const { data } = await (await this.fetch(url, undefined, 'get page impressions unique')).json();
 
-    // Return the data for the specified period
     return data?.find((d: any) => d.period === period) || data?.[0] || {};
   }
 
@@ -1447,12 +1425,10 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
       link?: string;
       published?: boolean;
       scheduled_publish_time?: number;
-      /** Set to 'MARKDOWN' to enable markdown formatting in the post */
       formatting?: 'PLAINTEXT' | 'MARKDOWN';
     }
   }
   ): Promise<{ id: string; permalink_url: string }> {
-    // Auto-detect link in message if not explicitly provided
     let link = options?.link;
     if (!link) {
       const urlRegex = /(https?:\/\/[^\s]+)/g;
@@ -1468,7 +1444,6 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
       published: options?.published ?? true,
     };
 
-    // Add formatting type if specified (MARKDOWN enables markdown support)
     if (options?.formatting) {
       body.formatting = options.formatting;
     }
@@ -1514,11 +1489,9 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     accessToken: string,
     options?: {
       link?: string;
-      /** Set to 'MARKDOWN' to enable markdown formatting in the post */
       formatting?: 'PLAINTEXT' | 'MARKDOWN';
     }
   ): Promise<{ id: string }> {
-    // Auto-detect link in message if not explicitly provided
     let link = options?.link;
     if (!link) {
       const urlRegex = /(https?:\/\/[^\s]+)/g;
@@ -1533,7 +1506,6 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
       message: message,
     };
 
-    // Add formatting type if specified (MARKDOWN enables markdown support)
     if (options?.formatting) {
       body.formatting = options.formatting;
     }
@@ -1650,7 +1622,6 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     accessToken: string,
     description?: string
   ): Promise<{ video_id: string; success: boolean }> {
-    // Step 1: Initialize upload session
     const initUrl = this._getGraphApiUrl(`/${pageId}/video_reels?access_token=${accessToken}`);
     const initResponse = await this.fetch(
       initUrl,
@@ -1671,7 +1642,6 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
       throw new Error('Failed to initialize reel upload session');
     }
 
-    // Step 2: Upload the video file to rupload.facebook.com
     const uploadResponse = await fetch(upload_url, {
       method: 'POST',
       headers: {
@@ -1685,7 +1655,6 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
       throw new Error(`Failed to upload reel video: ${errorText}`);
     }
 
-    // Step 3: Publish the reel
     const publishUrl = this._getGraphApiUrl(`/${pageId}/video_reels?access_token=${accessToken}`);
     const publishResponse = await this.fetch(
       publishUrl,
@@ -1748,7 +1717,6 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     );
     const { data } = await (await this.fetch(url, undefined, 'get video insights')).json();
 
-    // Parse the response into a structured object
     const result: Record<string, number> = {
     };
     data?.forEach((metric: any) => {
@@ -1810,14 +1778,12 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     );
     const { data } = await (await this.fetch(url, undefined, 'get reel insights')).json();
 
-    // Parse the response into a structured object
     const result: Record<string, any> = {
     };
     data?.forEach((metric: any) => {
       result[metric.name] = metric.values?.[0]?.value;
     });
 
-    // Calculate virality score based on engagement metrics
     const playCount = result.fb_reels_total_plays || result.blue_reels_play_count || 0;
     const replayCount = result.fb_reels_replay_count || 0;
     const impressions = result.post_impressions_unique || 0;

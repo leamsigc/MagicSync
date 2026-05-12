@@ -55,18 +55,18 @@ export const useDashboardNavigation = () => {
         children: [
           {
             label: menuData.menu.view,
-            to: '/app/calendar',
-            icon: 'i-lucide-calendar-days'
+            to: '/app/posts',
+            icon: 'i-lucide-grid'
+          },
+          {
+            label: menuData.menu.month,
+            to: '/app/posts/feeds',
+            icon: 'i-lucide-newspaper'
           },
           {
             label: menuData.menu.weeks,
             to: '/app/calendar/weeks',
             icon: 'i-lucide-calendar-range'
-          },
-          {
-            label: menuData.menu.month,
-            to: '/app/calendar/month',
-            icon: 'i-lucide-calendar-check'
           },
           {
             label: menuData.menu.day,
