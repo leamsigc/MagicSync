@@ -212,26 +212,23 @@ const handleBulkDelete = () => {
 </script>
 
 <template>
-  <div class="mt-3">
-    <UTable ref="table" v-model:row-selection="rowSelection" :data="posts" :columns="columns" class="flex-1" />
+  <div class="mt-4">
+    <div class="bg-elevated rounded-2xl  overflow-hidden">
+      <UTable ref="table" v-model:row-selection="rowSelection" :data="posts" :columns="columns" class="flex-1" />
 
-    <div class="px-4 py-3.5 border-t border-accented text-sm text-muted flex items-center justify-between">
-      <div>
-        {{ table?.tableApi?.getFilteredSelectedRowModel().rows.length || 0 }} of
-        {{ table?.tableApi?.getFilteredRowModel().rows.length || 0 }} row(s) selected.
+      <div class="px-5 py-4 border-t border-border/50 text-sm text-muted flex items-center justify-between">
+        <div>
+          {{ table?.tableApi?.getFilteredSelectedRowModel().rows.length || 0 }} of
+          {{ table?.tableApi?.getFilteredRowModel().rows.length || 0 }} row(s) selected.
+        </div>
+        <UButton v-if="(table?.tableApi?.getFilteredSelectedRowModel().rows.length || 0) > 0" color="error"
+          variant="outline" size="sm" @click="handleBulkDelete">
+          Delete Selected
+        </UButton>
       </div>
-      <UButton
-        v-if="(table?.tableApi?.getFilteredSelectedRowModel().rows.length || 0) > 0"
-        color="error"
-        variant="outline"
-        size="sm"
-        @click="handleBulkDelete"
-      >
-        Delete Selected
-      </UButton>
-    </div>
 
-    <UpdatePostModal ref="updatePostModalRef" @refresh="HandleRefresh" />
+      <UpdatePostModal ref="updatePostModalRef" @refresh="HandleRefresh" />
+    </div>
   </div>
 </template>
 

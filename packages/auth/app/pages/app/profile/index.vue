@@ -2,20 +2,36 @@
 <i18n src="./index.json"></i18n>
 
 <script lang="ts" setup>
-/**
- * Component Description: Profile page for managing user profile information
- *
- * @author Ismael Garcia <leamsigc@leamsigc.com>
- * @version 0.0.1
- */
-
 import ProfileForm from './components/ProfileForm.vue'
 import ProfileAvatar from './components/ProfileAvatar.vue'
 
 const { t } = useI18n()
-const { user } = UseUser()
+const { user, client } = UseUser()
+const { theme, setTheme, themes, currentTheme } = useTheme()
+const toast = useToast()
 
-// Page meta with translations
+const saving = ref(false)
+
+async function selectTheme(id: ThemeId) {
+  setTheme(id)
+  saving.value = true
+  try {
+    await client.updateUser({ theme: id })
+    toast.add({ title: 'Theme updated', color: 'success' })
+  } catch {
+    toast.add({ title: 'Failed to save theme', color: 'error' })
+  } finally {
+    saving.value = false
+  }
+}
+
+// Apply server-saved theme on mount
+watch(user, (u) => {
+  if (u?.theme && THEMES.some(t => t.id === u.theme)) {
+    setTheme(u.theme as ThemeId)
+  }
+}, { immediate: true })
+
 useHead({
   title: t('title'),
   meta: [
@@ -36,17 +52,30 @@ useHead({
     </div>
 
     <div v-else class="grid gap-6 md:grid-cols-3">
-      <!-- Avatar Section -->
       <div class="md:col-span-1">
-        <ProfileAvatar />
+        <div class="bg-elevated rounded-2xl  p-5">
+          <ProfileAvatar />
+        </div>
       </div>
 
-      <!-- Profile Form Section -->
-      <div class="md:col-span-2">
-        <ProfileForm />
+      <div class="md:col-span-2 space-y-6">
+        <div class="bg-elevated rounded-2xl ">
+          <ProfileForm />
+        </div>
+
+        <div class="bg-elevated rounded-2xl  p-5">
+          <h2 class="text-lg font-semibold text-highlighted mb-1">{{ t('theme.title') }}</h2>
+          <p class="text-sm text-muted mb-4">{{ t('theme.description') }}</p>
+          <div class="flex flex-wrap gap-3">
+            <UButton v-for="t in themes" :key="t.id" :disabled="saving" variant="outline"
+              class="gap-2 flex-1 min-w-28 justify-center rounded-xl"
+              :class="theme === t.id ? 'ring-2 ring-primary' : ''" @click="selectTheme(t.id)">
+              <span class="size-4 rounded-full shrink-0" :style="{ backgroundColor: t.color }" />
+              <span>{{ t.label }}</span>
+            </UButton>
+          </div>
+        </div>
       </div>
     </div>
   </UContainer>
 </template>
-
-<style scoped></style>

@@ -3,8 +3,9 @@
 import { eq } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import { businessProfiles, type BusinessProfile } from '#layers/BaseDB/db/business/business';
+import type { BusinessServiceType } from './interfaces';
 
-export class BusinessService {
+export class BusinessService implements BusinessServiceType {
   private db = useDrizzle();
 
   async create(data: Omit<BusinessProfile, 'id' | 'createdAt' | 'updatedAt'>): Promise<BusinessProfile> {

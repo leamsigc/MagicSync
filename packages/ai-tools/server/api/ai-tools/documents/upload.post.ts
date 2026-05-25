@@ -1,5 +1,4 @@
-import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
-import { documentService } from '#layers/BaseDB/server/services/document.service'
+import { aiToolsFacade } from '#ai-tools/server/services/aiToolsFacade.service'
 import { readMultipartFormData, createError } from 'h3'
 import { writeFile, mkdir } from 'fs/promises'
 import { join } from 'path'
@@ -18,7 +17,7 @@ const MAX_SIZE = 10 * 1024 * 1024 // 10MB
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event)
-  const user = await checkUserIsLogin(event)
+  const user = await aiToolsFacade.authenticate(event)
 
   const formData = await readMultipartFormData(event)
   log.set({ hasFile: !!formData?.find(f => f.name === 'file') })
@@ -63,13 +62,12 @@ export default defineEventHandler(async (event) => {
   const contentHash = createHash('sha256').update(fileField.data).digest('hex')
 
   // Check for duplicates
-  const existing = await documentService.findByContentHash(contentHash, user.id)
+  const existing = await aiToolsFacade.checkDocumentDuplicate(contentHash, user.id)
   if (existing.data) {
     throw createError({ statusCode: 409, statusMessage: 'Document already uploaded' })
   }
 
-  // Create document record
-  const result = await documentService.create(user.id, {
+  const result = await aiToolsFacade.createDocument(user.id, {
     filename: storageName,
     originalName: filename,
     mimeType,

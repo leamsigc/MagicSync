@@ -29,6 +29,7 @@ export const useDashboardNavigation = () => {
         icon: 'i-lucide-image',
         to: '/app/media',
         active: route.path.startsWith('/app/media'),
+        defaultOpen: true,
         children: [
           {
             label: menuData.menu.editImage,
@@ -52,6 +53,7 @@ export const useDashboardNavigation = () => {
         icon: 'i-lucide-calendar',
         to: '/app/calendar',
         active: route.path.startsWith('/app/calendar'),
+        defaultOpen: true,
         children: [
           {
             label: menuData.menu.view,
@@ -81,6 +83,7 @@ export const useDashboardNavigation = () => {
         icon: 'i-lucide-clipboard-list',
         to: '/app/posts',
         active: route.path.startsWith('/app/posts'),
+        defaultOpen: true,
         children: [
           {
             label: menuData.menu.new,
@@ -99,6 +102,7 @@ export const useDashboardNavigation = () => {
         icon: 'i-lucide-plug',
         to: '/app/integrations',
         active: route.path.startsWith('/app/integrations'),
+        defaultOpen: true,
         children: [
           {
             label: menuData.menu.active,
@@ -117,6 +121,7 @@ export const useDashboardNavigation = () => {
         icon: 'i-lucide-users',
         to: '/app/business',
         active: route.path.startsWith('/app/business'),
+        defaultOpen: true,
         children: [
           {
             label: menuData.menu.all,
@@ -136,6 +141,7 @@ export const useDashboardNavigation = () => {
         icon: 'i-lucide-box',
         to: '/app/ai-tools',
         active: route.path.startsWith('/app/ai-tools') || route.path.startsWith('/tools'),
+        defaultOpen: true,
         children: [
           {
             label: menuData.menu.aitools,
@@ -179,6 +185,7 @@ export const useDashboardNavigation = () => {
         icon: 'i-lucide-layout',
         to: '/app/templates',
         active: route.path.startsWith('/app/templates'),
+        defaultOpen: true,
         children: [
           {
             label: menuData.menu.chat,
@@ -207,6 +214,7 @@ export const useDashboardNavigation = () => {
         icon: 'i-lucide-settings',
         to: '/app/settings',
         active: route.path.startsWith('/app/settings') || route.path.startsWith('/app/profile') || route.path.startsWith('/app/account'),
+        defaultOpen: true,
         children: [
           {
             label: menuData.menu.profile,

@@ -1,6 +1,6 @@
 import { ScheduleRefreshSocialMediaTokens } from '#layers/BaseScheduler/server/utils/ScheduleUtils'
 import { AutoPostService } from '#layers/BaseScheduler/server/services/AutoPost.service'
-import { assetService } from '#layers/BaseAssets/server/services/asset.service'
+import { assetService } from '#layers/BaseShared/server/services/asset.service'
 import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service'
 import { postService } from '#layers/BaseDB/server/services/post.service'
 import { platformConfigurations } from '../../../../shared/platformConstants'

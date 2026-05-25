@@ -1,8 +1,8 @@
-import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
+import { aiToolsFacade } from '#ai-tools/server/services/aiToolsFacade.service'
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event)
-  const user = await checkUserIsLogin(event)
+  const user = await aiToolsFacade.authenticate(event)
   const id = getRouterParam(event, 'id')
 
   log.set({ agentId: id })

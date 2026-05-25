@@ -26,6 +26,11 @@ export default defineNuxtConfig({
     compatibilityVersion: 5
   },
   devtools: { enabled: true },
+  colorMode: {
+    preference: 'light',
+    fallback: 'light',
+    classSuffix: ''
+  },
 
   nitro: {
     experimental: {
@@ -128,24 +133,6 @@ export default defineNuxtConfig({
     strategy: 'prefix_except_default',
     // bundle: ''
   },
-  hooks: {
-    'pages:extend': function (pages) {
-      const pagesToRemove: NuxtPage[] = []
-      pages.forEach((page) => {
-        const pathsToExclude = ['types', 'components', '/api', 'composables', 'utils', '.json']
-        if (pathsToExclude.some(excludePath => page.path.includes(excludePath))) {
-          pagesToRemove.push(page)
-        }
-      })
-      pagesToRemove.forEach((page: NuxtPage) => {
-        pages.splice(pages.indexOf(page), 1)
-      })
-      /* Uncomment to show current Routes
-      console.log(`\nCurrent Routes:`)
-      console.log(pages)
-      console.log(`\n`) */
-    }
-  },
   site: {
     url: "https://magicsync.dev",
     name: "MagicSync - Social Media Management Made Easy"
@@ -185,6 +172,34 @@ export default defineNuxtConfig({
         external: [
           "sharp"
         ]
+      }
+    }
+  },
+  hooks: {
+    'pages:extend': function (pages) {
+      const pagesToRemove: NuxtPage[] = []
+      pages.forEach((page) => {
+        const pathsToExclude = ['types', 'components', '/api', 'composables', 'utils', '.json']
+        if (pathsToExclude.some(excludePath => page.path.includes(excludePath))) {
+          pagesToRemove.push(page)
+        }
+      })
+      pagesToRemove.forEach((page: NuxtPage) => {
+        pages.splice(pages.indexOf(page), 1)
+      })
+    },
+    'vite:config': (viteConfig) => {
+      if (viteConfig.plugins) {
+        for (const p of viteConfig.plugins) {
+          if (p && typeof p === 'object' && 'name' in p &&
+              (p.name === '@tailwindcss/vite:generate:serve' || p.name === '@tailwindcss/vite:generate:build') &&
+              'transform' in p) {
+            const transform = p.transform as any
+            if (transform?.filter?.id?.exclude) {
+              transform.filter.id.exclude.push(/[?&]direct\b/)
+            }
+          }
+        }
       }
     }
   }

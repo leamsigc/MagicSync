@@ -1,9 +1,8 @@
-import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
-import { chatService } from '#layers/BaseDB/server/services/chat.service'
+import { aiToolsFacade } from '#ai-tools/server/services/aiToolsFacade.service'
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event)
-  const user = await checkUserIsLogin(event)
+  const user = await aiToolsFacade.authenticate(event)
   const threadId = getRouterParam(event, 'id')
 
   log.set({ threadId })
@@ -12,7 +11,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Thread ID required' })
   }
 
-  const result = await chatService.deleteThread(threadId, user.id)
+  const result = await aiToolsFacade.deleteThread(threadId, user.id)
 
   if (result.error) {
     throw createError({ statusCode: 404, statusMessage: result.error })

@@ -70,7 +70,7 @@ export default defineNuxtConfig({
     WORDPRESS_CLIENT_ID: process.env.NUXT_WORDPRESS_CLIENT_ID,
     WORDPRESS_CLIENT_SECRET: process.env.NUXT_WORDPRESS_CLIENT_SECRET,
   },
-  extends: ['@local-monorepo/db', '@local-monorepo/ui', '@local-monorepo/email',],
+  extends: ['@local-monorepo/shared', '@local-monorepo/db', '@local-monorepo/ui', '@local-monorepo/email',],
   modules: ['@nuxtjs/i18n', 'nuxt-auth-utils', 'evlog/nuxt'],
   i18n: {
     vueI18n: join(currentDir, './translations/i18n.config.ts'),

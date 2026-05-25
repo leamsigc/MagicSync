@@ -1,9 +1,8 @@
-import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
-import { folderService } from '#layers/BaseDB/server/services/folder.service'
+import { aiToolsFacade } from '#ai-tools/server/services/aiToolsFacade.service'
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event)
-  const user = await checkUserIsLogin(event)
+  const user = await aiToolsFacade.authenticate(event)
   const body = await readBody(event)
 
   log.set({ folderName: body.name })
@@ -12,11 +11,11 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Folder name is required' })
   }
 
-  const result = await folderService.create(user.id, {
+  const result = await aiToolsFacade.createFolder(user.id, {
     name: body.name,
     parentId: body.parentId,
-    path: body.path || `/${body.name}`,
-    isGlobal: body.isGlobal ?? false,
+    path: body.path,
+    isGlobal: body.isGlobal,
   })
 
   if (result.error) {

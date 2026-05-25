@@ -1,5 +1,4 @@
-import type { PostCreateBase } from '#layers/BaseDB/db/schema'
-import type { SystemVariable } from '../../utils/templateProcessor'
+import type { Asset, PostCreateBase } from '#layers/BaseDB/db/schema'
 import type { CsvParseResult } from '../../utils/csvParser'
 
 export type BulkSchedulerState = {
@@ -17,28 +16,28 @@ export const useBulkScheduler = () => {
   const csvData = ref<PostCreateBase[] | null>(null)
   const generatedPosts = ref<PostCreateBase[] | null>(null)
 
-    const importFromCsv = async (
-        file: File,
-        platforms: string[],
-        businessId: string,
-        dateRange?: { startDate: Date; endDate: Date },
-        distributeEvenly = false,
-        selectedAssets: Asset[] = []
-    ) => {
-        isLoading.value = true
-        error.value = null
+  const importFromCsv = async (
+    file: File,
+    platforms: string[],
+    businessId: string,
+    dateRange?: { startDate: Date; endDate: Date },
+    distributeEvenly = false,
+    selectedAssets: Asset[] = []
+  ) => {
+    isLoading.value = true
+    error.value = null
 
-        try {
-            const formData = new FormData()
-            formData.append('file', file)
-            formData.append('platforms', JSON.stringify(platforms))
-            formData.append('businessId', businessId)
-            if (dateRange) {
-                formData.append('startDate', dateRange.startDate.toISOString())
-                formData.append('endDate', dateRange.endDate.toISOString())
-            }
-            formData.append('distributeEvenly', distributeEvenly.toString())
-            formData.append('selectedAssets', JSON.stringify(selectedAssets.map(a => a.id)))
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('platforms', JSON.stringify(platforms))
+      formData.append('businessId', businessId)
+      if (dateRange) {
+        formData.append('startDate', dateRange.startDate.toISOString())
+        formData.append('endDate', dateRange.endDate.toISOString())
+      }
+      formData.append('distributeEvenly', distributeEvenly.toString())
+      formData.append('selectedAssets', JSON.stringify(selectedAssets.map(a => a.id)))
 
       const response = await $fetch<{
         success: boolean
@@ -116,9 +115,9 @@ export const useBulkScheduler = () => {
       })
 
       return response
-    } catch (err: unknown) {
-      const errorData = err && typeof err === 'object' && 'data' in err ? (err as { data?: { errors?: string[]; message?: string } }).data : undefined
-      const errorMessage = err instanceof Error ? error.message : 'Failed to generate bulk posts'
+    } catch (caught: unknown) {
+      const errorData = caught && typeof caught === 'object' && 'data' in caught ? (caught as { data?: { errors?: string[]; message?: string } }).data : undefined
+      const errorMessage = caught instanceof Error ? caught.message : 'Failed to generate bulk posts'
       error.value = errorData?.message || errorMessage
 
       let description = ''
@@ -137,7 +136,7 @@ export const useBulkScheduler = () => {
         icon: 'i-heroicons-x-circle',
         color: 'error'
       })
-      throw err
+      throw caught
     }
   }
 

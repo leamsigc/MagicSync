@@ -1,5 +1,6 @@
 import { eq, and, or, sql, desc, inArray } from 'drizzle-orm'
 import { type ServiceResponse, type QueryOptions } from './types'
+import type { FolderServiceType } from './interfaces'
 import { knowledgeFolders, documents, type KnowledgeFolder } from '#layers/BaseDB/db/rag/rag'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
 
@@ -15,7 +16,7 @@ export interface UpdateFolderData {
   parentId?: string
 }
 
-export class FolderService {
+export class FolderService implements FolderServiceType {
   private db = useDrizzle()
 
   async create(userId: string, data: CreateFolderData): Promise<ServiceResponse<KnowledgeFolder>> {
@@ -34,9 +35,9 @@ export class FolderService {
         createdAt: now
       }).returning()
 
-      return { data: folder }
+      return { success: true, data: folder }
     } catch (error) {
-      return { error: 'Failed to create folder' }
+      return { success: false, error: 'Failed to create folder' }
     }
   }
 
@@ -49,12 +50,12 @@ export class FolderService {
         .limit(1)
 
       if (!folder) {
-        return { error: 'Folder not found', code: 'NOT_FOUND' }
+        return { success: false, error: 'Folder not found', code: 'NOT_FOUND' }
       }
 
-      return { data: folder }
+      return { success: true, data: folder }
     } catch (error) {
-      return { error: 'Failed to fetch folder' }
+      return { success: false, error: 'Failed to fetch folder' }
     }
   }
 
@@ -67,12 +68,12 @@ export class FolderService {
         .limit(1)
 
       if (!folder) {
-        return { error: 'Folder not found', code: 'NOT_FOUND' }
+        return { success: false, error: 'Folder not found', code: 'NOT_FOUND' }
       }
 
-      return { data: folder }
+      return { success: true, data: folder }
     } catch (error) {
-      return { error: 'Failed to fetch folder' }
+      return { success: false, error: 'Failed to fetch folder' }
     }
   }
 
@@ -96,10 +97,10 @@ export class FolderService {
           )
       }
 
-      return { data: folders }
+      return { success: true, data: folders }
     } catch (error) {
       console.error('[FolderService.findByUser] Error:', error)
-      return { error: 'Failed to fetch folders' }
+      return { success: false, error: 'Failed to fetch folders' }
     }
   }
 
@@ -111,9 +112,9 @@ export class FolderService {
         .where(and(eq(knowledgeFolders.userId, userId), eq(knowledgeFolders.parentId, parentId)))
         .orderBy(knowledgeFolders.name)
 
-      return { data: folders }
+      return { success: true, data: folders }
     } catch (error) {
-      return { error: 'Failed to fetch child folders' }
+      return { success: false, error: 'Failed to fetch child folders' }
     }
   }
 
@@ -124,10 +125,10 @@ export class FolderService {
         .from(knowledgeFolders)
         .where(eq(knowledgeFolders.userId, userId))
 
-      return { data: folders }
+      return { success: true, data: folders }
     } catch (error) {
       console.error('[FolderService.getRootFolders] Error:', error)
-      return { error: 'Failed to fetch root folders' }
+      return { success: false, error: 'Failed to fetch root folders' }
     }
   }
 
@@ -138,9 +139,9 @@ export class FolderService {
         .from(knowledgeFolders)
         .where(eq(knowledgeFolders.userId, userId))
 
-      return { data: folders }
+      return { success: true, data: folders }
     } catch (error) {
-      return { error: 'Failed to fetch folder tree' }
+      return { success: false, error: 'Failed to fetch folder tree' }
     }
   }
 
@@ -156,12 +157,12 @@ export class FolderService {
         .returning()
 
       if (!updated) {
-        return { error: 'Folder not found', code: 'NOT_FOUND' }
+        return { success: false, error: 'Folder not found', code: 'NOT_FOUND' }
       }
 
-      return { data: updated }
+      return { success: true, data: updated }
     } catch (error) {
-      return { error: 'Failed to update folder' }
+      return { success: false, error: 'Failed to update folder' }
     }
   }
 
@@ -173,19 +174,19 @@ export class FolderService {
         .returning()
 
       if (!deleted) {
-        return { error: 'Folder not found', code: 'NOT_FOUND' }
+        return { success: false, error: 'Folder not found', code: 'NOT_FOUND' }
       }
 
-      return { data: deleted }
+      return { success: true, data: deleted }
     } catch (error) {
-      return { error: 'Failed to delete folder' }
+      return { success: false, error: 'Failed to delete folder' }
     }
   }
 
   async moveDocumentsToFolder(folderId: string | null, documentIds: string[], userId: string): Promise<ServiceResponse<number>> {
     try {
       if (documentIds.length === 0) {
-        return { data: 0 }
+        return { success: true, data: 0 }
       }
 
       // FIX: batch update in single query instead of N individual updates
@@ -194,9 +195,9 @@ export class FolderService {
         .set({ folderId })
         .where(and(inArray(documents.id, documentIds), eq(documents.userId, userId)))
 
-      return { data: documentIds.length }
+      return { success: true, data: documentIds.length }
     } catch (error) {
-      return { error: 'Failed to move documents' }
+      return { success: false, error: 'Failed to move documents' }
     }
   }
 }

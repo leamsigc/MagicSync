@@ -1,26 +1,16 @@
-/**
- * Entity Details Service
- *
- * Handles CRUD operations for generic entity details stored as JSON.
- *
- * @author Ismael Garcia <leamsigc@leamsigc.com>
- * @version 0.0.1
- */
 
 import { eq, and } from 'drizzle-orm'
 import { entityDetails, type EntityDetails, type NewEntityDetails } from '#layers/BaseDB/db/entityDetails/entityDetails'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
 import { FacebookPage } from '#layers/BaseConnect/utils/FacebookPages'
+import type { EntityDetailsServiceType } from './interfaces'
 
 
 export interface UpdateEntityDetailsData {
   details?: Record<string, unknown>
 }
 
-/**
- * Entity Details Service Class
- */
-export class EntityDetailsService {
+export class EntityDetailsService implements EntityDetailsServiceType {
   private db = useDrizzle()
 
   /**

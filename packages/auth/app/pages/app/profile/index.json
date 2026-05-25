@@ -27,6 +27,10 @@
             "upload": "Upload Photo",
             "change": "Change Photo",
             "remove": "Remove Photo"
+        },
+        "theme": {
+            "title": "Color Theme",
+            "description": "Choose your preferred color palette"
         }
     },
     "es": {
@@ -57,6 +61,10 @@
             "upload": "Subir Foto",
             "change": "Cambiar Foto",
             "remove": "Eliminar Foto"
+        },
+        "theme": {
+            "title": "Tema de Color",
+            "description": "Elige tu paleta de colores preferida"
         }
     },
     "de": {
@@ -87,6 +95,10 @@
             "upload": "Foto Hochladen",
             "change": "Foto Ändern",
             "remove": "Foto Entfernen"
+        },
+        "theme": {
+            "title": "Farbthema",
+            "description": "Wählen Sie Ihre bevorzugte Farbpalette"
         }
     },
     "fr": {
@@ -117,6 +129,10 @@
             "upload": "Télécharger une Photo",
             "change": "Changer la Photo",
             "remove": "Supprimer la Photo"
+        },
+        "theme": {
+            "title": "Thème de Couleur",
+            "description": "Choisissez votre palette de couleurs préférée"
         }
     }
 }

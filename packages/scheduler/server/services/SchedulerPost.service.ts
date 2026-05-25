@@ -1,4 +1,4 @@
-import { ValidationError } from '#layers/BaseAssets/server/shared/assetsTypes';
+import { ValidationError } from '#layers/BaseShared/server/types/errors';
 import { type Post, type SocialMediaAccount as Integration, type Account, type SocialMediaAccount, type PostWithAllData } from '#layers/BaseDB/db/schema';
 import { EventEmitter } from 'events';
 import { logAuditService } from '#layers/BaseDB/server/services/auditLog.service';

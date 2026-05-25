@@ -5,6 +5,7 @@ import type {
   QueryOptions,
   ServiceResponse
 } from './types'
+import type { ReviewServiceType } from './interfaces'
 import { and, desc, eq, gte, lte, sql, type SQL } from 'drizzle-orm'
 import { businessProfiles, reviews } from '#layers/BaseDB/db/schema'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
@@ -48,7 +49,7 @@ export interface ReviewStats {
   shareRate: number
 }
 
-export class ReviewService {
+export class ReviewService implements ReviewServiceType {
   private db = useDrizzle()
 
   async create(data: CreateReviewData): Promise<ServiceResponse<Review>> {
@@ -65,12 +66,12 @@ export class ReviewService {
         updatedAt: now
       }).returning()
 
-      return { data: review }
+      return { success: true, data: review }
     } catch (error) {
       if (error instanceof ValidationError) {
-        return { error: error.message, code: error.code }
+        return { success: false, error: error.message, code: error.code }
       }
-      return { error: 'Failed to create review' }
+      return { success: false, error: 'Failed to create review' }
     }
   }
 
@@ -94,11 +95,11 @@ export class ReviewService {
         ))
         .limit(1)
 
-      if (profile) return { data: undefined }
+      if (profile) return { success: true, data: undefined }
 
       // Fall back to org membership check if event is available
       if (!event) {
-        return { error: 'Not authorized to access this review', code: 'UNAUTHORIZED' }
+        return { success: false, error: 'Not authorized to access this review', code: 'UNAUTHORIZED' }
       }
 
       // useAuthApi is auto-imported globally by Nuxt from
@@ -108,12 +109,12 @@ export class ReviewService {
       const isOrgMember = orgMembers.some(member => member.userId === review.businessId)
 
       if (!isOrgMember) {
-        return { error: 'Not authorized to access this review', code: 'UNAUTHORIZED' }
+        return { success: false, error: 'Not authorized to access this review', code: 'UNAUTHORIZED' }
       }
 
-      return { data: undefined }
+      return { success: true, data: undefined }
     } catch (error) {
-      return { error: 'Failed to verify business ownership' }
+      return { success: false, error: 'Failed to verify business ownership' }
     }
   }
 
@@ -126,18 +127,18 @@ export class ReviewService {
         .limit(1)
 
       if (!review) {
-        return { error: 'Review not found', code: 'NOT_FOUND' }
+        return { success: false, error: 'Review not found', code: 'NOT_FOUND' }
       }
 
       // Verify user owns the business
       const ownershipCheck = await this.verifyBusinessOwnership(review, userId, event)
       if (ownershipCheck.error) {
-        return { error: ownershipCheck.error, code: ownershipCheck.code }
+        return { success: false, error: ownershipCheck.error, code: ownershipCheck.code }
       }
 
-      return { data: review }
+      return { success: true, data: review }
     } catch (error) {
-      return { error: 'Failed to fetch review' }
+      return { success: false, error: 'Failed to fetch review' }
     }
   }
 
@@ -146,7 +147,7 @@ export class ReviewService {
       // Verify user owns the business
       const ownershipCheck = await businessProfileService.findById(businessId, userId, event)
       if (ownershipCheck.error) {
-        return { error: ownershipCheck.error, code: ownershipCheck.code }
+        return { success: false, error: ownershipCheck.error, code: ownershipCheck.code }
       }
 
       const { pagination = { page: 1, limit: 10 }, filters = {}, sort } = options
@@ -226,7 +227,7 @@ export class ReviewService {
         }
       }
     } catch (error) {
-      return { error: 'Failed to fetch reviews' }
+      return { success: false, error: 'Failed to fetch reviews' }
     }
   }
 
@@ -242,12 +243,12 @@ export class ReviewService {
         .limit(1)
 
       if (!review) {
-        return { error: 'Review not found', code: 'NOT_FOUND' }
+        return { success: false, error: 'Review not found', code: 'NOT_FOUND' }
       }
 
-      return { data: review }
+      return { success: true, data: review }
     } catch (error) {
-      return { error: 'Failed to fetch review' }
+      return { success: false, error: 'Failed to fetch review' }
     }
   }
 
@@ -261,12 +262,12 @@ export class ReviewService {
         .limit(1)
 
       if (!review) {
-        return { error: 'Review not found', code: 'NOT_FOUND' }
+        return { success: false, error: 'Review not found', code: 'NOT_FOUND' }
       }
 
       const ownershipCheck = await this.verifyBusinessOwnership(review, userId, event)
       if (ownershipCheck.error) {
-        return { error: ownershipCheck.error, code: ownershipCheck.code }
+        return { success: false, error: ownershipCheck.error, code: ownershipCheck.code }
       }
 
       const [updated] = await this.db
@@ -279,19 +280,19 @@ export class ReviewService {
         .returning()
 
       if (!updated) {
-        return { error: 'Review not found', code: 'NOT_FOUND' }
+        return { success: false, error: 'Review not found', code: 'NOT_FOUND' }
       }
 
-      return { data: updated }
+      return { success: true, data: updated }
     } catch (error) {
-      return { error: 'Failed to update review' }
+      return { success: false, error: 'Failed to update review' }
     }
   }
 
   async addResponse(id: string, userId: string, responseContent: string, event?: H3Event): Promise<ServiceResponse<Review>> {
     try {
       if (!responseContent || responseContent.trim().length === 0) {
-        return { error: 'Response content is required', code: 'VALIDATION_ERROR' }
+        return { success: false, error: 'Response content is required', code: 'VALIDATION_ERROR' }
       }
 
       // First verify ownership
@@ -302,12 +303,12 @@ export class ReviewService {
         .limit(1)
 
       if (!review) {
-        return { error: 'Review not found', code: 'NOT_FOUND' }
+        return { success: false, error: 'Review not found', code: 'NOT_FOUND' }
       }
 
       const ownershipCheck = await this.verifyBusinessOwnership(review, userId, event)
       if (ownershipCheck.error) {
-        return { error: ownershipCheck.error, code: ownershipCheck.code }
+        return { success: false, error: ownershipCheck.error, code: ownershipCheck.code }
       }
 
       const [updated] = await this.db
@@ -321,12 +322,12 @@ export class ReviewService {
         .returning()
 
       if (!updated) {
-        return { error: 'Review not found', code: 'NOT_FOUND' }
+        return { success: false, error: 'Review not found', code: 'NOT_FOUND' }
       }
 
-      return { data: updated }
+      return { success: true, data: updated }
     } catch (error) {
-      return { error: 'Failed to add response' }
+      return { success: false, error: 'Failed to add response' }
     }
   }
 
@@ -335,7 +336,7 @@ export class ReviewService {
       // First get the current state with ownership verification
       const currentResult = await this.findById(id, userId, event)
       if (currentResult.error) {
-        return { error: currentResult.error, code: currentResult.code }
+        return { success: false, error: currentResult.error, code: currentResult.code }
       }
 
       const [updated] = await this.db
@@ -347,9 +348,9 @@ export class ReviewService {
         .where(eq(reviews.id, id))
         .returning()
 
-      return { data: updated }
+      return { success: true, data: updated }
     } catch (error) {
-      return { error: 'Failed to toggle share status' }
+      return { success: false, error: 'Failed to toggle share status' }
     }
   }
 
@@ -358,7 +359,7 @@ export class ReviewService {
       // Verify user owns the business
       const ownershipCheck = await businessProfileService.findById(businessId, userId, event)
       if (ownershipCheck.error) {
-        return { error: ownershipCheck.error, code: ownershipCheck.code }
+        return { success: false, error: ownershipCheck.error, code: ownershipCheck.code }
       }
 
       let whereConditions: SQL<unknown> = eq(reviews.businessId, businessId)
@@ -416,9 +417,9 @@ export class ReviewService {
           : 0
       }
 
-      return { data: stats }
+      return { success: true, data: stats }
     } catch (error) {
-      return { error: 'Failed to get review stats' }
+      return { success: false, error: 'Failed to get review stats' }
     }
   }
 
@@ -427,7 +428,7 @@ export class ReviewService {
       // Verify user owns the business
       const ownershipCheck = await businessProfileService.findById(businessId, userId, event)
       if (ownershipCheck.error) {
-        return { error: ownershipCheck.error, code: ownershipCheck.code }
+        return { success: false, error: ownershipCheck.error, code: ownershipCheck.code }
       }
 
       const recentReviews = await this.db
@@ -437,9 +438,9 @@ export class ReviewService {
         .orderBy(desc(reviews.reviewDate))
         .limit(limit)
 
-      return { data: recentReviews }
+      return { success: true, data: recentReviews }
     } catch (error) {
-      return { error: 'Failed to fetch recent reviews' }
+      return { success: false, error: 'Failed to fetch recent reviews' }
     }
   }
 
@@ -453,21 +454,21 @@ export class ReviewService {
         .limit(1)
 
       if (!review) {
-        return { error: 'Review not found', code: 'NOT_FOUND' }
+        return { success: false, error: 'Review not found', code: 'NOT_FOUND' }
       }
 
       const ownershipCheck = await this.verifyBusinessOwnership(review, userId, event)
       if (ownershipCheck.error) {
-        return { error: ownershipCheck.error, code: ownershipCheck.code }
+        return { success: false, error: ownershipCheck.error, code: ownershipCheck.code }
       }
 
       await this.db
         .delete(reviews)
         .where(eq(reviews.id, id))
 
-      return { data: undefined }
+      return { success: true, data: undefined }
     } catch (error) {
-      return { error: 'Failed to delete review' }
+      return { success: false, error: 'Failed to delete review' }
     }
   }
 
@@ -528,10 +529,10 @@ export class ReviewService {
         }
       }
 
-      return { data: syncedReviews }
+      return { success: true, data: syncedReviews }
     } catch (error) {
       console.error('Error syncing GMB reviews:', error)
-      return { error: 'Failed to sync reviews from Google My Business' }
+      return { success: false, error: 'Failed to sync reviews from Google My Business' }
     }
   }
 
@@ -548,12 +549,12 @@ export class ReviewService {
         .limit(1)
 
       if (!review) {
-        return { error: 'Review not found', code: 'NOT_FOUND' }
+        return { success: false, error: 'Review not found', code: 'NOT_FOUND' }
       }
 
       // Validate that this is a GMB review
       if (review.platform !== 'google_my_business') {
-        return { error: 'This is not a Google My Business review', code: 'INVALID_PLATFORM' }
+        return { success: false, error: 'This is not a Google My Business review', code: 'INVALID_PLATFORM' }
       }
 
       // Reply to the review on GMB
@@ -573,10 +574,10 @@ export class ReviewService {
         .where(eq(reviews.id, reviewId))
         .returning()
 
-      return { data: updated }
+      return { success: true, data: updated }
     } catch (error) {
       console.error('Error replying to GMB review:', error)
-      return { error: 'Failed to reply to Google My Business review' }
+      return { success: false, error: 'Failed to reply to Google My Business review' }
     }
   }
 
@@ -593,7 +594,7 @@ export class ReviewService {
         .limit(1)
 
       if (!review) {
-        return { error: 'Review not found', code: 'NOT_FOUND' }
+        return { success: false, error: 'Review not found', code: 'NOT_FOUND' }
       }
 
       // Simple AI response generation based on rating
@@ -633,9 +634,9 @@ export class ReviewService {
         response += ` ${businessContext}`
       }
 
-      return { data: response }
+      return { success: true, data: response }
     } catch (error) {
-      return { error: 'Failed to generate AI response' }
+      return { success: false, error: 'Failed to generate AI response' }
     }
   }
 
@@ -659,9 +660,9 @@ export class ReviewService {
         .where(whereConditions)
         .orderBy(desc(reviews.reviewDate))
 
-      return { data: reviewsNeedingResponse }
+      return { success: true, data: reviewsNeedingResponse }
     } catch (error) {
-      return { error: 'Failed to fetch reviews needing response' }
+      return { success: false, error: 'Failed to fetch reviews needing response' }
     }
   }
 
@@ -681,9 +682,9 @@ export class ReviewService {
         .orderBy(desc(reviews.reviewDate))
         .limit(limit)
 
-      return { data: fiveStarReviews }
+      return { success: true, data: fiveStarReviews }
     } catch (error) {
-      return { error: 'Failed to fetch 5-star reviews for sharing' }
+      return { success: false, error: 'Failed to fetch 5-star reviews for sharing' }
     }
   }
 
@@ -695,7 +696,7 @@ export class ReviewService {
       const updateResult = await this.update(reviewId, userId, { isShared: true }, event)
       return updateResult
     } catch (error) {
-      return { error: 'Failed to mark review as shared' }
+      return { success: false, error: 'Failed to mark review as shared' }
     }
   }
 

@@ -1,0 +1,36 @@
+{
+    "en": {
+        "aiCsvGenerator": {
+            "title": "Generate Posts with AI",
+            "description": "Describe what kind of posts you want to create. Be specific about the topic, tone, and any details to include.",
+            "promptLabel": "What posts should we generate?",
+            "promptPlaceholder": "e.g., Generate 5 promotional posts for our new analytics feature, focusing on productivity benefits...",
+            "hint": "Tip: Mention the number of posts, topic, tone, and any key details you want included.",
+            "generate": "Generate CSV",
+            "generated": "{count} posts generated successfully",
+            "noPostsGenerated": "No posts were generated. Try being more specific.",
+            "error": "Failed to generate posts",
+            "errorDescription": "An error occurred while generating posts. Please try again."
+        },
+        "common": {
+            "cancel": "Cancel"
+        }
+    },
+    "es": {
+        "aiCsvGenerator": {
+            "title": "Generar Publicaciones con IA",
+            "description": "Describa qué tipo de publicaciones desea crear. Sea específico sobre el tema, tono y cualquier detalle a incluir.",
+            "promptLabel": "¿Qué publicaciones debemos generar?",
+            "promptPlaceholder": "ej., Genera 5 publicaciones promocionales para nuestra nueva función de análisis...",
+            "hint": "Consejo: Mencione el número de publicaciones, tema, tono y detalles clave.",
+            "generate": "Generar CSV",
+            "generated": "{count} publicaciones generadas exitosamente",
+            "noPostsGenerated": "No se generaron publicaciones. Intente ser más específico.",
+            "error": "Error al generar publicaciones",
+            "errorDescription": "Ocurrió un error al generar las publicaciones. Intente de nuevo."
+        },
+        "common": {
+            "cancel": "Cancelar"
+        }
+    }
+}

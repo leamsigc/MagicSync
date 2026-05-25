@@ -1,9 +1,8 @@
-import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
-import { userLlmConfigService } from '#layers/BaseDB/server/services/user-llm-config.service'
+import { aiToolsFacade } from '#ai-tools/server/services/aiToolsFacade.service'
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event)
-  const user = await checkUserIsLogin(event)
+  const user = await aiToolsFacade.authenticate(event)
   const body = await readBody(event)
 
   log.set({ provider: body.provider, model: body.model })
@@ -12,7 +11,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Provider and model are required' })
   }
 
-  const result = await userLlmConfigService.createConfig(user.id, {
+  const result = await aiToolsFacade.createLlmConfig(user.id, {
     provider: body.provider,
     model: body.model,
     apiKey: body.apiKey,

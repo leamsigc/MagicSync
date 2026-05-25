@@ -1,9 +1,8 @@
-import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
-import { skillService } from '#layers/BaseDB/server/services/skill.service'
+import { aiToolsFacade } from '#ai-tools/server/services/aiToolsFacade.service'
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event)
-  const user = await checkUserIsLogin(event)
+  const user = await aiToolsFacade.authenticate(event)
   const id = getRouterParam(event, 'id')
 
   log.set({ skillId: id })
@@ -14,7 +13,7 @@ export default defineEventHandler(async (event) => {
 
   const body = await readBody(event)
 
-  const result = await skillService.update(id, user.id, body)
+  const result = await aiToolsFacade.updateSkill(id, user.id, body)
 
   if (result.error) {
     throw createError({ statusCode: 404, statusMessage: result.error })

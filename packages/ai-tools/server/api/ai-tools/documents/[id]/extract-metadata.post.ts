@@ -1,13 +1,10 @@
-import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
-import { documentService } from '#layers/BaseDB/server/services/document.service'
+import { aiToolsFacade } from '#ai-tools/server/services/aiToolsFacade.service'
 import { readFile } from 'fs/promises'
 import { join } from 'path'
-import { createLlmJwt } from '#layers/BaseDB/server/utils/llm-jwt'
-import { userLlmConfigService } from '#layers/BaseDB/server/services/user-llm-config.service'
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event)
-  const user = await checkUserIsLogin(event)
+  const user = await aiToolsFacade.authenticate(event)
   const id = getRouterParam(event, 'id')
 
   log.set({ documentId: id })
@@ -17,7 +14,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Fetch document
-  const docResult = await documentService.findById(id, user.id)
+  const docResult = await aiToolsFacade.getDocument(id, user.id)
   if (docResult.error || !docResult.data) {
     throw createError({ statusCode: 404, statusMessage: 'Document not found' })
   }
@@ -32,9 +29,8 @@ export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const backendUrl = config.pythonBackendUrl || 'http://localhost:8000'
 
-  const llmConfigResult = await userLlmConfigService.getDefaultConfig(user.id)
-  const llmConfig = llmConfigResult.data ?? null
-  const llmJwt = createLlmJwt(user.id, user.email || '', llmConfig)
+  const llmJwtResult = await aiToolsFacade.getLlmJwtContext(user.id, user.email || '')
+  const llmJwt = llmJwtResult.data?.token ?? ''
 
   const metadata = await $fetch<{
     title: string
@@ -74,7 +70,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Save to database
-  await documentService.updateMetadata(id, user.id, mergedMetadata)
+  await aiToolsFacade.updateDocumentMetadata(id, user.id, mergedMetadata)
 
   return mergedMetadata
 })

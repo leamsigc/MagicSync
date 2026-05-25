@@ -21,7 +21,13 @@ export default defineNuxtConfig({
   nitro: {
     experimental: {
       openAPI: true,
-    }
+    },
+    alias: {
+      '#ai-tools': join(currentDir, '.'),
+    },
+  },
+  alias: {
+    '#ai-tools': join(currentDir, '.'),
   },
   $meta: {
     name: 'BaseAITools',

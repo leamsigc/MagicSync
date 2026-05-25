@@ -1,5 +1,5 @@
 import type { PostWithAllData, Account } from '#layers/BaseDB/db/schema';
-import { postService } from '#layers/BaseDB/server/services/post.service';
+import { postBatchService } from '#layers/BaseDB/server/services/post.service';
 import { socialMediaAccountService, } from '#layers/BaseDB/server/services/social-media-account.service';
 import { SchedulerPos, SchedulerPost } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import type { SchedulerPluginConstructor } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
@@ -55,7 +55,7 @@ export class AutoPostService {
             `Retry in ${Math.round((rateCheck.retryAfterMs ?? 0) / 1000)}s. ` +
             `Post ID: ${post.id}`
           )
-          await postService.scheduleRetry(
+          await postBatchService.scheduleRetry(
             post.id,
             post.retryCount ?? 0,
             `Rate limited on platform '${platform}'. Retry after ${Math.round((rateCheck.retryAfterMs ?? 0) / 1000)}s.`
@@ -76,7 +76,7 @@ export class AutoPostService {
         if (!socialMediaAccount || !socialMediaAccount.accessToken) {
           const err = `No access token found for platform ${platform}`
           console.error(`[AutoPost] ${err} | Post ID: ${post.id}`)
-          await postService.scheduleRetry(post.id, post.retryCount ?? 0, err)
+          await postBatchService.scheduleRetry(post.id, post.retryCount ?? 0, err)
           return
         }
         // @ts-ignore - dynamic plugin resolution
@@ -93,10 +93,10 @@ export class AutoPostService {
             socialMediaAccount
           );
 
-          await postService.updatePostBaseOnResponse(post, response, platformPost);
+          await postBatchService.updatePostBaseOnResponse(post, response, platformPost);
         } catch (e) {
           console.error(e);
-          await postService.updatePostBaseOnResponse(
+          await postBatchService.updatePostBaseOnResponse(
             post,
             { status: 'failed', id: platformPost.id, releaseURL: '', error: 'Post failed to post ', postId: post.id },
             platformPost

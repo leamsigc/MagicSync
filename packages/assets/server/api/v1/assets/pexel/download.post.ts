@@ -1,4 +1,4 @@
-import { assetService } from '#layers/BaseAssets/server/services/asset.service'
+import { assetService } from '#layers/BaseShared/server/services/asset.service'
 import { type ServerFile } from 'nuxt-file-storage'
 interface PexelsPhoto {
   id: number

@@ -1,5 +1,6 @@
 import { eq, and, sql, desc } from 'drizzle-orm'
 import { type ServiceResponse } from './types'
+import type { SearchServiceType } from './interfaces'
 import { documentChunks, documents } from '#layers/BaseDB/db/schema'
 import { useDrizzle, tursoClient } from '#layers/BaseDB/server/utils/drizzle'
 
@@ -29,7 +30,7 @@ export interface RerankRequest {
   pythonBackendUrl?: string
 }
 
-export class SearchService {
+export class SearchService implements SearchServiceType {
   private db = useDrizzle()
 
   async keywordSearch(
@@ -84,9 +85,9 @@ export class SearchService {
         }
       })
 
-      return { data: rows }
+      return { success: true, data: rows }
     } catch (error) {
-      return { error: 'Failed to perform keyword search' }
+      return { success: false, error: 'Failed to perform keyword search' }
     }
   }
 
@@ -149,9 +150,9 @@ export class SearchService {
         }
       })
 
-      return { data: rows }
+      return { success: true, data: rows }
     } catch (error) {
-      return { error: 'Failed to perform vector search' }
+      return { success: false, error: 'Failed to perform vector search' }
     }
   }
 
@@ -208,7 +209,7 @@ export class SearchService {
       const keywordResults = await this.keywordSearch(userId, query, keywordLimit, documentId)
 
       if (keywordResults.error) {
-        return { error: keywordResults.error }
+        return { success: false, error: keywordResults.error }
       }
 
       let vectorResults: SearchResult[] = []
@@ -222,7 +223,7 @@ export class SearchService {
 
         const vectorResult = await this.vectorSearch(userId, queryEmbedding, keywordLimit, vectorFilters)
         if (vectorResult.error) {
-          return { error: vectorResult.error }
+          return { success: false, error: vectorResult.error }
         }
         vectorResults = vectorResult.data || []
       }
@@ -232,7 +233,7 @@ export class SearchService {
           ...item,
           rank: index + 1,
         }))
-        return { data: ranked.slice(0, limit) }
+        return { success: true, data: ranked.slice(0, limit) }
       }
 
       const fused = this.reciprocalRankFusion(
@@ -242,9 +243,9 @@ export class SearchService {
         limit
       )
 
-      return { data: fused }
+      return { success: true, data: fused }
     } catch (error) {
-      return { error: 'Failed to perform hybrid search' }
+      return { success: false, error: 'Failed to perform hybrid search' }
     }
   }
 
@@ -255,7 +256,7 @@ export class SearchService {
       const { query, results, topK = 5, pythonBackendUrl } = request
 
       if (results.length === 0) {
-        return { data: [] }
+        return { success: true, data: [] }
       }
 
       // If Python backend URL is provided, use LLM-based reranking
@@ -278,6 +279,7 @@ export class SearchService {
           })
 
           return {
+            success: true,
             data: rerankResult.results.map((r, index) => ({
               content: r.content,
               documentId: r.document_id,
@@ -306,9 +308,9 @@ export class SearchService {
           source: 'reranked' as const,
         }))
 
-      return { data: reranked }
+      return { success: true, data: reranked }
     } catch (error) {
-      return { error: 'Failed to rerank results' }
+      return { success: false, error: 'Failed to rerank results' }
     }
   }
 }

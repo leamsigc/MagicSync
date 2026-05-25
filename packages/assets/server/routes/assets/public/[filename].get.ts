@@ -1,6 +1,6 @@
 import { promises as fs } from 'node:fs'
 import { join } from 'node:path'
-import { assetService } from '#layers/BaseAssets/server/services/asset.service'
+import { assetService } from '#layers/BaseShared/server/services/asset.service'
 
 export default defineEventHandler(async (event) => {
   try {

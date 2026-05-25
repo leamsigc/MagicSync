@@ -71,9 +71,8 @@ const handleSave = async (postData: PostCreateBase) => {
   }
 };
 
-const handleUpdate = async (postData: PostCreateBase) => {
+const handleUpdate = async (postData: PostCreateBase & { id: string }) => {
   try {
-    if (!postData.id) return;
     await updatePost(postData.id, postData);
     toast.add({
       title: t('toast.postUpdated'),

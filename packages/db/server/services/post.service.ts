@@ -1,19 +1,14 @@
-import type { PlatformPost, Post, PostCreateBase, PostWithAllData, SocialMediaAccount, PublishDetail, Asset } from '#layers/BaseDB/db/schema'
+import type { PlatformPost, Post, PostCreateBase, PostWithAllData, Asset } from '#layers/BaseDB/db/schema'
 import type {
   PaginatedResponse,
   QueryOptions,
   ServiceResponse,
-  PostResponse,
 } from './types'
-import { and, eq, gte, inArray, isNull, isNotNull, lte, sql, notExists, exists, or, not, between } from 'drizzle-orm'
+import type { PostServiceType } from './interfaces'
+import { and, eq, gte, inArray, lte, sql } from 'drizzle-orm'
 import { assets, platformPosts, posts, socialMediaAccounts } from '#layers/BaseDB/db/schema'
-import { socialMediaAccounts as socialMediaAccountsTable } from '#layers/BaseDB/db/socialMedia/socialMedia'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
-import {
-  ValidationError
-} from './types'
-import { socialMediaAccountService } from './social-media-account.service'
-
+import { ValidationError } from './types'
 
 
 export interface UpdatePostData extends Omit<PostCreateBase, 'businessId' | 'userId'> { }
@@ -28,7 +23,7 @@ export interface CreatePlatformPostData {
   platformSettings?: string
 }
 
-export class PostService {
+export class PostService implements PostServiceType {
   private db = useDrizzle()
 
   async create(userId: string, data: PostCreateBase): Promise<ServiceResponse<Post>> {
@@ -96,13 +91,13 @@ export class PostService {
           await tx.insert(platformPosts).values(platformPostEntries)
         }
 
-        return { data: post }
+        return { success: true, data: post }
       })
     } catch (error) {
       if (error instanceof ValidationError) {
-        return { error: error.message, code: error.code }
+        return { success: false, error: error.message, code: error.code }
       }
-      return { error: 'Failed to create post' + error }
+      return { success: false, error: 'Failed to create post' + error }
     }
   }
 
@@ -121,14 +116,11 @@ export class PostService {
         with: include
       })
       if (!post) {
-        return { error: 'Post not found', code: 'NOT_FOUND' }
+        return { success: false, error: 'Post not found', code: 'NOT_FOUND' }
       }
-
-      const result = post
-
-      return { data: result }
-    } catch (error) {
-      return { error: 'Failed to fetch post' }
+      return { success: true, data: result }
+    } catch {
+      return { success: false, error: 'Failed to fetch post' }
     }
   }
 
@@ -219,6 +211,7 @@ export class PostService {
 
 
       return {
+        success: true,
         data: postWithAssets as PostWithAllData[],
         pagination: {
           page: pagination.page || 1,
@@ -228,7 +221,7 @@ export class PostService {
         }
       }
     } catch (error) {
-      return { error: 'Failed to fetch posts' }
+      return { success: false, error: 'Failed to fetch posts' }
     }
   }
 
@@ -245,9 +238,9 @@ export class PostService {
         ))
         .orderBy(posts.scheduledAt)
 
-      return { data: scheduledPosts }
-    } catch (error) {
-      return { error: 'Failed to fetch scheduled posts' }
+      return { success: true, data: scheduledPosts }
+    } catch {
+      return { success: false, error: 'Failed to fetch scheduled posts' }
     }
   }
 
@@ -278,7 +271,7 @@ export class PostService {
           where: and(eq(posts.id, id), eq(posts.userId, userId))
         })
         if (!existingPost) {
-          return { error: 'Post not found' }
+          return { success: false, error: 'Post not found' }
         }
 
         const updateData: any = {
@@ -341,11 +334,11 @@ export class PostService {
 
           await tx.insert(platformPosts).values(platformPostEntries)
         }
-        return { data: updated }
+        return { success: true, data: updated }
       })
     } catch (error) {
       console.error('Error Updating post:', error)
-      return { error: 'Failed to update post' }
+      return { success: false, error: 'Failed to update post' }
     }
   }
 
@@ -368,12 +361,11 @@ export class PostService {
         .returning()
 
       if (!updated) {
-        return { error: 'Post not found', code: 'NOT_FOUND' }
+        return { success: false, error: 'Post not found', code: 'NOT_FOUND' }
       }
-
-      return { data: updated }
-    } catch (error) {
-      return { error: 'Failed to update post status' }
+      return { success: true, data: updated }
+    } catch {
+      return { success: false, error: 'Failed to update post status' }
     }
   }
 
@@ -392,10 +384,10 @@ export class PostService {
         .delete(posts)
         .where(and(eq(posts.id, id), eq(posts.userId, userId)))
 
-      return {}
+      return { success: true }
 
     } catch (error) {
-      return { error: 'Failed to delete post' }
+      return { success: false, error: 'Failed to delete post' }
     }
   }
 
@@ -412,12 +404,11 @@ export class PostService {
         .returning()
 
       if (!updated) {
-        return { error: 'Platform post not found', code: 'NOT_FOUND' }
+        return { success: false, error: 'Platform post not found', code: 'NOT_FOUND' }
       }
-
-      return { data: updated }
-    } catch (error) {
-      return { error: 'Failed to update platform post' }
+      return { success: true, data: updated }
+    } catch {
+      return { success: false, error: 'Failed to update platform post' }
     }
   }
 
@@ -428,9 +419,9 @@ export class PostService {
         .from(platformPosts)
         .where(eq(platformPosts.postId, postId))
 
-      return { data: platforms }
-    } catch (error) {
-      return { error: 'Failed to fetch platform posts' }
+      return { success: true, data: platforms }
+    } catch {
+      return { success: false, error: 'Failed to fetch platform posts' }
     }
   }
 
@@ -445,7 +436,7 @@ export class PostService {
       // Check if post can be retried
       if (post.status !== 'failed' && !post.platformPosts.some(p => p.status === 'failed')) {
         return {
-
+          success: false,
           error: 'Post does not have any failed publishing attempts to retry',
           code: 'INVALID_STATUS'
         }
@@ -474,279 +465,9 @@ export class PostService {
       // Return updated item
       return await this.findById(id, userId, true) as ServiceResponse<PostWithAllData>
     } catch (error) {
-      return { error: 'Failed to retry post' }
+      return { success: false, error: 'Failed to retry post' }
     }
   }
-
-  /**
-   * Count posts for a user within a date range
-   */
-  async countPosts(filters: {
-    userId: string
-    businessId?: string
-    startDate?: string
-    endDate?: string
-  }): Promise<number> {
-    try {
-      const whereConditions = [eq(posts.userId, filters.userId)]
-
-      if (filters.businessId) {
-        whereConditions.push(eq(posts.businessId, filters.businessId))
-      }
-
-      if (filters.startDate) {
-        whereConditions.push(gte(posts.createdAt, new Date(filters.startDate)))
-      }
-
-      if (filters.endDate) {
-        whereConditions.push(lte(posts.createdAt, new Date(filters.endDate)))
-      }
-
-      const result = await this.db
-        .select({ count: sql<number>`count(*)` })
-        .from(posts)
-        .where(and(...whereConditions))
-
-      return result[0]?.count || 0
-    } catch (error) {
-      return 0
-    }
-  }
-
-  async getPostStats(businessId: string, userId: string, filters: { startDate?: string; endDate?: string, timezone?: string } = {}): Promise<ServiceResponse<any>> {
-    try {
-      // Get all posts for the business
-      const postsResult = await this.findByBusinessId(businessId, userId, {
-        pagination: { page: 1, limit: 1000 }, // Get all posts for stats
-        filters
-      })
-
-      const posts = postsResult.data || []
-
-      // Calculate statistics
-      const stats = {
-        total: posts.length,
-        byStatus: {
-          draft: posts.filter(p => p.status === 'pending').length,
-          published: posts.filter(p => p.status === 'published').length,
-          failed: posts.filter(p => p.status === 'failed').length
-        },
-        platformStats: {} as Record<string, { total: number; published: number; failed: number }>,
-        recentActivity: {
-          publishedToday: 0,
-          scheduledNext7Days: 0,
-          failedLast24Hours: 0
-        },
-        engagement: {
-          totalPlatformPosts: 0,
-          successfulPosts: 0,
-          failedPosts: 0,
-          successRate: 0
-        }
-      }
-
-      const userTz = filters.timezone || 'UTC'
-
-      // Calculate date ranges for recent activity
-      const today = dayjs().tz(userTz).startOf('day').toDate()
-      const next7Days = dayjs().tz(userTz).add(7, 'day').startOf('day').toDate()
-      const last24Hours = dayjs.utc().subtract(24, 'hour').toDate()
-
-      // Process each post for detailed statistics
-      for (const post of posts) {
-        // Recent activity calculations
-        if (post.publishedAt && post.publishedAt >= today) {
-          stats.recentActivity.publishedToday++
-        }
-
-        if (post.status === 'pending' && post.scheduledAt && post.scheduledAt <= next7Days) {
-          stats.recentActivity.scheduledNext7Days++
-        }
-
-        if (post.status === 'failed' && post.updatedAt >= last24Hours) {
-          stats.recentActivity.failedLast24Hours++
-        }
-
-        // Platform statistics
-        if (post.platformPosts) {
-          for (const platformPost of post.platformPosts) {
-            stats.engagement.totalPlatformPosts++
-
-            if (platformPost.status === 'published') {
-              stats.engagement.successfulPosts++
-            } else if (platformPost.status === 'failed') {
-              stats.engagement.failedPosts++
-            }
-
-            // Group by social account (platform)
-            const accountId = platformPost.socialAccountId
-            if (!stats.platformStats[accountId]) {
-              stats.platformStats[accountId] = { total: 0, published: 0, failed: 0 }
-            }
-
-            stats.platformStats[accountId].total++
-            if (platformPost.status === 'published') {
-              stats.platformStats[accountId].published++
-            } else if (platformPost.status === 'failed') {
-              stats.platformStats[accountId].failed++
-            }
-          }
-        }
-      }
-
-      // Calculate success rate
-      if (stats.engagement.totalPlatformPosts > 0) {
-        stats.engagement.successRate = Math.round(
-          (stats.engagement.successfulPosts / stats.engagement.totalPlatformPosts) * 100
-        )
-      }
-
-      return { data: stats }
-    } catch (error) {
-      return { error: 'Failed to calculate post statistics' }
-    }
-  }
-
-  /**
-   * Get posts that are due for processing now (catch-up + scheduled).
-   * - Includes posts from ANY day where scheduledAt <= now (catch-up for server downtime)
-   * - Excludes posts with active retry backoff (nextRetryAt IS NOT NULL AND nextRetryAt > now)
-   * - Orders by scheduledAt ASC (oldest first)
-   * - Limits to 100 posts per run to prevent overwhelming
-   */
-  async getPostsToProcessNow(): Promise<PostWithAllData[]> {
-    const now = dayjs.utc().toDate()
-
-    const list = await this.db.query.posts.findMany({
-      where: and(
-        eq(posts.status, 'pending'),
-        lte(posts.scheduledAt, now),
-        or(
-          isNull(posts.nextRetryAt),
-          lte(posts.nextRetryAt, now)
-        )
-      ),
-      with: {
-        platformPosts: true,
-        user: true
-      },
-      orderBy: (posts, { asc }) => [asc(posts.scheduledAt)],
-      limit: 100
-    })
-
-    // Batch fetch all asset IDs from all posts to avoid N+1
-    const allAssetIds = list
-      .flatMap(post => {
-        try {
-          return post.mediaAssets ? JSON.parse(post.mediaAssets as unknown as string) : []
-        } catch {
-          return []
-        }
-      })
-      .filter((id): id is string => typeof id === 'string')
-
-    const assetsMap = new Map<string, Asset>()
-    if (allAssetIds.length > 0) {
-      const allAssets = await this.db.query.assets.findMany({
-        where: inArray(assets.id, allAssetIds)
-      })
-      allAssets.forEach(asset => assetsMap.set(asset.id, asset))
-    }
-
-    // Map assets back to posts
-    const postsWithAssets = list.map(post => {
-      let assetsList: Asset[] = []
-      if (post.mediaAssets) {
-        try {
-          const assetIds = JSON.parse(post.mediaAssets as unknown as string) as string[]
-          if (assetIds && assetIds.length > 0) {
-            assetsList = assetIds.map(id => assetsMap.get(id)).filter((a): a is Asset => !!a)
-          }
-        } catch (e) {
-          // Invalid JSON, return empty assets
-        }
-      }
-      return {
-        ...post,
-        assets: assetsList
-      } as PostWithAllData
-    })
-
-    return postsWithAssets
-  }
-
-  /**
-   * Schedule an automatic retry for a failed post using exponential backoff.
-   * @param postId - The post ID to schedule retry for
-   * @param currentRetryCount - The current retry count (0-based, so this is the attempt number being started)
-   * @param error - The error message to store
-   * @returns ServiceResponse with the updated post
-   *
-   * Backoff schedule (5 retries max):
-   *   Retry 1 (count=0):  5 min  -> nextRetryAt = now + 5min
-   *   Retry 2 (count=1): 10 min  -> nextRetryAt = now + 10min
-   *   Retry 3 (count=2): 20 min  -> nextRetryAt = now + 20min
-   *   Retry 4 (count=3): 40 min  -> nextRetryAt = now + 40min
-   *   Retry 5 (count=4): 80 min  -> nextRetryAt = now + 80min
-   *   After count=4 (5th attempt fails): no more retry, stays failed
-   */
-  async scheduleRetry(postId: string, currentRetryCount: number, error: string): Promise<ServiceResponse<Post>> {
-    const MAX_RETRIES = 5
-    const newRetryCount = currentRetryCount + 1
-
-    // Cap at MAX_RETRIES — after 5 failures, the post stays permanently failed
-    if (newRetryCount >= MAX_RETRIES) {
-      const [updated] = await this.db
-        .update(posts)
-        .set({
-          status: 'failed',
-          lastError: error,
-          nextRetryAt: null,
-          updatedAt: dayjs.utc().toDate()
-        })
-        .where(eq(posts.id, postId))
-        .returning()
-      return { data: updated, code: 'RETRY_EXHAUSTED' }
-    }
-
-    // Exponential backoff: 5min * 2^retryCount
-    // Capped at 80 minutes (5 * 2^4 = 80)
-    const backoffMs = 5 * 60 * 1000 * Math.pow(2, currentRetryCount)
-    const nextRetryAt = dayjs.utc().add(backoffMs, 'ms').toDate()
-
-    const [updated] = await this.db
-      .update(posts)
-      .set({
-        retryCount: newRetryCount,
-        nextRetryAt,
-        lastError: error,
-        updatedAt: dayjs.utc().toDate()
-      })
-      .where(eq(posts.id, postId))
-      .returning()
-
-    return { data: updated }
-  }
-
-  async updatePostBaseOnResponse(post: PostWithAllData, response: PostResponse, socialPlatform: PlatformPost) {
-    const socialPlatformId = socialPlatform.socialAccountId;
-    // Check on the old details and update
-    const oldDetails = JSON.parse(socialPlatform.publishDetail as unknown as string || '{}');
-
-
-    const platformSpecificDetails = {
-      publishedId: response.postId,
-      publishedUrl: response.releaseURL
-    }
-    const publishDetails: PublishDetail = new Map(Object.entries(oldDetails));
-    publishDetails.set(socialPlatformId, platformSpecificDetails);
-    const detailsString = JSON.stringify(Object.fromEntries(publishDetails));
-
-
-    await this.updateStatus(post.id, post.user.id, response.status)
-    await this.updatePlatformPost(socialPlatform.id, { publishDetail: detailsString, status: response.status })
-  }
-
 
   private validateCreateData(data: PostCreateBase): void {
 
@@ -775,3 +496,8 @@ export class PostService {
 }
 
 export const postService = new PostService()
+
+export { postStatsService } from './post-stats.service'
+export { postBatchService } from './post-batch.service'
+export { PostStatsService } from './post-stats.service'
+export { PostBatchService } from './post-batch.service'

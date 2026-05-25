@@ -1,15 +1,4 @@
 <script lang="ts" setup>
-/**
- *
- * Component Description:Desc
- *
- * @author Reflect-Media <reflect.media GmbH>
- * @version 0.0.1
- *
- * @todo [ ] Test the component
- * @todo [ ] Integration test.
- * @todo [✔] Update the typescript.
- */
 const { t } = useI18n()
 const appConfig = useAppConfig()
 const companyName = appConfig.BaseUiLayer.footer.companyName
@@ -18,7 +7,13 @@ const { links: items } = useNavigationLinks()
 </script>
 
 <template>
-  <UHeader class="dark:bg-transparent  border-0" mode="drawer">
+  <UHeader
+    mode="drawer"
+    :ui="{
+      root: 'sticky top-4 z-50 mx-auto max-w-7xl bg-elevated rounded-2xl ',
+      inner: 'w-full max-w-(--ui-container) mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-3 h-16'
+    }"
+  >
     <template #left>
       <UTooltip :text="t('navigation.home')" :kbds="['meta', 'H']">
         <UButton color="neutral" variant="ghost" to="/" icon="fxemoji:flaginhole" :aria-label="t('navigation.home')">
@@ -27,11 +22,15 @@ const { links: items } = useNavigationLinks()
       </UTooltip>
     </template>
 
-    <UNavigationMenu :items="items" :ui="{
-      childLinkDescription: 'text-balance line-clamp-2 ',
-      linkLabel: 'dark:text-white',
-    }" orientation="horizontal" class="w-full justify-center " highlight highlight-color="success" />
+    <UNavigationMenu
+      :items="items"
+      orientation="horizontal"
+      class="w-full justify-center"
+      highlight
+      highlight-color="primary"
+    />
     <template #right>
+      <BaseThemeSelector />
       <BaseTranslationMenu />
       <UColorModeButton />
       <UTooltip :text="t('navigation.login')" :kbds="['meta', 'L']">
@@ -44,7 +43,7 @@ const { links: items } = useNavigationLinks()
     </template>
 
     <template #body>
-      <section class="grid">
+      <section class="grid p-2 bg-elevated rounded-xl ">
         <UTooltip :text="t('navigation.home')" :kbds="['meta', 'H']">
           <UButton color="neutral" variant="ghost" to="/" icon="fxemoji:flaginhole" :aria-label="t('navigation.home')">
             {{ companyName }}

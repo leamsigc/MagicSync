@@ -1,9 +1,8 @@
-import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
-import { chatService } from '#layers/BaseDB/server/services/chat.service'
+import { aiToolsFacade } from '#ai-tools/server/services/aiToolsFacade.service'
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event)
-  const user = await checkUserIsLogin(event)
+  const user = await aiToolsFacade.authenticate(event)
   const body = await readBody(event)
 
   log.set({ title: body.title })
@@ -12,7 +11,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Title is required' })
   }
 
-  const result = await chatService.createThread(user.id, { title: body.title })
+  const result = await aiToolsFacade.createThread(user.id, { title: body.title })
 
   if (result.error) {
     throw createError({ statusCode: 500, statusMessage: result.error })

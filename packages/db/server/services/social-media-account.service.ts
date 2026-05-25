@@ -1,23 +1,14 @@
 import { entityDetails } from '#layers/BaseDB/db/entityDetails/entityDetails';
 
-/**
- * Social Media Account Service
- *
- * Handles CRUD operations for social media accounts, OAuth token management,
- * and platform-specific API integrations.
- *
- * @author Ismael Garcia <leamsigc@leamsigc.com>
- * @version 0.0.1
- */
-
 import { eq, and, desc, inArray } from 'drizzle-orm'
 import { encryptKey, decryptKey } from '#layers/BaseAuth/server/utils/AuthHelpers'
 import type { SocialMediaAccount } from '#layers/BaseDB/db/socialMedia/socialMedia'
 import { socialMediaAccounts } from '#layers/BaseDB/db/socialMedia/socialMedia'
 import { type Account, type User, user } from '#layers/BaseDB/db/auth/auth'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
-import { entityDetailsService } from '#layers/BaseDB/server/services/entity-details.service' // Import new service
+import { entityDetailsService } from '#layers/BaseDB/server/services/entity-details.service'
 import { businessProfiles, account } from '#layers/BaseDB/db/schema';
+import type { SocialMediaAccountServiceType } from './interfaces';
 
 export type SocialMediaPlatform =
   | 'facebook'
@@ -73,10 +64,7 @@ export interface SocialMediaAccountFilters {
   isActive?: boolean
 }
 
-/**
- * Social Media Account Service Class
- */
-export class SocialMediaAccountService {
+export class SocialMediaAccountService implements SocialMediaAccountServiceType {
   private db = useDrizzle()
 
 

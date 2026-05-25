@@ -32,8 +32,8 @@ const progressOffset = computed(() => {
 <template>
   <div class="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-md">
     <div :class="[
-      ' border border-white/10 shadow-2xl rounded-3xl overflow-hidden backdrop-blur-xl',
-      isExpanded ? 'p-6' : 'p-2 px-4'
+      ' border border-white/10 shadow-2xl  overflow-hidden backdrop-blur-xl',
+      isExpanded ? 'p-6 rounded-xl' : 'p-2 px-4 rounded-3xl'
     ]">
       <div class="flex items-center justify-between cursor-pointer" @click="$emit('toggle')">
         <div class="flex items-center gap-3">

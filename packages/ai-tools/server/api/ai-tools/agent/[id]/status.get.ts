@@ -1,9 +1,8 @@
-import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
-import { agentService } from '#layers/BaseDB/server/services/agent.service'
+import { aiToolsFacade } from '#ai-tools/server/services/aiToolsFacade.service'
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event)
-  const user = await checkUserIsLogin(event)
+  const user = await aiToolsFacade.authenticate(event)
   const id = getRouterParam(event, 'id')
 
   log.set({ agentId: id })
@@ -29,8 +28,7 @@ export default defineEventHandler(async (event) => {
     headers: { 'X-User-Id': user.id },
   })
 
-  // Sync status to DB
-  await agentService.update(id, user.id, {
+  await aiToolsFacade.updateAgentSession(id, user.id, {
     status: result.status as any,
     stepCount: result.step_count,
     result: result.result || undefined,

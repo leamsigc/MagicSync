@@ -1,5 +1,4 @@
 import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
-import type { SystemVariable } from '#layers/BaseBulkScheduler/utils/templateProcessor'
 import { bulkSchedulerService, type BulkGenerateRequest } from '#layers/BaseBulkScheduler/server/services/bulkScheduler.service'
 
 export default defineEventHandler(async (event) => {

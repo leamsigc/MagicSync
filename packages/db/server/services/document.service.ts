@@ -1,5 +1,6 @@
 import { eq, and, sql, desc, inArray } from 'drizzle-orm'
 import { type ServiceResponse, type PaginatedResponse, type QueryOptions } from './types'
+import type { DocumentServiceType, ChunkServiceType } from './interfaces'
 import { documents, documentChunks, type Document, type DocumentChunk } from '#layers/BaseDB/db/schema'
 import { useDrizzle, tursoClient } from '#layers/BaseDB/server/utils/drizzle'
 import { searchService, type SearchResult } from './search.service'
@@ -26,7 +27,7 @@ export interface CreateChunkData {
   metadata?: Record<string, any>
 }
 
-export class DocumentService {
+export class DocumentService implements DocumentServiceType {
   private db = useDrizzle()
 
   async create(userId: string, data: CreateDocumentData): Promise<ServiceResponse<Document>> {
@@ -43,9 +44,9 @@ export class DocumentService {
         updatedAt: now,
       }).returning()
 
-      return { data: doc }
+      return { success: true, data: doc }
     } catch (error) {
-      return { error: 'Failed to create document' }
+      return { success: false, error: 'Failed to create document' }
     }
   }
 
@@ -58,12 +59,12 @@ export class DocumentService {
         .limit(1)
 
       if (!doc) {
-        return { error: 'Document not found', code: 'NOT_FOUND' }
+        return { success: false, error: 'Document not found', code: 'NOT_FOUND' }
       }
 
-      return { data: doc }
+      return { success: true, data: doc }
     } catch (error) {
-      return { error: 'Failed to fetch document' }
+      return { success: false, error: 'Failed to fetch document' }
     }
   }
 
@@ -87,6 +88,7 @@ export class DocumentService {
       const count = result[0]?.count ?? 0
 
       return {
+        success: true,
         data: docList,
         pagination: {
           page: pagination.page || 1,
@@ -96,7 +98,7 @@ export class DocumentService {
         },
       }
     } catch (error) {
-      return { error: 'Failed to fetch documents' }
+      return { success: false, error: 'Failed to fetch documents' }
     }
   }
 
@@ -120,6 +122,7 @@ export class DocumentService {
       const count = result[0]?.count ?? 0
 
       return {
+        success: true,
         data: docList,
         pagination: {
           page: pagination.page || 1,
@@ -129,7 +132,7 @@ export class DocumentService {
         },
       }
     } catch (error) {
-      return { error: 'Failed to fetch documents by folder' }
+      return { success: false, error: 'Failed to fetch documents by folder' }
     }
   }
 
@@ -153,6 +156,7 @@ export class DocumentService {
       const count = result[0]?.count ?? 0
 
       return {
+        success: true,
         data: docList,
         pagination: {
           page: pagination.page || 1,
@@ -162,7 +166,7 @@ export class DocumentService {
         },
       }
     } catch (error) {
-      return { error: 'Failed to fetch unfiled documents' }
+      return { success: false, error: 'Failed to fetch unfiled documents' }
     }
   }
 
@@ -180,12 +184,12 @@ export class DocumentService {
         .returning()
 
       if (!updated) {
-        return { error: 'Document not found', code: 'NOT_FOUND' }
+        return { success: false, error: 'Document not found', code: 'NOT_FOUND' }
       }
 
-      return { data: updated }
+      return { success: true, data: updated }
     } catch (error) {
-      return { error: 'Failed to update document status' }
+      return { success: false, error: 'Failed to update document status' }
     }
   }
 
@@ -198,12 +202,12 @@ export class DocumentService {
         .returning()
 
       if (!updated) {
-        return { error: 'Document not found', code: 'NOT_FOUND' }
+        return { success: false, error: 'Document not found', code: 'NOT_FOUND' }
       }
 
-      return { data: updated }
+      return { success: true, data: updated }
     } catch (error) {
-      return { error: 'Failed to update chunk count' }
+      return { success: false, error: 'Failed to update chunk count' }
     }
   }
 
@@ -216,12 +220,12 @@ export class DocumentService {
         .returning()
 
       if (!updated) {
-        return { error: 'Document not found', code: 'NOT_FOUND' }
+        return { success: false, error: 'Document not found', code: 'NOT_FOUND' }
       }
 
-      return { data: updated }
+      return { success: true, data: updated }
     } catch (error) {
-      return { error: 'Failed to update content hash' }
+      return { success: false, error: 'Failed to update content hash' }
     }
   }
 
@@ -234,12 +238,12 @@ export class DocumentService {
         .returning()
 
       if (!updated) {
-        return { error: 'Document not found', code: 'NOT_FOUND' }
+        return { success: false, error: 'Document not found', code: 'NOT_FOUND' }
       }
 
-      return { data: updated }
+      return { success: true, data: updated }
     } catch (error) {
-      return { error: 'Failed to update metadata' }
+      return { success: false, error: 'Failed to update metadata' }
     }
   }
 
@@ -252,12 +256,12 @@ export class DocumentService {
         .returning()
 
       if (!updated) {
-        return { error: 'Document not found', code: 'NOT_FOUND' }
+        return { success: false, error: 'Document not found', code: 'NOT_FOUND' }
       }
 
-      return { data: updated }
+      return { success: true, data: updated }
     } catch (error) {
-      return { error: 'Failed to update document folder' }
+      return { success: false, error: 'Failed to update document folder' }
     }
   }
 
@@ -269,12 +273,12 @@ export class DocumentService {
         .returning()
 
       if (!deleted) {
-        return { error: 'Document not found', code: 'NOT_FOUND' }
+        return { success: false, error: 'Document not found', code: 'NOT_FOUND' }
       }
 
-      return { data: deleted }
+      return { success: true, data: deleted }
     } catch (error) {
-      return { error: 'Failed to delete document' }
+      return { success: false, error: 'Failed to delete document' }
     }
   }
 
@@ -294,19 +298,19 @@ export class DocumentService {
         .where(and(...conditions))
         .limit(1)
 
-      return { data: doc }
+      return { success: true, data: doc }
     } catch (error) {
-      return { error: 'Failed to check content hash' }
+      return { success: false, error: 'Failed to check content hash' }
     }
   }
 }
 
-export class ChunkService {
+export class ChunkService implements ChunkServiceType {
   private db = useDrizzle()
 
   async createMany(chunks: CreateChunkData[]): Promise<ServiceResponse<number>> {
     try {
-      if (chunks.length === 0) return { data: 0 }
+      if (chunks.length === 0) return { success: true, data: 0 }
 
       const values = chunks.map(c => ({
         id: crypto.randomUUID(),
@@ -322,9 +326,9 @@ export class ChunkService {
       }))
 
       await this.db.insert(documentChunks).values(values)
-      return { data: chunks.length }
+      return { success: true, data: chunks.length }
     } catch (error) {
-      return { error: 'Failed to create chunks' }
+      return { success: false, error: 'Failed to create chunks' }
     }
   }
 
@@ -333,9 +337,9 @@ export class ChunkService {
       const result = await this.db
         .delete(documentChunks)
         .where(eq(documentChunks.documentId, documentId))
-      return { data: 0 }
+      return { success: true, data: 0 }
     } catch (error) {
-      return { error: 'Failed to delete chunks' }
+      return { success: false, error: 'Failed to delete chunks' }
     }
   }
 
@@ -347,21 +351,21 @@ export class ChunkService {
         .where(eq(documentChunks.documentId, documentId))
         .orderBy(documentChunks.chunkIndex)
 
-      return { data: chunks }
+      return { success: true, data: chunks }
     } catch (error) {
-      return { error: 'Failed to fetch chunks' }
+      return { success: false, error: 'Failed to fetch chunks' }
     }
   }
 
   async deleteByIds(ids: string[]): Promise<ServiceResponse<number>> {
     try {
-      if (ids.length === 0) return { data: 0 }
+      if (ids.length === 0) return { success: true, data: 0 }
       await this.db
         .delete(documentChunks)
         .where(inArray(documentChunks.id, ids))
-      return { data: ids.length }
+      return { success: true, data: ids.length }
     } catch (error) {
-      return { error: 'Failed to delete chunks' }
+      return { success: false, error: 'Failed to delete chunks' }
     }
   }
 
@@ -416,9 +420,9 @@ export class ChunkService {
         }
       })
 
-      return { data: rows }
+      return { success: true, data: rows }
     } catch (error) {
-      return { error: 'Failed to search chunks' }
+      return { success: false, error: 'Failed to search chunks' }
     }
   }
 }

@@ -1,4 +1,4 @@
-import { postService } from "#layers/BaseDB/server/services/post.service"
+import { postStatsService } from "#layers/BaseDB/server/services/post.service"
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event)
@@ -35,7 +35,7 @@ export default defineEventHandler(async (event) => {
     if (startDate) filters.startDate = startDate
     if (endDate) filters.endDate = endDate
 
-    const result = await postService.getPostStats(businessId, session.user.id, filters)
+    const result = await postStatsService.getPostStats(businessId, session.user.id, filters)
 
     if (!result) {
       log.set({ error: 'Failed to calculate post statistics' })

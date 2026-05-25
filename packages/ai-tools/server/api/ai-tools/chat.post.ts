@@ -1,12 +1,9 @@
-import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
-import { chatService } from '#layers/BaseDB/server/services/chat.service'
-import { userLlmConfigService } from '#layers/BaseDB/server/services/user-llm-config.service'
-import { createLlmJwt } from '#layers/BaseDB/server/utils/llm-jwt'
+import { aiToolsFacade } from '#ai-tools/server/services/aiToolsFacade.service'
 import { generateId } from '@ai-sdk/provider-utils'
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event)
-  const user = await checkUserIsLogin(event)
+  const user = await aiToolsFacade.authenticate(event)
   const body = await readBody(event)
 
   const messages = body?.messages || []
@@ -31,15 +28,14 @@ export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const backendUrl = config.pythonBackendUrl || 'http://localhost:8000'
 
-  const llmConfigResult = await userLlmConfigService.getDefaultConfig(user.id)
-  const llmConfig = llmConfigResult.data ?? null
-  const llmJwt = createLlmJwt(user.id, user.email || '', llmConfig)
+  const llmJwtResult = await aiToolsFacade.getLlmJwtContext(user.id, user.email || '')
+  const llmJwt = llmJwtResult.data?.token ?? ''
 
   let threadId = body.thread_id as string | undefined
   if (!threadId) {
     const firstUserMsg = convertedMessages.find((m: any) => m.role === 'user')
     const title = firstUserMsg?.content?.slice(0, 80) || 'New Chat'
-    const threadResult = await chatService.createThread(user.id, { title })
+    const threadResult = await aiToolsFacade.createThread(user.id, { title })
     if (threadResult.data) {
       threadId = threadResult.data.id
     }
@@ -49,9 +45,8 @@ export default defineEventHandler(async (event) => {
   const enableTools = body?.enable_tools !== false // Default to true
 
   if (threadId && lastMessage?.role === 'user') {
-    await chatService.addMessage({
+    await aiToolsFacade.addMessage(user.id, {
       threadId,
-      userId: user.id,
       role: 'user',
       content: lastMessage.content,
     })
@@ -225,9 +220,8 @@ export default defineEventHandler(async (event) => {
 
       if (threadId && assistantContent) {
         try {
-          await chatService.addMessage({
+          await aiToolsFacade.addMessage(user.id, {
             threadId,
-            userId: user.id,
             role: 'assistant',
             content: assistantContent,
             metadata: componentStates.length > 0 ? { componentStates } : undefined,

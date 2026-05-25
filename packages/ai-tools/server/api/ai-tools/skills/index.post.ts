@@ -1,9 +1,8 @@
-import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
-import { skillService } from '#layers/BaseDB/server/services/skill.service'
+import { aiToolsFacade } from '#ai-tools/server/services/aiToolsFacade.service'
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event)
-  const user = await checkUserIsLogin(event)
+  const user = await aiToolsFacade.authenticate(event)
   const body = await readBody(event)
 
   log.set({ skillName: body.name })
@@ -12,7 +11,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Name, description, and instructions are required' })
   }
 
-  const result = await skillService.create(user.id, {
+  const result = await aiToolsFacade.createSkill(user.id, {
     name: body.name,
     description: body.description,
     instructions: body.instructions,

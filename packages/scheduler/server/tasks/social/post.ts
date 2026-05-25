@@ -1,4 +1,4 @@
-import { postService } from "#layers/BaseDB/server/services/post.service";
+import { postBatchService } from "#layers/BaseDB/server/services/post.service";
 import { AutoPostService } from "#layers/BaseScheduler/server/services/AutoPost.service";
 import { platformRateLimiter } from "#layers/BaseScheduler/server/services/RateLimiter.service";
 
@@ -8,7 +8,7 @@ export default defineTask({
     description: "Trigger social media post that are scheduled",
   },
   async run({ payload, context }) {
-    const listOfPostToProcess = await postService.getPostsToProcessNow();
+    const listOfPostToProcess = await postBatchService.getPostsToProcessNow();
 
     if (listOfPostToProcess.length === 0) {
       console.log("[social:post] No posts due for processing.");

@@ -1,5 +1,5 @@
 import { type Asset } from '#layers/BaseDB/db/schema';
-import { assetService } from '#layers/BaseAssets/server/services/asset.service';
+import { assetService } from '#layers/BaseShared/server/services/asset.service';
 import { join } from 'path';
 import dayjs from 'dayjs';
 

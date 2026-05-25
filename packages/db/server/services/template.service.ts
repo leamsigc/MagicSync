@@ -5,6 +5,7 @@ import {
   type QueryOptions,
   type PaginatedResponse
 } from './types';
+import type { TemplateServiceType } from './interfaces';
 import { templates, templateAssets, type Template, type TemplateAsset, TemplateType } from '#layers/BaseDB/db/schema';
 
 export interface CreateTemplateData {
@@ -34,7 +35,7 @@ export interface TemplateWithAssets {
   assets: TemplateAsset[];
 }
 
-export class TemplateService {
+export class TemplateService implements TemplateServiceType {
   private db = useDrizzle();
 
   async create(userId: string, data: CreateTemplateData): Promise<ServiceResponse<TemplateWithAssets>> {

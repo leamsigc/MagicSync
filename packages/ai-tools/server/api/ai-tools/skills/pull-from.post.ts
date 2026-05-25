@@ -1,4 +1,4 @@
-import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
+import { aiToolsFacade } from '#ai-tools/server/services/aiToolsFacade.service'
 
 type ImportFrom = 'folder' | 'zip' | 'url'
 
@@ -10,7 +10,7 @@ interface ImportBody {
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event)
-  const user = await checkUserIsLogin(event)
+  const user = await aiToolsFacade.authenticate(event)
   const config = useRuntimeConfig()
 
   const body = await readBody<ImportBody>(event)

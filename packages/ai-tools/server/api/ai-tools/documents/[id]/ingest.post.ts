@@ -1,14 +1,11 @@
-import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
-import { documentService, chunkService } from '#layers/BaseDB/server/services/document.service'
+import { aiToolsFacade } from '#ai-tools/server/services/aiToolsFacade.service'
 import { readFile } from 'fs/promises'
 import { join } from 'path'
 import { createHash } from 'crypto'
-import { createLlmJwt } from '#layers/BaseDB/server/utils/llm-jwt'
-import { userLlmConfigService } from '#layers/BaseDB/server/services/user-llm-config.service'
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event)
-  const user = await checkUserIsLogin(event)
+  const user = await aiToolsFacade.authenticate(event)
   const id = getRouterParam(event, 'id')
 
   log.set({ documentId: id })
@@ -19,7 +16,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Fetch document
-  const docResult = await documentService.findById(id, user.id)
+  const docResult = await aiToolsFacade.getDocument(id, user.id)
   if (docResult.error || !docResult.data) {
     throw createError({ statusCode: 404, statusMessage: 'Document not found' })
   }
@@ -59,20 +56,17 @@ export default defineEventHandler(async (event) => {
         }
 
         // Content changed or first ingestion — proceed
-        await documentService.updateStatus(id!, user.id, 'processing')
+        await aiToolsFacade.updateDocumentStatus(id!, user.id, 'processing')
 
         controller.enqueue(encoder.encode(sendEvent({ status: 'processing', message: 'Chunking and embedding...' })))
 
-        // Get LLM config and create JWT for Python backend auth
         const config = useRuntimeConfig()
         const backendUrl = config.pythonBackendUrl || 'http://localhost:8000'
-        
-        const llmConfigResult = await userLlmConfigService.getDefaultConfig(user.id)
-        const llmConfig = llmConfigResult.data ?? null
-        const llmJwt = createLlmJwt(user.id, user.email || '', llmConfig)
 
-        // Get existing chunks before new ingestion
-        const existingChunksResult = await chunkService.findByDocument(doc.id)
+        const llmJwtResult = await aiToolsFacade.getLlmJwtContext(user.id, user.email || '')
+        const llmJwt = llmJwtResult.data?.token ?? ''
+
+        const existingChunksResult = await aiToolsFacade.getChunksByDocument(doc.id)
         const existingChunks = existingChunksResult.data || []
 
         controller.enqueue(encoder.encode(sendEvent({ status: 'processing', message: 'Calling backend...' })))
@@ -191,10 +185,9 @@ export default defineEventHandler(async (event) => {
 
         // Delete removed chunks
         if (chunksToDelete.length > 0) {
-          await chunkService.deleteByIds(chunksToDelete)
+          await aiToolsFacade.deleteChunksByIds(chunksToDelete)
         }
 
-        // Insert new/changed chunks with embeddings
         if (chunksToInsert.length > 0) {
           const chunkData = chunksToInsert.map(c => ({
             documentId: doc.id,
@@ -209,7 +202,7 @@ export default defineEventHandler(async (event) => {
 
           for (let i = 0; i < chunkData.length; i += 50) {
             const batch = chunkData.slice(i, i + 50)
-            await chunkService.createMany(batch)
+            await aiToolsFacade.createChunks(batch)
             controller.enqueue(encoder.encode(sendEvent({
               status: 'storing',
               message: `Stored ${Math.min(i + 50, chunkData.length)}/${chunkData.length} new chunks`,
@@ -218,9 +211,8 @@ export default defineEventHandler(async (event) => {
           }
         }
 
-        // Update document content hash and chunk count
-        await documentService.updateContentHash(doc.id, user.id, fileContentHash)
-        await documentService.updateChunkCount(doc.id, user.id, ingestResult.total_chunks)
+        await aiToolsFacade.updateDocumentContentHash(doc.id, user.id, fileContentHash)
+        await aiToolsFacade.updateDocumentChunkCount(doc.id, user.id, ingestResult.total_chunks)
 
         // Merge document-level metadata from structured extraction
         let existingMeta: Record<string, any> = {}
@@ -253,7 +245,7 @@ export default defineEventHandler(async (event) => {
             headers: { 'X-User-Id': user.id },
           })
 
-          await documentService.updateMetadata(doc.id, user.id, {
+          await aiToolsFacade.updateDocumentMetadata(doc.id, user.id, {
             ...mergedMeta,
             title: metadataResult.title,
             author: metadataResult.author,
@@ -271,7 +263,7 @@ export default defineEventHandler(async (event) => {
           })))
         } catch (metaError: any) {
           // Still save the structured metadata even if LLM extraction fails
-          await documentService.updateMetadata(doc.id, user.id, mergedMeta)
+          await aiToolsFacade.updateDocumentMetadata(doc.id, user.id, mergedMeta)
 
           controller.enqueue(encoder.encode(sendEvent({
             status: 'extracting',
@@ -279,7 +271,7 @@ export default defineEventHandler(async (event) => {
           })))
         }
 
-        await documentService.updateStatus(id!, user.id, 'completed')
+        await aiToolsFacade.updateDocumentStatus(id!, user.id, 'completed')
 
         controller.enqueue(encoder.encode(sendEvent({
           status: 'completed',
@@ -295,7 +287,7 @@ export default defineEventHandler(async (event) => {
 
       } catch (error: any) {
         log.error('Ingest error', { error: String(error) })
-        await documentService.updateStatus(id!, user.id, 'failed', error.message)
+        await aiToolsFacade.updateDocumentStatus(id!, user.id, 'failed', error.message)
         controller.enqueue(encoder.encode(sendEvent({
           status: 'failed',
           message: error.message || 'Ingestion failed',

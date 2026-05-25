@@ -1,6 +1,8 @@
 import { auditLog } from '#layers/BaseDB/db/schema'
-import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle';
-export class LogAuditService {
+import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
+import type { LogAuditServiceType } from './interfaces'
+
+export class LogAuditService implements LogAuditServiceType {
 
   private db = useDrizzle();
 

@@ -1,5 +1,6 @@
 import { eq, and, desc, asc, sql } from 'drizzle-orm'
 import { type ServiceResponse } from './types'
+import type { ChatServiceType } from './interfaces'
 import { chatThreads, chatMessages, type ChatThread, type ChatMessage } from '#layers/BaseDB/db/schema'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
 
@@ -17,11 +18,11 @@ export interface CreateMessageData {
 
 export interface MessagePaginationOptions {
   limit?: number
-  before?: string  // cursor: message ID to fetch before
-  after?: string   // cursor: message ID to fetch after
+  before?: string
+  after?: string
 }
 
-export class ChatService {
+export class ChatService implements ChatServiceType {
   private db = useDrizzle()
 
   // --- Threads ---
@@ -39,9 +40,9 @@ export class ChatService {
         createdAt: now,
       }).returning()
 
-      return { data: thread }
+      return { success: true, data: thread }
     } catch (error) {
-      return { error: 'Failed to create thread' }
+      return { success: false, error: 'Failed to create thread' }
     }
   }
 
@@ -53,9 +54,9 @@ export class ChatService {
         .where(eq(chatThreads.userId, userId))
         .orderBy(desc(chatThreads.lastMessageAt))
 
-      return { data: threads }
+      return { success: true, data: threads }
     } catch (error) {
-      return { error: 'Failed to fetch threads' }
+      return { success: false, error: 'Failed to fetch threads' }
     }
   }
 
@@ -68,12 +69,12 @@ export class ChatService {
         .limit(1)
 
       if (!thread) {
-        return { error: 'Thread not found', code: 'NOT_FOUND' }
+        return { success: false, error: 'Thread not found', code: 'NOT_FOUND' }
       }
 
-      return { data: thread }
+      return { success: true, data: thread }
     } catch (error) {
-      return { error: 'Failed to fetch thread' }
+      return { success: false, error: 'Failed to fetch thread' }
     }
   }
 
@@ -85,12 +86,12 @@ export class ChatService {
         .returning()
 
       if (!deleted) {
-        return { error: 'Thread not found', code: 'NOT_FOUND' }
+        return { success: false, error: 'Thread not found', code: 'NOT_FOUND' }
       }
 
-      return { data: deleted }
+      return { success: true, data: deleted }
     } catch (error) {
-      return { error: 'Failed to delete thread' }
+      return { success: false, error: 'Failed to delete thread' }
     }
   }
 
@@ -103,12 +104,12 @@ export class ChatService {
         .returning()
 
       if (!updated) {
-        return { error: 'Thread not found', code: 'NOT_FOUND' }
+        return { success: false, error: 'Thread not found', code: 'NOT_FOUND' }
       }
 
-      return { data: updated }
+      return { success: true, data: updated }
     } catch (error) {
-      return { error: 'Failed to update thread title' }
+      return { success: false, error: 'Failed to update thread title' }
     }
   }
 
@@ -135,9 +136,9 @@ export class ChatService {
         .set({ lastMessageAt: now })
         .where(eq(chatThreads.id, data.threadId))
 
-      return { data: msg }
+      return { success: true, data: msg }
     } catch (error) {
-      return { error: 'Failed to add message' }
+      return { success: false, error: 'Failed to add message' }
     }
   }
 
@@ -163,9 +164,9 @@ export class ChatService {
 
       const messages = await query
 
-      return { data: messages.slice(0, limit) }
+      return { success: true, data: messages.slice(0, limit) }
     } catch (error) {
-      return { error: 'Failed to fetch messages' }
+      return { success: false, error: 'Failed to fetch messages' }
     }
   }
 }

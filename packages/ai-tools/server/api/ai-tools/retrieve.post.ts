@@ -1,9 +1,8 @@
-import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
-import { chunkService } from '#layers/BaseDB/server/services/document.service'
+import { aiToolsFacade } from '#ai-tools/server/services/aiToolsFacade.service'
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event)
-  const user = await checkUserIsLogin(event)
+  const user = await aiToolsFacade.authenticate(event)
   const body = await readBody(event)
 
   log.set({ query: body.query?.substring(0, 100) })
@@ -42,7 +41,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Search chunks in Turso using vector similarity with optional filters
-  const searchResult = await chunkService.search(
+  const searchResult = await aiToolsFacade.searchChunks(
     user.id,
     retrieveResult.embedding,
     retrieveResult.top_k,

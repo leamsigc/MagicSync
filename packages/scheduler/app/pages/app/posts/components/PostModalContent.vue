@@ -88,6 +88,9 @@ const postForm = ref<PostForm>({
   platformContent: {}, // NEW: Initialize platform content overrides
   postFormat: 'post', // NEW: Default format
   platformSettings: {},
+  retryCount: 0,
+  nextRetryAt: null,
+  lastError: null
 });
 const now = new Date();
 const selectedDate = shallowRef(
@@ -290,17 +293,20 @@ const handleSavePost = async (status: 'pending' | 'published' | 'failed') => {
 }
 
 const ResetToBase = () => {
-  postForm.value = {
-    content: '',
-    businessId: '',
-    scheduledAt: new Date(),
-    mediaAssets: [],
-    targetPlatforms: [],
-    status: 'pending',
-    comment: [],
-    postFormat: 'post',
-    platformSettings: {},
-  }
+    postForm.value = {
+      content: '',
+      businessId: '',
+      scheduledAt: new Date(),
+      mediaAssets: [],
+      targetPlatforms: [],
+      status: 'pending',
+      comment: [],
+      postFormat: 'post',
+      platformSettings: {},
+      retryCount: 0,
+      nextRetryAt: null,
+      lastError: null
+    }
   selectedDate.value = new CalendarDate(
     now.getFullYear(),
     now.getMonth() + 1,

@@ -57,6 +57,29 @@ const handleSubmit = async (event: FormSubmitEvent<Schema>) => {
   }
 }
 
+const { theme, setTheme, themes, currentTheme } = useTheme()
+const savingTheme = ref(false)
+
+async function selectTheme(id: ThemeId) {
+  setTheme(id)
+  savingTheme.value = true
+  try {
+    await client.updateUser({ theme: id })
+    toast.add({ title: 'Theme updated', color: 'success' })
+  } catch {
+    toast.add({ title: 'Failed to save theme', color: 'error' })
+  } finally {
+    savingTheme.value = false
+  }
+}
+
+// Apply server-saved theme on mount
+watch(user, (u) => {
+  if (u?.theme && THEMES.some(t => t.id === u.theme)) {
+    setTheme(u.theme as ThemeId)
+  }
+}, { immediate: true })
+
 const userLayoutSetting = useState("dashboard-layout", () => 'dashboard-layout');
 
 const HandleLayoutChange = async () => {
@@ -91,11 +114,42 @@ const HandleLayoutChange = async () => {
         {{ t('general.save') }}
       </UButton>
     </UForm>
-    <!-- Theme Settings -->
-    <section class="my-10">
-      <h2 class="text-xl font-semibold mt-4">Layout</h2>
-      <USwitch label="Twitter or Dashboard" :model-value="userLayoutSetting === 'dashboard-layout'"
-        @update:model-value="HandleLayoutChange" />
+
+    <UDivider class="my-8" />
+
+    <section class="space-y-6">
+      <div>
+        <h2 class="text-xl font-semibold">Layout</h2>
+        <p class="text-sm text-muted-foreground">Choose your preferred app layout</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <USwitch :model-value="userLayoutSetting === 'dashboard-layout'"
+          @update:model-value="HandleLayoutChange" />
+        <span class="text-sm">{{ userLayoutSetting === 'dashboard-layout' ? 'Dashboard' : 'Twitter' }}</span>
+      </div>
+    </section>
+
+    <UDivider class="my-8" />
+
+    <section class="space-y-4">
+      <div>
+        <h2 class="text-xl font-semibold">Color Theme</h2>
+        <p class="text-sm text-muted-foreground">Choose your preferred color palette</p>
+      </div>
+      <div class="flex flex-wrap gap-3">
+        <UButton
+          v-for="t in themes"
+          :key="t.id"
+          :disabled="savingTheme"
+          variant="outline"
+          class="gap-2 flex-1 min-w-28 justify-center"
+          :class="theme === t.id ? 'ring-2 ring-primary' : ''"
+          @click="selectTheme(t.id)"
+        >
+          <span class="size-4 rounded-full shrink-0" :style="{ backgroundColor: t.color }" />
+          <span class="text-sm">{{ t.label }}</span>
+        </UButton>
+      </div>
     </section>
   </UCard>
 </template>

@@ -20,11 +20,11 @@ A social media scheduling platform built with Nuxt 4 monorepo — enables schedu
 
 ## Commands
 
-- **Dev server:** `pnpm packages site dev` — starts on port 3000
+- **Dev server:** `pnpm dev` — starts on port 3000
 - **Build all:** `pnpm build`
 - **Build site:** `pnpm site:build`
 - **Database:** `cd packages/db && pnpm db:generate` / `db:migrate`
-- **Lint UI:** `pnpm ui:lint`
+- **Lint UI:** No lint script configured (available scripts: dev, build, start, clean)
 
 ## Scaffold Growth
 After every task: if no pattern exists for the task type you just completed, create one. If a pattern or context file is now out of date, update it. The scaffold grows from real work, not just setup. See the GROW step in `ROUTER.md` for details.

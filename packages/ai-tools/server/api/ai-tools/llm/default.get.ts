@@ -1,13 +1,12 @@
-import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
-import { userLlmConfigService } from '#layers/BaseDB/server/services/user-llm-config.service'
+import { aiToolsFacade } from '#ai-tools/server/services/aiToolsFacade.service'
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event)
-  const user = await checkUserIsLogin(event)
+  const user = await aiToolsFacade.authenticate(event)
 
   log.info('Getting default LLM config', {})
 
-  const result = await userLlmConfigService.getDefaultConfig(user.id)
+  const result = await aiToolsFacade.getDefaultLlmConfig(user.id)
 
   if (result.error) {
     throw createError({ statusCode: 500, statusMessage: result.error })

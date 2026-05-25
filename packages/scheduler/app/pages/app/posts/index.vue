@@ -48,20 +48,21 @@ const currentMonthPosts = computed(() => {
 </script>
 
 <template>
-  <div class="container mx-auto py-6 space-y-6">
+  <div class="mx-auto space-y-6">
     <BasePageHeader :title="t('title')" :description="t('description')">
       <template #actions>
         <NewPostModal />
       </template>
     </BasePageHeader>
-    <div class="flex justify-between items-center mb-4 bg-grey-950/10 rounded-lg p-3">
-      <section>
+    <div class=" p-2 flex justify-between items-center ">
+      <section class="flex gap-1">
 
-        <UButton icon="i-heroicons-squares-2x2" :variant="currentView === 'Board' ? 'solid' : 'ghost'"
-          @click="currentView = 'Board'">Board</UButton>
-        <UButton icon="i-heroicons-table-cells" :variant="currentView === 'Table' ? 'solid' : 'ghost'"
-          @click="currentView = 'Table'">Table</UButton>
-        <UButton icon="lucide:grid" :variant="currentView === 'Grid' ? 'solid' : 'ghost'" @click="currentView = 'Grid'">
+        <UButton icon="i-heroicons-squares-2x2" :variant="currentView === 'Board' ? 'solid' : 'ghost'" size="sm"
+          @click="currentView = 'Board'" class="rounded-xl">Board</UButton>
+        <UButton icon="i-heroicons-table-cells" :variant="currentView === 'Table' ? 'solid' : 'ghost'" size="sm"
+          @click="currentView = 'Table'" class="rounded-xl">Table</UButton>
+        <UButton icon="lucide:grid" :variant="currentView === 'Grid' ? 'solid' : 'ghost'" size="sm"
+          @click="currentView = 'Grid'" class="rounded-xl">
           Grid
         </UButton>
       </section>

@@ -737,6 +737,8 @@ importers:
         specifier: 'catalog:'
         version: 3.5.33(typescript@6.0.3)
 
+  packages/shared: {}
+
   packages/site:
     dependencies:
       '@comark/nuxt':

@@ -1,5 +1,6 @@
 import { eq, and, desc } from 'drizzle-orm'
 import { type ServiceResponse } from './types'
+import type { AgentServiceType } from './interfaces'
 import { agentSessions, type AgentSession } from '#layers/BaseDB/db/schema'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
 
@@ -22,7 +23,7 @@ export interface UpdateAgentSessionData {
   metadata?: Record<string, any>
 }
 
-export class AgentService {
+export class AgentService implements AgentServiceType {
   private db = useDrizzle()
 
   async create(data: CreateAgentSessionData): Promise<ServiceResponse<AgentSession>> {
@@ -44,9 +45,9 @@ export class AgentService {
         updatedAt: now,
       }).returning()
 
-      return { data: session }
+      return { success: true, data: session }
     } catch (error) {
-      return { error: 'Failed to create agent session' }
+      return { success: false, error: 'Failed to create agent session' }
     }
   }
 
@@ -59,12 +60,12 @@ export class AgentService {
         .limit(1)
 
       if (!session) {
-        return { error: 'Agent session not found', code: 'NOT_FOUND' }
+        return { success: false, error: 'Agent session not found', code: 'NOT_FOUND' }
       }
 
-      return { data: session }
+      return { success: true, data: session }
     } catch (error) {
-      return { error: 'Failed to fetch agent session' }
+      return { success: false, error: 'Failed to fetch agent session' }
     }
   }
 
@@ -85,9 +86,9 @@ export class AgentService {
         .where(and(...conditions))
         .orderBy(desc(agentSessions.createdAt))
 
-      return { data: sessions }
+      return { success: true, data: sessions }
     } catch (error) {
-      return { error: 'Failed to fetch agent sessions' }
+      return { success: false, error: 'Failed to fetch agent sessions' }
     }
   }
 
@@ -114,12 +115,12 @@ export class AgentService {
         .returning()
 
       if (!updated) {
-        return { error: 'Agent session not found', code: 'NOT_FOUND' }
+        return { success: false, error: 'Agent session not found', code: 'NOT_FOUND' }
       }
 
-      return { data: updated }
+      return { success: true, data: updated }
     } catch (error) {
-      return { error: 'Failed to update agent session' }
+      return { success: false, error: 'Failed to update agent session' }
     }
   }
 
@@ -131,12 +132,12 @@ export class AgentService {
         .returning()
 
       if (!deleted) {
-        return { error: 'Agent session not found', code: 'NOT_FOUND' }
+        return { success: false, error: 'Agent session not found', code: 'NOT_FOUND' }
       }
 
-      return { data: deleted }
+      return { success: true, data: deleted }
     } catch (error) {
-      return { error: 'Failed to delete agent session' }
+      return { success: false, error: 'Failed to delete agent session' }
     }
   }
 }

@@ -61,11 +61,11 @@ const mode = useColorMode()
 
 <template>
   <BaseTyndallEffect>
-    <section class="container mx-auto">
+    <section class=" mx-auto">
       <div class="grid place-items-center lg:max-w-screen-xl gap-8 mx-auto py-24 md:py-32">
         <div class="text-center space-y-8" v-motion-fade-visible>
-          <UBadge variant="outline" class="text-sm py-2">
-            <span class="mr-2 text-primary">
+          <UBadge class="text-sm py-2">
+            <span class="mr-2">
               <UBadge>{{ badge.label }}</UBadge>
             </span>
             <span> {{ badge.content }} </span>

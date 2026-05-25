@@ -10,7 +10,7 @@
  * ```
  */
 
-export type SchedulerGenerateAction = 'smartSplit' | 'rewrite' | 'fixGrammar' | 'generateHashtags' | 'custom';
+export type SchedulerGenerateAction = 'smartSplit' | 'rewrite' | 'fixGrammar' | 'generateHashtags' | 'custom' | 'generateCsv';
 
 /**
  * BASE SYSTEM PROMPT - Used for all generate actions
@@ -183,6 +183,38 @@ OPTIMIZE FOR VIRAL:
 
 OUTPUT: Only final content, no explanations.`;
   },
+
+  /**
+   * Generate CSV action - creates a batch of posts as CSV-compatible JSON array
+   */
+  generateCsv: (description: string): string => {
+    return `Generate a batch of social media posts as a JSON array based on this description:
+
+"${description}"
+
+Each post object must have these fields:
+- content (string, required): The post text. Keep between 50-500 characters unless the user specifies otherwise.
+- image_url (string, optional): A relevant Unsplash image URL (use https://images.unsplash.com/photo-XXX format with realistic photo IDs). Only include if an image would meaningfully enhance the post.
+- scheduled_time (string, optional): An ISO 8601 date string for scheduling, spaced across the next 7 days (e.g., "2026-06-01T09:00:00Z"). Omit if not needed.
+- comments (string, optional): Optional first comment, semicolon-separated if multiple.
+
+RULES:
+- Generate 5-10 posts unless the user specifies a different number
+- Each post must have unique, substantive content
+- Cover different angles/aspects of the requested topic
+- Use realistic, varied posting times spread across the next week
+- For image_url, use real Unsplash photo URLs when applicable
+
+Return ONLY a valid JSON array. Example:
+[
+  {
+    "content": "Excited to announce our new feature! 🚀",
+    "image_url": "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4",
+    "scheduled_time": "2026-06-01T09:00:00Z",
+    "comments": "What do you think?;Let us know below!"
+  }
+]`;
+  },
 };
 
 /**
@@ -219,6 +251,8 @@ export function schedulerGetGenerateTemperature(action: SchedulerGenerateAction)
       return 0.5; // Balanced creativity + accuracy
     case 'generateHashtags':
       return 0.4; // Strategic, not too random
+    case 'generateCsv':
+      return 0.7; // Creative for post generation
     default:
       return 0.7; // Standard for content creation
   }

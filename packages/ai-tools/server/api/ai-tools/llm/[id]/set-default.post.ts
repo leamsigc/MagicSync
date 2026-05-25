@@ -1,9 +1,8 @@
-import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
-import { userLlmConfigService } from '#layers/BaseDB/server/services/user-llm-config.service'
+import { aiToolsFacade } from '#ai-tools/server/services/aiToolsFacade.service'
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event)
-  const user = await checkUserIsLogin(event)
+  const user = await aiToolsFacade.authenticate(event)
   const configId = getRouterParam(event, 'id')
 
   log.set({ configId })
@@ -12,7 +11,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Config ID is required' })
   }
 
-  const result = await userLlmConfigService.setDefault(user.id, configId)
+  const result = await aiToolsFacade.setDefaultLlmConfig(user.id, configId)
 
   if (result.error) {
     const statusCode = result.code === 'NOT_FOUND' ? 404 : 500

@@ -1,5 +1,6 @@
 import { eq, and, sql, desc } from 'drizzle-orm'
 import { type ServiceResponse, type QueryOptions } from './types'
+import type { SkillServiceType, SkillFileServiceType } from './interfaces'
 import { skills, skillFiles, type Skill, type SkillFile } from '#layers/BaseDB/db/schema'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
 
@@ -19,7 +20,7 @@ export interface CreateSkillFileData {
   storagePath: string
 }
 
-export class SkillService {
+export class SkillService implements SkillServiceType {
   private db = useDrizzle()
 
   async create(userId: string, data: CreateSkillData): Promise<ServiceResponse<Skill>> {
@@ -38,9 +39,9 @@ export class SkillService {
         updatedAt: now,
       }).returning()
 
-      return { data: skill }
+      return { success: true, data: skill }
     } catch (error) {
-      return { error: 'Failed to create skill' }
+      return { success: false, error: 'Failed to create skill' }
     }
   }
 
@@ -53,12 +54,12 @@ export class SkillService {
         .limit(1)
 
       if (!skill) {
-        return { error: 'Skill not found', code: 'NOT_FOUND' }
+        return { success: false, error: 'Skill not found', code: 'NOT_FOUND' }
       }
 
-      return { data: skill }
+      return { success: true, data: skill }
     } catch (error) {
-      return { error: 'Failed to fetch skill' }
+      return { success: false, error: 'Failed to fetch skill' }
     }
   }
 
@@ -70,9 +71,9 @@ export class SkillService {
         .where(sql`(${skills.userId} = ${userId} OR ${skills.isGlobal} = 1) AND ${skills.enabled} = 1`)
         .orderBy(desc(skills.updatedAt))
 
-      return { data: allSkills }
+      return { success: true, data: allSkills }
     } catch (error) {
-      return { error: 'Failed to fetch skills' }
+      return { success: false, error: 'Failed to fetch skills' }
     }
   }
 
@@ -83,9 +84,9 @@ export class SkillService {
         .from(skills)
         .where(sql`(${skills.userId} = ${userId} OR ${skills.isGlobal} = 1) AND ${skills.enabled} = 1`)
 
-      return { data: skillCatalog }
+      return { success: true, data: skillCatalog }
     } catch (error) {
-      return { error: 'Failed to fetch skill catalog' }
+      return { success: false, error: 'Failed to fetch skill catalog' }
     }
   }
 
@@ -98,12 +99,12 @@ export class SkillService {
         .returning()
 
       if (!updated) {
-        return { error: 'Skill not found', code: 'NOT_FOUND' }
+        return { success: false, error: 'Skill not found', code: 'NOT_FOUND' }
       }
 
-      return { data: updated }
+      return { success: true, data: updated }
     } catch (error) {
-      return { error: 'Failed to update skill' }
+      return { success: false, error: 'Failed to update skill' }
     }
   }
 
@@ -115,17 +116,17 @@ export class SkillService {
         .returning()
 
       if (!deleted) {
-        return { error: 'Skill not found', code: 'NOT_FOUND' }
+        return { success: false, error: 'Skill not found', code: 'NOT_FOUND' }
       }
 
-      return { data: deleted }
+      return { success: true, data: deleted }
     } catch (error) {
-      return { error: 'Failed to delete skill' }
+      return { success: false, error: 'Failed to delete skill' }
     }
   }
 }
 
-export class SkillFileService {
+export class SkillFileService implements SkillFileServiceType {
   private db = useDrizzle()
 
   async create(userId: string, data: CreateSkillFileData): Promise<ServiceResponse<SkillFile>> {
@@ -145,9 +146,9 @@ export class SkillFileService {
         createdAt: now,
       }).returning()
 
-      return { data: file }
+      return { success: true, data: file }
     } catch (error) {
-      return { error: 'Failed to create skill file' }
+      return { success: false, error: 'Failed to create skill file' }
     }
   }
 
@@ -158,9 +159,9 @@ export class SkillFileService {
         .from(skillFiles)
         .where(eq(skillFiles.skillId, skillId))
 
-      return { data: files }
+      return { success: true, data: files }
     } catch (error) {
-      return { error: 'Failed to fetch skill files' }
+      return { success: false, error: 'Failed to fetch skill files' }
     }
   }
 }

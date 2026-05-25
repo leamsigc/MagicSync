@@ -6,6 +6,7 @@ import type {
   QueryOptions,
   ServiceResponse
 } from './types'
+import type { BusinessProfileServiceType } from './interfaces'
 import { and, eq, not, sql } from 'drizzle-orm'
 import { businessProfiles, entityDetails } from '#layers/BaseDB/db/schema'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
@@ -32,7 +33,7 @@ export interface UpdateBusinessProfileData extends Partial<CreateBusinessProfile
   isActive?: boolean
 }
 
-export class BusinessProfileService {
+export class BusinessProfileService implements BusinessProfileServiceType {
 
   private db = useDrizzle()
 
@@ -52,12 +53,12 @@ export class BusinessProfileService {
         updatedAt: now
       }).returning()
 
-      return { data: profile }
+      return { success: true, data: profile }
     } catch (error) {
       if (error instanceof ValidationError) {
-        return { error: error.message, code: error.code }
+        return { success: false, error: error.message, code: error.code }
       }
-      return { error: 'Failed to create business profile' }
+      return { success: false, error: 'Failed to create business profile' }
     }
   }
 
@@ -84,11 +85,11 @@ export class BusinessProfileService {
         .where(and(eq(businessProfiles.id, id), eq(businessProfiles.userId, userId)))
         .limit(1)
 
-      if (profile) return { data: profile }
+      if (profile) return { success: true, data: profile }
 
       // No direct owner match — fall back to org membership check if event is available.
       if (!event) {
-        return { error: 'Business profile not found', code: 'NOT_FOUND' }
+        return { success: false, error: 'Business profile not found', code: 'NOT_FOUND' }
       }
 
       const entity = await this.db
@@ -101,13 +102,13 @@ export class BusinessProfileService {
         .get()
 
       if (!entity) {
-        return { error: 'Business profile not found', code: 'NOT_FOUND' }
+        return { success: false, error: 'Business profile not found', code: 'NOT_FOUND' }
       }
 
       const orgMetadata = (entity.details ?? {}) as Record<string, unknown>
       const orgId = orgMetadata.organizationId as string | undefined
       if (!orgId) {
-        return { error: 'Business profile not found', code: 'NOT_FOUND' }
+        return { success: false, error: 'Business profile not found', code: 'NOT_FOUND' }
       }
 
       // useAuthApi is auto-imported globally by Nuxt from
@@ -119,12 +120,12 @@ export class BusinessProfileService {
       const org = await authApi.getFullOrganization({ query: { organizationId: orgId } }).catch(() => null)
 
       if (!org) {
-        return { error: 'Business profile not found', code: 'NOT_FOUND' }
+        return { success: false, error: 'Business profile not found', code: 'NOT_FOUND' }
       }
 
       const isMember = org.members.some((m: { userId: string }) => m.userId === userId)
       if (!isMember) {
-        return { error: 'Business profile not found', code: 'NOT_FOUND' }
+        return { success: false, error: 'Business profile not found', code: 'NOT_FOUND' }
       }
 
       const [profileFromOrg] = await this.db
@@ -134,12 +135,12 @@ export class BusinessProfileService {
         .limit(1)
 
       if (!profileFromOrg) {
-        return { error: 'Business profile not found', code: 'NOT_FOUND' }
+        return { success: false, error: 'Business profile not found', code: 'NOT_FOUND' }
       }
 
-      return { data: profileFromOrg }
+      return { success: true, data: profileFromOrg }
     } catch (error) {
-      return { error: 'Failed to fetch business profile' }
+      return { success: false, error: 'Failed to fetch business profile' }
     }
   }
   async findByIdOnly(id: string,): Promise<ServiceResponse<BusinessProfile>> {
@@ -151,12 +152,12 @@ export class BusinessProfileService {
         .limit(1)
 
       if (!profile) {
-        return { error: 'Business profile not found', code: 'NOT_FOUND' }
+        return { success: false, error: 'Business profile not found', code: 'NOT_FOUND' }
       }
 
-      return { data: profile }
+      return { success: true, data: profile }
     } catch (error) {
-      return { error: 'Failed to fetch business profile' }
+      return { success: false, error: 'Failed to fetch business profile' }
     }
   }
 
@@ -181,6 +182,7 @@ export class BusinessProfileService {
       const count = result[0]?.count ?? 0;
 
       return {
+        success: true,
         data: profiles,
         pagination: {
           page: pagination.page || 1,
@@ -190,7 +192,7 @@ export class BusinessProfileService {
         }
       }
     } catch (error) {
-      return { error: 'Failed to fetch business profiles' }
+      return { success: false, error: 'Failed to fetch business profiles' }
     }
   }
 
@@ -201,9 +203,9 @@ export class BusinessProfileService {
         .from(businessProfiles)
         .where(eq(businessProfiles.userId, userId))
 
-      return { data: profiles }
+      return { success: true, data: profiles }
     } catch (error) {
-      return { error: 'Failed to fetch business profiles' }
+      return { success: false, error: 'Failed to fetch business profiles' }
     }
   }
 
@@ -224,9 +226,9 @@ export class BusinessProfileService {
         .where(and(eq(businessProfiles.id, id), eq(businessProfiles.userId, userId)))
         .returning()
 
-      return { data: updated }
+      return { success: true, data: updated }
     } catch (error) {
-      return { error: 'Failed to update business profile' }
+      return { success: false, error: 'Failed to update business profile' }
     }
   }
 
@@ -244,7 +246,7 @@ export class BusinessProfileService {
 
       return updated ? { data: updated } : { error: 'Business profile not found', code: '404' }
     } catch (error) {
-      return { error: 'Failed to update business profile' }
+      return { success: false, error: 'Failed to update business profile' }
     }
   }
 
@@ -253,16 +255,16 @@ export class BusinessProfileService {
       // Check if profile exists and belongs to user
       const existingResult = await this.findById(id, userId)
       if (!existingResult) {
-        return { error: "Business profile not found", code: "404" }
+        return { success: false, error: "Business profile not found", code: "404" }
       }
 
       await this.db
         .delete(businessProfiles)
         .where(and(eq(businessProfiles.id, id), eq(businessProfiles.userId, userId)))
 
-      return {}
+      return { success: true }
     } catch (error) {
-      return { error: 'Failed to delete business profile' }
+      return { success: false, error: 'Failed to delete business profile' }
     }
   }
   async setActive(userId: string, data: { id: string, isActive: boolean }): Promise<ServiceResponse<BusinessProfile>> {
@@ -289,26 +291,26 @@ export class BusinessProfileService {
         })
         .where(and(not(eq(businessProfiles.id, data.id)), eq(businessProfiles.userId, userId)))
 
-      return { data: updated }
+      return { success: true, data: updated }
     } catch (error) {
-      return { error: 'Failed to update business profile' }
+      return { success: false, error: 'Failed to update business profile' }
     }
   }
   async getActive(userId: string): Promise<ServiceResponse<BusinessProfile>> {
     try {
       const existingResult = await this.findByUserId(userId)
       if (!existingResult.data) {
-        return { error: 'No business profiles found', code: "404" }
+        return { success: false, error: 'No business profiles found', code: "404" }
       }
 
       const activeProfile = existingResult.data?.find(profile => profile.isActive)
       if (!activeProfile) {
-        return { error: 'No active business profile found' }
+        return { success: false, error: 'No active business profile found' }
       }
 
-      return { data: activeProfile }
+      return { success: true, data: activeProfile }
     } catch (error) {
-      return { error: 'Failed to fetch active business profile' }
+      return { success: false, error: 'Failed to fetch active business profile' }
     }
   }
 
@@ -391,10 +393,10 @@ export class BusinessProfileService {
         }
       }
 
-      return { data: syncedProfiles }
+      return { success: true, data: syncedProfiles }
     } catch (error) {
       console.error('Error syncing GMB profiles:', error)
-      return { error: 'Failed to sync business profiles from Google My Business' }
+      return { success: false, error: 'Failed to sync business profiles from Google My Business' }
     }
   }
 
@@ -412,20 +414,20 @@ export class BusinessProfileService {
     try {
       const profile = business ?? (await this.findById(businessId, userId))?.data
       if (!profile) {
-        return { error: 'Business profile not found', code: '404' }
+        return { success: false, error: 'Business profile not found', code: '404' }
       }
 
       if (!profile.googleBusinessId) {
-        return { error: 'Business profile is not connected to Google My Business', code: 'NOT_CONNECTED' }
+        return { success: false, error: 'Business profile is not connected to Google My Business', code: 'NOT_CONNECTED' }
       }
 
       const gmbClient = createGMBClient(accessToken)
       const location = await gmbClient.getLocation(profile.googleBusinessId)
 
-      return { data: location }
+      return { success: true, data: location }
     } catch (error) {
       console.error('Error fetching GMB location details:', error)
-      return { error: 'Failed to fetch Google My Business location details' }
+      return { success: false, error: 'Failed to fetch Google My Business location details' }
     }
   }
 
@@ -442,13 +444,13 @@ export class BusinessProfileService {
     try {
       const profile = business ?? (await this.findById(businessId, userId))?.data
       if (!profile) {
-        return { error: 'Business profile not found', code: '404' }
+        return { success: false, error: 'Business profile not found', code: '404' }
       }
 
       const isConnected = !!profile.googleBusinessId
-      return { data: isConnected }
+      return { success: true, data: isConnected }
     } catch (error) {
-      return { error: 'Failed to check GMB connection status' }
+      return { success: false, error: 'Failed to check GMB connection status' }
     }
   }
 
@@ -470,7 +472,7 @@ export class BusinessProfileService {
 
       return updateResult
     } catch (error) {
-      return { error: 'Failed to disconnect from Google My Business' }
+      return { success: false, error: 'Failed to disconnect from Google My Business' }
     }
   }
 }

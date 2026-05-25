@@ -190,7 +190,7 @@ const handleSignOut = async () => {
 </script>
 
 <template>
-  <UDropdownMenu :items="items" :ui="{ content: 'bg-gray-50 dark:bg-gray-950' }">
+  <UDropdownMenu :items="items" :ui="{ content: 'bg-elevated rounded-xl ' }">
     <UButton color="neutral" variant="ghost" class="w-full justify-start">
       <div v-if="props.collapsed">
         <UAvatar :src="user?.image || ''" :alt="user?.name" />

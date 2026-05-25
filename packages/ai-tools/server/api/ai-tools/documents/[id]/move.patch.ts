@@ -1,9 +1,8 @@
-import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
-import { documentService } from '#layers/BaseDB/server/services/document.service'
+import { aiToolsFacade } from '#ai-tools/server/services/aiToolsFacade.service'
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event)
-  const user = await checkUserIsLogin(event)
+  const user = await aiToolsFacade.authenticate(event)
   const id = getRouterParam(event, 'id')
 
   log.set({ documentId: id })
@@ -19,7 +18,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Invalid folder ID' })
   }
 
-  const result = await documentService.updateFolder(id, user.id, folderId)
+  const result = await aiToolsFacade.updateDocumentFolder(id, user.id, folderId)
 
   if (result.error) {
     throw createError({ statusCode: 400, statusMessage: result.error })

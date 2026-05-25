@@ -8,7 +8,7 @@ import { platformConfigurations } from '#layers/BaseScheduler/shared/platformCon
 import type { PlatformContentOverride } from '#layers/BaseDB/db/posts/posts'
 import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service'
 import { createAssetFromBuffer } from '#layers/BaseAssets/server/utils/AssetsUtils'
-import { assetService } from '#layers/BaseAssets/server/services/asset.service';
+import { assetService } from '#layers/BaseShared/server/services/asset.service';
 
 export type BulkScheduleResult = {
   success: boolean
@@ -245,7 +245,10 @@ export class BulkSchedulerService {
           comment: comments,
           platformContent,
           platformSettings: {},
-          postFormat: 'post'
+          postFormat: 'post',
+          retryCount: 0,
+          nextRetryAt: null,
+          lastError: null
         }
       })
 

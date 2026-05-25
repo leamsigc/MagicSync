@@ -12,7 +12,7 @@
  *   - days: number of days for historical data (default: 30)
  */
 import { platformStatsService } from '#layers/BaseScheduler/server/services/PlatformStats.service'
-import { postService } from '#layers/BaseDB/server/services/post.service'
+import { postStatsService } from '#layers/BaseDB/server/services/post.service'
 import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service'
 import dayjs from 'dayjs'
 
@@ -34,7 +34,7 @@ export default defineEventHandler(async (event) => {
     const startDate = dayjs().subtract(daysNum, 'day').toISOString()
 
     const [postsCount, currentStats, timeSeries, connectedAccounts] = await Promise.all([
-      postService.countPosts({
+      postStatsService.countPosts({
         userId: user.id,
         businessId: businessId as string | undefined,
         startDate,

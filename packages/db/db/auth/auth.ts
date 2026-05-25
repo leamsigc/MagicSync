@@ -22,7 +22,8 @@ export const user = sqliteTable('user', {
   }).$defaultFn(() => /* @__PURE__ */ new Date()).notNull(),
   updatedAt: integer('updated_at', {
     mode: 'timestamp'
-  }).$defaultFn(() => /* @__PURE__ */ new Date()).notNull()
+  }).$defaultFn(() => /* @__PURE__ */ new Date()).notNull(),
+  theme: text('theme').default('orange')
 })
 
 export const session = sqliteTable('session', {

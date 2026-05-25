@@ -1,4 +1,4 @@
-import { assetService } from '#layers/BaseAssets/server/services/asset.service';
+import { assetService } from '#layers/BaseShared/server/services/asset.service';
 import { auth } from '#layers/BaseAuth/lib/auth';
 export default defineEventHandler(async (event) => {
   const log = useLogger(event)

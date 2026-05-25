@@ -39,6 +39,10 @@ export default defineLazyEventHandler(async () => {
           prompt = schedulerGeneratePrompts.custom(content);
           break;
 
+        case 'generateCsv':
+          prompt = schedulerGeneratePrompts.generateCsv(content);
+          break;
+
         default:
           throw createError({
             statusCode: 400,
@@ -55,7 +59,7 @@ export default defineLazyEventHandler(async () => {
       });
 
       // For actions that return JSON arrays, parse them
-      if (action === 'smartSplit' || action === 'generateHashtags') {
+      if (action === 'smartSplit' || action === 'generateHashtags' || action === 'generateCsv') {
         try {
           // Remove markdown code blocks if present
           const cleanText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();

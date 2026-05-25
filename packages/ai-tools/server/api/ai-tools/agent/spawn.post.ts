@@ -1,9 +1,8 @@
-import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
-import { agentService } from '#layers/BaseDB/server/services/agent.service'
+import { aiToolsFacade } from '#ai-tools/server/services/aiToolsFacade.service'
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event)
-  const user = await checkUserIsLogin(event)
+  const user = await aiToolsFacade.authenticate(event)
   const body = await readBody(event)
 
   log.set({ task: body.task?.substring(0, 100), parentMessageId: body.parent_message_id })
@@ -39,7 +38,7 @@ export default defineEventHandler(async (event) => {
   })
 
   // Persist in DB
-  await agentService.create({
+  await aiToolsFacade.createAgentSession({
     id: result.id,
     userId: user.id,
     parentMessageId: body.parent_message_id,

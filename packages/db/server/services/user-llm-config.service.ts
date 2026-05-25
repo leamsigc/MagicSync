@@ -1,5 +1,6 @@
 import { eq, and } from 'drizzle-orm'
 import { type ServiceResponse } from './types'
+import type { UserLlmConfigServiceType } from './interfaces'
 import { userLlmConfigs, type UserLlmConfig } from '#layers/BaseDB/db/schema'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
 
@@ -23,7 +24,7 @@ export interface UpdateLlmConfigData {
   maxTokens?: number
 }
 
-export class UserLlmConfigService {
+export class UserLlmConfigService implements UserLlmConfigServiceType {
   private db = useDrizzle()
 
   async getConfigs(userId: string): Promise<ServiceResponse<UserLlmConfig[]>> {
@@ -33,9 +34,9 @@ export class UserLlmConfigService {
         .from(userLlmConfigs)
         .where(eq(userLlmConfigs.userId, userId))
 
-      return { data: configs }
+      return { success: true, data: configs }
     } catch (error) {
-      return { error: 'Failed to fetch LLM configs' }
+      return { success: false, error: 'Failed to fetch LLM configs' }
     }
   }
 
@@ -53,8 +54,8 @@ export class UserLlmConfigService {
         .limit(1)
 
       if (!config) {
-        // Return platform defaults if user has no config
         return {
+          success: true,
           data: {
             id: 'default',
             userId,
@@ -71,9 +72,9 @@ export class UserLlmConfigService {
         }
       }
 
-      return { data: config }
+      return { success: true, data: config }
     } catch (error) {
-      return { error: 'Failed to fetch default LLM config' }
+      return { success: false, error: 'Failed to fetch default LLM config' }
     }
   }
 
@@ -110,9 +111,9 @@ export class UserLlmConfigService {
         })
         .returning()
 
-      return { data: config }
+      return { success: true, data: config }
     } catch (error) {
-      return { error: 'Failed to create LLM config' }
+      return { success: false, error: 'Failed to create LLM config' }
     }
   }
 
@@ -144,12 +145,12 @@ export class UserLlmConfigService {
         .returning()
 
       if (!updated) {
-        return { error: 'Config not found', code: 'NOT_FOUND' }
+        return { success: false, error: 'Config not found', code: 'NOT_FOUND' }
       }
 
-      return { data: updated }
+      return { success: true, data: updated }
     } catch (error) {
-      return { error: 'Failed to update LLM config' }
+      return { success: false, error: 'Failed to update LLM config' }
     }
   }
 
@@ -169,12 +170,12 @@ export class UserLlmConfigService {
         .returning()
 
       if (!deleted) {
-        return { error: 'Config not found', code: 'NOT_FOUND' }
+        return { success: false, error: 'Config not found', code: 'NOT_FOUND' }
       }
 
-      return { data: deleted }
+      return { success: true, data: deleted }
     } catch (error) {
-      return { error: 'Failed to delete LLM config' }
+      return { success: false, error: 'Failed to delete LLM config' }
     }
   }
 

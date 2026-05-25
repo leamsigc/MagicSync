@@ -1,6 +1,3 @@
-import { ref, watch } from 'vue'
-import { useFetch } from '#app'
-
 interface PexelsPhoto {
   id: number
   width: number
@@ -32,17 +29,6 @@ interface PexelsSearchResponse {
   next_page: string
 }
 
-/**
- *
- * Composable Description: Manages Pexels image search and selection.
- *
- * @author Ismael Garcia <leamsigc@leamsigc.com>
- * @version 0.0.1
- *
- * @todo [ ] Test the composable
- * @todo [ ] Integration test.
- * @todo [✔] Update the typescript.
- */
 export const usePexel = () => {
   const query = ref('')
   const currentPage = ref(1)
@@ -97,6 +83,17 @@ export const usePexel = () => {
     }
   }
 
+  const goToPage = (page: number) => {
+    if (page > 0 && page <= totalPages.value && !isLoading.value) {
+      currentPage.value = page
+      searchPhotos()
+    }
+  }
+
+  const totalPages = computed(() => {
+    return Math.ceil(totalResults.value / perPage.value) || 1
+  })
+
   const toggleSelectPhoto = (photo: PexelsPhoto) => {
     const index = selectedPhotos.value.findIndex((p) => p.id === photo.id)
     if (index > -1) {
@@ -110,23 +107,19 @@ export const usePexel = () => {
     selectedPhotos.value = []
   }
 
-  // Watch for changes in query to automatically trigger search
-  useDebounceFn(() => {
-    if (query.value.length > 2) { // Trigger search if query is meaningful
-      searchPhotos(query.value)
-    }
-  }, 1000)
-
-
   return {
     query,
     photos,
     totalResults,
+    totalPages,
     isLoading,
     error,
     selectedPhotos,
+    currentPage,
+    perPage,
     searchPhotos,
     loadMore,
+    goToPage,
     toggleSelectPhoto,
     clearSelectedPhotos,
   }

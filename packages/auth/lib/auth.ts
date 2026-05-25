@@ -60,6 +60,14 @@ export const auth = betterAuth({
         returned: true,
         input: true,
         required: true
+      },
+      theme: {
+        type: 'string',
+        fieldName: 'theme',
+        returned: true,
+        input: true,
+        required: false,
+        defaultValue: 'orange'
       }
     },
     deleteUser: {
@@ -95,7 +103,7 @@ export const auth = betterAuth({
       allowDifferentEmails: true,
       updateUserInfoOnLink: true,
       allowUnlinkingAll: false,
-      trustedProviders: ['google', 'facebook', 'email-password', 'linkedin', 'linkedin-page', 'twitter', 'tiktok', 'threads', 'youtube', 'reddit', 'discord', 'dribbble', 'instagram', 'x'],
+      trustedProviders: ['google', 'facebook', 'email-password', 'linkedin', 'linkedin-page', 'twitter', 'tiktok', 'threads', 'youtube', 'reddit', 'discord', 'dribbble', 'instagram', 'x', 'canva'],
     },
   },
   socialProviders: {
@@ -109,7 +117,8 @@ export const auth = betterAuth({
         'email',
         'profile',
         'https://www.googleapis.com/auth/business.manage',
-        'https://www.googleapis.com/auth/plus.business.manage'
+        'https://www.googleapis.com/auth/plus.business.manage',
+        'https://www.googleapis.com/auth/drive.readonly'
       ]
     },
     facebook: {
@@ -319,6 +328,24 @@ export const auth = betterAuth({
           userInfoUrl: 'https://public-api.wordpress.com/rest/v1/me',
           scopes: ['public', 'upload'],
           pkce: true,
+        },
+        // Canva OAuth - for accessing user's designs
+        {
+          providerId: 'canva',
+          clientId: process.env.NUXT_CANVA_CLIENT_ID as string,
+          clientSecret: process.env.NUXT_CANVA_CLIENT_SECRET as string,
+          authorizationUrl: 'https://www.canva.com/api/oauth/authorize',
+          tokenUrl: 'https://api.canva.com/rest/v1/oauth/token',
+          userInfoUrl: 'https://api.canva.com/rest/v1/users/me',
+          scopes: ['asset:read', 'asset:download'],
+          pkce: true,
+          mapProfileToUser: (profile: any) => {
+            return {
+              ...profile,
+              image: profile.profile_picture_url,
+              email: `${profile.id}@canva.com`,
+            };
+          },
         },
         // Instagram OAuth - not natively supported
         {

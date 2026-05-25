@@ -29,8 +29,7 @@ const isOpen = ref(false); // Keep isOpen for potential internal use or if a men
 
 <template>
   <!-- Top Menu  -->
-  <header
-    class="fixed top-10 left-6 z-40 backdrop-blur-md bg-background/20 border border-background-foreground/10 rounded-2xl shadow-2xl">
+  <header class="fixed top-10 left-6 z-40 backdrop-blur-md bg-background/20  rounded-2xl shadow-2xl">
     <section class="flex items-center px-4 py-3 gap-4">
       <section class="flex items-center gap-2 ">
         <NuxtLink to="/">

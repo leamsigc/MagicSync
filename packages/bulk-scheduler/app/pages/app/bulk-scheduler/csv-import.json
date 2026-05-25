@@ -3,21 +3,52 @@
         "csvImport": {
             "title": "CSV Import",
             "subtitle": "Bulk schedule posts from a CSV file",
-            "businessId": "Business ID",
-            "businessIdPlaceholder": "Enter your business ID",
+            "businessId": "Business",
+            "businessIdPlaceholder": "Select a business",
             "distributeEvenly": "Distribute posts evenly across date range",
             "dateRange": "Distribution Date Range",
             "import": "Import & Schedule",
             "step1": {
-                "title": "Upload CSV File",
-                "description": "Upload a CSV file containing your posts. The file should include columns: content, image_url (optional), scheduled_time (optional), and comments (optional)."
+                "title": "Add Posts",
+                "description": "Upload a CSV file or use AI to generate posts.",
+                "uploadTitle": "Upload CSV File",
+                "aiTitle": "Generate with AI",
+                "aiDescription": "Describe the posts you want to create and let AI generate them for you.",
+                "generateWithAi": "Generate with AI",
+                "or": "or"
             },
             "step2": {
-                "title": "Configure Settings",
-                "description": "Select platforms and configure scheduling options for your imported posts."
+                "title": "Preview & Edit",
+                "description": "Review your posts, edit content, and configure scheduling options.",
+                "rows": "posts",
+                "actions": "",
+                "contentPlaceholder": "Enter post content...",
+                "imageUrlPlaceholder": "Image URL...",
+                "commentsPlaceholder": "Comments (semicolon-separated)",
+                "browseAssets": "Browse Assets",
+                "selectAsset": "Select Image from Assets",
+                "row": "Row",
+                "settings": "Scheduling Settings"
+            },
+            "step3": {
+                "title": "Review",
+                "description": "Final review of your scheduled posts."
+            },
+            "columns": {
+                "title": "CSV Column Reference",
+                "required": "Required",
+                "optional": "Optional",
+                "content": "content",
+                "contentDesc": "The main text of the post. Maximum 10,000 characters.",
+                "imageUrl": "image_url",
+                "imageUrlDesc": "URL to an image to attach to the post. Optional.",
+                "scheduledTime": "scheduled_time",
+                "scheduledTimeDesc": "ISO 8601 date for when to publish (e.g., 2026-06-01T09:00:00Z). Optional.",
+                "comments": "comments",
+                "commentsDesc": "First comment on the post. Separate multiple with semicolons. Optional."
             },
             "selectAssets": "Select Media Assets (Optional)",
-            "selectAssetsDescription": "Choose images from your gallery to attach to your posts. If your CSV contains image URLs, those will be downloaded automatically."
+            "selectAssetsDescription": "Choose images from your gallery to attach to all posts. Per-row asset selection is available in the table above.",
         },
         "csvUploader": {
             "title": "Drag and drop your CSV file here",
@@ -38,10 +69,13 @@
             "back": "Back",
             "next": "Next",
             "cancel": "Cancel",
-            "save": "Save"
+            "save": "Save",
+            "changeFile": "Change File"
         },
         "errors": {
-            "csvOnly": "Please select a CSV file"
+            "csvOnly": "Please select a CSV file",
+            "csvParseError": "Failed to parse CSV",
+            "csvParseUnknown": "Unknown error parsing CSV file"
         },
         "toast": {
             "csvImportSuccess": "{count} posts imported successfully",
@@ -54,21 +88,51 @@
         "csvImport": {
             "title": "Importar CSV",
             "subtitle": "Programar publicaciones masivas desde archivo CSV",
-            "businessId": "ID de Negocio",
-            "businessIdPlaceholder": "Ingrese su ID de negocio",
+            "businessId": "Negocio",
+            "businessIdPlaceholder": "Seleccione un negocio",
             "distributeEvenly": "Distribuir publicaciones uniformemente en el rango de fechas",
             "dateRange": "Rango de Fechas de Distribución",
             "import": "Importar y Programar",
             "step1": {
-                "title": "Subir Archivo CSV",
-                "description": "Suba un archivo CSV con sus publicaciones. El archivo debe incluir columnas: content, image_url (opcional), scheduled_time (opcional), y comments (opcional)."
+                "title": "Agregar Publicaciones",
+                "description": "Suba un archivo CSV o use IA para generar publicaciones.",
+                "uploadTitle": "Subir Archivo CSV",
+                "aiTitle": "Generar con IA",
+                "aiDescription": "Describa las publicaciones que desea crear y deje que la IA las genere.",
+                "generateWithAi": "Generar con IA",
+                "or": "o"
             },
             "step2": {
-                "title": "Configurar Ajustes",
-                "description": "Seleccione plataformas y configure opciones de programación para sus publicaciones importadas."
+                "title": "Vista Previa y Edición",
+                "description": "Revise sus publicaciones, edite el contenido y configure opciones de programación.",
+                "rows": "publicaciones",
+                "actions": "",
+                "contentPlaceholder": "Ingrese contenido de la publicación...",
+                "imageUrlPlaceholder": "URL de imagen...",
+                "commentsPlaceholder": "Comentarios (separados por punto y coma)",
+                "browseAssets": "Explorar Recursos",
+                "selectAsset": "Seleccionar Imagen de Recursos",
+                "settings": "Configuración de Programación"
+            },
+            "step3": {
+                "title": "Revisión",
+                "description": "Revisión final de sus publicaciones programadas."
+            },
+            "columns": {
+                "title": "Referencia de Columnas CSV",
+                "required": "Requerido",
+                "optional": "Opcional",
+                "content": "content",
+                "contentDesc": "El texto principal de la publicación. Máximo 10,000 caracteres.",
+                "imageUrl": "image_url",
+                "imageUrlDesc": "URL de una imagen para adjuntar a la publicación. Opcional.",
+                "scheduledTime": "scheduled_time",
+                "scheduledTimeDesc": "Fecha ISO 8601 para programar la publicación. Opcional.",
+                "comments": "comments",
+                "commentsDesc": "Primer comentario de la publicación. Separe múltiples con punto y coma. Opcional."
             },
             "selectAssets": "Seleccionar Recursos Multimedia (Opcional)",
-            "selectAssetsDescription": "Elija imágenes de su galería para adjuntar a sus publicaciones. Si su CSV contiene URLs de imágenes, estas se descargarán automáticamente."
+            "selectAssetsDescription": "Elija imágenes de su galería para adjuntar a todas las publicaciones. La selección por fila está disponible en la tabla superior.",
         },
         "csvUploader": {
             "title": "Arrastra y suelta tu archivo CSV aquí",
@@ -89,10 +153,13 @@
             "back": "Atrás",
             "next": "Siguiente",
             "cancel": "Cancelar",
-            "save": "Guardar"
+            "save": "Guardar",
+            "changeFile": "Cambiar Archivo"
         },
         "errors": {
-            "csvOnly": "Por favor seleccione un archivo CSV"
+            "csvOnly": "Por favor seleccione un archivo CSV",
+            "csvParseError": "Error al analizar CSV",
+            "csvParseUnknown": "Error desconocido al analizar el archivo CSV"
         },
         "toast": {
             "csvImportSuccess": "{count} publicaciones importadas exitosamente",

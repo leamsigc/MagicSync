@@ -1,18 +1,4 @@
 <script lang="ts" setup>
-/**
- *
- * Component Description: Dashboard sidebar with navigation menu using Nuxt UI components
- *
- * @author Reflect-Media <reflect.media GmbH>
- * @version 0.0.1
- *
- * @todo [ ] Test the component
- * @todo [ ] Integration test.
- * @todo [✔] Update the typescript.
- */
-
-import type { NavigationMenuItem } from '@nuxt/ui'
-
 const { navigationLinks, t } = useDashboardNavigation()
 
 interface Props {
@@ -25,10 +11,14 @@ const props = withDefaults(defineProps<Props>(), {
 </script>
 
 <template>
-  <div>
-    <!-- Main Navigation Menu -->
-    <UNavigationMenu :items="navigationLinks" orientation="vertical" popover :collapsed="collapsed" color="primary"
-      class="data-[orientation=vertical]:space-y-4" type="single" variant="link" />
+  <div class="px-1">
+    <UNavigationMenu :items="navigationLinks" orientation="vertical" popover :collapsed="collapsed" color="neutral"
+      class="data-[orientation=vertical]:space-y-1" variant="link" :ui="{
+        link: 'dark:text-white/70 dark:hover:text-white hover:before:bg-white/5',
+        linkLeadingIcon: 'dark:text-white/50 dark:group-hover:text-white/80',
+        childLink: 'dark:text-white/60 dark:hover:text-white',
+        childLinkIcon: 'dark:text-white/40',
+      }" />
   </div>
 </template>
 <style scoped></style>

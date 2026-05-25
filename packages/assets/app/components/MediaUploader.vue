@@ -188,7 +188,7 @@ watchEffect(() => {
             <!-- Icon Container -->
             <div class="relative flex items-center justify-center w-full h-full">
               <div
-                class="absolute inset-0 bg-linear-to-br from-background/50 to-background/30 rounded-full backdrop-blur-sm border border-border/30">
+                class="absolute inset-0 bg-linear-to-br from-background/50 to-background/30 rounded-full backdrop-blur-sm /30">
               </div>
               <Icon v-if="isUploading" name="lucide:loader-2"
                 class="w-12 h-12 text-primary animate-spin relative z-10" />

@@ -27,7 +27,7 @@ export default defineNuxtConfig({
     FILE_STORAGE_MOUNT: process.env.NUXT_FILE_STORAGE_MOUNT,
     PEXELS_API_KEY: process.env.NUXT_PEXELS_API_KEY,
   },
-  extends: ['@local-monorepo/db', '@local-monorepo/ui', '@local-monorepo/auth'],
+  extends: ['@local-monorepo/shared', '@local-monorepo/db', '@local-monorepo/ui', '@local-monorepo/auth'],
   modules: ['@nuxtjs/i18n', 'nuxt-file-storage', 'evlog/nuxt'],
   fileStorage: {
     mount: process.env.NUXT_FILE_STORAGE_MOUNT || './upload/files'

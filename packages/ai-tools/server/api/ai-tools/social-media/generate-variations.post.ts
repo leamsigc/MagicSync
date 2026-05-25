@@ -1,7 +1,7 @@
-import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
+import { aiToolsFacade } from '#ai-tools/server/services/aiToolsFacade.service'
 
 export default defineEventHandler(async (event) => {
-  const user = await checkUserIsLogin(event)
+  const user = await aiToolsFacade.authenticate(event)
   const body = await readBody(event)
 
   if (!body?.base_content?.trim()) {
