@@ -704,10 +704,17 @@ const handleTranscriptFromRecorder = (text: string) => {
 
         <!-- Right Side: Preview -->
         <div class=" p-4" v-if="preview">
-          <PhonePreview :postContent="formatPostContent(postForm.content, currentPreviewPlatform)"
-            :mediaAssets="postMediaAssets" :platform="currentPreviewPlatform"
-            :post="(postForm as unknown as PostCreateBase)" :currentPlatformConfig="currentPlatformConfig"
-            v-model:format="selectedPostFormat" />
+          <ClientOnly>
+            <PhonePreview :postContent="formatPostContent(postForm.content, currentPreviewPlatform)"
+              :mediaAssets="postMediaAssets" :platform="currentPreviewPlatform"
+              :post="(postForm as unknown as PostCreateBase)" :currentPlatformConfig="currentPlatformConfig"
+              v-model:format="selectedPostFormat" />
+            <template #fallback>
+              <div class="flex items-center justify-center h-[882px] w-[433px]">
+                <UIcon name="lucide:loader-circle" class="w-8 h-8 animate-spin text-gray-400" />
+              </div>
+            </template>
+          </ClientOnly>
         </div>
       </div>
       <!-- Bottom -->

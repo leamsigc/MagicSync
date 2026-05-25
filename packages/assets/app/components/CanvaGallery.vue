@@ -15,7 +15,7 @@ const {
   toggleSelectAsset,
   downloadSelectedAssets,
 } = useCanva()
-
+const { t } = useI18n({ useScope: 'local' })
 const $emit = defineEmits<{
   (event: 'select-images', assets: Asset[]): void
 }>()

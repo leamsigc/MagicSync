@@ -16,6 +16,7 @@ const {
   downloadSelectedFiles,
 } = useGoogleDrive()
 
+const { t } = useI18n({ useScope: 'local' })
 const $emit = defineEmits<{
   (event: 'select-images', assets: Asset[]): void
 }>()

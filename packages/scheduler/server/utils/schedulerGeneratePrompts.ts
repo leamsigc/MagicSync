@@ -186,14 +186,34 @@ OUTPUT: Only final content, no explanations.`;
 
   /**
    * Generate CSV action - creates a batch of posts as CSV-compatible JSON array
+   * Supports {{variable}} placeholders from both system and custom variables
    */
-  generateCsv: (description: string): string => {
+  generateCsv: (input: string): string => {
+    let parsed: { prompt: string; variables?: { name: string; label: string }[]; systemVariables?: string[] }
+    try {
+      parsed = JSON.parse(input)
+    } catch {
+      parsed = { prompt: input, variables: [], systemVariables: [] }
+    }
+
+    const { prompt: description, variables = [], systemVariables = [] } = parsed
+
+    const variablesSection = variables.length > 0
+      ? `CUSTOM VARIABLES to personalize per post:\n${variables.map(v => `  - {{${v.name}}}: ${v.label || v.name} — generate a unique value for EACH post`).join('\n')}
+For each post, generate a realistic and context-appropriate value for each custom variable. Then include those values directly in the post content by replacing the {{variable}} placeholders.`
+      : ''
+
+    const systemVarsSection = systemVariables.length > 0
+      ? `\nSYSTEM VARIABLES available (replace with actual current values): ${systemVariables.join(', ')}`
+      : ''
+
     return `Generate a batch of social media posts as a JSON array based on this description:
 
 "${description}"
+${variablesSection}${systemVarsSection}
 
 Each post object must have these fields:
-- content (string, required): The post text. Keep between 50-500 characters unless the user specifies otherwise.
+- content (string, required): The post text. Keep between 50-500 characters unless the user specifies otherwise. ${variables.length > 0 ? 'IMPORTANT: Replace ALL {{variable}} placeholders with the unique values you generate for each post.' : ''}
 - image_url (string, optional): A relevant Unsplash image URL (use https://images.unsplash.com/photo-XXX format with realistic photo IDs). Only include if an image would meaningfully enhance the post.
 - scheduled_time (string, optional): An ISO 8601 date string for scheduling, spaced across the next 7 days (e.g., "2026-06-01T09:00:00Z"). Omit if not needed.
 - comments (string, optional): Optional first comment, semicolon-separated if multiple.
@@ -204,6 +224,7 @@ RULES:
 - Cover different angles/aspects of the requested topic
 - Use realistic, varied posting times spread across the next week
 - For image_url, use real Unsplash photo URLs when applicable
+${variables.length > 0 ? '\nIMPORTANT: Each post must have DIFFERENT values for the custom variables. Make the values realistic and specific to each post\'s angle.' : ''}
 
 Return ONLY a valid JSON array. Example:
 [

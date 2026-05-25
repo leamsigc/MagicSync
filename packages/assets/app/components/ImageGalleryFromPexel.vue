@@ -28,6 +28,7 @@ const $emit = defineEmits<{
   (event: 'select-images', assets: Asset[]): void
 }>()
 
+const { t } = useI18n({ useScope: 'local' })
 const toast = useToast()
 const isDownloading = ref(false)
 
@@ -114,7 +115,7 @@ const pageRange = computed(() => {
 
     <div v-else class="space-y-4">
       <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-        <UCard v-for="photo in photos" :key="photo.id" :ui="{ body: 'p-0' }"
+        <UCard v-for="photo in photos" :key="photo.id" :ui="{ body: 'p-0 sm:p-0' }"
           :class="['relative cursor-pointer group overflow-hidden rounded-lg', { 'ring-2 ring-primary': selectedPhotos.some((p) => p.id === photo.id) }]">
           <img :src="photo.src.landscape" :alt="photo.alt" class="w-full aspect-square object-cover"
             @click="toggleSelectPhoto(photo)" loading="lazy" />

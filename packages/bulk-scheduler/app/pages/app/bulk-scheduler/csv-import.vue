@@ -26,6 +26,7 @@ const selectedAssetsPerRow = ref<Record<number, Asset[]>>({})
 const showAiModal = ref(false)
 const showAssetModal = ref(false)
 const assetModalRowIndex = ref<number | null>(null)
+const currentRowAssets = ref<Asset[]>([])
 
 const csvColumns = [
   { key: 'content', label: t('csvImport.columns.content'), required: true, description: t('csvImport.columns.contentDesc') },
@@ -137,9 +138,16 @@ const openAssetSelector = (index: number) => {
   if (!selectedAssetsPerRow.value[index]) {
     selectedAssetsPerRow.value[index] = []
   }
+  currentRowAssets.value = selectedAssetsPerRow.value[index]
   assetModalRowIndex.value = index
   showAssetModal.value = true
 }
+
+watch(showAssetModal, (isOpen) => {
+  if (!isOpen && assetModalRowIndex.value !== null) {
+    selectedAssetsPerRow.value[assetModalRowIndex.value] = [...currentRowAssets.value]
+  }
+})
 
 const hasImageUrl = (row: typeof csvRows.value[0]) => row.image_url && row.image_url.trim() !== ''
 
@@ -316,13 +324,20 @@ const handleImport = async () => {
                 </td>
                 <td class="p-2 align-top">
                   <div class="space-y-2">
-                    <UInput :model-value="row.image_url"
-                      @update:model-value="updateRowContent(rowIndex, 'image_url', $event)" size="sm"
-                      :placeholder="t('csvImport.step2.imageUrlPlaceholder')" />
+                    <div class="flex items-center gap-1">
+                      <UInput :model-value="row.image_url"
+                        @update:model-value="updateRowContent(rowIndex, 'image_url', $event)" size="sm"
+                        :placeholder="t('csvImport.step2.imageUrlPlaceholder')" class="flex-1" />
+                      <UButton v-if="row.image_url" icon="i-heroicons-x-mark" color="neutral" variant="ghost"
+                        size="2xs" @click="updateRowContent(rowIndex, 'image_url', '')" />
+                    </div>
                     <div v-if="hasImageUrl(row)" class="relative group">
                       <img :src="row.image_url" alt="Preview"
                         class="w-16 h-16 object-cover rounded border border-gray-200"
                         @error="($event.target as HTMLImageElement).style.display = 'none'" />
+                      <UButton icon="i-heroicons-x-mark" color="error" variant="solid" size="2xs"
+                        class="absolute -top-1.5 -right-1.5 opacity-0 group-hover:opacity-100 transition-opacity rounded-full"
+                        @click="updateRowContent(rowIndex, 'image_url', '')" />
                     </div>
                     <UButton color="neutral" variant="ghost" size="xs" icon="i-heroicons-photo"
                       @click="openAssetSelector(rowIndex)">
@@ -336,9 +351,13 @@ const handleImport = async () => {
                     type="datetime-local" class="w-full" />
                 </td>
                 <td class="p-2 align-top">
-                  <UTextarea :model-value="row.comments"
-                    @update:model-value="updateRowContent(rowIndex, 'comments', $event)" :rows="2" autoresize
-                    class="w-full text-sm" :placeholder="t('csvImport.step2.commentsPlaceholder')" />
+                  <div class="flex items-start gap-1">
+                    <UTextarea :model-value="row.comments"
+                      @update:model-value="updateRowContent(rowIndex, 'comments', $event)" :rows="2" autoresize
+                      class="w-full text-sm" :placeholder="t('csvImport.step2.commentsPlaceholder')" />
+                    <UButton v-if="row.comments" icon="i-heroicons-x-mark" color="neutral" variant="ghost" size="2xs"
+                      class="mt-1 shrink-0" @click="updateRowContent(rowIndex, 'comments', '')" />
+                  </div>
                 </td>
                 <td class="p-2 align-top pt-3">
                   <UButton icon="i-heroicons-trash" color="error" variant="ghost" size="xs"
@@ -413,7 +432,7 @@ const handleImport = async () => {
               <UButton icon="i-heroicons-x-mark" color="neutral" variant="ghost" @click="showAssetModal = false" />
             </div>
           </template>
-          <MediaGalleryForUser v-model:selected="selectedAssetsPerRow[assetModalRowIndex!]" />
+          <MediaGalleryForUser v-model:selected="currentRowAssets" />
         </UCard>
       </template>
     </UModal>

@@ -65,8 +65,8 @@ export const useAssetManagement = () => {
   }
   const fetUserAssets = async () => {
     try {
-      const response = await $fetch<Asset[]>('/api/v1/assets?own=true')
-      assets.value = response
+      const response = await $fetch<{ data: Asset[] }>('/api/v1/assets?own=true')
+      assets.value = response.data
     } catch (err: any) {
       error.value = err.data?.message || err.message || 'Failed to fetch assets'
     }

@@ -111,14 +111,15 @@ export const auth = betterAuth({
       clientId: process.env.NUXT_GOOGLE_CLIENT_ID as string,
       clientSecret: process.env.NUXT_GOOGLE_CLIENT_SECRET as string,
       accessType: "offline",
-      // prompt: "select_account+consent",
+      prompt: "select_account consent",
       scope: [
         'openid',
         'email',
         'profile',
         'https://www.googleapis.com/auth/business.manage',
         'https://www.googleapis.com/auth/plus.business.manage',
-        'https://www.googleapis.com/auth/drive.readonly'
+        'https://www.googleapis.com/auth/drive.readonly',
+        'https://www.googleapis.com/auth/drive.file'
       ]
     },
     facebook: {

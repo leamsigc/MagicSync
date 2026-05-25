@@ -291,6 +291,8 @@ const handleDeleteAsset = (asset: Asset) => {
   assetsToDelete.value = [asset]
   showDeleteDialog.value = true
 }
+
+const getTagStaggerClass = (tagIndex: number | string) => `animate-stagger-${Number(tagIndex) + 1}`
 </script>
 
 <template>
@@ -479,7 +481,7 @@ const handleDeleteAsset = (asset: Asset) => {
               <UBadge v-for="(tag, tagIndex) in parseAssetMetadata(asset).tags?.slice(0, 2)" :key="tag"
                 variant="outline"
                 class="text-xs glass-badge hover-scale-105 transition-all duration-200 animate-fade-in-up"
-                :class="`animate-stagger-${tagIndex + 1}`">
+                :class="getTagStaggerClass(tagIndex)">
                 <Icon name="lucide:tag" class="w-2.5 h-2.5 mr-1" />
                 {{ tag }}
               </UBadge>
@@ -551,7 +553,7 @@ const handleDeleteAsset = (asset: Asset) => {
         <UCheckbox v-if="props.selectable" :checked="isAssetSelected(asset)" @click.stop="handleAssetClick(asset)" />
 
         <!-- Asset Thumbnail -->
-        <div class="w-12 h-12 bg-muted rounded flex items-center justify-center flex-shrink-0">
+        <div class="w-12 h-12 bg-muted rounded flex items-center justify-center shrink-0">
           <img v-if="getAssetType(asset.mimeType) === 'image'" :src="getAssetPreviewUrl(asset)"
             :alt="getAssetDisplayName(asset)" class="w-full h-full object-cover rounded" />
           <Icon v-else :name="getAssetType(asset.mimeType) === 'video' ? 'lucide:video' : 'lucide:file'"
@@ -586,12 +588,11 @@ const handleDeleteAsset = (asset: Asset) => {
     <UModal v-model:open="showPreviewModal" :ui="{ body: 'border-0', header: 'border-0' }"
       :fullscreen="isPreviewFullscreen">
       <template #header>
-        <div class="flex items-center justify-between w-full">
+        <div class="flex items-center justify-between w-full flex-wrap">
           <div class="flex items-center gap-3">
             <UBadge v-if="previewAsset" variant="outline" class="glass-badge">
               {{ getAssetType(previewAsset.mimeType) }}
             </UBadge>
-            <h3 class="text-lg font-semibold">{{ previewAsset ? getAssetDisplayName(previewAsset) : '' }}</h3>
           </div>
           <div class="flex items-center gap-2 ml-auto">
             <UButton v-if="previewAsset" variant="ghost" size="sm" class="glass-button">
@@ -607,6 +608,7 @@ const handleDeleteAsset = (asset: Asset) => {
               <Icon name="lucide:fullscreen" class="w-4 h-4" />
             </UButton>
           </div>
+          <h3 class="text-lg font-semibold ">{{ previewAsset ? getAssetDisplayName(previewAsset) : '' }}</h3>
         </div>
       </template>
 
