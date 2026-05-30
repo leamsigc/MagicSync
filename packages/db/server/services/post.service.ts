@@ -274,7 +274,7 @@ export class PostService implements PostServiceType {
           return { success: false, error: 'Post not found' }
         }
 
-        const updateData: any = {
+        const updateData: Record<string, unknown> = {
           ...data,
           updatedAt: dayjs.utc().toDate()
         }
@@ -344,7 +344,7 @@ export class PostService implements PostServiceType {
 
   async updateStatus(id: string, userId: string, status: 'pending' | 'published' | 'failed'): Promise<ServiceResponse<Post>> {
     try {
-      const updateData: any = {
+      const updateData: Record<string, unknown> = {
         status,
         updatedAt: dayjs.utc().toDate()
       }

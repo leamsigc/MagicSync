@@ -8,9 +8,9 @@ export default defineEventHandler(async (event) => {
 
   if (path?.startsWith('/api/v1') && !isPathPublic) {
     // Allow API key auth for CLI endpoints (checked by the api-key-auth middleware)
-    // if (event.context.apiKey?.valid) {
-    //   return // API key auth bypasses session auth
-    // }
+    if (path?.startsWith('/api/v1/cli')) {
+      return // API key auth bypasses session auth
+    }
 
     // Get user from session (assuming auth middleware sets this)
     const user = await checkUserIsLogin(event)

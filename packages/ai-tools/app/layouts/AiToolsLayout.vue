@@ -28,7 +28,8 @@ function isActive(href: string): boolean {
       </div>
 
       <nav class="flex-1 p-2 space-y-1">
-        <NuxtLink v-for="item in navigation" :key="item.href" :to="item.href"
+        <NuxtLink
+v-for="item in navigation" :key="item.href" :to="item.href"
           class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors" :class="{
             'bg-primary/10 text-primary': isActive(item.href),
             'text-gray-400 hover:text-white hover:bg-gray-800': !isActive(item.href)
@@ -39,7 +40,8 @@ function isActive(href: string): boolean {
       </nav>
 
       <div class="p-4 border-t border-gray-700/50">
-        <UButton to="/app" icon="i-lucide-arrow-left" label="Dashboard" color="neutral" variant="ghost" size="sm"
+        <UButton
+to="/app" icon="i-lucide-arrow-left" label="Dashboard" color="neutral" variant="ghost" size="sm"
           class="w-full justify-start text-gray-400" />
       </div>
     </aside>

@@ -1,14 +1,17 @@
-/**
- * Notification Management Composable
- * Handles CRUD operations for notifications
- */
+import type { Notification } from '#layers/BaseDB/db/schema'
+
+interface NotificationResponse<T> {
+  success: boolean
+  data: T
+}
+
+interface UnreadCountData {
+  count: number
+}
 
 export function useNotificationManagement() {
     const { notifications, unreadCount, loading, error } = useNotification()
 
-    /**
-     * Fetch notifications
-     */
     const fetchNotifications = async (options: {
         limit?: number
         offset?: number
@@ -18,7 +21,7 @@ export function useNotificationManagement() {
         error.value = null
 
         try {
-            const response = await $fetch('/api/v1/notifications', {
+            const response = await $fetch<NotificationResponse<Notification[]>>('/api/v1/notifications', {
                 method: 'GET',
                 query: options
             })
@@ -28,28 +31,24 @@ export function useNotificationManagement() {
             }
 
             return response
-        } catch (err: any) {
-            error.value = err.message || 'Failed to fetch notifications'
+        } catch (err: unknown) {
+            error.value = err instanceof Error ? err.message : 'Failed to fetch notifications'
             throw err
         } finally {
             loading.value = false
         }
     }
 
-    /**
-     * Mark notification as read
-     */
     const markAsRead = async (notificationId: number) => {
         loading.value = true
         error.value = null
 
         try {
-            const response = await $fetch('/api/v1/notifications/mark-read', {
+            const response = await $fetch<NotificationResponse<null>>('/api/v1/notifications/mark-read', {
                 method: 'POST',
                 body: { notificationId }
             })
 
-            // Update local state
             if (response.success) {
                 const index = notifications.value.findIndex(n => n.id === notificationId)
                 if (index !== -1) {
@@ -59,76 +58,65 @@ export function useNotificationManagement() {
             }
 
             return response
-        } catch (err: any) {
-            error.value = err.message || 'Failed to mark notification as read'
+        } catch (err: unknown) {
+            error.value = err instanceof Error ? err.message : 'Failed to mark notification as read'
             throw err
         } finally {
             loading.value = false
         }
     }
 
-    /**
-     * Mark all notifications as read
-     */
     const markAllAsRead = async () => {
         loading.value = true
         error.value = null
 
         try {
-            const response = await $fetch('/api/v1/notifications/mark-read', {
+            const response = await $fetch<NotificationResponse<null>>('/api/v1/notifications/mark-read', {
                 method: 'POST',
                 body: { markAll: true }
             })
 
-            // Update local state
             if (response.success) {
                 notifications.value = notifications.value.map(n => ({ ...n, read: true }))
                 unreadCount.value = 0
             }
 
             return response
-        } catch (err: any) {
-            error.value = err.message || 'Failed to mark all notifications as read'
+        } catch (err: unknown) {
+            error.value = err instanceof Error ? err.message : 'Failed to mark all notifications as read'
             throw err
         } finally {
             loading.value = false
         }
     }
 
-    /**
-     * Delete notification
-     */
     const deleteNotification = async (notificationId: number) => {
         loading.value = true
         error.value = null
 
         try {
-            const response = await $fetch('/api/v1/notifications/delete', {
+            const response = await $fetch<NotificationResponse<null>>('/api/v1/notifications/delete', {
                 method: 'DELETE',
                 body: { notificationId }
             })
 
-            // Update local state
             if (response.success) {
                 notifications.value = notifications.value.filter(n => n.id !== notificationId)
                 await fetchUnreadCount()
             }
 
             return response
-        } catch (err: any) {
-            error.value = err.message || 'Failed to delete notification'
+        } catch (err: unknown) {
+            error.value = err instanceof Error ? err.message : 'Failed to delete notification'
             throw err
         } finally {
             loading.value = false
         }
     }
 
-    /**
-     * Fetch unread notification count
-     */
     const fetchUnreadCount = async () => {
         try {
-            const response = await $fetch('/api/v1/notifications/unread-count', {
+            const response = await $fetch<NotificationResponse<UnreadCountData>>('/api/v1/notifications/unread-count', {
                 method: 'GET'
             })
 
@@ -137,8 +125,8 @@ export function useNotificationManagement() {
             }
 
             return response
-        } catch (err: any) {
-            error.value = err.message || 'Failed to fetch unread count'
+        } catch (err: unknown) {
+            error.value = err instanceof Error ? err.message : 'Failed to fetch unread count'
             throw err
         }
     }

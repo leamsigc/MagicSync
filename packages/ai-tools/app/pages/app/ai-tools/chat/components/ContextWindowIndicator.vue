@@ -11,7 +11,7 @@
       <div 
         class="progress-fill" 
         :style="{ width: `${Math.min(usage.percentage, 100)}%` }"
-      ></div>
+      />
     </div>
     <div v-if="isWarning" class="warning-indicator">
       <span v-if="isCritical" class="warning-icon">⚠️</span>

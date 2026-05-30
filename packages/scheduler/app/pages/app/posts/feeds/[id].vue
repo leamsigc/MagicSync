@@ -132,7 +132,7 @@ useHead({
           {{ t('feeds.tabs.comments') }}
           <span v-if="postData?.platformPosts?.length > 0"
             class="ml-1 text-xs bg-zinc-700 text-zinc-300 rounded-full px-1.5 py-0.5">
-            {{ postData.platformPosts.filter((pp: any) => pp.status === 'published').length }}
+            {{ postData.platformPosts.filter((pp: { status: string }) => pp.status === 'published').length }}
           </span>
         </button>
         <button

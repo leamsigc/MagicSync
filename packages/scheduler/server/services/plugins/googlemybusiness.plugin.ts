@@ -41,7 +41,7 @@ type GMBLocation = {
     };
   };
   websiteUri?: string;
-  regularHours?: any;
+  regularHours?: Record<string, unknown>;
   profile?: {
     description?: string;
   };
@@ -161,7 +161,7 @@ export class GoogleMyBusinessPlugin extends BaseSchedulerPlugin {
         followers: locationCount,
         posts: locationCount,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('[GoogleMyBusiness] Error fetching stats:', error);
       return this.createZeroStats(socialMediaAccount);
     }
@@ -183,12 +183,12 @@ export class GoogleMyBusinessPlugin extends BaseSchedulerPlugin {
 
   private getPlatformData(postDetails: PostWithAllData) {
     const platformName = this.pluginName;
-    const platformContent = (postDetails as any).platformContent?.[platformName];
-    const platformSettings = (postDetails as any).platformSettings?.[platformName] as GoogleBusinessSettings | undefined;
+    const platformContent = (postDetails.platformContent as Record<string, { content: string; comments?: string[] } | undefined>)?.[platformName];
+    const platformSettings = (postDetails.platformSettings as Record<string, unknown>)?.[platformName] as GoogleBusinessSettings | undefined;
     return {
       content: platformContent?.content || postDetails.content,
       settings: platformSettings,
-      postFormat: (postDetails as any).postFormat || 'post'
+      postFormat: postDetails.postFormat || 'post'
     };
   }
 
@@ -210,7 +210,7 @@ export class GoogleMyBusinessPlugin extends BaseSchedulerPlugin {
   private readonly PERFORMANCE_API_BASE = 'https://businessprofileperformance.googleapis.com/v1';
   private readonly baseUrl = process.env.NUXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 
-  protected init(options?: any): void {
+  protected init(options?: Record<string, unknown>): void {
     console.log('Google My Business plugin initialized', options);
   }
 
@@ -230,7 +230,7 @@ export class GoogleMyBusinessPlugin extends BaseSchedulerPlugin {
         throw new Error(`GMB API Error (${context}): ${errorBody}`);
       }
       return response;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(`Network or Fetch Error (${context}):`, error);
       throw error;
     }
@@ -316,7 +316,7 @@ export class GoogleMyBusinessPlugin extends BaseSchedulerPlugin {
   /**
    * Get all business locations
    */
-  async getLocations(_: any, accessToken: string): Promise<any[]> {
+  async getLocations(_: Record<string, unknown>, accessToken: string): Promise<Record<string, unknown>[]> {
     // First get accounts
     const accountsResponse = await this.fetch(
       `${this.ACCOUNT_MANAGEMENT_API_BASE}/accounts`,
@@ -372,7 +372,7 @@ export class GoogleMyBusinessPlugin extends BaseSchedulerPlugin {
   /**
    * Get a single location's detailed information
    */
-  async getLocation(locationId: string, accessToken: string): Promise<any> {
+  async getLocation(locationId: string, accessToken: string): Promise<Record<string, unknown>> {
     const response = await this.fetch(
       `${this.BUSINESS_INFO_API_BASE}/${locationId}?readMask=name,title,storefrontAddress,phoneNumbers,categories,websiteUri,regularHours,profile,metadata`,
       {
@@ -417,7 +417,7 @@ export class GoogleMyBusinessPlugin extends BaseSchedulerPlugin {
 
       const data = await response.json();
       return data.mediaItems?.[0]?.googleUrl || '';
-    } catch (error) {
+    } catch (error: unknown) {
       return '';
     }
   }
@@ -425,7 +425,7 @@ export class GoogleMyBusinessPlugin extends BaseSchedulerPlugin {
   /**
    * Format address object to string
    */
-  private _formatAddress(address?: any): string {
+  private _formatAddress(address?: { addressLines?: string[]; locality?: string; administrativeArea?: string; postalCode?: string }): string {
     if (!address) return '';
     const parts = [
       ...(address.addressLines || []),
@@ -443,7 +443,7 @@ export class GoogleMyBusinessPlugin extends BaseSchedulerPlugin {
     locationId: string,
     postData: GMBPostData,
     accessToken: string
-  ): Promise<any> {
+  ): Promise<Record<string, unknown>> {
     const response = await this.fetch(
       `${this.BUSINESS_INFO_API_BASE}/${locationId}/localPosts`,
       {
@@ -495,7 +495,7 @@ export class GoogleMyBusinessPlugin extends BaseSchedulerPlugin {
         {
           label: 'Search Impressions',
           percentageChange: 0,
-          data: data.searchKeywordsCounts?.map((item: any) => ({
+            data: data.searchKeywordsCounts?.map((item: Record<string, unknown>) => ({
             total: item.insightsValue?.value || 0,
             date: `${item.date?.year}-${String(item.date?.month).padStart(2, '0')}-${String(item.date?.day).padStart(2, '0')}`,
           })) || [],
@@ -503,7 +503,7 @@ export class GoogleMyBusinessPlugin extends BaseSchedulerPlugin {
       ];
 
       return analyticsData;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Analytics error:', error);
       return [];
     }
@@ -559,7 +559,7 @@ export class GoogleMyBusinessPlugin extends BaseSchedulerPlugin {
     reviewName: string,
     replyText: string,
     accessToken: string
-  ): Promise<any> {
+  ): Promise<Record<string, unknown>> {
     const response = await this.fetch(
       `${this.BUSINESS_INFO_API_BASE}/${reviewName}/reply`,
       {
@@ -620,7 +620,7 @@ export class GoogleMyBusinessPlugin extends BaseSchedulerPlugin {
 
       // Prepare post data based on type
       const postData: GMBPostData = {
-        topicType: (settings?.topicType as any) || 'STANDARD',
+        topicType: settings?.topicType || 'STANDARD',
         summary: content || '',
         media: postDetails.assets?.map((asset: Asset) => ({
           mediaFormat: asset.mimeType.includes('video') ? 'VIDEO' as const : 'PHOTO' as const,
@@ -669,7 +669,7 @@ export class GoogleMyBusinessPlugin extends BaseSchedulerPlugin {
           throw new Error('CTA URL is required for the selected action type');
         }
         postData.callToAction = {
-          actionType: settings.callToActionType as any,
+          actionType: settings.callToActionType,
           url: settings.callToActionUrl,
         };
       } else if (settings?.callToActionType === 'CALL') {

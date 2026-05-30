@@ -1,8 +1,8 @@
-import type { PostWithAllData, Account } from '#layers/BaseDB/db/schema';
+import type { Post, PostWithAllData, Account } from '#layers/BaseDB/db/schema';
 import { postBatchService } from '#layers/BaseDB/server/services/post.service';
 import { socialMediaAccountService, } from '#layers/BaseDB/server/services/social-media-account.service';
 import { SchedulerPos, SchedulerPost } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
-import type { SchedulerPluginConstructor } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
+import type { PluginPostDetails, PluginSocialMediaAccount, SchedulerPluginConstructor } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import { FacebookPlugin } from '#layers/BaseScheduler/server/services/plugins/facebook.plugin';
 import { BlueskyPlugin } from '#layers/BaseScheduler/server/services/plugins/bluesky.plugin';
 import { DevToPlugin } from '#layers/BaseScheduler/server/services/plugins/devto.plugin';
@@ -128,7 +128,7 @@ export class AutoPostService {
     }
     scheduler.use(plugin);
 
-    return await scheduler.getComments(post, socialAccount as any, pagination);
+    return await scheduler.getComments(post, socialAccount as unknown as PluginSocialMediaAccount, pagination);
 
   }
 
@@ -162,7 +162,7 @@ export class AutoPostService {
 
     return await scheduler.replyToComment(
       post,
-      socialAccount as any,
+      socialAccount as unknown as PluginSocialMediaAccount,
       commentId,
       replyText
     );
@@ -188,7 +188,7 @@ export class AutoPostService {
     }
     scheduler.use(plugin);
 
-    return await scheduler.getPostInsights(post, socialAccount as any);
+    return await scheduler.getPostInsights(post, socialAccount as unknown as PluginSocialMediaAccount);
   }
 
   async getStatisticForAccount({
@@ -199,7 +199,7 @@ export class AutoPostService {
     account: Account;
   }) {
     const scheduler = new SchedulerPost({
-      post: undefined as any,
+      post: undefined as unknown as Post,
       accounts: [account],
     });
 
@@ -209,6 +209,6 @@ export class AutoPostService {
     }
     scheduler.use(plugin);
 
-    return await scheduler.getStatistic({} as any, account as any);
+    return await scheduler.getStatistic({} as unknown as PluginPostDetails, account as unknown as PluginSocialMediaAccount);
   }
 }

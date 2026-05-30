@@ -111,7 +111,7 @@ async function mockWebSearch(page: Page, results: Array<{ title: string; url: st
 /**
  * Mocks the LLM config endpoint.
  */
-async function mockLLMConfig(page: Page, configs: any[] = []) {
+async function mockLLMConfig(page: Page, configs: Record<string, unknown>[] = []) {
   await page.route('**/api/ai-tools/llm', async (route) => {
     if (route.request().method() === 'GET') {
       await route.fulfill({

@@ -29,6 +29,6 @@ const props = defineProps<Props>()
       :height="definition.height"
       class="rounded-lg object-cover"
       loading="lazy"
-    />
+    >
   </div>
 </template>

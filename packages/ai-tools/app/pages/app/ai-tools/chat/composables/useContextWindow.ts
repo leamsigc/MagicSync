@@ -1,5 +1,9 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 
+interface ContextMessage {
+  content: string | Array<{ type: string; text?: string }>
+}
+
 interface ContextUsage {
   used: number
   max: number
@@ -13,13 +17,13 @@ const WARNING_THRESHOLD = 80
 const CRITICAL_THRESHOLD = 90
 
 export function useContextWindow() {
-  const messages = ref<any[]>([])
+  const messages = ref<ContextMessage[]>([])
   const currentModel = ref('gpt-4o')
   const maxTokens = ref(MAX_CONTEXT_WINDOW)
-  
+
   const contextUsage = computed<ContextUsage>(() => {
     let totalChars = 0
-    
+
     for (const msg of messages.value) {
       const content = msg.content
       if (typeof content === 'string') {
@@ -32,17 +36,17 @@ export function useContextWindow() {
         }
       }
     }
-    
+
     const estimatedTokens = Math.ceil(totalChars / 4)
     const percentage = (estimatedTokens / maxTokens.value) * 100
-    
+
     let status: 'green' | 'yellow' | 'red' = 'green'
     if (percentage >= CRITICAL_THRESHOLD) {
       status = 'red'
     } else if (percentage >= WARNING_THRESHOLD) {
       status = 'yellow'
     }
-    
+
     return {
       used: estimatedTokens,
       max: maxTokens.value,
@@ -51,21 +55,21 @@ export function useContextWindow() {
       status
     }
   })
-  
+
   const isWarning = computed(() => contextUsage.value.status !== 'green')
   const isCritical = computed(() => contextUsage.value.status === 'red')
-  
-  function setMessages(msgs: any[]) {
+
+  function setMessages(msgs: ContextMessage[]) {
     messages.value = msgs
   }
-  
+
   function setModel(model: string, contextWindow?: number) {
     currentModel.value = model
     if (contextWindow) {
       maxTokens.value = contextWindow
     }
   }
-  
+
   return {
     contextUsage,
     isWarning,

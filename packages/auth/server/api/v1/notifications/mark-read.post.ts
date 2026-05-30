@@ -41,8 +41,9 @@ export default defineEventHandler(async (event) => {
             message: 'Notification(s) marked as read',
             data: result
         }
-    } catch (error: any) {
-        log.error({ content: 'Failed to mark notification as read', error: error.message })
+    } catch (error: unknown) {
+        const msg = error instanceof Error ? error.message : 'Unknown error'
+        log.error({ content: 'Failed to mark notification as read', error: msg })
 
         if (error instanceof z.ZodError) {
             throw createError({
@@ -52,9 +53,10 @@ export default defineEventHandler(async (event) => {
             })
         }
 
+        const err = error as { statusCode?: number; statusMessage?: string }
         throw createError({
-            statusCode: error.statusCode || 500,
-            statusMessage: error.statusMessage || 'Failed to mark notification as read'
+            statusCode: err.statusCode || 500,
+            statusMessage: err.statusMessage || 'Failed to mark notification as read'
         })
     }
 })

@@ -1,6 +1,6 @@
 /**
  * Social Media Generation Composable
- * 
+ *
  * Provides AI-powered social media post generation capabilities
  * with support for multiple platforms and content types.
  */
@@ -79,6 +79,15 @@ export interface GenerateHashtagsOptions {
   style?: 'popular' | 'niche' | 'mixed' | 'trending'
 }
 
+function getErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof Error) return error.message
+  if (error && typeof error === 'object' && 'data' in error) {
+    const data = (error as { data: { message?: string } }).data
+    if (data?.message) return data.message
+  }
+  return fallback
+}
+
 export const useSocialMediaGenerator = () => {
   const loading = useState<boolean>('social-media:loading', () => false)
   const error = useState<string | null>('social-media:error', () => null)
@@ -112,8 +121,8 @@ export const useSocialMediaGenerator = () => {
       }
 
       return null
-    } catch (err: any) {
-      error.value = err.data?.message || err.message || 'Failed to generate post'
+    } catch (e: unknown) {
+      error.value = getErrorMessage(e, 'Failed to generate post')
       return null
     } finally {
       loading.value = false
@@ -142,8 +151,8 @@ export const useSocialMediaGenerator = () => {
       }
 
       return result.posts
-    } catch (err: any) {
-      error.value = err.data?.message || err.message || 'Failed to generate batch'
+    } catch (e: unknown) {
+      error.value = getErrorMessage(e, 'Failed to generate batch')
       return {}
     } finally {
       loading.value = false
@@ -173,8 +182,8 @@ export const useSocialMediaGenerator = () => {
       }
 
       return result.thread || []
-    } catch (err: any) {
-      error.value = err.data?.message || err.message || 'Failed to generate thread'
+    } catch (e: unknown) {
+      error.value = getErrorMessage(e, 'Failed to generate thread')
       return []
     } finally {
       loading.value = false
@@ -204,8 +213,8 @@ export const useSocialMediaGenerator = () => {
       }
 
       return result.variations || []
-    } catch (err: any) {
-      error.value = err.data?.message || err.message || 'Failed to generate variations'
+    } catch (e: unknown) {
+      error.value = getErrorMessage(e, 'Failed to generate variations')
       return []
     } finally {
       loading.value = false
@@ -235,8 +244,8 @@ export const useSocialMediaGenerator = () => {
       }
 
       return result.hooks || []
-    } catch (err: any) {
-      error.value = err.data?.message || err.message || 'Failed to generate hooks'
+    } catch (e: unknown) {
+      error.value = getErrorMessage(e, 'Failed to generate hooks')
       return []
     } finally {
       loading.value = false
@@ -266,8 +275,8 @@ export const useSocialMediaGenerator = () => {
       }
 
       return result.hashtags || []
-    } catch (err: any) {
-      error.value = err.data?.message || err.message || 'Failed to generate hashtags'
+    } catch (e: unknown) {
+      error.value = getErrorMessage(e, 'Failed to generate hashtags')
       return []
     } finally {
       loading.value = false
@@ -281,8 +290,8 @@ export const useSocialMediaGenerator = () => {
     try {
       const result = await $fetch<PlatformInfo[]>('/api/ai-tools/social-media/platforms')
       platforms.value = result
-    } catch (err: any) {
-      console.error('Failed to fetch platforms:', err)
+    } catch (error: unknown) {
+      console.error('Failed to fetch platforms:', error)
     }
   }
 

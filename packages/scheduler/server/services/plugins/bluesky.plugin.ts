@@ -1,18 +1,54 @@
 import { decryptKey } from '#layers/BaseAuth/server/utils/AuthHelpers';
 import type { PostResponse, GetCommentsResponse, ReplyCommentResponse, PlatformComment } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import { BaseSchedulerPlugin, type PluginPostDetails, type PluginSocialMediaAccount } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
-import type { Post, SocialMediaAccount, Asset } from '#layers/BaseDB/db/schema';
-import { AtpAgent, RichText, AppBskyFeedPost, AppBskyFeedDefs, BlobRef } from '@atproto/api';
+import type { Post, SocialMediaAccount, Asset, PlatformContentOverride } from '#layers/BaseDB/db/schema';
+import { AtpAgent, RichText, AppBskyFeedPost, AppBskyFeedDefs, BlobRef, AppBskyEmbedVideo, AppBskyVideoDefs } from '@atproto/api';
 import type { BlueskySettings } from '#layers/BaseScheduler/shared/platformSettings';
 import { platformConfigurations } from '#layers/BaseScheduler/shared/platformConstants';
 import { promises as fs } from 'node:fs'
 
-
-type AppBskyEmbedVideo = any;
-type AppBskyVideoDefs = any;
-
 import { Buffer } from 'node:buffer';
 import { URL } from 'node:url';
+
+type BlueskyPostRecord = {
+  $type: string;
+  text: string;
+  facets?: unknown[];
+  createdAt: string;
+  reply?: {
+    root: { uri: string; cid: string };
+    parent: { uri: string; cid: string };
+  };
+};
+
+type BlueskyApiComment = {
+  uri: string;
+  value?: {
+    text?: string;
+    createdAt?: string;
+    reply?: {
+      parent?: { uri?: string };
+      root?: { uri?: string; cid?: string };
+    };
+  };
+  author?: {
+    handle?: string;
+    did?: string;
+    avatar?: string;
+  };
+  likeCount?: number;
+  replyCount?: number;
+};
+
+type BlueskyAgentWithVideo = AtpAgent & {
+  app: {
+    bsky: {
+      video: {
+        getJobStatus: (params: { jobId: string }) => Promise<{ data: { jobStatus: AppBskyVideoDefs.JobStatus } }>;
+      };
+    };
+  };
+};
 
 // Helper to pause execution
 const timer = (ms: number) => new Promise((res) => setTimeout(res, ms));
@@ -42,12 +78,12 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
       .replace(/\r/g, '\n');
   }
 
-  private getPlatformData(postDetails: PluginPostDetails, platformPost?: any) {
+  private getPlatformData(postDetails: PluginPostDetails, platformPost?: Record<string, unknown>) {
     const platformName = this.pluginName;
-    const platformContent = (postDetails.platformContent as any)[platformName];
-    const platformSettings = (postDetails.platformSettings as any)[platformName] as BlueskySettings | undefined;
+    const platformContent = (postDetails.platformContent as unknown as Record<string, PlatformContentOverride | undefined>)?.[platformName];
+    const platformSettings = (postDetails.platformSettings as unknown as Record<string, unknown>)?.[platformName] as BlueskySettings | undefined;
     const rawContent = platformContent?.content || postDetails.content;
-    const postFormat = (postDetails as any).postFormat || 'post';
+    const postFormat = postDetails.postFormat ?? 'post';
     const comments = platformContent?.comments || [];
 
     return {
@@ -97,7 +133,16 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
   /**
    * Get user profile with stats (followers, following, posts count)
    */
-  async getProfile(handle: string, accessToken?: string): Promise<any> {
+  async getProfile(handle: string, accessToken?: string): Promise<{
+    did: string;
+    handle: string;
+    displayName?: string;
+    description?: string;
+    avatar?: string;
+    followersCount: number;
+    followsCount: number;
+    postsCount: number;
+  }> {
     if (accessToken) {
       await this.agent.login({
         identifier: handle,
@@ -121,7 +166,7 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
   /**
    * Get post thread with replies and engagement metrics
    */
-  async getPostThread(uri: string, accessToken?: string): Promise<any> {
+  async getPostThread(uri: string, accessToken?: string) {
     if (accessToken) {
       const session = JSON.parse(accessToken);
       await this.agent.resumeSession(session);
@@ -137,7 +182,10 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
   async getNotifications(
     accessToken: string,
     options?: { limit?: number; cursor?: string }
-  ): Promise<any> {
+  ): Promise<{
+    notifications: unknown[];
+    cursor?: string;
+  }> {
     const session = JSON.parse(accessToken);
     await this.agent.resumeSession(session);
 
@@ -162,7 +210,10 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
       cursor?: string;
       seenAt?: string;
     }
-  ): Promise<any> {
+  ): Promise<{
+    notifications: unknown[];
+    cursor?: string;
+  }> {
     return this.getNotifications(accessToken, options);
   }
 
@@ -173,7 +224,10 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
     actor: string,
     accessToken?: string,
     options?: { limit?: number; cursor?: string }
-  ): Promise<any> {
+  ): Promise<{
+    followers: unknown[];
+    cursor?: string;
+  }> {
     if (accessToken) {
       const session = JSON.parse(accessToken);
       await this.agent.resumeSession(session);
@@ -198,7 +252,10 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
     actor: string,
     accessToken?: string,
     options?: { limit?: number; cursor?: string }
-  ): Promise<any> {
+  ): Promise<{
+    following: unknown[];
+    cursor?: string;
+  }> {
     if (accessToken) {
       const session = JSON.parse(accessToken);
       await this.agent.resumeSession(session);
@@ -227,7 +284,10 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
       cursor?: string;
       sort?: 'top' | 'latest';
     }
-  ): Promise<any> {
+  ): Promise<{
+    posts: unknown[];
+    cursor?: string;
+  }> {
     if (accessToken) {
       const session = JSON.parse(accessToken);
       await this.agent.resumeSession(session);
@@ -300,9 +360,9 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
       }
 
       // Determine embed based on media types
-      let embed: any = {};
+      let embed: Record<string, unknown> = {};
       if (videoEmbed) {
-        embed = videoEmbed;
+        embed = videoEmbed as Record<string, unknown>;
       } else if (images.length > 0) {
         embed = {
           $type: 'app.bsky.embed.images',
@@ -571,8 +631,7 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
     const videoAgent = new AtpAgent({ service: 'https://video.bsky.app' });
 
     while (!blob) {
-      // Casting to any to bypass TypeScript error for 'app' property
-      const { data: status } = await (videoAgent as any).app.bsky.video.getJobStatus({
+      const { data: status } = await (videoAgent as BlueskyAgentWithVideo).app.bsky.video.getJobStatus({
         jobId: jobStatus.jobId,
       });
       if (status.jobStatus.blob) {
@@ -583,7 +642,7 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
         throw new BadBody(
           'bluesky',
           JSON.stringify({}),
-          {} as any,
+          {} as unknown as Response,
           'Could not upload video, job failed'
         );
       }
@@ -603,8 +662,7 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
     const handle = socialMediaAccount.accountId
 
     // Get profile with stats
-    const profile = await this.getProfile(handle, socialMediaAccount.accessToken)
-    const profileStats = profile as any
+    const profileStats = await this.getProfile(handle, socialMediaAccount.accessToken)
 
     // Get recent posts for engagement
     let totalEngagement = 0
@@ -648,14 +706,14 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
   /**
    * Transform Bluesky record to PlatformComment format
    */
-  private transformComment(record: any): PlatformComment {
+  private transformComment(record: BlueskyApiComment): PlatformComment {
     return {
       id: record.uri,
       text: record.value?.text || '',
       authorName: record.author?.handle || 'Unknown',
       authorId: record.author?.did,
       authorPicture: record.author?.avatar,
-      createdAt: record.value?.createdAt,
+      createdAt: record.value?.createdAt || '',
       likeCount: record.likeCount || 0,
       replyCount: record.replyCount || 0,
       parentId: record.value?.reply?.parent?.uri,
@@ -671,7 +729,7 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
     socialMediaAccount: PluginSocialMediaAccount,
     options?: { limit?: number; cursor?: string }
   ): Promise<GetCommentsResponse> {
-    const platformPost = postDetails.platformPosts?.find((pp: any) => pp.socialAccountId === socialMediaAccount.id);
+    const platformPost = postDetails.platformPosts?.find((pp: { socialAccountId: string }) => pp.socialAccountId === socialMediaAccount.id);
     const publishDetail = platformPost?.publishDetail ? JSON.parse(platformPost.publishDetail) : {};
     const externalPostId = publishDetail[socialMediaAccount.id]?.publishedId || publishDetail.postId;
 
@@ -689,7 +747,9 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
       });
 
       const comments: PlatformComment[] = [];
-      const threadData = thread.data.thread;
+      const threadData = thread.data.thread as {
+        replies?: Array<{ post: BlueskyApiComment }>;
+      };
 
       // Get replies from the thread
       if (threadData.replies && Array.isArray(threadData.replies)) {
@@ -756,7 +816,7 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
 
       const response = await agent.api.app.bsky.feed.post.create(
         { repo: agent.session?.did || '' },
-        replyRecord as any,
+        replyRecord as AppBskyFeedPost.Record,
       );
 
       return {

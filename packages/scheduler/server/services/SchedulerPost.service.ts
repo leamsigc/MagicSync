@@ -10,13 +10,13 @@ export type { Integration, PostResponse };
 
 export type PluginPostDetails = PostWithAllData & {
   title?: string;
-  settings?: any;
+  settings?: Record<string, unknown>;
   postId?: string;
   releaseURL?: string;
 };
 
 export type PluginSocialMediaAccount = SocialMediaAccount & {
-  metadata?: any;
+  metadata?: Record<string, unknown>;
   username?: string;
   picture?: string;
 };
@@ -103,7 +103,7 @@ export type PostDetails<T = Record<string, unknown>> = {
   media?: MediaContent[];
   poll?: PollDetails;
   comments?: PostDetails[];
-  platformSettings?: Record<string, any>;
+  platformSettings?: Record<string, unknown>;
   platformContent?: Record<string, { content: string; comments?: string[] }>;
   postFormat?: 'post' | 'reel' | 'story' | 'short';
 };
@@ -152,7 +152,7 @@ export interface SchedulerPlugin {
 }
 
 export interface SchedulerPluginConstructor {
-  new(scheduler: SchedulerPost, options?: any): BaseSchedulerPlugin;
+  new(scheduler: SchedulerPost, options?: Record<string, unknown>): BaseSchedulerPlugin;
   pluginName: string;
 }
 
@@ -167,12 +167,12 @@ export abstract class BaseSchedulerPlugin implements SchedulerPlugin {
   onRegister?(scheduler: SchedulerPost): void;
   onDestroy?(): void;
 
-  constructor(scheduler: SchedulerPost, options?: any) {
+  constructor(scheduler: SchedulerPost, options?: Record<string, unknown>) {
     this.scheduler = scheduler;
     this.init(options);
   }
 
-  protected abstract init(options?: any): void;
+  protected abstract init(options?: Record<string, unknown>): void;
 
   protected emit(event: string, ...args: unknown[]) {
     this.scheduler.emit(event, ...args);
@@ -183,7 +183,7 @@ export abstract class BaseSchedulerPlugin implements SchedulerPlugin {
     status: 'success' | 'failure' | 'pending',
     details: string,
     targetId?: string,
-    additionalDetails?: Record<string, any>
+    additionalDetails?: Record<string, unknown>
   ) {
     await logAuditService.logAuditEvent({
       category: 'plugin',
@@ -248,7 +248,7 @@ export class SchedulerPost extends EventEmitter {
 
 
 
-  use(pluginClass: SchedulerPluginConstructor, options?: any): this {
+  use(pluginClass: SchedulerPluginConstructor, options?: Record<string, unknown>): this {
     const pluginName = pluginClass.pluginName;
     if (this.plugins.has(pluginName)) {
       throw new Error(`Plugin ${pluginName} already registered`);
@@ -395,7 +395,7 @@ export class SchedulerPost extends EventEmitter {
   async getPostInsights(
     postDetails: PluginPostDetails,
     socialMediaAccount: PluginSocialMediaAccount
-  ): Promise<any> {
+  ): Promise<Record<string, unknown>> {
     const plugin = this.plugins.get(socialMediaAccount.platform);
     if (!plugin) {
       throw new Error('Plugin not registered for this socialMediaAccount');

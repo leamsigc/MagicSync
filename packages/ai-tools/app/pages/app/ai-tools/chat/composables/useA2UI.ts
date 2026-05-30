@@ -2,22 +2,30 @@ import { ref, computed, onUnmounted } from 'vue'
 
 interface A2UIComponent {
   id: string
-  component: Record<string, any>
+  component: string | Record<string, unknown>
+  [key: string]: unknown
 }
 
 interface A2UIAction {
   action: string
   surfaceId: string
   componentId: string
-  payload?: Record<string, any>
+  payload?: Record<string, unknown>
+}
+
+interface A2UIMessage {
+  type: string
+  components?: A2UIComponent[]
+  path?: string
+  value?: unknown
 }
 
 export function useA2UI() {
   const components = ref<A2UIComponent[]>([])
-  const dataModel = ref<Record<string, any>>({})
+  const dataModel = ref<Record<string, unknown>>({})
   const isConnected = ref(false)
   const error = ref<Error | null>(null)
-  
+
   let eventSource: EventSource | null = null
 
   function connect(url: string) {
@@ -44,7 +52,7 @@ export function useA2UI() {
     }
   }
 
-  function handleMessage(data: any) {
+  function handleMessage(data: A2UIMessage) {
     switch (data.type) {
       case 'createSurface':
       case 'beginRendering':
@@ -76,14 +84,15 @@ export function useA2UI() {
     }
   }
 
-  function setDeepValue(obj: any, path: string, value: any) {
+  function setDeepValue(obj: Record<string, unknown>, path: string, value: unknown) {
     const parts = path.split('/').filter(Boolean)
-    let current = obj
+    let current: Record<string, unknown> = obj
     for (let i = 0; i < parts.length - 1; i++) {
-      if (!current[parts[i]]) current[parts[i]] = {}
-      current = current[parts[i]]
+      // Fix the type issue here``
+      if (!current[parts[i] as string]) current[parts[i] as string] = {}
+      current = current[parts[i] as string] as Record<string, unknown>
     }
-    current[parts[parts.length - 1]] = value
+    current[parts[parts.length - 1] as string] = value
   }
 
   function sendAction(action: A2UIAction) {

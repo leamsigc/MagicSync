@@ -50,7 +50,7 @@ export class WordPressPlugin extends BaseSchedulerPlugin {
           subscribers: stats.subscribers?.count || 0,
         },
       };
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('[WordPress] Error fetching stats:', error);
       return this.createZeroStats(socialMediaAccount);
     }
@@ -72,12 +72,12 @@ export class WordPressPlugin extends BaseSchedulerPlugin {
 
   private getPlatformData(postDetails: PluginPostDetails) {
     const platformName = this.pluginName;
-    const platformContent = (postDetails as any).platformContent?.[platformName];
-    const platformSettings = (postDetails as any).platformSettings?.[platformName] as WordPressSettings | undefined;
+    const platformContent = (postDetails.platformContent as Record<string, { content: string; comments?: string[] } | undefined>)?.[platformName];
+    const platformSettings = (postDetails.platformSettings as Record<string, unknown>)?.[platformName] as WordPressSettings | undefined;
     return {
       content: platformContent?.content || postDetails.content,
       settings: platformSettings,
-      postFormat: (postDetails as any).postFormat || 'post'
+      postFormat: postDetails.postFormat || 'post'
     };
   }
 
@@ -92,7 +92,7 @@ export class WordPressPlugin extends BaseSchedulerPlugin {
     return platformConfigurations.wordpress.maxPostLength;
   }
 
-  protected init(options?: any): void {
+  protected init(options?: Record<string, unknown>): void {
     console.log('WordPress plugin initialized', options);
   }
 
@@ -107,7 +107,7 @@ export class WordPressPlugin extends BaseSchedulerPlugin {
   /**
    * Get site categories
    */
-  async getCategories(siteUrl: string, accessToken: string): Promise<any[]> {
+  async getCategories(siteUrl: string, accessToken: string): Promise<Record<string, unknown>[]> {
     const response = await fetch(`${siteUrl}/wp-json/wp/v2/categories`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -119,7 +119,7 @@ export class WordPressPlugin extends BaseSchedulerPlugin {
   /**
    * Get site tags
    */
-  async getTags(siteUrl: string, accessToken: string): Promise<any[]> {
+  async getTags(siteUrl: string, accessToken: string): Promise<Record<string, unknown>[]> {
     const response = await fetch(`${siteUrl}/wp-json/wp/v2/tags`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -140,9 +140,9 @@ export class WordPressPlugin extends BaseSchedulerPlugin {
         throw new Error('WordPress site URL is required in account settings');
       }
 
-      const settings = postDetails.settings as any;
+      const settings = postDetails.settings as Record<string, unknown>;
 
-      const postData: any = {
+      const postData: Record<string, unknown> = {
         title: postDetails.title || 'Untitled Post',
         content: postDetails.content,
         status: settings?.status || 'publish', // draft, pending, publish, future
@@ -230,9 +230,9 @@ export class WordPressPlugin extends BaseSchedulerPlugin {
         throw new Error('WordPress site URL is required');
       }
 
-      const settings = postDetails.settings as any;
+      const settings = postDetails.settings as Record<string, unknown>;
 
-      const postData: any = {
+      const postData: Record<string, unknown> = {
         title: postDetails.title || 'Untitled Post',
         content: postDetails.content,
       };
@@ -353,7 +353,7 @@ export class WordPressPlugin extends BaseSchedulerPlugin {
   /**
    * Transform WordPress comment to PlatformComment format
    */
-  private transformComment(comment: any): PlatformComment {
+  private transformComment(comment: Record<string, unknown>): PlatformComment {
     return {
       id: String(comment.id),
       text: comment.content?.rendered || comment.content || '',
@@ -375,7 +375,7 @@ export class WordPressPlugin extends BaseSchedulerPlugin {
     socialMediaAccount: PluginSocialMediaAccount,
     options?: { limit?: number; cursor?: string }
   ): Promise<GetCommentsResponse> {
-    const platformPost = postDetails.platformPosts?.find((pp: any) => pp.socialAccountId === socialMediaAccount.id);
+      const platformPost = postDetails.platformPosts?.find((pp) => pp.socialAccountId === socialMediaAccount.id);
     const publishDetail = platformPost?.publishDetail ? JSON.parse(platformPost.publishDetail) : {};
     const externalPostId = publishDetail[socialMediaAccount.id]?.publishedId || publishDetail.postId;
 
@@ -409,8 +409,8 @@ export class WordPressPlugin extends BaseSchedulerPlugin {
       const headers = response.headers;
 
       const comments: PlatformComment[] = data
-        .filter((comment: any) => !comment.parent)
-        .map((comment: any) => this.transformComment(comment));
+        .filter((comment: Record<string, unknown>) => !comment.parent)
+        .map((comment) => this.transformComment(comment as Record<string, unknown>));
 
       const totalPages = parseInt(headers.get('X-WP-TotalPages') || '1', 10);
       const currentPage = parseInt(options?.cursor || '1', 10);
@@ -422,7 +422,7 @@ export class WordPressPlugin extends BaseSchedulerPlugin {
         hasMore: currentPage < totalPages,
         nextCursor: currentPage < totalPages ? String(currentPage + 1) : undefined,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error fetching WordPress comments:', error);
       return {
         platform: this.pluginName,
@@ -443,7 +443,7 @@ export class WordPressPlugin extends BaseSchedulerPlugin {
     replyText: string
   ): Promise<ReplyCommentResponse> {
     try {
-      const platformPost = postDetails.platformPosts?.find((pp: any) => pp.socialAccountId === socialMediaAccount.id);
+    const platformPost = postDetails.platformPosts?.find((pp) => pp.socialAccountId === socialMediaAccount.id);
       const publishDetail = platformPost?.publishDetail ? JSON.parse(platformPost.publishDetail) : {};
       const externalPostId = publishDetail[socialMediaAccount.id]?.publishedId || publishDetail.postId;
 
@@ -475,7 +475,7 @@ export class WordPressPlugin extends BaseSchedulerPlugin {
         success: true,
         comment: this.transformComment(data),
       };
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error replying to WordPress comment:', error);
       return {
         success: false,

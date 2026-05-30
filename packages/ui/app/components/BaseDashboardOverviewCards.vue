@@ -29,11 +29,8 @@ const { displayMetrics } = defineProps<{
 <template>
   <div class="space-y-6">
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <UCard
-        v-for="metric in displayMetrics"
-        :key="metric.title"
-        class="hover:shadow-lg transition-shadow duration-200"
-      >
+      <UCard v-for="metric in displayMetrics" :key="metric.title"
+        class="hover:shadow-lg transition-shadow duration-200">
         <div class="flex items-center justify-between mb-3">
           <div class="flex items-center justify-center w-10 h-10 rounded-lg" :class="metric.color">
             <Icon :name="metric.icon" class="w-5 h-5" />

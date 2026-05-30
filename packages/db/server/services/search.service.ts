@@ -46,7 +46,7 @@ export class SearchService implements SearchServiceType {
         ? 'dc.user_id = ? AND dc.document_id = ?'
         : 'dc.user_id = ?'
 
-      const args: any[] = [userId]
+      const args: (string | number)[] = [userId]
       if (documentId) {
         args.push(documentId)
       }
@@ -101,7 +101,7 @@ export class SearchService implements SearchServiceType {
       const embeddingStr = `[${queryEmbedding.join(',')}]`
 
       const whereClauses: string[] = ['dc.user_id = ?']
-      const args: any[] = [userId, embeddingStr]
+      const args: (string | number)[] = [userId, embeddingStr]
 
       if (filters?.documentId) {
         whereClauses.push('dc.document_id = ?')

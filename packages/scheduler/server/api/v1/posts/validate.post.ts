@@ -86,8 +86,8 @@ export default defineEventHandler(async (event) => {
 
     // Calculate overall validation status
     const allValidations = Object.values(validationResults).filter(v => v.isValid !== undefined)
-    const overallValid = allValidations.every((v: any) => v.isValid)
-    const hasWarnings = allValidations.some((v: any) => v.warnings && v.warnings.length > 0)
+    const overallValid = allValidations.every((v) => v.isValid)
+    const hasWarnings = allValidations.some((v) => v.warnings && v.warnings.length > 0)
 
     log.set({ success: true, overallValid, hasWarnings })
     return {
@@ -98,13 +98,13 @@ export default defineEventHandler(async (event) => {
         validations: validationResults,
         summary: {
           totalPlatforms: allValidations.length,
-          validPlatforms: allValidations.filter((v: any) => v.isValid).length,
-          invalidPlatforms: allValidations.filter((v: any) => !v.isValid).length
+          validPlatforms: allValidations.filter((v) => v.isValid).length,
+          invalidPlatforms: allValidations.filter((v) => !v.isValid).length
         }
       }
     }
-  } catch (error: any) {
-    if (error.statusCode) {
+  } catch (error: unknown) {
+    if (error && typeof error === 'object' && 'statusCode' in error) {
       throw error
     }
 
@@ -116,12 +116,12 @@ export default defineEventHandler(async (event) => {
   }
 })
 
-function validateContentForPlatform(platform: any, content: PostContent): ValidationResult {
+function validateContentForPlatform(platform: string, content: PostContent): ValidationResult {
   // This is a placeholder. Real implementation would validate content against platform rules.
   return { isValid: true, warnings: [], errors: [] }
 }
 
-function validateCrossPlatformContent(content: PostContent, platforms: any[]): ValidationResult {
+function validateCrossPlatformContent(content: PostContent, platforms: string[]): ValidationResult {
   // This is a placeholder. Real implementation would validate content across platforms.
   return { isValid: true, warnings: [], errors: [] }
 }

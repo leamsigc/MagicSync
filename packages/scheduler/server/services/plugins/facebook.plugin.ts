@@ -1,10 +1,23 @@
-import type { Asset, PostWithAllData, SocialMediaAccount } from '#layers/BaseDB/db/schema';
+import type { Asset, PostWithAllData, SocialMediaAccount, PlatformContentOverride } from '#layers/BaseDB/db/schema';
 import type { PostResponse, GetCommentsResponse, ReplyCommentResponse, PlatformComment, PluginPostDetails, PluginSocialMediaAccount } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import type { FacebookSettings } from '#layers/BaseScheduler/shared/platformSettings';
 import dayjs from 'dayjs';
 import { BaseSchedulerPlugin } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import type { PlatformStats } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import type { FacebookPage } from '#layers/BaseConnect/utils/FacebookPages';
+
+type FacebookApiInsightValue = { value: number; end_time: string };
+type FacebookApiInsight = { name: string; values?: FacebookApiInsightValue[] };
+type FacebookApiMetric = { name: string; values?: { value: number }[] };
+type FacebookApiComment = {
+  id: string;
+  message?: string;
+  from?: { name?: string; id?: string; picture?: { data?: { url?: string } } };
+  created_time?: string;
+  like_count?: number;
+  comment_count?: number;
+  parent?: { id?: string };
+};
 
 type AuthTokenDetails = {
   refreshToken: string;
@@ -38,12 +51,12 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
       .replace(/\r/g, '\n');
   }
 
-  private getPlatformData(postDetails: PostWithAllData, platformPost?: any) {
+  private getPlatformData(postDetails: PostWithAllData, platformPost?: Record<string, unknown>) {
     const platformName = this.pluginName;
-    const platformContent = (postDetails.platformContent as any)[platformName];
-    const platformSettings = (postDetails.platformSettings as any)[platformName] as FacebookSettings | undefined;
+    const platformContent = (postDetails.platformContent as unknown as Record<string, PlatformContentOverride | undefined>)?.[platformName];
+    const platformSettings = (postDetails.platformSettings as unknown as Record<string, unknown>)?.[platformName] as FacebookSettings | undefined;
     const rawContent = platformContent?.content || postDetails.content;
-    const postFormat = (postDetails as any).postFormat || 'post';
+    const postFormat = postDetails.postFormat ?? 'post';
     const comments = platformContent?.comments || [];
 
     return {
@@ -90,7 +103,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
   private readonly OAUTH_DIALOG_URL = 'https://www.facebook.com/v20.0/dialog/oauth';
   private readonly baseUrl = process.env.NUXT_BASE_URL || 'http://localhost:3000'
 
-  protected init(options?: any): void {
+  protected init(options?: Record<string, unknown>): void {
     console.log('Facebook plugin initialized', options);
   }
 
@@ -254,7 +267,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     pageId: string,
     accessToken: string,
     days: number = 30
-  ): Promise<any> {
+  ): Promise<Array<{ label: string; data: Array<{ total: number; date: string }> }>> {
     const until = dayjs().endOf('day').unix();
     const since = dayjs().subtract(days, 'day').unix();
 
@@ -262,7 +275,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
       `/${pageId}/insights?metric=page_views_total,page_post_engagements,page_follows&period=day&since=${since}&until=${until}&access_token=${accessToken}`
     );
     const response = await this.fetch(url, undefined, 'fetch page insights')
-    const { data, error } = await response.json();
+    const { data, error } = await response.json() as { data?: FacebookApiInsight[]; error?: Record<string, unknown> };
 
     if (error) {
       console.warn('[Facebook] Page insights error:', error)
@@ -275,25 +288,25 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
       page_follows: 'Followers',
     }
 
-    return data?.map((d: any) => ({
+    return data?.map((d: FacebookApiInsight) => ({
       label: labelMap[d.name] || d.name,
-      data: d?.values?.map((v: any) => ({
+      data: d?.values?.map((v: FacebookApiInsightValue) => ({
         total: v.value,
         date: dayjs(v.end_time).format('YYYY-MM-DD'),
-      })),
+      })) || [],
     })) || [];
   }
 
   async getPostInsights(
     postId: string,
     accessToken: string
-  ): Promise<any> {
+  ): Promise<Array<{ label: string; value: number }>> {
     const url = this._getGraphApiUrl(
       `/${postId}/insights?metric=post_impressions,post_impressions_unique,post_engaged_users,post_clicks,post_reactions_like,post_reactions_love,post_reactions_haha,post_reactions_sorry,post_reactions_anger&access_token=${accessToken}`
     );
     const { data, error } = await (
       await this.fetch(url, undefined, 'fetch post insights')
-    ).json();
+    ).json() as { data?: FacebookApiMetric[]; error?: Record<string, unknown> };
 
     if (error) {
       console.warn('[Facebook] Post insights error:', error)
@@ -312,7 +325,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
       post_reactions_anger: 'Angry',
     }
 
-    return data?.map((d: any) => ({
+    return data?.map((d: FacebookApiMetric) => ({
       label: labelMap[d.name] || d.name,
       value: d.values?.[0]?.value || 0,
     })) || [];
@@ -325,7 +338,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     objectId: string,
     accessToken: string,
     options?: { limit?: number; after?: string }
-  ): Promise<any> {
+  ): Promise<{ data?: FacebookApiComment[]; paging?: { cursors?: { after?: string; before?: string } }; error?: { message: string } }> {
     const params = new URLSearchParams({
       access_token: accessToken,
       fields: 'id,message,from,created_time,like_count,comment_count,parent',
@@ -335,7 +348,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
 
     const url = this._getGraphApiUrl(`/${objectId}/comments?${params.toString()}`);
     const response = await this.fetch(url, undefined, 'get comments');
-    return response.json();
+    return response.json() as Promise<{ data?: FacebookApiComment[]; paging?: { cursors?: { after?: string; before?: string } }; error?: { message: string } }>;
   }
 
   /**
@@ -362,7 +375,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     commentId: string,
     replyText: string,
     accessToken: string
-  ): Promise<any> {
+  ): Promise<{ id?: string; error?: { message: string } }> {
     const url = this._getGraphApiUrl(`/${commentId}/comments?access_token=${accessToken}`);
     const response = await this.fetch(
       url,
@@ -377,29 +390,29 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
       },
       'reply to comment'
     );
-    return response.json();
+    return response.json() as Promise<{ id?: string; error?: { message: string } }>;
   }
 
   /**
    * Extract external post ID from postDetails
    */
-  private extractExternalPostId(postDetails: any, socialMediaAccount: any): string | null {
+  private extractExternalPostId(postDetails: PluginPostDetails, socialMediaAccount: PluginSocialMediaAccount): string | null {
     const platformPost = postDetails.platformPosts?.find(
-      (pp: any) => pp.socialAccountId === socialMediaAccount.id
+      (pp: { socialAccountId: string }) => pp.socialAccountId === socialMediaAccount.id
     );
     if (!platformPost) return null;
 
     const publishDetail = platformPost.publishDetail
-      ? JSON.parse(platformPost.publishDetail)
+      ? JSON.parse(platformPost.publishDetail as string)
       : {};
 
-    return publishDetail[socialMediaAccount.id]?.publishedId || null;
+    return (publishDetail as Record<string, { publishedId?: string }>)?.[socialMediaAccount.id]?.publishedId || null;
   }
 
   /**
    * Transform Facebook API comment to PlatformComment format
    */
-  private transformComment(fbComment: any): PlatformComment {
+  private transformComment(fbComment: FacebookApiComment): PlatformComment {
     return {
       id: fbComment.id,
       text: fbComment.message || '',
@@ -418,7 +431,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
    */
   // @ts-ignore
   async getComments(
-    _: any,
+    _: unknown,
     postDetails: PluginPostDetails,
     socialMediaAccount: PluginSocialMediaAccount,
     options?: { limit?: number; cursor?: string }
@@ -442,7 +455,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
         after: options?.cursor,
       });
 
-      const comments: PlatformComment[] = (result.data || []).map((c: any) =>
+      const comments: PlatformComment[] = (result.data || []).map((c: FacebookApiComment) =>
         this.transformComment(c)
       );
 
@@ -464,7 +477,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
    */
   // @ts-ignore
   async replyToComment(
-    _: any,
+    _: unknown,
     postDetails: PluginPostDetails,
     socialMediaAccount: PluginSocialMediaAccount,
     commentId: string,
@@ -542,7 +555,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     pageId: string,
     accessToken: string,
     options?: { limit?: number; after?: string }
-  ): Promise<any> {
+  ): Promise<{ data?: Array<Record<string, unknown>>; paging?: Record<string, unknown> }> {
     const params = new URLSearchParams({
       access_token: accessToken,
       fields: 'id,message,created_time,from,permalink_url',
@@ -552,7 +565,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
 
     const url = this._getGraphApiUrl(`/${pageId}/tagged?${params.toString()}`);
     const response = await this.fetch(url, undefined, 'get tagged posts');
-    return response.json();
+    return response.json() as Promise<{ data?: Array<Record<string, unknown>>; paging?: Record<string, unknown> }>;
   }
 
   /**
@@ -562,7 +575,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     pageId: string,
     accessToken: string,
     options?: { limit?: number; after?: string }
-  ): Promise<any> {
+  ): Promise<{ data?: Array<Record<string, unknown>>; paging?: Record<string, unknown> }> {
     return this.getTaggedPosts(pageId, accessToken, options);
   }
 
@@ -573,7 +586,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     pageId: string,
     accessToken: string,
     options?: { limit?: number; after?: string }
-  ): Promise<any> {
+  ): Promise<{ data?: Array<Record<string, unknown>>; paging?: Record<string, unknown> }> {
     const params = new URLSearchParams({
       access_token: accessToken,
       fields: 'id,link,updated_time,message_count,unread_count,participants',
@@ -583,7 +596,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
 
     const url = this._getGraphApiUrl(`/${pageId}/conversations?${params.toString()}`);
     const response = await this.fetch(url, undefined, 'get conversations');
-    return response.json();
+    return response.json() as Promise<{ data?: Array<Record<string, unknown>>; paging?: Record<string, unknown> }>;
   }
 
   /**
@@ -593,7 +606,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     conversationId: string,
     message: string,
     accessToken: string
-  ): Promise<any> {
+  ): Promise<{ id?: string; error?: { message: string } }> {
     const url = this._getGraphApiUrl(`/${conversationId}/messages?access_token=${accessToken}`);
     const response = await this.fetch(
       url,
@@ -608,7 +621,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
       },
       'reply to conversation'
     );
-    return response.json();
+    return response.json() as Promise<{ id?: string; error?: { message: string } }>;
   }
 
   async reConnect(
@@ -633,7 +646,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     };
   }
 
-  async pages(_: any, accessToken: string): Promise<FacebookPage[]> {
+  async pages(_: unknown, accessToken: string): Promise<FacebookPage[]> {
     const url = this._getGraphApiUrl(`/me/accounts?fields=id,instagram_business_account,username,name,picture.type(large)&access_token=${accessToken}`);
     const { data }: { data: FacebookPage[] } = await (
       await this.fetch(url, undefined, 'fetch pages')
@@ -782,13 +795,13 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     }
 
     return (
-      data?.map((d: any) => ({
+      data?.map((d: FacebookApiInsight) => ({
         label: labelMap[d.name] || d.name,
         percentageChange: 5,
-        data: d?.values?.map((v: any) => ({
+        data: d?.values?.map((v: FacebookApiInsightValue) => ({
           total: v.value,
           date: dayjs(v.end_time).format('YYYY-MM-DD'),
-        })),
+        })) || [],
       })) || []
     );
   }
@@ -1074,7 +1087,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
 
     const url = this._getGraphApiUrl(`/${postId}?access_token=${socialMediaAccount.accessToken}`);
 
-    const body: any = { message: content };
+    const body: Record<string, string> = { message: content };
     if (settings?.url) {
     }
 
@@ -1236,7 +1249,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
   ): Promise<{ id: string; success: boolean }> {
     const url = this._getGraphApiUrl(`/${postId}/comments?access_token=${accessToken}`);
 
-    const body: Record<string, any> = {
+    const body: { message: string; formatting?: string } = {
       message: message,
     };
 
@@ -1354,7 +1367,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     );
     const { data } = await (await this.fetch(url, undefined, 'get page impressions unique')).json();
 
-    return data?.find((d: any) => d.period === period) || data?.[0] || {};
+    return data?.find((d: { period: string }) => d.period === period) || data?.[0] || {};
   }
 
   // ===========================================
@@ -1435,7 +1448,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     }
 
     const url = this._getGraphApiUrl(`/${pageId}/feed?access_token=${accessToken}&fields=id,permalink_url`);
-    const body: Record<string, any> = {
+    const body: Record<string, unknown> = {
       message: message,
       published: options?.published ?? true,
     };
@@ -1498,7 +1511,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     }
 
     const url = this._getGraphApiUrl(`/${groupId}/feed?access_token=${accessToken}`);
-    const body: Record<string, any> = {
+    const body: Record<string, unknown> = {
       message: message,
     };
 
@@ -1695,7 +1708,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     total_video_views_sound_on: number;
     total_video_views_autoplayed: number;
     total_video_views_clicked_to_play: number;
-    raw_data: any[];
+    raw_data: Array<Record<string, unknown>>;
   }> {
     const metrics = [
       'total_video_views',
@@ -1711,11 +1724,11 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     const url = this._getGraphApiUrl(
       `/${videoId}/video_insights?metric=${metrics}&access_token=${accessToken}`
     );
-    const { data } = await (await this.fetch(url, undefined, 'get video insights')).json();
+    const { data } = await (await this.fetch(url, undefined, 'get video insights')).json() as { data?: FacebookApiMetric[] };
 
     const result: Record<string, number> = {
     };
-    data?.forEach((metric: any) => {
+    data?.forEach((metric: FacebookApiMetric) => {
       result[metric.name] = metric.values?.[0]?.value || 0;
     });
 
@@ -1754,7 +1767,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     post_video_likes_by_reaction_type: Record<string, number>;
     post_video_retention_graph: number[];
     virality_score: 'low' | 'medium' | 'high' | 'viral';
-    raw_data: any[];
+    raw_data: Array<Record<string, unknown>>;
   }> {
     const metrics = [
       'blue_reels_play_count',
@@ -1772,11 +1785,11 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     const url = this._getGraphApiUrl(
       `/${reelId}/video_insights?metric=${metrics}&access_token=${accessToken}`
     );
-    const { data } = await (await this.fetch(url, undefined, 'get reel insights')).json();
+    const { data } = await (await this.fetch(url, undefined, 'get reel insights')).json() as { data?: FacebookApiMetric[] };
 
-    const result: Record<string, any> = {
+    const result: Record<string, unknown> = {
     };
-    data?.forEach((metric: any) => {
+    data?.forEach((metric: FacebookApiMetric) => {
       result[metric.name] = metric.values?.[0]?.value;
     });
 

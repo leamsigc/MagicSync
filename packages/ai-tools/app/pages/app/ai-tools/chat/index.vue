@@ -5,6 +5,20 @@ import { useA2UIChat } from './composables/useA2UIChat'
 import ChatSidebar from './components/ChatSidebar.vue'
 import ToolCallCard from './components/ToolCallCard.vue'
 
+interface ChatPart {
+  type: string
+  text?: string
+  tool?: string
+  [key: string]: unknown
+}
+
+interface ToolCallInfo {
+  id: string
+  name: string
+  args: Record<string, unknown>
+  result?: string
+  error?: string
+}
 
 definePageMeta({ layout: 'ai-tools-layout' })
 
@@ -69,42 +83,41 @@ function insertTool(toolName: string) {
   input.value += `[${toolName}] `
 }
 
-function getToolCallForPart(part: any, index: number, toolCalls: any[] = []): any {
-  // First try to find by matching tool name
+function getToolCallForPart(part: ChatPart, index: number, toolCalls: ToolCallInfo[] = []): ToolCallInfo | undefined {
   const toolName = part.tool || ''
-  const matchingToolCall = toolCalls?.find((tc: any) => tc.name === toolName)
+  const matchingToolCall = toolCalls?.find((tc: ToolCallInfo) => tc.name === toolName)
   if (matchingToolCall) return matchingToolCall
-  // Fallback to index-based access
   return toolCalls?.[index]
 }
 
-function getToolCallState(part: any, index: number, toolCalls: any[] = []): 'input-available' | 'output-available' | 'error' {
+function getToolCallState(part: ChatPart, index: number, toolCalls: ToolCallInfo[] = []): 'input-available' | 'output-available' | 'error' {
   const tc = getToolCallForPart(part, index, toolCalls)
   if (tc?.error) return 'error'
   if (tc?.result) return 'output-available'
   return 'input-available'
 }
 
-function getToolName(part: any): string {
+function getToolName(part: ChatPart): string {
   return part.tool || 'unknown'
 }
 
-function isReasoningPart(part: any): boolean {
+function isReasoningPart(part: ChatPart): boolean {
   return part.type === 'thinking'
 }
 
-function isToolPart(part: any): boolean {
+function isToolPart(part: ChatPart): boolean {
   return part.type === 'tool'
 }
 
-function isTextPart(part: any): boolean {
+function isTextPart(part: ChatPart): boolean {
   return part.type === 'text'
 }
 </script>
 
 <template>
   <div class="flex h-screen overflow-hidden">
-    <ChatSidebar :threads="threads.map(t => ({
+    <ChatSidebar
+:threads="threads.map(t => ({
       id: t.id,
       title: t.title,
       lastMessage: t.lastMessageAt ? new Date(t.lastMessageAt).toLocaleDateString() : '',
@@ -127,14 +140,16 @@ function isTextPart(part: any): boolean {
         <div class="flex items-center gap-2">
           <UTooltip :text="enableTools ? 'Disable AI Tools' : 'Enable AI Tools'">
             <div class="flex items-center gap-1">
-              <UButton :icon="enableTools ? 'i-lucide-wrench' : 'i-lucide-wrench'"
+              <UButton
+:icon="enableTools ? 'i-lucide-wrench' : 'i-lucide-wrench'"
                 :color="enableTools ? 'primary' : 'neutral'" variant="ghost" size="sm"
                 @click="enableTools = !enableTools" />
               <span v-if="!enableTools" class="text-xs text-muted">Off</span>
             </div>
           </UTooltip>
           <UTooltip :text="'Show Available Tools'">
-            <UButton icon="i-lucide-list" color="neutral" variant="ghost" size="sm"
+            <UButton
+icon="i-lucide-list" color="neutral" variant="ghost" size="sm"
               @click="showToolsPanel = !showToolsPanel" />
           </UTooltip>
           <UButton icon="i-lucide-rotate-cw" color="neutral" variant="ghost" size="sm" @click="createNewThread" />
@@ -146,7 +161,8 @@ function isTextPart(part: any): boolean {
           <h3 class="text-sm font-semibold mb-2">Available Tools</h3>
           <p class="text-xs text-muted mb-3">Click to insert tool reference into your message</p>
           <div class="flex flex-wrap gap-2">
-            <UButton v-for="tool in availableTools" :key="tool.name" size="xs" variant="outline"
+            <UButton
+v-for="tool in availableTools" :key="tool.name" size="xs" variant="outline"
               @click="insertTool(tool.name)">
               {{ tool.name }}
             </UButton>
@@ -171,7 +187,8 @@ function isTextPart(part: any): boolean {
 
               <template v-for="(part, index) in message.parts" :key="`${message.id}-${part.type}-${index}`">
                 <template v-if="isToolPart(part)">
-                  <ToolCallCard :tool-call-id="getToolCallForPart(part, index, message.toolCalls)?.id || ''"
+                  <ToolCallCard
+:tool-call-id="getToolCallForPart(part, index, message.toolCalls)?.id || ''"
                     :tool-name="getToolName(part)"
                     :input="getToolCallForPart(part, index, message.toolCalls)?.args || {}"
                     :output="getToolCallForPart(part, index, message.toolCalls)?.result || ''"
@@ -179,12 +196,14 @@ function isTextPart(part: any): boolean {
                     :state="getToolCallState(part, index, message.toolCalls)" />
                 </template>
                 <template v-else-if="isTextPart(part)">
-                  <MDC v-if="part.text" :value="part.text" :cache-key="`${message.id}-${index}`"
+                  <MDC
+v-if="part.text" :value="part.text" :cache-key="`${message.id}-${index}`"
                     class="prose prose-sm max-w-none" />
                 </template>
               </template>
 
-              <div v-if="isStreaming && message.id === messages[messages.length - 1]?.id"
+              <div
+v-if="isStreaming && message.id === messages[messages.length - 1]?.id"
                 class="flex items-center gap-2 text-muted">
                 <UIcon name="i-lucide-ellipsis" class="w-6 h-6 animate-bounce" />
                 <span class="text-sm">Thinking...</span>
@@ -202,7 +221,8 @@ function isTextPart(part: any): boolean {
             {{ t('welcomeDescription') }}
           </p>
           <div class="flex flex-wrap gap-2 justify-center">
-            <UButton v-for="suggestion in [t('suggestion1'), t('suggestion2'), t('suggestion3')]" :key="suggestion"
+            <UButton
+v-for="suggestion in [t('suggestion1'), t('suggestion2'), t('suggestion3')]" :key="suggestion"
               :label="suggestion" color="neutral" variant="outline" size="sm"
               @click="handleSuggestionClick(suggestion)" />
           </div>
@@ -211,10 +231,12 @@ function isTextPart(part: any): boolean {
 
       <div class="px-6 py-4 border-t border-muted">
         <div class="max-w-3xl mx-auto">
-          <form @submit.prevent="onSubmit" class="flex gap-2">
-            <UInput v-model="input" :placeholder="t('placeholder')" class="flex-1" :disabled="isStreaming"
+          <form class="flex gap-2" @submit.prevent="onSubmit">
+            <UInput
+v-model="input" :placeholder="t('placeholder')" class="flex-1" :disabled="isStreaming"
               @keydown.enter.prevent="onSubmit" />
-            <UButton type="submit" :label="isStreaming ? 'Sending...' : 'Send'"
+            <UButton
+type="submit" :label="isStreaming ? 'Sending...' : 'Send'"
               :disabled="isStreaming || !input.trim()" />
           </form>
         </div>

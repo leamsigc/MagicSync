@@ -1,10 +1,24 @@
 import type { PostResponse, Integration, PluginPostDetails, PluginSocialMediaAccount, PlatformStats, GetCommentsResponse, ReplyCommentResponse, PlatformComment } from '../SchedulerPost.service';
 import { BaseSchedulerPlugin, type MediaContent } from '../SchedulerPost.service';
-import type { Post, PostWithAllData, SocialMediaAccount, Asset } from '#layers/BaseDB/db/schema';
+import type { Post, PostWithAllData, SocialMediaAccount, Asset, PlatformContentOverride } from '#layers/BaseDB/db/schema';
 import sharp from 'sharp';
 import type { LinkedInSettings } from '../../../shared/platformSettings';
 
 import { platformConfigurations } from '../../../shared/platformConstants';
+
+type LinkedInApiComment = {
+  id?: string;
+  $id?: string;
+  message?: { text?: string };
+  text?: string;
+  actor?: { name?: string; id?: string };
+  created?: { actor?: { name?: string; id?: string }; time?: string };
+  createdAt?: string;
+  likesSummary?: { totalLikes?: number };
+  commentsSummary?: { totalPosts?: number };
+  parent?: string;
+  inReplyTo?: string;
+};
 
 export class LinkedInPlugin extends BaseSchedulerPlugin {
   static readonly pluginName = 'linkedin';
@@ -18,20 +32,20 @@ export class LinkedInPlugin extends BaseSchedulerPlugin {
       .replace(/\r/g, '\n');
   }
 
-  private getPlatformData(postDetails: PluginPostDetails, platformPost?: any) {
+  private getPlatformData(postDetails: PluginPostDetails, platformPost?: Record<string, unknown>) {
     const platformName = this.pluginName;
-    const platformPostSettings = platformPost?.platformSettings || {};
-    const platformContent = platformPostSettings?.platformContent ||
-      (postDetails as any).platformContent?.[platformName];
+    const platformPostSettings = (platformPost?.platformSettings as Record<string, unknown> | undefined) || {};
+    const platformContent = (platformPostSettings?.platformContent as Record<string, PlatformContentOverride | undefined> | undefined) ||
+      (postDetails.platformContent as unknown as Record<string, PlatformContentOverride | undefined>)?.[platformName];
     const platformSettings = platformPostSettings ||
-      (postDetails as any).platformSettings?.[platformName] as LinkedInSettings | undefined;
+      (postDetails.platformSettings as unknown as Record<string, unknown>)?.[platformName] as LinkedInSettings | undefined;
 
     const rawContent = platformContent?.content || postDetails.content;
 
     return {
       content: this.normalizeContent(rawContent),
       settings: platformSettings,
-      postFormat: (postDetails as any).postFormat || 'post'
+      postFormat: postDetails.postFormat ?? 'post'
     };
   }
 
@@ -45,7 +59,7 @@ export class LinkedInPlugin extends BaseSchedulerPlugin {
     return platformConfigurations.linkedin.maxPostLength;
   }
 
-  protected init(options?: any): void {
+  protected init(options?: Record<string, unknown>): void {
     console.log('LinkedIn Personal plugin initialized', options);
   }
 
@@ -66,13 +80,13 @@ export class LinkedInPlugin extends BaseSchedulerPlugin {
   /**
    * Get LinkedIn user profile
    */
-  async getProfile(accessToken: string): Promise<any> {
+  async getProfile(accessToken: string): Promise<Record<string, unknown>> {
     const response = await fetch('https://api.linkedin.com/v2/userinfo', {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
     });
-    return response.json();
+    return response.json() as Promise<Record<string, unknown>>;
   }
 
   /**
@@ -116,7 +130,7 @@ export class LinkedInPlugin extends BaseSchedulerPlugin {
       headers: {
         'Content-Type': 'application/octet-stream',
       },
-      body: imageBuffer as any,
+        body: imageBuffer as unknown as BodyInit,
     });
 
     return asset;
@@ -151,7 +165,7 @@ export class LinkedInPlugin extends BaseSchedulerPlugin {
         );
       }
 
-      const shareBody: any = {
+      const shareBody: Record<string, unknown> = {
         author: `urn:li:person:${socialMediaAccount.accountId}`,
         lifecycleState: 'PUBLISHED',
         specificContent: {
@@ -372,7 +386,7 @@ export class LinkedInPlugin extends BaseSchedulerPlugin {
   /**
    * Transform LinkedIn social action to PlatformComment format
    */
-  private transformComment(comment: any): PlatformComment {
+  private transformComment(comment: LinkedInApiComment): PlatformComment {
     return {
       id: comment.id || comment.$id,
       text: comment.message?.text || comment.text || '',
@@ -394,8 +408,8 @@ export class LinkedInPlugin extends BaseSchedulerPlugin {
     socialMediaAccount: PluginSocialMediaAccount,
     options?: { limit?: number; cursor?: string }
   ): Promise<GetCommentsResponse> {
-    const platformPost = postDetails.platformPosts?.find((pp: any) => pp.socialAccountId === socialMediaAccount.id);
-    const publishDetail = platformPost?.publishDetail ? JSON.parse(platformPost.publishDetail) : {};
+    const platformPost = postDetails.platformPosts?.find((pp: { socialAccountId: string }) => pp.socialAccountId === socialMediaAccount.id);
+    const publishDetail = platformPost?.publishDetail ? JSON.parse(platformPost.publishDetail as string) : {};
     const externalPostId = publishDetail[socialMediaAccount.id]?.publishedId || publishDetail.postId;
 
     if (!externalPostId) {
@@ -425,8 +439,8 @@ export class LinkedInPlugin extends BaseSchedulerPlugin {
       }
 
       const data = await response.json();
-      const elements = data.elements || [];
-      const comments: PlatformComment[] = elements.map((c: any) => this.transformComment(c));
+      const elements: LinkedInApiComment[] = data.elements || [];
+      const comments: PlatformComment[] = elements.map((c: LinkedInApiComment) => this.transformComment(c));
 
       return {
         platform: this.pluginName,

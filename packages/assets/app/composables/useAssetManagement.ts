@@ -44,6 +44,15 @@ export interface FileUploadItem {
   asset?: Asset
 }
 
+function getErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof Error) return error.message
+  if (error && typeof error === 'object' && 'data' in error) {
+    const data = (error as { data: { message?: string } }).data
+    if (data?.message) return data.message
+  }
+  return fallback
+}
+
 const assets = ref<Asset[]>([])
 export const useAssetManagement = () => {
   const selectedAssets = ref<Asset[]>([])
@@ -67,8 +76,8 @@ export const useAssetManagement = () => {
     try {
       const response = await $fetch<{ data: Asset[] }>('/api/v1/assets?own=true')
       assets.value = response.data
-    } catch (err: any) {
-      error.value = err.data?.message || err.message || 'Failed to fetch assets'
+    } catch (error: unknown) {
+      error.value = getErrorMessage(error, 'Failed to fetch assets')
     }
   }
 
@@ -108,8 +117,8 @@ export const useAssetManagement = () => {
       if (options?.filters) {
         filters.value = options.filters
       }
-    } catch (err: any) {
-      error.value = err.data?.message || err.message || 'Failed to fetch assets'
+    } catch (error: unknown) {
+      error.value = getErrorMessage(error, 'Failed to fetch assets')
       assets.value = []
     } finally {
       isLoading.value = false
@@ -137,7 +146,7 @@ export const useAssetManagement = () => {
       // Convert files to nuxt-file-storage format
       const serverFiles = await Promise.all(
         files.map(async (file) => {
-          return new Promise<any>((resolve) => {
+          return new Promise<{ name: string; type: string; size: number; content: string }>((resolve) => {
             const reader = new FileReader()
             reader.onload = () => {
               resolve({

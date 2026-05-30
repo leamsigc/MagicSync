@@ -37,8 +37,9 @@ export default defineEventHandler(async (event) => {
       success: true,
       message: 'Profile updated successfully'
     }
-  } catch (error: any) {
-    log.error({ content: 'Failed to update profile', error: error.message })
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : 'Unknown error'
+    log.error({ content: 'Failed to update profile', error: msg })
 
     if (error instanceof z.ZodError) {
       throw createError({
@@ -50,7 +51,7 @@ export default defineEventHandler(async (event) => {
 
     throw createError({
       statusCode: 500,
-      statusMessage: error.message || 'Failed to update profile'
+      statusMessage: error instanceof Error ? error.message : 'Failed to update profile'
     })
   }
 })

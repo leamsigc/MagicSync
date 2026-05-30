@@ -40,10 +40,17 @@ export const auth = betterAuth({
     }
   }),
   session: {
-    cookieCache: {
-      enabled: true,
-      maxAge: 10 * 60 // Cache for 10 minutes
-    }
+    modelName: 'session',
+    fields: {
+      userId: 'userId',
+    },
+    partitioned: true,
+    expiresIn: 604_800, // 7 days
+    updateAge: 86_400, // 1 day
+    // cookieCache: {
+    //   enabled: true,
+    //   maxAge: 5 * 60,
+    // },
   },
   user: {
     additionalFields: {
@@ -111,15 +118,15 @@ export const auth = betterAuth({
       clientId: process.env.NUXT_GOOGLE_CLIENT_ID as string,
       clientSecret: process.env.NUXT_GOOGLE_CLIENT_SECRET as string,
       accessType: "offline",
-      prompt: "select_account consent",
+      // prompt: "select_account+consent",
       scope: [
         'openid',
         'email',
         'profile',
         'https://www.googleapis.com/auth/business.manage',
         'https://www.googleapis.com/auth/plus.business.manage',
-        'https://www.googleapis.com/auth/drive.readonly',
-        'https://www.googleapis.com/auth/drive.file'
+        // 'https://www.googleapis.com/auth/drive.readonly',
+        // 'https://www.googleapis.com/auth/drive.file'
       ]
     },
     facebook: {
@@ -306,7 +313,7 @@ export const auth = betterAuth({
           clientSecret: process.env.NUXT_GOOGLE_CLIENT_SECRET as string,
           discoveryUrl: 'https://accounts.google.com/.well-known/openid-configuration',
           scopes: ['openid', 'email', 'profile', 'https://www.googleapis.com/auth/youtube.upload', 'https://www.googleapis.com/auth/youtube'],
-          pkce: true,
+          pkce: false,
         },
         // Dribbble OAuth - not natively supported
         {
@@ -357,7 +364,7 @@ export const auth = betterAuth({
           tokenUrl: 'https://api.instagram.com/oauth/access_token',
           userInfoUrl: 'https://graph.instagram.com/me?fields=id,name,username,profile_picture_url',
           scopes: ['instagram_business_basic', "instagram_business_manage_messages", "instagram_business_content_publish", "instagram_business_manage_insights", "instagram_business_manage_comments  "],
-          pkce: true,
+          pkce: false,
           mapProfileToUser: (profile: any) => {
             return {
               ...profile,

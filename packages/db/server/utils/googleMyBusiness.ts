@@ -120,6 +120,26 @@ export interface GMBQuestion {
   }>
 }
 
+export interface GMBAccount {
+  name: string
+  accountName: string
+  type?: string
+  state?: string
+  [key: string]: unknown
+}
+
+export interface GMBAnswer {
+  name: string
+  text: string
+  author: {
+    displayName: string
+    profilePhotoUrl?: string
+    type: string
+  }
+  createTime: string
+  updateTime: string
+}
+
 /**
  * Google My Business API client class
  */
@@ -135,7 +155,7 @@ export class GoogleMyBusinessAPI {
   /**
   * Get all accounts accessible to the authenticated user
   */
-  async getAccounts(): Promise<any[]> {
+  async getAccounts(): Promise<{ accounts: GMBAccount[] }> {
     try {
       // Construct the full URL for the accounts.list endpoint
       const url = `${this.accountManagementUrl}/accounts`;
@@ -270,7 +290,7 @@ export class GoogleMyBusinessAPI {
   /**
    * Create a local post
    */
-  async createPost(locationName: string, post: GMBPost): Promise<any> {
+  async createPost(locationName: string, post: GMBPost): Promise<GMBPost> {
     try {
       const response = await fetch(`${this.baseUrl}/${locationName}/localPosts`, {
         method: 'POST',
@@ -319,7 +339,7 @@ export class GoogleMyBusinessAPI {
   /**
    * Answer a question
    */
-  async answerQuestion(questionName: string, text: string): Promise<any> {
+  async answerQuestion(questionName: string, text: string): Promise<GMBAnswer> {
     try {
       const response = await fetch(`${this.baseUrl}/${questionName}/answers`, {
         method: 'POST',
@@ -407,7 +427,7 @@ export function formatReviewForStorage(review: GMBReview, businessId: string) {
 /**
  * Create a text post for GMB
  */
-export function createTextPost(content: string, callToAction?: { type: string, url?: string }): GMBPost {
+export function createTextPost(content: string, callToAction?: { type: GMBPost['callToAction']['actionType'], url?: string }): GMBPost {
   const post: GMBPost = {
     languageCode: 'en',
     summary: content,
@@ -416,7 +436,7 @@ export function createTextPost(content: string, callToAction?: { type: string, u
 
   if (callToAction) {
     post.callToAction = {
-      actionType: callToAction.type as any,
+      actionType: callToAction.type,
       url: callToAction.url
     }
   }
@@ -462,7 +482,7 @@ export function createEventPost(
 /**
  * Create a post with images for GMB
  */
-export function createImagePost(content: string, imageUrls: string[], callToAction?: { type: string, url?: string }): GMBPost {
+export function createImagePost(content: string, imageUrls: string[], callToAction?: { type: GMBPost['callToAction']['actionType'], url?: string }): GMBPost {
   const post: GMBPost = {
     languageCode: 'en',
     summary: content,
@@ -475,7 +495,7 @@ export function createImagePost(content: string, imageUrls: string[], callToActi
 
   if (callToAction) {
     post.callToAction = {
-      actionType: callToAction.type as any,
+      actionType: callToAction.type,
       url: callToAction.url
     }
   }

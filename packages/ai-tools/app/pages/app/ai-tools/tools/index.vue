@@ -67,7 +67,8 @@ async function onSearchSubmit() {
             <UBadge v-for="t in tablesUsed" :key="t" :label="t" variant="soft" size="xs" color="primary" />
           </div>
           <div class="relative">
-            <pre class="bg-[#0d0d0d] text-emerald-400 p-4 rounded-lg text-sm overflow-x-auto font-mono border border-gray-700/50">{{ sql }}</pre>
+            <pre
+              class="bg-[#0d0d0d] text-emerald-400 p-4 rounded-lg text-sm overflow-x-auto font-mono border border-gray-700/50">{{ sql }}</pre>
             <UButton icon="i-heroicons-clipboard" size="xs" variant="solid" color="neutral"
               class="absolute top-2 right-2" @click="copySQL" />
           </div>
@@ -77,7 +78,8 @@ async function onSearchSubmit() {
       <!-- Web Search Tab -->
       <div v-if="activeTab === 'search'">
         <div class="flex gap-2 mb-6">
-          <UInput v-model="searchQuery" placeholder="Search the web..." class="flex-1" @keydown.enter="onSearchSubmit" />
+          <UInput v-model="searchQuery" placeholder="Search the web..." class="flex-1"
+            @keydown.enter="onSearchSubmit" />
           <UButton icon="i-heroicons-magnifying-glass" label="Search" color="primary" :loading="searchLoading"
             @click="onSearchSubmit" />
         </div>
@@ -89,8 +91,7 @@ async function onSearchSubmit() {
         <div v-if="results.length" class="space-y-4">
           <div v-for="result in results" :key="result.url"
             class="border border-gray-700/50 rounded-lg p-4 hover:bg-gray-800/30 transition-colors">
-            <a :href="result.url" target="_blank" rel="noopener"
-              class="text-emerald-500 font-medium hover:underline">
+            <a :href="result.url" target="_blank" rel="noopener" class="text-emerald-500 font-medium hover:underline">
               {{ result.title }}
             </a>
             <p class="text-xs text-gray-500 mt-1 truncate">{{ result.url }}</p>

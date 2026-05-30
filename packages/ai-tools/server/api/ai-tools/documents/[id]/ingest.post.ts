@@ -101,10 +101,10 @@ export default defineEventHandler(async (event) => {
         const reader = backendResponse.body.getReader()
         const decoder = new TextDecoder()
         let buffer = ''
-        let finalChunks: any[] = []
+        let finalChunks: Array<Record<string, unknown>> = []
         let totalChunks = 0
         let extractedText = ''
-        let documentMetadata: Record<string, any> = {}
+        let documentMetadata: Record<string, unknown> = {}
 
         while (true) {
           const { done, value } = await reader.read()
@@ -215,7 +215,7 @@ export default defineEventHandler(async (event) => {
         await aiToolsFacade.updateDocumentChunkCount(doc.id, user.id, ingestResult.total_chunks)
 
         // Merge document-level metadata from structured extraction
-        let existingMeta: Record<string, any> = {}
+        let existingMeta: Record<string, unknown> = {}
         try {
           existingMeta = doc.metadata ? JSON.parse(doc.metadata) : {}
         } catch { /* invalid JSON */ }
@@ -261,7 +261,7 @@ export default defineEventHandler(async (event) => {
             message: `Metadata extracted: "${metadataResult.title}"`,
             metadata: metadataResult,
           })))
-        } catch (metaError: any) {
+        } catch (metaError: unknown) {
           // Still save the structured metadata even if LLM extraction fails
           await aiToolsFacade.updateDocumentMetadata(doc.id, user.id, mergedMeta)
 
@@ -285,12 +285,13 @@ export default defineEventHandler(async (event) => {
         controller.close()
         return
 
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : String(error)
         log.error('Ingest error', { error: String(error) })
-        await aiToolsFacade.updateDocumentStatus(id!, user.id, 'failed', error.message)
+        await aiToolsFacade.updateDocumentStatus(id!, user.id, 'failed', errorMessage)
         controller.enqueue(encoder.encode(sendEvent({
           status: 'failed',
-          message: error.message || 'Ingestion failed',
+          message: errorMessage,
         })))
         controller.enqueue(encoder.encode('data: [DONE]\n\n'))
         controller.close()

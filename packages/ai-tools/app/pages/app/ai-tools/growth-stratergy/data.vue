@@ -92,7 +92,8 @@ useHead({
                                 <label class="block text-xs font-mono text-muted-foreground uppercase">{{ metric.label
                                     }}</label>
                             </div>
-                            <UInput v-model.number="stats[metric.key]" :type="metric.type" :step="metric.step" block
+                            <UInput
+v-model.number="stats[metric.key]" :type="metric.type" :step="metric.step" block
                                 variant="subtle" class="font-mono" />
                         </div>
                     </div>
@@ -114,7 +115,8 @@ useHead({
 
                 <div class="space-y-4">
                     <TransitionGroup name="list">
-                        <UAlert v-for="(option, idx) in fastOptions" :key="idx" :icon="option.icon"
+                        <UAlert
+v-for="(option, idx) in fastOptions" :key="idx" :icon="option.icon"
                             :color="option.color" variant="soft" :title="option.metric"
                             class="border border-current/10">
                             <template #description>

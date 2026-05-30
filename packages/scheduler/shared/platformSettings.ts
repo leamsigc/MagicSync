@@ -114,7 +114,7 @@ export interface YouTubeSettings extends BasePlatformSettings {
 export interface DiscordSettings extends BasePlatformSettings {
     __type: 'discord';
     channelId?: string;
-    embeds?: any[];
+    embeds?: Record<string, unknown>[];
 }
 
 export interface DribbbleSettings extends BasePlatformSettings {

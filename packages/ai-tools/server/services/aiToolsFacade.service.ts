@@ -7,7 +7,6 @@ import { documentService, chunkService } from '#layers/BaseDB/server/services/do
 import { agentService } from '#layers/BaseDB/server/services/agent.service'
 import { skillService } from '#layers/BaseDB/server/services/skill.service'
 import { folderService } from '#layers/BaseDB/server/services/folder.service'
-import type { ServiceResponse } from '@shared/server/types/service.types'
 import type { ChatThread, ChatMessage, UserLlmConfig, Document, DocumentChunk, AgentSession, Skill, SkillFile, KnowledgeFolder } from '#layers/BaseDB/db/schema'
 
 export type AuthenticatedUser = NonNullable<Awaited<ReturnType<typeof checkUserIsLogin>>>

@@ -65,7 +65,7 @@ export function useAuthApi(event: H3Event) {
 
     createOrganization(params: { body: { name: string; slug?: string; metadata?: Record<string, unknown> } }) {
       return auth.api.createOrganization({
-        ...params as any,
+        ...params,
         headers: headers()
       })
     },
@@ -130,7 +130,7 @@ export function useAuthApi(event: H3Event) {
 
     accountInfo(params: { body: { accountId: string } }) {
       return auth.api.accountInfo({
-        ...params as any,
+        ...params,
         headers: headers()
       })
     },

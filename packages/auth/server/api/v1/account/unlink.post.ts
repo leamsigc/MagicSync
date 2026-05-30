@@ -24,8 +24,9 @@ export default defineEventHandler(async (event) => {
         log.info({ content: 'Account unlinked successfully', accountId: validatedData.accountId })
 
         return result
-    } catch (error: any) {
-        log.error({ content: 'Failed to unlink account', error: error.message })
+    } catch (error: unknown) {
+        const msg = error instanceof Error ? error.message : 'Unknown error'
+        log.error({ content: 'Failed to unlink account', error: msg })
 
         if (error instanceof z.ZodError) {
             throw createError({
@@ -35,9 +36,10 @@ export default defineEventHandler(async (event) => {
             })
         }
 
+        const err = error as { statusCode?: number; statusMessage?: string }
         throw createError({
-            statusCode: error.statusCode || 500,
-            statusMessage: error.statusMessage || 'Failed to unlink account'
+            statusCode: err.statusCode || 500,
+            statusMessage: err.statusMessage || 'Failed to unlink account'
         })
     }
 })

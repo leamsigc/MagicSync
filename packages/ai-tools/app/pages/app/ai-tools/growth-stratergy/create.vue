@@ -93,7 +93,7 @@ watch(() => previewUrl.value, (newUrl) => {
 
 let timerInterval: ReturnType<typeof setInterval> | null = null
 let scrollTimeout: ReturnType<typeof setTimeout> | null = null
-let countdownInterval: ReturnType<typeof setInterval> | null = null
+const countdownInterval: ReturnType<typeof setInterval> | null = null
 
 // Sync timer with video recorder
 watch(videoTimer, (newTimer) => {
@@ -250,14 +250,16 @@ useHead({
               <div v-if="isAddingHook" class="p-4 bg-muted  rounded-lg space-y-3">
                 <UInput v-model="newHook.name" :placeholder="t('script.hookNamePlaceholder')" block />
                 <UInput v-model="newHook.template" :placeholder="t('script.hookTemplatePlaceholder')" block />
-                <UButton :disabled="!newHook.name || !newHook.template" color="primary" block
+                <UButton
+:disabled="!newHook.name || !newHook.template" color="primary" block
                   @click="handleAddCustomHook">
                   {{ t('script.addHook') }}
                 </UButton>
               </div>
 
               <div class="grid grid-cols-2 gap-2">
-                <UButton v-for="hook in hooks" :key="hook.id" color="neutral"
+                <UButton
+v-for="hook in hooks" :key="hook.id" color="neutral"
                   :variant="selectedHook.id === hook.id ? 'soft' : 'outline'" block
                   class="flex flex-col items-start p-3 h-auto text-left" @click="handleHookSelect(hook)">
                   <div class="font-bold text-sm">{{ hook.name }}</div>
@@ -272,11 +274,13 @@ useHead({
             <div class="space-y-2">
               <label class="block text-xs font-mono text-muted-foreground uppercase">{{
                 t('script.scriptLabel') }}</label>
-              <UTextarea v-model="scriptContent" :rows="12" block variant="subtle"
+              <UTextarea
+v-model="scriptContent" :rows="12" block variant="subtle"
                 class="font-mono leading-relaxed w-full" :placeholder="t('script.scriptLabel')" />
             </div>
 
-            <UButton :loading="isCheckingHealth" :disabled="!scriptContent || !topic" block size="lg"
+            <UButton
+:loading="isCheckingHealth" :disabled="!scriptContent || !topic" block size="lg"
               icon="i-lucide-zap" @click="onCheckHookHealth">
               {{ t('script.checkHealth') }}
             </UButton>
@@ -331,7 +335,8 @@ useHead({
                   <h4 class="text-xs font-mono text-muted-foreground uppercase mb-2">{{
                     t('script.adjustments') }}</h4>
                   <ul class="space-y-1">
-                    <li v-for="(adj, i) in hookHealth.adjustments" :key="i"
+                    <li
+v-for="(adj, i) in hookHealth.adjustments" :key="i"
                       class="text-xs text-muted-foreground flex items-center gap-2">
                       <UIcon name="i-lucide-circle-check" class="text-neutral-400" /> {{ adj }}
                     </li>
@@ -344,7 +349,8 @@ useHead({
                   <div class="bg-muted p-4 rounded-lg text-xs font-mono whitespace-pre-wrap leading-relaxed ">
                     {{ hookHealth.improvedScript }}
                   </div>
-                  <UButton block color="neutral" variant="soft"
+                  <UButton
+block color="neutral" variant="soft"
                     @click="acceptImprovedScript(hookHealth!.improvedScript)">
                     {{ t('script.acceptScript') }}
                   </UButton>
@@ -353,7 +359,8 @@ useHead({
                 <div v-if="hookHealth.alternativeVersions?.length" class="space-y-4 pt-4 border-t border-border mt-6">
                   <h4 class="text-xs font-mono text-muted-foreground uppercase">{{
                     t('script.alternativeHooks') }}</h4>
-                  <div v-for="(alt, idx) in hookHealth.alternativeVersions" :key="idx"
+                  <div
+v-for="(alt, idx) in hookHealth.alternativeVersions" :key="idx"
                     class="bg-muted/50  rounded-lg p-4 space-y-3">
                     <div class="flex justify-between items-start">
                       <div>
@@ -372,7 +379,8 @@ useHead({
                       class="bg-background  rounded-lg p-3 text-[10px] font-mono whitespace-pre-wrap leading-relaxed">
                       {{ alt.script }}
                     </div>
-                    <UButton block size="xs" color="neutral" variant="outline"
+                    <UButton
+block size="xs" color="neutral" variant="outline"
                       @click="acceptImprovedScript(alt.script)">
                       {{ t('script.useThisVersion') }}
                     </UButton>
@@ -407,7 +415,8 @@ useHead({
 
               <div class="w-full max-w-xs space-y-4">
                 <div class="grid grid-cols-3 gap-2">
-                  <UButton v-for="ratio in (['16:9', '9:16', '1:1'] as const)" :key="ratio" color="neutral"
+                  <UButton
+v-for="ratio in (['16:9', '9:16', '1:1'] as const)" :key="ratio" color="neutral"
                     :variant="aspectRatio === ratio ? 'solid' : 'outline'" size="xs" class="justify-center"
                     @click="aspectRatio = ratio">
                     {{ ratio }}
@@ -423,7 +432,8 @@ useHead({
                   <span class="text-xs font-mono text-muted-foreground uppercase">{{
                     t('record.latestRecording') }}</span>
                   <div class="flex gap-2">
-                    <UButton color="primary" variant="link" size="xs" icon="i-lucide-download"
+                    <UButton
+color="primary" variant="link" size="xs" icon="i-lucide-download"
                       @click="() => downloadVideo()">
                       {{ t('record.download') }}
                     </UButton>
@@ -477,7 +487,8 @@ useHead({
                 t('upload.videoUrl') }}</label>
               <UInput v-model="videoUrl" :placeholder="t('upload.placeholder')" block />
             </div>
-            <UButton :loading="isPublishing" block size="lg" color="primary" icon="i-lucide-cloud-upload"
+            <UButton
+:loading="isPublishing" block size="lg" color="primary" icon="i-lucide-cloud-upload"
               @click="onMarkAsPublished">
               {{ t('upload.markPublished') }}
             </UButton>
@@ -497,7 +508,8 @@ useHead({
             <span class="text-sm font-bold uppercase tracking-widest text-muted-foreground">{{
               t('record.focusMode') }}</span>
           </div>
-          <div v-if="isRecording"
+          <div
+v-if="isRecording"
             class="flex items-center gap-2 px-4 py-1.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-600">
             <div class="w-2 h-2 rounded-full bg-red-600 animate-pulse" />
             <span class="text-lg font-mono font-bold tabular-nums">{{ formatTime(timer) }}</span>
@@ -507,14 +519,18 @@ useHead({
         <div class="flex-1 relative w-full h-full flex items-center justify-center p-4 md:p-12 overflow-hidden">
           <div
             :class="['relative bg-neutral-900 rounded-3xl overflow-hidden shadow-2xl  transition-all duration-700', aspectRatio === '9:16' ? 'h-full aspect-9/16' : aspectRatio === '1:1' ? 'h-full aspect-square' : 'w-full max-w-6xl aspect-video']">
-            <video ref="videoRef" autoplay muted playsinline
+            <video
+ref="videoRef" autoplay muted playsinline
               class="absolute inset-0 w-full h-full object-cover opacity-30" />
 
-            <div v-if="words.length > 0"
+            <div
+v-if="words.length > 0"
               class="absolute inset-0 z-10 flex flex-col items-center justify-center p-8 text-center bg-black/40">
-              <transition-group name="word" tag="div"
+              <transition-group
+name="word" tag="div"
                 :class="['font-sans font-extrabold leading-tight tracking-tight flex flex-wrap justify-center gap-x-4 gap-y-2 select-none', aspectRatio === '9:16' ? 'text-4xl' : 'text-5xl md:text-7xl']">
-                <span v-for="(word, idx) in currentLine" :key="idx" :class="[
+                <span
+v-for="(word, idx) in currentLine" :key="idx" :class="[
                   'transition-all duration-300',
                   Number(idx) === Number(currentWordIndex) % WORDS_PER_LINE ? 'text-primary scale-110 drop-shadow-[0_0_20px_rgba(var(--color-primary-500),0.5)]' : Number(idx) < Number(currentWordIndex) % WORDS_PER_LINE ? 'text-white/20' : 'text-white'
                 ]">
@@ -550,28 +566,34 @@ useHead({
             </div>
 
             <div class="flex gap-2">
-              <UButton icon="i-lucide-chevron-up" color="neutral" variant="soft" size="lg" square
+              <UButton
+icon="i-lucide-chevron-up" color="neutral" variant="soft" size="lg" square
                 :disabled="Number(currentWordIndex) < WORDS_PER_LINE"
                 @click="currentWordIndex = Math.max(0, currentWordIndex - WORDS_PER_LINE)" />
-              <UButton icon="i-lucide-chevron-down" color="neutral" variant="soft" size="lg" square
+              <UButton
+icon="i-lucide-chevron-down" color="neutral" variant="soft" size="lg" square
                 :disabled="currentLineIndex >= lines.length - 1"
                 @click="currentWordIndex = Math.min(words.length - 1, currentWordIndex + WORDS_PER_LINE)" />
-              <UButton :icon="isAutoScroll ? 'i-lucide-pause' : 'i-lucide-play'"
+              <UButton
+:icon="isAutoScroll ? 'i-lucide-pause' : 'i-lucide-play'"
                 :color="isAutoScroll ? 'primary' : 'neutral'" variant="soft" size="lg" square :disabled="!isRecording"
                 @click="isAutoScroll = !isAutoScroll" />
             </div>
           </div>
 
           <div class="relative group">
-            <div v-if="!isVideoRecording"
+            <div
+v-if="!isVideoRecording"
               class="absolute inset-0 bg-primary/20 rounded-full blur-xl group-hover:bg-primary/30 transition-all scale-110" />
-            <UButton v-if="!isVideoRecording" size="xl" color="primary" variant="solid"
+            <UButton
+v-if="!isVideoRecording" size="xl" color="primary" variant="solid"
               class="rounded-full px-12 py-5 text-lg font-black uppercase tracking-[0.2em] shadow-2xl relative transition-transform active:scale-95"
               @click="startRecordingWithCountdown">
               <UIcon name="i-lucide-video" class="mr-3" />
               {{ t('record.startRecording') }}
             </UButton>
-            <UButton v-else size="xl" color="error" variant="solid"
+            <UButton
+v-else size="xl" color="error" variant="solid"
               class="rounded-full px-12 py-5 text-lg font-black uppercase tracking-[0.2em] shadow-2xl relative transition-transform active:scale-95 animate-pulse"
               @click="stopRecording">
               <UIcon name="i-lucide-square" class="mr-3" />

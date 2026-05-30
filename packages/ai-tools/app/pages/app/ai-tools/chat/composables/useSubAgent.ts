@@ -5,7 +5,7 @@ export interface SubAgentEvent {
   agentId: string
   task: string
   content?: string
-  toolCall?: { tool: string; input: Record<string, any> }
+  toolCall?: { tool: string; input: Record<string, unknown> }
   stepCount?: number
   maxSteps?: number
   done?: boolean
@@ -27,7 +27,7 @@ export interface SubAgentState {
 
 export interface SubAgentStep {
   content: string
-  toolCall?: { tool: string; input: Record<string, any>; result?: string }
+  toolCall?: { tool: string; input: Record<string, unknown>; result?: string }
   timestamp: Date
 }
 
@@ -35,7 +35,7 @@ export function useSubAgent() {
   const agents = ref<Map<string, SubAgentState>>(new Map())
   const isDetecting = ref(false)
 
-  async function detectSubAgent(message: string, context: any[] = []): Promise<{
+  async function detectSubAgent(message: string, context: Record<string, unknown>[] = []): Promise<{
     shouldSpawn: boolean
     taskType: string | null
     subAgentTask: string | null
@@ -69,7 +69,7 @@ export function useSubAgent() {
   async function spawnSubAgent(
     task: string,
     parentMessageId: string,
-    context?: any[],
+    context?: Record<string, unknown>[],
     maxSteps = 10,
     taskType?: string,
   ): Promise<SubAgentState | null> {
@@ -121,7 +121,7 @@ export function useSubAgent() {
       const result = await $fetch<{
         content: string | null
         done: boolean
-        tool_call: { tool: string; input: Record<string, any> } | null
+        tool_call: { tool: string; input: Record<string, unknown> } | null
         step_count: number
         error: string | null
       }>(`/api/ai-tools/agent/${agentId}/step`, {

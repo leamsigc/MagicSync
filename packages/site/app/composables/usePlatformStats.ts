@@ -106,8 +106,9 @@ export const usePlatformStats = () => {
         query: { ...filters, mode: 'current' },
       })
       if (res.success) stats.value = res.data
-    } catch (err: any) {
-      error.value = err.data?.message || 'Failed to fetch stats'
+    } catch (err: unknown) {
+      const fetchError = err as { data?: { message?: string }; message?: string }
+      error.value = fetchError.data?.message || fetchError.message || 'Failed to fetch stats'
     } finally {
       loading.value = false
     }
@@ -122,8 +123,9 @@ export const usePlatformStats = () => {
         query: { ...filters, mode: 'aggregated' },
       })
       if (res.success) aggregated.value = res.data
-    } catch (err: any) {
-      error.value = err.data?.message || 'Failed to fetch aggregated stats'
+    } catch (err: unknown) {
+      const fetchError = err as { data?: { message?: string }; message?: string }
+      error.value = fetchError.data?.message || fetchError.message || 'Failed to fetch aggregated stats'
     } finally {
       loading.value = false
     }
@@ -140,8 +142,9 @@ export const usePlatformStats = () => {
         query: { ...filters, mode: 'timeseries', days: filters.days || 30 },
       })
       if (res.success) timeSeries.value = res.data
-    } catch (err: any) {
-      error.value = err.data?.message || 'Failed to fetch time series'
+    } catch (err: unknown) {
+      const fetchError = err as { data?: { message?: string }; message?: string }
+      error.value = fetchError.data?.message || fetchError.message || 'Failed to fetch time series'
     } finally {
       loading.value = false
     }
@@ -156,8 +159,9 @@ export const usePlatformStats = () => {
         query: filters,
       })
       if (res.success) dashboard.value = res.data
-    } catch (err: any) {
-      error.value = err.data?.message || 'Failed to fetch dashboard'
+    } catch (err: unknown) {
+      const fetchError = err as { data?: { message?: string }; message?: string }
+      error.value = fetchError.data?.message || fetchError.message || 'Failed to fetch dashboard'
     } finally {
       loading.value = false
     }
@@ -179,8 +183,9 @@ export const usePlatformStats = () => {
         await fetchStats(filters)
       }
       return res.data
-    } catch (err: any) {
-      error.value = err.data?.message || 'Failed to collect stats'
+    } catch (err: unknown) {
+      const fetchError = err as { data?: { message?: string }; message?: string }
+      error.value = fetchError.data?.message || fetchError.message || 'Failed to collect stats'
       return null
     } finally {
       collecting.value = false

@@ -172,7 +172,7 @@ function testPlatformRateLimits(): void {
     const state = limiter.getState()
     // After reset, windows are empty, so let's just verify the configs
     // are correct by checking the type
-    const actual = (limiter as any)._limits?.[platform] ?? {}
+    const actual = (limiter as { _limits?: Record<string, unknown> })._limits?.[platform] ?? {}
     console.log(`  ${platform}: ${expectedCfg.maxRequests}/${Math.round(expectedCfg.windowMs / 1000 / 60)}min`)
   }
   console.log('[PASS] Platform rate limits are correctly configured')

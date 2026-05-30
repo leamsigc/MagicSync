@@ -15,6 +15,7 @@
  */
 import { platformStatsService } from '#layers/BaseScheduler/server/services/PlatformStats.service'
 import type { SocialMediaPlatform } from '#layers/BaseDB/server/services/social-media-account.service'
+import type { PlatformStatsFilters } from '#layers/BaseScheduler/server/services/PlatformStats.service'
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event)
@@ -41,14 +42,14 @@ export default defineEventHandler(async (event) => {
 
     log.set({ userId: session.user.id, businessId, platform, mode })
 
-    const filters: any = { userId: session.user.id }
+    const filters: PlatformStatsFilters = { userId: session.user.id }
     if (businessId) filters.businessId = businessId as string
     if (platform) filters.platform = platform as SocialMediaPlatform
     if (accountId) filters.accountId = accountId as string
     if (startDate) filters.startDate = startDate as string
     if (endDate) filters.endDate = endDate as string
 
-    let data: any
+    let data: unknown
 
     switch (mode) {
       case 'aggregated': {
@@ -76,9 +77,9 @@ export default defineEventHandler(async (event) => {
     }
 
     return { success: true, data }
-  } catch (error: any) {
+  } catch (error: unknown) {
     log.error({ content: 'Get stats error', error: String(error) })
-    if (error.statusCode) throw error
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error
     throw createError({ statusCode: 500, statusMessage: 'Failed to fetch stats' })
   }
 })

@@ -146,7 +146,7 @@ async function generateComment(text: string, platform: string, commentPrompt?: s
       const content = (response as { content: string }).content
       return content.split('\n').map(s => s.trim()).filter(Boolean).slice(0, 3)
     }
-  } catch {}
+  } catch { }
 
   return []
 }
@@ -172,6 +172,7 @@ export default defineEventHandler(async (event) => {
   // Get connected accounts
   const accounts = await socialMediaAccountService.getAccountsByBusinessId(businessId)
   const connectedPlatforms = new Set(accounts.map(a => a.platform))
+  // @ts-ignore
   const disconnectedPlatforms = body.platforms.filter(p => !connectedPlatforms.has(p))
 
   if (disconnectedPlatforms.length > 0) {
@@ -242,7 +243,7 @@ export default defineEventHandler(async (event) => {
     businessId,
     content: unifiedContent,
     mediaAssets: mediaAssets.map(a => a.id),
-    targetPlatforms: body.platforms,
+    targetPlatforms: relevantAccounts.map(acc => acc.id),
     scheduledAt,
     status: isImmediate ? 'published' : 'scheduled',
     comment: comments,

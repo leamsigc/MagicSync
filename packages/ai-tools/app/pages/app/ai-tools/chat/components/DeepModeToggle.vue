@@ -4,14 +4,14 @@
       <input
         type="checkbox"
         :checked="deepModeEnabled"
-        @change="toggleDeepMode"
         class="toggle-input"
-      />
-      <span class="toggle-switch"></span>
+        @change="toggleDeepMode"
+      >
+      <span class="toggle-switch"/>
       <span class="toggle-text">{{ t('deepMode') }}</span>
     </label>
     <div v-if="deepModeEnabled" class="deep-mode-indicator" :class="agentStatus">
-      <span class="status-dot"></span>
+      <span class="status-dot"/>
       <span class="status-text">{{ agentStatusLabel }}</span>
     </div>
   </div>

@@ -1,10 +1,37 @@
 import { getPublicUrlForAsset } from './../../utils/ScheduleUtils';
-import type { Post, PostWithAllData, SocialMediaAccount, Asset } from '#layers/BaseDB/db/schema';
+import type { Post, PostWithAllData, SocialMediaAccount, Asset, PlatformContentOverride } from '#layers/BaseDB/db/schema';
 import sharp from 'sharp';
 import type { LinkedInSettings } from '#layers/BaseScheduler/shared/platformSettings';
 import { platformConfigurations } from '#layers/BaseScheduler/shared/platformConstants';
 import { BaseSchedulerPlugin, type PluginPostDetails, type PluginSocialMediaAccount, type PostResponse, type GetCommentsResponse, type ReplyCommentResponse, type PlatformComment, type PlatformStats } from '../SchedulerPost.service';
 import type { FacebookPage } from '#layers/BaseConnect/utils/FacebookPages';
+
+type LinkedInApiOrgElement = {
+  'organizationalTarget~': {
+    logoV2?: {
+      'original~'?: {
+        elements?: Array<{ identifiers?: Array<{ identifier: string }> }>
+      }
+    }
+    localizedName: string
+    vanityName: string
+  }
+  organizationalTarget: string
+}
+
+type LinkedInApiComment = {
+  id?: string
+  $id?: string
+  message?: { text?: string }
+  text?: string
+  actor?: { name?: string; id?: string }
+  created?: { actor?: { name?: string; id?: string }; time?: string }
+  createdAt?: string
+  likesSummary?: { totalLikes?: number }
+  commentsSummary?: { totalPosts?: number }
+  parent?: string
+  inReplyTo?: string
+}
 
 /**
  * LinkedIn Page Plugin - Posts on behalf of LinkedIn Organization/Company pages
@@ -67,12 +94,12 @@ export class LinkedInPagePlugin extends BaseSchedulerPlugin {
 
   private getPlatformData(postDetails: PluginPostDetails) {
     const platformName = this.pluginName;
-    const platformContent = (postDetails as any).platformContent?.[platformName];
-    const platformSettings = (postDetails as any).platformSettings?.[platformName] as LinkedInSettings | undefined;
+    const platformContent = (postDetails.platformContent as unknown as Record<string, PlatformContentOverride | undefined>)?.[platformName];
+    const platformSettings = (postDetails.platformSettings as unknown as Record<string, unknown>)?.[platformName] as LinkedInSettings | undefined;
     return {
       content: platformContent?.content || postDetails.content,
       settings: platformSettings,
-      postFormat: (postDetails as any).postFormat || 'post'
+      postFormat: postDetails.postFormat ?? 'post'
     };
   }
 
@@ -87,7 +114,7 @@ export class LinkedInPagePlugin extends BaseSchedulerPlugin {
     return platformConfigurations['linkedin-page'].maxPostLength;
   }
 
-  protected init(options?: any): void {
+  protected init(options?: Record<string, unknown>): void {
     console.log('LinkedIn Page plugin initialized', options);
   }
 
@@ -108,7 +135,7 @@ export class LinkedInPagePlugin extends BaseSchedulerPlugin {
   /**
    * Get organization information
    */
-  async pages(_: any, accessToken: string): Promise<FacebookPage[]> {
+  async pages(_: unknown, accessToken: string): Promise<FacebookPage[]> {
     const { elements, ...all } = await (
       await fetch(
         'https://api.linkedin.com/v2/organizationalEntityAcls?q=roleAssignee&role=ADMINISTRATOR&projection=(elements*(organizationalTarget~(localizedName,vanityName,logoV2(original~:playableStreams))))',
@@ -122,7 +149,7 @@ export class LinkedInPagePlugin extends BaseSchedulerPlugin {
       )
     ).json();
     const imagePromises = await Promise.all(
-      (elements || []).map((e: any) => {
+      (elements || []).map((e: LinkedInApiOrgElement) => {
         const url = e['organizationalTarget~'].logoV2?.['original~']?.elements?.[0]?.identifiers?.[0]?.identifier;
         if (!url) {
           return null;
@@ -131,7 +158,7 @@ export class LinkedInPagePlugin extends BaseSchedulerPlugin {
       }));
     const imageBase64s = await Promise.all(imagePromises);
 
-    const pages: FacebookPage[] = (elements || []).map((e: any, index: number) => ({
+    const pages: FacebookPage[] = (elements || []).map((e: LinkedInApiOrgElement, index: number) => ({
       imageBase64: imageBase64s[index],
       id: e.organizationalTarget.split(':').pop(),
       page: e.organizationalTarget.split(':').pop(),
@@ -262,7 +289,7 @@ export class LinkedInPagePlugin extends BaseSchedulerPlugin {
         );
       }
 
-      const shareBody: any = {
+      const shareBody: Record<string, unknown> = {
         author: author,
         lifecycleState: 'PUBLISHED',
         specificContent: {
@@ -425,7 +452,7 @@ export class LinkedInPagePlugin extends BaseSchedulerPlugin {
   /**
    * Transform LinkedIn social action to PlatformComment format
    */
-  private transformComment(comment: any): PlatformComment {
+  private transformComment(comment: LinkedInApiComment): PlatformComment {
     return {
       id: comment.id || comment.$id,
       text: comment.message?.text || comment.text || '',
@@ -447,8 +474,8 @@ export class LinkedInPagePlugin extends BaseSchedulerPlugin {
     socialMediaAccount: PluginSocialMediaAccount,
     options?: { limit?: number; cursor?: string }
   ): Promise<GetCommentsResponse> {
-    const platformPost = postDetails.platformPosts?.find((pp: any) => pp.socialAccountId === socialMediaAccount.id);
-    const publishDetail = platformPost?.publishDetail ? JSON.parse(platformPost.publishDetail) : {};
+    const platformPost = postDetails.platformPosts?.find((pp: { socialAccountId: string }) => pp.socialAccountId === socialMediaAccount.id);
+    const publishDetail = platformPost?.publishDetail ? JSON.parse(platformPost.publishDetail as string) : {};
     const externalPostId = publishDetail[socialMediaAccount.id]?.publishedId || publishDetail.postId;
 
     if (!externalPostId) {
@@ -477,8 +504,8 @@ export class LinkedInPagePlugin extends BaseSchedulerPlugin {
       }
 
       const data = await response.json();
-      const elements = data.elements || [];
-      const comments: PlatformComment[] = elements.map((c: any) => this.transformComment(c));
+      const elements: LinkedInApiComment[] = data.elements || [];
+      const comments: PlatformComment[] = elements.map((c: LinkedInApiComment) => this.transformComment(c));
 
       return {
         platform: this.pluginName,

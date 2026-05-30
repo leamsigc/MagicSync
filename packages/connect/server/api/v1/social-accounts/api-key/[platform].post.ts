@@ -196,8 +196,8 @@ export default defineEventHandler(async (event) => {
     log.error('API key authentication failed', { error })
 
     throw createError({
-      statusCode: (error as any)?.statusCode || 500,
-      statusMessage: (error as any)?.statusMessage || 'Authentication failed'
+      statusCode: (error as { statusCode?: number })?.statusCode || 500,
+      statusMessage: (error as { statusMessage?: string })?.statusMessage || 'Authentication failed'
     })
   }
 })

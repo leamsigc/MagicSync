@@ -106,7 +106,7 @@ export default defineEventHandler(async (event) => {
     const baseUrl = BASE_URL || 'http://localhost:3000'
     const errorMessage = error instanceof Error
       ? error.message
-      : (error as any)?.statusMessage || 'Connection failed'
+      : (error as { statusMessage?: string })?.statusMessage || 'Connection failed'
     const errorUrl = `${baseUrl}/app/integrations?error=${encodeURIComponent(errorMessage)}`
 
     return sendRedirect(event, errorUrl)

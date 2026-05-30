@@ -155,7 +155,7 @@ export async function compressImage(buffer: Buffer, format: string | undefined, 
  * before triggering the post.
  */
 const platformsThatNeedTokenRefresh = ['x', 'twitter', 'linkedin',]
-export const ScheduleRefreshSocialMediaTokens = async (fullPost: PostWithAllData, userId: string, headers: any) => {
+export const ScheduleRefreshSocialMediaTokens = async (fullPost: PostWithAllData, userId: string, headers: HeadersInit) => {
   const platformsToPost = fullPost.platformPosts.filter((platformPost) => {
     return platformsThatNeedTokenRefresh.includes(platformPost.platformPostId || '')
   })
@@ -193,7 +193,7 @@ import { platformConfigurations } from '../../shared/platformConstants'
 import type { PlatformConfig } from '../../shared/platformConstants'
 
 export function validateContentForPlatform(platform: string, content: { text?: string; mediaUrls?: string[] }): ValidationResult {
-  const config: PlatformConfig = (platformConfigurations as any)[platform] ?? platformConfigurations.default
+  const config: PlatformConfig = (platformConfigurations as Record<string, PlatformConfig>)[platform] ?? platformConfigurations.default
   const errors: string[] = []
   const warnings: string[] = []
 

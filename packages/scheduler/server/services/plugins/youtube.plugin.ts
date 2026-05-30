@@ -12,12 +12,12 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
 
   private getPlatformData(postDetails: PluginPostDetails) {
     const platformName = this.pluginName;
-    const platformContent = (postDetails as any).platformContent?.[platformName];
-    const platformSettings = (postDetails as any).platformSettings?.[platformName] as YouTubeSettings | undefined;
+    const platformContent = (postDetails.platformContent as Record<string, { content: string; comments?: string[] } | undefined>)?.[platformName];
+    const platformSettings = (postDetails.platformSettings as Record<string, unknown>)?.[platformName] as YouTubeSettings | undefined;
     return {
       content: platformContent?.content || postDetails.content,
       settings: platformSettings,
-      postFormat: (postDetails as any).postFormat || 'post'
+      postFormat: postDetails.postFormat || 'post'
     };
   }
 
@@ -27,19 +27,19 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
   ] as const;
   override maxConcurrentJob = platformConfigurations.youtube.maxConcurrentJob; // YouTube has strict upload quotas
 
-  protected init(options?: any): void {
+  protected init(options?: Record<string, unknown>): void {
     console.log('YouTube plugin initialized', options);
   }
 
   override async validate(post: Post): Promise<string[]> {
     const errors: string[] = [];
-    const postWithAssets = post as any;
+    const postWithAssets = post as PostWithAllData;
 
     if (!postWithAssets.assets || postWithAssets.assets.length === 0) {
       errors.push('At least one video is required for YouTube uploads.');
     }
 
-    const hasVideo = postWithAssets.assets?.some((asset: any) => asset.mimeType?.includes('video'));
+    const hasVideo = postWithAssets.assets?.some((asset: Asset) => asset.mimeType?.includes('video'));
     if (!hasVideo) {
       errors.push('YouTube requires a video file.');
     }
@@ -50,7 +50,7 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
   /**
    * Get user's YouTube channels
    */
-  async getChannels(accessToken: string): Promise<any[]> {
+  async getChannels(accessToken: string): Promise<youtube_v3.Schema$Channel[]> {
     const auth = new google.auth.OAuth2();
     auth.setCredentials({ access_token: accessToken });
 
@@ -66,7 +66,7 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
   /**
    * Get available video categories
    */
-  async getVideoCategories(regionCode: string, accessToken: string): Promise<any[]> {
+  async getVideoCategories(regionCode: string, accessToken: string): Promise<youtube_v3.Schema$VideoCategory[]> {
     const auth = new google.auth.OAuth2();
     auth.setCredentials({ access_token: accessToken });
 
@@ -407,7 +407,7 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
   /**
    * Transform YouTube commentThread to PlatformComment format
    */
-  private transformComment(comment: any): PlatformComment {
+  private transformComment(comment: Record<string, unknown>): PlatformComment {
     return {
       id: comment.id,
       text: comment.snippet?.topLevelComment?.snippet?.textOriginal || comment.snippet?.textOriginal || '',
@@ -429,7 +429,7 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
     socialMediaAccount: PluginSocialMediaAccount,
     options?: { limit?: number; cursor?: string }
   ): Promise<GetCommentsResponse> {
-    const platformPost = postDetails.platformPosts?.find((pp: any) => pp.socialAccountId === socialMediaAccount.id);
+    const platformPost = postDetails.platformPosts?.find((pp) => pp.socialAccountId === socialMediaAccount.id);
     const publishDetail = platformPost?.publishDetail ? JSON.parse(platformPost.publishDetail) : {};
     const externalPostId = publishDetail[socialMediaAccount.id]?.publishedId || publishDetail.postId;
 
@@ -454,7 +454,7 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
         order: 'time',
       });
 
-      const comments: PlatformComment[] = (response.data.items || []).map((c: any) => this.transformComment(c));
+      const comments: PlatformComment[] = (response.data.items || []).map((c) => this.transformComment(c as Record<string, unknown>));
 
       return {
         platform: this.pluginName,
@@ -463,7 +463,7 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
         hasMore: !!response.data.nextPageToken,
         nextCursor: response.data.nextPageToken,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error fetching YouTube comments:', error);
       return {
         platform: this.pluginName,
@@ -532,7 +532,7 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
           parentId: commentId,
         },
       };
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error replying to YouTube comment:', error);
       return {
         success: false,

@@ -10,6 +10,7 @@ import { postService } from '#layers/BaseDB/server/services/post.service';
 import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service';
 import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers';
 import { AutoPostService } from '#layers/BaseScheduler/server/services/AutoPost.service';
+import type { Account } from '#layers/BaseDB/db/schema';
 
 
 export default defineEventHandler(async (event) => {
@@ -34,7 +35,7 @@ export default defineEventHandler(async (event) => {
 
     // Find the platform post for this platform
     const platformPost = post.platformPosts?.find(
-      (pp: any) => pp.platformPostId === platform || pp.platform === platform
+      (pp) => pp.platformPostId === platform || pp.platform === platform
     );
 
     if (!platformPost) {
@@ -55,13 +56,13 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 400, statusMessage: `Unsupported platform: ${platform}` });
     }
     const result = await trigger.getCommentsFromPost({
-      post, socialAccount: socialAccount as unknown as any, platform, pagination:
+      post, socialAccount: socialAccount as unknown as Account, platform, pagination:
         { limit: parseInt(limit as string, 10), cursor: cursor as string | undefined }
     });
 
     return { success: true, data: result };
-  } catch (error: any) {
-    if (error.statusCode) throw error;
+  } catch (error: unknown) {
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error;
     log.error({ content: 'Get comments error', error: String(error) });
     throw createError({ statusCode: 500, statusMessage: 'Internal server error' });
   }

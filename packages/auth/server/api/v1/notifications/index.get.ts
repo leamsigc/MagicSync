@@ -33,8 +33,9 @@ export default defineEventHandler(async (event) => {
                 offset: validatedQuery.offset
             }
         }
-    } catch (error: any) {
-        log.error({ content: 'Failed to get notifications', error: error.message })
+    } catch (error: unknown) {
+        const msg = error instanceof Error ? error.message : 'Unknown error'
+        log.error({ content: 'Failed to get notifications', error: msg })
 
         if (error instanceof z.ZodError) {
             throw createError({
@@ -44,9 +45,10 @@ export default defineEventHandler(async (event) => {
             })
         }
 
+        const err = error as { statusCode?: number; statusMessage?: string }
         throw createError({
-            statusCode: error.statusCode || 500,
-            statusMessage: error.statusMessage || 'Failed to get notifications'
+            statusCode: err.statusCode || 500,
+            statusMessage: err.statusMessage || 'Failed to get notifications'
         })
     }
 })

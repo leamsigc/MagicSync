@@ -96,7 +96,7 @@ export const useDashboardMetrics = () => {
       // Build platform distribution from aggregated data
       chartData.value.content.distribution = buildDistribution(allStats)
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Consider using a proper logging library in production
       // Error is handled by the parent usePlatformStats composable
     }
@@ -114,7 +114,7 @@ export const useDashboardMetrics = () => {
     return n.toString()
   }
 
-  function getTrend(allStats: PlatformStats[], metric: 'followers' | 'posts' | 'engagement'): 'up' | 'down' {
+  function getTrend(allStats: Readonly<PlatformStats>[], metric: 'followers' | 'posts' | 'engagement'): 'up' | 'down' {
     const hasGrowth = allStats.some(s => {
       const g = s.growth
       if (!g) return false
@@ -124,7 +124,7 @@ export const useDashboardMetrics = () => {
     return hasGrowth ? 'up' : 'down'
   }
 
-  function calculateChange(allStats: PlatformStats[], metric: 'followers' | 'posts' | 'engagement'): string {
+  function calculateChange(allStats: Readonly<PlatformStats>[], metric: 'followers' | 'posts' | 'engagement'): string {
     let totalChange = 0
     let totalBase = 0
 

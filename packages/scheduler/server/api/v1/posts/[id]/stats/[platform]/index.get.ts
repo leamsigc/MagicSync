@@ -11,6 +11,7 @@ import { entityDetails } from '#layers/BaseDB/db/entityDetails/entityDetails';
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle';
 import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers';
 import { AutoPostService } from '#layers/BaseScheduler/server/services/AutoPost.service';
+import type { Account } from '#layers/BaseDB/db/schema';
 import { eq, and, desc } from 'drizzle-orm';
 import dayjs from 'dayjs';
 
@@ -43,7 +44,7 @@ export default defineEventHandler(async (event) => {
     }
 
     const platformPost = post.platformPosts?.find(
-      (pp: any) => pp.platformPostId === platform || pp.platform === platform
+      (pp) => pp.platformPostId === platform || pp.platform === platform
     );
 
     if (!platformPost) {
@@ -72,7 +73,7 @@ export default defineEventHandler(async (event) => {
 
     const insights = await trigger.getPostInsights({
       post,
-      socialAccount: socialAccount as unknown as any,
+      socialAccount: socialAccount as unknown as Account,
       platform,
     });
 
@@ -96,8 +97,8 @@ export default defineEventHandler(async (event) => {
     }
 
     return { success: true, data: insights, cached: false, updatedAt: new Date().toISOString() };
-  } catch (error: any) {
-    if (error.statusCode) throw error;
+  } catch (error: unknown) {
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error;
     log.error({ content: 'Get post stats error', error: String(error) });
     throw createError({ statusCode: 500, statusMessage: 'Internal server error' });
   }

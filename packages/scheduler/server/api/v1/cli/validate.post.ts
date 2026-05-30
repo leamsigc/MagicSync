@@ -6,6 +6,7 @@
  */
 import { platformConfigurations } from '../../../../shared/platformConstants'
 import type { PlatformConfig } from '../../../../shared/platformConstants'
+import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service'
 
 interface ValidationResult {
   isValid: boolean

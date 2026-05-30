@@ -20,7 +20,7 @@ export interface PlatformPostStatus {
 }
 
 export interface PostWithPlatformStatus {
-  post: any
+  post: Record<string, unknown>
   platformStatuses: PlatformPostStatus[]
 }
 

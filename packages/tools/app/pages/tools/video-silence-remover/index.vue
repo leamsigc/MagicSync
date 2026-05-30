@@ -440,8 +440,7 @@ defineOgImage("BlogOgImage", {
             <section class="grid gap-4">
               <!-- File Upload -->
               <div>
-                <UFileUpload
-accept="video/*" :max-size="MAX_FILE_SIZE" color="primary" variant="area"
+                <UFileUpload accept="video/*" :max-size="MAX_FILE_SIZE" color="primary" variant="area"
                   :label="t('drag_and_drop_files_here')" :description="t('supported_formats')" class="w-full min-h-48"
                   @update:model-value="onFileDrop" />
               </div>
@@ -473,20 +472,18 @@ accept="video/*" :max-size="MAX_FILE_SIZE" color="primary" variant="area"
                 </UButton>
               </div>
 
-              <video
-:src="videoUrl" controls class="w-full rounded-lg border border-neutral-600"
-                preload="metadata"/>
+              <video :src="videoUrl" controls class="w-full rounded-lg border border-neutral-600" preload="metadata" />
 
               <!-- Threshold Settings -->
               <div class="space-y-4">
                 <div>
                   <label class="block text-sm font-medium text-white mb-2">{{ t('silence_threshold') }}</label>
-                  <input v-model.number="silenceThreshold" type="range" min="5" max="50" class="w-full" >
+                  <input v-model.number="silenceThreshold" type="range" min="5" max="50" class="w-full">
                   <span class="text-sm text-neutral-400">{{ silenceThreshold }}/255</span>
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-white mb-2">{{ t('buffer_frames') }}</label>
-                  <input v-model.number="bufferFrames" type="range" min="5" max="30" class="w-full" >
+                  <input v-model.number="bufferFrames" type="range" min="5" max="30" class="w-full">
                   <span class="text-sm text-neutral-400">{{ bufferFrames }} frames</span>
                 </div>
               </div>
@@ -523,9 +520,8 @@ accept="video/*" :max-size="MAX_FILE_SIZE" color="primary" variant="area"
               <!-- Processed Video -->
               <div v-if="processedVideo" class="space-y-4">
                 <h4 class="text-md font-medium text-white">{{ t('processed_video') }}</h4>
-                <video
-:src="processedVideo.url" controls class="w-full rounded-lg border border-neutral-600"
-                  preload="metadata"/>
+                <video :src="processedVideo.url" controls class="w-full rounded-lg border border-neutral-600"
+                  preload="metadata" />
 
                 <div class="text-sm text-neutral-400 space-y-1">
                   <p>{{ t('original_duration') }}: {{ processedVideo.duration }}s</p>
@@ -557,13 +553,12 @@ accept="video/*" :max-size="MAX_FILE_SIZE" color="primary" variant="area"
 
             <div class="relative w-full h-full bg-black group">
               <!-- Recording Video -->
-              <video
-ref="recordingVideo" autoplay playsinline muted="true"
-                class="w-full h-full object-cover transition-transform duration-500 opacity-100"/>
+              <video ref="recordingVideo" autoplay playsinline muted="true"
+                class="w-full h-full object-cover transition-transform duration-500 opacity-100" />
 
               <!-- Recording Indicator -->
               <div v-if="isRecording" class="absolute top-4 left-4 flex items-center space-x-2">
-                <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"/>
+                <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
                 <span class="text-white text-sm font-medium">{{ formatDuration(recordingDuration) }}</span>
               </div>
 
@@ -572,20 +567,17 @@ ref="recordingVideo" autoplay playsinline muted="true"
                 <!-- Aspect Ratio & Voice Mode -->
                 <div class="flex items-center space-x-2 p-1 bg-neutral-900/50 rounded-full backdrop-blur-sm">
                   <div class="flex space-x-1 ">
-                    <UButton
-:variant="selectedAspectRatio === '16:9' ? 'soft' : 'ghost'" size="xs"
-                      class="text-xs px-4 rounded-full  h-8 grid place-content-center"
-                      rounded @click="changeAspectRatio('16:9')">
+                    <UButton :variant="selectedAspectRatio === '16:9' ? 'soft' : 'ghost'" size="xs"
+                      class="text-xs px-4 rounded-full  h-8 grid place-content-center" rounded
+                      @click="changeAspectRatio('16:9')">
                       16:9
                     </UButton>
-                    <UButton
-:variant="selectedAspectRatio === '9:16' ? 'soft' : 'ghost'" size="xs" rounded
+                    <UButton :variant="selectedAspectRatio === '9:16' ? 'soft' : 'ghost'" size="xs" rounded
                       class="text-xs px-4 rounded-full  h-8 grid place-content-center"
                       @click="changeAspectRatio('9:16')">
                       9:16
                     </UButton>
-                    <UButton
-:variant="selectedAspectRatio === '1:1' ? 'soft' : 'ghost'" size="xs" rounded
+                    <UButton :variant="selectedAspectRatio === '1:1' ? 'soft' : 'ghost'" size="xs" rounded
                       class="text-xs px-4 rounded-full  h-8 grid place-content-center"
                       @click="changeAspectRatio('1:1')">
                       1:1
@@ -595,32 +587,31 @@ ref="recordingVideo" autoplay playsinline muted="true"
 
                 <!-- Recording Controls -->
                 <div class="flex items-center space-x-4">
-                  <UButton
-:variant="isMuted ? 'soft' : 'outline'" color="neutral" size="lg" rounded class="w-14 h-14 grid place-content-center rounded-full"
-                    @click="toggleMute">
+                  <UButton :variant="isMuted ? 'soft' : 'outline'" color="neutral" size="lg" rounded
+                    class="w-14 h-14 grid place-content-center rounded-full" @click="toggleMute">
                     <Icon :name="isMuted ? 'lucide:mic-off' : 'lucide:mic'" size="24" />
                   </UButton>
 
-                  <UButton
-v-if="!isRecording" icon="" color="error" size="xl" rounded class="w-20 h-20 grid place-content-center rounded-full border-4 border-white/50 animate-pulse text-white"
+                  <UButton v-if="!isRecording" icon="" color="error" size="xl" rounded
+                    class="w-20 h-20 grid place-content-center rounded-full border-4 border-white/50 animate-pulse text-white"
                     @click="startRecording">
                     <Icon name="lucide:play" size="26" />
                   </UButton>
 
-                  <UButton
-v-else-if="!isPaused" icon="" color="error" size="xl" rounded class="w-20 h-20 grid place-content-center rounded-full border-4 border-white/50 animate-pulse text-white"
+                  <UButton v-else-if="!isPaused" icon="" color="error" size="xl" rounded
+                    class="w-20 h-20 grid place-content-center rounded-full border-4 border-white/50 animate-pulse text-white"
                     @click="pauseRecording">
                     <Icon name="lucide:pause" />
                   </UButton>
 
-                  <UButton
-v-else icon="" color="error" size="xl" rounded class="w-20 h-20 grid place-content-center rounded-full border-4 border-white/50 text-white"
+                  <UButton v-else icon="" color="error" size="xl" rounded
+                    class="w-20 h-20 grid place-content-center rounded-full border-4 border-white/50 text-white"
                     @click="pauseRecording">
                     <Icon name="lucide:play" size="20" />
                   </UButton>
 
-                  <UButton
-icon="" color="neutral" size="lg" rounded class="w-14 h-14 grid place-content-center rounded-full text-red-700 "
+                  <UButton icon="" color="neutral" size="lg" rounded
+                    class="w-14 h-14 grid place-content-center rounded-full text-red-700 "
                     @click="changeCamera(selectedCamera)">
                     <Icon name="fluent:record-stop-12-filled" size="32" />
                   </UButton>

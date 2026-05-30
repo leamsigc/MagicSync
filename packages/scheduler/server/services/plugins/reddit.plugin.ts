@@ -11,12 +11,12 @@ export class RedditPlugin extends BaseSchedulerPlugin {
 
   private getPlatformData(postDetails: PostWithAllData) {
     const platformName = this.pluginName;
-    const platformContent = (postDetails as any).platformContent?.[platformName];
-    const platformSettings = (postDetails as any).platformSettings?.[platformName] as RedditSettings | undefined;
+    const platformContent = (postDetails.platformContent as Record<string, { content: string; comments?: string[] } | undefined>)?.[platformName];
+    const platformSettings = (postDetails.platformSettings as Record<string, unknown>)?.[platformName] as RedditSettings | undefined;
     return {
       content: platformContent?.content || postDetails.content,
       settings: platformSettings,
-      postFormat: (postDetails as any).postFormat || 'post'
+      postFormat: postDetails.postFormat || 'post'
     };
   }
 
@@ -31,7 +31,7 @@ export class RedditPlugin extends BaseSchedulerPlugin {
     return platformConfigurations.reddit.maxPostLength; // Self-post body limit
   }
 
-  protected init(options?: any): void {
+  protected init(options?: Record<string, unknown>): void {
     console.log('Reddit plugin initialized', options);
   }
 
@@ -52,21 +52,22 @@ export class RedditPlugin extends BaseSchedulerPlugin {
   /**
    * Get user's subscribed subreddits
    */
-  async getSubreddits(accessToken: string): Promise<any[]> {
+  async getSubreddits(accessToken: string): Promise<Record<string, unknown>[]> {
     const response = await fetch('https://oauth.reddit.com/subreddits/mine/subscriber', {
       headers: {
         Authorization: `Bearer ${accessToken}`,
         'User-Agent': 'PostScheduler/1.0',
       },
     });
-    const data = await response.json();
-    return data.data.children.map((child: any) => child.data);
+    const data = await response.json() as Record<string, unknown>;
+    const children = (data.data as Record<string, unknown>).children as Record<string, unknown>[];
+    return children.map((child) => (child.data as Record<string, unknown>));
   }
 
   /**
    * Get authenticated user information
    */
-  async getUser(accessToken: string): Promise<any> {
+  async getUser(accessToken: string): Promise<Record<string, unknown>> {
     const response = await fetch('https://oauth.reddit.com/api/v1/me', {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -127,14 +128,14 @@ export class RedditPlugin extends BaseSchedulerPlugin {
     socialMediaAccount: PluginSocialMediaAccount
   ): Promise<PostResponse> {
     try {
-      const settings = postDetails.settings as any;
+      const settings = postDetails.settings as RedditSettings;
       const subreddit = settings?.subreddit;
 
       if (!subreddit) {
         throw new Error('Subreddit is required. Please specify in post settings.');
       }
 
-      const submitData: any = {
+      const submitData: Record<string, unknown> = {
         sr: subreddit,
         kind: 'self', // Default to self-post (text)
         title: postDetails.title || postDetails.content.substring(0, 300),
@@ -201,7 +202,7 @@ export class RedditPlugin extends BaseSchedulerPlugin {
           'Content-Type': 'application/x-www-form-urlencoded',
           'User-Agent': 'PostScheduler/1.0',
         },
-        body: new URLSearchParams(submitData),
+        body: new URLSearchParams(submitData as Record<string, string>),
       });
 
       if (!response.ok) {
@@ -424,7 +425,7 @@ export class RedditPlugin extends BaseSchedulerPlugin {
   /**
    * Transform Reddit comment to PlatformComment format
    */
-  private transformComment(comment: any): PlatformComment {
+  private transformComment(comment: Record<string, unknown>): PlatformComment {
     return {
       id: comment.data?.name || comment.id,
       text: comment.data?.body || comment.body || '',
@@ -445,7 +446,7 @@ export class RedditPlugin extends BaseSchedulerPlugin {
     socialMediaAccount: PluginSocialMediaAccount,
     options?: { limit?: number; cursor?: string }
   ): Promise<GetCommentsResponse> {
-    const platformPost = postDetails.platformPosts?.find((pp: any) => pp.socialAccountId === socialMediaAccount.id);
+    const platformPost = postDetails.platformPosts?.find((pp) => pp.socialAccountId === socialMediaAccount.id);
     const publishDetail = platformPost?.publishDetail ? JSON.parse(platformPost.publishDetail) : {};
     const externalPostId = publishDetail[socialMediaAccount.id]?.publishedId || publishDetail.postId;
 
@@ -484,7 +485,7 @@ export class RedditPlugin extends BaseSchedulerPlugin {
       const data = await response.json();
       // Reddit returns [post_data, comments_data] structure
       const commentsData = data[1]?.data?.children || [];
-      const comments: PlatformComment[] = commentsData.map((c: any) => this.transformComment(c));
+      const comments: PlatformComment[] = commentsData.map((c) => this.transformComment(c as Record<string, unknown>));
 
       return {
         platform: this.pluginName,
@@ -493,7 +494,7 @@ export class RedditPlugin extends BaseSchedulerPlugin {
         hasMore: !!data[1]?.data?.after,
         nextCursor: data[1]?.data?.after,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error fetching Reddit comments:', error);
       return {
         platform: this.pluginName,
@@ -539,7 +540,7 @@ export class RedditPlugin extends BaseSchedulerPlugin {
         success: true,
         comment: this.transformComment(newComment),
       };
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error replying to Reddit comment:', error);
       return {
         success: false,

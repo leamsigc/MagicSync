@@ -223,7 +223,8 @@ onMounted(() => {
 
     <div v-else class="flex-1 overflow-y-auto p-4">
       <div class="grid gap-4">
-        <div v-for="skill in skills" :key="skill.id"
+        <div
+v-for="skill in skills" :key="skill.id"
           class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800">
           <div class="flex items-start justify-between">
             <div class="flex-1">
@@ -243,7 +244,7 @@ onMounted(() => {
             </div>
             <div class="flex items-center gap-2">
               <UTooltip :text="skill.enabled ? t('disable') : t('enable')">
-                <USwitch :modelValue="skill.enabled" @update:modelValue="toggleSkill(skill)" />
+                <USwitch :model-value="skill.enabled" @update:model-value="toggleSkill(skill)" />
               </UTooltip>
               <UTooltip :text="t('edit')">
                 <UButton variant="ghost" size="sm" @click="openEdit(skill)">
@@ -281,15 +282,15 @@ onMounted(() => {
             <label class="text-sm">{{ t('makeGlobal') }}</label>
           </div>
         </div>
-        <UButton @click="showCreateModal = false" variant="ghost">{{ t('cancel') }}</UButton>
-        <UButton @click="createSkill" color="primary">{{ t('create') }}</UButton>
+        <UButton variant="ghost" @click="showCreateModal = false">{{ t('cancel') }}</UButton>
+        <UButton color="primary" @click="createSkill">{{ t('create') }}</UButton>
       </template>
     </UModal>
 
     <UModal v-model:open="showEditModal" :title="t('editSkill')">
       <template #content>
 
-        <div class="p-4 space-y-4" v-if="selectedSkill">
+        <div v-if="selectedSkill" class="p-4 space-y-4">
           <div>
             <label class="block text-sm font-medium mb-1">{{ t('name') }}</label>
             <UInput v-model="selectedSkill.name" />
@@ -303,8 +304,8 @@ onMounted(() => {
             <UTextarea v-model="selectedSkill.instructions" :rows="6" />
           </div>
         </div>
-        <UButton @click="showEditModal = false" variant="ghost">{{ t('cancel') }}</UButton>
-        <UButton @click="updateSkill" color="primary">{{ t('save') }}</UButton>
+        <UButton variant="ghost" @click="showEditModal = false">{{ t('cancel') }}</UButton>
+        <UButton color="primary" @click="updateSkill">{{ t('save') }}</UButton>
       </template>
     </UModal>
 
@@ -312,15 +313,18 @@ onMounted(() => {
       <template #content>
         <div class="p-4 space-y-4">
           <div class="flex gap-2 mb-4">
-            <UButton :color="importMode === 'zip' ? 'primary' : 'neutral'" variant="outline" size="sm"
+            <UButton
+:color="importMode === 'zip' ? 'primary' : 'neutral'" variant="outline" size="sm"
               @click="importMode = 'zip'">
               {{ t('importFromZip') }}
             </UButton>
-            <UButton :color="importMode === 'url' ? 'primary' : 'neutral'" variant="outline" size="sm"
+            <UButton
+:color="importMode === 'url' ? 'primary' : 'neutral'" variant="outline" size="sm"
               @click="importMode = 'url'">
               {{ t('importFromUrl') }}
             </UButton>
-            <UButton :color="importMode === 'folder' ? 'primary' : 'neutral'" variant="outline" size="sm"
+            <UButton
+:color="importMode === 'folder' ? 'primary' : 'neutral'" variant="outline" size="sm"
               @click="importMode = 'folder'">
               {{ t('importFromFolder') }}
             </UButton>
@@ -328,9 +332,10 @@ onMounted(() => {
 
           <div v-if="importMode === 'zip'">
             <label class="block text-sm font-medium mb-1">{{ t('zipFile') }}</label>
-            <input type="file" accept=".zip"
-              @change="(e) => importData.zipFile = (e.target as HTMLInputElement).files?.[0] || null"
-              class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20" />
+            <input
+type="file" accept=".zip"
+              class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+              @change="(e) => importData.zipFile = (e.target as HTMLInputElement).files?.[0] || null" >
           </div>
 
           <div v-if="importMode === 'url'">
@@ -344,15 +349,16 @@ onMounted(() => {
           </div>
         </div>
         <section class="flex justify-end gap-2 p-4">
-          <UButton @click="showImportModal = false" variant="ghost">{{ t('cancel') }}</UButton>
-          <UButton v-if="importMode === 'zip'" @click="importFromZip" color="primary" :disabled="!importData.zipFile">
+          <UButton variant="ghost" @click="showImportModal = false">{{ t('cancel') }}</UButton>
+          <UButton v-if="importMode === 'zip'" color="primary" :disabled="!importData.zipFile" @click="importFromZip">
             {{ t('import') }}
           </UButton>
-          <UButton v-if="importMode === 'url'" @click="importFromUrl" color="primary" :disabled="!importData.url">
+          <UButton v-if="importMode === 'url'" color="primary" :disabled="!importData.url" @click="importFromUrl">
             {{ t('import') }}
           </UButton>
-          <UButton v-if="importMode === 'folder'" @click="importFromFolder" color="primary"
-            :disabled="!importData.folderPath">
+          <UButton
+v-if="importMode === 'folder'" color="primary" :disabled="!importData.folderPath"
+            @click="importFromFolder">
             {{ t('import') }}
           </UButton>
         </section>

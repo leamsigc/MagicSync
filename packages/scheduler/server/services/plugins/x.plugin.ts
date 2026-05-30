@@ -1,6 +1,6 @@
 import type { PostDetails, PostResponse, Integration, PluginPostDetails, PluginSocialMediaAccount, GetCommentsResponse, ReplyCommentResponse, PlatformComment } from '../SchedulerPost.service';
 import { BaseSchedulerPlugin, type MediaContent, type PlatformStats } from '../SchedulerPost.service';
-import type { Post, PostWithAllData, SocialMediaAccount, Asset } from '#layers/BaseDB/db/schema';
+import type { Post, PostWithAllData, SocialMediaAccount, Asset, PlatformContentOverride } from '#layers/BaseDB/db/schema';
 import { TwitterApi } from 'twitter-api-v2';
 import { platformConfigurations } from '../../../shared/platformConstants';
 import type { TwitterSettings } from '../../../shared/platformSettings';
@@ -28,14 +28,14 @@ export class XPlugin extends BaseSchedulerPlugin {
     return isPremium ? 4000 : 280;
   }
 
-  protected init(options?: any): void {
+  protected init(options?: Record<string, unknown>): void {
     console.log('X (Twitter) plugin initialized', options);
   }
 
   override async validate(post: Post): Promise<string[]> {
     const errors: string[] = [];
-    const settings = (post as any).settings;
-    const isPremium = settings?.isPremium || false;
+    const settings = (post as Post & { settings?: Record<string, unknown> }).settings;
+    const isPremium = (settings?.isPremium as boolean | undefined) || false;
     const maxLength = this.xMaxLength(isPremium);
 
     if (!post.content || post.content.trim() === '') {
@@ -52,7 +52,7 @@ export class XPlugin extends BaseSchedulerPlugin {
   /**
    * Get authenticated user information
    */
-  async getUser(accessToken: string): Promise<any> {
+  async getUser(accessToken: string) {
     const client = new TwitterApi(accessToken);
 
     const user = await client.v2.me();
@@ -62,7 +62,7 @@ export class XPlugin extends BaseSchedulerPlugin {
   /**
    * Get tweet metrics
    */
-  async getTweetMetrics(tweetId: string, accessToken: string): Promise<any> {
+  async getTweetMetrics(tweetId: string, accessToken: string) {
     const client = new TwitterApi(accessToken);
 
     const tweet = await client.v2.singleTweet(tweetId, {
@@ -80,12 +80,12 @@ export class XPlugin extends BaseSchedulerPlugin {
     const { buffer } = await reduceImageBySize(imageUrl, 5 * 1024); // 5MB = 5120 KB
     return buffer;
   }
-  private getPlatformData(postDetails: PostWithAllData, platformPost?: any) {
+  private getPlatformData(postDetails: PostWithAllData, platformPost?: Record<string, unknown>) {
     const platformName = this.pluginName;
-    const platformContent = (postDetails.platformContent as any)[platformName];
-    const platformSettings = (postDetails.platformSettings as any)[platformName] as TwitterSettings | undefined;
+    const platformContent = (postDetails.platformContent as unknown as Record<string, PlatformContentOverride | undefined>)?.[platformName];
+    const platformSettings = (postDetails.platformSettings as unknown as Record<string, unknown>)?.[platformName] as TwitterSettings | undefined;
     const rawContent = platformContent?.content || postDetails.content;
-    const postFormat = (postDetails as any).postFormat || 'post';
+    const postFormat = postDetails.postFormat ?? 'post';
     const comments = platformContent?.comments || [];
 
     return {
@@ -114,12 +114,13 @@ export class XPlugin extends BaseSchedulerPlugin {
       const { comments: postComments } = this.getPlatformData(postDetails);
 
       // Use platform-specific content if available, otherwise use master content
-      const platformContent = (postDetails as any).platformContent?.twitter
-        || (postDetails as any).platformContent?.x;
+      const postPlatformContent = postDetails.platformContent as unknown as Record<string, PlatformContentOverride | undefined> | undefined;
+      const platformContent = postPlatformContent?.twitter
+        || postPlatformContent?.x;
       const rawContent = platformContent?.content || postDetails.content;
       const contentToPost = this.normalizeContent(rawContent);
 
-      const tweetOptions: any = {
+      const tweetOptions: Record<string, unknown> = {
         text: contentToPost,
       };
 
@@ -151,7 +152,7 @@ export class XPlugin extends BaseSchedulerPlugin {
           for (const asset of imageAssets) {
             const imageBuffer = await this.processImage(asset);
             const mediaId = await client.v2.uploadMedia(imageBuffer, {
-              media_type: asset.mimeType || 'image/jpeg' as any,
+              media_type: asset.mimeType || ('image/jpeg' as const),
             });
             mediaIds.push(mediaId);
           }
@@ -171,7 +172,7 @@ export class XPlugin extends BaseSchedulerPlugin {
       // }
 
       // Platform-specific settings from platformSettings
-      const postPlatformSettings = (postDetails as any).platformSettings as Record<string, TwitterSettings> | undefined;
+      const postPlatformSettings = postDetails.platformSettings as unknown as Record<string, TwitterSettings> | undefined;
       const platformSettings = postPlatformSettings?.twitter || postPlatformSettings?.x;
       if (platformSettings) {
         // Handle who_can_reply setting
@@ -214,7 +215,7 @@ export class XPlugin extends BaseSchedulerPlugin {
 
       // Add comment to post
 
-      const tweetData = isThread ? (tweet as any)[0] : tweet;
+      const tweetData = isThread ? (tweet as { data: { id: string } }[])[0] : tweet as { data: { id: string } };
       const postResponse: PostResponse = {
         id: postDetails.id,
         postId: tweetData.data.id,
@@ -313,7 +314,7 @@ export class XPlugin extends BaseSchedulerPlugin {
       totalPosts = tweetList.length
 
       for (const tweet of tweetList) {
-        const metrics = (tweet as any).public_metrics || {}
+        const metrics = (tweet as { public_metrics?: Record<string, number> }).public_metrics || {}
         totalEngagement += (metrics.retweet_count || 0) + (metrics.like_count || 0) + (metrics.reply_count || 0) + (metrics.quote_count || 0)
       }
     } catch {
@@ -401,7 +402,14 @@ export class XPlugin extends BaseSchedulerPlugin {
   /**
    * Transform Twitter API tweet/reply to PlatformComment format
    */
-  private transformTweetToComment(tweet: any): PlatformComment {
+  private transformTweetToComment(tweet: {
+    id: string;
+    text?: string;
+    author?: { username?: string; name?: string; id?: string; profile_image_url?: string };
+    created_at?: string;
+    public_metrics?: { like_count?: number; reply_count?: number };
+    conversation_id?: string;
+  }): PlatformComment {
     return {
       id: tweet.id,
       text: tweet.text || '',

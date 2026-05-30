@@ -12,6 +12,9 @@
  * @todo [✔] Update the typescript.
  */
 
+import type {
+  OutputFormat
+} from 'mediabunny';
 import {
   Output,
   BufferTarget,
@@ -21,8 +24,7 @@ import {
   MediaStreamVideoTrackSource,
   getFirstEncodableVideoCodec,
   getFirstEncodableAudioCodec,
-  QUALITY_HIGH,
-  OutputFormat,
+  QUALITY_HIGH
 } from 'mediabunny'
 
 export type AspectRatio = '16:9' | '9:16' | '1:1'
@@ -272,7 +274,7 @@ export const useVideoRecorder = () => {
     gradient.addColorStop(0.5, 'rgba(0, 0, 0, 0.6)')
     gradient.addColorStop(1, 'rgba(0, 0, 0, 1)')
     ctx.fillStyle = gradient
-    ctx.fillRect(0,0, canvas.width, canvas.height)
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
 
     const centerY = canvas.height * 0.75
     const centerX = canvas.width / 2
@@ -636,7 +638,7 @@ export const useVideoRecorder = () => {
 
     const a = document.createElement('a')
     a.href = previewUrl.value
-    a.download =  `video-${aspectRatio.value}-${Date.now()}.mp4`
+    a.download = `video-${aspectRatio.value}-${Date.now()}.mp4`
     a.click()
   }
 

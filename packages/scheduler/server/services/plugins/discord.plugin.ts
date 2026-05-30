@@ -10,12 +10,12 @@ export class DiscordPlugin extends BaseSchedulerPlugin {
 
   private getPlatformData(postDetails: PluginPostDetails) {
     const platformName = this.pluginName;
-    const platformContent = (postDetails as any).platformContent?.[platformName];
-    const platformSettings = (postDetails as any).platformSettings?.[platformName] as DiscordSettings | undefined;
+    const platformContent = (postDetails.platformContent as Record<string, { content: string; comments?: string[] } | undefined>)?.[platformName];
+    const platformSettings = (postDetails.platformSettings as Record<string, unknown>)?.[platformName] as DiscordSettings | undefined;
     return {
       content: platformContent?.content || postDetails.content,
       settings: platformSettings,
-      postFormat: (postDetails as any).postFormat || 'post'
+      postFormat: postDetails.postFormat || 'post'
     };
   }
 
@@ -30,7 +30,7 @@ export class DiscordPlugin extends BaseSchedulerPlugin {
     return platformConfigurations.discord.maxPostLength;
   }
 
-  protected init(options?: any): void {
+  protected init(options?: Record<string, unknown>): void {
     console.log('Discord plugin initialized', options);
   }
 
@@ -48,25 +48,25 @@ export class DiscordPlugin extends BaseSchedulerPlugin {
   /**
    * Get user's guilds (servers)
    */
-  async getGuilds(accessToken: string): Promise<any[]> {
+  async getGuilds(accessToken: string): Promise<Record<string, unknown>[]> {
     const response = await fetch('https://discord.com/api/v10/users/@me/guilds', {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
     });
-    return response.json();
+    return response.json() as Promise<Record<string, unknown>[]>;
   }
 
   /**
    * Get channels for a guild
    */
-  async getChannels(guildId: string, accessToken: string): Promise<any[]> {
+  async getChannels(guildId: string, accessToken: string): Promise<Record<string, unknown>[]> {
     const response = await fetch(`https://discord.com/api/v10/guilds/${guildId}/channels`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
     });
-    return response.json();
+    return response.json() as Promise<Record<string, unknown>[]>;
   }
 
   override async post(
@@ -84,7 +84,7 @@ export class DiscordPlugin extends BaseSchedulerPlugin {
         throw new Error('Channel ID is required. Please configure it in account settings.');
       }
 
-      const messagePayload: any = {
+      const messagePayload: Record<string, unknown> = {
         content: content,
       };
 
@@ -284,7 +284,7 @@ export class DiscordPlugin extends BaseSchedulerPlugin {
       }
 
       // Construct payload
-      const payload: any = {
+      const payload: Record<string, unknown> = {
         content: content,
         // embeds: settings?.embeds, // Removed as embeds is not on DiscordSettings currently
       };
@@ -357,7 +357,7 @@ export class DiscordPlugin extends BaseSchedulerPlugin {
         throw new Error('Post ID is required for commenting');
       }
 
-      const messagePayload: any = {
+      const messagePayload: Record<string, unknown> = {
         content: content,
         message_reference: {
           message_id: postId,
@@ -408,7 +408,7 @@ export class DiscordPlugin extends BaseSchedulerPlugin {
   /**
    * Transform Discord message to PlatformComment format
    */
-  private transformComment(message: any): PlatformComment {
+  private transformComment(message: Record<string, unknown>): PlatformComment {
     return {
       id: message.id,
       text: message.content || '',
@@ -431,7 +431,7 @@ export class DiscordPlugin extends BaseSchedulerPlugin {
     socialMediaAccount: PluginSocialMediaAccount,
     options?: { limit?: number; cursor?: string }
   ): Promise<GetCommentsResponse> {
-    const platformPost = postDetails.platformPosts?.find((pp: any) => pp.socialAccountId === socialMediaAccount.id);
+    const platformPost = postDetails.platformPosts?.find((pp) => pp.socialAccountId === socialMediaAccount.id);
     const publishDetail = platformPost?.publishDetail ? JSON.parse(platformPost.publishDetail) : {};
     const externalPostId = publishDetail[socialMediaAccount.id]?.publishedId || publishDetail.postId;
 
@@ -464,7 +464,7 @@ export class DiscordPlugin extends BaseSchedulerPlugin {
       }
 
       const threadMessages = await response.json();
-      const comments: PlatformComment[] = (threadMessages.messages || []).map((m: any) => this.transformComment(m));
+      const comments: PlatformComment[] = (threadMessages.messages || []).map((m) => this.transformComment(m as Record<string, unknown>));
 
       return {
         platform: this.pluginName,
@@ -472,7 +472,7 @@ export class DiscordPlugin extends BaseSchedulerPlugin {
         comments,
         hasMore: false,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error fetching Discord comments:', error);
       return {
         platform: this.pluginName,

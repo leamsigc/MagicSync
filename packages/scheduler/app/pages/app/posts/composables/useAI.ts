@@ -41,7 +41,7 @@ export const useAI = () => {
     error.value = null;
 
     try {
-      const response = await $fetch<{ result: any }>('/api/v1/ai/generate', {
+      const response = await $fetch<{ result: string | string[] }>('/api/v1/ai/generate', {
         method: 'POST',
         body: {
           action,
@@ -52,8 +52,8 @@ export const useAI = () => {
       });
 
       return response.result;
-    } catch (err: any) {
-      error.value = err.message || 'Failed to generate AI content';
+    } catch (err: unknown) {
+      error.value = err instanceof Error ? err.message : 'Failed to generate AI content';
       toast.add({
         title: 'AI Error',
         description: error.value || 'Failed to generate AI content',
@@ -71,7 +71,7 @@ export const useAI = () => {
     return Array.isArray(result) ? result : [result];
   };
 
-  const rewriteContent = async (content: string, tone: AITone, platforms: any) => {
+  const rewriteContent = async (content: string, tone: AITone, platforms: string[]) => {
     const result = await callAI('rewrite', content, { tone, platforms });
     return typeof result === 'string' ? result : result[0] || content;
   };

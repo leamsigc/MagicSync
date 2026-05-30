@@ -27,7 +27,8 @@ const threadItems = (threadId: string) => [
       <UButton label="New Chat" icon="i-lucide-plus" color="primary" variant="solid" @click="emit('newThread')" />
     </div>
     <div class="overflow-y-auto flex-1">
-      <div v-for="thread in threads" :key="thread.id"
+      <div
+v-for="thread in threads" :key="thread.id"
         class="group flex items-center gap-2 p-3 cursor-pointer transition-colors rounded-lg mx-1" :class="{
           'bg-primary/10': thread.id === activeThreadId,
           'hover:bg-muted': thread.id !== activeThreadId,
@@ -38,7 +39,8 @@ const threadItems = (threadId: string) => [
           <p class="text-xs text-muted truncate">{{ thread.lastMessage }}</p>
         </div>
         <UDropdownMenu :items="threadItems(thread.id)">
-          <UButton icon="i-lucide-ellipsis-vertical" color="neutral" variant="ghost" size="xs"
+          <UButton
+icon="i-lucide-ellipsis-vertical" color="neutral" variant="ghost" size="xs"
             class="opacity-0 group-hover:opacity-100 transition-opacity" />
         </UDropdownMenu>
       </div>

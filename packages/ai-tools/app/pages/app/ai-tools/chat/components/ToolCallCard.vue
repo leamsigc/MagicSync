@@ -22,12 +22,15 @@ function formatInput(input: unknown): string {
 
 <template>
   <div class="border border-muted rounded-lg overflow-hidden bg-muted/30 my-2">
-    <button class="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted/50 transition-colors text-left"
+    <button
+class="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted/50 transition-colors text-left"
       @click="isExpanded = !isExpanded">
-      <UIcon :name="isExpanded ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right'"
+      <UIcon
+:name="isExpanded ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right'"
         class="w-4 h-4 text-muted shrink-0" />
       <div class="flex items-center gap-2">
-        <UBadge v-if="state === 'output-available' || state === 'input-available'" color="primary" variant="subtle"
+        <UBadge
+v-if="state === 'output-available' || state === 'input-available'" color="primary" variant="subtle"
           size="xs">
           <UIcon name="i-lucide-check" class="w-3 h-3 mr-1" />
           Done

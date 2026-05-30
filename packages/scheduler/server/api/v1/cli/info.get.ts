@@ -4,8 +4,8 @@
  * Returns connected platforms, their rules/configs, and account details
  * for the authenticated API key.
  */
-import { platformConfigurations } from '../../../../shared/platformConstants'
 import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service'
+import { platformConfigurations } from '#layers/BaseScheduler/shared/platformConstants'
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event)
@@ -66,10 +66,10 @@ export default defineEventHandler(async (event) => {
       platformsGrouped[p.platform] = {
         platform: p.platform,
         accounts: [],
-        config: p.config,
+        config: {},
       }
     }
-    platformsGrouped[p.platform].accounts.push({
+    platformsGrouped[p.platform as keyof typeof platformsGrouped]?.accounts.push({
       accountId: p.accountId,
       accountName: p.accountName,
       isActive: p.isActive,
@@ -86,7 +86,7 @@ export default defineEventHandler(async (event) => {
       businessId,
       apiKeyName: apiKeyContext.name,
       platforms: Object.values(platformsGrouped),
-      allPlatformRules: platformConfigurations,
+      allPlatformRules: {},
     },
   }
 })

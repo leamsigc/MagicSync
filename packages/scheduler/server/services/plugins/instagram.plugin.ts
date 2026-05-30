@@ -1,8 +1,23 @@
 import type { PostResponse, GetCommentsResponse, ReplyCommentResponse, PlatformComment, PluginPostDetails, PluginSocialMediaAccount } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import { BaseSchedulerPlugin, type PlatformStats } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
-import type { Post, PostWithAllData, SocialMediaAccount, Asset } from '#layers/BaseDB/db/schema';
+import type { Post, PostWithAllData, SocialMediaAccount, Asset, PlatformContentOverride } from '#layers/BaseDB/db/schema';
 import type { InstagramSettings } from '#layers/BaseScheduler/shared/platformSettings';
 import { platformConfigurations } from '#layers/BaseScheduler/shared/platformConstants';
+
+type InstagramPublishResponse = {
+  id: string;
+};
+
+type InstagramApiComment = {
+  id: string;
+  text?: string;
+  from?: { username?: string; id?: string; profile_picture_url?: string };
+  timestamp?: string;
+  created_time?: string;
+  like_count?: number;
+  replies?: { data?: unknown[] };
+  parent?: { id?: string };
+};
 
 export class InstagramPlugin extends BaseSchedulerPlugin {
   static readonly pluginName = 'instagram';
@@ -23,12 +38,12 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
       .replace(/\r/g, '\n');
   }
 
-  private getPlatformData(postDetails: PostWithAllData, platformPost?: any) {
+  private getPlatformData(postDetails: PostWithAllData, platformPost?: Record<string, unknown>) {
     const platformName = this.pluginName;
-    const platformContent = (postDetails.platformContent as any)[platformName];
-    const platformSettings = (postDetails.platformSettings as any)[platformName] as InstagramSettings | undefined;
+    const platformContent = (postDetails.platformContent as unknown as Record<string, PlatformContentOverride | undefined>)?.[platformName];
+    const platformSettings = (postDetails.platformSettings as unknown as Record<string, unknown>)?.[platformName] as InstagramSettings | undefined;
     const rawContent = platformContent?.content || postDetails.content;
-    const postFormat = (postDetails as any).postFormat || 'post';
+    const postFormat = postDetails.postFormat ?? 'post';
     const comments = platformContent?.comments || [];
     return {
       content: this.normalizeContent(rawContent),
@@ -49,7 +64,7 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
     return platformConfigurations.instagram.maxPostLength;
   }
 
-  protected init(options?: any): void {
+  protected init(options?: Record<string, unknown>): void {
     console.log('Instagram plugin initialized', options);
   }
 
@@ -74,17 +89,17 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
   /**
    * Get Instagram business account profile
    */
-  async getProfile(accountId: string, accessToken: string): Promise<any> {
+  async getProfile(accountId: string, accessToken: string): Promise<Record<string, unknown>> {
     const url = this._getGraphApiUrl(`${accountId}?fields=id,username,name,profile_picture_url,followers_count,follows_count,media_count&access_token=${accessToken}`)
     const response = await fetch(url)
-    return response.json()
+    return response.json() as Promise<Record<string, unknown>>
   }
 
   /**
    * Get media insights (engagement metrics)
    * Updated to use current valid Instagram Graph API metrics
    */
-  async getMediaInsights(mediaId: string, accessToken: string): Promise<any> {
+  async getMediaInsights(mediaId: string, accessToken: string): Promise<{ data: Record<string, unknown>[] }> {
     try {
       const url = this._getGraphApiUrl(`${mediaId}/insights?metric=reach,views,saved,likes,comments,shares,engagement&access_token=${accessToken}`)
       const response = await fetch(url)
@@ -93,7 +108,7 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
         console.warn('[Instagram] Media insights error:', error)
         return { data: [] }
       }
-      return response.json()
+      return response.json() as Promise<{ data: Record<string, unknown>[] }>
     } catch (error) {
       console.warn('[Instagram] Media insights fetch failed:', error)
       return { data: [] }
@@ -110,7 +125,7 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
     mediaType: 'IMAGE' | 'VIDEO' | 'CAROUSEL' | 'STORIES' | 'REELS',
     accessToken: string,
     children?: string[],
-    settings?: any,
+    settings?: Record<string, unknown>,
     isCarouselItem?: boolean
   ): Promise<string> {
     const params = new URLSearchParams({
@@ -132,9 +147,9 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
       params.append('media_type', mediaType);
       params.append('video_url', getPublicUrlForAsset(mediaUrl));
 
-      if (mediaType === 'REELS' && settings?.is_trial_reel) {
+      if (mediaType === 'REELS' && (settings?.is_trial_reel as boolean | undefined)) {
         params.append('trial_params', JSON.stringify({
-          graduation_strategy: settings?.graduation_strategy || 'MANUAL'
+          graduation_strategy: (settings?.graduation_strategy as string | undefined) || 'MANUAL'
         }));
       }
     } else if (mediaType === 'STORIES') {
@@ -169,7 +184,7 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
     containerId: string,
     accessToken: string,
     retries: number = 5
-  ): Promise<any> {
+  ): Promise<InstagramPublishResponse> {
     const params = new URLSearchParams({
       access_token: accessToken,
       creation_id: containerId,
@@ -261,7 +276,7 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
 
       log.info({ content: 'Instagram is story check', plugin: 'instagram', isStory })
       let containerId: string;
-      let lastPublishedData: any = null;
+      let lastPublishedData: InstagramPublishResponse | null = null;
 
       if (isStory) {
         for (const asset of postDetails.assets) {
@@ -440,7 +455,14 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
     const igUserId = socialMediaAccount.accountId
 
     // Fetch account-level profile stats (followers, following, media_count)
-    let profile: any = {}
+    let profile: {
+      username?: string;
+      profile_picture_url?: string;
+      followers_count?: number;
+      follows_count?: number;
+      media_count?: number;
+      name?: string;
+    } = {}
     try {
       const profileUrl = this._getGraphApiUrl(`${igUserId}?fields=id,username,name,profile_picture_url,followers_count,follows_count,media_count&access_token=${socialMediaAccount.accessToken}`)
       const profileResponse = await fetch(profileUrl)
@@ -585,14 +607,14 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
   /**
    * Transform Instagram Graph API comment to PlatformComment format
    */
-  private transformComment(comment: any): PlatformComment {
+  private transformComment(comment: InstagramApiComment): PlatformComment {
     return {
       id: comment.id,
       text: comment.text || '',
       authorName: comment.from?.username || 'Unknown',
       authorId: comment.from?.id,
       authorPicture: comment.from?.profile_picture_url,
-      createdAt: comment.timestamp || comment.created_time,
+      createdAt: comment.timestamp || comment.created_time || '',
       likeCount: comment.like_count,
       replyCount: comment.replies?.data?.length || 0,
       parentId: comment.parent?.id,
@@ -607,7 +629,7 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
     socialMediaAccount: PluginSocialMediaAccount,
     options?: { limit?: number; cursor?: string }
   ): Promise<GetCommentsResponse> {
-    const platformPost = postDetails.platformPosts?.find((pp: any) => pp.socialAccountId === socialMediaAccount.id);
+    const platformPost = postDetails.platformPosts?.find((pp: { socialAccountId: string }) => pp.socialAccountId === socialMediaAccount.id);
     const publishDetail = platformPost?.publishDetail ? JSON.parse(platformPost.publishDetail as unknown as string) : {};
     const externalPostId = publishDetail[socialMediaAccount.id]?.publishedId || publishDetail.postId;
 
@@ -634,8 +656,8 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
         throw new Error(`Instagram get comments failed: ${error}`);
       }
 
-      const data = await response.json();
-      const comments: PlatformComment[] = (data.data || []).map((c: any) => this.transformComment(c));
+      const data = await response.json() as { data?: InstagramApiComment[] };
+      const comments: PlatformComment[] = (data.data || []).map((c: InstagramApiComment) => this.transformComment(c));
 
       return {
         platform: this.pluginName,

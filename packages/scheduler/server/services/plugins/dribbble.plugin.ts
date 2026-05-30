@@ -1,5 +1,5 @@
 import type { PostResponse, PluginPostDetails, PluginSocialMediaAccount, GetCommentsResponse, ReplyCommentResponse, PlatformComment, PlatformStats } from '../SchedulerPost.service';
-import type { Post, Asset } from '#layers/BaseDB/db/schema';
+import type { Post, Asset, PostWithAllData } from '#layers/BaseDB/db/schema';
 import type { DribbbleSettings } from '#layers/BaseScheduler/shared/platformSettings';
 import { platformConfigurations } from '#layers/BaseScheduler/shared/platformConstants';
 import { BaseSchedulerPlugin, } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
@@ -49,7 +49,7 @@ export class DribbblePlugin extends BaseSchedulerPlugin {
           location: data.location,
         },
       };
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error fetching Dribbble stats:', error);
       return this.getZeroStats(socialMediaAccount);
     }
@@ -77,12 +77,12 @@ export class DribbblePlugin extends BaseSchedulerPlugin {
 
   private getPlatformData(postDetails: PluginPostDetails) {
     const platformName = this.pluginName;
-    const platformContent = (postDetails as any).platformContent?.[platformName];
-    const platformSettings = (postDetails as any).platformSettings?.[platformName] as DribbbleSettings | undefined;
+    const platformContent = (postDetails.platformContent as Record<string, { content: string; comments?: string[] } | undefined>)?.[platformName];
+    const platformSettings = (postDetails.platformSettings as Record<string, unknown>)?.[platformName] as DribbbleSettings | undefined;
     return {
       content: platformContent?.content || postDetails.content,
       settings: platformSettings,
-      postFormat: (postDetails as any).postFormat || 'post'
+      postFormat: postDetails.postFormat || 'post'
     };
   }
 
@@ -96,13 +96,13 @@ export class DribbblePlugin extends BaseSchedulerPlugin {
     return platformConfigurations.dribbble.maxPostLength;
   }
 
-  protected init(options?: any): void {
+  protected init(options?: Record<string, unknown>): void {
     console.log('Dribbble plugin initialized', options);
   }
 
   override async validate(post: Post): Promise<string[]> {
     const errors: string[] = [];
-    const postWithAssets = post as any;
+    const postWithAssets = post as PostWithAllData;
 
     if (!post.content || post.content.trim() === '') {
       errors.push('Shot title cannot be empty.');
@@ -118,7 +118,7 @@ export class DribbblePlugin extends BaseSchedulerPlugin {
   /**
    * Get authorized user information
    */
-  async getUser(accessToken: string): Promise<any> {
+  async getUser(accessToken: string): Promise<Record<string, unknown>> {
     const response = await fetch('https://api.dribbble.com/v2/user', {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -169,7 +169,7 @@ export class DribbblePlugin extends BaseSchedulerPlugin {
       }
 
       return { buffer: imageBuffer, width, height };
-    } catch (error) {
+    } catch (error: unknown) {
       throw new Error(`Failed to process image: ${(error as Error).message}`);
     }
   }
@@ -276,7 +276,7 @@ export class DribbblePlugin extends BaseSchedulerPlugin {
       }
 
       // Dribbble API v2 supports updating shots
-      const updateData: any = {};
+      const updateData: Record<string, unknown> = {};
 
       if (postDetails.title) {
         updateData.title = postDetails.title;

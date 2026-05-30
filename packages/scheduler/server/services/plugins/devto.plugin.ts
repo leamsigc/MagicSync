@@ -42,7 +42,7 @@ export class DevToPlugin extends BaseSchedulerPlugin {
           user_id: data.user_id,
         },
       };
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error fetching Dev.to stats:', error);
       return this.getZeroStats(socialMediaAccount);
     }
@@ -69,12 +69,12 @@ export class DevToPlugin extends BaseSchedulerPlugin {
 
   private getPlatformData(postDetails: PluginPostDetails) {
     const platformName = this.pluginName;
-    const platformContent = (postDetails as any).platformContent?.[platformName];
-    const platformSettings = (postDetails as any).platformSettings?.[platformName] as DevToSettings | undefined;
+    const platformContent = (postDetails.platformContent as Record<string, { content: string; comments?: string[] } | undefined>)?.[platformName];
+    const platformSettings = (postDetails.platformSettings as Record<string, unknown>)?.[platformName] as DevToSettings | undefined;
     return {
       content: platformContent?.content || postDetails.content,
       settings: platformSettings,
-      postFormat: (postDetails as any).postFormat || 'post'
+      postFormat: postDetails.postFormat || 'post'
     };
   }
 
@@ -107,7 +107,7 @@ export class DevToPlugin extends BaseSchedulerPlugin {
   /**
    * Get available tags for articles
    */
-  async getTags(apiKey: string): Promise<any[]> {
+  async getTags(apiKey: string): Promise<Record<string, unknown>[]> {
     const response = await fetch('https://dev.to/api/tags', {
       headers: {
         'api-key': apiKey,
@@ -119,7 +119,7 @@ export class DevToPlugin extends BaseSchedulerPlugin {
   /**
    * Get user's organizations
    */
-  async getOrganizations(apiKey: string): Promise<any[]> {
+  async getOrganizations(apiKey: string): Promise<Record<string, unknown>[]> {
     const response = await fetch('https://dev.to/api/organizations', {
       headers: {
         'api-key': apiKey,
@@ -136,7 +136,7 @@ export class DevToPlugin extends BaseSchedulerPlugin {
     try {
       const { content, settings } = this.getPlatformData(postDetails);
 
-      const article: any = {
+      const article: Record<string, unknown> = {
         title: postDetails.title || 'Untitled Article',
         body_markdown: content,
         published: true,
@@ -151,7 +151,7 @@ export class DevToPlugin extends BaseSchedulerPlugin {
       // The lint errors for 'series' were real.
       // Also mapping canonical -> canonical_url and organization -> organization_id.
 
-      const devToSettings = settings as any; // Temporary cast to avoid 'series' error if it's not in interface yet
+      const devToSettings = settings as Record<string, unknown>; // Temporary cast to avoid 'series' error if it's not in interface yet
 
       if (devToSettings?.series) {
         article.series = devToSettings.series;
@@ -161,7 +161,7 @@ export class DevToPlugin extends BaseSchedulerPlugin {
       if (settings?.tags && Array.isArray(settings.tags)) {
         // Check if tags are objects (as per interface) or strings (legacy?)
         // Interface says { value, label }[]
-        article.tags = settings.tags.map((t: any) => t.value || t).filter(Boolean);
+        article.tags = settings.tags.map((t) => t.value || t).filter(Boolean);
       }
 
       // Add canonical URL if provided
@@ -231,12 +231,12 @@ export class DevToPlugin extends BaseSchedulerPlugin {
         throw new Error('Post ID is required for updating');
       }
 
-      const article: any = {
+      const article: Record<string, unknown> = {
         title: postDetails.title || 'Untitled Article',
         body_markdown: postDetails.content,
       };
 
-      const settings = postDetails.settings as any;
+      const settings = postDetails.settings as Record<string, unknown>;
       if (settings?.tags && Array.isArray(settings.tags)) {
         article.tags = settings.tags;
       }
@@ -341,7 +341,7 @@ export class DevToPlugin extends BaseSchedulerPlugin {
   /**
    * Transform Dev.to comment to PlatformComment format
    */
-  private transformComment(comment: any): PlatformComment {
+  private transformComment(comment: Record<string, unknown>): PlatformComment {
     return {
       id: String(comment.id_code || comment.id),
       text: comment.body_html || comment.body_markdown || '',
@@ -363,7 +363,7 @@ export class DevToPlugin extends BaseSchedulerPlugin {
     socialMediaAccount: PluginSocialMediaAccount,
     options?: { limit?: number; cursor?: string }
   ): Promise<GetCommentsResponse> {
-    const platformPost = postDetails.platformPosts?.find((pp: any) => pp.socialAccountId === socialMediaAccount.id);
+      const platformPost = postDetails.platformPosts?.find((pp) => pp.socialAccountId === socialMediaAccount.id);
     const publishDetail = platformPost?.publishDetail ? JSON.parse(platformPost.publishDetail) : {};
     const externalPostId = publishDetail[socialMediaAccount.id]?.publishedId || publishDetail.postId;
 
@@ -394,8 +394,8 @@ export class DevToPlugin extends BaseSchedulerPlugin {
 
       const data = await response.json();
       const comments: PlatformComment[] = (data || [])
-        .filter((c: any) => !c.parent_id)
-        .map((c: any) => this.transformComment(c));
+        .filter((c: Record<string, unknown>) => !c.parent_id)
+        .map((c) => this.transformComment(c as Record<string, unknown>));
 
       return {
         platform: this.pluginName,
@@ -403,7 +403,7 @@ export class DevToPlugin extends BaseSchedulerPlugin {
         comments,
         hasMore: false,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error fetching Dev.to comments:', error);
       return {
         platform: this.pluginName,
@@ -424,7 +424,7 @@ export class DevToPlugin extends BaseSchedulerPlugin {
     replyText: string
   ): Promise<ReplyCommentResponse> {
     try {
-      const platformPost = postDetails.platformPosts?.find((pp: any) => pp.socialAccountId === socialMediaAccount.id);
+    const platformPost = postDetails.platformPosts?.find((pp) => pp.socialAccountId === socialMediaAccount.id);
       const publishDetail = platformPost?.publishDetail ? JSON.parse(platformPost.publishDetail) : {};
       const externalPostId = publishDetail[socialMediaAccount.id]?.publishedId || publishDetail.postId;
 
@@ -456,7 +456,7 @@ export class DevToPlugin extends BaseSchedulerPlugin {
         success: true,
         comment: this.transformComment(data),
       };
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error replying to Dev.to comment:', error);
       return {
         success: false,

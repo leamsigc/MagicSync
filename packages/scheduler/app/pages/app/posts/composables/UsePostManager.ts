@@ -109,8 +109,9 @@ export const usePostManager = () => {
 
 
       postList.value = response.value?.data ?? []
-    } catch (err: any) {
-      error.value = err.data?.message || err.message || 'Failed to fetch posts'
+    } catch (err: unknown) {
+      const fetchError = err as { data?: { message?: string }; message?: string }
+      error.value = fetchError.data?.message || fetchError.message || 'Failed to fetch posts'
       throw err
     } finally {
       isLoading.value = false
@@ -135,8 +136,9 @@ export const usePostManager = () => {
 
       showPlatformStatusToasts(response.platformStatuses || [], 'created')
       return response
-    } catch (err: any) {
-      error.value = err.data?.message || err.message || 'Failed to create post'
+    } catch (err: unknown) {
+      const fetchError = err as { data?: { message?: string }; message?: string }
+      error.value = fetchError.data?.message || fetchError.message || 'Failed to create post'
       toast.add({ title: t('toast.postCreatedFailed'), icon: 'i-heroicons-x-circle', color: 'error' })
       throw err
     } finally {
@@ -162,8 +164,9 @@ export const usePostManager = () => {
 
       showPlatformStatusToasts(response.platformStatuses || [], 'updated');
       return response;
-    } catch (err: any) {
-      error.value = err.data?.message || err.message || 'Failed to update post';
+    } catch (err: unknown) {
+      const fetchError = err as { data?: { message?: string }; message?: string }
+      error.value = fetchError.data?.message || fetchError.message || 'Failed to update post';
       toast.add({ title: t('toast.postUpdatedFailed'), icon: 'i-heroicons-x-circle', color: 'error' });
       throw err;
     } finally {
@@ -182,8 +185,9 @@ export const usePostManager = () => {
       const query = beforeDate ? `?before=${beforeDate.toISOString()}` : ''
       const response = await $fetch<ApiResponse<Post[]>>(`/api/v1/posts/scheduled${query}`)
       return response
-    } catch (err: any) {
-      error.value = err.data?.message || err.message || 'Failed to fetch scheduled posts'
+    } catch (err: unknown) {
+      const fetchError = err as { data?: { message?: string }; message?: string }
+      error.value = fetchError.data?.message || fetchError.message || 'Failed to fetch scheduled posts'
       throw err
     } finally {
       isLoading.value = false
@@ -208,8 +212,9 @@ export const usePostManager = () => {
 
       const response = await $fetch<ApiResponse<PostStats>>(`/api/v1/posts/stats?${query}`)
       return response
-    } catch (err: any) {
-      error.value = err.data?.message || err.message || 'Failed to fetch post stats'
+    } catch (err: unknown) {
+      const fetchError = err as { data?: { message?: string }; message?: string }
+      error.value = fetchError.data?.message || fetchError.message || 'Failed to fetch post stats'
       throw err
     } finally {
       isLoading.value = false
@@ -239,8 +244,9 @@ export const usePostManager = () => {
         }
       })
       return response
-    } catch (err: any) {
-      error.value = err.data?.message || err.message || 'Failed to validate post content'
+    } catch (err: unknown) {
+      const fetchError = err as { data?: { message?: string }; message?: string }
+      error.value = fetchError.data?.message || fetchError.message || 'Failed to validate post content'
       throw err
     } finally {
       isLoading.value = false
@@ -257,8 +263,9 @@ export const usePostManager = () => {
       })
       await getPosts(activeBusinessId.value)
       return response
-    } catch (err: any) {
-      error.value = err.data?.message || err.message || 'Failed to delete post'
+    } catch (err: unknown) {
+      const fetchError = err as { data?: { message?: string }; message?: string }
+      error.value = fetchError.data?.message || fetchError.message || 'Failed to delete post'
       throw err
     } finally {
       isLoading.value = false

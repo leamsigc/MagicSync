@@ -30,7 +30,7 @@ export const useBusinessManager = () => {
     }
   };
 
-  const addBusiness = async (business: any): Promise<BusinessProfile | undefined> => {
+  const addBusiness = async (business: Record<string, unknown>): Promise<BusinessProfile | undefined> => {
     try {
       const response = await $fetch<ServiceResponse<BusinessProfile>>('/api/v1/business', {
         method: 'POST',

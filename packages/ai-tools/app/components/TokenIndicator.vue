@@ -12,7 +12,8 @@ function formatNumber(num: number): string {
   <div class="flex items-center gap-2 text-sm">
     <div class="flex items-center gap-1">
       <span class="text-gray-500">Tokens:</span>
-      <span :class="{
+      <span
+:class="{
         'text-green-600': statusColor === 'green',
         'text-yellow-600': statusColor === 'yellow',
         'text-red-600': statusColor === 'red'
@@ -21,9 +22,9 @@ function formatNumber(num: number): string {
       </span>
       <span class="text-gray-400">/ {{ formatNumber(config.contextLimit) }}</span>
     </div>
-    
+
     <div class="w-24 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-      <div 
+      <div
         class="h-full transition-all duration-300"
         :class="{
           'bg-green-500': statusColor === 'green',
@@ -33,8 +34,8 @@ function formatNumber(num: number): string {
         :style="{ width: `${Math.min(usagePercentage, 100)}%` }"
       />
     </div>
-    
-    <span 
+
+    <span
       class="text-xs font-medium"
       :class="{
         'text-green-600': statusColor === 'green',
@@ -44,15 +45,15 @@ function formatNumber(num: number): string {
     >
       {{ usagePercentage.toFixed(1) }}%
     </span>
-    
-    <span 
-      v-if="isWarning" 
+
+    <span
+      v-if="isWarning"
       class="text-xs text-yellow-600"
     >
       ⚠️ Approaching limit
     </span>
-    <span 
-      v-if="isCritical" 
+    <span
+      v-if="isCritical"
       class="text-xs text-red-600"
     >
       🚨 Context limit

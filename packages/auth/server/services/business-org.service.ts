@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm'
 import type { H3Event } from 'h3'
-import { businessProfiles } from '#layers/BaseDB/db/schema'
+import { businessProfiles, organization as organizationTable } from '#layers/BaseDB/db/schema'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
 import { auth } from '#layers/BaseAuth/lib/auth'
 import { useAuthApi, type AuthApi } from '../utils/useAuthApi'
@@ -98,12 +98,14 @@ export const businessOrgService = {
    * This call does not need session headers — it reads public org metadata.
    */
   async getBusinessIdFromOrg(orgId: string): Promise<string | null> {
-    const org = await auth.api.getFullOrganization({
-      query: { organizationId: orgId }
-    }).catch(() => null)
-
-    if (!org?.metadata?.businessId) return null
-    return org.metadata.businessId as string
+    const db = useDrizzle()
+    const org = await db
+      .select()
+      .from(organizationTable)
+      .where(eq(organizationTable.id, orgId))
+      .get()
+    const metadata = JSON.parse(org?.metadata ?? {}) as Record<string, unknown>
+    return metadata.businessId as string
   },
 
   /**

@@ -2,7 +2,7 @@ import type { InferSelectModel } from 'drizzle-orm'
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import { user, type User } from '../auth/auth'
 import { businessProfiles } from '../business/business'
-import { socialMediaAccounts, type SocialMediaAccount } from '../socialMedia/socialMedia'
+import { socialMediaAccounts, type SocialMediaAccount as SocialMediaAccountType } from '../socialMedia/socialMedia'
 import type { Asset } from '../schema'
 
 // Posts
@@ -38,27 +38,29 @@ export const platformPosts = sqliteTable('platform_posts', {
     enum: ['pending', 'published', 'failed']
   }).notNull().default('pending'),
   errorMessage: text('error_message'),
-  platformSettings: text('platform_settings', { mode: 'json' }), // JSON object for platform-specific settings
-  publishDetail: text('publish_detail', { mode: 'json' }), // JSON object for publish details
+  platformSettings: text('platform_settings', { mode: 'json' }),
+  publishDetail: text('publish_detail', { mode: 'json' }),
   publishedAt: integer('published_at', { mode: 'timestamp' }),
   createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()).notNull()
 })
 
-
-export type PlatformSettingsRecord = Record<string, any>
 export type PlatformContentOverride = {
   content: string
   comments?: string[]
 }
+
+export type PostPlatformContent = Record<string, PlatformContentOverride | undefined>
+
 export type PublishDetail = Map<string, {
   publishedId?: string
   publishedUrl?: string
 }>
+
 export type Post = InferSelectModel<typeof posts>
 export type PlatformPost = InferSelectModel<typeof platformPosts>
 export type PlatformPostInsert = typeof platformPosts.$inferInsert
-export type PostWithPlatformPosts = Post & { platformPosts: PlatformPost[], socialMediaAccount: SocialMediaAccount }
-export type PostWithAllData = Post & { platformPosts: PlatformPost[], user: User, assets: Asset[], }
+export type PostWithPlatformPosts = Post & { platformPosts: PlatformPost[], socialMediaAccount: SocialMediaAccountType }
+export type PostWithAllData = Post & { platformPosts: PlatformPost[], user: User, assets: Asset[] }
 
 export type PostCreate = Omit<Post, 'id' | 'createdAt' | 'updatedAt' | 'userId' | 'targetPlatforms' | 'mediaAssets' | 'publishedAt'>
 

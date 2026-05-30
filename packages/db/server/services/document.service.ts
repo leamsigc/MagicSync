@@ -374,12 +374,12 @@ export class ChunkService implements ChunkServiceType {
     queryEmbedding: number[],
     limit: number = 5,
     filters?: { documentId?: string; metadataKey?: string; metadataValue?: string }
-  ): Promise<ServiceResponse<Array<{ content: string; documentId: string; similarity: number; metadata: Record<string, any> | null }>>> {
+  ): Promise<ServiceResponse<Array<{ content: string; documentId: string; similarity: number; metadata: Record<string, unknown> | null }>>> {
     try {
       const embeddingStr = `[${queryEmbedding.join(',')}]`
 
       const whereClauses: string[] = ['dc.user_id = ?']
-      const args: any[] = [userId, embeddingStr]
+      const args: (string | number)[] = [userId, embeddingStr]
 
       if (filters?.documentId) {
         whereClauses.push('dc.document_id = ?')

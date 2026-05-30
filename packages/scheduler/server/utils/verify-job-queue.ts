@@ -25,10 +25,10 @@ type Post = {
 
 // Verify the type has the new fields
 function assertPostHasRetryFields(post: Post): void {
-  if (typeof (post as any).retryCount !== 'number') {
+  if (typeof (post as Post).retryCount !== 'number') {
     throw new Error('posts.retryCount column is missing! Run: pnpm --filter @local-monorepo/db db:generate && pnpm --filter @local-monorepo/db db:migrate')
   }
-  if (typeof (post as any).nextRetryAt !== 'object' && (post as any).nextRetryAt !== null) {
+  if (typeof (post as Post).nextRetryAt !== 'object' && (post as Post).nextRetryAt !== null) {
     throw new Error('posts.nextRetryAt column is missing! Run: pnpm --filter @local-monorepo/db db:generate && pnpm --filter @local-monorepo/db db:migrate')
   }
   console.log('[OK] Posts table has retry fields: retryCount, nextRetryAt, lastError')

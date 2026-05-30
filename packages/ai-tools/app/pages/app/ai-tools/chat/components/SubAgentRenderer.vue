@@ -60,7 +60,8 @@ const taskTypeBadge = computed(() => {
           <span class="text-xs text-neutral-500 capitalize">{{ agent.status }}</span>
         </div>
       </div>
-      <UIcon name="i-heroicons-chevron-down"
+      <UIcon
+name="i-heroicons-chevron-down"
         :class="['w-4 h-4 text-neutral-400 transition-transform', { 'rotate-180': agent.isExpanded }]" />
     </button>
 
@@ -105,7 +106,8 @@ const taskTypeBadge = computed(() => {
       </div>
 
       <!-- Result -->
-      <div v-if="agent.result && agent.status === 'completed'"
+      <div
+v-if="agent.result && agent.status === 'completed'"
         class="px-4 py-3 bg-green-50 dark:bg-green-900/20 border-t border-green-100 dark:border-green-900/40">
         <div class="flex items-start gap-2">
           <UIcon name="i-heroicons-check-circle" class="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
@@ -117,7 +119,8 @@ const taskTypeBadge = computed(() => {
       </div>
 
       <!-- Error -->
-      <div v-if="agent.error && agent.status === 'failed'"
+      <div
+v-if="agent.error && agent.status === 'failed'"
         class="px-4 py-3 bg-red-50 dark:bg-red-900/20 border-t border-red-100 dark:border-red-900/40">
         <div class="flex items-start gap-2">
           <UIcon name="i-heroicons-x-circle" class="w-4 h-4 text-red-500 mt-0.5 shrink-0" />

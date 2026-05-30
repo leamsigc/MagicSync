@@ -9,6 +9,7 @@
 
 import type { PlatformStats } from '#layers/BaseScheduler/server/services/SchedulerPost.service'
 import type { SocialMediaPlatform } from '#layers/BaseDB/server/services/social-media-account.service'
+import type { SocialMediaAccount } from '#layers/BaseDB/db/schema'
 import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service'
 import { entityDetails } from '#layers/BaseDB/db/entityDetails/entityDetails'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
@@ -18,6 +19,15 @@ import { AutoPostService } from './AutoPost.service'
 
 const ENTITY_TYPE = 'platform_stats'
 const SNAPSHOT_DAYS = 30 // Keep 30 days of historical snapshots
+
+interface SnapshotRecord {
+  id: string
+  entityId: string
+  entityType: string
+  details: unknown
+  createdAt: Date
+  updatedAt: Date
+}
 
 export interface StatsSnapshot {
   id: string
@@ -67,7 +77,7 @@ export class PlatformStatsService {
   /**
    * Get the latest stats snapshot for a social media account
    */
-  private async getLatestSnapshot(accountId: string): Promise<any | null> {
+  private async getLatestSnapshot(accountId: string): Promise<SnapshotRecord | null> {
     const result = await this.db.query.entityDetails.findFirst({
       where: and(
         eq(entityDetails.entityId, accountId),
@@ -82,7 +92,7 @@ export class PlatformStatsService {
    * Check if a new snapshot should be created (new day vs update existing)
    * Always create a new snapshot each day for 30-day history
    */
-  private shouldCreateSnapshot(snapshot: any): boolean {
+  private shouldCreateSnapshot(snapshot: SnapshotRecord | null): boolean {
     if (!snapshot) return true
     const snapshotDate = dayjs(snapshot.createdAt).format('YYYY-MM-DD')
     const today = dayjs().format('YYYY-MM-DD')
@@ -114,7 +124,7 @@ export class PlatformStatsService {
   /**
    * Save or update a stats snapshot for an account
    */
-  private async saveSnapshot(accountId: string, stats: PlatformStats): Promise<any> {
+  private async saveSnapshot(accountId: string, stats: PlatformStats): Promise<{ id: string; created: boolean }> {
     const latest = await this.getLatestSnapshot(accountId)
 
     if (this.shouldCreateSnapshot(latest)) {
@@ -148,15 +158,16 @@ export class PlatformStatsService {
    */
   private autoPostService = new AutoPostService();
 
-  async fetchAccountStats(account: any): Promise<{ stats: PlatformStats | null; error?: string }> {
+  async fetchAccountStats(account: SocialMediaAccount): Promise<{ stats: PlatformStats | null; error?: string }> {
     try {
       const stats = await this.autoPostService.getStatisticForAccount({
         platform: account.platform,
         account,
       });
       return { stats };
-    } catch (error: any) {
-      const errorMessage = error?.message || error?.response?.data?.error?.message || String(error)
+    } catch (error: unknown) {
+      const err = error as { message?: string; response?: { data?: { error?: { message?: string } } } }
+      const errorMessage = err.message || err.response?.data?.error?.message || String(error)
       console.error(`[PlatformStats] Failed to fetch stats for ${account.platform}/${account.accountId}:`, errorMessage)
       return { stats: null, error: errorMessage }
     }
@@ -249,7 +260,7 @@ export class PlatformStatsService {
 
     if (accounts.length === 0) return []
 
-    const accountIds: string[] = accounts.map((a: any) => a.id)
+    const accountIds: string[] = accounts.map((a: SocialMediaAccount) => a.id)
 
     const conditions = [
       eq(entityDetails.entityType, ENTITY_TYPE),
@@ -272,7 +283,7 @@ export class PlatformStatsService {
       offset: options.offset || 0,
     })
 
-    return snapshots.map((s: any) => {
+    return snapshots.map((s: SnapshotRecord) => {
       const details = s.details as unknown as PlatformStats
       return {
         date: dayjs(s.createdAt).format('YYYY-MM-DD'),
@@ -299,7 +310,7 @@ export class PlatformStatsService {
     accounts: number
   }>> {
     const stats = await this.getCurrentStats(filters)
-    const byPlatform: Record<string, any> = {}
+    const byPlatform: Record<string, { platform: string; totalFollowers: number; totalPosts: number; totalEngagement: number; accounts: number }> = {}
 
     for (const s of stats) {
       if (!byPlatform[s.platform]) {

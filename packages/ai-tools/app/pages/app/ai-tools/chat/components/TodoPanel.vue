@@ -14,9 +14,9 @@
         <input
           type="checkbox"
           :checked="todo.status === 'completed'"
-          @change="toggleTodo(index)"
           class="todo-checkbox"
-        />
+          @change="toggleTodo(index)"
+        >
         <span class="todo-content">{{ todo.content }}</span>
       </div>
     </div>

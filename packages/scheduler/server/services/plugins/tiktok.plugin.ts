@@ -48,7 +48,7 @@ export class TikTokPlugin extends BaseSchedulerPlugin {
           likes: user.likes_count || 0,
         },
       };
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('TikTok getStatistic error:', error);
       return this.fallbackStats(socialMediaAccount);
     }
@@ -81,20 +81,20 @@ export class TikTokPlugin extends BaseSchedulerPlugin {
       .replace(/\r/g, '\n');
   }
 
-  private getPlatformData(postDetails: PluginPostDetails, platformPost?: any) {
+  private getPlatformData(postDetails: PluginPostDetails, platformPost?: { platformSettings?: Record<string, unknown> }) {
     const platformName = this.pluginName;
     const platformPostSettings = platformPost?.platformSettings || {};
     const platformContent = platformPostSettings?.platformContent ||
-      (postDetails as any).platformContent?.[platformName];
+      (postDetails.platformContent as Record<string, { content: string; comments?: string[] } | undefined>)?.[platformName];
     const platformSettings = platformPostSettings ||
-      (postDetails as any).platformSettings?.[platformName] as TikTokSettings | undefined;
+      (postDetails.platformSettings as Record<string, unknown>)?.[platformName] as TikTokSettings | undefined;
 
     const rawContent = platformContent?.content || postDetails.content;
 
     return {
       content: this.normalizeContent(rawContent),
       settings: platformSettings,
-      postFormat: (postDetails as any).postFormat || 'post'
+      postFormat: postDetails.postFormat || 'post'
     };
   }
 
@@ -108,7 +108,7 @@ export class TikTokPlugin extends BaseSchedulerPlugin {
   tiktokMaxLength() {
     return platformConfigurations.tiktok.maxPostLength;
   }
-  protected init(options?: any): void {
+  protected init(options?: Record<string, unknown>): void {
     console.log('TikTok plugin initialized', options);
   }
 
@@ -122,7 +122,7 @@ export class TikTokPlugin extends BaseSchedulerPlugin {
       errors.push('At least one video is required for TikTok posts.');
     }
 
-    const hasVideo = post.assets?.some((asset: any) => asset.mimeType?.includes('video'));
+    const hasVideo = post.assets?.some((asset: Asset) => asset.mimeType?.includes('video'));
     if (!hasVideo) {
       errors.push('TikTok requires a video file (MP4 + H.264).');
     }
@@ -133,7 +133,7 @@ export class TikTokPlugin extends BaseSchedulerPlugin {
   /**
    * Get authenticated user information
    */
-  async getUser(accessToken: string): Promise<any> {
+  async getUser(accessToken: string): Promise<Record<string, unknown>> {
     const response = await fetch(
       'https://open.tiktokapis.com/v2/user/info/?fields=open_id,union_id,avatar_url,display_name',
       {
@@ -149,7 +149,7 @@ export class TikTokPlugin extends BaseSchedulerPlugin {
   /**
    * Get video information
    */
-  async getVideoInfo(videoId: string, accessToken: string): Promise<any> {
+  async getVideoInfo(videoId: string, accessToken: string): Promise<Record<string, unknown>> {
     const response = await fetch(
       `https://open.tiktokapis.com/v2/video/query/?fields=id,create_time,cover_image_url,duration,height,width,title,video_description`,
       {
@@ -189,7 +189,7 @@ export class TikTokPlugin extends BaseSchedulerPlugin {
       const { content, settings } = this.getPlatformData(postDetails);
 
       // Step 1: Initialize video upload
-      const initData: any = {
+      const initData = {
         post_info: {
           title: content || '', // Use platform content as title
           privacy_level: settings?.privacy_level || 'PUBLIC', // Default to PUBLIC if not set
@@ -374,7 +374,7 @@ export class TikTokPlugin extends BaseSchedulerPlugin {
   /**
    * Transform TikTok comment to PlatformComment format
    */
-  private transformComment(comment: any): PlatformComment {
+  private transformComment(comment: Record<string, unknown>): PlatformComment {
     return {
       id: comment.comment_id,
       text: comment.text || '',
@@ -396,7 +396,7 @@ export class TikTokPlugin extends BaseSchedulerPlugin {
     socialMediaAccount: PluginSocialMediaAccount,
     options?: { limit?: number; cursor?: string }
   ): Promise<GetCommentsResponse> {
-    const platformPost = postDetails.platformPosts?.find((pp: any) => pp.socialAccountId === socialMediaAccount.id);
+    const platformPost = postDetails.platformPosts?.find((pp) => pp.socialAccountId === socialMediaAccount.id);
     const publishDetail = platformPost?.publishDetail ? JSON.parse(platformPost.publishDetail) : {};
     const externalPostId = publishDetail[socialMediaAccount.id]?.publishedId || publishDetail.postId;
 
@@ -427,7 +427,7 @@ export class TikTokPlugin extends BaseSchedulerPlugin {
       }
 
       const data = await response.json();
-      const comments: PlatformComment[] = (data.comments || []).map((c: any) => this.transformComment(c));
+      const comments: PlatformComment[] = (data.comments || []).map((c: Record<string, unknown>) => this.transformComment(c));
 
       return {
         platform: this.pluginName,
@@ -436,7 +436,7 @@ export class TikTokPlugin extends BaseSchedulerPlugin {
         hasMore: data.has_more || false,
         nextCursor: data.cursor ? String(data.cursor) : undefined,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error fetching TikTok comments:', error);
       return {
         platform: this.pluginName,
@@ -457,7 +457,7 @@ export class TikTokPlugin extends BaseSchedulerPlugin {
     replyText: string
   ): Promise<ReplyCommentResponse> {
     try {
-      const platformPost = postDetails.platformPosts?.find((pp: any) => pp.socialAccountId === socialMediaAccount.id);
+      const platformPost = postDetails.platformPosts?.find((pp) => pp.socialAccountId === socialMediaAccount.id);
       const publishDetail = platformPost?.publishDetail ? JSON.parse(platformPost.publishDetail) : {};
       const videoId = publishDetail[socialMediaAccount.id]?.publishedId || publishDetail.postId;
 
@@ -488,7 +488,7 @@ export class TikTokPlugin extends BaseSchedulerPlugin {
         success: true,
         comment: this.transformComment(data.data || { comment_id: data.comment_id, text: replyText }),
       };
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error replying to TikTok comment:', error);
       return {
         success: false,

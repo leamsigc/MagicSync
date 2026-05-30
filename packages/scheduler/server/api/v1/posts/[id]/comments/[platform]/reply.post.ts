@@ -10,6 +10,7 @@ import { postService } from '#layers/BaseDB/server/services/post.service';
 import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service';
 import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers';
 import { AutoPostService } from '#layers/BaseScheduler/server/services/AutoPost.service';
+import type { Account } from '#layers/BaseDB/db/schema';
 
 
 export default defineEventHandler(async (event) => {
@@ -39,7 +40,7 @@ export default defineEventHandler(async (event) => {
 
     // Find the platform post for this platform
     const platformPost = post.platformPosts?.find(
-      (pp: any) => pp.platformPostId === platform || pp.platform === platform
+      (pp) => pp.platformPostId === platform || pp.platform === platform
     );
 
     if (!platformPost) {
@@ -61,15 +62,15 @@ export default defineEventHandler(async (event) => {
 
     const result = await trigger.replyToComment({
       post,
-      socialAccount: socialAccount as unknown as any,
+      socialAccount: socialAccount as unknown as Account,
       platform,
       commentId,
       replyText,
     });
 
     return { success: true, data: result };
-  } catch (error: any) {
-    if (error.statusCode) throw error;
+  } catch (error: unknown) {
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error;
     log.error({ content: 'Reply to comment error', error: String(error) });
     throw createError({ statusCode: 500, statusMessage: 'Internal server error' });
   }

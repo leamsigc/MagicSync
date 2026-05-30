@@ -55,7 +55,7 @@ async function mockChatAPI(page: Page, response: string = 'Hello! How can I help
 /**
  * Mocks document list endpoint.
  */
-async function mockDocumentsList(page: Page, documents: any[] = []) {
+async function mockDocumentsList(page: Page, documents: Record<string, unknown>[] = []) {
   await page.route('**/api/ai-tools/documents', async (route) => {
     if (route.request().method() === 'GET') {
       await route.fulfill({
@@ -72,7 +72,7 @@ async function mockDocumentsList(page: Page, documents: any[] = []) {
 /**
  * Mocks document upload endpoint.
  */
-async function mockDocumentUpload(page: Page, doc: any) {
+async function mockDocumentUpload(page: Page, doc: Record<string, unknown>) {
   await page.route('**/api/ai-tools/documents/upload', async (route) => {
     await route.fulfill({
       status: 200,
@@ -176,9 +176,9 @@ async function mockIngestionWithMetadata(
   page: Page,
   docId: string,
   totalChunks: number = 5,
-  metadata: Record<string, any> = {}
+  metadata: Record<string, unknown> = {}
 ) {
-  const defaultMeta = {
+  const defaultMeta: Record<string, unknown> = {
     title: 'Test Document',
     author: 'Test Author',
     language: 'en',
@@ -214,9 +214,9 @@ async function mockIngestionWithMetadata(
 async function mockMetadataExtraction(
   page: Page,
   docId: string,
-  metadata: Record<string, any> = {}
+  metadata: Record<string, unknown> = {}
 ) {
-  const defaultMeta = {
+  const defaultMeta: Record<string, unknown> = {
     title: 'Test Document',
     author: 'Test Author',
     language: 'en',
@@ -240,7 +240,7 @@ async function mockMetadataExtraction(
  */
 async function mockRetrieval(
   page: Page,
-  results: Array<{ content: string; documentId: string; similarity: number; metadata?: any }> = []
+  results: Array<{ content: string; documentId: string; similarity: number; metadata?: Record<string, unknown> }> = []
 ) {
   await page.route('**/api/ai-tools/retrieve', async (route) => {
     await route.fulfill({
@@ -257,7 +257,7 @@ async function mockRetrieval(
 /**
  * Mocks thread list endpoint.
  */
-async function mockThreadsList(page: Page, threads: any[] = []) {
+async function mockThreadsList(page: Page, threads: Record<string, unknown>[] = []) {
   await page.route('**/api/ai-tools/chat/threads', async (route) => {
     if (route.request().method() === 'GET') {
       await route.fulfill({

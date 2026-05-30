@@ -1,4 +1,4 @@
-import { aiToolsFacade } from '#ai-tools/server/services/aiToolsFacade.service'
+import { aiToolsFacade } from '#layers/BaseAITools/server/services/aiToolsFacade.service';
 import { generateId } from '@ai-sdk/provider-utils'
 
 export default defineEventHandler(async (event) => {
@@ -13,17 +13,23 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Messages are required' })
   }
 
-  const convertedMessages = messages
-    .map((m: any) => {
+  interface InputMessage {
+    role: string
+    content?: string
+    parts?: Array<{ type: string; text?: string }>
+  }
+
+  const convertedMessages = (messages as InputMessage[])
+    .map((m) => {
       const content = m.parts
         ? m.parts
-            .filter((p: any) => p.type === 'text')
-            .map((p: any) => p.text)
-            .join('')
+          .filter((p) => p.type === 'text')
+          .map((p) => p.text || '')
+          .join('')
         : m.content || ''
       return { role: m.role, content }
     })
-    .filter((m: any) => !(m.role === 'assistant' && !m.content?.trim()))
+    .filter((m) => !(m.role === 'assistant' && !m.content?.trim()))
 
   const config = useRuntimeConfig()
   const backendUrl = config.pythonBackendUrl || 'http://localhost:8000'
@@ -33,7 +39,7 @@ export default defineEventHandler(async (event) => {
 
   let threadId = body.thread_id as string | undefined
   if (!threadId) {
-    const firstUserMsg = convertedMessages.find((m: any) => m.role === 'user')
+    const firstUserMsg = convertedMessages.find((m) => m.role === 'user')
     const title = firstUserMsg?.content?.slice(0, 80) || 'New Chat'
     const threadResult = await aiToolsFacade.createThread(user.id, { title })
     if (threadResult.data) {
@@ -63,7 +69,7 @@ export default defineEventHandler(async (event) => {
 
   const encoder = new TextEncoder()
   let assistantContent = ''
-  const componentStates: { id: string; type: string; data: any }[] = []
+  const componentStates: { id: string; type: string; data: Record<string, unknown> }[] = []
 
   const sendChunk = (data: Record<string, unknown>) => {
     return `data: ${JSON.stringify(data)}\n\n`
@@ -78,8 +84,8 @@ export default defineEventHandler(async (event) => {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${llmJwt}`,
           },
-          body: JSON.stringify({ 
-            messages: convertedMessages, 
+          body: JSON.stringify({
+            messages: convertedMessages,
             thread_id: threadId,
             enable_tools: enableTools,
           }),
@@ -178,18 +184,18 @@ export default defineEventHandler(async (event) => {
                 const isError = resultStr?.includes('[Tool Error:')
                 // Use the SAME id as the tool_call so frontend can match them
                 const toolCallId = data.tool_result.id  // Use the id from backend
-                
+
                 // Add tool_result to componentStates so it's saved in DB
-                componentStates.push({ 
-                  id: toolCallId, 
-                  type: 'tool-result', 
-                  data: { 
+                componentStates.push({
+                  id: toolCallId,
+                  type: 'tool-result',
+                  data: {
                     name: data.tool_call?.name || 'unknown', // Try to get tool name from tool_call
                     output: resultStr,
-                    isError 
-                  } 
+                    isError
+                  }
                 })
-                
+
                 controller.enqueue(encoder.encode(sendChunk({
                   type: 'tool_result',
                   id: toolCallId,  // Use same ID as tool_call
@@ -202,7 +208,7 @@ export default defineEventHandler(async (event) => {
               } else if (data.type === 'error') {
                 controller.enqueue(encoder.encode(sendChunk({ type: 'error', id: generateId(), content: data.content })))
               } else if (data.done) {
-                logger.info('Received done signal', {})
+                log.info('Received done signal', {})
                 controller.enqueue(encoder.encode(sendChunk({ type: 'done', id: generateId() })))
                 break
               }
@@ -213,9 +219,10 @@ export default defineEventHandler(async (event) => {
         }
 
         log.info('Stream finished', {})
-      } catch (err: any) {
-        log.error('Stream error', { error: String(err) })
-        controller.enqueue(encoder.encode(sendChunk({ type: 'error', id: generateId(), content: err.message })))
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : String(error)
+        log.error('Stream error', { error: String(error) })
+        controller.enqueue(encoder.encode(sendChunk({ type: 'error', id: generateId(), content: errorMessage })))
       }
 
       if (threadId && assistantContent) {

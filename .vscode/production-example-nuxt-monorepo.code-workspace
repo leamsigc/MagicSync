@@ -11,7 +11,8 @@
 		"tailwindCSS.classAttributes": [
 			"class",
 			"ui"
-		]
+		],
+		"js/ts.tsdk.path": "node_modules/typescript/lib"
 	},
 	"files.watcherExclude": {
 		"**/node_modules": true,

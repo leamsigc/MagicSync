@@ -1,9 +1,20 @@
 import type { PostResponse, Integration, PluginPostDetails, PluginSocialMediaAccount, GetCommentsResponse, ReplyCommentResponse, PlatformComment, PlatformStats } from '../SchedulerPost.service';
 import { BaseSchedulerPlugin, type MediaContent } from '../SchedulerPost.service';
-import type { Post, PostWithAllData, SocialMediaAccount, Asset } from '#layers/BaseDB/db/schema';
+import type { Post, PostWithAllData, SocialMediaAccount, Asset, PlatformContentOverride } from '#layers/BaseDB/db/schema';
 import type { ThreadsSettings } from '../../../shared/platformSettings';
 
 import { platformConfigurations } from '../../../shared/platformConstants';
+
+type ThreadsApiComment = {
+  id: string;
+  text?: string;
+  from?: { username?: string; id?: string; profile_picture_url?: string };
+  timestamp?: string;
+  created_time?: string;
+  like_count?: number;
+  replies?: { data?: unknown[] };
+  parent_id?: string;
+};
 
 export class ThreadsPlugin extends BaseSchedulerPlugin {
   override async getStatistic(postDetails: PluginPostDetails, socialMediaAccount: PluginSocialMediaAccount): Promise<PlatformStats> {
@@ -60,12 +71,12 @@ export class ThreadsPlugin extends BaseSchedulerPlugin {
 
   private getPlatformData(postDetails: PluginPostDetails) {
     const platformName = this.pluginName;
-    const platformContent = (postDetails as any).platformContent?.[platformName];
-    const platformSettings = (postDetails as any).platformSettings?.[platformName] as ThreadsSettings | undefined;
+    const platformContent = (postDetails.platformContent as unknown as Record<string, PlatformContentOverride | undefined>)?.[platformName];
+    const platformSettings = (postDetails.platformSettings as unknown as Record<string, unknown>)?.[platformName] as ThreadsSettings | undefined;
     return {
       content: platformContent?.content || postDetails.content,
       settings: platformSettings,
-      postFormat: (postDetails as any).postFormat || 'post'
+      postFormat: postDetails.postFormat ?? 'post'
     };
   }
 
@@ -80,7 +91,7 @@ export class ThreadsPlugin extends BaseSchedulerPlugin {
     return platformConfigurations.threads.maxPostLength;
   }
 
-  protected init(options?: any): void {
+  protected init(options?: Record<string, unknown>): void {
     console.log('Threads plugin initialized', options);
   }
 
@@ -98,11 +109,11 @@ export class ThreadsPlugin extends BaseSchedulerPlugin {
   /**
    * Get Threads user profile
    */
-  async getProfile(userId: string, accessToken: string): Promise<any> {
+  async getProfile(userId: string, accessToken: string): Promise<Record<string, unknown>> {
     const response = await fetch(
       `https://graph.threads.net/${userId}?fields=id,username,threads_profile_picture_url,threads_biography&access_token=${accessToken}`
     );
-    return response.json();
+    return response.json() as Promise<Record<string, unknown>>;
   }
 
   /**
@@ -116,7 +127,7 @@ export class ThreadsPlugin extends BaseSchedulerPlugin {
     mediaUrl?: string,
     children?: string[]
   ): Promise<string> {
-    const params: any = {
+    const params: Record<string, string> = {
       media_type: mediaType,
       text: text,
       access_token: accessToken,
@@ -152,7 +163,7 @@ export class ThreadsPlugin extends BaseSchedulerPlugin {
     userId: string,
     creationId: string,
     accessToken: string
-  ): Promise<any> {
+  ): Promise<Record<string, unknown>> {
     const params = new URLSearchParams({
       creation_id: creationId,
       access_token: accessToken,
@@ -350,14 +361,14 @@ export class ThreadsPlugin extends BaseSchedulerPlugin {
   /**
    * Transform Threads API comment to PlatformComment format
    */
-  private transformComment(comment: any): PlatformComment {
+  private transformComment(comment: ThreadsApiComment): PlatformComment {
     return {
       id: comment.id,
       text: comment.text || '',
       authorName: comment.from?.username || 'Unknown',
       authorId: comment.from?.id,
       authorPicture: comment.from?.profile_picture_url,
-      createdAt: comment.timestamp || comment.created_time,
+      createdAt: comment.timestamp || comment.created_time || '',
       likeCount: comment.like_count,
       replyCount: comment.replies?.data?.length || 0,
       parentId: comment.parent_id,
@@ -373,8 +384,8 @@ export class ThreadsPlugin extends BaseSchedulerPlugin {
     socialMediaAccount: PluginSocialMediaAccount,
     options?: { limit?: number; cursor?: string }
   ): Promise<GetCommentsResponse> {
-    const platformPost = postDetails.platformPosts?.find((pp: any) => pp.socialAccountId === socialMediaAccount.id);
-    const publishDetail = platformPost?.publishDetail ? JSON.parse(platformPost.publishDetail) : {};
+    const platformPost = postDetails.platformPosts?.find((pp: { socialAccountId: string }) => pp.socialAccountId === socialMediaAccount.id);
+    const publishDetail = platformPost?.publishDetail ? JSON.parse(platformPost.publishDetail as string) : {};
     const externalPostId = publishDetail[socialMediaAccount.id]?.publishedId || publishDetail.postId;
 
     if (!externalPostId) {
@@ -409,7 +420,7 @@ export class ThreadsPlugin extends BaseSchedulerPlugin {
 
       const data = await response.json();
       // Threads API may not return comments directly; return empty if not available
-      const comments: PlatformComment[] = (data.data || []).map((c: any) => this.transformComment(c));
+      const comments: PlatformComment[] = (data.data || []).map((c: ThreadsApiComment) => this.transformComment(c));
 
       return {
         platform: this.pluginName,

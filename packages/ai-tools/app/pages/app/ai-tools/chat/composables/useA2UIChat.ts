@@ -1,5 +1,5 @@
 import { ref, computed, watch, onMounted } from 'vue'
-import { useChatHistoryState } from './useChatHistoryState'
+import { useChatHistoryState, type ComponentState } from './useChatHistoryState'
 
 export interface ChatMessage {
   id: string
@@ -148,20 +148,20 @@ export function useA2UIChat() {
               console.log('[Chat] tool_result chunk:', chunk)
               // Find tool call - try by ID first, then by toolName
               let toolCall = null
-              
+
               // First try to find by ID from the chunk itself (id field)
               toolCall = assistantMessage.toolCalls?.find((tc) => tc.id === chunk.id)
-              
+
               // If not found, try by toolCallId from backend
               if (!toolCall && chunk.toolCallId) {
                 toolCall = assistantMessage.toolCalls?.find((tc) => tc.id === chunk.toolCallId)
               }
-              
+
               // Last resort: find by toolName (chunk.toolName when not error/unknown)
               if (!toolCall && chunk.toolName && chunk.toolName !== 'error' && chunk.toolName !== 'unknown') {
                 toolCall = assistantMessage.toolCalls?.find((tc) => tc.name === chunk.toolName)
               }
-              
+
               console.log('[Chat] Found toolCall:', toolCall, 'id:', chunk.id, 'toolCallId:', chunk.toolCallId, 'toolName:', chunk.toolName)
               console.log('[Chat] Available toolCalls:', assistantMessage.toolCalls?.map(tc => ({ id: tc.id, name: tc.name })))
               if (toolCall) {
@@ -192,7 +192,7 @@ export function useA2UIChat() {
       const toolCalls = assistantMessage.toolCalls || []
       const hasToolCalls = toolCalls.length > 0
       const hasTextContent = assistantMessage.content && assistantMessage.content.length > 0
-      
+
       if (hasToolCalls && !hasTextContent) {
         // Tools ran but no final text - show tool results as final content
         console.log('[Chat] Tools executed but no text response, showing tool results')
@@ -202,7 +202,7 @@ export function useA2UIChat() {
           .join('\n')
         assistantMessage.content = `[Tool Results]\n${toolOutputs}`
       }
-      
+
       isLoadingThreads.value = false
       if (!threadId.value) {
         loadThreads().then(() => {
@@ -212,9 +212,11 @@ export function useA2UIChat() {
           }
         })
       }
-    } catch (err: any) {
-      if (err.name !== 'AbortError') {
-        console.error('Chat error:', err)
+    } catch (error: unknown) {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        // AbortError is expected when user cancels
+      } else if (error instanceof Error) {
+        console.error('Chat error:', error)
       }
     } finally {
       isStreaming.value = false
@@ -256,7 +258,7 @@ export function useA2UIChat() {
             const parsed = JSON.parse(m.metadata)
             metadata = parsed
             if (parsed.componentStates) {
-              toolCalls = parsed.componentStates.map((cs: any) => ({
+              toolCalls = (parsed.componentStates as Array<{ id: string; data?: { name?: string; args?: Record<string, unknown>; arguments?: Record<string, unknown>; output?: string; isError?: boolean } }>).map((cs) => ({
                 id: cs.id,
                 name: cs.data?.name || 'unknown',
                 args: cs.data?.args || cs.data?.arguments || {},
@@ -291,10 +293,10 @@ export function useA2UIChat() {
           role: m.role as 'user' | 'assistant' | 'system',
           content: m.content,
           parts,
-          toolCalls: toolCalls || (messageState?.components ? messageState.components.map((c: any) => ({
+          toolCalls: toolCalls || (messageState?.components ? messageState.components.map((c: ComponentState) => ({
             id: c.id,
             name: c.data?.name || 'unknown',
-            args: c.data?.args || {},
+            args: (c.data?.args as Record<string, unknown>) || {},
           })) : undefined),
         }
       })

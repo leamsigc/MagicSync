@@ -344,8 +344,9 @@ useSortable(treeRef, items, {
         <h1 class="text-xl font-semibold">{{ t('title') }}</h1>
       </div>
       <div class="flex items-center gap-2">
-        <input ref="fileInput" type="file" class="hidden" accept=".pdf,.txt,.md,.html,.docx,.csv,.json" multiple
-          @change="handleUpload(($event.target as HTMLInputElement).files)" />
+        <input
+ref="fileInput" type="file" class="hidden" accept=".pdf,.txt,.md,.html,.docx,.csv,.json" multiple
+          @change="handleUpload(($event.target as HTMLInputElement).files)" >
         <UButton color="primary" :loading="uploading" @click="fileInput?.click()">
           <UIcon name="i-heroicons-arrow-up-tray" class="mr-1" />
           {{ t('upload') }}
@@ -362,16 +363,19 @@ useSortable(treeRef, items, {
     </div>
 
     <div v-else class="flex-1 flex overflow-hidden">
-      <div class="w-80 border-r border-gray-200 dark:border-gray-700 flex flex-col" @drop.prevent="onDrop"
+      <div
+class="w-80 border-r border-gray-200 dark:border-gray-700 flex flex-col" @drop.prevent="onDrop"
         @dragover="onDragOver" @dragleave="onDragLeave">
-        <UTree ref="tree" :items="items" @select="onTreeSelect" class="flex-1 overflow-y-auto p-2" />
-        <div v-if="dragOver"
+        <UTree ref="tree" :items="items" class="flex-1 overflow-y-auto p-2" @select="onTreeSelect" />
+        <div
+v-if="dragOver"
           class="absolute inset-0 bg-primary-50/90 dark:bg-primary-900/50 flex items-center justify-center border-2 border-dashed border-primary-500 rounded-lg m-2">
           <p class="text-primary-600 dark:text-primary-400 font-medium">{{ t('dropHere') }}</p>
         </div>
       </div>
 
-      <div v-if="showDetailPanel"
+      <div
+v-if="showDetailPanel"
         class="w-96 border-l border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden">
         <div class="p-4 border-b border-gray-200 dark:border-gray-700">
           <h2 class="text-lg font-semibold">File Details</h2>
@@ -408,7 +412,8 @@ useSortable(treeRef, items, {
 
               <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <label class="text-sm text-gray-500 block mb-2">Move to folder</label>
-                <USelect v-model="moveToFolderId" :items="folderOptions" :placeholder="t('selectFolder')"
+                <USelect
+v-model="moveToFolderId" :items="folderOptions" :placeholder="t('selectFolder')"
                   @update:model-value="handleMoveToFolder" />
               </div>
             </div>
@@ -441,10 +446,10 @@ useSortable(treeRef, items, {
           <UInput v-model="newFolderName" :placeholder="t('folderNamePlaceholder')" @keyup.enter="createFolder" />
         </div>
         <section class="flex gap-4 justify-end p-4 border-t border-gray-200 dark:border-gray-700">
-          <UButton @click="showNewFolderModal = false" variant="ghost">
+          <UButton variant="ghost" @click="showNewFolderModal = false">
             {{ t('cancel') }}
           </UButton>
-          <UButton @click="createFolder" color="primary">
+          <UButton color="primary" @click="createFolder">
             {{ t('create') }}
           </UButton>
         </section>

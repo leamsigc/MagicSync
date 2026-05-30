@@ -49,8 +49,8 @@ export function useApiKeyManagement() {
       })
 
       apiKeys.value = response.apiKeys
-    } catch (err: any) {
-      error.value = err.message || 'Failed to fetch API keys'
+    } catch (err: unknown) {
+      error.value = err instanceof Error ? err.message : 'Failed to fetch API keys'
     } finally {
       loading.value = false
     }
@@ -82,8 +82,8 @@ export function useApiKeyManagement() {
       await fetchApiKeys(targetBusinessId);
 
       return response
-    } catch (err: any) {
-      error.value = err.message || 'Failed to create API key'
+    } catch (err: unknown) {
+      error.value = err instanceof Error ? err.message : 'Failed to create API key'
       throw err
     } finally {
       loading.value = false
@@ -110,8 +110,8 @@ export function useApiKeyManagement() {
       })
 
       apiKeys.value = apiKeys.value.filter(k => k.id !== keyId)
-    } catch (err: any) {
-      error.value = err.message || 'Failed to delete API key'
+    } catch (err: unknown) {
+      error.value = err instanceof Error ? err.message : 'Failed to delete API key'
       throw err
     } finally {
       loading.value = false

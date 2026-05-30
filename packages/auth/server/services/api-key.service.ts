@@ -54,7 +54,12 @@ export const apiKeyService = {
     }
 
     try {
-      const result = await auth.api.verifyApiKey({ body: { key: apiKey } })
+      const result = await auth.api.verifyApiKey({
+        body: {
+          key: apiKey,
+          configId: "org-keys",
+        }
+      })
 
       if (!result.valid || !result.key) {
         return {
@@ -95,7 +100,7 @@ export const apiKeyService = {
       const connectedPlatforms = metadata.connectedPlatforms || []
 
       // userId may be undefined for org-level keys
-      const userId = (keyData as any).userId ?? undefined
+      const userId = (keyData as { userId?: string }).userId ?? ""
 
       return {
         success: true,
@@ -103,8 +108,8 @@ export const apiKeyService = {
           valid: true,
           keyId: keyData.id,
           orgId,
-          userId,
           businessId,
+          userId,
           connectedPlatforms,
           name: keyData.name,
         },

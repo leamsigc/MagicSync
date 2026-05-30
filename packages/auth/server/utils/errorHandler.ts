@@ -6,7 +6,7 @@ export interface ErrorResponse {
   error: {
     code: string
     message: string
-    details?: Record<string, any>
+    details?: Record<string, unknown>
     timestamp: string
     requestId?: string
   }
@@ -110,7 +110,7 @@ export class ExternalAPIError extends AppError {
     message: string,
     public readonly apiName: string,
     public readonly apiStatusCode?: number,
-    public readonly apiResponse?: any,
+    public readonly apiResponse?: unknown,
     isRetryable: boolean = true
   ) {
     super(

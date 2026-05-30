@@ -16,12 +16,14 @@ export default defineEventHandler(async (event) => {
             success: true,
             data: result
         }
-    } catch (error: any) {
-        log.error({ content: 'Failed to get unread count', error: error.message })
+    } catch (error: unknown) {
+        const msg = error instanceof Error ? error.message : 'Unknown error'
+        log.error({ content: 'Failed to get unread count', error: msg })
+        const err = error as { statusCode?: number; statusMessage?: string }
 
         throw createError({
-            statusCode: error.statusCode || 500,
-            statusMessage: error.statusMessage || 'Failed to get unread count'
+            statusCode: err.statusCode || 500,
+            statusMessage: err.statusMessage || 'Failed to get unread count'
         })
     }
 })

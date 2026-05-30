@@ -110,7 +110,8 @@ function loadConfig(config: any) {
         <h2 class="text-lg font-semibold text-white mb-3">{{ t('savedConfigs') }}</h2>
 
         <div class="space-y-3">
-          <div v-for="config in configs" :key="config.id"
+          <div
+v-for="config in configs" :key="config.id"
             class="flex items-center justify-between p-4 rounded-lg border border-gray-700/50"
             :class="config.isDefault ? 'bg-emerald-500/5 border-emerald-500/30' : 'hover:bg-gray-800/30'">
             <div>
@@ -128,11 +129,14 @@ function loadConfig(config: any) {
               </p>
             </div>
             <div class="flex items-center gap-2">
-              <UButton v-if="!config.isDefault" icon="i-heroicons-star" color="neutral" variant="ghost" size="sm"
+              <UButton
+v-if="!config.isDefault" icon="i-heroicons-star" color="neutral" variant="ghost" size="sm"
                 @click="setDefault(config.id)" />
-              <UButton icon="i-heroicons-pencil" color="neutral" variant="ghost" size="sm"
+              <UButton
+icon="i-heroicons-pencil" color="neutral" variant="ghost" size="sm"
                 @click="loadConfig(config)" />
-              <UButton icon="i-heroicons-trash" color="error" variant="ghost" size="sm"
+              <UButton
+icon="i-heroicons-trash" color="error" variant="ghost" size="sm"
                 @click="deleteConfig(config.id)" />
             </div>
           </div>
@@ -150,7 +154,8 @@ function loadConfig(config: any) {
           <div>
             <label class="block text-sm font-medium text-gray-200 mb-2">{{ t('provider') }}</label>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div v-for="option in providerOptions" :key="option.value"
+              <div
+v-for="option in providerOptions" :key="option.value"
                 class="p-3 rounded-lg border cursor-pointer transition-colors" :class="selectedProvider === option.value
                   ? 'border-emerald-500/50 bg-emerald-500/5'
                   : 'border-gray-700/50 hover:border-gray-600'"

@@ -11,6 +11,7 @@ import { entityDetails } from '#layers/BaseDB/db/entityDetails/entityDetails';
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle';
 import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers';
 import { AutoPostService } from '#layers/BaseScheduler/server/services/AutoPost.service';
+import type { Account } from '#layers/BaseDB/db/schema';
 import { eq, and, inArray } from 'drizzle-orm';
 import dayjs from 'dayjs';
 
@@ -35,15 +36,24 @@ export default defineEventHandler(async (event) => {
     }
 
     const trigger = new AutoPostService();
-    const publishedPosts = post.platformPosts?.filter((pp: any) => pp.status === 'published') || [];
+    const publishedPosts = post.platformPosts?.filter((pp) => pp.status === 'published') || [];
 
     if (publishedPosts.length === 0) {
       return { success: true, data: [], cached: false };
     }
 
-    const results = await Promise.all(publishedPosts.map(async (platformPost: any) => {
+    const results = await Promise.all(publishedPosts.map(async (platformPost) => {
       const platform = platformPost.platformPostId || platformPost.platform;
-      const platformData: any = {
+      const platformData: {
+        platform: string;
+        socialAccountId: string;
+        status: string;
+        publishedAt: unknown;
+        error?: string;
+        stats?: unknown;
+        cached?: boolean;
+        updatedAt?: unknown;
+      } = {
         platform,
         socialAccountId: platformPost.socialAccountId,
         status: platformPost.status,
@@ -82,7 +92,7 @@ export default defineEventHandler(async (event) => {
 
         const insights = await trigger.getPostInsights({
           post,
-          socialAccount: socialAccount as unknown as any,
+          socialAccount: socialAccount as unknown as Account,
           platform,
         });
 
@@ -108,16 +118,16 @@ export default defineEventHandler(async (event) => {
         platformData.stats = insights;
         platformData.cached = false;
         platformData.updatedAt = new Date().toISOString();
-      } catch (err: any) {
-        platformData.error = err.message || 'Failed to fetch stats';
+      } catch (err: unknown) {
+        platformData.error = err instanceof Error ? err.message : 'Failed to fetch stats';
       }
 
       return platformData;
     }));
 
     return { success: true, data: results };
-  } catch (error: any) {
-    if (error.statusCode) throw error;
+  } catch (error: unknown) {
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error;
     log.error({ content: 'Get all post stats error', error: String(error) });
     throw createError({ statusCode: 500, statusMessage: 'Internal server error' });
   }

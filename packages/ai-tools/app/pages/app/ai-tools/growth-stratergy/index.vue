@@ -129,7 +129,8 @@ const appendToBody = import.meta.client ? () => document.body : undefined
   <div class="space-y-8">
     <BasePageHeader :title="t('title')" :description="t('subtitle')">
       <template #actions>
-        <UButton to="/app/ai-tools/growth-stratergy/create" icon="i-lucide-rocket" color="primary" size="lg"
+        <UButton
+to="/app/ai-tools/growth-stratergy/create" icon="i-lucide-rocket" color="primary" size="lg"
           class="rounded-full px-6 shadow-lg shadow-primary/20 hover:scale-105 transition-transform">
           {{ t('cta') }}
         </UButton>
@@ -156,7 +157,8 @@ const appendToBody = import.meta.client ? () => document.body : undefined
         </template>
         <template #action-plan>
           <div class="grid grid-cols-1 gap-6">
-            <UCard v-for="section in actionSections" :key="section.id"
+            <UCard
+v-for="section in actionSections" :key="section.id"
               class="group relative bg-transparent transition-all duration-300 overflow-hidden ring-0 ">
               <div class="p-8">
                 <div class="flex items-center justify-between mb-8 pb-4 border-b border-border/50">
@@ -169,22 +171,26 @@ const appendToBody = import.meta.client ? () => document.body : undefined
                   </div>
                   <div class="flex gap-2">
                     <template v-if="editingSection === section.id">
-                      <UButton color="primary" variant="soft" icon="i-lucide-check" class="rounded-xl"
+                      <UButton
+color="primary" variant="soft" icon="i-lucide-check" class="rounded-xl"
                         @click="saveEditing">
                         {{ t('actionPlan.save') }}
                       </UButton>
-                      <UButton color="neutral" variant="ghost" icon="i-lucide-x" class="rounded-xl"
+                      <UButton
+color="neutral" variant="ghost" icon="i-lucide-x" class="rounded-xl"
                         @click="cancelEditing">
                         {{ t('actionPlan.cancel') }}
                       </UButton>
                     </template>
                     <template v-else>
-                      <UButton color="neutral" variant="ghost" icon="i-lucide-edit-2"
+                      <UButton
+color="neutral" variant="ghost" icon="i-lucide-edit-2"
                         class="rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"
                         @click="startEditing(section.id)">
                         {{ t('actionPlan.edit') }}
                       </UButton>
-                      <UButton color="neutral" variant="ghost" icon="i-lucide-rotate-ccw"
+                      <UButton
+color="neutral" variant="ghost" icon="i-lucide-rotate-ccw"
                         class="rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"
                         @click="resetSection(section.id)">
                         {{ t('actionPlan.reset') }}
@@ -195,7 +201,8 @@ const appendToBody = import.meta.client ? () => document.body : undefined
 
                 <div class="prose prose-neutral dark:prose-invert max-w-none">
                   <template v-if="editingSection === section.id">
-                    <UEditor v-slot="{ editor }" v-model="editBuffer" content-type="markdown" variant="none"
+                    <UEditor
+v-slot="{ editor }" v-model="editBuffer" content-type="markdown" variant="none"
                       class="w-full bg-muted/30 rounded-2xl p-4 font-mono text-sm border-2 border-primary/20 focus:border-primary transition-colors">
                       <UEditorToolbar :editor="editor" :items="items" layout="bubble" />
                       <UEditorSuggestionMenu :editor="editor" :items="itemSuggestions" :append-to="appendToBody" />
