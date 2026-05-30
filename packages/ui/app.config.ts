@@ -4,7 +4,7 @@ export default defineAppConfig({
     footer: {
       main: {
         company: "MagicSync",
-        logo: './logo.png'
+        logo: '/img/logo.png'
       },
       companyName: 'Default Company',
       socialLinks: [

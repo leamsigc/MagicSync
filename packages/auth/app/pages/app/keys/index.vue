@@ -1,6 +1,8 @@
 <i18n src="./index.json"></i18n>
 
 <script lang="ts" setup>
+import type { ApiKey } from '@better-auth/api-key';
+import type { TableColumn } from '@nuxt/ui'
 
 const { t } = useI18n()
 const activeBusinessId = useState<string>('business:id');
@@ -40,11 +42,6 @@ watch(activeBusinessId, (newVal) => {
   }
 }, { immediate: true })
 
-onMounted(() => {
-  if (activeBusinessId.value) {
-    fetchApiKeys(activeBusinessId.value)
-  }
-})
 
 const handleCreate = async () => {
   if (!newKeyName.value.trim()) {
@@ -99,6 +96,47 @@ useHead({
   title: t('title'),
   meta: [{ name: 'description', content: t('description') }]
 })
+
+
+const columns: TableColumn<ApiKey>[] = [
+  {
+    accessorKey: 'id',
+    header: '#',
+    cell: ({ row }) => `#${row.getValue('id')}`
+  },
+  {
+    accessorKey: 'name',
+    header: t('columns.name'),
+    cell: ({ row }) => row.getValue('name')
+  },
+  {
+    accessorKey: 'prefix',
+    header: t('columns.prefix'),
+    cell: ({ row }) => row.getValue('prefix')
+  },
+  {
+    accessorKey: 'createdAt',
+    header: t('columns.created'),
+    cell: ({ row }) => formatDate(row.getValue('createdAt'))
+  },
+  {
+    accessorKey: 'expiresAt',
+    header: t('columns.expires'),
+    cell: ({ row }) => formatDate(row.getValue('expiresAt'))
+  },
+  {
+    header: t('columns.actions'),
+    cell: ({ row }) => h(UButton, {
+      variant: 'ghost',
+      color: 'error',
+      size: 'sm',
+      icon: 'i-lucide-trash-2',
+      loading: deleteLoading.value === row.getValue('id'),
+      onClick: () => handleDelete(row.getValue('id'))
+    })
+  }
+
+]
 </script>
 
 <template>
@@ -129,35 +167,7 @@ useHead({
       </UButton>
     </div>
 
-    <UTable v-else :data="apiKeys" :loading="loading" class="w-full">
-      <template #columns>
-        <UTableColumn :label="t('columns.name')" key="name">
-          <template #cell="{ row }">
-            <div class="font-medium">{{ row.name }}</div>
-          </template>
-        </UTableColumn>
-        <UTableColumn :label="t('columns.prefix')" key="prefix">
-          <template #cell="{ row }">
-            <code class="text-sm bg-muted px-2 py-1 rounded">{{ row.prefix }}****</code>
-          </template>
-        </UTableColumn>
-        <UTableColumn :label="t('columns.created')" key="created">
-          <template #cell="{ row }">
-            {{ formatDate(row.createdAt) }}
-          </template>
-        </UTableColumn>
-        <UTableColumn :label="t('columns.expires')" key="expires">
-          <template #cell="{ row }">
-            {{ formatDate(row.expiresAt) }}
-          </template>
-        </UTableColumn>
-        <UTableColumn :label="t('columns.actions')" key="actions">
-          <template #cell="{ row }">
-            <UButton variant="ghost" color="error" size="sm" icon="i-lucide-trash-2" :loading="deleteLoading === row.id"
-              @click="handleDelete(row.id)" />
-          </template>
-        </UTableColumn>
-      </template>
+    <UTable v-else :data="apiKeys" :columns="columns" :loading="loading" class="flex-1 overflow-scroll">
     </UTable>
 
     <UModal v-model:open="showCreateModal" :title="t('createButton')">

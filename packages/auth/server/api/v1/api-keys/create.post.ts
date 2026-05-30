@@ -43,7 +43,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Step 5: Create the API key using the orgId we already resolved
-  const apiKey = await apiKeyService.createApiKey(event, org.id, name, expiresIn)
+  const apiKey = await apiKeyService.createApiKey(event, org.id, name, expiresIn, user.id)
 
   await logAuditService.logAuditEvent({
     userId: user.id,

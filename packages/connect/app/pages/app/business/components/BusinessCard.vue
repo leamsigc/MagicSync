@@ -12,11 +12,17 @@ const props = defineProps<{
 const { t } = useI18n();
 
 const emit = defineEmits(['edit', 'delete', 'select']);
+const router = useRouter();
 const menuActions = [
   {
     label: t('actions.edit'),
     icon: 'i-heroicons-pencil',
     onSelect: () => emit('edit', props.business.id),
+  },
+  {
+    label: 'Google Business',
+    icon: 'i-logos-google',
+    onSelect: () => router.push(`/app/business/${props.business.id}/gmb`),
   },
   {
     label: t('actions.delete'),

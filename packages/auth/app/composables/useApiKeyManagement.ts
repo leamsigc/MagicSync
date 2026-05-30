@@ -76,17 +76,10 @@ export function useApiKeyManagement() {
         }
       })
 
-      apiKeys.value.unshift({
-        id: response.id,
-        name: response.name,
-        prefix: response.prefix,
-        expiresAt: response.expiresAt,
-        createdAt: response.createdAt,
-        enabled: true
-      })
 
       newApiKey.value = response
       showKeyModal.value = true
+      await fetchApiKeys(targetBusinessId);
 
       return response
     } catch (err: any) {

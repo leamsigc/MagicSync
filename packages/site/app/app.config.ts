@@ -3,7 +3,7 @@ export default defineAppConfig({
     BaseUiLayer: {
         main: {
             company: "MagicSync",
-            logo: './logo.png'
+            logo: '/img/logo.png'
         },
         footer: {
             companyName: 'MagicSync',
@@ -11,27 +11,27 @@ export default defineAppConfig({
                 {
                     name: 'Facebook',
                     icon: 'logos:facebook',
-                    url: 'https://facebook.com/MagicSync'
+                    url: 'https://facebook.com/MagicSyncdordev'
                 },
                 {
                     name: 'Twitter',
                     icon: 'logos:twitter',
-                    url: 'https://twitter.com/MagicSync'
+                    url: 'https://twitter.com/magicsyncdotdev'
                 },
                 {
                     name: 'Instagram',
                     icon: 'ri:instagram-fill',
-                    url: 'https://instagram.com/MagicSync'
+                    url: 'https://instagram.com/magicsyncdotdev'
                 },
                 {
                     name: 'LinkedIn',
                     icon: 'logos:linkedin-icon',
-                    url: 'https://linkedin.com/MagicSync'
+                    url: 'https://linkedin.com/in/leamsigc'
                 },
                 {
                     name: 'YouTube',
                     icon: 'logos:youtube-icon',
-                    url: 'https://youtube.com/MagicSync'
+                    url: 'https://youtube.com/leamsigc'
                 }
             ]
         }

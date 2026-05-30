@@ -227,7 +227,7 @@
       "time": "Por favor, ingresa una hora válida"
     },
     "navigation": {
-      "devDocs": "Documentos de desarrollo",
+      "devDocs": "Documentación",
       "blogs": "Blogs",
       "platform": "Plataforma",
       "googleMyBusiness": "Google My Business",
@@ -243,8 +243,8 @@
       "pinterest": "Pinterest",
       "pinterestDesc": "Haz crecer tu audiencia de Pinterest con el uso de IA",
       "tools": "Herramientas",
-      "playground": "Campo de juego",
-      "aiTools": "Herramientas de IA",
+      "playground": "Playground",
+      "aiTools": "IA",
       "home": "Inicio",
       "login": "Iniciar sesión",
       "openOnGitHub": "Abrir en GitHub"
@@ -410,7 +410,7 @@
       "pinterestDesc": "Erweitern Sie Ihre Pinterest-Zielgruppe mit Hilfe von KI",
       "tools": "Tools",
       "playground": "Spielplatz",
-      "aiTools": "KI-Tools",
+      "aiTools": "KI",
       "home": "Startseite",
       "login": "Anmelden",
       "openOnGitHub": "Auf GitHub öffnen"
@@ -559,7 +559,7 @@
       "time": "Veuillez saisir une heure valide"
     },
     "navigation": {
-      "devDocs": "Docs de développement",
+      "devDocs": "Docs",
       "blogs": "Blogs",
       "platform": "Plateforme",
       "googleMyBusiness": "Google My Business",

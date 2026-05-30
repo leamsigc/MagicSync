@@ -259,7 +259,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     const since = dayjs().subtract(days, 'day').unix();
 
     const url = this._getGraphApiUrl(
-      `/${pageId}/insights?metric=page_impressions,page_views_total,page_post_engagements,page_fan_adds_unique,page_follows&period=day&since=${since}&until=${until}&access_token=${accessToken}`
+      `/${pageId}/insights?metric=page_views_total,page_post_engagements,page_follows&period=day&since=${since}&until=${until}&access_token=${accessToken}`
     );
     const response = await this.fetch(url, undefined, 'fetch page insights')
     const { data, error } = await response.json();
@@ -270,11 +270,9 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     }
 
     const labelMap: Record<string, string> = {
-      page_impressions: 'Reach',
-      page_follows: 'Followers',
-      page_views_total: 'Profile Views',
+      page_views_total: 'Reach',
       page_post_engagements: 'Post Engagements',
-      page_fan_adds_unique: 'New Likes',
+      page_follows: 'Followers',
     }
 
     return data?.map((d: any) => ({
@@ -771,18 +769,16 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     const since = dayjs().subtract(date, 'day').unix();
 
     const url = this._getGraphApiUrl(
-      `/${id}/insights?metric=page_impressions,page_views_total,page_post_engagements,page_fan_adds_unique,page_follows&period=day&since=${since}&until=${until}&access_token=${accessToken}`
+      `/${id}/insights?metric=page_views_total,page_post_engagements,page_follows&period=day&since=${since}&until=${until}&access_token=${accessToken}`
     );
     const { data } = await (
       await this.fetch(url, undefined, 'fetch analytics')
     ).json();
 
     const labelMap: Record<string, string> = {
-      page_impressions: 'Reach',
-      page_follows: 'Followers',
-      page_views_total: 'Profile Views',
+      page_views_total: 'Reach',
       page_post_engagements: 'Post Engagements',
-      page_fan_adds_unique: 'New Likes',
+      page_follows: 'Followers',
     }
 
     return (
@@ -1127,7 +1123,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     let previousFollowers = 0
 
     for (const metric of insightsData) {
-      if (metric.label === 'Post Engagements' || metric.label === 'New Likes') {
+      if (metric.label === 'Post Engagements') {
         // @ts-ignore
         totalEngagement += metric.data?.reduce((sum, d) => sum + d.total, 0) || 0
       }

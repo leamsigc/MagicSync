@@ -2,33 +2,25 @@
 const { t } = useI18n()
 const appConfig = useAppConfig()
 const companyName = appConfig.BaseUiLayer.footer.companyName
+const companyLogo = appConfig.BaseUiLayer.main.logo
 
 const { links: items } = useNavigationLinks()
 </script>
 
 <template>
-  <UHeader
-    mode="drawer"
-    :ui="{
-      root: 'sticky top-4 z-50 mx-auto max-w-7xl bg-elevated rounded-2xl ',
-      inner: 'w-full max-w-(--ui-container) mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-3 h-16'
-    }"
-  >
+  <UHeader mode="drawer" :ui="{
+    root: 'sticky top-4 z-50 mx-auto max-w-7xl bg-elevated rounded-2xl ',
+    content: 'w-full max-w-(--ui-container) mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-3 h-16'
+  }">
     <template #left>
-      <UTooltip :text="t('navigation.home')" :kbds="['meta', 'H']">
-        <UButton color="neutral" variant="ghost" to="/" icon="fxemoji:flaginhole" :aria-label="t('navigation.home')">
-          {{ companyName }}
-        </UButton>
-      </UTooltip>
+      <UButton color="neutral" variant="ghost" to="/" :aria-label="t('navigation.home')">
+        <img :src="companyLogo" fit="contain" :alt="companyName" :title="companyName" class="h-10 object-contain" />
+        {{ companyName }}
+      </UButton>
     </template>
 
-    <UNavigationMenu
-      :items="items"
-      orientation="horizontal"
-      class="w-full justify-center"
-      highlight
-      highlight-color="primary"
-    />
+    <UNavigationMenu :items="items" orientation="horizontal" class="w-full justify-center" highlight
+      highlight-color="primary" />
     <template #right>
       <BaseThemeSelector />
       <BaseTranslationMenu />

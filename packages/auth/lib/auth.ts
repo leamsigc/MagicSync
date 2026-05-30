@@ -398,7 +398,13 @@ export const auth = betterAuth({
         // Invitation emails handled via notifications
       }
     }),
-    apiKey()
+    apiKey([
+      {
+        configId: "org-keys",
+        defaultPrefix: "org_",
+        references: "organization", // Owned by organizations
+      },
+    ])
   ],
   databaseHooks: {
     account: {

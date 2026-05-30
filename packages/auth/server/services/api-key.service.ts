@@ -24,17 +24,17 @@ export interface ApiKeyVerificationResult {
 
 export interface ApiKeyWithSecret {
   id: string
-  name: string
+  name: string | null
   key: string
-  prefix: string
+  prefix: string | null
   expiresAt: Date | null
   createdAt: Date
 }
 
 export interface ApiKeyListItem {
   id: string
-  name: string
-  prefix: string
+  name: string | null
+  prefix: string | null
   expiresAt: Date | null
   createdAt: Date
   enabled: boolean
@@ -159,13 +159,15 @@ export const apiKeyService = {
    * Create a new API key for an organization.
    * Does NOT check membership or fetch/create the org — the caller handles that.
    */
-  async createApiKey(event: H3Event, orgId: string, name: string, expiresIn?: number): Promise<ApiKeyWithSecret> {
+  async createApiKey(event: H3Event, orgId: string, name: string, expiresIn?: number, userId?: string): Promise<ApiKeyWithSecret> {
     const authApi = useAuthApi(event)
 
     const apiKey = await authApi.createApiKey({
       body: {
         name,
+        configId: "org-keys",
         organizationId: orgId,
+        userId: userId,
         expiresIn: expiresIn ?? (90 * 24 * 60 * 60)
       }
     })
@@ -184,11 +186,11 @@ export const apiKeyService = {
    * List all API keys for an organization.
    * Does NOT check membership or fetch/create the org — the caller handles that.
    */
-  async listApiKeys(event: H3Event, orgId: string): Promise<ApiKeyListItem[]> {
+  async listApiKeys(event: H3Event, orgId: string, userId?: string): Promise<ApiKeyListItem[]> {
     const authApi = useAuthApi(event)
-    const result = await authApi.listApiKeys({ query: { organizationId: orgId } })
+    const result = await authApi.listApiKeys({ query: { organizationId: orgId, configId: "org-keys", } })
 
-    return result.apiKeys.map((key: { id: string; name: string; prefix: string; expiresAt: Date | null; createdAt: Date; enabled: boolean }) => ({
+    return result.apiKeys.map((key: ApiKeyListItem) => ({
       id: key.id,
       name: key.name,
       prefix: key.prefix,
@@ -204,6 +206,6 @@ export const apiKeyService = {
    */
   async deleteApiKey(event: H3Event, keyId: string): Promise<void> {
     const authApi = useAuthApi(event)
-    await authApi.deleteApiKey({ body: { keyId } })
+    await authApi.deleteApiKey({ body: { keyId, configId: "org-keys" } })
   }
 }

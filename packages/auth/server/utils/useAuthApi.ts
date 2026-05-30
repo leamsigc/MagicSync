@@ -65,7 +65,7 @@ export function useAuthApi(event: H3Event) {
 
     createOrganization(params: { body: { name: string; slug?: string; metadata?: Record<string, unknown> } }) {
       return auth.api.createOrganization({
-        ...params,
+        ...params as any,
         headers: headers()
       })
     },
@@ -76,21 +76,40 @@ export function useAuthApi(event: H3Event) {
       return auth.api.verifyApiKey(params)
     },
 
-    createApiKey(params: { body: { name: string; organizationId: string; expiresIn?: number; metadata?: Record<string, unknown> } }) {
+    /*
+        body: {
+        configId,
+        name: 'project-api-key',
+        expiresIn: 60 * 60 * 24 * 7,
+        userId: "user-id", // server-only
+        organizationId: "org-id",
+        prefix: 'project-api-key',
+        remaining: 100, // server-only
+        metadata: { someKey: 'someValue' },
+        refillAmount: 100, // server-only
+        refillInterval: 1000, // server-only
+        rateLimitTimeWindow: 1000, // server-only
+        rateLimitMax: 100, // server-only
+        rateLimitEnabled: true, // server-only
+        permissions, // server-only
+    },
+
+    */
+    createApiKey(params: { body: { name: string; configId: string; expiresIn?: number; metadata?: Record<string, unknown>, userId?: string, organizationId?: string } }) {
       return auth.api.createApiKey({
         ...params,
         headers: headers()
       })
     },
 
-    listApiKeys(params: { query?: { organizationId: string } }) {
+    listApiKeys(params: { query?: { configId?: string, organizationId: string, userId?: string } }) {
       return auth.api.listApiKeys({
         ...params,
         headers: headers()
       })
     },
 
-    deleteApiKey(params: { body: { keyId: string } }) {
+    deleteApiKey(params: { body: { keyId: string, configId?: string } }) {
       return auth.api.deleteApiKey({
         ...params,
         headers: headers()
@@ -111,7 +130,7 @@ export function useAuthApi(event: H3Event) {
 
     accountInfo(params: { body: { accountId: string } }) {
       return auth.api.accountInfo({
-        ...params,
+        ...params as any,
         headers: headers()
       })
     },

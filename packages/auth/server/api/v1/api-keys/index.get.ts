@@ -32,7 +32,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, statusMessage: 'You are not a member of this business' })
   }
 
-  const apiKeys = await apiKeyService.listApiKeys(event, org.id)
+  const apiKeys = await apiKeyService.listApiKeys(event, org.id, user.id)
   log.info({ content: 'Listed API keys', total: apiKeys.length })
 
   return { apiKeys, total: apiKeys.length }

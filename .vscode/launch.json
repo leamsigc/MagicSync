@@ -1,315 +1,349 @@
 {
-    "version": "0.2.1",
-    "configurations": [
-        // Create one for firefox
-        {
-            "type": "firefox",
-            "request": "launch",
-            "name": "client: firefox",
-            "url": "http://localhost:3000",
-            "webRoot": "${workspaceFolder}/packages/site"
-        },
-        {
-            "type": "chrome",
-            "request": "launch",
-            "name": "client: chrome",
-            "url": "http://localhost:3000",
-            // this should point to your Nuxt `srcDir`, which is `app` by default
-            "webRoot": "${workspaceFolder}/packages/site"
-        },
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "server: nuxt",
-            "outputCapture": "std",
-            "program": "${workspaceFolder}/packages/sites/node_modules/nuxt/bin/nuxt.mjs",
-            "args": [
-                "dev"
-            ],
-        },
-        {
-            "type": "node",
-            "name": "Launch Nuxt Dev Server",
-            "request": "launch",
-            "cwd": "${workspaceFolder}",
-            "runtimeExecutable": "pnpm",
-            "runtimeArgs": [
-                "dev"
-            ],
-            "console": "integratedTerminal",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
-            "env": {
-                "NODE_ENV": "development"
-            }
-        },
-        {
-            "name": "Site Package (Development)",
-            "type": "node",
-            "request": "launch",
-            "cwd": "${workspaceFolder}",
-            "runtimeExecutable": "pnpm",
-            "runtimeArgs": [
-                "packages",
-                "site",
-                "dev"
-            ],
-            "console": "integratedTerminal",
-            "skipFiles": [
-                "<node_internals>/**",
-                "node_modules/**"
-            ],
-            "env": {
-                "NODE_ENV": "development"
-            }
-        },
-        {
-            "name": "Assets Package (Development)",
-            "type": "node",
-            "request": "launch",
-            "cwd": "${workspaceFolder}",
-            "runtimeExecutable": "pnpm",
-            "runtimeArgs": [
-                "packages",
-                "assets",
-                "dev"
-            ],
-            "console": "integratedTerminal",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
-            "env": {
-                "NODE_ENV": "development"
-            }
-        },
-        {
-            "name": "Auth Package (Development)",
-            "type": "node",
-            "request": "launch",
-            "cwd": "${workspaceFolder}",
-            "runtimeExecutable": "pnpm",
-            "runtimeArgs": [
-                "packages",
-                "auth",
-                "dev"
-            ],
-            "console": "integratedTerminal",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
-            "env": {
-                "NODE_ENV": "development"
-            }
-        },
-        {
-            "name": "UI Package (Development)",
-            "type": "node",
-            "request": "launch",
-            "cwd": "${workspaceFolder}",
-            "runtimeExecutable": "pnpm",
-            "runtimeArgs": [
-                "packages",
-                "ui",
-                "dev"
-            ],
-            "console": "integratedTerminal",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
-            "env": {
-                "NODE_ENV": "development"
-            }
-        },
-        {
-            "name": "Content Package (Development)",
-            "type": "node",
-            "request": "launch",
-            "cwd": "${workspaceFolder}",
-            "runtimeExecutable": "pnpm",
-            "runtimeArgs": [
-                "packages",
-                "content",
-                "dev"
-            ],
-            "console": "integratedTerminal",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
-            "env": {
-                "NODE_ENV": "development"
-            }
-        },
-        {
-            "name": "Doc Package (Development)",
-            "type": "node",
-            "request": "launch",
-            "cwd": "${workspaceFolder}",
-            "runtimeExecutable": "pnpm",
-            "runtimeArgs": [
-                "packages",
-                "doc",
-                "dev"
-            ],
-            "console": "integratedTerminal",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
-            "env": {
-                "NODE_ENV": "development"
-            }
-        },
-        {
-            "name": "AI Tools Package (Development)",
-            "type": "node",
-            "request": "launch",
-            "cwd": "${workspaceFolder}",
-            "runtimeExecutable": "pnpm",
-            "runtimeArgs": [
-                "packages",
-                "ai-tools",
-                "dev"
-            ],
-            "console": "integratedTerminal",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
-            "env": {
-                "NODE_ENV": "development"
-            }
-        },
-        {
-            "name": "Tools Package (Development)",
-            "type": "node",
-            "request": "launch",
-            "cwd": "${workspaceFolder}",
-            "runtimeExecutable": "pnpm",
-            "runtimeArgs": [
-                "packages",
-                "tools",
-                "dev"
-            ],
-            "console": "integratedTerminal",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
-            "env": {
-                "NODE_ENV": "development"
-            }
-        },
-        {
-            "name": "Bulk Scheduler Package (Development)",
-            "type": "node",
-            "request": "launch",
-            "cwd": "${workspaceFolder}",
-            "runtimeExecutable": "pnpm",
-            "runtimeArgs": [
-                "packages",
-                "bulk-scheduler",
-                "dev"
-            ],
-            "console": "integratedTerminal",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
-            "env": {
-                "NODE_ENV": "development"
-            }
-        },
-        {
-            "name": "Scheduler Package (Development)",
-            "type": "node",
-            "request": "launch",
-            "cwd": "${workspaceFolder}",
-            "runtimeExecutable": "pnpm",
-            "runtimeArgs": [
-                "packages",
-                "scheduler",
-                "dev"
-            ],
-            "console": "integratedTerminal",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
-            "env": {
-                "NODE_ENV": "development"
-            }
-        },
-        {
-            "name": "Email Package (Development)",
-            "type": "node",
-            "request": "launch",
-            "cwd": "${workspaceFolder}",
-            "runtimeExecutable": "pnpm",
-            "runtimeArgs": [
-                "packages",
-                "email",
-                "dev"
-            ],
-            "console": "integratedTerminal",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
-            "env": {
-                "NODE_ENV": "development"
-            }
-        },
-        {
-            "name": "Connect Package (Development)",
-            "type": "node",
-            "request": "launch",
-            "cwd": "${workspaceFolder}",
-            "runtimeExecutable": "pnpm",
-            "runtimeArgs": [
-                "packages",
-                "connect",
-                "dev"
-            ],
-            "console": "integratedTerminal",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
-            "env": {
-                "NODE_ENV": "development"
-            }
-        },
-        {
-            "name": "DB Package (Development)",
-            "type": "node",
-            "request": "launch",
-            "cwd": "${workspaceFolder}",
-            "runtimeExecutable": "pnpm",
-            "runtimeArgs": [
-                "packages",
-                "db",
-                "dev"
-            ],
-            "console": "integratedTerminal",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
-            "env": {
-                "NODE_ENV": "development"
-            }
-        },
-        {
-            "type": "node",
-            "request": "attach",
-            "name": "Attach to Node Process",
-            "port": 9229,
-            "skipFiles": [
-                "<node_internals>/**"
-            ]
-        }
-    ],
-    "compounds": [
-        {
-            "name": "fullstack: nuxt",
-            "configurations": [
-                "server: nuxt",
-                "client: chrome"
-            ],
-            "stopAll": true
-        }
-    ]
+  "version": "0.2.1",
+  "configurations": [
+    {
+      "type": "firefox",
+      "request": "launch",
+      "name": "client: firefox",
+      "url": "http://localhost:3000",
+      "webRoot": "${workspaceFolder}/packages/site"
+    },
+    {
+      "type": "firefox",
+      "request": "attach",
+      "name": "client: firefox (attach, active profile)",
+      "port": 6000,
+      "url": "http://localhost:3000",
+      "webRoot": "${workspaceFolder}/packages/site"
+    },
+    {
+      "type": "chrome",
+      "request": "launch",
+      "name": "client: chrome (with profile)",
+      "url": "http://localhost:3000",
+      "webRoot": "${workspaceFolder}/packages/site",
+      "runtimeArgs": [
+        "--user-data-dir=/home/leamsigc/.config/google-chrome"
+      ]
+    },
+    {
+      "type": "chrome",
+      "request": "launch",
+      "name": "client: chrome (attach, active profile)",
+      "url": "http://localhost:3000",
+      "port": 9222,
+      "webRoot": "${workspaceFolder}/packages/site",
+      "sourceMaps": true
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "server: nuxt",
+      "outputCapture": "std",
+      "program": "${workspaceFolder}/packages/sites/node_modules/nuxt/bin/nuxt.mjs",
+      "args": [
+        "dev"
+      ],
+    },
+    {
+      "type": "node",
+      "name": "Launch Nuxt Dev Server",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "dev"
+      ],
+      "console": "integratedTerminal",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "env": {
+        "NODE_ENV": "development"
+      }
+    },
+    {
+      "name": "Site Package (Development)",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "packages",
+        "site",
+        "dev"
+      ],
+      "console": "integratedTerminal",
+      "skipFiles": [
+        "<node_internals>/**",
+        "node_modules/**"
+      ],
+      "env": {
+        "NODE_ENV": "development"
+      }
+    },
+    {
+      "name": "Assets Package (Development)",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "packages",
+        "assets",
+        "dev"
+      ],
+      "console": "integratedTerminal",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "env": {
+        "NODE_ENV": "development"
+      }
+    },
+    {
+      "name": "Auth Package (Development)",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "packages",
+        "auth",
+        "dev"
+      ],
+      "console": "integratedTerminal",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "env": {
+        "NODE_ENV": "development"
+      }
+    },
+    {
+      "name": "UI Package (Development)",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "packages",
+        "ui",
+        "dev"
+      ],
+      "console": "integratedTerminal",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "env": {
+        "NODE_ENV": "development"
+      }
+    },
+    {
+      "name": "Content Package (Development)",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "packages",
+        "content",
+        "dev"
+      ],
+      "console": "integratedTerminal",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "env": {
+        "NODE_ENV": "development"
+      }
+    },
+    {
+      "name": "Doc Package (Development)",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "packages",
+        "doc",
+        "dev"
+      ],
+      "console": "integratedTerminal",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "env": {
+        "NODE_ENV": "development"
+      }
+    },
+    {
+      "name": "AI Tools Package (Development)",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "packages",
+        "ai-tools",
+        "dev"
+      ],
+      "console": "integratedTerminal",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "env": {
+        "NODE_ENV": "development"
+      }
+    },
+    {
+      "name": "Tools Package (Development)",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "packages",
+        "tools",
+        "dev"
+      ],
+      "console": "integratedTerminal",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "env": {
+        "NODE_ENV": "development"
+      }
+    },
+    {
+      "name": "Bulk Scheduler Package (Development)",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "packages",
+        "bulk-scheduler",
+        "dev"
+      ],
+      "console": "integratedTerminal",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "env": {
+        "NODE_ENV": "development"
+      }
+    },
+    {
+      "name": "Scheduler Package (Development)",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "packages",
+        "scheduler",
+        "dev"
+      ],
+      "console": "integratedTerminal",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "env": {
+        "NODE_ENV": "development"
+      }
+    },
+    {
+      "name": "Email Package (Development)",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "packages",
+        "email",
+        "dev"
+      ],
+      "console": "integratedTerminal",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "env": {
+        "NODE_ENV": "development"
+      }
+    },
+    {
+      "name": "Connect Package (Development)",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "packages",
+        "connect",
+        "dev"
+      ],
+      "console": "integratedTerminal",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "env": {
+        "NODE_ENV": "development"
+      }
+    },
+    {
+      "name": "DB Package (Development)",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "packages",
+        "db",
+        "dev"
+      ],
+      "console": "integratedTerminal",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "env": {
+        "NODE_ENV": "development"
+      }
+    },
+    {
+      "type": "node",
+      "request": "attach",
+      "name": "Attach to Node Process",
+      "port": 9229,
+      "skipFiles": [
+        "<node_internals>/**"
+      ]
+    }
+  ],
+  "compounds": [
+    {
+      "name": "fullstack: nuxt",
+      "configurations": [
+        "server: nuxt",
+        "client: chrome"
+      ],
+      "stopAll": true
+    },
+    {
+      "name": "fullstack: nuxt (attach chrome)",
+      "configurations": [
+        "server: nuxt",
+        "client: chrome (attach, active profile)"
+      ],
+      "stopAll": true
+    },
+    {
+      "name": "fullstack: nuxt (attach firefox)",
+      "configurations": [
+        "server: nuxt",
+        "client: firefox (attach, active profile)"
+      ],
+      "stopAll": true
+    }
+  ]
 }
