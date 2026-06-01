@@ -14,7 +14,7 @@
 </a>
 </p>
 
-<h3 align="center"><strong><a href="https://github.com/gitroomhq/postiz-agent">
+<h3 align="center"><strong><a href="https://github.com/leamsigc/MagicSync/tree/main/magic-sync-skill">
  NEW: check out MagicSync Agent Skill perfect for your N8N workflows or AI Harness</a>
  </strong></h3>
 <div align="center">
