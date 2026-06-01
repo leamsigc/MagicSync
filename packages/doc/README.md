@@ -1,45 +1,69 @@
 # @local-monorepo/doc
 
-Documentation Layer - Comprehensive documentation for all layers and UI components.
+Documentation Layer - Comprehensive documentation for MagicSync platform.
 
 ## Overview
 
-This layer contains all documentation for the monorepo layers, UI components, and development guides.
+This layer contains all documentation for the monorepo layers, UI components, development guides, and user documentation.
 
 ### Features
 
-- **Layer Documentation**: Detailed documentation for each layer's functionality
-- **UI Component Docs**: Documentation for UI components and their usage
-- **API Documentation**: API endpoint documentation and examples
-- **Development Guides**: Setup, configuration, and development workflows
-- **Best Practices**: Coding standards and architectural guidelines
+- **User Guides** - Getting started, features, installation, platform setup
+- **Developer Documentation** - Architecture, development setup, contributing
+- **Layer Documentation** - Detailed documentation for each layer's functionality
+- **API Documentation** - API endpoint documentation and examples
+- **Best Practices** - Coding standards and architectural guidelines
 
-### Documentation Coverage
+### Documentation Structure
 
-- All layer functionalities and APIs
-- UI component library documentation
-- Development setup and configuration
-- Integration guides and examples
-- Troubleshooting and FAQ
+```
+guide/
+├── introduction.md     # What is MagicSync
+├── features.md         # Complete feature overview
+├── layers.md           # Architecture and layer structure
+├── for-everyone.md     # Complete guide for all users
+├── use-cases.md        # Industry-specific use cases
+├── installation.md     # Installation guide
+├── quick-start.md      # 5-minute quick start
+├── platform-keys.md    # API key setup for platforms
+├── csv-import.md       # Bulk CSV import guide
+├── bulk-generation.md  # Bulk content generation
+├── growth-strategy.md  # Growth strategy dashboard
+├── roadmap.md         # Project roadmap
+├── faq.md             # Frequently asked questions
+└── docker-setup.md    # Docker deployment guide
+
+contributing/
+├── development-setup.md  # Local dev environment
+├── architecture.md      # System architecture
+├── adding-features.md    # How to add features
+└── documentation.md      # How to write docs
+```
 
 ## Setup
 
-Make sure to install the dependencies:
-
 ```bash
+# Install dependencies
 pnpm install
-```
 
-## Development
-
-Start the development server:
-
-```bash
+# Start development server
 pnpm dev
+
+# Build for production
+pnpm build
 ```
 
-## Scripts
+## Tech Stack
 
-- `pnpm dev` - Start development server with playground
-- `pnpm build` - Build the layer
-- `pnpm lint` - Run ESLint
+- **Framework**: VitePress
+- **Theme**: Custom Vue components
+- **Styling**: Tailwind CSS
+- **Deployment**: Static site generation
+
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `pnpm dev` | Start development server with hot reload |
+| `pnpm build` | Build static site for production |
+| `pnpm lint` | Run ESLint on Vue and Markdown files |

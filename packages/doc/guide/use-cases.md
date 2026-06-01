@@ -230,16 +230,16 @@ Find the use case that matches your business and get started today.
   </div>
   
   <div class="feature-item">
-    <div class="feature-icon">💰</div>
-    <h3 class="feature-title">See Pricing</h3>
-    <p class="feature-description">Find the right plan for your business</p>
-    <a href="/guide/pricing" class="feature-link">View Plans →</a>
+    <div class="feature-icon">💡</div>
+    <h3 class="feature-title">Features</h3>
+    <p class="feature-description">See all the features MagicSync offers</p>
+    <a href="/guide/features" class="feature-link">View Features →</a>
   </div>
   
   <div class="feature-item">
     <div class="feature-icon">📞</div>
-    <h3 class="feature-title">Talk to Us</h3>
-    <p class="feature-description">Get personalized recommendations</p>
-    <a href="/contact" class="feature-link">Contact Sales →</a>
+    <h3 class="feature-title">For Everyone</h3>
+    <p class="feature-description">Complete guide for all users</p>
+    <a href="/guide/for-everyone" class="feature-link">Learn More →</a>
   </div>
 </FeatureGrid>

@@ -98,19 +98,19 @@ MagicSync puts ALL of those in ONE place. Write once, post everywhere!
 
 ```
 packages/
-├── ui/           # Design system & components
-├── auth/         # Authentication
-├── db/           # Database layer
-├── ai-tools/     # AI features
-├── assets/       # Static assets
-├── scheduler/    # Post scheduling
-├── bulk-scheduler/ # CSV imports
-├── connect/      # Platform OAuth
-├── content/      # Blog/content
+├── db/           # Database layer (Drizzle ORM, Turso)
+├── auth/         # Authentication (Better Auth)
+├── ui/           # Design system & components (Nuxt UI)
+├── assets/       # Static assets & media
+├── scheduler/    # Post scheduling & calendar
+├── bulk-scheduler/ # CSV imports & bulk operations
+├── connect/      # Platform OAuth connections
+├── tools/        # In-browser tools
+├── ai-tools/     # AI content generation
+├── content/      # Blog & static content
 ├── email/        # Email templates
-├── templates/    # Post templates
 ├── site/         # Main application
-└── doc/          # Documentation
+└── doc/          # Documentation (VitePress)
 ```
 
 ---

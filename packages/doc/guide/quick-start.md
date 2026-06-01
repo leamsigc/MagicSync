@@ -83,19 +83,19 @@ magicsync post create \
 Now that you've created your first post, explore these features:
 
 ### 📅 **Set Up Your Content Calendar**
-Plan your posts for the week or month ahead. [Learn about scheduling →](/guide/scheduling)
+Plan your posts for the week or month ahead. Check the calendar view in your dashboard.
 
 ### 🤖 **Use AI Content Generation**
-Generate bulk posts, holiday content, and captions automatically. [AI Features →](/guide/ai-features)
+Generate bulk posts, holiday content, and captions automatically.
 
 ### 📊 **Track Your Performance**
-Monitor engagement, reach, and growth across all platforms. [Analytics Guide →](/guide/analytics)
+Monitor engagement, reach, and growth across all platforms.
 
 ### 👥 **Invite Your Team**
-Collaborate with team members and assign roles. [Team Management →](/guide/team-collaboration)
+Collaborate with team members and assign roles.
 
 ### 🔧 **Customize Your Workflow**
-Set up automation rules and posting schedules. [Automation Guide →](/guide/automation)
+Set up automation rules and posting schedules.
 
 ## Common First Steps
 
@@ -166,12 +166,12 @@ Visit our [FAQ](/guide/faq) or join our [Community Support](https://github.com/l
   
   <div class="feature-item">
     <div class="feature-icon">💡</div>
-    <h3 class="feature-title">Best Practices</h3>
-    <p class="feature-description">Tips for social media success</p>
-    <a href="/guide/best-practices" class="feature-link">Learn More →</a>
+    <h3 class="feature-title">For Everyone</h3>
+    <p class="feature-description">Complete guide for all users</p>
+    <a href="/guide/for-everyone" class="feature-link">Learn More →</a>
   </div>
 </FeatureGrid>
 
 ---
 
-**Questions?** Check our [FAQ](/guide/faq) or [contact support](/contact).
+**Questions?** Check our [FAQ](/guide/faq).
