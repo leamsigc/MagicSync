@@ -618,7 +618,8 @@ const handleTranscriptFromRecorder = (text: string) => {
     <UCard>
       <div class="flex items-center justify-between">
         <PostPlatformSelector :accounts="connectedSocialAccountsList" :selectedAccounts="selectedSocialMediaAccounts"
-          @toggle="togglePlatform" :validationStatus="validationStatus" />
+          @toggle="togglePlatform" :validationStatus="validationStatus" :businesses="businesses.data"
+          v-model="activeBusinessId" />
         <UButton v-if="preview" color="neutral" variant="ghost" icon="i-heroicons-x-mark-20-solid" class="-my-1"
           @click="emit('close')" />
       </div>
