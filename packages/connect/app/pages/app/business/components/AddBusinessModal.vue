@@ -175,7 +175,7 @@ const handleCancel = () => {
           </div>
         </div>
 
-        <div :class="step === 0 ? '' : 'bg-gray-50/30 dark:bg-gray-900/30 flex-1'">
+        <div :class="step === 0 ? '' : ' flex-1'">
           <!-- Step 0: Initial Setup -->
           <StepZero v-if="step === 0" @continue="handleStepZeroContinue" @skip="handleStepZeroSkip" />
 

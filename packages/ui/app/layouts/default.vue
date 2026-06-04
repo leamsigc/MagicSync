@@ -4,7 +4,7 @@
 <template>
   <main class="default relative min-h-screen">
     <BaseHeader />
-    <div class="mx-auto pt-6 pb-12">
+    <div class="mx-auto pt-6 pb-12 px-2">
       <slot />
     </div>
     <LazyBaseFooter />

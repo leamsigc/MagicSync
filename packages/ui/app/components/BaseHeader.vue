@@ -10,7 +10,8 @@ const { links: items } = useNavigationLinks()
 <template>
   <UHeader mode="drawer" :ui="{
     root: 'sticky top-4 z-50 mx-auto max-w-7xl bg-elevated rounded-2xl ',
-    content: 'w-full max-w-(--ui-container) mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-3 h-16'
+    content: 'w-full md:max-w-(--ui-container) mx-auto px-4 md:px-6 lg:px-8 flex items-center justify-between gap-3 md:h-16 ',
+    body:'w-full'
   }">
     <template #left>
       <UButton color="neutral" variant="ghost" to="/" :aria-label="t('navigation.home')">
@@ -35,7 +36,7 @@ const { links: items } = useNavigationLinks()
     </template>
 
     <template #body>
-      <section class="grid p-2 bg-elevated rounded-xl ">
+      <section class="grid p-2  rounded-xl ">
         <UTooltip :text="t('navigation.home')" :kbds="['meta', 'H']">
           <UButton color="neutral" variant="ghost" to="/" icon="fxemoji:flaginhole" :aria-label="t('navigation.home')">
             {{ companyName }}
