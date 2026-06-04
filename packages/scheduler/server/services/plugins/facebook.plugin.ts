@@ -1155,11 +1155,15 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
       ? Math.round((followerAbsolute / previousFollowers) * 10000) / 100
       : 0
 
+    const base64Picture = profileData.picture?.data?.url
+      ? await fetchedImageBase64(profileData.picture.data.url)
+      : undefined
+
     return {
       platform: 'facebook',
       accountId: pageId,
       username: profileData.name || socialMediaAccount.accountName || '',
-      picture: profileData.picture?.data?.url || undefined,
+      picture: base64Picture,
       fetchedAt: new Date().toISOString(),
       followers: currentFollowers,
       posts: undefined,

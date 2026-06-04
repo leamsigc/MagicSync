@@ -151,12 +151,15 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
     }
 
     const profile = await this.agent.getProfile({ actor: handle });
+    const base64Avatar = profile.data.avatar
+      ? await fetchedImageBase64(profile.data.avatar)
+      : undefined;
     return {
       did: profile.data.did,
       handle: profile.data.handle,
       displayName: profile.data.displayName,
       description: profile.data.description,
-      avatar: profile.data.avatar,
+      avatar: base64Avatar,
       followersCount: profile.data.followersCount || 0,
       followsCount: profile.data.followsCount || 0,
       postsCount: profile.data.postsCount || 0,
@@ -661,12 +664,16 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
   ): Promise<PlatformStats> {
     const handle = socialMediaAccount.accountId
 
-    // Get profile with stats
     const profileStats = await this.getProfile(handle, socialMediaAccount.accessToken)
 
-    // Get recent posts for engagement
     let totalEngagement = 0
     let totalPosts = 0
+    let totalLikes = 0
+    let totalReposts = 0
+    let totalReplies = 0
+    let totalQuotes = 0
+    let topPosts: Array<{ uri: string; text: string; likes: number; reposts: number; replies: number }> = []
+
     try {
       const authorFeed = await this.agent.api.app.bsky.feed.getAuthorFeed({
         actor: handle,
@@ -675,12 +682,37 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
       const feedItems = authorFeed.data.feed || []
       totalPosts = feedItems.length
       for (const item of feedItems) {
-        const metrics = item.post?.viewer || {}
-        totalEngagement += (metrics.like || 0) + (metrics.repost || 0)
+        const post = item.post || {}
+        const likeCount = post.likeCount || 0
+        const repostCount = post.repostCount || 0
+        const replyCount = post.replyCount || 0
+        const quoteCount = post.quoteCount || 0
+        const engagement = likeCount + repostCount + replyCount + quoteCount
+
+        totalLikes += likeCount
+        totalReposts += repostCount
+        totalReplies += replyCount
+        totalQuotes += quoteCount
+        totalEngagement += engagement
+
+        const record = post.record as { text?: string } | undefined
+        topPosts.push({
+          uri: post.uri,
+          text: (record?.text || '').substring(0, 100),
+          likes: likeCount,
+          reposts: repostCount,
+          replies: replyCount,
+        })
       }
+
+      topPosts.sort((a, b) => (b.likes + b.reposts + b.replies) - (a.likes + a.reposts + a.replies))
+      topPosts = topPosts.slice(0, 10)
     } catch {
-      // Feed fetch failed
     }
+
+    const engagementRate = profileStats.followersCount > 0 && totalPosts > 0
+      ? Math.round((totalEngagement / totalPosts / profileStats.followersCount) * 10000) / 100
+      : 0
 
     return {
       platform: 'bluesky',
@@ -693,12 +725,24 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
       posts: profileStats.postsCount || totalPosts,
       engagement: {
         total: totalEngagement,
-        likes: 0,
-        shares: 0,
+        likes: totalLikes,
+        comments: totalReplies,
+        shares: totalReposts + totalQuotes,
       },
-      growth: undefined,
+      growth: {
+        followers: { absolute: 0, percentage: 0 },
+        following: { absolute: 0, percentage: 0 },
+        posts: { absolute: 0, percentage: 0 },
+        engagement: { absolute: totalEngagement, percentage: engagementRate },
+      },
       extra: {
         displayName: profileStats.displayName,
+        totalReposts,
+        totalReplies,
+        totalQuotes,
+        engagementRate,
+        topPosts,
+        postsAnalyzed: totalPosts,
       },
     }
   }
@@ -706,13 +750,16 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
   /**
    * Transform Bluesky record to PlatformComment format
    */
-  private transformComment(record: BlueskyApiComment): PlatformComment {
+  private async transformComment(record: BlueskyApiComment): Promise<PlatformComment> {
+    const authorPicture = record.author?.avatar
+      ? await fetchedImageBase64(record.author.avatar)
+      : undefined;
     return {
       id: record.uri,
       text: record.value?.text || '',
       authorName: record.author?.handle || 'Unknown',
       authorId: record.author?.did,
-      authorPicture: record.author?.avatar,
+      authorPicture,
       createdAt: record.value?.createdAt || '',
       likeCount: record.likeCount || 0,
       replyCount: record.replyCount || 0,
@@ -754,7 +801,7 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
       // Get replies from the thread
       if (threadData.replies && Array.isArray(threadData.replies)) {
         for (const reply of threadData.replies) {
-          comments.push(this.transformComment(reply.post));
+          comments.push(await this.transformComment(reply.post));
         }
       }
 
@@ -821,7 +868,7 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
 
       return {
         success: true,
-        comment: this.transformComment({
+        comment: await this.transformComment({
           uri: response.uri,
           cid: response.cid,
           author: {

@@ -34,11 +34,66 @@ export class TikTokPlugin extends BaseSchedulerPlugin {
       const data = await response.json();
       const user = data.data || {};
 
+      let totalEngagement = 0
+      let totalViews = 0
+      let totalComments = 0
+      let totalShares = 0
+      let videoInsights: Array<{ id: string; views: number; likes: number; comments: number; shares: number; engagement: number }> = []
+
+      try {
+        const videoQueryResponse = await fetch(
+          'https://open.tiktokapis.com/v2/video/query/?fields=id,views,likes_count,comments_count,shares_count,create_time',
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              max_count: 20,
+            }),
+          }
+        )
+
+        if (videoQueryResponse.ok) {
+          const videoData = await videoQueryResponse.json()
+          const videos = videoData.data?.videos || []
+          for (const video of videos) {
+            const views = video.views || 0
+            const likes = video.likes_count || 0
+            const comments = video.comments_count || 0
+            const shares = video.shares_count || 0
+            const engagement = likes + comments + shares
+
+            totalEngagement += engagement
+            totalViews += views
+            totalComments += comments
+            totalShares += shares
+
+            videoInsights.push({
+              id: video.id,
+              views,
+              likes,
+              comments,
+              shares,
+              engagement,
+            })
+          }
+        }
+      } catch {
+      }
+
+      const engagementRate = user.followers_count > 0
+        ? Math.round((user.likes_count / user.followers_count) * 10000) / 100
+        : 0
+
+      const base64Picture = user.avatar_url ? await fetchedImageBase64(user.avatar_url) : undefined;
+
       return {
         platform: 'tiktok',
         accountId: user.open_id || socialMediaAccount.id,
         username: user.username || socialMediaAccount.accountName || '',
-        picture: user.avatar_url || undefined,
+        picture: base64Picture,
         fetchedAt: new Date().toISOString(),
         followers: user.followers_count || 0,
         following: user.following_count || 0,
@@ -46,6 +101,22 @@ export class TikTokPlugin extends BaseSchedulerPlugin {
         engagement: {
           total: user.likes_count || 0,
           likes: user.likes_count || 0,
+          comments: totalComments,
+          shares: totalShares,
+          views: totalViews,
+        },
+        growth: {
+          followers: { absolute: 0, percentage: 0 },
+          posts: { absolute: 0, percentage: 0 },
+          engagement: { absolute: totalEngagement, percentage: engagementRate },
+        },
+        extra: {
+          displayName: user.display_name,
+          engagementRate,
+          totalVideoEngagement: totalEngagement,
+          totalVideoViews: totalViews,
+          videoInsights,
+          recentVideosCount: videoInsights.length,
         },
       };
     } catch (error: unknown) {

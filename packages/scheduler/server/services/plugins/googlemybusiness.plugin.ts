@@ -2,7 +2,6 @@ import type { Asset, Post, PostWithAllData, SocialMediaAccount } from '#layers/B
 import type { PluginPostDetails, PluginSocialMediaAccount, PostResponse, GetCommentsResponse, ReplyCommentResponse, PlatformComment, PlatformStats } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import { BaseSchedulerPlugin } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import dayjs from 'dayjs';
-import type { GoogleBusinessSettings } from '#layers/BaseScheduler/shared/platformSettings';
 
 // Type definitions for Google My Business API responses
 type AuthTokenDetails = {
@@ -107,7 +106,6 @@ export class GoogleMyBusinessPlugin extends BaseSchedulerPlugin {
         return this.createZeroStats(socialMediaAccount);
       }
 
-      // Step 1: Get accounts to retrieve the account name
       const accountsResponse = await fetch(
         `${this.BUSINESS_INFO_API_BASE}/accounts`,
         {
@@ -130,10 +128,8 @@ export class GoogleMyBusinessPlugin extends BaseSchedulerPlugin {
         return this.createZeroStats(socialMediaAccount);
       }
 
-      // Use the first account's name
       const accountName = accounts[0].name;
 
-      // Step 2: Get locations for the account to count them
       const locationsResponse = await fetch(
         `${this.ACCOUNT_MANAGEMENT_API_BASE}/${accountName}/locations`,
         {
@@ -150,9 +146,93 @@ export class GoogleMyBusinessPlugin extends BaseSchedulerPlugin {
       }
 
       const locationsData = await locationsResponse.json();
-      const locationCount = locationsData.locations?.length || 0;
+      const locations = locationsData.locations || [];
+      const locationCount = locations.length
 
-      // Map location count to followers/posts as a reasonable proxy for GMB
+      let totalImpressions = 0
+      let searchImpressions = 0
+      let mapsImpressions = 0
+      let websiteClicks = 0
+      let callClicks = 0
+      let directionRequests = 0
+      let bookingRequests = 0
+      let totalEngagement = 0
+      let keywordData: Array<{ keyword: string; impressions: number }> = []
+
+      const firstLocation = locations[0]
+      if (firstLocation?.name) {
+        try {
+          const perfUrl = `${this.PERFORMANCE_API_BASE}/${firstLocation.name}/`
+
+          const insightsResponse = await fetch(
+            `${perfUrl}insights?dailyRange.startDate.year=2026&dailyRange.startDate.month=1&dailyRange.startDate.day=1&dailyRange.endDate.year=2026&dailyRange.endDate.month=6&dailyRange.endDate.day=4`,
+            {
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+              },
+            }
+          )
+
+          if (insightsResponse.ok) {
+            const insightsData = await insightsResponse.json()
+            const metrics = insightsData.insights || []
+
+            for (const metric of metrics) {
+              const metricValues = metric.value || {}
+
+              switch (metric.metricType) {
+                case 'ALL_IMPRESSIONS':
+                  totalImpressions += metricValues.count || 0
+                  break
+                case 'SEARCH_IMPRESSIONS':
+                  searchImpressions += metricValues.count || 0
+                  break
+                case 'MAPS_IMPRESSIONS':
+                  mapsImpressions += metricValues.count || 0
+                  break
+                case 'WEBSITE_CLICKS':
+                  websiteClicks += metricValues.count || 0
+                  break
+                case 'CALL_CLICKS':
+                  callClicks += metricValues.count || 0
+                  break
+                case 'DIRECTION_REQUESTS':
+                  directionRequests += metricValues.count || 0
+                  break
+                case 'BOOKING_CLICKS':
+                  bookingRequests += metricValues.count || 0
+                  break
+              }
+            }
+          }
+        } catch {
+        }
+
+        try {
+          const keywordsResponse = await fetch(
+            `${this.PERFORMANCE_API_BASE}/${firstLocation.name}/searchkeywords/impressions/monthly`,
+            {
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+              },
+            }
+          )
+
+          if (keywordsResponse.ok) {
+            const kwData = await keywordsResponse.json()
+            keywordData = (kwData.searchKeywordsCounts || []).map(
+              (item: { keyword?: { name?: string }; insightsValue?: { value?: number } }) => ({
+                keyword: item.keyword?.name?.split('/').pop() || 'unknown',
+                impressions: item.insightsValue?.value || 0,
+              })
+            )
+          }
+        } catch {
+        }
+      }
+
+      totalEngagement = websiteClicks + callClicks + directionRequests + bookingRequests
+
       return {
         platform: 'googlemybusiness',
         accountId: socialMediaAccount.accountId || '',
@@ -160,6 +240,28 @@ export class GoogleMyBusinessPlugin extends BaseSchedulerPlugin {
         fetchedAt: new Date().toISOString(),
         followers: locationCount,
         posts: locationCount,
+        engagement: {
+          total: totalEngagement,
+          impressions: totalImpressions,
+          reach: searchImpressions + mapsImpressions,
+        },
+        growth: {
+          followers: { absolute: 0, percentage: 0 },
+          posts: { absolute: 0, percentage: 0 },
+          engagement: { absolute: totalEngagement, percentage: 0 },
+        },
+        extra: {
+          locationCount,
+          searchImpressions,
+          mapsImpressions,
+          totalImpressions,
+          websiteClicks,
+          callClicks,
+          directionRequests,
+          bookingRequests,
+          topKeywords: keywordData.slice(0, 20),
+          keywordCount: keywordData.length,
+        },
       };
     } catch (error: unknown) {
       console.error('[GoogleMyBusiness] Error fetching stats:', error);
@@ -416,7 +518,11 @@ export class GoogleMyBusinessPlugin extends BaseSchedulerPlugin {
       );
 
       const data = await response.json();
-      return data.mediaItems?.[0]?.googleUrl || '';
+      const photoUrl = data.mediaItems?.[0]?.googleUrl;
+      if (photoUrl) {
+        return await fetchedImageBase64(photoUrl);
+      }
+      return '';
     } catch (error: unknown) {
       return '';
     }

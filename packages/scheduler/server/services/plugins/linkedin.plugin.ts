@@ -272,7 +272,6 @@ export class LinkedInPlugin extends BaseSchedulerPlugin {
     postDetails: PluginPostDetails,
     socialMediaAccount: PluginSocialMediaAccount
   ): Promise<PlatformStats> {
-    // Fetch LinkedIn user profile with network stats
     const profileResponse = await fetch('https://api.linkedin.com/v2/me?projection=(id,localizedFirstName,localizedLastName,profilePicture(displayImage~:playableStreamingSymlink)),numConnections,numConnectionsCapped', {
       headers: {
         Authorization: `Bearer ${socialMediaAccount.accessToken}`,
@@ -281,9 +280,12 @@ export class LinkedInPlugin extends BaseSchedulerPlugin {
     })
     const profile = await profileResponse.json()
 
-    // Fetch posts for engagement aggregation
     let totalEngagement = 0
     let totalPosts = 0
+    let totalLikes = 0
+    let totalComments = 0
+    let totalShares = 0
+    let totalImpressions = 0
     try {
       const postsResponse = await fetch('https://api.linkedin.com/v2/ugcPosts?count=50&q=authors&authors=List(~)', {
         headers: {
@@ -295,29 +297,56 @@ export class LinkedInPlugin extends BaseSchedulerPlugin {
       const elements = postsData.elements || []
       totalPosts = elements.length
       for (const post of elements) {
-        totalEngagement += (post.totalSocialStatistics?.shareCount || 0) +
-          (post.totalSocialStatistics?.likeCount || 0) +
-          (post.totalSocialStatistics?.commentCount || 0)
+        const likes = post.totalSocialStatistics?.likeCount || 0
+        const comments = post.totalSocialStatistics?.commentCount || 0
+        const shares = post.totalSocialStatistics?.shareCount || 0
+        const impressions = post.totalSocialStatistics?.impressionCount || 0
+
+        totalLikes += likes
+        totalComments += comments
+        totalShares += shares
+        totalImpressions += impressions
+        totalEngagement += likes + comments + shares
       }
     } catch {
-      // Posts fetch failed
     }
+
+    const connections = profile.numConnections || 0
+    const engagementRate = connections > 0 && totalPosts > 0
+      ? Math.round((totalEngagement / totalPosts / connections) * 10000) / 100
+      : 0
+
+    const pictureUrl = profile.profilePicture?.['displayImage~']?.elements?.[0]?.identifiers?.[0]?.identifier;
+    const base64Picture = pictureUrl ? await fetchedImageBase64(pictureUrl) : undefined;
 
     return {
       platform: 'linkedin',
       accountId: profile.id || socialMediaAccount.accountId,
       username: `${profile.localizedFirstName || ''} ${profile.localizedLastName || ''}`.trim() || socialMediaAccount.accountName || '',
-      picture: profile.profilePicture?.['displayImage~']?.elements?.[0]?.identifiers?.[0]?.identifier || undefined,
+      picture: base64Picture,
       fetchedAt: new Date().toISOString(),
-      followers: profile.numConnections,
+      followers: connections,
       posts: totalPosts,
       engagement: {
         total: totalEngagement,
-        likes: 0,
-        comments: 0,
-        shares: 0,
+        likes: totalLikes,
+        comments: totalComments,
+        shares: totalShares,
+        impressions: totalImpressions,
       },
-      growth: undefined,
+      growth: {
+        followers: { absolute: 0, percentage: 0 },
+        posts: { absolute: 0, percentage: 0 },
+        engagement: { absolute: totalEngagement, percentage: engagementRate },
+      },
+      extra: {
+        connectionsCapped: profile.numConnectionsCapped || false,
+        totalLikes,
+        totalComments,
+        totalShares,
+        totalImpressions,
+        engagementRate,
+      },
     }
   }
 

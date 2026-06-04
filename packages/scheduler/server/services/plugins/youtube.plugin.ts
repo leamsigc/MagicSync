@@ -189,7 +189,6 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
 
     const youtube = google.youtube({ version: 'v3', auth: oauth2Client })
 
-    // Fetch the authenticated user's channel (account-level stats)
     const channelsResponse = await youtube.channels.list({
       part: ['snippet', 'statistics'],
       mine: true,
@@ -214,14 +213,24 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
     const stats = channel.statistics || {}
     const relatedPlaylists = contentDetails.relatedPlaylists || {}
 
-    // Fetch recent uploads for engagement aggregation
     let totalEngagement = 0
+    let totalViews = 0
+    let totalLikes = 0
+    let totalComments = 0
     let recentVideoIds: string[] = []
+    let shortsCount = 0
+    let shortsEngagement = 0
+    let shortsViews = 0
+    let regularVideosCount = 0
+    let regularVideosEngagement = 0
+    let regularVideosViews = 0
+    let videoPerformances: Array<{ id: string; title: string; views: number; likes: number; comments: number; isShort: boolean }> = []
+
     try {
       const uploadsPlaylistId = relatedPlaylists.uploads || ''
       if (uploadsPlaylistId) {
         const playlistItems = await youtube.playlistItems.list({
-          part: ['contentDetails'],
+          part: ['contentDetails', 'snippet'],
           playlistId: uploadsPlaylistId,
           maxResults: 50,
         })
@@ -231,46 +240,99 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
         }
       }
     } catch {
-      // Playlist fetch failed — account stats still returned
     }
 
-    // Batch-fetch video stats for engagement
     if (recentVideoIds.length > 0) {
       try {
         const chunkSize = 50
         for (let i = 0; i < recentVideoIds.length; i += chunkSize) {
           const chunk = recentVideoIds.slice(i, i + chunkSize)
           const videosResponse = await youtube.videos.list({
-            part: ['statistics'],
+            part: ['statistics', 'snippet', 'contentDetails'],
             id: chunk,
           })
           for (const video of videosResponse.data.items || []) {
             const vs = video.statistics || {}
-            totalEngagement += Number(vs.likeCount || 0) + Number(vs.commentCount || 0) + Number(vs.viewCount || 0)
+            const views = Number(vs.viewCount || 0)
+            const likes = Number(vs.likeCount || 0)
+            const comments = Number(vs.commentCount || 0)
+            const engagement = views + likes + comments
+
+            totalEngagement += engagement
+            totalViews += views
+            totalLikes += likes
+            totalComments += comments
+
+            const durationStr = video.contentDetails?.duration || 'PT0S'
+            const durationMatch = durationStr.match(/PT(\d+M)?(\d+S)?/)
+            const minutes = parseInt(durationMatch?.[1]?.replace('M', '') || '0', 10)
+            const seconds = parseInt(durationMatch?.[2]?.replace('S', '') || '0', 10)
+            const totalSeconds = minutes * 60 + seconds
+            const isShort = totalSeconds <= 60 && video.snippet?.thumbnails?.maxres?.url?.includes('shorts') === false === false
+
+            if (isShort) {
+              shortsCount++
+              shortsEngagement += engagement
+              shortsViews += views
+            } else {
+              regularVideosCount++
+              regularVideosEngagement += engagement
+              regularVideosViews += views
+            }
+
+            videoPerformances.push({
+              id: video.id || '',
+              title: video.snippet?.title || '',
+              views,
+              likes,
+              comments,
+              isShort,
+            })
           }
         }
       } catch {
-        // Videos fetch failed
       }
     }
+
+    const subscriberCount = parseInt(stats.subscriberCount || '0', 10)
+    const engagementRate = subscriberCount > 0
+      ? Math.round((totalLikes + totalComments) / subscriberCount * 10000) / 100
+      : 0
+
+    const base64Picture = snippet.thumbnails?.default?.url ? await fetchedImageBase64(snippet.thumbnails.default.url) : undefined;
 
     return {
       platform: 'youtube',
       accountId: channel.id || socialMediaAccount.accountId,
       username: snippet.title || socialMediaAccount.accountName || '',
-      picture: snippet.thumbnails?.default?.url || undefined,
+      picture: base64Picture,
       fetchedAt: new Date().toISOString(),
-      followers: parseInt(stats.subscriberCount || '0', 10),
+      followers: subscriberCount,
       posts: parseInt(stats.videoCount || '0', 10),
       engagement: {
         total: totalEngagement,
-        views: 0,
+        views: totalViews,
+        likes: totalLikes,
+        comments: totalComments,
       },
-      growth: undefined,
+      growth: {
+        followers: { absolute: 0, percentage: 0 },
+        posts: { absolute: 0, percentage: 0 },
+        engagement: { absolute: totalEngagement, percentage: engagementRate },
+      },
       extra: {
         viewCount: parseInt(stats.viewCount || '0', 10),
         hiddenSubscriberCount: stats.hiddenSubscriberCount || false,
         uploadsPlaylistId: relatedPlaylists.uploads || undefined,
+        shortsCount,
+        shortsEngagement,
+        shortsViews,
+        regularVideosCount,
+        regularVideosEngagement,
+        regularVideosViews,
+        engagementRate,
+        videoPerformances,
+        recentVideosAnalyzed: videoPerformances.length,
       },
     }
   }

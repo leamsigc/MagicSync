@@ -311,57 +311,154 @@ export class RedditPlugin extends BaseSchedulerPlugin {
     postDetails: PluginPostDetails,
     socialMediaAccount: PluginSocialMediaAccount
   ): Promise<PlatformStats> {
-    // Fetch Reddit user profile
-    const userResponse = await fetch('https://oauth.reddit.com/api/v1/me', {
-      headers: {
-        Authorization: `Bearer ${socialMediaAccount.accessToken}`,
-        'User-Agent': 'PostScheduler/1.0',
-      },
-    })
-    const profile = await userResponse.json()
-
-    // Fetch user's recent submissions for engagement stats
-    let totalEngagement = 0
-    let totalPosts = 0
     try {
-      const submissionsResponse = await fetch(
-        `https://oauth.reddit.com/user/${profile.name}/submitted?limit=100&raw_json=1`,
-        {
-          headers: {
-            Authorization: `Bearer ${socialMediaAccount.accessToken}`,
-            'User-Agent': 'PostScheduler/1.0',
-          },
-        }
-      )
-      const submissions = await submissionsResponse.json()
-      const posts = submissions.data?.children || []
-      totalPosts = posts.length
-      for (const post of posts) {
-        const d = post.data || {}
-        totalEngagement += (d.score || 0) + (d.num_comments || 0)
-      }
-    } catch {
-      // Submissions fetch failed
-    }
+      const accessToken = socialMediaAccount.accessToken
 
+      const userResponse = await fetch('https://oauth.reddit.com/api/v1/me', {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'User-Agent': 'PostScheduler/1.0',
+        },
+      })
+
+      if (!userResponse.ok) {
+        return this.getZeroStats(socialMediaAccount)
+      }
+
+      const profile = await userResponse.json() as Record<string, unknown>
+      const username = profile.name as string
+
+      let totalPosts = 0
+      let totalScore = 0
+      let totalComments = 0
+      let totalUpvotes = 0
+      let totalDownvotes = 0
+      const topPosts: Array<{ id: string; title: string; subreddit: string; score: number; numComments: number; upvoteRatio: number; created: number; url: string }> = []
+
+      try {
+        const submissionsResponse = await fetch(
+          `https://oauth.reddit.com/user/${username}/submitted?limit=100&raw_json=1&sort=new`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              'User-Agent': 'PostScheduler/1.0',
+            },
+          }
+        )
+
+        if (submissionsResponse.ok) {
+          const submissions = await submissionsResponse.json() as Record<string, unknown>
+          const posts = (submissions.data as Record<string, unknown>)?.children as Array<Record<string, unknown>> || []
+          totalPosts = posts.length
+
+          for (const post of posts) {
+            const d = post.data as Record<string, unknown> || {}
+            const score = (d.score as number) || 0
+            const numComments = (d.num_comments as number) || 0
+            totalScore += score
+            totalComments += numComments
+            if (score > 0) totalUpvotes += score
+            if (score < 0) totalDownvotes += Math.abs(score)
+            topPosts.push({
+              id: d.id as string,
+              title: (d.title as string)?.substring(0, 200) || '',
+              subreddit: d.subreddit as string,
+              score,
+              numComments,
+              upvoteRatio: (d.upvote_ratio as number) || 1,
+              created: (d.created_utc as number) || 0,
+              url: d.url as string || `https://reddit.com${d.permalink as string}`,
+            })
+          }
+
+          topPosts.sort((a, b) => b.score - a.score)
+        }
+      } catch {
+      }
+
+      let totalCommentKarma = 0
+      let recentCommentsCount = 0
+      try {
+        const commentsResponse = await fetch(
+          `https://oauth.reddit.com/user/${username}/comments?limit=100&raw_json=1&sort=new`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              'User-Agent': 'PostScheduler/1.0',
+            },
+          }
+        )
+
+        if (commentsResponse.ok) {
+          const commentsData = await commentsResponse.json() as Record<string, unknown>
+          const comments = (commentsData.data as Record<string, unknown>)?.children as Array<Record<string, unknown>> || []
+          recentCommentsCount = comments.length
+          for (const comment of comments) {
+            totalCommentKarma += (comment.data as Record<string, unknown>)?.score as number || 0
+          }
+        }
+      } catch {
+      }
+
+      const totalEngagement = totalScore + totalComments + totalCommentKarma
+      const engagementRate = totalPosts > 0 ? Math.round((totalScore / totalPosts) * 100) / 100 : 0
+
+      const pictureUrl = (profile.icon_img as string)?.split('?')[0]
+      const base64Picture = pictureUrl ? await fetchedImageBase64(pictureUrl) : undefined
+
+      return {
+        platform: 'reddit',
+        accountId: (profile.id as string) || socialMediaAccount.accountId,
+        username: username || socialMediaAccount.accountName || '',
+        picture: base64Picture,
+        fetchedAt: new Date().toISOString(),
+        followers: (profile.num_friends as number) || 0,
+        posts: totalPosts,
+        engagement: {
+          total: totalEngagement,
+          likes: totalUpvotes,
+          comments: totalComments,
+          saves: totalCommentKarma,
+          impressions: totalScore,
+        },
+        growth: {
+          followers: { absolute: (profile.num_friends as number) || 0, percentage: 0 },
+          posts: { absolute: totalPosts, percentage: 0 },
+          engagement: { absolute: totalEngagement, percentage: engagementRate * 10 },
+        },
+        extra: {
+          linkKarma: profile.link_karma || 0,
+          commentKarma: profile.comment_karma || 0,
+          totalPostScore: totalScore,
+          totalPostComments: totalComments,
+          totalCommentKarmaRecent: totalCommentKarma,
+          recentCommentsCount,
+          averageScorePerPost: totalPosts > 0 ? Math.round((totalScore / totalPosts) * 10) / 10 : 0,
+          engagementRate,
+          isGold: profile.is_gold,
+          isMod: profile.is_mod,
+          isEmployee: profile.is_employee,
+          hasVerifiedEmail: profile.has_verified_email,
+          over18: profile.over_18,
+          createdUtc: profile.created_utc,
+          topPosts: topPosts.slice(0, 10),
+        },
+      }
+    } catch (error: unknown) {
+      console.error('Error fetching Reddit stats:', error);
+      return this.getZeroStats(socialMediaAccount);
+    }
+  }
+
+  private getZeroStats(socialMediaAccount: PluginSocialMediaAccount): PlatformStats {
     return {
       platform: 'reddit',
-      accountId: profile.id || socialMediaAccount.accountId,
-      username: profile.name || socialMediaAccount.accountName || '',
-      picture: profile.icon_img?.split('?')[0] || undefined,
+      accountId: socialMediaAccount.accountId,
+      username: socialMediaAccount.accountName || socialMediaAccount.accountId,
       fetchedAt: new Date().toISOString(),
-      followers: profile.num_friends || 0,
-      posts: totalPosts,
-      engagement: {
-        total: totalEngagement,
-        likes: 0,
-        comments: 0,
-      },
-      growth: undefined,
-      extra: {
-        karma: profile.link_karma || 0,
-        commentKarma: profile.comment_karma || 0,
-      },
+      followers: 0,
+      posts: 0,
+      engagement: { total: 0 },
     }
   }
 

@@ -56,6 +56,9 @@ export class XPlugin extends BaseSchedulerPlugin {
     const client = new TwitterApi(accessToken);
 
     const user = await client.v2.me();
+    if (user.data.profile_image_url) {
+      user.data.profile_image_url = await fetchedImageBase64(user.data.profile_image_url);
+    }
     return user.data;
   }
 
@@ -298,12 +301,16 @@ export class XPlugin extends BaseSchedulerPlugin {
       throw new Error('Access token not found')
     }
 
-    // Get user profile with public metrics
     const profile = await this.getUser(accessToken)
 
-    // Get recent tweets for engagement data
     let totalEngagement = 0
     let totalPosts = 0
+    let totalLikes = 0
+    let totalRetweets = 0
+    let totalReplies = 0
+    let totalQuotes = 0
+    let topTweets: Array<{ id: string; text: string; likes: number; retweets: number; replies: number; quotes: number; engagement: number }> = []
+
     try {
       const client = new TwitterApi(accessToken)
       const tweets = await client.v2.userTimeline(profile.id, {
@@ -315,30 +322,74 @@ export class XPlugin extends BaseSchedulerPlugin {
 
       for (const tweet of tweetList) {
         const metrics = (tweet as { public_metrics?: Record<string, number> }).public_metrics || {}
-        totalEngagement += (metrics.retweet_count || 0) + (metrics.like_count || 0) + (metrics.reply_count || 0) + (metrics.quote_count || 0)
+        const likes = metrics.like_count || 0
+        const retweets = metrics.retweet_count || 0
+        const replies = metrics.reply_count || 0
+        const quotes = metrics.quote_count || 0
+        const engagement = likes + retweets + replies + quotes
+
+        totalEngagement += engagement
+        totalLikes += likes
+        totalRetweets += retweets
+        totalReplies += replies
+        totalQuotes += quotes
+
+        topTweets.push({
+          id: tweet.id,
+          text: (tweet as { text?: string }).text || '',
+          likes,
+          retweets,
+          replies,
+          quotes,
+          engagement,
+        })
       }
+
+      topTweets.sort((a, b) => b.engagement - a.engagement)
+      topTweets = topTweets.slice(0, 10)
     } catch {
-      // Timeline fetch failed
     }
+
+    const followersCount = profile.public_metrics?.followers_count || 0
+    const engagementRate = followersCount > 0 && totalPosts > 0
+      ? Math.round((totalEngagement / totalPosts / followersCount) * 10000) / 100
+      : 0
+
+    const base64Picture = profile.profile_image_url
+      ? await fetchedImageBase64(profile.profile_image_url)
+      : undefined;
 
     return {
       platform: 'twitter',
       accountId: profile.id,
       username: profile.username || socialMediaAccount.accountName || '',
-      picture: profile.profile_image_url || undefined,
+      picture: base64Picture,
       fetchedAt: new Date().toISOString(),
-      followers: profile.public_metrics?.followers_count,
+      followers: followersCount,
       following: profile.public_metrics?.following_count,
       posts: profile.public_metrics?.tweet_count,
       engagement: {
         total: totalEngagement,
-        likes: 0,
-        comments: 0,
-        shares: 0,
+        likes: totalLikes,
+        comments: totalReplies,
+        shares: totalRetweets + totalQuotes,
+        impressions: totalEngagement,
       },
-      growth: undefined,
+      growth: {
+        followers: { absolute: 0, percentage: 0 },
+        following: { absolute: 0, percentage: 0 },
+        posts: { absolute: 0, percentage: 0 },
+        engagement: { absolute: totalEngagement, percentage: engagementRate },
+      },
       extra: {
         name: profile.name,
+        totalRetweets,
+        totalQuotes,
+        totalReplies,
+        engagementRate,
+        topTweets,
+        topTweetsCount: topTweets.length,
+        listedCount: profile.public_metrics?.listed_count,
       },
     }
   }
@@ -389,7 +440,7 @@ export class XPlugin extends BaseSchedulerPlugin {
       (pp) => pp.socialAccountId === socialMediaAccount.id
     );
     if (!platformPost) return null;
-    
+
     // Parse the publishDetail which is stored as JSON string
     try {
       const detail = JSON.parse(platformPost.publishDetail as unknown as string || '{}');
@@ -402,20 +453,23 @@ export class XPlugin extends BaseSchedulerPlugin {
   /**
    * Transform Twitter API tweet/reply to PlatformComment format
    */
-  private transformTweetToComment(tweet: {
+  private async transformTweetToComment(tweet: {
     id: string;
     text?: string;
     author?: { username?: string; name?: string; id?: string; profile_image_url?: string };
     created_at?: string;
     public_metrics?: { like_count?: number; reply_count?: number };
     conversation_id?: string;
-  }): PlatformComment {
+  }): Promise<PlatformComment> {
+    const authorPicture = tweet.author?.profile_image_url
+      ? await fetchedImageBase64(tweet.author.profile_image_url)
+      : undefined;
     return {
       id: tweet.id,
       text: tweet.text || '',
       authorName: tweet.author?.username || tweet.author?.name || 'Unknown',
       authorId: tweet.author?.id,
-      authorPicture: tweet.author?.profile_image_url,
+      authorPicture,
       createdAt: tweet.created_at,
       likeCount: tweet.public_metrics?.like_count,
       replyCount: tweet.public_metrics?.reply_count,
@@ -498,7 +552,7 @@ export class XPlugin extends BaseSchedulerPlugin {
 
       return {
         success: true,
-        comment: this.transformTweetToComment(reply.data),
+        comment: await this.transformTweetToComment(reply.data),
       };
     } catch (error) {
       console.error('Error replying to comment:', error);

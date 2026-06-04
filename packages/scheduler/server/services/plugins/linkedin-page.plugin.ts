@@ -47,8 +47,7 @@ export class LinkedInPagePlugin extends BaseSchedulerPlugin {
       const accountId = socialMediaAccount.accountId;
       const accessToken = socialMediaAccount.accessToken;
 
-      // Fetch follower statistics and organization info in parallel
-      const [statsData, orgData] = await Promise.all([
+      const [statsData, orgData, postsData] = await Promise.all([
         fetch(
           `https://api.linkedin.com/v2/organizationalEntityFollowerStatistics?q=organizationalEntity&organizationalEntity=${accountId}`,
           {
@@ -67,9 +66,50 @@ export class LinkedInPagePlugin extends BaseSchedulerPlugin {
             },
           }
         ).then(r => r.json()),
+        fetch(
+          `https://api.linkedin.com/v2/organizationalEntityShareStatistics?q=organizationalEntity&organizationalEntity=${accountId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              'LinkedIn-Version': '202401',
+            },
+          }
+        ).then(r => r.json().catch(() => ({}))),
       ]);
 
       const followerCount = statsData?.elements?.[0]?.followerCounts?.followers || 0;
+      const followerGains = statsData?.elements?.[0]?.followerGains?.followers || 0;
+
+      let totalEngagement = 0
+      let totalImpressions = 0
+      let totalClicks = 0
+      let totalLikes = 0
+      let totalComments = 0
+      let totalShares = 0
+      let totalPostsCount = 0
+
+      if (postsData?.elements) {
+        for (const element of postsData.elements) {
+          const stats = element?.totalShareStatistics || {}
+          const likes = stats.likeCount || 0
+          const comments = stats.commentCount || 0
+          const shares = stats.shareCount || 0
+          const impressions = stats.impressionCount || 0
+          const clicks = stats.clickCount || 0
+
+          totalLikes += likes
+          totalComments += comments
+          totalShares += shares
+          totalImpressions += impressions
+          totalClicks += clicks
+          totalEngagement += likes + comments + shares + clicks
+          totalPostsCount++
+        }
+      }
+
+      const engagementRate = totalImpressions > 0
+        ? Math.round((totalEngagement / totalImpressions) * 10000) / 100
+        : 0
 
       return {
         platform: 'linkedin-page',
@@ -77,6 +117,29 @@ export class LinkedInPagePlugin extends BaseSchedulerPlugin {
         username: orgData?.localizedName || socialMediaAccount.accountName || '',
         fetchedAt: new Date().toISOString(),
         followers: followerCount,
+        posts: totalPostsCount,
+        engagement: {
+          total: totalEngagement,
+          likes: totalLikes,
+          comments: totalComments,
+          shares: totalShares,
+          impressions: totalImpressions,
+        },
+        growth: {
+          followers: {
+            absolute: followerGains || 0,
+            percentage: followerCount > 0 ? Math.round(((followerGains || 0) / followerCount) * 10000) / 100 : 0,
+          },
+          engagement: { absolute: totalEngagement, percentage: engagementRate },
+        },
+        extra: {
+          name: orgData?.localizedName,
+          vanityName: orgData?.vanityName,
+          followerGains,
+          totalClicks,
+          engagementRate,
+          totalImpressions,
+        },
       };
     } catch (error) {
       console.error('Error fetching LinkedIn Page statistics:', error);

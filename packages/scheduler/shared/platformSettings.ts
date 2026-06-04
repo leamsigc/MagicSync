@@ -127,6 +127,17 @@ export interface DribbbleSettings extends BasePlatformSettings {
     scheduled_for?: string;
 }
 
+export interface PinterestSettings extends BasePlatformSettings {
+    __type: 'pinterest';
+    title?: string;
+    description?: string;
+    board?: string;
+    boardId?: string;
+    link?: string;
+    altText?: string;
+    tags?: string[];
+}
+
 export type PlatformSettings =
     | TwitterSettings
     | FacebookSettings
@@ -141,7 +152,8 @@ export type PlatformSettings =
     | ThreadsSettings
     | YouTubeSettings
     | DiscordSettings
-    | DribbbleSettings;
+    | DribbbleSettings
+    | PinterestSettings;
 
 export type PlatformSettingsMap = {
     twitter: TwitterSettings;
@@ -161,6 +173,7 @@ export type PlatformSettingsMap = {
     youtube: YouTubeSettings;
     discord: DiscordSettings;
     dribbble: DribbbleSettings;
+    pinterest: PinterestSettings;
 };
 
 export function createDefaultSettings(platform: string): PlatformSettings | null {
@@ -202,6 +215,8 @@ export function createDefaultSettings(platform: string): PlatformSettings | null
             return { __type: 'discord' };
         case 'dribbble':
             return { __type: 'dribbble', title: '' };
+        case 'pinterest':
+            return { __type: 'pinterest', title: '' };
         default:
             return null;
     }

@@ -5,48 +5,117 @@ import { platformConfigurations } from '#layers/BaseScheduler/shared/platformCon
 import { BaseSchedulerPlugin, } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import sharp from 'sharp';
 
-
 export class DribbblePlugin extends BaseSchedulerPlugin {
   override async getStatistic(
     postDetails: PluginPostDetails,
     socialMediaAccount: PluginSocialMediaAccount
   ): Promise<PlatformStats> {
     try {
-      const response = await fetch('https://api.dribbble.com/v2/user', {
-        headers: {
-          Authorization: `Bearer ${socialMediaAccount.accessToken}`,
-        },
+      const accessToken = socialMediaAccount.accessToken;
+
+      const userResponse = await fetch('https://api.dribbble.com/v2/user', {
+        headers: { Authorization: `Bearer ${accessToken}` },
       });
 
-      if (!response.ok) {
-        console.warn(`Dribbble API error: ${response.statusText}`);
+      if (!userResponse.ok) {
+        console.warn(`Dribbble API error: ${userResponse.statusText}`);
         return this.getZeroStats(socialMediaAccount);
       }
 
-      const data = await response.json();
+      const data = await userResponse.json() as Record<string, unknown>;
+      const base64Picture = data.avatar_url ? await fetchedImageBase64(data.avatar_url as string) : undefined;
+
+      let totalShots = 0
+      let totalLikes = 0
+      let totalViews = 0
+      let totalComments = 0
+      let totalRebounds = 0
+      const topShots: Array<{
+        id: number; title: string; url: string; likes: number; views: number;
+        comments: number; rebounds: number; created: string; tags: string[]
+      }> = []
+
+      try {
+        const shotsResponse = await fetch(
+          `https://api.dribbble.com/v2/user/shots?per_page=100`,
+          {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          }
+        )
+
+        if (shotsResponse.ok) {
+          const shots = await shotsResponse.json() as Array<Record<string, unknown>>
+          totalShots = shots.length
+
+          for (const shot of shots) {
+            const likes = (shot.likes_count as number) || 0
+            const views = (shot.views_count as number) || 0
+            const comments = (shot.comments_count as number) || 0
+            const rebounds = (shot.rebounds_count as number) || 0
+
+            totalLikes += likes
+            totalViews += views
+            totalComments += comments
+            totalRebounds += rebounds
+
+            topShots.push({
+              id: shot.id as number,
+              title: (shot.title as string)?.substring(0, 200) || '',
+              url: shot.html_url as string,
+              likes,
+              views,
+              comments,
+              rebounds,
+              created: shot.created_at as string,
+              tags: (shot.tags as string[]) || [],
+            })
+          }
+
+          topShots.sort((a, b) => b.likes - a.likes)
+        }
+      } catch {
+      }
+
+      const totalEngagement = totalLikes + totalComments + totalRebounds
+      const engagementRate = totalShots > 0 ? Math.round((totalEngagement / totalShots) * 10) / 10 : 0
+      const averageViewsPerShot = totalShots > 0 ? Math.round(totalViews / totalShots) : 0
 
       return {
         platform: 'dribbble',
         accountId: socialMediaAccount.accountId,
-        username: data.name || data.username || socialMediaAccount.accountName || socialMediaAccount.accountId,
-        picture: data.avatar_url,
+        username: (data.name as string) || (data.username as string) || socialMediaAccount.accountName || socialMediaAccount.accountId,
+        picture: base64Picture,
         fetchedAt: new Date().toISOString(),
-        followers: data.followers_count || 0,
-        following: data.following_count || 0,
-        posts: data.shots_count || 0,
+        followers: (data.followers_count as number) || 0,
+        following: (data.following_count as number) || 0,
+        posts: totalShots || (data.shots_count as number) || 0,
         engagement: {
-          total: data.likes_received_count || 0,
-          likes: data.likes_received_count || 0,
-          comments: data.comments_received_count || 0,
+          total: totalEngagement,
+          likes: totalLikes,
+          comments: totalComments,
+          impressions: totalViews,
+          saves: totalRebounds,
+        },
+        growth: {
+          followers: { absolute: (data.followers_count as number) || 0, percentage: 0 },
+          posts: { absolute: totalShots, percentage: 0 },
+          engagement: { absolute: totalEngagement, percentage: engagementRate },
         },
         extra: {
-          following_count: data.following_count,
-          likes_received_count: data.likes_received_count,
-          shots_count: data.shots_count,
-          comments_received_count: data.comments_received_count,
-          projects_created_count: data.projects_created_count,
+          shotsCount: data.shots_count,
+          likesReceivedCount: data.likes_received_count,
+          commentsReceivedCount: data.comments_received_count,
+          projectsCreatedCount: data.projects_created_count,
           bio: data.bio,
           location: data.location,
+          pro: data.pro,
+          totalViews,
+          totalLikes,
+          totalComments,
+          totalRebounds,
+          averageViewsPerShot,
+          engagementRate,
+          topShots: topShots.slice(0, 10),
         },
       };
     } catch (error: unknown) {

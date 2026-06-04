@@ -13,33 +13,105 @@ export class DevToPlugin extends BaseSchedulerPlugin {
     try {
       const username = socialMediaAccount.accountId;
 
-      const response = await fetch(`https://dev.to/api/users/${username}`);
+      const userResponse = await fetch(`https://dev.to/api/users/${username}`);
 
-      if (!response.ok) {
-        console.warn(`Dev.to API error: ${response.statusText}`);
+      if (!userResponse.ok) {
+        console.warn(`Dev.to API error: ${userResponse.statusText}`);
         return this.getZeroStats(socialMediaAccount);
       }
 
-      const data = await response.json();
+      const data = await userResponse.json() as Record<string, unknown>;
+
+      const articlesResponse = await fetch(
+        `https://dev.to/api/articles?username=${username}&per_page=100`,
+        {
+          headers: {
+            'api-key': socialMediaAccount.accessToken,
+          },
+        }
+      );
+
+      let totalPageViews = 0
+      let totalReactions = 0
+      let totalComments = 0
+      let readingTimeMinutes = 0
+      let publishedCount = 0
+      const topArticles: Array<{
+        id: number; title: string; url: string; tags: string; pageViews: number;
+        positiveReactions: number; comments: number; readingTime: number; published: string
+      }> = []
+
+      if (articlesResponse.ok) {
+        const articles = await articlesResponse.json() as Array<Record<string, unknown>>
+        publishedCount = articles.length
+
+        for (const article of articles) {
+          const pv = (article.page_views_count as number) || 0
+          const reactions = (article.positive_reactions_count as number) || 0
+          const comms = (article.comments_count as number) || 0
+          const rt = (article.reading_time_minutes as number) || 0
+
+          totalPageViews += pv
+          totalReactions += reactions
+          totalComments += comms
+          readingTimeMinutes += rt
+
+          topArticles.push({
+            id: (article.id as number),
+            title: (article.title as string)?.substring(0, 200) || '',
+            url: article.url as string,
+            tags: (article.tags as string) || '',
+            pageViews: pv,
+            positiveReactions: reactions,
+            comments: comms,
+            readingTime: rt,
+            published: article.published_at as string,
+          })
+        }
+
+        topArticles.sort((a, b) => b.positiveReactions - a.positiveReactions)
+      }
+
+      const base64Picture = data.profile_image ? await fetchedImageBase64(data.profile_image as string) : undefined
+      const totalEngagement = totalReactions + totalComments
+      const engagementRate = publishedCount > 0 ? Math.round((totalEngagement / publishedCount) * 10) / 10 : 0
 
       return {
         platform: 'devto',
         accountId: String(data.user_id || username),
-        username: data.username || username,
+        username: (data.username as string) || username,
+        picture: base64Picture,
         fetchedAt: new Date().toISOString(),
-        followers: data.followers_count || 0,
-        following: data.following || 0,
-        posts: data.articles_count || 0,
+        followers: (data.followers_count as number) || 0,
+        following: (data.following as number) || 0,
+        posts: publishedCount || (data.articles_count as number) || 0,
         engagement: {
-          total: (data.public_reactions_count || 0) + (data.public_comments_count || 0),
-          likes: data.public_reactions_count || 0,
-          comments: data.public_comments_count || 0,
+          total: totalEngagement,
+          likes: totalReactions,
+          comments: totalComments,
+          impressions: totalPageViews,
+          saves: readingTimeMinutes,
+        },
+        growth: {
+          followers: { absolute: (data.followers_count as number) || 0, percentage: 0 },
+          posts: { absolute: publishedCount, percentage: 0 },
+          engagement: { absolute: totalEngagement, percentage: engagementRate },
         },
         extra: {
           name: data.name,
-          twitter_username: data.twitter_username,
-          github_username: data.github_username,
-          user_id: data.user_id,
+          twitterUsername: data.twitter_username,
+          githubUsername: data.github_username,
+          websiteUrl: data.website_url,
+          location: data.location,
+          joinedAt: data.joined_at,
+          totalPageViews,
+          totalReactions,
+          totalComments,
+          totalReadingTimeMinutes: readingTimeMinutes,
+          averageReadingTimePerArticle: publishedCount > 0 ? Math.round((readingTimeMinutes / publishedCount) * 10) / 10 : 0,
+          engagementRate,
+          publishedArticlesCount: publishedCount,
+          topArticles: topArticles.slice(0, 10),
         },
       };
     } catch (error: unknown) {

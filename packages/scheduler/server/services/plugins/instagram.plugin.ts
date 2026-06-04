@@ -92,7 +92,11 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
   async getProfile(accountId: string, accessToken: string): Promise<Record<string, unknown>> {
     const url = this._getGraphApiUrl(`${accountId}?fields=id,username,name,profile_picture_url,followers_count,follows_count,media_count&access_token=${accessToken}`)
     const response = await fetch(url)
-    return response.json() as Promise<Record<string, unknown>>
+    const data = await response.json() as Record<string, unknown>
+    if (data.profile_picture_url) {
+      data.profile_picture_url = await fetchedImageBase64(data.profile_picture_url as string)
+    }
+    return data
   }
 
   /**
@@ -454,7 +458,6 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
   ): Promise<PlatformStats> {
     const igUserId = socialMediaAccount.accountId
 
-    // Fetch account-level profile stats (followers, following, media_count)
     let profile: {
       username?: string;
       profile_picture_url?: string;
@@ -476,10 +479,21 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
       console.warn('[Instagram] Profile fetch failed:', error)
     }
 
-    // Fetch latest media for engagement stats
     let totalEngagement = 0
     let totalViews = 0
     let totalPosts = 0
+    let totalLikes = 0
+    let totalComments = 0
+    let totalShares = 0
+    let totalSaves = 0
+    let reelsCount = 0
+    let reelsEngagement = 0
+    let reelsViews = 0
+    let storiesCount = 0
+    let carouselCount = 0
+    let carouselEngagement = 0
+    let imageCount = 0
+    let imageEngagement = 0
 
     try {
       const mediaUrl = this._getGraphApiUrl(`${igUserId}/media?fields=id,caption,media_type,like_count,comments_count,reach,views,saved,share_count&limit=50&access_token=${socialMediaAccount.accessToken}`)
@@ -494,57 +508,156 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
         totalPosts = mediaItems.length
 
         for (const media of mediaItems) {
-          totalEngagement += (media.like_count || 0) + (media.comments_count || 0) + (media.share_count || 0) + (media.saved || 0)
-          totalViews += media.views || 0
+          const likes = media.like_count || 0
+          const comments = media.comments_count || 0
+          const shares = media.share_count || 0
+          const saves = media.saved || 0
+          const views = media.views || 0
+          const engagement = likes + comments + shares + saves
+
+          totalEngagement += engagement
+          totalViews += views
+          totalLikes += likes
+          totalComments += comments
+          totalShares += shares
+          totalSaves += saves
+
+          switch (media.media_type) {
+            case 'VIDEO':
+            case 'REELS':
+              reelsCount++
+              reelsEngagement += engagement
+              reelsViews += views
+              break
+            case 'STORIES':
+              storiesCount++
+              break
+            case 'CAROUSEL':
+              carouselCount++
+              carouselEngagement += engagement
+              break
+            default:
+              imageCount++
+              imageEngagement += engagement
+              break
+          }
         }
       }
     } catch (error) {
       console.warn('[Instagram] Media fetch failed:', error)
     }
 
-    // Fetch 7-day follower change if available
     let followerGrowth = undefined
+    let profileVisits = 0
+    let newFollows = 0
+    let followerTrend7d: number[] = []
+    let followerTrend14d: number[] = []
+    let followerTrend30d: number[] = []
+    let followerTrend90d: number[] = []
     try {
-      const insightsUrl = this._getGraphApiUrl(`${igUserId}/insights?metric=follower_count&period=day&access_token=${socialMediaAccount.accessToken}`)
+      const insightsUrl = this._getGraphApiUrl(`${igUserId}/insights?metric=follower_count,profile_visits&period=day&access_token=${socialMediaAccount.accessToken}`)
       const insightsResponse = await fetch(insightsUrl)
       if (!insightsResponse.ok) {
         const error = await insightsResponse.json()
         console.warn('[Instagram] Follower insights error:', error)
       } else {
         const insightsData = await insightsResponse.json()
-        const values = insightsData.data?.[0]?.values || []
-        if (values.length >= 2) {
-          const current = values[values.length - 1].value
-          const previous = values[0].value
-          const absolute = current - previous
-          const percentage = previous > 0 ? Math.round((absolute / previous) * 10000) / 100 : 0
-          followerGrowth = { absolute, percentage }
+        for (const metric of insightsData.data || []) {
+          const values = metric.values || []
+          const nums = values.map((v: { value: number }) => v.value)
+
+          if (metric.name === 'follower_count') {
+            followerTrend90d = nums
+            if (nums.length >= 2) {
+              const current = nums[nums.length - 1]
+              const previous = nums[0]
+              const absolute = current - previous
+              const percentage = previous > 0 ? Math.round((absolute / previous) * 10000) / 100 : 0
+              followerGrowth = { absolute, percentage }
+            }
+            followerTrend7d = nums.slice(-7)
+            followerTrend14d = nums.slice(-14)
+            followerTrend30d = nums.slice(-30)
+          }
+
+          if (metric.name === 'profile_visits') {
+            profileVisits = nums.reduce((a: number, b: number) => a + b, 0)
+          }
         }
       }
     } catch (error) {
-      console.warn('[Instagram] Follower insights fetch failed:', error)
+      console.warn('[Instagram] Insights fetch failed:', error)
     }
+
+    let newFollowsGrowth = undefined
+    try {
+      const reachUrl = this._getGraphApiUrl(`${igUserId}/insights?metric=new_follows&period=day&access_token=${socialMediaAccount.accessToken}`)
+      const reachResponse = await fetch(reachUrl)
+      if (reachResponse.ok) {
+        const reachData = await reachResponse.json()
+        const values = reachData.data?.[0]?.values || []
+        newFollows = values.reduce((a: number, v: { value: number }) => a + v.value, 0)
+        if (values.length >= 2) {
+          const current = values[values.length - 1]?.value || 0
+          const previous = values[0]?.value || 0
+          const absolute = current - previous
+          const percentage = previous > 0 ? Math.round((absolute / previous) * 10000) / 100 : 0
+          newFollowsGrowth = { absolute, percentage }
+        }
+      }
+    } catch {
+    }
+
+    const base64Picture = profile.profile_picture_url
+      ? await fetchedImageBase64(profile.profile_picture_url)
+      : undefined
+
+    const engagementRate = profile.followers_count && profile.followers_count > 0
+      ? Math.round((totalEngagement / totalPosts / profile.followers_count) * 10000) / 100
+      : 0
 
     return {
       platform: 'instagram',
       accountId: igUserId,
       username: profile.username || socialMediaAccount.accountName || '',
-      picture: profile.profile_picture_url || undefined,
+      picture: base64Picture,
       fetchedAt: new Date().toISOString(),
       followers: profile.followers_count,
       following: profile.follows_count,
       posts: profile.media_count || totalPosts,
       engagement: {
         total: totalEngagement,
-        likes: totalEngagement,
-        comments: 0,
+        likes: totalLikes,
+        comments: totalComments,
+        shares: totalShares,
         views: totalViews,
+        impressions: totalViews + totalEngagement,
       },
       growth: {
         followers: followerGrowth,
+        following: { absolute: 0, percentage: 0 },
+        posts: { absolute: 0, percentage: 0 },
+        engagement: { absolute: totalEngagement, percentage: engagementRate },
       },
       extra: {
         name: profile.name,
+        profileVisits,
+        newFollows,
+        reelsCount,
+        reelsEngagement,
+        reelsViews,
+        storiesCount,
+        carouselCount,
+        carouselEngagement,
+        imageCount,
+        imageEngagement,
+        engagementRate,
+        followerTrend7d,
+        followerTrend14d,
+        followerTrend30d,
+        followerTrend90d,
+        saves: totalSaves,
+        likesReceived: totalLikes,
       },
     }
   }
@@ -607,13 +720,16 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
   /**
    * Transform Instagram Graph API comment to PlatformComment format
    */
-  private transformComment(comment: InstagramApiComment): PlatformComment {
+  private async transformComment(comment: InstagramApiComment): Promise<PlatformComment> {
+    const authorPicture = comment.from?.profile_picture_url
+      ? await fetchedImageBase64(comment.from.profile_picture_url)
+      : undefined
     return {
       id: comment.id,
       text: comment.text || '',
       authorName: comment.from?.username || 'Unknown',
       authorId: comment.from?.id,
-      authorPicture: comment.from?.profile_picture_url,
+      authorPicture,
       createdAt: comment.timestamp || comment.created_time || '',
       likeCount: comment.like_count,
       replyCount: comment.replies?.data?.length || 0,
@@ -657,7 +773,9 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
       }
 
       const data = await response.json() as { data?: InstagramApiComment[] };
-      const comments: PlatformComment[] = (data.data || []).map((c: InstagramApiComment) => this.transformComment(c));
+      const comments: PlatformComment[] = await Promise.all(
+        (data.data || []).map((c: InstagramApiComment) => this.transformComment(c))
+      );
 
       return {
         platform: this.pluginName,
@@ -704,7 +822,7 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
 
       return {
         success: true,
-        comment: this.transformComment(data),
+        comment: await this.transformComment(data),
       };
     } catch (error) {
       console.error('Error replying to Instagram comment:', error);

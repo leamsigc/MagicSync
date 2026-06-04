@@ -19,6 +19,7 @@ import { TikTokPlugin } from '#layers/BaseScheduler/server/services/plugins/tikt
 import { WordPressPlugin } from '#layers/BaseScheduler/server/services/plugins/wordpress.plugin';
 import { XPlugin } from '#layers/BaseScheduler/server/services/plugins/x.plugin';
 import { YouTubePlugin } from '#layers/BaseScheduler/server/services/plugins/youtube.plugin';
+import { PinterestPlugin } from '#layers/BaseScheduler/server/services/plugins/pinterest.plugin';
 import { platformRateLimiter } from './RateLimiter.service';
 export class AutoPostService {
 
@@ -38,6 +39,7 @@ export class AutoPostService {
     tiktok: TikTokPlugin as unknown as SchedulerPluginConstructor,
     wordpress: WordPressPlugin as unknown as SchedulerPluginConstructor,
     twitter: XPlugin as unknown as SchedulerPluginConstructor,
+    pinterest: PinterestPlugin as unknown as SchedulerPluginConstructor,
     youtube: YouTubePlugin as unknown as SchedulerPluginConstructor,
   }
 

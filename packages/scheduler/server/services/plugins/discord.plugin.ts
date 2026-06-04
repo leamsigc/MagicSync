@@ -183,75 +183,118 @@ export class DiscordPlugin extends BaseSchedulerPlugin {
     socialMediaAccount: PluginSocialMediaAccount
   ): Promise<PlatformStats> {
     try {
-      // Use metadata.guildCount if available (stored server count)
-      const metadataGuildCount = socialMediaAccount.metadata?.guildCount;
-      if (metadataGuildCount !== undefined) {
-        return {
-          platform: 'discord',
-          accountId: socialMediaAccount.accountId,
-          username: socialMediaAccount.accountName || '',
-          fetchedAt: new Date().toISOString(),
-          followers: metadataGuildCount,
-          posts: 0,
-          engagement: { total: 0 },
-          growth: undefined,
-          extra: {
-            serverCount: metadataGuildCount,
-          },
-        };
-      }
+      const token = socialMediaAccount.accessToken;
 
-      // Fetch bot user info from Discord API with Bot authorization
-      const response = await fetch('https://discord.com/api/v10/users/@me', {
-        headers: {
-          Authorization: `Bot ${socialMediaAccount.accessToken}`,
-        },
+      const botResponse = await fetch('https://discord.com/api/v10/users/@me', {
+        headers: { Authorization: `Bot ${token}` },
       });
 
-      if (!response.ok) {
-        // Return graceful zero fallback on API failure
-        return {
-          platform: 'discord',
-          accountId: socialMediaAccount.accountId,
-          username: socialMediaAccount.accountName || '',
-          fetchedAt: new Date().toISOString(),
-          followers: 0,
-          posts: 0,
-          engagement: { total: 0 },
-          growth: undefined,
-          extra: {},
-        };
+      if (!botResponse.ok) {
+        return this.getZeroStats(socialMediaAccount);
       }
 
-      const botUser = await response.json();
+      const botUser = await botResponse.json() as Record<string, unknown>;
+
+      let totalMembers = 0
+      let totalChannels = 0
+      let totalGuilds = 0
+      const guildDetails: Array<{ id: string; name: string; memberCount: number; channelCount: number }> = []
+
+      try {
+        const guildsResponse = await fetch('https://discord.com/api/v10/users/@me/guilds', {
+          headers: { Authorization: `Bot ${token}` },
+        })
+
+        if (guildsResponse.ok) {
+          const guilds = await guildsResponse.json() as Array<Record<string, unknown>>
+          totalGuilds = guilds.length
+
+          for (const guild of guilds) {
+            const guildId = guild.id as string
+            const guildName = guild.name as string
+
+            try {
+              const [memberResponse, channelsResponse] = await Promise.all([
+                fetch(`https://discord.com/api/v10/guilds/${guildId}/preview`, {
+                  headers: { Authorization: `Bot ${token}` },
+                }),
+                fetch(`https://discord.com/api/v10/guilds/${guildId}/channels`, {
+                  headers: { Authorization: `Bot ${token}` },
+                }),
+              ])
+
+              let memberCount = 0
+              if (memberResponse.ok) {
+                const preview = await memberResponse.json() as Record<string, unknown>
+                memberCount = (preview.approximate_member_count as number) || 0
+              }
+
+              let channelCount = 0
+              if (channelsResponse.ok) {
+                const channels = await channelsResponse.json() as Array<Record<string, unknown>>
+                channelCount = channels.length
+              }
+
+              totalMembers += memberCount
+              totalChannels += channelCount
+              guildDetails.push({ id: guildId, name: guildName, memberCount, channelCount })
+            } catch {
+              guildDetails.push({ id: guildId, name: guildName, memberCount: 0, channelCount: 0 })
+            }
+          }
+        }
+      } catch {
+      }
+
+      const base64Picture = botUser.avatar
+        ? await fetchedImageBase64(`https://cdn.discordapp.com/avatars/${botUser.id}/${botUser.avatar}.png`)
+        : undefined
 
       return {
         platform: 'discord',
         accountId: socialMediaAccount.accountId,
-        username: botUser.username || socialMediaAccount.accountName || '',
+        username: (botUser.username as string) || socialMediaAccount.accountName || '',
+        picture: base64Picture,
         fetchedAt: new Date().toISOString(),
-        followers: 0, // Discord bots don't have followers
-        posts: 0,
-        engagement: { total: 0 },
-        growth: undefined,
+        followers: totalMembers,
+        posts: totalChannels,
+        engagement: {
+          total: totalMembers,
+          impressions: totalGuilds,
+        },
+        growth: {
+          followers: { absolute: totalMembers, percentage: 0 },
+          posts: { absolute: totalChannels, percentage: 0 },
+          engagement: { absolute: totalMembers, percentage: 0 },
+        },
         extra: {
           botId: botUser.id,
+          botName: botUser.username,
+          discriminator: botUser.discriminator,
           avatar: botUser.avatar,
+          botPublic: botUser.public,
+          botFlags: botUser.flags,
+          totalGuilds,
+          totalMembers,
+          totalChannels,
+          averageMembersPerGuild: totalGuilds > 0 ? Math.round(totalMembers / totalGuilds) : 0,
+          guilds: guildDetails,
         },
-      };
+      }
     } catch {
-      // Return graceful zero fallback on any error
-      return {
-        platform: 'discord',
-        accountId: socialMediaAccount.accountId,
-        username: socialMediaAccount.accountName || '',
-        fetchedAt: new Date().toISOString(),
-        followers: 0,
-        posts: 0,
-        engagement: { total: 0 },
-        growth: undefined,
-        extra: {},
-      };
+      return this.getZeroStats(socialMediaAccount)
+    }
+  }
+
+  private getZeroStats(socialMediaAccount: PluginSocialMediaAccount): PlatformStats {
+    return {
+      platform: 'discord',
+      accountId: socialMediaAccount.accountId,
+      username: socialMediaAccount.accountName || socialMediaAccount.accountId,
+      fetchedAt: new Date().toISOString(),
+      followers: 0,
+      posts: 0,
+      engagement: { total: 0 },
     }
   }
 

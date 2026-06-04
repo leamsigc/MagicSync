@@ -20,6 +20,8 @@ export class ThreadsPlugin extends BaseSchedulerPlugin {
   override async getStatistic(postDetails: PluginPostDetails, socialMediaAccount: PluginSocialMediaAccount): Promise<PlatformStats> {
     try {
       const accessToken = socialMediaAccount.accessToken;
+      const userId = socialMediaAccount.accountId;
+
       const response = await fetch(
         `https://graph.threads.net/v1.0/me?fields=id,username,name,profile_picture_url,followers_count,following_count,biography`,
         {
@@ -37,17 +39,94 @@ export class ThreadsPlugin extends BaseSchedulerPlugin {
 
       const profile = await response.json();
 
+      let totalEngagement = 0
+      let totalLikes = 0
+      let totalReplies = 0
+      let totalReposts = 0
+      let totalQuotes = 0
+      let totalThreadsCount = 0
+      let threadPerformances: Array<{ id: string; text: string; likes: number; replies: number; reposts: number }> = []
+
+      if (userId) {
+        try {
+          const mediaResponse = await fetch(
+            `https://graph.threads.net/${userId}/threads?fields=id,text,like_count,reply_count,repost_count,quote_count,timestamp&limit=50&access_token=${accessToken}`,
+            {
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+              },
+            }
+          )
+
+          if (mediaResponse.ok) {
+            const mediaData = await mediaResponse.json()
+            const threads = mediaData.data || []
+            totalThreadsCount = threads.length
+
+            for (const thread of threads) {
+              const likes = thread.like_count || 0
+              const replies = thread.reply_count || 0
+              const reposts = thread.repost_count || 0
+              const quotes = thread.quote_count || 0
+              const engagement = likes + replies + reposts + quotes
+
+              totalLikes += likes
+              totalReplies += replies
+              totalReposts += reposts
+              totalQuotes += quotes
+              totalEngagement += engagement
+
+              threadPerformances.push({
+                id: thread.id,
+                text: (thread.text || '').substring(0, 100),
+                likes,
+                replies,
+                reposts,
+              })
+            }
+
+            threadPerformances.sort((a, b) => (b.likes + b.replies + b.reposts) - (a.likes + a.replies + a.reposts))
+            threadPerformances = threadPerformances.slice(0, 10)
+          }
+        } catch {
+        }
+      }
+
+      const followersCount = profile.followers_count || 0
+      const engagementRate = followersCount > 0 && totalThreadsCount > 0
+        ? Math.round((totalEngagement / totalThreadsCount / followersCount) * 10000) / 100
+        : 0
+
+      const base64Picture = profile.profile_picture_url ? await fetchedImageBase64(profile.profile_picture_url) : undefined;
+
       return {
         platform: 'threads',
         accountId: profile.id || socialMediaAccount.accountId || '',
         username: profile.username || socialMediaAccount.username || socialMediaAccount.accountName || '',
-        picture: profile.profile_picture_url,
+        picture: base64Picture,
         fetchedAt: new Date().toISOString(),
-        followers: profile.followers_count || 0,
+        followers: followersCount,
         following: profile.following_count || 0,
+        posts: totalThreadsCount,
+        engagement: {
+          total: totalEngagement,
+          likes: totalLikes,
+          comments: totalReplies,
+          shares: totalReposts + totalQuotes,
+        },
+        growth: {
+          followers: { absolute: 0, percentage: 0 },
+          engagement: { absolute: totalEngagement, percentage: engagementRate },
+        },
         extra: {
           name: profile.name,
           biography: profile.biography,
+          totalReplies,
+          totalReposts,
+          totalQuotes,
+          engagementRate,
+          topThreads: threadPerformances,
+          threadsAnalyzed: totalThreadsCount,
         },
       };
     } catch (error) {
@@ -113,7 +192,11 @@ export class ThreadsPlugin extends BaseSchedulerPlugin {
     const response = await fetch(
       `https://graph.threads.net/${userId}?fields=id,username,threads_profile_picture_url,threads_biography&access_token=${accessToken}`
     );
-    return response.json() as Promise<Record<string, unknown>>;
+    const data = await response.json() as Record<string, unknown>;
+    if (data.threads_profile_picture_url) {
+      data.threads_profile_picture_url = await fetchedImageBase64(data.threads_profile_picture_url as string);
+    }
+    return data;
   }
 
   /**
@@ -361,13 +444,16 @@ export class ThreadsPlugin extends BaseSchedulerPlugin {
   /**
    * Transform Threads API comment to PlatformComment format
    */
-  private transformComment(comment: ThreadsApiComment): PlatformComment {
+  private async transformComment(comment: ThreadsApiComment): Promise<PlatformComment> {
+    const authorPicture = comment.from?.profile_picture_url
+      ? await fetchedImageBase64(comment.from.profile_picture_url)
+      : undefined;
     return {
       id: comment.id,
       text: comment.text || '',
       authorName: comment.from?.username || 'Unknown',
       authorId: comment.from?.id,
-      authorPicture: comment.from?.profile_picture_url,
+      authorPicture,
       createdAt: comment.timestamp || comment.created_time || '',
       likeCount: comment.like_count,
       replyCount: comment.replies?.data?.length || 0,
@@ -420,7 +506,9 @@ export class ThreadsPlugin extends BaseSchedulerPlugin {
 
       const data = await response.json();
       // Threads API may not return comments directly; return empty if not available
-      const comments: PlatformComment[] = (data.data || []).map((c: ThreadsApiComment) => this.transformComment(c));
+      const comments: PlatformComment[] = await Promise.all(
+        (data.data || []).map((c: ThreadsApiComment) => this.transformComment(c))
+      );
 
       return {
         platform: this.pluginName,

@@ -14,7 +14,7 @@
 import type { SocialMediaPlatform } from '#layers/BaseUI/app/composables/usePlatformIcons'
 import { usePlatformIcons } from '#layers/BaseUI/app/composables/usePlatformIcons'
 import type { EChartsOption } from 'echarts'
-import type { DashboardData, CollectStatsResult } from '~~/app/composables/usePlatformStats'
+import type { DashboardData, CollectStatsResult, PlatformStats, PlatformGraph } from '~~/app/composables/usePlatformStats'
 
 const { t } = useI18n()
 const { getPlatformIcon } = usePlatformIcons()
@@ -48,16 +48,28 @@ async function handleCollectStats() {
   }
 }
 
+function avgGrowth(stats: PlatformStats[], field: 'followers' | 'posts' | 'engagement'): { absolute: number; percentage: number } {
+  let absolute = 0; let percentage = 0; let count = 0
+  for (const s of stats) {
+    const g = s.growth?.[field]
+    if (g) { absolute += g.absolute; percentage += g.percentage; count++ }
+  }
+  return { absolute, percentage: count > 0 ? percentage / count : 0 }
+}
+
 const displayMetrics = computed(() => {
   if (!dashboard.value) return []
-  const { summary } = dashboard.value
+  const { summary, currentStats } = dashboard.value
+  const followerGrowth = avgGrowth(currentStats, 'followers')
+  const engagementGrowth = avgGrowth(currentStats, 'engagement')
+  const postGrowth = avgGrowth(currentStats, 'posts')
   return [
     {
       id: 'posts',
       title: 'totalPosts',
       value: formatNumber(summary.postsLast30Days),
-      change: '+0%',
-      trend: 'up' as const,
+      change: `${postGrowth.percentage >= 0 ? '+' : ''}${postGrowth.percentage.toFixed(1)}%`,
+      trend: (postGrowth.percentage >= 0 ? 'up' : 'down') as const,
       icon: 'lucide:calendar-days',
       color: 'bg-primary/10 text-primary',
     },
@@ -65,8 +77,8 @@ const displayMetrics = computed(() => {
       id: 'followers',
       title: 'totalFollowers',
       value: formatNumber(summary.totalFollowers),
-      change: '+0%',
-      trend: 'up' as const,
+      change: `${followerGrowth.percentage >= 0 ? '+' : ''}${followerGrowth.percentage.toFixed(1)}%`,
+      trend: (followerGrowth.percentage >= 0 ? 'up' : 'down') as const,
       icon: 'lucide:users',
       color: 'bg-secondary text-secondary-foreground',
     },
@@ -74,8 +86,8 @@ const displayMetrics = computed(() => {
       id: 'engagement',
       title: 'totalEngagement',
       value: formatNumber(summary.totalEngagement),
-      change: '+0%',
-      trend: 'up' as const,
+      change: `${engagementGrowth.percentage >= 0 ? '+' : ''}${engagementGrowth.percentage.toFixed(1)}%`,
+      trend: (engagementGrowth.percentage >= 0 ? 'up' : 'down') as const,
       icon: 'lucide:heart',
       color: 'bg-rose-500/10 text-rose-500',
     },
@@ -86,6 +98,24 @@ function formatNumber(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`
   return n.toString()
+}
+
+function getPlatformStat(graph: PlatformGraph, key: 'likes' | 'comments' | 'impressions' | 'saves' | 'shares' | 'views'): number {
+  if (!dashboard.value) return 0
+  const stat = dashboard.value.currentStats.find(
+    s => s.platform === graph.platform && s.accountId === (graph.accountId || '')
+  )
+  return (stat?.engagement as Record<string, number>)?.[key] ?? 0
+}
+
+function getPlatformGrowth(graph: PlatformGraph): { absolute: number; percentage: number } | null {
+  if (!dashboard.value) return null
+  const stat = dashboard.value.currentStats.find(
+    s => s.platform === graph.platform && s.accountId === (graph.accountId || '')
+  )
+  const growth = stat?.growth?.followers
+  if (!growth) return null
+  return growth
 }
 
 function getChartOptions(platformGraph: PlatformGraph): EChartsOption {
@@ -217,7 +247,7 @@ onMounted(async () => {
           <UCard class="h-full" :ui="{ title: 'p-0 sm:px-2', }">
             <template #header>
               <div class=" flex items-center gap-3">
-                <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-secondary">
+                <!-- <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-secondary">
                   <Icon :name="getPlatformIcon(platformGraph.platform as SocialMediaPlatform)"
                     class="w-4 h-4 text-secondary-foreground" />
                 </div>
@@ -236,12 +266,12 @@ onMounted(async () => {
                   <p class="text-xs text-muted-foreground">
                     {{ t('followers') }}
                   </p>
-                </div>
+                </div> -->
               </div>
             </template>
 
             <BaseChart v-if="platformGraph.labels.length > 0" :title="t('last30Days')"
-              :description="`${platformGraph.platform} performance over time`"
+              :description="`${platformGraph.accountName} performance over time`"
               :icon="getPlatformIcon(platformGraph.platform as SocialMediaPlatform)"
               :chart-options="getChartOptions(platformGraph)" />
 
@@ -256,10 +286,10 @@ onMounted(async () => {
               </div>
               <div class="text-center p-3 rounded-lg bg-muted/50">
                 <p class="text-xl font-bold text-foreground">
-                  {{ formatNumber(platformGraph.current.posts) }}
+                  {{ formatNumber(platformGraph.current.following) }}
                 </p>
                 <p class="text-xs text-muted-foreground">
-                  {{ t('posts') }}
+                  {{ t('following') }}
                 </p>
               </div>
               <div class="text-center p-3 rounded-lg bg-muted/50">
@@ -270,6 +300,47 @@ onMounted(async () => {
                   {{ t('engagement') }}
                 </p>
               </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2 mt-3">
+              <div v-if="getPlatformStat(platformGraph, 'likes') > 0" class="text-center p-2 rounded-lg bg-muted/30">
+                <p class="text-xs font-semibold text-foreground">{{ formatNumber(getPlatformStat(platformGraph, 'likes')) }}</p>
+                <p class="text-[10px] text-muted-foreground">{{ t('likes') }}</p>
+              </div>
+              <div v-if="getPlatformStat(platformGraph, 'comments') > 0" class="text-center p-2 rounded-lg bg-muted/30">
+                <p class="text-xs font-semibold text-foreground">{{ formatNumber(getPlatformStat(platformGraph, 'comments')) }}</p>
+                <p class="text-[10px] text-muted-foreground">{{ t('comments') }}</p>
+              </div>
+              <div v-if="getPlatformStat(platformGraph, 'impressions') > 0" class="text-center p-2 rounded-lg bg-muted/30">
+                <p class="text-xs font-semibold text-foreground">{{ formatNumber(getPlatformStat(platformGraph, 'impressions')) }}</p>
+                <p class="text-[10px] text-muted-foreground">{{ t('impressions') }}</p>
+              </div>
+              <div v-if="getPlatformStat(platformGraph, 'saves') > 0" class="text-center p-2 rounded-lg bg-muted/30">
+                <p class="text-xs font-semibold text-foreground">{{ formatNumber(getPlatformStat(platformGraph, 'saves')) }}</p>
+                <p class="text-[10px] text-muted-foreground">{{ t('saves') }}</p>
+              </div>
+              <div v-if="getPlatformStat(platformGraph, 'shares') > 0" class="text-center p-2 rounded-lg bg-muted/30">
+                <p class="text-xs font-semibold text-foreground">{{ formatNumber(getPlatformStat(platformGraph, 'shares')) }}</p>
+                <p class="text-[10px] text-muted-foreground">{{ t('shares') }}</p>
+              </div>
+              <div v-if="getPlatformStat(platformGraph, 'views') > 0" class="text-center p-2 rounded-lg bg-muted/30">
+                <p class="text-xs font-semibold text-foreground">{{ formatNumber(getPlatformStat(platformGraph, 'views')) }}</p>
+                <p class="text-[10px] text-muted-foreground">{{ t('views') }}</p>
+              </div>
+            </div>
+
+            <div v-if="getPlatformGrowth(platformGraph)" class="flex items-center justify-end gap-2 mt-2">
+              <UBadge
+                :color="(getPlatformGrowth(platformGraph)?.percentage ?? 0) >= 0 ? 'success' : 'error'"
+                variant="subtle" size="sm"
+              >
+                <Icon
+                  :name="(getPlatformGrowth(platformGraph)?.percentage ?? 0) >= 0 ? 'lucide:trending-up' : 'lucide:trending-down'"
+                  class="w-3 h-3 mr-1"
+                />
+                {{ (getPlatformGrowth(platformGraph)?.percentage ?? 0) >= 0 ? '+' : '' }}{{ (getPlatformGrowth(platformGraph)?.percentage ?? 0).toFixed(1) }}%
+              </UBadge>
+              <span class="text-[10px] text-muted-foreground">{{ t('followerGrowth') }}</span>
             </div>
 
 

@@ -16,38 +16,134 @@ export class WordPressPlugin extends BaseSchedulerPlugin {
         return this.createZeroStats(socialMediaAccount);
       }
 
-      // Try WPCOM REST API first (for wordpress.com sites)
       const wpcomSiteId = socialMediaAccount.metadata?.wpcomSiteId || siteUrl;
-      const response = await fetch(
+      const statsResponse = await fetch(
         `https://public-api.wordpress.com/rest/v1.1/sites/${encodeURIComponent(wpcomSiteId)}/stats`,
         {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
+          headers: { Authorization: `Bearer ${accessToken}` },
         }
       );
 
-      if (!response.ok) {
-        const error = await response.text();
-        console.error(`[WordPress] Failed to fetch stats via WPCOM API: ${error}`);
+      if (!statsResponse.ok) {
+        console.error(`[WordPress] Failed to fetch stats: ${await statsResponse.text()}`);
         return this.createZeroStats(socialMediaAccount);
       }
 
-      const stats = await response.json();
+      const stats = await statsResponse.json() as Record<string, unknown>;
+
+      let totalViewsMonth = 0
+      let totalViewsWeek = 0
+      let totalViewsDay = 0
+      let totalLikes = 0
+      let totalComments = 0
+      let totalWords = 0
+      let publishedCount = 0
+      const topPosts: Array<{ id: number; title: string; url: string; views: number; likes: number; comments: number; date: string }> = []
+
+      try {
+        const [summaryResponse, postsResponse] = await Promise.all([
+          fetch(
+            `https://public-api.wordpress.com/rest/v1.1/sites/${encodeURIComponent(wpcomSiteId)}/stats/summary`,
+            { headers: { Authorization: `Bearer ${accessToken}` } }
+          ),
+          fetch(
+            `https://public-api.wordpress.com/rest/v1.1/sites/${encodeURIComponent(wpcomSiteId)}/posts?number=100&status=publish&fields=ID,title,URL,like_count,comment_count,date`,
+            { headers: { Authorization: `Bearer ${accessToken}` } }
+          ),
+        ])
+
+        if (summaryResponse.ok) {
+          const summary = await summaryResponse.json() as Record<string, unknown>
+          const weeks = (summary.weeks as Array<Array<number>>) || []
+          const days = (summary.days as Array<Array<number>>) || []
+
+          for (const week of weeks.slice(-4)) {
+            totalViewsMonth += week[1] || 0
+          }
+          for (const week of weeks.slice(-1)) {
+            totalViewsWeek += week[1] || 0
+          }
+          for (const day of days.slice(-1)) {
+            totalViewsDay += day[1] || 0
+          }
+
+          totalLikes = (summary.likes as number) || 0
+          totalComments = (summary.comments as number) || 0
+          totalWords = (summary.words as number) || 0
+        }
+
+        if (postsResponse.ok) {
+          const postsData = await postsResponse.json() as Record<string, unknown>
+          const posts = (postsData.posts as Array<Record<string, unknown>>) || []
+          publishedCount = posts.length
+
+          for (const post of posts) {
+            const likeCount = (post.like_count as number) || 0
+            const commentCount = (post.comment_count as number) || 0
+
+            topPosts.push({
+              id: post.ID as number,
+              title: (post.title as string)?.substring(0, 200) || '',
+              url: post.URL as string,
+              views: 0,
+              likes: likeCount,
+              comments: commentCount,
+              date: post.date as string,
+            })
+          }
+
+          topPosts.sort((a, b) => (b.likes + b.comments) - (a.likes + a.comments))
+        }
+      } catch {
+      }
+
+      const totalEngagement = totalLikes + totalComments
+      const engagementRate = publishedCount > 0 ? Math.round((totalEngagement / publishedCount) * 10) / 10 : 0
+      const base64Picture = stats.avatar ? await fetchedImageBase64(stats.avatar as string) : undefined
 
       return {
         platform: 'wordpress',
         accountId: socialMediaAccount.accountId || '',
         username: socialMediaAccount.username || socialMediaAccount.accountName || '',
-        picture: stats.avatar || undefined,
+        picture: base64Picture,
         fetchedAt: new Date().toISOString(),
-        followers: stats.followers?.count || 0,
-        posts: stats.posts?.count || 0,
+        followers: ((stats.followers as Record<string, unknown>)?.count as number) || 0,
+        posts: publishedCount || ((stats.posts as Record<string, unknown>)?.count as number) || 0,
+        engagement: {
+          total: totalEngagement,
+          likes: totalLikes,
+          comments: totalComments,
+          impressions: totalViewsMonth,
+          saves: totalWords,
+        },
+        growth: {
+          followers: { absolute: ((stats.followers as Record<string, unknown>)?.count as number) || 0, percentage: 0 },
+          posts: { absolute: publishedCount, percentage: 0 },
+          engagement: { absolute: totalEngagement, percentage: engagementRate },
+        },
         extra: {
-          views: stats.views?.total || 0,
-          likes: stats.likes?.total || 0,
-          comments: stats.comments?.total || 0,
-          subscribers: stats.subscribers?.count || 0,
+          siteName: stats.name,
+          siteDescription: stats.description,
+          siteUrl: stats.URL,
+          icon: stats.icon,
+          totalViewsAllTime: (stats.views as Record<string, unknown>)?.total || 0,
+          totalViewsMonth,
+          totalViewsWeek,
+          totalViewsDay,
+          totalLikes,
+          totalComments,
+          totalWords,
+          averageEngagementPerPost: publishedCount > 0 ? Math.round((totalEngagement / publishedCount) * 10) / 10 : 0,
+          engagementRate,
+          subscribersCount: ((stats.subscribers as Record<string, unknown>)?.count as number) || 0,
+          publicizeFollowersCount: ((stats.followers as Record<string, unknown>)?.publicize as number) || 0,
+          emailFollowersCount: ((stats.followers as Record<string, unknown>)?.email as number) || 0,
+          topPosts: topPosts.slice(0, 10),
+          trafficData: {
+            viewsByDay: totalViewsDay,
+            viewsByWeek: totalViewsWeek,
+            viewsByMonth: totalViewsMonth,
+          },
         },
       };
     } catch (error: unknown) {

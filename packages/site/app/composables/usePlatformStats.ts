@@ -19,6 +19,7 @@ export interface PlatformStats {
     views?: number
     reach?: number
     impressions?: number
+    saves?: number
   }
   growth?: {
     followers?: { absolute: number; percentage: number }

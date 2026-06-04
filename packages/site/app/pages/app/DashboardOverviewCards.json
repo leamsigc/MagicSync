@@ -22,7 +22,15 @@
     "refreshStats": "Refresh Stats",
     "last30Days": "Last 30 Days",
     "noStatsCollected": "No stats collected yet. Click below to fetch platform data.",
-    "collectStats": "Collect Stats"
+    "collectStats": "Collect Stats",
+    "following": "Following",
+    "likes": "Likes",
+    "comments": "Comments",
+    "impressions": "Impressions",
+    "saves": "Saves",
+    "shares": "Shares",
+    "views": "Views",
+    "followerGrowth": "Follower growth"
   },
   "es": {
     "totalFollowers": "Total Seguidores",
@@ -47,7 +55,15 @@
     "refreshStats": "Actualizar Estadísticas",
     "last30Days": "Últimos 30 Días",
     "noStatsCollected": "No hay estadísticas recopiladas. Haga clic a continuación para obtener datos de la plataforma.",
-    "collectStats": "Recopilar Estadísticas"
+    "collectStats": "Recopilar Estadísticas",
+    "following": "Siguiendo",
+    "likes": "Me gusta",
+    "comments": "Comentarios",
+    "impressions": "Impresiones",
+    "saves": "Guardados",
+    "shares": "Compartidos",
+    "views": "Vistas",
+    "followerGrowth": "Crecimiento de seguidores"
   },
   "de": {
     "totalFollowers": "Follower Gesamt",
@@ -72,7 +88,15 @@
     "refreshStats": "Statistiken Aktualisieren",
     "last30Days": "Letzte 30 Tage",
     "noStatsCollected": "Noch keine Statistiken gesammelt. Klicken Sie unten, um Plattformdaten abzurufen.",
-    "collectStats": "Statistiken Sammeln"
+    "collectStats": "Statistiken Sammeln",
+    "following": "Folge ich",
+    "likes": "Gefällt mir",
+    "comments": "Kommentare",
+    "impressions": "Impressionen",
+    "saves": "Gespeichert",
+    "shares": "Geteilt",
+    "views": "Aufrufe",
+    "followerGrowth": "Follower-Wachstum"
   },
   "fr": {
     "totalFollowers": "Total Abonnés",
@@ -97,6 +121,14 @@
     "refreshStats": "Actualiser les Statistiques",
     "last30Days": "30 Derniers Jours",
     "noStatsCollected": "Aucune statistique collectée. Cliquez ci-dessous pour récupérer les données de la plateforme.",
-    "collectStats": "Collecter les Statistiques"
+    "collectStats": "Collecter les Statistiques",
+    "following": "Abonnements",
+    "likes": "J'aime",
+    "comments": "Commentaires",
+    "impressions": "Impressions",
+    "saves": "Sauvegardes",
+    "shares": "Partages",
+    "views": "Vues",
+    "followerGrowth": "Croissance des abonnés"
   }
 }

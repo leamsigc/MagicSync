@@ -71,6 +71,7 @@ export interface PlatformStats {
     views?: number
     reach?: number
     impressions?: number
+    saves?: number
   }
   // Growth metrics (change over last 7 days or available period)
   growth?: {
