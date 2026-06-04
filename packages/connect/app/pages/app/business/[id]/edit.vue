@@ -19,6 +19,25 @@ const isSaving = ref(false);
 
 const responseResult = ref<InformationSchemaBusinessResponse | null>(null);
 
+const safeParseDetails = (details: unknown): { companyInformation?: string; brandDetails?: Record<string, unknown> } => {
+  try {
+    if (typeof details === 'string') {
+      return JSON.parse(details);
+    }
+    if (typeof details === 'object' && details !== null) {
+      const keys = Object.keys(details);
+      if (keys.every(k => /^\d+$/.test(k))) {
+        const reconstructed = keys.sort((a, b) => parseInt(a) - parseInt(b)).map(k => (details as Record<string, string>)[k]).join('');
+        return JSON.parse(reconstructed);
+      }
+      return details as { companyInformation?: string; brandDetails?: Record<string, unknown> };
+    }
+  } catch {
+    console.warn('Failed to parse entity details, using base business data only');
+  }
+  return {};
+};
+
 onMounted(async () => {
   try {
     const { data } = await useFetch<{ data: BusinessProfile, entityDetails: EntityDetails }>(`/api/v1/business/${businessId}`);
@@ -27,7 +46,8 @@ onMounted(async () => {
 
     if (data.value?.data) {
       const business = data.value.data;
-      const details = JSON.parse(data.value.entityDetails.details || {});
+      const parsedDetails = safeParseDetails(data.value.entityDetails?.details);
+      const brandDetails = safeParseDetails(parsedDetails.brandDetails || {});
       responseResult.value = {
         businessProfile: {
           name: business.name || '',
@@ -37,8 +57,8 @@ onMounted(async () => {
           website: business.website || '',
           category: business.category || ''
         },
-        companyInformation: details.companyInformation,
-        brandDetails: JSON.parse(details.brandDetails || {})
+        companyInformation: parsedDetails.companyInformation || {},
+        brandDetails
       };
     } else {
       toast.add({
@@ -80,16 +100,36 @@ const handleSubmit = async (payload: BodySchemaCreateBusinessType) => {
     });
 
     router.push('/app/business');
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error updating business:', error);
+    const errorMessage = extractErrorMessage(error);
     toast.add({
       title: t('states.error'),
-      description: t('states.something_went_wrong'),
+      description: errorMessage,
       color: 'error'
     });
   } finally {
     isSaving.value = false;
   }
+};
+
+const extractErrorMessage = (error: unknown): string => {
+  if (error && typeof error === 'object' && 'data' in error) {
+    const err = error as { data?: { errors?: Array<{ field: string; message: string }>; message?: string }; message?: string };
+    if (err.data?.errors?.length) {
+      return err.data.errors.map(e => `${e.field}: ${e.message}`).join(', ');
+    }
+    if (err.data?.message) {
+      return err.data.message;
+    }
+    if (err.message) {
+      return err.message;
+    }
+  }
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return t('states.something_went_wrong');
 };
 
 const handleCancel = () => {

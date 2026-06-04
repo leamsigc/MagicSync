@@ -28,10 +28,10 @@
     },
     {
       "type": "chrome",
-      "request": "launch",
+      "request": "attach",
       "name": "client: chrome (attach, active profile)",
       "url": "http://localhost:3000",
-      "port": 9222,
+      "port": 40051,
       "webRoot": "${workspaceFolder}/packages/site",
       "sourceMaps": true
     },

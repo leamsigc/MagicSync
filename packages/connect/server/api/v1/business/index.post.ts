@@ -38,7 +38,7 @@ export default defineEventHandler(async (event) => {
     const entityDetails = entityDetailsService.createDetails({
       entityType: 'business_details',
       entityId: newBusiness.data.id,
-      details: JSON.stringify(body.entityDetails),
+      details: JSON.stringify(body.entityDetails) as any,
     })
   }
 

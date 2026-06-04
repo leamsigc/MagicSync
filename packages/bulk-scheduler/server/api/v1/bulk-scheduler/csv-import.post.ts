@@ -1,6 +1,6 @@
 import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
-import { bulkSchedulerService, type CsvImportRequest } from '#layers/BaseBulkScheduler/server/services/bulkScheduler.service'
 import { parseFromBuffer } from '#layers/BaseBulkScheduler/utils/csvParser'
+import { bulkSchedulerService, type CsvImportRequest } from '#layers/BaseBulkScheduler/server/services/bulkScheduler.service'
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event)

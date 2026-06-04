@@ -10,6 +10,14 @@ const { t } = useI18n()
 const { importFromCsv, isLoading } = useBulkScheduler()
 const { businesses, activeBusinessId, getAllBusinesses } = useBusinessManager()
 const { connectedSocialAccountsList, getAllSocialMediaAccounts } = useSocialMediaManager()
+
+interface CsvRow {
+  content: string;
+  image_url?: string;
+  scheduled_time?: string;
+  comments?: string
+}
+
 const router = useRouter()
 const toast = useToast()
 
@@ -20,7 +28,7 @@ const dateRange = ref<{ startDate: Date; endDate: Date } | null>(null)
 const distributeEvenly = ref(false)
 const selectedBusinessId = ref(activeBusinessId.value || '')
 const selectedAssets = ref<Asset[]>([])
-const csvRows = ref<Array<{ content: string; image_url: string; scheduled_time: string; comments: string }>>([])
+const csvRows = ref<Array<CsvRow>>([])
 const selectedAssetsPerRow = ref<Record<number, Asset[]>>({})
 
 const showAiModal = ref(false)
@@ -76,7 +84,7 @@ const handleFileSelected = async (file: File) => {
         image_url: (Array.isArray(post.mediaAssets) && post.mediaAssets.length > 0) ? post.mediaAssets[0] : '',
         scheduled_time: isoToDatetimeLocal(post.scheduledAt),
         comments: Array.isArray(post.comment) ? post.comment.join(';') : ''
-      }))
+      } satisfies CsvRow));
       currentStep.value = 2
     } else {
       toast.add({
@@ -328,14 +336,14 @@ const handleImport = async () => {
                       <UInput :model-value="row.image_url"
                         @update:model-value="updateRowContent(rowIndex, 'image_url', $event)" size="sm"
                         :placeholder="t('csvImport.step2.imageUrlPlaceholder')" class="flex-1" />
-                      <UButton v-if="row.image_url" icon="i-heroicons-x-mark" color="neutral" variant="ghost"
-                        size="2xs" @click="updateRowContent(rowIndex, 'image_url', '')" />
+                      <UButton v-if="row.image_url" icon="i-heroicons-x-mark" color="neutral" variant="ghost" size="xs"
+                        @click="updateRowContent(rowIndex, 'image_url', '')" />
                     </div>
                     <div v-if="hasImageUrl(row)" class="relative group">
                       <img :src="row.image_url" alt="Preview"
                         class="w-16 h-16 object-cover rounded border border-gray-200"
                         @error="($event.target as HTMLImageElement).style.display = 'none'" />
-                      <UButton icon="i-heroicons-x-mark" color="error" variant="solid" size="2xs"
+                      <UButton icon="i-heroicons-x-mark" color="error" variant="solid" size="xs"
                         class="absolute -top-1.5 -right-1.5 opacity-0 group-hover:opacity-100 transition-opacity rounded-full"
                         @click="updateRowContent(rowIndex, 'image_url', '')" />
                     </div>
@@ -355,7 +363,7 @@ const handleImport = async () => {
                     <UTextarea :model-value="row.comments"
                       @update:model-value="updateRowContent(rowIndex, 'comments', $event)" :rows="2" autoresize
                       class="w-full text-sm" :placeholder="t('csvImport.step2.commentsPlaceholder')" />
-                    <UButton v-if="row.comments" icon="i-heroicons-x-mark" color="neutral" variant="ghost" size="2xs"
+                    <UButton v-if="row.comments" icon="i-heroicons-x-mark" color="neutral" variant="ghost" size="xs"
                       class="mt-1 shrink-0" @click="updateRowContent(rowIndex, 'comments', '')" />
                   </div>
                 </td>

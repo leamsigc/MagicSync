@@ -81,11 +81,11 @@ const handleExtractionSubmit = async (payload: FormSubmitEvent<ExtractionForm>) 
 const submitFinalForm = async (payload: BodySchemaCreateBusinessType) => {
   try {
     const response = await addBusiness(payload);
-    
+
     if (!response) {
       throw new Error('No response from server');
     }
-    
+
     if (!response.id) {
       console.error('Invalid response:', response);
       throw new Error('Failed to create business - invalid response');

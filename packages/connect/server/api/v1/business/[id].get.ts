@@ -23,14 +23,14 @@ export default defineEventHandler(async (event) => {
   const entityDetails = await entityDetailsService.getDetailsByEntity(id, 'business_details');
 
   if (business.error) {
-    log.error('Business not found or access denied', { businessId: id })
+    log.error({ message: 'Business not found or access denied', businessId: id })
     throw createError({
       statusCode: 404,
       message: business.error
     });
   }
 
-  log.info('Business profile retrieved', { businessId: id })
+  log.info({ message: 'Business profile retrieved', businessId: id })
 
   return { ...business, entityDetails };
 });

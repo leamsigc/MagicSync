@@ -15,8 +15,7 @@ const updateCompanyInformation = (value: string) => {
 <template>
   <div class="space-y-6 min-h-[500px] grid grid-cols-1 content-start">
     <!-- Info Banner -->
-    <div
-      class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 flex gap-3 text-sm text-gray-600 dark:text-gray-300">
+    <div class="p-4  rounded-lg   flex gap-3 text-sm text-gray-600 dark:text-gray-300">
       <UIcon name="lucide:info" class="w-5 h-5 shrink-0 text-gray-500" />
       <p>{{ t('company_info.description') }}</p>
     </div>
@@ -24,7 +23,7 @@ const updateCompanyInformation = (value: string) => {
     <!-- Company Information Editor -->
     <UFormField :label="t('company_info.label')" name="companyInformation">
       <UEditor v-model="state.companyInformation" content-type="markdown" :placeholder="t('company_info.placeholder')"
-        :rows="16" class="font-mono text-xs md:text-sm shadow-inner bg-gray-50 dark:bg-gray-900 rounded-md py-3 px-4" />
+        :rows="16" class="font-mono text-xs md:text-sm shadow-inner  rounded-md py-12" />
     </UFormField>
   </div>
 </template>

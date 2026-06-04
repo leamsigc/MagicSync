@@ -92,13 +92,12 @@ const handleCancel = () => {
       </BusinessTabs>
 
       <!-- Form Actions -->
-      <div
-        class="flex flex-col sm:flex-row justify-end gap-3 pt-6 mt-8 border-t border-gray-200 dark:border-gray-800 -mx-6 -mb-6 px-6 py-4 bg-gray-50/80 dark:bg-gray-900/80 backdrop-blur-sm">
-        <UButton color="neutral" variant="ghost" class="w-full sm:w-auto justify-center" @click="handleCancel">
+      <div class="flex flex-col sm:flex-row justify-end gap-3 pt-6 mt-8   -mx-6 -mb-6 px-6 py-4 backdrop-blur-sm">
+        <UButton color="neutral" variant="soft" class="w-full sm:w-auto justify-center" @click="handleCancel">
           {{ t('form.cancel') }}
         </UButton>
         <UButton type="submit" color="primary" size="md" icon="lucide:check-circle-2"
-          class="w-full sm:w-auto justify-center shadow-md">
+          class="w-full sm:w-auto justify-center shadow-sm">
           {{ t('form.save') }}
         </UButton>
       </div>

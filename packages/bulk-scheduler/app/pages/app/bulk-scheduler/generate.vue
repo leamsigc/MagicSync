@@ -4,8 +4,8 @@
 <script lang="ts" setup>
 import { useBusinessManager } from '#layers/BaseConnect/app/pages/app/business/composables/useBusinessManager'
 import { useSocialMediaManager } from '#layers/BaseConnect/app/composables/UseSocialMediaManager'
-import { extractVariablesFromTemplate } from '#layers/BaseBulkScheduler/utils/templateProcessor'
-import { getDefaultSystemVariables } from '#layers/BaseBulkScheduler/utils/templateProcessor'
+import { extractVariablesFromTemplate, getDefaultSystemVariables } from '#layers/BaseBulkScheduler/utils/templateProcessor'
+
 const { t } = useI18n()
 const { generateBulkPosts, isLoading: isGenerating } = useBulkScheduler()
 const { parseCsv, isLoading: isParsingCsv } = useCsvParser()

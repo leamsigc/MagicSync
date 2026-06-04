@@ -21,16 +21,25 @@ export const businessProfiles = sqliteTable('business_profiles', {
 export type BusinessProfile = InferSelectModel<typeof businessProfiles>
 
 export const UpdateBusinessProfileSchema = z.object({
-  id: z.string(),
-  userId: z.string(),
-  googleBusinessId: z.string(),
   name: z.string(),
   description: z.string(),
   address: z.string(),
   phone: z.string(),
   website: z.string(),
-  category: z.string(),
-  isActive: z.boolean()
+  category: z.string()
+}).partial()
+
+export const UpdateBusinessProfileWithIdSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  googleBusinessId: z.string(),
+  isActive: z.boolean(),
+  name: z.string(),
+  description: z.string(),
+  address: z.string(),
+  phone: z.string(),
+  website: z.string(),
+  category: z.string()
 })
 
 export const CreateBusinessProfileSchema = z.object({
