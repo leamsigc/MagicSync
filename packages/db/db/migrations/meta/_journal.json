@@ -50,6 +50,13 @@
       "when": 1780183097165,
       "tag": "0006_tranquil_wallow",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1780615418726,
+      "tag": "0007_workable_korath",
+      "breakpoints": true
     }
   ]
 }

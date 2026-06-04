@@ -2,44 +2,121 @@
  * Unified AI Connection Utility for MagicSync Scheduler
  *
  * Provides a centralized interface for AI generation calls across all endpoints.
- * Supports both generateText and generateObject with a consistent API.
+ * Supports multiple AI providers with user-configurable defaults.
+ *
+ * System default: Google Gemini (gemini-3-flash-preview)
+ * User override: Each user can configure their own provider/model via user_llm_configs
  *
  * Auto-imported from utils folder in Nuxt server.
  * Usage:
  * ```ts
  * // For text generation
  * const result = await schedulerUnifiedAI.generateText({
- *   systemPrompt: 'social-content-creator', // or custom string
  *   prompt: 'Split this content...',
  * });
  *
- * // For object generation
+ * // For object generation with user config override
  * const result = await schedulerUnifiedAI.generateObject({
- *   systemPrompt: 'business-researcher',
  *   prompt: 'Extract business info...',
  *   schema: MySchema,
+ *   userId: currentUser.id, // optional — uses user's configured provider
  * });
  * ```
  */
 
-import { generateText, generateObject } from 'ai';
+import { generateText, generateObject, type LanguageModelV1 } from 'ai';
 import { google } from '@ai-sdk/google';
+import { anthropic } from '@ai-sdk/anthropic';
+import { openai } from '@ai-sdk/openai';
 import { z } from 'zod';
+import { userLlmConfigService } from '#layers/BaseDB/server/services/user-llm-config.service';
 
-// Default model configuration
-const DEFAULT_MODEL = 'gemini-3-flash-preview';
+// System default configuration
+const SYSTEM_DEFAULT_PROVIDER = 'google';
+const SYSTEM_DEFAULT_MODEL = 'gemini-3-flash-preview';
 const DEFAULT_TEMPERATURE = 0.7;
 
-/**
- * Get the API key from environment
- * @throws Error if API key is not configured
- */
-function getApiKey(): string {
-  const apiKey = process.env.NUXT_GOOGLE_GENERATIVE_AI_API_KEY || '';
-  if (!apiKey) {
-    throw new Error('Missing Google Generative AI API key. Please set NUXT_GOOGLE_GENERATIVE_AI_API_KEY in your environment variables.');
+type ProviderName = 'google' | 'ollama' | 'openai' | 'anthropic' | 'openrouter' | 'deepseek';
+
+const PROVIDER_BASE_URLS: Record<string, string> = {
+  ollama: 'http://localhost:11434/v1',
+  openrouter: 'https://openrouter.ai/api/v1',
+  deepseek: 'https://api.deepseek.com/v1',
+};
+
+function resolveApiKey(userKey?: string | null, ...envVars: string[]): string | undefined {
+  if (userKey) return userKey;
+  for (const envVar of envVars) {
+    const val = process.env[envVar];
+    if (val) return val;
   }
-  return apiKey;
+  return undefined;
+}
+
+function createModel(provider: ProviderName, modelName: string, userApiKey?: string | null, apiBaseUrl?: string | null): LanguageModelV1 {
+  switch (provider) {
+    case 'google': {
+      const apiKey = resolveApiKey(userApiKey, 'NUXT_GOOGLE_GENERATIVE_AI_API_KEY', 'GOOGLE_GENERATIVE_AI_API_KEY');
+      if (!apiKey) throw new Error('Missing Google Generative AI API key. Set NUXT_GOOGLE_GENERATIVE_AI_API_KEY in your .env file.');
+      return google(modelName, { apiKey });
+    }
+
+    case 'anthropic': {
+      const apiKey = resolveApiKey(userApiKey, 'NUXT_ANTHROPIC_API_KEY', 'ANTHROPIC_API_KEY');
+      return anthropic(modelName, { apiKey: apiKey || undefined });
+    }
+
+    case 'openai': {
+      const apiKey = resolveApiKey(userApiKey, 'NUXT_OPENAI_API_KEY', 'OPENAI_API_KEY');
+      return openai.chat(modelName, { apiKey: apiKey || undefined });
+    }
+
+    case 'ollama': {
+      const baseURL = apiBaseUrl || PROVIDER_BASE_URLS.ollama;
+      return openai.chat(modelName, { baseURL });
+    }
+
+    case 'openrouter': {
+      const baseURL = apiBaseUrl || PROVIDER_BASE_URLS.openrouter;
+      const apiKey = resolveApiKey(userApiKey, 'NUXT_OPENROUTER_API_KEY', 'OPENROUTER_API_KEY');
+      return openai.chat(modelName, { baseURL, apiKey: apiKey || undefined });
+    }
+
+    case 'deepseek': {
+      const baseURL = apiBaseUrl || PROVIDER_BASE_URLS.deepseek;
+      const apiKey = resolveApiKey(userApiKey, 'NUXT_DEEPSEEK_API_KEY', 'DEEPSEEK_API_KEY');
+      return openai.chat(modelName, { baseURL, apiKey: apiKey || undefined });
+    }
+
+    default:
+      throw new Error(`Unsupported AI provider: ${provider}`);
+  }
+}
+
+interface ResolvedConfig {
+  provider: ProviderName;
+  model: string;
+  apiKey?: string | null;
+  apiBaseUrl?: string | null;
+}
+
+async function resolveConfig(userId?: string): Promise<ResolvedConfig> {
+  if (userId) {
+    const result = await userLlmConfigService.getDefaultConfig(userId);
+    if (result.success && result.data && result.data.id !== 'default') {
+      return {
+        provider: result.data.provider as ProviderName,
+        model: result.data.model,
+        apiKey: result.data.apiKey,
+        apiBaseUrl: result.data.apiBaseUrl,
+      };
+    }
+  }
+
+  return {
+    provider: SYSTEM_DEFAULT_PROVIDER,
+    model: SYSTEM_DEFAULT_MODEL,
+  };
 }
 
 /**
@@ -52,8 +129,12 @@ export interface SchedulerGenerateTextOptions {
   prompt: string;
   /** Generation temperature (default: 0.7) */
   temperature?: number;
-  /** Model to use (default: gemini-3-flash-preview) */
+  /** Model to use (overrides user config and system default) */
   model?: string;
+  /** Provider to use (overrides user config) */
+  provider?: string;
+  /** User ID to look up their configured AI provider */
+  userId?: string;
 }
 
 /**
@@ -68,8 +149,12 @@ export interface SchedulerGenerateObjectOptions<T extends z.ZodSchema> {
   schema: T;
   /** Generation temperature (default: 0.7) */
   temperature?: number;
-  /** Model to use (default: gemini-3-flash-preview) */
+  /** Model to use (overrides user config and system default) */
   model?: string;
+  /** Provider to use (overrides user config) */
+  provider?: string;
+  /** User ID to look up their configured AI provider */
+  userId?: string;
 }
 
 /**
@@ -85,21 +170,25 @@ export interface SchedulerGenerateTextResult {
 export const schedulerUnifiedAI = {
   /**
    * Generate text content using the AI
-   * @param options - Generation options
-   * @returns Generated text result
    */
   async generateText(options: SchedulerGenerateTextOptions): Promise<SchedulerGenerateTextResult> {
-    getApiKey(); // Validate API key
-
     const {
       systemPrompt,
       prompt,
       temperature = DEFAULT_TEMPERATURE,
-      model = DEFAULT_MODEL,
+      model: modelOverride,
+      provider: providerOverride,
+      userId,
     } = options;
 
+    const config = await resolveConfig(userId);
+    const provider = (providerOverride || config.provider) as ProviderName;
+    const modelName = modelOverride || config.model;
+
+    const aiModel = createModel(provider, modelName, config.apiKey, config.apiBaseUrl);
+
     const { text } = await generateText({
-      model: google(model),
+      model: aiModel,
       system: systemPrompt,
       prompt,
       temperature,
@@ -110,24 +199,28 @@ export const schedulerUnifiedAI = {
 
   /**
    * Generate structured object using the AI
-   * @param options - Generation options including Zod schema
-   * @returns Generated object result
    */
   async generateObject<T extends z.ZodSchema>(
     options: SchedulerGenerateObjectOptions<T>
   ): Promise<{ object: z.infer<T> }> {
-    getApiKey(); // Validate API key
-
     const {
       systemPrompt,
       prompt,
       schema,
       temperature = DEFAULT_TEMPERATURE,
-      model = DEFAULT_MODEL,
+      model: modelOverride,
+      provider: providerOverride,
+      userId,
     } = options;
 
+    const config = await resolveConfig(userId);
+    const provider = (providerOverride || config.provider) as ProviderName;
+    const modelName = modelOverride || config.model;
+
+    const aiModel = createModel(provider, modelName, config.apiKey, config.apiBaseUrl);
+
     const { object } = await generateObject({
-      model: google(model),
+      model: aiModel,
       system: systemPrompt,
       schema,
       prompt,

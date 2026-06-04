@@ -7,9 +7,9 @@ export const userLlmConfigs = sqliteTable('user_llm_configs', {
   id: text('id').primaryKey(),
   userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
   provider: text('provider', {
-    enum: ['ollama', 'openai', 'anthropic', 'openrouter']
-  }).notNull().default('ollama'),
-  model: text('model').notNull().default('qwen3.5'),
+    enum: ['google', 'ollama', 'openai', 'anthropic', 'openrouter', 'deepseek']
+  }).notNull().default('google'),
+  model: text('model').notNull().default('gemini-3-flash-preview'),
   apiKey: text('api_key'), // nullable - null means use platform defaults
   apiBaseUrl: text('api_base_url'), // nullable - for custom ollama endpoints etc
   isDefault: integer('is_default', { mode: 'boolean' }).notNull().default(true),
