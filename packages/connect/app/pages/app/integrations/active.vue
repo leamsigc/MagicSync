@@ -3,6 +3,7 @@
 
 <script lang="ts" setup>
 import { useConnectionManager } from './composables/useConnectionManager';
+import { useBusinessManager } from '../business/composables/useBusinessManager';
 
 /**
  *
@@ -19,9 +20,16 @@ import dayjs from "dayjs";
 import ConnectIntegrationCard from './components/ConnectIntegrationCard.vue';
 
 const { getAllSocialMediaAccounts, pagesList } = useConnectionManager();
+const { activeBusinessId, getAllBusinesses } = useBusinessManager();
 
 onMounted(async () => {
+  await getAllBusinesses();
   await getAllSocialMediaAccounts();
+})
+
+const filteredAccounts = computed(() => {
+  if (!activeBusinessId.value) return []
+  return pagesList.value.filter(account => account.businessId === activeBusinessId.value)
 })
 
 const { t } = useI18n();
@@ -38,9 +46,9 @@ useHead({
   <div class="container mx-auto py-6 space-y-6">
     <BasePageHeader :title="t('title')" :description="t('description')" />
     <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
-      <ConnectIntegrationCard v-for="social in pagesList" :name="social.accountName" :key="social.id"
-        :image="social.entityDetail.details.picture ? social.entityDetail.details.picture : ''"
-        :icon="`logos:${social.platform}`" :tags="[social.accountId]"
+      <ConnectIntegrationCard v-for="social in filteredAccounts" :name="social.accountName" :key="social.id"
+        :image="social.entityDetail?.details?.picture ? social.entityDetail.details.picture : ''"
+        :icon="`logos:${social.platform}`" :tags="[social.accountId]" :id="social.id"
         :time="dayjs(social.createdAt as unknown as string).format('YYYY-MM-DD')" connected :show-pages="false" />
     </div>
   </div>

@@ -2,7 +2,9 @@
 <i18n src="../connect.json"></i18n>
 <script lang="ts" setup>
 import type { FacebookPage } from '#layers/BaseConnect/utils/FacebookPages';
+import type { LinkedInPage } from '#layers/BaseConnect/utils/LinkedInPages';
 import { useConnectionManager } from '../composables/useConnectionManager';
+import EditConnectionModal from './EditConnectionModal.vue';
 
 /**
  *
@@ -27,12 +29,14 @@ interface Props {
   showPages?: boolean;
   showMenu?: boolean;
 }
-const { getPagesForIntegration, HandleConnectToFacebook, facebookPages, handleDisconnect, HandleConnectToLinkedIn } = useConnectionManager();
+const { getPagesForIntegration, HandleConnectToFacebook, facebookPages, handleDisconnect, HandleConnectToLinkedIn, getAllSocialMediaAccounts } = useConnectionManager();
 
 const modalStatus = ref(false);
 const toggleModal = () => {
   modalStatus.value = !modalStatus.value;
 };
+
+const editModalStatus = ref(false);
 
 const props = withDefaults(defineProps<Props>(), { showPages: true, showMenu: true });
 
@@ -67,7 +71,7 @@ const items = computed(() => [
       icon: 'i-heroicons-pencil',
       onSelect: () => {
         // Handle edit action
-        console.log('Edit clicked');
+        editModalStatus.value = true;
       },
     }]
 ]);
@@ -80,6 +84,10 @@ const HandleConnectTo = async (page: unknown) => {
   }
 
   toggleModal();
+};
+
+const handleEditSaved = async () => {
+  await getAllSocialMediaAccounts();
 };
 </script>
 
@@ -128,5 +136,7 @@ const HandleConnectTo = async (page: unknown) => {
       </section>
     </template>
   </UModal>
+  <EditConnectionModal v-model="editModalStatus" :connectionId="props.id" :connectionName="props.name"
+    @saved="handleEditSaved" />
 </template>
 <style scoped></style>

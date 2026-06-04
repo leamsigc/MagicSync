@@ -19,7 +19,17 @@
     "modal": {
       "select_page_title": "Select a page",
       "select_page_description": "Here you can select a specific page to connect to base on the current connection",
-      "id_label": "Id: "
+      "id_label": "Id: ",
+      "edit_connection_title": "Edit Connection",
+      "edit_connection_description": "Update the business and users who can access this connection",
+      "business_section": "Business",
+      "managers_section": "Users who can access",
+      "no_businesses": "No businesses available",
+      "no_users": "No organization users available"
+    },
+    "actions": {
+      "save": "Save",
+      "cancel": "Cancel"
     },
     "messages": {
       "connect": {
@@ -30,6 +40,10 @@
         "title": "Disconnected",
         "description": "Disconnected successfully"
       },
+      "saved": {
+        "title": "Saved",
+        "description": "Connection settings updated successfully"
+      },
       "error": {
         "title": "Error",
         "description": "An error occurred while trying to connect/disconnect {error} {id}"
@@ -38,9 +52,9 @@
   },
   "fr": {
     "title": "Connectez votre compte Connect",
-    "description": "Connectez votre compte Connect pour commencer à l'utiliser",
+    "description": "Connectez votre compte Connect pour commencer à l'utiliser",
     "seo_title_all": "Connectez votre compte Connect",
-    "seo_description_all": "Connectez votre compte Connect pour commencer à l'utiliser",
+    "seo_description_all": "Connectez votre compte Connect pour commencer à l'utiliser",
     "states": {
       "add_connection": "Ajouter une connexion",
       "not_connected": "Non connecté",
@@ -56,7 +70,35 @@
     "modal": {
       "select_page_title": "Sélectionner une page",
       "select_page_description": "Ici, vous pouvez sélectionner une page spécifique à connecter en fonction de la connexion actuelle",
-      "id_label": "Id: "
+      "id_label": "Id: ",
+      "edit_connection_title": "Modifier la connexion",
+      "edit_connection_description": "Mettre à jour l'entreprise et les utilisateurs qui peuvent accéder à cette connexion",
+      "business_section": "Entreprise",
+      "managers_section": "Utilisateurs qui peuvent accéder",
+      "no_businesses": "Aucune entreprise disponible",
+      "no_users": "Aucun utilisateur d'organisation disponible"
+    },
+    "actions": {
+      "save": "Enregistrer",
+      "cancel": "Annuler"
+    },
+    "messages": {
+      "connect": {
+        "title": "Connecté",
+        "description": "Connecté avec succès"
+      },
+      "disconnected": {
+        "title": "Déconnecté",
+        "description": "Déconnecté avec succès"
+      },
+      "saved": {
+        "title": "Enregistré",
+        "description": "Paramètres de connexion mis à jour avec succès"
+      },
+      "error": {
+        "title": "Erreur",
+        "description": "Une erreur s'est produite lors de la tentative de connexion/déconnexion {error} {id}"
+      }
     }
   },
   "es": {
@@ -74,19 +116,47 @@
       "pages": "Páginas",
       "reconnect": "Reconectar",
       "disconnect": "Desconectar",
-      "edit": "Editar"
+      "edit": "Éditer"
     },
     "modal": {
       "select_page_title": "Seleccionar una página",
       "select_page_description": "Aquí puedes seleccionar una página específica para conectar basada en la conexión actual",
-      "id_label": "Id: "
+      "id_label": "Id: ",
+      "edit_connection_title": "Editar conexión",
+      "edit_connection_description": "Actualiza la empresa y los usuarios que pueden acceder a esta conexión",
+      "business_section": "Empresa",
+      "managers_section": "Usuarios que pueden acceder",
+      "no_businesses": "No hay empresas disponibles",
+      "no_users": "No hay usuarios de organización disponibles"
+    },
+    "actions": {
+      "save": "Guardar",
+      "cancel": "Cancelar"
+    },
+    "messages": {
+      "connect": {
+        "title": "Conectado",
+        "description": "Conectado con éxito"
+      },
+      "disconnected": {
+        "title": "Desconectado",
+        "description": "Desconectado con éxito"
+      },
+      "saved": {
+        "title": "Guardado",
+        "description": "Configuración de conexión actualizada con éxito"
+      },
+      "error": {
+        "title": "Error",
+        "description": "Se produjo un error al intentar conectar/desconectar {error} {id}"
+      }
     }
   },
   "de": {
     "title": "Verbinden Sie Ihre Connect-Konto",
     "description": "Verbinden Sie Ihr Connect-Konto, um es zu nutzen",
-    "seo_title_all": "Verbinden Sie Ihr Connect-Konto",
-    "seo_description_all": "Verbinden Sie Ihr Connect-Konto, um es zu nutzen",
+    "seo_title_all": "Verbinden Sie Ihre Connect-Konto",
+    "seo_description_all": "Verbinden Sie Ihre Connect-Konto, um es zu nutzen",
     "states": {
       "add_connection": "Verbindung hinzufügen",
       "not_connected": "Nicht verbunden",
@@ -102,7 +172,35 @@
     "modal": {
       "select_page_title": "Seite auswählen",
       "select_page_description": "Hier können Sie eine bestimmte Seite auswählen, die basierend auf der aktuellen Verbindung angeschlossen werden soll",
-      "id_label": "Id: "
+      "id_label": "Id: ",
+      "edit_connection_title": "Verbindung bearbeiten",
+      "edit_connection_description": "Aktualisieren Sie das Unternehmen und die Benutzer, die auf diese Verbindung zugreifen können",
+      "business_section": "Unternehmen",
+      "managers_section": "Benutzer, die zugreifen können",
+      "no_businesses": "Keine Unternehmen verfügbar",
+      "no_users": "Keine Organisationsbenutzer verfügbar"
+    },
+    "actions": {
+      "save": "Speichern",
+      "cancel": "Abbrechen"
+    },
+    "messages": {
+      "connect": {
+        "title": "Verbunden",
+        "description": "Erfolgreich verbunden"
+      },
+      "disconnected": {
+        "title": "Getrennt",
+        "description": "Erfolgreich getrennt"
+      },
+      "saved": {
+        "title": "Gespeichert",
+        "description": "Verbindungseinstellungen erfolgreich aktualisiert"
+      },
+      "error": {
+        "title": "Fehler",
+        "description": "Beim Versuch, eine Verbindung herzustellen/zu trennen, ist ein Fehler aufgetreten {error} {id}"
+      }
     }
   }
 }

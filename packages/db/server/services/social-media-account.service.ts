@@ -2,9 +2,9 @@ import { entityDetails } from '#layers/BaseDB/db/entityDetails/entityDetails';
 
 import { eq, and, desc, inArray } from 'drizzle-orm'
 import { encryptKey, decryptKey } from '#layers/BaseAuth/server/utils/AuthHelpers'
-import type { SocialMediaAccount } from '#layers/BaseDB/db/socialMedia/socialMedia'
-import { socialMediaAccounts } from '#layers/BaseDB/db/socialMedia/socialMedia'
-import { type Account, type User, user } from '#layers/BaseDB/db/auth/auth'
+import type { SocialMediaAccount, SocialMediaAccountManager } from '#layers/BaseDB/db/socialMedia/socialMedia'
+import { socialMediaAccounts, socialMediaAccountManagers } from '#layers/BaseDB/db/socialMedia/socialMedia'
+import { type Account, type User, user, member, organization } from '#layers/BaseDB/db/auth/auth'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
 import { entityDetailsService } from '#layers/BaseDB/server/services/entity-details.service'
 import { businessProfiles, account } from '#layers/BaseDB/db/schema';
@@ -62,6 +62,18 @@ export interface SocialMediaAccountFilters {
   businessId?: string
   platform?: SocialMediaPlatform
   isActive?: boolean
+}
+
+export interface UpdateConnectionSettingsData {
+  businessId?: string
+  managerIds?: string[]
+}
+
+export interface ConnectionWithManagers {
+  account: SocialMediaAccount
+  currentManagers: SocialMediaAccountManager[]
+  availableUsers: Array<{ id: string; name: string; email: string; image: string | null }>
+  availableBusinesses: Array<{ id: string; name: string }>
 }
 
 export class SocialMediaAccountService implements SocialMediaAccountServiceType {
@@ -505,6 +517,174 @@ export class SocialMediaAccountService implements SocialMediaAccountServiceType 
     // For now, we'll assume the account is valid if it exists and is active
     // In a real implementation, you'd make an API call to verify the token
     return { isValid: true, needsRefresh }
+  }
+
+  /**
+   * Get account with its current managers
+   * SECURITY: Requires userId ownership check
+   */
+  async getAccountWithManagers(id: string, userId?: string) {
+    const account = await this.getAccountById(id, userId)
+    if (!account) return null
+
+    const managers = await this.db
+      .select({
+        socialMediaAccountId: socialMediaAccountManagers.socialMediaAccountId,
+        userId: socialMediaAccountManagers.userId,
+        createdAt: socialMediaAccountManagers.createdAt,
+        updatedAt: socialMediaAccountManagers.updatedAt,
+        managerUserId: user.id,
+        managerUserName: user.name,
+        managerUserEmail: user.email,
+        managerUserImage: user.image,
+      })
+      .from(socialMediaAccountManagers)
+      .leftJoin(user, eq(socialMediaAccountManagers.userId, user.id))
+      .where(eq(socialMediaAccountManagers.socialMediaAccountId, id))
+
+    return {
+      ...account,
+      managers: managers.map(m => ({
+        socialMediaAccountId: m.socialMediaAccountId,
+        userId: m.userId,
+        createdAt: m.createdAt,
+        updatedAt: m.updatedAt,
+        user: m.managerUserId ? {
+          id: m.managerUserId,
+          name: m.managerUserName,
+          email: m.managerUserEmail,
+          image: m.managerUserImage,
+        } : null,
+      })),
+    }
+  }
+
+  /**
+   * Get organization members for a user (users that can be assigned as managers)
+   * Returns users who are members of any organization that the given user belongs to
+   */
+  async getOrganizationMembers(userId: string) {
+    const memberIds = await this.db
+      .select({ organizationId: member.organizationId })
+      .from(member)
+      .where(eq(member.userId, userId))
+
+    if (memberIds.length === 0) {
+      return []
+    }
+
+    const orgIds = memberIds.map(m => m.organizationId)
+    const members = await this.db
+      .select({
+        userId: member.userId,
+        userName: user.name,
+        userEmail: user.email,
+        userImage: user.image,
+      })
+      .from(member)
+      .leftJoin(user, eq(member.userId, user.id))
+      .where(inArray(member.organizationId, orgIds))
+
+    return members.map(m => ({
+      id: m.userId,
+      name: m.userName || 'Unknown',
+      email: m.userEmail || '',
+      image: m.userImage,
+    }))
+  }
+
+  /**
+   * Get all businesses owned by a user
+   */
+  async getUserBusinesses(userId: string) {
+    const businesses = await this.db
+      .select({ id: businessProfiles.id, name: businessProfiles.name })
+      .from(businessProfiles)
+      .where(eq(businessProfiles.userId, userId))
+
+    return businesses
+  }
+
+  /**
+   * Get connection settings for editing (account, managers, available users, available businesses)
+   * SECURITY: Only the account owner can access this
+   */
+  async getConnectionSettings(id: string, requestingUserId: string): Promise<ConnectionWithManagers | null> {
+    const accountWithManagers = await this.getAccountWithManagers(id, requestingUserId)
+    if (!accountWithManagers) return null
+
+    const [account] = await this.db
+      .select()
+      .from(socialMediaAccounts)
+      .where(eq(socialMediaAccounts.id, id))
+
+    if (!account) return null
+
+    if (account.userId !== requestingUserId) {
+      return null
+    }
+
+    const [availableUsers, availableBusinesses] = await Promise.all([
+      this.getOrganizationMembers(requestingUserId),
+      this.getUserBusinesses(requestingUserId),
+    ])
+
+    return {
+      account: accountWithManagers,
+      currentManagers: accountWithManagers.managers as SocialMediaAccountManager[],
+      availableUsers,
+      availableBusinesses,
+    }
+  }
+
+  /**
+   * Update connection settings (business and/or managers)
+   * SECURITY: Only the account owner can update this
+   */
+  async updateConnectionSettings(
+    id: string,
+    requestingUserId: string,
+    data: UpdateConnectionSettingsData
+  ): Promise<{ success: boolean; error?: string }> {
+    const account = await this.db.query.socialMediaAccounts.findFirst({
+      where: eq(socialMediaAccounts.id, id),
+    })
+
+    if (!account) {
+      return { success: false, error: 'Account not found' }
+    }
+
+    if (account.userId !== requestingUserId) {
+      return { success: false, error: 'Only the account owner can update settings' }
+    }
+
+    if (data.businessId !== undefined) {
+      await this.db
+        .update(socialMediaAccounts)
+        .set({ businessId: data.businessId, updatedAt: new Date() })
+        .where(eq(socialMediaAccounts.id, id))
+    }
+
+    if (data.managerIds !== undefined) {
+      await this.db
+        .delete(socialMediaAccountManagers)
+        .where(eq(socialMediaAccountManagers.socialMediaAccountId, id))
+
+      if (data.managerIds.length > 0) {
+        const managerValues = data.managerIds.map(managerId => ({
+          socialMediaAccountId: id,
+          userId: managerId,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }))
+
+        await this.db
+          .insert(socialMediaAccountManagers)
+          .values(managerValues)
+      }
+    }
+
+    return { success: true }
   }
 }
 
