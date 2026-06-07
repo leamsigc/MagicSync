@@ -116,6 +116,36 @@ export function useAuthApi(event: H3Event) {
       })
     },
 
+    // --- Organization Invitations ---
+    inviteMember(params: { body: { email: string; role?: string; organizationId: string } }) {
+      return auth.api.createInvitation({
+        ...params,
+        headers: headers()
+      })
+    },
+
+    // --- Admin ---
+    banUser(params: { body: { userId: string; banReason?: string; banExpiresIn?: number } }) {
+      return auth.api.banUser({
+        ...params,
+        headers: headers()
+      })
+    },
+
+    unbanUser(params: { body: { userId: string } }) {
+      return auth.api.unbanUser({
+        ...params,
+        headers: headers()
+      })
+    },
+
+    listUsers(params: { query?: { limit?: number; offset?: number; sortBy?: string; sortDirection?: string } } = {}) {
+      return auth.api.listUsers({
+        ...params,
+        headers: headers()
+      })
+    },
+
     // --- Social Accounts ---
     signInSocial(params: { body: { provider: string; callbackURL?: string } }) {
       return auth.api.signInSocial(params)

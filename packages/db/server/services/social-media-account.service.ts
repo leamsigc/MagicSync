@@ -482,6 +482,44 @@ export class SocialMediaAccountService implements SocialMediaAccountServiceType 
   }
 
   /**
+   * Token health status for UI indicators
+   */
+  getTokenHealth(account: SocialMediaAccount): { status: 'healthy' | 'expiring_soon' | 'expired' | 'unknown'; expiresAt: Date | null; daysRemaining: number | null } {
+    if (!account.tokenExpiresAt) {
+      return { status: 'unknown', expiresAt: null, daysRemaining: null }
+    }
+
+    const expirationTime = typeof account.tokenExpiresAt === 'number'
+      ? account.tokenExpiresAt * 1000
+      : account.tokenExpiresAt.getTime()
+
+    const expiresAt = new Date(expirationTime)
+    const msRemaining = expirationTime - Date.now()
+    const daysRemaining = Math.floor(msRemaining / (1000 * 60 * 60 * 24))
+
+    if (msRemaining <= 0) {
+      return { status: 'expired', expiresAt, daysRemaining: 0 }
+    }
+
+    if (daysRemaining <= 7) {
+      return { status: 'expiring_soon', expiresAt, daysRemaining }
+    }
+
+    return { status: 'healthy', expiresAt, daysRemaining }
+  }
+
+  /**
+   * Get detailed token health for all accounts of a business
+   */
+  async getBusinessTokenHealth(businessId: string): Promise<Array<SocialMediaAccount & { health: { status: string; expiresAt: Date | null; daysRemaining: number | null } }>> {
+    const accounts = await this.getAccounts({ businessId, isActive: true })
+    return accounts.map(account => ({
+      ...account,
+      health: this.getTokenHealth(account)
+    }))
+  }
+
+  /**
    * Decrypt OAuth tokens from stored encrypted values.
    * Returns plain-text tokens for API usage.
    */

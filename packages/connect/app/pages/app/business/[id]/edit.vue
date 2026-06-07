@@ -2,6 +2,7 @@
 <script lang="ts" setup>
 import { useBusinessManager } from '../composables/useBusinessManager';
 import BusinessFormStep from '../components/BusinessFormStep.vue';
+import InviteTeamMember from '../components/InviteTeamMember.vue';
 import type { BusinessProfile, EntityDetails } from '#layers/BaseDB/db/schema';
 import type { InformationSchemaBusinessResponse } from '#layers/BaseScheduler/server/api/v1/ai/information/index.post';
 import type { BodySchemaCreateBusinessType } from '#layers/BaseConnect/server/api/v1/business/index.post';
@@ -152,8 +153,12 @@ useHead({
       <UProgress indicator />
     </div>
 
-    <div v-else-if="responseResult" class="mt-6">
+    <div v-else-if="responseResult" class="mt-6 space-y-6">
       <BusinessFormStep :result="responseResult" @submit="handleSubmit" @cancel="handleCancel" />
+
+      <UDivider class="my-8" />
+
+      <InviteTeamMember :business-id="businessId" />
     </div>
   </div>
 </template>

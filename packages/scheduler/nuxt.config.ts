@@ -21,8 +21,10 @@ export default defineNuxtConfig({
       tasks: true,
     },
     scheduledTasks: {
-      // Run `cms:update` task every 15 minute
-      '*/15 * * * *': ['social:post']
+      // Run `social:post` every 15 minutes to process scheduled posts
+      '*/15 * * * *': ['social:post'],
+      // Run `token:health` every 6 hours to log expiring/expired tokens
+      '0 */6 * * *': ['token:health'],
     }
   },
   $meta: {

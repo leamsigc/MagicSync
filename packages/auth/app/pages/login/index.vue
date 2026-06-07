@@ -15,6 +15,9 @@ import UserLogin from './components/UserLogin.vue';
  */
 
 const { t } = useI18n()
+const route = useRoute()
+
+const redirectUrl = computed(() => (route.query.redirect as string) || '/app/')
 
 // Page meta with translations
 useHead({
@@ -27,7 +30,7 @@ useHead({
 
 <template>
   <div class="min-h-screen grid place-content-center ">
-    <UserLogin />
+    <UserLogin :redirect-url="redirectUrl" />
   </div>
 </template>
 

@@ -1,4 +1,5 @@
 import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service';
+import { sendOrganizationInvitationEmail } from '#layers/BaseEmail/server/utils/email';
 import { APIError, betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { apiKey } from "@better-auth/api-key"
@@ -401,8 +402,14 @@ export const auth = betterAuth({
       ]
     }),
     organization({
-      async sendInvitationEmail() {
-        // Invitation emails handled via notifications
+      async sendInvitationEmail({ email, organization, inviter, id }) {
+        const url = `${process.env.NUXT_APP_URL || process.env.NUXT_BETTER_AUTH_URL || 'http://localhost:3000'}/accept-invitation?id=${id}`;
+        await sendOrganizationInvitationEmail(
+          email,
+          url,
+          inviter.user.name || inviter.user.email || 'A team member',
+          organization.name
+        )
       }
     }),
     apiKey([
