@@ -117,7 +117,7 @@ export function useAuthApi(event: H3Event) {
     },
 
     // --- Organization Invitations ---
-    inviteMember(params: { body: { email: string; role?: string; organizationId: string } }) {
+    inviteMember(params: { body: { email: string; role?: string; organizationId: string, resend: boolean } }) {
       return auth.api.createInvitation({
         ...params,
         headers: headers()

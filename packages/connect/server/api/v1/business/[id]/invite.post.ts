@@ -33,7 +33,8 @@ export default defineEventHandler(async (event) => {
       body: {
         email: body.email,
         role: "member",
-        organizationId: org.id
+        organizationId: org.id,
+        resend: true,
       }
     })
 

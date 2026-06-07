@@ -2,7 +2,7 @@ import { decryptKey } from '#layers/BaseAuth/server/utils/AuthHelpers';
 import type { PostResponse, GetCommentsResponse, ReplyCommentResponse, PlatformComment } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import { BaseSchedulerPlugin, type PluginPostDetails, type PluginSocialMediaAccount } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import type { Post, SocialMediaAccount, Asset, PlatformContentOverride } from '#layers/BaseDB/db/schema';
-import { AtpAgent, RichText, AppBskyFeedPost, AppBskyFeedDefs, BlobRef, AppBskyEmbedVideo, AppBskyVideoDefs } from '@atproto/api';
+import { AtpAgent, RichText, AppBskyFeedPost, AppBskyFeedDefs, BlobRef, AppBskyVideoDefs } from '@atproto/api';
 import type { BlueskySettings } from '#layers/BaseScheduler/shared/platformSettings';
 import { platformConfigurations } from '#layers/BaseScheduler/shared/platformConstants';
 import { promises as fs } from 'node:fs'
