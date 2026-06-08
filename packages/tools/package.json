@@ -14,6 +14,8 @@
   },
   "devDependencies": {
     "@huggingface/transformers": "catalog:",
+    "@browser-ai/transformers-js": "catalog:",
+    "ai": "catalog:",
     "@local-monorepo/assets": "workspace:*",
     "@local-monorepo/ui": "workspace:*",
     "@nuxt/eslint": "catalog:",
