@@ -150,37 +150,57 @@ export async function compressImage(buffer: Buffer, format: string | undefined, 
   }
 }
 
+const platformProviderMap: Record<string, string> = {
+  x: 'twitter',
+  twitter: 'twitter',
+  linkedin: 'linkedin',
+  linkedin_page: 'linkedin',
+  'linkedin-page': 'linkedin',
+  facebook: 'facebook',
+  instagram: 'instagram',
+  'instagram-standalone': 'instagram',
+  threads: 'threads',
+  tiktok: 'tiktok',
+  youtube: 'youtube',
+  googlemybusiness: 'google',
+  discord: 'discord',
+  reddit: 'reddit',
+  dribbble: 'dribbble',
+}
+
 /**
- * Refreshes social media tokens for specific platforms (X/Twitter)
- * before triggering the post.
+ * Refreshes social media tokens for the platforms that have expiring tokens,
+ * using Better Auth's internal token refresh. Attempts refresh for all platforms
+ * that have an associated Better Auth provider mapping.
  */
-const platformsThatNeedTokenRefresh = ['x', 'twitter', 'linkedin',]
 export const ScheduleRefreshSocialMediaTokens = async (fullPost: PostWithAllData, userId: string, headers: HeadersInit) => {
-  const platformsToPost = fullPost.platformPosts.filter((platformPost) => {
-    return platformsThatNeedTokenRefresh.includes(platformPost.platformPostId || '')
+  const needsRefresh = fullPost.platformPosts.filter((platformPost) => {
+    const providerId = platformProviderMap[platformPost.platformPostId || '']
+    return !!providerId
   })
 
-  if (platformsToPost.length > 0) {
-    await Promise.all(platformsToPost.map(async (platformPost) => {
-      // We need to get the account details here
-      const account = await socialMediaAccountService.getActualAccountByAccountId(platformPost.socialAccountId)
-      const providerId = platformPost.platformPostId === 'x' ? 'twitter' : platformPost.platformPostId
-      if (!account || !providerId) return Promise.reject('Account not found')
+  if (needsRefresh.length === 0) return
 
-      const tokenData = await getAccessTokenHelper(headers, {
-        providerId: providerId,
-        userId: userId,
-        accountId: account.accountId,
-      });
+  await Promise.allSettled(needsRefresh.map(async (platformPost) => {
+    const account = await socialMediaAccountService.getActualAccountByAccountId(platformPost.socialAccountId)
+    const providerId = platformProviderMap[platformPost.platformPostId || '']
+    if (!account || !providerId) return
 
+    const expired = socialMediaAccountService.isTokenExpired(account)
+    if (!expired) return
 
-      if (tokenData?.accessToken) {
-        await socialMediaAccountService.updateAccount(platformPost.socialAccountId, {
-          accessToken: tokenData.accessToken
-        });
-      }
-    }))
-  }
+    const tokenData = await getAccessTokenHelper(headers, {
+      providerId,
+      userId,
+      accountId: account.accountId,
+    }).catch(() => null)
+
+    if (tokenData?.accessToken) {
+      await socialMediaAccountService.updateAccount(platformPost.socialAccountId, {
+        accessToken: tokenData.accessToken
+      })
+    }
+  }))
 }
 
 interface ValidationResult {

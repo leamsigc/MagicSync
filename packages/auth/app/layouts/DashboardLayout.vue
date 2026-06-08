@@ -2,6 +2,11 @@
 import DashboardHeader from './dashboard/Header.vue';
 import DashboardSidebar from './dashboard/Sidebar.vue';
 import UserNav from './dashboard/UserNav.vue';
+
+const { checkAndNotify } = useTokenHealthNotification()
+onMounted(() => {
+  checkAndNotify()
+})
 </script>
 
 <template>

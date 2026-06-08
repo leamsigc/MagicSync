@@ -16,7 +16,7 @@ export class WordPressPlugin extends BaseSchedulerPlugin {
         return this.createZeroStats(socialMediaAccount);
       }
 
-      const wpcomSiteId = socialMediaAccount.metadata?.wpcomSiteId || siteUrl;
+      const wpcomSiteId = socialMediaAccount.metadata?.wpcomSiteId as string || siteUrl as string;
       const statsResponse = await fetch(
         `https://public-api.wordpress.com/rest/v1.1/sites/${encodeURIComponent(wpcomSiteId)}/stats`,
         {
@@ -471,7 +471,7 @@ export class WordPressPlugin extends BaseSchedulerPlugin {
     socialMediaAccount: PluginSocialMediaAccount,
     options?: { limit?: number; cursor?: string }
   ): Promise<GetCommentsResponse> {
-      const platformPost = postDetails.platformPosts?.find((pp) => pp.socialAccountId === socialMediaAccount.id);
+    const platformPost = postDetails.platformPosts?.find((pp) => pp.socialAccountId === socialMediaAccount.id);
     const publishDetail = platformPost?.publishDetail ? JSON.parse(platformPost.publishDetail) : {};
     const externalPostId = publishDetail[socialMediaAccount.id]?.publishedId || publishDetail.postId;
 
@@ -539,7 +539,7 @@ export class WordPressPlugin extends BaseSchedulerPlugin {
     replyText: string
   ): Promise<ReplyCommentResponse> {
     try {
-    const platformPost = postDetails.platformPosts?.find((pp) => pp.socialAccountId === socialMediaAccount.id);
+      const platformPost = postDetails.platformPosts?.find((pp) => pp.socialAccountId === socialMediaAccount.id);
       const publishDetail = platformPost?.publishDetail ? JSON.parse(platformPost.publishDetail) : {};
       const externalPostId = publishDetail[socialMediaAccount.id]?.publishedId || publishDetail.postId;
 

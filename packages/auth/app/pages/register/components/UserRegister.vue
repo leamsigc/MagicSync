@@ -33,35 +33,30 @@ const fields = computed<AuthFormField[]>(() => [{
   label: t('form.first_name'),
   placeholder: t('placeholders.first_name'),
   required: true,
-  disabled: true
 }, {
   name: 'lastName',
   type: 'text',
   label: t('form.last_name'),
   placeholder: t('placeholders.last_name'),
   required: true,
-  disabled: true
 }, {
   name: 'email',
   type: 'email',
   label: t('form.email'),
   placeholder: t('placeholders.email'),
   required: true,
-  disabled: true
 }, {
   name: 'password',
   label: t('form.password'),
   type: 'password',
   placeholder: t('placeholders.password'),
   required: true,
-  disabled: true
 }, {
   name: 'passwordConfirm',
   label: t('form.password_confirm'),
   type: 'password',
   placeholder: t('placeholders.password_confirm'),
   required: true,
-  disabled: true
 }, {
   name: 'remember',
   label: t('form.remember_me'),
@@ -73,17 +68,15 @@ const providers = [{
   icon: 'i-simple-icons-google',
   onClick: signInWithGoogle
 }, {
-  label: t('buttons.continue_with_github'),
-  icon: 'i-simple-icons-github',
-  onClick: () => {
-    // TODO: Implement GitHub registration
-    add({
-      title: t('coming_soon.title'),
-      description: t('coming_soon.description'),
-      color: 'info'
-    })
-  }
-}]
+  label: t('buttons.continue_with_facebook'),
+  icon: 'i-simple-icons-facebook',
+  onClick: signInWithFacebook
+}, {
+  label: t('buttons.continue_with_linkedin'),
+  icon: 'i-simple-icons-linkedin',
+  onClick: signInWithLinkedIn
+},
+]
 
 const schema = z.object({
   firstName: z.string('First name is required').min(1, 'First name is required'),
@@ -135,6 +128,38 @@ async function HandleRegisterUser(data: Schema) {
 async function signInWithGoogle() {
   await signIn.social({
     provider: 'google',
+    callbackURL: props.redirectUrl,
+    fetchOptions: {
+      onError: (context: any) => {
+        add({
+          title: t('messages.register_error'),
+          description: context?.error?.message || t('messages.check_information'),
+          color: 'error'
+        })
+      }
+    }
+  })
+}
+
+async function signInWithFacebook() {
+  await signIn.social({
+    provider: 'facebook',
+    callbackURL: props.redirectUrl,
+    fetchOptions: {
+      onError: (context: any) => {
+        add({
+          title: t('messages.register_error'),
+          description: context?.error?.message || t('messages.check_information'),
+          color: 'error'
+        })
+      }
+    }
+  })
+}
+
+async function signInWithLinkedIn() {
+  await signIn.social({
+    provider: 'linkedin',
     callbackURL: props.redirectUrl,
     fetchOptions: {
       onError: (context: any) => {

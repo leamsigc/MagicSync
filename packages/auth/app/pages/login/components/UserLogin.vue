@@ -33,14 +33,12 @@ const fields = computed<AuthFormField[]>(() => [{
   label: t('form.email'),
   placeholder: t('placeholders.email'),
   required: true,
-  disabled: true
 }, {
   name: 'password',
   label: t('form.password'),
   type: 'password',
   placeholder: t('placeholders.password'),
   required: true,
-  disabled: true
 }, {
   name: 'remember',
   label: t('form.remember_me'),
@@ -52,17 +50,15 @@ const providers = [{
   icon: 'i-simple-icons-google',
   onClick: signInWithGoogle
 }, {
-  label: t('buttons.continue_with_github'),
-  icon: 'i-simple-icons-github',
-  onClick: () => {
-    // TODO: Implement GitHub login
-    add({
-      title: t('coming_soon.title'),
-      description: t('coming_soon.description'),
-      color: 'info'
-    })
-  }
-}]
+  label: t('buttons.continue_with_facebook'),
+  icon: 'i-simple-icons-facebook',
+  onClick: signInWithFacebook
+}, {
+  label: t('buttons.continue_with_linkedin'),
+  icon: 'i-simple-icons-linkedin',
+  onClick: signInWithLinkedIn
+},
+]
 
 const schema = z.object({
   email: z.email('Invalid email'),
@@ -102,6 +98,38 @@ async function HandleLoginUser(email: string, password: string) {
 async function signInWithGoogle() {
   await signIn.social({
     provider: 'google',
+    callbackURL: props.redirectUrl,
+    fetchOptions: {
+      onError: (context: any) => {
+        add({
+          title: t('messages.login_error'),
+          description: context?.error?.message || t('messages.check_credentials'),
+          color: 'error'
+        })
+      }
+    }
+  })
+}
+
+async function signInWithFacebook() {
+  await signIn.social({
+    provider: 'facebook',
+    callbackURL: props.redirectUrl,
+    fetchOptions: {
+      onError: (context: any) => {
+        add({
+          title: t('messages.login_error'),
+          description: context?.error?.message || t('messages.check_credentials'),
+          color: 'error'
+        })
+      }
+    }
+  })
+}
+
+async function signInWithLinkedIn() {
+  await signIn.social({
+    provider: 'linkedin',
     callbackURL: props.redirectUrl,
     fetchOptions: {
       onError: (context: any) => {

@@ -4,8 +4,10 @@ import type { UserLlmConfigServiceType } from './interfaces'
 import { userLlmConfigs, type UserLlmConfig } from '#layers/BaseDB/db/schema'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
 
+export type SupportedProvider = 'google' | 'ollama' | 'openai' | 'anthropic' | 'openrouter' | 'deepseek'
+
 export interface CreateLlmConfigData {
-  provider: 'ollama' | 'openai' | 'anthropic' | 'openrouter'
+  provider: SupportedProvider
   model: string
   apiKey?: string | null
   apiBaseUrl?: string | null
@@ -15,7 +17,7 @@ export interface CreateLlmConfigData {
 }
 
 export interface UpdateLlmConfigData {
-  provider?: 'ollama' | 'openai' | 'anthropic' | 'openrouter'
+  provider?: SupportedProvider
   model?: string
   apiKey?: string | null
   apiBaseUrl?: string | null
@@ -59,8 +61,8 @@ export class UserLlmConfigService implements UserLlmConfigServiceType {
           data: {
             id: 'default',
             userId,
-            provider: 'ollama',
-            model: 'qwen3.5',
+            provider: 'google',
+            model: 'gemini-3-flash-preview',
             apiKey: null,
             apiBaseUrl: null,
             isDefault: true,

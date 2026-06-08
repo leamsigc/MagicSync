@@ -223,7 +223,7 @@ export class DevToPlugin extends BaseSchedulerPlugin {
       // The lint errors for 'series' were real.
       // Also mapping canonical -> canonical_url and organization -> organization_id.
 
-      const devToSettings = settings as Record<string, unknown>; // Temporary cast to avoid 'series' error if it's not in interface yet
+      const devToSettings = settings as DevToSettings & { series?: string }; // Temporary cast to avoid 'series' error if it's not in interface yet
 
       if (devToSettings?.series) {
         article.series = devToSettings.series;
@@ -435,7 +435,7 @@ export class DevToPlugin extends BaseSchedulerPlugin {
     socialMediaAccount: PluginSocialMediaAccount,
     options?: { limit?: number; cursor?: string }
   ): Promise<GetCommentsResponse> {
-      const platformPost = postDetails.platformPosts?.find((pp) => pp.socialAccountId === socialMediaAccount.id);
+    const platformPost = postDetails.platformPosts?.find((pp) => pp.socialAccountId === socialMediaAccount.id);
     const publishDetail = platformPost?.publishDetail ? JSON.parse(platformPost.publishDetail) : {};
     const externalPostId = publishDetail[socialMediaAccount.id]?.publishedId || publishDetail.postId;
 
@@ -496,7 +496,7 @@ export class DevToPlugin extends BaseSchedulerPlugin {
     replyText: string
   ): Promise<ReplyCommentResponse> {
     try {
-    const platformPost = postDetails.platformPosts?.find((pp) => pp.socialAccountId === socialMediaAccount.id);
+      const platformPost = postDetails.platformPosts?.find((pp) => pp.socialAccountId === socialMediaAccount.id);
       const publishDetail = platformPost?.publishDetail ? JSON.parse(platformPost.publishDetail) : {};
       const externalPostId = publishDetail[socialMediaAccount.id]?.publishedId || publishDetail.postId;
 

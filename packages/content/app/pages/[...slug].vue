@@ -17,12 +17,12 @@ const route = useRoute()
 const collectionType = route.path.startsWith('/blogs/') ? 'blog' : 'content'
 const { locale, localeProperties } = useI18n()
 
-const slug = computed(() => withLeadingSlash(String(route.params.slug)))
+const slug = computed(() => withLeadingSlash(String(route.params.slug||'')))
+
 
 
 const { data: page } = await useAsyncData(`page-${slug.value}`, async () => {
 
-  console.log(slug.value)
   const collection = (`${collectionType}_${locale.value}`) as keyof Collections
   const path = collectionType === 'blog' ? `${route.path.replace('/blogs', '')}` : slug.value.replace(',', '/')
 

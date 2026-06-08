@@ -1,4 +1,4 @@
-import { assetService } from '#layers/BaseShared/server/services/asset.service'
+import { assetService } from '#layers/BaseAssets/server/services/asset.service'
 import { type ServerFile } from 'nuxt-file-storage'
 interface PexelsPhoto {
   id: number
@@ -66,9 +66,6 @@ export default defineEventHandler(async (event) => {
           uniqueFilename,
           userFolder,
         )
-        log.debug('File stored', { storedFile })
-
-
         const fileUrl = `/api/v1/assets/serve/${uniqueFilename}.${fileExtension}`
 
         const assetData = {
@@ -112,11 +109,11 @@ export default defineEventHandler(async (event) => {
       message: `Successfully created ${uploadedAssets.length} asset(s) from Pexels.`,
     }
   } catch (error) {
+    log.error('Pexels download API error', { error })
     if (error && typeof error === 'object' && 'statusCode' in error) {
       throw error
     }
 
-    log.error('Pexels download API error', { error })
     throw createError({
       statusCode: 500,
       statusMessage: 'Internal server error during Pexels image processing.',

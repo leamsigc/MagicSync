@@ -6,6 +6,8 @@
       "register": "Register",
       "continue_with_email": "Continue with Email",
       "continue_with_google": "Continue with Google",
+      "continue_with_facebook": "Continue with Facebook",
+      "continue_with_linkedin": "Continue with LinkedIn",
       "continue_with_github": "Continue with GitHub",
       "back_to_options": "Back to login options"
     },
@@ -45,6 +47,8 @@
       "register": "Registrarse",
       "continue_with_email": "Continuar con Correo",
       "continue_with_google": "Continuar con Google",
+      "continue_with_facebook": "Continuar con Facebook",
+      "continue_with_linkedin": "Continuar con LinkedIn",
       "continue_with_github": "Continuar con GitHub",
       "back_to_options": "Volver a opciones de registro"
     },
@@ -84,6 +88,8 @@
       "register": "Registrieren",
       "continue_with_email": "Mit E-Mail fortfahren",
       "continue_with_google": "Mit Google fortfahren",
+      "continue_with_facebook": "Mit Facebook fortfahren",
+      "continue_with_linkedin": "Mit LinkedIn fortfahren",
       "continue_with_github": "Mit GitHub fortfahren",
       "back_to_options": "Zurück zu Registrierungsoptionen"
     },
@@ -123,6 +129,8 @@
       "register": "S'inscrire",
       "continue_with_email": "Continuer avec Email",
       "continue_with_google": "Continuer avec Google",
+      "continue_with_facebook": "Continuer avec Facebook",
+      "continue_with_linkedin": "Continuer avec LinkedIn",
       "continue_with_github": "Continuer avec GitHub",
       "back_to_options": "Retour aux options d'inscription"
     },

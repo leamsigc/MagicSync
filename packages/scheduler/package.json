@@ -12,7 +12,9 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@ai-sdk/google": "^2.0.44",
+    "@ai-sdk/anthropic": "catalog:",
+    "@ai-sdk/google": "catalog:",
+    "@ai-sdk/openai": "catalog:",
     "@atproto/api": "catalog:",
     "@fullcalendar/daygrid": "catalog:",
     "@fullcalendar/interaction": "catalog:",
@@ -25,15 +27,15 @@
     "@local-monorepo/auth": "workspace:*",
     "@local-monorepo/connect": "workspace:*",
     "@local-monorepo/db": "workspace:*",
-    "@local-monorepo/ui": "workspace:*",
     "@local-monorepo/templates": "workspace:*",
+    "@local-monorepo/ui": "workspace:*",
     "ai": "catalog:",
     "axios": "catalog:",
     "dayjs": "catalog:",
+    "evlog": "catalog:",
     "googleapis": "catalog:",
     "sharp": "catalog:",
-    "twitter-api-v2": "catalog:",
-    "evlog": "catalog:"
+    "twitter-api-v2": "catalog:"
   },
   "devDependencies": {
     "@fullcalendar/core": "catalog:",

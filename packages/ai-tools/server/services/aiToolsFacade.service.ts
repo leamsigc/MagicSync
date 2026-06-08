@@ -280,11 +280,11 @@ export class AiToolsFacadeService {
     return userLlmConfigService.getDefaultConfig(userId)
   }
 
-  async createLlmConfig(userId: string, data: { provider: 'ollama' | 'openai' | 'anthropic' | 'openrouter'; model: string; apiKey?: string | null; apiBaseUrl?: string | null; isDefault?: boolean; temperature?: number; maxTokens?: number }): Promise<ServiceResponse<UserLlmConfig>> {
+  async createLlmConfig(userId: string, data: { provider: 'google' | 'ollama' | 'openai' | 'anthropic' | 'openrouter' | 'deepseek'; model: string; apiKey?: string | null; apiBaseUrl?: string | null; isDefault?: boolean; temperature?: number; maxTokens?: number }): Promise<ServiceResponse<UserLlmConfig>> {
     return userLlmConfigService.createConfig(userId, data)
   }
 
-  async updateLlmConfig(userId: string, configId: string, data: { provider?: 'ollama' | 'openai' | 'anthropic' | 'openrouter'; model?: string; apiKey?: string | null; apiBaseUrl?: string | null; isDefault?: boolean; temperature?: number; maxTokens?: number }): Promise<ServiceResponse<UserLlmConfig>> {
+  async updateLlmConfig(userId: string, configId: string, data: { provider?: 'google' | 'ollama' | 'openai' | 'anthropic' | 'openrouter' | 'deepseek'; model?: string; apiKey?: string | null; apiBaseUrl?: string | null; isDefault?: boolean; temperature?: number; maxTokens?: number }): Promise<ServiceResponse<UserLlmConfig>> {
     return userLlmConfigService.updateConfig(userId, configId, data)
   }
 

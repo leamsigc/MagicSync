@@ -1,5 +1,5 @@
 import type { User } from 'better-auth'
-import { userPasswordResetTemplate, userVerificationTemplate } from './emailTemplates'
+import { userPasswordResetTemplate, userVerificationTemplate, organizationInvitationTemplate } from './emailTemplates'
 
 export interface EmailOptions {
   from: string
@@ -88,5 +88,20 @@ export const sendUserPasswordResetEmail = async (url: string, user: User) => {
     console.log('Email sent successfully')
   } catch (error) {
     console.error('Failed to send email:', error)
+  }
+}
+
+export const sendOrganizationInvitationEmail = async (email: string, url: string, inviterName: string, organizationName: string) => {
+  const emailHTML = await organizationInvitationTemplate(url, inviterName, organizationName)
+  try {
+    await useMailgun().send({
+      from: process.env.NUXT_MAIL_FROM_EMAIL || 'no-reply@localhost.com',
+      to: email,
+      subject: `You're invited to join ${organizationName}`,
+      html: emailHTML.html
+    })
+    console.log('Invitation email sent successfully')
+  } catch (error) {
+    console.error('Failed to send invitation email:', error)
   }
 }

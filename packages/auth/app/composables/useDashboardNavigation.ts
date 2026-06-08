@@ -11,13 +11,16 @@ import menu from '../layouts/dashboard/Menu.json'
 export const useDashboardNavigation = () => {
   const { locale, t } = useI18n()
   const route = useRoute()
+  const { user } = UseUser()
 
   const menuItems = computed(() => menu[locale.value] || {})
+
+  const isAdmin = computed(() => user.value?.role === 'admin')
 
   const navigationLinks = computed<NavigationMenuItem[]>(() => {
     const menuData = menuItems.value
 
-    return [
+    const links: NavigationMenuItem[] = [
       {
         label: menuData.menu.dashboard,
         icon: 'i-lucide-house',
@@ -239,6 +242,45 @@ export const useDashboardNavigation = () => {
         ]
       }
     ]
+
+    if (isAdmin.value) {
+      links.push({
+        label: 'Admin',
+        icon: 'i-lucide-shield',
+        to: '/app/admin',
+        active: route.path.startsWith('/admin'),
+        defaultOpen: true,
+        children: [
+          {
+            label: 'Dashboard',
+            to: '/app/admin',
+            icon: 'i-lucide-gauge'
+          },
+          {
+            label: 'Users',
+            to: '/app/admin/users',
+            icon: 'i-lucide-users'
+          },
+          {
+            label: 'Businesses',
+            to: '/app/admin/businesses',
+            icon: 'i-lucide-building-2'
+          },
+          {
+            label: 'Integrations',
+            to: '/app/admin/integrations',
+            icon: 'i-lucide-plug'
+          },
+          {
+            label: 'Audit Log',
+            to: '/app/admin/audit',
+            icon: 'i-lucide-scroll-text'
+          }
+        ]
+      })
+    }
+
+    return links
   })
 
   const userMenuItems = computed(() => {
