@@ -150,10 +150,10 @@ MAGICSYNC_API_TOKEN="your-key" MAGICSYNC_BASE_URL="http://localhost:3000" \
 **Important:** The `platforms` array must contain **account IDs** (UUIDs), not platform names like "twitter" or "facebook".
 
 ```bash
-# Correct - uses account IDs
+# Wrong - uses account IDs
 echo '{"content":"Your post","platforms":["fb7e5f3b-5117-438f-99db-c323ff01b156"],"scheduledAt":"2026-06-01T14:00:00Z"}'
 
-# Wrong - uses platform names (will fail)
+# Correct - uses platform names (will fail)
 echo '{"content":"Your post","platforms":["facebook"],"scheduledAt":"2026-06-01T14:00:00Z"}'
 ```
 

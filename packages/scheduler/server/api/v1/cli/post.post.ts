@@ -61,7 +61,6 @@ function validatePlatformContent(platform: string, text: string, imageCount: num
     errors.push(`${platform} does not support image carousels`)
   }
 
-  // Warnings for tight character limits
   if (config.maxPostLength <= 300 && text.length > config.maxPostLength * 0.85) {
     warnings.push(`Content is ${Math.round((text.length / config.maxPostLength) * 100)}% of ${config.maxPostLength} char limit`)
   }
@@ -72,60 +71,70 @@ function validatePlatformContent(platform: string, text: string, imageCount: num
 async function downloadAndCreateAssets(userId: string, businessId: string, media: ExternalPostBody['media'], log?: ReturnType<typeof useLogger>) {
   const createdAssets: Array<{ id: string; url: string; type: string }> = []
 
+  const userFolder = `/userFiles/${userId}`
+
+  async function downloadAndStore(url: string, type: 'image' | 'video'): Promise<{ uniqueFilename: string; fileExtension: string; mimeType: string; fileSize: number } | null> {
+    try {
+      const response = await fetch(url)
+      if (!response.ok) return null
+
+      const buffer = await response.arrayBuffer()
+      const base64Content = Buffer.from(buffer).toString('base64')
+
+      const fileExtension = type === 'image' ? 'jpg' : 'mp4'
+      const mimeType = type === 'image' ? 'image/jpeg' : 'video/mp4'
+      const uniqueFilename = crypto.randomUUID()
+
+      const serverFile: ServerFile = {
+        name: `external_${uniqueFilename}.${fileExtension}`,
+        content: `data:${mimeType};base64,${base64Content}`,
+        size: String(buffer.byteLength),
+        type: mimeType,
+        lastModified: String(Date.now()),
+      }
+
+       await storeFileLocally(serverFile, uniqueFilename, userFolder)
+
+      return { uniqueFilename, fileExtension, mimeType, fileSize: buffer.byteLength }
+    } catch (error) {
+      log?.error(`Failed to download ${type}:`, url, error)
+      return null
+    }
+  }
+
+  async function processMedia(url: string, type: 'image' | 'video'): Promise<void> {
+    const stored = await downloadAndStore(url, type)
+    if (!stored) return
+
+    const fileUrl = `/api/v1/assets/serve/${stored.uniqueFilename}.${stored.fileExtension}`
+
+    const result = await assetService.create(userId, {
+      businessId,
+      filename: stored.uniqueFilename,
+      originalName: `external_${stored.uniqueFilename}.${stored.fileExtension}`,
+      mimeType: stored.mimeType,
+      size: stored.fileSize,
+      url: fileUrl,
+      metadata: {
+        source: 'external',
+        originalUrl: url,
+        storedPath: `${userFolder}/${stored.uniqueFilename}.${stored.fileExtension}`,
+      },
+    })
+
+    if (result.success && result.data) {
+      createdAssets.push({ id: result.data.id, url: result.data.url, type })
+    }
+  }
+
   if (media?.image && media.image.length > 0) {
     for (const imageUrl of media.image) {
-      try {
-        const response = await fetch(imageUrl)
-        if (!response.ok) continue
-
-        const buffer = await response.arrayBuffer()
-        const blob = new Blob([buffer])
-        const filename = `external_${crypto.randomUUID()}.jpg`
-
-        const result = await assetService.create(userId, {
-          businessId,
-          filename,
-          originalName: filename,
-          mimeType: blob.type || 'image/jpeg',
-          size: blob.size,
-          url: imageUrl,
-          metadata: { source: 'external', originalUrl: imageUrl },
-        })
-
-        if (result.success && result.data) {
-          createdAssets.push({ id: result.data.id, url: result.data.url, type: 'image' })
-        }
-      } catch (error) {
-        log?.error('Failed to download image:', imageUrl, error)
-      }
+      await processMedia(imageUrl, 'image')
     }
   }
 
   if (media?.video) {
-    try {
-      const response = await fetch(media.video)
-      if (!response.ok) throw new Error(`Failed to fetch video: ${response.status}`)
-
-      const buffer = await response.arrayBuffer()
-      const blob = new Blob([buffer])
-      const filename = `external_${crypto.randomUUID()}.mp4`
-
-      const result = await assetService.create(userId, {
-        businessId,
-        filename,
-        originalName: filename,
-        mimeType: blob.type || 'video/mp4',
-        size: blob.size,
-        url: media.video,
-        metadata: { source: 'external', originalUrl: media.video },
-      })
-
-      if (result.success && result.data) {
-        createdAssets.push({ id: result.data.id, url: result.data.url, type: 'video' })
-      }
-    } catch (error) {
-      log?.error('Failed to download video:', media.video, error)
-    }
+    await processMedia(media.video, 'video')
   }
 
   return createdAssets
@@ -169,7 +178,6 @@ export default defineEventHandler(async (event) => {
 
   log.set({ businessId, platforms: body.platforms, hasScheduledAt: !!body.scheduledAt })
 
-  // Get connected accounts
   const accounts = await socialMediaAccountService.getAccountsByBusinessId(businessId)
   const connectedPlatforms = new Set(accounts.map(a => a.platform))
   // @ts-ignore
@@ -182,7 +190,6 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // Validate all platforms before creating the post
   const validationResults: Record<string, { isValid: boolean; errors: string[]; warnings: string[] }> = {}
   const imageCount = body.media?.image?.length ?? 0
   const videoCount = body.media?.video ? 1 : 0
@@ -200,14 +207,12 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // Get the first account's userId for post creation
   const relevantAccounts = accounts.filter(acc => body.platforms.includes(acc.platform))
   if (relevantAccounts.length === 0) {
     throw createError({ statusCode: 400, statusMessage: 'No connected accounts for requested platforms' })
   }
   const userId = relevantAccounts[0].userId
 
-  // Build platform-specific content object
   const platformContent: Record<string, any> = {}
   for (const platform of body.platforms) {
     const override = body.platformContent?.[platform]
@@ -228,14 +233,11 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // Download and create media assets
   const mediaAssets = await downloadAndCreateAssets(userId, businessId, body.media, log)
 
-  // Determine scheduling
   const scheduledAt = body.scheduledAt ? new Date(body.scheduledAt) : new Date()
   const isImmediate = !body.scheduledAt || scheduledAt <= new Date()
 
-  // Build unified content (use first platform's content as base)
   const primaryPlatform = body.platforms[0]
   const unifiedContent = platformContent[primaryPlatform]?.content ?? body.content
 
@@ -259,7 +261,6 @@ export default defineEventHandler(async (event) => {
 
   log.set({ postId: result.data.id, status: isImmediate ? 'published' : 'scheduled' })
 
-  // Trigger immediate publish
   if (isImmediate) {
     const fullPost = await postService.findByIdFull({ postId: result.data.id })
     if (fullPost) {
@@ -269,7 +270,6 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // Build response with per-platform content used
   const fullPost = await postService.findByIdFull({ postId: result.data.id })
   const platformStatuses = fullPost?.platformPosts?.map((pp: any) => ({
     platform: pp.platform,
