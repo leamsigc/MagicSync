@@ -28,7 +28,7 @@ interface Emits {
 
 const props = withDefaults(defineProps<Props>(), {
   accept: 'image/*,video/*',
-  maxSize: 10, // 10MB default
+  maxSize: 800, // 800MB default
   multiple: true,
   disabled: false,
   withPadding: true
