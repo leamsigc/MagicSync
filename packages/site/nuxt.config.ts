@@ -33,6 +33,9 @@ export default defineNuxtConfig({
   },
 
   nitro: {
+    serverOptions: {
+      timeout: 300000,
+    },
     experimental: {
       openAPI: true,
       tasks: true,
