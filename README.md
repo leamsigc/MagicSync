@@ -43,6 +43,13 @@
 </p>
 
 <p align="center">
+  <a href="https://www.youtube.com/watch?v=J8utRbCOZDM" target="_blank">
+    <img src="https://img.youtube.com/vi/J8utRbCOZDM/maxresdefault.jpg" alt="MagicSync Overview" width="560" height="315" style="max-width: 100%; height: auto;" />
+  </a>
+</p>
+
+
+<p align="center">
   <a href="https://magicsync.dev/register">Register</a>
   ·
   <a href="https://magicsync.dev/">Join Our Discord (coming soon)</a>
@@ -325,6 +332,12 @@ MIT
 <img src="https://leamsigc.com/leamsigcWebSite.633a9447.png" alt="Leamsigc" style="width: 100px; height: 100px; object-fit: contain;">
 <h3>Leamsigc</h3>
 <p>The personal website of Ismael Garcia</p>
+</a>
+
+<a href="https://github.com/leamsigc/ShortsGenerator" target="_blank" style="border: 1px solid #ddd; border-radius: 8px; padding: 16px; text-decoration: none; color: inherit;">
+<img src="https://opengraph.githubassets.com/1/leamsigc/ShortsGenerator" alt="ShortsGenerator" style="width: 100px; height: 100px; object-fit: contain;">
+<h3>ShortsGenerator</h3>
+<p>AI-powered short-form video generator — already integrated with MagicSync for seamless social media content scheduling.</p>
 </a>
 
 </div>
