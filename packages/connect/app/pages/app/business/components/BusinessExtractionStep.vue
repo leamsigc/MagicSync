@@ -69,7 +69,7 @@ const handleSkip = () => {
 
 <template>
   <div
-    class="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-lg mx-auto w-full min-h-[500px] grid grid-cols-1 content-center">
+    class="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-lg mx-auto w-full min-h-[500px] grid grid-cols-1 content-center" data-test="step-one">
     <div class="mb-8">
       <h2 class="text-2xl font-bold text-gray-900 dark:text-white tracking-tight mb-2">
         {{ t('wizard.title') }}

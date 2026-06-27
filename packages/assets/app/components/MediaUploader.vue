@@ -338,7 +338,7 @@ watchEffect(() => {
             <!-- File Details -->
             <div class="flex-1 min-w-0 space-y-2 max-w-full">
               <div class="flex items-center justify-between ">
-                <h5 class="font-medium truncate text-sm max-w-32 md:max-w-full">{{ item.file.name }}</h5>
+                <h5 class="font-medium truncate text-sm max-w-32 xl:max-w-full">{{ item.file.name.length > 20 ? item.file.name.slice(0, 20) + '...' : item.file.name }}</h5>
                 <span class="text-xs text-muted-foreground">{{ formatFileSize(item.file.size) }}</span>
               </div>
 

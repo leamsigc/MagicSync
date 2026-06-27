@@ -12,6 +12,6 @@ export default defineEventHandler(async (event): Promise<PaginatedResponse<Busin
   //Get all the business for the current user
   const businesses = await businessProfileService.findByUserId(user.id)
   //return the business
-  log.info('Business profiles listed', { count: businesses.data })
+  log.info({ message: 'Business profiles listed', count: businesses.data })
   return businesses;
 });

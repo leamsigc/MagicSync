@@ -32,6 +32,6 @@ export default defineEventHandler(async (event) => {
   const plugin = new GoogleMyBusinessPlugin(scheduler)
   const analytics = await plugin.getAnalytics(targetLocation, tokens.accessToken, days)
 
-  log.info('GMB analytics fetched', { businessId, days })
+  log.info({ message: 'GMB analytics fetched', businessId, days })
   return { success: true, data: analytics }
 })

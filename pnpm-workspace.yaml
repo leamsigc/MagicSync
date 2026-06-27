@@ -48,6 +48,7 @@ catalog:
   cheerio: ^1.2.0
   consola: 3.4.2
   dayjs: 1.11.21
+  driver.js: 1.3.6
   drizzle-kit: 0.31.10
   drizzle-orm: 0.45.2
   echarts: 6.1.0

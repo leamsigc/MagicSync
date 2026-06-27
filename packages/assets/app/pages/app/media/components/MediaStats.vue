@@ -75,7 +75,7 @@ const displayMetrics = computed<Metric[]>(() => [
 
 <template>
   <div class="grid grid-cols-2 md:grid-cols-5 gap-4" v-motion-fade-visible>
-    <UCard v-for="metric in displayMetrics" :key="metric.title" class="p-4">
+    <UCard variant="soft" v-for="metric in displayMetrics" :key="metric.title" class="p-4">
       <div class="flex items-center justify-between mb-3">
         <div class="flex items-center justify-center w-10 h-10 rounded-lg" :class="metric.color">
           <Icon :name="metric.icon" class="w-5 h-5" />

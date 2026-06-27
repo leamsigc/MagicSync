@@ -12,7 +12,7 @@ const { size = 'md' } = defineProps<Props>();
       <!-- Left Sidebar (Navigation) - dark glass floating -->
       <header class="w-20 xl:w-72 shrink-0">
         <slot name="left-sidebar">
-          <div class="bg-neutral-900 rounded-2xl h-[calc(100vh-2rem)] sticky top-4 border border-white/10">
+          <div class=" rounded-2xl  sticky top-4 border border-white/10">
             <BaseSidebarNavigation />
           </div>
         </slot>
@@ -24,8 +24,8 @@ const { size = 'md' } = defineProps<Props>();
         'max-w-2xl': size === 'md',
         'max-w-xl': size === 'sm'
       }">
-        <div class="bg-elevated rounded-2xl min-h-screen ">
-          <div class="sticky top-0 z-10 bg-elevated rounded-t-2xl border-b border-border px-5 py-4">
+        <div class=" rounded-2xl min-h-screen ">
+          <div class="sticky top-0 z-10  rounded-t-2xl border-b border-border px-5 py-4">
             <h1 class="text-xl font-bold text-highlighted">Home</h1>
           </div>
           <div class="p-4">
@@ -36,8 +36,8 @@ const { size = 'md' } = defineProps<Props>();
 
       <!-- Right Sidebar (Widgets) -->
       <slot name="right-sidebar">
-        <div class="hidden xl:block w-80 shrink-0">
-          <div class="bg-elevated rounded-2xl h-fit sticky top-4  p-4">
+        <div class="hidden xl:block  shrink-0">
+          <div class=" rounded-2xl h-fit sticky top-4 ">
             <BaseSidebarRight />
           </div>
         </div>

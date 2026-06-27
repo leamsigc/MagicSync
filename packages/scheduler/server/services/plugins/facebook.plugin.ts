@@ -133,13 +133,13 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
       const response = await fetch(url, options);
       if (!response.ok) {
         const errorBody = await response.text();
-        console.error(`Facebook API Error (${context}): ${response.status} - ${errorBody}`);
+        log.error({ content: `Facebook API Error (${context})`, status: response.status, errorBody });
         await this.logPluginEvent('fetch-error:response', 'failure', `Error: ${errorBody}, Context: ${context}`, url, { options });
         throw new Error(`Facebook API Error (${context}): ${errorBody}`);
       }
       return response;
     } catch (error) {
-      console.error(`Network or Fetch Error (${context}):`, error);
+      log.error({ content: `Network or Fetch Error (${context})`, error: (error as Error).message });
       await this.logPluginEvent('fetch-error', 'failure', `Error: ${(error as Error).message}, Context: ${context}`, url, { options });
       throw error;
     }
@@ -278,7 +278,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     const { data, error } = await response.json() as { data?: FacebookApiInsight[]; error?: Record<string, unknown> };
 
     if (error) {
-      console.warn('[Facebook] Page insights error:', error)
+      log.warn({ content: '[Facebook] Page insights error', error })
       return []
     }
 
@@ -309,7 +309,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     ).json() as { data?: FacebookApiMetric[]; error?: Record<string, unknown> };
 
     if (error) {
-      console.warn('[Facebook] Post insights error:', error)
+      log.warn({ content: '[Facebook] Post insights error', error })
       return []
     }
 
@@ -429,9 +429,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
   /**
    * Get comments - implements BaseSchedulerPlugin interface
    */
-  // @ts-ignore
-  async getComments(
-    _: unknown,
+  override async getComments(
     postDetails: PluginPostDetails,
     socialMediaAccount: PluginSocialMediaAccount,
     options?: { limit?: number; cursor?: string }
@@ -467,7 +465,8 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
         nextCursor: result.paging?.cursors?.after,
       };
     } catch (error) {
-      console.error('Error fetching comments:', error);
+      log.error({ content: 'Error fetching Facebook comments', plugin: 'facebook', error: (error as Error).message });
+      this.logPluginEvent('get-comments', 'failure', `Error: ${(error as Error).message}`);
       throw error;
     }
   }
@@ -475,9 +474,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
   /**
    * Reply to comment - implements BaseSchedulerPlugin interface
    */
-  // @ts-ignore
-  async replyToComment(
-    _: unknown,
+  override async replyToComment(
     postDetails: PluginPostDetails,
     socialMediaAccount: PluginSocialMediaAccount,
     commentId: string,
@@ -500,7 +497,8 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
         comment: this.transformComment(result),
       };
     } catch (error) {
-      console.error('Error replying to comment:', error);
+      log.error({ content: 'Error replying to Facebook comment', plugin: 'facebook', error: (error as Error).message });
+      this.logPluginEvent('reply-comment-error', 'failure', `Error: ${(error as Error).message}`, commentId);
       return {
         success: false,
         error: (error as Error).message || 'Failed to reply to comment',
@@ -806,7 +804,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     );
   }
 
-  override async validate(post: PostWithAllData): Promise<string[]> {
+  override async validate(post: PluginPostDetails): Promise<string[]> {
 
     const errors: string[] = [];
     const detail = post;
@@ -925,9 +923,9 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
   }
 
   override async post(
-    postDetails: PostWithAllData,
-    comments: PostWithAllData[],
-    socialMediaAccount: SocialMediaAccount
+    postDetails: PluginPostDetails,
+    comments: PluginPostDetails[],
+    socialMediaAccount: PluginSocialMediaAccount
   ): Promise<PostResponse> {
     try {
       const { content, settings, postFormat, comments: postComments } = this.getPlatformData(postDetails);
@@ -1054,6 +1052,8 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
       this.emit('facebook:post:published', { postId: finalId, response, format: effectiveFormat });
       return response;
     } catch (error: unknown) {
+      log.error({ content: 'Facebook post failed', plugin: 'facebook', error: (error as Error).message });
+      this.logPluginEvent('post-error', 'failure', `Error: ${(error as Error).message}`, postDetails.id);
       const errorResponse: PostResponse = {
         id: postDetails.id,
         postId: '',
@@ -1067,9 +1067,9 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
   }
 
   override async update(
-    postDetails: PostWithAllData,
-    comments: PostWithAllData[],
-    socialMediaAccount: SocialMediaAccount
+    postDetails: PluginPostDetails,
+    comments: PluginPostDetails[],
+    socialMediaAccount: PluginSocialMediaAccount
   ): Promise<PostResponse> {
     const publicationDetails = postDetails.platformPosts.find((platform) => platform.socialAccountId === socialMediaAccount.id);
     if (!publicationDetails) {
@@ -1116,8 +1116,8 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
   }
 
   async getStatistic(
-    postDetails: PostWithAllData,
-    socialMediaAccount: SocialMediaAccount
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount
   ): Promise<PlatformStats> {
     const pageId = socialMediaAccount.accountId
 
@@ -1184,9 +1184,9 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
   }
 
   override async addComment(
-    postDetails: PostWithAllData,
-    commentDetails: PostWithAllData,
-    socialMediaAccount: SocialMediaAccount
+    postDetails: PluginPostDetails,
+    commentDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount
   ): Promise<PostResponse> {
     try {
       const url = this._getGraphApiUrl(`/${socialMediaAccount.accountId}/comments?access_token=${socialMediaAccount.accessToken}&fields=id,permalink_url`);
@@ -1218,6 +1218,8 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
       this.emit('facebook:comment:added', { commentId, permalink_url, commentDetails });
       return response;
     } catch (error: unknown) {
+      log.error({ content: 'Facebook comment failed', plugin: 'facebook', error: (error as Error).message });
+      this.logPluginEvent('comment-error', 'failure', `Error: ${(error as Error).message}`, commentDetails.id);
       const errorResponse: PostResponse = {
         id: commentDetails.id,
         postId: '',

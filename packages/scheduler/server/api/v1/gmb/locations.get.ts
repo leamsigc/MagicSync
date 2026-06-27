@@ -26,6 +26,6 @@ export default defineEventHandler(async (event) => {
   const plugin = new GoogleMyBusinessPlugin(scheduler)
   const locations = await plugin.getLocations(undefined, tokens.accessToken)
 
-  log.info('GMB locations fetched', { businessId })
+  log.info({ message: 'GMB locations fetched', businessId })
   return { success: true, data: locations }
 })

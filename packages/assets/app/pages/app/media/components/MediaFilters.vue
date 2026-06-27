@@ -59,7 +59,7 @@ const filterOptions = [
 </script>
 
 <template>
-  <UCard class="p-4">
+  <UCard class="p-4" variant="soft">
     <div class="flex flex-wrap items-center gap-4">
       <!-- File Type Filter -->
       <div class="flex items-center gap-2">
@@ -70,7 +70,7 @@ const filterOptions = [
       <!-- View Mode Toggle -->
       <div class="flex items-center gap-2 ml-auto" v-if="!hideViewMode">
         <label class="text-sm font-medium">{{ t('sections.filters.view') }}</label>
-        <div class="flex border rounded-lg">
+        <div class="flex  rounded-lg">
           <UButton variant="ghost" size="sm" :class="{ 'bg-muted': viewMode === 'grid' }" @click="viewMode = 'grid'">
             <Icon name="lucide:grid-3x3" class="h-4 w-4" />
           </UButton>

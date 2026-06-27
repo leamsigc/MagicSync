@@ -23,7 +23,7 @@ export class InstagramStandalonePlugin extends BaseSchedulerPlugin {
       const basicRes = await fetch(basicUrl);
 
       if (!basicRes.ok) {
-        console.warn(`Instagram-standalone basic info API error: ${basicRes.status} ${basicRes.statusText}`);
+        log.warn(`Instagram-standalone basic info API error: ${basicRes.status} ${basicRes.statusText}`);
         return this.getZeroStats(accountId, accountName);
       }
 
@@ -62,7 +62,8 @@ export class InstagramStandalonePlugin extends BaseSchedulerPlugin {
           }
         }
       } catch (insightsErr) {
-        console.warn('Instagram-standalone insights fetch failed, using zero fallback:', insightsErr);
+        log.warn({ content: 'Instagram-standalone insights fetch failed, using zero fallback', error: (insightsErr as Error).message });
+        this.logPluginEvent('get-stats-insights', 'failure', `Error: ${(insightsErr as Error).message}`);
       }
 
       return {
@@ -82,7 +83,8 @@ export class InstagramStandalonePlugin extends BaseSchedulerPlugin {
         },
       };
     } catch (error) {
-      console.error('Instagram-standalone getStatistic error:', error);
+      log.error({ content: 'Instagram-standalone getStatistic error', plugin: 'instagram-standalone', error: (error as Error).message });
+      this.logPluginEvent('get-stats', 'failure', `Error: ${(error as Error).message}`);
       return this.getZeroStats(accountId, accountName);
     }
   }
@@ -115,7 +117,7 @@ export class InstagramStandalonePlugin extends BaseSchedulerPlugin {
   }
 
   protected init(options?: any): void {
-    console.warn(
+    log.warn(
       'WARNING: Instagram Basic Display API was deprecated on December 4, 2024. ' +
       'Please use the Instagram Graph API plugin instead (instagram.plugin.ts)'
     );

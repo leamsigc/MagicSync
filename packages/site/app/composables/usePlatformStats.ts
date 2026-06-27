@@ -210,13 +210,13 @@ export const usePlatformStats = () => {
 
   return {
     // State
-    stats: readonly(stats),
-    aggregated: readonly(aggregated),
-    timeSeries: readonly(timeSeries),
-    dashboard: readonly(dashboard),
-    loading: readonly(loading),
-    collecting: readonly(collecting),
-    error: readonly(error),
+    stats: stats,
+    aggregated: aggregated,
+    timeSeries: timeSeries,
+    dashboard: dashboard,
+    loading: loading,
+    collecting: collecting,
+    error: error,
 
     // Computed
     totalFollowers,

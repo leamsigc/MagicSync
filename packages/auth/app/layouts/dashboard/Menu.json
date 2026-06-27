@@ -1,6 +1,7 @@
 {
   "en": {
     "menu": {
+      "home": "Home",
       "providers": "Providers",
       "general": "General",
       "dashboard": "Dashboard",
@@ -96,6 +97,7 @@
   },
   "es": {
     "menu": {
+      "home": "Inicio",
       "providers": "Providers",
       "general": "General",
       "dashboard": "Tablero",
@@ -191,6 +193,7 @@
   },
   "de": {
     "menu": {
+      "home": "Home",
       "providers": "Providers",
       "general": "Allgemein",
       "dashboard": "Dashboard",
@@ -286,6 +289,7 @@
   },
   "fr": {
     "menu": {
+      "home": "Accueil",
       "providers": "Providers",
       "general": "Général",
       "dashboard": "Tableau de bord",

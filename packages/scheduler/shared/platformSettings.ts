@@ -25,7 +25,7 @@ export interface LinkedInSettings extends BasePlatformSettings {
 }
 
 export interface GoogleBusinessSettings extends BasePlatformSettings {
-    __type: 'gmb';
+    __type: 'gmb' | 'googlemybusiness';
     topicType?: 'STANDARD' | 'EVENT' | 'OFFER';
     callToActionType?: 'BOOK' | 'ORDER' | 'SHOP' | 'LEARN_MORE' | 'SIGN_UP' | 'CALL';
     callToActionUrl?: string;
@@ -109,6 +109,7 @@ export interface YouTubeSettings extends BasePlatformSettings {
     tags?: string[];
     categoryId?: string;
     thumbnailUrl?: string;
+    postType?: 'video' | 'short' | 'post';
 }
 
 export interface DiscordSettings extends BasePlatformSettings {
@@ -164,6 +165,7 @@ export type PlatformSettingsMap = {
     linkedin: LinkedInSettings;
     'linkedin-page': LinkedInSettings;
     google: GoogleBusinessSettings;
+    googlemybusiness: GoogleBusinessSettings;
     reddit: RedditSettings;
     devto: DevToSettings;
     wordpress: WordPressSettings;
@@ -190,6 +192,7 @@ export function createDefaultSettings(platform: string): PlatformSettings | null
         case 'linkedin-page':
             return { __type: platform, post_as_images_carousel: false };
         case 'google':
+        case 'googlemybusiness':
             return { __type: 'gmb', topicType: 'STANDARD' };
         case 'reddit':
             return { __type: 'reddit', type: 'self' };
@@ -210,7 +213,7 @@ export function createDefaultSettings(platform: string): PlatformSettings | null
         case 'threads':
             return { __type: 'threads', hide_likes: false, who_can_reply: 'everyone' };
         case 'youtube':
-            return { __type: 'youtube', title: '', privacyStatus: 'public', madeForKids: false };
+            return { __type: 'youtube', title: '', privacyStatus: 'public', madeForKids: false, postType: 'video' };
         case 'discord':
             return { __type: 'discord' };
         case 'dribbble':

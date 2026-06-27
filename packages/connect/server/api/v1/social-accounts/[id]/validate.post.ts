@@ -54,7 +54,7 @@ export default defineEventHandler(async (event) => {
         })
       }
     } catch (error) {
-      log.error('Token validation failed', { accountId, error })
+      log.error({ message: 'Token validation failed', accountId, error })
       isValid = false
       needsRefresh = true
 
@@ -64,7 +64,7 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    log.info('Social media account validated', { accountId, isValid, needsRefresh })
+    log.info({ message: 'Social media account validated', accountId, isValid, needsRefresh })
 
     return {
       success: true,
@@ -80,7 +80,7 @@ export default defineEventHandler(async (event) => {
       }
     }
   } catch (error) {
-    log.error('Failed to validate social media account', { error })
+    log.error({ message: 'Failed to validate social media account', error })
 
     if (error && typeof error === 'object' && 'statusCode' in error) {
       throw error

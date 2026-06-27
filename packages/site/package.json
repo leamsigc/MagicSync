@@ -44,7 +44,8 @@
     "vue-router": "catalog:",
     "evlog": "catalog:",
     "consola": "catalog:",
-    "@comark/nuxt": "catalog:"
+    "@comark/nuxt": "catalog:",
+    "driver.js": "catalog:"
   },
   "devDependencies": {
     "@nuxt/hints": "catalog:",

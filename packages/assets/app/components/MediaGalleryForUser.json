@@ -26,7 +26,11 @@
     "canvaEmpty": "No designs found. Connect your Canva account or try a different search.",
     "canvaEmptyDescription": "Connect Canva in the Integrations page to access your designs.",
     "googleDriveIntegrationComingSoon": "Browse your Google Drive files below",
-    "canvasIntegrationComingSoon": "Browse your Canva designs below"
+    "canvasIntegrationComingSoon": "Browse your Canva designs below",
+    "video": "Video",
+    "pdf": "PDF",
+    "image": "Image",
+    "fileTypeBadge": "File type badge"
   },
   "es": {
     "local": "Local",
@@ -55,7 +59,11 @@
     "canvaEmpty": "No se encontraron diseños. Conecta tu cuenta de Canva o prueba otra búsqueda.",
     "canvaEmptyDescription": "Conecta Canva en la página de Integraciones para acceder a tus diseños.",
     "googleDriveIntegrationComingSoon": "Explora tus archivos de Google Drive a continuación",
-    "canvasIntegrationComingSoon": "Explora tus diseños de Canva a continuación"
+    "canvasIntegrationComingSoon": "Explora tus diseños de Canva a continuación",
+    "video": "Video",
+    "pdf": "PDF",
+    "image": "Imagen",
+    "fileTypeBadge": "Indicador de tipo de archivo"
   },
   "de": {
     "local": "Lokal",
@@ -84,7 +92,11 @@
     "canvaEmpty": "Keine Designs gefunden. Verbinde dein Canva-Konto oder versuche eine andere Suche.",
     "canvaEmptyDescription": "Verbinde Canva auf der Integrationsseite, um auf deine Designs zuzugreifen.",
     "googleDriveIntegrationComingSoon": "Durchsuche deine Google Drive-Dateien unten",
-    "canvasIntegrationComingSoon": "Durchsuche deine Canva-Designs unten"
+    "canvasIntegrationComingSoon": "Durchsuche deine Canva-Designs unten",
+    "video": "Video",
+    "pdf": "PDF",
+    "image": "Bild",
+    "fileTypeBadge": "Dateityp-Abzeichen"
   },
   "fr": {
     "local": "Local",
@@ -113,6 +125,10 @@
     "canvaEmpty": "Aucun design trouvé. Connectez votre compte Canva ou essayez une autre recherche.",
     "canvaEmptyDescription": "Connectez Canva dans la page Intégrations pour accéder à vos designs.",
     "googleDriveIntegrationComingSoon": "Parcourez vos fichiers Google Drive ci-dessous",
-    "canvasIntegrationComingSoon": "Parcourez vos designs Canva ci-dessous"
+    "canvasIntegrationComingSoon": "Parcourez vos designs Canva ci-dessous",
+    "video": "Vidéo",
+    "pdf": "PDF",
+    "image": "Image",
+    "fileTypeBadge": "Badge de type de fichier"
   }
 }

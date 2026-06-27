@@ -126,8 +126,11 @@ export const auth = betterAuth({
         'profile',
         'https://www.googleapis.com/auth/business.manage',
         'https://www.googleapis.com/auth/plus.business.manage',
-        // 'https://www.googleapis.com/auth/drive.readonly',
-        // 'https://www.googleapis.com/auth/drive.file'
+        'https://www.googleapis.com/auth/youtube.upload',
+        'https://www.googleapis.com/auth/youtube',
+        'https://www.googleapis.com/auth/youtube.readonly',
+        'https://www.googleapis.com/auth/drive.readonly',
+        'https://www.googleapis.com/auth/drive.file'
       ]
     },
     facebook: {
@@ -314,6 +317,7 @@ export const auth = betterAuth({
           clientSecret: process.env.NUXT_GOOGLE_CLIENT_SECRET as string,
           discoveryUrl: 'https://accounts.google.com/.well-known/openid-configuration',
           scopes: ['openid', 'email', 'profile', 'https://www.googleapis.com/auth/youtube.upload', 'https://www.googleapis.com/auth/youtube'],
+          accessType: 'offline',
           pkce: false,
         },
         // Dribbble OAuth - not natively supported
@@ -484,6 +488,8 @@ export const auth = betterAuth({
                 // SAFE: only log non-sensitive profile fields, never tokens or full account object
                 details: `ig_user_id=${response.id} username=${response.username} from INSTAGRAM`,
               })
+
+              return;
             }
 
             if (account.providerId === "twitter") {
@@ -521,6 +527,8 @@ export const auth = betterAuth({
                 // SAFE: only log non-sensitive profile fields, never tokens or full account object
                 details: `twitter_user_id=${account.accountId} username=${twitterUser.username} from TWITTER`,
               })
+
+              return;
             }
             if (account.providerId === "linkedin") {
               const linkedinUser = await $fetch<{ sub: string, name: string, picture: string, email: string, profile: string }>(
@@ -554,47 +562,195 @@ export const auth = betterAuth({
                 // SAFE: only log non-sensitive profile fields, never tokens or full account object
                 details: `linkedin_sub=${linkedinUser.sub} name=${linkedinUser.name} from LINKEDIN`,
               })
+
+              return;
             }
-            // Handle link linkedin-page
-            // if (account.providerId === "linkedin-page") {
-            //   const linkedinUser = await $fetch<{ sub: string, name: string, picture: string }>(
-            //     `https://api.linkedin.com/v2/userinfo`,
-            //     {
-            //       headers: {
-            //         Authorization: `Bearer ${account.accessToken}`,
-            //       },
-            //     }
-            //   );
-            //   const { vanityName: username } = await (
-            //     await fetch('https://api.linkedin.com/v2/me', {
-            //       headers: {
-            //         Authorization: `Bearer ${account.accessToken}`,
-            //       },
-            //     })
-            //   ).json();
 
-            //   await socialMediaAccountService.createOrUpdateAccountFromAuth({
-            //     id: `p_${linkedinUser.sub}`,
-            //     name: linkedinUser.name,
-            //     access_token: account.accessToken as string,
-            //     picture: linkedinUser.picture,
-            //     username: username,
-            //     platformId: 'linkedin-page',
-            //     user: user as schema.User
-            //   });
+            // YouTube (genericOAuth via Google)
+            if (account.providerId === "youtube") {
+              const response = await $fetch<{ items: Array<{ id: string, snippet: { title: string, thumbnails: { default: { url: string } } } }> }>(
+                'https://www.googleapis.com/youtube/v3/channels?part=snippet&mine=true',
+                {
+                  headers: {
+                    Authorization: `Bearer ${account.accessToken}`,
+                  },
+                }
+              );
 
-            //   await logAuditService.logAuditEvent({
-            //     userId: ctx?.context.session?.user.id,
-            //     category: 'after:create',
-            //     action: 'AUTH_CREATE_SOCIAL_MEDIA',
-            //     targetType: 'linkedin-page',
-            //     targetId: account.accountId,
-            //     ipAddress: "",
-            //     userAgent: "",
-            //     status: 'success',
-            //     details: `${linkedinUser.sub} ${linkedinUser.name} ${username} from LINKEDIN-PAGE`,
-            //   })
-            // }
+              if (response.items?.length) {
+                const channel = response.items[0];
+                await socialMediaAccountService.createOrUpdateAccountFromAuth({
+                  id: channel.id,
+                  name: channel.snippet.title,
+                  access_token: account.accessToken as string,
+                  refresh_token: account.refreshToken as string,
+                  picture: channel.snippet.thumbnails.default.url,
+                  username: channel.snippet.title,
+                  platformId: 'youtube',
+                  user: user as schema.User
+                });
+              }
+
+              await logAuditService.logAuditEvent({
+                userId: ctx?.context.session?.user.id,
+                category: 'after:create',
+                action: 'AUTH_CREATE_SOCIAL_MEDIA',
+                targetType: 'youtube',
+                targetId: account.id,
+                ipAddress: "",
+                userAgent: "",
+                status: 'success',
+                details: `youtube from YOUTUBE`,
+              })
+
+              return;
+            }
+
+            // Discord (native)
+            if (account.providerId === "discord") {
+              const response = await $fetch<{ id: string, username: string, global_name?: string, avatar: string | null }>(
+                'https://discord.com/api/users/@me',
+                {
+                  headers: {
+                    Authorization: `Bearer ${account.accessToken}`,
+                  },
+                }
+              );
+
+              await socialMediaAccountService.createOrUpdateAccountFromAuth({
+                id: response.id,
+                name: response.global_name || response.username,
+                access_token: account.accessToken as string,
+                picture: response.avatar ? `https://cdn.discordapp.com/avatars/${response.id}/${response.avatar}.png` : '',
+                username: response.username,
+                platformId: 'discord',
+                user: user as schema.User
+              });
+
+              await logAuditService.logAuditEvent({
+                userId: ctx?.context.session?.user.id,
+                category: 'after:create',
+                action: 'AUTH_CREATE_SOCIAL_MEDIA',
+                targetType: 'discord',
+                targetId: account.id,
+                ipAddress: "",
+                userAgent: "",
+                status: 'success',
+                details: `discord_user_id=${response.id} username=${response.username} from DISCORD`,
+              })
+
+              return;
+            }
+
+            // Reddit (native)
+            if (account.providerId === "reddit") {
+              const response = await $fetch<{ id: string, name: string, icon_img: string }>(
+                'https://oauth.reddit.com/api/v1/me',
+                {
+                  headers: {
+                    Authorization: `Bearer ${account.accessToken}`,
+                    'User-Agent': 'MagicSync/1.0',
+                  },
+                }
+              );
+
+              await socialMediaAccountService.createOrUpdateAccountFromAuth({
+                id: response.id,
+                name: response.name,
+                access_token: account.accessToken as string,
+                picture: response.icon_img,
+                username: response.name,
+                platformId: 'reddit',
+                user: user as schema.User
+              });
+
+              await logAuditService.logAuditEvent({
+                userId: ctx?.context.session?.user.id,
+                category: 'after:create',
+                action: 'AUTH_CREATE_SOCIAL_MEDIA',
+                targetType: 'reddit',
+                targetId: account.id,
+                ipAddress: "",
+                userAgent: "",
+                status: 'success',
+                details: `reddit_user_id=${response.id} username=${response.name} from REDDIT`,
+              })
+
+              return;
+            }
+
+            // TikTok (native)
+            if (account.providerId === "tiktok") {
+              const response = await $fetch<{ data: { user: { id: string, display_name: string, username: string, avatar_url: string } } }>(
+                'https://open.tiktokapis.com/v2/user/info/?fields=display_name,username,avatar_url',
+                {
+                  headers: {
+                    Authorization: `Bearer ${account.accessToken}`,
+                  },
+                }
+              );
+
+              const tiktokUser = response.data.user;
+              await socialMediaAccountService.createOrUpdateAccountFromAuth({
+                id: tiktokUser.id,
+                name: tiktokUser.display_name,
+                access_token: account.accessToken as string,
+                picture: tiktokUser.avatar_url,
+                username: tiktokUser.username,
+                platformId: 'tiktok',
+                user: user as schema.User
+              });
+
+              await logAuditService.logAuditEvent({
+                userId: ctx?.context.session?.user.id,
+                category: 'after:create',
+                action: 'AUTH_CREATE_SOCIAL_MEDIA',
+                targetType: 'tiktok',
+                targetId: account.id,
+                ipAddress: "",
+                userAgent: "",
+                status: 'success',
+                details: `tiktok_user_id=${tiktokUser.id} username=${tiktokUser.username} from TIKTOK`,
+              })
+
+              return;
+            }
+
+            // Dribbble (genericOAuth)
+            if (account.providerId === "dribbble") {
+              const response = await $fetch<{ id: number, name: string, username: string, avatar_url: string }>(
+                'https://api.dribbble.com/v2/user',
+                {
+                  headers: {
+                    Authorization: `Bearer ${account.accessToken}`,
+                  },
+                }
+              );
+
+              await socialMediaAccountService.createOrUpdateAccountFromAuth({
+                id: String(response.id),
+                name: response.name,
+                access_token: account.accessToken as string,
+                picture: response.avatar_url,
+                username: response.username,
+                platformId: 'dribbble',
+                user: user as schema.User
+              });
+
+              await logAuditService.logAuditEvent({
+                userId: ctx?.context.session?.user.id,
+                category: 'after:create',
+                action: 'AUTH_CREATE_SOCIAL_MEDIA',
+                targetType: 'dribbble',
+                targetId: account.id,
+                ipAddress: "",
+                userAgent: "",
+                status: 'success',
+                details: `dribbble_user_id=${response.id} username=${response.username} from DRIBBBLE`,
+              })
+
+              return;
+            }
 
             await logAuditService.logAuditEvent({
               userId: ctx?.context.session?.user.id,
@@ -605,7 +761,6 @@ export const auth = betterAuth({
               ipAddress: "",
               userAgent: "",
               status: 'success',
-              // SAFE: only log non-sensitive fields, NEVER log tokens, accessToken, refreshToken, or accountId
               details: `provider=${account.providerId} accountId=${account.id} from ${account.providerId} (unconfigured handler)`,
             })
 

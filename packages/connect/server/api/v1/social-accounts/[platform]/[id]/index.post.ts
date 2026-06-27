@@ -2,7 +2,9 @@ import { logAuditService } from '#layers/BaseDB/server/services/auditLog.service
 import { socialMediaAccountService, type CreateSocialMediaAccountData, type SocialMediaPlatform } from '#layers/BaseDB/server/services/social-media-account.service';
 import { FacebookPlugin } from '#layers/BaseScheduler/server/services/plugins/facebook.plugin';
 import { LinkedInPagePlugin } from '#layers/BaseScheduler/server/services/plugins/linkedin-page.plugin';
+import { YouTubePlugin } from '#layers/BaseScheduler/server/services/plugins/youtube.plugin';
 import { SchedulerPost, type SchedulerPluginConstructor } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
+import { checkUserIsLogin, getAccessTokenHelper } from '#layers/BaseAuth/server/utils/AuthHelpers';
 import { H3Error, readBody } from 'h3';
 
 interface ConnectSocialMediaAccountBody {
@@ -40,15 +42,23 @@ export default defineEventHandler(async (event) => {
     log.set({ businessId: body.businessId })
 
     // Use the social media manager to get the page details
-    const account = await socialMediaAccountService.getAccountsForPlatform(
+    let account = await socialMediaAccountService.getAccountsForPlatform(
       platform,
       user.id
     )
+    // For youtube, also check google provider (native OAuth) if no direct youtube account
+    if (!account || account.length === 0) {
+      const googleAccounts = await socialMediaAccountService.getAccountsForPlatform('google', user.id);
+      if (googleAccounts?.length) {
+        account = googleAccounts;
+      }
+    }
     const matcher: Record<string, SchedulerPluginConstructor> = {
       facebook: FacebookPlugin,
       'linkedin-page': LinkedInPagePlugin,
+      youtube: YouTubePlugin,
     }
-    if (!matcher[platform] || !account) {
+    if (!matcher[platform] || !account || account.length === 0) {
       throw createError({
         statusCode: 400,
         statusMessage: 'Invalid platform'
@@ -60,7 +70,7 @@ export default defineEventHandler(async (event) => {
     });
     scheduler.use(matcher[platform]);
 
-    const platformAccount = account.find(account => account.providerId === platform);
+    const platformAccount = account[0];
     if (!platformAccount) {
       throw createError({
         statusCode: 400,
@@ -68,14 +78,21 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    //@ts-ignore
-    const pageDetails = await scheduler.fetchPageInformation(pageId, platformAccount.accessToken, { instagramId: body.instagram_business_account?.id }) as {
-      id: string;
-      name: string;
-      access_token: string;
-      picture: string;
-      username: string;
-    };
+    const tokenData = await getAccessTokenHelper(event, {
+      providerId: platform,
+      userId: user.id,
+      accountId: platformAccount.accountId,
+    }).catch(() => null)
+
+    if (tokenData?.accessToken) {
+      await socialMediaAccountService.updateAccount(platformAccount.id, {
+        accessToken: tokenData.accessToken
+      })
+    }
+
+    const accessToken = tokenData?.accessToken || platformAccount.accessToken;
+
+    const pageDetails = await (scheduler as unknown as { fetchPageInformation: (pageId: string, token: string, options?: { instagramId?: string }) => Promise<{ id: string; name: string; access_token: string; picture: string; username: string }> }).fetchPageInformation(pageId, accessToken, { instagramId: body.instagram_business_account?.id });
 
     await logAuditService.logAuditEvent({
       userId: user.id,
@@ -89,10 +106,10 @@ export default defineEventHandler(async (event) => {
       details: JSON.stringify({ id: pageDetails.id, name: pageDetails.name, picture: pageDetails.picture, username: pageDetails.username }),
     })
 
-    log.info('Social media page connected', { platform, pageId, pageName: pageDetails.name })
+    log.info({ message: 'Social media page connected', platform, pageId, pageName: pageDetails.name })
 
     // handle to the social media  service to create or update
-    const socialMediaAccount = socialMediaAccountService.createOrUpdateAccount({
+    const socialMediaAccount = await socialMediaAccountService.createOrUpdateAccount({
       ...pageDetails,
       user,
       businessId: body.businessId,
@@ -104,7 +121,7 @@ export default defineEventHandler(async (event) => {
     return socialMediaAccount;
 
   } catch (error) {
-    log.error('Failed to connect social media account', { error })
+    log.error({ message: 'Failed to connect social media account', error })
 
     if (error instanceof H3Error) {
       throw error;

@@ -18,6 +18,7 @@
       <NuxtLayout>
         <NuxtPage />
       </NuxtLayout>
+      <LazyBaseOnboardingTutorial />
     </div>
   </UApp>
 </template>

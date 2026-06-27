@@ -33,7 +33,7 @@ export class ThreadsPlugin extends BaseSchedulerPlugin {
 
       if (!response.ok) {
         const error = await response.text();
-        console.error(`[Threads] Failed to fetch stats: ${error}`);
+        log.error(`[Threads] Failed to fetch stats: ${error}`);
         return this.createZeroStats(socialMediaAccount);
       }
 
@@ -88,7 +88,8 @@ export class ThreadsPlugin extends BaseSchedulerPlugin {
             threadPerformances.sort((a, b) => (b.likes + b.replies + b.reposts) - (a.likes + a.replies + a.reposts))
             threadPerformances = threadPerformances.slice(0, 10)
           }
-        } catch {
+        } catch (error: unknown) {
+          log.error({ content: 'Threads media fetch failed', plugin: 'threads', error: (error as Error).message });
         }
       }
 
@@ -130,7 +131,8 @@ export class ThreadsPlugin extends BaseSchedulerPlugin {
         },
       };
     } catch (error) {
-      console.error('[Threads] Error fetching stats:', error);
+      log.error({ content: 'Threads Error fetching stats', plugin: 'threads', error: (error as Error).message });
+      this.logPluginEvent('get-stats', 'failure', `Error: ${(error as Error).message}`);
       return this.createZeroStats(socialMediaAccount);
     }
   }
@@ -360,6 +362,8 @@ export class ThreadsPlugin extends BaseSchedulerPlugin {
       this.emit('threads:post:published', { postId: postResponse.postId, response: publishedData });
       return postResponse;
     } catch (error: unknown) {
+      log.error({ content: 'Threads post failed', plugin: 'threads', error: (error as Error).message });
+      this.logPluginEvent('post-error', 'failure', `Error: ${(error as Error).message}`, postDetails.id);
       const errorResponse: PostResponse = {
         id: postDetails.id,
         postId: '',
@@ -429,6 +433,8 @@ export class ThreadsPlugin extends BaseSchedulerPlugin {
       this.emit('threads:comment:added', { commentId: commentResponse.postId, postDetails, commentDetails });
       return commentResponse;
     } catch (error: unknown) {
+      log.error({ content: 'Threads comment failed', plugin: 'threads', error: (error as Error).message });
+      this.logPluginEvent('comment-error', 'failure', `Error: ${(error as Error).message}`, commentDetails.id);
       const errorResponse: PostResponse = {
         id: commentDetails.id,
         postId: '',
@@ -518,7 +524,8 @@ export class ThreadsPlugin extends BaseSchedulerPlugin {
         nextCursor: data.paging?.cursors?.after,
       };
     } catch (error) {
-      console.error('Error fetching Threads comments:', error);
+      log.error({ content: 'Error fetching Threads comments', plugin: 'threads', error: (error as Error).message });
+      this.logPluginEvent('get-comments', 'failure', `Error: ${(error as Error).message}`);
       return {
         platform: this.pluginName,
         postId: externalPostId,
@@ -577,7 +584,8 @@ export class ThreadsPlugin extends BaseSchedulerPlugin {
         },
       };
     } catch (error) {
-      console.error('Error replying to Threads comment:', error);
+      log.error({ content: 'Error replying to Threads comment', plugin: 'threads', error: (error as Error).message });
+      this.logPluginEvent('reply-comment-error', 'failure', `Error: ${(error as Error).message}`, commentId);
       return {
         success: false,
         error: (error as Error).message || 'Failed to reply to comment',

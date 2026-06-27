@@ -12,7 +12,7 @@ export class WordPressPlugin extends BaseSchedulerPlugin {
       const siteUrl = socialMediaAccount.accountId || socialMediaAccount.accountName;
 
       if (!siteUrl) {
-        console.error('[WordPress] No site URL found in account settings');
+        log.error({ content: '[WordPress] No site URL found in account settings' });
         return this.createZeroStats(socialMediaAccount);
       }
 
@@ -25,7 +25,7 @@ export class WordPressPlugin extends BaseSchedulerPlugin {
       );
 
       if (!statsResponse.ok) {
-        console.error(`[WordPress] Failed to fetch stats: ${await statsResponse.text()}`);
+        log.error(`[WordPress] Failed to fetch stats: ${await statsResponse.text()}`);
         return this.createZeroStats(socialMediaAccount);
       }
 
@@ -94,7 +94,8 @@ export class WordPressPlugin extends BaseSchedulerPlugin {
 
           topPosts.sort((a, b) => (b.likes + b.comments) - (a.likes + a.comments))
         }
-      } catch {
+      } catch (error: unknown) {
+        log.error({ content: 'WordPress posts/summary fetch failed', plugin: 'wordpress', error: (error as Error).message });
       }
 
       const totalEngagement = totalLikes + totalComments
@@ -147,7 +148,8 @@ export class WordPressPlugin extends BaseSchedulerPlugin {
         },
       };
     } catch (error: unknown) {
-      console.error('[WordPress] Error fetching stats:', error);
+      log.error({ content: 'WordPress Error fetching stats', plugin: 'wordpress', error: (error as Error).message });
+      this.logPluginEvent('get-stats', 'failure', `Error: ${(error as Error).message}`);
       return this.createZeroStats(socialMediaAccount);
     }
   }
@@ -298,6 +300,8 @@ export class WordPressPlugin extends BaseSchedulerPlugin {
       this.emit('wordpress:post:published', { postId: postResponse.postId, response: data });
       return postResponse;
     } catch (error: unknown) {
+      log.error({ content: 'WordPress post failed', plugin: 'wordpress', error: (error as Error).message });
+      this.logPluginEvent('post-error', 'failure', `Error: ${(error as Error).message}`, postDetails.id);
       const errorResponse: PostResponse = {
         id: postDetails.id,
         postId: '',
@@ -375,6 +379,8 @@ export class WordPressPlugin extends BaseSchedulerPlugin {
       this.emit('wordpress:post:updated', { postId: postResponse.postId, postDetails });
       return postResponse;
     } catch (error: unknown) {
+      log.error({ content: 'WordPress update failed', plugin: 'wordpress', error: (error as Error).message });
+      this.logPluginEvent('update-error', 'failure', `Error: ${(error as Error).message}`, postDetails.id);
       const errorResponse: PostResponse = {
         id: postDetails.id,
         postId: '',
@@ -434,6 +440,8 @@ export class WordPressPlugin extends BaseSchedulerPlugin {
       this.emit('wordpress:comment:added', { commentId: commentResponse.postId, postDetails, commentDetails });
       return commentResponse;
     } catch (error: unknown) {
+      log.error({ content: 'WordPress comment failed', plugin: 'wordpress', error: (error as Error).message });
+      this.logPluginEvent('comment-error', 'failure', `Error: ${(error as Error).message}`, commentDetails.id);
       const errorResponse: PostResponse = {
         id: commentDetails.id,
         postId: '',
@@ -519,7 +527,8 @@ export class WordPressPlugin extends BaseSchedulerPlugin {
         nextCursor: currentPage < totalPages ? String(currentPage + 1) : undefined,
       };
     } catch (error: unknown) {
-      console.error('Error fetching WordPress comments:', error);
+      log.error({ content: 'Error fetching WordPress comments', plugin: 'wordpress', error: (error as Error).message });
+      this.logPluginEvent('get-comments', 'failure', `Error: ${(error as Error).message}`);
       return {
         platform: this.pluginName,
         postId: externalPostId,
@@ -572,7 +581,8 @@ export class WordPressPlugin extends BaseSchedulerPlugin {
         comment: this.transformComment(data),
       };
     } catch (error: unknown) {
-      console.error('Error replying to WordPress comment:', error);
+      log.error({ content: 'Error replying to WordPress comment', plugin: 'wordpress', error: (error as Error).message });
+      this.logPluginEvent('reply-comment-error', 'failure', `Error: ${(error as Error).message}`, commentId);
       return {
         success: false,
         error: (error as Error).message || 'Failed to reply to comment',

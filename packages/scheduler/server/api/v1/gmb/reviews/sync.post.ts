@@ -54,6 +54,6 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  log.info('GMB reviews synced via plugin', { businessId, count: synced.length })
+  log.info({ message: 'GMB reviews synced via plugin', businessId, count: synced.length })
   return { success: true, data: synced }
 })

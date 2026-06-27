@@ -2,6 +2,7 @@ export interface FacebookPage {
   id: string;
   name: string;
   imageBase64?: string;
+  platformType?: string;
   instagram_business_account?: {
     id: string
   };

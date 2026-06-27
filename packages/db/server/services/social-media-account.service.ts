@@ -303,6 +303,7 @@ export class SocialMediaAccountService implements SocialMediaAccountServiceType 
     }
 
     if (data.refreshToken !== undefined) {
+      encryptedData.refreshToken = data.refreshToken
       encryptedData.refresh_token_encrypted = data.refreshToken
         ? await encryptKey(data.refreshToken)
         : null
@@ -330,10 +331,11 @@ export class SocialMediaAccountService implements SocialMediaAccountServiceType 
   /**
    * Create or update social media account
    */
-  async createOrUpdateAccount({ id, name, access_token, picture, username, user, businessId, platformId }: {
+  async createOrUpdateAccount({ id, name, access_token, refresh_token, picture, username, user, businessId, platformId }: {
     id: string;
     name: string;
     access_token: string;
+    refresh_token?: string;
     picture: string;
     username: string;
     user: User,
@@ -364,6 +366,7 @@ export class SocialMediaAccountService implements SocialMediaAccountServiceType 
         {
           accountName: name,
           accessToken: access_token,
+          refreshToken: refresh_token,
           lastSyncAt: new Date(),
           isActive: true,
           entityDetailId: entityDetails?.id
@@ -378,6 +381,7 @@ export class SocialMediaAccountService implements SocialMediaAccountServiceType 
         accountId: id,
         accountName: name,
         accessToken: access_token,
+        refreshToken: refresh_token,
         entityDetailId: entityDetails?.id
       });
     }
@@ -385,10 +389,11 @@ export class SocialMediaAccountService implements SocialMediaAccountServiceType 
     return socialMediaAccount;
   }
 
-  async createOrUpdateAccountFromAuth({ id, name, access_token, picture, username, platformId, user }: {
+  async createOrUpdateAccountFromAuth({ id, name, access_token, refresh_token, picture, username, platformId, user }: {
     id: string;
     name: string;
     access_token: string;
+    refresh_token?: string;
     picture: string;
     username: string;
     platformId: SocialMediaPlatform;
@@ -401,7 +406,7 @@ export class SocialMediaAccountService implements SocialMediaAccountServiceType 
     });
 
 
-    return this.createOrUpdateAccount({ id, name, access_token, picture, username, user, businessId: businessFromUser?.id as string || '', platformId });
+    return this.createOrUpdateAccount({ id, name, access_token, refresh_token, picture, username, user, businessId: businessFromUser?.id as string || '', platformId });
 
   }
   async getAccountByAccountId(id: string, userId?: string) {

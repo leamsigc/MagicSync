@@ -17,7 +17,7 @@ export default defineEventHandler(async (event) => {
     isActive: body.isActive
   });
 
-  log.info('Active business set', { businessId: body.businessId, isActive: body.isActive })
+  log.info({ message: 'Active business set', businessId: body.businessId, isActive: body.isActive })
 
   return newBusiness;
 });

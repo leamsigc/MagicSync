@@ -16,7 +16,7 @@ export class DevToPlugin extends BaseSchedulerPlugin {
       const userResponse = await fetch(`https://dev.to/api/users/${username}`);
 
       if (!userResponse.ok) {
-        console.warn(`Dev.to API error: ${userResponse.statusText}`);
+        log.warn({ content: 'Dev.to API error', statusText: userResponse.statusText });
         return this.getZeroStats(socialMediaAccount);
       }
 
@@ -115,7 +115,8 @@ export class DevToPlugin extends BaseSchedulerPlugin {
         },
       };
     } catch (error: unknown) {
-      console.error('Error fetching Dev.to stats:', error);
+      log.error({ content: 'Error fetching Dev.to stats', plugin: 'devto', error: (error as Error).message });
+      this.logPluginEvent('get-stats', 'failure', `Error: ${(error as Error).message}`);
       return this.getZeroStats(socialMediaAccount);
     }
   }
@@ -281,6 +282,8 @@ export class DevToPlugin extends BaseSchedulerPlugin {
       this.emit('devto:post:published', { postId: postResponse.postId, response: data });
       return postResponse;
     } catch (error: unknown) {
+      log.error({ content: 'Dev.to post failed', plugin: 'devto', error: (error as Error).message });
+      this.logPluginEvent('post-error', 'failure', `Error: ${(error as Error).message}`, postDetails.id);
       const errorResponse: PostResponse = {
         id: postDetails.id,
         postId: '',
@@ -344,6 +347,8 @@ export class DevToPlugin extends BaseSchedulerPlugin {
       this.emit('devto:post:updated', { postId: postResponse.postId, postDetails });
       return postResponse;
     } catch (error: unknown) {
+      log.error({ content: 'Dev.to update failed', plugin: 'devto', error: (error as Error).message });
+      this.logPluginEvent('update-error', 'failure', `Error: ${(error as Error).message}`, postDetails.id);
       const errorResponse: PostResponse = {
         id: postDetails.id,
         postId: '',
@@ -398,6 +403,8 @@ export class DevToPlugin extends BaseSchedulerPlugin {
       this.emit('devto:comment:added', { commentId: commentResponse.postId, postDetails, commentDetails });
       return commentResponse;
     } catch (error: unknown) {
+      log.error({ content: 'Dev.to comment failed', plugin: 'devto', error: (error as Error).message });
+      this.logPluginEvent('comment-error', 'failure', `Error: ${(error as Error).message}`, commentDetails.id);
       const errorResponse: PostResponse = {
         id: commentDetails.id,
         postId: '',
@@ -476,7 +483,8 @@ export class DevToPlugin extends BaseSchedulerPlugin {
         hasMore: false,
       };
     } catch (error: unknown) {
-      console.error('Error fetching Dev.to comments:', error);
+      log.error({ content: 'Error fetching Dev.to comments', plugin: 'devto', error: (error as Error).message });
+      this.logPluginEvent('get-comments', 'failure', `Error: ${(error as Error).message}`);
       return {
         platform: this.pluginName,
         postId: externalPostId,
@@ -529,7 +537,8 @@ export class DevToPlugin extends BaseSchedulerPlugin {
         comment: this.transformComment(data),
       };
     } catch (error: unknown) {
-      console.error('Error replying to Dev.to comment:', error);
+      log.error({ content: 'Error replying to Dev.to comment', plugin: 'devto', error: (error as Error).message });
+      this.logPluginEvent('reply-comment-error', 'failure', `Error: ${(error as Error).message}`, commentId);
       return {
         success: false,
         error: (error as Error).message || 'Failed to reply to comment',

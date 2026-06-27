@@ -9,7 +9,7 @@ export default defineEventHandler(async (event) => {
 
   const result = await businessProfileService.getActive(user.id);
 
-  log.info('Active business retrieved', { businessId: result?.data || '' })
+  log.info({ message: 'Active business retrieved', businessId: result?.data || '' })
 
   return result;
 });

@@ -26,6 +26,8 @@ const gridClass = computed(() => {
 </script>
 
 <style scoped>
+@reference "tailwindcss";
+
 :deep(.feature-item) {
   @apply p-6 border border-[var(--vp-c-divider)] rounded-lg bg-[var(--vp-c-bg-soft)] transition-all duration-300;
 }

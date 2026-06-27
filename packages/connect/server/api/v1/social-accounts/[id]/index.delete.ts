@@ -47,14 +47,14 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    log.info('Social media account deleted', { accountId, platform: account.platform })
+    log.info({ message: 'Social media account deleted', accountId, platform: account.platform })
 
     return {
       success: true,
       message: 'Social media account disconnected successfully'
     }
   } catch (error) {
-    log.error('Failed to delete social media account', { error })
+    log.error({ message: 'Failed to delete social media account', error })
 
     if (error && typeof error === 'object' && 'statusCode' in error) {
       throw error

@@ -57,7 +57,7 @@ const items = computed(() => [
     {
       label: t('userNav.account'),
       icon: 'i-heroicons-user',
-      to: '/app/user/profile'
+      to: '/app/profile'
     },
     {
       label: t('userNav.settings'),

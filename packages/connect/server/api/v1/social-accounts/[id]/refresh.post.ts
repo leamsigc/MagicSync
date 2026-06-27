@@ -58,7 +58,7 @@ export default defineEventHandler(async (event) => {
         })
       }
 
-      log.info('Access token refreshed', { accountId, platform: account.platform })
+      log.info({ message: 'Access token refreshed', accountId, platform: account.platform })
 
       return {
         success: true,
@@ -73,7 +73,7 @@ export default defineEventHandler(async (event) => {
         }
       }
     } catch (refreshError) {
-      log.error('Token refresh failed', { accountId, error: refreshError })
+      log.error({ message: 'Token refresh failed', accountId, error: refreshError })
 
       // Mark account as inactive if refresh fails
       await socialMediaAccountService.updateAccount(accountId, { isActive: false })
@@ -84,7 +84,7 @@ export default defineEventHandler(async (event) => {
       })
     }
   } catch (error) {
-    log.error('Failed to refresh social media account tokens', { error })
+    log.error({ message: 'Failed to refresh social media account tokens', error })
 
     if (error && typeof error === 'object' && 'statusCode' in error) {
       throw error

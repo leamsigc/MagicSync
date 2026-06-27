@@ -19,12 +19,15 @@ export const usePlatformConfiguration = () => {
     }
 
     // Validate number of images
-    if (postMediaAssets.length > config.maxImages) {
+    const hasVideo = postMediaAssets.some(asset => asset.mimeType.startsWith('video/'));
+    const effectiveImageCount = platformType === 'youtube'
+      ? (hasVideo ? 0 : postMediaAssets.filter(a => !a.mimeType.startsWith('video/')).length)
+      : postMediaAssets.length;
+    if (effectiveImageCount > config.maxImages) {
       return { isValid: false, message: t('validation.tooManyImages', { platform: platformType, max: config.maxImages }) };
     }
 
     // Validate video support and length
-    const hasVideo = postMediaAssets.some(asset => asset.mimeType.startsWith('video/'));
     if (hasVideo) {
       if (!config.supportsVideo) {
         return { isValid: false, message: t('validation.videoNotSupported', { platform: platformType }) };

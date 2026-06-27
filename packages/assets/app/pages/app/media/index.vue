@@ -197,7 +197,7 @@ const handleDeleteAsset = (asset: Asset[]) => {
         hide-view-mode />
 
       <!-- Asset Gallery -->
-      <UCard class="p-6">
+      <UCard class="p-6" variant="soft">
         <MediaGallery :business-id="selectedBusinessId" :selectable="true" :multi-select="true" :show-uploader="false"
           :filter-type="filterType" @select="(asset: Asset) => console.log('Selected:', asset)"
           @deselect="(asset: Asset) => console.log('Deselected:', asset)" @upload="handleFileUpload"

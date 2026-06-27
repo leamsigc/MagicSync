@@ -66,7 +66,11 @@ export const useValidation = () => {
         }
 
         // Media count validation
-        if (media.length > config.maxImages) {
+        const hasVideo = media.some(asset => asset.mimeType.startsWith('video/'));
+        const effectiveImageCount = platformId === 'youtube'
+            ? (hasVideo ? 0 : media.filter(a => !a.mimeType.startsWith('video/')).length)
+            : media.length;
+        if (effectiveImageCount > config.maxImages) {
             status = 'error';
           messages.push({
                 message: `Too many media items (${media.length}/${config.maxImages})`,
@@ -75,7 +79,6 @@ export const useValidation = () => {
         }
 
         // Video validation
-        const hasVideo = media.some(asset => asset.mimeType.startsWith('video/'));
         if (hasVideo && !config.supportsVideo) {
             status = 'error';
           messages.push({

@@ -20,14 +20,14 @@ export default defineEventHandler(async (event) => {
   const deletedBusiness = await businessProfileService.delete(id, user.id);
 
   if (!deletedBusiness) {
-    log.error('Business not found or user not authorized', { businessId: id })
+    log.error({ message: 'Business not found or user not authorized', businessId: id })
     throw createError({
       statusCode: 404,
       statusMessage: 'Business not found or user not authorized to delete it'
     });
   }
 
-  log.info('Business deleted', { businessId: id })
+  log.info({ message: 'Business deleted', businessId: id })
 
   return { message: 'Business deleted successfully' };
 });

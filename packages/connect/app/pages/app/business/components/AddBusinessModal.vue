@@ -156,6 +156,7 @@ const handleCancel = () => {
     :ui="{ content: 'min-w-5xl overflow-y-auto' }">
     <!-- Trigger Button -->
     <UButton variant="ghost"
+      data-test="add-business-button"
       class="flex flex-col items-center justify-center gap-4 w-full h-full min-h-[16rem] rounded-2xl border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-primary-500 hover:bg-gray-50 dark:hover:border-primary-500 dark:hover:bg-gray-800/50 transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900">
       <div
         class="flex items-center justify-center w-16 h-16 rounded-full bg-primary-50 dark:bg-primary-950/50 group-hover:scale-110 transition-transform duration-300 shadow-sm border border-primary-100 dark:border-primary-900/50">

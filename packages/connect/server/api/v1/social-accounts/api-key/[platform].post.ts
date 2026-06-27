@@ -70,7 +70,7 @@ export default defineEventHandler(async (event) => {
             picture
           }
         } catch (error) {
-          log.error('Bluesky authentication failed', { platform, error })
+          log.error({ message: 'Bluesky authentication failed', platform, error })
           throw createError({
             statusCode: 401,
             statusMessage: 'Invalid Bluesky credentials'
@@ -110,7 +110,7 @@ export default defineEventHandler(async (event) => {
             picture: userData.profile_image
           }
         } catch (error) {
-          log.error('Dev.to authentication failed', { platform, error })
+          log.error({ message: 'Dev.to authentication failed', platform, error })
           throw createError({
             statusCode: 401,
             statusMessage: 'Invalid Dev.to API key'
@@ -151,7 +151,7 @@ export default defineEventHandler(async (event) => {
             picture: userData.avatar
           }
         } catch (error) {
-          log.error('WordPress authentication failed', { platform, error })
+          log.error({ message: 'WordPress authentication failed', platform, error })
           throw createError({
             statusCode: 401,
             statusMessage: 'Invalid WordPress credentials'
@@ -185,7 +185,7 @@ export default defineEventHandler(async (event) => {
       platformId: platform
     })
 
-    log.info('API key authentication successful', { platform, accountId: account?.accountId })
+    log.info({ message: 'API key authentication successful', platform, accountId: account?.accountId })
 
     return {
       success: true,
@@ -193,7 +193,7 @@ export default defineEventHandler(async (event) => {
     }
 
   } catch (error) {
-    log.error('API key authentication failed', { error })
+    log.error({ message: 'API key authentication failed', error })
 
     throw createError({
       statusCode: (error as { statusCode?: number })?.statusCode || 500,

@@ -24,6 +24,7 @@
     "shiki": "^4.2.0"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.1",
     "@types/node": "^25.9.2",
     "autoprefixer": "^10.5.0",
     "mermaid": "^11.15.0",

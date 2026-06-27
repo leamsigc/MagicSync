@@ -410,6 +410,8 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
       this.emit('bluesky:post:published', { postId: response.postId, response });
       return response;
     } catch (error: unknown) {
+      log.error({ content: 'Bluesky post failed', plugin: 'bluesky', error: (error as Error).message });
+      this.logPluginEvent('post-error', 'failure', `Error: ${(error as Error).message}`, postDetails.id);
       const errorResponse: PostResponse = {
         id: postDetails.id,
         postId: '',
@@ -585,6 +587,8 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
       this.emit('bluesky:comment:published', { commentId: response.postId, postDetails, commentDetails });
       return response;
     } catch (error: unknown) {
+      log.error({ content: 'Bluesky comment failed', plugin: 'bluesky', error: (error as Error).message });
+      this.logPluginEvent('comment-error', 'failure', `Error: ${(error as Error).message}`, commentDetails.id);
       const errorResponse: PostResponse = {
         id: commentDetails.id,
         postId: '',
@@ -707,7 +711,9 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
 
       topPosts.sort((a, b) => (b.likes + b.reposts + b.replies) - (a.likes + a.reposts + a.replies))
       topPosts = topPosts.slice(0, 10)
-    } catch {
+    } catch (error: unknown) {
+      log.error({ content: 'Bluesky stats fetch failed', plugin: 'bluesky', error: (error as Error).message });
+      this.logPluginEvent('get-stats', 'failure', `Error: ${(error as Error).message}`);
     }
 
     const engagementRate = profileStats.followersCount > 0 && totalPosts > 0
@@ -812,7 +818,8 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
         hasMore: false,
       };
     } catch (error) {
-      console.error('Error fetching Bluesky comments:', error);
+      log.error({ content: 'Error fetching Bluesky comments', plugin: 'bluesky', error: (error as Error).message });
+      this.logPluginEvent('get-comments', 'failure', `Error: ${(error as Error).message}`);
       return {
         platform: this.pluginName,
         postId: externalPostId,
@@ -879,7 +886,8 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
         }),
       };
     } catch (error) {
-      console.error('Error replying to Bluesky comment:', error);
+      log.error({ content: 'Error replying to Bluesky comment', plugin: 'bluesky', error: (error as Error).message });
+      this.logPluginEvent('reply-comment-error', 'failure', `Error: ${(error as Error).message}`, commentId);
       return {
         success: false,
         error: (error as Error).message || 'Failed to reply to comment',

@@ -14,6 +14,6 @@ export default defineEventHandler(async (event) => {
 
   const result = await reviewService.generateAIResponse(reviewId, businessContext)
 
-  log.info('AI review response generated', { reviewId })
+  log.info({ message: 'AI review response generated', reviewId })
   return result
 })

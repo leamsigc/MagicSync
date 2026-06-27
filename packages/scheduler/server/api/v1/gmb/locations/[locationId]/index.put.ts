@@ -41,6 +41,6 @@ export default defineEventHandler(async (event) => {
   }
 
   const result = await response.json()
-  log.info('GMB location updated', { businessId, locationId })
+  log.info({ message: 'GMB location updated', businessId, locationId })
   return { success: true, data: result }
 })

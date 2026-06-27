@@ -22,8 +22,14 @@ export const useDashboardNavigation = () => {
 
     const links: NavigationMenuItem[] = [
       {
+        label: menuData.menu.home,
+        icon: 'i-lucide-home',
+        to: '/app/home',
+        active: route.path === '/app/home'
+      },
+      {
         label: menuData.menu.dashboard,
-        icon: 'i-lucide-house',
+        icon: 'i-lucide-square',
         to: '/app',
         active: route.path === '/app'
       },
@@ -324,7 +330,7 @@ export const useDashboardNavigation = () => {
         {
           label: menuData.userNav.account,
           icon: 'i-heroicons-user',
-          to: '/app/user/profile'
+          to: '/app/profile'
         },
         {
           label: menuData.userNav.settings,

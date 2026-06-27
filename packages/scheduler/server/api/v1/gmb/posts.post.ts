@@ -28,6 +28,6 @@ export default defineEventHandler(async (event) => {
   const plugin = new GoogleMyBusinessPlugin(scheduler)
   const result = await plugin.createPost(locationName, postData, tokens.accessToken)
 
-  log.info('GMB post created', { businessId, locationName, topicType: postData.topicType })
+  log.info({ message: 'GMB post created', businessId, locationName, topicType: postData.topicType })
   return { success: true, data: result }
 })

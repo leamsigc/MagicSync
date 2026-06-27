@@ -102,7 +102,7 @@ export class GoogleMyBusinessPlugin extends BaseSchedulerPlugin {
       const accessToken = socialMediaAccount.accessToken;
 
       if (!accessToken) {
-        console.error('[GoogleMyBusiness] No access token found');
+        log.error({ content: '[GoogleMyBusiness] No access token found' });
         return this.createZeroStats(socialMediaAccount);
       }
 
@@ -117,7 +117,7 @@ export class GoogleMyBusinessPlugin extends BaseSchedulerPlugin {
 
       if (!accountsResponse.ok) {
         const errorBody = await accountsResponse.text();
-        console.error(`[GoogleMyBusiness] Failed to fetch accounts: ${accountsResponse.status} - ${errorBody}`);
+        log.error(`[GoogleMyBusiness] Failed to fetch accounts: ${accountsResponse.status} - ${errorBody}`);
         return this.createZeroStats(socialMediaAccount);
       }
 
@@ -141,7 +141,7 @@ export class GoogleMyBusinessPlugin extends BaseSchedulerPlugin {
 
       if (!locationsResponse.ok) {
         const errorBody = await locationsResponse.text();
-        console.error(`[GoogleMyBusiness] Failed to fetch locations: ${locationsResponse.status} - ${errorBody}`);
+        log.error(`[GoogleMyBusiness] Failed to fetch locations: ${locationsResponse.status} - ${errorBody}`);
         return this.createZeroStats(socialMediaAccount);
       }
 
@@ -205,7 +205,8 @@ export class GoogleMyBusinessPlugin extends BaseSchedulerPlugin {
               }
             }
           }
-        } catch {
+        } catch (error: unknown) {
+          log.error({ content: 'GMB insights fetch failed', plugin: 'googlemybusiness', error: (error as Error).message });
         }
 
         try {
@@ -227,7 +228,8 @@ export class GoogleMyBusinessPlugin extends BaseSchedulerPlugin {
               })
             )
           }
-        } catch {
+        } catch (error: unknown) {
+          log.error({ content: 'GMB keywords fetch failed', plugin: 'googlemybusiness', error: (error as Error).message });
         }
       }
 
@@ -264,7 +266,8 @@ export class GoogleMyBusinessPlugin extends BaseSchedulerPlugin {
         },
       };
     } catch (error: unknown) {
-      console.error('[GoogleMyBusiness] Error fetching stats:', error);
+      log.error({ content: 'GMB Error fetching stats', plugin: 'googlemybusiness', error: (error as Error).message });
+      this.logPluginEvent('get-stats', 'failure', `Error: ${(error as Error).message}`);
       return this.createZeroStats(socialMediaAccount);
     }
   }
@@ -328,12 +331,13 @@ export class GoogleMyBusinessPlugin extends BaseSchedulerPlugin {
       const response = await fetch(url, options);
       if (!response.ok) {
         const errorBody = await response.text();
-        console.error(`GMB API Error (${context}): ${response.status} - ${errorBody}`);
+        log.error(`GMB API Error (${context}): ${response.status} - ${errorBody}`);
         throw new Error(`GMB API Error (${context}): ${errorBody}`);
       }
       return response;
     } catch (error: unknown) {
-      console.error(`Network or Fetch Error (${context}):`, error);
+      log.error(`Network or Fetch Error (${context}):`, error);
+      this.logPluginEvent('fetch-error', 'failure', `Error: ${(error as Error).message}, Context: ${context}`, url, { options });
       throw error;
     }
   }
@@ -524,6 +528,7 @@ export class GoogleMyBusinessPlugin extends BaseSchedulerPlugin {
       }
       return '';
     } catch (error: unknown) {
+      log.error({ content: 'GMB location photo fetch failed', plugin: 'googlemybusiness', error: (error as Error).message });
       return '';
     }
   }
@@ -601,7 +606,7 @@ export class GoogleMyBusinessPlugin extends BaseSchedulerPlugin {
         {
           label: 'Search Impressions',
           percentageChange: 0,
-            data: data.searchKeywordsCounts?.map((item: Record<string, unknown>) => ({
+          data: data.searchKeywordsCounts?.map((item: Record<string, unknown>) => ({
             total: item.insightsValue?.value || 0,
             date: `${item.date?.year}-${String(item.date?.month).padStart(2, '0')}-${String(item.date?.day).padStart(2, '0')}`,
           })) || [],
@@ -610,7 +615,8 @@ export class GoogleMyBusinessPlugin extends BaseSchedulerPlugin {
 
       return analyticsData;
     } catch (error: unknown) {
-      console.error('Analytics error:', error);
+      log.error({ content: 'GMB analytics error', plugin: 'googlemybusiness', error: (error as Error).message });
+      this.logPluginEvent('get-analytics-error', 'failure', `Error: ${(error as Error).message}`);
       return [];
     }
   }
@@ -800,6 +806,8 @@ export class GoogleMyBusinessPlugin extends BaseSchedulerPlugin {
       this.emit('googlemybusiness:post:published', { postId: result.name, response });
       return response;
     } catch (error: unknown) {
+      log.error({ content: 'GMB post failed', plugin: 'googlemybusiness', error: (error as Error).message });
+      this.logPluginEvent('post-error', 'failure', `Error: ${(error as Error).message}`, postDetails.id);
       const errorResponse: PostResponse = {
         id: postDetails.id,
         postId: '',

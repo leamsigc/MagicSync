@@ -19,6 +19,24 @@ const selectedTab = ref('local')
 const showUploader = ref(false)
 const toast = useToast()
 
+function getAssetType(mimeType: string): 'image' | 'video' | 'pdf' | 'audio' | 'other' {
+  if (mimeType.startsWith('image/')) return 'image'
+  if (mimeType.startsWith('video/')) return 'video'
+  if (mimeType === 'application/pdf') return 'pdf'
+  if (mimeType.startsWith('audio/')) return 'audio'
+  return 'other'
+}
+
+function getAssetIcon(type: ReturnType<typeof getAssetType>): string {
+  switch (type) {
+    case 'video': return 'lucide:film'
+    case 'pdf': return 'lucide:file-text'
+    case 'audio': return 'lucide:music'
+    case 'other': return 'lucide:file'
+    default: return 'lucide:image'
+  }
+}
+
 const HandleSelect = (asset: Asset) => {
   if (selected.value.includes(asset)) {
     selected.value = selected.value.filter(item => item.id !== asset.id)
@@ -97,8 +115,22 @@ const items = [{
                     v-if="selected.find(item => item.id === asset.id)">
                     {{ t('selected') }}
                   </div>
-                  <img :src="asset.url" :alt="asset.originalName"
-                    class="w-full h-full object-cover rounded-lg shadow-md aspect-square" />
+                  <div class="relative w-full h-full">
+                    <video v-if="getAssetType(asset.mimeType) === 'video'"
+                      :src="asset.url" :alt="asset.originalName"
+                      class="w-full h-full object-cover rounded-lg shadow-md aspect-square" />
+                    <img v-else-if="getAssetType(asset.mimeType) === 'image'"
+                      :src="asset.url" :alt="asset.originalName"
+                      class="w-full h-full object-cover rounded-lg shadow-md aspect-square" />
+                    <div v-else
+                      class="w-full h-full flex items-center justify-center bg-muted rounded-lg shadow-md aspect-square">
+                      <Icon :name="getAssetIcon(getAssetType(asset.mimeType))" class="w-12 h-12 text-muted-foreground" />
+                    </div>
+                    <div
+                      class="absolute top-1 start-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold uppercase bg-background/80 backdrop-blur-sm text-foreground border border-border">
+                      {{ t(getAssetType(asset.mimeType)) }}
+                    </div>
+                  </div>
                 </section>
               </UCard>
             </BaseShinyCard>

@@ -166,6 +166,8 @@ export class DiscordPlugin extends BaseSchedulerPlugin {
         return postResponse;
       }
     } catch (error: unknown) {
+      log.error({ content: 'Discord post failed', plugin: 'discord', error: (error as Error).message });
+      this.logPluginEvent('post-error', 'failure', `Error: ${(error as Error).message}`, postDetails.id);
       const errorResponse: PostResponse = {
         id: postDetails.id,
         postId: '',
@@ -238,12 +240,14 @@ export class DiscordPlugin extends BaseSchedulerPlugin {
               totalMembers += memberCount
               totalChannels += channelCount
               guildDetails.push({ id: guildId, name: guildName, memberCount, channelCount })
-            } catch {
+            } catch (error: unknown) {
+              log.error({ content: 'Discord guild fetch failed', plugin: 'discord', error: (error as Error).message });
               guildDetails.push({ id: guildId, name: guildName, memberCount: 0, channelCount: 0 })
             }
           }
         }
-      } catch {
+      } catch (error: unknown) {
+        log.error({ content: 'Discord guilds fetch failed', plugin: 'discord', error: (error as Error).message });
       }
 
       const base64Picture = botUser.avatar
@@ -281,7 +285,9 @@ export class DiscordPlugin extends BaseSchedulerPlugin {
           guilds: guildDetails,
         },
       }
-    } catch {
+    } catch (error: unknown) {
+      log.error({ content: 'Discord stats fetch failed', plugin: 'discord', error: (error as Error).message });
+      this.logPluginEvent('get-stats', 'failure', `Error: ${(error as Error).message}`);
       return this.getZeroStats(socialMediaAccount)
     }
   }
@@ -361,6 +367,8 @@ export class DiscordPlugin extends BaseSchedulerPlugin {
       this.emit('discord:post:updated', { postId: postResponse.postId, postDetails });
       return postResponse;
     } catch (error: unknown) {
+      log.error({ content: 'Discord update failed', plugin: 'discord', error: (error as Error).message });
+      this.logPluginEvent('update-error', 'failure', `Error: ${(error as Error).message}`, postDetails.id);
       const errorResponse: PostResponse = {
         id: postDetails.id,
         postId: '',
@@ -436,6 +444,8 @@ export class DiscordPlugin extends BaseSchedulerPlugin {
       this.emit('discord:comment:added', { commentId: commentResponse.postId, postDetails, commentDetails });
       return commentResponse;
     } catch (error: unknown) {
+      log.error({ content: 'Discord comment failed', plugin: 'discord', error: (error as Error).message });
+      this.logPluginEvent('comment-error', 'failure', `Error: ${(error as Error).message}`, commentDetails.id);
       const errorResponse: PostResponse = {
         id: commentDetails.id,
         postId: '',
@@ -516,7 +526,8 @@ export class DiscordPlugin extends BaseSchedulerPlugin {
         hasMore: false,
       };
     } catch (error: unknown) {
-      console.error('Error fetching Discord comments:', error);
+      log.error({ content: 'Error fetching Discord comments', plugin: 'discord', error: (error as Error).message });
+      this.logPluginEvent('get-comments', 'failure', `Error: ${(error as Error).message}`);
       return {
         platform: this.pluginName,
         postId: externalPostId,
@@ -528,7 +539,6 @@ export class DiscordPlugin extends BaseSchedulerPlugin {
 
   /**
    * Reply to a message on Discord
-   * Note: Discord doesn't have traditional comment replies
    */
   async replyToComment(
     postDetails: PluginPostDetails,

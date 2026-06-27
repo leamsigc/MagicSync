@@ -109,12 +109,13 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
       const response = await fetch(url)
       if (!response.ok) {
         const error = await response.json()
-        console.warn('[Instagram] Media insights error:', error)
+        log.warn({ message: '[Instagram] Media insights error:', error })
         return { data: [] }
       }
       return response.json() as Promise<{ data: Record<string, unknown>[] }>
     } catch (error) {
-      console.warn('[Instagram] Media insights fetch failed:', error)
+      log.warn({ content: 'Instagram Media insights fetch failed', plugin: 'instagram', error: (error as Error).message })
+      this.logPluginEvent('get-media-insights-error', 'failure', `Error: ${(error as Error).message}`)
       return { data: [] }
     }
   }
@@ -232,7 +233,7 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
         const url = this._getGraphApiUrl(`${containerId}?fields=status_code&access_token=${accessToken}`)
         response = await fetch(url)
       } catch (err) {
-        // network error, let's keep waiting
+        log.warn({ content: 'Instagram media processing check failed', plugin: 'instagram', error: (err as Error).message })
       }
 
       if (response && response.ok) {
@@ -390,6 +391,7 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
       throw new Error('Unknown posting error');
     } catch (error: unknown) {
       log.error({ content: 'Instagram post failed', plugin: 'instagram', error: (error as Error).message })
+      log.error({ content: 'Instagram post failed', plugin: 'instagram', error: (error as Error).message })
 
       this.logPluginEvent('post-error', 'failure', `Error: ${(error as Error).message}`, postDetails.id, {
         error: `${error}`,
@@ -471,12 +473,13 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
       const profileResponse = await fetch(profileUrl)
       if (!profileResponse.ok) {
         const error = await profileResponse.json()
-        console.warn('[Instagram] Profile fetch error:', error)
+        log.warn({ content: '[Instagram] Profile fetch error', error })
       } else {
         profile = await profileResponse.json()
       }
     } catch (error) {
-      console.warn('[Instagram] Profile fetch failed:', error)
+      log.warn({ content: 'Instagram Profile fetch failed', plugin: 'instagram', error: (error as Error).message })
+      this.logPluginEvent('get-stats-profile', 'failure', `Error: ${(error as Error).message}`)
     }
 
     let totalEngagement = 0
@@ -500,7 +503,7 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
       const mediaResponse = await fetch(mediaUrl)
       if (!mediaResponse.ok) {
         const error = await mediaResponse.json()
-        console.warn('[Instagram] Media fetch error:', error)
+        log.warn({ content: '[Instagram] Media fetch error', error })
       } else {
         const mediaData = await mediaResponse.json()
         const mediaItems = mediaData.data || []
@@ -544,7 +547,8 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
         }
       }
     } catch (error) {
-      console.warn('[Instagram] Media fetch failed:', error)
+      log.warn({ content: 'Instagram Media fetch failed', plugin: 'instagram', error: (error as Error).message })
+      this.logPluginEvent('get-stats-media', 'failure', `Error: ${(error as Error).message}`)
     }
 
     let followerGrowth = undefined
@@ -559,7 +563,7 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
       const insightsResponse = await fetch(insightsUrl)
       if (!insightsResponse.ok) {
         const error = await insightsResponse.json()
-        console.warn('[Instagram] Follower insights error:', error)
+        log.warn({ content: '[Instagram] Follower insights error', error })
       } else {
         const insightsData = await insightsResponse.json()
         for (const metric of insightsData.data || []) {
@@ -586,7 +590,8 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
         }
       }
     } catch (error) {
-      console.warn('[Instagram] Insights fetch failed:', error)
+      log.warn({ content: 'Instagram Insights fetch failed', plugin: 'instagram', error: (error as Error).message })
+      this.logPluginEvent('get-stats-insights', 'failure', `Error: ${(error as Error).message}`)
     }
 
     let newFollowsGrowth = undefined
@@ -605,7 +610,8 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
           newFollowsGrowth = { absolute, percentage }
         }
       }
-    } catch {
+    } catch (error: unknown) {
+      log.warn({ content: 'Instagram new follows fetch failed', plugin: 'instagram', error: (error as Error).message })
     }
 
     const base64Picture = profile.profile_picture_url
@@ -705,6 +711,8 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
       this.emit('instagram:comment:added', { commentId: commentResponse.postId, postDetails, commentDetails });
       return commentResponse;
     } catch (error: unknown) {
+      log.error({ content: 'Instagram comment failed', plugin: 'instagram', error: (error as Error).message });
+      this.logPluginEvent('comment-error', 'failure', `Error: ${(error as Error).message}`, commentDetails.id);
       const errorResponse: PostResponse = {
         id: commentDetails.id,
         postId: '',
@@ -785,7 +793,8 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
         nextCursor: data.paging?.cursors?.after,
       };
     } catch (error) {
-      console.error('Error fetching Instagram comments:', error);
+      log.error({ content: 'Error fetching Instagram comments', plugin: 'instagram', error: (error as Error).message });
+      this.logPluginEvent('get-comments', 'failure', `Error: ${(error as Error).message}`);
       return {
         platform: this.pluginName,
         postId: externalPostId,
@@ -825,7 +834,8 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
         comment: await this.transformComment(data),
       };
     } catch (error) {
-      console.error('Error replying to Instagram comment:', error);
+      log.error({ content: 'Error replying to Instagram comment', plugin: 'instagram', error: (error as Error).message });
+      this.logPluginEvent('reply-comment-error', 'failure', `Error: ${(error as Error).message}`, commentId);
       return {
         success: false,
         error: (error as Error).message || 'Failed to reply to comment',

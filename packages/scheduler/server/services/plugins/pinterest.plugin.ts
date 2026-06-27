@@ -132,6 +132,8 @@ export class PinterestPlugin extends BaseSchedulerPlugin {
       this.emit('pinterest:post:published', { postId: postResponse.postId, response: data });
       return postResponse;
     } catch (error: unknown) {
+      log.error({ content: 'Pinterest post failed', plugin: 'pinterest', error: (error as Error).message });
+      this.logPluginEvent('post-error', 'failure', `Error: ${(error as Error).message}`, postDetails.id);
       const errorResponse: PostResponse = {
         id: postDetails.id,
         postId: '',
@@ -189,6 +191,8 @@ export class PinterestPlugin extends BaseSchedulerPlugin {
       this.emit('pinterest:post:updated', { postId: postResponse.postId, postDetails });
       return postResponse;
     } catch (error: unknown) {
+      log.error({ content: 'Pinterest update failed', plugin: 'pinterest', error: (error as Error).message });
+      this.logPluginEvent('update-error', 'failure', `Error: ${(error as Error).message}`, postDetails.id);
       const errorResponse: PostResponse = {
         id: postDetails.id,
         postId: '',
@@ -232,7 +236,7 @@ export class PinterestPlugin extends BaseSchedulerPlugin {
       });
 
       if (!userResponse.ok) {
-        console.error('[Pinterest] Failed to fetch user:', userResponse.status);
+        log.error({ content: '[Pinterest] Failed to fetch user', status: userResponse.status });
         return this.createZeroStats(socialMediaAccount);
       }
 
@@ -284,11 +288,13 @@ export class PinterestPlugin extends BaseSchedulerPlugin {
                   totalEngagement += ((pin as Record<string, number>).save_count || 0) + ((pin as Record<string, number>).click_count || 0)
                 }
               }
-            } catch {
+            } catch (error: unknown) {
+              log.error({ content: 'Pinterest board pins fetch failed', plugin: 'pinterest', error: (error as Error).message });
             }
           }
         }
-      } catch {
+      } catch (error: unknown) {
+        log.error({ content: 'Pinterest boards fetch failed', plugin: 'pinterest', error: (error as Error).message });
       }
 
       const base64Picture = userData.profile_image
@@ -333,7 +339,8 @@ export class PinterestPlugin extends BaseSchedulerPlugin {
         },
       }
     } catch (error: unknown) {
-      console.error('[Pinterest] Error fetching stats:', error);
+      log.error({ content: 'Pinterest Error fetching stats', plugin: 'pinterest', error: (error as Error).message });
+      this.logPluginEvent('get-stats', 'failure', `Error: ${(error as Error).message}`);
       return this.createZeroStats(socialMediaAccount);
     }
   }

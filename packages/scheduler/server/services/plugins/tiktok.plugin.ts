@@ -27,7 +27,7 @@ export class TikTokPlugin extends BaseSchedulerPlugin {
       );
 
       if (!response.ok) {
-        console.error('TikTok getStatistic failed:', response.status, await response.text());
+        log.error({ content: 'TikTok getStatistic failed', status: response.status, body: await response.text() });
         return this.fallbackStats(socialMediaAccount);
       }
 
@@ -80,7 +80,8 @@ export class TikTokPlugin extends BaseSchedulerPlugin {
             })
           }
         }
-      } catch {
+      } catch (error: unknown) {
+        log.error({ content: 'TikTok videos fetch failed', plugin: 'tiktok', error: (error as Error).message });
       }
 
       const engagementRate = user.followers_count > 0
@@ -120,7 +121,8 @@ export class TikTokPlugin extends BaseSchedulerPlugin {
         },
       };
     } catch (error: unknown) {
-      console.error('TikTok getStatistic error:', error);
+      log.error({ content: 'TikTok getStatistic error', plugin: 'tiktok', error: (error as Error).message });
+      this.logPluginEvent('get-stats', 'failure', `Error: ${(error as Error).message}`);
       return this.fallbackStats(socialMediaAccount);
     }
   }
@@ -357,6 +359,8 @@ export class TikTokPlugin extends BaseSchedulerPlugin {
       this.emit('tiktok:post:published', { postId: postResponse.postId });
       return postResponse;
     } catch (error: unknown) {
+      log.error({ content: 'TikTok post failed', plugin: 'tiktok', error: (error as Error).message });
+      this.logPluginEvent('post-error', 'failure', `Error: ${(error as Error).message}`, postDetails.id);
       const errorResponse: PostResponse = {
         id: postDetails.id,
         postId: '',
@@ -430,6 +434,8 @@ export class TikTokPlugin extends BaseSchedulerPlugin {
       this.emit('tiktok:comment:added', { commentId: commentResponse.postId, postDetails, commentDetails });
       return commentResponse;
     } catch (error: unknown) {
+      log.error({ content: 'TikTok comment failed', plugin: 'tiktok', error: (error as Error).message });
+      this.logPluginEvent('comment-error', 'failure', `Error: ${(error as Error).message}`, commentDetails.id);
       const errorResponse: PostResponse = {
         id: commentDetails.id,
         postId: '',
@@ -508,7 +514,8 @@ export class TikTokPlugin extends BaseSchedulerPlugin {
         nextCursor: data.cursor ? String(data.cursor) : undefined,
       };
     } catch (error: unknown) {
-      console.error('Error fetching TikTok comments:', error);
+      log.error({ content: 'Error fetching TikTok comments', plugin: 'tiktok', error: (error as Error).message });
+      this.logPluginEvent('get-comments', 'failure', `Error: ${(error as Error).message}`);
       return {
         platform: this.pluginName,
         postId: externalPostId,
@@ -560,7 +567,8 @@ export class TikTokPlugin extends BaseSchedulerPlugin {
         comment: this.transformComment(data.data || { comment_id: data.comment_id, text: replyText }),
       };
     } catch (error: unknown) {
-      console.error('Error replying to TikTok comment:', error);
+      log.error({ content: 'Error replying to TikTok comment', plugin: 'tiktok', error: (error as Error).message });
+      this.logPluginEvent('reply-comment-error', 'failure', `Error: ${(error as Error).message}`, commentId);
       return {
         success: false,
         error: (error as Error).message || 'Failed to reply to comment',

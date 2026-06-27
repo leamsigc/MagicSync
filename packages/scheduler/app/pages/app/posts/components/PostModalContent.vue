@@ -256,6 +256,17 @@ const handleSavePost = async (status: 'pending' | 'published' | 'failed') => {
         firstInvalidPlatform = targetPlatform;
       }
     }
+
+    // Validate required platform settings
+    const platformSettings = postForm.value.platformSettings?.[targetPlatform.platformType];
+    if (targetPlatform.platformType === 'youtube') {
+      if (!platformSettings || !(platformSettings as any).title?.trim()) {
+        validationErrors.value.push({ platform: 'youtube', message: 'YouTube video title is required' });
+        if (!firstInvalidPlatform) {
+          firstInvalidPlatform = targetPlatform;
+        }
+      }
+    }
   }
 
   if (validationErrors.value.length > 0) {
@@ -677,7 +688,7 @@ const handleTranscriptFromRecorder = (text: string) => {
 
                 <!-- Platform-Specific Settings Panel -->
                 <PlatformSettingsPanel v-if="postForm.platformSettings" v-model="postForm.platformSettings"
-                  :platform="explicitPreviewPlatform" />
+                  :platform="explicitPreviewPlatform" :media-assets="postMediaAssets" />
 
                 <div class="mt-4">
                   <h4 class="text-sm font-semibold mb-2">{{ t('newPostModal.commentsTitle') }}</h4>

@@ -22,6 +22,6 @@ export default defineEventHandler(async (event) => {
 
   const result = await businessProfileService.syncFromGMB(user.id, tokens.accessToken)
 
-  log.info('GMB profiles synced', { businessId })
+  log.info({ message: 'GMB profiles synced', businessId })
   return result
 })

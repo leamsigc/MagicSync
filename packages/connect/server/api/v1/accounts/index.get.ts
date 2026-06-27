@@ -7,7 +7,7 @@ export default defineEventHandler(async (event) => {
 
   const result = await socialMediaAccountService.getUserAccountsCompleteDetails(user.id);
 
-  log.info('User accounts retrieved', { accountCount: result.length })
+  log.info({ message: 'User accounts retrieved', accountCount: result.length })
 
   return result;
 });

@@ -12,9 +12,11 @@
  */
 import type { PlatformSettings } from '#layers/BaseScheduler/shared/platformSettings';
 import { createDefaultSettings } from '#layers/BaseScheduler/shared/platformSettings';
+import type { Asset } from '#layers/BaseDB/db/schema';
 
 type Props = {
     platform: string;
+    mediaAssets?: Asset[];
 };
 
 const props = defineProps<Props>();
@@ -33,6 +35,7 @@ const platformComponentMap: Record<string, ReturnType<typeof defineAsyncComponen
     reddit: defineAsyncComponent(() => import('./platform-settings/RedditSettings.vue')),
     devto: defineAsyncComponent(() => import('./platform-settings/DevToSettings.vue')),
     wordpress: defineAsyncComponent(() => import('./platform-settings/WordPressSettings.vue')),
+    youtube: defineAsyncComponent(() => import('./platform-settings/YouTubeSettings.vue')),
 };
 
 const showPanel = computed(() =>
@@ -72,6 +75,7 @@ const platformLabel = computed(() => {
         reddit: 'Reddit',
         devto: 'Dev.to',
         wordpress: 'WordPress',
+        youtube: 'YouTube',
     };
     return labels[props.platform] || props.platform;
 });
@@ -84,7 +88,7 @@ const platformLabel = computed(() => {
             <h4 class="text-sm font-semibold">{{ platformLabel }} Settings</h4>
         </div>
         <Suspense>
-            <component :is="currentComponent" v-model="currentSettings" />
+            <component :is="currentComponent" v-model="currentSettings" :media-assets="props.mediaAssets" />
             <template #fallback>
                 <div class="flex items-center justify-center py-4">
                     <Icon name="lucide:loader-2" class="w-5 h-5 animate-spin text-muted" />

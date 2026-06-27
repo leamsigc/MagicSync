@@ -38,6 +38,6 @@ export default defineEventHandler(async (event) => {
 
   const updated = await reviewService.addResponse(reviewId, user.id, response)
 
-  log.info('GMB review reply sent via plugin', { businessId, reviewId })
+  log.info({ message: 'GMB review reply sent via plugin', businessId, reviewId })
   return updated
 })

@@ -29,13 +29,14 @@ export const useConnectionManager = () => {
     connectionList.value = [
       // Better Auth OAuth platforms (native support)
       { name: 'Facebook', icon: 'logos:facebook', url: '#', platform: 'facebook', authType: 'better-auth', active: true },
+      { name: 'Google', icon: 'logos:google', url: '#', platform: "google", authType: 'better-auth', active: true },
       { name: 'Google Business', icon: 'logos:google', url: '#', platform: "googlemybusiness", authType: 'better-auth', active: true },
       { name: 'LinkedIn', icon: 'logos:linkedin-icon', url: '#', platform: "linkedin", authType: 'better-auth', active: true },
       { name: 'X (Twitter)', icon: 'logos:twitter', url: '#', platform: "twitter", authType: 'better-auth', active: true },
       { name: 'TikTok', icon: 'logos:tiktok-icon', url: '#', platform: "tiktok", authType: 'better-auth', active: false },
       { name: 'Discord', icon: 'logos:discord-icon', url: '#', platform: "discord", authType: 'better-auth', active: false },
       { name: 'Reddit', icon: 'logos:reddit-icon', url: '#', platform: "reddit", authType: 'better-auth', active: false },
-      { name: 'YouTube', icon: 'logos:youtube-icon', url: '#', platform: "youtube", authType: 'better-auth', active: false },
+      { name: 'YouTube', icon: 'logos:youtube-icon', url: '#', platform: "youtube", authType: 'manual-oauth', active: true },
 
       // Better Auth Generic OAuth platforms
       { name: 'Instagram', icon: 'logos:instagram-icon', url: '#', platform: "instagram", authType: 'manual-oauth', active: true },
@@ -106,11 +107,17 @@ export const useConnectionManager = () => {
     try {
       const response = await $fetch<Promise<SocialMediaAccount[]>>('/api/v1/social-accounts?platformId=' + connectionId);
 
-      if (connectionId === 'facebook' || connectionId === 'linkedin-page') {
+      if (connectionId === 'facebook' || connectionId === 'linkedin-page' || connectionId === 'youtube' || connectionId === 'google') {
         facebookPages.value = (response as unknown as FacebookPage[])
       }
     } catch (error) {
       console.error('Error adding business:', error);
+      toast.add({
+        title: 'Failed to Fetch Pages',
+        description: `Could not retrieve pages for ${connectionId}. The token may have expired. Try reconnecting.`,
+        icon: 'i-heroicons-x-circle',
+        color: 'error',
+      });
       throw error;
     }
   }
@@ -178,6 +185,59 @@ export const useConnectionManager = () => {
     }
   }
 
+  const HandleConnectToYoutube = async (page: FacebookPage & { platformType?: string }) => {
+    try {
+      const { activeBusinessId } = useBusinessManager()
+      const res = await $fetch<Promise<SocialMediaAccount>>(`/api/v1/social-accounts/youtube/${page.id}`, {
+        method: 'POST',
+        body: { ...page, platformId: 'youtube', businessId: activeBusinessId.value },
+      });
+      toast.add({
+        title: 'Success',
+        description: 'Successfully connected to YouTube channel ' + page.name,
+        icon: 'i-heroicons-check-circle',
+        color: 'success',
+      });
+
+      await getAllSocialMediaAccounts();
+    } catch (error) {
+      console.error('Error connecting YouTube channel:', error);
+      toast.add({
+        title: 'Error',
+        description: 'Failed to connect to YouTube channel ' + page.name,
+        icon: 'i-heroicons-x-circle',
+        color: 'error',
+      });
+      throw error;
+    }
+  }
+  const HandleConnectToGMB = async (page: FacebookPage & { platformType?: string }) => {
+    try {
+      const { activeBusinessId } = useBusinessManager()
+      const res = await $fetch<Promise<SocialMediaAccount>>(`/api/v1/social-accounts/googlemybusiness/${page.id}`, {
+        method: 'POST',
+        body: { ...page, platformId: 'googlemybusiness', businessId: activeBusinessId.value },
+      });
+      toast.add({
+        title: 'Success',
+        description: 'Successfully connected to GMB location ' + page.name,
+        icon: 'i-heroicons-check-circle',
+        color: 'success',
+      });
+
+      await getAllSocialMediaAccounts();
+    } catch (error) {
+      console.error('Error connecting GMB location:', error);
+      toast.add({
+        title: 'Error',
+        description: 'Failed to connect to GMB location ' + page.name,
+        icon: 'i-heroicons-x-circle',
+        color: 'error',
+      });
+      throw error;
+    }
+  }
+
   const getAllAccountDetails = async () => {
     try {
       const response = await $fetch<Promise<AccountComplete[]>>('/api/v1/accounts');
@@ -192,7 +252,7 @@ export const useConnectionManager = () => {
   const handleDisconnect = async (id: string) => {
     try {
       await $fetch(`/api/v1/social-accounts/${id}`, {
-        method: 'DELETE',
+        method: 'DELETE' as any,
       });
       await getAllSocialMediaAccounts();
       toast.add({
@@ -226,6 +286,8 @@ export const useConnectionManager = () => {
     getPagesForIntegration,
     HandleConnectToFacebook,
     HandleConnectToLinkedIn,
+    HandleConnectToYoutube,
+    HandleConnectToGMB,
     getAllSocialMediaAccounts,
     getAllAccountDetails
   }

@@ -42,7 +42,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  log.info('Business profile created', { businessId: newBusiness.data?.id })
+  log.info({ message: 'Business profile created', businessId: newBusiness.data?.id })
 
   return newBusiness;
 });

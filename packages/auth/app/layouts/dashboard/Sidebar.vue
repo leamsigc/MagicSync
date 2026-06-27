@@ -6,7 +6,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  collapsed: false
+  collapsed: true
 })
 </script>
 

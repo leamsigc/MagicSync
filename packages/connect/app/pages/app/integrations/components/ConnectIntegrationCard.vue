@@ -35,7 +35,9 @@ interface Props {
   showMenu?: boolean;
   health?: HealthStatus;
 }
-const { getPagesForIntegration, HandleConnectToFacebook, facebookPages, handleDisconnect, HandleConnectToLinkedIn, getAllSocialMediaAccounts } = useConnectionManager();
+
+const { t } = useI18n();
+const { getPagesForIntegration, HandleConnectToFacebook, facebookPages, handleDisconnect, HandleConnectToLinkedIn, HandleConnectToYoutube, HandleConnectToGMB, getAllSocialMediaAccounts } = useConnectionManager();
 
 const modalStatus = ref(false);
 const toggleModal = () => {
@@ -83,13 +85,23 @@ const items = computed(() => [
 ]);
 
 const HandleConnectTo = async (page: unknown) => {
-  if (props.name === 'facebook') {
-    await HandleConnectToFacebook(page as FacebookPage);
-  } else if (props.name === 'linkedin-page') {
-    await HandleConnectToLinkedIn(page as LinkedInPage);
-  }
+  const pageWithType = page as FacebookPage & { platformType?: string };
 
-  toggleModal();
+  try {
+    if (pageWithType.platformType === 'youtube') {
+      await HandleConnectToYoutube(pageWithType);
+    } else if (pageWithType.platformType === 'googlemybusiness') {
+      await HandleConnectToGMB(pageWithType);
+    } else if (props.name === 'facebook') {
+      await HandleConnectToFacebook(page as FacebookPage);
+    } else if (props.name === 'linkedin-page') {
+      await HandleConnectToLinkedIn(page as LinkedInPage);
+    }
+  } catch {
+    // Error toast already handled by the respective handler
+  } finally {
+    toggleModal();
+  }
 };
 
 const handleEditSaved = async () => {
@@ -110,9 +122,9 @@ const handleEditSaved = async () => {
         <p class="text-sm text-gray-500 dark:text-gray-400"> {{ props.time }}</p>
         <p class="text-sm text-gray-500 dark:text-gray-400"> {{ props.tags.join(', ') }}</p>
         <div class="flex items-center justify-center gap-2 mt-2">
-          <UBadge v-if="props.connected" color="success" variant="subtle">{{ $t('states.connected') }}
+          <UBadge v-if="props.connected" color="success" variant="subtle">{{ t('states.connected') }}
           </UBadge>
-          <UBadge v-else color="error" variant="subtle">{{ $t('states.not_connected') }}</UBadge>
+          <UBadge v-else color="error" variant="subtle">{{ t('states.not_connected') }}</UBadge>
           <template v-if="props.health && props.connected">
             <UTooltip v-if="props.health.status === 'healthy'" text="Token valid">
               <span class="inline-flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
@@ -147,8 +159,8 @@ const handleEditSaved = async () => {
       </div>
     </section>
   </UPageCard>
-  <UModal v-model:open="modalStatus" :title="$t('modal.select_page_title')"
-    :description="$t('modal.select_page_description')" class="md:min-w-4xl">
+  <UModal v-model:open="modalStatus" :title="t('modal.select_page_title')"
+    :description="t('modal.select_page_description')" class="md:min-w-4xl">
 
     <template #body>
       <section class="grid md:grid-cols-3 gap-2">
@@ -159,9 +171,11 @@ const handleEditSaved = async () => {
             <UAvatar :src="page.imageBase64 || page.picture.data.url" class="size-20 border border-primary relative" />
             <section class="text-center">
               <h3 class="text-lg font-semibold">{{ page.name }}</h3>
-              <p class="text-sm text-gray-500 dark:text-gray-400">{{ $t('modal.id_label') }}{{ page.id }}</p>
+              <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('modal.id_label') }}{{ page.id }}</p>
               <Icon v-if="page.instagram_business_account?.id" name="logos:instagram" />
               <Icon v-else-if="props.icon === 'logos:linkedin-page'" name="logos:linkedin" class="mr-4" />
+              <Icon v-else-if="page.platformType === 'youtube'" name="logos:youtube" class="mr-4" />
+              <Icon v-else-if="page.platformType === 'googlemybusiness'" name="logos:google" class="mr-4" />
               <Icon v-else name="logos:facebook" class="mr-4" />
             </section>
           </section>

@@ -28,7 +28,8 @@
     "typescript": "catalog:",
     "vue": "catalog:",
     "tailwindcss": "catalog:",
-    "evlog": "catalog:"
+    "evlog": "catalog:",
+    "driver.js": "catalog:"
   },
   "dependencies": {
     "@nuxt/fonts": "catalog:",

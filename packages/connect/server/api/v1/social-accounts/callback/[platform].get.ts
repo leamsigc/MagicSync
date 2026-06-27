@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
 
     // Validate required state parameter for CSRF protection
     if (!state) {
-      log.error('OAuth callback missing state parameter')
+      log.error({ message: 'OAuth callback missing state parameter' })
       throw createError({
         statusCode: 400,
         statusMessage: 'OAuth state parameter is required'
@@ -32,7 +32,7 @@ export default defineEventHandler(async (event) => {
       const decodedState = Buffer.from(state, 'base64url').toString('utf-8')
       statePayload = JSON.parse(decodedState)
     } catch {
-      log.error('OAuth callback has invalid state format')
+      log.error({ message: 'OAuth callback has invalid state format' })
       throw createError({
         statusCode: 400,
         statusMessage: 'Invalid OAuth state format'
@@ -41,7 +41,7 @@ export default defineEventHandler(async (event) => {
 
     // Validate state payload structure
     if (!statePayload.businessId || typeof statePayload.businessId !== 'string') {
-      log.error('OAuth state missing valid businessId')
+      log.error({ message: 'OAuth state missing valid businessId' })
       throw createError({
         statusCode: 400,
         statusMessage: 'Invalid OAuth state: missing businessId'
@@ -52,7 +52,7 @@ export default defineEventHandler(async (event) => {
     const now = Date.now()
     const stateAge = (now - statePayload.timestamp) / 1000 // in seconds
     if (stateAge > STATE_COOKIE_MAX_AGE || stateAge < -60) {
-      log.error('OAuth state has expired or is invalid', { stateAge, maxAge: STATE_COOKIE_MAX_AGE })
+      log.error({ message: 'OAuth state has expired or is invalid', stateAge, maxAge: STATE_COOKIE_MAX_AGE })
       throw createError({
         statusCode: 400,
         statusMessage: 'OAuth state has expired. Please try connecting again.'
@@ -64,7 +64,7 @@ export default defineEventHandler(async (event) => {
 
     // Handle OAuth errors
     if (error) {
-      log.error('OAuth error during callback', { platform, error })
+      log.error({ message: 'OAuth error during callback', platform, error })
       throw createError({
         statusCode: 400,
         statusMessage: `OAuth error: ${error}`
@@ -95,12 +95,12 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    log.info('OAuth callback successful', { platform, userId: user.id })
+    log.info({ message: 'OAuth callback successful', platform, userId: user.id })
 
     sendRedirect(event, '/app/integrations')
 
   } catch (error) {
-    log.error('Error handling OAuth callback', { error })
+    log.error({ message: 'Error handling OAuth callback', error })
 
     // Redirect to error page
     const baseUrl = BASE_URL || 'http://localhost:3000'

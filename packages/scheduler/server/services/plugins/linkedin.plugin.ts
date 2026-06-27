@@ -130,7 +130,7 @@ export class LinkedInPlugin extends BaseSchedulerPlugin {
       headers: {
         'Content-Type': 'application/octet-stream',
       },
-        body: imageBuffer as unknown as BodyInit,
+      body: imageBuffer as unknown as BodyInit,
     });
 
     return asset;
@@ -231,7 +231,7 @@ export class LinkedInPlugin extends BaseSchedulerPlugin {
       this.emit('linkedin:post:published', { postId: postResponse.postId, response: data });
       return postResponse;
     } catch (error: unknown) {
-
+      log.error({ content: 'LinkedIn post failed', plugin: 'linkedin', error: (error as Error).message });
       this.logPluginEvent('LinkedIn:post-error', 'failure', `Error: ${(error as Error).message}`, postDetails.id);
       const errorResponse: PostResponse = {
         id: postDetails.id,
@@ -308,7 +308,8 @@ export class LinkedInPlugin extends BaseSchedulerPlugin {
         totalImpressions += impressions
         totalEngagement += likes + comments + shares
       }
-    } catch {
+    } catch (error: unknown) {
+      log.error({ content: 'LinkedIn posts fetch failed', plugin: 'linkedin', error: (error as Error).message });
     }
 
     const connections = profile.numConnections || 0
@@ -400,6 +401,8 @@ export class LinkedInPlugin extends BaseSchedulerPlugin {
       this.emit('linkedin:comment:added', { commentId: commentResponse.postId, postDetails, commentDetails });
       return commentResponse;
     } catch (error: unknown) {
+      log.error({ content: 'LinkedIn comment failed', plugin: 'linkedin', error: (error as Error).message });
+      this.logPluginEvent('comment-error', 'failure', `Error: ${(error as Error).message}`, commentDetails.id);
       const errorResponse: PostResponse = {
         id: commentDetails.id,
         postId: '',
@@ -479,7 +482,8 @@ export class LinkedInPlugin extends BaseSchedulerPlugin {
         nextCursor: data.paging?.start + data.paging?.count < data.paging?.total ? String(data.paging?.start + data.paging?.count) : undefined,
       };
     } catch (error) {
-      console.error('Error fetching LinkedIn comments:', error);
+      log.error({ content: 'Error fetching LinkedIn comments', plugin: 'linkedin', error: (error as Error).message });
+      this.logPluginEvent('get-comments', 'failure', `Error: ${(error as Error).message}`);
       return {
         platform: this.pluginName,
         postId: externalPostId,
@@ -533,7 +537,8 @@ export class LinkedInPlugin extends BaseSchedulerPlugin {
         comment: this.transformComment(data),
       };
     } catch (error) {
-      console.error('Error replying to LinkedIn comment:', error);
+      log.error({ content: 'Error replying to LinkedIn comment', plugin: 'linkedin', error: (error as Error).message });
+      this.logPluginEvent('reply-comment-error', 'failure', `Error: ${(error as Error).message}`, commentId);
       return {
         success: false,
         error: (error as Error).message || 'Failed to reply to comment',

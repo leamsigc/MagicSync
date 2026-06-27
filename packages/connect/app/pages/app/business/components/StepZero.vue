@@ -38,11 +38,11 @@ const completedActions = computed(() => Object.values(stepZeroState.value).filte
 // Social media links configuration
 const socialLinks = {
   starGithub: 'https://github.com/leamsigc/production-example-nuxt-monorepo',
-  followTwitter: 'https://twitter.com/yourusername',
-  followLinkedin: 'https://linkedin.com/company/yourcompany',
-  followBluesky: 'https://bsky.app/profile/yourhandle.bsky.social',
-  followInstagram: 'https://instagram.com/yourusername',
-  followFacebook: 'https://facebook.com/yourpage'
+  followTwitter: 'https://twitter.com/leamsigc',
+  followLinkedin: 'https://linkedin.com/in/leamsigc',
+  followBluesky: 'https://bsky.app/profile/leamsigc.com',
+  followInstagram: 'https://instagram.com/leamsigc',
+  followFacebook: 'https://facebook.com/leamsigc'
 }
 
 const handleActionClick = (action: keyof StepZeroActions) => {
@@ -62,7 +62,8 @@ const handleSkip = () => {
 </script>
 
 <template>
-  <div class="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-2xl mx-auto w-full">
+  <div class="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-2xl mx-auto w-full" 
+      data-test="step-zero">
     <!-- Header -->
     <div class="mb-8 text-center">
       <h2 class="text-2xl font-bold text-gray-900 dark:text-white tracking-tight mb-2">
@@ -111,7 +112,7 @@ const handleSkip = () => {
       <!-- Follow Twitter -->
       <div
         class="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-        @click="handleActionClick('followTwitter')">
+        @click="handleActionClick('followTwitter')" data-test="step-zero-follow-twitter">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
             <UIcon name="lucide:twitter" class="w-5 h-5 text-blue-600 dark:text-blue-400" />
@@ -216,7 +217,8 @@ const handleSkip = () => {
         {{ t('step_zero.continue') }}
       </UButton>
 
-      <UButton color="neutral" variant="outline" size="lg" class="flex-1 justify-center" @click="handleSkip">
+      <UButton color="neutral" variant="outline" size="lg" class="flex-1 justify-center" 
+      data-test="step-zero-skip" @click="handleSkip">
         {{ t('step_zero.skip') }}
       </UButton>
     </div>

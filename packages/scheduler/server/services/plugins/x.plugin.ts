@@ -229,6 +229,7 @@ export class XPlugin extends BaseSchedulerPlugin {
       this.emit('x:post:published', { postId: postResponse.postId, response: tweetData.data });
       return postResponse;
     } catch (error: unknown) {
+      log.error({ content: 'X post failed', plugin: 'twitter', error: (error as Error).message });
       this.logPluginEvent('post-error', 'failure', (error as Error).message);
 
       const errorResponse: PostResponse = {
@@ -280,6 +281,8 @@ export class XPlugin extends BaseSchedulerPlugin {
       this.emit('x:post:updated', { postId: postResponse.postId, postDetails });
       return postResponse;
     } catch (error: unknown) {
+      log.error({ content: 'X update failed', plugin: 'twitter', error: (error as Error).message });
+      this.logPluginEvent('update-error', 'failure', `Error: ${(error as Error).message}`, postDetails.id);
       const errorResponse: PostResponse = {
         id: postDetails.id,
         postId: '',
@@ -347,7 +350,8 @@ export class XPlugin extends BaseSchedulerPlugin {
 
       topTweets.sort((a, b) => b.engagement - a.engagement)
       topTweets = topTweets.slice(0, 10)
-    } catch {
+    } catch (error: unknown) {
+      log.error({ content: 'X timeline fetch failed', plugin: 'twitter', error: (error as Error).message });
     }
 
     const followersCount = profile.public_metrics?.followers_count || 0
@@ -420,6 +424,8 @@ export class XPlugin extends BaseSchedulerPlugin {
       this.emit('x:comment:added', { commentId: commentResponse.postId, postDetails, commentDetails });
       return commentResponse;
     } catch (error: unknown) {
+      log.error({ content: 'X comment failed', plugin: 'twitter', error: (error as Error).message });
+      this.logPluginEvent('comment-error', 'failure', `Error: ${(error as Error).message}`, commentDetails.id);
       const errorResponse: PostResponse = {
         id: commentDetails.id,
         postId: '',
@@ -521,7 +527,8 @@ export class XPlugin extends BaseSchedulerPlugin {
         hasMore: false,
       };
     } catch (error) {
-      console.error('Error fetching comments:', error);
+      log.error({ content: 'Error fetching X comments', plugin: 'twitter', error: (error as Error).message });
+      this.logPluginEvent('get-comments', 'failure', `Error: ${(error as Error).message}`);
       // Return empty on error rather than throwing, consistent with Facebook plugin behavior
       return {
         platform: this.pluginName,
@@ -534,7 +541,6 @@ export class XPlugin extends BaseSchedulerPlugin {
 
   /**
    * Reply to a comment (tweet)
-   * commentId is the tweet ID to reply to
    */
   async replyToComment(
     postDetails: PluginPostDetails,
@@ -555,7 +561,8 @@ export class XPlugin extends BaseSchedulerPlugin {
         comment: await this.transformTweetToComment(reply.data),
       };
     } catch (error) {
-      console.error('Error replying to comment:', error);
+      log.error({ content: 'Error replying to X comment', plugin: 'twitter', error: (error as Error).message });
+      this.logPluginEvent('reply-comment-error', 'failure', `Error: ${(error as Error).message}`, commentId);
       return {
         success: false,
         error: (error as Error).message || 'Failed to reply to comment',

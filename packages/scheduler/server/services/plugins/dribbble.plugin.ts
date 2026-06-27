@@ -18,7 +18,7 @@ export class DribbblePlugin extends BaseSchedulerPlugin {
       });
 
       if (!userResponse.ok) {
-        console.warn(`Dribbble API error: ${userResponse.statusText}`);
+        log.warn({ content: 'Dribbble API error', statusText: userResponse.statusText });
         return this.getZeroStats(socialMediaAccount);
       }
 
@@ -73,7 +73,8 @@ export class DribbblePlugin extends BaseSchedulerPlugin {
 
           topShots.sort((a, b) => b.likes - a.likes)
         }
-      } catch {
+      } catch (error: unknown) {
+        log.error({ content: 'Dribbble shots fetch failed', plugin: 'dribbble', error: (error as Error).message });
       }
 
       const totalEngagement = totalLikes + totalComments + totalRebounds
@@ -119,7 +120,8 @@ export class DribbblePlugin extends BaseSchedulerPlugin {
         },
       };
     } catch (error: unknown) {
-      console.error('Error fetching Dribbble stats:', error);
+      log.error({ content: 'Error fetching Dribbble stats', plugin: 'dribbble', error: (error as Error).message });
+      this.logPluginEvent('get-stats', 'failure', `Error: ${(error as Error).message}`);
       return this.getZeroStats(socialMediaAccount);
     }
   }
@@ -322,6 +324,8 @@ export class DribbblePlugin extends BaseSchedulerPlugin {
       this.emit('dribbble:post:published', { postId: postResponse.postId, response: data });
       return postResponse;
     } catch (error: unknown) {
+      log.error({ content: 'Dribbble post failed', plugin: 'dribbble', error: (error as Error).message });
+      this.logPluginEvent('post-error', 'failure', `Error: ${(error as Error).message}`, postDetails.id);
       const errorResponse: PostResponse = {
         id: postDetails.id,
         postId: '',
@@ -390,6 +394,8 @@ export class DribbblePlugin extends BaseSchedulerPlugin {
       this.emit('dribbble:post:updated', { postId: postResponse.postId, postDetails });
       return postResponse;
     } catch (error: unknown) {
+      log.error({ content: 'Dribbble update failed', plugin: 'dribbble', error: (error as Error).message });
+      this.logPluginEvent('update-error', 'failure', `Error: ${(error as Error).message}`, postDetails.id);
       const errorResponse: PostResponse = {
         id: postDetails.id,
         postId: '',
@@ -443,6 +449,8 @@ export class DribbblePlugin extends BaseSchedulerPlugin {
       this.emit('dribbble:comment:added', { commentId: commentResponse.postId, postDetails, commentDetails });
       return commentResponse;
     } catch (error: unknown) {
+      log.error({ content: 'Dribbble comment failed', plugin: 'dribbble', error: (error as Error).message });
+      this.logPluginEvent('comment-error', 'failure', `Error: ${(error as Error).message}`, commentDetails.id);
       const errorResponse: PostResponse = {
         id: commentDetails.id,
         postId: '',
@@ -457,7 +465,6 @@ export class DribbblePlugin extends BaseSchedulerPlugin {
 
   /**
    * Get comments for a Dribbble shot
-   * Note: Dribbble does not have a public comments API
    */
   async getComments(
     postDetails: PluginPostDetails,

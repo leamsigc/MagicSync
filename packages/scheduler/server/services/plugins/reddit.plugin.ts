@@ -233,6 +233,8 @@ export class RedditPlugin extends BaseSchedulerPlugin {
 
       return postResponse;
     } catch (error: unknown) {
+      log.error({ content: 'Reddit post failed', plugin: 'reddit', error: (error as Error).message });
+      this.logPluginEvent('post-error', 'failure', `Error: ${(error as Error).message}`, postDetails.id);
       const errorResponse: PostResponse = {
         id: postDetails.id,
         postId: '',
@@ -295,6 +297,8 @@ export class RedditPlugin extends BaseSchedulerPlugin {
 
       return postResponse;
     } catch (error: unknown) {
+      log.error({ content: 'Reddit update failed', plugin: 'reddit', error: (error as Error).message });
+      this.logPluginEvent('update-error', 'failure', `Error: ${(error as Error).message}`, postDetails.id);
       const errorResponse: PostResponse = {
         id: postDetails.id,
         postId: '',
@@ -373,7 +377,8 @@ export class RedditPlugin extends BaseSchedulerPlugin {
 
           topPosts.sort((a, b) => b.score - a.score)
         }
-      } catch {
+      } catch (error: unknown) {
+        log.error({ content: 'Reddit submissions fetch failed', plugin: 'reddit', error: (error as Error).message });
       }
 
       let totalCommentKarma = 0
@@ -397,7 +402,8 @@ export class RedditPlugin extends BaseSchedulerPlugin {
             totalCommentKarma += (comment.data as Record<string, unknown>)?.score as number || 0
           }
         }
-      } catch {
+      } catch (error: unknown) {
+        log.error({ content: 'Reddit comments fetch failed', plugin: 'reddit', error: (error as Error).message });
       }
 
       const totalEngagement = totalScore + totalComments + totalCommentKarma
@@ -445,7 +451,8 @@ export class RedditPlugin extends BaseSchedulerPlugin {
         },
       }
     } catch (error: unknown) {
-      console.error('Error fetching Reddit stats:', error);
+      log.error({ content: 'Error fetching Reddit stats', plugin: 'reddit', error: (error as Error).message });
+      this.logPluginEvent('get-stats', 'failure', `Error: ${(error as Error).message}`);
       return this.getZeroStats(socialMediaAccount);
     }
   }
@@ -507,6 +514,8 @@ export class RedditPlugin extends BaseSchedulerPlugin {
 
       return commentResponse;
     } catch (error: unknown) {
+      log.error({ content: 'Reddit comment failed', plugin: 'reddit', error: (error as Error).message });
+      this.logPluginEvent('comment-error', 'failure', `Error: ${(error as Error).message}`, commentDetails.id);
       const errorResponse: PostResponse = {
         id: commentDetails.id,
         postId: '',
@@ -592,7 +601,8 @@ export class RedditPlugin extends BaseSchedulerPlugin {
         nextCursor: data[1]?.data?.after,
       };
     } catch (error: unknown) {
-      console.error('Error fetching Reddit comments:', error);
+      log.error({ content: 'Error fetching Reddit comments', plugin: 'reddit', error: (error as Error).message });
+      this.logPluginEvent('get-comments', 'failure', `Error: ${(error as Error).message}`);
       return {
         platform: this.pluginName,
         postId: externalPostId,
@@ -638,7 +648,8 @@ export class RedditPlugin extends BaseSchedulerPlugin {
         comment: this.transformComment(newComment),
       };
     } catch (error: unknown) {
-      console.error('Error replying to Reddit comment:', error);
+      log.error({ content: 'Error replying to Reddit comment', plugin: 'reddit', error: (error as Error).message });
+      this.logPluginEvent('reply-comment-error', 'failure', `Error: ${(error as Error).message}`, commentId);
       return {
         success: false,
         error: (error as Error).message || 'Failed to reply to comment',
