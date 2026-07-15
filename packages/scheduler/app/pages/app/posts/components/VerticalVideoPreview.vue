@@ -29,7 +29,7 @@ const formattedContent = computed(() => {
         <div class="absolute inset-0 bg-zinc-800 flex items-center justify-center">
             <template v-if="mediaAssets.length > 0">
                 <video v-if="mediaAssets[0]?.mimeType?.startsWith('video/')"
-                    class="w-full h-full object-cover opacity-60" :src="mediaAssets[0]?.url" muted />
+                    class="w-full h-full object-cover opacity-60" :src="mediaAssets[0]?.url"   autoplay loop controls />
                 <img v-else :src="mediaAssets[0]?.url" class="w-full h-full object-cover opacity-60" alt="Background" />
             </template>
             <div v-else class="text-center opacity-50">

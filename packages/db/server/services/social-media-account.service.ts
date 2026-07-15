@@ -95,6 +95,15 @@ export class SocialMediaAccountService implements SocialMediaAccountServiceType 
     return details
 
   }
+  async getBetterAuthAccountId(providerId: string, userId: string, smAccountId: string): Promise<Account | null> {
+    return await this.db.query.account.findFirst({
+      where: and(
+        eq(account.providerId, providerId),
+        eq(account.userId, userId),
+        eq(account.accountId, smAccountId)
+      )
+    }) || null;
+  }
   async getUserAccountsCompleteDetails(id: string) {
     const userAccounts = await this.db.query.account.findMany({
       where: eq(account.userId, id),
@@ -475,12 +484,12 @@ export class SocialMediaAccountService implements SocialMediaAccountServiceType 
   /**
    * Check if token is expired or about to expire (within 5 minutes)
    */
-  isTokenExpired(account: SocialMediaAccount): boolean {
-    if (!account.tokenExpiresAt) return false
+  isTokenExpired(account: Account): boolean {
+    if (!account.accessTokenExpiresAt) return false
 
-    const expirationTime = typeof account.tokenExpiresAt === 'number'
-      ? account.tokenExpiresAt * 1000
-      : account.tokenExpiresAt.getTime()
+    const expirationTime = typeof account.accessTokenExpiresAt === 'number'
+      ? account.accessTokenExpiresAt * 1000
+      : account.accessTokenExpiresAt.getTime()
 
     const fiveMinutesFromNow = Date.now() + (5 * 60 * 1000)
     return expirationTime <= fiveMinutesFromNow

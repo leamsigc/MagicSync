@@ -38,7 +38,7 @@ export const useDashboardNavigation = () => {
         icon: 'i-lucide-image',
         to: '/app/media',
         active: route.path.startsWith('/app/media'),
-        defaultOpen: true,
+        defaultOpen: false,
         children: [
           {
             label: menuData.menu.editImage,
@@ -62,7 +62,7 @@ export const useDashboardNavigation = () => {
         icon: 'i-lucide-calendar',
         to: '/app/calendar',
         active: route.path.startsWith('/app/calendar'),
-        defaultOpen: true,
+        defaultOpen: false,
         children: [
           {
             label: menuData.menu.view,
@@ -111,7 +111,7 @@ export const useDashboardNavigation = () => {
         icon: 'i-lucide-plug',
         to: '/app/integrations',
         active: route.path.startsWith('/app/integrations'),
-        defaultOpen: true,
+        defaultOpen: false,
         children: [
           {
             label: menuData.menu.active,
@@ -130,7 +130,7 @@ export const useDashboardNavigation = () => {
         icon: 'i-lucide-users',
         to: '/app/business',
         active: route.path.startsWith('/app/business'),
-        defaultOpen: true,
+        defaultOpen: false,
         children: [
           {
             label: menuData.menu.all,
@@ -148,45 +148,45 @@ export const useDashboardNavigation = () => {
       {
         label: menuData.menu.tools,
         icon: 'i-lucide-box',
-        to: '/app/ai-tools',
-        active: route.path.startsWith('/app/ai-tools') || route.path.startsWith('/tools'),
-        defaultOpen: true,
+        to: '/app/tools',
+        active: route.path.startsWith('/app/tools') || route.path.startsWith('/tools'),
+        defaultOpen: false,
         children: [
           {
             label: menuData.menu.aitools,
-            to: '/app/ai-tools/content-split',
+            to: '/app/tools/content-split',
             icon: 'i-lucide-sparkles'
           },
-          {
-            label: menuData.menu.chat,
-            to: '/app/ai-tools/chat',
-            icon: 'i-lucide-message-square'
-          },
+          // {
+          //   label: menuData.menu.chat,
+          //   to: '/app/ai-tools/chat',
+          //   icon: 'i-lucide-message-square'
+          // },
           {
             label: menuData.menu.growthStrategies,
-            to: '/app/ai-tools/growth-stratergy',
+            to: '/app/tools/growth-stratergy',
             icon: 'i-lucide-trending-up'
           },
-          {
-            label: menuData.menu.aiToolsTools,
-            to: '/app/ai-tools/tools',
-            icon: 'i-lucide-wrench'
-          },
-          {
-            label: menuData.menu.aiToolsSettings,
-            to: '/app/ai-tools/settings',
-            icon: 'i-lucide-settings'
-          },
-          {
-            label: menuData.menu.analytics,
-            to: '/app/ai-tools/knowledge',
-            icon: 'i-lucide-folder'
-          },
-          {
-            label: menuData.menu.aiToolsSkills,
-            to: '/app/ai-tools/skills',
-            icon: 'i-lucide-sparkles'
-          }
+          // {
+          //   label: menuData.menu.aiToolsTools,
+          //   to: '/app/ai-tools/tools',
+          //   icon: 'i-lucide-wrench'
+          // },
+          // {
+          //   label: menuData.menu.aiToolsSettings,
+          //   to: '/app/ai-tools/settings',
+          //   icon: 'i-lucide-settings'
+          // },
+          // {
+          //   label: menuData.menu.analytics,
+          //   to: '/app/ai-tools/knowledge',
+          //   icon: 'i-lucide-folder'
+          // },
+          // {
+          //   label: menuData.menu.aiToolsSkills,
+          //   to: '/app/ai-tools/skills',
+          //   icon: 'i-lucide-sparkles'
+          // }
         ]
       },
       {
@@ -194,7 +194,7 @@ export const useDashboardNavigation = () => {
         icon: 'i-lucide-layout',
         to: '/app/templates',
         active: route.path.startsWith('/app/templates'),
-        defaultOpen: true,
+        defaultOpen: false,
         children: [
           {
             label: menuData.menu.chat,
@@ -223,7 +223,7 @@ export const useDashboardNavigation = () => {
         icon: 'i-lucide-settings',
         to: '/app/settings',
         active: route.path.startsWith('/app/settings') || route.path.startsWith('/app/profile') || route.path.startsWith('/app/account'),
-        defaultOpen: true,
+        defaultOpen: false,
         children: [
           {
             label: menuData.menu.profile,
@@ -255,7 +255,7 @@ export const useDashboardNavigation = () => {
         icon: 'i-lucide-shield',
         to: '/app/admin',
         active: route.path.startsWith('/admin'),
-        defaultOpen: true,
+        defaultOpen: false,
         children: [
           {
             label: 'Dashboard',

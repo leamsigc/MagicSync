@@ -116,7 +116,7 @@ onMounted(() => {
   <div class="space-y-3">
     <div class="flex items-center justify-between gap-2">
       <div class="flex items-center gap-2 flex-wrap">
-        <UButton color="neutral" variant="outline" size="sm" @click="showFilters = !showFilters">
+        <UButton color="neutral" variant="outline" size="sm" @click="() => {showFilters = !showFilters}">
           <Icon name="lucide:filter" class="mr-2 h-4 w-4" />
           Filters
           <UBadge v-if="filtersCount > 0" color="primary" variant="solid" class="ml-2">

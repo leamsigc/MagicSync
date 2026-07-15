@@ -34,7 +34,7 @@ export default defineEventHandler(async (event) => {
 
     // Parse filter parameters
     const filters: any = {}
-    if (query.status) {
+    if (query.status && query.status !== 'undefined') {
       filters.status = query.status as string
     }
     if (query.startDate) {
@@ -46,10 +46,10 @@ export default defineEventHandler(async (event) => {
     if (query.dateType) {
       filters.dateType = query.dateType as string
     }
-    if (query.postFormat) {
+    if (query.postFormat && query.postFormat !== 'undefined') {
       filters.postFormat = query.postFormat as string
     }
-    if (query.platforms) {
+    if (query.platforms && query.platforms !== 'undefined') {
       filters.platforms = (query.platforms as string).split(',')
     }
 

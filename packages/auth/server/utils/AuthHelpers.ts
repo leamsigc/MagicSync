@@ -47,14 +47,22 @@ export const getAccessTokenHelper = async (
   }
 ) => {
 
-  return await auth.api.getAccessToken({
-    body: {
-      providerId: options.providerId,
-      accountId: options.accountId,
-      userId: options.userId
-    },
-    headers: eventOrHeaders // headers containing the user's session token
-  })
+  log.info({ message: '### Token Helper####', providerId: options.providerId, accountId: options.accountId, userId: options.userId })
+  try {
+    const resp = await auth.api.getAccessToken({
+      body: {
+        providerId: options.providerId,
+        accountId: options.accountId,
+        userId: options.userId
+      },
+      headers: eventOrHeaders // headers containing the user's session token
+    })
+    log.info({ message: 'Got access token', response: resp })
+    return resp;
+  } catch (error) {
+    log.info({ message: 'Error getting access token', error: error })
+
+  }
 }
 
 /**

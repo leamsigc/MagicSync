@@ -676,7 +676,10 @@ const handleTranscriptFromRecorder = (text: string) => {
                     </template>
                     <template #assetsList>
                       <section v-for="asset in postMediaAssets">
-                        <img :src="asset.url" :alt="asset.filename" class="size-20 rounded-2xl">
+
+                        <img v-if="asset.mimeType === 'image'" :src="asset.url" :alt="asset.filename" class="size-20 rounded-2xl">
+                        <video v-else="asset.mimeType === 'video'" :src="asset.url" :alt="asset.filename" class="size-20 rounded-2xl"/>
+
                       </section>
                     </template>
                   </PostContentEditor>

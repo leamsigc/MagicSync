@@ -12,7 +12,6 @@ export default defineEventHandler(async (event) => {
     const log = useLogger(event)
     // Get request body
     const body = await readBody(event)
-    const header = getRequestHeaders(event)
 
     // Validate required fields
     if (!body.businessId || !body.content || !body.targetPlatforms || !Array.isArray(body.targetPlatforms) || body.targetPlatforms.length === 0) {
@@ -75,7 +74,7 @@ export default defineEventHandler(async (event) => {
       // Schedule post
       const trigger = new AutoPostService()
       // Refresh social media tokens if necessary
-      await ScheduleRefreshSocialMediaTokens(fullPost, user.id, header);
+      await ScheduleRefreshSocialMediaTokens(fullPost, user.id, event as any);
 
       trigger.triggerSocialMediaPost(fullPost);
     }

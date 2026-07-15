@@ -98,11 +98,14 @@ export const usePostManager = () => {
     error.value = null
 
     try {
-      const query = new URLSearchParams({
-        businessId,
-        page: pagination.page.toString(),
-        limit: pagination.limit.toString(),
-        ...filters
+      const query = new URLSearchParams()
+      query.set('businessId', businessId)
+      query.set('page', pagination.page.toString())
+      query.set('limit', pagination.limit.toString())
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          query.set(key, Array.isArray(value) ? value.join(',') : String(value))
+        }
       })
 
       const { data: response } = await useFetch<PaginatedResponse<PostWithAllData>>(`/api/v1/posts?${query}`)

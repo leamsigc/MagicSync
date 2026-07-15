@@ -95,7 +95,6 @@ const itemSuggestions: EditorSuggestionMenuItem[][] = [
     }
   ]
 ]
-definePageMeta({ layout: 'ai-tools-layout' })
 
 const { t } = useI18n()
 const { actionPlan, editingSection, editBuffer, startEditing, saveEditing, cancelEditing, resetSection } = useGrowthStrategy()

@@ -15,10 +15,10 @@ export const auth = betterAuth({
   logger: {
     disabled: false,
     disableColors: false,
-    level: "debug",
+    level: 'debug',
     log: (level, message, ...args) => {
       // Custom logging implementation
-      console.log(`[${level}] ${message}`, ...args);
+      log.info(`[${level}] ${message}`, ...args);
     }
   },
   trustedOrigins: (() => {

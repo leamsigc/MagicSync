@@ -19,9 +19,9 @@ const startDate = dayjs().startOf('month').format('YYYY-MM-DD');
 const endDate = dayjs().endOf('month').format('YYYY-MM-DD');
 </script>
 <template>
-  <CalendarViewWrapper 
-    seo-end-label="month" 
-    :start-date="startDate" 
+  <CalendarViewWrapper
+    seo-end-label="month"
+    :start-date="startDate"
     :end-date="endDate"
     show-platform-filter
     show-post-format-filter

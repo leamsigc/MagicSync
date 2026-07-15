@@ -93,12 +93,13 @@ watch(endDate, (val) => {
 }, { immediate: true });
 </script>
 <template>
-  <FullCalendar :options="calendarOptions" :event-limit="true" class="min-h-[600px]">
-    <template v-slot:eventContent='arg'>
-      <PostCalendarPreview :post="arg.event.extendedProps.post" />
-    </template>
-
-  </FullCalendar>
+  <ClientOnly>
+    <FullCalendar :options="calendarOptions" :event-limit="true" class="min-h-[600px]">
+      <template v-slot:eventContent='arg'>
+        <PostCalendarPreview :post="arg.event.extendedProps.post" />
+      </template>
+    </FullCalendar>
+  </ClientOnly>
 </template>
 
 <style></style>

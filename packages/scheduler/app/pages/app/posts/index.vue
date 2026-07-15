@@ -19,6 +19,9 @@ import NewPostModal from './components/NewPostModal.vue';
 import PostsGridView from './components/views/PostsGridView.vue';
 import PostsBoardView from './components/views/PostsBoardView.vue';
 import PostsTableView from './components/views/PostsTableView.vue';
+import PostFiltersBar from "../calendar/components/PostFiltersBar.vue"
+import type { PostFilters } from '#layers/BaseScheduler/server/utils/SchedulerTypes';
+import dayjs from 'dayjs';
 
 const activeBusinessId = useState<string>('business:id');
 const { getPosts, postList, t } = usePostManager();
@@ -32,18 +35,39 @@ useHead({
 });
 
 const currentView = ref<'Board' | 'Table' | 'Grid'>('Grid');
-const monthDate = ref(new Date());
 
-const currentMonthPosts = computed(() => {
-  const selectedMonth = monthDate.value.getMonth();
-  const selectedYear = monthDate.value.getFullYear();
+// get filters from route
 
-  return postList.value.filter(post => {
-    if (!post.scheduledAt) return false;
-    const postDate = new Date(post.createdAt);
-    return postDate.getMonth() === selectedMonth && postDate.getFullYear() === selectedYear;
-  });
-});
+const startDate = ref(dayjs().startOf('month').format('YYYY-MM-DD'));
+const endDate = ref(dayjs().endOf('month').format('YYYY-MM-DD'));
+const handleFilterChange = async (filters: PostFilters & { page: number, limit: number }) => {
+  startDate.value = filters.startDate ||  dayjs().startOf('month').format('YYYY-MM-DD');
+  endDate.value = filters.endDate ||  dayjs().endOf('month').format('YYYY-MM-DD');
+  await getPosts(
+    activeBusinessId.value,
+    { page: filters.page, limit: filters.limit },
+    {
+      status: filters.status,
+      startDate: filters.startDate || startDate.value,
+      endDate: filters.endDate || endDate.value,
+      dateType: filters.dateType,
+      postFormat: filters.postFormat,
+      platforms: filters.platforms
+    }
+  )
+}
+
+const HandleRefresh = async () => {
+  await getPosts(activeBusinessId.value, {
+    page: 1,
+    limit: 100
+  },
+  {
+    startDate: startDate.value,
+    endDate: endDate.value
+  }
+  );
+}
 
 </script>
 
@@ -56,26 +80,29 @@ const currentMonthPosts = computed(() => {
     </BasePageHeader>
     <div class=" p-2 flex justify-between items-center ">
       <section class="flex gap-1">
-
-        <UButton icon="i-heroicons-squares-2x2" :variant="currentView === 'Board' ? 'solid' : 'ghost'" size="sm"
-          @click="currentView = 'Board'" class="rounded-xl">Board</UButton>
-        <UButton icon="i-heroicons-table-cells" :variant="currentView === 'Table' ? 'solid' : 'ghost'" size="sm"
-          @click="currentView = 'Table'" class="rounded-xl">Table</UButton>
-        <UButton icon="lucide:grid" :variant="currentView === 'Grid' ? 'solid' : 'ghost'" size="sm"
-          @click="currentView = 'Grid'" class="rounded-xl">
+        <PostFiltersBar  @filter-change="handleFilterChange"
+      @refresh="HandleRefresh"/>
+        <section>
+          <UButton icon="i-heroicons-squares-2x2" :variant="currentView === 'Board' ? 'solid' : 'ghost'" size="sm"
+          @click="() => {currentView = 'Board'}" class="rounded-xl">Board</UButton>
+          <UButton icon="i-heroicons-table-cells" :variant="currentView === 'Table' ? 'solid' : 'ghost'" size="sm"
+          @click="() => {currentView = 'Table'}" class="rounded-xl">Table</UButton>
+          <UButton icon="lucide:grid" :variant="currentView === 'Grid' ? 'solid' : 'ghost'" size="sm"
+          @click="() => {currentView = 'Grid'}" class="rounded-xl">
           Grid
         </UButton>
+      </section>
       </section>
 
       <!-- <UMonthPicker v-model="monthDate" /> -->
     </div>
 
     <!-- List of all posts -->
-    <PostsGridView v-if="currentView === 'Grid'" :posts="currentMonthPosts" />
+    <PostsGridView v-if="currentView === 'Grid'" :posts="postList" />
 
-    <PostsBoardView v-if="currentView === 'Board'" :posts="currentMonthPosts" />
+    <PostsBoardView v-if="currentView === 'Board'" :posts="postList" />
 
-    <PostsTableView v-if="currentView === 'Table'" :posts="currentMonthPosts" />
+    <PostsTableView v-if="currentView === 'Table'" :posts="postList" />
   </div>
 </template>
 <style scoped></style>

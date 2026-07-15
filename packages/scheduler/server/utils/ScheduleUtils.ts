@@ -1,9 +1,9 @@
-import { account } from '#layers/BaseDB/db/schema';
 import sharp from 'sharp';
 import { promises as fs } from 'node:fs'
 import { getAccessTokenHelper } from "#layers/BaseAuth/server/utils/AuthHelpers"
 import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service';
 import type { PostWithAllData } from '#layers/BaseDB/db/posts/posts';
+import { platformConfigurations, type PlatformConfig } from '#layers/BaseScheduler/shared/platformConstants';
 
 
 const baseUrl = process.env.NUXT_BASE_URL
@@ -161,7 +161,7 @@ const platformProviderMap: Record<string, string> = {
   'instagram-standalone': 'instagram',
   threads: 'threads',
   tiktok: 'tiktok',
-  youtube: 'youtube',
+  youtube: 'google',
   googlemybusiness: 'google',
   discord: 'discord',
   reddit: 'reddit',
@@ -182,18 +182,31 @@ export const ScheduleRefreshSocialMediaTokens = async (fullPost: PostWithAllData
   if (needsRefresh.length === 0) return
 
   await Promise.allSettled(needsRefresh.map(async (platformPost) => {
-    const account = await socialMediaAccountService.getActualAccountByAccountId(platformPost.socialAccountId)
     const providerId = platformProviderMap[platformPost.platformPostId || '']
-    if (!account || !providerId) return
+    let socialMediaAccount = await socialMediaAccountService.getActualAccountByAccountId(platformPost.socialAccountId);
+    if (!providerId) return
+    let account = await socialMediaAccountService.getBetterAuthAccountId(providerId, userId, socialMediaAccount?.accountId ?? '')
+    // Check if platformPost.platformPostId is youtube then check google account because youtube social media accountId is the page or channel id
+    if (platformPost.platformPostId === 'youtube') {
+      const googleAccounts = await socialMediaAccountService.getAccountsForPlatform('google', userId);
+      account = googleAccounts[0] || null;
+    }
+
+    log.info({ message: 'Single account found', providerId })
+    if (!account) return
+
 
     const expired = socialMediaAccountService.isTokenExpired(account)
+    log.info({ message: 'Token expired', account, providerId, expired })
     if (!expired) return
 
     const tokenData = await getAccessTokenHelper(headers, {
       providerId,
       userId,
       accountId: account.accountId,
-    }).catch(() => null)
+    });
+
+    log.error({ message: 'Token data', tokenData })
 
     if (tokenData?.accessToken) {
       await socialMediaAccountService.updateAccount(platformPost.socialAccountId, {
@@ -209,11 +222,9 @@ interface ValidationResult {
   errors: string[]
 }
 
-import { platformConfigurations } from '../../shared/platformConstants'
-import type { PlatformConfig } from '../../shared/platformConstants'
 
 export function validateContentForPlatform(platform: string, content: { text?: string; mediaUrls?: string[] }): ValidationResult {
-  const config: PlatformConfig = (platformConfigurations as Record<string, PlatformConfig>)[platform] ?? platformConfigurations.default
+  const config: PlatformConfig = (platformConfigurations as unknown as Record<string, PlatformConfig>)[platform] ?? platformConfigurations.default
   const errors: string[] = []
   const warnings: string[] = []
 

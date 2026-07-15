@@ -5,7 +5,7 @@ import DashboardUserNav from './UserNav.vue';
 const tokenHealthCount = ref(0)
 
 const { checkAndNotify } = useTokenHealthNotification()
-onMounted(async () => {
+callOnce('token-health-notification', async () => {
   const summary = await checkAndNotify()
   if (summary) {
     tokenHealthCount.value = summary.needsAttention

@@ -78,7 +78,7 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    const tokenData = await getAccessTokenHelper(event, {
+    const tokenData = await getAccessTokenHelper(event as any, {
       providerId: platform,
       userId: user.id,
       accountId: platformAccount.accountId,

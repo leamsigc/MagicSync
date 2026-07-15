@@ -124,7 +124,7 @@ const handleDateChange = ({ start, end }: { start: string, end: string }) => {
 <template>
   <div class="container mx-auto py-6 space-y-6">
     <SchedulerPageHeader />
-    <PostFiltersBar 
+    <PostFiltersBar
       :show-platform-filter="showPlatformFilter"
       :show-post-format-filter="showPostFormatFilter"
       @filter-change="handleFilterChange"

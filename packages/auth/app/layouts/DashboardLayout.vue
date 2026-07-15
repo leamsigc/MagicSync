@@ -4,9 +4,7 @@ import DashboardSidebar from './dashboard/Sidebar.vue';
 import UserNav from './dashboard/UserNav.vue';
 
 const { checkAndNotify } = useTokenHealthNotification()
-onMounted(() => {
-  checkAndNotify()
-})
+await callOnce('token-health-notification', () => checkAndNotify());
 </script>
 
 <template>
