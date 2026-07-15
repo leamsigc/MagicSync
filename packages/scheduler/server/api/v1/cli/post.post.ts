@@ -93,7 +93,7 @@ async function downloadAndCreateAssets(userId: string, businessId: string, media
         lastModified: String(Date.now()),
       }
 
-       await storeFileLocally(serverFile, uniqueFilename, userFolder)
+      await storeFileLocally(serverFile, uniqueFilename, userFolder)
 
       return { uniqueFilename, fileExtension, mimeType, fileSize: buffer.byteLength }
     } catch (error) {
@@ -178,7 +178,7 @@ export default defineEventHandler(async (event) => {
 
   log.set({ businessId, platforms: body.platforms, hasScheduledAt: !!body.scheduledAt })
 
-  const accounts = await socialMediaAccountService.getAccountsByBusinessId(businessId)
+  const accounts = await socialMediaAccountService.getAccountsByBusinessIdWithOutActiveCheck(businessId)
   const connectedPlatforms = new Set(accounts.map(a => a.platform))
   // @ts-ignore
   const disconnectedPlatforms = body.platforms.filter(p => !connectedPlatforms.has(p))

@@ -248,6 +248,9 @@ export class SocialMediaAccountService implements SocialMediaAccountServiceType 
   async getAccountsByBusinessId(businessId: string): Promise<SocialMediaAccount[]> {
     return this.getAccounts({ businessId, isActive: true })
   }
+  async getAccountsByBusinessIdWithOutActiveCheck(businessId: string): Promise<SocialMediaAccount[]> {
+    return this.getAccounts({ businessId })
+  }
 
   /**
    * Get accounts by platform
