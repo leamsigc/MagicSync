@@ -3,7 +3,9 @@ FROM node:22-alpine AS builder
 
 # bash is required by ./scripts/tts_assets_folder.sh (bash-only constructs:
 # [[ ]], arrays, (( ))). node:22-alpine ships only busybox sh by default.
-RUN apk add --no-cache bash g++ make py3-pip vips-dev
+# curl is required by the same script — node:22-alpine does NOT include curl
+# (busybox has wget, but the script's --retry/--location semantics need curl).
+RUN apk add --no-cache bash curl g++ make py3-pip vips-dev
 RUN npm install -g pnpm
 
 WORKDIR /usr/app
