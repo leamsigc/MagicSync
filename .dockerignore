@@ -30,6 +30,9 @@ logs
 images/
 opencodetmp/
 
+# Python backend virtual env (902MB - not needed for site container)
+packages/python-backend/venv
+
 # Git
 .git
 
@@ -39,7 +42,11 @@ docker-compose*
 
 # Docs and misc
 .github/
-scripts/
+# scripts/ is excluded by default, but the Dockerfile invokes this one script
+# to fetch ONNX model weights from HuggingFace. The !exception re-includes
+# just this file so the build context stays small.
+scripts/*
+!scripts/tts_assets_folder.sh
 *.md
 CODE_OF_CONDUCT.md
 CONTRIBUTING.md

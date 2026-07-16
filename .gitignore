@@ -84,6 +84,13 @@ out
 dist
 .output
 
+# Large ONNX model weights (~340MB total) — kept out of git so pushes stay
+# under GitHub's 100MB file-size limit. Populate this directory by running
+# ./scripts/tts_assets_folder.sh (also wired into the Dockerfile).
+# The .gitkeep preserves the directory structure in fresh clones.
+packages/site/public/assets/onnx/*
+!packages/site/public/assets/onnx/.gitkeep
+
 playwright-report
 # Gatsby files
 .cache/

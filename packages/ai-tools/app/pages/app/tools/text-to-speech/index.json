@@ -1,0 +1,430 @@
+{
+  "en": {
+    "title": "Text to Speech - Supertonic 3 AI Voice Generator",
+    "description": "Convert text to natural speech with Supertonic 3 — lightning-fast, on-device, 31-language TTS. Free, private, in your browser.",
+    "header": {
+      "title": "Text to Speech",
+      "subtitle": "Supertonic 3 — Lightning-fast, on-device TTS with 10 voices, 31 languages, and private in-browser inference"
+    },
+    "input": {
+      "label": "Enter your text",
+      "placeholder": "Type or paste the text you want to convert to speech...",
+      "char_count": "{count} / {max} characters",
+      "clear": "Clear"
+    },
+    "voice": {
+      "label": "Voice",
+      "description": "Choose from 10 natural-sounding voices"
+    },
+    "language": {
+      "label": "Language",
+      "description": "31 languages with auto-detection"
+    },
+    "speed": {
+      "label": "Speed",
+      "description": "Adjust speech rate"
+    },
+    "quality": {
+      "label": "Quality",
+      "description": "Higher quality = more inference steps"
+    },
+    "actions": {
+      "generate": "Generate Speech",
+      "generate_again": "Regenerate",
+      "generating": "Generating...",
+      "loading_model": "Loading Supertonic 3...",
+      "play": "Play",
+      "pause": "Pause",
+      "stop": "Stop",
+      "download": "Download WAV",
+      "new": "New Synthesis",
+      "cancel": "Cancel synthesis"
+    },
+    "player": {
+      "title": "Generated Audio",
+      "duration": "{duration}s",
+      "no_audio": "No audio generated yet. Enter some text and click Generate.",
+      "ready": "Ready to play"
+    },
+    "progress": {
+      "loading_model": "{text}",
+      "synthesizing": "Synthesizing speech...",
+      "done": "Synthesis complete!",
+      "error": "Error: {error}"
+    },
+    "status": {
+      "idle": "Ready",
+      "loading": "Loading models...",
+      "ready": "Ready",
+      "synthesizing": "Generating...",
+      "done": "Complete",
+      "error": "Error",
+      "cancelled": "Cancelled"
+    },
+    "history": {
+      "title": "Generation History",
+      "subtitle": "Stored locally in your browser",
+      "empty": "No generations yet — synthesize text to see it here.",
+      "count": "{count} generations",
+      "actions": {
+        "play": "Play",
+        "download": "Download",
+        "delete": "Delete",
+        "delete_confirm": "Delete this generation?",
+        "clearAll": "Clear all",
+        "clearAll_confirm": "Clear all history?"
+      },
+      "just_now": "just now",
+      "removed_toast": "Generation removed",
+      "cleared_toast": "History cleared"
+    },
+    "features": {
+      "title": "Features",
+      "private": {
+        "title": "100% Private",
+        "description": "All processing happens locally in your browser. Your text never leaves your device."
+      },
+      "multilingual": {
+        "title": "31 Languages",
+        "description": "Full support for 31 languages with automatic detection and natural-sounding synthesis."
+      },
+      "voices": {
+        "title": "10 Voices",
+        "description": "Five male and five female voices with distinct, natural characteristics."
+      },
+      "download": {
+        "title": "Download Audio",
+        "description": "Export your generated speech as a high-quality 44.1kHz 16-bit WAV file."
+      }
+    },
+    "notifications": {
+      "model_loaded": "Supertonic 3 ready",
+      "model_load_error": "Failed to load Supertonic 3 models",
+      "synthesis_complete": "Speech synthesis complete",
+      "synthesis_error": "Speech synthesis failed",
+      "synthesis_cancelled": "Synthesis cancelled",
+      "download_started": "Download started"
+    }
+  },
+  "es": {
+    "title": "Texto a Voz - Supertonic 3 Generador de Voz IA",
+    "description": "Convierte texto a voz natural con Supertonic 3 — TTS ultrarrápido, en dispositivo, 31 idiomas. Gratis, privado, en tu navegador.",
+    "header": {
+      "title": "Texto a Voz",
+      "subtitle": "Supertonic 3 — TTS ultrarrápido con 10 voces, 31 idiomas e inferencia privada en el navegador"
+    },
+    "input": {
+      "label": "Ingresa tu texto",
+      "placeholder": "Escribe o pega el texto que quieres convertir a voz...",
+      "char_count": "{count} / {max} caracteres",
+      "clear": "Limpiar"
+    },
+    "voice": {
+      "label": "Voz",
+      "description": "Elige entre 10 voces naturales"
+    },
+    "language": {
+      "label": "Idioma",
+      "description": "31 idiomas con detección automática"
+    },
+    "speed": {
+      "label": "Velocidad",
+      "description": "Ajusta la velocidad del habla"
+    },
+    "quality": {
+      "label": "Calidad",
+      "description": "Mayor calidad = más pasos de inferencia"
+    },
+    "actions": {
+      "generate": "Generar Voz",
+      "generate_again": "Regenerar",
+      "generating": "Generando...",
+      "loading_model": "Cargando Supertonic 3...",
+      "play": "Reproducir",
+      "pause": "Pausar",
+      "stop": "Detener",
+      "download": "Descargar WAV",
+      "new": "Nueva Síntesis",
+      "cancel": "Cancelar síntesis"
+    },
+    "player": {
+      "title": "Audio Generado",
+      "duration": "{duration}s",
+      "no_audio": "Aún no se ha generado audio. Ingresa texto y haz clic en Generar.",
+      "ready": "Listo para reproducir"
+    },
+    "progress": {
+      "loading_model": "{text}",
+      "synthesizing": "Sintetizando voz...",
+      "done": "¡Síntesis completa!",
+      "error": "Error: {error}"
+    },
+    "status": {
+      "idle": "Listo",
+      "loading": "Cargando modelos...",
+      "ready": "Listo",
+      "synthesizing": "Generando...",
+      "done": "Completo",
+      "error": "Error",
+      "cancelled": "Cancelado"
+    },
+    "history": {
+      "title": "Historial de generaciones",
+      "subtitle": "Guardado localmente en tu navegador",
+      "empty": "Aún no hay generaciones — sintetiza texto para verlo aquí.",
+      "count": "{count} generaciones",
+      "actions": {
+        "play": "Reproducir",
+        "download": "Descargar",
+        "delete": "Eliminar",
+        "delete_confirm": "¿Eliminar esta generación?",
+        "clearAll": "Limpiar todo",
+        "clearAll_confirm": "¿Limpiar todo el historial?"
+      },
+      "just_now": "ahora mismo",
+      "removed_toast": "Generación eliminada",
+      "cleared_toast": "Historial limpiado"
+    },
+    "features": {
+      "title": "Características",
+      "private": {
+        "title": "100% Privado",
+        "description": "Todo el procesamiento ocurre localmente. Tu texto nunca sale de tu dispositivo."
+      },
+      "multilingual": {
+        "title": "31 Idiomas",
+        "description": "Soporte completo para 31 idiomas con detección automática y síntesis natural."
+      },
+      "voices": {
+        "title": "10 Voces",
+        "description": "Cinco voces masculinas y cinco femeninas con características naturales y distintivas."
+      },
+      "download": {
+        "title": "Descargar Audio",
+        "description": "Exporta tu voz generada como archivo WAV de alta calidad 44.1kHz 16-bit."
+      }
+    },
+    "notifications": {
+      "model_loaded": "Supertonic 3 listo",
+      "model_load_error": "Error al cargar modelos Supertonic 3",
+      "synthesis_complete": "Síntesis de voz completa",
+      "synthesis_error": "Error en la síntesis de voz",
+      "synthesis_cancelled": "Síntesis cancelada",
+      "download_started": "Descarga iniciada"
+    }
+  },
+  "de": {
+    "title": "Text zu Sprache - Supertonic 3 KI-Stimmgenerator",
+    "description": "Text in natürliche Sprache umwandeln mit Supertonic 3 — blitzschnell, gerätebasiert, 31 Sprachen. Kostenlos, privat, im Browser.",
+    "header": {
+      "title": "Text zu Sprache",
+      "subtitle": "Supertonic 3 — Blitzschnelles On-Device TTS mit 10 Stimmen, 31 Sprachen und privater Browser-Inferenz"
+    },
+    "input": {
+      "label": "Gib deinen Text ein",
+      "placeholder": "Tippe oder füge den Text ein, den du in Sprache umwandeln möchtest...",
+      "char_count": "{count} / {max} Zeichen",
+      "clear": "Löschen"
+    },
+    "voice": {
+      "label": "Stimme",
+      "description": "Wähle aus 10 natürlich klingenden Stimmen"
+    },
+    "language": {
+      "label": "Sprache",
+      "description": "31 Sprachen mit automatischer Erkennung"
+    },
+    "speed": {
+      "label": "Geschwindigkeit",
+      "description": "Sprechgeschwindigkeit anpassen"
+    },
+    "quality": {
+      "label": "Qualität",
+      "description": "Höhere Qualität = mehr Inferenzschritte"
+    },
+    "actions": {
+      "generate": "Sprache Generieren",
+      "generate_again": "Neu generieren",
+      "generating": "Generiere...",
+      "loading_model": "Supertonic 3 wird geladen...",
+      "play": "Abspielen",
+      "pause": "Pause",
+      "stop": "Stopp",
+      "download": "WAV Herunterladen",
+      "new": "Neue Synthese",
+      "cancel": "Synthese abbrechen"
+    },
+    "player": {
+      "title": "Generiertes Audio",
+      "duration": "{duration}s",
+      "no_audio": "Noch kein Audio generiert. Gib Text ein und klicke auf Generieren.",
+      "ready": "Bereit zum Abspielen"
+    },
+    "progress": {
+      "loading_model": "{text}",
+      "synthesizing": "Sprache wird synthetisiert...",
+      "done": "Synthese abgeschlossen!",
+      "error": "Fehler: {error}"
+    },
+    "status": {
+      "idle": "Bereit",
+      "loading": "Modelle werden geladen...",
+      "ready": "Bereit",
+      "synthesizing": "Generiere...",
+      "done": "Fertig",
+      "error": "Fehler",
+      "cancelled": "Abgebrochen"
+    },
+    "history": {
+      "title": "Generierungsverlauf",
+      "subtitle": "Lokal in deinem Browser gespeichert",
+      "empty": "Noch keine Generierungen — synthetisiere Text, um ihn hier zu sehen.",
+      "count": "{count} Generierungen",
+      "actions": {
+        "play": "Abspielen",
+        "download": "Herunterladen",
+        "delete": "Löschen",
+        "delete_confirm": "Diese Generierung löschen?",
+        "clearAll": "Alles löschen",
+        "clearAll_confirm": "Gesamten Verlauf löschen?"
+      },
+      "just_now": "gerade eben",
+      "removed_toast": "Generierung entfernt",
+      "cleared_toast": "Verlauf geleert"
+    },
+    "features": {
+      "title": "Funktionen",
+      "private": {
+        "title": "100% Privat",
+        "description": "Alle Verarbeitung erfolgt lokal in deinem Browser. Dein Text verlässt nie dein Gerät."
+      },
+      "multilingual": {
+        "title": "31 Sprachen",
+        "description": "Volle Unterstützung für 31 Sprachen mit automatischer Erkennung und natürlicher Sprachsynthese."
+      },
+      "voices": {
+        "title": "10 Stimmen",
+        "description": "Fünf männliche und fünf weibliche Stimmen mit charakteristischen, natürlichen Klangfarben."
+      },
+      "download": {
+        "title": "Audio Herunterladen",
+        "description": "Exportiere deine generierte Sprache als hochwertige 44.1kHz 16-bit WAV-Datei."
+      }
+    },
+    "notifications": {
+      "model_loaded": "Supertonic 3 bereit",
+      "model_load_error": "Laden der Supertonic 3-Modelle fehlgeschlagen",
+      "synthesis_complete": "Sprachsynthese abgeschlossen",
+      "synthesis_error": "Sprachsynthese fehlgeschlagen",
+      "synthesis_cancelled": "Synthese abgebrochen",
+      "download_started": "Download gestartet"
+    }
+  },
+  "fr": {
+    "title": "Texte en Parole - Supertonic 3 Générateur Vocal IA",
+    "description": "Convertissez du texte en parole naturelle avec Supertonic 3 — TTS ultra-rapide, sur appareil, 31 langues. Gratuit, privé, dans le navigateur.",
+    "header": {
+      "title": "Texte en Parole",
+      "subtitle": "Supertonic 3 — TTS ultra-rapide sur appareil avec 10 voix, 31 langues et inférence privée dans le navigateur"
+    },
+    "input": {
+      "label": "Entrez votre texte",
+      "placeholder": "Tapez ou collez le texte à convertir en parole...",
+      "char_count": "{count} / {max} caractères",
+      "clear": "Effacer"
+    },
+    "voice": {
+      "label": "Voix",
+      "description": "Choisissez parmi 10 voix naturelles"
+    },
+    "language": {
+      "label": "Langue",
+      "description": "31 langues avec détection automatique"
+    },
+    "speed": {
+      "label": "Vitesse",
+      "description": "Ajuster le débit vocal"
+    },
+    "quality": {
+      "label": "Qualité",
+      "description": "Qualité supérieure = plus de passes d'inférence"
+    },
+    "actions": {
+      "generate": "Générer la Parole",
+      "generate_again": "Régénérer",
+      "generating": "Génération...",
+      "loading_model": "Chargement Supertonic 3...",
+      "play": "Lire",
+      "pause": "Pause",
+      "stop": "Arrêter",
+      "download": "Télécharger WAV",
+      "new": "Nouvelle Synthèse",
+      "cancel": "Annuler la synthèse"
+    },
+    "player": {
+      "title": "Audio Généré",
+      "duration": "{duration}s",
+      "no_audio": "Aucun audio généré. Entrez du texte et cliquez sur Générer.",
+      "ready": "Prêt à lire"
+    },
+    "progress": {
+      "loading_model": "{text}",
+      "synthesizing": "Synthèse vocale en cours...",
+      "done": "Synthèse terminée !",
+      "error": "Erreur: {error}"
+    },
+    "status": {
+      "idle": "Prêt",
+      "loading": "Chargement des modèles...",
+      "ready": "Prêt",
+      "synthesizing": "Génération...",
+      "done": "Terminé",
+      "error": "Erreur",
+      "cancelled": "Annulé"
+    },
+    "history": {
+      "title": "Historique des générations",
+      "subtitle": "Stocké localement dans votre navigateur",
+      "empty": "Aucune génération encore — synthétisez du texte pour le voir ici.",
+      "count": "{count} générations",
+      "actions": {
+        "play": "Lire",
+        "download": "Télécharger",
+        "delete": "Supprimer",
+        "delete_confirm": "Supprimer cette génération ?",
+        "clearAll": "Tout effacer",
+        "clearAll_confirm": "Effacer tout l'historique ?"
+      },
+      "just_now": "à l'instant",
+      "removed_toast": "Génération supprimée",
+      "cleared_toast": "Historique effacé"
+    },
+    "features": {
+      "title": "Fonctionnalités",
+      "private": {
+        "title": "100% Privé",
+        "description": "Tout le traitement se fait localement. Votre texte ne quitte jamais votre appareil."
+      },
+      "multilingual": {
+        "title": "31 Langues",
+        "description": "Prise en charge complète de 31 langues avec détection automatique et synthèse naturelle."
+      },
+      "voices": {
+        "title": "10 Voix",
+        "description": "Cinq voix masculines et cinq voix féminines aux caractéristiques naturelles distinctes."
+      },
+      "download": {
+        "title": "Télécharger l'Audio",
+        "description": "Exportez votre parole générée en fichier WAV haute qualité 44.1kHz 16-bit."
+      }
+    },
+    "notifications": {
+      "model_loaded": "Supertonic 3 prêt",
+      "model_load_error": "Échec du chargement des modèles Supertonic 3",
+      "synthesis_complete": "Synthèse vocale terminée",
+      "synthesis_error": "Échec de la synthèse vocale",
+      "synthesis_cancelled": "Synthèse annulée",
+      "download_started": "Téléchargement démarré"
+    }
+  }
+}

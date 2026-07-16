@@ -51,7 +51,9 @@
     "dev:prepare": "pnpm -r run dev:prepare",
     "doc": "pnpm packages magicsync-docs dev",
     "doc:build": "pnpm packages magicsync-docs build",
-    "doc:start": "pnpm packages magicsync-docs preview"
+    "doc:start": "pnpm packages magicsync-docs preview",
+    "tts:assets": "bash ./scripts/tts_assets_folder.sh",
+    "tts:assets:force": "bash ./scripts/tts_assets_folder.sh --force"
   },
   "devDependencies": {
     "dotenv-cli": "^11.0.0",

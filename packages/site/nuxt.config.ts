@@ -41,6 +41,16 @@ export default defineNuxtConfig({
       tasks: true,
     },
   },
+  // Cross-origin isolation scoped to the on-device WASM-using tools.
+  //  Why COOP/COEP: ONNX Runtime Web's JSEP execution provider needs
+  //  SharedArrayBuffer, which browsers only expose to pages that are
+  //  `crossOriginIsolated` (i.e. send these headers).
+  //  Why `credentialless` (not `require-corp`): the app loads cross-origin
+  //  resources (Google Fonts, Pexels images, Umami analytics) without
+  //  explicit CORP headers. `require-corp` would block them; `credentialless`
+  //  unlocks SAB while tolerating no-CORS cross-origin subresources.
+  //  Why /app/tools: covers the TTS tool today and any future in-browser
+  //  WASM-based tools (image generators, audio editors) without further edits.
   runtimeConfig: {
     APP_URL: process.env.NUXT_APP_URL,
     BASE_URL: process.env.NUXT_APP_URL,
@@ -169,7 +179,36 @@ export default defineNuxtConfig({
     // Optional: exclude specific routes from logging
     exclude: ['/api/_nuxt_icon/**'],
   },
+  // Header rules live at top level (not under `nitro:`) so that
+  // Nuxt applies them through both production (Nitro) and dev mode.
+  routeRules: {
+    "/": { swr: 1200 },
+    "/blog": { swr: true },
+    "/blog/**": { swr: 1200 },
+    "/app/**": { swr: false },
+    '/api/v1/**': {
+      cors: true
+    },
+    // Cross-origin isolation for on-device WASM tools (TTS, etc.)
+    // — copied here so Vite dev-server middleware also picks them up.
+    '/app/tools/**': {
+      headers: {
+        'Cross-Origin-Opener-Policy': 'same-origin',
+        'Cross-Origin-Embedder-Policy': 'credentialless',
+      },
+    },
+  },
   vite: {
+    // Vite dev-server must also send the isolation headers so `/_nuxt/*`,
+    // `/@fs/*`, and `/@vite/*` responses carry them. Without this, the page
+    // HTML gets COOP/COEP via Nitro but the JS modules don't, so the page
+    // still reports `crossOriginIsolated === false`.
+    server: {
+      headers: {
+        'Cross-Origin-Opener-Policy': 'same-origin',
+        'Cross-Origin-Embedder-Policy': 'credentialless',
+      },
+    },
     build: {
       rollupOptions: {
         external: [

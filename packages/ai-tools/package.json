@@ -25,7 +25,8 @@
     "ai": "catalog:",
     "cheerio": "catalog:",
     "evlog": "catalog:",
-    "mediabunny": "catalog:"
+    "mediabunny": "catalog:",
+    "onnxruntime-web": "catalog:"
   },
   "devDependencies": {
     "@nuxt/eslint": "catalog:",

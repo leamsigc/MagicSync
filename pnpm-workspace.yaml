@@ -82,6 +82,7 @@ catalog:
   idb: 8.0.3
   "wavesurfer.js": 7.12.7
   "@takumi-rs/core": "1.7.0"
+  onnxruntime-web: 1.23.0
 
 ignoredBuiltDependencies:
   - fsevents

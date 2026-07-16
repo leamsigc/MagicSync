@@ -63,7 +63,9 @@
       "aiToolsAssets": "Assets",
       "aiToolsCreate": "Create",
       "aiToolsData": "Data",
-      "aiToolsSkills": "Skills"
+      "aiToolsSkills": "Skills",
+      "videoCropper": "Video Cropper",
+      "textToAudio": "Text to Audio"
     },
     "userNav": {
       "upgradeToPro": "Upgrade to Pro",
@@ -159,7 +161,9 @@
       "aiToolsAssets": "Recursos",
       "aiToolsCreate": "Crear",
       "aiToolsData": "Datos",
-      "aiToolsSkills": "Skills"
+      "aiToolsSkills": "Skills",
+      "videoCropper": "Video Cropper",
+      "textToAudio": "Texto a Audio"
     },
     "userNav": {
       "upgradeToPro": "Actualizar a Pro",
@@ -255,7 +259,9 @@
       "aiToolsAssets": "Ressourcen",
       "aiToolsCreate": "Erstellen",
       "aiToolsData": "Daten",
-      "aiToolsSkills": "Skills"
+      "aiToolsSkills": "Skills",
+      "videoCropper": "Video Cropper",
+      "textToAudio": "Text zu Audio"
     },
     "userNav": {
       "upgradeToPro": "Auf Pro upgraden",
@@ -351,7 +357,9 @@
       "aiToolsAssets": "Ressources",
       "aiToolsCreate": "Créer",
       "aiToolsData": "Données",
-      "aiToolsSkills": "Skills"
+      "aiToolsSkills": "Skills",
+      "videoCropper": "Video Cropper",
+      "textToAudio": "Texte en audio"
     },
     "userNav": {
       "upgradeToPro": "Mettre à niveau vers Pro",

@@ -157,11 +157,16 @@ export const useDashboardNavigation = () => {
             to: '/app/tools/content-split',
             icon: 'i-lucide-sparkles'
           },
-          // {
-          //   label: menuData.menu.chat,
-          //   to: '/app/ai-tools/chat',
-          //   icon: 'i-lucide-message-square'
-          // },
+          {
+            label: menuData.menu.videoCropper,
+            to: '/app/tools/video-cropper',
+            icon: 'i-lucide-crop'
+          },
+          {
+            label: menuData.menu.textToAudio,
+            to: '/app/tools/text-to-speech',
+            icon: 'i-lucide-volume-2'
+          },
           {
             label: menuData.menu.growthStrategies,
             to: '/app/tools/growth-stratergy',

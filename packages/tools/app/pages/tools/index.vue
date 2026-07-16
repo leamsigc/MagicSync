@@ -63,6 +63,13 @@ const posts = ref([
     date: '2026-03-19',
     to: "/tools/podcast"
   },
+  {
+    title: 'Video Cropper',
+    description: 'Crop, split-screen, and keyframe your videos with multi-camera motion tracking',
+    image: '/img/video-cropper.png',
+    date: '2026-07-15',
+    to: "/tools/video-cropper"
+  },
 ])
 const { t } = useI18n()
 useHead({

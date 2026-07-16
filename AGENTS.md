@@ -24,6 +24,7 @@ A social media scheduling platform built with Nuxt 4 monorepo — enables schedu
 - **Build all:** `pnpm build`
 - **Build site:** `pnpm site:build`
 - **Database:** `cd packages/db && pnpm db:generate` / `db:migrate`
+- **TTS assets (HF):** `pnpm tts:assets` — downloads ONNX models + voice styles from HuggingFace into `packages/site/public/assets/` (also runs automatically inside the Docker build)
 - **Lint UI:** No lint script configured (available scripts: dev, build, start, clean)
 
 ## Scaffold Growth
@@ -33,3 +34,9 @@ After every task: if no pattern exists for the task type you just completed, cre
 At the start of every session, read `./.claude/ROUTER.md` before doing anything else.
 For full project context, patterns, and task guidance — everything is there.
 
+### Do not do ever
+The following should be avoided at all costs.
+```vue
+ @click="audioTab = 'file'"
+```
+right within the `@click` handler. Instead, ` @click="() => {audioTab = 'file'}"`. or create a handler function in the script block.
