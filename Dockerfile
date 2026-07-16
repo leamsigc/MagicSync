@@ -1,7 +1,9 @@
 # ============ BUILDER ============
 FROM node:22-alpine AS builder
 
-RUN apk add --no-cache g++ make py3-pip vips-dev
+# bash is required by ./scripts/tts_assets_folder.sh (bash-only constructs:
+# [[ ]], arrays, (( ))). node:22-alpine ships only busybox sh by default.
+RUN apk add --no-cache bash g++ make py3-pip vips-dev
 RUN npm install -g pnpm
 
 WORKDIR /usr/app
