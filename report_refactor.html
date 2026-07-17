@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MagicSync Refactor Playbook</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .candidate { scroll-margin-top: 2rem; }
+    .step-number { @apply flex items-center justify-center w-8 h-8 rounded-full bg-slate-800 text-white font-bold text-sm shrink-0; }
+    .must-do { @apply border-l-4 border-red-500 bg-red-50 p-4 rounded-r-lg; }
+    .tdd-box { @apply border-l-4 border-green-600 bg-green-50 p-4 rounded-r-lg; }
+    .file-list li { @apply font-mono text-sm text-slate-700; }
+    code { @apply bg-slate-100 px-1 py-0.5 rounded text-sm font-mono; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900">
+  <div class="max-w-5xl mx-auto px-6 py-12">
+    <header class="mb-12">
+      <h1 class="text-4xl font-bold mb-4">MagicSync Refactor Playbook</h1>
+      <p class="text-lg text-slate-600">Step-by-step, TDD-guided deepening of five architectural seams.</p>
+      <p class="text-sm text-slate-500 mt-2">Intended for: smaller models working incrementally. Do one candidate at a time.</p>
+    </header>
+
+    <nav class="bg-white rounded-xl p-6 shadow-sm mb-12">
+      <h2 class="text-lg font-semibold mb-4">Candidates</h2>
+      <ol class="list-decimal list-inside space-y-2 text-slate-700">
+        <li><a href="#candidate-1" class="text-blue-600 hover:underline">Scheduler Plugin Interface</a></li>
+        <li><a href="#candidate-2" class="text-blue-600 hover:underline">BulkSchedulerService</a></li>
+        <li><a href="#candidate-3" class="text-blue-600 hover:underline">PlatformStatsService</a></li>
+        <li><a href="#candidate-4" class="text-blue-600 hover:underline">AI Tools Facade</a></li>
+        <li><a href="#candidate-5" class="text-blue-600 hover:underline">Asset Service Duplication</a></li>
+      </ol>
+    </nav>
+
+    <section class="bg-white rounded-xl p-6 shadow-sm mb-12">
+      <h2 class="text-xl font-semibold mb-4">How to Use This Playbook</h2>
+      <ul class="list-disc list-inside text-slate-700 space-y-2">
+        <li>Work on <strong>one candidate at a time</strong>.</li>
+        <li>Follow the <strong>must-do points</strong> in order.</li>
+        <li>Use the <strong>TDD loop</strong> for every new module: write a failing test, make it pass, refactor.</li>
+        <li>Run the validation commands after each candidate.</li>
+        <li>Never modify more than one candidate before running tests.</li>
+      </ul>
+    </section>
+
+    <!-- Candidate 1 -->
+    <article id="candidate-1" class="candidate bg-white rounded-xl p-8 shadow-sm mb-12">
+      <div class="flex items-center gap-3 mb-6">
+        <span class="step-number">1</span>
+        <h2 class="text-2xl font-bold">Scheduler Plugin Interface</h2>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6 mb-6">
+        <div>
+          <h3 class="font-semibold text-slate-800 mb-2">Current Problem</h3>
+          <p class="text-slate-700 text-sm">
+            The <code>SchedulerPlugin</code> interface in <code>packages/scheduler/server/services/SchedulerPost.service.ts</code> forces every platform adapter to implement validate, post, update, addComment, getStatistic, getComments, and replyToComment. This is a shallow, broad interface.
+          </p>
+        </div>
+        <div>
+          <h3 class="font-semibold text-slate-800 mb-2">Goal</h3>
+          <p class="text-slate-700 text-sm">
+            Split the monolithic interface into capability-specific seams: <code>PostPublisher</code>, <code>StatsProvider</code>, and <code>CommentManager</code>. A plugin registers only the capabilities it supports.
+          </p>
+        </div>
+      </div>
+
+      <div class="must-do mb-6">
+        <h3 class="font-semibold text-slate-800 mb-3">Must-Do Points</h3>
+        <ol class="list-decimal list-inside space-y-2 text-sm text-slate-700">
+          <li>Read <code>packages/scheduler/server/services/SchedulerPost.service.ts</code> and list every method currently required by <code>SchedulerPlugin</code>.</li>
+          <li>Group methods by capability: posting, statistics, comments.</li>
+          <li>Define three new interfaces in <code>packages/scheduler/server/types/scheduler-plugin.types.ts</code>:
+            <ul class="list-disc list-inside ml-6 mt-1">
+              <li><code>PostPublisher</code>: validate, post, update</li>
+              <li><code>StatsProvider</code>: getStatistic</li>
+              <li><code>CommentManager</code>: getComments, replyToComment, addComment</li>
+            </ul>
+          </li>
+          <li>Replace the single <code>SchedulerPlugin</code> interface with a registry that maps platform names to capability sets.</li>
+          <li>Update every plugin in <code>packages/scheduler/server/services/plugins/</code> to implement only the capabilities it supports.</li>
+          <li>Update <code>AutoPost.service.ts</code> and <code>SchedulerPost.service.ts</code> to look up capabilities before calling methods.</li>
+          <li>Remove any stub methods that plugins implemented only to satisfy the old interface.</li>
+        </ol>
+      </div>
+
+      <div class="tdd-box mb-6">
+        <h3 class="font-semibold text-slate-800 mb-3">TDD Loop</h3>
+        <ol class="list-decimal list-inside space-y-2 text-sm text-slate-700">
+          <li><strong>Red:</strong> Write a test that creates a plugin implementing only <code>PostPublisher</code> and asserts it can be registered without implementing comment or stats methods.</li>
+          <li><strong>Green:</strong> Update the registry to accept capability-specific interfaces and make the test pass.</li>
+          <li><strong>Refactor:</strong> Extract helper functions for capability lookup so the registry code is readable.</li>
+          <li><strong>Red:</strong> Write a test that calls <code>getStatistic</code> on a plugin that does not support it and expects a clear error.</li>
+          <li><strong>Green:</strong> Implement capability checking in <code>SchedulerPost.service.ts</code>.</li>
+          <li><strong>Refactor:</strong> Ensure every capability check uses the same helper.</li>
+        </ol>
+      </div>
+
+      <div class="bg-slate-50 rounded-lg p-4 mb-4">
+        <h3 class="font-semibold text-slate-800 mb-2">Files to Create/Modify</h3>
+        <ul class="file-list list-disc list-inside space-y-1">
+          <li>Create: <code>packages/scheduler/server/types/scheduler-plugin.types.ts</code></li>
+          <li>Modify: <code>packages/scheduler/server/services/SchedulerPost.service.ts</code></li>
+          <li>Modify: <code>packages/scheduler/server/services/AutoPost.service.ts</code></li>
+          <li>Modify: <code>packages/scheduler/server/services/plugins/*.plugin.ts</code></li>
+          <li>Tests: <code>packages/scheduler/server/services/SchedulerPost.service.test.ts</code></li>
+        </ul>
+      </div>
+
+      <div class="bg-slate-100 rounded-lg p-4">
+        <h3 class="font-semibold text-slate-800 mb-2">Validation</h3>
+        <pre class="text-sm font-mono bg-slate-900 text-slate-100 p-3 rounded overflow-x-auto">pnpm build
+pnpm test:scheduler
+# or if no test script exists:
+cd packages/scheduler && pnpm test</pre>
+      </div>
+    </article>
+
+    <!-- Candidate 2 -->
+    <article id="candidate-2" class="candidate bg-white rounded-xl p-8 shadow-sm mb-12">
+      <div class="flex items-center gap-3 mb-6">
+        <span class="step-number">2</span>
+        <h2 class="text-2xl font-bold">BulkSchedulerService</h2>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6 mb-6">
+        <div>
+          <h3 class="font-semibold text-slate-800 mb-2">Current Problem</h3>
+          <p class="text-slate-700 text-sm">
+            <code>BulkSchedulerService</code> in <code>packages/bulk-scheduler/server/services/bulkScheduler.service.ts</code> handles CSV import, bulk generation, template processing, date distribution, asset downloading, platform trimming, and notifications. It is a shallow god-object.
+          </p>
+        </div>
+        <div>
+          <h3 class="font-semibold text-slate-800 mb-2">Goal</h3>
+          <p class="text-slate-700 text-sm">
+            Introduce deep modules behind narrow seams: <code>CsvPostImporter</code>, <code>BulkPostGenerator</code>, <code>PlatformContentFormatter</code>, <code>RemoteAssetDownloader</code>, and <code>BulkPostBatcher</code>.
+          </p>
+        </div>
+      </div>
+
+      <div class="must-do mb-6">
+        <h3 class="font-semibold text-slate-800 mb-3">Must-Do Points</h3>
+        <ol class="list-decimal list-inside space-y-2 text-sm text-slate-700">
+          <li>Read <code>packages/bulk-scheduler/server/services/bulkScheduler.service.ts</code> and identify every distinct responsibility.</li>
+          <li>Extract <code>trimContentForPlatform</code> into <code>packages/scheduler/server/utils/platformFormatter.ts</code> in the <code>BaseScheduler</code> layer.</li>
+          <li>Extract <code>downloadAndCreateAsset</code> into <code>packages/assets/server/utils/remoteDownloader.ts</code> in the <code>BaseAssets</code> layer.</li>
+          <li>Create <code>CsvPostImporter</code> in <code>packages/bulk-scheduler/server/services/csvImporter.service.ts</code> with a single public method <code>import(csvBuffer, options)</code>.</li>
+          <li>Create <code>BulkPostGenerator</code> in <code>packages/bulk-scheduler/server/services/bulkGenerator.service.ts</code> with a single public method <code>generate(template, variables, options)</code>.</li>
+          <li>Create <code>BulkPostBatcher</code> in <code>packages/bulk-scheduler/server/services/bulkPostBatcher.service.ts</code> that wraps <code>postService.create</code> with <code>Promise.allSettled</code>.</li>
+          <li>Refactor <code>BulkSchedulerService</code> to accept the new modules via constructor and delegate all work to them.</li>
+          <li>Ensure no inline CSV parsing, template expansion, or asset download logic remains in <code>BulkSchedulerService</code>.</li>
+        </ol>
+      </div>
+
+      <div class="tdd-box mb-6">
+        <h3 class="font-semibold text-slate-800 mb-3">TDD Loop</h3>
+        <ol class="list-decimal list-inside space-y-2 text-sm text-slate-700">
+          <li><strong>Red:</strong> Write a test for <code>PlatformContentFormatter.trim</code> with a string longer than the platform limit; expect it to truncate correctly.</li>
+          <li><strong>Green:</strong> Move the trimming logic into the new formatter and make the test pass.</li>
+          <li><strong>Refactor:</strong> Remove the old inline method from <code>BulkSchedulerService</code>.</li>
+          <li><strong>Red:</strong> Write a test for <code>CsvPostImporter.import</code> that passes a CSV buffer and expects an list of post objects.</li>
+          <li><strong>Green:</strong> Move CSV parsing logic into the importer and make the test pass.</li>
+          <li><strong>Refactor:</strong> Update <code>BulkSchedulerService</code> to use the importer.</li>
+          <li><strong>Red:</strong> Write a test for <code>BulkPostBatcher</code> that mocks <code>postService.create</code> and asserts all promises are settled.</li>
+          <li><strong>Green:</strong> Implement the batcher and wire it into the service.</li>
+        </ol>
+      </div>
+
+      <div class="bg-slate-50 rounded-lg p-4 mb-4">
+        <h3 class="font-semibold text-slate-800 mb-2">Files to Create/Modify</h3>
+        <ul class="file-list list-disc list-inside space-y-1">
+          <li>Create: <code>packages/bulk-scheduler/server/services/csvImporter.service.ts</code></li>
+          <li>Create: <code>packages/bulk-scheduler/server/services/bulkGenerator.service.ts</code></li>
+          <li>Create: <code>packages/bulk-scheduler/server/services/bulkPostBatcher.service.ts</code></li>
+          <li>Create: <code>packages/scheduler/server/utils/platformFormatter.ts</code></li>
+          <li>Create: <code>packages/assets/server/utils/remoteDownloader.ts</code></li>
+          <li>Modify: <code>packages/bulk-scheduler/server/services/bulkScheduler.service.ts</code></li>
+        </ul>
+      </div>
+
+      <div class="bg-slate-100 rounded-lg p-4">
+        <h3 class="font-semibold text-slate-800 mb-2">Validation</h3>
+        <pre class="text-sm font-mono bg-slate-900 text-slate-100 p-3 rounded overflow-x-auto">pnpm build
+cd packages/bulk-scheduler && pnpm test</pre>
+      </div>
+    </article>
+
+    <!-- Candidate 3 -->
+    <article id="candidate-3" class="candidate bg-white rounded-xl p-8 shadow-sm mb-12">
+      <div class="flex items-center gap-3 mb-6">
+        <span class="step-number">3</span>
+        <h2 class="text-2xl font-bold">PlatformStatsService</h2>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6 mb-6">
+        <div>
+          <h3 class="font-semibold text-slate-800 mb-2">Current Problem</h3>
+          <p class="text-slate-700 text-sm">
+            <code>PlatformStatsService</code> fetches stats, persists snapshots, calculates growth, aggregates, and builds time-series. It mixes integration, persistence, and presentation concerns.
+          </p>
+        </div>
+        <div>
+          <h3 class="font-semibold text-slate-800 mb-2">Goal</h3>
+          <p class="text-slate-700 text-sm">
+            Split into <code>StatsCollector</code>, <code>StatsRepository</code>, and <code>StatsAggregator</code>. The service keeps only orchestration.
+          </p>
+        </div>
+      </div>
+
+      <div class="must-do mb-6">
+        <h3 class="font-semibold text-slate-800 mb-3">Must-Do Points</h3>
+        <ol class="list-decimal list-inside space-y-2 text-sm text-slate-700">
+          <li>Read <code>packages/scheduler/server/services/PlatformStats.service.ts</code> and classify each method as collect, persist, or aggregate.</li>
+          <li>Create <code>StatsRepository</code> in <code>packages/db/server/services/stats.repository.ts</code> with methods: <code>getLatestSnapshot</code>, <code>saveSnapshot</code>, <code>getStatsHistory</code>.</li>
+          <li>Create <code>StatsCollector</code> in <code>packages/scheduler/server/services/StatsCollector.service.ts</code> with methods: <code>fetchAccountStats</code>, <code>collectAllStats</code>.</li>
+          <li>Create <code>StatsAggregator</code> in <code>packages/scheduler/server/services/StatsAggregator.service.ts</code> with methods: <code>calculateGrowth</code>, <code>getAggregatedByPlatform</code>, <code>getTimeSeriesData</code>.</li>
+          <li>Refactor <code>PlatformStatsService</code> to depend on the three new modules via constructor.</li>
+          <li>Move all Drizzle queries out of <code>PlatformStatsService</code> and into <code>StatsRepository</code>.</li>
+          <li>Update API routes in <code>packages/scheduler/server/api/v1/stats/</code> to use the new modules directly where appropriate.</li>
+        </ol>
+      </div>
+
+      <div class="tdd-box mb-6">
+        <h3 class="font-semibold text-slate-800 mb-3">TDD Loop</h3>
+        <ol class="list-decimal list-inside space-y-2 text-sm text-slate-700">
+          <li><strong>Red:</strong> Write a test for <code>StatsRepository.saveSnapshot</code> using an in-memory Drizzle mock; expect the correct insert/update behavior.</li>
+          <li><strong>Green:</strong> Move persistence logic into the repository and make the test pass.</li>
+          <li><strong>Red:</strong> Write a test for <code>StatsAggregator.calculateGrowth</code> with two snapshots; expect the correct percentage change.</li>
+          <li><strong>Green:</strong> Move growth calculation into the aggregator and make the test pass.</li>
+          <li><strong>Red:</strong> Write a test for <code>StatsCollector.collectAllStats</code> that mocks the external platform call and asserts the repository receives the data.</li>
+          <li><strong>Green:</strong> Move collection logic into the collector and make the test pass.</li>
+          <li><strong>Refactor:</strong> Reduce <code>PlatformStatsService</code> to a thin orchestrator.</li>
+        </ol>
+      </div>
+
+      <div class="bg-slate-50 rounded-lg p-4 mb-4">
+        <h3 class="font-semibold text-slate-800 mb-2">Files to Create/Modify</h3>
+        <ul class="file-list list-disc list-inside space-y-1">
+          <li>Create: <code>packages/db/server/services/stats.repository.ts</code></li>
+          <li>Create: <code>packages/scheduler/server/services/StatsCollector.service.ts</code></li>
+          <li>Create: <code>packages/scheduler/server/services/StatsAggregator.service.ts</code></li>
+          <li>Modify: <code>packages/scheduler/server/services/PlatformStats.service.ts</code></li>
+          <li>Modify: <code>packages/scheduler/server/api/v1/stats/*.ts</code></li>
+        </ul>
+      </div>
+
+      <div class="bg-slate-100 rounded-lg p-4">
+        <h3 class="font-semibold text-slate-800 mb-2">Validation</h3>
+        <pre class="text-sm font-mono bg-slate-900 text-slate-100 p-3 rounded overflow-x-auto">pnpm build
+cd packages/scheduler && pnpm test</pre>
+      </div>
+    </article>
+
+    <!-- Candidate 4 -->
+    <article id="candidate-4" class="candidate bg-white rounded-xl p-8 shadow-sm mb-12">
+      <div class="flex items-center gap-3 mb-6">
+        <span class="step-number">4</span>
+        <h2 class="text-2xl font-bold">AI Tools Facade</h2>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6 mb-6">
+        <div>
+          <h3 class="font-semibold text-slate-800 mb-2">Current Problem</h3>
+          <p class="text-slate-700 text-sm">
+            <code>AiToolsFacadeService</code> in <code>packages/ai-tools/server/services/aiToolsFacade.service.ts</code> handles authentication, LLM context, thread management, document handling, and skill management. A single facade with such a broad surface is shallow.
+          </p>
+        </div>
+        <div>
+          <h3 class="font-semibold text-slate-800 mb-2">Goal</h3>
+          <p class="text-slate-700 text-sm">
+            Replace the monolithic facade with deep modules: <code>ChatSessionManager</code>, <code>SkillRegistry</code>, <code>DocumentContext</code>, and <code>LLMGateway</code>.
+          </p>
+        </div>
+      </div>
+
+      <div class="must-do mb-6">
+        <h3 class="font-semibold text-slate-800 mb-3">Must-Do Points</h3>
+        <ol class="list-decimal list-inside space-y-2 text-sm text-slate-700">
+          <li>Read <code>packages/ai-tools/server/services/aiToolsFacade.service.ts</code> and map every public method to one of: chat, skills, documents, LLM gateway.</li>
+          <li>Create <code>LLMGateway</code> in <code>packages/ai-tools/server/services/llmGateway.service.ts</code> to own all Python-backend HTTP calls, JWT context, and SSE parsing.</li>
+          <li>Create <code>ChatSessionManager</code> in <code>packages/ai-tools/server/services/chatSessionManager.service.ts</code> to own thread lifecycle and message history.</li>
+          <li>Create <code>SkillRegistry</code> in <code>packages/ai-tools/server/services/skillRegistry.service.ts</code> to own skill loading, matching, and invocation.</li>
+          <li>Create <code>DocumentContext</code> in <code>packages/ai-tools/server/services/documentContext.service.ts</code> to own document upload, chunking, and retrieval.</li>
+          <li>Delete or deprecate <code>AiToolsFacadeService</code> after all callers are updated.</li>
+          <li>Update API routes in <code>packages/ai-tools/server/api/ai-tools/</code> to import the specific module they need.</li>
+        </ol>
+      </div>
+
+      <div class="tdd-box mb-6">
+        <h3 class="font-semibold text-slate-800 mb-3">TDD Loop</h3>
+        <ol class="list-decimal list-inside space-y-2 text-sm text-slate-700">
+          <li><strong>Red:</strong> Write a test for <code>LLMGateway.sendChat</code> that mocks the Python backend and asserts the correct JWT is attached.</li>
+          <li><strong>Green:</strong> Move the HTTP/SSE logic from the facade into the gateway and make the test pass.</li>
+          <li><strong>Red:</strong> Write a test for <code>ChatSessionManager.createThread</code> that asserts a thread record is created.</li>
+          <li><strong>Green:</strong> Move thread logic into the manager and make the test pass.</li>
+          <li><strong>Red:</strong> Write a test for <code>SkillRegistry.invoke</code> with a known skill name; expect the correct handler to run.</li>
+          <li><strong>Green:</strong> Move skill logic into the registry and make the test pass.</li>
+          <li><strong>Refactor:</strong> Update chat endpoint to compose the four modules instead of using the facade.</li>
+        </ol>
+      </div>
+
+      <div class="bg-slate-50 rounded-lg p-4 mb-4">
+        <h3 class="font-semibold text-slate-800 mb-2">Files to Create/Modify</h3>
+        <ul class="file-list list-disc list-inside space-y-1">
+          <li>Create: <code>packages/ai-tools/server/services/llmGateway.service.ts</code></li>
+          <li>Create: <code>packages/ai-tools/server/services/chatSessionManager.service.ts</code></li>
+          <li>Create: <code>packages/ai-tools/server/services/skillRegistry.service.ts</code></li>
+          <li>Create: <code>packages/ai-tools/server/services/documentContext.service.ts</code></li>
+          <li>Modify/Delete: <code>packages/ai-tools/server/services/aiToolsFacade.service.ts</code></li>
+          <li>Modify: <code>packages/ai-tools/server/api/ai-tools/*.ts</code></li>
+        </ul>
+      </div>
+
+      <div class="bg-slate-100 rounded-lg p-4">
+        <h3 class="font-semibold text-slate-800 mb-2">Validation</h3>
+        <pre class="text-sm font-mono bg-slate-900 text-slate-100 p-3 rounded overflow-x-auto">pnpm build
+cd packages/ai-tools && pnpm test</pre>
+      </div>
+    </article>
+
+    <!-- Candidate 5 -->
+    <article id="candidate-5" class="candidate bg-white rounded-xl p-8 shadow-sm mb-12">
+      <div class="flex items-center gap-3 mb-6">
+        <span class="step-number">5</span>
+        <h2 class="text-2xl font-bold">Asset Service Duplication</h2>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6 mb-6">
+        <div>
+          <h3 class="font-semibold text-slate-800 mb-2">Current Problem</h3>
+          <p class="text-slate-700 text-sm">
+            Asset-related logic appears in <code>packages/assets</code>, <code>packages/db</code>, and <code>packages/shared</code>. The seam is not real because there is no single interface callers can rely on.
+          </p>
+        </div>
+        <div>
+          <h3 class="font-semibold text-slate-800 mb-2">Goal</h3>
+          <p class="text-slate-700 text-sm">
+            Define a single <code>IAssetService</code> interface in <code>BaseShared</code>, move the Drizzle implementation into <code>BaseDB</code>, and make <code>BaseAssets</code> own domain orchestration.
+          </p>
+        </div>
+      </div>
+
+      <div class="must-do mb-6">
+        <h3 class="font-semibold text-slate-800 mb-3">Must-Do Points</h3>
+        <ol class="list-decimal list-inside space-y-2 text-sm text-slate-700">
+          <li>Read the three asset service files and identify which one contains the real implementation.</li>
+          <li>Define <code>IAssetService</code> in <code>packages/shared/server/types/asset.types.ts</code> with methods like <code>createAsset</code>, <code>getAssetById</code>, <code>deleteAsset</code>.</li>
+          <li>Move the concrete Drizzle implementation into <code>packages/db/server/services/asset.service.ts</code> and make it implement <code>IAssetService</code>.</li>
+          <li>Delete the re-export files in <code>packages/assets/server/services/asset.service.ts</code> and <code>packages/shared/server/services/asset.service.ts</code>.</li>
+          <li>Update <code>packages/assets/server/utils/AssetsUtils.ts</code> to import the DB implementation from <code>#layers/BaseDB/server/services/asset.service</code>.</li>
+          <li>Search the entire monorepo for imports of the old asset service paths and update them.</li>
+          <li>Ensure no layer other than <code>BaseDB</code> directly imports Drizzle schema for assets.</li>
+        </ol>
+      </div>
+
+      <div class="tdd-box mb-6">
+        <h3 class="font-semibold text-slate-800 mb-3">TDD Loop</h3>
+        <ol class="list-decimal list-inside space-y-2 text-sm text-slate-700">
+          <li><strong>Red:</strong> Write a test that asserts <code>packages/db/server/services/asset.service.ts</code> implements <code>IAssetService</code> (type-level or runtime check).</li>
+          <li><strong>Green:</strong> Move the implementation and make the test pass.</li>
+          <li><strong>Red:</strong> Write a test for <code>createAsset</code> using an in-memory DB mock.</li>
+          <li><strong>Green:</strong> Ensure the DB service passes the test.</li>
+          <li><strong>Red:</strong> Write a test that imports the asset service from the correct layer and asserts it is defined.</li>
+          <li><strong>Green:</strong> Fix all broken imports across the monorepo.</li>
+        </ol>
+      </div>
+
+      <div class="bg-slate-50 rounded-lg p-4 mb-4">
+        <h3 class="font-semibold text-slate-800 mb-2">Files to Create/Modify</h3>
+        <ul class="file-list list-disc list-inside space-y-1">
+          <li>Create: <code>packages/shared/server/types/asset.types.ts</code></li>
+          <li>Modify: <code>packages/db/server/services/asset.service.ts</code></li>
+          <li>Delete: <code>packages/assets/server/services/asset.service.ts</code></li>
+          <li>Delete: <code>packages/shared/server/services/asset.service.ts</code></li>
+          <li>Modify: <code>packages/assets/server/utils/AssetsUtils.ts</code></li>
+        </ul>
+      </div>
+
+      <div class="bg-slate-100 rounded-lg p-4">
+        <h3 class="font-semibold text-slate-800 mb-2">Validation</h3>
+        <pre class="text-sm font-mono bg-slate-900 text-slate-100 p-3 rounded overflow-x-auto">pnpm build
+# Search for stale imports
+code-searcher --pattern "from .*asset.service" --flags "-g *.ts -g *.vue"</pre>
+      </div>
+    </article>
+
+    <section class="bg-slate-900 text-white rounded-xl p-8 mt-12">
+      <h2 class="text-2xl font-bold mb-4">Global Rules</h2>
+      <ul class="list-disc list-inside space-y-2 text-slate-300">
+        <li>Never modify more than one candidate before running tests.</li>
+        <li>Always run <code>pnpm build</code> after file moves or import changes.</li>
+        <li>Prefer constructor injection over direct imports for new modules.</li>
+        <li>Keep Nuxt layer boundaries: <code>BaseShared</code> for types, <code>BaseDB</code> for persistence, <code>BaseAssets</code> for file logic, <code>BaseScheduler</code> for scheduling rules.</li>
+        <li>Record any new ADR if a refactor contradicts an existing decision.</li>
+      </ul>
+    </section>
+
+    <footer class="mt-12 pt-8 border-t border-slate-200 text-sm text-slate-500">
+      <p>Generated for incremental, TDD-guided refactoring of the MagicSync Nuxt monorepo.</p>
+    </footer>
+  </div>
+</body>
+</html>

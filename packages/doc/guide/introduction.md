@@ -1,131 +1,105 @@
-# Hello, Friend! 👋
+# Introduction to MagicSync
 
-**Welcome to MagicSync — Where Your Social Media Dreams Come True!**
-
-Imagine you have a magical robot friend who can help you share your stories, photos, and fun ideas with the whole world — all from one special place. That's MagicSync!
+MagicSync is a social media management platform for small businesses, creators, and teams. It lets you schedule posts, manage multiple accounts, generate content with AI, and track performance from one dashboard.
 
 ---
 
-## 🎈 What is MagicSync?
+## What is MagicSync?
 
-Do you like sharing pictures of your favorite things? Maybe you have a pet, or you love drawing, or your family makes the yummiest cookies ever! 
-
-Well, MagicSync is like a **super helpful assistant** that helps you share all those cool things with friends on the internet — but instead of logging into lots of different apps, you just use ONE app!
-
-It's like having one magical backpack that can hold all your crayons, and you can take out any color you need, anytime!
+MagicSync brings together the tools you need to manage your social media presence without switching between multiple apps. You can connect your accounts, create content, schedule posts, and review analytics in one place.
 
 ---
 
-## ✨ Why Kids (and Grown-Ups!) Love MagicSync
+## Who is MagicSync for?
 
-### 🕐 Save Time for What Matters
-Instead of running around to show everyone your cool drawings, MagicSync lets you show them all at once! It's like setting up a playdate for all your friends at the same time — but online!
-
-### 🤖 Your Smart Helper
-MagicSync has a really smart friend named **AI** who helps you think of cool things to share! Stuck on what to post? Just ask your AI helper! It's like having a brainstorming buddy who's always excited to help.
-
-### 🔐 Your Secret Fortress
-Guess what? With MagicSync, your stuff stays safe with you! Some apps share your things with strangers, but MagicSync lets you keep everything in your own secret fortress. Cool, right?
+- **Small businesses** — Restaurants, retail stores, salons, and service providers
+- **Content creators** — YouTubers, artists, writers, and influencers
+- **Marketing teams** — Agencies managing multiple client accounts
+- **Nonprofits and communities** — Organizations building an online presence
 
 ---
 
-## 🌟 Who Can Use MagicSync?
+## Key Benefits
 
-### 🏪 Small Business Owners
-- **Pizza Shops** can share photos of their yummiest pizzas!
-- **Pet Stores** can show cute puppies and kittens!
-- **Book Shops** can tell everyone about the best stories!
-- **Salons** can share the coolest hairstyles!
-
-### 👨‍👩‍👧 Families
-- Share photos from birthday parties!
-- Keep distant grandparents updated with cute videos!
-- Create a family scrapbook that everyone can add to!
-
-### 📱 Content Creators
-- YouTubers can plan their videos!
-- Artists can share their creations!
-- Gamers can tell their followers about new games!
+- **Save time** — Schedule posts across platforms from one place
+- **Stay organized** — Use the calendar and media library to manage content
+- **Grow faster** — Use AI tools and analytics to improve performance
+- **Own your data** — Choose self-hosting for full control
+- **Reduce costs** — No per-user fees or artificial account limits
 
 ---
 
-## 🌈 All the Places You Can Share!
+## Supported Platforms
 
-MagicSync can connect to LOTS of places where you can share things:
+MagicSync supports a wide range of social platforms:
 
-| Place | What You Can Share |
-|-------|---------------------|
-| 📘 Facebook | Posts, photos, stories |
-| 📸 Instagram | Pictures, reels, stories |
-| 🐦 X (Twitter) | Tweets, threads |
-| 💼 LinkedIn | Work updates, professional posts |
-| 🎵 TikTok | Videos |
-| 🎬 YouTube | Videos |
-| 📍 Google My Business | Business updates, reviews |
-| 📌 Pinterest | Pins and ideas |
-| 💬 Discord | Messages to server friends |
-| 🌅 Threads | Text posts |
-| 🦋 Bluesky | Posts on the new social sky |
-| 📝 WordPress | Blog stories |
-| 👨‍💻 Dev.to | Code and tech stuff |
-
-That's SO many places! And you can use just ONE app to post to ALL of them!
+| Platform | Posts | Stories | Videos | Analytics |
+|----------|-------|---------|--------|-----------|
+| Facebook | ✅ | ✅ | ✅ | ✅ |
+| Instagram | ✅ | ✅ | ✅ | ✅ |
+| X (Twitter) | ✅ | — | ✅ | ✅ |
+| LinkedIn | ✅ | — | ✅ | ✅ |
+| TikTok | ✅ | — | ✅ | ✅ |
+| YouTube | ✅ | — | ✅ | ✅ |
+| Pinterest | ✅ | — | ✅ | ✅ |
+| Reddit | ✅ | — | ✅ | ✅ |
+| Discord | ✅ | — | — | ✅ |
+| Threads | ✅ | — | — | ✅ |
+| Bluesky | ✅ | — | — | ✅ |
+| WordPress | ✅ | — | — | ✅ |
+| Dev.to | ✅ | — | — | ✅ |
 
 ---
 
-## 🚀 How Does It Work? (Super Simple Version!)
+## How It Works
 
-1. **Connect Your Accounts** — It's like adding friends to your magical circle!
-2. **Create Something Awesome** — Make a post, take a photo, or let AI help you!
-3. **Schedule It** — Pick when you want to share it (maybe when everyone is awake!)
-4. **Watch the Magic Happen** — Your posts go out all by themselves! ✨
-
----
-
-## 🎪 The Magic Features
-
-### 📅 The Calendar — See Everything at Once!
-Imagine a big calendar on your wall where you can see ALL your posts in one glance. That's the MagicSync calendar! You can see what's going out today, tomorrow, or even next month!
-
-### 🎨 The Media Library — Your Art Room!
-All your photos, videos, and drawings in one place! It's like having a beautiful art room where everything is organized and easy to find.
-
-### 📊 The Stats — Your Cheerleaders!
-MagicSync tells you when people like your posts! It's like having cheerleaders tell you "Great job!" — but from the whole internet!
-
-### 👥 Team Work — Friends Helping Friends!
-Sometimes sharing is better with friends! You can invite family members or teammates to help create and share content. Everyone can work together like a superhero team!
+1. **Connect your accounts** — Link your social media profiles
+2. **Create content** — Write posts, upload media, or use AI assistance
+3. **Schedule posts** — Choose when each post goes live
+4. **Analyze results** — Track engagement and improve over time
 
 ---
 
-## 🎯 Ready to Start Your Adventure?
+## Core Features
 
-Getting started with MagicSync is easy peasy!
-
-- **[Installation](/guide/installation)** — Let's get you set up!
-- **[Quick Start](/guide/quick-start)** — Post your first thing in 5 minutes!
-- **[Platform Setup](/guide/platform-keys)** — Connect your favorite apps!
-
----
-
-## 💫 What Makes MagicSync Special?
-
-| Cool Thing | MagicSync | Other Apps |
-|------------|-----------|------------|
-| 💰 Cost | One time payment! | Expensive monthly fees |
-| 👥 Friends | As many as you want! | Limited accounts |
-| 🔒 Safety | Your data stays with you! | They keep your data |
-| 🤖 AI Helper | Included for free! | Costs extra |
-| 🔧 Fix It Yourself | Yes! | No way! |
+- **Multi-platform scheduling** — Post to several networks at once
+- **AI content generation** — Generate captions, ideas, and hashtags
+- **Media library** — Store and organize all your assets
+- **Analytics dashboard** — Track performance across platforms
+- **Team collaboration** — Invite users and set permissions
+- **Automation** — Connect with Zapier, Make.com, n8n, and RSS feeds
+- **Free tools** — Image editor, video cropper, text-to-speech, and more
 
 ---
 
-## 🤔 Questions?
+## Deployment Options
 
-We've got answers! Check out our [FAQ](/guide/faq) or make sure to ask your parents before signing up!
+- **Cloud** — Managed hosting by the MagicSync team
+- **Self-hosted** — Run on your own server with Docker
+- **Coolify** — Deploy easily with the pre-built Docker image
+
+Learn more in the [Installation Guide](/guide/installation), [Self-Hosting Guide](/guide/self-hosting), and [Coolify Deployment Guide](/guide/coolify-deploy).
 
 ---
 
-**Let's make some magic together!** ✨
+## MagicSync vs Other Platforms
 
-*MagicSync — Because sharing should be fun, not complicated!*
+| Feature | MagicSync | Typical Competitors |
+|---------|-----------|---------------------|
+| Self-hosting | ✅ | Limited or unavailable |
+| Unlimited accounts | ✅ | Often limited by plan |
+| AI content generation | ✅ | Usually extra cost |
+| Self-hosted option | ✅ | Often unavailable |
+| Open source | ✅ | Proprietary |
+| Open source | ✅ | Proprietary |
+
+MagicSync is designed for users who want control, transparency, and predictable costs.
+
+---
+
+## Next Steps
+
+- [Installation](/guide/installation) — Set up MagicSync
+- [Quick Start](/guide/quick-start) — Create your first post
+- [Platform Keys](/guide/platform-keys) — Connect your accounts
+- [Free Tools](/guide/tools) — Explore the creative tools

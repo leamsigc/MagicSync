@@ -83,6 +83,13 @@ docker-compose up -d
 
 See [Docker Setup](/guide/docker-setup) for detailed configuration.
 
+## Self-Hosting & Coolify
+
+Want to run MagicSync on your own server? You have two great options:
+
+- 🏰 [Self-Hosting Guide](/guide/self-hosting) — Build and run MagicSync on your own server using Docker Compose.
+- ☁️ [Coolify Deploy Guide](/guide/coolify-deploy) — Deploy with one click using the pre-built Docker image `ghcr.io/leamsigc/magicsync`.
+
 ## Troubleshooting
 
 ### Port Already in Use

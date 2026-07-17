@@ -36,3 +36,10 @@ MagicSync can be easily set up using Docker Compose.
 - **App**: The main Nuxt application.
 - **Database**: PostgreSQL/Turso (check `docker-compose.yml`).
 - **Redis**: For queue management (if used).
+
+## More Deployment Options
+
+Want to go deeper? Check out these guides:
+
+- 🏰 [Self-Hosting Guide](/guide/self-hosting) — Run MagicSync on your own server with full control.
+- ☁️ [Coolify Deploy Guide](/guide/coolify-deploy) — Deploy MagicSync easily with Coolify using the pre-built Docker image `ghcr.io/leamsigc/magicsync`.

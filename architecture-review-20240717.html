@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Architecture Review - Deepening Opportunities</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#64748b',
+                        success: '#22c55e',
+                        warning: '#f59e0b',
+                        danger: '#ef4444'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .card {
+            transition: all 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        .badge-strong {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+        .badge-worth {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+        .badge-speculative {
+            background-color: #f3e8ff;
+            color: #6b21a8;
+        }
+        .before-after {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+        @media (max-width: 768px) {
+            .before-after {
+                grid-template-columns: 1fr;
+            }
+        }
+        .diagram-container {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            overflow-x: auto;
+        }
+        .friction-point {
+            background-color: #fef2f2;
+            border-left: 4px solid #ef4444;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+        .opportunity {
+            background-color: #f0fdf4;
+            border-left: 4px solid #22c55e;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+        <header class="mb-12">
+            <h1 class="text-4xl font-bold text-gray-900 mb-4">Architecture Review - Deepening Opportunities</h1>
+            <p class="text-lg text-gray-600">Identifying architectural friction and proposing deepening opportunities for improved testability and AI-navigability</p>
+        </header>
+
+        <div class="space-y-8">
+            <!-- Candidate 1: Social Media Account Service -->
+            <section class="card bg-white rounded-lg shadow-md p-6">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">Social Media Account Service</h2>
+                        <p class="text-gray-600">packages/db/server/services/social-media-account.service.ts</p>
+                    </div>
+                    <span class="badge badge-strong">Strong</span>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Files Involved</h3>
+                    <ul class="list-disc list-inside text-gray-700 space-y-1">
+                        <li>packages/db/server/services/social-media-account.service.ts</li>
+                        <li>packages/db/server/services/oauth.service.ts (new)</li>
+                        <li>packages/db/server/services/token.service.ts (new)</li>
+                        <li>packages/db/server/services/account.service.ts (new)</li>
+                    </ul>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Problem</h3>
+                    <div class="friction-point">
+                        <strong>Interface vs Implementation Complexity:</strong> The service has 25+ methods covering creation, updates, deletion, token management, validation, and account linking, yet the implementation is a 747-line single class with many thin wrappers.
+                    </div>
+                    <div class="friction-point">
+                        <strong>Tight Coupling Across Seams:</strong> Direct imports from BaseDB schema and BaseAuth, uses useDrizzle(), and calls entityDetailsService from another service.
+                    </div>
+                    <div class="friction-point">
+                        <strong>Lack of Locality:</strong> Pure functions like isTokenExpired() and getTokenHealth() are extracted for testability but called from multiple places with different types.
+                    </div>
+                    <div class="friction-point">
+                        <strong>Untested/Hard to Test Areas:</strong> OAuth token refresh logic, account validation against external APIs, token expiration checks with timezone considerations.
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Solution</h3>
+                    <div class="opportunity">
+                        <strong>Refactor into smaller, more focused services:</strong> Split into AccountService (CRUD operations), TokenService (token management), and OAuthService (external API interactions).
+                    </div>
+                    <div class="opportunity">
+                        <strong>Use dependency injection:</strong> Make the service more testable by injecting dependencies instead of direct imports.
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Benefits</h3>
+                    <ul class="list-disc list-inside text-gray-700 space-y-2">
+                        <li><strong>Locality:</strong> Each service has a clear, focused responsibility</li>
+                        <li><strong>Leverage:</strong> Changes to one service will have less impact on others</li>
+                        <li><strong>Testability:</strong> Smaller services are easier to test</li>
+                        <li><strong>Maintainability:</strong> The system will be easier to understand and modify</li>
+                    </ul>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Before / After Visualization</h3>
+                    <div class="before-after">
+                        <div class="bg-gray-100 rounded p-4">
+                            <h4 class="font-bold mb-3 text-gray-700">Before (Shallow)</h4>
+                            <div class="mermaid">
+                                graph LR
+                                    A[SocialMediaAccountService<br/>747 lines<br/>25+ methods] --> B[Direct DB Access]
+                                    A --> C[BaseAuth Imports]
+                                    A --> D[EntityDetailService]
+                                    A --> E[Token Management]
+                                    A --> F[OAuth Flow]
+                                    A --> G[Validation Logic]
+                                    A --> H[Account Linking]
+                            </div>
+                        </div>
+                        <div class="bg-green-50 rounded p-4">
+                            <h4 class="font-bold mb-3 text-gray-700">After (Deepened)</h4>
+                            <div class="mermaid">
+                                graph TD
+                                    A[SocialMediaAccountService<br/>CRUD operations<br/>100 lines] --> B[AccountService]
+                                    C[Token Management<br/>200 lines] --> D[TokenService]
+                                    E[OAuth Flow<br/>300 lines] --> F[OAuthService]
+                                    G[Validation Logic<br/>100 lines] --> H[ValidationService]
+                                    B --> I[Database Layer]
+                                    D --> I
+                                    F --> J[External APIs]
+                                    H --> I
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Recommendation Strength</h3>
+                    <div class="badge badge-strong text-lg px-4 py-2">⭐⭐⭐⭐⭐ (High)</div>
+                </div>
+            </section>
+
+            <!-- Candidate 2: Post Service -->
+            <section class="card bg-white rounded-lg shadow-md p-6">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">Post Service</h2>
+                        <p class="text-gray-600">packages/db/server/services/post.service.ts</p>
+                    </div>
+                    <span class="badge badge-worth">Worth exploring</span>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Files Involved</h3>
+                    <ul class="list-disc list-inside text-gray-700 space-y-1">
+                        <li>packages/db/server/services/post.service.ts</li>
+                        <li>packages/db/server/services/platform-post.service.ts (new)</li>
+                        <li>packages/db/server/services/post-batch.service.ts (new)</li>
+                        <li>packages/db/server/services/validation.service.ts (new)</li>
+                    </ul>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Problem</h3>
+                    <div class="friction-point">
+                        <strong>Interface vs Implementation Complexity:</strong> The service has 10+ methods for CRUD operations, platform post management, and retry logic, yet contains 503 lines of code with significant platform-specific logic.
+                    </div>
+                    <div class="friction-point">
+                        <strong>Tight Coupling and Cross-Service Dependencies:</strong> Direct imports from BaseDB schema, uses useDrizzle(), and calls postBatchService from within the service itself (circular dependency risk).
+                    </div>
+                    <div class="friction-point">
+                        <strong>Lack of Locality:</strong> Batch creation logic is embedded in the create() method, retry logic is called from multiple places, and platform mapping is done inline in multiple methods.
+                    </div>
+                    <div class="friction-point">
+                        <strong>Untested/Hard to Test Areas:</strong> Transactional integrity across multiple database operations, platform post status management, retry logic with error handling.
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Solution</h3>
+                    <div class="opportunity">
+                        <strong>Split into multiple services:</strong> Separate PostService (CRUD), PlatformPostService (platform-specific operations), PostBatchService (batch operations).
+                    </div>
+                    <div class="opportunity">
+                        <strong>Extract validation logic:</strong> Move validation into a separate validator service.
+                    </div>
+                    <div class="opportunity">
+                        <strong>Move platform-specific logic:</strong> Extract to a plugin system (similar to scheduler plugins).
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Benefits</h3>
+                    <ul class="list-disc list-inside text-gray-700 space-y-2">
+                        <li><strong>Locality:</strong> Each service handles a specific domain concern</li>
+                        <li><strong>Leverage:</strong> Platform-specific changes won't affect core post operations</li>
+                        <li><strong>Testability:</strong> Smaller services can be tested independently</li>
+                        <li><strong>Maintainability:</strong> Easier to understand and modify individual components</li>
+                    </ul>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Before / After Visualization</h3>
+                    <div class="before-after">
+                        <div class="bg-gray-100 rounded p-4">
+                            <h4 class="font-bold mb-3 text-gray-700">Before (Shallow)</h4>
+                            <div class="mermaid">
+                                graph LR
+                                    A[PostService<br/>503 lines<br/>CRUD + Platform + Retry] --> B[Database]
+                                    A --> C[Platform Post Logic]
+                                    A --> D[Batch Operations]
+                                    A --> E[Retry Mechanism]
+                                    A --> F[Platform Mapping]
+                            </div>
+                        </div>
+                        <div class="bg-green-50 rounded p-4">
+                            <h4 class="font-bold mb-3 text-gray-700">After (Deepened)</h4>
+                            <div class="mermaid">
+                                graph TD
+                                    A[PostService<br/>CRUD operations<br/>150 lines] --> B[Database]
+                                    C[Platform Post Logic<br/>200 lines] --> D[PlatformPostService]
+                                    E[Batch Operations<br/>150 lines] --> F[PostBatchService]
+                                    G[Retry Mechanism<br/>100 lines] --> H[RetryService]
+                                    D --> I[External APIs]
+                                    F --> I
+                                    H --> I
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Recommendation Strength</h3>
+                    <div class="badge badge-worth text-lg px-4 py-2">⭐⭐⭐⭐ (High)</div>
+                </div>
+            </section>
+
+            <!-- Candidate 3: Review Service -->
+            <section class="card bg-white rounded-lg shadow-md p-6">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">Review Service</h2>
+                        <p class="text-gray-600">packages/db/server/services/review.service.ts</p>
+                    </div>
+                    <span class="badge badge-strong">Strong</span>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Files Involved</h3>
+                    <ul class="list-disc list-inside text-gray-700 space-y-1">
+                        <li>packages/db/server/services/review.service.ts</li>
+                        <li>packages/db/server/services/review-ai.service.ts (new)</li>
+                        <li>packages/db/server/services/review-sync.service.ts (new)</li>
+                        <li>packages/db/server/services/template.service.ts (new)</li>
+                    </ul>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Problem</h3>
+                    <div class="friction-point">
+                        <strong>Interface vs Implementation Complexity:</strong> The service has 20+ methods for review management, AI response generation, and sync operations, yet contains 764 lines of code with significant business logic.
+                    </div>
+                    <div class="friction-point">
+                        <strong>Tight Coupling and Cross-Service Dependencies:</strong> Direct imports from BaseDB schema, calls chatService for AI generation, uses searchService for review searches.
+                    </div>
+                    <div class="friction-point">
+                        <strong>Lack of Locality:</strong> AI response generation contains inline AI call logic, template retrieval is a pure function but called from multiple places, external sync has complex logic that should be separated.
+                    </div>
+                    <div class="friction-point">
+                        <strong>Untested/Hard to Test Areas:</strong> AI response generation logic, Google My Business integration, review sync with external APIs, response template selection.
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Solution</h3>
+                    <div class="opportunity">
+                        <strong>Split into multiple services:</strong> Separate ReviewService (CRUD), ReviewAIService (AI generation), ReviewSyncService (external sync).
+                    </div>
+                    <div class="opportunity">
+                        <strong>Extract template logic:</strong> Move to a dedicated TemplateService.
+                    </div>
+                    <div class="opportunity">
+                        <strong>Move external API calls:</strong> Extract to a separate ReviewSyncService.
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Benefits</h3>
+                    <ul class="list-disc list-inside text-gray-700 space-y-2">
+                        <li><strong>Locality:</strong> Each service focuses on a specific domain</li>
+                        <li><strong>Leverage:</strong> AI generation changes don't affect review CRUD</li>
+                        <li><strong>Testability:</strong> AI and sync logic can be tested independently</li>
+                        <li><strong>Maintainability:</strong> Clear separation of concerns</li>
+                    </ul>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Before / After Visualization</h3>
+                    <div class="before-after">
+                        <div class="bg-gray-100 rounded p-4">
+                            <h4 class="font-bold mb-3 text-gray-700">Before (Shallow)</h4>
+                            <div class="mermaid">
+                                graph LR
+                                    A[ReviewService<br/>764 lines<br/>CRUD + AI + Sync] --> B[Database]
+                                    A --> C[AI Generation]
+                                    A --> D[Template Retrieval]
+                                    A --> E[Google My Business]
+                                    A --> F[External Sync]
+                                    A --> G[Response Selection]
+                            </div>
+                        </div>
+                        <div class="bg-green-50 rounded p-4">
+                            <h4 class="font-bold mb-3 text-gray-700">After (Deepened)</h4>
+                            <div class="mermaid">
+                                graph TD
+                                    A[ReviewService<br/>CRUD operations<br/>150 lines] --> B[Database]
+                                    C[AI Generation<br/>250 lines] --> D[ReviewAIService]
+                                    E[Google My Business<br/>200 lines] --> F[ReviewSyncService]
+                                    G[Template Selection<br/>100 lines] --> H[TemplateService]
+                                    D --> I[AI APIs]
+                                    F --> J[External APIs]
+                                    H --> K[Template Database]
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Recommendation Strength</h3>
+                    <div class="badge badge-strong text-lg px-4 py-2">⭐⭐⭐⭐⭐ (Very High)</div>
+                </div>
+            </section>
+
+            <!-- Candidate 4: Scheduler Plugins -->
+            <section class="card bg-white rounded-lg shadow-md p-6">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">Scheduler Plugins</h2>
+                        <p class="text-gray-600">packages/scheduler/server/services/plugins/</p>
+                    </div>
+                    <span class="badge badge-worth">Worth exploring</span>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Files Involved</h3>
+                    <ul class="list-disc list-inside text-gray-700 space-y-1">
+                        <li>packages/scheduler/server/services/plugins/*.ts (20+ files)</li>
+                        <li>packages/scheduler/server/services/SchedulerPost.service.ts</li>
+                        <li>packages/scheduler/server/services/AutoPostService.ts</li>
+                        <li>packages/scheduler/server/services/plugin-registry.service.ts (new)</li>
+                    </ul>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Problem</h3>
+                    <div class="friction-point">
+                        <strong>Interface vs Implementation Complexity:</strong> Each plugin implements SchedulerPlugin interface with 6 abstract methods, but there are 20+ plugin files that need to be understood to add a new platform.
+                    </div>
+                    <div class="friction-point">
+                        <strong>Tight Coupling and Cross-Service Dependencies:</strong> Direct imports from SchedulerPost service, AutoPostService imports all plugin classes creating tight coupling.
+                    </div>
+                    <div class="friction-point">
+                        <strong>Lack of Locality:</strong> Platform mapping is a hardcoded matcher object, dynamic plugin resolution makes it hard to track which plugin is used, error handling flow is not clearly defined.
+                    </div>
+                    <div class="friction-point">
+                        <strong>Untested/Hard to Test Areas:</strong> Plugin execution logic, rate limiting integration, error handling and retry mechanisms, platform-specific API calls.
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Solution</h3>
+                    <div class="opportunity">
+                        <strong>Create a plugin registry:</strong> Decouple the scheduler from the plugin classes using a registry pattern.
+                    </div>
+                    <div class="opportunity">
+                        <strong>Extract common plugin logic:</strong> Move shared logic into a base class or utility functions.
+                    </div>
+                    <div class="opportunity">
+                        <strong>Move plugin discovery:</strong> Change from hardcoded object to configuration file.
+                    </div>
+                    <div class="opportunity">
+                        <strong>Add testing harness:</strong> Create comprehensive tests for plugin validation.
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Benefits</h3>
+                    <ul class="list-disc list-inside text-gray-700 space-y-2">
+                        <li><strong>Locality:</strong> Plugin discovery is centralized and easy to understand</li>
+                        <li><strong>Leverage:</strong> Adding new plugins becomes straightforward</li>
+                        <li><strong>Testability:</strong> Plugins can be tested independently</li>
+                        <li><strong>Maintainability:</strong> Clear separation between plugin logic and scheduler</li>
+                    </ul>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Before / After Visualization</h3>
+                    <div class="before-after">
+                        <div class="bg-gray-100 rounded p-4">
+                            <h4 class="font-bold mb-3 text-gray-700">Before (Shallow)</h4>
+                            <div class="mermaid">
+                                graph LR
+                                    A[AutoPostService] --> B[Plugin Class 1]
+                                    A --> C[Plugin Class 2]
+                                    A --> D[Plugin Class 3]
+                                    A --> E[Plugin Class 4]
+                                    B --> F[Platform 1]
+                                    C --> G[Platform 2]
+                                    D --> H[Platform 3]
+                                    E --> I[Platform 4]
+                            </div>
+                        </div>
+                        <div class="bg-green-50 rounded p-4">
+                            <h4 class="font-bold mb-3 text-gray-700">After (Deepened)</h4>
+                            <div class="mermaid">
+                                graph TD
+                                    A[Scheduler Service] --> B[Plugin Registry]
+                                    B --> C[Plugin Class 1]
+                                    B --> D[Plugin Class 2]
+                                    B --> E[Plugin Class 3]
+                                    B --> F[Plugin Class 4]
+                                    B --> G[Plugin Class 5]
+                                    B --> H[Plugin Class 6]
+                                    B --> I[Plugin Class 7]
+                                    B --> J[Plugin Class 8]
+                                    B --> K[Plugin Class 9]
+                                    B --> L[Plugin Class 10]
+                                    B --> M[Plugin Class 11]
+                                    B --> N[Plugin Class 12]
+                                    B --> O[Plugin Class 13]
+                                    B --> P[Plugin Class 14]
+                                    B --> Q[Plugin Class 15]
+                                    B --> R[Plugin Class 16]
+                                    B --> S[Plugin Class 17]
+                                    B --> T[Plugin Class 18]
+                                    B --> U[Plugin Class 19]
+                                    B --> V[Plugin Class 20]
+                                    B --> W[Configuration]
+                                    B --> X[Error Handling]
+                                    B --> Y[Rate Limiting]
+                                    B --> Z[Testing Harness]
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Recommendation Strength</h3>
+                    <div class="badge badge-worth text-lg px-4 py-2">⭐⭐⭐⭐ (High)</div>
+                </div>
+            </section>
+
+            <!-- Candidate 5: AI Tools Integration -->
+            <section class="card bg-white rounded-lg shadow-md p-6">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">AI Tools Integration</h2>
+                        <p class="text-gray-600">packages/ai-tools/ and packages/python-backend/</p>
+                    </div>
+                    <span class="badge badge-worth">Worth exploring</span>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Files Involved</h3>
+                    <ul class="list-disc list-inside text-gray-700 space-y-1">
+                        <li>packages/ai-tools/AiToolsFacadeService.ts</li>
+                        <li>packages/python-backend/*.py</li>
+                        <li>packages/ai-tools/api-contract.service.ts (new)</li>
+                        <li>packages/ai-tools/integration-test.service.ts (new)</li>
+                    </ul>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Problem</h3>
+                    <div class="friction-point">
+                        <strong>Interface vs Implementation Complexity:</strong> Nuxt side has 60+ methods that wrap Python backend calls, while the Python backend contains complex AI logic, RAG, and social media generation.
+                    </div>
+                    <div class="friction-point">
+                        <strong>Tight Coupling and Cross-Service Dependencies:</strong> Nuxt services use $fetch to call Python backend, both sides share authentication logic creating coupling.
+                    </div>
+                    <div class="friction-point">
+                        <strong>Lack of Locality:</strong> Authentication method is a pure function but called from multiple places, LLM JWT context has complex logic, document operations call multiple services.
+                    </div>
+                    <div class="friction-point">
+                        <strong>Untested/Hard to Test Areas:</strong> Python backend integration, AI model responses, RAG pipeline, document chunking and embedding.
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Solution</h3>
+                    <div class="opportunity">
+                        <strong>Create an abstraction layer:</strong> Build a clear API contract between Nuxt and Python backend.
+                    </div>
+                    <div class="opportunity">
+                        <strong>Move common AI logic:</strong> Consider moving common AI logic to the Nuxt side if feasible.
+                    </div>
+                    <div class="opportunity">
+                        <strong>Add API contract testing:</strong> Ensure Nuxt-Python integration is stable through contract testing.
+                    </div>
+                    <div class="opportunity">
+                        <strong>Create integration test suite:</strong> Build comprehensive tests for the AI tools integration.
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Benefits</h3>
+                    <ul class="list-disc list-inside text-gray-700 space-y-2">
+                        <li><strong>Locality:</strong> Clear separation between Nuxt and Python layers</li>
+                        <li><strong>Leverage:</strong> Changes to Python backend don't require Nuxt changes</li>
+                        <li><strong>Testability:</strong> Contract testing ensures integration stability</li>
+                        <li><strong>Maintainability:</strong> Easier to update either side independently</li>
+                    </ul>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Before / After Visualization</h3>
+                    <div class="before-after">
+                        <div class="bg-gray-100 rounded p-4">
+                            <h4 class="font-bold mb-3 text-gray-700">Before (Shallow)</h4>
+                            <div class="mermaid">
+                                graph LR
+                                    A[Nuxt AiToolsFacadeService<br/>60+ methods] --> B[Python Backend]
+                                    A --> C[Authentication]
+                                    A --> D[LLM JWT Context]
+                                    A --> E[Document Operations]
+                                    B --> F[AI Logic]
+                                    B --> G[RAG Pipeline]
+                                    B --> H[Social Media Generation]
+                            </div>
+                        </div>
+                        <div class="bg-green-50 rounded p-4">
+                            <h4 class="font-bold mb-3 text-gray-700">After (Deepened)</h4>
+                            <div class="mermaid">
+                                graph TD
+                                    A[Nuxt AiToolsService<br/>API Contract Layer<br/>100 lines] --> B[Python Backend API]
+                                    A --> C[Authentication Service]
+                                    A --> D[LLM Context Service]
+                                    A --> E[Document Service]
+                                    B --> F[Python AI Logic]
+                                    B --> G[Python RAG Pipeline]
+                                    B --> H[Python Social Media]
+                                    C --> I[Auth APIs]
+                                    D --> J[LLM APIs]
+                                    E --> K[Document APIs]
+                                    I --> L[Auth Database]
+                                    J --> M[LLM Database]
+                                    K --> N[Document Database]
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Recommendation Strength</h3>
+                    <div class="badge badge-worth text-lg px-4 py-2">⭐⭐⭐⭐ (High)</div>
+                </div>
+            </section>
+
+            <!-- Candidate 6: Document Service -->
+            <section class="card bg-white rounded-lg shadow-md p-6">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">Document Service</h2>
+                        <p class="text-gray-600">packages/db/server/services/document.service.ts</p>
+                    </div>
+                    <span class="badge badge-worth">Worth exploring</span>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Files Involved</h3>
+                    <ul class="list-disc list-inside text-gray-700 space-y-1">
+                        <li>packages/db/server/services/document.service.ts</li>
+                        <li>packages/db/server/services/chunk.service.ts (new)</li>
+                        <li>packages/db/server/services/document-search.service.ts (new)</li>
+                        <li>packages/db/server/services/folder.service.ts (new)</li>
+                    </ul>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Problem</h3>
+                    <div class="friction-point">
+                        <strong>Interface vs Implementation Complexity:</strong> The service has 12 methods for document management, yet contains 431 lines of code with significant chunking, search, and folder management logic.
+                    </div>
+                    <div class="friction-point">
+                        <strong>Tight Coupling and Cross-Service Dependencies:</strong> Direct imports from BaseDB schema, uses useDrizzle(), calls searchService for document search.
+                    </div>
+                    <div class="friction-point">
+                        <strong>Lack of Locality:</strong> Chunking logic is embedded in createChunks() method, search logic contains vector search logic, folder management has complex logic.
+                    </div>
+                    <div class="friction-point">
+                        <strong>Untested/Hard to Test Areas:</strong> Chunking algorithm, vector search performance, folder hierarchy management, document deduplication.
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Solution</h3>
+                    <div class="opportunity">
+                        <strong>Split into multiple services:</strong> Separate DocumentService (CRUD), ChunkService (chunking), DocumentSearchService (search), FolderService (folder management).
+                    </div>
+                    <div class="opportunity">
+                        <strong>Extract chunking logic:</strong> Move to a dedicated ChunkingService.
+                    </div>
+                    <div class="opportunity">
+                        <strong>Move search logic:</strong> Extract to a dedicated SearchService.
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Benefits</h3>
+                    <ul class="list-disc list-inside text-gray-700 space-y-2">
+                        <li><strong>Locality:</strong> Each service handles a specific document operation</li>
+                        <li><strong>Leverage:</strong> Search optimization doesn't affect document CRUD</li>
+                        <li><strong>Testability:</strong> Chunking and search logic can be tested independently</li>
+                        <li><strong>Maintainability:</strong> Clear separation of concerns</li>
+                    </ul>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Before / After Visualization</h3>
+                    <div class="before-after">
+                        <div class="bg-gray-100 rounded p-4">
+                            <h4 class="font-bold mb-3 text-gray-700">Before (Shallow)</h4>
+                            <div class="mermaid">
+                                graph LR
+                                    A[DocumentService<br/>431 lines<br/>CRUD + Chunking + Search] --> B[Database]
+                                    A --> C[Chunking Logic]
+                                    A --> D[Search Logic]
+                                    A --> E[Folder Management]
+                                    C --> F[Vector Database]
+                                    D --> G[Vector Search]
+                                    E --> H[Folder Hierarchy]
+                            </div>
+                        </div>
+                        <div class="bg-green-50 rounded p-4">
+                            <h4 class="font-bold mb-3 text-gray-700">After (Deepened)</h4>
+                            <div class="mermaid">
+                                graph TD
+                                    A[DocumentService<br/>CRUD operations<br/>150 lines] --> B[Database]
+                                    C[Chunking Logic<br/>150 lines] --> D[ChunkService]
+                                    E[Search Logic<br/>100 lines] --> F[DocumentSearchService]
+                                    G[Folder Management<br/>100 lines] --> H[FolderService]
+                                    D --> I[Chunk Database]
+                                    F --> J[Search Database]
+                                    H --> K[Folder Database]
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Recommendation Strength</h3>
+                    <div class="badge badge-worth text-lg px-4 py-2">⭐⭐⭐ (Medium)</div>
+                </div>
+            </section>
+
+            <!-- Candidate 7: Auth Service -->
+            <section class="card bg-white rounded-lg shadow-md p-6">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">Auth Service</h2>
+                        <p class="text-gray-600">packages/auth/</p>
+                    </div>
+                    <span class="badge badge-worth">Worth exploring</span>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Files Involved</h3>
+                    <ul class="list-disc list-inside text-gray-700 space-y-1">
+                        <li>packages/auth/*.ts</li>
+                        <li>packages/auth/auth.service.ts (new)</li>
+                        <li>packages/auth/auth-utils.service.ts (new)</li>
+                    </ul>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Problem</h3>
+                    <div class="friction-point">
+                        <strong>Interface vs Implementation Complexity:</strong> While AccountService has only 2 methods, BusinessProfileService has 15+ methods, creating inconsistency in the auth layer.
+                    </div>
+                    <div class="friction-point">
+                        <strong>Tight Coupling and Cross-Service Dependencies:</strong> Direct auth imports from BaseAuth, useAuthApi() is a utility that wraps Better Auth but is used across multiple services.
+                    </div>
+                    <div class="friction-point">
+                        <strong>Lack of Locality:</strong> checkUserIsLogin(), verifyApiKey(), and linkSocialAccount() are pure functions but called from multiple places.
+                    </div>
+                    <div class="friction-point">
+                        <strong>Untested/Hard to Test Areas:</strong> Better Auth integration, session management, API key validation, social account linking.
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Solution</h3>
+                    <div class="opportunity">
+                        <strong>Extract Better Auth logic:</strong> Move to a separate AuthService.
+                    </div>
+                    <div class="opportunity">
+                        <strong>Move authentication utilities:</strong> Extract to a dedicated AuthUtils module.
+                    </div>
+                    <div class="opportunity">
+                        <strong>Add unit tests:</strong> Create comprehensive unit tests for auth utility functions.
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Benefits</h3>
+                    <ul class="list-disc list-inside text-gray-700 space-y-2">
+                        <li><strong>Locality:</strong> Clear separation of authentication logic</li>
+                        <li><strong>Leverage:</strong> Auth utilities can be reused across services</li>
+                        <li><strong>Testability:</strong> Auth utilities can be tested independently</li>
+                        <li><strong>Maintainability:</strong> Easier to update authentication logic</li>
+                    </ul>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Before / After Visualization</h3>
+                    <div class="before-after">
+                        <div class="bg-gray-100 rounded p-4">
+                            <h4 class="font-bold mb-3 text-gray-700">Before (Shallow)</h4>
+                            <div class="mermaid">
+                                graph LR
+                                    A[Auth Services<br/>Multiple files] --> B[BaseAuth]
+                                    A --> C[useAuthApi]
+                                    A --> D[checkUserIsLogin]
+                                    A --> E[verifyApiKey]
+                                    A --> F[linkSocialAccount]
+                                    C --> G[Multiple Services]
+                                    D --> G
+                                    E --> G
+                                    F --> G
+                            </div>
+                        </div>
+                        <div class="bg-green-50 rounded p-4">
+                            <h4 class="font-bold mb-3 text-gray-700">After (Deepened)</h4>
+                            <div class="mermaid">
+                                graph TD
+                                    A[AuthService<br/>Authentication Logic<br/>100 lines] --> B[BaseAuth]
+                                    C[AuthUtils<br/>Utility Functions<br/>100 lines] --> D[Multiple Services]
+                                    E --> F[AuthUtils]
+                                    D --> G[Auth Database]
+                                    F --> H[Auth APIs]
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Recommendation Strength</h3>
+                    <div class="badge badge-worth text-lg px-4 py-2">⭐⭐⭐ (Medium)</div>
+                </div>
+            </section>
+
+             <!-- Critical Issue: Direct Database Queries -->
+             <section class="card bg-white rounded-lg shadow-md p-6 border-2 border-red-200">
+                 <h2 class="text-2xl font-bold text-red-900 mb-4">CRITICAL: Direct Database Queries in API Routes</h2>
+                 <div class="mb-6">
+                     <h3 class="text-lg font-semibold text-gray-800 mb-3">Problem</h3>
+                     <div class="friction-point">
+                         <strong>Violation of Non-Negotiables:</strong> Admin API routes in `packages/site/server/api/v1/admin/` are using direct database queries instead of the service layer pattern.
+                     </div>
+                     <div class="friction-point">
+                         <strong>Specific Violations:</strong>
+                         <ul class="list-disc list-inside text-gray-700 ml-4">
+                             <li>Direct `useDrizzle()` calls in route handlers</li>
+                             <li>Direct `db.select().all()` queries</li>
+                             <li>Missing `ServiceResponse<T>` return types</li>
+                         </ul>
+                     </div>
+                 </div>
+                 
+                 <div class="mb-6">
+                     <h3 class="text-lg font-semibold text-gray-800 mb-3">Impact</h3>
+                     <ul class="list-disc list-inside text-gray-700 space-y-2">
+                         <li><strong>Architecture Violation:</strong> Breaks the established service layer pattern</li>
+                         <li><strong>Testing Difficulty:</strong> Harder to test route handlers without duplicating business logic</li>
+                         <li><strong>Maintainability:</strong> Changes to business logic require updates in multiple places</li>
+                         <li><strong>Security:</strong> Missing proper error handling and validation</li>
+                     </ul>
+                 </div>
+                 
+                 <div class="mb-6">
+                     <h3 class="text-lg font-semibold text-gray-800 mb-3">Solution</h3>
+                     <div class="opportunity">
+                         <strong>Refactor to use service layer:</strong> Create or extend existing services to handle admin operations, then have API routes call these services.
+                     </div>
+                     <div class="opportunity">
+                         <strong>Consistent Pattern:</strong> Ensure all API routes follow the same pattern as other services.
+                     </div>
+                 </div>
+                 
+                 <div class="mb-4">
+                     <h3 class="text-lg font-semibold text-gray-800 mb-3">Recommendation Strength</h3>
+                     <div class="badge badge-strong text-lg px-4 py-2">⭐⭐⭐⭐⭐ (Critical)</div>
+                 </div>
+             </section>
+
+             <!-- Cross-Cutting Issues -->
+             <section class="card bg-white rounded-lg shadow-md p-6">
+                 <h2 class="text-2xl font-bold text-gray-900 mb-4">Cross-Cutting Architectural Issues</h2>
+                
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">1. Service Layer Over-Engineering</h3>
+                    <p class="text-gray-700 mb-3">The service layer is becoming increasingly complex, with many services that have overlapping responsibilities. Understanding any business operation requires reading through multiple service files.</p>
+                    <p class="text-gray-700">
+                        <strong>Solution:</strong> Consolidate related services into fewer, more focused modules.
+                    </p>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">2. Database Coupling</h3>
+                    <p class="text-gray-700 mb-3">Services directly import from BaseDB schema and use useDrizzle(). Tight coupling to the database schema makes refactoring difficult.</p>
+                    <p class="text-gray-700">
+                        <strong>Solution:</strong> Use a more abstract repository pattern that decouples services from the schema.
+                    </p>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">3. Lack of Clear Boundaries</h3>
+                    <p class="text-gray-700 mb-3">Services often handle multiple concerns (CRUD, validation, business logic, external API calls). Services become large and complex, making them hard to maintain.</p>
+                    <p class="text-gray-700">
+                        <strong>Solution:</strong> Apply strict single-responsibility principle to services.
+                    </p>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">4. Testing Gaps</h3>
+                    <p class="text-gray-700 mb-3">Many services are not well tested, especially those with complex business logic. Bugs are hard to detect and fix.</p>
+                    <p class="text-gray-700">
+                        <strong>Solution:</strong> Add comprehensive unit tests for all service methods, especially those with pure functions.
+                    </p>
+                </div>
+            </section>
+
+             <!-- Top Recommendation -->
+             <section class="card bg-gradient-to-r from-blue-50 to-green-50 rounded-lg shadow-md p-6 border-2 border-blue-200">
+                 <h2 class="text-2xl font-bold text-gray-900 mb-4">Top Recommendation</h2>
+                 
+                 <div class="mb-6">
+                     <h3 class="text-xl font-semibold text-gray-800 mb-3">Review Service (Candidate 3)</h3>
+                     <p class="text-gray-700 mb-4">
+                         This is the highest priority deepening opportunity because it is the largest and most complex module in the codebase (764 lines, 20+ methods). The current architecture creates significant friction for understanding and maintaining the review generation and sync logic.
+                     </p>
+                     <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded mb-6">
+                         <p class="text-yellow-800 mb-2">
+                             <strong>Immediate Priority:</strong> Before proceeding with deepening opportunities, the critical issue of direct database queries in admin API routes must be addressed. This violates the project's non-negotiables and needs to be fixed first.
+                         </p>
+                         <p class="text-yellow-800">
+                             <strong>Priority Order:</strong>
+                             1. Fix admin API routes (Critical - Violation of non-negotiables)
+                             2. Deepen Review Service (High - Complexity & maintenance)
+                             3. Deepen other services as needed
+                         </p>
+                     </div>
+                 </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-white p-4 rounded">
+                            <h4 class="font-bold text-gray-800 mb-2">Why This First?</h4>
+                            <ul class="list-disc list-inside text-gray-700 space-y-1">
+                                <li>High complexity and friction points</li>
+                                <li>Multiple untested areas (AI, external APIs)</li>
+                                <li>Clear separation of concerns possible</li>
+                                <li>Significant impact on overall system maintainability</li>
+                            </ul>
+                        </div>
+                        <div class="bg-white p-4 rounded">
+                            <h4 class="font-bold text-gray-800 mb-2">Expected Benefits</h4>
+                            <ul class="list-disc list-inside text-gray-700 space-y-1">
+                                <li>Improved test coverage for AI logic</li>
+                                <li>Reduced coupling between AI and sync operations</li>
+                                <li>Clearer API for external integrations</li>
+                                <li>Better developer experience for future changes</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
+                    <p class="text-yellow-800">
+                        <strong>Note:</strong> This deepening opportunity contradicts no existing ADRs, but may require careful consideration of the current service boundaries. The review service is a prime candidate for the "one adapter = hypothetical seam, two = real seam" principle.
+                    </p>
+                </div>
+            </section>
+
+            <footer class="mt-12 pt-8 border-t border-gray-200">
+                <p class="text-gray-600 text-center">
+                    Generated on <span id="timestamp"></span> | 
+                    Report contains <strong>7 deepening candidates</strong> for the MagicSync codebase
+                </p>
+            </footer>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'default'
+        });
+        
+        document.getElementById('timestamp').textContent = new Date().toLocaleString();
+    </script>
+</body>
+</html>

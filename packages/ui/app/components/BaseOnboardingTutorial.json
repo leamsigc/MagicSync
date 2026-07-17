@@ -2,232 +2,315 @@
   "en": {
     "modalTitle": "Tutorials",
     "tooltip": "Tutorials",
+    "currentPage": "Current page",
+    "allTutorials": "All tutorials",
     "firstTime": {
       "label": "First time",
       "description": "Get familiar with the MagicSync platform and its core features.",
       "steps": [
-        {
-          "title": "Welcome to MagicSync!",
-          "description": "You need to create a business to start using MagicSync. One business can have multiple social media accounts, and you can invite others to a specific business and they will have access to the social media that are part of that business only."
-        },
-        {
-          "title": "Follow & Support Us",
-          "description": "Follow MagicSync on our social media channels to stay updated, and give us a star on GitHub if you find this tool useful. Click to open a window where you can follow us, or skip this step."
-        },
-        {
-          "title": "Follow us in Twitter",
-          "description": "Follow MagicSync on Twitter to stay updated. Click to open a window where you can follow us, or skip this step."
-        },
-        {
-          "title": "Skip this step",
-          "description": "Skip this step if you are already Follow us on our social media channels."
-        },
-        {
-          "title": "Create Your Project",
-          "description": "Enter your website URL to auto-extract business details. You can skip this and fill in the information manually."
-        },
-        {
-          "title": "Business Details",
-          "description": "Review your business details across tabs: Business name, address, website, and phone (optional) are available under the Business info tab."
-        }
+        { "title": "Welcome to MagicSync!", "description": "You need to create a business to start using MagicSync. One business can have multiple social media accounts, and you can invite others to a specific business and they will have access to the social media that are part of that business only." },
+        { "title": "Follow & Support Us", "description": "Follow MagicSync on our social media channels to stay updated, and give us a star on GitHub if you find this tool useful. Click to open a window where you can follow us, or skip this step." },
+        { "title": "Follow us in Twitter", "description": "Follow MagicSync on Twitter to stay updated. Click to open a window where you can follow us, or skip this step." },
+        { "title": "Skip this step", "description": "Skip this step if you are already Follow us on our social media channels." },
+        { "title": "Create Your Project", "description": "Enter your website URL to auto-extract business details. You can skip this and fill in the information manually." },
+        { "title": "Business Details", "description": "Review your business details across tabs: Business name, address, website, and phone (optional) are available under the Business info tab." }
       ]
     },
     "createBusiness": {
       "label": "Create business",
       "description": "Set up your business profile with name, description, and branding.",
       "steps": [
-        {
-          "title": "Create a Business",
-          "description": "Go to Settings > Business to create your business profile. Add your business name, description, website, and branding."
-        },
-        {
-          "title": "Business Settings",
-          "description": "Configure your timezone, posting hours, and default social profiles for each business."
-        },
-        {
-          "title": "Team Management",
-          "description": "Invite team members to collaborate on your business from the business settings page."
-        }
+        { "title": "Create a Business", "description": "Go to Settings > Business to create your business profile. Add your business name, description, website, and branding." },
+        { "title": "Business Settings", "description": "Configure your timezone, posting hours, and default social profiles for each business." },
+        { "title": "Team Management", "description": "Invite team members to collaborate on your business from the business settings page." }
       ]
     },
     "connectSocialMedia": {
       "label": "Connect social media",
       "description": "Link your social media accounts to start scheduling.",
       "steps": [
-        {
-          "title": "Connect Social Media",
-          "description": "Navigate to Connect in the sidebar to link your social media accounts."
-        },
-        {
-          "title": "Supported Platforms",
-          "description": "Connect Facebook, Twitter/X, Instagram, Bluesky, LinkedIn, TikTok, and more."
-        },
-        {
-          "title": "Authentication",
-          "description": "Each platform will ask you to authorize MagicSync through OAuth. Follow the prompts to complete the connection."
-        }
+        { "title": "Connect Social Media", "description": "Navigate to Connect in the sidebar to link your social media accounts." },
+        { "title": "Supported Platforms", "description": "Connect Facebook, Twitter/X, Instagram, Bluesky, LinkedIn, TikTok, and more." },
+        { "title": "Authentication", "description": "Each platform will ask you to authorize MagicSync through OAuth. Follow the prompts to complete the connection." }
       ]
     },
     "addAssets": {
       "label": "Add assets",
       "description": "Upload images, videos, and other media to your asset library.",
       "steps": [
-        {
-          "title": "Asset Library",
-          "description": "The Asset Library stores all your images, videos, and media files for use in posts."
-        },
-        {
-          "title": "Upload Assets",
-          "description": "Navigate to Assets to upload files. You can drag and drop or use the upload button."
-        },
-        {
-          "title": "Organize Assets",
-          "description": "Create folders and tag your assets to keep everything organized and easy to find."
-        }
+        { "title": "Asset Library", "description": "The Asset Library stores all your images, videos, and media files for use in posts." },
+        { "title": "Upload Assets", "description": "Navigate to Assets to upload files. You can drag and drop or use the upload button." },
+        { "title": "Organize Assets", "description": "Create folders and tag your assets to keep everything organized and easy to find." }
       ]
     },
     "createNewPost": {
       "label": "Create new post",
       "description": "Create and schedule a new social media post.",
       "steps": [
-        {
-          "title": "Create a Post",
-          "description": "Click the \"New Post\" button to open the post composer."
-        },
-        {
-          "title": "Compose Your Content",
-          "description": "Write your post content, add images, and preview how it will look on each platform."
-        },
-        {
-          "title": "Schedule or Publish",
-          "description": "Choose to publish immediately or schedule for a specific date and time."
-        }
+        { "title": "Create a Post", "description": "Click the \"New Post\" button to open the post composer." },
+        { "title": "Compose Your Content", "description": "Write your post content, add images, and preview how it will look on each platform." },
+        { "title": "Schedule or Publish", "description": "Choose to publish immediately or schedule for a specific date and time." }
       ]
     },
     "createBulkPost": {
       "label": "Create bulk post",
       "description": "Create multiple posts at once with bulk scheduling.",
       "steps": [
-        {
-          "title": "Bulk Post Creation",
-          "description": "Create multiple posts at once using the bulk creation tool."
-        },
-        {
-          "title": "CSV Import",
-          "description": "Import posts from a CSV file with columns for content, platform, and schedule."
-        },
-        {
-          "title": "Review & Confirm",
-          "description": "Review all your posts before scheduling. Make edits to individual posts as needed."
-        }
+        { "title": "Bulk Post Creation", "description": "Create multiple posts at once using the bulk creation tool." },
+        { "title": "CSV Import", "description": "Import posts from a CSV file with columns for content, platform, and schedule." },
+        { "title": "Review & Confirm", "description": "Review all your posts before scheduling. Make edits to individual posts as needed." }
       ]
     },
     "sendInvitation": {
       "label": "Send invitation to business",
       "description": "Invite team members to collaborate on your business.",
       "steps": [
-        {
-          "title": "Invite Team Members",
-          "description": "Go to your business settings and select \"Team\" to invite members."
-        },
-        {
-          "title": "Set Permissions",
-          "description": "Choose what each team member can do — admin, editor, or viewer roles."
-        },
-        {
-          "title": "Accept Invitations",
-          "description": "Invited members will receive an email with a link to join your business."
-        }
+        { "title": "Invite Team Members", "description": "Go to your business settings and select \"Team\" to invite members." },
+        { "title": "Set Permissions", "description": "Choose what each team member can do — admin, editor, or viewer roles." },
+        { "title": "Accept Invitations", "description": "Invited members will receive an email with a link to join your business." }
       ]
     },
     "connectMultiplePages": {
       "label": "Connect multiple pages",
       "description": "Manage and connect multiple social media pages.",
       "steps": [
-        {
-          "title": "Multiple Pages",
-          "description": "Connect and manage multiple pages for each social platform."
-        },
-        {
-          "title": "Page Switching",
-          "description": "Easily switch between pages when creating posts or viewing analytics."
-        },
-        {
-          "title": "Bulk Actions",
-          "description": "Perform actions across multiple pages simultaneously."
-        }
+        { "title": "Multiple Pages", "description": "Connect and manage multiple pages for each social platform." },
+        { "title": "Page Switching", "description": "Easily switch between pages when creating posts or viewing analytics." },
+        { "title": "Bulk Actions", "description": "Perform actions across multiple pages simultaneously." }
       ]
     },
     "groupSocialMedia": {
       "label": "Group social media",
       "description": "Organize your social accounts into groups for easier management.",
       "steps": [
-        {
-          "title": "Social Media Groups",
-          "description": "Group your social accounts by category, campaign, or any custom organization."
-        },
-        {
-          "title": "Create Groups",
-          "description": "Navigate to Settings > Groups to create and manage your groups."
-        },
-        {
-          "title": "Bulk Post to Groups",
-          "description": "Schedule posts to entire groups at once, saving time on repetitive tasks."
-        }
+        { "title": "Social Media Groups", "description": "Group your social accounts by category, campaign, or any custom organization." },
+        { "title": "Create Groups", "description": "Navigate to Settings > Groups to create and manage your groups." },
+        { "title": "Bulk Post to Groups", "description": "Schedule posts to entire groups at once, saving time on repetitive tasks." }
       ]
     },
     "createVariables": {
       "label": "Create variables",
       "description": "Create reusable variables for dynamic content in your posts.",
       "steps": [
-        {
-          "title": "What are Variables?",
-          "description": "Variables are reusable placeholders like `business_name` or `date` that auto-fill in your posts."
-        },
-        {
-          "title": "Create Variables",
-          "description": "Go to Settings > Variables to create your custom variables with default values."
-        },
-        {
-          "title": "Use Variables in Posts",
-          "description": "Insert variables into your post content using the `variable_name` syntax."
-        }
+        { "title": "What are Variables?", "description": "Variables are reusable placeholders like `business_name` or `date` that auto-fill in your posts." },
+        { "title": "Create Variables", "description": "Go to Settings > Variables to create your custom variables with default values." },
+        { "title": "Use Variables in Posts", "description": "Insert variables into your post content using the `variable_name` syntax." }
       ]
     },
     "createApiKey": {
       "label": "Create API key",
       "description": "Generate API keys for external integrations and automation.",
       "steps": [
-        {
-          "title": "API Keys",
-          "description": "API keys allow external applications to interact with MagicSync programmatically."
-        },
-        {
-          "title": "Generate a Key",
-          "description": "Navigate to Settings > API Keys and click \"Generate New Key\"."
-        },
-        {
-          "title": "Key Permissions",
-          "description": "Set scope and permissions for each API key to limit access to specific features."
-        }
+        { "title": "API Keys", "description": "API keys allow external applications to interact with MagicSync programmatically." },
+        { "title": "Generate a Key", "description": "Navigate to Settings > API Keys and click \"Generate New Key\"." },
+        { "title": "Key Permissions", "description": "Set scope and permissions for each API key to limit access to specific features." }
       ]
     },
     "viewCalendar": {
       "label": "View calendar",
       "description": "View and manage your content publishing calendar.",
       "steps": [
-        {
-          "title": "Content Calendar",
-          "description": "The calendar shows all your scheduled and published posts in a monthly view."
-        },
-        {
-          "title": "Navigate the Calendar",
-          "description": "Use the month/week/day toggles to switch views. Click a date to see all posts for that day."
-        },
-        {
-          "title": "Manage Posts",
-          "description": "Click any post on the calendar to edit, reschedule, or delete it."
-        }
+        { "title": "Content Calendar", "description": "The calendar shows all your scheduled and published posts in a monthly view." },
+        { "title": "Navigate the Calendar", "description": "Use the month/week/day toggles to switch views. Click a date to see all posts for that day." },
+        { "title": "Manage Posts", "description": "Click any post on the calendar to edit, reschedule, or delete it." }
+      ]
+    },
+    "posts": {
+      "label": "Posts",
+      "description": "Manage all your scheduled and published social media posts.",
+      "steps": [
+        { "title": "Posts Dashboard", "description": "View all your posts in board, table, or grid views. Filter by status, platform, or date." },
+        { "title": "Post Actions", "description": "Edit, duplicate, reschedule, or delete posts directly from the posts list." },
+        { "title": "Performance", "description": "Click on any post to see its stats, comments, and engagement metrics." }
+      ]
+    },
+    "feeds": {
+      "label": "Feeds",
+      "description": "Curate and schedule content from RSS feeds and other sources.",
+      "steps": [
+        { "title": "Feed Sources", "description": "Add RSS feeds or content sources to automatically generate post ideas." },
+        { "title": "Review Feed Items", "description": "Browse feed items, preview them, and select the ones you want to share." },
+        { "title": "Schedule Feed Posts", "description": "Turn feed items into scheduled posts with one click." }
+      ]
+    },
+    "postVideo": {
+      "label": "Video post",
+      "description": "Create and schedule video posts for your social channels.",
+      "steps": [
+        { "title": "Upload Video", "description": "Select or upload a video file for your post." },
+        { "title": "Add Details", "description": "Write a caption, add hashtags, and choose the platforms to publish to." },
+        { "title": "Publish or Schedule", "description": "Publish immediately or schedule the video for the best time." }
+      ]
+    },
+    "templates": {
+      "label": "Templates",
+      "description": "Create reusable post templates to speed up content creation.",
+      "steps": [
+        { "title": "Template Library", "description": "Browse and manage all your saved templates in one place." },
+        { "title": "Create a Template", "description": "Build a template with variables, default text, and platform settings." },
+        { "title": "Use Templates", "description": "Apply templates when creating new posts to save time." }
+      ]
+    },
+    "templateEmail": {
+      "label": "Email templates",
+      "description": "Design reusable email templates for campaigns and notifications.",
+      "steps": [
+        { "title": "Email Template Builder", "description": "Create email templates with a rich text editor and dynamic variables." },
+        { "title": "Preview", "description": "Preview how your email will look on desktop and mobile." },
+        { "title": "Save & Reuse", "description": "Save templates and reuse them across campaigns." }
+      ]
+    },
+    "templateImages": {
+      "label": "Image templates",
+      "description": "Create reusable image templates for consistent branding.",
+      "steps": [
+        { "title": "Image Template Canvas", "description": "Design image templates with overlays, text, and brand assets." },
+        { "title": "Brand Presets", "description": "Save colors, fonts, and logos to keep designs consistent." },
+        { "title": "Export", "description": "Export templates in the right sizes for each platform." }
+      ]
+    },
+    "templateChat": {
+      "label": "Chat templates",
+      "description": "Save and reuse chat prompt templates for AI conversations.",
+      "steps": [
+        { "title": "Prompt Templates", "description": "Create prompt templates for common AI tasks and conversations." },
+        { "title": "Variables", "description": "Use variables to make templates reusable across different inputs." },
+        { "title": "Share", "description": "Share templates with your team for consistent AI interactions." }
+      ]
+    },
+    "aiTools": {
+      "label": "AI tools",
+      "description": "Use AI to generate content, strategies, and assets.",
+      "steps": [
+        { "title": "AI Dashboard", "description": "Explore all available AI tools from the AI dashboard." },
+        { "title": "Choose a Tool", "description": "Pick a tool based on your needs: content generation, strategy, or media." },
+        { "title": "Review Output", "description": "Always review AI-generated content before publishing." }
+      ]
+    },
+    "aiChat": {
+      "label": "AI chat",
+      "description": "Chat with MagicSync AI to get help with content and strategy.",
+      "steps": [
+        { "title": "Start a Chat", "description": "Open a new chat and describe what you need help with." },
+        { "title": "Use Skills", "description": "Activate skills to give the AI special capabilities like generating posts or images." },
+        { "title": "Save Results", "description": "Save useful outputs to your templates or posts." }
+      ]
+    },
+    "aiKnowledge": {
+      "label": "AI knowledge",
+      "description": "Upload documents to create a knowledge base for the AI.",
+      "steps": [
+        { "title": "Upload Documents", "description": "Upload PDFs, text files, or web pages to build your knowledge base." },
+        { "title": "Organize Knowledge", "description": "Group documents by topic or project for better AI responses." },
+        { "title": "Ask Questions", "description": "Ask the AI questions based on your uploaded documents." }
+      ]
+    },
+    "aiSkills": {
+      "label": "AI skills",
+      "description": "Create and manage custom AI skills.",
+      "steps": [
+        { "title": "Skill Library", "description": "Browse built-in skills and custom skills created by your team." },
+        { "title": "Create a Skill", "description": "Define instructions and examples for a new skill." },
+        { "title": "Use in Chat", "description": "Enable skills in AI chat to extend its capabilities." }
+      ]
+    },
+    "aiAssets": {
+      "label": "AI assets",
+      "description": "Manage assets generated or used by AI tools.",
+      "steps": [
+        { "title": "Generated Assets", "description": "View and organize images, text, and other outputs from AI tools." },
+        { "title": "Sync with Library", "description": "Move generated assets to your main media library." },
+        { "title": "Reuse", "description": "Reuse AI-generated assets across posts and campaigns." }
+      ]
+    },
+    "aiSettings": {
+      "label": "AI settings",
+      "description": "Configure AI providers, models, and defaults.",
+      "steps": [
+        { "title": "AI Provider", "description": "Choose the AI provider and model you want to use." },
+        { "title": "Default Settings", "description": "Set default tone, length, and language for AI outputs." },
+        { "title": "API Keys", "description": "Add your own API keys for AI providers if needed." }
+      ]
+    },
+    "tools": {
+      "label": "Free tools",
+      "description": "Access free utilities like video cropping, text-to-speech, and more.",
+      "steps": [
+        { "title": "Tool Library", "description": "Browse all free tools available in MagicSync." },
+        { "title": "Pick a Tool", "description": "Select a tool to open its dedicated workspace." },
+        { "title": "Export Results", "description": "Download or save results directly to your media library." }
+      ]
+    },
+    "videoCropper": {
+      "label": "Video cropper",
+      "description": "Crop and resize videos for different social platforms.",
+      "steps": [
+        { "title": "Upload Video", "description": "Upload a video or select one from your media library." },
+        { "title": "Choose Aspect Ratio", "description": "Pick the aspect ratio for the target platform." },
+        { "title": "Export", "description": "Crop, preview, and export the video in the right format." }
+      ]
+    },
+    "textToSpeech": {
+      "label": "Text to speech",
+      "description": "Convert text into natural-speech audio.",
+      "steps": [
+        { "title": "Enter Text", "description": "Type or paste the text you want to convert to speech." },
+        { "title": "Select Voice", "description": "Choose a voice style and adjust speed or pitch." },
+        { "title": "Generate Audio", "description": "Generate the audio file and download or save it." }
+      ]
+    },
+    "growthStrategy": {
+      "label": "Growth strategy",
+      "description": "Generate growth strategies and content plans with AI.",
+      "steps": [
+        { "title": "Define Goals", "description": "Enter your business goals and target audience." },
+        { "title": "Generate Strategy", "description": "Let AI create a tailored growth strategy for you." },
+        { "title": "Export Plan", "description": "Export the strategy as a document or schedule it as posts." }
+      ]
+    },
+    "contentSplit": {
+      "label": "Content split",
+      "description": "Split long content into multiple social media posts.",
+      "steps": [
+        { "title": "Paste Content", "description": "Paste a blog post, article, or long-form content." },
+        { "title": "Configure Split", "description": "Choose how many posts to create and the tone for each." },
+        { "title": "Review & Schedule", "description": "Review the generated posts and schedule them." }
+      ]
+    },
+    "profile": {
+      "label": "Profile",
+      "description": "Manage your personal profile and preferences.",
+      "steps": [
+        { "title": "Profile Info", "description": "Update your name, email, avatar, and language preferences." },
+        { "title": "Security", "description": "Change your password and enable two-factor authentication." },
+        { "title": "Preferences", "description": "Set default timezone, notifications, and display settings." }
+      ]
+    },
+    "account": {
+      "label": "Account",
+      "description": "Manage linked accounts and security settings.",
+      "steps": [
+        { "title": "Linked Accounts", "description": "Connect or disconnect social login providers." },
+        { "title": "Account Settings", "description": "Update email, password, and other account details." },
+        { "title": "Danger Zone", "description": "Delete your account or export your data from here." }
+      ]
+    },
+    "notifications": {
+      "label": "Notifications",
+      "description": "View and manage your notifications.",
+      "steps": [
+        { "title": "Notification List", "description": "See all your notifications in one place." },
+        { "title": "Filter", "description": "Filter by read/unread or type of notification." },
+        { "title": "Actions", "description": "Mark as read, archive, or clear notifications." }
+      ]
+    },
+    "admin": {
+      "label": "Admin",
+      "description": "Administer businesses, users, and integrations.",
+      "steps": [
+        { "title": "Admin Dashboard", "description": "Get an overview of businesses, users, and integrations." },
+        { "title": "Manage Users", "description": "Add, edit, or deactivate user accounts." },
+        { "title": "Audit", "description": "Review audit logs and system activity." }
       ]
     },
     "comingSoon": {
@@ -238,232 +321,315 @@
   "es": {
     "modalTitle": "Tutoriales",
     "tooltip": "Tutoriales",
+    "currentPage": "Página actual",
+    "allTutorials": "Todos los tutoriales",
     "firstTime": {
       "label": "Primera vez",
       "description": "Familiarízate con la plataforma MagicSync y sus funciones principales.",
       "steps": [
-        {
-          "title": "¡Bienvenido a MagicSync!",
-          "description": "Necesitas crear un negocio para empezar a usar MagicSync. Un negocio puede tener múltiples cuentas de redes sociales, y puedes invitar a otros a un negocio específico y solo tendrán acceso a las redes sociales que pertenecen a ese negocio."
-        },
-        {
-          "title": "Síguenos y Apóyanos",
-          "description": "Sigue a MagicSync en nuestras redes sociales para mantenerte actualizado, y danos una estrella en GitHub si te resulta útil. Haz clic para abrir una ventana donde puedes seguirnos, o salta este paso."
-        },
-        {
-          "title": "Síguenos en Twitter",
-          "description": "Sigue a MagicSync en Twitter para mantenerte actualizado. Haz clic para abrir una ventana donde puedes seguirnos, o salta este paso."
-        },
-        {
-          "title": "Saltar este paso",
-          "description": "Salta este paso si ya nos sigues en nuestras redes sociales."
-        },
-        {
-          "title": "Crea tu Proyecto",
-          "description": "Ingresa la URL de tu sitio web para extraer automáticamente los datos del negocio. Puedes saltar esto y completar la información manualmente."
-        },
-        {
-          "title": "Detalles del Negocio",
-          "description": "Revisa los detalles de tu negocio en las pestañas: Nombre, dirección, sitio web y teléfono (opcional) están disponibles en la pestaña de información del negocio."
-        }
+        { "title": "¡Bienvenido a MagicSync!", "description": "Necesitas crear un negocio para empezar a usar MagicSync. Un negocio puede tener múltiples cuentas de redes sociales, y puedes invitar a otros a un negocio específico y solo tendrán acceso a las redes sociales que pertenecen a ese negocio." },
+        { "title": "Síguenos y Apóyanos", "description": "Sigue a MagicSync en nuestras redes sociales para mantenerte actualizado, y danos una estrella en GitHub si te resulta útil. Haz clic para abrir una ventana donde puedes seguirnos, o salta este paso." },
+        { "title": "Síguenos en Twitter", "description": "Sigue a MagicSync en Twitter para mantenerte actualizado. Haz clic para abrir una ventana donde puedes seguirnos, o salta este paso." },
+        { "title": "Saltar este paso", "description": "Salta este paso si ya nos sigues en nuestras redes sociales." },
+        { "title": "Crea tu Proyecto", "description": "Ingresa la URL de tu sitio web para extraer automáticamente los datos del negocio. Puedes saltar esto y completar la información manualmente." },
+        { "title": "Detalles del Negocio", "description": "Revisa los detalles de tu negocio en las pestañas: Nombre, dirección, sitio web y teléfono (opcional) están disponibles en la pestaña de información del negocio." }
       ]
     },
     "createBusiness": {
       "label": "Crear negocio",
       "description": "Configura tu perfil de negocio con nombre, descripción y marca.",
       "steps": [
-        {
-          "title": "Crear un Negocio",
-          "description": "Ve a Configuración > Negocio para crear tu perfil. Agrega nombre, descripción, sitio web y marca."
-        },
-        {
-          "title": "Configuración del Negocio",
-          "description": "Configura tu zona horaria, horarios de publicación y perfiles sociales predeterminados."
-        },
-        {
-          "title": "Gestión de Equipo",
-          "description": "Invita miembros del equipo a colaborar desde la página de configuración del negocio."
-        }
+        { "title": "Crear un Negocio", "description": "Ve a Configuración > Negocio para crear tu perfil. Agrega nombre, descripción, sitio web y marca." },
+        { "title": "Configuración del Negocio", "description": "Configura tu zona horaria, horarios de publicación y perfiles sociales predeterminados." },
+        { "title": "Gestión de Equipo", "description": "Invita miembros del equipo a colaborar desde la página de configuración del negocio." }
       ]
     },
     "connectSocialMedia": {
       "label": "Conectar redes sociales",
       "description": "Vincula tus cuentas de redes sociales para comenzar a programar.",
       "steps": [
-        {
-          "title": "Conectar Redes Sociales",
-          "description": "Ve a Conectar en la barra lateral para vincular tus cuentas."
-        },
-        {
-          "title": "Plataformas Soportadas",
-          "description": "Conecta Facebook, Twitter/X, Instagram, Bluesky, LinkedIn, TikTok y más."
-        },
-        {
-          "title": "Autenticación",
-          "description": "Cada plataforma te pedirá autorizar MagicSync mediante OAuth. Sigue las instrucciones."
-        }
+        { "title": "Conectar Redes Sociales", "description": "Ve a Conectar en la barra lateral para vincular tus cuentas." },
+        { "title": "Plataformas Soportadas", "description": "Conecta Facebook, Twitter/X, Instagram, Bluesky, LinkedIn, TikTok y más." },
+        { "title": "Autenticación", "description": "Cada plataforma te pedirá autorizar MagicSync mediante OAuth. Sigue las instrucciones." }
       ]
     },
     "addAssets": {
       "label": "Agregar archivos",
       "description": "Sube imágenes, videos y otros medios a tu biblioteca de archivos.",
       "steps": [
-        {
-          "title": "Biblioteca de Archivos",
-          "description": "La biblioteca almacena todas tus imágenes, videos y archivos multimedia."
-        },
-        {
-          "title": "Subir Archivos",
-          "description": "Ve a Archivos para subir contenido. Puedes arrastrar y soltar o usar el botón de subida."
-        },
-        {
-          "title": "Organizar Archivos",
-          "description": "Crea carpetas y etiqueta tus archivos para mantener todo organizado."
-        }
+        { "title": "Biblioteca de Archivos", "description": "La biblioteca almacena todas tus imágenes, videos y archivos multimedia." },
+        { "title": "Subir Archivos", "description": "Ve a Archivos para subir contenido. Puedes arrastrar y soltar o usar el botón de subida." },
+        { "title": "Organizar Archivos", "description": "Crea carpetas y etiqueta tus archivos para mantener todo organizado." }
       ]
     },
     "createNewPost": {
       "label": "Crear nueva publicación",
       "description": "Crea y programa una nueva publicación en redes sociales.",
       "steps": [
-        {
-          "title": "Crear una Publicación",
-          "description": "Haz clic en \"Nueva Publicación\" para abrir el compositor."
-        },
-        {
-          "title": "Redacta tu Contenido",
-          "description": "Escribe tu contenido, agrega imágenes y previsualiza cómo se verá en cada plataforma."
-        },
-        {
-          "title": "Programar o Publicar",
-          "description": "Elige publicar inmediatamente o programar para una fecha y hora específica."
-        }
+        { "title": "Crear una Publicación", "description": "Haz clic en \"Nueva Publicación\" para abrir el compositor." },
+        { "title": "Redacta tu Contenido", "description": "Escribe tu contenido, agrega imágenes y previsualiza cómo se verá en cada plataforma." },
+        { "title": "Programar o Publicar", "description": "Elige publicar inmediatamente o programar para una fecha y hora específica." }
       ]
     },
     "createBulkPost": {
       "label": "Crear publicación masiva",
       "description": "Crea múltiples publicaciones a la vez con programación masiva.",
       "steps": [
-        {
-          "title": "Creación Masiva",
-          "description": "Crea varias publicaciones a la vez usando la herramienta de creación masiva."
-        },
-        {
-          "title": "Importar CSV",
-          "description": "Importa publicaciones desde un archivo CSV con columnas para contenido, plataforma y horario."
-        },
-        {
-          "title": "Revisar y Confirmar",
-          "description": "Revisa todas tus publicaciones antes de programarlas. Edita según sea necesario."
-        }
+        { "title": "Creación Masiva", "description": "Crea varias publicaciones a la vez usando la herramienta de creación masiva." },
+        { "title": "Importar CSV", "description": "Importa publicaciones desde un archivo CSV con columnas para contenido, plataforma y horario." },
+        { "title": "Revisar y Confirmar", "description": "Revisa todas tus publicaciones antes de programarlas. Edita según sea necesario." }
       ]
     },
     "sendInvitation": {
       "label": "Enviar invitación al negocio",
       "description": "Invita miembros del equipo a colaborar en tu negocio.",
       "steps": [
-        {
-          "title": "Invitar Miembros",
-          "description": "Ve a configuración del negocio y selecciona \"Equipo\" para invitar miembros."
-        },
-        {
-          "title": "Establecer Permisos",
-          "description": "Elige qué puede hacer cada miembro: roles de administrador, editor o visor."
-        },
-        {
-          "title": "Aceptar Invitaciones",
-          "description": "Los miembros invitados recibirán un correo con un enlace para unirse."
-        }
+        { "title": "Invitar Miembros", "description": "Ve a configuración del negocio y selecciona \"Equipo\" para invitar miembros." },
+        { "title": "Establecer Permisos", "description": "Elige qué puede hacer cada miembro: roles de administrador, editor o visor." },
+        { "title": "Aceptar Invitaciones", "description": "Los miembros invitados recibirán un correo con un enlace para unirse." }
       ]
     },
     "connectMultiplePages": {
       "label": "Conectar múltiples páginas",
       "description": "Gestiona y conecta múltiples páginas de redes sociales.",
       "steps": [
-        {
-          "title": "Múltiples Páginas",
-          "description": "Conecta y gestiona varias páginas para cada plataforma social."
-        },
-        {
-          "title": "Cambio de Página",
-          "description": "Cambia fácilmente entre páginas al crear publicaciones o ver análisis."
-        },
-        {
-          "title": "Acciones Masivas",
-          "description": "Realiza acciones en múltiples páginas simultáneamente."
-        }
+        { "title": "Múltiples Páginas", "description": "Conecta y gestiona varias páginas para cada plataforma social." },
+        { "title": "Cambio de Página", "description": "Cambia fácilmente entre páginas al crear publicaciones o ver análisis." },
+        { "title": "Acciones Masivas", "description": "Realiza acciones en múltiples páginas simultáneamente." }
       ]
     },
     "groupSocialMedia": {
       "label": "Agrupar redes sociales",
       "description": "Organiza tus cuentas sociales en grupos para una gestión más fácil.",
       "steps": [
-        {
-          "title": "Grupos de Redes Sociales",
-          "description": "Agrupa tus cuentas por categoría, campaña o cualquier organización personalizada."
-        },
-        {
-          "title": "Crear Grupos",
-          "description": "Ve a Configuración > Grupos para crear y gestionar tus grupos."
-        },
-        {
-          "title": "Publicar en Grupos",
-          "description": "Programa publicaciones para grupos enteros a la vez, ahorrando tiempo."
-        }
+        { "title": "Grupos de Redes Sociales", "description": "Agrupa tus cuentas por categoría, campaña o cualquier organización personalizada." },
+        { "title": "Crear Grupos", "description": "Ve a Configuración > Grupos para crear y gestionar tus grupos." },
+        { "title": "Publicar en Grupos", "description": "Programa publicaciones para grupos enteros a la vez, ahorrando tiempo." }
       ]
     },
     "createVariables": {
       "label": "Crear variables",
       "description": "Crea variables reutilizables para contenido dinámico en tus publicaciones.",
       "steps": [
-        {
-          "title": "¿Qué son las Variables?",
-          "description": "Las variables son marcadores reutilizables como `business_name` o `date` que se autocompletan."
-        },
-        {
-          "title": "Crear Variables",
-          "description": "Ve a Configuración > Variables para crear tus variables personalizadas."
-        },
-        {
-          "title": "Usar Variables",
-          "description": "Inserta variables en tus publicaciones usando la sintaxis `nombre_variable`."
-        }
+        { "title": "¿Qué son las Variables?", "description": "Las variables son marcadores reutilizables como `business_name` o `date` que se autocompletan." },
+        { "title": "Crear Variables", "description": "Ve a Configuración > Variables para crear tus variables personalizadas." },
+        { "title": "Usar Variables", "description": "Inserta variables en tus publicaciones usando la sintaxis `nombre_variable`." }
       ]
     },
     "createApiKey": {
       "label": "Crear clave API",
       "description": "Genera claves API para integraciones externas y automatización.",
       "steps": [
-        {
-          "title": "Claves API",
-          "description": "Las claves API permiten que aplicaciones externas interactúen con MagicSync programáticamente."
-        },
-        {
-          "title": "Generar una Clave",
-          "description": "Ve a Configuración > Claves API y haz clic en \"Generar Nueva Clave\"."
-        },
-        {
-          "title": "Permisos de Clave",
-          "description": "Establece el alcance y permisos para cada clave API."
-        }
+        { "title": "Claves API", "description": "Las claves API permiten que aplicaciones externas interactúen con MagicSync programáticamente." },
+        { "title": "Generar una Clave", "description": "Ve a Configuración > Claves API y haz clic en \"Generar Nueva Clave\"." },
+        { "title": "Permisos de Clave", "description": "Establece el alcance y permisos para cada clave API." }
       ]
     },
     "viewCalendar": {
       "label": "Ver calendario",
       "description": "Visualiza y gestiona tu calendario de publicaciones.",
       "steps": [
-        {
-          "title": "Calendario de Contenido",
-          "description": "El calendario muestra todas tus publicaciones programadas en vista mensual."
-        },
-        {
-          "title": "Navegar el Calendario",
-          "description": "Usa los botones mes/semana/día para cambiar de vista."
-        },
-        {
-          "title": "Gestionar Publicaciones",
-          "description": "Haz clic en cualquier publicación para editarla, reprogramarla o eliminarla."
-        }
+        { "title": "Calendario de Contenido", "description": "El calendario muestra todas tus publicaciones programadas en vista mensual." },
+        { "title": "Navegar el Calendario", "description": "Usa los botones mes/semana/día para cambiar de vista." },
+        { "title": "Gestionar Publicaciones", "description": "Haz clic en cualquier publicación para editarla, reprogramarla o eliminarla." }
+      ]
+    },
+    "posts": {
+      "label": "Publicaciones",
+      "description": "Gestiona todas tus publicaciones programadas y publicadas en redes sociales.",
+      "steps": [
+        { "title": "Panel de Publicaciones", "description": "Ve todas tus publicaciones en vistas de tablero, tabla o cuadrícula. Filtra por estado, plataforma o fecha." },
+        { "title": "Acciones de Publicación", "description": "Edita, duplica, reprograma o elimina publicaciones directamente desde la lista." },
+        { "title": "Rendimiento", "description": "Haz clic en cualquier publicación para ver sus estadísticas, comentarios y métricas de engagement." }
+      ]
+    },
+    "feeds": {
+      "label": "Fuentes",
+      "description": "Cura y programa contenido desde fuentes RSS y otros orígenes.",
+      "steps": [
+        { "title": "Fuentes de Contenido", "description": "Agrega fuentes RSS u otros orígenes para generar ideas de publicaciones automáticamente." },
+        { "title": "Revisar Elementos", "description": "Navega los elementos de las fuentes, previsualízalos y selecciona los que quieres compartir." },
+        { "title": "Programar Publicaciones", "description": "Convierte elementos de fuentes en publicaciones programadas con un clic." }
+      ]
+    },
+    "postVideo": {
+      "label": "Publicación de video",
+      "description": "Crea y programa publicaciones de video para tus canales sociales.",
+      "steps": [
+        { "title": "Subir Video", "description": "Selecciona o sube un archivo de video para tu publicación." },
+        { "title": "Agregar Detalles", "description": "Escribe un pie de foto, agrega hashtags y elige las plataformas para publicar." },
+        { "title": "Publicar o Programar", "description": "Publica inmediatamente o programa el video para el mejor momento." }
+      ]
+    },
+    "templates": {
+      "label": "Plantillas",
+      "description": "Crea plantillas de publicación reutilizables para agilizar la creación de contenido.",
+      "steps": [
+        { "title": "Biblioteca de Plantillas", "description": "Navega y gestiona todas tus plantillas guardadas en un solo lugar." },
+        { "title": "Crear una Plantilla", "description": "Construye una plantilla con variables, texto predeterminado y configuraciones de plataforma." },
+        { "title": "Usar Plantillas", "description": "Aplica plantillas al crear nuevas publicaciones para ahorrar tiempo." }
+      ]
+    },
+    "templateEmail": {
+      "label": "Plantillas de email",
+      "description": "Diseña plantillas de email reutilizables para campañas y notificaciones.",
+      "steps": [
+        { "title": "Constructor de Email", "description": "Crea plantillas de email con un editor de texto enriquecido y variables dinámicas." },
+        { "title": "Vista Previa", "description": "Previsualiza cómo se verá tu email en escritorio y móvil." },
+        { "title": "Guardar y Reutilizar", "description": "Guarda plantillas y reutilízalas en campañas." }
+      ]
+    },
+    "templateImages": {
+      "label": "Plantillas de imagen",
+      "description": "Crea plantillas de imagen reutilizables para una marca consistente.",
+      "steps": [
+        { "title": "Lienzo de Plantilla", "description": "Diseña plantillas de imagen con superposiciones, texto y activos de marca." },
+        { "title": "Presets de Marca", "description": "Guarda colores, fuentes y logos para mantener diseños consistentes." },
+        { "title": "Exportar", "description": "Exporta plantillas en los tamaños correctos para cada plataforma." }
+      ]
+    },
+    "templateChat": {
+      "label": "Plantillas de chat",
+      "description": "Guarda y reutiliza plantillas de prompts para conversaciones con IA.",
+      "steps": [
+        { "title": "Plantillas de Prompts", "description": "Crea plantillas de prompts para tareas y conversaciones comunes de IA." },
+        { "title": "Variables", "description": "Usa variables para hacer las plantillas reutilizables con diferentes entradas." },
+        { "title": "Compartir", "description": "Comparte plantillas con tu equipo para interacciones consistentes con la IA." }
+      ]
+    },
+    "aiTools": {
+      "label": "Herramientas de IA",
+      "description": "Usa IA para generar contenido, estrategias y activos.",
+      "steps": [
+        { "title": "Panel de IA", "description": "Explora todas las herramientas de IA disponibles desde el panel." },
+        { "title": "Elegir una Herramienta", "description": "Elige una herramienta según tus necesidades: generación de contenido, estrategia o medios." },
+        { "title": "Revisar Resultados", "description": "Siempre revisa el contenido generado por IA antes de publicar." }
+      ]
+    },
+    "aiChat": {
+      "label": "Chat de IA",
+      "description": "Chatea con MagicSync AI para obtener ayuda con contenido y estrategia.",
+      "steps": [
+        { "title": "Iniciar un Chat", "description": "Abre un nuevo chat y describe con qué necesitas ayuda." },
+        { "title": "Usar Habilidades", "description": "Activa habilidades para darle a la IA capacidades especiales como generar publicaciones o imágenes." },
+        { "title": "Guardar Resultados", "description": "Guarda resultados útiles en tus plantillas o publicaciones." }
+      ]
+    },
+    "aiKnowledge": {
+      "label": "Conocimiento de IA",
+      "description": "Sube documentos para crear una base de conocimiento para la IA.",
+      "steps": [
+        { "title": "Subir Documentos", "description": "Sube PDFs, archivos de texto o páginas web para construir tu base de conocimiento." },
+        { "title": "Organizar Conocimiento", "description": "Agrupa documentos por tema o proyecto para mejores respuestas de la IA." },
+        { "title": "Hacer Preguntas", "description": "Pregunta a la IA basándote en tus documentos subidos." }
+      ]
+    },
+    "aiSkills": {
+      "label": "Habilidades de IA",
+      "description": "Crea y gestiona habilidades de IA personalizadas.",
+      "steps": [
+        { "title": "Biblioteca de Habilidades", "description": "Navega habilidades integradas y personalizadas creadas por tu equipo." },
+        { "title": "Crear una Habilidad", "description": "Define instrucciones y ejemplos para una nueva habilidad." },
+        { "title": "Usar en Chat", "description": "Habilita habilidades en el chat de IA para ampliar sus capacidades." }
+      ]
+    },
+    "aiAssets": {
+      "label": "Activos de IA",
+      "description": "Gestiona activos generados o usados por herramientas de IA.",
+      "steps": [
+        { "title": "Activos Generados", "description": "Ve y organiza imágenes, textos y otros outputs de las herramientas de IA." },
+        { "title": "Sincronizar con Biblioteca", "description": "Mueve activos generados a tu biblioteca de medios principal." },
+        { "title": "Reutilizar", "description": "Reutiliza activos generados por IA en publicaciones y campañas." }
+      ]
+    },
+    "aiSettings": {
+      "label": "Configuración de IA",
+      "description": "Configura proveedores, modelos y valores predeterminados de IA.",
+      "steps": [
+        { "title": "Proveedor de IA", "description": "Elige el proveedor y modelo de IA que deseas usar." },
+        { "title": "Configuración Predeterminada", "description": "Establece el tono, longitud e idioma predeterminados para los outputs de IA." },
+        { "title": "Claves API", "description": "Agrega tus propias claves API de proveedores de IA si es necesario." }
+      ]
+    },
+    "tools": {
+      "label": "Herramientas gratuitas",
+      "description": "Accede a utilidades gratuitas como recorte de video, texto a voz y más.",
+      "steps": [
+        { "title": "Biblioteca de Herramientas", "description": "Navega todas las herramientas gratuitas disponibles en MagicSync." },
+        { "title": "Elegir una Herramienta", "description": "Selecciona una herramienta para abrir su espacio de trabajo dedicado." },
+        { "title": "Exportar Resultados", "description": "Descarga o guarda resultados directamente en tu biblioteca de medios." }
+      ]
+    },
+    "videoCropper": {
+      "label": "Recortador de video",
+      "description": "Recorta y redimensiona videos para diferentes plataformas sociales.",
+      "steps": [
+        { "title": "Subir Video", "description": "Sube un video o selecciona uno de tu biblioteca de medios." },
+        { "title": "Elegir Proporción", "description": "Elige la proporción de aspecto para la plataforma objetivo." },
+        { "title": "Exportar", "description": "Recorta, previsualiza y exporta el video en el formato correcto." }
+      ]
+    },
+    "textToSpeech": {
+      "label": "Texto a voz",
+      "description": "Convierte texto en audio de voz natural.",
+      "steps": [
+        { "title": "Ingresar Texto", "description": "Escribe o pega el texto que quieres convertir a voz." },
+        { "title": "Seleccionar Voz", "description": "Elige un estilo de voz y ajusta velocidad o tono." },
+        { "title": "Generar Audio", "description": "Genera el archivo de audio y descárgalo o guárdalo." }
+      ]
+    },
+    "growthStrategy": {
+      "label": "Estrategia de crecimiento",
+      "description": "Genera estrategias de crecimiento y planes de contenido con IA.",
+      "steps": [
+        { "title": "Definir Objetivos", "description": "Ingresa tus objetivos de negocio y audiencia objetivo." },
+        { "title": "Generar Estrategia", "description": "Deja que la IA cree una estrategia de crecimiento personalizada." },
+        { "title": "Exportar Plan", "description": "Exporta la estrategia como documento o prográmala como publicaciones." }
+      ]
+    },
+    "contentSplit": {
+      "label": "División de contenido",
+      "description": "Divide contenido largo en múltiples publicaciones para redes sociales.",
+      "steps": [
+        { "title": "Pegar Contenido", "description": "Pega una entrada de blog, artículo o contenido largo." },
+        { "title": "Configurar División", "description": "Elige cuántas publicaciones crear y el tono para cada una." },
+        { "title": "Revisar y Programar", "description": "Revisa las publicaciones generadas y prográmalas." }
+      ]
+    },
+    "profile": {
+      "label": "Perfil",
+      "description": "Gestiona tu perfil personal y preferencias.",
+      "steps": [
+        { "title": "Información de Perfil", "description": "Actualiza tu nombre, email, avatar y preferencias de idioma." },
+        { "title": "Seguridad", "description": "Cambia tu contraseña y habilita la autenticación de dos factores." },
+        { "title": "Preferencias", "description": "Establece zona horaria, notificaciones y configuración de visualización." }
+      ]
+    },
+    "account": {
+      "label": "Cuenta",
+      "description": "Gestiona cuentas vinculadas y configuración de seguridad.",
+      "steps": [
+        { "title": "Cuentas Vinculadas", "description": "Conecta o desconecta proveedores de inicio de sesión social." },
+        { "title": "Configuración de Cuenta", "description": "Actualiza email, contraseña y otros detalles de la cuenta." },
+        { "title": "Zona de Peligro", "description": "Elimina tu cuenta o exporta tus datos desde aquí." }
+      ]
+    },
+    "notifications": {
+      "label": "Notificaciones",
+      "description": "Ve y gestiona tus notificaciones.",
+      "steps": [
+        { "title": "Lista de Notificaciones", "description": "Ve todas tus notificaciones en un solo lugar." },
+        { "title": "Filtrar", "description": "Filtra por leídas/no leídas o tipo de notificación." },
+        { "title": "Acciones", "description": "Marca como leídas, archiva o borra notificaciones." }
+      ]
+    },
+    "admin": {
+      "label": "Admin",
+      "description": "Administra negocios, usuarios e integraciones.",
+      "steps": [
+        { "title": "Panel de Admin", "description": "Obtén una vista general de negocios, usuarios e integraciones." },
+        { "title": "Gestionar Usuarios", "description": "Agrega, edita o desactiva cuentas de usuario." },
+        { "title": "Auditoría", "description": "Revisa registros de auditoría y actividad del sistema." }
       ]
     },
     "comingSoon": {
@@ -474,232 +640,315 @@
   "de": {
     "modalTitle": "Tutorials",
     "tooltip": "Tutorials",
+    "currentPage": "Aktuelle Seite",
+    "allTutorials": "Alle Tutorials",
     "firstTime": {
       "label": "Erstes Mal",
       "description": "Lerne die MagicSync-Plattform und ihre Kernfunktionen kennen.",
       "steps": [
-        {
-          "title": "Willkommen bei MagicSync!",
-          "description": "Du musst ein Unternehmen erstellen, um MagicSync zu nutzen. Ein Unternehmen kann mehrere Social-Media-Konten haben, und du kannst andere zu einem bestimmten Unternehmen einladen, die dann nur Zugriff auf die zu diesem Unternehmen gehörenden sozialen Medien haben."
-        },
-        {
-          "title": "Folge & Unterstütze Uns",
-          "description": "Folge MagicSync in unseren sozialen Medien, um auf dem Laufenden zu bleiben, und gib uns einen Stern auf GitHub, wenn du dieses Tool nützlich findest. Klicke, um ein Fenster zu öffnen, oder überspringe diesen Schritt."
-        },
-        {
-          "title": "Folge uns auf Twitter",
-          "description": "Folge MagicSync auf Twitter, um auf dem Laufenden zu bleiben. Klicke, um ein Fenster zu öffnen, oder überspringe diesen Schritt."
-        },
-        {
-          "title": "Diesen Schritt überspringen",
-          "description": "Überspringe diesen Schritt, wenn du uns bereits in den sozialen Medien folgst."
-        },
-        {
-          "title": "Projekt Erstellen",
-          "description": "Gib deine Website-URL ein, um Geschäftsdaten automatisch zu extrahieren. Du kannst dies überspringen und die Daten manuell eingeben."
-        },
-        {
-          "title": "Geschäftsdetails",
-          "description": "Überprüfe deine Geschäftsdaten in den Tabs: Name, Adresse, Website und Telefon (optional) sind im Tab Geschäftsinformationen verfügbar."
-        }
+        { "title": "Willkommen bei MagicSync!", "description": "Du musst ein Unternehmen erstellen, um MagicSync zu nutzen. Ein Unternehmen kann mehrere Social-Media-Konten haben, und du kannst andere zu einem bestimmten Unternehmen einladen, die dann nur Zugriff auf die zu diesem Unternehmen gehörenden sozialen Medien haben." },
+        { "title": "Folge & Unterstütze Uns", "description": "Folge MagicSync in unseren sozialen Medien, um auf dem Laufenden zu bleiben, und gib uns einen Stern auf GitHub, wenn du dieses Tool nützlich findest. Klicke, um ein Fenster zu öffnen, oder überspringe diesen Schritt." },
+        { "title": "Folge uns auf Twitter", "description": "Folge MagicSync auf Twitter, um auf dem Laufenden zu bleiben. Klicke, um ein Fenster zu öffnen, oder überspringe diesen Schritt." },
+        { "title": "Diesen Schritt überspringen", "description": "Überspringe diesen Schritt, wenn du uns bereits in den sozialen Medien folgst." },
+        { "title": "Projekt Erstellen", "description": "Gib deine Website-URL ein, um Geschäftsdaten automatisch zu extrahieren. Du kannst dies überspringen und die Daten manuell eingeben." },
+        { "title": "Geschäftsdetails", "description": "Überprüfe deine Geschäftsdaten in den Tabs: Name, Adresse, Website und Telefon (optional) sind im Tab Geschäftsinformationen verfügbar." }
       ]
     },
     "createBusiness": {
       "label": "Unternehmen erstellen",
       "description": "Richte dein Unternehmensprofil mit Name, Beschreibung und Branding ein.",
       "steps": [
-        {
-          "title": "Unternehmen erstellen",
-          "description": "Gehe zu Einstellungen > Unternehmen, um dein Profil zu erstellen."
-        },
-        {
-          "title": "Unternehmenseinstellungen",
-          "description": "Konfiguriere Zeitzone, Veröffentlichungszeiten und Standard-Profile."
-        },
-        {
-          "title": "Teamverwaltung",
-          "description": "Lade Teammitglieder ein, um an deinem Unternehmen mitzuarbeiten."
-        }
+        { "title": "Unternehmen erstellen", "description": "Gehe zu Einstellungen > Unternehmen, um dein Profil zu erstellen." },
+        { "title": "Unternehmenseinstellungen", "description": "Konfiguriere Zeitzone, Veröffentlichungszeiten und Standard-Profile." },
+        { "title": "Teamverwaltung", "description": "Lade Teammitglieder ein, um an deinem Unternehmen mitzuarbeiten." }
       ]
     },
     "connectSocialMedia": {
       "label": "Soziale Medien verbinden",
       "description": "Verknüpfe deine Social-Media-Konten, um mit der Planung zu beginnen.",
       "steps": [
-        {
-          "title": "Soziale Medien verbinden",
-          "description": "Gehe in der Seitenleiste zu Verbinden, um deine Konten zu verknüpfen."
-        },
-        {
-          "title": "Unterstützte Plattformen",
-          "description": "Verbinde Facebook, Twitter/X, Instagram, Bluesky, LinkedIn, TikTok und mehr."
-        },
-        {
-          "title": "Authentifizierung",
-          "description": "Jede Plattform fordert dich auf, MagicSync per OAuth zu autorisieren."
-        }
+        { "title": "Soziale Medien verbinden", "description": "Gehe in der Seitenleiste zu Verbinden, um deine Konten zu verknüpfen." },
+        { "title": "Unterstützte Plattformen", "description": "Verbinde Facebook, Twitter/X, Instagram, Bluesky, LinkedIn, TikTok und mehr." },
+        { "title": "Authentifizierung", "description": "Jede Plattform fordert dich auf, MagicSync per OAuth zu autorisieren." }
       ]
     },
     "addAssets": {
       "label": "Medien hinzufügen",
       "description": "Lade Bilder, Videos und andere Medien in deine Medienbibliothek hoch.",
       "steps": [
-        {
-          "title": "Medienbibliothek",
-          "description": "Die Medienbibliothek speichert alle deine Bilder, Videos und Mediendateien."
-        },
-        {
-          "title": "Medien hochladen",
-          "description": "Gehe zu Medien, um Dateien hochzuladen. Du kannst sie auch per Drag & Drop hinzufügen."
-        },
-        {
-          "title": "Medien organisieren",
-          "description": "Erstelle Ordner und vergebe Schlagwörter, um alles organisiert zu halten."
-        }
+        { "title": "Medienbibliothek", "description": "Die Medienbibliothek speichert alle deine Bilder, Videos und Mediendateien." },
+        { "title": "Medien hochladen", "description": "Gehe zu Medien, um Dateien hochzuladen. Du kannst sie auch per Drag & Drop hinzufügen." },
+        { "title": "Medien organisieren", "description": "Erstelle Ordner und vergebe Schlagwörter, um alles organisiert zu halten." }
       ]
     },
     "createNewPost": {
       "label": "Neuen Beitrag erstellen",
       "description": "Erstelle und plane einen neuen Social-Media-Beitrag.",
       "steps": [
-        {
-          "title": "Beitrag erstellen",
-          "description": "Klicke auf \"Neuer Beitrag\", um den Beitragseditor zu öffnen."
-        },
-        {
-          "title": "Inhalt verfassen",
-          "description": "Schreibe deinen Beitrag, füge Bilder hinzu und sieh dir die Vorschau an."
-        },
-        {
-          "title": "Planen oder veröffentlichen",
-          "description": "Wähle zwischen sofortiger Veröffentlichung oder Planung für einen späteren Zeitpunkt."
-        }
+        { "title": "Beitrag erstellen", "description": "Klicke auf \"Neuer Beitrag\", um den Beitragseditor zu öffnen." },
+        { "title": "Inhalt verfassen", "description": "Schreibe deinen Beitrag, füge Bilder hinzu und sieh dir die Vorschau an." },
+        { "title": "Planen oder veröffentlichen", "description": "Wähle zwischen sofortiger Veröffentlichung oder Planung für einen späteren Zeitpunkt." }
       ]
     },
     "createBulkPost": {
       "label": "Massenbeitrag erstellen",
       "description": "Erstelle mehrere Beiträge auf einmal mit der Massenplanung.",
       "steps": [
-        {
-          "title": "Massenbeitragserstellung",
-          "description": "Erstelle mehrere Beiträge gleichzeitig mit dem Massenerstellungstool."
-        },
-        {
-          "title": "CSV-Import",
-          "description": "Importiere Beiträge aus einer CSV-Datei mit Spalten für Inhalt, Plattform und Zeitplan."
-        },
-        {
-          "title": "Prüfen & Bestätigen",
-          "description": "Überprüfe alle Beiträge vor der Planung und bearbeite sie bei Bedarf."
-        }
+        { "title": "Massenbeitragserstellung", "description": "Erstelle mehrere Beiträge gleichzeitig mit dem Massenerstellungstool." },
+        { "title": "CSV-Import", "description": "Importiere Beiträge aus einer CSV-Datei mit Spalten für Inhalt, Plattform und Zeitplan." },
+        { "title": "Prüfen & Bestätigen", "description": "Überprüfe alle Beiträge vor der Planung und bearbeite sie bei Bedarf." }
       ]
     },
     "sendInvitation": {
       "label": "Einladung an Unternehmen senden",
       "description": "Lade Teammitglieder zur Zusammenarbeit an deinem Unternehmen ein.",
       "steps": [
-        {
-          "title": "Teammitglieder einladen",
-          "description": "Gehe zu den Unternehmenseinstellungen und wähle \"Team\" aus."
-        },
-        {
-          "title": "Berechtigungen festlegen",
-          "description": "Lege fest, was jedes Teammitglied tun kann — Admin, Editor oder Betrachter."
-        },
-        {
-          "title": "Einladungen annehmen",
-          "description": "Eingeladene Mitglieder erhalten eine E-Mail mit einem Link."
-        }
+        { "title": "Teammitglieder einladen", "description": "Gehe zu den Unternehmenseinstellungen und wähle \"Team\" aus." },
+        { "title": "Berechtigungen festlegen", "description": "Lege fest, was jedes Teammitglied tun kann — Admin, Editor oder Betrachter." },
+        { "title": "Einladungen annehmen", "description": "Eingeladene Mitglieder erhalten eine E-Mail mit einem Link." }
       ]
     },
     "connectMultiplePages": {
       "label": "Mehrere Seiten verbinden",
       "description": "Verwalte und verbinde mehrere Social-Media-Seiten.",
       "steps": [
-        {
-          "title": "Mehrere Seiten",
-          "description": "Verbinde und verwalte mehrere Seiten für jede Plattform."
-        },
-        {
-          "title": "Seitenwechsel",
-          "description": "Wechsle einfach zwischen Seiten beim Erstellen von Beiträgen."
-        },
-        {
-          "title": "Massenaktionen",
-          "description": "Führe Aktionen auf mehreren Seiten gleichzeitig aus."
-        }
+        { "title": "Mehrere Seiten", "description": "Verbinde und verwalte mehrere Seiten für jede Plattform." },
+        { "title": "Seitenwechsel", "description": "Wechsle einfach zwischen Seiten beim Erstellen von Beiträgen." },
+        { "title": "Massenaktionen", "description": "Führe Aktionen auf mehreren Seiten gleichzeitig aus." }
       ]
     },
     "groupSocialMedia": {
       "label": "Soziale Medien gruppieren",
       "description": "Organisiere deine Konten in Gruppen für eine einfachere Verwaltung.",
       "steps": [
-        {
-          "title": "Social-Media-Gruppen",
-          "description": "Gruppiere deine Konten nach Kategorie, Kampagne oder benutzerdefiniert."
-        },
-        {
-          "title": "Gruppen erstellen",
-          "description": "Gehe zu Einstellungen > Gruppen, um Gruppen zu erstellen."
-        },
-        {
-          "title": "An Gruppen posten",
-          "description": "Plane Beiträge für ganze Gruppen auf einmal."
-        }
+        { "title": "Social-Media-Gruppen", "description": "Gruppiere deine Konten nach Kategorie, Kampagne oder benutzerdefiniert." },
+        { "title": "Gruppen erstellen", "description": "Gehe zu Einstellungen > Gruppen, um Gruppen zu erstellen." },
+        { "title": "An Gruppen posten", "description": "Plane Beiträge für ganze Gruppen auf einmal." }
       ]
     },
     "createVariables": {
       "label": "Variablen erstellen",
       "description": "Erstelle wiederverwendbare Variablen für dynamische Inhalte.",
       "steps": [
-        {
-          "title": "Was sind Variablen?",
-          "description": "Variablen sind Platzhalter wie `business_name` oder `date`, die automatisch ausgefüllt werden."
-        },
-        {
-          "title": "Variablen erstellen",
-          "description": "Gehe zu Einstellungen > Variablen, um benutzerdefinierte Variablen zu erstellen."
-        },
-        {
-          "title": "Variablen verwenden",
-          "description": "Füge Variablen mit der Syntax `variablen_name` in Beiträge ein."
-        }
+        { "title": "Was sind Variablen?", "description": "Variablen sind Platzhalter wie `business_name` oder `date`, die automatisch ausgefüllt werden." },
+        { "title": "Variablen erstellen", "description": "Gehe zu Einstellungen > Variablen, um benutzerdefinierte Variablen zu erstellen." },
+        { "title": "Variablen verwenden", "description": "Füge Variablen mit der Syntax `variablen_name` in Beiträge ein." }
       ]
     },
     "createApiKey": {
       "label": "API-Schlüssel erstellen",
       "description": "Generiere API-Schlüssel für externe Integrationen und Automatisierung.",
       "steps": [
-        {
-          "title": "API-Schlüssel",
-          "description": "API-Schlüssel ermöglichen externen Anwendungen die programmatische Interaktion mit MagicSync."
-        },
-        {
-          "title": "Schlüssel generieren",
-          "description": "Gehe zu Einstellungen > API-Schlüssel und klicke auf \"Neuen Schlüssel generieren\"."
-        },
-        {
-          "title": "Schlüsselberechtigungen",
-          "description": "Lege Umfang und Berechtigungen für jeden API-Schlüssel fest."
-        }
+        { "title": "API-Schlüssel", "description": "API-Schlüssel ermöglichen externen Anwendungen die programmatische Interaktion mit MagicSync." },
+        { "title": "Schlüssel generieren", "description": "Gehe zu Einstellungen > API-Schlüssel und klicke auf \"Neuen Schlüssel generieren\"." },
+        { "title": "Schlüsselberechtigungen", "description": "Lege Umfang und Berechtigungen für jeden API-Schlüssel fest." }
       ]
     },
     "viewCalendar": {
       "label": "Kalender anzeigen",
       "description": "Zeige und verwalte deinen Content-Kalender.",
       "steps": [
-        {
-          "title": "Content-Kalender",
-          "description": "Der Kalender zeigt alle geplanten und veröffentlichten Beiträge in einer Monatsansicht."
-        },
-        {
-          "title": "Kalendernavigation",
-          "description": "Nutze die Monat/Woche/Tag-Umschalter, um die Ansicht zu wechseln."
-        },
-        {
-          "title": "Beiträge verwalten",
-          "description": "Klicke auf einen Beitrag, um ihn zu bearbeiten, umzuplanen oder zu löschen."
-        }
+        { "title": "Content-Kalender", "description": "Der Kalender zeigt alle geplanten und veröffentlichten Beiträge in einer Monatsansicht." },
+        { "title": "Kalendernavigation", "description": "Nutze die Monat/Woche/Tag-Umschalter, um die Ansicht zu wechseln." },
+        { "title": "Beiträge verwalten", "description": "Klicke auf einen Beitrag, um ihn zu bearbeiten, umzuplanen oder zu löschen." }
+      ]
+    },
+    "posts": {
+      "label": "Beiträge",
+      "description": "Verwalte alle geplanten und veröffentlichten Social-Media-Beiträge.",
+      "steps": [
+        { "title": "Beitrags-Dashboard", "description": "Sieh alle Beiträge in Board-, Tabellen- oder Rasteransicht. Filtere nach Status, Plattform oder Datum." },
+        { "title": "Beitragsaktionen", "description": "Bearbeite, dupliziere, plane um oder lösche Beiträge direkt aus der Liste." },
+        { "title": "Performance", "description": "Klicke auf einen Beitrag, um Statistiken, Kommentare und Engagement-Metriken zu sehen." }
+      ]
+    },
+    "feeds": {
+      "label": "Feeds",
+      "description": "Kuratiere und plane Inhalte aus RSS-Feeds und anderen Quellen.",
+      "steps": [
+        { "title": "Feed-Quellen", "description": "Füge RSS-Feeds oder andere Quellen hinzu, um automatisch Beitragsideen zu generieren." },
+        { "title": "Feed-Elemente prüfen", "description": "Durchsuche Feed-Elemente, previewe sie und wähle aus, was du teilen möchtest." },
+        { "title": "Feed-Beiträge planen", "description": "Wandle Feed-Elemente mit einem Klick in geplante Beiträge um." }
+      ]
+    },
+    "postVideo": {
+      "label": "Video-Beitrag",
+      "description": "Erstelle und plane Video-Beiträge für deine Social-Kanäle.",
+      "steps": [
+        { "title": "Video hochladen", "description": "Wähle oder lade eine Videodatei für deinen Beitrag aus." },
+        { "title": "Details hinzufügen", "description": "Schreibe eine Bildunterschrift, füge Hashtags hinzu und wähle die Plattformen aus." },
+        { "title": "Veröffentlichen oder planen", "description": "Veröffentliche sofort oder plane das Video für den besten Zeitpunkt." }
+      ]
+    },
+    "templates": {
+      "label": "Vorlagen",
+      "description": "Erstelle wiederverwendbare Beitragsvorlagen, um die Inhaltserstellung zu beschleunigen.",
+      "steps": [
+        { "title": "Vorlagenbibliothek", "description": "Durchsuche und verwalte alle gespeicherten Vorlagen an einem Ort." },
+        { "title": "Vorlage erstellen", "description": "Erstelle eine Vorlage mit Variablen, Standardtext und Plattformeinstellungen." },
+        { "title": "Vorlagen verwenden", "description": "Wende Vorlagen beim Erstellen neuer Beiträge an, um Zeit zu sparen." }
+      ]
+    },
+    "templateEmail": {
+      "label": "Email-Vorlagen",
+      "description": "Entwirf wiederverwendbare Email-Vorlagen für Kampagnen und Benachrichtigungen.",
+      "steps": [
+        { "title": "Email-Vorlagen-Builder", "description": "Erstelle Email-Vorlagen mit einem Rich-Text-Editor und dynamischen Variablen." },
+        { "title": "Vorschau", "description": "Previewe, wie deine Email auf Desktop und Mobile aussieht." },
+        { "title": "Speichern & Wiederverwenden", "description": "Speichere Vorlagen und verwende sie in Kampagnen wieder." }
+      ]
+    },
+    "templateImages": {
+      "label": "Bildvorlagen",
+      "description": "Erstelle wiederverwendbare Bildvorlagen für einheitliches Branding.",
+      "steps": [
+        { "title": "Bildvorlagen-Canvas", "description": "Entwirf Bildvorlagen mit Overlays, Text und Brand-Assets." },
+        { "title": "Brand-Presets", "description": "Speichere Farben, Schriftarten und Logos, um Designs konsistent zu halten." },
+        { "title": "Exportieren", "description": "Exportiere Vorlagen in den richtigen Größen für jede Plattform." }
+      ]
+    },
+    "templateChat": {
+      "label": "Chat-Vorlagen",
+      "description": "Speichere und verwende Chat-Prompt-Vorlagen für KI-Gespräche.",
+      "steps": [
+        { "title": "Prompt-Vorlagen", "description": "Erstelle Prompt-Vorlagen für häufige KI-Aufgaben und Gespräche." },
+        { "title": "Variablen", "description": "Verwende Variablen, um Vorlagen mit verschiedenen Eingaben wiederverwendbar zu machen." },
+        { "title": "Teilen", "description": "Teile Vorlagen mit deinem Team für konsistente KI-Interaktionen." }
+      ]
+    },
+    "aiTools": {
+      "label": "KI-Tools",
+      "description": "Nutze KI, um Inhalte, Strategien und Assets zu generieren.",
+      "steps": [
+        { "title": "KI-Dashboard", "description": "Erkunde alle verfügbaren KI-Tools im KI-Dashboard." },
+        { "title": "Tool auswählen", "description": "Wähle ein Tool basierend auf deinen Bedürfnissen: Inhaltsgenerierung, Strategie oder Medien." },
+        { "title": "Output prüfen", "description": "Überprüfe KI-generierte Inhalte immer vor der Veröffentlichung." }
+      ]
+    },
+    "aiChat": {
+      "label": "KI-Chat",
+      "description": "Chatte mit MagicSync AI, um Hilfe bei Inhalten und Strategie zu erhalten.",
+      "steps": [
+        { "title": "Chat starten", "description": "Öffne einen neuen Chat und beschreibe, wobei du Hilfe brauchst." },
+        { "title": "Skills verwenden", "description": "Aktiviere Skills, um der KI besondere Fähigkeiten wie Beitrags- oder Bildgenerierung zu geben." },
+        { "title": "Ergebnisse speichern", "description": "Speichere nützliche Outputs in deinen Vorlagen oder Beiträgen." }
+      ]
+    },
+    "aiKnowledge": {
+      "label": "KI-Wissen",
+      "description": "Lade Dokumente hoch, um eine Wissensbasis für die KI zu erstellen.",
+      "steps": [
+        { "title": "Dokumente hochladen", "description": "Lade PDFs, Textdateien oder Webseiten hoch, um deine Wissensbasis aufzubauen." },
+        { "title": "Wissen organisieren", "description": "Gruppiere Dokumente nach Thema oder Projekt für bessere KI-Antworten." },
+        { "title": "Fragen stellen", "description": "Stelle der KI Fragen basierend auf deinen hochgeladenen Dokumenten." }
+      ]
+    },
+    "aiSkills": {
+      "label": "KI-Skills",
+      "description": "Erstelle und verwalte benutzerdefinierte KI-Skills.",
+      "steps": [
+        { "title": "Skill-Bibliothek", "description": "Durchsuche integrierte und von deinem Team erstellte Skills." },
+        { "title": "Skill erstellen", "description": "Definiere Anweisungen und Beispiele für einen neuen Skill." },
+        { "title": "Im Chat verwenden", "description": "Aktiviere Skills im KI-Chat, um seine Fähigkeiten zu erweitern." }
+      ]
+    },
+    "aiAssets": {
+      "label": "KI-Assets",
+      "description": "Verwalte von KI-Tools generierte oder verwendete Assets.",
+      "steps": [
+        { "title": "Generierte Assets", "description": "Sieh und organisiere Bilder, Texte und andere Outputs von KI-Tools." },
+        { "title": "Mit Bibliothek synchronisieren", "description": "Verschiebe generierte Assets in deine Haupt-Medienbibliothek." },
+        { "title": "Wiederverwenden", "description": "Verwende KI-generierte Assets in Beiträgen und Kampagnen wieder." }
+      ]
+    },
+    "aiSettings": {
+      "label": "KI-Einstellungen",
+      "description": "Konfiguriere KI-Provider, Modelle und Standardeinstellungen.",
+      "steps": [
+        { "title": "KI-Provider", "description": "Wähle den KI-Provider und das Modell aus, das du verwenden möchtest." },
+        { "title": "Standardeinstellungen", "description": "Setze Standard-Ton, Länge und Sprache für KI-Outputs." },
+        { "title": "API-Schlüssel", "description": "Füge bei Bedarf deine eigenen API-Schlüssel für KI-Provider hinzu." }
+      ]
+    },
+    "tools": {
+      "label": "Kostenlose Tools",
+      "description": "Greife auf kostenlose Utilities wie Video-Cropping, Text-to-Speech und mehr zu.",
+      "steps": [
+        { "title": "Tool-Bibliothek", "description": "Durchsuche alle kostenlosen Tools, die in MagicSync verfügbar sind." },
+        { "title": "Tool auswählen", "description": "Wähle ein Tool, um seinen dedizierten Arbeitsbereich zu öffnen." },
+        { "title": "Ergebnisse exportieren", "description": "Lade Ergebnisse herunter oder speichere sie direkt in deiner Medienbibliothek." }
+      ]
+    },
+    "videoCropper": {
+      "label": "Video-Cropper",
+      "description": "Schneide und resize Videos für verschiedene Social-Plattformen.",
+      "steps": [
+        { "title": "Video hochladen", "description": "Lade ein Video hoch oder wähle eines aus deiner Medienbibliothek aus." },
+        { "title": "Seitenverhältnis wählen", "description": "Wähle das Seitenverhältnis für die Zielplattform." },
+        { "title": "Exportieren", "description": "Schneide, previewe und exportiere das Video im richtigen Format." }
+      ]
+    },
+    "textToSpeech": {
+      "label": "Text-to-Speech",
+      "description": "Wandle Text in natürlich klingende Sprache um.",
+      "steps": [
+        { "title": "Text eingeben", "description": "Tippe oder füge den Text ein, den du in Sprache umwandeln möchtest." },
+        { "title": "Stimme auswählen", "description": "Wähle einen Stil und passe Geschwindigkeit oder Tonhöhe an." },
+        { "title": "Audio generieren", "description": "Generiere die Audiodatei und lade sie herunter oder speichere sie." }
+      ]
+    },
+    "growthStrategy": {
+      "label": "Wachstumsstrategie",
+      "description": "Generiere Wachstumsstrategien und Content-Pläne mit KI.",
+      "steps": [
+        { "title": "Ziele definieren", "description": "Gib deine Geschäftsziele und Zielgruppe ein." },
+        { "title": "Strategie generieren", "description": "Lass die KI eine maßgeschneiderte Wachstumsstrategie erstellen." },
+        { "title": "Plan exportieren", "description": "Exportiere die Strategie als Dokument oder plane sie als Beiträge." }
+      ]
+    },
+    "contentSplit": {
+      "label": "Content-Split",
+      "description": "Teile lange Inhalte in mehrere Social-Media-Beiträge auf.",
+      "steps": [
+        { "title": "Inhalt einfügen", "description": "Füge einen Blog-Post, Artikel oder langen Inhalt ein." },
+        { "title": "Split konfigurieren", "description": "Wähle, wie viele Beiträge erstellt werden sollen und den Ton für jeden." },
+        { "title": "Prüfen & Planen", "description": "Überprüfe die generierten Beiträge und plane sie." }
+      ]
+    },
+    "profile": {
+      "label": "Profil",
+      "description": "Verwalte dein persönliches Profil und deine Einstellungen.",
+      "steps": [
+        { "title": "Profilinformationen", "description": "Aktualisiere Name, E-Mail, Avatar und Spracheinstellungen." },
+        { "title": "Sicherheit", "description": "Ändere dein Passwort und aktiviere die Zwei-Faktor-Authentifizierung." },
+        { "title": "Präferenzen", "description": "Setze Standard-Zeitzone, Benachrichtigungen und Anzeigeeinstellungen." }
+      ]
+    },
+    "account": {
+      "label": "Konto",
+      "description": "Verwalte verknüpfte Konten und Sicherheitseinstellungen.",
+      "steps": [
+        { "title": "Verknüpfte Konten", "description": "Verbinde oder trenne Social-Login-Provider." },
+        { "title": "Kontoeinstellungen", "description": "Aktualisiere E-Mail, Passwort und andere Kontodetails." },
+        { "title": "Gefahrenzone", "description": "Lösche dein Konto oder exportiere deine Daten von hier aus." }
+      ]
+    },
+    "notifications": {
+      "label": "Benachrichtigungen",
+      "description": "Sieh und verwalte deine Benachrichtigungen.",
+      "steps": [
+        { "title": "Benachrichtigungsliste", "description": "Sieh alle Benachrichtigungen an einem Ort." },
+        { "title": "Filtern", "description": "Filtere nach gelesen/ungelesen oder Benachrichtigungstyp." },
+        { "title": "Aktionen", "description": "Markiere als gelesen, archiviere oder lösche Benachrichtigungen." }
+      ]
+    },
+    "admin": {
+      "label": "Admin",
+      "description": "Verwalte Unternehmen, Benutzer und Integrationen.",
+      "steps": [
+        { "title": "Admin-Dashboard", "description": "Erhalte einen Überblick über Unternehmen, Benutzer und Integrationen." },
+        { "title": "Benutzer verwalten", "description": "Füge Benutzerkonten hinzu, bearbeite oder deaktiviere sie." },
+        { "title": "Audit", "description": "Überprüfe Audit-Logs und Systemaktivitäten." }
       ]
     },
     "comingSoon": {
@@ -710,232 +959,315 @@
   "fr": {
     "modalTitle": "Tutoriels",
     "tooltip": "Tutoriels",
+    "currentPage": "Page actuelle",
+    "allTutorials": "Tous les tutoriels",
     "firstTime": {
       "label": "Première fois",
       "description": "Familiarisez-vous avec la plateforme MagicSync et ses fonctionnalités principales.",
       "steps": [
-        {
-          "title": "Bienvenue sur MagicSync !",
-          "description": "Vous devez créer une entreprise pour commencer à utiliser MagicSync. Une entreprise peut avoir plusieurs comptes de réseaux sociaux, et vous pouvez inviter d'autres personnes à une entreprise spécifique qui n'auront accès qu'aux réseaux sociaux de cette entreprise."
-        },
-        {
-          "title": "Suivez-nous & Soutenez-nous",
-          "description": "Suivez MagicSync sur nos réseaux sociaux pour rester informé, et donnez-nous une étoile sur GitHub si vous trouvez cet outil utile. Cliquez pour ouvrir une fenêtre où vous pouvez nous suivre, ou passez cette étape."
-        },
-        {
-          "title": "Suivez-nous sur Twitter",
-          "description": "Suivez MagicSync sur Twitter pour rester informé. Cliquez pour ouvrir une fenêtre où vous pouvez nous suivre, ou passez cette étape."
-        },
-        {
-          "title": "Passer cette étape",
-          "description": "Passez cette étape si vous nous suivez déjà sur nos réseaux sociaux."
-        },
-        {
-          "title": "Créez Votre Projet",
-          "description": "Entrez l'URL de votre site web pour extraire automatiquement les informations de l'entreprise. Vous pouvez passer cette étape et remplir les informations manuellement."
-        },
-        {
-          "title": "Détails de l'Entreprise",
-          "description": "Consultez les détails de votre entreprise dans les onglets : Nom, adresse, site web et téléphone (facultatif) sont disponibles sous l'onglet Informations de l'entreprise."
-        }
+        { "title": "Bienvenue sur MagicSync !", "description": "Vous devez créer une entreprise pour commencer à utiliser MagicSync. Une entreprise peut avoir plusieurs comptes de réseaux sociaux, et vous pouvez inviter d'autres personnes à une entreprise spécifique qui n'auront accès qu'aux réseaux sociaux de cette entreprise." },
+        { "title": "Suivez-nous & Soutenez-nous", "description": "Suivez MagicSync sur nos réseaux sociaux pour rester informé, et donnez-nous une étoile sur GitHub si vous trouvez cet outil utile. Cliquez pour ouvrir une fenêtre où vous pouvez nous suivre, ou passez cette étape." },
+        { "title": "Suivez-nous sur Twitter", "description": "Suivez MagicSync sur Twitter pour rester informé. Cliquez pour ouvrir une fenêtre où vous pouvez nous suivre, ou passez cette étape." },
+        { "title": "Passer cette étape", "description": "Passez cette étape si vous nous suivez déjà sur nos réseaux sociaux." },
+        { "title": "Créez Votre Projet", "description": "Entrez l'URL de votre site web pour extraire automatiquement les informations de l'entreprise. Vous pouvez passer cette étape et remplir les informations manuellement." },
+        { "title": "Détails de l'Entreprise", "description": "Consultez les détails de votre entreprise dans les onglets : Nom, adresse, site web et téléphone (facultatif) sont disponibles sous l'onglet Informations de l'entreprise." }
       ]
     },
     "createBusiness": {
       "label": "Créer une entreprise",
       "description": "Configurez votre profil d'entreprise avec nom, description et image de marque.",
       "steps": [
-        {
-          "title": "Créer une entreprise",
-          "description": "Allez dans Paramètres > Entreprise pour créer votre profil. Ajoutez le nom, la description, le site web et l'image de marque."
-        },
-        {
-          "title": "Paramètres d'entreprise",
-          "description": "Configurez votre fuseau horaire, vos heures de publication et vos profils sociaux par défaut."
-        },
-        {
-          "title": "Gestion d'équipe",
-          "description": "Invitez des membres de l'équipe à collaborer depuis la page des paramètres d'entreprise."
-        }
+        { "title": "Créer une entreprise", "description": "Allez dans Paramètres > Entreprise pour créer votre profil. Ajoutez le nom, la description, le site web et l'image de marque." },
+        { "title": "Paramètres d'entreprise", "description": "Configurez votre fuseau horaire, vos heures de publication et vos profils sociaux par défaut." },
+        { "title": "Gestion d'équipe", "description": "Invitez des membres de l'équipe à collaborer depuis la page des paramètres d'entreprise." }
       ]
     },
     "connectSocialMedia": {
       "label": "Connecter les réseaux sociaux",
       "description": "Lie vos comptes de réseaux sociaux pour commencer à planifier.",
       "steps": [
-        {
-          "title": "Connecter les réseaux sociaux",
-          "description": "Allez dans Connecter dans la barre latérale pour lier vos comptes."
-        },
-        {
-          "title": "Plateformes prises en charge",
-          "description": "Connectez Facebook, Twitter/X, Instagram, Bluesky, LinkedIn, TikTok et plus."
-        },
-        {
-          "title": "Authentification",
-          "description": "Chaque plateforme vous demandera d'autoriser MagicSync via OAuth. Suivez les instructions."
-        }
+        { "title": "Connecter les réseaux sociaux", "description": "Allez dans Connecter dans la barre latérale pour lier vos comptes." },
+        { "title": "Plateformes prises en charge", "description": "Connectez Facebook, Twitter/X, Instagram, Bluesky, LinkedIn, TikTok et plus." },
+        { "title": "Authentification", "description": "Chaque plateforme vous demandera d'autoriser MagicSync via OAuth. Suivez les instructions." }
       ]
     },
     "addAssets": {
       "label": "Ajouter des ressources",
       "description": "Téléchargez des images, vidéos et autres médias dans votre bibliothèque.",
       "steps": [
-        {
-          "title": "Bibliothèque de ressources",
-          "description": "La bibliothèque stocke toutes vos images, vidéos et fichiers médias."
-        },
-        {
-          "title": "Télécharger des ressources",
-          "description": "Allez dans Ressources pour télécharger des fichiers. Vous pouvez glisser-déposer."
-        },
-        {
-          "title": "Organiser les ressources",
-          "description": "Créez des dossiers et étiquetez vos ressources pour tout garder organisé."
-        }
+        { "title": "Bibliothèque de ressources", "description": "La bibliothèque stocke toutes vos images, vidéos et fichiers médias." },
+        { "title": "Télécharger des ressources", "description": "Allez dans Ressources pour télécharger des fichiers. Vous pouvez glisser-déposer." },
+        { "title": "Organiser les ressources", "description": "Créez des dossiers et étiquetez vos ressources pour tout garder organisé." }
       ]
     },
     "createNewPost": {
       "label": "Créer une publication",
       "description": "Créez et planifiez une nouvelle publication sur les réseaux sociaux.",
       "steps": [
-        {
-          "title": "Créer une publication",
-          "description": "Cliquez sur \"Nouvelle publication\" pour ouvrir le composeur."
-        },
-        {
-          "title": "Composez votre contenu",
-          "description": "Écrivez votre contenu, ajoutez des images et prévisualisez le rendu."
-        },
-        {
-          "title": "Planifier ou publier",
-          "description": "Choisissez de publier immédiatement ou de planifier pour une date ultérieure."
-        }
+        { "title": "Créer une publication", "description": "Cliquez sur \"Nouvelle publication\" pour ouvrir le composeur." },
+        { "title": "Composez votre contenu", "description": "Écrivez votre contenu, ajoutez des images et prévisualisez le rendu." },
+        { "title": "Planifier ou publier", "description": "Choisissez de publier immédiatement ou de planifier pour une date ultérieure." }
       ]
     },
     "createBulkPost": {
       "label": "Création en masse",
       "description": "Créez plusieurs publications à la fois avec la planification en masse.",
       "steps": [
-        {
-          "title": "Création en masse",
-          "description": "Créez plusieurs publications en une fois avec l'outil de création en masse."
-        },
-        {
-          "title": "Import CSV",
-          "description": "Importez des publications depuis un fichier CSV avec colonnes pour le contenu, la plateforme et l'horaire."
-        },
-        {
-          "title": "Réviser & Confirmer",
-          "description": "Révisez toutes vos publications avant de les planifier. Modifiez si nécessaire."
-        }
+        { "title": "Création en masse", "description": "Créez plusieurs publications en une fois avec l'outil de création en masse." },
+        { "title": "Import CSV", "description": "Importez des publications depuis un fichier CSV avec colonnes pour le contenu, la plateforme et l'horaire." },
+        { "title": "Réviser & Confirmer", "description": "Révisez toutes vos publications avant de les planifier. Modifiez si nécessaire." }
       ]
     },
     "sendInvitation": {
       "label": "Envoyer une invitation",
       "description": "Invitez des membres de l'équipe à collaborer sur votre entreprise.",
       "steps": [
-        {
-          "title": "Inviter des membres",
-          "description": "Allez dans les paramètres d'entreprise et sélectionnez \"Équipe\" pour inviter."
-        },
-        {
-          "title": "Définir les permissions",
-          "description": "Choisissez ce que chaque membre peut faire — administrateur, éditeur ou lecteur."
-        },
-        {
-          "title": "Accepter les invitations",
-          "description": "Les membres invités recevront un e-mail avec un lien pour rejoindre."
-        }
+        { "title": "Inviter des membres", "description": "Allez dans les paramètres d'entreprise et sélectionnez \"Équipe\" pour inviter." },
+        { "title": "Définir les permissions", "description": "Choisissez ce que chaque membre peut faire — administrateur, éditeur ou lecteur." },
+        { "title": "Accepter les invitations", "description": "Les membres invités recevront un e-mail avec un lien pour rejoindre." }
       ]
     },
     "connectMultiplePages": {
       "label": "Connecter plusieurs pages",
       "description": "Gérez et connectez plusieurs pages de réseaux sociaux.",
       "steps": [
-        {
-          "title": "Pages multiples",
-          "description": "Connectez et gérez plusieurs pages pour chaque plateforme sociale."
-        },
-        {
-          "title": "Changement de page",
-          "description": "Changez facilement de page lors de la création de publications."
-        },
-        {
-          "title": "Actions groupées",
-          "description": "Effectuez des actions sur plusieurs pages simultanément."
-        }
+        { "title": "Pages multiples", "description": "Connectez et gérez plusieurs pages pour chaque plateforme sociale." },
+        { "title": "Changement de page", "description": "Changez facilement de page lors de la création de publications." },
+        { "title": "Actions groupées", "description": "Effectuez des actions sur plusieurs pages simultanément." }
       ]
     },
     "groupSocialMedia": {
       "label": "Grouper les réseaux sociaux",
       "description": "Organisez vos comptes en groupes pour une gestion plus facile.",
       "steps": [
-        {
-          "title": "Groupes de réseaux sociaux",
-          "description": "Regroupez vos comptes par catégorie, campagne ou organisation personnalisée."
-        },
-        {
-          "title": "Créer des groupes",
-          "description": "Allez dans Paramètres > Groupes pour créer et gérer vos groupes."
-        },
-        {
-          "title": "Publier dans des groupes",
-          "description": "Planifiez des publications pour des groupes entiers à la fois."
-        }
+        { "title": "Groupes de réseaux sociaux", "description": "Regroupez vos comptes par catégorie, campagne ou organisation personnalisée." },
+        { "title": "Créer des groupes", "description": "Allez dans Paramètres > Groupes pour créer et gérer vos groupes." },
+        { "title": "Publier dans des groupes", "description": "Planifiez des publications pour des groupes entiers à la fois." }
       ]
     },
     "createVariables": {
       "label": "Créer des variables",
       "description": "Créez des variables réutilisables pour du contenu dynamique.",
       "steps": [
-        {
-          "title": "Que sont les variables ?",
-          "description": "Les variables sont des espaces réservés comme `business_name` ou `date` qui se remplissent automatiquement."
-        },
-        {
-          "title": "Créer des variables",
-          "description": "Allez dans Paramètres > Variables pour créer vos variables personnalisées."
-        },
-        {
-          "title": "Utiliser les variables",
-          "description": "Insérez des variables dans vos publications avec la syntaxe `nom_variable`."
-        }
+        { "title": "Que sont les variables ?", "description": "Les variables sont des espaces réservés comme `business_name` ou `date` qui se remplissent automatiquement." },
+        { "title": "Créer des variables", "description": "Allez dans Paramètres > Variables pour créer vos variables personnalisées." },
+        { "title": "Utiliser les variables", "description": "Insérez des variables dans vos publications avec la syntaxe `nom_variable`." }
       ]
     },
     "createApiKey": {
       "label": "Créer une clé API",
       "description": "Générez des clés API pour les intégrations externes et l'automatisation.",
       "steps": [
-        {
-          "title": "Clés API",
-          "description": "Les clés API permettent aux applications externes d'interagir avec MagicSync par programmation."
-        },
-        {
-          "title": "Générer une clé",
-          "description": "Allez dans Paramètres > Clés API et cliquez sur \"Générer une nouvelle clé\"."
-        },
-        {
-          "title": "Permissions de clé",
-          "description": "Définissez la portée et les permissions pour chaque clé API."
-        }
+        { "title": "Clés API", "description": "Les clés API permettent aux applications externes d'interagir avec MagicSync par programmation." },
+        { "title": "Générer une clé", "description": "Allez dans Paramètres > Clés API et cliquez sur \"Générer une nouvelle clé\"." },
+        { "title": "Permissions de clé", "description": "Définissez la portée et les permissions pour chaque clé API." }
       ]
     },
     "viewCalendar": {
       "label": "Voir le calendrier",
       "description": "Consultez et gérez votre calendrier de publication de contenu.",
       "steps": [
-        {
-          "title": "Calendrier de contenu",
-          "description": "Le calendrier montre toutes vos publications planifiées dans une vue mensuelle."
-        },
-        {
-          "title": "Naviguer dans le calendrier",
-          "description": "Utilisez les boutons mois/semaine/jour pour changer de vue."
-        },
-        {
-          "title": "Gérer les publications",
-          "description": "Cliquez sur une publication pour la modifier, la reprogrammer ou la supprimer."
-        }
+        { "title": "Calendrier de contenu", "description": "Le calendrier montre toutes vos publications planifiées dans une vue mensuelle." },
+        { "title": "Naviguer dans le calendrier", "description": "Utilisez les boutons mois/semaine/jour pour changer de vue." },
+        { "title": "Gérer les publications", "description": "Cliquez sur une publication pour la modifier, la reprogrammer ou la supprimer." }
+      ]
+    },
+    "posts": {
+      "label": "Publications",
+      "description": "Gérez toutes vos publications sur les réseaux sociaux planifiées et publiées.",
+      "steps": [
+        { "title": "Tableau de bord des publications", "description": "Voir toutes vos publications en vue tableau, grille ou liste. Filtrez par statut, plateforme ou date." },
+        { "title": "Actions sur les publications", "description": "Modifiez, dupliquez, reprogrammez ou supprimez des publications directement depuis la liste." },
+        { "title": "Performance", "description": "Cliquez sur une publication pour voir ses statistiques, commentaires et métriques d'engagement." }
+      ]
+    },
+    "feeds": {
+      "label": "Flux",
+      "description": "Curez et planifiez du contenu à partir de flux RSS et d'autres sources.",
+      "steps": [
+        { "title": "Sources de flux", "description": "Ajoutez des flux RSS ou d'autres sources pour générer automatiquement des idées de publications." },
+        { "title": "Examiner les éléments", "description": "Parcourez les éléments de flux, prévisualisez-les et sélectionnez ceux que vous voulez partager." },
+        { "title": "Planifier les publications", "description": "Transformez les éléments de flux en publications planifiées en un clic." }
+      ]
+    },
+    "postVideo": {
+      "label": "Publication vidéo",
+      "description": "Créez et planifiez des publications vidéo pour vos canaux sociaux.",
+      "steps": [
+        { "title": "Télécharger une vidéo", "description": "Sélectionnez ou téléchargez un fichier vidéo pour votre publication." },
+        { "title": "Ajouter des détails", "description": "Écrivez une légende, ajoutez des hashtags et choisissez les plateformes de publication." },
+        { "title": "Publier ou planifier", "description": "Publiez immédiatement ou planifiez la vidéo au meilleur moment." }
+      ]
+    },
+    "templates": {
+      "label": "Modèles",
+      "description": "Créez des modèles de publication réutilisables pour accélérer la création de contenu.",
+      "steps": [
+        { "title": "Bibliothèque de modèles", "description": "Parcourez et gérez tous vos modèles enregistrés en un seul endroit." },
+        { "title": "Créer un modèle", "description": "Créez un modèle avec des variables, du texte par défaut et des paramètres de plateforme." },
+        { "title": "Utiliser les modèles", "description": "Appliquez des modèles lors de la création de nouvelles publications pour gagner du temps." }
+      ]
+    },
+    "templateEmail": {
+      "label": "Modèles d'email",
+      "description": "Concevez des modèles d'email réutilisables pour les campagnes et notifications.",
+      "steps": [
+        { "title": "Constructeur d'email", "description": "Créez des modèles d'email avec un éditeur de texte enrichi et des variables dynamiques." },
+        { "title": "Aperçu", "description": "Prévisualisez l'apparence de votre email sur ordinateur et mobile." },
+        { "title": "Enregistrer et réutiliser", "description": "Enregistrez des modèles et réutilisez-les dans les campagnes." }
+      ]
+    },
+    "templateImages": {
+      "label": "Modèles d'image",
+      "description": "Créez des modèles d'image réutilisables pour une image de marque cohérente.",
+      "steps": [
+        { "title": "Canvas de modèle d'image", "description": "Concevez des modèles d'image avec des superpositions, du texte et des actifs de marque." },
+        { "title": "Préréglages de marque", "description": "Enregistrez les couleurs, polices et logos pour garder les designs cohérents." },
+        { "title": "Exporter", "description": "Exportez les modèles aux bonnes tailles pour chaque plateforme." }
+      ]
+    },
+    "templateChat": {
+      "label": "Modèles de chat",
+      "description": "Enregistrez et réutilisez des modèles de prompts pour les conversations IA.",
+      "steps": [
+        { "title": "Modèles de prompts", "description": "Créez des modèles de prompts pour les tâches et conversations IA courantes." },
+        { "title": "Variables", "description": "Utilisez des variables pour rendre les modèles réutilisables avec différentes entrées." },
+        { "title": "Partager", "description": "Partagez des modèles avec votre équipe pour des interactions IA cohérentes." }
+      ]
+    },
+    "aiTools": {
+      "label": "Outils IA",
+      "description": "Utilisez l'IA pour générer du contenu, des stratégies et des actifs.",
+      "steps": [
+        { "title": "Tableau de bord IA", "description": "Explorez tous les outils IA disponibles depuis le tableau de bord." },
+        { "title": "Choisir un outil", "description": "Choisissez un outil en fonction de vos besoins : génération de contenu, stratégie ou médias." },
+        { "title": "Vérifier les résultats", "description": "Vérifiez toujours le contenu généré par l'IA avant de publier." }
+      ]
+    },
+    "aiChat": {
+      "label": "Chat IA",
+      "description": "Chattez avec MagicSync AI pour obtenir de l'aide sur le contenu et la stratégie.",
+      "steps": [
+        { "title": "Démarrer un chat", "description": "Ouvrez un nouveau chat et décrivez ce avec quoi vous avez besoin d'aide." },
+        { "title": "Utiliser les compétences", "description": "Activez des compétences pour donner à l'IA des capacités spéciales comme générer des publications ou images." },
+        { "title": "Enregistrer les résultats", "description": "Enregistrez les résultats utiles dans vos modèles ou publications." }
+      ]
+    },
+    "aiKnowledge": {
+      "label": "Connaissances IA",
+      "description": "Téléchargez des documents pour créer une base de connaissances pour l'IA.",
+      "steps": [
+        { "title": "Télécharger des documents", "description": "Téléchargez des PDFs, fichiers texte ou pages web pour construire votre base de connaissances." },
+        { "title": "Organiser les connaissances", "description": "Groupez les documents par sujet ou projet pour de meilleures réponses de l'IA." },
+        { "title": "Poser des questions", "description": "Posez des questions à l'IA basées sur vos documents téléchargés." }
+      ]
+    },
+    "aiSkills": {
+      "label": "Compétences IA",
+      "description": "Créez et gérez des compétences IA personnalisées.",
+      "steps": [
+        { "title": "Bibliothèque de compétences", "description": "Parcourez les compétences intégrées et personnalisées créées par votre équipe." },
+        { "title": "Créer une compétence", "description": "Définissez des instructions et des exemples pour une nouvelle compétence." },
+        { "title": "Utiliser dans le chat", "description": "Activez des compétences dans le chat IA pour étendre ses capacités." }
+      ]
+    },
+    "aiAssets": {
+      "label": "Actifs IA",
+      "description": "Gérez les actifs générés ou utilisés par les outils IA.",
+      "steps": [
+        { "title": "Actifs générés", "description": "Consultez et organisez les images, textes et autres outputs des outils IA." },
+        { "title": "Synchroniser avec la bibliothèque", "description": "Déplacez les actifs générés vers votre bibliothèque multimédia principale." },
+        { "title": "Réutiliser", "description": "Réutilisez les actifs générés par l'IA dans les publications et campagnes." }
+      ]
+    },
+    "aiSettings": {
+      "label": "Paramètres IA",
+      "description": "Configurez les fournisseurs, modèles et paramètres par défaut de l'IA.",
+      "steps": [
+        { "title": "Fournisseur IA", "description": "Choisissez le fournisseur et le modèle d'IA que vous souhaitez utiliser." },
+        { "title": "Paramètres par défaut", "description": "Définissez le ton, la longueur et la langue par défaut des outputs de l'IA." },
+        { "title": "Clés API", "description": "Ajoutez vos propres clés API de fournisseurs d'IA si nécessaire." }
+      ]
+    },
+    "tools": {
+      "label": "Outils gratuits",
+      "description": "Accédez à des utilitaires gratuits comme le recadrage vidéo, le texte-parole et plus.",
+      "steps": [
+        { "title": "Bibliothèque d'outils", "description": "Parcourez tous les outils gratuits disponibles dans MagicSync." },
+        { "title": "Choisir un outil", "description": "Sélectionnez un outil pour ouvrir son espace de travail dédié." },
+        { "title": "Exporter les résultats", "description": "Téléchargez ou enregistrez les résultats directement dans votre bibliothèque multimédia." }
+      ]
+    },
+    "videoCropper": {
+      "label": "Recadrage vidéo",
+      "description": "Recadrez et redimensionnez des vidéos pour différentes plateformes sociales.",
+      "steps": [
+        { "title": "Télécharger une vidéo", "description": "Téléchargez une vidéo ou sélectionnez-en une dans votre bibliothèque multimédia." },
+        { "title": "Choisir le ratio", "description": "Choisissez le ratio d'aspect pour la plateforme cible." },
+        { "title": "Exporter", "description": "Recadrez, prévisualisez et exportez la vidéo au bon format." }
+      ]
+    },
+    "textToSpeech": {
+      "label": "Texte à parole",
+      "description": "Convertissez du texte en audio de parole naturelle.",
+      "steps": [
+        { "title": "Entrer le texte", "description": "Tapez ou collez le texte que vous souhaitez convertir en parole." },
+        { "title": "Sélectionner la voix", "description": "Choisissez un style de voix et ajustez la vitesse ou le ton." },
+        { "title": "Générer l'audio", "description": "Générez le fichier audio et téléchargez-le ou enregistrez-le." }
+      ]
+    },
+    "growthStrategy": {
+      "label": "Stratégie de croissance",
+      "description": "Générez des stratégies de croissance et des plans de contenu avec l'IA.",
+      "steps": [
+        { "title": "Définir les objectifs", "description": "Entrez vos objectifs commerciaux et votre audience cible." },
+        { "title": "Générer la stratégie", "description": "Laissez l'IA créer une stratégie de croissance sur mesure." },
+        { "title": "Exporter le plan", "description": "Exportez la stratégie comme document ou programmez-la comme publications." }
+      ]
+    },
+    "contentSplit": {
+      "label": "Fractionnement de contenu",
+      "description": "Divisez un contenu long en plusieurs publications pour les réseaux sociaux.",
+      "steps": [
+        { "title": "Coller le contenu", "description": "Collez un article de blog, un article ou un contenu long." },
+        { "title": "Configurer la division", "description": "Choisissez combien de publications créer et le ton pour chacune." },
+        { "title": "Réviser et planifier", "description": "Révisez les publications générées et planifiez-les." }
+      ]
+    },
+    "profile": {
+      "label": "Profil",
+      "description": "Gérez votre profil personnel et vos préférences.",
+      "steps": [
+        { "title": "Informations de profil", "description": "Mettez à jour votre nom, email, avatar et préférences de langue." },
+        { "title": "Sécurité", "description": "Changez votre mot de passe et activez l'authentification à deux facteurs." },
+        { "title": "Préférences", "description": "Définissez le fuseau horaire, les notifications et les paramètres d'affichage." }
+      ]
+    },
+    "account": {
+      "label": "Compte",
+      "description": "Gérez les comptes liés et les paramètres de sécurité.",
+      "steps": [
+        { "title": "Comptes liés", "description": "Connectez ou déconnectez les fournisseurs de connexion sociale." },
+        { "title": "Paramètres du compte", "description": "Mettez à jour l'email, le mot de passe et autres détails du compte." },
+        { "title": "Zone de danger", "description": "Supprimez votre compte ou exportez vos données ici." }
+      ]
+    },
+    "notifications": {
+      "label": "Notifications",
+      "description": "Consultez et gérez vos notifications.",
+      "steps": [
+        { "title": "Liste des notifications", "description": "Voir toutes vos notifications en un seul endroit." },
+        { "title": "Filtrer", "description": "Filtrez par lues/non lues ou type de notification." },
+        { "title": "Actions", "description": "Marquez comme lu, archivez ou supprimez des notifications." }
+      ]
+    },
+    "admin": {
+      "label": "Admin",
+      "description": "Administrez les entreprises, utilisateurs et intégrations.",
+      "steps": [
+        { "title": "Tableau de bord admin", "description": "Obtenez une vue d'ensemble des entreprises, utilisateurs et intégrations." },
+        { "title": "Gérer les utilisateurs", "description": "Ajoutez, modifiez ou désactivez des comptes utilisateurs." },
+        { "title": "Audit", "description": "Consultez les journaux d'audit et l'activité du système." }
       ]
     },
     "comingSoon": {

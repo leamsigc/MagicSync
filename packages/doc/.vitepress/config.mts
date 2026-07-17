@@ -78,6 +78,8 @@ export default withMermaid(defineConfig({
           collapsed: false,
           items: [
             { text: 'Docker Setup', link: '/guide/docker-setup' },
+            { text: 'Self-Hosting', link: '/guide/self-hosting' },
+            { text: 'Coolify Deploy', link: '/guide/coolify-deploy' },
             { text: 'Platform Keys', link: '/guide/platform-keys' },
           ],
         },
@@ -88,12 +90,12 @@ export default withMermaid(defineConfig({
             { text: 'CSV Import', link: '/guide/csv-import' },
             { text: 'Bulk Generation', link: '/guide/bulk-generation' },
           ],
-        },
-        {
+        },          {
           text: 'AI Tools',
           collapsed: false,
           items: [
             { text: 'Features Overview', link: '/guide/features' },
+            { text: 'Free Tools', link: '/guide/tools' },
             { text: 'Growth Strategy & Content Pipeline', link: '/guide/growth-strategy' },
           ],
         },

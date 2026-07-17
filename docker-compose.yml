@@ -1,5 +1,11 @@
 services:
   site:
+    # Build locally from the fixed Dockerfile for verification.
+    # Once the GitHub workflow publishes a fixed image, switch back to:
+    # image: ghcr.io/leamsigc/magicsync:latest
+    build:
+      dockerfile: Dockerfile
+      context: .
     depends_on:
       - db
     env_file:
@@ -9,9 +15,6 @@ services:
       - NUXT_PYTHON_API_URL=http://python-backend:8000
     ports:
       - "3000:3000"
-    build:
-      dockerfile: Dockerfile
-      context: .
 
   python-backend:
     depends_on:
