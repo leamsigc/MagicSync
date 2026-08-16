@@ -57,10 +57,21 @@ export const getAccessTokenHelper = async (
       },
       headers: eventOrHeaders // headers containing the user's session token
     })
-    log.info({ message: 'Got access token', response: resp })
+    // SAFE: never log the access token / id token — log presence and expiry only
+    log.info({
+      message: 'Got access token',
+      providerId: options.providerId,
+      hasAccessToken: !!resp?.accessToken,
+      accessTokenExpiresAt: resp?.accessTokenExpiresAt,
+      scopes: resp?.scopes,
+    })
     return resp;
   } catch (error) {
-    log.info({ message: 'Error getting access token', error: error })
+    // SAFE: log error type/message only — the error object may embed request headers/tokens
+    log.info({
+      message: 'Error getting access token',
+      error: error instanceof Error ? error.message : String(error),
+    })
 
   }
 }

@@ -75,14 +75,16 @@ const HandleRefresh = async () => {
   <div class="mx-auto space-y-6">
     <BasePageHeader :title="t('title')" :description="t('description')">
       <template #actions>
-        <NewPostModal />
+        <div data-tour="create-new-post-step-0">
+          <NewPostModal />
+        </div>
       </template>
     </BasePageHeader>
     <div class=" p-2 flex justify-between items-center ">
-      <section class="flex gap-1">
+      <section class="flex gap-1" data-tour="posts-step-0">
         <PostFiltersBar  @filter-change="handleFilterChange"
       @refresh="HandleRefresh"/>
-        <section>
+        <section data-tour="posts-step-1">
           <UButton icon="i-heroicons-squares-2x2" :variant="currentView === 'Board' ? 'solid' : 'ghost'" size="sm"
           @click="() => {currentView = 'Board'}" class="rounded-xl">Board</UButton>
           <UButton icon="i-heroicons-table-cells" :variant="currentView === 'Table' ? 'solid' : 'ghost'" size="sm"

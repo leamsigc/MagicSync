@@ -5,7 +5,7 @@ import { useVideoCropper } from '../composables/useVideoCropper'
 
 const { t } = useI18n()
 
-const { cropBoxAspectRatio, finalVideoAspectRatio, fitMode } = useVideoCropper()
+const { cropBoxAspectRatio, finalVideoAspectRatio, fitMode, applyCropBoxAspectRatio } = useVideoCropper()
 
 const cropAspects = [
   { value: null, label: 'Free', data: 'free' },
@@ -54,7 +54,7 @@ function isSelected(value: number | null, current: number | null): boolean {
             :color="isSelected(asp.value, cropBoxAspectRatio) ? 'primary' : 'neutral'"
             :variant="isSelected(asp.value, cropBoxAspectRatio) ? 'solid' : 'ghost'"
             class="font-mono"
-            @click="()=>{cropBoxAspectRatio = asp.value}"
+            @click="()=>{cropBoxAspectRatio = asp.value; applyCropBoxAspectRatio()}"
           >
             {{ asp.label }}
           </UButton>

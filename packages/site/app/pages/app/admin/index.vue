@@ -3,8 +3,6 @@ definePageMeta({
   layout: 'dashboard-layout'
 })
 
-const { t } = useI18n()
-
 useHead({
   title: 'Admin Dashboard',
   meta: [{ name: 'description', content: 'Administration dashboard' }]
@@ -51,8 +49,8 @@ const adminLinks = [
       <p class="text-muted-foreground">System overview and administration</p>
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <UCard v-for="stat in stats" :key="stat.label">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" data-tour="admin-step-0">
+      <div v-for="stat in stats" :key="stat.label" class="bg-elevated rounded-2xl p-4">
         <div class="flex items-center gap-3">
           <div class="p-2 rounded-lg bg-primary/10">
             <UIcon :name="stat.icon" class="w-5 h-5 text-primary" />
@@ -62,12 +60,16 @@ const adminLinks = [
             <p class="text-sm text-muted-foreground">{{ stat.label }}</p>
           </div>
         </div>
-      </UCard>
+      </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <NuxtLink v-for="link in adminLinks" :key="link.to" :to="link.to"
-        class="block p-4 rounded-xl border border-border hover:border-primary/50 transition-colors bg-card">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4" data-tour="admin-step-1">
+      <NuxtLink
+        v-for="link in adminLinks"
+        :key="link.to"
+        :to="link.to"
+        class="block p-4 rounded-2xl bg-elevated hover:shadow-lg transition-shadow"
+      >
         <div class="flex items-center gap-3">
           <div class="p-2 rounded-lg bg-primary/10">
             <UIcon :name="link.icon" class="w-5 h-5 text-primary" />

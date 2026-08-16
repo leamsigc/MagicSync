@@ -267,6 +267,27 @@ export class BusinessProfileService implements BusinessProfileServiceType {
       return { success: false, error: 'Failed to delete business profile' }
     }
   }
+
+  /**
+   * Like delete() but skips the findById ownership check.
+   * Use only for admin operations where the caller already verified authorization.
+   */
+  async deleteRaw(id: string): Promise<ServiceResponse<void>> {
+    try {
+      const result = await this.db
+        .delete(businessProfiles)
+        .where(eq(businessProfiles.id, id))
+        .returning()
+
+      if (!result.length) {
+        return { success: false, error: "Business profile not found", code: "404" }
+      }
+
+      return { success: true }
+    } catch (error) {
+      return { success: false, error: 'Failed to delete business profile' }
+    }
+  }
   async setActive(userId: string, data: { id: string, isActive: boolean }): Promise<ServiceResponse<BusinessProfile>> {
     try {
       const existingResult = await this.findById(data.id, userId)

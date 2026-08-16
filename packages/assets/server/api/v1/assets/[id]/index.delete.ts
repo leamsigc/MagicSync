@@ -1,5 +1,7 @@
 import { assetService } from '#layers/BaseShared/server/services/asset.service';
 import { auth } from '#layers/BaseAuth/lib/auth';
+import { getFileFromAsset } from '#layers/BaseAssets/server/utils/AssetsUtils'
+import { unlink } from 'fs/promises'
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event)
@@ -35,6 +37,16 @@ export default defineEventHandler(async (event) => {
         statusCode: 500,
         statusMessage: result.error
       })
+    }
+
+    // Best-effort cleanup of the stored file
+    if (result.data?.url) {
+      try {
+        const filePath = getFileFromAsset(result.data)
+        await unlink(filePath)
+      } catch (fileError) {
+        log.warn('Failed to remove stored file', { assetId, error: fileError })
+      }
     }
 
     log.info('Asset deleted successfully', { assetId })

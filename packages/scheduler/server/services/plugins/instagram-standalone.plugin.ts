@@ -1,5 +1,5 @@
-import type { PostResponse, Integration, PluginPostDetails, PluginSocialMediaAccount, GetCommentsResponse, ReplyCommentResponse, PlatformComment, PlatformStats } from '../SchedulerPost.service';
-import { BaseSchedulerPlugin } from '../SchedulerPost.service';
+import type { PostResponse, Integration, PluginPostDetails, PluginSocialMediaAccount, GetCommentsResponse, ReplyCommentResponse, PlatformComment, PlatformStats, PostInsight } from '../SchedulerPost.service';
+import { BaseSchedulerPlugin, createPostInsightsFallback, extractExternalPostId } from '../SchedulerPost.service';
 import type { Post, PostWithAllData, SocialMediaAccount } from '#layers/BaseDB/db/schema';
 
 /**
@@ -105,6 +105,35 @@ export class InstagramStandalonePlugin extends BaseSchedulerPlugin {
       },
     };
   }
+
+  async getPostInsights(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount
+  ): Promise<PostInsight[]> {
+    const externalPostId = extractExternalPostId(postDetails, socialMediaAccount);
+    if (!externalPostId) {
+      return createPostInsightsFallback(this.pluginName);
+    }
+
+    try {
+      const url = `https://graph.instagram.com/${externalPostId}?fields=id,caption,media_type,like_count,comments_count,timestamp&access_token=${socialMediaAccount.accessToken}`;
+      const res = await fetch(url);
+      if (!res.ok) {
+        log.warn({ content: 'Instagram-standalone post insights error', status: res.status, body: await res.text() });
+        return createPostInsightsFallback(this.pluginName);
+      }
+      const media = await res.json();
+
+      return [
+        { label: 'Likes', value: media.like_count || 0 },
+        { label: 'Comments', value: media.comments_count || 0 },
+      ];
+    } catch (error) {
+      log.warn({ content: 'Instagram-standalone post insights fetch failed', error: (error as Error).message });
+      return createPostInsightsFallback(this.pluginName);
+    }
+  }
+
   static readonly pluginName = 'instagram-standalone';
   readonly pluginName = 'instagram-standalone';
   public override exposedMethods = [

@@ -1,5 +1,5 @@
-import type { PostResponse, Integration, PluginPostDetails, PluginSocialMediaAccount, PlatformStats, GetCommentsResponse, ReplyCommentResponse, PlatformComment } from '../SchedulerPost.service';
-import { BaseSchedulerPlugin, type MediaContent } from '../SchedulerPost.service';
+import type { PostResponse, Integration, PluginPostDetails, PluginSocialMediaAccount, PlatformStats, GetCommentsResponse, ReplyCommentResponse, PlatformComment, PostInsight } from '../SchedulerPost.service';
+import { BaseSchedulerPlugin, type MediaContent, createPostInsightsFallback, extractExternalPostId } from '../SchedulerPost.service';
 import type { Post, PostWithAllData, SocialMediaAccount, Asset, PlatformContentOverride } from '#layers/BaseDB/db/schema';
 import sharp from 'sharp';
 import type { LinkedInSettings } from '../../../shared/platformSettings';
@@ -348,6 +348,45 @@ export class LinkedInPlugin extends BaseSchedulerPlugin {
         totalImpressions,
         engagementRate,
       },
+    }
+  }
+
+  async getPostInsights(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount
+  ): Promise<PostInsight[]> {
+    const externalPostId = extractExternalPostId(postDetails, socialMediaAccount) || postDetails.postId;
+    if (!externalPostId) {
+      return createPostInsightsFallback(this.pluginName);
+    }
+
+    try {
+      const response = await fetch('https://api.linkedin.com/v2/ugcPosts?count=50&q=authors&authors=List(~)', {
+        headers: {
+          Authorization: `Bearer ${socialMediaAccount.accessToken}`,
+          'LinkedIn-Version': '202401',
+        },
+      });
+      const postsData = await response.json();
+      const elements = postsData.elements || [];
+      const post = elements.find(
+        (el: { id?: string; urn?: string }) => el.id === externalPostId || el.urn === externalPostId
+      );
+
+      if (!post) {
+        return createPostInsightsFallback(this.pluginName);
+      }
+
+      const stats = post.totalSocialStatistics || {};
+      return [
+        { label: 'Likes', value: stats.likeCount || 0 },
+        { label: 'Comments', value: stats.commentCount || 0 },
+        { label: 'Shares', value: stats.shareCount || 0 },
+        { label: 'Impressions', value: stats.impressionCount || 0 },
+      ];
+    } catch (error: unknown) {
+      log.error({ content: 'LinkedIn post insights fetch failed', plugin: 'linkedin', error: (error as Error).message });
+      return createPostInsightsFallback(this.pluginName);
     }
   }
 

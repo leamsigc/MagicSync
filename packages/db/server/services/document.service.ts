@@ -387,8 +387,13 @@ export class ChunkService implements ChunkServiceType {
       }
 
       if (filters?.metadataKey && filters?.metadataValue) {
-        whereClauses.push(`json_extract(dc.metadata, '$.${filters.metadataKey}') LIKE ?`)
-        args.push(`%${filters.metadataValue}%`)
+        // SAFE: bind the JSON path as a parameter — never interpolate user input into SQL.
+        // Also whitelist the key so only plain JSON-path characters are accepted.
+        if (!/^[A-Za-z0-9_.-]+$/.test(filters.metadataKey)) {
+          return { success: false, error: 'Invalid metadata key' }
+        }
+        whereClauses.push(`json_extract(dc.metadata, ?) LIKE ?`)
+        args.push(`$.${filters.metadataKey}`, `%${filters.metadataValue}%`)
       }
 
       args.push(limit)

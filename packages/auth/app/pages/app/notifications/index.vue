@@ -61,7 +61,7 @@ useHead({
 
 <template>
   <UContainer class="py-8 max-w-4xl">
-    <div class="flex items-center justify-between mb-8">
+    <div class="flex items-center justify-between mb-8" data-tour="notifications-step-0">
       <div>
         <h1 class="text-3xl font-bold mb-2">{{ t('heading') }}</h1>
         <p class="text-muted-foreground">{{ t('subheading') }}</p>
@@ -72,7 +72,7 @@ useHead({
       </UButton>
     </div>
 
-    <UTabs :items="items" v-model="filter" class="w-full">
+    <UTabs :items="items" v-model="filter" class="w-full" data-tour="notifications-step-1">
       <template #all>
         <NotificationList class="mt-6" :notifications="notifications" :loading="loading" @mark-read="handleMarkRead"
           @delete="handleDelete" />

@@ -1,11 +1,66 @@
-import type { PluginPostDetails, PostResponse, Integration, PluginSocialMediaAccount, GetCommentsResponse, ReplyCommentResponse, PlatformComment } from '../SchedulerPost.service';
-import { BaseSchedulerPlugin, type MediaContent, type PlatformStats } from '../SchedulerPost.service';
+import type { PluginPostDetails, PostResponse, Integration, PluginSocialMediaAccount, GetCommentsResponse, ReplyCommentResponse, PlatformComment, PlatformStats, PostInsight } from '../SchedulerPost.service';
+import { BaseSchedulerPlugin, type MediaContent, createPostInsightsFallback, extractExternalPostId } from '../SchedulerPost.service';
 import type { Post, SocialMediaAccount, Asset } from '#layers/BaseDB/db/schema';
 import type { TikTokSettings } from '../../../shared/platformSettings';
 
 import { platformConfigurations } from '../../../shared/platformConstants';
 
 export class TikTokPlugin extends BaseSchedulerPlugin {
+  async getPostInsights(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount
+  ): Promise<PostInsight[]> {
+    const externalPostId = extractExternalPostId(postDetails, socialMediaAccount);
+    if (!externalPostId) {
+      return createPostInsightsFallback(this.pluginName);
+    }
+
+    try {
+      const accessToken = socialMediaAccount.accessToken;
+      if (!accessToken) {
+        return createPostInsightsFallback(this.pluginName);
+      }
+
+      const videoQueryResponse = await fetch(
+        'https://open.tiktokapis.com/v2/video/query/?fields=id,views,likes_count,comments_count,shares_count,create_time',
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            filters: {
+              video_ids: [externalPostId],
+            },
+            max_count: 1,
+          }),
+        }
+      );
+
+      if (!videoQueryResponse.ok) {
+        log.warn({ content: '[TikTok] Post insights error', status: videoQueryResponse.status, body: await videoQueryResponse.text() });
+        return createPostInsightsFallback(this.pluginName);
+      }
+
+      const videoData = await videoQueryResponse.json();
+      const video = videoData.data?.videos?.[0];
+      if (!video) {
+        return createPostInsightsFallback(this.pluginName);
+      }
+
+      return [
+        { label: 'Views', value: video.views || 0 },
+        { label: 'Likes', value: video.likes_count || 0 },
+        { label: 'Comments', value: video.comments_count || 0 },
+        { label: 'Shares', value: video.shares_count || 0 },
+      ];
+    } catch (error: unknown) {
+      log.error({ content: 'TikTok post insights fetch failed', plugin: 'tiktok', error: (error as Error).message });
+      return createPostInsightsFallback(this.pluginName);
+    }
+  }
+
   override async getStatistic(
     postDetails: PluginPostDetails,
     socialMediaAccount: PluginSocialMediaAccount

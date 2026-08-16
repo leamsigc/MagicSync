@@ -1,7 +1,35 @@
 import { assetService } from '#layers/BaseShared/server/services/asset.service';
-import { auth } from '#layers/BaseAuth/lib/auth';
-import { type ServerFile } from 'nuxt-file-storage'
+import { readMultipartFormData, readBody } from 'h3'
+import { writeFile, mkdir } from 'fs/promises'
+import { join } from 'path'
 import dayjs from 'dayjs'
+
+const FILE_STORAGE_MOUNT = process.env.NUXT_FILE_STORAGE_MOUNT || './upload/files'
+
+const getUserUploadDir = (userId: string) => {
+  return join(process.cwd(), FILE_STORAGE_MOUNT, 'userFiles', userId)
+}
+
+const MIME_BY_EXTENSION: Record<string, string> = {
+  'jpg': 'image/jpeg',
+  'jpeg': 'image/jpeg',
+  'png': 'image/png',
+  'gif': 'image/gif',
+  'webp': 'image/webp',
+  'svg': 'image/svg+xml',
+  'mp4': 'video/mp4',
+  'webm': 'video/webm',
+  'mov': 'video/quicktime',
+  'avi': 'video/x-msvideo',
+  'mkv': 'video/x-matroska',
+  'pdf': 'application/pdf',
+  'txt': 'text/plain'
+}
+
+const getMimeFromFilename = (filename: string): string => {
+  const ext = filename.split('.').pop()?.toLowerCase() || ''
+  return MIME_BY_EXTENSION[ext] || 'application/octet-stream'
+}
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event)
@@ -10,53 +38,118 @@ export default defineEventHandler(async (event) => {
     const user = await checkUserIsLogin(event)
     log.set({ userId: user.id })
 
-    // Handle nuxt-file-storage files
-    const { files } = await readBody<{ files: ServerFile[] }>(event)
-    log.set({ filesCount: files?.length || 0 })
-
-    if (!files || files.length === 0) {
-      log.error('No files uploaded', {})
-      throw createError({
-        statusCode: 400,
-        statusMessage: 'No files uploaded'
-      })
-    }
+    const contentType = getRequestHeader(event, 'content-type') || ''
+    const isMultipart = contentType.startsWith('multipart/form-data')
 
     const uploadedAssets = []
 
-    // Create user-specific folder path
-    const userFolder = `/userFiles/${user.id}`
+    if (isMultipart) {
+      // Primary path: multipart/form-data — streams raw bytes, safe for large videos
+      const formData = await readMultipartFormData(event)
+      const fileParts = formData?.filter(part => part.name === 'files' && part.filename && part.data) || []
+      log.set({ filesCount: fileParts.length })
 
-    // Process each uploaded file
-    for (const file of files) {
-      try {
-        // Generate unique filename with original extension
-        const fileExtension = file.name.split('.').pop() || ''
+      if (fileParts.length === 0) {
+        log.error('No files uploaded', {})
+        throw createError({
+          statusCode: 400,
+          statusMessage: 'No files uploaded'
+        })
+      }
+
+      const businessIdField = formData?.find(part => part.name === 'businessId')
+      const businessId = businessIdField?.data?.toString() || undefined
+
+      // Create user-specific folder (matches the serve routes)
+      const userDir = getUserUploadDir(user.id)
+      await mkdir(userDir, { recursive: true })
+
+      for (const part of fileParts) {
+        try {
+          const originalName = part.filename || 'file'
+          const fileExtension = originalName.split('.').pop()?.toLowerCase() || 'bin'
+          const uniqueFilename = crypto.randomUUID()
+          const fullFilename = `${uniqueFilename}.${fileExtension}`
+          const fileSize = part.data.length
+
+          // Write raw bytes directly to disk (no base64/JSON overhead)
+          await writeFile(join(userDir, fullFilename), part.data)
+
+          const fileUrl = `/api/v1/assets/serve/${fullFilename}`
+
+          const assetData = {
+            businessId,
+            filename: uniqueFilename,
+            originalName,
+            mimeType: part.type || 'application/octet-stream',
+            size: fileSize,
+            url: fileUrl,
+            metadata: {
+              uploadedAt: dayjs().toDate(),
+              originalSize: fileSize,
+              storedPath: fullFilename
+            }
+          }
+
+          const result = await assetService.create(user.id, assetData)
+
+          if (result.success) {
+            uploadedAssets.push(result.data)
+          }
+        } catch (fileError) {
+          log.error('Error processing file', { fileName: part.filename, error: fileError })
+          // Continue processing other files
+        }
+      }
+    } else {
+      // JSON payload — two supported shapes:
+      //  1. URL import:      { url: 'https://...', filename?, originalName?, businessId? }  (uploadFromUrl)
+      //  2. Direct metadata: { filename, originalName, mimeType, size, url, businessId? }    (createAsset)
+      const body = await readBody<{
+        url?: string
+        filename?: string
+        originalName?: string
+        mimeType?: string
+        size?: number
+        businessId?: string
+      }>(event)
+
+      if (!body || (!body.url && !body.filename)) {
+        log.error('No files uploaded', {})
+        throw createError({
+          statusCode: 400,
+          statusMessage: 'No files uploaded'
+        })
+      }
+
+      // Remote URL import: fetch the file server-side and store it
+      if (body.url && /^https?:\/\//i.test(body.url)) {
+        const urlFilename = body.filename || body.originalName || body.url.split('/').pop() || 'downloaded-asset'
+        const fileExtension = urlFilename.split('.').pop()?.toLowerCase() || 'bin'
         const uniqueFilename = crypto.randomUUID()
+        const fullFilename = `${uniqueFilename}.${fileExtension}`
 
-        // Store file locally using nuxt-file-storage
-        const storedFile = await storeFileLocally(
-          file,
-          uniqueFilename,
-          userFolder
-        )
+        const remoteResponse = await $fetch<ArrayBuffer>(body.url)
+        const buffer = Buffer.from(remoteResponse)
 
-        // Get file size from the stored file or original file, ensure it's a number
-        const fileSize = typeof file.size === 'string' ? parseInt(file.size, 10) : (file.size || 0)
+        const userDir = getUserUploadDir(user.id)
+        await mkdir(userDir, { recursive: true })
+        await writeFile(join(userDir, fullFilename), buffer)
 
-        // Create asset record with proper URL
-        const fileUrl = `/api/v1/assets/serve/${uniqueFilename}.${fileExtension}`
+        const fileUrl = `/api/v1/assets/serve/${fullFilename}`
 
         const assetData = {
+          businessId: body.businessId,
           filename: uniqueFilename,
-          originalName: file.name,
-          mimeType: file.type || 'application/octet-stream',
-          size: fileSize,
-          url: fileUrl, // URL to serve the file
+          originalName: urlFilename,
+          mimeType: getMimeFromFilename(urlFilename),
+          size: buffer.length,
+          url: fileUrl,
           metadata: {
             uploadedAt: dayjs().toDate(),
-            originalSize: fileSize,
-            storedPath: storedFile
+            originalSize: buffer.length,
+            storedPath: fullFilename,
+            sourceUrl: body.url
           }
         }
 
@@ -65,9 +158,29 @@ export default defineEventHandler(async (event) => {
         if (result.success) {
           uploadedAssets.push(result.data)
         }
-      } catch (fileError) {
-        log.error('Error processing file', { fileName: file.name, error: fileError })
-        // Continue processing other files
+      } else if (body.filename && body.originalName && body.mimeType && body.url) {
+        // Direct metadata create — the file is expected to already be stored
+        const result = await assetService.create(user.id, {
+          businessId: body.businessId,
+          filename: body.filename,
+          originalName: body.originalName,
+          mimeType: body.mimeType,
+          size: body.size ?? 0,
+          url: body.url,
+          metadata: {
+            uploadedAt: dayjs().toDate()
+          }
+        })
+
+        if (result.success) {
+          uploadedAssets.push(result.data)
+        }
+      } else {
+        log.error('Invalid upload payload', {})
+        throw createError({
+          statusCode: 400,
+          statusMessage: 'Invalid upload payload'
+        })
       }
     }
 

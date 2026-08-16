@@ -1,4 +1,4 @@
-import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service';
+import { socialMediaAccountService, sanitizeSocialMediaAccount } from '#layers/BaseDB/server/services/social-media-account.service';
 import { SchedulerPost, type SchedulerPluginConstructor } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import { FacebookPlugin } from '#layers/BaseScheduler/server/services/plugins/facebook.plugin';
 import { checkUserIsLogin, getAccessTokenHelper } from '#layers/BaseAuth/server/utils/AuthHelpers';
@@ -29,7 +29,8 @@ export default defineEventHandler(async (event) => {
     if (!platform) {
       const accounts = await socialMediaAccountService.getAccountsByUserId(user.id)
       log.info({ message: 'Retrieved all social media accounts', count: accounts.length })
-      return accounts
+      // SECURITY: strip token columns before returning accounts to the browser
+      return accounts.map(sanitizeSocialMediaAccount)
     }
 
     log.set({ platform })

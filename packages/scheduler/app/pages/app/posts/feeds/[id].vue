@@ -30,6 +30,15 @@ const post = useState<{ success: boolean, data: PostWithAllData } | null>()
 
 const activeTab = ref<'post' | 'details' | 'comments' | 'stats'>('post')
 
+const statsTabActive = ref(false)
+
+function openTab(tab: 'post' | 'details' | 'comments' | 'stats') {
+  activeTab.value = tab
+  if (tab === 'stats') {
+    statsTabActive.value = true
+  }
+}
+
 callOnce(async () => {
   console.log('This will only be logged once and then on every client side navigation')
   post.value = await $fetch(`/api/v1/posts/${postId}`)
@@ -140,7 +149,7 @@ useHead({
           :class="activeTab === 'stats'
             ? 'border-blue-500 text-blue-500'
             : 'border-transparent text-zinc-500 hover:text-zinc-300'"
-          @click="activeTab = 'stats'"
+          @click="openTab('stats')"
         >
           {{ t('feeds.tabs.stats') }}
         </button>
@@ -296,7 +305,7 @@ useHead({
 
     <!-- Tab: Stats -->
     <div v-if="activeTab === 'stats'" class="p-4">
-      <PostStatsView v-if="postData" :post="postData" />
+      <PostStatsView v-if="postData" :post="postData" :auto-load="statsTabActive" />
     </div>
 
   </div>

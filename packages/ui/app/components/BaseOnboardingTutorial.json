@@ -4,6 +4,11 @@
     "tooltip": "Tutorials",
     "currentPage": "Current page",
     "allTutorials": "All tutorials",
+    "noTutorialForPage": "No tutorial available for this page. Browse all tutorials below or navigate to a page with a tutorial.",
+    "routeWarning": {
+      "title": "Wrong page",
+      "description": "This tutorial is for the {route} page. Click the arrow to navigate there first."
+    },
     "firstTime": {
       "label": "First time",
       "description": "Get familiar with the MagicSync platform and its core features.",
@@ -323,6 +328,11 @@
     "tooltip": "Tutoriales",
     "currentPage": "Página actual",
     "allTutorials": "Todos los tutoriales",
+    "noTutorialForPage": "No hay tutorial disponible para esta página. Explora todos los tutoriales abajo o navega a una página con tutorial.",
+    "routeWarning": {
+      "title": "Página incorrecta",
+      "description": "Este tutorial es para la página {route}. Haz clic en la flecha para ir allí primero."
+    },
     "firstTime": {
       "label": "Primera vez",
       "description": "Familiarízate con la plataforma MagicSync y sus funciones principales.",
@@ -642,6 +652,11 @@
     "tooltip": "Tutorials",
     "currentPage": "Aktuelle Seite",
     "allTutorials": "Alle Tutorials",
+    "noTutorialForPage": "Kein Tutorial für diese Seite verfügbar. Durchsuche alle Tutorials unten oder navigiere zu einer Seite mit Tutorial.",
+    "routeWarning": {
+      "title": "Falsche Seite",
+      "description": "Dieses Tutorial ist für die Seite {route}. Klicke auf den Pfeil, um zuerst dorthin zu navigieren."
+    },
     "firstTime": {
       "label": "Erstes Mal",
       "description": "Lerne die MagicSync-Plattform und ihre Kernfunktionen kennen.",

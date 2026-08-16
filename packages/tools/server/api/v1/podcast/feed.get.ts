@@ -1,4 +1,5 @@
 import * as cheerio from 'cheerio'
+import { isSafeExternalUrl } from '#layers/BaseShared/server/utils/ssrf'
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event)
@@ -9,6 +10,13 @@ export default defineEventHandler(async (event) => {
   if (!feedUrl) {
     log.error('feedUrl parameter is required', {})
     throw createError({ statusCode: 400, message: 'feedUrl is required' })
+  }
+
+  // SAFE: block SSRF — reject internal/private/loopback/metadata hosts
+  const { safe, reason } = await isSafeExternalUrl(feedUrl)
+  if (!safe) {
+    log.error('Blocked unsafe podcast feed URL', { feedUrl, reason })
+    throw createError({ statusCode: 400, message: reason })
   }
 
   log.info('Fetching podcast feed', { feedUrl })

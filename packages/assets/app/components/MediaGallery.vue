@@ -38,6 +38,7 @@ const {
   assets,
   selectedAssets,
   isLoading,
+  isLoadingMore,
   error,
   pagination,
   fetchAssets,
@@ -174,10 +175,33 @@ const confirmDelete = async () => {
 }
 
 const loadMore = () => {
+  if (isLoading.value || isLoadingMore.value) return
   if (pagination.value.page < pagination.value.totalPages && props.businessId) {
     loadMoreAssets(props.businessId)
   }
 }
+
+// Infinite scroll: auto-load the next page when the sentinel enters the viewport
+const sentinelRef = ref<HTMLElement | null>(null)
+let sentinelObserver: IntersectionObserver | null = null
+
+watch(sentinelRef, (element) => {
+  sentinelObserver?.disconnect()
+  sentinelObserver = null
+  if (element && typeof IntersectionObserver !== 'undefined') {
+    sentinelObserver = new IntersectionObserver((entries) => {
+      if (entries.some(entry => entry.isIntersecting)) {
+        loadMore()
+      }
+    }, { rootMargin: '300px 0px' })
+    sentinelObserver.observe(element)
+  }
+})
+
+onBeforeUnmount(() => {
+  sentinelObserver?.disconnect()
+  sentinelObserver = null
+})
 
 const toggleTag = (tag: string) => {
   const index = selectedTags.value.indexOf(tag)
@@ -486,11 +510,10 @@ const handleDeleteAsset = (asset: Asset) => {
       </div>
     </div>
 
-    <div v-if="pagination.page < pagination.totalPages" class="text-center mt-8">
-      <UButton variant="outline" :disabled="isLoading" @click="loadMore">
-        <Icon v-if="isLoading" name="lucide:loader-2" class="w-4 h-4 animate-spin mr-2" />
-        {{ t('buttons.load_more') }}
-      </UButton>
+    <div v-if="pagination.page < pagination.totalPages" ref="sentinelRef"
+      class="flex items-center justify-center gap-2 py-6">
+      <Icon v-if="isLoadingMore" name="lucide:loader-2" class="w-5 h-5 animate-spin text-muted-foreground" />
+      <span v-else class="text-sm text-muted-foreground">{{ t('buttons.load_more') }}</span>
     </div>
 
     <UModal v-model:open="showPreviewModal" :fullscreen="isPreviewFullscreen">

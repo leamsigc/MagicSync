@@ -26,8 +26,8 @@ export default defineEventHandler(async (event) => {
     }
 
     log.set({ postId, userId: user.id })
-    // Get full post with platforms and assets
-    const result = await postService.findByIdFull({ postId })
+    // Get full post with platforms and assets — scoped to the owner
+    const result = await postService.findByIdFull({ postId, userId: user.id })
 
     return {
       success: true,
@@ -36,6 +36,13 @@ export default defineEventHandler(async (event) => {
   } catch (error: any) {
     if (error.statusCode) {
       throw error
+    }
+
+    if (error?.message === 'Post not found') {
+      throw createError({
+        statusCode: 404,
+        statusMessage: 'Post not found'
+      })
     }
 
     log.error({ content: 'Get post error', error: String(error) })

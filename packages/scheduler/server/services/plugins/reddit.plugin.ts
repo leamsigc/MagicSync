@@ -1,5 +1,5 @@
-import type { PostDetails, PostResponse, Integration, PluginPostDetails, PluginSocialMediaAccount, GetCommentsResponse, ReplyCommentResponse, PlatformComment } from '../SchedulerPost.service';
-import { BaseSchedulerPlugin, type MediaContent } from '../SchedulerPost.service';
+import type { PostDetails, PostResponse, Integration, PluginPostDetails, PluginSocialMediaAccount, GetCommentsResponse, ReplyCommentResponse, PlatformComment, PlatformStats, PostInsight } from '../SchedulerPost.service';
+import { BaseSchedulerPlugin, type MediaContent, createPostInsightsFallback, extractExternalPostId } from '../SchedulerPost.service';
 import type { Post, PostWithAllData, SocialMediaAccount, Asset } from '#layers/BaseDB/db/schema';
 import type { RedditSettings } from '../../../shared/platformSettings';
 
@@ -466,6 +466,51 @@ export class RedditPlugin extends BaseSchedulerPlugin {
       followers: 0,
       posts: 0,
       engagement: { total: 0 },
+    }
+  }
+
+  async getPostInsights(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount
+  ): Promise<PostInsight[]> {
+    const externalPostId = extractExternalPostId(postDetails, socialMediaAccount);
+    if (!externalPostId) {
+      return createPostInsightsFallback(this.pluginName);
+    }
+
+    try {
+      const accessToken = socialMediaAccount.accessToken;
+      const response = await fetch(
+        `https://oauth.reddit.com/api/info?id=t3_${externalPostId}&raw_json=1`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'User-Agent': 'PostScheduler/1.0',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        return createPostInsightsFallback(this.pluginName);
+      }
+
+      const data = await response.json() as Record<string, unknown>;
+      const children = (data.data as Record<string, unknown>)?.children as Array<Record<string, unknown>> || [];
+      const post = children[0]?.data as Record<string, unknown> | undefined;
+
+      if (!post) {
+        return createPostInsightsFallback(this.pluginName);
+      }
+
+      return [
+        { label: 'Score', value: (post.score as number) || 0 },
+        { label: 'Upvote Ratio', value: Math.round(((post.upvote_ratio as number) || 0) * 100) },
+        { label: 'Comments', value: (post.num_comments as number) || 0 },
+        { label: 'Gilded', value: (post.gilded as number) || 0 },
+      ];
+    } catch (error: unknown) {
+      log.error({ content: 'Reddit post insights fetch failed', plugin: 'reddit', error: (error as Error).message });
+      return createPostInsightsFallback(this.pluginName);
     }
   }
 

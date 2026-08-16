@@ -51,7 +51,8 @@
       "cached": "Cached",
       "freshData": "Fresh data from platform",
       "loadedFromCache": "Loaded from cache",
-      "retry": "Retry"
+      "retry": "Retry",
+      "refresh": "Refresh stats"
     }
   },
   "es": {

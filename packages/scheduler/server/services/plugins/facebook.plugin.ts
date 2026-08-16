@@ -1,9 +1,8 @@
 import type { Asset, PostWithAllData, SocialMediaAccount, PlatformContentOverride } from '#layers/BaseDB/db/schema';
-import type { PostResponse, GetCommentsResponse, ReplyCommentResponse, PlatformComment, PluginPostDetails, PluginSocialMediaAccount } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
+import type { PostResponse, GetCommentsResponse, ReplyCommentResponse, PlatformComment, PluginPostDetails, PluginSocialMediaAccount, PostInsight, PlatformStats } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import type { FacebookSettings } from '#layers/BaseScheduler/shared/platformSettings';
 import dayjs from 'dayjs';
-import { BaseSchedulerPlugin } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
-import type { PlatformStats } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
+import { BaseSchedulerPlugin, createPostInsightsFallback, extractExternalPostId } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import type { FacebookPage } from '#layers/BaseConnect/utils/FacebookPages';
 
 type FacebookApiInsightValue = { value: number; end_time: string };
@@ -298,11 +297,16 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
   }
 
   async getPostInsights(
-    postId: string,
-    accessToken: string
-  ): Promise<Array<{ label: string; value: number }>> {
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount
+  ): Promise<PostInsight[]> {
+    const externalPostId = this.extractExternalPostId(postDetails, socialMediaAccount);
+    if (!externalPostId) {
+      return createPostInsightsFallback(this.pluginName);
+    }
+
     const url = this._getGraphApiUrl(
-      `/${postId}/insights?metric=post_impressions,post_impressions_unique,post_engaged_users,post_clicks,post_reactions_like,post_reactions_love,post_reactions_haha,post_reactions_sorry,post_reactions_anger&access_token=${accessToken}`
+      `/${externalPostId}/insights?metric=post_impressions,post_impressions_unique,post_engaged_users,post_clicks,post_reactions_like,post_reactions_love,post_reactions_haha,post_reactions_sorry,post_reactions_anger&access_token=${socialMediaAccount.accessToken}`
     );
     const { data, error } = await (
       await this.fetch(url, undefined, 'fetch post insights')
@@ -310,7 +314,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
 
     if (error) {
       log.warn({ content: '[Facebook] Post insights error', error })
-      return []
+      return createPostInsightsFallback(this.pluginName);
     }
 
     const labelMap: Record<string, string> = {
@@ -325,7 +329,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
       post_reactions_anger: 'Angry',
     }
 
-    return data?.map((d: FacebookApiMetric) => ({
+    return data?.map((d: FacebookApiMetric): PostInsight => ({
       label: labelMap[d.name] || d.name,
       value: d.values?.[0]?.value || 0,
     })) || [];
@@ -397,16 +401,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
    * Extract external post ID from postDetails
    */
   private extractExternalPostId(postDetails: PluginPostDetails, socialMediaAccount: PluginSocialMediaAccount): string | null {
-    const platformPost = postDetails.platformPosts?.find(
-      (pp: { socialAccountId: string }) => pp.socialAccountId === socialMediaAccount.id
-    );
-    if (!platformPost) return null;
-
-    const publishDetail = platformPost.publishDetail
-      ? JSON.parse(platformPost.publishDetail as string)
-      : {};
-
-    return (publishDetail as Record<string, { publishedId?: string }>)?.[socialMediaAccount.id]?.publishedId || null;
+    return extractExternalPostId(postDetails, socialMediaAccount);
   }
 
   /**

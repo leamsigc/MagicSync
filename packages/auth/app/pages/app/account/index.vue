@@ -54,9 +54,11 @@ const items = computed(() => [
       <p class="text-muted-foreground">{{ t('subheading') }}</p>
     </div>
 
-    <UTabs :items="items" class="w-full">
+    <UTabs :items="items" class="w-full" data-tour="account-step-0">
       <template #general>
-        <AccountSettings class="mt-6" />
+        <div data-tour="account-step-1">
+          <AccountSettings class="mt-6" />
+        </div>
       </template>
 
       <template #linked>
@@ -64,7 +66,9 @@ const items = computed(() => [
       </template>
 
       <template #danger>
-        <DangerZone class="mt-6" />
+        <div data-tour="account-step-2">
+          <DangerZone class="mt-6" />
+        </div>
       </template>
     </UTabs>
   </UContainer>

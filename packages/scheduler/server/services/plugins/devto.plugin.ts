@@ -1,5 +1,5 @@
-import type { PostResponse, PluginPostDetails, PluginSocialMediaAccount, GetCommentsResponse, ReplyCommentResponse, PlatformComment, PlatformStats } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
-import { BaseSchedulerPlugin } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
+import type { PostResponse, PluginPostDetails, PluginSocialMediaAccount, GetCommentsResponse, ReplyCommentResponse, PlatformComment, PlatformStats, PostInsight } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
+import { BaseSchedulerPlugin, createPostInsightsFallback, extractExternalPostId } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import type { Post, SocialMediaAccount, Asset } from '#layers/BaseDB/db/schema';
 import type { DevToSettings } from '#layers/BaseScheduler/shared/platformSettings';
 import { platformConfigurations } from '#layers/BaseScheduler/shared/platformConstants';
@@ -137,6 +137,41 @@ export class DevToPlugin extends BaseSchedulerPlugin {
       },
     };
   }
+
+  async getPostInsights(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount
+  ): Promise<PostInsight[]> {
+    const externalPostId = extractExternalPostId(postDetails, socialMediaAccount);
+    if (!externalPostId) {
+      return createPostInsightsFallback(this.pluginName);
+    }
+
+    try {
+      const response = await fetch(`https://dev.to/api/articles/${externalPostId}`, {
+        headers: {
+          'api-key': socialMediaAccount.accessToken,
+        },
+      });
+
+      if (!response.ok) {
+        log.warn({ content: 'Dev.to post insights error', status: response.status, body: await response.text() });
+        return createPostInsightsFallback(this.pluginName);
+      }
+
+      const article = await response.json() as Record<string, unknown>;
+      return [
+        { label: 'Views', value: (article.page_views_count as number) || 0 },
+        { label: 'Reactions', value: (article.positive_reactions_count as number) || 0 },
+        { label: 'Comments', value: (article.comments_count as number) || 0 },
+        { label: 'Reading Time', value: (article.reading_time_minutes as number) || 0 },
+      ];
+    } catch (error: unknown) {
+      log.error({ content: 'Dev.to post insights fetch failed', plugin: 'devto', error: (error as Error).message });
+      return createPostInsightsFallback(this.pluginName);
+    }
+  }
+
   static readonly pluginName = 'devto';
   readonly pluginName = 'devto';
 

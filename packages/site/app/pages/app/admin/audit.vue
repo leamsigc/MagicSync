@@ -1,7 +1,16 @@
 <script lang="ts" setup>
+import { h, resolveComponent, useTemplateRef } from 'vue'
+import type { TableColumn } from '@nuxt/ui'
+import type { Row } from '@tanstack/vue-table'
+
 definePageMeta({
   layout: 'dashboard-layout'
 })
+
+const UBadge = resolveComponent('UBadge')
+const UDropdownMenu = resolveComponent('UDropdownMenu')
+const UCheckbox = resolveComponent('UCheckbox')
+const UButton = resolveComponent('UButton')
 
 const toast = useToast()
 
@@ -22,6 +31,10 @@ interface AuditEntry {
 const logs = ref<AuditEntry[]>([])
 const loading = ref(true)
 const selectedLog = ref<AuditEntry | null>(null)
+const rowSelection = ref<Record<string, boolean>>({})
+
+const table = useTemplateRef('table')
+
 const showDetail = computed({
   get: () => !!selectedLog.value,
   set: (val) => { if (!val) selectedLog.value = null }
@@ -46,72 +59,213 @@ async function fetchLogs() {
 }
 
 onMounted(fetchLogs)
+
+async function deleteLog(log: AuditEntry) {
+  try {
+    await $fetch(`/api/v1/admin/audit-log/${log.id}`, { method: 'DELETE' })
+    toast.add({ title: 'Log Deleted', description: `Audit log entry #${log.id} has been deleted`, color: 'success' })
+    await fetchLogs()
+  } catch {
+    toast.add({ title: 'Error', description: 'Failed to delete log', color: 'error' })
+  }
+}
+
+function confirmDelete(log: AuditEntry) {
+  toast.add({
+    title: 'Delete Log',
+    description: `Are you sure you want to delete audit log entry #${log.id}?`,
+    color: 'error',
+    actions: [
+      { label: 'Delete', color: 'error', variant: 'solid', onClick: () => deleteLog(log) },
+      { label: 'Cancel', color: 'neutral', variant: 'outline' }
+    ]
+  })
+}
+
+async function deleteSelected() {
+  const selectedRows = table.value?.tableApi?.getFilteredSelectedRowModel().rows || []
+  if (selectedRows.length === 0) return
+  const ids = selectedRows.map(row => row.original.id)
+  try {
+    await $fetch('/api/v1/admin/audit-log', { method: 'DELETE', body: { ids } })
+    toast.add({ title: 'Logs Deleted', description: `${ids.length} audit log entries deleted`, color: 'success' })
+    rowSelection.value = {}
+    await fetchLogs()
+  } catch {
+    toast.add({ title: 'Error', description: 'Failed to delete selected logs', color: 'error' })
+  }
+}
+
+async function deleteAll() {
+  if (logs.value.length === 0) return
+  toast.add({
+    title: 'Delete All Logs',
+    description: `Are you sure you want to delete all ${logs.value.length} audit log entries? This cannot be undone.`,
+    color: 'error',
+    actions: [
+      {
+        label: 'Delete All',
+        color: 'error',
+        variant: 'solid',
+        onClick: async () => {
+          try {
+            await $fetch('/api/v1/admin/audit-log', { method: 'DELETE', body: { all: true } })
+            toast.add({ title: 'Logs Deleted', description: 'All audit log entries deleted', color: 'success' })
+            rowSelection.value = {}
+            await fetchLogs()
+          } catch {
+            toast.add({ title: 'Error', description: 'Failed to delete all logs', color: 'error' })
+          }
+        }
+      },
+      { label: 'Cancel', color: 'neutral', variant: 'outline' }
+    ]
+  })
+}
+
+function formatDate(value: string) {
+  return new Date(value).toLocaleString()
+}
+
+function openDetail(log: AuditEntry) {
+  selectedLog.value = log
+}
+
+function getRowItems(row: Row<AuditEntry>) {
+  return [
+    { type: 'label', label: 'Actions' },
+    { label: 'View details', onSelect: () => openDetail(row.original) },
+    { type: 'separator' },
+    { label: 'Delete', onSelect: () => confirmDelete(row.original) }
+  ]
+}
+
+const columns: TableColumn<AuditEntry>[] = [
+  {
+    id: 'select',
+    header: ({ table }) =>
+      h(UCheckbox, {
+        modelValue: table.getIsSomePageRowsSelected()
+          ? 'indeterminate'
+          : table.getIsAllPageRowsSelected(),
+        'onUpdate:modelValue': (value: boolean | 'indeterminate') =>
+          table.toggleAllPageRowsSelected(!!value),
+        'aria-label': 'Select all'
+      }),
+    cell: ({ row }) =>
+      h(UCheckbox, {
+        modelValue: row.getIsSelected(),
+        'onUpdate:modelValue': (value: boolean | 'indeterminate') => row.toggleSelected(!!value),
+        'aria-label': 'Select row'
+      })
+  },
+  {
+    accessorKey: 'createdAt',
+    header: 'Time',
+    cell: ({ row }) => h('span', { class: 'text-xs text-muted-foreground' }, formatDate(row.original.createdAt))
+  },
+  {
+    accessorKey: 'category',
+    header: 'Category',
+    cell: ({ row }) => h('span', { class: 'text-xs font-mono' }, row.original.category)
+  },
+  {
+    accessorKey: 'action',
+    header: 'Action',
+    cell: ({ row }) => h('span', { class: 'text-sm' }, row.original.action)
+  },
+  {
+    accessorKey: 'status',
+    header: 'Status',
+    cell: ({ row }) =>
+      h(UBadge, { color: statusColor[row.original.status || ''] || 'neutral', variant: 'subtle', size: 'sm' }, () =>
+        row.original.status
+      )
+  },
+  {
+    accessorKey: 'details',
+    header: 'Details',
+    cell: ({ row }) =>
+      h('span', { class: 'text-xs text-muted-foreground truncate block max-w-[220px]' }, row.original.details)
+  },
+  {
+    id: 'actions',
+    header: () => h('div', { class: 'text-right' }, 'Actions'),
+    cell: ({ row }) =>
+      h('div', { class: 'text-right' }, [
+        h(UDropdownMenu, {
+          content: { align: 'end' },
+          items: getRowItems(row),
+          'aria-label': 'Actions dropdown'
+        }, () =>
+          h(UButton, {
+            icon: 'i-lucide-ellipsis-vertical',
+            color: 'neutral',
+            variant: 'ghost',
+            size: 'sm',
+            'aria-label': 'Actions dropdown'
+          })
+        )
+      ])
+  }
+]
 </script>
 
 <template>
   <div class="space-y-6">
-    <UCard>
-      <template #header>
-        <div class="flex items-center justify-between">
-          <div>
-            <h1 class="text-2xl font-bold tracking-tight">Audit Log</h1>
-            <p class="text-muted-foreground">Review system activity and events</p>
-          </div>
-          <UButton color="neutral" variant="ghost" size="sm" icon="i-heroicons-arrow-path" @click="fetchLogs">
-            Refresh
-          </UButton>
-        </div>
-      </template>
-
-      <div v-if="loading" class="flex justify-center py-12">
-        <UIcon name="i-heroicons-arrow-path" class="w-6 h-6 animate-spin text-muted-foreground" />
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold tracking-tight">Audit Log</h1>
+        <p class="text-muted-foreground">Review system activity and events</p>
       </div>
-
-      <div v-else-if="logs.length === 0" class="text-center py-12 text-muted-foreground">
-        No log entries found
+      <div class="flex items-center gap-2">
+        <UButton
+          v-if="(table?.tableApi?.getFilteredSelectedRowModel().rows.length || 0) > 0"
+          color="error" variant="outline" size="sm" icon="i-lucide-trash-2" @click="deleteSelected"
+        >
+          Delete Selected
+        </UButton>
+        <UButton v-if="logs.length > 0" color="error" variant="ghost" size="sm" icon="i-lucide-trash-2" @click="deleteAll">
+          Delete All
+        </UButton>
+        <UButton color="neutral" variant="ghost" size="sm" icon="i-heroicons-arrow-path" @click="fetchLogs">
+          Refresh
+        </UButton>
       </div>
+    </div>
 
-      <table v-else class="w-full">
-        <thead>
-          <tr class="border-b border-border text-left">
-            <th class="py-2 px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Time</th>
-            <th class="py-2 px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Category</th>
-            <th class="py-2 px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Action</th>
-            <th class="py-2 px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
-            <th class="py-2 px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Details</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="log in logs" :key="log.id" class="border-b border-border hover:bg-muted/50 cursor-pointer" @click="selectedLog = log">
-            <td class="py-2 px-3">
-              <span class="text-xs text-muted-foreground">{{ new Date(log.createdAt).toLocaleString() }}</span>
-            </td>
-            <td class="py-2 px-3">
-              <span class="text-xs font-mono">{{ log.category }}</span>
-            </td>
-            <td class="py-2 px-3">
-              <span class="text-sm">{{ log.action }}</span>
-            </td>
-            <td class="py-2 px-3">
-              <UBadge :color="statusColor[log.status || ''] || 'neutral'" variant="subtle" size="sm">
-                {{ log.status }}
-              </UBadge>
-            </td>
-            <td class="py-2 px-3">
-              <span class="text-xs text-muted-foreground truncate block max-w-[200px]">{{ log.details }}</span>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </UCard>
+    <div v-if="loading" class="bg-elevated rounded-2xl flex justify-center py-12">
+      <UIcon name="i-heroicons-arrow-path" class="w-6 h-6 animate-spin text-muted-foreground" />
+    </div>
 
-    <UModal v-model:open="showDetail"  :ui="{ content: 'md:min-w-[900px]' }">
+    <div v-else-if="logs.length === 0" class="bg-elevated rounded-2xl text-center py-12 text-muted-foreground">
+      No log entries found
+    </div>
+
+    <div v-else class="bg-elevated rounded-2xl overflow-hidden">
+      <UTable
+        ref="table"
+        v-model:row-selection="rowSelection"
+        :data="logs"
+        :columns="columns"
+        class="flex-1"
+      />
+
+      <div class="px-5 py-4 border-t border-border/50 text-sm text-muted flex items-center justify-between">
+        <span>
+          {{ table?.tableApi?.getFilteredSelectedRowModel().rows.length || 0 }} of
+          {{ table?.tableApi?.getFilteredRowModel().rows.length || 0 }} row(s) selected.
+        </span>
+      </div>
+    </div>
+
+    <UModal v-model:open="showDetail" :ui="{ content: 'md:min-w-[900px]' }">
       <template #content>
-        <UCard v-if="selectedLog" >
+        <UCard v-if="selectedLog">
           <template #header>
             <div class="flex items-center justify-between">
               <h3 class="text-lg font-semibold">Log Details</h3>
-              <UButton variant="ghost" color="neutral" icon="i-heroicons-x-mark" @click="selectedLog = null" />
+              <UButton variant="ghost" color="neutral" icon="i-heroicons-x-mark" @click="() => { selectedLog = null }" />
             </div>
           </template>
           <dl class="space-y-3 text-sm">

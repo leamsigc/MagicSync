@@ -1,26 +1,20 @@
 /**
  * GET /api/v1/posts/[id]/stats/[platform] - Get post insights for a specific platform
  *
- * Uses cached data if entityDetails (social_media_post_stats) was updated within 1 hour.
- * Otherwise fetches fresh data from the platform API and saves to entityDetails.
+ * Uses cached data scoped by post+platform+account in entityDetails
+ * (social_media_post_stats) and serves it forever until a refresh is
+ * requested via ?refresh=1, which fetches fresh data from the platform API.
  */
 
 import { postService } from '#layers/BaseDB/server/services/post.service';
 import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service';
-import { entityDetails } from '#layers/BaseDB/db/entityDetails/entityDetails';
-import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle';
 import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers';
 import { AutoPostService } from '#layers/BaseScheduler/server/services/AutoPost.service';
+import { getPostStatsCache, savePostStatsCache } from '#layers/BaseScheduler/server/utils/PostStatsCache';
 import type { Account } from '#layers/BaseDB/db/schema';
-import { eq, and, desc } from 'drizzle-orm';
-import dayjs from 'dayjs';
-
-const ENTITY_TYPE = 'social_media_post_stats';
-const CACHE_TTL_HOURS = 1;
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event);
-  const db = useDrizzle();
 
   try {
     const user = await checkUserIsLogin(event);
@@ -38,7 +32,7 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 400, statusMessage: `Unsupported platform: ${platform}` });
     }
 
-    const post = await postService.findByIdFull({ postId });
+    const post = await postService.findByIdFull({ postId, userId: user.id });
     if (!post) {
       throw createError({ statusCode: 404, statusMessage: 'Post not found' });
     }
@@ -56,19 +50,13 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 404, statusMessage: 'Social media account not found' });
     }
 
-    const latestCache = await db.query.entityDetails.findFirst({
-      where: and(
-        eq(entityDetails.entityId, postId),
-        eq(entityDetails.entityType, ENTITY_TYPE)
-      ),
-      orderBy: desc(entityDetails.updatedAt),
-    });
+    const query = getQuery(event);
+    const forceRefresh = query.refresh === '1' || query.refresh === 'true';
 
-    if (latestCache) {
-      const cacheAge = dayjs().diff(dayjs(latestCache.updatedAt), 'hour');
-      if (cacheAge < CACHE_TTL_HOURS) {
-        return { success: true, data: latestCache.details, cached: true, updatedAt: latestCache.updatedAt };
-      }
+    const latestCache = await getPostStatsCache(postId, platform, platformPost.socialAccountId);
+
+    if (!forceRefresh && latestCache) {
+      return { success: true, data: latestCache.details, cached: true, updatedAt: latestCache.updatedAt };
     }
 
     const insights = await trigger.getPostInsights({
@@ -77,28 +65,14 @@ export default defineEventHandler(async (event) => {
       platform,
     });
 
-    if (latestCache) {
-      await db.update(entityDetails)
-        .set({
-          details: insights as unknown as Record<string, unknown>,
-          updatedAt: dayjs().toDate(),
-        })
-        .where(eq(entityDetails.id, latestCache.id));
-    } else {
-      const id = crypto.randomUUID();
-      await db.insert(entityDetails).values({
-        id,
-        entityId: postId,
-        entityType: ENTITY_TYPE,
-        details: insights as unknown as Record<string, unknown>,
-        createdAt: dayjs().toDate(),
-        updatedAt: dayjs().toDate(),
-      });
-    }
+    await savePostStatsCache(postId, platform, platformPost.socialAccountId, insights);
 
     return { success: true, data: insights, cached: false, updatedAt: new Date().toISOString() };
   } catch (error: unknown) {
     if (error && typeof error === 'object' && 'statusCode' in error) throw error;
+    if (error instanceof Error && error.message === 'Post not found') {
+      throw createError({ statusCode: 404, statusMessage: 'Post not found' });
+    }
     log.error({ content: 'Get post stats error', error: String(error) });
     throw createError({ statusCode: 500, statusMessage: 'Internal server error' });
   }

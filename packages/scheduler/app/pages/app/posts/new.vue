@@ -39,8 +39,19 @@ type RepurposedContent = {
 };
 
 const repurposedContent = ref<RepurposedContent | null>(null);
+const cropperMediaAssetId = ref<string | null>(null);
 
 onMounted(() => {
+  const storedCropper = sessionStorage.getItem('video-cropper-media');
+  if (storedCropper) {
+    try {
+      const parsed = JSON.parse(storedCropper);
+      if (parsed?.assetId) cropperMediaAssetId.value = parsed.assetId;
+      sessionStorage.removeItem('video-cropper-media');
+    } catch {
+      sessionStorage.removeItem('video-cropper-media');
+    }
+  }
   const stored = sessionStorage.getItem('repurposed-content');
   if (stored) {
     try {
@@ -95,13 +106,17 @@ const handleClose = () => {
 };
 
 const initialPost = computed(() => {
-  if (!repurposedContent.value) return undefined;
+  if (!repurposedContent.value && !cropperMediaAssetId.value) return undefined;
+
+  const mediaAssets: string[] = cropperMediaAssetId.value
+    ? [cropperMediaAssetId.value]
+    : repurposedContent.value?.mediaAssets || [];
 
   return {
-    content: repurposedContent.value.content,
-    comment: repurposedContent.value.isThread ? repurposedContent.value.comments : [],
-    mediaAssets: JSON.stringify(repurposedContent.value.mediaAssets || []),
-    platformContent: repurposedContent.value.platformOverrides
+    content: repurposedContent.value?.content ?? '',
+    comment: repurposedContent.value?.isThread ? repurposedContent.value.comments : [],
+    mediaAssets: JSON.stringify(mediaAssets),
+    platformContent: repurposedContent.value?.platformOverrides
       ? Object.fromEntries(
         Object.entries(repurposedContent.value.platformOverrides).map(([k, v]) => [k, { content: v }])
       )

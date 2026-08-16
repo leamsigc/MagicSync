@@ -99,8 +99,8 @@ defineOgImage("BlogOgImage", {
     <main class="min-h-screen inset-0">
       <section class="min-h-screen relative p-10 bg-background-foreground">
         <BaseHeader />
-        <section class="mt-24">
-          <UBlogPosts :posts="posts" />
+        <section class="mt-24" data-tour="tools-step-0">
+          <UBlogPosts :posts="posts" data-tour="tools-step-1" />
         </section>
       </section>
     </main>

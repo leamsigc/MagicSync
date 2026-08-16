@@ -10,7 +10,6 @@ import AudioTracks from './components/AudioTracks.vue'
 import ExportPanel from './components/ExportPanel.vue'
 import SelectAssetModal from './components/SelectAssetModal.vue'
 import SaveAsAssetModal from './components/SaveAsAssetModal.vue'
-import SchedulePostModal from './components/SchedulePostModal.vue'
 import UploadDropZone from './components/UploadDropZone.vue'
 import { useExport } from './composables/useExport'
 import { useVideoCropper } from './composables/useVideoCropper'
@@ -26,8 +25,8 @@ const {
 const { runExport, cancelExport, isExporting } = useExport()
 
 const exportedBlob = ref<Blob | null>(null)
+const downloadFileName = ref(`magic_sync_video_${Date.now()}.mp4`)
 const showSaveAssetModal = ref(false)
-const showScheduleModal = ref(false)
 const showSelectAssetModal = ref(false)
 
 const { uploadFiles } = useAssetManagement()
@@ -57,7 +56,11 @@ async function handleSaveAsAsset(name: string) {
   if (!exportedBlob.value) return
   try {
     const file = new File([exportedBlob.value], name.endsWith('.mp4') ? name : `${name}.mp4`, { type: 'video/mp4' })
-    await uploadFiles([file])
+    const createdAssets = await uploadFiles([file])
+    if (createdAssets.length === 0) {
+      toast.add({ title: t('notifications.error'), description: t('notifications.asset_upload_failed'), color: 'error' })
+      return
+    }
     toast.add({ title: t('notifications.saved_as_asset'), color: 'success' })
     showSaveAssetModal.value = false
   } catch (err: any) {
@@ -67,21 +70,28 @@ async function handleSaveAsAsset(name: string) {
 
 function handleDownload() {
   if (!exportedBlob.value) return
+  downloadFileName.value = `magic_sync_video_${Date.now()}.mp4`
   const url = URL.createObjectURL(exportedBlob.value)
   const a = document.createElement('a')
   a.href = url
-  a.download = `magic_sync_video_${Date.now()}.mp4`
+  a.download = downloadFileName.value
   document.body.appendChild(a)
   a.click()
   document.body.removeChild(a)
   URL.revokeObjectURL(url)
 }
 
-async function handlePublishPost(data: { platforms: string[]; caption: string; scheduleAt: string | null }) {
+async function handleSchedulePost() {
   if (!exportedBlob.value) return
   try {
-    showScheduleModal.value = false
-    toast.add({ title: t('notifications.post_created'), color: 'success' })
+    const file = new File([exportedBlob.value], downloadFileName.value, { type: 'video/mp4' })
+    const createdAssets = await uploadFiles([file])
+    if (createdAssets.length === 0) {
+      toast.add({ title: t('notifications.error'), description: t('notifications.asset_upload_failed'), color: 'error' })
+      return
+    }
+    sessionStorage.setItem('video-cropper-media', JSON.stringify({ assetId: createdAssets[0].id }))
+    await navigateTo('/app/posts/new')
   } catch (err: any) {
     toast.add({ title: t('notifications.error'), description: err.message, color: 'error' })
   }
@@ -152,7 +162,7 @@ useEventListener(window, 'keydown', handleGlobalKeydown)
                   color="primary"
                   variant="soft"
                   icon="i-lucide-calendar"
-                  @click="()=>{showScheduleModal = true}"
+                  @click="handleSchedulePost"
                 >
                   {{ t('actions.schedule_post') }}
                 </UButton>
@@ -168,9 +178,7 @@ useEventListener(window, 'keydown', handleGlobalKeydown)
         </div>
       </template>
     </main>
-
     <SelectAssetModal v-model:open="showSelectAssetModal" @select="handleAssetSelect" />
-    <SaveAsAssetModal v-model:open="showSaveAssetModal" @save="handleSaveAsAsset" @download="handleDownload" />
-    <SchedulePostModal v-model:open="showScheduleModal" @publish="handlePublishPost" />
+    <SaveAsAssetModal v-model:open="showSaveAssetModal" :default-name="downloadFileName" @save="handleSaveAsAsset" @download="handleDownload" />
   </div>
 </template>

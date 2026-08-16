@@ -1,4 +1,4 @@
-import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service'
+import { socialMediaAccountService, sanitizeSocialMediaAccount } from '#layers/BaseDB/server/services/social-media-account.service'
 import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
 
 export default defineEventHandler(async (event) => {
@@ -7,7 +7,7 @@ export default defineEventHandler(async (event) => {
   const accounts = await socialMediaAccountService.getAccountsByUserId(user.id)
 
   const accountsWithHealth = accounts.map(account => ({
-    ...account,
+    ...sanitizeSocialMediaAccount(account),
     health: socialMediaAccountService.getTokenHealth(account)
   }))
 

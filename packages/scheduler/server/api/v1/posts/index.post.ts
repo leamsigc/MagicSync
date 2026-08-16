@@ -64,7 +64,7 @@ export default defineEventHandler(async (event) => {
     log.set({ postId: result.data.id })
 
     if (body.status === 'published') {
-      const fullPost = await postService.findByIdFull({ postId: result.data.id });
+      const fullPost = await postService.findByIdFull({ postId: result.data.id, userId: user.id });
       if (!fullPost || !fullPost) {
         throw createError({
           statusCode: 400,
@@ -81,7 +81,7 @@ export default defineEventHandler(async (event) => {
 
 
     // Fetch full post with platform statuses
-    const fullPost = await postService.findByIdFull({ postId: result.data.id })
+    const fullPost = await postService.findByIdFull({ postId: result.data.id, userId: user.id })
     const platformStatuses = fullPost.platformPosts?.map((pp: any) => ({
       platform: pp.platformPostId || pp.socialAccountId,
       status: pp.status,

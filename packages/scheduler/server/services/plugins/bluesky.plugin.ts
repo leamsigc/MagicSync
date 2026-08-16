@@ -1,6 +1,6 @@
 import { decryptKey } from '#layers/BaseAuth/server/utils/AuthHelpers';
-import type { PostResponse, GetCommentsResponse, ReplyCommentResponse, PlatformComment } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
-import { BaseSchedulerPlugin, type PluginPostDetails, type PluginSocialMediaAccount } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
+import { BaseSchedulerPlugin, createPostInsightsFallback, extractExternalPostId } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
+import type { PluginPostDetails, PluginSocialMediaAccount, PostResponse, GetCommentsResponse, ReplyCommentResponse, PlatformComment, PostInsight } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import type { Post, SocialMediaAccount, Asset, PlatformContentOverride } from '#layers/BaseDB/db/schema';
 import { AtpAgent, RichText, AppBskyFeedPost, AppBskyFeedDefs, BlobRef, AppBskyVideoDefs } from '@atproto/api';
 import type { BlueskySettings } from '#layers/BaseScheduler/shared/platformSettings';
@@ -750,6 +750,40 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
         topPosts,
         postsAnalyzed: totalPosts,
       },
+    }
+  }
+
+  async getPostInsights(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount
+  ): Promise<PostInsight[]> {
+    const externalPostId = extractExternalPostId(postDetails, socialMediaAccount);
+    if (!externalPostId) {
+      return createPostInsightsFallback(this.pluginName);
+    }
+
+    try {
+      // externalPostId for Bluesky is the at:// URI
+      const threadResponse = await this.agent.getPostThread({ uri: externalPostId });
+      const post = threadResponse.data.thread?.post as unknown as {
+        likeCount?: number;
+        repostCount?: number;
+        replyCount?: number;
+        quoteCount?: number;
+      } | undefined;
+      if (!post) {
+        return createPostInsightsFallback(this.pluginName);
+      }
+
+      return [
+        { label: 'Likes', value: post.likeCount || 0 },
+        { label: 'Reposts', value: post.repostCount || 0 },
+        { label: 'Replies', value: post.replyCount || 0 },
+        { label: 'Quotes', value: post.quoteCount || 0 },
+      ];
+    } catch (error: unknown) {
+      log.error({ content: 'Bluesky post insights fetch failed', plugin: 'bluesky', error: (error as Error).message });
+      return createPostInsightsFallback(this.pluginName);
     }
   }
 

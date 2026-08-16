@@ -61,9 +61,9 @@ const templateTypes = [
 
 <template>
     <div class="container mx-auto py-6 space-y-6">
-        <BasePageHeader :title="t('title')" :description="t('description')" />
+        <BasePageHeader :title="t('title')" :description="t('description')" data-tour="templates-step-0" />
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" data-tour="templates-step-1">
             <NuxtLink v-for="item in templateTypes" :key="item.type" :to="item.route">
                 <UCard
                     class="group hover:shadow-lg hover:border-primary/50 transition-all duration-300 cursor-pointer h-full">

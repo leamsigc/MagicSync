@@ -1,3 +1,5 @@
+import { isSafeExternalUrl } from '#layers/BaseShared/server/utils/ssrf'
+
 export default defineEventHandler(async (event) => {
   const log = useLogger(event)
   const query = getQuery(event)
@@ -7,6 +9,13 @@ export default defineEventHandler(async (event) => {
   if (!audioUrl) {
     log.error('url parameter is required', {})
     throw createError({ statusCode: 400, message: 'url is required' })
+  }
+
+  // SAFE: block SSRF — reject internal/private/loopback/metadata hosts
+  const { safe, reason } = await isSafeExternalUrl(audioUrl)
+  if (!safe) {
+    log.error('Blocked unsafe audio URL', { audioUrl, reason })
+    throw createError({ statusCode: 400, message: reason })
   }
 
   log.info('Fetching audio', { audioUrl })

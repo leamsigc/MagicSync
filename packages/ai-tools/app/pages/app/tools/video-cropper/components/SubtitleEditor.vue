@@ -103,7 +103,7 @@ function applyPredefined(key: 'modern' | 'classic' | 'bold' | 'minimal') {
             :variant="subtitleStyle.color === c.value ? 'solid' : 'ghost'"
             size="xs"
             square
-            class="w-7 h-7! rounded-full!"
+            class="flex items-center justify-center w-7 h-7 rounded-full!"
             @click="subtitleStyle.color = c.value"
           >
             <span class="w-3 h-3 rounded-full" :style="{ backgroundColor: c.value }"></span>

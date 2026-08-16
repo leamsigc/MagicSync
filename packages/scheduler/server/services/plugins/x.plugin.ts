@@ -1,5 +1,5 @@
-import type { PostDetails, PostResponse, Integration, PluginPostDetails, PluginSocialMediaAccount, GetCommentsResponse, ReplyCommentResponse, PlatformComment } from '../SchedulerPost.service';
-import { BaseSchedulerPlugin, type MediaContent, type PlatformStats } from '../SchedulerPost.service';
+import type { PostDetails, PostResponse, Integration, PluginPostDetails, PluginSocialMediaAccount, GetCommentsResponse, ReplyCommentResponse, PlatformComment, PlatformStats, PostInsight } from '../SchedulerPost.service';
+import { BaseSchedulerPlugin, type MediaContent, createPostInsightsFallback, extractExternalPostId } from '../SchedulerPost.service';
 import type { Post, PostWithAllData, SocialMediaAccount, Asset, PlatformContentOverride } from '#layers/BaseDB/db/schema';
 import { TwitterApi } from 'twitter-api-v2';
 import { platformConfigurations } from '../../../shared/platformConstants';
@@ -395,6 +395,41 @@ export class XPlugin extends BaseSchedulerPlugin {
         topTweetsCount: topTweets.length,
         listedCount: profile.public_metrics?.listed_count,
       },
+    }
+  }
+
+  async getPostInsights(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount
+  ): Promise<PostInsight[]> {
+    const externalPostId = extractExternalPostId(postDetails, socialMediaAccount) || postDetails.postId;
+    if (!externalPostId) {
+      return createPostInsightsFallback(this.pluginName);
+    }
+
+    const accessToken = socialMediaAccount.accessToken;
+    if (!accessToken) {
+      return createPostInsightsFallback(this.pluginName);
+    }
+
+    try {
+      const client = new TwitterApi(accessToken);
+      const tweet = await client.v2.singleTweet(externalPostId, {
+        'tweet.fields': ['public_metrics', 'created_at'],
+      });
+      const metrics = (tweet.data as unknown as { public_metrics?: Record<string, number> })?.public_metrics || {};
+
+      return [
+        { label: 'Likes', value: metrics.like_count || 0 },
+        { label: 'Retweets', value: metrics.retweet_count || 0 },
+        { label: 'Replies', value: metrics.reply_count || 0 },
+        { label: 'Quotes', value: metrics.quote_count || 0 },
+        { label: 'Impressions', value: metrics.impression_count || 0 },
+        { label: 'Bookmarks', value: metrics.bookmark_count || 0 },
+      ];
+    } catch (error: unknown) {
+      log.error({ content: 'X post insights fetch failed', plugin: 'twitter', error: (error as Error).message });
+      return createPostInsightsFallback(this.pluginName);
     }
   }
 

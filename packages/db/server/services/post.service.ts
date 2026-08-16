@@ -5,8 +5,8 @@ import type {
   ServiceResponse,
 } from './types'
 import type { PostServiceType } from './interfaces'
-import { and, eq, gte, inArray, lte, sql } from 'drizzle-orm'
-import { assets, platformPosts, posts, socialMediaAccounts } from '#layers/BaseDB/db/schema'
+import { and, eq, gte, inArray, lte, or, sql } from 'drizzle-orm'
+import { assets, businessProfiles, member, organization, platformPosts, posts, socialMediaAccounts } from '#layers/BaseDB/db/schema'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
 import { ValidationError } from './types'
 
@@ -118,7 +118,7 @@ export class PostService implements PostServiceType {
       if (!post) {
         return { success: false, error: 'Post not found', code: 'NOT_FOUND' }
       }
-      return { success: true, data: result }
+      return { success: true, data: post }
     } catch {
       return { success: false, error: 'Failed to fetch post' }
     }
@@ -225,16 +225,26 @@ export class PostService implements PostServiceType {
     }
   }
 
-  async findScheduledPosts(beforeDate?: Date): Promise<ServiceResponse<Post[]>> {
+  async findScheduledPosts(userId: string, beforeDate?: Date): Promise<ServiceResponse<Post[]>> {
     try {
       const cutoffDate = beforeDate || dayjs.utc().toDate()
 
+      const accessibleBusinessIds = await this.getAccessibleBusinessIds(userId)
+      const businessCondition = accessibleBusinessIds.length > 0
+        ? inArray(posts.businessId, accessibleBusinessIds)
+        : undefined
+
+      // Owner OR business-org-member access (team members see their business's posts).
       const scheduledPosts = await this.db
         .select()
         .from(posts)
         .where(and(
           eq(posts.status, 'pending'),
-          lte(posts.scheduledAt, cutoffDate)
+          lte(posts.scheduledAt, cutoffDate),
+          or(
+            eq(posts.userId, userId),
+            businessCondition
+          )
         ))
         .orderBy(posts.scheduledAt)
 
@@ -244,14 +254,38 @@ export class PostService implements PostServiceType {
     }
   }
 
-  async findByIdFull({ postId }: { postId: string }): Promise<PostWithAllData> {
-    const post = await this.db.query.posts.findFirst({
-      where: eq(posts.id, postId),
-      with: {
-        platformPosts: true,
-        user: true,
+  async findByIdFull({ postId, userId }: { postId: string; userId: string }): Promise<PostWithAllData> {
+    const withRelations = {
+      platformPosts: true,
+      user: true,
+    } as const
+
+    // Owner path: the post belongs to the requesting user.
+    let post = await this.db.query.posts.findFirst({
+      where: and(eq(posts.id, postId), eq(posts.userId, userId)),
+      with: withRelations,
+    }) as PostWithAllData | undefined;
+
+    // Org-member path: the post belongs to a business the user can access
+    // as the business owner or a member of the business's organization.
+    if (!post) {
+      const probe = await this.db.query.posts.findFirst({
+        where: eq(posts.id, postId),
+        columns: { businessId: true },
+      })
+      if (!probe) {
+        throw new Error('Post not found')
       }
-    }) as PostWithAllData;
+      const accessibleBusinessIds = await this.getAccessibleBusinessIds(userId)
+      if (!accessibleBusinessIds.includes(probe.businessId)) {
+        throw new Error('Post not found')
+      }
+      post = await this.db.query.posts.findFirst({
+        where: eq(posts.id, postId),
+        with: withRelations,
+      }) as PostWithAllData | undefined;
+    }
+
     if (!post) {
       throw new Error('Post not found')
     }
@@ -261,6 +295,45 @@ export class PostService implements PostServiceType {
     })
     post.assets = postAssets;
     return post;
+  }
+
+  /**
+   * Business IDs the requesting user can access: businesses they own directly,
+   * OR businesses whose organization they are a member of (team access).
+   * Mirrors the access model used by businessProfileService.findById() and
+   * businessOrgService.getBusinessIdFromOrg().
+   */
+  private async getAccessibleBusinessIds(userId: string): Promise<string[]> {
+    const owned = await this.db
+      .select({ id: businessProfiles.id })
+      .from(businessProfiles)
+      .where(eq(businessProfiles.userId, userId))
+
+    const ids = new Set(owned.map(b => b.id))
+
+    // Organizations the user belongs to → their linked businessId (org metadata
+    // is written server-side by businessOrgService at org creation time).
+    const orgRows = await this.db
+      .select({ organizationId: member.organizationId })
+      .from(member)
+      .where(eq(member.userId, userId))
+
+    if (orgRows.length > 0) {
+      const orgIds = orgRows.map(r => r.organizationId)
+      const orgs = await this.db
+        .select({ id: organization.id, metadata: organization.metadata })
+        .from(organization)
+        .where(inArray(organization.id, orgIds))
+
+      for (const org of orgs) {
+        const meta = JSON.parse(org.metadata ?? '{}') as Record<string, unknown>
+        if (typeof meta.businessId === 'string' && meta.businessId) {
+          ids.add(meta.businessId)
+        }
+      }
+    }
+
+    return [...ids]
   }
 
   async update(id: string, userId: string, data: UpdatePostData): Promise<ServiceResponse<Post>> {

@@ -57,6 +57,7 @@ const assets = ref<Asset[]>([])
 export const useAssetManagement = () => {
   const selectedAssets = ref<Asset[]>([])
   const isLoading = ref(false)
+  const isLoadingMore = ref(false)
   const error = ref<string | null>(null)
   const pagination = ref<AssetPagination>({
     page: 1,
@@ -76,8 +77,8 @@ export const useAssetManagement = () => {
     try {
       const response = await $fetch<{ data: Asset[] }>('/api/v1/assets?own=true')
       assets.value = response.data
-    } catch (error: unknown) {
-      error.value = getErrorMessage(error, 'Failed to fetch assets')
+    } catch (caught: unknown) {
+      error.value = getErrorMessage(caught, 'Failed to fetch assets')
     }
   }
 
@@ -117,15 +118,15 @@ export const useAssetManagement = () => {
       if (options?.filters) {
         filters.value = options.filters
       }
-    } catch (error: unknown) {
-      error.value = getErrorMessage(error, 'Failed to fetch assets')
+    } catch (caught: unknown) {
+      error.value = getErrorMessage(caught, 'Failed to fetch assets')
       assets.value = []
     } finally {
       isLoading.value = false
     }
   }
 
-  const uploadFiles = async (files: File[], businessId?: string): Promise<boolean> => {
+  const uploadFiles = async (files: File[], businessId?: string): Promise<Asset[]> => {
     // Add files to upload queue
     const uploadItems: FileUploadItem[] = files.map(file => ({
       file,
@@ -136,41 +137,56 @@ export const useAssetManagement = () => {
 
     uploadQueue.value.push(...uploadItems)
 
+    // Build multipart form data so large files stream without base64 overhead
+    const formData = new FormData()
+    files.forEach(file => formData.append('files', file))
+    if (businessId) {
+      formData.append('businessId', businessId)
+    }
+
+    uploadItems.forEach(item => {
+      item.status = 'uploading'
+    })
+
     try {
-      // Update status to uploading
-      uploadItems.forEach(item => {
-        item.status = 'uploading'
-        item.progress.percentage = 50 // Show progress
-      })
-
-      // Convert files to nuxt-file-storage format
-      const serverFiles = await Promise.all(
-        files.map(async (file) => {
-          return new Promise<{ name: string; type: string; size: number; content: string }>((resolve) => {
-            const reader = new FileReader()
-            reader.onload = () => {
-              resolve({
-                name: file.name,
-                type: file.type,
-                size: file.size,
-                content: reader.result as string
-              })
-            }
-            reader.readAsDataURL(file)
-          })
-        })
-      )
-
-      const response = await $fetch<{
+      // Use XMLHttpRequest to get real upload progress for large files
+      // (ofetch does not expose onUploadProgress for the same-origin path)
+      const response = await new Promise<{
         success: boolean
         data: Asset[]
         message?: string
         error?: string
-      }>('/api/v1/assets', {
-        method: 'POST',
-        body: {
-          files: serverFiles
+      }>((resolve, reject) => {
+        const xhr = new XMLHttpRequest()
+        xhr.open('POST', '/api/v1/assets')
+        xhr.setRequestHeader('Accept', 'application/json')
+
+        xhr.upload.onprogress = (event) => {
+          if (!event.lengthComputable) return
+          uploadItems.forEach(item => {
+            item.progress.loaded = event.loaded
+            item.progress.total = event.total
+            item.progress.percentage = Math.round((event.loaded / event.total) * 100)
+          })
         }
+
+        xhr.onload = () => {
+          try {
+            const parsed = JSON.parse(xhr.responseText)
+            if (xhr.status >= 200 && xhr.status < 300) {
+              resolve(parsed)
+            } else {
+              reject(new Error(parsed?.error || parsed?.message || `Upload failed (${xhr.status})`))
+            }
+          } catch {
+            reject(new Error('Invalid server response'))
+          }
+        }
+
+        xhr.onerror = () => reject(new Error('Network error during upload'))
+        xhr.onabort = () => reject(new Error('Upload aborted'))
+
+        xhr.send(formData)
       })
 
       if (!response.success) {
@@ -186,8 +202,14 @@ export const useAssetManagement = () => {
         }
       })
 
-      // Add new assets to the list
-      assets.value.unshift(...response.data)
+      // Add new assets to the list (avoid duplicates with loaded pages)
+      const existingIds = new Set(assets.value.map(a => a.id))
+      response.data.forEach(asset => {
+        if (!existingIds.has(asset.id)) {
+          assets.value.unshift(asset)
+          existingIds.add(asset.id)
+        }
+      })
 
       // Remove completed uploads from queue after a delay
       setTimeout(() => {
@@ -195,16 +217,16 @@ export const useAssetManagement = () => {
           !uploadItems.some(uploadItem => uploadItem.id === item.id)
         )
       }, 3000)
-      return true
+      return response.data
     } catch (err: any) {
       // Mark all uploads as failed
       uploadItems.forEach(item => {
         item.status = 'error'
-        item.error = err.data?.message || err.message || 'Upload failed'
+        item.error = err?.data?.message || err?.message || 'Upload failed'
       })
 
-      error.value = err.data?.message || err.message || 'Failed to upload files'
-      return false
+      error.value = err?.data?.message || err?.message || 'Failed to upload files'
+      return []
     }
   }
 
@@ -236,10 +258,14 @@ export const useAssetManagement = () => {
         throw new Error(response.error || 'Failed to upload from URL')
       }
 
-      // Add to assets list
-      assets.value.unshift(response.data)
+      const asset = Array.isArray(response.data) ? response.data[0] : response.data
 
-      return response.data
+      // Add to assets list
+      if (asset) {
+        assets.value.unshift(asset)
+      }
+
+      return asset ?? null
     } catch (err: any) {
       error.value = err.data?.message || err.message || 'Failed to upload from URL'
       return null
@@ -345,9 +371,11 @@ export const useAssetManagement = () => {
   }
 
   const loadMoreAssets = async (businessId: string): Promise<void> => {
+    if (isLoadingMore.value) return
     if (pagination.value.page >= pagination.value.totalPages) return
 
     const nextPage = pagination.value.page + 1
+    isLoadingMore.value = true
 
     try {
       const params = new URLSearchParams({
@@ -368,11 +396,19 @@ export const useAssetManagement = () => {
       }>(`/api/v1/assets?${params.toString()}`)
 
       if (response.success) {
-        assets.value.push(...response.data)
+        const existingIds = new Set(assets.value.map(a => a.id))
+        response.data.forEach(asset => {
+          if (!existingIds.has(asset.id)) {
+            assets.value.push(asset)
+            existingIds.add(asset.id)
+          }
+        })
         pagination.value = response.pagination
       }
     } catch (err: any) {
       error.value = err.data?.message || err.message || 'Failed to load more assets'
+    } finally {
+      isLoadingMore.value = false
     }
   }
 
@@ -381,6 +417,7 @@ export const useAssetManagement = () => {
     assets: readonly(assets),
     selectedAssets: readonly(selectedAssets),
     isLoading: readonly(isLoading),
+    isLoadingMore: readonly(isLoadingMore),
     error: readonly(error),
     pagination: readonly(pagination),
     filters: readonly(filters),

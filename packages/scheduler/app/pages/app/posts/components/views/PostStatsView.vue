@@ -44,6 +44,7 @@ interface PlatformSection {
 
 const props = defineProps<{
   post: any;
+  autoLoad?: boolean;
 }>();
 
 const { t } = useI18n();
@@ -51,6 +52,53 @@ const { getPlatformIcon } = usePlatformIcons();
 const toast = useToast();
 
 const platformSections = ref<PlatformSection[]>([]);
+
+async function loadStats(section: PlatformSection, forceRefresh = false) {
+  if (!forceRefresh && section.isExpanded && section.stats) return;
+
+  section.isExpanded = true;
+  section.isLoading = true;
+  section.error = undefined;
+  section.cached = false;
+
+  try {
+    const data = await $fetch<{ data: any; cached?: boolean; updatedAt?: string }>(
+      `/api/v1/posts/${props.post.id}/stats/${section.platform}`,
+      { query: forceRefresh ? { refresh: 1 } : undefined }
+    );
+
+    section.stats = data?.data || [];
+    section.cached = data?.cached || false;
+    section.updatedAt = data?.updatedAt;
+
+    if (section.cached) {
+      toast.add({ title: t('postStats.loadedFromCache'), color: 'success', icon: 'i-heroicons-clock' });
+    }
+  } catch (err: any) {
+    section.error = err?.data?.statusMessage || err?.message || 'Failed to load stats';
+  } finally {
+    section.isLoading = false;
+    updatePlatformSection(section);
+  }
+}
+
+function toggleSection(section: PlatformSection) {
+  if (section.isExpanded) {
+    section.isExpanded = false;
+    return;
+  }
+  loadStats(section);
+}
+
+function loadAllSections() {
+  platformSections.value.forEach((section) => {
+    if (!section.stats) loadStats(section);
+  });
+}
+
+watch(() => props.autoLoad, (active) => {
+  if (active) loadAllSections();
+});
 
 watch(props.post, () => {
   if (!props.post?.platformPosts) return;
@@ -78,38 +126,6 @@ const updatePlatformSection = (section: PlatformSection) => {
   }
 };
 
-async function loadStats(section: PlatformSection) {
-  if (section.isExpanded) {
-    section.isExpanded = false;
-    return;
-  }
-
-  section.isExpanded = true;
-  if (section.stats) return;
-
-  section.isLoading = true;
-  section.error = undefined;
-
-  try {
-    const data = await $fetch<{ data: any; cached?: boolean; updatedAt?: string }>(
-      `/api/v1/posts/${props.post.id}/stats/${section.platform}`
-    );
-
-    section.stats = data?.data || [];
-    section.cached = data?.cached || false;
-    section.updatedAt = data?.updatedAt;
-
-    if (section.cached) {
-      toast.add({ title: t('postStats.loadedFromCache'), color: 'success', icon: 'i-heroicons-clock' });
-    }
-  } catch (err: any) {
-    section.error = err?.data?.statusMessage || err?.message || 'Failed to load stats';
-  } finally {
-    section.isLoading = false;
-    updatePlatformSection(section);
-  }
-}
-
 function formatTime(isoString: string): string {
   if (!isoString) return '';
   return dayjs(isoString).fromNow();
@@ -134,7 +150,7 @@ function formatNumber(value: number | string | undefined): string {
       class="border border-zinc-800 rounded-2xl overflow-hidden">
 
       <button class="w-full flex items-center justify-between p-4 hover:bg-zinc-900/50 transition-colors"
-        @click="loadStats(section)">
+        @click="toggleSection(section)">
         <div class="flex items-center gap-3">
           <UIcon :name="getPlatformIcon(section.platform as any)" class="w-5 h-5 text-zinc-400 shrink-0" />
           <div class="text-left">
@@ -145,6 +161,14 @@ function formatNumber(value: number | string | undefined): string {
           </div>
         </div>
         <div class="flex items-center gap-2">
+          <ULink
+            class="text-zinc-400 hover:text-white transition-colors"
+            :title="t('postStats.refresh')"
+            :aria-label="t('postStats.refresh')"
+            @click.stop="loadStats(section, true)"
+          >
+            <UIcon name="i-heroicons-arrow-path" class="w-4 h-4" />
+          </ULink>
           <UBadge :color="section.status === 'published' ? 'success' : 'warning'" variant="subtle" size="sm">
             {{ section.status }}
           </UBadge>

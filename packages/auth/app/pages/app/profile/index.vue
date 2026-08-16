@@ -52,13 +52,13 @@ useHead({
     </div>
 
     <div v-else class="grid gap-6 md:grid-cols-3">
-      <div class="md:col-span-1">
+      <div class="md:col-span-1" data-tour="profile-step-0">
         <div class="bg-elevated rounded-2xl  p-5">
           <ProfileAvatar />
         </div>
       </div>
 
-      <div class="md:col-span-2 space-y-6">
+      <div class="md:col-span-2 space-y-6" data-tour="profile-step-1">
         <div class="bg-elevated rounded-2xl ">
           <ProfileForm />
         </div>

@@ -1,5 +1,5 @@
-import type { PostResponse, PluginPostDetails, PluginSocialMediaAccount, GetCommentsResponse, ReplyCommentResponse, PlatformComment, PlatformStats } from '../SchedulerPost.service';
-import { BaseSchedulerPlugin } from '../SchedulerPost.service';
+import type { PostResponse, PluginPostDetails, PluginSocialMediaAccount, GetCommentsResponse, ReplyCommentResponse, PlatformComment, PlatformStats, PostInsight } from '../SchedulerPost.service';
+import { BaseSchedulerPlugin, createPostInsightsFallback, extractExternalPostId } from '../SchedulerPost.service';
 import type { Post, SocialMediaAccount, Asset } from '#layers/BaseDB/db/schema';
 import type { PinterestSettings } from '../../../shared/platformSettings';
 import { platformConfigurations } from '../../../shared/platformConstants';
@@ -356,6 +356,45 @@ export class PinterestPlugin extends BaseSchedulerPlugin {
       posts: 0,
       engagement: { total: 0 },
     };
+  }
+
+  async getPostInsights(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount
+  ): Promise<PostInsight[]> {
+    const externalPostId = extractExternalPostId(postDetails, socialMediaAccount);
+    if (!externalPostId) {
+      return createPostInsightsFallback(this.pluginName);
+    }
+
+    try {
+      const accessToken = socialMediaAccount.accessToken;
+      if (!accessToken) {
+        return createPostInsightsFallback(this.pluginName);
+      }
+
+      const response = await fetch(`${this.API_BASE}/pins/${externalPostId}`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        log.error({ content: '[Pinterest] Failed to fetch pin insights', status: response.status });
+        return createPostInsightsFallback(this.pluginName);
+      }
+
+      const pin = await response.json();
+      return [
+        { label: 'Saves', value: (pin.save_count as number) || 0 },
+        { label: 'Impressions', value: (pin.impression_count as number) || 0 },
+        { label: 'Clicks', value: (pin.click_count as number) || 0 },
+        { label: 'Comment Count', value: (pin.comment_count as number) || 0 },
+      ];
+    } catch (error: unknown) {
+      log.error({ content: 'Pinterest pin insights fetch failed', plugin: 'pinterest', error: (error as Error).message });
+      return createPostInsightsFallback(this.pluginName);
+    }
   }
 
   async getComments(

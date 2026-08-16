@@ -98,8 +98,8 @@ export type PostServiceType = {
   create: (userId: string, data: PostCreateBase) => Promise<ServiceResponse<Post>>
   findById: (id: string, userId: string, includePlatforms?: boolean, includeUser?: boolean) => Promise<ServiceResponse<PostWithAllData | Post>>
   findByBusinessId: (businessId: string, userId: string, options?: QueryOptions) => Promise<PaginatedResponse<PostWithAllData>>
-  findScheduledPosts: (beforeDate?: Date) => Promise<ServiceResponse<Post[]>>
-  findByIdFull: (params: { postId: string }) => Promise<PostWithAllData>
+  findScheduledPosts: (userId: string, beforeDate?: Date) => Promise<ServiceResponse<Post[]>>
+  findByIdFull: (params: { postId: string; userId: string }) => Promise<PostWithAllData>
   update: (id: string, userId: string, data: UpdatePostData) => Promise<ServiceResponse<Post>>
   updateStatus: (id: string, userId: string, status: 'pending' | 'published' | 'failed') => Promise<ServiceResponse<Post>>
   delete: (id: string, userId: string) => Promise<ServiceResponse<void>>
@@ -128,6 +128,9 @@ export type LogAuditServiceType = {
     status?: 'success' | 'failure' | 'pending'
     details?: string
   }) => Promise<void>
+  deleteById: (id: number) => Promise<{ success: boolean, error?: string }>
+  deleteMany: (ids: number[]) => Promise<{ success: boolean, error?: string }>
+  deleteAll: () => Promise<{ success: boolean, error?: string }>
 }
 
 export type BusinessProfileServiceType = {
@@ -139,6 +142,7 @@ export type BusinessProfileServiceType = {
   update: (id: string, userId: string, data: UpdateBusinessProfileData) => Promise<ServiceResponse<BusinessProfile>>
   updateRaw: (id: string, data: UpdateBusinessProfileData) => Promise<ServiceResponse<BusinessProfile>>
   delete: (id: string, userId: string) => Promise<ServiceResponse<void>>
+  deleteRaw: (id: string) => Promise<ServiceResponse<void>>
   setActive: (userId: string, data: { id: string, isActive: boolean }) => Promise<ServiceResponse<BusinessProfile>>
   getActive: (userId: string) => Promise<ServiceResponse<BusinessProfile>>
   syncFromGMB: (userId: string, accessToken: string) => Promise<ServiceResponse<BusinessProfile[]>>

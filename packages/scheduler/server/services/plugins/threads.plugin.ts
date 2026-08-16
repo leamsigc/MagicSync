@@ -1,5 +1,5 @@
-import type { PostResponse, Integration, PluginPostDetails, PluginSocialMediaAccount, GetCommentsResponse, ReplyCommentResponse, PlatformComment, PlatformStats } from '../SchedulerPost.service';
-import { BaseSchedulerPlugin, type MediaContent } from '../SchedulerPost.service';
+import type { PostResponse, Integration, PluginPostDetails, PluginSocialMediaAccount, GetCommentsResponse, ReplyCommentResponse, PlatformComment, PlatformStats, PostInsight } from '../SchedulerPost.service';
+import { BaseSchedulerPlugin, type MediaContent, createPostInsightsFallback, extractExternalPostId } from '../SchedulerPost.service';
 import type { Post, PostWithAllData, SocialMediaAccount, Asset, PlatformContentOverride } from '#layers/BaseDB/db/schema';
 import type { ThreadsSettings } from '../../../shared/platformSettings';
 
@@ -147,6 +147,45 @@ export class ThreadsPlugin extends BaseSchedulerPlugin {
       following: 0,
     };
   }
+
+  async getPostInsights(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount
+  ): Promise<PostInsight[]> {
+    const externalPostId = extractExternalPostId(postDetails, socialMediaAccount);
+    if (!externalPostId) {
+      return createPostInsightsFallback(this.pluginName);
+    }
+
+    try {
+      const accessToken = socialMediaAccount.accessToken;
+      const response = await fetch(
+        `https://graph.threads.net/${externalPostId}?fields=like_count,reply_count,repost_count,quote_count,timestamp&access_token=${accessToken}`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        log.warn({ content: '[Threads] Post insights error', status: response.status, body: await response.text() });
+        return createPostInsightsFallback(this.pluginName);
+      }
+
+      const thread = await response.json();
+      return [
+        { label: 'Likes', value: thread.like_count || 0 },
+        { label: 'Replies', value: thread.reply_count || 0 },
+        { label: 'Reposts', value: thread.repost_count || 0 },
+        { label: 'Quotes', value: thread.quote_count || 0 },
+      ];
+    } catch (error: unknown) {
+      log.error({ content: 'Threads post insights fetch failed', plugin: 'threads', error: (error as Error).message });
+      return createPostInsightsFallback(this.pluginName);
+    }
+  }
+
   static readonly pluginName = 'threads';
   readonly pluginName = 'threads';
 

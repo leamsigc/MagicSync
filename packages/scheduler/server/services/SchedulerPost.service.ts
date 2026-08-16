@@ -84,6 +84,51 @@ export interface PlatformStats {
   extra?: Record<string, unknown>
 }
 
+// Unified post-level insight — all plugin getPostInsights() methods return this shape
+export interface PostInsight {
+  label: string;
+  value: number;
+}
+
+export function createPostInsightsFallback(platform: string): PostInsight[] {
+  return [{
+    label: `${platform} insights unavailable`,
+    value: 0,
+  }];
+}
+
+/**
+ * Resolve the platform-native post id from a post's publishDetail. Plugins store
+ * their published post id either keyed by account id ({ [accountId]: { publishedId } })
+ * or flat ({ postId }).
+ */
+export function extractExternalPostId(
+  postDetails: PluginPostDetails,
+  socialMediaAccount: PluginSocialMediaAccount
+): string | null {
+  const platformPost = postDetails.platformPosts?.find(
+    (pp: { socialAccountId: string }) => pp.socialAccountId === socialMediaAccount.id
+  );
+  if (!platformPost) return null;
+
+  const raw = platformPost.publishDetail;
+  let publishDetail: Record<string, unknown> = {};
+  if (typeof raw === 'string') {
+    try {
+      publishDetail = JSON.parse(raw) as Record<string, unknown>;
+    } catch {
+      publishDetail = {};
+    }
+  } else if (raw && typeof raw === 'object') {
+    publishDetail = raw as Record<string, unknown>;
+  }
+
+  const byAccount = (publishDetail as Record<string, { publishedId?: string }>)?.[socialMediaAccount.id]?.publishedId;
+  if (byAccount) return byAccount;
+
+  return (publishDetail as { postId?: string })?.postId || null;
+}
+
 export type PollDetails = {
   options: string[]; // Array of poll options
   duration: number; // Duration in hours for which the poll will be active
@@ -139,6 +184,10 @@ export interface SchedulerPlugin {
     postDetails: PluginPostDetails,
     socialMediaAccount: PluginSocialMediaAccount
   ): Promise<PlatformStats>;
+  getPostInsights(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount
+  ): Promise<PostInsight[]>;
   getComments(
     postDetails: PluginPostDetails,
     socialMediaAccount: PluginSocialMediaAccount,
@@ -216,6 +265,12 @@ export abstract class BaseSchedulerPlugin implements SchedulerPlugin {
     postDetails: PluginPostDetails,
     socialMediaAccount: PluginSocialMediaAccount
   ): Promise<PlatformStats>;
+  getPostInsights(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount
+  ): Promise<PostInsight[]> {
+    return Promise.resolve(createPostInsightsFallback(this.pluginName));
+  }
   abstract getComments(
     postDetails: PluginPostDetails,
     socialMediaAccount: PluginSocialMediaAccount,
@@ -396,14 +451,14 @@ export class SchedulerPost extends EventEmitter {
   async getPostInsights(
     postDetails: PluginPostDetails,
     socialMediaAccount: PluginSocialMediaAccount
-  ): Promise<Record<string, unknown>> {
+  ): Promise<PostInsight[]> {
     const plugin = this.plugins.get(socialMediaAccount.platform);
     if (!plugin) {
       throw new Error('Plugin not registered for this socialMediaAccount');
     }
     const method = plugin['getPostInsights'];
     if (typeof method !== 'function') {
-      throw new Error(`Platform ${socialMediaAccount.platform} does not support getPostInsights`);
+      return createPostInsightsFallback(socialMediaAccount.platform);
     }
     return method.call(plugin, postDetails, socialMediaAccount);
   }

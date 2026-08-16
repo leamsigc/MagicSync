@@ -33,7 +33,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // Fetch the post with full data
-    const post = await postService.findByIdFull({ postId });
+    const post = await postService.findByIdFull({ postId, userId: user.id });
     if (!post) {
       throw createError({ statusCode: 404, statusMessage: 'Post not found' });
     }
@@ -71,6 +71,9 @@ export default defineEventHandler(async (event) => {
     return { success: true, data: result };
   } catch (error: unknown) {
     if (error && typeof error === 'object' && 'statusCode' in error) throw error;
+    if (error instanceof Error && error.message === 'Post not found') {
+      throw createError({ statusCode: 404, statusMessage: 'Post not found' });
+    }
     log.error({ content: 'Reply to comment error', error: String(error) });
     throw createError({ statusCode: 500, statusMessage: 'Internal server error' });
   }

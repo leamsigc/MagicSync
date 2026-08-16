@@ -8,13 +8,25 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
-const assetName = ref(`magic_sync_video_${Date.now()}.mp4`)
+const props = defineProps<{
+  defaultName: string
+}>()
 const isSaving = ref(false)
+const assetName = ref(props.defaultName)
+
+watch(() => props.defaultName, (name) => {
+  assetName.value = name
+})
+
+watch(isOpen, (val) => {
+  if (val) assetName.value = props.defaultName
+})
 
 async function handleSave() {
   if (!assetName.value.trim()) return
   isSaving.value = true
   emit('save', assetName.value.trim())
+  isSaving.value = false
 }
 
 function handleDownload() {

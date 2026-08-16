@@ -1,5 +1,5 @@
-import type { PostDetails, PostResponse, Integration, PluginSocialMediaAccount, PluginPostDetails, GetCommentsResponse, ReplyCommentResponse, PlatformComment, PlatformStats } from '../SchedulerPost.service';
-import { BaseSchedulerPlugin, type MediaContent } from '../SchedulerPost.service';
+import type { PostDetails, PostResponse, Integration, PluginSocialMediaAccount, PluginPostDetails, GetCommentsResponse, ReplyCommentResponse, PlatformComment, PlatformStats, PostInsight } from '../SchedulerPost.service';
+import { BaseSchedulerPlugin, type MediaContent, createPostInsightsFallback, extractExternalPostId } from '../SchedulerPost.service';
 import type { Post, SocialMediaAccount, Asset } from '#layers/BaseDB/db/schema';
 import type { WordPressSettings } from '../../../shared/platformSettings';
 
@@ -163,6 +163,54 @@ export class WordPressPlugin extends BaseSchedulerPlugin {
       followers: 0,
       posts: 0,
     };
+  }
+
+  async getPostInsights(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount
+  ): Promise<PostInsight[]> {
+    const externalPostId = extractExternalPostId(postDetails, socialMediaAccount);
+    if (!externalPostId) {
+      return createPostInsightsFallback(this.pluginName);
+    }
+
+    try {
+      const accessToken = socialMediaAccount.accessToken;
+      const siteUrl = socialMediaAccount.accountId || socialMediaAccount.accountName;
+      if (!siteUrl) {
+        return createPostInsightsFallback(this.pluginName);
+      }
+      const wpcomSiteId = socialMediaAccount.metadata?.wpcomSiteId as string || siteUrl;
+
+      const [postResponse, postStatsResponse] = await Promise.all([
+        fetch(
+          `https://public-api.wordpress.com/rest/v1.1/sites/${encodeURIComponent(wpcomSiteId)}/posts/${externalPostId}?fields=ID,title,like_count,comment_count`,
+          { headers: { Authorization: `Bearer ${accessToken}` } }
+        ),
+        fetch(
+          `https://public-api.wordpress.com/rest/v1.1/sites/${encodeURIComponent(wpcomSiteId)}/stats/post/${externalPostId}`,
+          { headers: { Authorization: `Bearer ${accessToken}` } }
+        ),
+      ]);
+
+      if (!postResponse.ok && !postStatsResponse.ok) {
+        return createPostInsightsFallback(this.pluginName);
+      }
+
+      const [post, postStats] = await Promise.all([
+        postResponse.ok ? postResponse.json() : {},
+        postStatsResponse.ok ? postStatsResponse.json() : {},
+      ]);
+
+      return [
+        { label: 'Views', value: (postStats as Record<string, unknown>).views || 0 },
+        { label: 'Likes', value: (post as Record<string, unknown>).like_count || 0 },
+        { label: 'Comments', value: (post as Record<string, unknown>).comment_count || 0 },
+      ];
+    } catch (error: unknown) {
+      log.error({ content: 'WordPress post insights fetch failed', plugin: 'wordpress', error: (error as Error).message });
+      return createPostInsightsFallback(this.pluginName);
+    }
   }
 
   static readonly pluginName = 'wordpress';

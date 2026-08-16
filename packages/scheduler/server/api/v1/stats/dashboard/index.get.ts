@@ -10,6 +10,7 @@
  * Query params:
  *   - businessId: filter by business
  *   - days: number of days for historical data (default: 30)
+ *   - refresh: when '1'/'true', re-collects fresh stats from connected platforms before responding
  */
 import { platformStatsService } from '#layers/BaseScheduler/server/services/PlatformStats.service'
 import { postStatsService } from '#layers/BaseDB/server/services/post.service'
@@ -25,11 +26,16 @@ export default defineEventHandler(async (event) => {
     const query = getQuery(event)
     const { businessId, days = '30' } = query
     const daysNum = parseInt(days as string) || 30
+    const forceRefresh = query.refresh === '1' || query.refresh === 'true'
 
-    log.set({ userId: user.id, businessId, days: daysNum })
+    log.set({ userId: user.id, businessId, days: daysNum, refresh: forceRefresh })
 
     const filters: any = { userId: user.id }
     if (businessId) filters.businessId = businessId as string
+
+    if (forceRefresh) {
+      await platformStatsService.collectAllStats(filters)
+    }
 
     const startDate = dayjs().subtract(daysNum, 'day').toISOString()
 

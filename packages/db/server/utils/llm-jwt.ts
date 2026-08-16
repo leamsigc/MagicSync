@@ -1,9 +1,17 @@
 import jwt from 'jsonwebtoken'
 import type { UserLlmConfig } from '#layers/BaseDB/db/schema'
 
-// Shared secret - must be set in env and match Python backend
-const JWT_SECRET = process.env.NUXT_LLM_JWT_SECRET || 'magicsync-llm-secret-change-me'
 const JWT_EXPIRES_IN = '1h' // Short-lived token for API calls
+
+// SECURITY: no hard-coded fallback secret. If the env var is missing, fail
+// loudly instead of silently signing tokens with a publicly-known constant.
+function getJwtSecret(): string {
+  const secret = process.env.NUXT_LLM_JWT_SECRET
+  if (!secret) {
+    throw new Error('[llm-jwt] NUXT_LLM_JWT_SECRET is required — refusing to use an insecure fallback secret')
+  }
+  return secret
+}
 
 export interface LlmJwtPayload {
   userId: string
@@ -41,7 +49,7 @@ export function createLlmJwt(
     maxTokens: config?.maxTokens ?? 2048,
   }
 
-  return jwt.sign(payload, JWT_SECRET, {
+  return jwt.sign(payload, getJwtSecret(), {
     expiresIn: JWT_EXPIRES_IN,
     issuer: 'magicsync-nuxt',
     audience: 'magicsync-python',
@@ -54,7 +62,7 @@ export function createLlmJwt(
  */
 export function verifyLlmJwt(token: string): LlmJwtPayload | null {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET, {
+    const decoded = jwt.verify(token, getJwtSecret(), {
       issuer: 'magicsync-nuxt',
       audience: 'magicsync-python',
     }) as LlmJwtPayload

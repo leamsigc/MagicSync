@@ -3,7 +3,7 @@ import type { Post, PostWithAllData, SocialMediaAccount, Asset, PlatformContentO
 import sharp from 'sharp';
 import type { LinkedInSettings } from '#layers/BaseScheduler/shared/platformSettings';
 import { platformConfigurations } from '#layers/BaseScheduler/shared/platformConstants';
-import { BaseSchedulerPlugin, type PluginPostDetails, type PluginSocialMediaAccount, type PostResponse, type GetCommentsResponse, type ReplyCommentResponse, type PlatformComment, type PlatformStats } from '../SchedulerPost.service';
+import { BaseSchedulerPlugin, type PluginPostDetails, type PluginSocialMediaAccount, type PostResponse, type GetCommentsResponse, type ReplyCommentResponse, type PlatformComment, type PlatformStats, type PostInsight, createPostInsightsFallback, extractExternalPostId } from '../SchedulerPost.service';
 import type { FacebookPage } from '#layers/BaseConnect/utils/FacebookPages';
 
 type LinkedInApiOrgElement = {
@@ -153,6 +153,50 @@ export class LinkedInPagePlugin extends BaseSchedulerPlugin {
       };
     }
   }
+
+  async getPostInsights(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount
+  ): Promise<PostInsight[]> {
+    const externalPostId = extractExternalPostId(postDetails, socialMediaAccount) || postDetails.postId;
+    if (!externalPostId) {
+      return createPostInsightsFallback(this.pluginName);
+    }
+
+    try {
+      const response = await fetch(
+        `https://api.linkedin.com/v2/organizationalEntityShareStatistics?q=organizationalEntity&organizationalEntity=${socialMediaAccount.accountId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${socialMediaAccount.accessToken}`,
+            'LinkedIn-Version': '202401',
+          },
+        }
+      );
+      const postsData = await response.json();
+      const elements = postsData.elements || [];
+      const post = elements.find(
+        (el: { share?: string }) => el.share && el.share.includes(externalPostId)
+      );
+
+      if (!post) {
+        return createPostInsightsFallback(this.pluginName);
+      }
+
+      const stats = post?.totalShareStatistics || {};
+      return [
+        { label: 'Likes', value: stats.likeCount || 0 },
+        { label: 'Comments', value: stats.commentCount || 0 },
+        { label: 'Shares', value: stats.shareCount || 0 },
+        { label: 'Impressions', value: stats.impressionCount || 0 },
+        { label: 'Clicks', value: stats.clickCount || 0 },
+      ];
+    } catch (error) {
+      log.error({ content: 'LinkedIn Page post insights fetch failed', plugin: 'linkedin-page', error: (error as Error).message });
+      return createPostInsightsFallback(this.pluginName);
+    }
+  }
+
   static readonly pluginName = 'linkedin-page';
   readonly pluginName = 'linkedin-page';
 

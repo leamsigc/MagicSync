@@ -262,7 +262,7 @@ export default defineEventHandler(async (event) => {
   log.set({ postId: result.data.id, status: isImmediate ? 'published' : 'scheduled' })
 
   if (isImmediate) {
-    const fullPost = await postService.findByIdFull({ postId: result.data.id })
+    const fullPost = await postService.findByIdFull({ postId: result.data.id, userId })
     if (fullPost) {
       await ScheduleRefreshSocialMediaTokens(fullPost, userId, getHeaders(event))
       const trigger = new AutoPostService()
@@ -270,7 +270,7 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  const fullPost = await postService.findByIdFull({ postId: result.data.id })
+  const fullPost = await postService.findByIdFull({ postId: result.data.id, userId })
   const platformStatuses = fullPost?.platformPosts?.map((pp: any) => ({
     platform: pp.platform,
     accountId: pp.socialAccountId,

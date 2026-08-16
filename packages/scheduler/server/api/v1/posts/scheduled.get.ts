@@ -29,8 +29,8 @@ export default defineEventHandler(async (event) => {
     }
 
     log.set({ userId: session.user.id, beforeDate: beforeDate?.toISOString() })
-    // Get scheduled posts
-    const result = await postService.findScheduledPosts(beforeDate)
+    // Get scheduled posts — scoped to the current user
+    const result = await postService.findScheduledPosts(session.user.id, beforeDate)
 
     if (!result) {
       log.set({ error: 'Failed to fetch scheduled posts' })

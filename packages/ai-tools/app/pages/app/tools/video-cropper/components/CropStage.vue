@@ -136,6 +136,7 @@ watch(() => currentTime.value, updateCropBoxFromTime)
 watch(() => activeLayerId.value, updateCropBoxFromTime)
 watch(() => layers.value.length, updateCropBoxFromTime)
 watch(() => cropBoxAspectRatio.value, updateCropBoxFromTime)
+watch(() => activeLayer.value?.keyframes, updateCropBoxFromTime, { deep: true })
 
 onMounted(() => {
   syncCropBox()

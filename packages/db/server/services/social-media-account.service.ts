@@ -76,6 +76,21 @@ export interface ConnectionWithManagers {
   availableBusinesses: Array<{ id: string; name: string }>
 }
 
+/**
+ * SECURITY: Strip sensitive token columns before returning accounts to the client.
+ * Never expose accessToken / refreshToken (plaintext or encrypted) via API responses.
+ */
+export function sanitizeSocialMediaAccount<T extends SocialMediaAccount>(
+  account: T
+): Omit<T, 'accessToken' | 'refreshToken' | 'accessTokenEncrypted' | 'refreshTokenEncrypted'> {
+  const { accessToken: _at, refreshToken: _rt, accessTokenEncrypted: _ate, refreshTokenEncrypted: _rte, ...safeAccount } = account
+  void _at
+  void _rt
+  void _ate
+  void _rte
+  return safeAccount
+}
+
 export class SocialMediaAccountService implements SocialMediaAccountServiceType {
   private db = useDrizzle()
 

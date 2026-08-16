@@ -24,15 +24,14 @@ import MediaStats from './components/MediaStats.vue'
 const { t } = useI18n()
 const toast = useToast()
 
+// App-wide active business, populated by the connect global business-check middleware
+const activeBusinessId = useState<string | undefined>('business:id')
+
 // Composables
 const {
   assets,
   selectedAssets,
-  isLoading,
   error,
-  pagination,
-  fetchAssets,
-  uploadFiles,
   deleteAssets,
   getStorageUsage,
   clearError
@@ -47,50 +46,26 @@ const searchQuery = ref('')
 const viewMode = ref<'grid' | 'list'>('grid')
 
 // Computed
-const selectedBusinessId = ref<string>()
+const selectedBusinessId = ref<string | undefined>(activeBusinessId.value)
 const hasSelectedBusiness = computed(() => !!selectedBusinessId.value)
 const storageUsage = computed(() => getStorageUsage())
 
-const filteredAssets = computed(() => {
-  let filtered = assets.value
-
-  // Filter by type
-  if (filterType.value !== 'all') {
-    filtered = filtered.filter(asset => {
-      if (filterType.value === 'image') return asset.mimeType.startsWith('image/')
-      if (filterType.value === 'video') return asset.mimeType.startsWith('video/')
-      if (filterType.value === 'document') return !asset.mimeType.startsWith('image/') && !asset.mimeType.startsWith('video/')
-      return true
-    })
-  }
-
-  // Filter by search query
-  if (searchQuery.value.trim()) {
-    const query = searchQuery.value.toLowerCase()
-    filtered = filtered.filter(asset =>
-      asset.originalName.toLowerCase().includes(query) ||
-      asset.filename.toLowerCase().includes(query)
-    )
-  }
-
-  return filtered
+// Keep the selected business in sync with the app-wide active business
+watch(activeBusinessId, (id) => {
+  selectedBusinessId.value = id
 })
 
 const assetStats = computed(() => {
+  const list = assets.value ?? []
   return {
-    total: assets.value.length,
-    images: assets.value.filter(a => a.mimeType.startsWith('image/')).length,
-    videos: assets.value.filter(a => a.mimeType.startsWith('video/')).length,
-    documents: assets.value.filter(a => !a.mimeType.startsWith('image/') && !a.mimeType.startsWith('video/')).length
+    total: list.length,
+    images: list.filter(a => a.mimeType.startsWith('image/')).length,
+    videos: list.filter(a => a.mimeType.startsWith('video/')).length,
+    documents: list.filter(a => !a.mimeType.startsWith('image/') && !a.mimeType.startsWith('video/')).length
   }
 })
 
 // Methods
-const loadAssets = async () => {
-  if (!selectedBusinessId.value) return
-  await fetchAssets(selectedBusinessId.value)
-}
-
 const handleFileUpload = async (files: File[]) => {
 
   useToast().add({
@@ -127,21 +102,6 @@ const handleDeleteSelected = async () => {
 }
 
 
-// Initialize
-onMounted(async () => {
-  // await ensureInitialized()
-  if (selectedBusinessId.value) {
-    await loadAssets()
-  }
-})
-
-// Watch for business changes
-watch(selectedBusinessId, async (newBusinessId) => {
-  if (newBusinessId) {
-    await loadAssets()
-  }
-})
-
 const handleOpenEditModal = (asset: Asset) => {
   selectedAssetForEdit.value = asset
   showEditor.value = true
@@ -160,7 +120,7 @@ const handleDeleteAsset = (asset: Asset[]) => {
   <UContainer class="py-6 space-y-6 ">
     <!-- Header -->
     <MediaPageHeader :selected-assets-count="selectedAssets.length" @delete-selected="handleDeleteSelected"
-      @upload-assets="showUploader = true" />
+      @upload-assets="showUploader = true" data-tour="add-assets-step-0" />
 
     <!-- Business Selection Warning -->
     <UAlert v-if="!hasSelectedBusiness" color="neutral" variant="soft" icon="lucide:info" class="mb-4">
@@ -194,10 +154,10 @@ const handleDeleteAsset = (asset: Asset[]) => {
 
       <!-- Filters and Search -->
       <MediaFilters v-model:filter-type="filterType" v-model:search-query="searchQuery" v-model:view-mode="viewMode"
-        hide-view-mode />
+        hide-view-mode data-tour="add-assets-step-1" />
 
       <!-- Asset Gallery -->
-      <UCard class="p-6" variant="soft">
+      <UCard class="p-6" variant="soft" data-tour="add-assets-step-2">
         <MediaGallery :business-id="selectedBusinessId" :selectable="true" :multi-select="true" :show-uploader="false"
           :filter-type="filterType" @select="(asset: Asset) => console.log('Selected:', asset)"
           @deselect="(asset: Asset) => console.log('Deselected:', asset)" @upload="handleFileUpload"

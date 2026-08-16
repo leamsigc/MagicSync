@@ -421,6 +421,11 @@ export const auth = betterAuth({
         configId: "org-keys",
         defaultPrefix: "org_",
         references: "organization", // Owned by organizations
+        rateLimit: {
+          enabled: true,
+          timeWindow: 1000 * 60 * 60 * 24, // 1 day
+          maxRequests: 50, // 50 requests per day
+        },
       },
     ])
   ],

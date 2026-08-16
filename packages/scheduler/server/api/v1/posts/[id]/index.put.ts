@@ -87,7 +87,7 @@ export default defineEventHandler(async (event) => {
 
     if (body.status === 'published') {
       log.set({ postId: result.data.id })
-      const fullPost = await postService.findByIdFull({ postId: result.data.id });
+      const fullPost = await postService.findByIdFull({ postId: result.data.id, userId: user.id });
       if (!fullPost || !fullPost) {
         log.error({ content: 'Failed to find post' })
         throw createError({
@@ -104,7 +104,7 @@ export default defineEventHandler(async (event) => {
       await trigger.triggerSocialMediaPost(fullPost);
     }
     // Fetch full post with platform statuses
-    const fullPost = await postService.findByIdFull({ postId: result.data.id })
+    const fullPost = await postService.findByIdFull({ postId: result.data.id, userId: user.id })
     const platformStatuses = fullPost.platformPosts?.map((pp: any) => ({
       platform: pp.platformPostId || pp.socialAccountId,
       status: pp.status,

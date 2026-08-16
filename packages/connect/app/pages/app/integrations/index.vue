@@ -80,8 +80,10 @@ watch(accountsList, () => {
   <div class="container mx-auto py-6 space-y-6">
     <BasePageHeader :title="t('title')" :description="t('description')" />
     <h3>Providers</h3>
-    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
-      <ConnectAddAccount />
+    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4" data-tour="connect-social-media-step-0">
+      <div data-tour="connect-social-media-step-1">
+        <ConnectAddAccount />
+      </div>
       <ConnectIntegrationCard v-for="connection in accountsList" :name="connection.providerId" :key="connection.id"
         :image="user && user.image ? user.image : ''" :icon="`logos:${connection.providerId}`" :tags="[]"
         :id="connection.id" :time="dayjs(connection.createdAt as unknown as string).format('YYYY-MM-DD')" connected
@@ -95,7 +97,7 @@ watch(accountsList, () => {
       </p>
     </div>
     <h3>Pages</h3>
-    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
+    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4" data-tour="connect-social-media-step-2">
       <template v-for="account in accountsList">
         <template v-if="account.entityDetail && account.entityDetail.details.pages">
           <ConnectIntegrationCard v-for="social in account.entityDetail.details.pages" :name="social.name"

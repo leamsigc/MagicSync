@@ -1,4 +1,4 @@
-import { BaseSchedulerPlugin, type PluginPostDetails, type PluginSocialMediaAccount, type GetCommentsResponse, type ReplyCommentResponse, type PlatformComment, type PlatformStats, type PostResponse } from '../SchedulerPost.service';
+import { BaseSchedulerPlugin, type PluginPostDetails, type PluginSocialMediaAccount, type GetCommentsResponse, type ReplyCommentResponse, type PlatformComment, type PlatformStats, type PostResponse, type PostInsight, createPostInsightsFallback, extractExternalPostId } from '../SchedulerPost.service';
 import type { Post, PostWithAllData, Asset } from '#layers/BaseDB/db/schema';
 import { google, youtube_v3 } from 'googleapis';
 import type { YouTubeSettings } from '#layers/BaseScheduler/shared/platformSettings';
@@ -484,6 +484,46 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
         engagement: { total: 0 },
         growth: undefined,
       }
+    }
+  }
+
+  async getPostInsights(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount
+  ): Promise<PostInsight[]> {
+    const externalPostId = extractExternalPostId(postDetails, socialMediaAccount) || postDetails.postId;
+    if (!externalPostId) {
+      return createPostInsightsFallback(this.pluginName);
+    }
+
+    try {
+      const oauth2Client = new google.auth.OAuth2();
+      oauth2Client.setCredentials({
+        access_token: socialMediaAccount.accessToken,
+        refresh_token: socialMediaAccount.refreshToken,
+      });
+
+      const youtube = google.youtube({ version: 'v3', auth: oauth2Client });
+      const videosResponse = await youtube.videos.list({
+        part: ['statistics', 'snippet'],
+        id: [externalPostId],
+      });
+
+      const video = videosResponse.data.items?.[0];
+      if (!video) {
+        return createPostInsightsFallback(this.pluginName);
+      }
+
+      const vs = video.statistics || {};
+      return [
+        { label: 'Views', value: Number(vs.viewCount || 0) },
+        { label: 'Likes', value: Number(vs.likeCount || 0) },
+        { label: 'Comments', value: Number(vs.commentCount || 0) },
+        { label: 'Favorites', value: Number(vs.favoriteCount || 0) },
+      ];
+    } catch (error: unknown) {
+      log.error({ content: 'YouTube post insights fetch failed', plugin: 'youtube', error: (error as Error).message });
+      return createPostInsightsFallback(this.pluginName);
     }
   }
 

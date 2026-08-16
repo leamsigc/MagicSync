@@ -1,4 +1,4 @@
-import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service'
+import { socialMediaAccountService, sanitizeSocialMediaAccount } from '#layers/BaseDB/server/services/social-media-account.service'
 import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
 
 defineRouteMeta({
@@ -39,7 +39,11 @@ export default defineEventHandler(async (event) => {
 
     log.info({ message: 'Retrieved connection settings', accountId })
 
-    return settings
+    // SECURITY: strip token columns from the account before returning to the browser
+    return {
+      ...settings,
+      account: settings.account ? sanitizeSocialMediaAccount(settings.account) : settings.account,
+    }
   } catch (error) {
     log.error({ message: 'Failed to get connection settings', error })
 

@@ -1,5 +1,5 @@
-import type { PostResponse, GetCommentsResponse, ReplyCommentResponse, PlatformComment, PluginPostDetails, PluginSocialMediaAccount } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
-import { BaseSchedulerPlugin, type PlatformStats } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
+import type { PostResponse, GetCommentsResponse, ReplyCommentResponse, PlatformComment, PluginPostDetails, PluginSocialMediaAccount, PostInsight, PlatformStats } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
+import { BaseSchedulerPlugin, createPostInsightsFallback, extractExternalPostId } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import type { Post, PostWithAllData, SocialMediaAccount, Asset, PlatformContentOverride } from '#layers/BaseDB/db/schema';
 import type { InstagramSettings } from '#layers/BaseScheduler/shared/platformSettings';
 import { platformConfigurations } from '#layers/BaseScheduler/shared/platformConstants';
@@ -665,6 +665,39 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
         saves: totalSaves,
         likesReceived: totalLikes,
       },
+    }
+  }
+
+  async getPostInsights(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount
+  ): Promise<PostInsight[]> {
+    const externalPostId = extractExternalPostId(postDetails, socialMediaAccount);
+    if (!externalPostId) {
+      return createPostInsightsFallback(this.pluginName);
+    }
+
+    try {
+      const fields = 'id,caption,media_type,like_count,comments_count,reach,views,saved,share_count,timestamp';
+      const url = this._getGraphApiUrl(`${externalPostId}?fields=${fields}&access_token=${socialMediaAccount.accessToken}`);
+      const response = await fetch(url);
+      if (!response.ok) {
+        log.warn({ content: '[Instagram] Post insights error', status: response.status, body: await response.text() });
+        return createPostInsightsFallback(this.pluginName);
+      }
+      const media = await response.json();
+
+      return [
+        { label: 'Likes', value: media.like_count || 0 },
+        { label: 'Comments', value: media.comments_count || 0 },
+        { label: 'Reach', value: media.reach || 0 },
+        { label: 'Views', value: media.views || 0 },
+        { label: 'Saves', value: media.saved || 0 },
+        { label: 'Shares', value: media.share_count || 0 },
+      ];
+    } catch (error: unknown) {
+      log.warn({ content: 'Instagram post insights fetch failed', plugin: 'instagram', error: (error as Error).message });
+      return createPostInsightsFallback(this.pluginName);
     }
   }
 
