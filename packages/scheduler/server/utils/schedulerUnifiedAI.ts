@@ -33,7 +33,7 @@ import { userLlmConfigService } from '#layers/BaseDB/server/services/user-llm-co
 
 // System default configuration
 const SYSTEM_DEFAULT_PROVIDER = 'google';
-const SYSTEM_DEFAULT_MODEL = 'gemini-3-flash-preview';
+const SYSTEM_DEFAULT_MODEL = 'gemini-3.5-flash';
 const DEFAULT_TEMPERATURE = 0.7;
 
 type ProviderName = 'google' | 'ollama' | 'openai' | 'anthropic' | 'openrouter' | 'deepseek';
