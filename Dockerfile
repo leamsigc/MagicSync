@@ -6,11 +6,18 @@ FROM node:22-alpine AS builder
 # curl is required by the same script — node:22-alpine does NOT include curl
 # (busybox has wget, but the script's --retry/--location semantics need curl).
 RUN apk add --no-cache bash curl g++ make py3-pip vips-dev
-RUN npm install -g pnpm
 
 WORKDIR /usr/app
 
+# Pin pnpm to the exact version from the "packageManager" field in package.json.
+# Installing the latest pnpm (11.x) makes `pnpm i` fail on this lockfileVersion
+# 9.0 lockfile with:
+#   Cannot verify the identity of the @pnpm/exe.linux-x64 native binary:
+#   it is missing from pnpm-lock.yaml.
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN npm install -g pnpm@$(node -p "require('./package.json').packageManager.split('@')[1]")
+RUN pnpm --version
+
 COPY . .
 
 # The runtime image is node:22-alpine (musl libc). Hint to pnpm that it should

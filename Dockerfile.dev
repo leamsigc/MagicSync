@@ -1,11 +1,13 @@
 FROM node:24-alpine AS serve
-# RUN curl -sL https://unpkg.com/@pnpm/self-installer | node
-RUN npm install -g pnpm
-# RUN mkdir -p /usr/app/frontend/node_modules /usr/app/frontend/mainstream-lib/node_modules /usr/app/frontend/mainstream-lib/dist
-# RUN chown node /usr/app/frontend/node_modules /usr/app/frontend/mainstream-lib/node_modules /usr/app/frontend/mainstream-lib/dist
-# USER node
 
-WORKDIR  /usr/app/frontend
+WORKDIR /usr/app/frontend
+
+# Pin pnpm to the same version as the "packageManager" field in package.json.
+# The latest pnpm (11.x) fails on this lockfileVersion 9.0 lockfile with
+# "Cannot verify the identity of the @pnpm/exe.linux-x64 native binary".
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN npm install -g pnpm@$(node -p "require('./package.json').packageManager.split('@')[1]")
+
 COPY . .
 RUN pnpm i
 EXPOSE 3000
