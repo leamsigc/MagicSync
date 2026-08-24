@@ -1,0 +1,74 @@
+{
+  "en": {
+    "title": "Save to Library",
+    "description": "Save this creation to your media library so you can reuse it in posts.",
+    "nameLabel": "Asset name",
+    "actions": {
+      "confirm": "Save",
+      "cancel": "Cancel"
+    },
+    "messages": {
+      "savedTitle": "Saved to library",
+      "savedDescription": "Your asset is now available in your media library."
+    },
+    "errors": {
+      "unauthorized": "Please log in to save assets to your library.",
+      "uploadFailedTitle": "Could not save asset",
+      "generic": "Something went wrong while saving. Please try again."
+    }
+  },
+  "es": {
+    "title": "Guardar en la Biblioteca",
+    "description": "Guarda esta creación en tu biblioteca de medios para reutilizarla en publicaciones.",
+    "nameLabel": "Nombre del recurso",
+    "actions": {
+      "confirm": "Guardar",
+      "cancel": "Cancelar"
+    },
+    "messages": {
+      "savedTitle": "Guardado en la biblioteca",
+      "savedDescription": "Tu recurso ya está disponible en tu biblioteca de medios."
+    },
+    "errors": {
+      "unauthorized": "Inicia sesión para guardar recursos en tu biblioteca.",
+      "uploadFailedTitle": "No se pudo guardar el recurso",
+      "generic": "Algo salió mal al guardar. Inténtalo de nuevo."
+    }
+  },
+  "de": {
+    "title": "In Bibliothek speichern",
+    "description": "Speichere diese Kreation in deiner Medienbibliothek, um sie in Beiträgen wiederzuverwenden.",
+    "nameLabel": "Name des Assets",
+    "actions": {
+      "confirm": "Speichern",
+      "cancel": "Abbrechen"
+    },
+    "messages": {
+      "savedTitle": "In Bibliothek gespeichert",
+      "savedDescription": "Dein Asset ist jetzt in deiner Medienbibliothek verfügbar."
+    },
+    "errors": {
+      "unauthorized": "Bitte melde dich an, um Assets in deiner Bibliothek zu speichern.",
+      "uploadFailedTitle": "Asset konnte nicht gespeichert werden",
+      "generic": "Beim Speichern ist etwas schiefgelaufen. Bitte versuche es erneut."
+    }
+  },
+  "fr": {
+    "title": "Enregistrer dans la Bibliothèque",
+    "description": "Enregistrez cette création dans votre médiathèque pour la réutiliser dans vos publications.",
+    "nameLabel": "Nom du fichier",
+    "actions": {
+      "confirm": "Enregistrer",
+      "cancel": "Annuler"
+    },
+    "messages": {
+      "savedTitle": "Enregistré dans la bibliothèque",
+      "savedDescription": "Votre fichier est désormais disponible dans votre médiathèque."
+    },
+    "errors": {
+      "unauthorized": "Connectez-vous pour enregistrer des fichiers dans votre bibliothèque.",
+      "uploadFailedTitle": "Impossible d'enregistrer le fichier",
+      "generic": "Une erreur s'est produite lors de l'enregistrement. Veuillez réessayer."
+    }
+  }
+}

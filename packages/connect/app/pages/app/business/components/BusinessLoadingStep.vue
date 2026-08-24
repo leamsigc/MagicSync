@@ -8,9 +8,13 @@ interface Props {
   steps: Step[]
   loading: boolean
   visible: boolean
+  /** Backend-driven active step index (null = timer mode) */
+  activeStep?: number | null
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  activeStep: null
+})
 
 const emit = defineEmits<{
   'update:visible': [value: boolean]
@@ -44,7 +48,7 @@ const handleClose = () => {
       </div>
     </div>
     <template #content>
-      <MultiStepLoader :steps="steps" :loading="loading" @close="handleClose" />
+      <MultiStepLoader :steps="steps" :loading="loading" :active-step="activeStep" @close="handleClose" />
     </template>
 
   </UModal>

@@ -14,7 +14,7 @@
 import type { SocialMediaPlatform } from '#layers/BaseUI/app/composables/usePlatformIcons'
 import { usePlatformIcons } from '#layers/BaseUI/app/composables/usePlatformIcons'
 import type { EChartsOption } from 'echarts'
-import type { DashboardData, CollectStatsResult, PlatformStats, PlatformGraph } from '~~/app/composables/usePlatformStats'
+import type { CollectStatsResult, PlatformStats, PlatformGraph } from '~~/app/composables/usePlatformStats'
 
 const { t } = useI18n()
 const { getPlatformIcon } = usePlatformIcons()
@@ -22,6 +22,7 @@ const { dashboard, fetchDashboard, collectStats, collecting } = usePlatformStats
 const { user } = UseUser()
 const toast = useToast()
 const colorMode = useColorMode()
+const { steps: setupSteps, fetch: fetchSetupState } = useGettingStarted()
 
 async function handleCollectStats() {
   if (user.value?.id) {
@@ -221,13 +222,28 @@ function getChartOptions(platformGraph: PlatformGraph): EChartsOption {
 
 onMounted(async () => {
   if (user.value?.id) {
-    await fetchDashboard({})
+    await Promise.all([fetchDashboard({}), fetchSetupState()])
   }
 })
 </script>
 
 <template>
-  <BaseDashboardOverviewCards :display-metrics="displayMetrics">
+  <div class="space-y-6">
+    <BaseGettingStarted v-if="user?.id" :steps="setupSteps" />
+
+    <div class="flex flex-wrap items-center gap-2">
+      <UButton to="/app/posts/new" icon="i-lucide-plus" size="lg">
+        {{ t('quickCreatePost') }}
+      </UButton>
+      <UButton to="/app/integrations" icon="i-lucide-plug" variant="outline" color="neutral" size="lg">
+        {{ t('quickConnect') }}
+      </UButton>
+      <UButton to="/app/calendar" icon="i-lucide-calendar" variant="ghost" color="neutral" size="lg">
+        {{ t('quickCalendar') }}
+      </UButton>
+    </div>
+
+    <BaseDashboardOverviewCards :display-metrics="displayMetrics">
     <template v-if="dashboard">
       <div class="col-span-1 lg:col-span-3">
         <div class="flex items-center justify-between mb-6">
@@ -366,7 +382,8 @@ onMounted(async () => {
         <UIcon name="i-heroicons-arrow-path" class="w-8 h-8 animate-spin text-muted-foreground" />
       </div>
     </template>
-  </BaseDashboardOverviewCards>
+    </BaseDashboardOverviewCards>
+  </div>
 </template>
 
 <style scoped></style>

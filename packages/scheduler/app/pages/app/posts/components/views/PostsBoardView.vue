@@ -1,6 +1,5 @@
 <script lang="ts" setup>
 import { computed } from 'vue';
-import DefaultPreview from '../DefaultPreview.vue';
 import type { PlatformPost, PostWithAllData, PublishDetail } from '#layers/BaseDB/db/posts/posts';
 import dayjs from 'dayjs';
 
@@ -34,6 +33,11 @@ const getPlatformDetails = (platform: PlatformPost): PublishDetail => {
   const details = JSON.parse(platform.publishDetail as unknown as string || '{}');
   return new Map(Object.entries(details));
 };
+
+const router = useRouter();
+const openPost = (id: string) => {
+  router.push(`/app/posts/feeds/${id}`);
+};
 </script>
 
 <template>
@@ -41,7 +45,8 @@ const getPlatformDetails = (platform: PlatformPost): PublishDetail => {
     <div v-for="(postsInGroup, status) in groupedPosts" :key="status" class="bg-elevated rounded-2xl  overflow-hidden">
       <div class="px-4 py-3.5 ">
         <div class="flex items-center gap-2">
-          <span class="w-2 h-2 rounded-full" :class="{
+          <span
+class="w-2 h-2 rounded-full" :class="{
             'bg-warning': status === 'pending',
             'bg-success': status === 'published',
             'bg-error': status === 'failed',
@@ -54,7 +59,10 @@ const getPlatformDetails = (platform: PlatformPost): PublishDetail => {
       <div class="p-3 space-y-3 max-h-[70vh] overflow-y-auto">
         <template v-for="post in postsInGroup" :key="post.id">
           <div
-            class="bg-elevated rounded-xl hover:shadow-sm hover:-translate-y-0.5 transition-all duration-180  overflow-hidden">
+            class="bg-elevated rounded-xl hover:shadow-sm hover:-translate-y-0.5 transition-all duration-180  overflow-hidden cursor-pointer"
+            role="link" tabindex="0" :aria-label="`Open post details`"
+            @click="openPost(post.id)"
+            @keydown.enter="openPost(post.id)">
             <div class="p-3.5 space-y-3">
               <div class="flex items-center gap-2">
                 <div class="size-5 rounded-lg bg-black/5 dark:bg-white/5 flex items-center justify-center shrink-0">
@@ -65,8 +73,9 @@ const getPlatformDetails = (platform: PlatformPost): PublishDetail => {
               </div>
               <p class="text-sm text-toned line-clamp-3 leading-relaxed">{{ post.content }}</p>
               <div class="flex flex-wrap gap-1.5">
-                <UBadge color="primary" variant="soft" size="xs" v-for="platform in post.platformPosts"
-                  :key="platform.id">
+                <UBadge
+v-for="platform in post.platformPosts" :key="platform.id" color="primary" variant="soft"
+                  size="xs">
                   <Icon :name="`logos:${platform.platformPostId ?? 'facebook'}`" class="size-3" />
                   {{ platform.status }}
                 </UBadge>
@@ -87,10 +96,11 @@ const getPlatformDetails = (platform: PlatformPost): PublishDetail => {
                   </UBadge>
                 </div>
               </div>
-              <div v-if="status === 'published'" class="pt-2 border-t border-border/30">
+              <div v-if="status === 'published'" class="pt-2 border-t border-border/30" @click.stop>
                 <div class="flex items-center gap-2 flex-wrap">
-                  <UButton color="neutral" variant="soft" size="xs" v-for="platform in post.platformPosts"
-                    :key="platform.id" target="_blank" class="rounded-lg"
+                  <UButton
+v-for="platform in post.platformPosts" :key="platform.id" color="neutral" variant="soft"
+                    size="xs" target="_blank" class="rounded-lg"
                     :to="getPlatformDetails(platform).get(platform.socialAccountId)?.publishedUrl">
                     <UIcon name="lucide:link" class="size-3" />
                     {{ getPlatformDetails(platform).get(platform.socialAccountId)?.publishedUrl ?

@@ -110,12 +110,18 @@ const handleEditSaved = async () => {
 </script>
 
 <template>
+  <!-- eslint-disable-next-line vue/no-multiple-template-root -- card + modals are an intentional Vue 3 fragment -->
   <UPageCard :ui="{ body: 'flex-col p-0', root: 'md:min-h-60 p-0', wrapper: 'p-2', container: 'p-0 sm:p-2' }">
-    <section class="relative flex flex-col items-center justify-center p-2">
-      <UAvatar :src="props.image" class="w-12 h-12 border-2 relative" :class="{ 'border-primary': connected }" />
-      <div v-if="props.icon" class="">
-        <UAvatar :icon="props.icon === 'logos:linkedin-page' ? 'logos:linkedin' : props.icon" size="2xl"
-          class="bg-white dark:bg-gray-900" />
+    <section class="relative flex flex-col items-center justify-center p-4">
+      <div class="relative mb-3">
+        <UAvatar :src="props.image" class="size-14 border-2" :class="{ 'border-primary': connected }" />
+        <span
+v-if="props.icon"
+          class="absolute -bottom-1.5 -right-1.5 rounded-full ring-2 ring-background inline-flex">
+          <UAvatar
+:icon="props.icon === 'logos:linkedin-page' ? 'logos:linkedin' : props.icon" size="sm"
+            class="bg-white dark:bg-gray-900" />
+        </span>
       </div>
       <section class="text-center">
         <h3 class="text-lg font-semibold">{{ props.name }}</h3>
@@ -131,7 +137,8 @@ const handleEditSaved = async () => {
                 <span class="w-2 h-2 rounded-full bg-green-600 dark:bg-green-400" />
               </span>
             </UTooltip>
-            <UTooltip v-else-if="props.health.status === 'expiring_soon'"
+            <UTooltip
+v-else-if="props.health.status === 'expiring_soon'"
               :text="`Expires in ${props.health.daysRemaining} day${props.health.daysRemaining === 1 ? '' : 's'}`">
               <span class="inline-flex items-center gap-1 text-xs text-yellow-600 dark:text-yellow-400">
                 <span class="w-2 h-2 rounded-full bg-yellow-600 dark:bg-yellow-400" />
@@ -152,21 +159,22 @@ const handleEditSaved = async () => {
           </template>
         </div>
       </section>
-      <div class="absolute top-1 right-1" v-if="props.showMenu">
+      <div v-if="props.showMenu" class="absolute top-1 right-1">
         <UDropdownMenu :items="items" :popper="{ placement: 'bottom-start' }">
           <UButton color="neutral" variant="ghost" icon="i-heroicons-ellipsis-vertical-20-solid" />
         </UDropdownMenu>
       </div>
     </section>
   </UPageCard>
-  <UModal v-model:open="modalStatus" :title="t('modal.select_page_title')"
+  <UModal
+v-model:open="modalStatus" :title="t('modal.select_page_title')"
     :description="t('modal.select_page_description')" class="md:min-w-4xl">
 
     <template #body>
       <section class="grid md:grid-cols-3 gap-2">
         <UPageCard
-          :ui="{ body: 'sm:p-0 p-0', root: 'sm:p-0 p-0 cursor-pointer', wrapper: 'p-0', container: 'p-0 sm:p-0' }"
-          v-for="page in facebookPages" :key="page.id" @click="HandleConnectTo(page)">
+          v-for="page in facebookPages"
+          :key="page.id" :ui="{ body: 'sm:p-0 p-0', root: 'sm:p-0 p-0 cursor-pointer', wrapper: 'p-0', container: 'p-0 sm:p-0' }" @click="HandleConnectTo(page)">
           <section class="relative flex flex-col items-center justify-center p-4">
             <UAvatar :src="page.imageBase64 || page.picture.data.url" class="size-20 border border-primary relative" />
             <section class="text-center">
@@ -183,7 +191,9 @@ const handleEditSaved = async () => {
       </section>
     </template>
   </UModal>
-  <EditConnectionModal v-model="editModalStatus" :connectionId="props.id" :connectionName="props.name"
+  <!-- eslint-disable-next-line vue/no-multiple-template-root -- intentional Vue 3 fragment -->
+  <EditConnectionModal
+v-model="editModalStatus" :connection-id="props.id" :connection-name="props.name"
     @saved="handleEditSaved" />
 </template>
 <style scoped></style>

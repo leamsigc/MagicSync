@@ -3,7 +3,7 @@ import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers';
 export default defineEventHandler(async (event) => {
   const log = useLogger(event)
   const path = event.path
-  const publicApiPrefixes = ['/api/v1/assets/public', '/api/v1/podcast/search', '/api/v1/podcast/feed', '/api/v1/podcast/audio']
+  const publicApiPrefixes = ['/api/v1/assets/public', '/api/v1/podcast/search', '/api/v1/podcast/feed', '/api/v1/podcast/audio', '/api/v1/menu-board/public']
   const isPathPublic = publicApiPrefixes.some(prefix => path?.startsWith(prefix))
 
   if (path?.startsWith('/api/v1') && !isPathPublic) {

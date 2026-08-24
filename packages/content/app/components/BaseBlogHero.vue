@@ -15,7 +15,8 @@ import type { Collections } from '@nuxt/content';
 const router = useRouter();
 const { locale } = useI18n()
 const blogCollection = (`blog_${locale.value}`) as keyof Collections
-const path = router.currentRoute.value.path.replace('/blogs', '');
+// Stored paths include the public `/blogs` segment; normalize locale prefixes only.
+const path = router.currentRoute.value.path.replace(/^\/(?:es|de|fr)?\/blogs/, '/blogs');
 const { data } = await useAsyncData(`${path}-blog-hero`, () =>
   queryCollection(blogCollection as "blog_en").path(path)
     .select('title', 'description', 'image', 'publishedAt', 'author')

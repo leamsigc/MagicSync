@@ -19,12 +19,14 @@ const { locale, localeProperties } = useI18n()
 
 const slug = computed(() => withLeadingSlash(String(route.params.slug||'')))
 
-
+// Blog documents are stored with the public `/blogs` prefix (see content.config.ts),
+// so normalize any locale-prefixed route (/es/blogs/x -> /blogs/x) before querying.
+const blogPath = computed(() => route.path.replace(/^\/(?:es|de|fr)?\/blogs/, '/blogs'))
 
 const { data: page } = await useAsyncData(`page-${slug.value}`, async () => {
 
   const collection = (`${collectionType}_${locale.value}`) as keyof Collections
-  const path = collectionType === 'blog' ? `${route.path.replace('/blogs', '')}` : slug.value.replace(',', '/')
+  const path = collectionType === 'blog' ? blogPath.value : slug.value.replace(',', '/')
 
 
   let content = await queryCollection(collection).path(`${path}`).first()
@@ -32,7 +34,7 @@ const { data: page } = await useAsyncData(`page-${slug.value}`, async () => {
   // Fallback to default locale if content is missing
   if (!content && locale.value !== 'en') {
     const defaultCollection = (`${collectionType}_en`) as keyof Collections;
-    content = await queryCollection(defaultCollection).path(`${slug.value}`).first()
+    content = await queryCollection(defaultCollection).path(`${collectionType === 'blog' ? blogPath.value : slug.value}`).first()
   }
 
   return content

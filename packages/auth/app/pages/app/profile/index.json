@@ -31,6 +31,13 @@
         "theme": {
             "title": "Color Theme",
             "description": "Choose your preferred color palette"
+        },
+        "shortcuts": {
+            "title": "Quick links",
+            "account": "Account settings",
+            "apiKeys": "API keys",
+            "notifications": "Notifications",
+            "business": "My business"
         }
     },
     "es": {
@@ -65,6 +72,13 @@
         "theme": {
             "title": "Tema de Color",
             "description": "Elige tu paleta de colores preferida"
+        },
+        "shortcuts": {
+            "title": "Enlaces rápidos",
+            "account": "Configuración de la cuenta",
+            "apiKeys": "Claves API",
+            "notifications": "Notificaciones",
+            "business": "Mi negocio"
         }
     },
     "de": {
@@ -99,6 +113,13 @@
         "theme": {
             "title": "Farbthema",
             "description": "Wählen Sie Ihre bevorzugte Farbpalette"
+        },
+        "shortcuts": {
+            "title": "Schnellzugriffe",
+            "account": "Kontoeinstellungen",
+            "apiKeys": "API-Schlüssel",
+            "notifications": "Benachrichtigungen",
+            "business": "Mein Unternehmen"
         }
     },
     "fr": {
@@ -133,6 +154,13 @@
         "theme": {
             "title": "Thème de Couleur",
             "description": "Choisissez votre palette de couleurs préférée"
+        },
+        "shortcuts": {
+            "title": "Liens rapides",
+            "account": "Paramètres du compte",
+            "apiKeys": "Clés API",
+            "notifications": "Notifications",
+            "business": "Mon entreprise"
         }
     }
 }

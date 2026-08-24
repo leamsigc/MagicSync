@@ -44,6 +44,7 @@
       "noPlatformSelected": "At least one platform must be selected.",
       "unknownError": "An unknown error occurred during validation.",
       "postInvalidForPlatform": "Post is invalid for {platform}",
+      "commentTooLong": "Comment {index} exceeds the character limit for {platform} (max {max})",
       "previewErrors": "Validation Errors:",
       "platformError": "{platform}: {message}"
     },
@@ -63,7 +64,24 @@
     },
     "feeds": {
       "noMorePosts": "No more posts to load",
+      "openFullFeed": "Open full feed",
       "noPostsFound": "No posts found"
+    },
+    "autoFormat": {
+      "toggle": "Smart Format",
+      "title": "Platform Auto-Format",
+      "description": "Long posts are split into platform-sized threads: the master post stays as-is, short-limit platforms get the first chunk as the post and the rest as comments.",
+      "emptyState": "Write your post first.",
+      "noPlatforms": "Select at least one platform to analyze limits.",
+      "applyAll": "Auto-format all",
+      "apply": "Apply",
+      "threadBadge": "Thread · {parts} parts",
+      "truncateBadge": "Will truncate (no thread support)",
+      "fitsBadge": "Fits",
+      "nothingToApply": "Everything already fits.",
+      "appliedTitle": "Platforms formatted",
+      "appliedDescription": "{count} platform(s) now have custom overrides.",
+      "appliedOne": "{platform} override created."
     }
   },
   "es": {
@@ -109,6 +127,7 @@
       "noPlatformSelected": "Se debe seleccionar al menos una plataforma.",
       "unknownError": "Ocurrió un error desconocido durante la validación.",
       "postInvalidForPlatform": "La publicación no es válida para {platform}",
+      "commentTooLong": "El comentario {index} supera el límite de caracteres de {platform} (máx {max})",
       "previewErrors": "Errores de validación:",
       "platformError": "{platform}: {message}"
     },
@@ -128,7 +147,24 @@
     },
     "feeds": {
       "noMorePosts": "No hay más publicaciones para cargar",
+      "openFullFeed": "Abrir el feed completo",
       "noPostsFound": "No se encontraron publicaciones"
+    },
+    "autoFormat": {
+      "toggle": "Formato inteligente",
+      "title": "Auto-formato por plataforma",
+      "description": "Las publicaciones largas se dividen en hilos según cada plataforma: la publicación maestra queda igual, y las plataformas con límites cortos usan el primer fragmento como publicación y el resto como comentarios.",
+      "emptyState": "Escribe primero tu publicación.",
+      "noPlatforms": "Selecciona al menos una plataforma para analizar los límites.",
+      "applyAll": "Auto-formatear todo",
+      "apply": "Aplicar",
+      "threadBadge": "Hilo · {parts} partes",
+      "truncateBadge": "Se truncará (sin soporte de hilos)",
+      "fitsBadge": "Encaja",
+      "nothingToApply": "Todo ya encaja.",
+      "appliedTitle": "Plataformas formateadas",
+      "appliedDescription": "{count} plataforma(s) tienen ahora contenido personalizado.",
+      "appliedOne": "Contenido personalizado creado para {platform}."
     }
   },
   "fr": {
@@ -174,6 +210,7 @@
       "noPlatformSelected": "Au moins une plateforme doit être sélectionnée.",
       "unknownError": "Une erreur inconnue est survenue lors de la validation.",
       "postInvalidForPlatform": "La publication est invalide pour {platform}",
+      "commentTooLong": "Le commentaire {index} dépasse la limite de caractères de {platform} (max {max})",
       "previewErrors": "Erreurs de validation :",
       "platformError": "{platform} : {message}"
     },
@@ -193,7 +230,24 @@
     },
     "feeds": {
       "noMorePosts": "Plus de publications à charger",
+      "openFullFeed": "Ouvrir le fil complet",
       "noPostsFound": "Aucune publication trouvée"
+    },
+    "autoFormat": {
+      "toggle": "Formatage intelligent",
+      "title": "Auto-formatage par plateforme",
+      "description": "Les publications longues sont divisées en fils adaptés à chaque plateforme : la publication maître reste intacte, et les plateformes à limite courte utilisent le premier segment comme publication et le reste en commentaires.",
+      "emptyState": "Rédigez d'abord votre publication.",
+      "noPlatforms": "Sélectionnez au moins une plateforme pour analyser les limites.",
+      "applyAll": "Tout auto-formater",
+      "apply": "Appliquer",
+      "threadBadge": "Fil · {parts} parties",
+      "truncateBadge": "Sera tronqué (fil non pris en charge)",
+      "fitsBadge": "Conforme",
+      "nothingToApply": "Tout convient déjà.",
+      "appliedTitle": "Plateformes formatées",
+      "appliedDescription": "{count} plateforme(s) ont désormais un contenu personnalisé.",
+      "appliedOne": "Contenu personnalisé créé pour {platform}."
     }
   },
   "de": {
@@ -239,6 +293,7 @@
       "noPlatformSelected": "Mindestens eine Plattform muss ausgewählt werden.",
       "unknownError": "Während der Validierung ist ein unbekannter Fehler aufgetreten.",
       "postInvalidForPlatform": "Beitrag ist ungültig für {platform}",
+      "commentTooLong": "Kommentar {index} überschreitet das Zeichenlimit von {platform} (max {max})",
       "previewErrors": "Validierungsfehler:",
       "platformError": "{platform}: {message}"
     },
@@ -258,7 +313,24 @@
     },
     "feeds": {
       "noMorePosts": "Keine weiteren Beiträge zum Laden",
+      "openFullFeed": "Vollständigen Feed öffnen",
       "noPostsFound": "Keine Beiträge gefunden"
+    },
+    "autoFormat": {
+      "toggle": "Smart-Format",
+      "title": "Auto-Formatierung pro Plattform",
+      "description": "Lange Beiträge werden in plattformgerechte Threads aufgeteilt: Der Master-Beitrag bleibt unverändert, Plattformen mit kurzen Limits nutzen das erste Segment als Beitrag und den Rest als Kommentare.",
+      "emptyState": "Schreiben Sie zuerst Ihren Beitrag.",
+      "noPlatforms": "Wählen Sie mindestens eine Plattform aus, um die Limits zu prüfen.",
+      "applyAll": "Alle auto-formatieren",
+      "apply": "Anwenden",
+      "threadBadge": "Thread · {parts} Teile",
+      "truncateBadge": "Wird gekürzt (keine Thread-Unterstützung)",
+      "fitsBadge": "Passt",
+      "nothingToApply": "Alles passt bereits.",
+      "appliedTitle": "Plattformen formatiert",
+      "appliedDescription": "{count} Plattform(en) haben jetzt eigene Inhalte.",
+      "appliedOne": "Eigener Inhalt für {platform} erstellt."
     }
   }
 }

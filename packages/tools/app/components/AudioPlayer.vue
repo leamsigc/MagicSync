@@ -107,18 +107,18 @@ function setPlaybackRate(rate: number) {
 </script>
 
 <template>
-  <div class=" border border-white/0 rounded-2xl p-6 flex flex-col gap-6">
+  <div class=" border border-default rounded-2xl p-6 flex flex-col gap-6">
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-4">
         <UButton :icon="isPlaying ? 'i-lucide-pause' : 'i-lucide-play'" color="success" size="lg" class="rounded-full"
           @click="togglePlay" />
         <div>
-          <div class="text-sm font-mono text-white">
-            {{ formatTime(currentTime) }} <span class="text-gray-500">/ {{ formatTime(duration) }}</span>
+          <div class="text-sm font-mono text-highlighted">
+            {{ formatTime(currentTime) }} <span class="text-dimmed">/ {{ formatTime(duration) }}</span>
           </div>
         </div>
       </div>
-      <div class="flex items-center gap-2 text-gray-400">
+      <div class="flex items-center gap-2 text-dimmed">
         <UButton variant="ghost" size="sm" icon="i-lucide-rotate-rewind" @click="skip(-10)" />
         <UButton variant="ghost" size="sm" icon="i-lucide-rotate-ccw" @click="skip(10)" />
         <USelect v-model="playbackRate" :items="[

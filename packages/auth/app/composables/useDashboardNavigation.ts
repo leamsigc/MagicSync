@@ -3,10 +3,11 @@ import menu from '../layouts/dashboard/Menu.json'
 
 /**
  * Composable for dashboard navigation links
- * Provides navigation items for the Twitter-style sidebar
+ * Organised for business owners: daily actions first,
+ * then content creation, then one-time setup.
  *
  * @author Reflect-Media <reflect.media GmbH>
- * @version 0.0.1
+ * @version 0.0.2
  */
 export const useDashboardNavigation = () => {
   const { locale, t } = useI18n()
@@ -18,280 +19,301 @@ export const useDashboardNavigation = () => {
   const isAdmin = computed(() => user.value?.role === 'admin')
 
   const navigationLinks = computed<NavigationMenuItem[]>(() => {
-    const menuData = menuItems.value
+    const m = menuItems.value
 
     const links: NavigationMenuItem[] = [
+      // ── Daily ──────────────────────────────────────────────
       {
-        label: menuData.menu.home,
+        label: m.menu.dashboard,
         icon: 'i-lucide-home',
-        to: '/app/home',
-        active: route.path === '/app/home'
-      },
-      {
-        label: menuData.menu.dashboard,
-        icon: 'i-lucide-square',
         to: '/app',
         active: route.path === '/app'
       },
       {
-        label: menuData.menu.media,
-        icon: 'i-lucide-image',
-        to: '/app/media',
-        active: route.path.startsWith('/app/media'),
-        defaultOpen: false,
-        children: [
-          {
-            label: menuData.menu.editImage,
-            to: '/tools/image-editor',
-            icon: 'i-lucide-pencil'
-          },
-          {
-            label: menuData.menu.upload,
-            to: '/app/media/upload',
-            icon: 'i-lucide-upload'
-          },
-          {
-            label: menuData.menu.all,
-            to: '/app/media',
-            icon: 'i-lucide-images'
-          }
-        ]
-      },
-      {
-        label: menuData.menu.calendar,
+        label: m.menu.calendar,
         icon: 'i-lucide-calendar',
         to: '/app/calendar',
         active: route.path.startsWith('/app/calendar'),
-        defaultOpen: false,
         children: [
           {
-            label: menuData.menu.view,
-            to: '/app/posts',
-            icon: 'i-lucide-grid'
+            label: m.menu.month,
+            to: '/app/calendar',
+            icon: 'i-lucide-calendar'
           },
           {
-            label: menuData.menu.month,
-            to: '/app/posts/feeds',
-            icon: 'i-lucide-newspaper'
-          },
-          {
-            label: menuData.menu.weeks,
+            label: m.menu.weeks,
             to: '/app/calendar/weeks',
             icon: 'i-lucide-calendar-range'
           },
           {
-            label: menuData.menu.day,
+            label: m.menu.day,
             to: '/app/calendar/day',
-            icon: 'i-lucide-calendar'
+            icon: 'i-lucide-calendar-days'
           }
-          // TODO:Should show the post in board/table/grid/Twitter feed like
         ]
       },
       {
-        label: menuData.menu.posts,
-        icon: 'i-lucide-clipboard-list',
+        label: m.menu.posts,
+        icon: 'i-lucide-pen-line',
         to: '/app/posts',
-        active: route.path.startsWith('/app/posts'),
-        defaultOpen: true,
+        active: route.path.startsWith('/app/posts') || route.path.startsWith('/app/bulk-scheduler'),
+        defaultOpen: false,
         children: [
           {
-            label: menuData.menu.new,
+            label: m.menu.new,
             to: '/app/posts/new',
             icon: 'i-lucide-plus'
           },
           {
-            label: menuData.menu.bulkCreate,
+            label: m.menu.allPosts,
+            to: '/app/posts',
+            icon: 'i-lucide-list'
+          },
+          {
+            label: m.menu.feed,
+            to: '/app/posts/feeds',
+            icon: 'i-lucide-messages-square'
+          },
+          {
+            label: m.menu.bulkCreate,
             to: '/app/bulk-scheduler',
             icon: 'i-lucide-layers'
           }
         ]
       },
+
+      // ── Content ────────────────────────────────────────────
+      { type: 'label', label: m.menu.sectionContent },
       {
-        label: menuData.menu.integrations,
+        label: m.menu.toolbox,
+        icon: 'i-lucide-wrench',
+        to: '/app/toolbox',
+        active: route.path.startsWith('/app/toolbox')
+      },
+      {
+        label: m.menu.media,
+        icon: 'i-lucide-image',
+        to: '/app/media',
+        active: route.path.startsWith('/app/media'),
+        children: [
+          {
+            label: m.menu.upload,
+            to: '/app/media/upload',
+            icon: 'i-lucide-upload'
+          },
+          {
+            label: m.menu.all,
+            to: '/app/media',
+            icon: 'i-lucide-images'
+          },
+          {
+            label: m.menu.editImage,
+            to: '/tools/image-editor',
+            icon: 'i-lucide-pencil'
+          }
+        ]
+      },
+      {
+        label: m.menu.tools,
+        icon: 'i-lucide-sparkles',
+        to: '/app/tools',
+        active: route.path.startsWith('/app/tools') || route.path.startsWith('/tools'),
+        children: [
+          {
+            label: m.menu.aitools,
+            to: '/app/tools/content-split',
+            icon: 'i-lucide-recycle'
+          },
+          {
+            label: m.menu.videoCropper,
+            to: '/app/tools/video-cropper',
+            icon: 'i-lucide-crop'
+          },
+          {
+            label: m.menu.textToAudio,
+            to: '/app/tools/text-to-speech',
+            icon: 'i-lucide-volume-2'
+          },
+          {
+            label: m.menu.growthStrategies,
+            to: '/app/tools/growth-stratergy',
+            icon: 'i-lucide-trending-up'
+          },
+          {
+            label: m.menu.chat,
+            to: '/app/ai-tools/chat',
+            icon: 'i-lucide-bot'
+          },
+          {
+            label: m.menu.aiToolsData,
+            to: '/app/ai-tools/knowledge',
+            icon: 'i-lucide-folder-open'
+          },
+          {
+            label: m.menu.aiToolsSkills,
+            to: '/app/ai-tools/skills',
+            icon: 'i-lucide-blocks'
+          }
+        ]
+      },
+
+      // ── Setup ──────────────────────────────────────────────
+      { type: 'label', label: m.menu.sectionSetup },
+      {
+        label: m.menu.connectAccounts,
         icon: 'i-lucide-plug',
         to: '/app/integrations',
         active: route.path.startsWith('/app/integrations'),
-        defaultOpen: false,
         children: [
           {
-            label: menuData.menu.active,
+            label: m.menu.active,
             to: '/app/integrations/active',
             icon: 'i-lucide-check-circle'
           },
           {
-            label: menuData.menu.providers,
+            label: m.menu.providers,
             to: '/app/integrations',
             icon: 'i-lucide-grid-2x2'
           }
         ]
       },
       {
-        label: menuData.menu.business,
-        icon: 'i-lucide-users',
+        label: m.menu.business,
+        icon: 'i-lucide-building-2',
         to: '/app/business',
-        active: route.path.startsWith('/app/business'),
-        defaultOpen: false,
+        active: route.path.startsWith('/app/business') || route.path === '/app/home',
         children: [
           {
-            label: menuData.menu.all,
+            label: m.menu.allBusinesses,
             to: '/app/business',
-            icon: 'i-lucide-users'
+            icon: 'i-lucide-list'
+          },
+          {
+            label: m.menu.switchBusiness,
+            to: '/app/home',
+            icon: 'i-lucide-repeat'
           }
         ]
       },
+
+      // ── Settings ───────────────────────────────────────────
+      { type: 'label', label: m.menu.settings },
       {
-        label: menuData.menu.apiKeys,
-        icon: 'i-lucide-key',
-        to: '/app/keys',
-        active: route.path.startsWith('/app/keys')
-      },
-      {
-        label: menuData.menu.tools,
-        icon: 'i-lucide-box',
-        to: '/app/tools',
-        active: route.path.startsWith('/app/tools') || route.path.startsWith('/tools'),
-        defaultOpen: false,
-        children: [
-          {
-            label: menuData.menu.aitools,
-            to: '/app/tools/content-split',
-            icon: 'i-lucide-sparkles'
-          },
-          {
-            label: menuData.menu.videoCropper,
-            to: '/app/tools/video-cropper',
-            icon: 'i-lucide-crop'
-          },
-          {
-            label: menuData.menu.textToAudio,
-            to: '/app/tools/text-to-speech',
-            icon: 'i-lucide-volume-2'
-          },
-          {
-            label: menuData.menu.growthStrategies,
-            to: '/app/tools/growth-stratergy',
-            icon: 'i-lucide-trending-up'
-          },
-          // {
-          //   label: menuData.menu.aiToolsTools,
-          //   to: '/app/ai-tools/tools',
-          //   icon: 'i-lucide-wrench'
-          // },
-          // {
-          //   label: menuData.menu.aiToolsSettings,
-          //   to: '/app/ai-tools/settings',
-          //   icon: 'i-lucide-settings'
-          // },
-          // {
-          //   label: menuData.menu.analytics,
-          //   to: '/app/ai-tools/knowledge',
-          //   icon: 'i-lucide-folder'
-          // },
-          // {
-          //   label: menuData.menu.aiToolsSkills,
-          //   to: '/app/ai-tools/skills',
-          //   icon: 'i-lucide-sparkles'
-          // }
-        ]
-      },
-      {
-        label: menuData.menu.templates,
-        icon: 'i-lucide-layout',
+        label: m.menu.templates,
+        icon: 'i-lucide-layout-template',
         to: '/app/templates',
         active: route.path.startsWith('/app/templates'),
-        defaultOpen: false,
         children: [
           {
-            label: menuData.menu.chat,
+            label: m.menu.all,
+            to: '/app/templates',
+            icon: 'i-lucide-images'
+          },
+          {
+            label: m.menu.chat,
             to: '/app/templates/chat',
             icon: 'i-lucide-message-square'
           },
           {
-            label: menuData.menu.email,
+            label: m.menu.email,
             to: '/app/templates/email',
             icon: 'i-lucide-mail'
           },
           {
-            label: menuData.menu.image,
+            label: m.menu.image,
             to: '/app/templates/images',
             icon: 'i-lucide-image'
           },
           {
-            label: menuData.menu.variables,
+            label: m.menu.variables,
             to: '/app/templates/variables',
             icon: 'i-lucide-variable'
           }
         ]
       },
       {
-        label: menuData.menu.settings,
-        icon: 'i-lucide-settings',
-        to: '/app/settings',
-        active: route.path.startsWith('/app/settings') || route.path.startsWith('/app/profile') || route.path.startsWith('/app/account'),
-        defaultOpen: false,
-        children: [
-          {
-            label: menuData.menu.profile,
-            to: '/app/profile',
-            icon: 'i-lucide-user'
-          },
-          {
-            label: menuData.userNav.account,
-            to: '/app/account',
-            icon: 'i-lucide-user-cog'
-          },
-          {
-            label: menuData.userNav.appearance,
-            to: '/app/keys',
-            icon: 'i-lucide-key'
-          },
-          {
-            label: menuData.menu.notification,
-            to: '/app/notifications',
-            icon: 'i-lucide-bell'
-          }
-        ]
+        label: m.menu.profile,
+        icon: 'i-lucide-user',
+        to: '/app/profile',
+        active: route.path.startsWith('/app/profile')
+      },
+      {
+        label: m.userNav.account,
+        icon: 'i-lucide-user-cog',
+        to: '/app/account',
+        active: route.path.startsWith('/app/account')
+      },
+      {
+        label: m.menu.notification,
+        icon: 'i-lucide-bell',
+        to: '/app/notifications',
+        active: route.path.startsWith('/app/notifications')
+      },
+      {
+        label: m.menu.apiKeys,
+        icon: 'i-lucide-key',
+        to: '/app/keys',
+        active: route.path.startsWith('/app/keys')
       }
     ]
 
     if (isAdmin.value) {
-      links.push({
-        label: 'Admin',
-        icon: 'i-lucide-shield',
-        to: '/app/admin',
-        active: route.path.startsWith('/admin'),
-        defaultOpen: false,
-        children: [
-          {
-            label: 'Dashboard',
-            to: '/app/admin',
-            icon: 'i-lucide-gauge'
-          },
-          {
-            label: 'Users',
-            to: '/app/admin/users',
-            icon: 'i-lucide-users'
-          },
-          {
-            label: 'Businesses',
-            to: '/app/admin/businesses',
-            icon: 'i-lucide-building-2'
-          },
-          {
-            label: 'Integrations',
-            to: '/app/admin/integrations',
-            icon: 'i-lucide-plug'
-          },
-          {
-            label: 'Audit Log',
-            to: '/app/admin/audit',
-            icon: 'i-lucide-scroll-text'
-          }
-        ]
-      })
+      links.push(
+        { type: 'label', label: m.menu.adminSection },
+        {
+          label: m.menu.admin,
+          icon: 'i-lucide-shield',
+          to: '/app/admin',
+          active: route.path.startsWith('/app/admin'),
+          children: [
+            {
+              label: m.menu.admin,
+              to: '/app/admin',
+              icon: 'i-lucide-gauge'
+            },
+            {
+              label: m.menu.users,
+              to: '/app/admin/users',
+              icon: 'i-lucide-users'
+            },
+            {
+              label: m.menu.businesses,
+              to: '/app/admin/businesses',
+              icon: 'i-lucide-building-2'
+            },
+            {
+              label: m.menu.integrations,
+              to: '/app/admin/integrations',
+              icon: 'i-lucide-plug'
+            },
+            {
+              label: m.menu.auditLog,
+              to: '/app/admin/audit',
+              icon: 'i-lucide-scroll-text'
+            }
+          ]
+        }
+      )
     }
 
     return links
+  })
+
+  const currentPageTitle = computed<string>(() => {
+    const findLabel = (items: NavigationMenuItem[]): string | null => {
+      for (const item of items) {
+        if (item.type === 'label' || !item.to) continue
+        const target = String(item.to)
+        if (route.path === target) return item.label as string
+        if (route.path.startsWith(`${target}/`)) return item.label as string
+        if (item.children) {
+          const child = item.children.find(c => c.to && (route.path === String(c.to) || route.path.startsWith(`${String(c.to)}/`)))
+          if (child) return child.label as string
+        }
+      }
+      return null
+    }
+    return findLabel(navigationLinks.value) ?? 'MagicSync'
   })
 
   const userMenuItems = computed(() => {
@@ -327,36 +349,41 @@ export const useDashboardNavigation = () => {
       ],
       [
         {
-          label: menuData.userNav.upgradeToPro,
-          icon: 'i-heroicons-sparkles',
-          to: '/app/upgrade',
-          badge: 'Pro'
-        },
-        {
-          label: menuData.userNav.account,
+          label: menuData.userNav.profile,
           icon: 'i-heroicons-user',
           to: '/app/profile'
         },
         {
-          label: menuData.userNav.settings,
-          icon: 'i-heroicons-cog-6-tooth',
-          children: [
-            {
-              label: menuData.userNav.billingSettings,
-              icon: 'i-heroicons-credit-card',
-              to: '/app/billing'
-            },
-            {
-              label: menuData.userNav.paymentMethods,
-              icon: 'i-heroicons-credit-card',
-              to: '/app/billing/payment-methods'
-            },
-            {
-              label: menuData.userNav.invoices,
-              icon: 'i-heroicons-document-text',
-              to: '/app/billing/invoices'
-            }
-          ]
+          label: menuData.userNav.account,
+          icon: 'i-heroicons-user-circle',
+          to: '/app/account'
+        },
+        {
+          label: menuData.menu.apiKeys,
+          icon: 'i-heroicons-key',
+          to: '/app/keys'
+        },
+        {
+          label: menuData.menu.notification,
+          icon: 'i-heroicons-bell',
+          to: '/app/notifications'
+        }
+      ],
+      [
+        {
+          label: menuData.menu.business,
+          icon: 'i-heroicons-building-office-2',
+          to: '/app/business'
+        },
+        {
+          label: menuData.menu.integrations,
+          icon: 'i-heroicons-link',
+          to: '/app/integrations'
+        },
+        {
+          label: menuData.userNav.templateGallery,
+          icon: 'i-heroicons-squares-2x2',
+          to: '/app/templates'
         }
       ],
       [
@@ -382,57 +409,9 @@ export const useDashboardNavigation = () => {
           ]
         },
         {
-          label: menuData.userNav.templates,
-          icon: 'i-heroicons-squares-2x2',
-          children: [
-            {
-              label: menuData.userNav.templateGallery,
-              icon: 'i-heroicons-squares-2x2',
-              to: '/app/templates'
-            },
-            {
-              label: menuData.userNav.createTemplate,
-              icon: 'i-heroicons-plus',
-              to: '/app/templates/create'
-            }
-          ]
-        }
-      ],
-      [
-        {
-          label: menuData.userNav.documentation,
-          icon: 'i-heroicons-book-open',
-          to: '/docs',
-          target: '_blank'
-        },
-        {
-          label: menuData.userNav.apiDocs,
-          icon: 'i-heroicons-code-bracket',
-          to: '/api-docs',
-          target: '_blank'
-        },
-        {
-          label: menuData.userNav.helpCenter,
-          icon: 'i-heroicons-lifebuoy',
-          to: '/help',
-          target: '_blank'
-        },
-        {
-          label: menuData.userNav.support,
-          icon: 'i-heroicons-chat-bubble-left-right',
-          to: '/support',
-          target: '_blank'
-        },
-        {
           label: menuData.userNav.github,
           icon: 'i-heroicons-mark-github',
           to: 'https://github.com/leamsigc/magicsync',
-          target: '_blank'
-        },
-        {
-          label: menuData.userNav.changelog,
-          icon: 'i-heroicons-document-text',
-          to: '/changelog',
           target: '_blank'
         }
       ],
@@ -448,6 +427,7 @@ export const useDashboardNavigation = () => {
 
   return {
     navigationLinks,
+    currentPageTitle,
     userMenuItems,
     t
   }

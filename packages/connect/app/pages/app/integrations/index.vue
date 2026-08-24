@@ -79,14 +79,17 @@ watch(accountsList, () => {
 <template>
   <div class="container mx-auto py-6 space-y-6">
     <BasePageHeader :title="t('title')" :description="t('description')" />
-    <h3>Providers</h3>
+    <h2 class="text-sm font-semibold uppercase tracking-wide text-muted">
+      {{ t('sections.providers') }}
+    </h2>
     <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4" data-tour="connect-social-media-step-0">
       <div data-tour="connect-social-media-step-1">
         <ConnectAddAccount />
       </div>
-      <ConnectIntegrationCard v-for="connection in accountsList" :name="connection.providerId" :key="connection.id"
-        :image="user && user.image ? user.image : ''" :icon="`logos:${connection.providerId}`" :tags="[]"
-        :id="connection.id" :time="dayjs(connection.createdAt as unknown as string).format('YYYY-MM-DD')" connected
+      <ConnectIntegrationCard
+v-for="connection in accountsList" :id="connection.id" :key="connection.id"
+        :name="connection.providerId" :image="user && user.image ? user.image : ''" :icon="`logos:${connection.providerId}`"
+        :tags="[]" :time="dayjs(connection.createdAt as unknown as string).format('YYYY-MM-DD')" connected
         :health="accountHealth.get(connection.id)" />
     </div>
     <div v-if="healthSummary.needsAttention > 0" class="flex items-center gap-2 p-3 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800">
@@ -96,19 +99,23 @@ watch(accountsList, () => {
         <NuxtLink to="#expired-tokens" class="underline font-medium">reconnect expired tokens</NuxtLink> to avoid publish failures.
       </p>
     </div>
-    <h3>Pages</h3>
+    <h2 class="text-sm font-semibold uppercase tracking-wide text-muted">
+      {{ t('sections.pages') }}
+    </h2>
     <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4" data-tour="connect-social-media-step-2">
       <template v-for="account in accountsList">
         <template v-if="account.entityDetail && account.entityDetail.details.pages">
-          <ConnectIntegrationCard v-for="social in account.entityDetail.details.pages" :name="social.name"
-            :key="social.id" :image="social.imageBase64 || ''" :icon="`logos:${account.providerId}`" :tags="[social.id]"
-            :time="dayjs(account.createdAt as unknown as string).format('YYYY-MM-DD')" :id="social.id"
+          <ConnectIntegrationCard
+v-for="social in account.entityDetail.details.pages" :id="social.id"
+            :key="social.id" :name="social.name" :image="social.imageBase64 || ''" :icon="`logos:${account.providerId}`"
+            :tags="[social.id]" :time="dayjs(account.createdAt as unknown as string).format('YYYY-MM-DD')"
             :connected="connectedAccounts.includes(social.id)" :show-pages="false" :show-menu="false" />
         </template>
       </template>
       <template v-for="social in pagesList" :key="social.id">
-        <ConnectIntegrationCard :name="social.accountName" v-if="!accountPages.includes(social.accountId)"
-          :image="social.entityDetail.details.picture ? social.entityDetail.details.picture : ''" :id="social.id"
+        <ConnectIntegrationCard
+v-if="!accountPages.includes(social.accountId)" :id="social.id"
+          :name="social.accountName" :image="social.entityDetail.details.picture ? social.entityDetail.details.picture : ''"
           :icon="`logos:${social.platform}`" :tags="[social.accountId]"
           :time="dayjs(social.createdAt as unknown as string).format('YYYY-MM-DD')" connected :show-pages="false"
           :health="socialHealth.get(social.id)" />

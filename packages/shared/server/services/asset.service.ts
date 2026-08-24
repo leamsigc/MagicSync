@@ -188,7 +188,11 @@ export class AssetService {
         ),
       });
 
-      return { success: true, data: assetList };
+      // Preserve requested order — DB IN clause does not guarantee ordering
+      const byId = new Map(assetList.map(asset => [asset.id, asset]));
+      const ordered = ids.map(id => byId.get(id)).filter((asset): asset is Asset => !!asset);
+
+      return { success: true, data: ordered };
     } catch (error) {
       return { success: false, error: 'Failed to fetch assets' };
     }

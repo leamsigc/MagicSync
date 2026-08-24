@@ -13,12 +13,13 @@
  * @todo [ ] Integration test.
  * @todo [✔] Update the typescript.
  */
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 import { usePostManager } from './composables/UsePostManager';
 import NewPostModal from './components/NewPostModal.vue';
 import PostsGridView from './components/views/PostsGridView.vue';
 import PostsBoardView from './components/views/PostsBoardView.vue';
 import PostsTableView from './components/views/PostsTableView.vue';
+import PostsFeedView from './components/views/PostsFeedView.vue';
 import PostFiltersBar from "../calendar/components/PostFiltersBar.vue"
 import type { PostFilters } from '#layers/BaseScheduler/server/utils/SchedulerTypes';
 import dayjs from 'dayjs';
@@ -34,7 +35,7 @@ useHead({
   ]
 });
 
-const currentView = ref<'Board' | 'Table' | 'Grid'>('Grid');
+const currentView = ref<'Board' | 'Table' | 'Grid' | 'Feed'>('Grid');
 
 // get filters from route
 
@@ -82,18 +83,31 @@ const HandleRefresh = async () => {
     </BasePageHeader>
     <div class=" p-2 flex justify-between items-center ">
       <section class="flex gap-1" data-tour="posts-step-0">
-        <PostFiltersBar  @filter-change="handleFilterChange"
+        <PostFiltersBar
+@filter-change="handleFilterChange"
       @refresh="HandleRefresh"/>
-        <section data-tour="posts-step-1">
-          <UButton icon="i-heroicons-squares-2x2" :variant="currentView === 'Board' ? 'solid' : 'ghost'" size="sm"
-          @click="() => {currentView = 'Board'}" class="rounded-xl">Board</UButton>
-          <UButton icon="i-heroicons-table-cells" :variant="currentView === 'Table' ? 'solid' : 'ghost'" size="sm"
-          @click="() => {currentView = 'Table'}" class="rounded-xl">Table</UButton>
-          <UButton icon="lucide:grid" :variant="currentView === 'Grid' ? 'solid' : 'ghost'" size="sm"
-          @click="() => {currentView = 'Grid'}" class="rounded-xl">
-          Grid
-        </UButton>
-      </section>
+        <section data-tour="posts-step-1" class="flex gap-1">
+          <UButton
+icon="i-lucide-grid-2x2" :variant="currentView === 'Grid' ? 'solid' : 'ghost'" size="sm"
+            class="rounded-xl" @click="() => {currentView = 'Grid'}">
+            Grid
+          </UButton>
+          <UButton
+icon="i-heroicons-bars-3-bottom-left" :variant="currentView === 'Feed' ? 'solid' : 'ghost'"
+            size="sm" class="rounded-xl" @click="() => {currentView = 'Feed'}">
+            Feed
+          </UButton>
+          <UButton
+icon="i-heroicons-squares-2x2" :variant="currentView === 'Board' ? 'solid' : 'ghost'" size="sm"
+            class="rounded-xl" @click="() => {currentView = 'Board'}">
+            Board
+          </UButton>
+          <UButton
+icon="i-heroicons-table-cells" :variant="currentView === 'Table' ? 'solid' : 'ghost'" size="sm"
+            class="rounded-xl" @click="() => {currentView = 'Table'}">
+            Table
+          </UButton>
+        </section>
       </section>
 
       <!-- <UMonthPicker v-model="monthDate" /> -->
@@ -101,6 +115,8 @@ const HandleRefresh = async () => {
 
     <!-- List of all posts -->
     <PostsGridView v-if="currentView === 'Grid'" :posts="postList" />
+
+    <PostsFeedView v-if="currentView === 'Feed'" :posts="postList" />
 
     <PostsBoardView v-if="currentView === 'Board'" :posts="postList" />
 

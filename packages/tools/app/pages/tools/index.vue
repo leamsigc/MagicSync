@@ -6,71 +6,21 @@
  * Tools
  *
  * @author Reflect-Media <reflect.media GmbH>
- * @version 0.0.1
+ * @version 0.0.2
  *
  * @todo [ ] Test the component
  * @todo [ ] Integration test.
  * @todo [✔] Update the typescript.
  */
+import { toolRegistry } from '#layers/BaseUI/app/utils/toolRegistry'
 
-const posts = ref([
-  {
-    title: 'Image Editor',
-    description: 'Edit your images for free and use templates for social media',
-    image: '/img/ImageEditor.png',
-    date: '2024-11-25',
-    to: "/tools/image-editor"
-  },
-  {
-    title: 'Flutter clipper',
-    description: 'Create Custom clippers for your flutter apps',
-    image: '/img/flutter-clipper.png',
-    date: '2024-11-04',
-    to: "/tools/flutter-clipper"
-  },
-  {
-    title: 'Video Silence Remover',
-    description: 'Remove silent parts from your videos automatically with our free online tool',
-    image: '/img/video-remover.png',
-    date: '2024-12-11',
-    to: "/tools/video-silence-remover"
-  },
-  {
-    title: 'Text Behind Image Free',
-    description: 'Create stunning text behind your images for free',
-    image: '/img/text-behind.png',
-    date: '2026-01-01',
-    to: "/tools/text-behind-image-free"
-  },
-  {
-    title: 'Audio Transcription',
-    description: 'Transcribe audio and video files to text with timestamps using AI',
-    image: '/img/audio-transcription.png',
-    date: '2026-03-09',
-    to: "/tools/audio-transcription"
-  },
-  {
-    title: 'Audio Player',
-    description: 'Stream audio from Bunny CDN or play local files with waveform visualization',
-    image: '/img/audio-player.png',
-    date: '2026-03-19',
-    to: "/tools/audio-player"
-  },
-  {
-    title: 'Podcast Player',
-    description: 'Discover and listen to the best tech podcasts with a global player',
-    image: '/img/podcast-player.png',
-    date: '2026-03-19',
-    to: "/tools/podcast"
-  },
-  {
-    title: 'Video Cropper',
-    description: 'Crop, split-screen, and keyframe your videos with multi-camera motion tracking',
-    image: '/img/video-cropper.png',
-    date: '2026-07-15',
-    to: "/tools/video-cropper"
-  },
-])
+const posts = computed(() => toolRegistry.map(tool => ({
+  title: tool.name,
+  description: tool.description,
+  image: tool.image ?? '/img/ImageEditor.png',
+  date: tool.date ?? '2026-08-23',
+  to: tool.route
+})))
 const { t } = useI18n()
 useHead({
   title: t('title'),

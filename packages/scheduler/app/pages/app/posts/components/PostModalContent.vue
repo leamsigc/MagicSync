@@ -15,7 +15,7 @@
  * @todo [✔] Update the typescript.
  */
 import { usePlatformConfiguration, type SocialMediaPlatformConfigurations, type PostFormat } from '../composables/usePlatformConfiguration';
-import type { PostCreateBase, Asset, Post, PostWithAllData, SocialMediaComplete } from '#layers/BaseDB/db/schema';
+import type { PostCreateBase, Asset, PostWithAllData, SocialMediaComplete } from '#layers/BaseDB/db/schema';
 import type { PlatformSettings } from '#layers/BaseScheduler/shared/platformSettings';
 import dayjs from 'dayjs';
 import PostPlatformSelector from './editor/PostPlatformSelector.vue';
@@ -34,6 +34,7 @@ import EmojiPicker from '#layers/BaseScheduler/app/components/EmojiPicker.vue';
 import { useBusinessManager } from '#layers/BaseConnect/app/pages/app/business/composables/useBusinessManager';
 import PlatformSettingsPanel from '#layers/BaseScheduler/app/components/PlatformSettingsPanel.vue';
 import MicRecorder from '#layers/BaseTools/app/components/MicRecorder.vue';
+import PlatformAutoFormat from './assistant/PlatformAutoFormat.vue';
 
 interface TargetPlatform {
   accountId: string;
@@ -118,8 +119,7 @@ const postHasError = ref(false);
 const validationErrors = ref<{ platform: string; message: string }[]>([]);
 const selectedPostFormat = ref<PostFormat>('post');
 
-const explicitPreviewPlatform = ref<keyof typeof previewsMap | 'default'>('default');
-const previewsMap = {
+const _previewsMap = {
   facebook: '',
   instagram: '',
   twitter: '',
@@ -135,59 +135,70 @@ const previewsMap = {
   default: '',
 };
 
+type PreviewPlatform = keyof typeof _previewsMap;
+
+const explicitPreviewPlatform = ref<PreviewPlatform | 'default'>('default');
+
+async function loadInitialPost(post: typeof initialPost): Promise<void> {
+  if (!post) return;
+  console.log(post);
+
+  const platformPosts = (post as { platformPosts?: Array<{ platformPostId: string; socialAccountId: string }> }).platformPosts;
+
+  if (platformPosts && platformPosts.length > 0) {
+    const firstPlatformPost = platformPosts[0];
+    explicitPreviewPlatform.value = firstPlatformPost?.platformPostId as PreviewPlatform || 'default';
+  }
+
+  const processedTargetPlatforms: TargetPlatform[] = (platformPosts || []).map(p => ({
+    accountId: p.socialAccountId,
+    platformType: p.platformPostId as keyof SocialMediaPlatformConfigurations,
+  }));
+  const initialCommentsRaw = (post as { comment?: string | string[] }).comment;
+  const processedComments: string[] = Array.isArray(initialCommentsRaw)
+    ? initialCommentsRaw
+    : (initialCommentsRaw ? [initialCommentsRaw] : []);
+
+  const initialMediaAssetsRaw = JSON.parse((post.mediaAssets as unknown as string) || "[]");
+  const processedMediaAssetsIds: string[] = Array.isArray(initialMediaAssetsRaw)
+    ? initialMediaAssetsRaw
+    : (initialMediaAssetsRaw ? [initialMediaAssetsRaw] : []);
+
+  postForm.value = {
+    ...post,
+    targetPlatforms: processedTargetPlatforms,
+    mediaAssets: processedMediaAssetsIds,
+    comment: processedComments,
+    platformContent: (post as { platformContent?: Record<string, PlatformContentOverride> }).platformContent || {},
+    platformSettings: (post as { platformSettings?: Record<string, PlatformSettings> }).platformSettings || {},
+  } as PostForm;
+  platformSettingsState.masterContent.value = postForm.value.content;
+  platformSettingsState.masterComments.value = postForm.value.comment;
+  platformSettingsState.platformContent.value = (post as { platformContent?: Record<string, PlatformContentOverride> }).platformContent as Record<string, PlatformContentOverride> || {};
+
+
+  const scheduleAt = dayjs(postForm.value.scheduledAt).toDate();
+  selectedTime.value = dayjs(postForm.value.scheduledAt).format('HH:mm');
+
+
+  selectedDate.value = new CalendarDate(
+    scheduleAt.getFullYear(),
+    scheduleAt.getMonth() + 1,
+    scheduleAt.getDate()
+  );
+
+  if (processedMediaAssetsIds.length > 0) {
+    postMediaAssets.value = await getAssetsByIds(processedMediaAssetsIds);
+  }
+}
+
 onMounted(async () => {
   await getAllSocialMediaAccounts();
-  if (initialPost) {
-    console.log(initialPost);
+  await loadInitialPost(initialPost);
+});
 
-    const platformPosts = initialPost.platformPosts;
-
-    if (platformPosts && platformPosts.length > 0) {
-      const firstPlatformPost = platformPosts[0];
-      explicitPreviewPlatform.value = firstPlatformPost?.platformPostId as keyof typeof previewsMap || 'default';
-    }
-
-    const processedTargetPlatforms: TargetPlatform[] = platformPosts.map(p => ({
-      accountId: p.socialAccountId,
-      platformType: p.platformPostId as keyof SocialMediaPlatformConfigurations,
-    }));
-    const initialCommentsRaw = (initialPost as { comment?: string | string[] }).comment;
-    const processedComments: string[] = Array.isArray(initialCommentsRaw)
-      ? initialCommentsRaw
-      : (initialCommentsRaw ? [initialCommentsRaw] : []);
-
-    const initialMediaAssetsRaw = JSON.parse(initialPost.mediaAssets as string || "[]");
-    const processedMediaAssetsIds: string[] = Array.isArray(initialMediaAssetsRaw)
-      ? initialMediaAssetsRaw
-      : (initialMediaAssetsRaw ? [initialMediaAssetsRaw] : []);
-
-    postForm.value = {
-      ...initialPost,
-      targetPlatforms: processedTargetPlatforms,
-      mediaAssets: processedMediaAssetsIds,
-      comment: processedComments,
-      platformContent: (initialPost as any).platformContent || {},
-      platformSettings: (initialPost as any).platformSettings || {},
-    } as PostForm;
-    platformSettingsState.masterContent.value = postForm.value.content;
-    platformSettingsState.masterComments.value = postForm.value.comment;
-    platformSettingsState.platformContent.value = initialPost.platformContent as Record<string, PlatformContentOverride> || {};
-
-
-    const scheduleAt = dayjs(postForm.value.scheduledAt).toDate();
-    selectedTime.value = dayjs(postForm.value.scheduledAt).format('HH:mm');
-
-
-    selectedDate.value = new CalendarDate(
-      scheduleAt.getFullYear(),
-      scheduleAt.getMonth() + 1,
-      scheduleAt.getDate()
-    );
-
-    if (processedMediaAssetsIds.length > 0) {
-      postMediaAssets.value = await getAssetsByIds(processedMediaAssetsIds);
-    }
-  }
+watch(() => initialPost, async (newPost) => {
+  if (newPost) await loadInitialPost(newPost);
 });
 
 const currentPreviewPlatform = computed(() => {
@@ -197,7 +208,7 @@ const currentPreviewPlatform = computed(() => {
   return 'default';
 });
 
-const formatPostContent = (content: string, platformType: keyof typeof previewsMap | 'default'): string => {
+const formatPostContent = (content: string, platformType: PreviewPlatform | 'default'): string => {
   if (platformType === 'default') return content;
   const config = platformConfigurations[platformType];
   if (config && content.length > config.maxPostLength) {
@@ -260,7 +271,8 @@ const handleSavePost = async (status: 'pending' | 'published' | 'failed') => {
     // Validate required platform settings
     const platformSettings = postForm.value.platformSettings?.[targetPlatform.platformType];
     if (targetPlatform.platformType === 'youtube') {
-      if (!platformSettings || !(platformSettings as any).title?.trim()) {
+      const ytTitle = (platformSettings as { title?: string } | undefined)?.title;
+      if (!ytTitle?.trim()) {
         validationErrors.value.push({ platform: 'youtube', message: 'YouTube video title is required' });
         if (!firstInvalidPlatform) {
           firstInvalidPlatform = targetPlatform;
@@ -330,11 +342,6 @@ const ResetToBase = () => {
   explicitPreviewPlatform.value = 'default';
 }
 
-const HandleAssetsSelected = (assets: Asset[]) => {
-  postMediaAssets.value = assets;
-  postForm.value.mediaAssets = assets.map(asset => asset.id);
-}
-
 const haveAtLeastOneAccountSelected = computed(() => {
   return postForm.value.targetPlatforms.length === 0;
 })
@@ -356,11 +363,6 @@ defineExpose({
 
 
 /* Editor context */
-interface PlatformOverride {
-  content?: string;
-  comments?: string[];
-}
-
 const { validatePlatform } = useValidation();
 
 
@@ -371,9 +373,6 @@ const {
   addComment,
   removeComment,
   updateComment,
-  hasPlatformOverride,
-  getContentForPlatform,
-  getCommentsForPlatform,
 } = platformSettingsState;
 
 watch(explicitPreviewPlatform, (val) => {
@@ -443,7 +442,7 @@ const contextTabs = computed(() => {
     tabs.push({
       label: platform.platformType.charAt(0).toUpperCase() + platform.platformType.slice(1),
       value: platform.platformType,
-      icon: getPlatformIcon(platform.platformType as any),
+      icon: getPlatformIcon(platform.platformType as Parameters<typeof getPlatformIcon>[0]),
       hasOverride
     });
   });
@@ -506,6 +505,10 @@ const currentPlatformConfig = computed(() => {
   return platformConfigurations[explicitPreviewPlatform.value] || platformConfigurations['default'];
 });
 
+const currentMaxCommentLength = computed(() =>
+  currentPlatformConfig.value.maxCommentLength ?? currentPlatformConfig.value.maxPostLength
+);
+
 /* Ai related need to move  */
 const { rewriteContent, fixGrammar, generateHashtags, smartSplit, isLoading: aiLoading, customPrompt } = useAI();
 
@@ -538,22 +541,26 @@ const handleAIAction = async (action: string, prompt?: string) => {
         result = await fixGrammar(content);
         if (result) postForm.value.content = result;
         break;
-      case 'generate-hashtags':
+      case 'generate-hashtags': {
         const hashtags = await generateHashtags(content);
         if (hashtags) postForm.value.content += `\n\n${hashtags.join(' ')}`;
         break;
-      case 'smart-split':
+      }
+      case 'smart-split': {
         const thread = await smartSplit(content, postForm.value.targetPlatforms.map(platform => platform.platformType));
         if (thread && thread.length > 0) {
           postForm.value.content = thread[0];
           postForm.value.comment = thread.slice(1);
         }
-      case 'custom-prompt':
+        break;
+      }
+      case 'custom-prompt': {
         result = await customPrompt(`Content:${content} - User Prompt:${prompt}`);
         if (result) postForm.value.content = result;
         break;
+      }
     }
-  } catch (error) {
+  } catch {
     toast.add({
       title: 'AI Error',
       description: 'Failed to process AI request',
@@ -622,6 +629,15 @@ const handleTranscriptFromRecorder = (text: string) => {
     };
   }
 };
+
+/* Platform Auto-Format (thread splitter) */
+const showAutoFormat = ref(false);
+
+const handleAutoFormatApply = (overrides: Record<string, PlatformContentOverride>) => {
+  for (const [platform, override] of Object.entries(overrides)) {
+    platformSettingsState.platformContent.value[platform] = override;
+  }
+};
 </script>
 
 <template>
@@ -645,11 +661,17 @@ const handleTranscriptFromRecorder = (text: string) => {
                 <div class="flex items-center justify-between overflow-x-auto">
                   <PostContextSwitcher v-model="explicitPreviewPlatform" :tabs="contextTabs"
                     :currentPlatformConfig="currentPlatformConfig" />
-                  <UButton v-if="explicitPreviewPlatform !== 'default'" @click="revertToMaster" variant="ghost"
-                    color="neutral" class="text-xs  hover:text-red-400 flex items-center gap-1 transition-colors">
-                    <Icon name="lucide:rotate-ccw" class="w-3 h-3" />
-                    {{ t('create_post.revert_to_master') }}
-                  </UButton>
+                  <div class="flex items-center gap-1 shrink-0 pl-2">
+                    <UButton variant="ghost" color="neutral" size="xs" icon="i-heroicons-scissors"
+                      :class="{ 'text-indigo-400': showAutoFormat }" @click="() => { showAutoFormat = !showAutoFormat }">
+                      {{ t('autoFormat.toggle') }}
+                    </UButton>
+                    <UButton v-if="explicitPreviewPlatform !== 'default'" @click="revertToMaster" variant="ghost"
+                      color="neutral" class="text-xs  hover:text-red-400 flex items-center gap-1 transition-colors">
+                      <Icon name="lucide:rotate-ccw" class="w-3 h-3" />
+                      {{ t('create_post.revert_to_master') }}
+                    </UButton>
+                  </div>
                 </div>
                 <div
                   class=" border border-muted  rounded-xl overflow-hidden focus-within:ring-1 focus-within:ring-indigo-500/10 transition-all mt-2">
@@ -675,15 +697,20 @@ const handleTranscriptFromRecorder = (text: string) => {
                       <MicRecorder @transcript="handleTranscriptFromRecorder" />
                     </template>
                     <template #assetsList>
-                      <section v-for="asset in postMediaAssets">
+                      <section v-for="asset in postMediaAssets" :key="asset.id">
 
                         <img v-if="asset.mimeType === 'image'" :src="asset.url" :alt="asset.filename" class="size-20 rounded-2xl">
-                        <video v-else="asset.mimeType === 'video'" :src="asset.url" :alt="asset.filename" class="size-20 rounded-2xl"/>
+                        <video v-else :src="asset.url" :alt="asset.filename" class="size-20 rounded-2xl"/>
 
                       </section>
                     </template>
                   </PostContentEditor>
                 </div>
+
+                <!-- Platform Auto-Format: split long posts into platform threads -->
+                <PlatformAutoFormat v-if="showAutoFormat" class="mt-2"
+                  :platforms="postForm.targetPlatforms.map(p => p.platformType)" :content="postForm.content"
+                  @apply="handleAutoFormatApply" />
 
                 <!-- Post Format Selector -->
                 <PostFormatSelector v-model="postForm.postFormat"
@@ -695,11 +722,20 @@ const handleTranscriptFromRecorder = (text: string) => {
 
                 <div class="mt-4">
                   <h4 class="text-sm font-semibold mb-2">{{ t('newPostModal.commentsTitle') }}</h4>
-                  <div v-for="(comment, index) in currentComments" :key="index" class="flex items-center gap-2 mb-2">
-                    <UTextarea :model-value="currentComments[index]" @update:model-value="updateComment(index, $event)"
+                  <div v-for="(comment, index) in currentComments" :key="index" class="mb-2">
+                    <UTextarea :model-value="currentComments[index]"
                       :placeholder="t('newPostModal.commentPlaceholder', { index: index + 1 })" :rows="8"
+                      :maxlength="currentMaxCommentLength"
                       color="neutral" variant="none"
-                      class="w-full flex-1 bg-transparent resize-none focus:ring-0 p-4 text-lg text-zinc-100 border border-muted rounded-2xl placeholder-zinc-600 scrollbar-hide" />
+                      class="w-full flex-1 bg-transparent resize-none focus:ring-0 p-4 text-lg text-zinc-100 border border-muted rounded-2xl placeholder-zinc-600 scrollbar-hide"
+                      :class="{ 'text-red-400': comment.length > currentMaxCommentLength }"
+                      @update:model-value="updateComment(index, $event)" />
+                    <div class="flex items-center justify-between px-4">
+                      <span class="text-xs"
+                        :class="comment.length > currentMaxCommentLength ? 'text-red-400' : 'text-zinc-500'">
+                        {{ comment.length }}/{{ currentMaxCommentLength }}
+                      </span>
+                    </div>
                     <UButton v-if="currentComments.length > 0" icon="i-heroicons-trash-20-solid" color="error"
                       variant="ghost" @click="removeComment(index)" />
                   </div>

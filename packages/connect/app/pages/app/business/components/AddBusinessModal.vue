@@ -7,14 +7,14 @@ import StepZero from './StepZero.vue'
 import BusinessExtractionStep from './BusinessExtractionStep.vue'
 import BusinessFormStep from './BusinessFormStep.vue'
 import BusinessLoadingStep from './BusinessLoadingStep.vue'
-import type { InformationSchemaBusinessResponse } from '#layers/BaseScheduler/server/api/v1/ai/information/index.post'
+import type { InformationSchemaBusinessResponse, InformationExtractionEvent } from '#layers/BaseScheduler/server/api/v1/ai/information/index.post'
 import type { BodySchemaCreateBusinessType } from '#layers/BaseConnect/server/api/v1/business/index.post'
 
 const emit = defineEmits(['add', 'cancel'])
 const { t } = useI18n()
 const modalOpen = defineModel<boolean>('open')
 const initialSetup = defineModel<boolean>('initialSetup', { default: false })
-const { addBusiness, extractBusinessInfo, setActiveBusiness } = useBusinessManager()
+const { addBusiness, extractBusinessInfoWithProgress, setActiveBusiness } = useBusinessManager()
 const toast = useToast()
 const router = useRouter()
 
@@ -34,16 +34,35 @@ const extractionState = ref<ExtractionForm>({
   channels: []
 });
 
-// Step 2 State
-const loaderSteps = ref([
-  { text: t('loader.step1_text'), afterText: t('loader.step1_after'), duration: 3000 },
-  { text: t('loader.step2_text'), afterText: t('loader.step2_after'), duration: 4000 },
-  { text: t('loader.step3_text'), afterText: t('loader.step3_after'), duration: 5000 },
-  { text: t('loader.step4_text'), afterText: t('loader.step4_after'), duration: 5000 },
-  { text: t('loader.step5_text'), afterText: t('loader.step5_after'), async: true }
+// Step 2 State — steps are advanced by backend progress events, not timers
+const loaderSteps = computed(() => [
+  { text: t('loader.step1_text'), afterText: t('loader.step1_after') },
+  { text: t('loader.step2_text'), afterText: t('loader.step2_after') },
+  { text: t('loader.step4_text'), afterText: t('loader.step4_after') },
+  { text: t('loader.step5_text'), afterText: t('loader.step5_after') }
 ]);
 
 const isExtracting = ref(false);
+/** Index of the step currently active according to the backend */
+const activeLoaderStep = ref<number | null>(null);
+
+// Loader indices: 0=scrape, 1=core AI, 2=brand AI, 3=finalize
+const handleProgressEvent = (
+  event: InformationExtractionEvent,
+  state: { coreDone: boolean; brandDone: boolean }
+) => {
+  if (event.type === 'step') {
+    if (event.step === 'scrape' && event.status === 'done') {
+      activeLoaderStep.value = 1;
+      return;
+    }
+    if (event.step === 'core' && event.status === 'done') state.coreDone = true;
+    if (event.step === 'brand' && event.status === 'done') state.brandDone = true;
+    if (state.coreDone || state.brandDone) {
+      activeLoaderStep.value = !state.coreDone ? 1 : !state.brandDone ? 2 : 3;
+    }
+  }
+};
 
 // Step 3 State
 const responseResult = ref<InformationSchemaBusinessResponse>();
@@ -51,20 +70,30 @@ const responseResult = ref<InformationSchemaBusinessResponse>();
 const handleExtractionSubmit = async (payload: FormSubmitEvent<ExtractionForm>) => {
   step.value = 2;
   isExtracting.value = true;
+  activeLoaderStep.value = 0;
 
   try {
     const defaultExplanation = 'Extract comprehensive business profile, core offering, top competitors, target audience, and infer brand design details (colors, typography).';
     const validCompetitors = payload.data.competitors?.filter(c => c && c.trim() !== '') || [];
 
-    const result = await extractBusinessInfo({
-      url: payload.data.url,
-      explanation: defaultExplanation,
-      competitors: validCompetitors.length > 0 ? validCompetitors : undefined
-    });
+    const progressState = { coreDone: false, brandDone: false };
+    const result = await extractBusinessInfoWithProgress(
+      {
+        url: payload.data.url,
+        explanation: defaultExplanation,
+        competitors: validCompetitors.length > 0 ? validCompetitors : undefined
+      },
+      (event) => handleProgressEvent(event, progressState)
+    );
 
-    responseResult.value = result;
-    isExtracting.value = false;
-    step.value = 3;
+    // All steps complete — brief pause so the user sees every checkmark
+    activeLoaderStep.value = loaderSteps.value.length;
+
+    setTimeout(() => {
+      isExtracting.value = false;
+      responseResult.value = result;
+      step.value = 3;
+    }, 600);
 
   } catch (error) {
     console.error('Extraction failed:', error);
@@ -74,6 +103,7 @@ const handleExtractionSubmit = async (payload: FormSubmitEvent<ExtractionForm>) 
       color: 'error'
     });
     isExtracting.value = false;
+    activeLoaderStep.value = null;
     step.value = 1;
   }
 };
@@ -183,10 +213,11 @@ const handleCancel = () => {
           <!-- Step 1: Business Extraction -->
           <BusinessExtractionStep v-else-if="step === 1" @submit="handleExtractionSubmit" @skip="skipExtraction" />
 
-          <!-- Step 2: Loading/Processing -->
+          <!-- Step 2: Loading/Processing — steps driven by backend progress events -->
           <BusinessLoadingStep v-else-if="step === 2" :steps="loaderSteps" :loading="isExtracting" :visible="true"
+            :active-step="activeLoaderStep"
             @update:visible="() => { isExtracting = false; step = 1 }"
-            @close="() => { isExtracting = false; step = 1 }" />
+            @close="() => { isExtracting = false; activeLoaderStep = null; step = 1 }" />
 
           <!-- Step 3: Business Form -->
           <BusinessFormStep v-else-if="step === 3 && responseResult" :result="responseResult" @submit="submitFinalForm"

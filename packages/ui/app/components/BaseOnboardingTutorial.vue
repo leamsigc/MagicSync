@@ -573,7 +573,7 @@ function navigateAndStart(tutorial: Tutorial) {
 </script>
 
 <template>
-  <div class="fixed bottom-6 right-6 z-50">
+  <div class="fixed bottom-6 right-6 z-50" v-if="currentRouteTutorial">
     <UTooltip :text="t('tooltip')" :popper="{ placement: 'left' }">
       <UButton
         :padded="false"

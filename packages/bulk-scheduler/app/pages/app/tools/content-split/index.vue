@@ -102,8 +102,21 @@ const resultPlatforms = computed(() => results.value ?? {});
 const isResultsEmpty = computed(() => Object.keys(resultPlatforms.value).length === 0);
 
 
-const handleCreatePostNow = async () => {
-  //Add selected assets to post
+const handleScheduleResult = (platformKey: string) => {
+  const result = results.value[platformKey]
+  if (!result?.content) return
+  const comments = result.comments ?? []
+  sessionStorage.setItem('repurposed-content', JSON.stringify({
+    content: result.content,
+    fullContent: content.value || url.value,
+    platform: platformKey,
+    isThread: comments.length > 0,
+    comments
+  }))
+  navigateTo('/app/posts/new')
+}
+
+const handleCreatePostNow = async () => {  //Add selected assets to post
   postToCreate.value.mediaAssets = selectedAssets.value.map(asset => asset.id);
 
   const state = postToCreate.value.content.length < 0;
@@ -120,7 +133,7 @@ const handleCreatePostNow = async () => {
     await createPost(postToCreate.value);
 
     toast.add({ title: 'Post scheduled successfully!', color: 'success' });
-  } catch (e: any) {
+  } catch (e) {
     console.error(e);
   } finally {
     isLoading.value = false
@@ -133,7 +146,7 @@ const handleCreatePostNow = async () => {
 const handleTogglePlatform = (account: { id: string, platform: string }) => {
   //Check if the postToCreate has content
   const haveContent = postToCreate.value.content.length > 0;
-  const resultHaveContentForPlatform = resultPlatforms.value[account.platform as any];
+  const resultHaveContentForPlatform = resultPlatforms.value[account.platform];
   console.log(resultPlatforms.value);
   console.log(resultHaveContentForPlatform);
 
@@ -271,7 +284,7 @@ const handleTogglePlatform = (account: { id: string, platform: string }) => {
                         <p class="whitespace-pre-wrap">{{ platform.content }}</p>
                       </div>
                     </template>
-                    <template v-for="comment in platform.comments">
+                    <template v-for="(comment, commentIndex) in platform.comments" :key="commentIndex">
                       <div class="p-3 rounded-lg bg-muted/50 my-2">
                         <p class="whitespace-pre-wrap">{{ comment }}</p>
                       </div>
@@ -282,6 +295,11 @@ const handleTogglePlatform = (account: { id: string, platform: string }) => {
                     <UButton variant="outline" color="neutral" icon="i-heroicons-clipboard-document"
                       @click="copyToClipboard(getContentAsString(key))">
                       {{ t('results.copy') }}
+                    </UButton>
+                    <UButton variant="outline" color="primary" icon="i-heroicons-calendar"
+                      data-testid="btn-schedule-result"
+                      @click="handleScheduleResult(key)">
+                      {{ t('results.schedule') }}
                     </UButton>
                   </div>
 

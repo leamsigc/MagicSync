@@ -1,0 +1,706 @@
+{
+  "en": {
+    "title": "Instagram Carousel Creator",
+    "description": "Design high-converting multi-slide Instagram carousels with templates, AI design, pattern overlays and one-click export — free, no signup required.",
+    "studioTitle": "Carousel Studio",
+    "randomize": "Randomize pattern",
+    "login": "Sign in",
+    "tabs": {
+      "style": "Style",
+      "export": "Export"
+    },
+    "dock": {
+      "deck": "Deck"
+    },
+    "deck": {
+      "brand": "Brand",
+      "handle": "User handle",
+      "handlePlaceholder": "yourhandle",
+      "handleHint": "Shown in the footer of every slide."
+    },
+    "flow": {
+      "label": "Background flow",
+      "off": "Off",
+      "pan": "Pan",
+      "plane": "Plane",
+      "offHint": "Each slide uses its own background and image.",
+      "panHint": "Slices cut from one wide image — a run of slides after the cover each hold the next slice.",
+      "planeHint": "One continuous background stretched across the whole deck, offset per slide — it continues across a swipe instead of restarting on every frame.",
+      "panRun": "Pan run",
+      "panSlides": "{count} slides pan across the image.",
+      "image": "Wide image",
+      "planeImage": "Deck image (overrides gradient)",
+      "from": "From",
+      "to": "To",
+      "dim": "Dim overlay"
+    },
+    "actions": {
+      "saveAll": "Save all to Library",
+      "useInPost": "Use in post"
+    },
+    "templates": {
+      "label": "Templates",
+      "deckTitle": "Deck templates",
+      "deckHint": "Multi-page decks — one click replaces the whole carousel.",
+      "useDeck": "Use deck",
+      "confirmTitle": "Replace deck?",
+      "confirmReplace": "Replace current deck with \"{title}\"?",
+      "confirmHint": "Your current pages will be replaced",
+      "confirmBody": "This will replace all current pages with the selected template. You can still edit everything after.",
+      "cancel": "Cancel",
+      "confirm": "Replace",
+      "applied": "Deck applied",
+      "appliedDesc": "\"{title}\" loaded — edit your copy now.",
+      "chooseLayout": "Choose a layout",
+      "chooseLayoutHint": "Pick a layout for the new page inserted after the current one.",
+      "blankPage": "Blank"
+    },
+    "slide": {
+      "label": "Slides",
+      "manager": "Slide manager",
+      "add": "Add slide",
+      "addPage": "Add page",
+      "duplicate": "Duplicate",
+      "delete": "Delete",
+      "download": "Download",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "goTo": "Go to slide",
+      "prev": "Previous slide",
+      "next": "Next slide",
+      "insertAfter": "Insert after",
+      "insertHint": "New pages are inserted after the current page.",
+      "manage": "Manage page",
+      "manageHint": "Drag handle pages via the arrows, duplicate or delete. Add new pages with any layout."
+    },
+    "ai": {
+      "label": "AI Design",
+      "topic": "What is the carousel about?",
+      "topicPlaceholder": "e.g. 5 mistakes first-time founders make with pricing",
+      "tone": {
+        "label": "Tone",
+        "educational": "Educational",
+        "professional": "Professional",
+        "friendly": "Friendly",
+        "humorous": "Humorous",
+        "promotional": "Promotional"
+      },
+      "slideCount": "Slides (3-10)",
+      "generate": "Generate design",
+      "hint": "AI writes the copy for every slide, picks the layouts and a matching palette. You can edit everything afterwards.",
+      "failedTitle": "AI generation failed",
+      "currentPalette": "Current palette — background {bg}, accent {accent}"
+    },
+    "media": {
+      "label": "Media",
+      "image": "Slide image",
+      "perSlideHint": "This image applies to the current slide only. Select another slide to give it its own image.",
+      "shadow": "Image shadow",
+      "shadowX": "Offset X",
+      "shadowY": "Offset Y",
+      "shadowBlur": "Blur",
+      "shadowOpacity": "Opacity",
+      "dim": "Darken overlay"
+    },
+    "style": {
+      "layout": "Layout",
+      "palette": "Palette",
+      "content": "Slide text",
+      "pattern": "Pattern overlay",
+      "patternColor": "Pattern color",
+      "patternOpacity": "Opacity",
+      "photo": "Photo"
+    },
+    "palette": {
+      "bg": "BG",
+      "text": "Text",
+      "accent": "Accent"
+    },
+    "fields": {
+      "kicker": "Kicker",
+      "headline": "Headline",
+      "body": "Body",
+      "items": "Items (one per line)",
+      "itemsHint": "Myth vs Fact uses exactly two lines: first the myth, then the fact.",
+      "quote": "Quote",
+      "author": "Author",
+      "stat": "Big number",
+      "statLabel": "Stat label",
+      "cta": "Button text"
+    },
+    "export": {
+      "downloadCurrent": "Download this slide",
+      "downloadAll": "Download all slides",
+      "individual": "Download single slides",
+      "working": "Working…",
+      "hint": "Slides export at 1080×1350 (Instagram portrait, 4:5)."
+    },
+    "status": {
+      "slides": "{n} slide | {n} slides",
+      "frame": "frame {w}×{h}"
+    },
+    "toasts": {
+      "savedTitle": "Carousel saved",
+      "savedDescription": "{count} slides added to your library.",
+      "loginRequired": "Sign in to save to your library",
+      "failedTitle": "Export failed",
+      "failedDescription": "Something went wrong while exporting your slides."
+    },
+    "bar": {
+      "dialRotate": "Rotate",
+      "dialZoom": "Zoom",
+      "dialPattern": "Pattern",
+      "guides": "Safe-area guides",
+      "aspect": "Aspect",
+      "frame": "Frame preset"
+    },
+    "preview": {
+      "label": "Preview",
+      "editor": "Editor",
+      "instagram": "Instagram",
+      "linkedin": "LinkedIn",
+      "strip": "All pages",
+      "stripTitle": "All pages — scroll to preview",
+      "stripHint": "Swipe sideways to see all pages",
+      "igCaption": "Swipe to see the full story — which slide is your favourite?",
+      "igComments": "View all 42 comments",
+      "igTranslate": "See translation",
+      "igHint": "Instagram feed preview — 1080×1350 shown as in feed with dots. Export is unchanged.",
+      "liHint": "LinkedIn document carousel preview — swipe indicators as readers will see them.",
+      "liText": "New carousel just dropped — swipe through and let me know which slide hits hardest.",
+      "follow": "Follow",
+      "like": "Like",
+      "comment": "Comment",
+      "repost": "Repost",
+      "send": "Send"
+    }
+  },
+  "fr": {
+    "title": "Créateur de carrousel Instagram",
+    "description": "Concevez des carrousels Instagram qui convertissent, avec modèles, design IA, textures et export en un clic — gratuit, sans inscription.",
+    "studioTitle": "Studio de carrousel",
+    "randomize": "Texture aléatoire",
+    "login": "Se connecter",
+    "tabs": {
+      "style": "Style",
+      "export": "Export"
+    },
+    "dock": {
+      "deck": "Diapositives"
+    },
+    "deck": {
+      "brand": "Marque",
+      "handle": "Identifiant",
+      "handlePlaceholder": "votrenom",
+      "handleHint": "Affiché dans le pied de chaque diapositive."
+    },
+    "flow": {
+      "label": "Fond continu",
+      "off": "Off",
+      "pan": "Pan",
+      "plane": "Plan",
+      "offHint": "Chaque diapositive utilise son propre fond et sa propre image.",
+      "panHint": "Des tranches découpées dans une seule image large — plusieurs diapositives après la couverture se partagent l'image.",
+      "planeHint": "Un arrière-plan continu étiré sur tout le carrousel, décalé à chaque diapositive — le dégradé continue pendant le swipe au lieu de redémarrer.",
+      "panRun": "Séquence pan",
+      "panSlides": "{count} diapositives parcourent l'image.",
+      "image": "Image large",
+      "planeImage": "Image de fond (remplace le dégradé)",
+      "from": "Début",
+      "to": "Fin",
+      "dim": "Assombrir"
+    },
+    "actions": {
+      "saveAll": "Tout enregistrer",
+      "useInPost": "Utiliser dans un post"
+    },
+    "templates": {
+      "label": "Modèles",
+      "deckTitle": "Modèles de carrousel",
+      "deckHint": "Carrousels complets — un clic remplace tout le deck.",
+      "useDeck": "Utiliser",
+      "confirmTitle": "Remplacer le deck ?",
+      "confirmReplace": "Remplacer le deck actuel par \"{title}\" ?",
+      "confirmHint": "Vos pages actuelles seront remplacées",
+      "confirmBody": "Cette action remplacera toutes les pages actuelles par le modèle sélectionné. Vous pourrez encore tout modifier après.",
+      "cancel": "Annuler",
+      "confirm": "Remplacer",
+      "applied": "Modèle appliqué",
+      "appliedDesc": "\"{title}\" chargé — modifiez votre contenu.",
+      "chooseLayout": "Choisir une mise en page",
+      "chooseLayoutHint": "Choisissez une mise en page pour la nouvelle page après la page actuelle.",
+      "blankPage": "Vide"
+    },
+    "slide": {
+      "label": "Diapositives",
+      "manager": "Gestionnaire de diapositives",
+      "add": "Ajouter",
+      "addPage": "Ajouter une page",
+      "duplicate": "Dupliquer",
+      "delete": "Supprimer",
+      "download": "Télécharger",
+      "moveUp": "Monter",
+      "moveDown": "Descendre",
+      "goTo": "Aller à la diapositive",
+      "prev": "Diapositive précédente",
+      "next": "Diapositive suivante",
+      "insertAfter": "Insérer après",
+      "insertHint": "Les nouvelles pages sont insérées après la page actuelle.",
+      "manage": "Gérer la page",
+      "manageHint": "Déplacez les pages avec les flèches, dupliquez ou supprimez. Ajoutez de nouvelles pages avec n'importe quelle mise en page."
+    },
+    "ai": {
+      "label": "Design IA",
+      "topic": "De quoi parle le carrousel ?",
+      "topicPlaceholder": "ex. 5 erreurs de pricing des jeunes fondateurs",
+      "tone": {
+        "label": "Ton",
+        "educational": "Éducatif",
+        "professional": "Professionnel",
+        "friendly": "Amical",
+        "humorous": "Humoristique",
+        "promotional": "Promotionnel"
+      },
+      "slideCount": "Diapositives (3-10)",
+      "generate": "Générer le design",
+      "hint": "L'IA rédige le texte de chaque diapositive, choisit les mises en page et une palette assortie. Tout reste modifiable ensuite.",
+      "failedTitle": "Échec de la génération IA",
+      "currentPalette": "Palette actuelle — fond {bg}, accent {accent}"
+    },
+    "media": {
+      "label": "Médias",
+      "image": "Image de la diapositive",
+      "perSlideHint": "Cette image s'applique uniquement à la diapositive actuelle. Sélectionnez une autre diapositive pour lui donner sa propre image.",
+      "shadow": "Ombre de l'image",
+      "shadowX": "Décalage X",
+      "shadowY": "Décalage Y",
+      "shadowBlur": "Flou",
+      "shadowOpacity": "Opacité",
+      "dim": "Assombrir"
+    },
+    "style": {
+      "layout": "Mise en page",
+      "palette": "Palette",
+      "content": "Texte de la diapositive",
+      "pattern": "Texture",
+      "patternColor": "Couleur de la texture",
+      "patternOpacity": "Opacité",
+      "photo": "Photo"
+    },
+    "palette": {
+      "bg": "Fond",
+      "text": "Texte",
+      "accent": "Accent"
+    },
+    "fields": {
+      "kicker": "Surtitre",
+      "headline": "Titre",
+      "body": "Texte",
+      "items": "Éléments (un par ligne)",
+      "itemsHint": "Mythe vs Réalité utilise exactement deux lignes : le mythe puis la réalité.",
+      "quote": "Citation",
+      "author": "Auteur",
+      "stat": "Grand chiffre",
+      "statLabel": "Libellé du chiffre",
+      "cta": "Texte du bouton"
+    },
+    "export": {
+      "downloadCurrent": "Télécharger cette diapositive",
+      "downloadAll": "Télécharger tout",
+      "individual": "Télécharger des diapositives seules",
+      "working": "En cours…",
+      "hint": "Export en 1080×1350 (format portrait Instagram, 4:5)."
+    },
+    "status": {
+      "slides": "{n} diapositive | {n} diapositives",
+      "frame": "format {w}×{h}"
+    },
+    "toasts": {
+      "savedTitle": "Carrousel enregistré",
+      "savedDescription": "{count} diapositives ajoutées à votre bibliothèque.",
+      "loginRequired": "Connectez-vous pour enregistrer dans votre bibliothèque",
+      "failedTitle": "Échec de l'export",
+      "failedDescription": "Une erreur est survenue lors de l'export de vos diapositives."
+    },
+    "bar": {
+      "dialRotate": "Rotation",
+      "dialZoom": "Zoom",
+      "dialPattern": "Texture",
+      "guides": "Repères de sécurité",
+      "aspect": "Format",
+      "frame": "Cadre"
+    },
+    "preview": {
+      "label": "Aperçu",
+      "editor": "Éditeur",
+      "instagram": "Instagram",
+      "linkedin": "LinkedIn",
+      "strip": "Toutes les pages",
+      "stripTitle": "Toutes les pages — faites défiler pour prévisualiser",
+      "stripHint": "Glissez latéralement pour voir toutes les pages",
+      "igCaption": "Glissez pour voir l'histoire complète — quelle diapositive préférez-vous ?",
+      "igComments": "Voir les 42 commentaires",
+      "igTranslate": "Voir la traduction",
+      "igHint": "Aperçu du feed Instagram — 1080×1350 tel qu'il apparaîtra avec les points. L'export reste identique.",
+      "liHint": "Aperçu carrousel document LinkedIn — indicateurs comme les verront vos lecteurs.",
+      "liText": "Nouveau carrousel en ligne — parcourez-le et dites-moi quelle diapositive vous parle le plus.",
+      "follow": "Suivre",
+      "like": "J'aime",
+      "comment": "Commenter",
+      "repost": "Republier",
+      "send": "Envoyer"
+    }
+  },
+  "es": {
+    "title": "Creador de carruseles de Instagram",
+    "description": "Diseña carruseles de Instagram que convierten, con plantillas, diseño con IA, texturas y exportación en un clic. Gratis, sin registro.",
+    "studioTitle": "Estudio de carruseles",
+    "randomize": "Textura aleatoria",
+    "login": "Iniciar sesión",
+    "tabs": {
+      "style": "Estilo",
+      "export": "Exportar"
+    },
+    "dock": {
+      "deck": "Diapositivas"
+    },
+    "deck": {
+      "brand": "Marca",
+      "handle": "Usuario",
+      "handlePlaceholder": "tuusuario",
+      "handleHint": "Se muestra en el pie de cada diapositiva."
+    },
+    "flow": {
+      "label": "Fondo continuo",
+      "off": "Apagado",
+      "pan": "Paneo",
+      "plane": "Plano",
+      "offHint": "Cada diapositiva usa su propio fondo e imagen.",
+      "panHint": "Recortes de una sola imagen ancha: varias diapositivas tras la portada comparten la imagen.",
+      "planeHint": "Un fondo continuo estirado por todo el carrusel, desplazado por diapositiva: el degradado continúa al deslizar en vez de reiniciarse.",
+      "panRun": "Secuencia de paneo",
+      "panSlides": "{count} diapositivas recorren la imagen.",
+      "image": "Imagen ancha",
+      "planeImage": "Imagen de fondo (anula el degradado)",
+      "from": "Inicio",
+      "to": "Fin",
+      "dim": "Oscurecer"
+    },
+    "actions": {
+      "saveAll": "Guardar todo",
+      "useInPost": "Usar en publicación"
+    },
+    "templates": {
+      "label": "Plantillas",
+      "deckTitle": "Plantillas de carrusel",
+      "deckHint": "Carruseles completos — un clic reemplaza todo el deck.",
+      "useDeck": "Usar deck",
+      "confirmTitle": "¿Reemplazar deck?",
+      "confirmReplace": "¿Reemplazar el deck actual por \"{title}\"?",
+      "confirmHint": "Tus páginas actuales serán reemplazadas",
+      "confirmBody": "Esto reemplazará todas las páginas actuales con la plantilla seleccionada. Podrás seguir editando después.",
+      "cancel": "Cancelar",
+      "confirm": "Reemplazar",
+      "applied": "Plantilla aplicada",
+      "appliedDesc": "\"{title}\" cargado — edita tu contenido ahora.",
+      "chooseLayout": "Elegir diseño",
+      "chooseLayoutHint": "Elige un diseño para la nueva página después de la actual.",
+      "blankPage": "En blanco"
+    },
+    "slide": {
+      "label": "Diapositivas",
+      "manager": "Gestor de diapositivas",
+      "add": "Añadir",
+      "addPage": "Añadir página",
+      "duplicate": "Duplicar",
+      "delete": "Eliminar",
+      "download": "Descargar",
+      "moveUp": "Subir",
+      "moveDown": "Bajar",
+      "goTo": "Ir a la diapositiva",
+      "prev": "Diapositiva anterior",
+      "next": "Diapositiva siguiente",
+      "insertAfter": "Insertar después",
+      "insertHint": "Las nuevas páginas se insertan después de la página actual.",
+      "manage": "Gestionar página",
+      "manageHint": "Mueve páginas con flechas, duplica o elimina. Añade páginas nuevas con cualquier diseño."
+    },
+    "ai": {
+      "label": "Diseño IA",
+      "topic": "¿Sobre qué trata el carrusel?",
+      "topicPlaceholder": "ej. 5 errores de precios de los fundadores primerizos",
+      "tone": {
+        "label": "Tono",
+        "educational": "Educativo",
+        "professional": "Profesional",
+        "friendly": "Cercano",
+        "humorous": "Humorístico",
+        "promotional": "Promocional"
+      },
+      "slideCount": "Diapositivas (3-10)",
+      "generate": "Generar diseño",
+      "hint": "La IA escribe el texto de cada diapositiva, elige los diseños y una paleta a juego. Todo se puede editar después.",
+      "failedTitle": "Falló la generación con IA",
+      "currentPalette": "Paleta actual — fondo {bg}, acento {accent}"
+    },
+    "media": {
+      "label": "Medios",
+      "image": "Imagen de la diapositiva",
+      "perSlideHint": "Esta imagen se aplica solo a la diapositiva actual. Selecciona otra diapositiva para darle su propia imagen.",
+      "shadow": "Sombra de la imagen",
+      "shadowX": "Desplazamiento X",
+      "shadowY": "Desplazamiento Y",
+      "shadowBlur": "Desenfoque",
+      "shadowOpacity": "Opacidad",
+      "dim": "Oscurecer"
+    },
+    "style": {
+      "layout": "Diseño",
+      "palette": "Paleta",
+      "content": "Texto de la diapositiva",
+      "pattern": "Textura",
+      "patternColor": "Color de la textura",
+      "patternOpacity": "Opacidad",
+      "photo": "Foto"
+    },
+    "palette": {
+      "bg": "Fondo",
+      "text": "Texto",
+      "accent": "Acento"
+    },
+    "fields": {
+      "kicker": "Antetítulo",
+      "headline": "Titular",
+      "body": "Cuerpo",
+      "items": "Elementos (uno por línea)",
+      "itemsHint": "Mito vs Realidad usa exactamente dos líneas: primero el mito, luego la realidad.",
+      "quote": "Cita",
+      "author": "Autor",
+      "stat": "Cifra grande",
+      "statLabel": "Etiqueta de la cifra",
+      "cta": "Texto del botón"
+    },
+    "export": {
+      "downloadCurrent": "Descargar esta diapositiva",
+      "downloadAll": "Descargar todo",
+      "individual": "Descargar diapositivas sueltas",
+      "working": "Trabajando…",
+      "hint": "Exportación a 1080×1350 (formato vertical de Instagram, 4:5)."
+    },
+    "status": {
+      "slides": "{n} diapositiva | {n} diapositivas",
+      "frame": "formato {w}×{h}"
+    },
+    "toasts": {
+      "savedTitle": "Carrusel guardado",
+      "savedDescription": "{count} diapositivas añadidas a tu biblioteca.",
+      "loginRequired": "Inicia sesión para guardar en tu biblioteca",
+      "failedTitle": "Error al exportar",
+      "failedDescription": "Algo salió mal al exportar tus diapositivas."
+    },
+    "bar": {
+      "dialRotate": "Rotar",
+      "dialZoom": "Zoom",
+      "dialPattern": "Textura",
+      "guides": "Guías de seguridad",
+      "aspect": "Formato",
+      "frame": "Marco"
+    },
+    "preview": {
+      "label": "Vista previa",
+      "editor": "Editor",
+      "instagram": "Instagram",
+      "linkedin": "LinkedIn",
+      "strip": "Todas las páginas",
+      "stripTitle": "Todas las páginas — desplázate para previsualizar",
+      "stripHint": "Desliza lateralmente para ver todas las páginas",
+      "igCaption": "Desliza para ver la historia completa — ¿cuál diapositiva te gusta más?",
+      "igComments": "Ver los 42 comentarios",
+      "igTranslate": "Ver traducción",
+      "igHint": "Vista previa del feed de Instagram — 1080×1350 tal como se verá con los puntos. La exportación no cambia.",
+      "liHint": "Vista previa de carrusel de LinkedIn — indicadores como los verán tus lectores.",
+      "liText": "Nuevo carrusel disponible — desliza y dime qué diapositiva te impacta más.",
+      "follow": "Seguir",
+      "like": "Me gusta",
+      "comment": "Comentar",
+      "repost": "Compartir",
+      "send": "Enviar"
+    }
+  },
+  "de": {
+    "title": "Instagram-Karussell-Ersteller",
+    "description": "Gestalte Instagram-Karussells, die konvertieren — mit Vorlagen, KI-Design, Mustern und Ein-Klick-Export. Kostenlos, ohne Anmeldung.",
+    "studioTitle": "Karussell-Studio",
+    "randomize": "Muster zufällig",
+    "login": "Anmelden",
+    "tabs": {
+      "style": "Stil",
+      "export": "Export"
+    },
+    "dock": {
+      "deck": "Folien"
+    },
+    "deck": {
+      "brand": "Marke",
+      "handle": "Benutzername",
+      "handlePlaceholder": "deinname",
+      "handleHint": "Erscheint im Fuß jeder Folie."
+    },
+    "flow": {
+      "label": "Hintergrund-Verlauf",
+      "off": "Aus",
+      "pan": "Schwenk",
+      "plane": "Ebene",
+      "offHint": "Jede Folie nutzt ihren eigenen Hintergrund und ihr eigenes Bild.",
+      "panHint": "Ausschnitte aus einem einzigen Breitbild — mehrere Folien nach dem Cover teilen sich das Bild.",
+      "planeHint": "Ein durchgehender Hintergrund über das ganze Karussell, pro Folie versetzt — der Verlauf läuft beim Wischen weiter, statt neu zu starten.",
+      "panRun": "Schwenk-Sequenz",
+      "panSlides": "{count} Folien wandern über das Bild.",
+      "image": "Breitbild",
+      "planeImage": "Deck-Bild (ersetzt den Verlauf)",
+      "from": "Von",
+      "to": "Bis",
+      "dim": "Abdunkeln"
+    },
+    "actions": {
+      "saveAll": "Alles speichern",
+      "useInPost": "Im Post verwenden"
+    },
+    "templates": {
+      "label": "Vorlagen",
+      "deckTitle": "Deck-Vorlagen",
+      "deckHint": "Komplette Karussells — ein Klick ersetzt das ganze Deck.",
+      "useDeck": "Deck verwenden",
+      "confirmTitle": "Deck ersetzen?",
+      "confirmReplace": "Aktuelles Deck durch \"{title}\" ersetzen?",
+      "confirmHint": "Deine aktuellen Seiten werden ersetzt",
+      "confirmBody": "Dies ersetzt alle aktuellen Seiten durch die ausgewählte Vorlage. Du kannst danach alles weiter bearbeiten.",
+      "cancel": "Abbrechen",
+      "confirm": "Ersetzen",
+      "applied": "Vorlage angewendet",
+      "appliedDesc": "\"{title}\" geladen — bearbeite jetzt deinen Inhalt.",
+      "chooseLayout": "Layout wählen",
+      "chooseLayoutHint": "Wähle ein Layout für die neue Seite nach der aktuellen Seite.",
+      "blankPage": "Leer"
+    },
+    "slide": {
+      "label": "Folien",
+      "manager": "Folienverwaltung",
+      "add": "Hinzufügen",
+      "addPage": "Seite hinzufügen",
+      "duplicate": "Duplizieren",
+      "delete": "Löschen",
+      "download": "Herunterladen",
+      "moveUp": "Nach oben",
+      "moveDown": "Nach unten",
+      "goTo": "Zur Folie springen",
+      "prev": "Vorherige Folie",
+      "next": "Nächste Folie",
+      "insertAfter": "Danach einfügen",
+      "insertHint": "Neue Seiten werden nach der aktuellen Seite eingefügt.",
+      "manage": "Seite verwalten",
+      "manageHint": "Verschiebe Seiten mit Pfeilen, dupliziere oder lösche. Füge neue Seiten mit beliebigem Layout hinzu."
+    },
+    "ai": {
+      "label": "KI-Design",
+      "topic": "Worum geht es im Karussell?",
+      "topicPlaceholder": "z. B. 5 Preisfehler von Erstgründern",
+      "tone": {
+        "label": "Tonalität",
+        "educational": "Lehrreich",
+        "professional": "Professionell",
+        "friendly": "Freundlich",
+        "humorous": "Humorvoll",
+        "promotional": "Werblich"
+      },
+      "slideCount": "Folien (3-10)",
+      "generate": "Design generieren",
+      "hint": "Die KI schreibt den Text für jede Folie, wählt Layouts und eine passende Palette. Alles bleibt danach bearbeitbar.",
+      "failedTitle": "KI-Generierung fehlgeschlagen",
+      "currentPalette": "Aktuelle Palette — Hintergrund {bg}, Akzent {accent}"
+    },
+    "media": {
+      "label": "Medien",
+      "image": "Folienbild",
+      "perSlideHint": "Dieses Bild gilt nur für die aktuelle Folie. Wähle eine andere Folie, um ihr ein eigenes Bild zu geben.",
+      "shadow": "Bildschatten",
+      "shadowX": "Versatz X",
+      "shadowY": "Versatz Y",
+      "shadowBlur": "Weichzeichnen",
+      "shadowOpacity": "Deckkraft",
+      "dim": "Abdunkeln"
+    },
+    "style": {
+      "layout": "Layout",
+      "palette": "Palette",
+      "content": "Folientext",
+      "pattern": "Muster-Overlay",
+      "patternColor": "Musterfarbe",
+      "patternOpacity": "Deckkraft",
+      "photo": "Foto"
+    },
+    "palette": {
+      "bg": "HG",
+      "text": "Text",
+      "accent": "Akzent"
+    },
+    "fields": {
+      "kicker": "Aufmacher",
+      "headline": "Überschrift",
+      "body": "Fließtext",
+      "items": "Punkte (einer pro Zeile)",
+      "itemsHint": "Mythos vs. Fakt nutzt genau zwei Zeilen: zuerst der Mythos, dann der Fakt.",
+      "quote": "Zitat",
+      "author": "Autor",
+      "stat": "Große Zahl",
+      "statLabel": "Zahlen-Beschriftung",
+      "cta": "Button-Text"
+    },
+    "export": {
+      "downloadCurrent": "Diese Folie herunterladen",
+      "downloadAll": "Alle herunterladen",
+      "individual": "Einzelne Folien herunterladen",
+      "working": "Läuft…",
+      "hint": "Export in 1080×1350 (Instagram-Hochformat, 4:5)."
+    },
+    "status": {
+      "slides": "{n} Folie | {n} Folien",
+      "frame": "Format {w}×{h}"
+    },
+    "toasts": {
+      "savedTitle": "Karussell gespeichert",
+      "savedDescription": "{count} Folien zu deiner Bibliothek hinzugefügt.",
+      "loginRequired": "Melde dich an, um in deiner Bibliothek zu speichern",
+      "failedTitle": "Export fehlgeschlagen",
+      "failedDescription": "Beim Exportieren deiner Folien ist etwas schiefgelaufen."
+    },
+    "bar": {
+      "dialRotate": "Drehen",
+      "dialZoom": "Zoom",
+      "dialPattern": "Muster",
+      "guides": "Sichere Bereiche",
+      "aspect": "Format",
+      "frame": "Rahmen"
+    },
+    "preview": {
+      "label": "Vorschau",
+      "editor": "Editor",
+      "instagram": "Instagram",
+      "linkedin": "LinkedIn",
+      "strip": "Alle Seiten",
+      "stripTitle": "Alle Seiten — scrollen zum Vorschauen",
+      "stripHint": "Seitlich wischen, um alle Seiten zu sehen",
+      "igCaption": "Wische, um die ganze Story zu sehen — welche Folie gefällt dir am besten?",
+      "igComments": "Alle 42 Kommentare ansehen",
+      "igTranslate": "Übersetzung ansehen",
+      "igHint": "Instagram-Feed-Vorschau — 1080×1350 wie im Feed mit Punkten. Export bleibt unverändert.",
+      "liHint": "LinkedIn-Dokument-Karussell-Vorschau — Indikatoren wie Leser sie sehen.",
+      "liText": "Neues Karussell ist da — wische durch und sag mir, welche Folie am stärksten wirkt.",
+      "follow": "Folgen",
+      "like": "Gefällt mir",
+      "comment": "Kommentieren",
+      "repost": "Reposten",
+      "send": "Senden"
+    }
+  }
+}

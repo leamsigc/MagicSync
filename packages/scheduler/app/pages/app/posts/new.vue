@@ -41,7 +41,7 @@ type RepurposedContent = {
 const repurposedContent = ref<RepurposedContent | null>(null);
 const cropperMediaAssetId = ref<string | null>(null);
 
-onMounted(() => {
+function readStorage(): void {
   const storedCropper = sessionStorage.getItem('video-cropper-media');
   if (storedCropper) {
     try {
@@ -60,6 +60,18 @@ onMounted(() => {
     } catch {
       repurposedContent.value = null;
     }
+  }
+}
+
+// Read synchronously on client so initialPost is ready before child mounts
+if (import.meta.client) {
+  readStorage();
+}
+
+onMounted(() => {
+  // Fallback for cases where sessionStorage was written after initial hydration
+  if (!repurposedContent.value && !cropperMediaAssetId.value) {
+    readStorage();
   }
 });
 

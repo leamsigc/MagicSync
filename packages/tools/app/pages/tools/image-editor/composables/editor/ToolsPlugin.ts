@@ -1,7 +1,7 @@
 import type { FabricObject} from 'fabric';
 import { Canvas, IText, Rect, Circle, Triangle, PencilBrush, FabricImage, filters, Group, Point } from 'fabric';
 import { BaseFabricPlugin, FabricEditor, type FabricObjectWithName } from './FabricEditor';
-import { nextTick } from 'vue';
+import { nextTick, toRaw } from 'vue';
 import type { CorePlugin } from './CorePlugin';
 
 export class ToolsPlugin extends BaseFabricPlugin {
@@ -67,9 +67,11 @@ export class ToolsPlugin extends BaseFabricPlugin {
 
   async deleteLayer(layer?: FabricObject) {
     if (this.canvas) {
-      const target = layer || this.canvas.getActiveObject();
+      const requested = layer ? toRaw(layer) : undefined;
+      const target = requested
+        ? this.canvas.getObjects().find(o => o === requested)
+        : this.canvas.getActiveObject();
       if (target) {
-        console.log('Deleting layer:', target);
         this.canvas.remove(target);
         this.canvas.discardActiveObject();
         this.canvas.requestRenderAll();

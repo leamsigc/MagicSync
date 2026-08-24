@@ -49,6 +49,24 @@ export const usePlatformConfiguration = () => {
       return { isValid: false, message: t('validation.commentsNotSupported', { platform: platformType }) };
     }
 
+    // Validate comment lengths (thread replies must respect per-comment limits)
+    if (post.comment && post.comment.length > 0) {
+      const maxCommentLength = config.maxCommentLength ?? config.maxPostLength;
+      for (let i = 0; i < post.comment.length; i++) {
+        const commentLength = (post.comment[i] || '').length;
+        if (commentLength > maxCommentLength) {
+          return {
+            isValid: false,
+            message: t('validation.commentTooLong', {
+              platform: platformType,
+              index: i + 1,
+              max: maxCommentLength
+            })
+          };
+        }
+      }
+    }
+
     // Validate tags support
     if (config.supportsTags === false && post.tags && post.tags.length > 0) {
       return { isValid: false, message: t('validation.tagsNotSupported', { platform: platformType }) };

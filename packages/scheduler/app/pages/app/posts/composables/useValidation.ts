@@ -115,6 +115,18 @@ export const useValidation = () => {
             });
         }
 
+        // Comment length validation (thread replies must respect per-comment limits)
+        const maxCommentLength = config.maxCommentLength ?? config.maxPostLength;
+        comments.forEach((comment, index) => {
+            if (comment.length > maxCommentLength) {
+                status = 'error';
+                messages.push({
+                    message: `Comment ${index + 1} exceeds character limit (${comment.length}/${maxCommentLength})`,
+                    status: 'error'
+                });
+            }
+        });
+
         // Empty content validation
         if (!content.trim() && media.length === 0) {
             status = 'error';

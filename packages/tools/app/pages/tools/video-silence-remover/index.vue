@@ -424,13 +424,13 @@ defineOgImage("BlogOgImage", {
 </script>
 
 <template>
-  <div class="min-h-screen bg-linear-to-br from-neutral-900 via-neutral-800 to-neutral-900">
+  <div class="min-h-screen bg-linear-to-br from-default via-muted to-default">
     <BaseHeader />
     <div class="container mx-auto px-4 py-8">
       <!-- Header -->
       <div class="text-center mb-8">
-        <h1 class="text-4xl font-bold text-white mb-2">{{ t('video_silence_remover') }}</h1>
-        <p class="text-neutral-300">{{ t('upload_video_to_remove_silence') }}</p>
+        <h1 class="text-4xl font-bold text-highlighted mb-2">{{ t('video_silence_remover') }}</h1>
+        <p class="text-toned">{{ t('upload_video_to_remove_silence') }}</p>
       </div>
 
       <!-- No File Selected State -->
@@ -465,26 +465,26 @@ defineOgImage("BlogOgImage", {
           <UCard class="space-y-4">
             <div class="grid gap-4">
               <div class="flex items-center justify-between">
-                <h3 class="text-lg font-semibold text-white">{{ t('original_video') }}</h3>
+                <h3 class="text-lg font-semibold text-highlighted">{{ t('original_video') }}</h3>
                 <UButton variant="ghost" color="error" @click="deleteFile">
                   <Icon name="i-heroicons-trash" class="mr-2" />
                   {{ t('delete') }}
                 </UButton>
               </div>
 
-              <video :src="videoUrl" controls class="w-full rounded-lg border border-neutral-600" preload="metadata" />
+              <video :src="videoUrl" controls class="w-full rounded-lg border border-default" preload="metadata" />
 
               <!-- Threshold Settings -->
               <div class="space-y-4">
                 <div>
-                  <label class="block text-sm font-medium text-white mb-2">{{ t('silence_threshold') }}</label>
+                  <label class="block text-sm font-medium text-highlighted mb-2">{{ t('silence_threshold') }}</label>
                   <input v-model.number="silenceThreshold" type="range" min="5" max="50" class="w-full">
-                  <span class="text-sm text-neutral-400">{{ silenceThreshold }}/255</span>
+                  <span class="text-sm text-muted">{{ silenceThreshold }}/255</span>
                 </div>
                 <div>
-                  <label class="block text-sm font-medium text-white mb-2">{{ t('buffer_frames') }}</label>
+                  <label class="block text-sm font-medium text-highlighted mb-2">{{ t('buffer_frames') }}</label>
                   <input v-model.number="bufferFrames" type="range" min="5" max="30" class="w-full">
-                  <span class="text-sm text-neutral-400">{{ bufferFrames }} frames</span>
+                  <span class="text-sm text-muted">{{ bufferFrames }} frames</span>
                 </div>
               </div>
 
@@ -500,11 +500,11 @@ defineOgImage("BlogOgImage", {
         <BaseShinyCard class="p-6">
           <UCard class="space-y-6 h-full">
             <div class="grid gap-4">
-              <h3 class="text-lg font-semibold text-white mb-4">{{ t('status') }}</h3>
+              <h3 class="text-lg font-semibold text-highlighted mb-4">{{ t('status') }}</h3>
 
               <!-- Processing Status -->
               <div v-if="isProcessing" class="space-y-4">
-                <div class="flex justify-between text-sm text-white">
+                <div class="flex justify-between text-sm text-default">
                   <span>{{ t('processing_video') }}</span>
                   <span>{{ Math.round(progress) }}%</span>
                 </div>
@@ -514,16 +514,16 @@ defineOgImage("BlogOgImage", {
               <!-- Ready Status -->
               <div v-else-if="!processedVideo" class="text-center py-8">
                 <Icon name="i-heroicons-check-circle" class="mx-auto h-12 w-12 text-green-400 mb-4" />
-                <p class="text-white">{{ t('ready_to_process') }}</p>
+                <p class="text-default">{{ t('ready_to_process') }}</p>
               </div>
 
               <!-- Processed Video -->
               <div v-if="processedVideo" class="space-y-4">
-                <h4 class="text-md font-medium text-white">{{ t('processed_video') }}</h4>
-                <video :src="processedVideo.url" controls class="w-full rounded-lg border border-neutral-600"
+                <h4 class="text-md font-medium text-highlighted">{{ t('processed_video') }}</h4>
+                <video :src="processedVideo.url" controls class="w-full rounded-lg border border-default"
                   preload="metadata" />
 
-                <div class="text-sm text-neutral-400 space-y-1">
+                <div class="text-sm text-muted space-y-1">
                   <p>{{ t('original_duration') }}: {{ processedVideo.duration }}s</p>
                   <p>{{ t('new_duration') }}: {{ processedVideo.duration }}s</p>
                 </div>

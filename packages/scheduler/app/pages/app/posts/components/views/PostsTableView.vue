@@ -14,7 +14,6 @@ import type { PostWithAllData } from '#layers/BaseDB/db/posts/posts';
 import { h, resolveComponent, useTemplateRef } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { Row } from '@tanstack/vue-table'
-import { useClipboard } from '@vueuse/core'
 import { usePostManager } from '../../composables/UsePostManager';
 import UpdatePostModal from '../UpdatePostModal.vue';
 
@@ -23,14 +22,18 @@ const UBadge = resolveComponent('UBadge')
 const UDropdownMenu = resolveComponent('UDropdownMenu')
 const UCheckbox = resolveComponent('UCheckbox')
 const toast = useToast()
-const { copy } = useClipboard()
 
 const { deletePost, getPosts, activeBusinessId } = usePostManager();
-const props = defineProps<{
+defineProps<{
   posts: PostWithAllData[];
 }>();
 
 const rowSelection = ref<Record<string, boolean>>({})
+
+const router = useRouter()
+const openPostDetails = (id: string) => {
+  router.push(`/app/posts/feeds/${id}`)
+}
 
 
 const columns: TableColumn<PostWithAllData>[] = [
@@ -57,7 +60,11 @@ const columns: TableColumn<PostWithAllData>[] = [
     header: '#',
     cell: ({ row }) => {
       const contentDescription = row.getValue('content') as string;
-      return h('div', { class: 'text-left' }, contentDescription.slice(0, 100))
+      return h('button', {
+        class: 'text-left hover:underline text-default cursor-pointer',
+        type: 'button',
+        onClick: () => openPostDetails(row.original.id)
+      }, contentDescription.slice(0, 100))
     }
   },
   {
@@ -150,7 +157,11 @@ function getRowItems(row: Row<PostWithAllData>) {
       type: 'separator'
     },
     {
-      label: 'View customer'
+      label: 'View details',
+      icon: 'i-heroicons-eye',
+      onSelect() {
+        openPostDetails(row.original.id)
+      }
     }
   ]
 }
@@ -221,7 +232,8 @@ const handleBulkDelete = () => {
           {{ table?.tableApi?.getFilteredSelectedRowModel().rows.length || 0 }} of
           {{ table?.tableApi?.getFilteredRowModel().rows.length || 0 }} row(s) selected.
         </div>
-        <UButton v-if="(table?.tableApi?.getFilteredSelectedRowModel().rows.length || 0) > 0" color="error"
+        <UButton
+v-if="(table?.tableApi?.getFilteredSelectedRowModel().rows.length || 0) > 0" color="error"
           variant="outline" size="sm" @click="handleBulkDelete">
           Delete Selected
         </UButton>

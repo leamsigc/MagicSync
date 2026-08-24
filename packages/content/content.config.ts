@@ -71,7 +71,10 @@ export const collections = {
     type: 'page',
     source: {
       include: 'en/blogs/**',
-      prefix: '',
+      // Prefix stored paths with the public URL segment so sitemap/canonical
+      // URLs match the served route (/blogs/<slug>) instead of emitting
+      // root-level paths that soft-404.
+      prefix: '/blogs',
     },
     schema: blogSchema
   }),
@@ -89,7 +92,7 @@ export const collections = {
     type: 'page',
     source: {
       include: 'es/blogs/**',
-      prefix: '',
+      prefix: '/blogs',
     },
     schema: blogSchema
   })

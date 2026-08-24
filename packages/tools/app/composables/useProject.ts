@@ -76,7 +76,7 @@ export const useProject = () => {
     const worker = getTranscriptionWorker()
 
     worker.onmessage = (e: MessageEvent) => {
-      const { type, models, progress, status } = e.data
+      const { type, models, progress, status, error } = e.data
 
       if (type === 'models_list') {
         availableModels.value = models || []
@@ -84,12 +84,25 @@ export const useProject = () => {
           worker.postMessage({ type: 'init', model: models[0].id })
           isModelLoading.value = true
         }
-      } else if (status === 'loading') {
-        modelLoadingProgress.value = progress || 0
+      } else if (type === 'progress' || status === 'loading') {
+        if (typeof progress === 'number') {
+          modelLoadingProgress.value = progress
+        }
         isModelLoading.value = true
       } else if (type === 'ready') {
         isModelLoading.value = false
         modelLoadingProgress.value = 0
+      } else if (type === 'error') {
+        if (isModelLoading.value) {
+          isModelLoading.value = false
+          modelLoadingProgress.value = 0
+          useToast().add({
+            title: 'Model loading failed',
+            description: error || 'Failed to load the transcription model.',
+            color: 'error',
+            icon: 'i-lucide-alert-circle'
+          })
+        }
       }
     }
 

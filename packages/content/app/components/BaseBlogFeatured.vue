@@ -34,12 +34,12 @@ const { data: featuredArticles } = await useAsyncData("featured_posts", () =>
       class="group flex flex-col space-y-3 md:space-y-6  transition-transform">
       <NuxtLinkLocale
         class="object-contain aspect-video rounded-xl overflow-hidden flex items-center justify-center transition-all dark:group-hover:opacity-80 hover:hue-rotate-90"
-        :to="`/blogs${article.path}`" :title="article.title">
+        :to="article.path" :title="article.title">
         <NuxtPicture loading="lazy" class="w-full h-full" :src="article.image.src" :alt="article.image.alt" width="600"
           height="300" />
       </NuxtLinkLocale>
       <div class="space-y-3 md:space-y-5 pr-3 flex-1">
-        <NuxtLinkLocale :to="`/blogs${article.path}`" :title="article.title">
+        <NuxtLinkLocale :to="article.path" :title="article.title">
           <h3 class="group-hover:text-primary transition-colors text-2xl font-semibold leading-tight">
             {{ article.title }}
           </h3>

@@ -14,12 +14,19 @@ interface Props {
   loading?: boolean;
   defaultDuration?: number;
   preventClose?: boolean;
+  /**
+   * Externally-controlled step index (e.g. driven by backend progress events).
+   * When set, internal timers are disabled. Passing steps.length marks all
+   * steps complete.
+   */
+  activeStep?: number | null;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   loading: false,
   defaultDuration: 1500,
   preventClose: false,
+  activeStep: null,
 });
 
 const emit = defineEmits<{
@@ -79,6 +86,20 @@ function close() {
   emit("close");
 }
 
+// Watch for externally-controlled step changes (backend-driven progress)
+watch(
+  () => props.activeStep,
+  (step) => {
+    if (step === null || step === undefined) return;
+    if (currentTimer) {
+      clearTimeout(currentTimer);
+      currentTimer = null;
+    }
+    currentState.value = Math.max(0, Math.min(step, props.steps.length));
+    isLastStepComplete.value = currentState.value >= props.steps.length;
+  },
+);
+
 // Watch for changes in the async property
 watch(
   () => props.steps[currentState.value]?.async,
@@ -103,7 +124,10 @@ watch(
       currentState.value = 0;
       stepStartTime.value = Date.now();
       isLastStepComplete.value = false;
-      processCurrentStep();
+      // In externally-controlled mode the backend advances the steps
+      if (props.activeStep === null || props.activeStep === undefined) {
+        processCurrentStep();
+      }
     } else if (currentTimer) {
       clearTimeout(currentTimer);
     }

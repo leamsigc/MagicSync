@@ -1,5 +1,5 @@
 import type { BusinessProfile, CreateBusinessProfileData } from '#layers/BaseDB/db/schema';
-import type { InformationSchemaBusinessResponse } from '#layers/BaseScheduler/server/api/v1/ai/information/index.post';
+import type { InformationSchemaBusinessResponse, InformationExtractionEvent } from '#layers/BaseScheduler/server/api/v1/ai/information/index.post';
 import type { ServiceResponse } from '#layers/BaseDB/server/services/types';
 import { ref } from 'vue';
 
@@ -62,6 +62,61 @@ export const useBusinessManager = () => {
     }
   };
 
+  /**
+   * Streaming variant — reports backend progress events as they happen so the
+   * UI can show the real active step instead of a fake timed loader.
+   */
+  const extractBusinessInfoWithProgress = async (
+    payload: { url: string; explanation: string; competitors?: string[] },
+    onEvent: (event: InformationExtractionEvent) => void
+  ): Promise<InformationSchemaBusinessResponse> => {
+    const response = await $fetch.raw<ReadableStream<Uint8Array>>('/api/v1/ai/information', {
+      method: 'POST',
+      body: payload,
+      responseType: 'stream'
+    });
+
+    const body = response.body;
+
+    if (!body) {
+      throw new Error('No response stream from server');
+    }
+
+    const reader = body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let completed: InformationSchemaBusinessResponse | undefined;
+    let failure: Error | undefined;
+
+    const processLine = (line: string) => {
+      if (!line.trim()) return;
+      let event: InformationExtractionEvent;
+      try {
+        event = JSON.parse(line) as InformationExtractionEvent;
+      } catch {
+        return;
+      }
+      onEvent(event);
+      if (event.type === 'complete') completed = event.data;
+      if (event.type === 'error') failure = new Error(event.message || 'Extraction failed');
+    };
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() ?? '';
+      for (const line of lines) processLine(line);
+    }
+    if (buffer) processLine(buffer);
+
+    if (failure) throw failure;
+    if (!completed) throw new Error('Extraction ended without a result');
+
+    return completed;
+  };
+
   const updateBusiness = async (id: string, updatedFields: Partial<BusinessProfile>) => {
     try {
       const updatedBusiness = await $fetch<BusinessProfile>(`/api/v1/business/${id}`, {
@@ -104,6 +159,7 @@ export const useBusinessManager = () => {
     getAllBusinesses,
     addBusiness,
     extractBusinessInfo,
+    extractBusinessInfoWithProgress,
     updateBusiness,
     deleteBusiness,
     setActiveBusiness

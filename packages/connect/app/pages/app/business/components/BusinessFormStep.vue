@@ -62,7 +62,8 @@ const handleSubmit = (payload: FormSubmitEvent<BusinessForm>) => {
     entityDetails: {
       companyInformation: formData.companyInformation,
       brandDetails: formData.brandDetails,
-      channels: []
+      channels: [],
+      targetAudience: props.result.targetAudience
     },
   }
 

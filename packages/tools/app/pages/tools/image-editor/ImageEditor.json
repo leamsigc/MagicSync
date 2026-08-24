@@ -6,6 +6,8 @@
       "main": {
         "new": "New",
         "save": "Save",
+        "saveToLibrary": "Save to Library",
+        "useInPost": "Use in Post",
         "export": "Export",
         "templates": "Templates"
       },
@@ -109,6 +111,9 @@
         "title": "Opacity",
         "value": "Opacity"
       }
+    },
+    "notifications": {
+      "frameUnavailable": "Nothing to save yet — create something on the canvas first."
     }
   },
   "es": {
@@ -118,6 +123,8 @@
       "main": {
         "new": "Nuevo",
         "save": "Guardar",
+        "saveToLibrary": "Guardar en la Biblioteca",
+        "useInPost": "Usar en Publicación",
         "export": "Exportar",
         "templates": "Plantillas"
       },
@@ -221,6 +228,9 @@
         "title": "Opacidad",
         "value": "Opacidad"
       }
+    },
+    "notifications": {
+      "frameUnavailable": "Nada que guardar todavía — crea algo en el lienzo primero."
     }
   },
   "de": {
@@ -230,6 +240,8 @@
       "main": {
         "new": "Neu",
         "save": "Speichern",
+        "saveToLibrary": "In Bibliothek speichern",
+        "useInPost": "In Beitrag verwenden",
         "export": "Exportieren",
         "templates": "Vorlagen"
       },
@@ -333,6 +345,9 @@
         "title": "Deckkraft",
         "value": "Deckkraft"
       }
+    },
+    "notifications": {
+      "frameUnavailable": "Noch nichts zu speichern — erstelle zuerst etwas auf der Leinwand."
     }
   },
   "fr": {
@@ -342,6 +357,8 @@
       "main": {
         "new": "Nouveau",
         "save": "Sauvegarder",
+        "saveToLibrary": "Enregistrer dans la Bibliothèque",
+        "useInPost": "Utiliser dans une Publication",
         "export": "Exporter",
         "templates": "Modèles"
       },
@@ -445,6 +462,9 @@
         "title": "Opacité",
         "value": "Opacité"
       }
+    },
+    "notifications": {
+      "frameUnavailable": "Rien à enregistrer pour le moment — créez d'abord quelque chose sur le canevas."
     }
   }
 }

@@ -129,7 +129,7 @@ const appendToBody = import.meta.client ? () => document.body : undefined
     <BasePageHeader :title="t('title')" :description="t('subtitle')">
       <template #actions>
         <UButton
-to="/app/ai-tools/growth-stratergy/create" icon="i-lucide-rocket" color="primary" size="lg"
+to="/app/tools/growth-stratergy/create" icon="i-lucide-rocket" color="primary" size="lg"
           class="rounded-full px-6 shadow-lg shadow-primary/20 hover:scale-105 transition-transform">
           {{ t('cta') }}
         </UButton>

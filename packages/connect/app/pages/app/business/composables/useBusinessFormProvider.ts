@@ -14,6 +14,51 @@ export interface BusinessFormState {
   brandDetails: string
 }
 
+/** Render the extracted target audience as a Markdown section */
+function renderTargetAudienceSection(
+  audience: NonNullable<InformationSchemaBusinessResponse['targetAudience']>
+): string {
+  const lines: string[] = ['', '## Target Audience', '']
+
+  if (audience.primarySegment) {
+    lines.push(`**Primary segment:** ${audience.primarySegment}`, '')
+  }
+
+  const demographics = audience.demographics as Record<string, unknown> | undefined
+  if (demographics && Object.keys(demographics).length) {
+    lines.push('### Demographics', '')
+    for (const [key, value] of Object.entries(demographics)) {
+      if (value == null || value === '') continue
+      lines.push(`- **${key.replace(/([A-Z])/g, ' $1').toLowerCase()}:** ${value}`)
+    }
+    lines.push('')
+  }
+
+  const listFields: Array<[string, unknown]> = [
+    ['Pain Points', audience.painPoints],
+    ['Motivations', audience.motivations],
+    ['Buying Triggers', audience.buyingTriggers],
+    ['Preferred Platforms', audience.preferredPlatforms],
+    ['Content Preferences', audience.contentPreferences]
+  ]
+
+  for (const [title, value] of listFields) {
+    if (Array.isArray(value) && value.length) {
+      lines.push(`### ${title}`, '', ...value.map((item) => `- ${item}`), '')
+    }
+  }
+
+  if (Array.isArray(audience.secondarySegments) && audience.secondarySegments.length) {
+    lines.push('### Secondary Segments', '')
+    for (const segment of audience.secondarySegments) {
+      lines.push(`- **${segment.name}**${segment.description ? ` — ${segment.description}` : ''}`)
+    }
+    lines.push('')
+  }
+
+  return lines.join('\n')
+}
+
 export interface BusinessFormActions {
   updateBusinessDetails: (details: Partial<BusinessFormState['businessDetails']>) => void
   updateCompanyInformation: (content: string) => void
@@ -57,7 +102,10 @@ export function useBusinessFormProvider() {
         website: response.businessProfile?.website || '',
         category: response.businessProfile?.category || ''
       }
-      state.companyInformation = response.companyInformation || ''
+      const audienceSection = response.targetAudience
+        ? renderTargetAudienceSection(response.targetAudience)
+        : ''
+      state.companyInformation = `${response.companyInformation || ''}${audienceSection}`
       state.brandDetails = JSON.stringify(response.brandDetails || {}, null, 2)
     },
 

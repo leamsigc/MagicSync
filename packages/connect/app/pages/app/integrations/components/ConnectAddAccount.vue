@@ -21,7 +21,6 @@ const { connectionList, setConnectionList, HandleConnectTo } = useConnectionMana
 setConnectionList();
 
 const { t } = useI18n();
-const toast = useToast();
 const blueskyModal = ref(false)
 const mainModal = ref(false)
 const HandleConnectBaseOnThePlatform = (connection: Connection) => {
@@ -76,33 +75,41 @@ const HandleConnectToBluesky = (payload: FormSubmitEvent<Schema>) => {
 
 <template>
   <UModal v-model:open="mainModal">
-    <UButton color="primary" variant="outline" class="grid place-content-center py-8 shadow cursor-pointer md:min-h-60"
+    <button
+type="button"
+      class="w-full md:min-h-60 rounded-xl border-2 border-dashed border-border hover:border-primary bg-elevated/50 hover:bg-elevated transition-colors flex flex-col items-center justify-center gap-3 p-6 cursor-pointer text-highlighted"
+      data-tour="connect-add-account"
       @click="mainModal = true">
-      <section class="flex flex-col items-center gap-2 border-2 border-primary  rounded-full p-4 mb-2 w-24 h-24">
-        <Icon name="lucide:plus" size="80" class="" />
-      </section>
-      <h3 class=" text-center">{{ t('states.add_connection') }}</h3>
-    </UButton>
+      <span class="size-14 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center">
+        <UIcon name="i-lucide-plus" class="size-7 text-primary" />
+      </span>
+      <span class="text-sm font-medium">{{ t('states.add_connection') }}</span>
+    </button>
     <template #content>
       <section class="grid grid-cols-2 md:grid-cols-3 gap-4 p-6 overflow-y-auto">
-        <UButton color="neutral" variant="soft" v-for="connection in connectionList" :key="connection.name"
-          :disabled="!connection.active" @click="HandleConnectBaseOnThePlatform(connection)"
-          class="p-4   rounded grid place-content-center text-center">
+        <UButton
+v-for="connection in connectionList" :key="connection.name" color="neutral" variant="soft"
+          :disabled="!connection.active" class="p-4 rounded-xl grid place-items-center gap-2 text-center min-h-32"
+          @click="HandleConnectBaseOnThePlatform(connection)">
           <template v-if="connection.platform == 'bluesky'">
-            <UModal v-model:open="blueskyModal" title="Bluesky" :ui="{ footer: 'justify-end' }" size="small"
+            <UModal
+v-model:open="blueskyModal" title="Bluesky" :ui="{ footer: 'justify-end' }" size="small"
               class="max-w-sm">
               <template #body>
-                <UAuthForm :schema="schema" title="Bluesky" description="Enter bluesky credentials" icon="i-lucide-user"
-                  :fields="fields" @submit="HandleConnectToBluesky" class="max-w-md" />
+                <UAuthForm
+:schema="schema" title="Bluesky" description="Enter bluesky credentials" icon="i-lucide-user"
+                  :fields="fields" class="max-w-md" @submit="HandleConnectToBluesky" />
               </template>
             </UModal>
 
           </template>
-          <Icon :name="connection.icon" size="48" class="w-20" />
-          <h3>{{ connection.name }}</h3>
+          <Icon :name="connection.icon" size="40" class="shrink-0" />
+          <h3 class="text-sm font-medium truncate w-full">{{ connection.name }}</h3>
         </UButton>
-        <UButton color="neutral" variant="soft" class="p-4  rounded grid place-content-center text-center" disabled>
-          <h3>{{ t('states.coming_soon') }}</h3>
+        <UButton
+color="neutral" variant="soft" class="p-4 rounded-xl grid place-items-center gap-2 text-center min-h-32"
+          disabled>
+          <h3 class="text-sm font-medium">{{ t('states.coming_soon') }}</h3>
         </UButton>
       </section>
     </template>

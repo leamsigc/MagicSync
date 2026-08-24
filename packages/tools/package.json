@@ -13,24 +13,26 @@
     "test:e2e": "playwright test"
   },
   "devDependencies": {
-    "@huggingface/transformers": "catalog:",
+    "@ai-sdk/google": "catalog:",
     "@browser-ai/transformers-js": "catalog:",
-    "ai": "catalog:",
+    "@huggingface/transformers": "catalog:",
     "@local-monorepo/assets": "workspace:*",
     "@local-monorepo/ui": "workspace:*",
     "@nuxt/eslint": "catalog:",
+    "@nuxt/fonts": "catalog:",
     "@nuxtjs/i18n": "catalog:",
     "@playwright/test": "catalog:",
-    "@nuxt/fonts": "catalog:",
+    "ai": "catalog:",
     "eslint": "catalog:",
+    "evlog": "catalog:",
     "fabric": "catalog:",
+    "idb": "catalog:",
+    "jspdf": "^4.2.1",
+    "mediabunny": "catalog:",
+    "modern-screenshot": "catalog:",
     "nuxt": "catalog:",
     "typescript": "catalog:",
     "vue": "catalog:",
-    "modern-screenshot": "catalog:",
-    "evlog": "catalog:",
-    "mediabunny": "catalog:",
-    "wavesurfer.js": "catalog:",
-    "idb": "catalog:"
+    "wavesurfer.js": "catalog:"
   }
 }

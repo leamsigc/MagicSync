@@ -1,7 +1,7 @@
 ---
 layout: blog-layout
-title: "Must Know Resources | The easy way of  using Web Worker in Nuxt."
-description: "Looking for a way to use Web Worker in Nuxt? This blog post will show you how to do it in a simple way."
+title: "The Easy Way to Use Web Workers in Nuxt"
+description: "Run heavy JS off the main thread in Nuxt with Vite worker imports - the simple ?worker pattern, real examples, and pitfalls to avoid."
 
 featured: true
 tags:

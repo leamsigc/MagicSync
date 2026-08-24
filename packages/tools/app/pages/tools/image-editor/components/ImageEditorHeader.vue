@@ -3,29 +3,52 @@
 <script lang="ts" setup>
 import { useFabricJs } from '../composables/useFabricJs';
 
-// Props
-defineProps<{
-  // Add any props if needed later
-}>();
-
 const { t } = useI18n();
+const toast = useToast();
 const {
   undo,
   redo,
   zoomIn,
   zoomOut,
   downloadCanvasImage,
+  getFrameDataUrl,
   exportCurrentCanvas,
-  editor
+  zoomPercent
 } = useFabricJs();
 
-const canvasZoom = computed(() => {
-  return Math.round((editor.value?.fabricCanvas?.getZoom() || 1) * 100);
-});
+const showSaveAssetModal = ref(false);
+const pendingDataUrl = ref<string | null>(null);
+const pendingFilename = ref('');
+const savedAssetId = ref<string | null>(null);
 
 const handleHomeClick = () => {
   navigateTo('/');
 }
+
+const handleSaveToLibrary = () => {
+  const dataUrl = getFrameDataUrl();
+  if (!dataUrl) {
+    toast.add({
+      title: t('notifications.frameUnavailable'),
+      icon: 'i-heroicons-exclamation-triangle',
+      color: 'warning'
+    });
+    return;
+  }
+  pendingDataUrl.value = dataUrl;
+  pendingFilename.value = `magic_sync_design_${Date.now()}.png`;
+  showSaveAssetModal.value = true;
+};
+
+const handleSaved = (asset: { id: string }) => {
+  savedAssetId.value = asset.id;
+};
+
+const handleUseInPost = () => {
+  if (!savedAssetId.value) return;
+  sessionStorage.setItem('video-cropper-media', JSON.stringify({ assetId: savedAssetId.value, source: 'image-editor' }));
+  navigateTo('/app/posts/new');
+};
 
 </script>
 
@@ -41,29 +64,48 @@ const handleHomeClick = () => {
 
       <!-- History Controls -->
       <UTooltip :text="t('menu.vertical.undo', 'Undo')">
-        <UButton variant="ghost" color="neutral" icon="lucide:undo" size="sm" @click="undo" />
+        <UButton variant="ghost" color="neutral" icon="lucide:undo" size="sm" aria-label="Undo" data-testid="btn-undo" @click="undo" />
       </UTooltip>
       <UTooltip :text="t('menu.vertical.redo', 'Redo')">
-        <UButton variant="ghost" color="neutral" icon="lucide:redo" size="sm" @click="redo" />
+        <UButton variant="ghost" color="neutral" icon="lucide:redo" size="sm" aria-label="Redo" data-testid="btn-redo" @click="redo" />
       </UTooltip>
     </div>
 
     <!-- Center: Zoom Controls -->
     <div class="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-md p-1">
-      <UButton variant="ghost" color="neutral" icon="lucide:minus" size="xs" @click="zoomOut" />
-      <span class="text-xs font-mono w-12 text-center">{{ canvasZoom }}%</span>
-      <UButton variant="ghost" color="neutral" icon="lucide:plus" size="xs" @click="zoomIn" />
+      <UButton variant="ghost" color="neutral" icon="lucide:minus" size="xs" aria-label="Zoom Out" @click="zoomOut" />
+      <span data-testid="zoom-level" class="text-xs font-mono w-12 text-center">{{ zoomPercent }}%</span>
+      <UButton variant="ghost" color="neutral" icon="lucide:plus" size="xs" aria-label="Zoom In" @click="zoomIn" />
     </div>
 
     <!-- Right: Actions -->
     <div class="flex items-center gap-2">
       <UButton
-color="neutral" variant="outline" size="sm" icon="lucide:download" :label="t('menu.main.save', 'Save')"
+        v-if="savedAssetId"
+        color="primary" variant="soft" size="sm" icon="lucide:calendar-plus"
+        :label="t('menu.main.useInPost', 'Use in Post')"
+        data-testid="btn-use-in-post"
+        @click="handleUseInPost" />
+      <UButton
+        color="neutral" variant="outline" size="sm" icon="lucide:download" :label="t('menu.main.save', 'Save')"
         @click="downloadCanvasImage" />
       <UButton
-color="primary" variant="solid" size="sm" icon="lucide:share" :label="t('menu.main.export', 'Export')"
+        color="neutral" variant="outline" size="sm" icon="lucide:library-big"
+        :label="t('menu.main.saveToLibrary', 'Save to Library')"
+        data-testid="btn-save-to-library"
+        @click="handleSaveToLibrary" />
+      <UButton
+        color="primary" variant="solid" size="sm" icon="lucide:share" :label="t('menu.main.export', 'Export')"
         @click="exportCurrentCanvas" />
     </div>
+
+    <BaseSaveAssetModal
+      v-model:open="showSaveAssetModal"
+      accept="dataUrl"
+      :filename="pendingFilename"
+      :payload="pendingDataUrl"
+      @saved="handleSaved"
+    />
   </header>
 </template>
 

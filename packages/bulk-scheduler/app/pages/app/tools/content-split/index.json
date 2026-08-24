@@ -27,6 +27,7 @@
     "results": {
       "title": "Generated Content",
       "copy": "Copy",
+      "schedule": "Schedule",
       "useForPost": "Use for Post",
       "noResults": "No content generated yet",
       "schedulePost": "Schedule Post"
@@ -60,6 +61,7 @@
     "results": {
       "title": "Contenido Generado",
       "copy": "Copiar",
+      "schedule": "Programar",
       "useForPost": "Usar para Publicación",
       "noResults": "Aún no se ha generado contenido",
       "schedulePost": "Programar Publicación"
@@ -93,6 +95,7 @@
     "results": {
       "title": "Contenu Généré",
       "copy": "Copier",
+      "schedule": "Programmer",
       "useForPost": "Utiliser pour Publication",
       "noResults": "Aucun contenu généré pour le moment",
       "schedulePost": "Programmer la Publication"
@@ -126,6 +129,7 @@
     "results": {
       "title": "Generierter Inhalt",
       "copy": "Kopieren",
+      "schedule": "Planen",
       "useForPost": "Für Beitrag Verwenden",
       "noResults": "Noch kein Inhalt generiert",
       "schedulePost": "Beitrag Planen"

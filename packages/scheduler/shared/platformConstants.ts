@@ -25,6 +25,8 @@ export interface PlatformConfig {
   icon: string;
   color: string;
   maxPostLength: number;
+  /** Max characters per comment/reply. Falls back to maxPostLength when unset. */
+  maxCommentLength?: number;
   maxImages: number;
   supportsComments: boolean;
   supportsImagesInComments: boolean;
@@ -189,6 +191,7 @@ export const platformConfigurations: SocialMediaPlatformConfigurations = {
     icon: 'i-simple-icons-x',
     color: '#000000',
     maxPostLength: 280,
+    maxCommentLength: 280,
     maxImages: 4,
     supportsComments: true,
     supportsImagesInComments: true,
@@ -216,6 +219,7 @@ export const platformConfigurations: SocialMediaPlatformConfigurations = {
     icon: 'i-simple-icons-x',
     color: '#000000',
     maxPostLength: 280,
+    maxCommentLength: 280,
     maxImages: 4,
     supportsComments: true,
     supportsImagesInComments: true,
@@ -384,6 +388,7 @@ export const platformConfigurations: SocialMediaPlatformConfigurations = {
     icon: 'i-simple-icons-threads',
     color: '#000000',
     maxPostLength: 500,
+    maxCommentLength: 500,
     maxImages: 10,
     supportsComments: true,
     supportsImagesInComments: true,
@@ -469,6 +474,7 @@ export const platformConfigurations: SocialMediaPlatformConfigurations = {
     icon: 'i-simple-icons-mastodon',
     color: '#6364FF',
     maxPostLength: 500,
+    maxCommentLength: 500,
     maxImages: 4,
     supportsComments: true,
     supportsImagesInComments: false,
@@ -496,6 +502,7 @@ export const platformConfigurations: SocialMediaPlatformConfigurations = {
     icon: 'i-simple-icons-bluesky',
     color: '#0085FF',
     maxPostLength: 300,
+    maxCommentLength: 300,
     maxImages: 4,
     supportsComments: true,
     supportsImagesInComments: false,

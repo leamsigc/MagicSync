@@ -8,6 +8,8 @@ import type { FacebookPage } from '#layers/BaseConnect/utils/FacebookPages';
 type FacebookApiInsightValue = { value: number; end_time: string };
 type FacebookApiInsight = { name: string; values?: FacebookApiInsightValue[] };
 type FacebookApiMetric = { name: string; values?: { value: number }[] };
+type FacebookApiPostInsightMetric = { name: string; values?: { value: number | Record<string, number> }[] };
+type FacebookApiReactionType = { like?: number; love?: number; haha?: number; wow?: number; sorry?: number; anger?: number; [key: string]: number | undefined };
 type FacebookApiComment = {
   id: string;
   message?: string;
@@ -305,34 +307,97 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
       return createPostInsightsFallback(this.pluginName);
     }
 
-    const url = this._getGraphApiUrl(
-      `/${externalPostId}/insights?metric=post_impressions,post_impressions_unique,post_engaged_users,post_clicks,post_reactions_like,post_reactions_love,post_reactions_haha,post_reactions_sorry,post_reactions_anger&access_token=${socialMediaAccount.accessToken}`
-    );
-    const { data, error } = await (
-      await this.fetch(url, undefined, 'fetch post insights')
-    ).json() as { data?: FacebookApiMetric[]; error?: Record<string, unknown> };
+    const accessToken = socialMediaAccount.accessToken;
 
-    if (error) {
-      log.warn({ content: '[Facebook] Post insights error', error })
+    // Metric list is kept to post-level metrics that remain valid in Graph API
+    // v25.0+. post_impressions_unique was removed in v25.0, so we rely on the
+    // documented replacements (post_media_view / post_total_media_view_unique)
+    // for reach/views, plus the post object's exact reaction/comment/share totals.
+    const metrics = [
+      'post_impressions',
+      'post_total_media_view_unique',
+      'post_media_view',
+      'post_engaged_users',
+      'post_clicks',
+      'post_reactions_by_type_total',
+    ].join(',');
+
+    const [insightsRes, postRes] = await Promise.all([
+      this.fetch(
+        this._getGraphApiUrl(`/${externalPostId}/insights?metric=${metrics}&access_token=${accessToken}`),
+        undefined,
+        'fetch post insights'
+      ).then((r) => r.json() as Promise<{ data?: FacebookApiPostInsightMetric[]; error?: Record<string, unknown> }>),
+      this.fetch(
+        this._getGraphApiUrl(
+          `/${externalPostId}?fields=reactions.summary(total_count),comments.summary(total_count),shares.count&access_token=${accessToken}`
+        ),
+        undefined,
+        'fetch post engagement totals'
+      ).then((r) =>
+        r.json() as Promise<{
+          reactions?: { summary?: { total_count?: number } };
+          comments?: { summary?: { total_count?: number } };
+          shares?: { count?: number };
+          error?: Record<string, unknown>;
+        }>
+      ),
+    ]);
+
+    if (insightsRes.error || postRes.error) {
+      const insightError = insightsRes.error ?? postRes.error;
+      log.warn({ content: '[Facebook] Post insights error', error: insightError })
       return createPostInsightsFallback(this.pluginName);
     }
 
-    const labelMap: Record<string, string> = {
-      post_impressions: 'Impressions',
-      post_impressions_unique: 'Reach',
-      post_engaged_users: 'Engaged Users',
-      post_clicks: 'Link Clicks',
-      post_reactions_like: 'Likes',
-      post_reactions_love: 'Love',
-      post_reactions_haha: 'Haha',
-      post_reactions_sorry: 'Sorry',
-      post_reactions_anger: 'Angry',
+    const metricValue = (name: string): number => {
+      const metric = insightsRes.data?.find((d) => d.name === name);
+      const value = metric?.values?.[0]?.value;
+      return typeof value === 'number' ? value : 0;
+    };
+
+    const reactionsByType = insightsRes.data?.find((d) => d.name === 'post_reactions_by_type_total');
+    const reactionValue = reactionsByType?.values?.[0]?.value;
+    const reactionsFromInsights: number = reactionValue && typeof reactionValue === 'object'
+      ? Object.values(reactionValue as FacebookApiReactionType).reduce<number>((sum, count) => sum + (Number(count) || 0), 0)
+      : 0;
+
+    const totalReactions: number = postRes.reactions?.summary?.total_count ?? reactionsFromInsights;
+    const totalComments: number = postRes.comments?.summary?.total_count ?? 0;
+    const totalShares: number = postRes.shares?.count ?? 0;
+    const totalEngagement: number = totalReactions + totalComments + totalShares;
+
+    const insights: PostInsight[] = [
+      { label: 'Views', value: metricValue('post_total_media_view_unique') || metricValue('post_impressions') },
+      { label: 'Impressions', value: metricValue('post_impressions') },
+      { label: 'Engagement', value: totalEngagement },
+      { label: 'Reactions', value: totalReactions },
+      { label: 'Comments', value: totalComments },
+      { label: 'Shares', value: totalShares },
+      { label: 'Link Clicks', value: metricValue('post_clicks') },
+      { label: 'Engaged Users', value: metricValue('post_engaged_users') },
+    ];
+
+    const reactionLabelMap: Record<string, string> = {
+      like: 'Likes',
+      love: 'Love',
+      haha: 'Haha',
+      wow: 'Wow',
+      sorry: 'Sorry',
+      anger: 'Angry',
+    };
+    const reactionBreakdown = reactionValue && typeof reactionValue === 'object'
+      ? (reactionValue as FacebookApiReactionType)
+      : undefined;
+    if (reactionBreakdown) {
+      for (const [type, count] of Object.entries(reactionBreakdown)) {
+        if (count) {
+          insights.push({ label: reactionLabelMap[type] || type, value: count });
+        }
+      }
     }
 
-    return data?.map((d: FacebookApiMetric): PostInsight => ({
-      label: labelMap[d.name] || d.name,
-      value: d.values?.[0]?.value || 0,
-    })) || [];
+    return insights;
   }
 
   /**

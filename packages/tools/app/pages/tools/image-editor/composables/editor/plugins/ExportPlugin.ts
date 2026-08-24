@@ -1,5 +1,5 @@
-import { Canvas, filters, Group } from 'fabric';
-import { BaseFabricPlugin, FabricEditor, type FabricObjectWithName } from '../FabricEditor';
+import { Group } from 'fabric';
+import { BaseFabricPlugin, type FabricObjectWithName } from '../FabricEditor';
 import type { CorePlugin } from '../CorePlugin';
 
 export class ExportPlugin extends BaseFabricPlugin {
@@ -10,55 +10,68 @@ export class ExportPlugin extends BaseFabricPlugin {
     'downloadCanvasImage',
     'exportCurrentCanvas',
     'loadTemplateFromJson',
-    'groupLayers'
+    'groupLayers',
+    'getFrameDataUrl'
   ];
 
   protected init() { }
+
+  /**
+   * Renders the workspace frame to a data URL at its original size.
+   * Temporarily resets the viewport so the export is 1:1 relative to the frame.
+   */
+  getFrameDataUrl(
+    format: 'png' | 'jpeg' = 'png',
+    quality: number = 1,
+  ): string | null {
+    if (!this.canvas) return null;
+
+    const core = this.editor.getPlugin('core') as unknown as { getWorkspace?: () => FabricObjectWithName } | undefined;
+    const frame = core?.getWorkspace();
+
+    if (!frame) {
+      console.warn('Main frame not found for export.');
+      return null;
+    }
+
+    // Store current viewport transform
+    const vpt = this.canvas.viewportTransform;
+    // Reset viewport to ensure 1:1 export scale relative to canvas 0,0
+    this.canvas.viewportTransform = [1, 0, 0, 1, 0, 0];
+
+    const dataURL = this.canvas.toDataURL({
+      format,
+      quality,
+      multiplier: 1 / frame.scaleX!, // Scale back to original frame size
+      left: frame.getBoundingRect().left,
+      top: frame.getBoundingRect().top,
+
+      width: frame.width * frame.scaleX!, // Account for potential scaling
+      height: frame.height * frame.scaleY!,
+    });
+
+    // Restore viewport
+    this.canvas.setViewportTransform(vpt!);
+    this.canvas.requestRenderAll();
+
+    return dataURL;
+  }
 
   downloadCanvasImage(
     format: 'png' | 'jpeg' = 'png',
     quality: number = 1,
   ) {
-    if (this.canvas) {
-      const core = this.editor.getPlugin('core') as any;
-      const frame = core?.getWorkspace();
+    if (!this.canvas) return;
 
-      if (!frame) {
-        console.warn('Main frame not found for download.');
-        return;
-      }
-      console.log('frame', frame);
+    const dataURL = this.getFrameDataUrl(format, quality);
+    if (!dataURL) return;
 
-
-      //Get the layers
-      const layers = this.canvas.getObjects();
-      // Store current viewport transform
-      const vpt = this.canvas.viewportTransform;
-      // Reset viewport to ensure 1:1 export scale relative to canvas 0,0
-      this.canvas.viewportTransform = [1, 0, 0, 1, 0, 0];
-
-      const dataURL = this.canvas.toDataURL({
-        format,
-        quality,
-        multiplier: 1 / frame.scaleX!, // Scale back to original frame size
-        left: frame.getBoundingRect().left,
-        top: frame.getBoundingRect().top,
-
-        width: frame.width * frame.scaleX!, // Account for potential scaling
-        height: frame.height * frame.scaleY!,
-      });
-
-      // Restore viewport
-      this.canvas.setViewportTransform(vpt!);
-      this.canvas.requestRenderAll();
-
-      const link = document.createElement('a');
-      link.href = dataURL;
-      link.download = `magic_sync_design.${format}`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
+    const link = document.createElement('a');
+    link.href = dataURL;
+    link.download = `magic_sync_design.${format}`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }
 
   exportCurrentCanvas() {
@@ -66,7 +79,7 @@ export class ExportPlugin extends BaseFabricPlugin {
       const groupLayer = this.groupLayers();
       if (!groupLayer) return;
 
-      (groupLayer as any).id = 'workspace';
+      (groupLayer as unknown as FabricObjectWithName).id = 'workspace';
       this.canvas.clear();
       this.canvas.add(groupLayer);
 
@@ -115,7 +128,7 @@ export class ExportPlugin extends BaseFabricPlugin {
         const corePlugin = this.editor.getPlugin('core') as CorePlugin;
         if (corePlugin) {
           // Re-initialize core workspace if missing
-          (corePlugin as any)._initWorkspace();
+          (corePlugin as unknown as { _initWorkspace?: () => void })._initWorkspace?.();
         }
       }
     }

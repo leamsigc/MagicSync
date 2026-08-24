@@ -2,6 +2,10 @@
   "en": {
     "title": "Connect your Connect account",
     "description": "Connect your Connect account to start using it",
+    "sections": {
+      "providers": "Providers",
+      "pages": "Pages"
+    },
     "seo_title_all": "Connect your Connect account",
     "seo_description_all": "Connect your Connect account to start using it",
     "states": {
@@ -53,6 +57,10 @@
   "fr": {
     "title": "Connectez votre compte Connect",
     "description": "Connectez votre compte Connect pour commencer à l'utiliser",
+    "sections": {
+      "providers": "Fournisseurs",
+      "pages": "Pages"
+    },
     "seo_title_all": "Connectez votre compte Connect",
     "seo_description_all": "Connectez votre compte Connect pour commencer à l'utiliser",
     "states": {
@@ -104,6 +112,10 @@
   "es": {
     "title": "Conecta tu cuenta de Connect",
     "description": "Conecta tu cuenta de Connect para comenzar a usarla",
+    "sections": {
+      "providers": "Proveedores",
+      "pages": "Páginas"
+    },
     "seo_title_all": "Conecta tu cuenta de Connect",
     "seo_description_all": "Conecta tu cuenta de Connect para comenzar a usarla",
     "states": {
@@ -155,6 +167,10 @@
   "de": {
     "title": "Verbinden Sie Ihre Connect-Konto",
     "description": "Verbinden Sie Ihr Connect-Konto, um es zu nutzen",
+    "sections": {
+      "providers": "Anbieter",
+      "pages": "Seiten"
+    },
     "seo_title_all": "Verbinden Sie Ihre Connect-Konto",
     "seo_description_all": "Verbinden Sie Ihre Connect-Konto, um es zu nutzen",
     "states": {

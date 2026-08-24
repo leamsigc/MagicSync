@@ -1,9 +1,35 @@
 import { defineNuxtConfig } from 'nuxt/config'
 import type { NuxtPage } from 'nuxt/schema'
+import { readdirSync, statSync, existsSync } from 'fs'
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
 
 const currentDir = dirname(fileURLToPath(import.meta.url))
+
+// Blog posts live at /blogs/<slug> but were historically also reachable (as
+// soft-404s) at root level because the sitemap emitted unprefixed paths.
+// Generate 301s from the content directory so any crawled root-level URL
+// passes its signals to the canonical /blogs/<slug> version.
+function collectBlogSlugs(dir: string, base = ''): string[] {
+  const slugs: string[] = []
+  if (!existsSync(dir)) return slugs
+  for (const entry of readdirSync(dir)) {
+    const full = join(dir, entry)
+    if (!statSync(full).isDirectory()) continue
+    if (existsSync(join(full, 'index.md'))) {
+      slugs.push(base ? `${base}/${entry}` : entry)
+    }
+    else {
+      slugs.push(...collectBlogSlugs(full, base ? `${base}/${entry}` : entry))
+    }
+  }
+  return slugs
+}
+
+const blogSlugs = collectBlogSlugs(join(currentDir, '../content/content/en/blogs'))
+const blogRootRedirects = Object.fromEntries(
+  blogSlugs.map(slug => [`/${slug}`, { redirect: { to: `/blogs/${slug}`, statusCode: 301 } }])
+)
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
@@ -15,6 +41,30 @@ export default defineNuxtConfig({
     '/api/v1/**': {
       cors: true
     },
+    // Cross-origin isolation for on-device WASM tools (TTS, etc.)
+    // — copied here so Vite dev-server middleware also picks them up.
+    '/app/tools/**': {
+      headers: {
+        'Cross-Origin-Opener-Policy': 'same-origin',
+        'Cross-Origin-Embedder-Policy': 'credentialless',
+      },
+    },
+    // `/home` is an exact duplicate of `/` — consolidate all signals on `/`.
+    '/home': { redirect: { to: '/', statusCode: 301 } },
+    ...blogRootRedirects,
+    // Dev/internal routes: emit `X-Robots-Tag: noindex` so Google drops them.
+    // NOTE: intentionally NOT blocked in robots.txt — a crawl block would
+    // prevent Google from re-crawling and seeing the noindex. They are also
+    // removed from the sitemap (see sitemap.exclude below).
+    '/ui-preview/**': { robots: false },
+    '/es/ui-preview/**': { robots: false },
+    '/de/ui-preview/**': { robots: false },
+    '/fr/ui-preview/**': { robots: false },
+    '/twitter-mock': { robots: false },
+    '/es/twitter-mock': { robots: false },
+    '/de/twitter-mock': { robots: false },
+    '/fr/twitter-mock': { robots: false },
+    '/_scripts': { robots: false },
   },
   // debug: true,
   experimental: {
@@ -153,6 +203,14 @@ export default defineNuxtConfig({
   sitemap: {
     exclude: [
       '/app/**',
+      // Dev/internal routes must never appear in the sitemap. They are ALSO
+      // noindexed via routeRules below (robots.txt blocking would prevent
+      // Google from re-crawling and honoring the noindex).
+      '/ui-preview/**',
+      '/twitter-mock',
+      '/_scripts',
+      // Duplicate homepage variant — now 301'd to `/`.
+      '/home',
     ],
   },
   robots: {
@@ -181,23 +239,8 @@ export default defineNuxtConfig({
   },
   // Header rules live at top level (not under `nitro:`) so that
   // Nuxt applies them through both production (Nitro) and dev mode.
-  routeRules: {
-    "/": { swr: 1200 },
-    "/blog": { swr: true },
-    "/blog/**": { swr: 1200 },
-    "/app/**": { swr: false },
-    '/api/v1/**': {
-      cors: true
-    },
-    // Cross-origin isolation for on-device WASM tools (TTS, etc.)
-    // — copied here so Vite dev-server middleware also picks them up.
-    '/app/tools/**': {
-      headers: {
-        'Cross-Origin-Opener-Policy': 'same-origin',
-        'Cross-Origin-Embedder-Policy': 'credentialless',
-      },
-    },
-  },
+  // (Consolidated into the single `routeRules` block above — a duplicate
+  // key here used to silently overwrite the redirect/noindex rules.)
   vite: {
     // Vite dev-server must also send the isolation headers so `/_nuxt/*`,
     // `/@fs/*`, and `/@vite/*` responses carry them. Without this, the page

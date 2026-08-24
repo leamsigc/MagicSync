@@ -1,0 +1,70 @@
+{
+  "en": {
+    "title": "Toolbox",
+    "description": "Every MagicSync tool in one place — create, convert, optimize and learn.",
+    "openTool": "Open tool",
+    "categories": {
+      "create": "Create",
+      "convert": "Convert",
+      "optimize": "Optimize",
+      "learn": "Learn"
+    },
+    "badges": {
+      "free": "Free",
+      "app": "Pro",
+      "pro": "Pro",
+      "beta": "Beta"
+    }
+  },
+  "es": {
+    "title": "Caja de herramientas",
+    "description": "Todas las herramientas de MagicSync en un solo lugar: crear, convertir, optimizar y aprender.",
+    "openTool": "Abrir herramienta",
+    "categories": {
+      "create": "Crear",
+      "convert": "Convertir",
+      "optimize": "Optimizar",
+      "learn": "Aprender"
+    },
+    "badges": {
+      "free": "Gratis",
+      "app": "Pro",
+      "pro": "Pro",
+      "beta": "Beta"
+    }
+  },
+  "de": {
+    "title": "Werkzeugkasten",
+    "description": "Alle MagicSync-Tools an einem Ort — erstellen, konvertieren, optimieren und lernen.",
+    "openTool": "Tool öffnen",
+    "categories": {
+      "create": "Erstellen",
+      "convert": "Konvertieren",
+      "optimize": "Optimieren",
+      "learn": "Lernen"
+    },
+    "badges": {
+      "free": "Kostenlos",
+      "app": "Pro",
+      "pro": "Pro",
+      "beta": "Beta"
+    }
+  },
+  "fr": {
+    "title": "Boîte à outils",
+    "description": "Tous les outils MagicSync au même endroit — créer, convertir, optimiser et apprendre.",
+    "openTool": "Ouvrir l'outil",
+    "categories": {
+      "create": "Créer",
+      "convert": "Convertir",
+      "optimize": "Optimiser",
+      "learn": "Apprendre"
+    },
+    "badges": {
+      "free": "Gratuit",
+      "app": "Pro",
+      "pro": "Pro",
+      "beta": "Beta"
+    }
+  }
+}

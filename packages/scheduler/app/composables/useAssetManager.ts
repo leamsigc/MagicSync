@@ -25,7 +25,9 @@ export const useAssetManager = () => {
       const query = new URLSearchParams(assetIds.map(id => ['assetIds', id]));
       query.append('businessId', businessId.value);
       const response = await $fetch<{ data: Asset[] }>(`/api/v1/assets/search?${query.toString()}`);
-      return response.data;
+      // Preserve requested order — DB `IN` does not guarantee order
+      const byId = new Map(response.data.map(asset => [asset.id, asset]));
+      return assetIds.map(id => byId.get(id)).filter((asset): asset is Asset => !!asset);
     } catch (err: any) {
       error.value = err.data?.message || err.message || 'Failed to fetch assets';
       throw err;
