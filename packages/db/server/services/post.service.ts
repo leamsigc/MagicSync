@@ -289,11 +289,16 @@ export class PostService implements PostServiceType {
     if (!post) {
       throw new Error('Post not found')
     }
-    const assetsIds = post.mediaAssets ? JSON.parse(post.mediaAssets) : []
-    const postAssets = await this.db.query.assets.findMany({
-      where: inArray(assets.id, assetsIds),
-    })
-    post.assets = postAssets;
+    const assetsIds: string[] = post.mediaAssets ? JSON.parse(post.mediaAssets) : []
+    if (assetsIds.length > 0) {
+      const postAssets = await this.db.query.assets.findMany({
+        where: inArray(assets.id, assetsIds),
+      })
+      const assetsById = new Map(postAssets.map(a => [a.id, a]))
+      post.assets = assetsIds.map(id => assetsById.get(id)).filter((a): a is Asset => !!a)
+    } else {
+      post.assets = []
+    }
     return post;
   }
 

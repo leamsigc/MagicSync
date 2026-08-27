@@ -36,7 +36,7 @@ const showStat = computed(() => currentSlide.value.templateKey === 'stat-highlig
 const showCta = computed(() => currentSlide.value.templateKey === 'cta')
 
 const itemsText = computed({
-  get: () => (currentSlide.value.data.items ?? []).join('\n'),
+  get: () => Array.isArray(currentSlide.value.data.items) ? currentSlide.value.data.items.join('\n') : typeof currentSlide.value.data.items === 'string' ? currentSlide.value.data.items : '',
   set: (value: string) => updateSlideData({ items: value.split('\n').filter(line => line.trim()) }),
 })
 

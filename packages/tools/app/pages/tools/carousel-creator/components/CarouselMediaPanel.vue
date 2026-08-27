@@ -14,7 +14,12 @@ const MAX_GRID_IMAGES = 4
 
 const isGrid = computed(() => currentSlide.value.templateKey === 'photo-grid')
 const isPolaroid = computed(() => currentSlide.value.templateKey === 'polaroid')
-const images = computed(() => currentSlide.value.data.images ?? [])
+const images = computed(() => {
+  const raw = currentSlide.value.data.images
+  if (Array.isArray(raw)) return raw
+  if (typeof raw === 'string' && raw.trim()) return raw.split(/[,\n]/).map(s => s.trim()).filter(Boolean)
+  return []
+})
 
 const pendingGridUrl = ref('')
 watch(pendingGridUrl, (url) => {

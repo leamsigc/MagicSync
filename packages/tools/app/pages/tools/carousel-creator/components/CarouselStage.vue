@@ -59,7 +59,7 @@ const editableFields = computed(() => {
     fields.push({ key: 'body', label: 'Body', value: d.body ?? '', placeholder: 'Body text' })
   }
   if (['tips-list', 'steps', 'checklist', 'comparison', 'stat-cards', 'feature-highlight', 'timeline', 'number-hero'].includes(t) || (d.items && d.items.length)) {
-    fields.push({ key: 'items', label: 'Items (one per line)', value: (d.items ?? []).join('\n'), placeholder: 'One per line' })
+    fields.push({ key: 'items', label: 'Items (one per line)', value: Array.isArray(d.items) ? d.items.join('\n') : typeof d.items === 'string' ? d.items : '', placeholder: 'One per line' })
   }
   if (t === 'quote' || t === 'testimonial' || d.quote !== undefined) {
     fields.push({ key: 'quote', label: 'Quote', value: d.quote ?? '', placeholder: 'Quote' })

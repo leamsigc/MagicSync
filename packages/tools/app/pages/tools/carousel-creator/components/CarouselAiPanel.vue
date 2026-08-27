@@ -60,45 +60,20 @@ async function generate(): Promise<void> {
   <div class="space-y-3" data-testid="ai-panel">
     <template v-if="loggedIn">
       <UFormField :label="t('ai.topic')" size="xs">
-        <UTextarea
-          v-model="topic"
-          :placeholder="t('ai.topicPlaceholder')"
-          :rows="3"
-          :maxlength="500"
-          class="w-full"
-        />
+        <UTextarea v-model="topic" :placeholder="t('ai.topicPlaceholder')" :rows="3" :maxlength="1000" class="w-full" />
       </UFormField>
 
       <div class="grid grid-cols-2 gap-2">
         <UFormField :label="t('ai.tone.label')" size="xs">
-          <USelect
-            v-model="tone"
-            :items="toneItems"
-            value-key="value"
-            size="sm"
-            class="w-full"
-          />
+          <USelect v-model="tone" :items="toneItems" value-key="value" size="sm" class="w-full" />
         </UFormField>
         <UFormField :label="t('ai.slideCount')" size="xs">
-          <UInput
-            v-model.number="slideCount"
-            type="number"
-            :min="3"
-            :max="10"
-            size="sm"
-            class="w-full"
-          />
+          <UInput v-model.number="slideCount" type="number" :min="3" :max="10" size="sm" class="w-full" />
         </UFormField>
       </div>
 
-      <UButton
-        data-testid="btn-ai-generate"
-        block
-        icon="i-lucide-sparkles"
-        :loading="generating"
-        :disabled="!topic.trim()"
-        @click="generate"
-      >
+      <UButton data-testid="btn-ai-generate" block icon="i-lucide-sparkles" :loading="generating"
+        :disabled="!topic.trim()" @click="generate">
         {{ t('ai.generate') }}
       </UButton>
       <p class="text-[11px] text-muted leading-relaxed">

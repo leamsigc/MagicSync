@@ -100,6 +100,18 @@ export interface CarouselTemplate {
 const esc = (s: string): string =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 
+function toArray(items: unknown): string[] {
+  if (Array.isArray(items)) return items.filter((x): x is string => typeof x === 'string' && x.trim() !== '')
+  if (typeof items === 'string' && items.trim()) return items.split('\n').map(s => s.trim()).filter(Boolean)
+  return []
+}
+
+function toImagesArray(items: unknown): string[] {
+  if (Array.isArray(items)) return items.filter((x): x is string => typeof x === 'string' && x.trim() !== '')
+  if (typeof items === 'string' && items.trim()) return items.split(/[,\n]/).map(s => s.trim()).filter(Boolean)
+  return []
+}
+
 function imageTransformStyle(t?: ImageTransform): string {
   if (!t) return ''
   return `transform:translate(${t.x}px, ${t.y}px) scale(${t.scale});transform-origin:center;`
@@ -211,7 +223,7 @@ export const CAROUSEL_TEMPLATES: CarouselTemplate[] = [
         ${d.kicker ? `<div style="font-size:24px;letter-spacing:0.24em;text-transform:uppercase;color:${esc(p.accent)};font-weight:600">${esc(d.kicker)}</div>` : ''}
         <div style="font-size:58px;font-weight:800;line-height:1.1">${esc(d.headline)}</div>
         <ol style="display:flex;flex-direction:column;gap:28px;font-size:32px;line-height:1.4">
-          ${(d.items ?? []).map((item, idx) => `
+          ${toArray(d.items).map((item, idx) => `
             <li style="display:flex;gap:24px;align-items:flex-start">
               <span style="flex-shrink:0;width:56px;height:56px;border-radius:16px;background:${esc(p.accent)};color:${esc(p.bg)};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:26px">${idx + 1}</span>
               <span style="padding-top:8px">${esc(item)}</span>
@@ -258,11 +270,11 @@ export const CAROUSEL_TEMPLATES: CarouselTemplate[] = [
       <div style="position:relative;height:100%;display:flex;flex-direction:column;gap:36px;padding:96px 80px 140px;color:${esc(p.text)}">
         <div style="font-size:54px;font-weight:800">${esc(d.headline)}</div>
         <div style="display:flex;flex-direction:column;gap:0">
-          ${(d.items ?? []).map((item, idx) => `
+          ${toArray(d.items).map((item, idx) => `
             <div style="display:flex;gap:28px">
               <div style="display:flex;flex-direction:column;align-items:center">
                 <span style="width:52px;height:52px;border-radius:9999px;background:${esc(p.accent)};color:${esc(p.bg)};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:24px;flex-shrink:0">${idx + 1}</span>
-                ${idx < (d.items?.length ?? 0) - 1 ? `<span style="width:3px;flex:1;background:${esc(p.accent)};opacity:0.35;min-height:36px"></span>` : ''}
+                ${idx < toArray(d.items).length - 1 ? `<span style="width:3px;flex:1;background:${esc(p.accent)};opacity:0.35;min-height:36px"></span>` : ''}
               </div>
               <div style="font-size:30px;line-height:1.4;padding:10px 0 36px">${esc(item)}</div>
             </div>`).join('')}
@@ -280,7 +292,7 @@ export const CAROUSEL_TEMPLATES: CarouselTemplate[] = [
       <div style="position:relative;height:100%;display:flex;flex-direction:column;gap:40px;padding:96px 80px 140px;color:${esc(p.text)}">
         <div style="font-size:56px;font-weight:800">${esc(d.headline)}</div>
         <div style="display:flex;flex-direction:column;gap:26px">
-          ${(d.items ?? []).map(item => `
+          ${toArray(d.items).map(item => `
             <div style="display:flex;gap:22px;align-items:center;font-size:31px">
               <span style="width:46px;height:46px;border-radius:12px;background:${esc(p.accent)};display:flex;align-items:center;justify-content:center;flex-shrink:0;color:${esc(p.bg)};font-weight:800;font-size:26px">&check;</span>
               <span>${esc(item)}</span>
@@ -294,9 +306,9 @@ export const CAROUSEL_TEMPLATES: CarouselTemplate[] = [
     title: 'Comparison',
     description: 'Two columns side by side',
     render: (d, p, i, t, bg) => {
-      const half = Math.ceil((d.items?.length ?? 0) / 2)
-      const left = (d.items ?? []).slice(0, half)
-      const right = (d.items ?? []).slice(half)
+      const half = Math.ceil(toArray(d.items).length / 2)
+      const left = toArray(d.items).slice(0, half)
+      const right = toArray(d.items).slice(half)
       const col = (items: string[], accent: boolean) => `
         <div style="flex:1;border-radius:24px;padding:36px;background:${accent ? esc(p.accent) : 'rgba(255,255,255,0.06)'};color:${accent ? esc(p.bg) : esc(p.text)};display:flex;flex-direction:column;gap:18px">
           ${items.map(item => `<div style="font-size:27px;line-height:1.35">${esc(item)}</div>`).join('')}
@@ -376,7 +388,7 @@ export const CAROUSEL_TEMPLATES: CarouselTemplate[] = [
     title: 'Myth vs Fact',
     description: 'Debunk format with two blocks',
     render: (d, p, i, t, bg) => {
-      const [myth = '', fact = ''] = d.items ?? []
+      const [myth = '', fact = ''] = toArray(d.items)
       return `
       ${bgLayer(p, bg)}
       ${patternLayer('__PATTERN__')}
@@ -413,7 +425,7 @@ export const CAROUSEL_TEMPLATES: CarouselTemplate[] = [
     title: 'Photo Grid',
     description: 'Up to four photos tiled above a caption — add images in the Media panel',
     render: (d, p, i, t, bg) => {
-      const imgs = (d.images ?? []).slice(0, 4)
+      const imgs = toImagesArray(d.images).slice(0, 4)
       const cell = (idx: number): string => {
         const url = imgs[idx]
         return `<div data-image-slot="grid-${idx}" style="position:relative;flex:1;border-radius:20px;overflow:hidden;background:${esc(p.accent)}22;cursor:pointer">
@@ -443,7 +455,7 @@ export const CAROUSEL_TEMPLATES: CarouselTemplate[] = [
     title: 'Polaroid',
     description: 'Tilted framed photo card with a caption strip',
     render: (d, p, i, t, bg) => {
-      const url = d.images?.[0] ?? bg?.url
+      const url = toImagesArray(d.images)[0] ?? bg?.url
       return `
       ${bgLayer(p, bg)}
       ${patternLayer('__PATTERN__')}
@@ -469,7 +481,7 @@ export const CAROUSEL_TEMPLATES: CarouselTemplate[] = [
       <div style="position:relative;height:100%;display:flex;flex-direction:column;gap:44px;padding:96px 80px 140px;color:${esc(p.text)}">
         <div style="font-size:54px;font-weight:800;line-height:1.1">${esc(d.headline)}</div>
         <div style="display:flex;gap:22px;flex:1">
-          ${(d.items ?? []).map((item, idx) => `
+          ${toArray(d.items).map((item, idx) => `
             <div style="flex:1;border-radius:24px;padding:34px 26px;background:${idx % 2 === 0 ? esc(p.accent) : 'rgba(255,255,255,0.07)'};color:${idx % 2 === 0 ? esc(p.bg) : esc(p.text)};display:flex;flex-direction:column;gap:14px">
               <div style="font-size:80px;font-weight:800;line-height:1">${String(idx + 1).padStart(2, '0')}</div>
               <div style="font-size:25px;line-height:1.35">${esc(item)}</div>
@@ -508,7 +520,7 @@ export const CAROUSEL_TEMPLATES: CarouselTemplate[] = [
         </div>
         <div style="margin-top:26px;font-size:64px;font-weight:800;line-height:1.08;letter-spacing:-0.02em">${esc(d.headline)}</div>
         ${d.body ? `<div style="margin-top:20px;font-size:30px;line-height:1.5;opacity:0.78;max-width:820px">${esc(d.body)}</div>` : ''}
-        ${d.items?.length ? `<div style="margin-top:28px;display:flex;flex-direction:column;gap:14px">${d.items.slice(0, 3).map(item => `<div style=\"display:flex;gap:14px;align-items:center;font-size:27px\"><span style=\"width:10px;height:10px;border-radius:9999px;background:${esc(p.accent)};flex-shrink:0\"></span><span>${esc(item)}</span></div>`).join('')}</div>` : ''}
+        ${toArray(d.items).length ? `<div style="margin-top:28px;display:flex;flex-direction:column;gap:14px">${toArray(d.items).slice(0, 3).map(item => `<div style=\"display:flex;gap:14px;align-items:center;font-size:27px\"><span style=\"width:10px;height:10px;border-radius:9999px;background:${esc(p.accent)};flex-shrink:0\"></span><span>${esc(item)}</span></div>`).join('')}</div>` : ''}
       </div>
       ${pageFooter(p, i, t, d.footer)}`,
   },
@@ -526,7 +538,7 @@ export const CAROUSEL_TEMPLATES: CarouselTemplate[] = [
           ${d.body ? `<div style="font-size:26px;line-height:1.45;opacity:0.75">${esc(d.body)}</div>` : ''}
         </div>
         <div style="flex:1;display:flex;gap:18px;min-height:0">
-          ${(d.items ?? []).slice(0, 3).map(item => `
+          ${toArray(d.items).slice(0, 3).map(item => `
             <div style="flex:1;display:flex;flex-direction:column;gap:16px;padding:28px 22px;border-radius:20px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08)">
               <div style="width:48px;height:48px;border-radius:14px;background:${esc(p.accent)};display:flex;align-items:center;justify-content:center;font-weight:800;color:${esc(p.bg)};font-size:22px">${esc(item.slice(0, 1).toUpperCase())}</div>
               <div style="font-size:24px;line-height:1.35;font-weight:600">${esc(item)}</div>
@@ -540,7 +552,7 @@ export const CAROUSEL_TEMPLATES: CarouselTemplate[] = [
     title: 'Testimonial',
     description: 'Social proof with avatar, quote and handle — 2.4× higher comment rate',
     render: (d, p, i, t, bg) => {
-      const url = d.images?.[0] ?? bg?.url
+      const url = toImagesArray(d.images)[0] ?? bg?.url
       return `
       ${bgLayer(p, bg)}
       ${patternLayer('__PATTERN__')}
@@ -565,7 +577,7 @@ export const CAROUSEL_TEMPLATES: CarouselTemplate[] = [
       <div style="position:relative;height:100%;display:flex;flex-direction:column;gap:30px;padding:88px 84px 140px;color:${esc(p.text)}">
         <div style="font-size:52px;font-weight:800;line-height:1.1">${esc(d.headline)}</div>
         <div style="flex:1;display:flex;flex-direction:column;gap:0;justify-content:center">
-          ${(d.items ?? []).slice(0, 5).map((item, idx, arr) => `
+          ${toArray(d.items).slice(0, 5).map((item, idx, arr) => `
             <div style="display:flex;gap:24px;align-items:flex-start;min-height:92px">
               <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0">
                 <span style="width:44px;height:44px;border-radius:9999px;background:${idx === 0 ? esc(p.accent) : 'rgba(255,255,255,0.12)'};color:${idx === 0 ? esc(p.bg) : esc(p.text)};border:2px solid ${esc(p.accent)};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px">${idx + 1}</span>
@@ -585,7 +597,7 @@ export const CAROUSEL_TEMPLATES: CarouselTemplate[] = [
     title: 'Image Focus',
     description: 'Large image with caption bar — photo carousels get 2× saves for travel/food',
     render: (d, p, i, t, bg) => {
-      const url = d.images?.[0] ?? bg?.url
+      const url = toImagesArray(d.images)[0] ?? bg?.url
       return `
       ${bgLayer(p, bg)}
       ${patternLayer('__PATTERN__')}

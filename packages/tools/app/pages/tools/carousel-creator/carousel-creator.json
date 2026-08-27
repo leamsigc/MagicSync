@@ -36,7 +36,16 @@
     },
     "actions": {
       "saveAll": "Save all to Library",
-      "useInPost": "Use in post"
+      "useInPost": "Use in post",
+      "save": "Save",
+      "share": "Share",
+      "copyLink": "Copy link",
+      "unshare": "Remove link",
+      "saved": "Carousel saved",
+      "savedDesc": "Your carousel has been saved to your account.",
+      "shared": "Link copied",
+      "sharedDesc": "Share link copied to clipboard.",
+      "linkRemoved": "Share link removed"
     },
     "templates": {
       "label": "Templates",
@@ -245,7 +254,16 @@
     },
     "actions": {
       "saveAll": "Tout enregistrer",
-      "useInPost": "Utiliser dans un post"
+      "useInPost": "Utiliser dans un post",
+      "save": "Enregistrer",
+      "share": "Partager",
+      "copyLink": "Copier le lien",
+      "unshare": "Supprimer le lien",
+      "saved": "Carrousel enregistré",
+      "savedDesc": "Votre carrousel a été enregistré dans votre compte.",
+      "shared": "Lien copié",
+      "sharedDesc": "Lien de partage copié dans le presse-papiers.",
+      "linkRemoved": "Lien de partage supprimé"
     },
     "templates": {
       "label": "Modèles",
@@ -454,7 +472,16 @@
     },
     "actions": {
       "saveAll": "Guardar todo",
-      "useInPost": "Usar en publicación"
+      "useInPost": "Usar en publicación",
+      "save": "Guardar",
+      "share": "Compartir",
+      "copyLink": "Copiar enlace",
+      "unshare": "Eliminar enlace",
+      "saved": "Carrusel guardado",
+      "savedDesc": "Tu carrusel ha sido guardado en tu cuenta.",
+      "shared": "Enlace copiado",
+      "sharedDesc": "Enlace de compartición copiado al portapapeles.",
+      "linkRemoved": "Enlace de compartición eliminado"
     },
     "templates": {
       "label": "Plantillas",
@@ -663,7 +690,16 @@
     },
     "actions": {
       "saveAll": "Alles speichern",
-      "useInPost": "Im Post verwenden"
+      "useInPost": "Im Post verwenden",
+      "save": "Speichern",
+      "share": "Teilen",
+      "copyLink": "Link kopieren",
+      "unshare": "Link entfernen",
+      "saved": "Karussell gespeichert",
+      "savedDesc": "Dein Karussell wurde in deinem Konto gespeichert.",
+      "shared": "Link kopiert",
+      "sharedDesc": "Share-Link in die Zwischenablage kopiert.",
+      "linkRemoved": "Share-Link entfernt"
     },
     "templates": {
       "label": "Vorlagen",

@@ -15,10 +15,25 @@ import CarouselStripPreview from './components/CarouselStripPreview.vue'
 import CarouselSlidesRail from './components/CarouselSlidesRail.vue'
 import CarouselDeckShowcase from './components/CarouselDeckShowcase.vue'
 import { useCarouselDeck, fxStyle } from './composables/useCarouselDeck'
+import { useCarouselSaveShare } from '../../../composables/useCarouselSaveShare'
+import { getAllLocalCarousels } from '../../../utils/carousel-db'
+import type { SlideData, SlidePalette } from './templates'
 
 const { t } = useI18n()
 const toast = useToast()
 const { loggedIn, fetchSession } = UseUser()
+
+interface SavedCarousel {
+  id: string
+  name: string
+  slides: Array<{ templateKey: string; data: SlideData; pattern: string; patternColor: string; patternOpacity: number; bgImage: unknown; customHtml: string }>
+  palette: SlidePalette
+  pattern?: string
+  handle?: string
+  isPublic?: boolean
+  shareSlug?: string
+  updatedAt?: string
+}
 
 const {
   slides,
@@ -36,6 +51,36 @@ const {
   downloadAllSlides,
   saveAllSlides,
 } = useCarouselDeck()
+
+const currentCarousel = computed(() => {
+  if (slides.value.length === 0) return null
+  return {
+    id: `carousel-${Date.now()}`,
+    name: 'My Carousel',
+    slides: slides.value.map((s, i) => ({
+      id: `slide-${i}`,
+      templateKey: s.templateKey,
+      data: s.data,
+      pattern: s.pattern,
+      patternColor: s.patternColor,
+      patternOpacity: s.patternOpacity,
+      bgImage: s.bgImage,
+      customHtml: s.customHtml,
+    })),
+    palette: palette.value,
+    handle: handle.value,
+  }
+})
+
+const {
+  isSaving,
+  isPublic,
+  shareUrl,
+  saveCarousel: saveToCloud,
+  publishCarousel,
+  unpublishCarousel,
+  copyShareLink,
+} = useCarouselSaveShare(currentCarousel)
 
 const currentHtmlStr = computed(() => {
   void palette.value
@@ -58,6 +103,70 @@ const mode = ref<'deck' | 'ai'>('deck')
 const guides = ref(false)
 const previewPlatform = ref<'editor' | 'instagram' | 'linkedin' | 'strip'>('editor')
 const stageFx = computed(() => fxStyle(fx.value))
+
+// Carousel selector state
+const savedCarousels = ref<SavedCarousel[]>([])
+const isLoadingCarousels = ref(false)
+const currentCarouselName = ref('My Carousel')
+
+async function loadSavedCarousels(): Promise<void> {
+  isLoadingCarousels.value = true
+  try {
+    await fetchSession()
+    if (loggedIn.value) {
+      const res = await $fetch<SavedCarousel[]>('/api/v1/carousel')
+      savedCarousels.value = res ?? []
+    } else {
+      const local = await getAllLocalCarousels()
+      savedCarousels.value = local.map(c => ({
+        id: c.id,
+        name: c.name,
+        slides: c.slides,
+        palette: c.palette,
+        pattern: c.pattern,
+        handle: c.handle,
+        isPublic: false,
+        updatedAt: new Date(c.lastModified).toISOString(),
+      }))
+    }
+  } catch {
+    savedCarousels.value = []
+  } finally {
+    isLoadingCarousels.value = false
+  }
+}
+
+async function loadCarouselIntoEditor(carousel: SavedCarousel): Promise<void> {
+  if (!carousel.slides?.length) {
+    toast.add({ title: 'Empty carousel', description: 'This carousel has no slides.', color: 'warning', icon: 'i-lucide-alert-circle' })
+    return
+  }
+
+  try {
+    // Directly apply slides and palette to the deck
+    slides.value = carousel.slides.map(s => ({
+      id: `slide-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+      templateKey: s.templateKey,
+      data: { ...s.data },
+      pattern: s.pattern ?? 'dots',
+      patternColor: s.patternColor ?? carousel.palette.text,
+      patternOpacity: s.patternOpacity ?? 0.08,
+      bgImage: s.bgImage ?? null,
+      customHtml: s.customHtml ?? '',
+    }))
+    palette.value = { ...carousel.palette }
+    handle.value = carousel.handle ?? ''
+    currentIndex.value = 0
+    currentCarouselName.value = carousel.name
+    toast.add({ title: 'Carousel loaded', description: `"${carousel.name}" loaded into editor.`, color: 'success', icon: 'i-lucide-check-circle' })
+  } catch {
+    toast.add({ title: 'Load failed', description: 'Could not load carousel.', color: 'error', icon: 'i-lucide-alert-circle' })
+  }
+}
+
+onMounted(async () => {
+  await loadSavedCarousels()
+})
 
 useHead({
   title: t('title'),
@@ -175,15 +284,63 @@ async function handleDownloadAll(): Promise<void> {
     handleSaveError(error)
   }
 }
+
+async function handleSaveToCloud(): Promise<void> {
+  if (!await ensureAuth()) return
+  await saveToCloud()
+}
+
+async function handleShare(): Promise<void> {
+  if (!await ensureAuth()) return
+  await publishCarousel()
+}
+
+async function handleUnshare(): Promise<void> {
+  if (!await ensureAuth()) return
+  await unpublishCarousel()
+}
+
+async function handleCopyLink(): Promise<void> {
+  await copyShareLink()
+}
 </script>
 
 <template>
   <div class="min-h-screen bg-linear-to-br from-default via-muted to-default">
     <BaseHeader />
     <div class="container mx-auto px-4 pt-6 pb-12">
-      <div class="mb-4">
+      <div class="mb-4 flex items-center gap-4">
         <h1 class="text-2xl font-bold text-highlighted">{{ t('studioTitle') }}</h1>
-        <p class="text-sm text-muted">{{ t('description') }}</p>
+        <UPopover v-if="loggedIn || savedCarousels.length > 0">
+          <UButton variant="outline" color="neutral" icon="i-lucide-layout-grid" :loading="isLoadingCarousels">
+            {{ currentCarouselName }}
+            <UIcon name="i-lucide-chevron-down" class="ml-1 size-4" />
+          </UButton>
+          <template #content>
+            <div class="p-2 w-72 max-h-96 overflow-y-auto">
+              <div v-if="savedCarousels.length === 0" class="px-3 py-2 text-sm text-muted">
+                No saved carousels
+              </div>
+              <button
+                v-for="carousel in savedCarousels"
+                :key="carousel.id"
+                class="w-full text-left px-3 py-2 rounded-lg hover:bg-accent flex items-center gap-2"
+                :class="{ 'bg-accent': carousel.name === currentCarouselName }"
+                @click="() => loadCarouselIntoEditor(carousel)"
+              >
+                <UIcon name="i-lucide-gallery-horizontal-end" class="size-4 shrink-0" />
+                <span class="truncate">{{ carousel.name }}</span>
+                <UBadge v-if="carousel.isPublic" color="info" variant="subtle" size="sm" class="ml-auto">
+                  Public
+                </UBadge>
+              </button>
+              <USeparator class="my-2" />
+              <UButton variant="ghost" block icon="i-lucide-plus" to="/app/templates">
+                Manage all templates
+              </UButton>
+            </div>
+          </template>
+        </UPopover>
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
@@ -239,8 +396,10 @@ async function handleDownloadAll(): Promise<void> {
 
           <div class="sticky bottom-4 z-30 flex justify-center">
             <CarouselControlBar v-model:mode="mode" v-model:guides="guides" :exporting="exporting"
-              :export-progress="exportProgress" @download="handleDownloadCurrent" @download-all="handleDownloadAll"
-              @save-all="handleSaveAll" @use-in-post="handleUseInPost" />
+              :export-progress="exportProgress" :is-saving="isSaving" :is-public="isPublic" :share-url="shareUrl"
+              @download="handleDownloadCurrent" @download-all="handleDownloadAll"
+              @save-all="handleSaveAll" @use-in-post="handleUseInPost"
+              @save="handleSaveToCloud" @share="handleShare" @unshare="handleUnshare" @copy-link="handleCopyLink" />
           </div>
         </div>
 

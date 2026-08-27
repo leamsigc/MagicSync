@@ -34,9 +34,9 @@ const slideSchema = z.object({
   }),
   kicker: z.string().max(80).optional().nullable().transform(v => v?.trim() || undefined),
   headline: z.string().max(220).describe('Main headline'),
-  body: z.string().max(350).optional().nullable().transform(v => v?.trim() || undefined),
-  items: z.array(z.string().max(150)).max(6).optional().nullable().transform(v => v?.filter(Boolean) || undefined),
-  quote: z.string().max(260).optional().nullable().transform(v => v?.trim() || undefined),
+  body: z.string().max(500).optional().nullable().transform(v => v?.trim() || undefined),
+  items: z.array(z.string().max(200)).max(8).optional().nullable().transform(v => v?.filter(Boolean) || undefined),
+  quote: z.string().max(300).optional().nullable().transform(v => v?.trim() || undefined),
   author: z.string().max(80).optional().nullable().transform(v => v?.trim() || undefined),
   stat: z.string().max(20).optional().nullable().transform(v => v?.trim() || undefined),
   statLabel: z.string().max(120).optional().nullable().transform(v => v?.trim() || undefined),
@@ -63,28 +63,28 @@ const responseSchema = z.object({
 })
 
 const TEMPLATE_GUIDE = `Available slide layouts:
-- title-kicker: cover with kicker + headline + body
-- big-statement: one bold headline
-- tips-list: numbered tips (items 3-5)
-- quote: quote + author
-- stat-highlight: big number (stat, statLabel, body)
-- steps: sequential steps (items)
-- checklist: checklist (items)
+- title-kicker: cover with kicker (short label like "THE DATA") + headline (bold claim) + body (1-2 sentence context)
+- big-statement: one bold headline — make it a pattern interrupt or contrarian take
+- tips-list: numbered tips (items 3-6 — each item must be SPECIFIC and ACTIONABLE with concrete details)
+- quote: quote + author (use real or realistic-sounding attribution)
+- stat-highlight: big number (stat = specific number, statLabel = context, body = explanation)
+- steps: sequential steps (items 3-6 — each step = clear action with specifics)
+- checklist: checklist (items 3-6 — each item = doable action)
 - comparison: two-column contrast (items 4-6)
 - photo-left: image left text right (headline, body)
-- full-photo: full-bleed image with overlay text
-- qa: question (headline) + answer (body)
-- myth-fact: debunk (items exactly [myth, fact])
-- cta: finale (headline, body, cta)
+- full-photo: full-bleed image with overlay text (kicker, headline, body)
+- qa: question (headline) + answer (body — include evidence or specifics)
+- myth-fact: debunk (items exactly [myth, fact] — make myth believable, fact surprising)
+- cta: finale (headline = compelling reason to act, body = what to do, cta = button text)
 - photo-grid: 2x2 photo grid (kicker, headline, images)
 - polaroid: framed photo (headline, body, images[0])
-- stat-cards: numbered cards (headline, items 3)
+- stat-cards: numbered cards (headline, items 3 — each card = one key stat)
 - split-band: angled accent band (kicker, headline, body)
-- number-hero: giant number + headline + body + items (viral)
+- number-hero: giant number + headline + body + items (viral listicle)
 - feature-highlight: 3 feature cards (kicker, headline, body, items 3)
-- testimonial: avatar + quote + author + body
-- timeline: vertical timeline (headline, body, items up to 5)
-- image-focus: large image with caption bar (kicker, headline, body, images[0])
+- testimonial: avatar + quote + author (use real-sounding names + specific results)
+- timeline: vertical timeline (headline, body, items up to 5 — each = one milestone)
+- image-focus: large image with caption bar (kicker, headline, body)
 
 Patterns: ${VALID_PATTERNS.join(', ')}
 Fonts: Arial, Arial Black, Impact, Georgia, Courier New, Verdana, Trebuchet MS, Comic Sans MS, Palatino, Century Gothic`
@@ -125,25 +125,36 @@ export default defineLazyEventHandler(async () => {
         log.set({ userId: user.id, promptLength: prompt.length, slideCount, attempt })
         const languageSection = language ? `\nWrite all text in language: ${language}.` : ''
 
-        const aiPrompt = `You are designing a reusable Instagram carousel TEMPLATE.
+        const aiPrompt = `You are designing a WORLD-CLASS reusable Instagram carousel TEMPLATE.
 
 User wants: "${prompt.slice(0, 580)}"
 Need EXACTLY ${slideCount} slides. ${languageSection}
 
 ${TEMPLATE_GUIDE}
 
-RULES:
-- First slide must hook (title-kicker or big-statement or split-band)
-- Last slide must be cta with compelling cta button text
-- Middle slides alternate layouts: use number-hero, feature-highlight, testimonial, timeline, image-focus, stat-highlight, etc. Mix them — don't repeat same layout more than twice in a row
-- Make headlines punchy (<=8 words), body supportive (<=25 words)
-- Choose a cohesive palette with strong contrast and a vivid accent that matches the vibe described
-- Pick a pattern that matches the vibe (e.g., minimal -> none/grid-fine, playful -> confetti, premium -> rings)
-- Font must match vibe (e.g., luxury -> Georgia/Palatino, bold -> Impact/Arial Black, friendly -> Comic Sans MS/Century Gothic)
+CONTENT STRATEGY (CRITICAL):
+- SLIDE 1 (HOOK): title-kicker or big-statement. Create curiosity gap or bold claim. NOT generic.
+- SLIDES 2-${slideCount - 1} (VALUE): Each slide delivers ONE specific insight. Use real numbers, concrete examples, step-by-step instructions. NOT vague advice.
+- FINAL SLIDE (CTA): Compelling reason to save, share, or follow.
+- BODY TEXT: 2-4 sentences per slide. Tell micro-stories, give context, provide "why". Be specific — numbers, names, timeframes.
+- ITEMS: Specific and actionable. NOT: "Be consistent" — YES: "Post 3x per week at 7am EST"
+- HEADLINES: 4-10 words. Power words: "exact", "secret", "why", "how", "proof". Create open loops.
+- QUOTES: Real or realistic-sounding attributions. "Sarah Chen, CEO of GrowthLab"
+- STATS: Specific numbers with context. "87% of top carousels use this exact slide order"
+
+SLIDE DIVERSITY:
+- Alternate templates — never repeat same layout twice in a row
+- Mix: proof (stats), action (steps/tips), story (quote/qa), contrast (myth-fact/comparison)
+
+STYLE:
+- Cohesive palette with strong contrast and vivid accent matching the vibe
+- Pattern matches vibe (minimal -> none/grid-fine, playful -> confetti, premium -> rings)
+- Font matches vibe (luxury -> Georgia/Palatino, bold -> Impact/Arial Black, friendly -> Comic Sans MS/Century Gothic)
 - Title: 2-4 words, Description: include page count + vibe (e.g., "5 pages — bold cyberpunk")
 - Key: kebab-case from title (e.g., "cyber-neon-pulse")
-- IMPORTANT: Use only allowed template keys and pattern keys listed above.
-- Return JSON matching the schema.`
+
+IMPORTANT: Use only allowed template keys and pattern keys listed above.
+Return JSON matching the schema. Make every word count.`
 
         const { object } = await schedulerUnifiedAI.generateObject({
           systemPrompt: SCHEDULER_GENERATE_SYSTEM_PROMPT,

@@ -166,6 +166,7 @@ async function loadInitialPost(post: typeof initialPost): Promise<void> {
 
   postForm.value = {
     ...post,
+    id: (post as { id?: string }).id,
     targetPlatforms: processedTargetPlatforms,
     mediaAssets: processedMediaAssetsIds,
     comment: processedComments,
@@ -308,7 +309,7 @@ const handleSavePost = async (status: 'pending' | 'published' | 'failed') => {
     businessId: activeBusinessId.value,
     mediaAssets: postMediaAssets.value.map(asset => asset.id),
   };
-  if (initialPost) {
+  if (postForm.value.id) {
     emit('update', postData);
   } else {
     emit('save', postData);

@@ -276,7 +276,8 @@ export function useCarouselDeck() {
   }
 
   function setGalleryImage(index: number, url: string | null): void {
-    const imgs = [...(currentSlide.value.data.images ?? [])]
+    const raw = currentSlide.value.data.images
+    const imgs = Array.isArray(raw) ? [...raw] : typeof raw === 'string' ? raw.split(/[,\n]/).map(s => s.trim()).filter(Boolean) : []
     while (imgs.length <= index) imgs.push('')
     if (url === null) {
       imgs.splice(index, 1)

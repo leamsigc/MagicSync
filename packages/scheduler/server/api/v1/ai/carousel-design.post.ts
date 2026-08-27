@@ -33,12 +33,12 @@ const slideSchema = z.object({
   }),
   kicker: z.string().max(80).optional().nullable().transform(val => val?.trim() || undefined).describe('Short uppercase label above the headline'),
   headline: z.string().max(220).describe('Main headline text for the slide'),
-  body: z.string().max(350).optional().nullable().transform(val => val?.trim() || undefined).describe('Supporting paragraph text'),
-  items: z.array(z.string().max(150)).max(6).optional().nullable().transform(val => val?.filter(Boolean) || undefined).describe('List items for list/step/checklist/comparison/myth-fact layouts (exactly 2 for myth-fact: [myth, fact])'),
-  quote: z.string().max(260).optional().nullable().transform(val => val?.trim() || undefined).describe('Quote text for the quote layout'),
+  body: z.string().max(500).optional().nullable().transform(val => val?.trim() || undefined).describe('Supporting paragraph text — 2-4 sentences that expand on the headline with specifics, numbers, or micro-stories'),
+  items: z.array(z.string().max(200)).max(8).optional().nullable().transform(val => val?.filter(Boolean) || undefined).describe('List items for list/step/checklist/comparison/myth-fact layouts — each item should be specific and actionable with concrete details'),
+  quote: z.string().max(300).optional().nullable().transform(val => val?.trim() || undefined).describe('Quote text for the quote layout — use real or realistic-sounding attribution'),
   author: z.string().max(80).optional().nullable().transform(val => val?.trim() || undefined).describe('Quote attribution'),
   stat: z.string().max(20).optional().nullable().transform(val => val?.trim() || undefined).describe('Short big number for stat layout, e.g. "87%"'),
-  statLabel: z.string().max(120).optional().nullable().transform(val => val?.trim() || undefined).describe('Label under the stat number'),
+  statLabel: z.string().max(150).optional().nullable().transform(val => val?.trim() || undefined).describe('Label under the stat number — include context like "of top carousels use this exact slide order"'),
   cta: z.string().max(50).optional().nullable().transform(val => val?.trim() || undefined).describe('Call-to-action button text for the cta layout'),
   images: z.array(z.string().max(500)).max(4).optional().nullable().transform(val => val?.filter(Boolean) || undefined).describe('Image URLs for photo-grid/polaroid/testimonial/image-focus (leave empty, user adds later)'),
 });
@@ -53,28 +53,28 @@ const responseSchema = z.object({
 });
 
 const TEMPLATE_GUIDE = `Available templates and when to use them:
-- title-kicker: slide 1 hook with kicker + headline + subtitle (kicker, headline, body)
-- big-statement: one bold idea (headline only)
-- tips-list: numbered tips (kicker, headline, items 3-5)
-- quote: powerful quote (quote, author)
-- stat-highlight: big number proof (stat, statLabel, body)
-- steps: how-to sequence (headline, items 3-5)
-- checklist: actionable checklist (headline, items 3-5)
-- comparison: two-column contrast (headline, items 4-6, first half left column)
-- photo-left: image left, text right (headline, body + per-slide bg image)
-- full-photo: full-bleed image with overlay text (kicker, headline, body)
-- qa: question and answer (headline = question, body = answer)
-- myth-fact: debunk (items = exactly [myth, fact])
-- cta: final call to action (headline, body, cta)
-- photo-grid: up to 4 photos grid (kicker, headline, images)
-- polaroid: framed photo card (headline, body, images[0])
-- stat-cards: numbered cards side by side (headline, items 3)
-- split-band: angled accent band with headline (kicker, headline, body)
-- number-hero: giant slide number + headline + body + items (viral listicle)
-- feature-highlight: 3 feature cards (kicker, headline, body, items 3)
-- testimonial: avatar + quote + author + body CTA (quote, author, headline, body, images[0])
-- timeline: vertical timeline (headline, body, items up to 5)
-- image-focus: large image with caption bar (kicker, headline, body, images[0])`;
+- title-kicker: slide 1 hook with kicker + headline + subtitle (kicker = short label like "THE DATA" or "SECRET #1", headline = bold claim, body = 1-2 sentence context)
+- big-statement: one bold idea filling the slide (headline only — make it a pattern interrupt or contrarian take)
+- tips-list: numbered tips (kicker, headline, items 3-6 — each item must be SPECIFIC and ACTIONABLE with concrete details, not vague advice)
+- quote: powerful quote with attribution (quote = the actual quote text, author = real or realistic name + title)
+- stat-highlight: giant number with proof (stat = specific number like "87%", statLabel = context like "of creators who post carousels get 2x more saves", body = explanation)
+- steps: how-to sequence (headline, items 3-6 — each step should be a clear action with specifics)
+- checklist: actionable checklist (headline, items 3-6 — each item is a doable action)
+- comparison: two-column contrast (headline, items 4-6 — first half = left column, second half = right column)
+- photo-left: image left, text right (headline, body — good for before/after or product showcases)
+- full-photo: full-bleed image with overlay text (kicker, headline, body — dramatic visual + strong text)
+- qa: question and answer (headline = specific question, body = detailed answer with evidence)
+- myth-fact: debunk format (items = exactly [myth, fact] — make the myth believable and the fact surprising)
+- cta: final call to action (headline = compelling reason to act, body = what to do, cta = button text like "Save this for later" or "Tag a friend")
+- photo-grid: up to 4 photos grid (kicker, headline — good for visual lists or collections)
+- polaroid: framed photo card (headline, body — good for testimonials or single focal images)
+- stat-cards: numbered cards side by side (headline, items 3 — each card = one key stat or point)
+- split-band: angled accent band (kicker, headline, body — good for dramatic announcements)
+- number-hero: giant slide number + headline (body, items — perfect for listicles and countdowns)
+- feature-highlight: 3 feature cards (kicker, headline, body, items 3 — each card = one feature with details)
+- testimonial: avatar + quote + author (quote, author, headline — use real-sounding names and specific results)
+- timeline: vertical timeline (headline, body, items up to 5 — each item = one milestone with specifics)
+- image-focus: large image with caption bar (kicker, headline, body — hero image + supporting text)`;
 
 export default defineLazyEventHandler(async () => {
   return defineEventHandler(async (event) => {
@@ -131,7 +131,7 @@ export default defineLazyEventHandler(async () => {
 
         const languageSection = language ? `\nWrite all text in this language: ${language}.` : '';
 
-        const prompt = `Design an Instagram carousel deck about this TOPIC:
+        const prompt = `You are a WORLD-CLASS Instagram carousel strategist. Design a high-engagement carousel deck about:
 "${topic.slice(0, 480)}"
 
 TONE: ${tone}.
@@ -140,15 +140,23 @@ ${languageSection}
 
 ${TEMPLATE_GUIDE}
 
-RULES:
-- Slide 1 must use title-kicker or big-statement and hook the reader in the first second
-- Middle slides teach: alternate tips-list / steps / stat-highlight / qa / myth-fact / comparison / checklist / quote
-- The final slide must use cta
-- Keep headlines under 8 words, body text under 25 words per slide
-- Choose a palette with strong contrast (dark bg + light text, or light bg + dark text) and a vivid accent
-- IMPORTANT: Use ONLY templates from this list: ${VALID_TEMPLATES.join(', ')}
-- IMPORTANT: Colors must be hex codes like #0f0e0d
-- Return JSON matching the schema.`;
+CONTENT STRATEGY (CRITICAL — follow these exactly):
+- SLIDE 1 (HOOK): Use title-kicker or big-statement. Create a curiosity gap or bold claim that makes people STOP scrolling. Example: "I lost 10kg in 90 days. Here's the exact protocol." NOT: "Tips for weight loss"
+- SLIDES 2-${slideCount - 1} (VALUE): Each slide must deliver ONE specific, actionable insight. Use real numbers, concrete examples, or step-by-step instructions. NOT vague advice. Example: "Drink 500ml water before every meal — studies show 44% more weight loss over 12 weeks" NOT: "Stay hydrated"
+- FINAL SLIDE (CTA): Use cta template. Give a compelling reason to save, share, or follow. Example: "Save this carousel — you'll need it when you start" or "Tag someone who needs to hear this"
+- BODY TEXT: Write 2-4 sentences per slide that expand on the headline. Tell a micro-story, give context, or provide the "why" behind the claim. Be specific — numbers, names, timeframes.
+- ITEMS: When using list templates (tips-list, steps, checklist), write items that are specific and actionable. NOT: "Be consistent" — YES: "Post 3x per week at 7am EST — algorithm rewards regularity"
+- HEADLINES: 4-10 words. Use power words: "exact", "secret", "why", "how", "proof", "data". Create open loops that make people swipe.
+- QUOTES: Use real or realistic-sounding attributions. "Sarah Chen, CEO of GrowthLab" beats "Anonymous"
+- STATS: Use specific numbers with context. "87% of top carousels use this exact slide order" beats "Most carousels do well"
+- PALETTE: Choose colors that match the mood — dark+bold for authority, bright+clean for approachability, neon+dark for edgy
+
+SLIDE DIVERSITY:
+- Alternate between different templates — never use the same template twice in a row
+- Mix content types: proof slides (stats), action slides (steps/tips), story slides (quote/qa), contrast slides (myth-fact/comparison)
+- Every slide should feel like it earns the right to the next one
+
+Return JSON matching the schema. Make every word count — this carousel should get saves, shares, and comments.`;
 
         const { object } = await schedulerUnifiedAI.generateObject({
           systemPrompt: SCHEDULER_GENERATE_SYSTEM_PROMPT,

@@ -11,6 +11,9 @@ defineProps<{
   guides: boolean
   exporting: boolean
   exportProgress: string
+  isSaving: boolean
+  isPublic: boolean
+  shareUrl: string | null
 }>()
 
 const emit = defineEmits<{
@@ -20,6 +23,10 @@ const emit = defineEmits<{
   'download-all': []
   'save-all': []
   'use-in-post': []
+  'save': []
+  'share': []
+  'unshare': []
+  'copy-link': []
 }>()
 
 const { t } = useI18n()
@@ -418,6 +425,64 @@ function applyFrame(preset: DeckFrame): void {
           @click="emit('save-all')"
         />
       </UTooltip>
+
+      <span class="h-6 w-px bg-accented" aria-hidden="true" />
+
+      <UTooltip :text="t('actions.save')">
+        <UButton
+          icon="i-lucide-cloud-upload"
+          variant="ghost"
+          color="neutral"
+          size="sm"
+          class="rounded-xl"
+          :loading="isSaving"
+          :aria-label="t('actions.save')"
+          data-testid="pill-save-carousel"
+          @click="emit('save')"
+        />
+      </UTooltip>
+
+      <UPopover v-if="isPublic">
+        <UTooltip :text="t('actions.copyLink')">
+          <UButton
+            icon="i-lucide-share-2"
+            variant="ghost"
+            color="success"
+            size="sm"
+            class="rounded-xl"
+            :aria-label="t('actions.copyLink')"
+            data-testid="pill-copy-link"
+          />
+        </UTooltip>
+        <template #content>
+          <div class="p-2 space-y-2 min-w-[200px]">
+            <p class="text-xs text-muted truncate" :title="shareUrl ?? ''">{{ shareUrl }}</p>
+            <div class="flex gap-1">
+              <UButton size="xs" color="primary" @click="emit('copy-link')">
+                {{ t('actions.copyLink') }}
+              </UButton>
+              <UButton size="xs" color="error" variant="ghost" @click="emit('unshare')">
+                {{ t('actions.unshare') }}
+              </UButton>
+            </div>
+          </div>
+        </template>
+      </UPopover>
+      <UTooltip v-else :text="t('actions.share')">
+        <UButton
+          icon="i-lucide-share-2"
+          variant="ghost"
+          color="neutral"
+          size="sm"
+          class="rounded-xl"
+          :aria-label="t('actions.share')"
+          data-testid="pill-share-carousel"
+          @click="emit('share')"
+        />
+      </UTooltip>
+
+      <span class="h-6 w-px bg-accented" aria-hidden="true" />
+
       <button
         type="button"
         class="rounded-full bg-yellow-400 px-4 py-1.5 text-[11px] font-bold uppercase tracking-wider text-neutral-950 transition-colors hover:bg-yellow-300 disabled:opacity-50"
