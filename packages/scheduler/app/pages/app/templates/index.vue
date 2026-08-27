@@ -1,8 +1,5 @@
 <script lang="ts" setup>
-import {
-  getAllLocalCarousels,
-  deleteLocalCarousel,
-} from '#layers/BaseTools/utils/carousel-db'
+
 
 interface SavedCarousel {
   id: string
@@ -152,17 +149,9 @@ function formatDate(dateStr?: string): string {
       Loading...
     </div>
 
-    <TemplatesCarouselList
-      v-else-if="activeTab === 'carousels'"
-      :carousels="carousels"
-      @edit="openInEditor"
-      @delete="deleteCarousel"
-    />
+    <TemplatesCarouselList v-else-if="activeTab === 'carousels'" :carousels="carousels" @edit="openInEditor"
+      @delete="deleteCarousel" />
 
-    <TemplatesAiList
-      v-else-if="activeTab === 'templates'"
-      :templates="aiTemplates"
-      @delete="deleteAiTemplate"
-    />
+    <TemplatesAiList v-else-if="activeTab === 'templates'" :templates="aiTemplates" @delete="deleteAiTemplate" />
   </div>
 </template>
