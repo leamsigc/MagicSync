@@ -38,7 +38,7 @@ function handleAddBlank(): void {
     :aria-label="t('slide.manager')"
   >
     <div class="flex items-center justify-between gap-2">
-      <p class="text-xs font-semibold uppercase tracking-wider text-neutral-400">
+      <p class="text-xs font-semibold uppercase tracking-wider text-muted">
         {{ t('slide.label') }}
       </p>
       <div class="flex items-center gap-2">
@@ -57,31 +57,31 @@ function handleAddBlank(): void {
           />
           <template #content>
             <div class="w-72 p-2 space-y-2">
-              <p class="text-xs font-semibold text-neutral-300 px-1">{{ t('templates.chooseLayout') }}</p>
-              <p class="text-[11px] text-neutral-500 px-1">{{ t('templates.chooseLayoutHint') }}</p>
+              <p class="text-xs font-semibold text-toned px-1">{{ t('templates.chooseLayout') }}</p>
+              <p class="text-[11px] text-muted px-1">{{ t('templates.chooseLayoutHint') }}</p>
               <div class="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto pr-1">
                 <button
                   type="button"
                   data-testid="template-chooser-blank"
-                  class="rounded-lg border border-dashed border-neutral-700 hover:border-primary/60 hover:bg-neutral-800 p-2 text-left transition-colors flex flex-col gap-1 items-center justify-center min-h-[72px]"
+                  class="rounded-lg border border-dashed border-default hover:border-primary/60 hover:bg-muted p-2 text-left transition-colors flex flex-col gap-1 items-center justify-center min-h-[72px]"
                   @click="handleAddBlank"
                 >
-                  <Icon name="i-lucide-file-plus" class="w-5 h-5 text-neutral-400" />
-                  <span class="text-[11px] font-medium text-neutral-300">{{ t('templates.blankPage') }}</span>
+                  <Icon name="i-lucide-file-plus" class="w-5 h-5 text-muted" />
+                  <span class="text-[11px] font-medium text-toned">{{ t('templates.blankPage') }}</span>
                 </button>
                 <button
                   v-for="tpl in CAROUSEL_TEMPLATES"
                   :key="tpl.key"
                   :data-testid="`template-chooser-${tpl.key}`"
                   type="button"
-                  class="rounded-lg border border-neutral-700/60 hover:border-primary/50 hover:bg-neutral-800 p-2 text-left transition-colors"
+                  class="rounded-lg border border-default hover:border-primary/50 hover:bg-muted p-2 text-left transition-colors"
                   @click="() => handleAddWithTemplate(tpl.key)"
                 >
-                  <span class="block text-xs font-medium text-white truncate">{{ tpl.title }}</span>
-                  <span class="block text-[10px] text-neutral-500 line-clamp-2 leading-tight">{{ tpl.description }}</span>
+                  <span class="block text-xs font-medium text-highlighted truncate">{{ tpl.title }}</span>
+                  <span class="block text-[10px] text-muted line-clamp-2 leading-tight">{{ tpl.description }}</span>
                 </button>
               </div>
-              <p class="text-[10px] text-neutral-500 px-1">{{ t('slide.insertHint') }}</p>
+              <p class="text-[10px] text-muted px-1">{{ t('slide.insertHint') }}</p>
             </div>
           </template>
         </UPopover>
@@ -97,12 +97,12 @@ function handleAddBlank(): void {
       >
         <div
           class="relative rounded-lg overflow-hidden border transition-colors"
-          :class="index === currentIndex ? 'border-primary ring-2 ring-primary/50' : 'border-neutral-700/60 hover:border-primary/50'"
+          :class="index === currentIndex ? 'border-primary ring-2 ring-primary/50' : 'border-default hover:border-primary/50'"
         >
           <button
             type="button"
             :data-testid="`slide-thumb-${index}`"
-            class="block w-full aspect-[4/5] bg-neutral-800 overflow-hidden"
+            class="block w-full aspect-[4/5] bg-muted overflow-hidden"
             :aria-label="`${t('slide.goTo')} ${index + 1}`"
             @click="() => switchTo(index)"
           >
@@ -112,7 +112,7 @@ function handleAddBlank(): void {
               v-html="slideHtml(slide, index, slides.length)"
             />
           </button>
-          <span class="absolute top-1 left-1 text-[10px] font-mono px-1 rounded bg-black/70 text-white border border-white/10">
+          <span class="absolute top-1 left-1 text-[10px] font-mono px-1 rounded bg-black/70 text-highlighted border border-white/10">
             {{ String(index + 1).padStart(2, '0') }} · {{ slide.templateKey }}
           </span>
           <span class="absolute top-1 right-1 hidden sm:flex">
@@ -178,7 +178,7 @@ function handleAddBlank(): void {
               icon="i-lucide-plus"
               :disabled="!canAddMore"
               :data-testid="`btn-insert-after-${index}`"
-              class="h-6 w-6 rounded-full bg-neutral-800 border border-neutral-700 opacity-0 group-hover:opacity-100 transition-opacity"
+              class="h-6 w-6 rounded-full bg-muted border border-default opacity-0 group-hover:opacity-100 transition-opacity"
               @click="() => insertSlideAt(index + 1)"
             />
           </UTooltip>
@@ -190,17 +190,17 @@ function handleAddBlank(): void {
           type="button"
           data-testid="btn-add-slide"
           :disabled="!canAddMore"
-          class="w-full aspect-[4/5] rounded-lg border-2 border-dashed border-neutral-700 hover:border-primary/60 hover:text-primary text-neutral-400 transition-colors flex flex-col items-center justify-center gap-1.5 disabled:opacity-40 disabled:pointer-events-none min-h-[110px]"
+          class="w-full aspect-[4/5] rounded-lg border-2 border-dashed border-default hover:border-primary/60 hover:text-primary text-muted transition-colors flex flex-col items-center justify-center gap-1.5 disabled:opacity-40 disabled:pointer-events-none min-h-[110px]"
           :aria-label="t('slide.add')"
           @click="() => addSlide()"
         >
           <Icon name="i-lucide-plus" class="w-5 h-5" />
           <span class="text-[11px] font-medium">{{ t('slide.add') }}</span>
-          <span class="text-[9px] text-neutral-500">Blank</span>
+          <span class="text-[9px] text-muted">Blank</span>
         </button>
       </li>
     </ol>
 
-    <p class="text-[10px] text-neutral-500 leading-relaxed">{{ t('slide.manageHint') }}</p>
+    <p class="text-[10px] text-muted leading-relaxed">{{ t('slide.manageHint') }}</p>
   </section>
 </template>

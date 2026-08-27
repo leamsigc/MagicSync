@@ -9,6 +9,8 @@ export interface SlideData {
   statLabel?: string
   cta?: string
   footer?: string
+  images?: string[]
+  borderRadius?: number
 }
 
 export interface SlidePalette {
@@ -16,12 +18,40 @@ export interface SlidePalette {
   text: string
   accent: string
   patternColor: string
+  font?: string
+}
+
+export const FONT_STACKS: Record<string, string> = {
+  'Arial': "'Arial', 'Helvetica Neue', Helvetica, sans-serif",
+  'Arial Black': "'Arial Black', 'Arial Bold', Gadget, sans-serif",
+  'Impact': "Impact, Haettenschweiler, 'Franklin Gothic Bold', 'Arial Narrow Bold', sans-serif",
+  'Georgia': "Georgia, 'Times New Roman', Times, serif",
+  'Courier New': "'Courier New', Courier, 'Lucida Console', monospace",
+  'Verdana': "Verdana, Geneva, Tahoma, sans-serif",
+  'Trebuchet MS': "'Trebuchet MS', 'Lucida Grande', 'Lucida Sans Unicode', sans-serif",
+  'Comic Sans MS': "'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', cursive",
+  'Palatino': "'Palatino Linotype', 'Book Antiqua', Palatino, serif",
+  'Century Gothic': "'Century Gothic', CenturyGothic, AppleGothic, Futura, sans-serif",
+  'Brush Script MT': "'Brush Script MT', 'Segoe Script', 'Bradley Hand', cursive",
+}
+
+export function fontFamilyStack(name?: string): string {
+  if (!name) return ''
+  const clean = name.replace(/['"]/g, '')
+  return FONT_STACKS[clean] ?? `'${clean}', sans-serif`
+}
+
+export interface ImageTransform {
+  x: number
+  y: number
+  scale: number
 }
 
 export interface BgImageLayer {
   url: string
   dim: number
   shadow: { x: number, y: number, blur: number, opacity: number }
+  transform?: ImageTransform
 }
 
 export interface DeckFlow {
@@ -70,15 +100,21 @@ export interface CarouselTemplate {
 const esc = (s: string): string =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 
+function imageTransformStyle(t?: ImageTransform): string {
+  if (!t) return ''
+  return `transform:translate(${t.x}px, ${t.y}px) scale(${t.scale});transform-origin:center;`
+}
+
 function bgLayer(palette: SlidePalette, bgImage?: BgImageLayer): string {
   if (!bgImage?.url) {
-    return `<div style="position:absolute;inset:0;background:${esc(palette.bg)}"></div>`
+    return `<div data-image-slot="bg" data-image-empty="bg" style="position:absolute;inset:0;background:${esc(palette.bg)};display:flex;align-items:center;justify-content:center;cursor:pointer"><span data-empty-label style="font-size:28px;opacity:0.35">+ Add image</span></div>`
   }
   const s = bgImage.shadow
   const shadow = `drop-shadow(${s.x}px ${s.y}px ${s.blur}px rgba(0,0,0,${s.opacity}))`
-  return `<div style="position:absolute;inset:0;background:${esc(palette.bg)}">
-    <img src="${esc(bgImage.url)}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:${shadow}" draggable="false">
-    <div style="position:absolute;inset:0;background:rgba(0,0,0,${bgImage.dim})"></div>
+  const tf = imageTransformStyle(bgImage.transform)
+  return `<div data-image-slot="bg" style="position:absolute;inset:0;background:${esc(palette.bg)};overflow:hidden;cursor:move">
+    <img data-image="bg" src="${esc(bgImage.url)}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:${shadow};${tf}" draggable="false">
+    <div style="position:absolute;inset:0;background:rgba(0,0,0,${bgImage.dim});pointer-events:none"></div>
   </div>`
 }
 
@@ -125,7 +161,8 @@ export function flowLayer(flow: DeckFlow, index: number, total: number): string 
 }
 
 function pageFooter(palette: SlidePalette, index: number, total: number, footer?: string): string {
-  return `<div style="position:absolute;left:64px;right:64px;bottom:44px;display:flex;justify-content:space-between;align-items:center;font-size:22px;letter-spacing:0.12em;text-transform:uppercase;color:${esc(palette.text)};opacity:0.55">
+  const fontCss = palette.font ? `font-family:${fontFamilyStack(palette.font)};` : ''
+  return `<div style="position:absolute;left:64px;right:64px;bottom:44px;display:flex;justify-content:space-between;align-items:center;font-size:22px;letter-spacing:0.12em;text-transform:uppercase;${fontCss}color:${esc(palette.text)};opacity:0.55">
     <span>${esc(footer ?? '')}</span>
     <span style="font-variant-numeric:tabular-nums">${String(index + 1).padStart(2, '0')} / ${String(total).padStart(2, '0')}</span>
   </div>`
@@ -282,11 +319,11 @@ export const CAROUSEL_TEMPLATES: CarouselTemplate[] = [
       ${bgLayer(p, bg)}
       ${patternLayer('__PATTERN__')}
       <div style="position:relative;height:100%;display:flex;color:${esc(p.text)}">
-        <div style="width:46%;position:relative">
+        <div data-image-slot="bg" style="width:46%;position:relative;overflow:hidden;cursor:pointer">
           ${bg?.url
-            ? `<img src="${esc(bg.url)}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:drop-shadow(${bg.shadow.x}px ${bg.shadow.y}px ${bg.shadow.blur}px rgba(0,0,0,${bg.shadow.opacity}))" draggable="false">
+            ? `<img data-image="bg" src="${esc(bg.url)}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:drop-shadow(${bg.shadow.x}px ${bg.shadow.y}px ${bg.shadow.blur}px rgba(0,0,0,${bg.shadow.opacity}))" draggable="false">
                <div style="position:absolute;inset:0;background:rgba(0,0,0,${bg.dim})"></div>`
-            : `<div style="position:absolute;inset:0;background:${esc(p.accent)};opacity:0.85"></div>`}
+            : `<div data-image-empty="bg" style="position:absolute;inset:0;background:${esc(p.accent)};opacity:0.85;display:flex;align-items:center;justify-content:center;color:${esc(p.bg)};font-size:24px;font-weight:700">+ Add image</div>`}
         </div>
         <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:32px;padding:80px 72px 140px">
           ${accentBar(p)}
@@ -301,11 +338,11 @@ export const CAROUSEL_TEMPLATES: CarouselTemplate[] = [
     title: 'Full Photo',
     description: 'Full-bleed image with overlay text',
     render: (d, p, i, t, bg) => `
-      <div style="position:absolute;inset:0;background:${esc(p.bg)}">
+      <div data-image-slot="bg" style="position:absolute;inset:0;background:${esc(p.bg)};overflow:hidden;cursor:pointer">
         ${bg?.url
-          ? `<img src="${esc(bg.url)}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:drop-shadow(${bg.shadow.x}px ${bg.shadow.y}px ${bg.shadow.blur}px rgba(0,0,0,${bg.shadow.opacity}))" draggable="false">
+          ? `<img data-image="bg" src="${esc(bg.url)}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:drop-shadow(${bg.shadow.x}px ${bg.shadow.y}px ${bg.shadow.blur}px rgba(0,0,0,${bg.shadow.opacity}))" draggable="false">
              <div style="position:absolute;inset:0;background:linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.25) 55%, rgba(0,0,0,0.05) 100%)"></div>`
-          : `<div style="position:absolute;inset:0;background:${esc(p.bg)}"></div>`}
+          : `<div data-image-empty="bg" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:${esc(p.text)};font-size:28px;font-weight:700;opacity:0.5">+ Add image</div>`}
       </div>
       ${patternLayer('__PATTERN__')}
       <div style="position:relative;height:100%;display:flex;flex-direction:column;justify-content:flex-end;gap:26px;padding:96px 80px 140px;color:#ffffff">
@@ -371,6 +408,200 @@ export const CAROUSEL_TEMPLATES: CarouselTemplate[] = [
       </div>
       ${pageFooter(p, i, t, d.footer)}`,
   },
+  {
+    key: 'photo-grid',
+    title: 'Photo Grid',
+    description: 'Up to four photos tiled above a caption — add images in the Media panel',
+    render: (d, p, i, t, bg) => {
+      const imgs = (d.images ?? []).slice(0, 4)
+      const cell = (idx: number): string => {
+        const url = imgs[idx]
+        return `<div data-image-slot="grid-${idx}" style="position:relative;flex:1;border-radius:20px;overflow:hidden;background:${esc(p.accent)}22;cursor:pointer">
+          ${url
+            ? `<img data-image="grid-${idx}" src="${esc(url)}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" draggable="false">`
+            : `<div data-image-empty="grid-${idx}" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;font-size:22px;font-weight:700;color:${esc(p.accent)};opacity:0.6"><span style="font-size:32px">+</span>Add</div>`}
+        </div>`
+      }
+      return `
+      ${bgLayer(p, bg)}
+      ${patternLayer('__PATTERN__')}
+      <div style="position:relative;height:100%;display:flex;flex-direction:column;gap:36px;padding:88px 80px 140px;color:${esc(p.text)}">
+        <div style="display:flex;flex-direction:column;gap:14px">
+          ${d.kicker ? `<div style="font-size:24px;letter-spacing:0.24em;text-transform:uppercase;color:${esc(p.accent)};font-weight:700">${esc(d.kicker)}</div>` : ''}
+          <div style="font-size:56px;font-weight:800;line-height:1.08">${esc(d.headline)}</div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:16px;min-height:0">
+          <div style="flex:1;display:flex;gap:16px;min-height:0">${cell(0)}${cell(1)}</div>
+          <div style="flex:1;display:flex;gap:16px;min-height:0">${cell(2)}${cell(3)}</div>
+        </div>
+      </div>
+      ${pageFooter(p, i, t, d.footer)}`
+    },
+  },
+  {
+    key: 'polaroid',
+    title: 'Polaroid',
+    description: 'Tilted framed photo card with a caption strip',
+    render: (d, p, i, t, bg) => {
+      const url = d.images?.[0] ?? bg?.url
+      return `
+      ${bgLayer(p, bg)}
+      ${patternLayer('__PATTERN__')}
+      <div style="position:relative;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:40px;padding:96px 90px 140px;color:${esc(p.text)}">
+        <div style="width:70%;background:#ffffff;padding:26px 26px 18px;border-radius:12px;box-shadow:0 30px 60px rgba(0,0,0,0.35);transform:rotate(-2deg)">
+          <div data-image-slot="polaroid" style="position:relative;width:100%;aspect-ratio:4/5;overflow:hidden;border-radius:6px;background:${esc(p.bg)};cursor:pointer">
+            ${url ? `<img data-image="polaroid" src="${esc(url)}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" draggable="false">` : `<div data-image-empty="polaroid" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:18px;opacity:0.4">+ Add photo</div>`}
+          </div>
+          <div style="padding-top:16px;text-align:center;font-size:32px;line-height:1.3;color:#1c1917">${esc(d.headline)}</div>
+        </div>
+        ${d.body ? `<div style="font-size:30px;line-height:1.5;opacity:0.8;text-align:center;max-width:720px">${esc(d.body)}</div>` : ''}
+      </div>
+      ${pageFooter(p, i, t, d.footer)}`
+    },
+  },
+  {
+    key: 'stat-cards',
+    title: 'Stat Cards',
+    description: 'Items as numbered cards side by side',
+    render: (d, p, i, t, bg) => `
+      ${bgLayer(p, bg)}
+      ${patternLayer('__PATTERN__')}
+      <div style="position:relative;height:100%;display:flex;flex-direction:column;gap:44px;padding:96px 80px 140px;color:${esc(p.text)}">
+        <div style="font-size:54px;font-weight:800;line-height:1.1">${esc(d.headline)}</div>
+        <div style="display:flex;gap:22px;flex:1">
+          ${(d.items ?? []).map((item, idx) => `
+            <div style="flex:1;border-radius:24px;padding:34px 26px;background:${idx % 2 === 0 ? esc(p.accent) : 'rgba(255,255,255,0.07)'};color:${idx % 2 === 0 ? esc(p.bg) : esc(p.text)};display:flex;flex-direction:column;gap:14px">
+              <div style="font-size:80px;font-weight:800;line-height:1">${String(idx + 1).padStart(2, '0')}</div>
+              <div style="font-size:25px;line-height:1.35">${esc(item)}</div>
+            </div>`).join('')}
+        </div>
+      </div>
+      ${pageFooter(p, i, t, d.footer)}`,
+  },
+  {
+    key: 'split-band',
+    title: 'Split Band',
+    description: 'Angled accent band with bold headline over it',
+    render: (d, p, i, t, bg) => `
+      ${bgLayer(p, bg)}
+      ${patternLayer('__PATTERN__')}
+      <div style="position:absolute;top:-160px;left:-80px;width:130%;height:54%;background:${esc(p.accent)};transform:rotate(-6deg);transform-origin:50% 50%"></div>
+      <div style="position:relative;height:100%;display:flex;flex-direction:column;justify-content:center;gap:34px;padding:96px 84px 140px;color:${esc(p.bg)}">
+        ${d.kicker ? `<div style="font-size:24px;letter-spacing:0.26em;text-transform:uppercase;font-weight:700;opacity:0.75">${esc(d.kicker)}</div>` : ''}
+        <div style="font-size:92px;font-weight:800;line-height:1.05;letter-spacing:-0.02em">${esc(d.headline)}</div>
+        ${d.body ? `<div style="font-size:38px;line-height:1.45;color:${esc(p.text)};max-width:760px">${esc(d.body)}</div>` : ''}
+      </div>
+      ${pageFooter(p, i, t, d.footer)}`,
+  },
+  // ── Five new high-performance layouts (based on 2025 IG carousel data) ──
+  {
+    key: 'number-hero',
+    title: 'Number Hero',
+    description: 'Gigantic number + headline — listicle slides that stop the scroll (3.1× saves)',
+    render: (d, p, i, t, bg) => `
+      ${bgLayer(p, bg)}
+      ${patternLayer('__PATTERN__')}
+      <div style="position:relative;height:100%;display:flex;flex-direction:column;padding:88px 80px 140px;color:${esc(p.text)}">
+        <div style="display:flex;align-items:baseline;gap:18px">
+          <span style="font-size:168px;line-height:0.85;font-weight:900;letter-spacing:-0.06em;color:${esc(p.accent)}">${String(i + 1).padStart(2, '0')}</span>
+          <span style="width:72px;height:8px;background:${esc(p.accent)};border-radius:9999px;flex-shrink:0;margin-bottom:42px"></span>
+        </div>
+        <div style="margin-top:26px;font-size:64px;font-weight:800;line-height:1.08;letter-spacing:-0.02em">${esc(d.headline)}</div>
+        ${d.body ? `<div style="margin-top:20px;font-size:30px;line-height:1.5;opacity:0.78;max-width:820px">${esc(d.body)}</div>` : ''}
+        ${d.items?.length ? `<div style="margin-top:28px;display:flex;flex-direction:column;gap:14px">${d.items.slice(0, 3).map(item => `<div style=\"display:flex;gap:14px;align-items:center;font-size:27px\"><span style=\"width:10px;height:10px;border-radius:9999px;background:${esc(p.accent)};flex-shrink:0\"></span><span>${esc(item)}</span></div>`).join('')}</div>` : ''}
+      </div>
+      ${pageFooter(p, i, t, d.footer)}`,
+  },
+  {
+    key: 'feature-highlight',
+    title: 'Feature Cards',
+    description: 'Three feature cards with top accent — perfect for value stacks and tool lists',
+    render: (d, p, i, t, bg) => `
+      ${bgLayer(p, bg)}
+      ${patternLayer('__PATTERN__')}
+      <div style="position:relative;height:100%;display:flex;flex-direction:column;gap:32px;padding:88px 72px 140px;color:${esc(p.text)}">
+        <div style="display:flex;flex-direction:column;gap:12px">
+          ${d.kicker ? `<div style="font-size:22px;letter-spacing:0.22em;text-transform:uppercase;color:${esc(p.accent)};font-weight:700">${esc(d.kicker)}</div>` : ''}
+          <div style="font-size:54px;font-weight:800;line-height:1.08">${esc(d.headline)}</div>
+          ${d.body ? `<div style="font-size:26px;line-height:1.45;opacity:0.75">${esc(d.body)}</div>` : ''}
+        </div>
+        <div style="flex:1;display:flex;gap:18px;min-height:0">
+          ${(d.items ?? []).slice(0, 3).map(item => `
+            <div style="flex:1;display:flex;flex-direction:column;gap:16px;padding:28px 22px;border-radius:20px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08)">
+              <div style="width:48px;height:48px;border-radius:14px;background:${esc(p.accent)};display:flex;align-items:center;justify-content:center;font-weight:800;color:${esc(p.bg)};font-size:22px">${esc(item.slice(0, 1).toUpperCase())}</div>
+              <div style="font-size:24px;line-height:1.35;font-weight:600">${esc(item)}</div>
+            </div>`).join('')}
+        </div>
+      </div>
+      ${pageFooter(p, i, t, d.footer)}`,
+  },
+  {
+    key: 'testimonial',
+    title: 'Testimonial',
+    description: 'Social proof with avatar, quote and handle — 2.4× higher comment rate',
+    render: (d, p, i, t, bg) => {
+      const url = d.images?.[0] ?? bg?.url
+      return `
+      ${bgLayer(p, bg)}
+      ${patternLayer('__PATTERN__')}
+      <div style="position:relative;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:36px;padding:96px 80px 140px;color:${esc(p.text)};text-align:center">
+        <div data-image-slot="testimonial" style="position:relative;width:120px;height:120px;border-radius:9999px;overflow:hidden;border:4px solid ${esc(p.accent)};background:${esc(p.accent)}22;flex-shrink:0;cursor:pointer">
+          ${url ? `<img data-image="testimonial" src="${esc(url)}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" draggable="false">` : `<div data-image-empty="testimonial" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:54px;opacity:0.5">☺</div>`}
+        </div>
+        <div style="font-size:48px;line-height:1.3;font-weight:700;max-width:860px">&ldquo;${esc(d.quote ?? d.headline)}&rdquo;</div>
+        ${d.author ? `<div style="font-size:22px;letter-spacing:0.16em;text-transform:uppercase;opacity:0.7">— ${esc(d.author)}</div>` : ''}
+        ${d.body ? `<div style="margin-top:8px;padding:14px 22px;border-radius:9999px;background:${esc(p.accent)};color:${esc(p.bg)};font-size:22px;font-weight:700">${esc(d.body)}</div>` : ''}
+      </div>
+      ${pageFooter(p, i, t, d.footer)}`
+    },
+  },
+  {
+    key: 'timeline',
+    title: 'Timeline',
+    description: 'Vertical timeline — ideal for processes and story arcs with high completion',
+    render: (d, p, i, t, bg) => `
+      ${bgLayer(p, bg)}
+      ${patternLayer('__PATTERN__')}
+      <div style="position:relative;height:100%;display:flex;flex-direction:column;gap:30px;padding:88px 84px 140px;color:${esc(p.text)}">
+        <div style="font-size:52px;font-weight:800;line-height:1.1">${esc(d.headline)}</div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:0;justify-content:center">
+          ${(d.items ?? []).slice(0, 5).map((item, idx, arr) => `
+            <div style="display:flex;gap:24px;align-items:flex-start;min-height:92px">
+              <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0">
+                <span style="width:44px;height:44px;border-radius:9999px;background:${idx === 0 ? esc(p.accent) : 'rgba(255,255,255,0.12)'};color:${idx === 0 ? esc(p.bg) : esc(p.text)};border:2px solid ${esc(p.accent)};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px">${idx + 1}</span>
+                ${idx < arr.length - 1 ? `<span style="width:2px;flex:1;min-height:28px;background:${esc(p.accent)};opacity:0.35;margin:6px 0"></span>` : ''}
+              </div>
+              <div style="flex:1;padding-top:8px">
+                <div style="font-size:26px;line-height:1.4;font-weight:600">${esc(item)}</div>
+                ${idx === 0 && d.body ? `<div style="font-size:22px;opacity:0.65;margin-top:6px">${esc(d.body)}</div>` : ''}
+              </div>
+            </div>`).join('')}
+        </div>
+      </div>
+      ${pageFooter(p, i, t, d.footer)}`,
+  },
+  {
+    key: 'image-focus',
+    title: 'Image Focus',
+    description: 'Large image with caption bar — photo carousels get 2× saves for travel/food',
+    render: (d, p, i, t, bg) => {
+      const url = d.images?.[0] ?? bg?.url
+      return `
+      ${bgLayer(p, bg)}
+      ${patternLayer('__PATTERN__')}
+      <div style="position:relative;height:100%;display:flex;flex-direction:column;padding:0;color:${esc(p.text)}">
+        <div data-image-slot="focus" style="flex:1;position:relative;overflow:hidden;background:${esc(p.accent)}14;margin:36px 48px 0;border-radius:20px;border:1px solid rgba(255,255,255,0.08);cursor:pointer">
+          ${url ? `<img data-image="focus" src="${esc(url)}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" draggable="false"><div style="position:absolute;inset:0;background:linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 45%);pointer-events:none"></div>` : `<div data-image-empty="focus" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:28px;letter-spacing:0.2em;text-transform:uppercase;opacity:0.35;color:${esc(p.accent)}">+ Add image</div>`}
+          ${d.kicker ? `<div style="position:absolute;top:18px;left:18px;padding:8px 14px;border-radius:9999px;background:${esc(p.accent)};color:${esc(p.bg)};font-size:16px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase">${esc(d.kicker)}</div>` : ''}
+        </div>
+        <div style="padding:28px 56px 44px;display:flex;flex-direction:column;gap:14px">
+          <div style="font-size:54px;font-weight:800;line-height:1.08">${esc(d.headline)}</div>
+          ${d.body ? `<div style="font-size:26px;line-height:1.5;opacity:0.78">${esc(d.body)}</div>` : ''}
+        </div>
+      </div>
+      ${pageFooter(p, i, t, d.footer)}`
+    },
+  },
 ]
 
 export function renderSlideHtml(
@@ -387,14 +618,20 @@ export function renderSlideHtml(
   const template = CAROUSEL_TEMPLATES.find(tpl => tpl.key === templateKey) ?? CAROUSEL_TEMPLATES[0]!
   const effectiveData: SlideData = handle ? { ...data, footer: handle } : data
   let html = template.render(effectiveData, palette, index, total, bgImage)
+  const fontStack = fontFamilyStack(palette.font)
+  const fontCss = fontStack ? `font-family:${fontStack};` : ''
   html = html.replaceAll(
     'position:relative;height:100%',
-    'position:relative;height:100%;transform:var(--slide-fx,none);transform-origin:50% 50%',
+    `position:relative;height:100%;transform:var(--slide-fx,none);transform-origin:50% 50%;${fontCss}`,
   )
   if (flow && flow.mode !== 'off') {
     const baseBg = bgLayer(palette, bgImage)
     const flowHtml = flowLayer(flow, index, total)
     if (flowHtml) html = html.replace(baseBg, () => flowHtml)
+  }
+  const borderRadius = data.borderRadius ?? 0
+  if (borderRadius > 0) {
+    html = `<div style="position:absolute;inset:0;border-radius:${borderRadius}px;overflow:hidden">${html}</div>`
   }
   return html.replace('__PATTERN__', patternHtml)
 }

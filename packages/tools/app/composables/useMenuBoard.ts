@@ -50,7 +50,7 @@ function seedGuestBoard(): MenuBoard {
 
 export const useMenuBoard = () => {
   const { loggedIn, fetchSession } = UseUser()
-  // Capture once inside setup context so toasts work from any method.
+  const { t } = useI18n()
   const toast = useToast()
 
   const boards = useState<MenuBoard[]>('menu-board:boards', () => [])
@@ -152,18 +152,18 @@ export const useMenuBoard = () => {
       isDirty.value = false
 
       toast.add({
-        title: 'Saved',
+        title: t('saved_title'),
         description:
           storageMode.value === 'database'
-            ? `"${board.name}" saved to your account.`
-            : `"${board.name}" saved on this device.`,
+            ? t('saved_desc_db', { name: `"${board.name}"` })
+            : t('saved_desc_local', { name: `"${board.name}"` }),
         color: 'success',
         icon: 'i-lucide-check-circle',
       })
     } catch {
       toast.add({
-        title: 'Save failed',
-        description: 'Could not save the board. Please try again.',
+        title: t('save_failed_title'),
+        description: t('save_failed_desc'),
         color: 'error',
         icon: 'i-lucide-alert-circle',
       })
@@ -232,6 +232,17 @@ export const useMenuBoard = () => {
     isDirty.value = true
   }
 
+  function addHtmlPage(name: string, content: string): MenuPage | null {
+    if (!currentBoard.value) return null
+    let created: MenuPage | null = null
+    mutatePages((pages) => {
+      created = createMenuPage({ name, type: 'html', content, order: pages.length })
+      return [...pages, created]
+    })
+    isDirty.value = true
+    return created
+  }
+
   function duplicatePage(pageId: string): void {
     mutatePages((pages) => {
       const source = pages.find(p => p.id === pageId)
@@ -286,7 +297,15 @@ export const useMenuBoard = () => {
     return sortActivePages(currentBoard.value?.pages ?? [])
   }
 
+  const previewPageId = useState<string | null>('menu-board:previewPageId', () => null)
+
+  async function previewPage(page: MenuPage): Promise<void> {
+    previewPageId.value = page.id
+    mode.value = 'display'
+  }
+
   async function enterDisplayMode(withFullscreen = true): Promise<void> {
+    previewPageId.value = null
     mode.value = 'display'
     if (withFullscreen && import.meta.client) {
       // Restaurant TVs run the board as a true fullscreen display.
@@ -295,6 +314,7 @@ export const useMenuBoard = () => {
   }
 
   async function exitDisplayMode(): Promise<void> {
+    previewPageId.value = null
     mode.value = 'admin'
     if (import.meta.client && isFullscreenActive()) {
       await exitImmersive()
@@ -305,8 +325,8 @@ export const useMenuBoard = () => {
     if (!currentBoard.value) return false
     if (!currentBoard.value.settings.unlockPin.trim()) {
       toast.add({
-        title: 'PIN required',
-        description: 'Set an unlock PIN in Settings before locking the display.',
+        title: t('pin_required_title'),
+        description: t('pin_required_desc'),
         color: 'warning',
         icon: 'i-lucide-lock',
       })
@@ -356,8 +376,8 @@ export const useMenuBoard = () => {
         }, durationSeconds * 1000)
       } catch {
         toast.add({
-          title: 'Recording failed',
-          description: 'Screen recording was cancelled or permission was denied.',
+          title: t('recording_failed_title'),
+          description: t('recording_failed_desc'),
           color: 'error',
           icon: 'i-lucide-video-off',
         })
@@ -384,12 +404,15 @@ export const useMenuBoard = () => {
     setShared,
     addPageFromTemplate,
     addImagePage,
+    addHtmlPage,
     duplicatePage,
     updatePage,
     removePage,
     movePage,
     generateWithAi,
     activeSortedPages,
+    previewPageId: readonly(previewPageId),
+    previewPage,
     enterDisplayMode,
     exitDisplayMode,
     lockAndStartDisplay,

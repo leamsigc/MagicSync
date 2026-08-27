@@ -5,9 +5,30 @@ import { useCarouselDeck } from '../composables/useCarouselDeck'
 
 const {
   currentSlide,
+  updateSlideData,
 } = useCarouselDeck()
 
 const { t } = useI18n()
+
+const MAX_GRID_IMAGES = 4
+
+const isGrid = computed(() => currentSlide.value.templateKey === 'photo-grid')
+const isPolaroid = computed(() => currentSlide.value.templateKey === 'polaroid')
+const images = computed(() => currentSlide.value.data.images ?? [])
+
+const pendingGridUrl = ref('')
+watch(pendingGridUrl, (url) => {
+  if (!url) return
+  if (images.value.length < MAX_GRID_IMAGES) {
+    updateSlideData({ images: [...images.value, url] })
+  }
+  pendingGridUrl.value = ''
+})
+
+function removeImage(idx: number): void {
+  updateSlideData({ images: images.value.filter((_, i) => i !== idx) }
+  )
+}
 
 const bgUrl = computed({
   get: () => currentSlide.value.bgImage?.url ?? '',
@@ -43,6 +64,39 @@ function updateDim(value: number): void {
 
 <template>
   <div class="space-y-4" data-testid="media-panel">
+    <div v-if="isGrid || isPolaroid" class="space-y-3" data-testid="grid-images">
+      <div class="flex items-center justify-between">
+        <p class="text-xs font-semibold uppercase tracking-wider text-muted">{{ t('media.gallery') }}</p>
+        <UBadge v-if="isGrid" variant="outline" color="neutral" size="xs">{{ images.length }}/{{ MAX_GRID_IMAGES }}</UBadge>
+      </div>
+      <p class="text-[11px] text-muted leading-relaxed">
+        {{ isGrid ? t('media.photosHint') : t('media.polaroidHint') }}
+      </p>
+      <p v-if="isGrid && images.length >= MAX_GRID_IMAGES" class="text-[11px] text-warning">{{ t('media.maxPhotos') }}</p>
+      <OgMediaPicker v-else v-model="pendingGridUrl" :label="t('media.addPhoto')" />
+      <div v-if="images.length" class="grid grid-cols-4 gap-2">
+        <div
+          v-for="(img, idx) in images"
+          :key="`${idx}-${img}`"
+          class="group relative aspect-square overflow-hidden rounded-md border border-default bg-muted"
+        >
+          <img :src="img" alt="" class="h-full w-full object-cover pointer-events-none">
+          <button
+            type="button"
+            class="absolute top-0.5 right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-highlighted opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100"
+            :data-testid="`btn-remove-image-${idx}`"
+            :aria-label="t('media.removePhoto')"
+            @click="() => removeImage(idx)"
+          >
+            <UIcon name="i-lucide-x" class="h-3 w-3" />
+          </button>
+          <span class="absolute bottom-0.5 left-0.5 text-[9px] font-mono px-1 rounded bg-black/70 text-highlighted">{{ idx + 1 }}</span>
+        </div>
+      </div>
+    </div>
+
+    <USeparator v-if="isGrid || isPolaroid" />
+
     <OgMediaPicker v-model="bgUrl" :label="t('media.image')" />
 
     <template v-if="bgUrl">
@@ -56,7 +110,7 @@ function updateDim(value: number): void {
       <USeparator />
 
       <div class="space-y-3">
-        <p class="text-xs font-semibold uppercase tracking-wider text-neutral-400">
+        <p class="text-xs font-semibold uppercase tracking-wider text-muted">
           {{ t('media.shadow') }}
         </p>
         <div class="grid grid-cols-2 gap-x-4 gap-y-2">

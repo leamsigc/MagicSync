@@ -279,38 +279,27 @@ const columns: TableColumn<AdminUser>[] = [
         <p class="text-muted-foreground">Manage user accounts and roles</p>
       </div>
       <div class="flex flex-col sm:flex-row gap-2">
-        <UInput
-          v-model="searchQuery"
-          placeholder="Search users..."
-          icon="i-heroicons-magnifying-glass"
-          size="sm"
-          class="sm:w-64"
-        />
+        <UInput v-model="searchQuery" placeholder="Search users..." icon="i-heroicons-magnifying-glass" size="sm"
+          class="sm:w-64" />
         <UButton icon="i-lucide-user-plus" size="sm" @click="() => { showCreateModal = true }">
           Create User
         </UButton>
       </div>
     </div>
 
-    <div v-if="loading" class="bg-elevated rounded-2xl flex justify-center py-12">
+    <div v-if="loading" class=" rounded flex justify-center py-12">
       <UIcon name="i-heroicons-arrow-path" class="w-6 h-6 animate-spin text-muted-foreground" />
     </div>
 
-    <div v-else class="bg-elevated rounded-2xl overflow-hidden">
+    <div v-else class="shadow rounded overflow-hidden">
       <div v-if="filteredUsers.length === 0" class="text-center py-12 text-muted-foreground">
         No users found
       </div>
 
-      <UTable
-        v-else
-        ref="table"
-        v-model:row-selection="rowSelection"
-        :data="filteredUsers"
-        :columns="columns"
-        class="flex-1"
-      />
+      <UTable v-else ref="table" v-model:row-selection="rowSelection" :data="filteredUsers" :columns="columns"
+        class="flex-1" :ui="{ 'tr': 'bg-transparent', 'td': 'border-0', 'th': 'border-0' }" />
 
-      <div class="px-5 py-4 border-t border-border/50 text-sm text-muted flex items-center justify-between">
+      <div class="px-5 py-4  text-sm text-muted flex items-center justify-between">
         <span>
           {{ table?.tableApi?.getFilteredSelectedRowModel().rows.length || 0 }} of
           {{ table?.tableApi?.getFilteredRowModel().rows.length || 0 }} row(s) selected.
@@ -356,7 +345,8 @@ const columns: TableColumn<AdminUser>[] = [
           </template>
           <div class="space-y-4">
             <div class="flex items-center gap-3">
-              <UAvatar :src="selectedUser.image || undefined" :alt="selectedUser.name || selectedUser.email" size="sm" />
+              <UAvatar :src="selectedUser.image || undefined" :alt="selectedUser.name || selectedUser.email"
+                size="sm" />
               <div>
                 <p class="font-medium text-sm">{{ selectedUser.name || 'Unnamed' }}</p>
                 <p class="text-xs text-muted-foreground">{{ selectedUser.email }}</p>

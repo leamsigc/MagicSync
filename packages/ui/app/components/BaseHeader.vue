@@ -11,7 +11,7 @@ const { links: items } = useNavigationLinks()
   <UHeader mode="drawer" :ui="{
     root: 'sticky top-4 z-50 mx-auto max-w-7xl bg-elevated rounded-2xl ',
     content: 'w-full md:max-w-(--ui-container) mx-auto px-4 md:px-6 lg:px-8 flex items-center justify-between gap-3 md:h-16 ',
-    body:'w-full'
+    body: 'w-full'
   }">
     <template #left>
       <UButton color="neutral" variant="ghost" to="/" :aria-label="t('navigation.home')">
@@ -21,7 +21,8 @@ const { links: items } = useNavigationLinks()
     </template>
 
     <UNavigationMenu :items="items" orientation="horizontal" class="w-full justify-center" highlight
-      highlight-color="primary" />
+      highlight-color="primary"
+      :ui="{ viewport: 'ring-0 shadow rounded-lg', viewportWrapper: 'ring-0 ', content: 'p-4' }" />
     <template #right>
       <BaseThemeSelector />
       <BaseTranslationMenu />
@@ -46,7 +47,7 @@ const { links: items } = useNavigationLinks()
           <UButton color="primary" variant="ghost" to="/login" icon="i-lucide-user"
             :aria-label="t('navigation.login')" />
         </UTooltip>
-        <UNavigationMenu :items="items" orientation="vertical" class="-mx-2.5" />
+        <!-- <UNavigationMenu :items="items" orientation="vertical" class="-mx-2.5" :ui="{ viewport: 'ring-0' }" /> -->
       </section>
     </template>
   </UHeader>

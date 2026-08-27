@@ -60,7 +60,7 @@ const formatDate = (date: Date) => {
     </div>
 
     <div v-else class="space-y-4">
-      <div v-for="acc in listAccounts" :key="acc.id" class="flex items-center justify-between p-4 border rounded-lg">
+      <div v-for="acc in listAccounts" :key="acc.id" class="flex items-center justify-between p-4  rounded-lg">
         <div>
           <p class="font-medium capitalize">{{ acc.providerId }}</p>
           <p class="text-sm text-muted-foreground">

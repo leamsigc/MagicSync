@@ -1,5 +1,7 @@
+<i18n src="../index.json"></i18n>
 <script lang="ts" setup>
 import TextBehindImageEditor from './TextBehindImageEditor.vue';
+const { t } = useI18n();
 
 /**
  *
@@ -119,29 +121,28 @@ const clear = () => {
 const benefits = ref([
   {
     icon: 'lucide:blocks',
-    title: 'Drag & Drop a image to edit',
-    description: 'Select the base image for the text over image',
+    title: t('benefit_drag_title'),
+    description: t('benefit_drag_desc'),
   },
   {
     icon: 'lucide:file-image',
-    title: 'Background Remover',
-    description: 'The background of the original image will be removed',
+    title: t('benefit_bg_title'),
+    description: t('benefit_bg_desc'),
   },
   {
     icon: 'lucide:text',
-    title: 'Add Text',
-    description: 'Provide the text for the image',
+    title: t('benefit_text_title'),
+    description: t('benefit_text_desc'),
   },
   {
     icon: 'lucide:edit',
-    title: 'Edit Text',
-    description: 'Edit the text over the image',
+    title: t('benefit_edit_title'),
+    description: t('benefit_edit_desc'),
   },
   {
     icon: 'lucide:download',
-    title: 'Download',
-    description:
-      'When you are done editing, you can download the image with the text over it',
+    title: t('benefit_download_title'),
+    description: t('benefit_download_desc'),
   },
 ]);
 </script>
@@ -188,7 +189,7 @@ v-if="isLoading || isAnyImageInProgress"
 v-if="!isLoading && (viewState === 'REMOVE_BG' || !files.length)"
               class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2   p-5 rounded-xl  w-96 text-sm flex flex-col items-center space-y-4">
               <UFileUpload
-accept="image/*" label="Drop your image here" description="SVG, PNG, JPG or GIF (max. 2MB)"
+accept="image/*" :label="t('drop_image')" :description="t('drop_image_desc')"
                 :multiple="false" class="w-96 min-h-80" @update:model-value="onFileDrop" />
             </div>
 

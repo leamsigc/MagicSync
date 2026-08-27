@@ -86,7 +86,7 @@ const display = computed(() => `${Math.round(props.modelValue)}${props.unit}`)
       :aria-valuemax="max"
       :aria-valuenow="modelValue"
       :data-testid="`dial-${label.toLowerCase().replace(/\s+/g, '-')}`"
-      class="relative h-12 w-12 rounded-full border border-neutral-700/80 bg-neutral-800/80 cursor-ns-resize outline-none focus-visible:ring-2 ring-primary touch-none"
+      class="relative h-12 w-12 rounded-full border border-default bg-muted cursor-ns-resize outline-none focus-visible:ring-2 ring-primary touch-none"
       title="Drag or scroll · double-click to reset"
       @pointerdown="onPointerDown"
       @pointermove="onPointerMove"
@@ -106,10 +106,10 @@ const display = computed(() => `${Math.round(props.modelValue)}${props.unit}`)
         class="absolute left-1/2 top-1/2 h-[3px] w-px bg-neutral-600"
         :style="{ transform: `translateX(-50%) rotate(${-135 + (tick - 1) * 27}deg) translateY(-21px)` }"
       />
-      <span class="absolute inset-0 flex items-center justify-center text-[9px] font-mono text-neutral-300 pointer-events-none">
+      <span class="absolute inset-0 flex items-center justify-center text-[9px] font-mono text-toned pointer-events-none">
         {{ display }}
       </span>
     </div>
-    <span class="text-[9px] uppercase tracking-wider text-neutral-500">{{ label }}</span>
+    <span class="text-[9px] uppercase tracking-wider text-muted">{{ label }}</span>
   </div>
 </template>

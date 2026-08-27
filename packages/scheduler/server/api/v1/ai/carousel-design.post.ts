@@ -16,7 +16,7 @@ const HEX_COLOR = z.string().transform(val => {
   return trimmed || '#0f0e0d';
 });
 
-const VALID_TEMPLATES = ['title-kicker', 'big-statement', 'tips-list', 'quote', 'stat-highlight', 'steps', 'checklist', 'comparison', 'qa', 'myth-fact', 'cta'] as const;
+const VALID_TEMPLATES = ['title-kicker', 'big-statement', 'tips-list', 'quote', 'stat-highlight', 'steps', 'checklist', 'comparison', 'photo-left', 'full-photo', 'qa', 'myth-fact', 'cta', 'photo-grid', 'polaroid', 'stat-cards', 'split-band', 'number-hero', 'feature-highlight', 'testimonial', 'timeline', 'image-focus'] as const;
 
 const slideSchema = z.object({
   template: z.string().describe('Which layout this slide uses').transform(val => {
@@ -40,6 +40,7 @@ const slideSchema = z.object({
   stat: z.string().max(20).optional().nullable().transform(val => val?.trim() || undefined).describe('Short big number for stat layout, e.g. "87%"'),
   statLabel: z.string().max(120).optional().nullable().transform(val => val?.trim() || undefined).describe('Label under the stat number'),
   cta: z.string().max(50).optional().nullable().transform(val => val?.trim() || undefined).describe('Call-to-action button text for the cta layout'),
+  images: z.array(z.string().max(500)).max(4).optional().nullable().transform(val => val?.filter(Boolean) || undefined).describe('Image URLs for photo-grid/polaroid/testimonial/image-focus (leave empty, user adds later)'),
 });
 
 const responseSchema = z.object({
@@ -60,9 +61,20 @@ const TEMPLATE_GUIDE = `Available templates and when to use them:
 - steps: how-to sequence (headline, items 3-5)
 - checklist: actionable checklist (headline, items 3-5)
 - comparison: two-column contrast (headline, items 4-6, first half left column)
+- photo-left: image left, text right (headline, body + per-slide bg image)
+- full-photo: full-bleed image with overlay text (kicker, headline, body)
 - qa: question and answer (headline = question, body = answer)
 - myth-fact: debunk (items = exactly [myth, fact])
-- cta: final call to action (headline, body, cta)`;
+- cta: final call to action (headline, body, cta)
+- photo-grid: up to 4 photos grid (kicker, headline, images)
+- polaroid: framed photo card (headline, body, images[0])
+- stat-cards: numbered cards side by side (headline, items 3)
+- split-band: angled accent band with headline (kicker, headline, body)
+- number-hero: giant slide number + headline + body + items (viral listicle)
+- feature-highlight: 3 feature cards (kicker, headline, body, items 3)
+- testimonial: avatar + quote + author + body CTA (quote, author, headline, body, images[0])
+- timeline: vertical timeline (headline, body, items up to 5)
+- image-focus: large image with caption bar (kicker, headline, body, images[0])`;
 
 export default defineLazyEventHandler(async () => {
   return defineEventHandler(async (event) => {

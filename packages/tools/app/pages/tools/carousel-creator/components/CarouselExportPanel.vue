@@ -27,11 +27,11 @@ function getStage(): HTMLElement {
       data-testid="btn-download-all"
       @click="() => downloadAllSlides(getStage())"
     />
-    <p v-if="exportProgress" class="text-[11px] font-mono text-center text-neutral-400" data-testid="download-progress">{{ exportProgress }}</p>
+    <p v-if="exportProgress" class="text-[11px] font-mono text-center text-muted" data-testid="download-progress">{{ exportProgress }}</p>
 
     <USeparator class="my-2" />
 
-    <p class="text-xs font-semibold uppercase tracking-wider text-neutral-400">
+    <p class="text-xs font-semibold uppercase tracking-wider text-muted">
       {{ t('export.individual') }}
     </p>
     <div class="grid grid-cols-5 gap-1.5">
@@ -49,7 +49,7 @@ function getStage(): HTMLElement {
       </UButton>
     </div>
 
-    <p class="text-[11px] text-neutral-500 leading-relaxed">
+    <p class="text-[11px] text-muted leading-relaxed">
       {{ t('export.hint') }}
     </p>
   </div>

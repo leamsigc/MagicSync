@@ -34,17 +34,17 @@ const { t } = useI18n()
               {{ handle ? handle.replace(/^@/, '') : 'yourhandle' }}
               <Icon name="i-lucide-badge-check" class="w-3 h-3 text-blue-500 fill-blue-500" />
             </p>
-            <p class="text-[11px] text-neutral-500">Original audio</p>
+            <p class="text-[11px] text-muted">Original audio</p>
           </div>
         </div>
         <Icon name="i-lucide-ellipsis" class="w-4 h-4 text-neutral-700" />
       </div>
 
       <!-- Stage with IG chrome -->
-      <div class="relative bg-neutral-950">
+      <div class="relative bg-inverted">
         <CarouselStage :html="html" :width="width" :height="height" :guides="false" :fx-style="fxStyle" />
         <!-- IG 1/N badge top-right -->
-        <span class="absolute top-2 right-2 text-[11px] font-medium px-2 py-0.5 rounded-full bg-black/60 text-white backdrop-blur">
+        <span class="absolute top-2 right-2 text-[11px] font-medium px-2 py-0.5 rounded-full bg-black/60 text-highlighted backdrop-blur">
           {{ currentIndex + 1 }}/{{ total }}
         </span>
         <!-- tap areas -->
@@ -76,10 +76,10 @@ const { t } = useI18n()
           <p class="text-[13px] leading-snug text-neutral-900 line-clamp-2">
             <span class="font-semibold">{{ handle ? handle.replace(/^@/, '') : 'yourhandle' }}</span>
             {{ t('preview.igCaption', 'Swipe to see the full story — which slide is your favourite?') }}
-            <span class="text-neutral-500">... more</span>
+            <span class="text-muted">... more</span>
           </p>
-          <p class="text-[11px] text-neutral-500">{{ t('preview.igComments', 'View all 42 comments') }}</p>
-          <p class="text-[10px] tracking-widest text-neutral-400 uppercase">2 hours ago · {{ t('preview.igTranslate', 'See translation') }}</p>
+          <p class="text-[11px] text-muted">{{ t('preview.igComments', 'View all 42 comments') }}</p>
+          <p class="text-[10px] tracking-widest text-muted uppercase">2 hours ago · {{ t('preview.igTranslate', 'See translation') }}</p>
         </div>
       </div>
     </div>
@@ -92,13 +92,13 @@ const { t } = useI18n()
       <div class="px-3 py-3 bg-white">
         <div class="flex items-start justify-between gap-3">
           <div class="flex gap-2.5">
-            <div class="h-10 w-10 rounded-full bg-neutral-800 flex items-center justify-center text-xs font-bold text-white shrink-0">
+            <div class="h-10 w-10 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-highlighted shrink-0">
               {{ (handle || 'YH').slice(0, 2).toUpperCase() }}
             </div>
             <div class="leading-tight">
-              <p class="text-[14px] font-semibold text-neutral-900 leading-none">{{ handle ? handle.replace(/^@/, '') : 'Your Name' }} · <span class="font-normal text-neutral-500">1st</span></p>
+              <p class="text-[14px] font-semibold text-neutral-900 leading-none">{{ handle ? handle.replace(/^@/, '') : 'Your Name' }} · <span class="font-normal text-muted">1st</span></p>
               <p class="text-[12px] text-neutral-600 line-clamp-1">Creator · Helping builders ship faster — 12k followers</p>
-              <p class="text-[11px] text-neutral-500 flex items-center gap-1">2h · <Icon name="i-lucide-globe" class="w-3 h-3" /></p>
+              <p class="text-[11px] text-muted flex items-center gap-1">2h · <Icon name="i-lucide-globe" class="w-3 h-3" /></p>
             </div>
           </div>
           <div class="flex items-center gap-2 shrink-0">
@@ -113,7 +113,7 @@ const { t } = useI18n()
 
       <!-- Document / image carousel -->
       <div class="relative bg-[#f4f2ee] border-y border-neutral-200">
-        <div class="bg-neutral-950">
+        <div class="bg-inverted">
           <CarouselStage :html="html" :width="width" :height="height" :guides="false" :fx-style="fxStyle" />
         </div>
 
@@ -126,7 +126,7 @@ const { t } = useI18n()
             <Icon name="i-lucide-chevron-right" class="w-4 h-4 text-neutral-700" />
           </div>
         </div>
-        <div class="absolute bottom-2 right-2 text-[11px] font-medium px-2 py-1 rounded bg-black/70 text-white">
+        <div class="absolute bottom-2 right-2 text-[11px] font-medium px-2 py-1 rounded bg-black/70 text-highlighted">
           {{ currentIndex + 1 }} / {{ total }}
         </div>
       </div>
@@ -139,18 +139,18 @@ const { t } = useI18n()
             v-for="i in total"
             :key="i"
             class="h-1.5 rounded-full transition-all"
-            :class="i - 1 === currentIndex ? 'w-6 bg-neutral-800' : 'w-1.5 bg-neutral-300'"
+            :class="i - 1 === currentIndex ? 'w-6 bg-muted' : 'w-1.5 bg-neutral-300'"
           />
         </div>
         <div class="flex items-center justify-between border-t border-neutral-100 pt-2">
           <div class="flex items-center gap-1 text-[11px] text-neutral-600">
             <span class="flex -space-x-1">
-              <span class="h-4 w-4 rounded-full bg-[#0a66c2] border border-white flex items-center justify-center text-[9px] text-white">♥</span>
-              <span class="h-4 w-4 rounded-full bg-green-600 border border-white flex items-center justify-center text-[9px] text-white">👍</span>
-              <span class="h-4 w-4 rounded-full bg-amber-500 border border-white flex items-center justify-center text-[9px] text-white">💡</span>
+              <span class="h-4 w-4 rounded-full bg-[#0a66c2] border border-white flex items-center justify-center text-[9px] text-highlighted">♥</span>
+              <span class="h-4 w-4 rounded-full bg-green-600 border border-white flex items-center justify-center text-[9px] text-highlighted">👍</span>
+              <span class="h-4 w-4 rounded-full bg-amber-500 border border-white flex items-center justify-center text-[9px] text-highlighted">💡</span>
             </span>
             <span>834</span>
-            <span class="text-neutral-400">·</span>
+            <span class="text-muted">·</span>
             <span>42 comments · 12 reposts</span>
           </div>
         </div>

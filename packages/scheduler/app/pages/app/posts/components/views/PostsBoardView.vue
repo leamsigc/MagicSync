@@ -42,11 +42,10 @@ const openPost = (id: string) => {
 
 <template>
   <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mt-4">
-    <div v-for="(postsInGroup, status) in groupedPosts" :key="status" class="bg-elevated rounded-2xl  overflow-hidden">
+    <div v-for="(postsInGroup, status) in groupedPosts" :key="status" class="rounded  overflow-hidden">
       <div class="px-4 py-3.5 ">
         <div class="flex items-center gap-2">
-          <span
-class="w-2 h-2 rounded-full" :class="{
+          <span class="w-2 h-2 rounded-full" :class="{
             'bg-warning': status === 'pending',
             'bg-success': status === 'published',
             'bg-error': status === 'failed',
@@ -60,8 +59,7 @@ class="w-2 h-2 rounded-full" :class="{
         <template v-for="post in postsInGroup" :key="post.id">
           <div
             class="bg-elevated rounded-xl hover:shadow-sm hover:-translate-y-0.5 transition-all duration-180  overflow-hidden cursor-pointer"
-            role="link" tabindex="0" :aria-label="`Open post details`"
-            @click="openPost(post.id)"
+            role="link" tabindex="0" :aria-label="`Open post details`" @click="openPost(post.id)"
             @keydown.enter="openPost(post.id)">
             <div class="p-3.5 space-y-3">
               <div class="flex items-center gap-2">
@@ -73,14 +71,13 @@ class="w-2 h-2 rounded-full" :class="{
               </div>
               <p class="text-sm text-toned line-clamp-3 leading-relaxed">{{ post.content }}</p>
               <div class="flex flex-wrap gap-1.5">
-                <UBadge
-v-for="platform in post.platformPosts" :key="platform.id" color="primary" variant="soft"
+                <UBadge v-for="platform in post.platformPosts" :key="platform.id" color="primary" variant="soft"
                   size="xs">
                   <Icon :name="`logos:${platform.platformPostId ?? 'facebook'}`" class="size-3" />
                   {{ platform.status }}
                 </UBadge>
               </div>
-              <div class="flex items-center justify-between flex-wrap gap-2 pt-2 border-t border-border/30">
+              <div class="flex items-center justify-between flex-wrap gap-2 pt-2 /30">
                 <div class="flex items-center gap-2 text-xs text-muted flex-wrap">
                   <UBadge color="neutral" variant="soft" size="xs">
                     <UIcon name="lucide:clock" class="size-3" />
@@ -96,10 +93,9 @@ v-for="platform in post.platformPosts" :key="platform.id" color="primary" varian
                   </UBadge>
                 </div>
               </div>
-              <div v-if="status === 'published'" class="pt-2 border-t border-border/30" @click.stop>
+              <div v-if="status === 'published'" class="pt-2 /30" @click.stop>
                 <div class="flex items-center gap-2 flex-wrap">
-                  <UButton
-v-for="platform in post.platformPosts" :key="platform.id" color="neutral" variant="soft"
+                  <UButton v-for="platform in post.platformPosts" :key="platform.id" color="neutral" variant="soft"
                     size="xs" target="_blank" class="rounded-lg"
                     :to="getPlatformDetails(platform).get(platform.socialAccountId)?.publishedUrl">
                     <UIcon name="lucide:link" class="size-3" />

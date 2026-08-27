@@ -17,7 +17,7 @@ callOnce('token-health-notification', async () => {
 
 <template>
   <header class="sticky top-3 z-40 mx-auto px-4">
-    <div class="bg-elevated rounded-2xl flex items-center justify-between px-5 py-2.5  max-w-7xl mx-auto">
+    <div class="rounded flex items-center justify-between px-5 py-2.5  max-w-7xl mx-auto">
       <div class="flex items-center space-x-3">
         <UDashboardSidebarToggle class="rounded-xl" />
         <span class="text-sm font-semibold text-highlighted truncate">{{ currentPageTitle }}</span>

@@ -1,6 +1,7 @@
 <i18n src="../carousel-creator.json"></i18n>
 <script lang="ts" setup>
 import DialKnob from './DialKnob.vue'
+import CarouselGenerateTemplateModal from './CarouselGenerateTemplateModal.vue'
 import { CAROUSEL_PATTERNS } from '../patterns'
 import { CAROUSEL_TEMPLATES, PALETTES } from '../templates'
 import { useCarouselDeck, FRAME_PRESETS, type DeckFrame } from '../composables/useCarouselDeck'
@@ -37,6 +38,7 @@ const {
 
 const canAddMore = computed(() => slides.value.length < 10)
 const addPageOpen = ref(false)
+const aiTemplateOpen = ref(false)
 
 function handleAddPageWithTemplate(key: string): void {
   insertSlideAt(currentIndex.value + 1, key)
@@ -53,8 +55,8 @@ function randomizePattern(): void {
 }
 
 const modeItems = [
-  { label: t('dock.deck'), value: 'deck' as const },
-  { label: t('ai.label'), value: 'ai' as const },
+  { value: 'deck' as const, icon: 'i-lucide-layout-grid', tip: t('dock.deck') },
+  { value: 'ai' as const, icon: 'i-lucide-sparkles', tip: t('ai.label') },
 ]
 
 const patternOpacityPercent = computed({
@@ -100,23 +102,24 @@ function applyFrame(preset: DeckFrame): void {
 
 <template>
   <div
-    class="flex flex-wrap items-center justify-center gap-2 rounded-2xl border border-neutral-700/60 bg-neutral-900/90 backdrop-blur-md p-1.5 shadow-2xl"
+    class="flex flex-wrap items-center justify-center gap-1 sm:gap-2 rounded-2xl border border-default bg-elevated/90 backdrop-blur-md p-1 sm:p-1.5 shadow-2xl"
     data-testid="control-bar"
   >
     <!-- Mode segment -->
-    <div class="flex items-center rounded-full border border-neutral-700/60 bg-neutral-800/70 p-0.5" data-testid="bar-mode">
-      <button
-        v-for="item in modeItems"
-        :key="item.value"
-        type="button"
-        :data-active="mode === item.value"
-        class="rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-wider transition-colors"
-        :class="mode === item.value ? 'bg-neutral-200 text-neutral-900' : 'text-neutral-400 hover:text-neutral-200'"
-        :aria-pressed="mode === item.value"
-        @click="() => emit('update:mode', item.value)"
-      >
-        {{ item.label }}
-      </button>
+    <div class="flex items-center rounded-full border border-default bg-muted/70 p-0.5" data-testid="bar-mode">
+      <UTooltip v-for="item in modeItems" :key="item.value" :text="item.tip">
+        <UButton
+          :icon="item.icon"
+          :data-active="mode === item.value"
+          variant="ghost"
+          :color="mode === item.value ? 'primary' : 'neutral'"
+          size="xs"
+          class="rounded-full px-2 py-1"
+          :aria-pressed="mode === item.value"
+          :aria-label="item.tip"
+          @click="() => emit('update:mode', item.value)"
+        />
+      </UTooltip>
     </div>
 
     <!-- Scrubbable dials -->
@@ -149,7 +152,7 @@ function applyFrame(preset: DeckFrame): void {
       />
     </div>
 
-    <span class="h-8 w-px bg-neutral-700/60" aria-hidden="true" />
+    <span class="h-8 w-px bg-accented" aria-hidden="true" />
 
     <UPopover v-model:open="addPageOpen">
       <UTooltip :text="t('slide.addPage')">
@@ -166,35 +169,48 @@ function applyFrame(preset: DeckFrame): void {
       </UTooltip>
       <template #content>
         <div class="w-72 p-2 space-y-2">
-          <p class="text-xs font-semibold text-neutral-300 px-1">{{ t('templates.chooseLayout') }}</p>
-          <p class="text-[11px] text-neutral-500 px-1">{{ t('templates.chooseLayoutHint') }}</p>
+          <p class="text-xs font-semibold text-toned px-1">{{ t('templates.chooseLayout') }}</p>
+          <p class="text-[11px] text-muted px-1">{{ t('templates.chooseLayoutHint') }}</p>
           <div class="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto pr-1">
             <button
               type="button"
               data-testid="bar-template-blank"
-              class="rounded-lg border border-dashed border-neutral-700 hover:border-primary/60 hover:bg-neutral-800 p-2 text-left flex flex-col gap-1 items-center justify-center min-h-[64px]"
+              class="rounded-lg border border-dashed border-default hover:border-primary/60 hover:bg-muted p-2 text-left flex flex-col gap-1 items-center justify-center min-h-[64px]"
               @click="handleAddBlankPage"
             >
-              <Icon name="i-lucide-file-plus" class="w-5 h-5 text-neutral-400" />
-              <span class="text-[11px] font-medium text-neutral-300">{{ t('templates.blankPage') }}</span>
+              <Icon name="i-lucide-file-plus" class="w-5 h-5 text-muted" />
+              <span class="text-[11px] font-medium text-toned">{{ t('templates.blankPage') }}</span>
             </button>
             <button
               v-for="tpl in CAROUSEL_TEMPLATES"
               :key="tpl.key"
               :data-testid="`bar-template-${tpl.key}`"
               type="button"
-              class="rounded-lg border border-neutral-700/60 hover:border-primary/50 hover:bg-neutral-800 p-2 text-left"
+              class="rounded-lg border border-default hover:border-primary/50 hover:bg-muted p-2 text-left"
               @click="() => handleAddPageWithTemplate(tpl.key)"
             >
-              <span class="block text-xs font-medium text-white truncate">{{ tpl.title }}</span>
-              <span class="block text-[10px] text-neutral-500 line-clamp-2 leading-tight">{{ tpl.description }}</span>
+              <span class="block text-xs font-medium text-highlighted truncate">{{ tpl.title }}</span>
+              <span class="block text-[10px] text-muted line-clamp-2 leading-tight">{{ tpl.description }}</span>
             </button>
           </div>
         </div>
       </template>
     </UPopover>
 
-    <span class="h-8 w-px bg-neutral-700/60" aria-hidden="true" />
+    <UTooltip :text="t('aiTemplate.generate')">
+      <UButton
+        icon="i-lucide-wand-2"
+        variant="soft"
+        color="primary"
+        size="xs"
+        class="rounded-xl"
+        data-testid="bar-generate-template"
+        aria-label="Generate AI template"
+        @click="aiTemplateOpen = true"
+      />
+    </UTooltip>
+
+    <span class="h-8 w-px bg-accented" aria-hidden="true" />
 
     <!-- Quick-access cluster -->
     <div class="flex items-center gap-0.5">
@@ -219,7 +235,7 @@ function applyFrame(preset: DeckFrame): void {
               :data-testid="`bar-layout-${tpl.key}`"
               :data-active="currentSlide.templateKey === tpl.key"
               class="w-full rounded-md px-2 py-1.5 text-left text-xs transition-colors"
-              :class="currentSlide.templateKey === tpl.key ? 'bg-primary/10 text-primary' : 'text-neutral-300 hover:bg-neutral-800'"
+              :class="currentSlide.templateKey === tpl.key ? 'bg-primary/10 text-primary' : 'text-toned hover:bg-muted'"
               @click="() => applyTemplateToCurrent(tpl.key)"
             >
               {{ tpl.title }}
@@ -245,7 +261,7 @@ function applyFrame(preset: DeckFrame): void {
               v-for="preset in PALETTES"
               :key="preset.name"
               type="button"
-              class="h-8 w-10 overflow-hidden rounded-md border border-neutral-700 transition-transform hover:scale-105"
+              class="h-8 w-10 overflow-hidden rounded-md border border-default transition-transform hover:scale-105"
               :title="preset.name"
               :aria-label="preset.name"
               @click="() => applyPalette({ bg: preset.bg, text: preset.text, accent: preset.accent })"
@@ -350,7 +366,7 @@ function applyFrame(preset: DeckFrame): void {
               :data-testid="`bar-frame-${preset.key}`"
               :data-active="frame.h === preset.h"
               class="w-full rounded-md px-2 py-1.5 text-left text-xs font-mono transition-colors"
-              :class="frame.h === preset.h ? 'bg-primary/10 text-primary' : 'text-neutral-300 hover:bg-neutral-800'"
+              :class="frame.h === preset.h ? 'bg-primary/10 text-primary' : 'text-toned hover:bg-muted'"
               @click="() => applyFrame(preset)"
             >
               {{ preset.key === 'portrait' ? '4:5 · 1080×1350' : '1:1 · 1080×1080' }}
@@ -360,7 +376,7 @@ function applyFrame(preset: DeckFrame): void {
       </UPopover>
     </div>
 
-    <span class="h-8 w-px bg-neutral-700/60" aria-hidden="true" />
+    <span class="h-8 w-px bg-accented" aria-hidden="true" />
 
     <!-- Export actions -->
     <div class="flex items-center gap-1">
@@ -411,5 +427,7 @@ function applyFrame(preset: DeckFrame): void {
         {{ t('actions.useInPost') }}
       </button>
     </div>
+
+    <CarouselGenerateTemplateModal v-model:open="aiTemplateOpen" />
   </div>
 </template>

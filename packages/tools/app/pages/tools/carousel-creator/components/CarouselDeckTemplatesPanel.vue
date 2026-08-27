@@ -1,11 +1,11 @@
 <i18n src="../carousel-creator.json"></i18n>
 <script lang="ts" setup>
-import { CAROUSEL_DECK_TEMPLATES } from '../deckTemplates'
+import { CAROUSEL_DECK_TEMPLATES, type DeckTemplate } from '../deckTemplates'
 import { renderSlideHtml, type SlidePalette } from '../templates'
 import { patternStyle } from '../patterns'
-import { useCarouselDeck } from '../composables/useCarouselDeck'
+import { useCarouselDeck, type AiDeckTemplate } from '../composables/useCarouselDeck'
 
-const { applyDeckTemplate, slides } = useCarouselDeck()
+const { applyDeckTemplate, slides, allDeckTemplates, customDecks, removeCustomDeck } = useCarouselDeck()
 const { t } = useI18n()
 const toast = useToast()
 
@@ -15,12 +15,22 @@ const isConfirmOpen = computed({
   set: (value: boolean) => { if (!value) pendingDeck.value = null },
 })
 
-function previewHtml(deck: typeof CAROUSEL_DECK_TEMPLATES[number], slideIdx: number): string {
+function handleRemoveAi(key: string): void {
+  removeCustomDeck(key)
+  toast.add({ title: 'Template removed', color: 'neutral' })
+}
+
+function previewHtml(deck: DeckTemplate, slideIdx: number): string {
   const spec = deck.slides[slideIdx]
   if (!spec) return ''
-  const palette: SlidePalette = { bg: deck.palette.bg, text: deck.palette.text, accent: deck.palette.accent, patternColor: deck.palette.text }
-  const patternHtml = `<div style="position:absolute;inset:0;${Object.entries(patternStyle('dots', palette.patternColor, 0.08)).map(([k, v]) => `${k.replace(/([A-Z])/g, '-$1').toLowerCase()}:${v}`).join(';')}"></div>`
+  const palette: SlidePalette = { bg: deck.palette.bg, text: deck.palette.text, accent: deck.palette.accent, patternColor: deck.palette.text, font: deck.palette.font }
+  const patternKey = deck.pattern ?? 'dots'
+  const patternHtml = `<div style="position:absolute;inset:0;${Object.entries(patternStyle(patternKey, palette.patternColor, 0.08)).map(([k, v]) => `${k.replace(/([A-Z])/g, '-$1').toLowerCase()}:${v}`).join(';')}"></div>`
   return renderSlideHtml(spec.templateKey, spec.data, palette, slideIdx, deck.slides.length, patternHtml)
+}
+
+function isAiDeck(key: string): boolean {
+  return customDecks.value.some(d => d.key === key)
 }
 
 function applyDeck(key: string, title: string): void {
@@ -47,17 +57,18 @@ function confirmApply(): void {
 <template>
   <section class="space-y-3" data-testid="deck-templates-panel">
     <div class="flex items-center justify-between">
-      <p class="text-xs font-semibold uppercase tracking-wider text-neutral-400">{{ t('templates.deckTitle') }}</p>
-      <UBadge variant="outline" color="neutral" size="xs">{{ CAROUSEL_DECK_TEMPLATES.length }}</UBadge>
+      <p class="text-xs font-semibold uppercase tracking-wider text-muted">{{ t('templates.deckTitle') }}</p>
+      <UBadge variant="outline" color="neutral" size="xs">{{ allDeckTemplates.length }}</UBadge>
     </div>
-    <p class="text-[11px] text-neutral-500 leading-relaxed">{{ t('templates.deckHint') }}</p>
+    <p class="text-[11px] text-muted leading-relaxed">{{ t('templates.deckHint') }}</p>
 
     <div class="grid grid-cols-1 gap-3">
       <article
-        v-for="deck in CAROUSEL_DECK_TEMPLATES"
+        v-for="deck in allDeckTemplates"
         :key="deck.key"
         :data-testid="`deck-template-${deck.key}`"
-        class="group relative overflow-hidden rounded-xl border border-neutral-700/60 bg-neutral-800/50 hover:border-primary/50 hover:bg-neutral-800 transition-colors"
+        class="group relative overflow-hidden rounded-xl border border-default bg-muted hover:border-primary/50 hover:bg-muted transition-colors"
+        :class="isAiDeck(deck.key) ? 'ring-1 ring-primary/30' : ''"
       >
         <div class="flex gap-2 p-3">
           <!-- Stacked mini previews of first 3 pages -->
@@ -65,7 +76,7 @@ function confirmApply(): void {
             <div
               v-for="i in Math.min(3, deck.slides.length)"
               :key="i"
-              class="absolute rounded-md overflow-hidden border border-neutral-700/60 bg-neutral-900 shadow-md"
+              class="absolute rounded-md overflow-hidden border border-default bg-elevated shadow-md"
               :style="{ width: '56px', height: '70px', left: `${(i - 1) * 14}px`, top: `${(i - 1) * 4}px`, zIndex: 4 - i }"
             >
               <div class="origin-top-left pointer-events-none" :style="{ width: '1080px', height: '1350px', transform: 'scale(0.052)' }" v-html="previewHtml(deck, i - 1)" />
@@ -74,11 +85,14 @@ function confirmApply(): void {
           </div>
 
           <div class="min-w-0 flex-1 space-y-1">
-            <h4 class="text-sm font-semibold text-white truncate">{{ deck.title }}</h4>
-            <p class="text-[11px] leading-relaxed text-neutral-400 line-clamp-2">{{ deck.description }}</p>
+            <div class="flex items-center gap-1.5">
+              <h4 class="text-sm font-semibold text-highlighted truncate">{{ deck.title }}</h4>
+              <UBadge v-if="isAiDeck(deck.key)" color="primary" variant="solid" size="xs" class="shrink-0">AI</UBadge>
+            </div>
+            <p class="text-[11px] leading-relaxed text-muted line-clamp-2">{{ deck.description }}</p>
             <div class="flex flex-wrap gap-1 pt-1">
-              <span v-for="s in deck.slides.slice(0, 4)" :key="s.templateKey" class="text-[9px] px-1 py-0.5 rounded bg-neutral-700/60 text-neutral-300">{{ s.templateKey }}</span>
-              <span v-if="deck.slides.length > 4" class="text-[9px] px-1 text-neutral-500">+{{ deck.slides.length - 4 }}</span>
+              <span v-for="s in deck.slides.slice(0, 4)" :key="s.templateKey" class="text-[9px] px-1 py-0.5 rounded bg-accented text-toned">{{ s.templateKey }}</span>
+              <span v-if="deck.slides.length > 4" class="text-[9px] px-1 text-muted">+{{ deck.slides.length - 4 }}</span>
             </div>
           </div>
         </div>
@@ -89,15 +103,27 @@ function confirmApply(): void {
             <span class="h-3 w-3 rounded-full border border-white/20" :style="{ background: deck.palette.accent }" />
             <span class="h-3 w-3 rounded-full border border-white/20" :style="{ background: deck.palette.text }" />
           </div>
-          <UButton
-            size="xs"
-            color="primary"
-            variant="soft"
-            icon="i-lucide-sparkles"
-            :label="t('templates.useDeck')"
-            :data-testid="`btn-use-deck-${deck.key}`"
-            @click="() => handleApply(deck.key, deck.title)"
-          />
+          <div class="flex items-center gap-1">
+            <UButton
+              v-if="isAiDeck(deck.key)"
+              size="xs"
+              color="neutral"
+              variant="ghost"
+              icon="i-lucide-trash-2"
+              :aria-label="`Delete ${deck.title}`"
+              :data-testid="`btn-delete-deck-${deck.key}`"
+              @click="() => handleRemoveAi(deck.key)"
+            />
+            <UButton
+              size="xs"
+              color="primary"
+              variant="soft"
+              icon="i-lucide-sparkles"
+              :label="t('templates.useDeck')"
+              :data-testid="`btn-use-deck-${deck.key}`"
+              @click="() => handleApply(deck.key, deck.title)"
+            />
+          </div>
         </div>
       </article>
     </div>

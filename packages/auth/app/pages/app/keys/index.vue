@@ -167,7 +167,8 @@ const columns: TableColumn<ApiKey>[] = [
       </UButton>
     </div>
 
-    <UTable v-else :data="apiKeys" :columns="columns" :loading="loading" class="flex-1 overflow-scroll">
+    <UTable v-else :data="apiKeys" :columns="columns" :loading="loading" class="flex-1 overflow-scroll"
+      :ui="{ 'tr': 'bg-transparent', 'td': 'border-0', 'th': 'border-0' }">
     </UTable>
 
     <UModal v-model:open="showCreateModal" :title="t('createButton')">

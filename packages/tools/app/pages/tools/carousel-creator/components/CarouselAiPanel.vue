@@ -101,19 +101,19 @@ async function generate(): Promise<void> {
       >
         {{ t('ai.generate') }}
       </UButton>
-      <p class="text-[11px] text-neutral-500 leading-relaxed">
+      <p class="text-[11px] text-muted leading-relaxed">
         {{ t('ai.hint') }}
       </p>
     </template>
 
     <div v-else class="rounded-lg border border-dashed border-neutral-600 p-4 text-center space-y-2">
       <Icon name="i-lucide-sparkles" class="mx-auto opacity-60" />
-      <p class="text-xs text-neutral-400">{{ t('toasts.loginRequired') }}</p>
+      <p class="text-xs text-muted">{{ t('toasts.loginRequired') }}</p>
       <UButton :label="t('login')" size="xs" to="/login" />
     </div>
 
     <USeparator />
-    <p class="text-[11px] text-neutral-500">
+    <p class="text-[11px] text-muted">
       {{ t('ai.currentPalette', { bg: palette.bg, accent: palette.accent }) }}
     </p>
   </div>

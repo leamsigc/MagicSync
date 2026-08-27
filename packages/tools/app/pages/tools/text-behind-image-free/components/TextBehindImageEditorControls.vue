@@ -1,3 +1,4 @@
+<i18n src="../index.json"></i18n>
 <script lang="ts" setup>
 /**
  *
@@ -14,6 +15,7 @@ import type { CSSProperties } from 'vue';
 import { useDraggable } from '@vueuse/core';
 import { useImageFilterStyles, useTextStyles } from '../composables/useTextStyles';
 import type { AspectRatios, BackgroundControls, FontFamilies, TextLayer, TextStyle, } from '../composables/useTextStyles';
+const { t } = useI18n();
 
 interface Props {
   isOverflowing: boolean;
@@ -150,12 +152,12 @@ const activeImageType = ref<'base' | 'overlay'>('base');
         <template #content>
           <section class="p-4 grid">
             <header ref="handler" class="text-center">
-              <h2>Text Behind Image Editor</h2>
+              <h2>{{ t('editor_title') }}</h2>
               <p>Drag to move the text or the Settings</p>
             </header>
             <div class="flex justify-between items-center mt-10 mb-5">
               <label class="text-sm font-medium">Text Layers</label>
-              <UButton size="sm" variant="outline" @click="addTextLayer()">Add Layer</UButton>
+              <UButton size="sm" variant="outline" @click="addTextLayer()">{{ t('add_layer') }}</UButton>
             </div>
             <div class="grid gap-2">
               <div v-for="layer in textLayers" :key="layer.id"
@@ -186,7 +188,7 @@ const activeImageType = ref<'base' | 'overlay'>('base');
         <template #content>
           <section class="p-4 grid">
             <header class="text-center">
-              <h2>Social Media Presets</h2>
+              <h2>{{ t('social_presets') }}</h2>
               <p>Social media aspect ratios and predefined positions</p>
             </header>
             <section class="grid grid-cols-2 gap-2 my-4">
@@ -258,7 +260,7 @@ const activeImageType = ref<'base' | 'overlay'>('base');
         <template #content>
           <section class="p-4 grid max-h-96 overflow-auto max-w-sm">
             <header class="text-center">
-              <h2>Text Presets</h2>
+              <h2>{{ t('text_presets') }}</h2>
               <p>Edit the text related settings</p>
             </header>
             <section class="grid gap-2 grid-cols-1">
@@ -383,7 +385,7 @@ const activeImageType = ref<'base' | 'overlay'>('base');
         <template #content>
           <section class="p-4 grid max-h-96 overflow-auto max-w-sm">
             <header class="text-center">
-              <h2>Text preset templates</h2>
+              <h2>{{ t('text_templates') }}</h2>
               <p>Use text preset templates</p>
             </header>
             <section>
@@ -425,7 +427,7 @@ const activeImageType = ref<'base' | 'overlay'>('base');
             </section>
             <section class="grid gap-2 mt-4">
               <label class="text-xs text-muted-foreground">Save current style:</label>
-              <UInput :model-value="newStyleNameModel" placeholder="Style name..." class="flex-1"
+              <UInput :model-value="newStyleNameModel" :placeholder="t('style_name_placeholder')" class="flex-1"
                 @update:model-value="(val: string | number) => newStyleNameModel = String(val)" />
               <UButton variant="outline"
                 @click="saveCurrentAsCustomStyle(String(newStyleNameModel) || `Custom ${String(customStyles.length + 1)}`)">
@@ -442,7 +444,7 @@ const activeImageType = ref<'base' | 'overlay'>('base');
         <template #content>
           <section class="p-4 grid max-h-96 overflow-auto max-w-sm">
             <header class="text-center">
-              <h2>Text Position</h2>
+              <h2>{{ t('text_position') }}</h2>
               <p>Drag to move the text</p>
             </header>
             <section v-if="textControlsModel" class="space-y-4">
@@ -492,7 +494,7 @@ const activeImageType = ref<'base' | 'overlay'>('base');
         <template #content>
           <section class="p-4 grid max-h-96 overflow-auto max-w-sm">
             <header class="text-center">
-              <h2>Background</h2>
+              <h2>{{ t('background') }}</h2>
               <p>Update the main background</p>
             </header>
 
@@ -576,7 +578,7 @@ const activeImageType = ref<'base' | 'overlay'>('base');
         <template #content>
           <section class="p-4 grid max-h-96 overflow-auto max-w-sm">
             <header class="text-center">
-              <h2>Image Styles</h2>
+              <h2>{{ t('image_styles') }}</h2>
               <p>Base and overlay image controls</p>
             </header>
 
@@ -596,7 +598,7 @@ const activeImageType = ref<'base' | 'overlay'>('base');
 
             <!-- Base Image Controls -->
             <div v-if="activeImageType === 'base'" class="space-y-4">
-              <h3 class="text-sm font-medium">Base Image Styles</h3>
+              <h3 class="text-sm font-medium">{{ t('base_image_styles') }}</h3>
 
               <!-- Opacity -->
               <div class="space-y-2">
@@ -664,7 +666,7 @@ const activeImageType = ref<'base' | 'overlay'>('base');
 
             <!-- Overlay Image Controls -->
             <div v-if="activeImageType === 'overlay'" class="space-y-4">
-              <h3 class="text-sm font-medium">Overlay Image Styles</h3>
+              <h3 class="text-sm font-medium">{{ t('overlay_image_styles') }}</h3>
 
               <!-- Opacity -->
               <div class="space-y-2">

@@ -133,33 +133,27 @@ const columns: TableColumn<AdminConnection>[] = [
         <p class="text-muted-foreground">Monitor platform connections and their users</p>
       </div>
       <UButtonGroup size="sm">
-        <UButton
-          :variant="viewMode === 'cards' ? 'solid' : 'outline'"
-          icon="i-lucide-layout-grid"
-          @click="() => { viewMode = 'cards' }"
-        >
+        <UButton :variant="viewMode === 'cards' ? 'solid' : 'outline'" icon="i-lucide-layout-grid"
+          @click="() => { viewMode = 'cards' }">
           Cards
         </UButton>
-        <UButton
-          :variant="viewMode === 'table' ? 'solid' : 'outline'"
-          icon="i-lucide-table"
-          @click="() => { viewMode = 'table' }"
-        >
+        <UButton :variant="viewMode === 'table' ? 'solid' : 'outline'" icon="i-lucide-table"
+          @click="() => { viewMode = 'table' }">
           Table
         </UButton>
       </UButtonGroup>
     </div>
 
-    <div v-if="loading" class="bg-elevated rounded-2xl flex justify-center py-12">
+    <div v-if="loading" class="rounded flex justify-center py-12">
       <UIcon name="i-heroicons-arrow-path" class="w-6 h-6 animate-spin text-muted-foreground" />
     </div>
 
-    <div v-else-if="connections.length === 0" class="bg-elevated rounded-2xl text-center py-12 text-muted-foreground">
+    <div v-else-if="connections.length === 0" class="rounded text-center py-12 text-muted-foreground">
       No connections found
     </div>
 
     <div v-else-if="viewMode === 'cards'" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      <div v-for="conn in connections" :key="conn.id" class="bg-elevated rounded-2xl p-4 hover:shadow-lg transition-shadow">
+      <div v-for="conn in connections" :key="conn.id" class="rounded p-4 hover:shadow-lg transition-shadow">
         <div class="flex items-center gap-4">
           <div class="p-3 rounded-lg bg-primary/10">
             <UIcon :name="providerIcon(conn.providerId)" class="w-6 h-6 text-primary" />
@@ -169,7 +163,7 @@ const columns: TableColumn<AdminConnection>[] = [
             <p class="text-xs text-muted-foreground truncate">Account: {{ conn.accountId }}</p>
           </div>
         </div>
-        <div class="mt-3 pt-3 border-t border-border/50 flex items-center gap-3">
+        <div class="mt-3 pt-3  flex items-center gap-3">
           <UAvatar :src="conn.userImage || undefined" :alt="conn.userName || conn.userEmail || 'User'" size="sm" />
           <div class="min-w-0">
             <p class="text-sm font-medium truncate">{{ conn.userName || 'Unnamed' }}</p>
@@ -179,8 +173,9 @@ const columns: TableColumn<AdminConnection>[] = [
       </div>
     </div>
 
-    <div v-else class="bg-elevated rounded-2xl overflow-hidden">
-      <UTable :data="connections" :columns="columns" class="flex-1" />
+    <div v-else class="rounded overflow-hidden">
+      <UTable :data="connections" :columns="columns" class="flex-1"
+        :ui="{ 'tr': 'bg-transparent', 'td': 'border-0', 'th': 'border-0' }" />
     </div>
   </div>
 </template>

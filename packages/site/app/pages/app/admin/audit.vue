@@ -219,13 +219,12 @@ const columns: TableColumn<AuditEntry>[] = [
         <p class="text-muted-foreground">Review system activity and events</p>
       </div>
       <div class="flex items-center gap-2">
-        <UButton
-          v-if="(table?.tableApi?.getFilteredSelectedRowModel().rows.length || 0) > 0"
-          color="error" variant="outline" size="sm" icon="i-lucide-trash-2" @click="deleteSelected"
-        >
+        <UButton v-if="(table?.tableApi?.getFilteredSelectedRowModel().rows.length || 0) > 0" color="error"
+          variant="outline" size="sm" icon="i-lucide-trash-2" @click="deleteSelected">
           Delete Selected
         </UButton>
-        <UButton v-if="logs.length > 0" color="error" variant="ghost" size="sm" icon="i-lucide-trash-2" @click="deleteAll">
+        <UButton v-if="logs.length > 0" color="error" variant="ghost" size="sm" icon="i-lucide-trash-2"
+          @click="deleteAll">
           Delete All
         </UButton>
         <UButton color="neutral" variant="ghost" size="sm" icon="i-heroicons-arrow-path" @click="fetchLogs">
@@ -234,24 +233,19 @@ const columns: TableColumn<AuditEntry>[] = [
       </div>
     </div>
 
-    <div v-if="loading" class="bg-elevated rounded-2xl flex justify-center py-12">
+    <div v-if="loading" class="rounded flex justify-center py-12">
       <UIcon name="i-heroicons-arrow-path" class="w-6 h-6 animate-spin text-muted-foreground" />
     </div>
 
-    <div v-else-if="logs.length === 0" class="bg-elevated rounded-2xl text-center py-12 text-muted-foreground">
+    <div v-else-if="logs.length === 0" class="rounded text-center py-12 text-muted-foreground">
       No log entries found
     </div>
 
-    <div v-else class="bg-elevated rounded-2xl overflow-hidden">
-      <UTable
-        ref="table"
-        v-model:row-selection="rowSelection"
-        :data="logs"
-        :columns="columns"
-        class="flex-1"
-      />
+    <div v-else class="rounded overflow-hidden">
+      <UTable ref="table" v-model:row-selection="rowSelection" :data="logs" :columns="columns" class="flex-1"
+        :ui="{ 'tr': 'bg-transparent', 'td': 'border-0', 'th': 'border-0' }" />
 
-      <div class="px-5 py-4 border-t border-border/50 text-sm text-muted flex items-center justify-between">
+      <div class="px-5 py-4  text-sm text-muted flex items-center justify-between">
         <span>
           {{ table?.tableApi?.getFilteredSelectedRowModel().rows.length || 0 }} of
           {{ table?.tableApi?.getFilteredRowModel().rows.length || 0 }} row(s) selected.
@@ -265,7 +259,8 @@ const columns: TableColumn<AuditEntry>[] = [
           <template #header>
             <div class="flex items-center justify-between">
               <h3 class="text-lg font-semibold">Log Details</h3>
-              <UButton variant="ghost" color="neutral" icon="i-heroicons-x-mark" @click="() => { selectedLog = null }" />
+              <UButton variant="ghost" color="neutral" icon="i-heroicons-x-mark"
+                @click="() => { selectedLog = null }" />
             </div>
           </template>
           <dl class="space-y-3 text-sm">

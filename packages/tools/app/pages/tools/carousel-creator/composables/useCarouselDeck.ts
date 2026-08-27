@@ -5,10 +5,11 @@ import {
   renderSlideHtml,
   type BgImageLayer,
   type DeckFlow,
+  type ImageTransform,
   type SlideData,
   type SlidePalette,
 } from '../templates'
-import { CAROUSEL_DECK_TEMPLATES } from '../deckTemplates'
+import { CAROUSEL_DECK_TEMPLATES, type DeckTemplate } from '../deckTemplates'
 import { patternStyle } from '../patterns'
 
 export const MAX_CAROUSEL_SLIDES = 10
@@ -28,6 +29,7 @@ export interface DeckPalette {
   bg: string
   text: string
   accent: string
+  font?: string
 }
 
 export interface DeckFrame {
@@ -63,6 +65,11 @@ export const DEFAULT_PALETTE: DeckPalette = {
   accent: '#f97316',
 }
 
+export interface AiDeckTemplate extends DeckTemplate {
+  isAi?: boolean
+  createdAt?: string
+}
+
 function createId(): string {
   return `slide-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
 }
@@ -71,7 +78,7 @@ function blankSlide(templateKey = 'title-kicker'): CarouselSlide {
   return {
     id: createId(),
     templateKey,
-    data: { headline: 'Your headline here', body: '' },
+    data: { headline: 'Your headline here', body: '', borderRadius: 0 },
     pattern: 'dots',
     patternColor: '#ffffff',
     patternOpacity: 0.08,
@@ -90,6 +97,28 @@ const fx = ref<DeckFx>({ rotate: 0, zoom: 100 })
 const exporting = ref(false)
 const exportProgress = ref('')
 
+const CUSTOM_DECKS_KEY = 'carousel-ai-decks'
+const customDecks = ref<AiDeckTemplate[]>([])
+
+if (import.meta.client) {
+  try {
+    const raw = localStorage.getItem(CUSTOM_DECKS_KEY)
+    if (raw) customDecks.value = JSON.parse(raw) as AiDeckTemplate[]
+  } catch {}
+}
+
+function persistCustomDecks(): void {
+  if (!import.meta.client) return
+  try {
+    localStorage.setItem(CUSTOM_DECKS_KEY, JSON.stringify(customDecks.value.slice(0, 30)))
+  } catch {}
+}
+
+const allDeckTemplates = computed<DeckTemplate[]>(() => [
+  ...customDecks.value,
+  ...CAROUSEL_DECK_TEMPLATES,
+])
+
 if (import.meta.client) {
   const w = window as unknown as { __CAROUSEL_DECK_LOADS__?: number }
   w.__CAROUSEL_DECK_LOADS__ = (w.__CAROUSEL_DECK_LOADS__ ?? 0) + 1
@@ -106,6 +135,7 @@ export function useCarouselDeck() {
       text: palette.value.text,
       accent: palette.value.accent,
       patternColor: slide.patternColor,
+      font: palette.value.font,
     }
     const patternHtml = `<div style="position:absolute;inset:0;${Object.entries(patternStyle(slide.pattern, slide.patternColor, slide.patternOpacity)).map(([k, v]) => `${k.replace(/([A-Z])/g, '-$1').toLowerCase()}:${v}`).join(';')}"></div>`
     return renderSlideHtml(slide.templateKey, slide.data, fullPalette, index, total, patternHtml, slide.bgImage ?? undefined, flow.value, handle.value)
@@ -138,13 +168,13 @@ export function useCarouselDeck() {
   }
 
   function applyDeckTemplate(deckKey: string): void {
-    const deck = CAROUSEL_DECK_TEMPLATES.find(d => d.key === deckKey)
+    const deck = (allDeckTemplates.value.find(d => d.key === deckKey) ?? CAROUSEL_DECK_TEMPLATES.find(d => d.key === deckKey)) as DeckTemplate | undefined
     if (!deck) return
     const mapped: CarouselSlide[] = deck.slides.map(spec => ({
       id: createId(),
       templateKey: spec.templateKey,
-      data: { ...spec.data },
-      pattern: 'dots',
+      data: { ...spec.data, images: spec.data.images ? [...spec.data.images] : undefined },
+      pattern: deck.pattern ?? 'dots',
       patternColor: deck.palette.text,
       patternOpacity: 0.08,
       bgImage: null,
@@ -154,6 +184,32 @@ export function useCarouselDeck() {
     palette.value = { ...deck.palette }
     for (const slide of slides.value) slide.patternColor = deck.palette.text
     currentIndex.value = 0
+  }
+
+  function addCustomDeckTemplate(deck: DeckTemplate): void {
+    const normalized: AiDeckTemplate = {
+      ...deck,
+      key: deck.key.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-'),
+      isAi: true,
+      createdAt: new Date().toISOString(),
+    }
+    // ensure unique key
+    let candidate = normalized.key
+    let suffix = 1
+    const existingKeys = new Set([...CAROUSEL_DECK_TEMPLATES.map(d => d.key), ...customDecks.value.map(d => d.key)])
+    while (existingKeys.has(candidate)) {
+      candidate = `${normalized.key}-${suffix++}`
+    }
+    normalized.key = candidate
+    customDecks.value.unshift(normalized)
+    // keep max 20 ai decks
+    if (customDecks.value.length > 20) customDecks.value = customDecks.value.slice(0, 20)
+    persistCustomDecks()
+  }
+
+  function removeCustomDeck(key: string): void {
+    customDecks.value = customDecks.value.filter(d => d.key !== key)
+    persistCustomDecks()
   }
 
   function duplicateSlide(index: number): void {
@@ -196,6 +252,48 @@ export function useCarouselDeck() {
     currentSlide.value.data = { ...currentSlide.value.data, ...patch }
   }
 
+  function setBgImage(url: string | null): void {
+    if (!url) {
+      currentSlide.value.bgImage = null
+      return
+    }
+    const existing = currentSlide.value.bgImage
+    currentSlide.value.bgImage = {
+      url,
+      dim: existing?.dim ?? 0.25,
+      shadow: existing?.shadow ?? { x: 0, y: 18, blur: 45, opacity: 0.45 },
+      transform: existing?.transform ?? { x: 0, y: 0, scale: 1 },
+    }
+  }
+
+  function updateBgTransform(patch: Partial<ImageTransform>): void {
+    if (!currentSlide.value.bgImage) return
+    const cur = currentSlide.value.bgImage.transform ?? { x: 0, y: 0, scale: 1 }
+    currentSlide.value.bgImage = {
+      ...currentSlide.value.bgImage,
+      transform: { ...cur, ...patch },
+    }
+  }
+
+  function setGalleryImage(index: number, url: string | null): void {
+    const imgs = [...(currentSlide.value.data.images ?? [])]
+    while (imgs.length <= index) imgs.push('')
+    if (url === null) {
+      imgs.splice(index, 1)
+    } else {
+      imgs[index] = url
+    }
+    // filter empty trailing? Keep but remove empty strings
+    const filtered = imgs.filter(Boolean)
+    // Preserve order with at most 4
+    updateSlideData({ images: filtered.slice(0, 4) })
+  }
+
+  function resetBgTransform(): void {
+    if (!currentSlide.value.bgImage) return
+    currentSlide.value.bgImage = { ...currentSlide.value.bgImage, transform: { x: 0, y: 0, scale: 1 } }
+  }
+
   function applyTemplateToCurrent(templateKey: string): void {
     currentSlide.value.templateKey = templateKey
   }
@@ -222,6 +320,7 @@ export function useCarouselDeck() {
         stat: aiSlide.stat,
         statLabel: aiSlide.statLabel,
         cta: aiSlide.cta,
+        images: (aiSlide as any).images,
       },
       pattern: 'dots',
       patternColor: result.palette.text,
@@ -232,6 +331,11 @@ export function useCarouselDeck() {
     if (!mapped.length) return
     slides.value = mapped
     currentIndex.value = 0
+  }
+
+  function applyAiDeckTemplate(deck: DeckTemplate): void {
+    addCustomDeckTemplate(deck)
+    applyDeckTemplate(deck.key)
   }
 
   async function renderSlideToPng(stage: HTMLElement, index: number): Promise<string> {
@@ -327,10 +431,19 @@ export function useCarouselDeck() {
     nextSlide,
     prevSlide,
     updateSlideData,
+    setBgImage,
+    updateBgTransform,
+    resetBgTransform,
+    setGalleryImage,
     applyTemplateToCurrent,
     applyPalette,
     applyAiDesign,
     applyDeckTemplate,
+    addCustomDeckTemplate,
+    removeCustomDeck,
+    applyAiDeckTemplate,
+    customDecks,
+    allDeckTemplates,
     downloadSlide,
     downloadAllSlides,
     saveAllSlides,

@@ -115,9 +115,7 @@ const HandleRefresh = async () => {
   <div>
     <TwitterPostEditor @refresh="HandleRefresh" />
     <div class="my-10 max-w-2xl mx-auto">
-      <div
-v-if="posts.length"
-        class="bg-elevated rounded-2xl border border-border overflow-hidden divide-y divide-border">
+      <div v-if="posts.length" class="rounded  overflow-hidden divide-y divide-primary/10 shadow divider-shadow">
         <PostFeedCard v-for="post in posts" :key="post.id" :post="post" />
       </div>
 

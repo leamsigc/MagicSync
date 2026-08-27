@@ -1,3 +1,4 @@
+<i18n src="./index.json"></i18n>
 <script setup lang="ts">
 /**
  *
@@ -16,8 +17,13 @@ import BoardDisplay from './components/BoardDisplay.vue'
 import PageEditorModal from './components/PageEditorModal.vue'
 import TemplatesModal from './components/TemplatesModal.vue'
 import BoardSettingsModal from './components/BoardSettingsModal.vue'
+import TvPreviewModal from './components/TvPreviewModal.vue'
+import LayerEditorModal from './components/LayerEditorModal.vue'
 import { exportPagesToPdf, type PdfResolution } from './composables/useMenuBoardExport'
-import type { MenuPage } from './types'
+import { getDisplaySize, type MenuPage, type TvDisplaySize } from './types'
+import { fitHtmlToStage } from './utils/resize'
+
+const { t } = useI18n()
 
 const {
   boards,
@@ -38,11 +44,14 @@ const {
   setShared,
   addPageFromTemplate,
   addImagePage,
+  addHtmlPage,
   duplicatePage,
   updatePage,
   removePage,
   movePage,
   activeSortedPages,
+  previewPageId,
+  previewPage,
   enterDisplayMode,
   exitDisplayMode,
   lockAndStartDisplay,
@@ -53,29 +62,63 @@ const {
 // ---------- modals ----------
 const showTemplates = ref(false)
 const showSettings = ref(false)
+const showTvPreview = ref(false)
+const showLayerEditor = ref(false)
 const editingPage = ref<MenuPage | null>(null)
 
 // ---------- share ----------
 const isSharing = ref(false)
+const publicUrl = ref('')
+const isCopyingUrl = ref(false)
+
+async function copyPublicUrl(): Promise<void> {
+  if (!currentBoard.value || storageMode.value !== 'database') return
+  isCopyingUrl.value = true
+  try {
+    // Re-posting the share state is idempotent and returns the existing slug.
+    const url = await setShared(true)
+    publicUrl.value = url ?? ''
+    if (url) {
+      await navigator.clipboard?.writeText(url).catch(() => { })
+      useToast().add({
+        title: t('link_copied'),
+        description: t('link_copied_desc'),
+        color: 'success',
+        icon: 'i-lucide-clipboard-check',
+      })
+    }
+  } catch {
+    useToast().add({
+      title: t('copy_failed'),
+      description: t('copy_failed_desc'),
+      color: 'error',
+      icon: 'i-lucide-alert-circle',
+    })
+  } finally {
+    isCopyingUrl.value = false
+  }
+}
+
 async function handleShareToggle(): Promise<void> {
   if (!currentBoard.value || storageMode.value !== 'database') return
   isSharing.value = true
   try {
     const nextPublic = !currentBoard.value.isPublic
     const url = await setShared(nextPublic)
+    publicUrl.value = url ?? ''
     useToast().add({
-      title: nextPublic ? 'Shared publicly' : 'Sharing disabled',
-      description: nextPublic ? 'Anyone with the link can view this board.' : 'The public link is no longer available.',
+      title: nextPublic ? t('shared_title') : t('unshared_title'),
+      description: nextPublic ? t('shared_desc') : t('unshared_desc'),
       color: nextPublic ? 'success' : 'info',
       icon: nextPublic ? 'i-lucide-link' : 'i-lucide-link-2-off',
     })
     if (url) {
-      await navigator.clipboard?.writeText(url).catch(() => {})
+      await navigator.clipboard?.writeText(url).catch(() => { })
     }
   } catch {
     useToast().add({
-      title: 'Share failed',
-      description: 'Could not update sharing. Please try again.',
+      title: t('share_failed'),
+      description: t('share_failed_desc'),
       color: 'error',
       icon: 'i-lucide-alert-circle',
     })
@@ -105,8 +148,8 @@ async function handleExportPdf(): Promise<void> {
       showPdfModal.value = false
     } else {
       useToast().add({
-        title: 'PDF export failed',
-        description: 'Some pages could not be captured. Try disabling external images or retry.',
+        title: t('pdf_failed_title'),
+        description: t('pdf_failed_desc'),
         color: 'error',
         icon: 'i-lucide-file-down',
       })
@@ -142,6 +185,61 @@ function handleSavePage(page: MenuPage): void {
   updatePage(page.id, page)
 }
 
+function scrollToEditor(): void {
+  document.getElementById('menu-board-header')?.scrollIntoView({ behavior: 'smooth' })
+}
+
+function handleLayerPageSave(name: string, html: string): void {
+  addHtmlPage(name || 'Layer Page', html)
+  useToast().add({
+    title: t('page_created'),
+    description: t('page_created_desc'),
+    color: 'success',
+    icon: 'i-lucide-check-circle',
+  })
+}
+
+const displayWidth = computed(() => getDisplaySize(currentBoard.value?.settings.displaySize ?? 'fhd').width)
+const displayHeight = computed(() => getDisplaySize(currentBoard.value?.settings.displaySize ?? 'fhd').height)
+
+const displayPages = computed<MenuPage[]>(() => {
+  if (previewPageId.value) {
+    return orderedPages.value.filter(p => p.id === previewPageId.value && p.isActive)
+      .map(p => ({ ...p, isActive: true }))
+  }
+  return activeSortedPages()
+})
+
+async function handleFitPages(targetSize: TvDisplaySize): Promise<void> {
+  if (!currentBoard.value) return
+  const target = getDisplaySize(targetSize)
+  let changed = 0
+  const pages = currentBoard.value.pages.map((page) => {
+    if (page.type !== 'html') return page
+    const result = fitHtmlToStage(page.content, target.width, target.height)
+    if (!result.fitted) return page
+    changed += 1
+    return { ...page, content: result.html }
+  })
+  if (changed === 0) {
+    useToast().add({
+      title: t('nothing_to_resize'),
+      description: t('nothing_to_resize_desc'),
+      color: 'info',
+      icon: 'i-lucide-info',
+    })
+    return
+  }
+  currentBoard.value = { ...currentBoard.value, pages }
+  await saveBoard()
+  useToast().add({
+    title: t('resized_title', { n: changed, s: changed === 1 ? '' : 's' }),
+    description: t('resized_desc', { size: target.label }),
+    color: 'success',
+    icon: 'i-lucide-scaling',
+  })
+}
+
 onMounted(async () => {
   await loadBoards()
   if (!currentBoard.value && boards.value.length > 0) {
@@ -152,8 +250,26 @@ onMounted(async () => {
 })
 
 useHead({
-  title: 'Dynamic Menu Board — Free Digital Signage Tool',
-  meta: [{ name: 'description', content: 'Create rotating digital menu boards for TVs, preview fullscreen and share a public link.' }],
+  title: () => t('app_title') + ' — Free Digital Menu Board Software',
+  meta: [
+    {
+      name: 'description',
+      content: () =>
+        t('subtitle') + ' Free for restaurants, cafés and small businesses — no extra hardware or subscription needed.',
+    },
+    {
+      name: 'keywords',
+      content:
+        'digital menu board, virtual menu, free menu board software, restaurant TV menu, café menu display, digital signage for small business, QR code menu alternative, bar menu board, bakery display screen',
+    },
+  ],
+})
+
+useSeoMeta({
+  title: () => `${t('app_title')} — ${t('seo_title')}`,
+  ogTitle: () => `${t('app_title')} — ${t('seo_title')}`,
+  description: () => t('seo_p1'),
+  ogDescription: () => t('seo_p1'),
 })
 
 defineOgImage('BlogOgImage', {
@@ -164,14 +280,14 @@ defineOgImage('BlogOgImage', {
 
 <template>
   <div class="min-h-screen font-sans bg-background text-foreground">
-    <BaseHeader />
+    <BaseHeader v-if="mode != 'display'" />
 
     <!-- Display mode takes over the whole viewport -->
     <template v-if="mode === 'display'">
       <ClientOnly>
-        <BoardDisplay
-:pages="activeSortedPages()" :transition-time="currentBoard?.settings.transitionTime ?? 10"
+        <BoardDisplay :pages="displayPages" :transition-time="currentBoard?.settings.transitionTime ?? 10"
           :is-locked="currentBoard?.settings.isLocked ?? false" interactive
+          :display-width="previewPageId ? 0 : displayWidth" :display-height="previewPageId ? 0 : displayHeight"
           :validate-pin="unlockDisplay" @exit="exitDisplayMode" />
       </ClientOnly>
     </template>
@@ -179,34 +295,28 @@ defineOgImage('BlogOgImage', {
     <div v-else class="max-w-6xl mx-auto p-6">
       <header class="mb-8 mt-8 flex flex-col md:flex-row justify-between md:items-center gap-4">
         <div data-testid="menu-board-header">
-          <h1 class="text-3xl font-semibold tracking-tight mb-2">Dynamic Menu Board</h1>
+          <h1 class="text-3xl font-semibold tracking-tight mb-2">{{ t('app_title') }}</h1>
           <p class="text-muted-foreground">
-            Build rotating signage for your TVs and share it with a public link.
+            {{ t('subtitle') }}
           </p>
-          <UBadge
-:color="storageMode === 'database' ? 'success' : 'neutral'" variant="subtle" class="mt-2"
+          <UBadge :color="storageMode === 'database' ? 'success' : 'neutral'" variant="subtle" class="mt-2"
             data-testid="storage-mode-badge">
-            {{ storageMode === 'database' ? 'Saving to your account' : 'Saved on this device (guest mode)' }}
+            {{ storageMode === 'database' ? t('saving_account') : t('saved_device') }}
           </UBadge>
         </div>
 
         <div class="flex flex-wrap gap-2" data-testid="menu-board-toolbar">
-          <UButton
-variant="outline" color="neutral" icon="i-lucide-file-down" data-testid="open-pdf-export"
+          <UButton variant="outline" color="neutral" icon="i-lucide-file-down" data-testid="open-pdf-export"
             @click="openPdfModal">PDF</UButton>
-          <UButton
-variant="outline" color="neutral" icon="i-lucide-video" data-testid="open-video-record"
+          <UButton variant="outline" color="neutral" icon="i-lucide-video" data-testid="open-video-record"
             @click="() => { showVideoModal = true }">Video</UButton>
           <UPopover v-if="loggedIn" data-testid="board-selector">
-            <UButton
-variant="outline" color="neutral" icon="i-lucide-layout-grid"
-              data-testid="board-selector-button">
-              Boards ({{ boards.length }})
+            <UButton variant="outline" color="neutral" icon="i-lucide-layout-grid" data-testid="board-selector-button">
+              {{ t('boards') }} ({{ boards.length }})
             </UButton>
             <template #content>
               <div class="p-2 w-64 max-h-80 overflow-y-auto">
-                <button
-v-for="board in boards" :key="board.id"
+                <button v-for="board in boards" :key="board.id"
                   class="w-full text-left px-3 py-2 rounded-lg hover:bg-accent flex items-center gap-2"
                   :class="{ 'bg-accent': board.id === currentBoard?.id }"
                   :data-testid="`select-board-${board.name.toLowerCase().replace(/\s+/g, '-')}`"
@@ -214,50 +324,56 @@ v-for="board in boards" :key="board.id"
                   <UIcon name="i-lucide-monitor-play" class="size-4 shrink-0" />
                   <span class="truncate">{{ board.name }}</span>
                   <UBadge v-if="board.isPublic" color="info" variant="subtle" size="sm" class="ml-auto">
-                    Public
+                    {{ t('public_badge') }}
                   </UBadge>
                 </button>
                 <USeparator class="my-2" />
                 <UButton variant="ghost" block icon="i-lucide-plus" data-testid="new-board" @click="newBoard()">
-                  New Board
+                  {{ t('new_board') }}
                 </UButton>
               </div>
             </template>
           </UPopover>
-          <UButton
-variant="outline" color="neutral" icon="i-lucide-settings" data-testid="open-settings"
-            @click="() => { showSettings = true }">Settings</UButton>
-          <UButton
-color="warning" variant="subtle" icon="i-lucide-lock" data-testid="lock-display"
-            @click="lockAndStartDisplay()">Lock Display</UButton>
+          <UButton variant="outline" color="neutral" icon="i-lucide-tv" data-testid="open-tv-preview"
+            @click="() => { showTvPreview = true }">{{ t('tv_preview') }}</UButton>
+          <UButton variant="outline" color="neutral" icon="i-lucide-settings" data-testid="open-settings"
+            @click="() => { showSettings = true }">{{ t('settings') }}</UButton>
+          <UButton color="warning" variant="subtle" icon="i-lucide-lock" data-testid="lock-display"
+            @click="lockAndStartDisplay">{{ t('lock_display') }}</UButton>
           <UButton icon="i-lucide-monitor-play" data-testid="start-display" @click="enterDisplayMode(true)">
-            Start Display
+            {{ t('start_display') }}
           </UButton>
         </div>
       </header>
 
       <!-- Current board panel — borderless elevated card per system design -->
-      <div v-if="currentBoard" class="bg-elevated rounded-2xl overflow-hidden" data-testid="current-board-panel">
+      <div v-if="currentBoard" class="rounded overflow-hidden" data-testid="current-board-panel">
         <div class="px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-3 border-b border-border/50">
           <UInput :model-value="currentBoard.name" class="flex-1" data-testid="board-name-input"
             @update:model-value="(e) => renameBoard(String(e))" />
           <div class="flex items-center gap-2">
-            <UBadge v-if="isDirty" color="warning" variant="subtle" data-testid="dirty-badge">Unsaved</UBadge>
-            <UTooltip text="Save board">
+            <UBadge v-if="isDirty" color="warning" variant="subtle" data-testid="dirty-badge">{{ t('unsaved') }}
+            </UBadge>
+            <UTooltip :text="t('save_board_tooltip')">
               <UButton :loading="isSaving" icon="i-lucide-save" data-testid="save-board" @click="saveBoard()">
-                Save
+                {{ t('save') }}
               </UButton>
             </UTooltip>
-            <UTooltip v-if="loggedIn"
-              :text="currentBoard.isPublic ? 'Disable public sharing' : 'Share a public read-only link'">
+            <UTooltip v-if="loggedIn && currentBoard.isPublic" :text="t('copy_link_tooltip')">
+              <UButton :loading="isCopyingUrl" color="success" variant="subtle" icon="i-lucide-copy"
+                data-testid="copy-public-url" @click="copyPublicUrl">
+                {{ t('copy_link') }}
+              </UButton>
+            </UTooltip>
+            <UTooltip v-if="loggedIn" :text="currentBoard.isPublic ? t('share_tooltip_on') : t('share_tooltip_off')">
               <UButton :loading="isSharing" :color="currentBoard.isPublic ? 'error' : 'primary'"
                 :variant="currentBoard.isPublic ? 'subtle' : 'solid'"
-                :icon="currentBoard.isPublic ? 'i-lucide-link-2-off' : 'i-lucide-share-2'"
-                data-testid="share-toggle" @click="handleShareToggle">
-                {{ currentBoard.isPublic ? 'Unshare' : 'Share' }}
+                :icon="currentBoard.isPublic ? 'i-lucide-link-2-off' : 'i-lucide-share-2'" data-testid="share-toggle"
+                @click="handleShareToggle">
+                {{ currentBoard.isPublic ? t('unshare') : t('share') }}
               </UButton>
             </UTooltip>
-            <UTooltip v-else text="Log in to save to the cloud and get a public share link">
+            <UTooltip v-else :text="t('share_disabled_guest_tooltip')">
               <UButton color="neutral" variant="outline" icon="i-lucide-lock" disabled
                 data-testid="share-disabled-guest">
                 Share
@@ -270,19 +386,24 @@ color="warning" variant="subtle" icon="i-lucide-lock" data-testid="lock-display"
 
         <div class="p-5">
           <div class="flex justify-between items-center mb-3">
-            <h2 class="font-semibold" data-testid="pages-count">Pages ({{ orderedPages.length }})</h2>
+            <h2 class="font-semibold" data-testid="pages-count">{{ t('pages') }} ({{ orderedPages.length }})</h2>
             <div class="flex gap-2">
               <UButton size="sm" variant="outline" color="neutral" icon="i-lucide-code" data-testid="add-html-page"
-                @click="() => { showTemplates = true }">Add HTML</UButton>
+                @click="() => { showTemplates = true }">{{ t('add_html') }}</UButton>
               <UButton size="sm" variant="outline" color="neutral" icon="i-lucide-image" data-testid="add-image-page"
                 @click="() => { addImagePage(); editingPage = orderedPages[orderedPages.length - 1] ?? null }">
-                Add Image
+                {{ t('add_image') }}
+              </UButton>
+              <UButton size="sm" variant="outline" color="warning" icon="i-lucide-layers" data-testid="add-layer-page"
+                @click="() => { showLayerEditor = true }">
+                {{ t('layer_editor') }}
+                <UBadge color="warning" variant="subtle" class="ml-1" size="sm">Pro</UBadge>
               </UButton>
             </div>
           </div>
 
           <div v-if="orderedPages.length === 0" class="py-10 text-center text-muted-foreground" data-testid="no-pages">
-            No pages yet. Click "Add HTML" to pick a restaurant menu template.
+            {{ t('no_pages_hint') }}
           </div>
 
           <ul v-else class="flex flex-col gap-1" data-testid="page-list">
@@ -292,13 +413,14 @@ color="warning" variant="subtle" icon="i-lucide-lock" data-testid="lock-display"
               :data-testid="`page-row-${page.name.toLowerCase().replace(/\s+/g, '-')}`">
               <div class="flex items-center gap-4 flex-1 min-w-0">
                 <div class="flex flex-col text-muted-foreground">
-                  <UButton size="xs" variant="ghost" color="neutral" icon="i-lucide-chevron-up"
-                    :disabled="index === 0" :data-testid="`move-up-${page.id}`" @click="movePage(page.id, -1)" />
+                  <UButton size="xs" variant="ghost" color="neutral" icon="i-lucide-chevron-up" :disabled="index === 0"
+                    :data-testid="`move-up-${page.id}`" @click="movePage(page.id, -1)" />
                   <UButton size="xs" variant="ghost" color="neutral" icon="i-lucide-chevron-down"
                     :disabled="index === orderedPages.length - 1" :data-testid="`move-down-${page.id}`"
                     @click="movePage(page.id, 1)" />
                 </div>
-                <div class="flex items-center justify-center size-10 rounded-lg bg-muted text-muted-foreground shrink-0">
+                <div
+                  class="flex items-center justify-center size-10 rounded-lg bg-muted text-muted-foreground shrink-0">
                   <UIcon :name="page.type === 'html' ? 'i-lucide-code' : 'i-lucide-image'" class="size-5" />
                 </div>
                 <div class="min-w-0">
@@ -306,20 +428,24 @@ color="warning" variant="subtle" icon="i-lucide-lock" data-testid="lock-display"
                   <p class="text-xs text-muted-foreground flex items-center gap-2">
                     <span class="inline-block size-2 rounded-full"
                       :class="page.isActive ? 'bg-success' : 'bg-border'" />
-                    {{ page.isActive ? 'Active' : 'Inactive' }} • {{ page.type.toUpperCase() }}
+                    {{ page.isActive ? t('active') : t('inactive') }} • {{ page.type.toUpperCase() }}
                   </p>
                 </div>
               </div>
               <div class="flex items-center gap-1 shrink-0">
-                <UTooltip text="Duplicate">
+                <UTooltip :text="t('preview_page_tooltip')">
+                  <UButton variant="ghost" color="neutral" size="sm" icon="i-lucide-eye"
+                    :data-testid="`preview-${page.id}`" @click="previewPage(page)" />
+                </UTooltip>
+                <UTooltip :text="t('duplicate')">
                   <UButton variant="ghost" color="neutral" size="sm" icon="i-lucide-copy"
                     :data-testid="`duplicate-${page.id}`" @click="duplicatePage(page.id)" />
                 </UTooltip>
-                <UTooltip text="Edit">
+                <UTooltip :text="t('edit')">
                   <UButton variant="ghost" color="neutral" size="sm" icon="i-lucide-pencil"
                     :data-testid="`edit-${page.id}`" @click="() => { editingPage = page }" />
                 </UTooltip>
-                <UTooltip text="Delete">
+                <UTooltip :text="t('delete')">
                   <UButton variant="ghost" color="error" size="sm" icon="i-lucide-trash-2"
                     :data-testid="`remove-${page.id}`" @click="removePage(page.id)" />
                 </UTooltip>
@@ -330,20 +456,32 @@ color="warning" variant="subtle" icon="i-lucide-lock" data-testid="lock-display"
       </div>
 
       <div v-else-if="isLoading" class="text-center py-24 text-muted-foreground" data-testid="loading-boards">
-        Loading boards...
+        {{ t('loading_boards') }}
       </div>
 
       <!-- Page editor -->
-      <PageEditorModal
-:open="!!editingPage" :page="editingPage" @save="handleSavePage"
+      <PageEditorModal :open="!!editingPage" :page="editingPage" @save="handleSavePage"
         @update:open="(v) => { if (!v) editingPage = null }" />
+
+      <!-- Advanced TV frame preview -->
+      <TvPreviewModal v-model:open="showTvPreview" :pages="activeSortedPages()"
+        :transition-time="currentBoard?.settings.transitionTime ?? 10"
+        :display-size="currentBoard?.settings.displaySize ?? 'fhd'" :tv-inches="currentBoard?.settings.tvInches ?? 55"
+        @update:display-size="(size: TvDisplaySize) => updateSettings({ displaySize: size })"
+        @update:tv-inches="(inches: number) => updateSettings({ tvInches: inches })" @fit-pages="handleFitPages" />
+
+      <!-- Premium layer editor -->
+      <LayerEditorModal :open="showLayerEditor" title="Layer Page"
+        :display-size="currentBoard?.settings.displaySize ?? 'fhd'" @save="handleLayerPageSave"
+        @update:display-size="(size: TvDisplaySize) => updateSettings({ displaySize: size })"
+        @update:open="(v) => { showLayerEditor = v }" />
 
       <!-- Template picker -->
       <TemplatesModal v-model:open="showTemplates" @select="addPageFromTemplate" />
 
       <!-- Settings -->
-      <BoardSettingsModal
-v-model:open="showSettings" :settings="currentBoard?.settings ?? { transitionTime: 10, isLocked: false, unlockPin: '0000' }"
+      <BoardSettingsModal v-model:open="showSettings"
+        :settings="currentBoard?.settings ?? { transitionTime: 10, isLocked: false, unlockPin: '0000' }"
         @update:settings="updateSettings" />
 
       <!-- PDF export -->
@@ -355,18 +493,15 @@ v-model:open="showSettings" :settings="currentBoard?.settings ?? { transitionTim
               <UButton variant="ghost" color="neutral" icon="i-lucide-x" @click="() => { showPdfModal = false }" />
             </div>
             <UFormField label="Target TV Resolution">
-              <USelect
-v-model="pdfResolution" :items="[
+              <USelect v-model="pdfResolution" :items="[
                 { label: '1080p Full HD (1920x1080)', value: '1080p' },
                 { label: '4K UHD (3840x2160)', value: '4k' },
               ]" class="w-full" data-testid="pdf-resolution" />
             </UFormField>
-            <fieldset class="max-h-60 overflow-y-auto border border-border rounded-lg divide-y divide-border">
-              <label
-v-for="page in orderedPages" :key="page.id"
+            <fieldset class="max-h-60 overflow-y-auto  rounded-lg divide-y divide-border">
+              <label v-for="page in orderedPages" :key="page.id"
                 class="flex items-center gap-3 p-3 hover:bg-accent cursor-pointer">
-                <input
-v-model="selectedPdfIds" type="checkbox" :value="page.id" class="size-4"
+                <input v-model="selectedPdfIds" type="checkbox" :value="page.id" class="size-4"
                   :data-testid="`pdf-check-${page.id}`">
                 <span class="font-medium">{{ page.name }}</span>
                 <span class="ml-auto text-xs uppercase text-muted-foreground">{{ page.type }}</span>
@@ -374,8 +509,7 @@ v-model="selectedPdfIds" type="checkbox" :value="page.id" class="size-4"
             </fieldset>
             <div class="flex justify-end gap-3">
               <UButton variant="ghost" color="neutral" @click="() => { showPdfModal = false }">Cancel</UButton>
-              <UButton
-:loading="isExportingPdf" :disabled="selectedPdfIds.length === 0" icon="i-lucide-file-down"
+              <UButton :loading="isExportingPdf" :disabled="selectedPdfIds.length === 0" icon="i-lucide-file-down"
                 data-testid="export-pdf-submit" @click="handleExportPdf">
                 Download PDF
               </UButton>
@@ -397,8 +531,7 @@ v-model="selectedPdfIds" type="checkbox" :value="page.id" class="size-4"
               Your browser will ask which screen/tab to record.
             </p>
             <UFormField label="Duration (seconds)">
-              <UInput
-v-model.number="videoDuration" type="number" :min="5" :max="3600" class="w-full"
+              <UInput v-model.number="videoDuration" type="number" :min="5" :max="3600" class="w-full"
                 data-testid="video-duration" />
             </UFormField>
             <div class="flex justify-end gap-3">
@@ -411,16 +544,101 @@ v-model.number="videoDuration" type="number" :min="5" :max="3600" class="w-full"
         </template>
       </UModal>
 
+      <!-- How to use -->
+      <section class="mt-12 border-t border-border pt-10" data-testid="how-to-use" aria-labelledby="how-to-title">
+        <h2 id="how-to-title" class="text-2xl font-semibold tracking-tight mb-6">{{ t('howto_title') }}</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="rounded-xl border border-border p-5">
+            <h3 class="font-semibold flex items-center gap-2 mb-2">
+              <UIcon name="i-lucide-plus-circle" class="size-5 text-primary" /> {{ t('step_create') }}
+            </h3>
+            <ul class="text-sm text-muted-foreground space-y-1.5 list-disc list-inside">
+              <li>{{ t('create_1') }}</li>
+              <li>{{ t('create_2') }}</li>
+              <li>{{ t('create_3') }}</li>
+            </ul>
+          </div>
+          <div class="rounded-xl border border-border p-5">
+            <h3 class="font-semibold flex items-center gap-2 mb-2">
+              <UIcon name="i-lucide-share-2" class="size-5 text-primary" /> {{ t('step_share') }}
+            </h3>
+            <ul class="text-sm text-muted-foreground space-y-1.5 list-disc list-inside">
+              <li>{{ t('share_s1') }}</li>
+              <li>{{ t('share_s2') }}</li>
+              <li>{{ t('share_s3') }}</li>
+            </ul>
+          </div>
+          <div class="rounded-xl border border-border p-5">
+            <h3 class="font-semibold flex items-center gap-2 mb-2">
+              <UIcon name="i-lucide-tv" class="size-5 text-primary" /> {{ t('step_display') }}
+            </h3>
+            <ul class="text-sm text-muted-foreground space-y-1.5 list-disc list-inside">
+              <li>{{ t('display_1') }}</li>
+              <li>{{ t('display_2') }}</li>
+              <li>{{ t('display_3') }}</li>
+            </ul>
+          </div>
+          <div class="rounded-xl border border-border p-5">
+            <h3 class="font-semibold flex items-center gap-2 mb-2">
+              <UIcon name="i-lucide-sparkles" class="size-5 text-primary" /> {{ t('step_ai') }}
+            </h3>
+            <ul class="text-sm text-muted-foreground space-y-1.5 list-disc list-inside">
+              <li>{{ t('ai_1') }}</li>
+              <li>{{ t('ai_2') }}</li>
+              <li>{{ t('ai_3') }}</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- SEO: small business virtual menu -->
+        <section class="mt-10 rounded-2xl bg-elevated p-6 md:p-8" data-testid="small-business-seo"
+          aria-labelledby="virtual-menu-title">
+          <h2 id="virtual-menu-title" class="text-2xl font-semibold tracking-tight mb-3">{{ t('seo_title') }}</h2>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm text-muted-foreground leading-relaxed mt-4">
+            <div class="space-y-3">
+              <h3 class="font-semibold text-foreground">{{ t('seo_h1') }}</h3>
+              <p>{{ t('seo_p1') }}</p>
+              <h3 class="font-semibold text-foreground">{{ t('seo_h2') }}</h3>
+              <p>{{ t('seo_p2') }}</p>
+            </div>
+            <div class="space-y-3">
+              <h3 class="font-semibold text-foreground">{{ t('seo_h3') }}</h3>
+              <p>{{ t('seo_p3') }}</p>
+              <h3 class="font-semibold text-foreground">{{ t('seo_h4') }}</h3>
+              <p>{{ t('seo_p4') }}</p>
+            </div>
+            <div class="space-y-3">
+              <h3 class="font-semibold text-foreground">{{ t('seo_h5') }}</h3>
+              <ul class="space-y-1.5 list-disc list-inside">
+                <li>{{ t('seo_li1') }}</li>
+                <li>{{ t('seo_li2') }}</li>
+                <li>{{ t('seo_li3') }}</li>
+                <li>{{ t('seo_li4') }}</li>
+                <li>{{ t('seo_li5') }}</li>
+              </ul>
+              <UButton variant="soft" icon="i-lucide-monitor-play" class="mt-2" data-testid="seo-create-cta"
+                @click="scrollToEditor">
+                {{ t('seo_cta') }}
+              </UButton>
+            </div>
+          </div>
+        </section>
+      </section>
+
       <!-- Delete board confirm -->
       <UModal :open="!!deleteConfirmId" @update:open="v => !v && (deleteConfirmId = null)">
         <template #content>
           <div class="p-6 text-center space-y-4" data-testid="delete-board-confirm">
             <UIcon name="i-lucide-alert-circle" class="size-12 text-destructive mx-auto" />
             <h3 class="text-xl font-bold">Delete Board?</h3>
-            <p class="text-muted-foreground">This will permanently delete the board{{ loggedIn ? '' : ' from this device' }}.</p>
+            <p class="text-muted-foreground">This will permanently delete the board{{
+              loggedIn ? '' :
+                ' from this device' }}.</p>
             <div class="flex gap-3">
-              <UButton variant="outline" color="neutral" block @click="() => { deleteConfirmId = null }">Cancel</UButton>
-              <UButton color="error" block data-testid="confirm-delete-board" @click="confirmDeleteBoard">Delete</UButton>
+              <UButton variant="outline" color="neutral" block @click="() => { deleteConfirmId = null }">Cancel
+              </UButton>
+              <UButton color="error" block data-testid="confirm-delete-board" @click="confirmDeleteBoard">Delete
+              </UButton>
             </div>
           </div>
         </template>

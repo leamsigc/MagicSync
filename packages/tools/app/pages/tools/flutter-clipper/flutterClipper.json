@@ -28,5 +28,15 @@
         "copy": "Copier"
       }
     }
+  },
+  "es": {
+    "title": "Flutter Clipper",
+    "description": "Flutter Clipper",
+    "menu": {
+      "main": {
+        "new": "Nuevo",
+        "copy": "Copiar"
+      }
+    }
   }
 }

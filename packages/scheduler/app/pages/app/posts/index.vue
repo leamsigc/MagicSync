@@ -42,8 +42,8 @@ const currentView = ref<'Board' | 'Table' | 'Grid' | 'Feed'>('Grid');
 const startDate = ref(dayjs().startOf('month').format('YYYY-MM-DD'));
 const endDate = ref(dayjs().endOf('month').format('YYYY-MM-DD'));
 const handleFilterChange = async (filters: PostFilters & { page: number, limit: number }) => {
-  startDate.value = filters.startDate ||  dayjs().startOf('month').format('YYYY-MM-DD');
-  endDate.value = filters.endDate ||  dayjs().endOf('month').format('YYYY-MM-DD');
+  startDate.value = filters.startDate || dayjs().startOf('month').format('YYYY-MM-DD');
+  endDate.value = filters.endDate || dayjs().endOf('month').format('YYYY-MM-DD');
   await getPosts(
     activeBusinessId.value,
     { page: filters.page, limit: filters.limit },
@@ -63,10 +63,10 @@ const HandleRefresh = async () => {
     page: 1,
     limit: 100
   },
-  {
-    startDate: startDate.value,
-    endDate: endDate.value
-  }
+    {
+      startDate: startDate.value,
+      endDate: endDate.value
+    }
   );
 }
 
@@ -83,28 +83,22 @@ const HandleRefresh = async () => {
     </BasePageHeader>
     <div class=" p-2 flex justify-between items-center ">
       <section class="flex gap-1" data-tour="posts-step-0">
-        <PostFiltersBar
-@filter-change="handleFilterChange"
-      @refresh="HandleRefresh"/>
+        <PostFiltersBar @filter-change="handleFilterChange" @refresh="HandleRefresh" />
         <section data-tour="posts-step-1" class="flex gap-1">
-          <UButton
-icon="i-lucide-grid-2x2" :variant="currentView === 'Grid' ? 'solid' : 'ghost'" size="sm"
-            class="rounded-xl" @click="() => {currentView = 'Grid'}">
+          <UButton icon="i-lucide-grid-2x2" :variant="currentView === 'Grid' ? 'solid' : 'ghost'" size="sm"
+            class="rounded-xl" @click="() => { currentView = 'Grid' }">
             Grid
           </UButton>
-          <UButton
-icon="i-heroicons-bars-3-bottom-left" :variant="currentView === 'Feed' ? 'solid' : 'ghost'"
-            size="sm" class="rounded-xl" @click="() => {currentView = 'Feed'}">
+          <UButton icon="i-heroicons-bars-3-bottom-left" :variant="currentView === 'Feed' ? 'solid' : 'ghost'" size="sm"
+            class="rounded-xl" @click="() => { currentView = 'Feed' }">
             Feed
           </UButton>
-          <UButton
-icon="i-heroicons-squares-2x2" :variant="currentView === 'Board' ? 'solid' : 'ghost'" size="sm"
-            class="rounded-xl" @click="() => {currentView = 'Board'}">
+          <UButton icon="i-heroicons-squares-2x2" :variant="currentView === 'Board' ? 'solid' : 'ghost'" size="sm"
+            class="rounded-xl" @click="() => { currentView = 'Board' }">
             Board
           </UButton>
-          <UButton
-icon="i-heroicons-table-cells" :variant="currentView === 'Table' ? 'solid' : 'ghost'" size="sm"
-            class="rounded-xl" @click="() => {currentView = 'Table'}">
+          <UButton icon="i-heroicons-table-cells" :variant="currentView === 'Table' ? 'solid' : 'ghost'" size="sm"
+            class="rounded-xl" @click="() => { currentView = 'Table' }">
             Table
           </UButton>
         </section>

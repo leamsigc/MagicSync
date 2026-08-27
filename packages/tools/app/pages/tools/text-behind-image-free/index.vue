@@ -1,4 +1,6 @@
+<i18n src="./index.json"></i18n>
 <script lang="ts" setup>
+const { t } = useI18n()
 import TextBehindImage from './components/TextBehindImage.vue';
 /**
  *
@@ -13,21 +15,21 @@ import TextBehindImage from './components/TextBehindImage.vue';
  */
 
 useHead({
-  title: 'Text behind image for free',
+  title: t('title'),
   meta: [
     {
       name: 'description',
-      content: 'Best text over image tool for free!',
+      content: t('description'),
     },
   ],
 });
 useSeoMeta({
-  title: 'Text behind image for free',
+  title: t('title'),
   description: 'Best text over image tool for free!',
 });
 defineOgImage('BlogOgImage', {
-  title: `${'Text behind image for free '.slice(0, 50)}...`,
-  description: `${'Best text over image tool for free!'.slice(0, 200)}...`,
+  title: t('title'),
+  description: t('description'),
   headline: '👋 Human Ideas...!',
 });
 </script>

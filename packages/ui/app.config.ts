@@ -1,3 +1,4 @@
+import { tables } from './../db/server/utils/drizzle';
 export default defineAppConfig({
   BaseUiLayer: {
     name: 'Hello from Nuxt layer',
@@ -197,6 +198,20 @@ export default defineAppConfig({
     slideover: {
       slots: {
         content: 'sm:shadow-lg shadow-(color:--ui-shadow-final-soft)'
+      }
+    },
+    table: {
+      slots: {
+        tr: 'bg-transparent',
+        td: 'border-0 ',
+        th: 'border-0 '
+      }
+    },
+    navigationMenu: {
+      slots: {
+        root: '',
+        viewport: 'border-0 ring-0 rounded',
+        content: "border-0 shadow-none "
       }
     }
   }

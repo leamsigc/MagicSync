@@ -55,6 +55,11 @@
       "chooseLayoutHint": "Pick a layout for the new page inserted after the current one.",
       "blankPage": "Blank"
     },
+    "showcase": {
+      "title": "Template gallery",
+      "hint": "Every deck with every page laid out — scroll a strip, then load the whole carousel with one click.",
+      "pages": "pages"
+    },
     "slide": {
       "label": "Slides",
       "manager": "Slide manager",
@@ -91,9 +96,34 @@
       "failedTitle": "AI generation failed",
       "currentPalette": "Current palette — background {bg}, accent {accent}"
     },
+    "aiTemplate": {
+      "title": "Generate template with AI",
+      "description": "Describe the vibe, topic, audience and colors. AI creates a reusable carousel template you can apply instantly.",
+      "promptLabel": "Template idea",
+      "promptPlaceholder": "e.g. A bold finance carousel with dark background, yellow accent, for Gen Z saving tips — premium, minimal, 6 pages",
+      "promptHint": "Mention topic, audience, colors and page count for best results.",
+      "ex0": "Bold finance tips for Gen Z",
+      "ex1": "Minimal product launch carousel",
+      "ex2": "Playful productivity checklist",
+      "pageLabel": "Page count",
+      "pages": "pages",
+      "generate": "Generate template",
+      "generating": "Creating template…",
+      "successTitle": "Template ready",
+      "successDescription": "\"{title}\" was created and saved to your deck templates.",
+      "apply": "Apply template",
+      "saveOnly": "Save only",
+      "errorTitle": "Template generation failed"
+    },
     "media": {
       "label": "Media",
       "image": "Slide image",
+      "gallery": "Photos on this page",
+      "addPhoto": "Add photo",
+      "photosHint": "Photos fill the grid slots in order (up to 4). Hover a thumbnail to remove it.",
+      "polaroidHint": "The first photo becomes the framed polaroid image.",
+      "maxPhotos": "Grid is full — remove a photo to add another.",
+      "removePhoto": "Remove photo",
       "perSlideHint": "This image applies to the current slide only. Select another slide to give it its own image.",
       "shadow": "Image shadow",
       "shadowX": "Offset X",
@@ -109,7 +139,10 @@
       "pattern": "Pattern overlay",
       "patternColor": "Pattern color",
       "patternOpacity": "Opacity",
-      "photo": "Photo"
+      "borderRadius": "Corner radius",
+      "photo": "Photo",
+      "font": "Font",
+      "fontHint": "Applies to every page. Deck templates set their own — choosing here overrides it."
     },
     "palette": {
       "bg": "BG",
@@ -231,6 +264,11 @@
       "chooseLayoutHint": "Choisissez une mise en page pour la nouvelle page après la page actuelle.",
       "blankPage": "Vide"
     },
+    "showcase": {
+      "title": "Galerie de modèles",
+      "hint": "Tous les carrousels avec toutes leurs pages — faites défiler, puis chargez le modèle en un clic.",
+      "pages": "pages"
+    },
     "slide": {
       "label": "Diapositives",
       "manager": "Gestionnaire de diapositives",
@@ -267,9 +305,34 @@
       "failedTitle": "Échec de la génération IA",
       "currentPalette": "Palette actuelle — fond {bg}, accent {accent}"
     },
+    "aiTemplate": {
+      "title": "Générer un modèle avec l'IA",
+      "description": "Décrivez l'ambiance, le sujet, l'audience et les couleurs. L'IA crée un modèle de carrousel réutilisable et applicable immédiatement.",
+      "promptLabel": "Idée de modèle",
+      "promptPlaceholder": "ex. Un carrousel finance audacieux, fond sombre, accent jaune, conseils d'épargne Gen Z — premium, minimal, 6 pages",
+      "promptHint": "Précisez sujet, audience, couleurs et nombre de pages pour un meilleur résultat.",
+      "ex0": "Conseils finance audacieux pour Gen Z",
+      "ex1": "Carrousel de lancement produit minimaliste",
+      "ex2": "Checklist productivité ludique",
+      "pageLabel": "Nombre de pages",
+      "pages": "pages",
+      "generate": "Générer le modèle",
+      "generating": "Création du modèle…",
+      "successTitle": "Modèle prêt",
+      "successDescription": "« {title} » a été créé et ajouté à vos modèles de deck.",
+      "apply": "Appliquer le modèle",
+      "saveOnly": "Enregistrer seulement",
+      "errorTitle": "Échec de la génération du modèle"
+    },
     "media": {
       "label": "Médias",
       "image": "Image de la diapositive",
+      "gallery": "Photos de la page",
+      "addPhoto": "Ajouter une photo",
+      "photosHint": "Les photos remplissent les cases dans l'ordre (max 4). Survolez une vignette pour la supprimer.",
+      "polaroidHint": "La première photo devient l'image du cadre polaroïd.",
+      "maxPhotos": "Grille pleine — supprimez une photo pour en ajouter une autre.",
+      "removePhoto": "Supprimer la photo",
       "perSlideHint": "Cette image s'applique uniquement à la diapositive actuelle. Sélectionnez une autre diapositive pour lui donner sa propre image.",
       "shadow": "Ombre de l'image",
       "shadowX": "Décalage X",
@@ -285,7 +348,10 @@
       "pattern": "Texture",
       "patternColor": "Couleur de la texture",
       "patternOpacity": "Opacité",
-      "photo": "Photo"
+      "borderRadius": "Rayon de bordure",
+      "photo": "Photo",
+      "font": "Police",
+      "fontHint": "S'applique à toutes les pages. Les modèles définissent leur police — ce choix la remplace."
     },
     "palette": {
       "bg": "Fond",
@@ -407,6 +473,11 @@
       "chooseLayoutHint": "Elige un diseño para la nueva página después de la actual.",
       "blankPage": "En blanco"
     },
+    "showcase": {
+      "title": "Galería de plantillas",
+      "hint": "Todos los carruseles con todas sus páginas — desliza y carga la plantilla con un clic.",
+      "pages": "páginas"
+    },
     "slide": {
       "label": "Diapositivas",
       "manager": "Gestor de diapositivas",
@@ -443,9 +514,34 @@
       "failedTitle": "Falló la generación con IA",
       "currentPalette": "Paleta actual — fondo {bg}, acento {accent}"
     },
+    "aiTemplate": {
+      "title": "Generar plantilla con IA",
+      "description": "Describe el estilo, tema, audiencia y colores. La IA crea una plantilla de carrusel reutilizable que puedes aplicar al instante.",
+      "promptLabel": "Idea de plantilla",
+      "promptPlaceholder": "ej. Un carrusel de finanzas impactante con fondo oscuro, acento amarillo, consejos de ahorro Gen Z — premium, minimalista, 6 páginas",
+      "promptHint": "Menciona tema, audiencia, colores y número de páginas para obtener mejores resultados.",
+      "ex0": "Consejos de finanzas para Gen Z",
+      "ex1": "Carrusel minimalista de lanzamiento de producto",
+      "ex2": "Checklist de productividad divertida",
+      "pageLabel": "Número de páginas",
+      "pages": "páginas",
+      "generate": "Generar plantilla",
+      "generating": "Creando plantilla…",
+      "successTitle": "Plantilla lista",
+      "successDescription": "«{title}» se creó y se guardó en tus plantillas de deck.",
+      "apply": "Aplicar plantilla",
+      "saveOnly": "Solo guardar",
+      "errorTitle": "Falló la generación de la plantilla"
+    },
     "media": {
       "label": "Medios",
       "image": "Imagen de la diapositiva",
+      "gallery": "Fotos de la página",
+      "addPhoto": "Añadir foto",
+      "photosHint": "Las fotos llenan las casillas en orden (máx. 4). Pasa el cursor sobre una miniatura para eliminarla.",
+      "polaroidHint": "La primera foto se convierte en la imagen del marco polaroid.",
+      "maxPhotos": "Cuadrícula llena — elimina una foto para añadir otra.",
+      "removePhoto": "Eliminar foto",
       "perSlideHint": "Esta imagen se aplica solo a la diapositiva actual. Selecciona otra diapositiva para darle su propia imagen.",
       "shadow": "Sombra de la imagen",
       "shadowX": "Desplazamiento X",
@@ -461,7 +557,10 @@
       "pattern": "Textura",
       "patternColor": "Color de la textura",
       "patternOpacity": "Opacidad",
-      "photo": "Foto"
+      "borderRadius": "Radio de esquina",
+      "photo": "Foto",
+      "font": "Fuente",
+      "fontHint": "Se aplica a todas las páginas. Las plantillas definen su fuente; esta elección la reemplaza."
     },
     "palette": {
       "bg": "Fondo",
@@ -583,6 +682,11 @@
       "chooseLayoutHint": "Wähle ein Layout für die neue Seite nach der aktuellen Seite.",
       "blankPage": "Leer"
     },
+    "showcase": {
+      "title": "Vorlagen-Galerie",
+      "hint": "Alle Decks mit allen Seiten — durchscrollen und mit einem Klick laden.",
+      "pages": "Seiten"
+    },
     "slide": {
       "label": "Folien",
       "manager": "Folienverwaltung",
@@ -619,9 +723,34 @@
       "failedTitle": "KI-Generierung fehlgeschlagen",
       "currentPalette": "Aktuelle Palette — Hintergrund {bg}, Akzent {accent}"
     },
+    "aiTemplate": {
+      "title": "Vorlage mit KI generieren",
+      "description": "Beschreibe Stil, Thema, Zielgruppe und Farben. Die KI erstellt eine wiederverwendbare Karussell-Vorlage, die sofort angewendet werden kann.",
+      "promptLabel": "Vorlagenidee",
+      "promptPlaceholder": "z. B. Kräftiges Finanz-Karussell mit dunklem Hintergrund, gelbem Akzent, Spartipps für Gen Z — premium, minimal, 6 Seiten",
+      "promptHint": "Nenne Thema, Zielgruppe, Farben und Seitenanzahl für bessere Ergebnisse.",
+      "ex0": "Kräftige Spartipps für Gen Z",
+      "ex1": "Minimalistisches Produkt-Launch-Karussell",
+      "ex2": "Verspielte Produktivitäts-Checkliste",
+      "pageLabel": "Seitenanzahl",
+      "pages": "Seiten",
+      "generate": "Vorlage generieren",
+      "generating": "Vorlage wird erstellt…",
+      "successTitle": "Vorlage bereit",
+      "successDescription": "„{title}“ wurde erstellt und in deinen Deck-Vorlagen gespeichert.",
+      "apply": "Vorlage anwenden",
+      "saveOnly": "Nur speichern",
+      "errorTitle": "Vorlagen-Generierung fehlgeschlagen"
+    },
     "media": {
       "label": "Medien",
       "image": "Folienbild",
+      "gallery": "Fotos dieser Seite",
+      "addPhoto": "Foto hinzufügen",
+      "photosHint": "Fotos füllen die Rasterfelder der Reihe nach (max. 4). Zum Entfernen mit der Maus darüberfahren und × klicken.",
+      "polaroidHint": "Das erste Foto wird zum Polaroid-Bild im Rahmen.",
+      "maxPhotos": "Raster voll — entferne ein Foto, um ein weiteres hinzuzufügen.",
+      "removePhoto": "Foto entfernen",
       "perSlideHint": "Dieses Bild gilt nur für die aktuelle Folie. Wähle eine andere Folie, um ihr ein eigenes Bild zu geben.",
       "shadow": "Bildschatten",
       "shadowX": "Versatz X",
@@ -637,7 +766,10 @@
       "pattern": "Muster-Overlay",
       "patternColor": "Musterfarbe",
       "patternOpacity": "Deckkraft",
-      "photo": "Foto"
+      "borderRadius": "Eckenradius",
+      "photo": "Foto",
+      "font": "Schrift",
+      "fontHint": "Gilt für alle Seiten. Deck-Vorlagen bringen eigene Schriften mit — diese Wahl überschreibt sie."
     },
     "palette": {
       "bg": "HG",

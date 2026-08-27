@@ -224,16 +224,16 @@ const handleBulkDelete = () => {
 
 <template>
   <div class="mt-4">
-    <div class="bg-elevated rounded-2xl  overflow-hidden">
-      <UTable ref="table" v-model:row-selection="rowSelection" :data="posts" :columns="columns" class="flex-1" />
+    <div class="rounded  overflow-hidden">
+      <UTable ref="table" v-model:row-selection="rowSelection" :data="posts" :columns="columns" class="flex-1"
+        :ui="{ 'tr': 'bg-transparent', 'td': 'border-0', 'th': 'border-0' }" />
 
-      <div class="px-5 py-4 border-t border-border/50 text-sm text-muted flex items-center justify-between">
+      <div class="px-5 py-4  text-sm text-muted flex items-center justify-between">
         <div>
           {{ table?.tableApi?.getFilteredSelectedRowModel().rows.length || 0 }} of
           {{ table?.tableApi?.getFilteredRowModel().rows.length || 0 }} row(s) selected.
         </div>
-        <UButton
-v-if="(table?.tableApi?.getFilteredSelectedRowModel().rows.length || 0) > 0" color="error"
+        <UButton v-if="(table?.tableApi?.getFilteredSelectedRowModel().rows.length || 0) > 0" color="error"
           variant="outline" size="sm" @click="handleBulkDelete">
           Delete Selected
         </UButton>

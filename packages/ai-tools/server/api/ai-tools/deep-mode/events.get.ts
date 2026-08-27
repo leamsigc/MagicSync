@@ -5,9 +5,9 @@ export default defineEventHandler(async (event) => {
   const user = await aiToolsFacade.authenticate(event)
   const query = getQuery(event)
   const threadId = query.thread_id as string | undefined
-  
+
   log.set({ threadId })
-  
+
   if (!threadId) {
     throw createError({
       statusCode: 400,
@@ -20,10 +20,12 @@ export default defineEventHandler(async (event) => {
   setHeader(event, 'Connection', 'keep-alive')
   setHeader(event, 'X-Accel-Buffering', 'no')
 
+  let cleanup = () => { }
+
   const stream = new ReadableStream({
     start(controller) {
       const encoder = new TextEncoder()
-      
+
       const sendEvent = (data: Record<string, unknown>) => {
         const message = `data: ${JSON.stringify(data)}\n\n`
         controller.enqueue(encoder.encode(message))
@@ -35,8 +37,11 @@ export default defineEventHandler(async (event) => {
 
       let heartbeatInterval: ReturnType<typeof setInterval> | null = null
       let cleanupFn: (() => void) | null = null
+      let cleanedUp = false
 
-      const cleanup = () => {
+      cleanup = () => {
+        if (cleanedUp) return
+        cleanedUp = true
         if (heartbeatInterval) {
           clearInterval(heartbeatInterval)
           heartbeatInterval = null
@@ -61,12 +66,13 @@ export default defineEventHandler(async (event) => {
         cleanup()
         controller.close()
       }
-
-      event.node.req.on('close', () => {
-        cleanup()
-      })
+    },
+    cancel() {
+      cleanup()
     }
   })
+
+  onClosed(event, () => cleanup())
 
   return sendEventStream(event, stream)
 })

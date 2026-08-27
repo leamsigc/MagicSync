@@ -257,41 +257,32 @@ useHead({
       <div class="flex items-center justify-between max-w-3xl mx-auto">
         <template v-for="(step, idx) in steps" :key="idx">
           <div class="flex items-center">
-            <button
-              :class="[
-                'flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-300',
+            <button :class="[
+              'flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-300',
+              currentStep === idx
+                ? 'bg-primary/10 text-primary'
+                : idx < currentStep
+                  ? 'text-primary/60 hover:text-primary/80'
+                  : 'text-muted-foreground/40 hover:text-muted-foreground/60',
+            ]" :disabled="idx > currentStep" @click="currentStep = idx">
+              <div :class="[
+                'w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300',
                 currentStep === idx
-                  ? 'bg-primary/10 text-primary'
+                  ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25'
                   : idx < currentStep
-                    ? 'text-primary/60 hover:text-primary/80'
-                    : 'text-muted-foreground/40 hover:text-muted-foreground/60',
-              ]"
-              :disabled="idx > currentStep"
-              @click="currentStep = idx"
-            >
-              <div
-                :class="[
-                  'w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300',
-                  currentStep === idx
-                    ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25'
-                    : idx < currentStep
-                      ? 'bg-primary/20 text-primary'
-                      : 'bg-muted text-muted-foreground',
-                ]"
-              >
+                    ? 'bg-primary/20 text-primary'
+                    : 'bg-muted text-muted-foreground',
+              ]">
                 <UIcon v-if="idx < currentStep" name="i-lucide-check" class="w-4 h-4" />
                 <span v-else>{{ idx + 1 }}</span>
               </div>
               <span class="hidden sm:block text-xs font-medium">{{ step.label }}</span>
             </button>
           </div>
-          <div
-            v-if="idx < totalSteps - 1"
-            :class="[
-              'flex-1 h-px mx-2 transition-all duration-500',
-              idx < currentStep ? 'bg-primary/40' : 'bg-muted',
-            ]"
-          />
+          <div v-if="idx < totalSteps - 1" :class="[
+            'flex-1 h-px mx-2 transition-all duration-500',
+            idx < currentStep ? 'bg-primary/40' : 'bg-muted',
+          ]" />
         </template>
       </div>
     </div>
@@ -311,25 +302,15 @@ useHead({
               <label class="text-xs font-mono text-muted-foreground uppercase tracking-wider">
                 {{ t('step1.topicLabel') }}
               </label>
-              <UTextarea
-                v-model="topic"
-                :placeholder="t('step1.topicPlaceholder')"
-                :rows="4"
-                block
-                variant="subtle"
-                class="font-mono leading-relaxed w-full"
-              />
+              <UTextarea v-model="topic" :placeholder="t('step1.topicPlaceholder')" :rows="4" block variant="subtle"
+                class="font-mono leading-relaxed w-full" />
             </div>
 
             <div class="space-y-2">
               <label class="text-xs font-mono text-muted-foreground uppercase tracking-wider">
                 {{ t('step1.voiceLabel') }}
               </label>
-              <USelect
-                v-model="voiceType"
-                :items="voiceOptions"
-                block
-              />
+              <USelect v-model="voiceType" :items="voiceOptions" block />
             </div>
 
             <div class="space-y-3">
@@ -337,46 +318,25 @@ useHead({
                 {{ t('step1.linksLabel') }}
               </label>
               <div class="flex gap-2">
-                <UInput
-                  v-model="newLink"
-                  :placeholder="t('step1.linksPlaceholder')"
-                  block
-                  class="flex-1"
-                  @keydown.enter="addLink"
-                />
+                <UInput v-model="newLink" :placeholder="t('step1.linksPlaceholder')" block class="flex-1"
+                  @keydown.enter="addLink" />
                 <UButton color="neutral" variant="outline" :disabled="!newLink.trim()" @click="addLink">
                   {{ t('step1.addLink') }}
                 </UButton>
               </div>
               <TransitionGroup name="list" tag="div" class="space-y-2">
-                <div
-                  v-for="(link, idx) in inspirationLinks"
-                  :key="idx"
-                  class="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2 text-sm"
-                >
+                <div v-for="(link, idx) in inspirationLinks" :key="idx"
+                  class="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2 text-sm">
                   <UIcon name="i-lucide-link" class="w-4 h-4 text-muted-foreground shrink-0" />
                   <span class="truncate flex-1 font-mono text-xs">{{ link }}</span>
-                  <UButton
-                    color="neutral"
-                    variant="ghost"
-                    size="xs"
-                    square
-                    icon="i-lucide-x"
-                    @click="removeLink(idx)"
-                  />
+                  <UButton color="neutral" variant="ghost" size="xs" square icon="i-lucide-x"
+                    @click="removeLink(idx)" />
                 </div>
               </TransitionGroup>
             </div>
 
-            <UButton
-              :loading="isGeneratingScript"
-              :disabled="!topic.trim()"
-              block
-              size="lg"
-              color="primary"
-              icon="i-lucide-wand-sparkles"
-              @click="onGenerateScript"
-            >
+            <UButton :loading="isGeneratingScript" :disabled="!topic.trim()" block size="lg" color="primary"
+              icon="i-lucide-wand-sparkles" @click="onGenerateScript">
               {{ isGeneratingScript ? t('step1.generating') : t('step1.generateScript') }}
             </UButton>
           </div>
@@ -400,14 +360,8 @@ useHead({
                   </label>
                   <span class="text-xs font-mono text-muted-foreground">{{ scriptContent.length }} chars</span>
                 </div>
-                <UTextarea
-                  v-model="scriptContent"
-                  :placeholder="t('step2.scriptPlaceholder')"
-                  :rows="14"
-                  block
-                  variant="subtle"
-                  class="font-mono leading-relaxed w-full"
-                />
+                <UTextarea v-model="scriptContent" :placeholder="t('step2.scriptPlaceholder')" :rows="14" block
+                  variant="subtle" class="font-mono leading-relaxed w-full" />
               </div>
             </UCard>
 
@@ -465,27 +419,18 @@ useHead({
                     <div class="bg-muted p-4 rounded-lg text-xs font-mono whitespace-pre-wrap leading-relaxed">
                       {{ healthResult.improvedScript }}
                     </div>
-                    <UButton
-                      block
-                      color="neutral"
-                      variant="soft"
-                      size="sm"
-                      class="mt-2"
-                      @click="acceptImprovedScript(healthResult!.improvedScript)"
-                    >
+                    <UButton block color="neutral" variant="soft" size="sm" class="mt-2"
+                      @click="acceptImprovedScript(healthResult!.improvedScript)">
                       {{ t('step2.acceptScript') }}
                     </UButton>
                   </div>
 
-                  <div v-if="healthResult.alternativeVersions.length" class="space-y-4 pt-4 border-t border-border">
+                  <div v-if="healthResult.alternativeVersions.length" class="space-y-4 pt-4 ">
                     <h4 class="text-xs font-mono text-muted-foreground uppercase tracking-wider">
                       {{ t('step2.alternativeVersions') }}
                     </h4>
-                    <div
-                      v-for="(alt, idx) in healthResult.alternativeVersions"
-                      :key="idx"
-                      class="bg-muted/50 rounded-lg p-4 space-y-3"
-                    >
+                    <div v-for="(alt, idx) in healthResult.alternativeVersions" :key="idx"
+                      class="bg-muted/50 rounded-lg p-4 space-y-3">
                       <div class="flex items-center justify-between">
                         <h5 class="font-bold text-sm">{{ alt.hookName }}</h5>
                         <div class="text-right">
@@ -496,13 +441,8 @@ useHead({
                       <div class="bg-background rounded-lg p-3 text-xs font-mono whitespace-pre-wrap leading-relaxed">
                         {{ alt.script }}
                       </div>
-                      <UButton
-                        block
-                        size="xs"
-                        color="neutral"
-                        variant="outline"
-                        @click="acceptImprovedScript(alt.script)"
-                      >
+                      <UButton block size="xs" color="neutral" variant="outline"
+                        @click="acceptImprovedScript(alt.script)">
                         {{ t('step2.useThisVersion') }}
                       </UButton>
                     </div>
@@ -520,15 +460,9 @@ useHead({
                 </h3>
               </template>
               <div class="space-y-2 p-1">
-                <UButton
-                  v-for="hook in hookOptions"
-                  :key="hook.value"
-                  :variant="selectedHook === hook.value ? 'soft' : 'outline'"
-                  color="neutral"
-                  block
-                  size="sm"
-                  @click="loadHookVariation(hook.value)"
-                >
+                <UButton v-for="hook in hookOptions" :key="hook.value"
+                  :variant="selectedHook === hook.value ? 'soft' : 'outline'" color="neutral" block size="sm"
+                  @click="loadHookVariation(hook.value)">
                   {{ hook.label }}
                 </UButton>
               </div>
@@ -539,56 +473,24 @@ useHead({
                 <h3 class="text-xs font-mono text-muted-foreground uppercase tracking-wider">AI Actions</h3>
               </template>
               <div class="space-y-2 p-1">
-                <UButton
-                  :loading="isCheckingHealth"
-                  :disabled="!scriptContent.trim()"
-                  block
-                  color="neutral"
-                  variant="outline"
-                  size="sm"
-                  icon="i-lucide-heart-pulse"
-                  @click="onCheckHealth"
-                >
+                <UButton :loading="isCheckingHealth" :disabled="!scriptContent.trim()" block color="neutral"
+                  variant="outline" size="sm" icon="i-lucide-heart-pulse" @click="onCheckHealth">
                   {{ isCheckingHealth ? t('step2.checkingHealth') : t('step2.checkHealth') }}
                 </UButton>
-                <UButton
-                  block
-                  color="neutral"
-                  variant="outline"
-                  size="sm"
-                  icon="i-lucide-iteration-ccw"
-                  :disabled="!scriptContent.trim()"
-                >
+                <UButton block color="neutral" variant="outline" size="sm" icon="i-lucide-iteration-ccw"
+                  :disabled="!scriptContent.trim()">
                   {{ t('step2.hookVariations') }}
                 </UButton>
-                <UButton
-                  block
-                  color="neutral"
-                  variant="outline"
-                  size="sm"
-                  icon="i-lucide-check-circle"
-                  :disabled="!scriptContent.trim()"
-                >
+                <UButton block color="neutral" variant="outline" size="sm" icon="i-lucide-check-circle"
+                  :disabled="!scriptContent.trim()">
                   {{ t('step2.valueCheck') }}
                 </UButton>
-                <UButton
-                  block
-                  color="neutral"
-                  variant="outline"
-                  size="sm"
-                  icon="i-lucide-thumbs-up"
-                  :disabled="!scriptContent.trim()"
-                >
+                <UButton block color="neutral" variant="outline" size="sm" icon="i-lucide-thumbs-up"
+                  :disabled="!scriptContent.trim()">
                   {{ t('step2.videoLikeCheck') }}
                 </UButton>
-                <UButton
-                  block
-                  color="neutral"
-                  variant="outline"
-                  size="sm"
-                  icon="i-lucide-refresh-cw"
-                  :disabled="!scriptContent.trim()"
-                >
+                <UButton block color="neutral" variant="outline" size="sm" icon="i-lucide-refresh-cw"
+                  :disabled="!scriptContent.trim()">
                   {{ t('step2.refineScript') }}
                 </UButton>
               </div>
@@ -604,7 +506,8 @@ useHead({
                 <div v-for="(scene, idx) in scenes" :key="idx" class="bg-muted/30 rounded-lg p-3 space-y-2">
                   <div class="flex items-center justify-between">
                     <span class="text-xs font-mono text-muted-foreground">Scene {{ idx + 1 }}</span>
-                    <UButton color="neutral" variant="ghost" size="xs" square icon="i-lucide-x" @click="removeScene(idx)" />
+                    <UButton color="neutral" variant="ghost" size="xs" square icon="i-lucide-x"
+                      @click="removeScene(idx)" />
                   </div>
                   <p class="text-xs text-muted-foreground line-clamp-2">{{ scene.text || 'No text assigned' }}</p>
                   <UButton color="neutral" variant="outline" size="xs" block icon="i-lucide-image">
@@ -652,14 +555,9 @@ useHead({
                 <div class="space-y-2">
                   <label class="text-xs font-mono text-muted-foreground">{{ t('step3.position') }}</label>
                   <div class="grid grid-cols-3 gap-2">
-                    <UButton
-                      v-for="pos in positionOptions"
-                      :key="pos.value"
-                      :variant="subtitlePosition === pos.value ? 'soft' : 'outline'"
-                      color="neutral"
-                      size="sm"
-                      @click="subtitlePosition = pos.value"
-                    >
+                    <UButton v-for="pos in positionOptions" :key="pos.value"
+                      :variant="subtitlePosition === pos.value ? 'soft' : 'outline'" color="neutral" size="sm"
+                      @click="subtitlePosition = pos.value">
                       {{ pos.label }}
                     </UButton>
                   </div>
@@ -668,36 +566,23 @@ useHead({
                 <div class="space-y-2">
                   <label class="text-xs font-mono text-muted-foreground">{{ t('step3.color') }}</label>
                   <div class="flex gap-2">
-                    <button
-                      v-for="c in colorOptions"
-                      :key="c.value"
-                      :class="[
-                        'w-8 h-8 rounded-full border-2 transition-all',
-                        subtitleColor === c.value ? 'border-primary scale-110' : 'border-transparent',
-                        c.class,
-                      ]"
-                      @click="subtitleColor = c.value"
-                    />
+                    <button v-for="c in colorOptions" :key="c.value" :class="[
+                      'w-8 h-8 rounded-full border-2 transition-all',
+                      subtitleColor === c.value ? 'border-primary scale-110' : 'border-transparent',
+                      c.class,
+                    ]" @click="subtitleColor = c.value" />
                   </div>
                 </div>
 
                 <div class="space-y-2">
                   <label class="text-xs font-mono text-muted-foreground">{{ t('step3.bgLabel') }}</label>
                   <div class="flex gap-2">
-                    <UButton
-                      :variant="subtitleBg ? 'soft' : 'outline'"
-                      color="neutral"
-                      size="sm"
-                      @click="subtitleBg = true"
-                    >
+                    <UButton :variant="subtitleBg ? 'soft' : 'outline'" color="neutral" size="sm"
+                      @click="subtitleBg = true">
                       {{ t('step3.bgEnabled') }}
                     </UButton>
-                    <UButton
-                      :variant="!subtitleBg ? 'soft' : 'outline'"
-                      color="neutral"
-                      size="sm"
-                      @click="subtitleBg = false"
-                    >
+                    <UButton :variant="!subtitleBg ? 'soft' : 'outline'" color="neutral" size="sm"
+                      @click="subtitleBg = false">
                       {{ t('step3.bgDisabled') }}
                     </UButton>
                   </div>
@@ -714,24 +599,19 @@ useHead({
               <div class="grid grid-cols-3 gap-3 p-2">
                 <button
                   v-for="ratio in ([{ value: '16:9', label: t('step3.format16_9') }, { value: '9:16', label: t('step3.format9_16') }, { value: '1:1', label: t('step3.format1_1') }] as const)"
-                  :key="ratio.value"
-                  :class="[
+                  :key="ratio.value" :class="[
                     'flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all',
                     aspectRatio === ratio.value
                       ? 'border-primary bg-primary/5'
                       : 'border-muted hover:border-muted-foreground/20',
-                  ]"
-                  @click="aspectRatio = ratio.value"
-                >
-                  <div
-                    :class="[
-                      'rounded-lg border-2 bg-muted/50 transition-all',
-                      ratio.value === '16:9' ? 'w-16 aspect-video' : '',
-                      ratio.value === '9:16' ? 'w-10 aspect-[9/16]' : '',
-                      ratio.value === '1:1' ? 'w-12 aspect-square' : '',
-                      aspectRatio === ratio.value ? 'border-primary' : 'border-muted',
-                    ]"
-                  />
+                  ]" @click="aspectRatio = ratio.value">
+                  <div :class="[
+                    'rounded-lg border-2 bg-muted/50 transition-all',
+                    ratio.value === '16:9' ? 'w-16 aspect-video' : '',
+                    ratio.value === '9:16' ? 'w-10 aspect-[9/16]' : '',
+                    ratio.value === '1:1' ? 'w-12 aspect-square' : '',
+                    aspectRatio === ratio.value ? 'border-primary' : 'border-muted',
+                  ]" />
                   <span class="text-xs font-medium">{{ ratio.value }}</span>
                   <span class="text-[10px] text-muted-foreground">{{ ratio.label }}</span>
                 </button>
@@ -754,38 +634,20 @@ useHead({
 
                 <div class="space-y-2">
                   <label class="text-xs font-mono text-muted-foreground">{{ t('step3.seoDescription') }}</label>
-                  <UTextarea
-                    v-model="seoDescription"
-                    :placeholder="t('step3.seoPlaceholder')"
-                    :rows="3"
-                    block
-                    variant="subtle"
-                  />
+                  <UTextarea v-model="seoDescription" :placeholder="t('step3.seoPlaceholder')" :rows="3" block
+                    variant="subtle" />
                 </div>
 
                 <div class="space-y-2">
                   <label class="text-xs font-mono text-muted-foreground">{{ t('step3.socialPost') }}</label>
-                  <UTextarea
-                    v-model="socialPost"
-                    :placeholder="t('step3.socialPostPlaceholder')"
-                    :rows="5"
-                    block
-                    variant="subtle"
-                  />
+                  <UTextarea v-model="socialPost" :placeholder="t('step3.socialPostPlaceholder')" :rows="5" block
+                    variant="subtle" />
                 </div>
               </div>
             </UCard>
 
-            <UButton
-              :loading="isGeneratingVideo"
-              :disabled="!postTitle.trim()"
-              block
-              size="xl"
-              color="primary"
-              icon="i-lucide-video"
-              class="py-6 text-lg font-bold"
-              @click="onGenerateVideo"
-            >
+            <UButton :loading="isGeneratingVideo" :disabled="!postTitle.trim()" block size="xl" color="primary"
+              icon="i-lucide-video" class="py-6 text-lg font-bold" @click="onGenerateVideo">
               <UIcon name="i-lucide-sparkles" class="mr-2" />
               {{ isGeneratingVideo ? t('step3.generatingVideo') : t('step3.generateVideo') }}
             </UButton>
@@ -809,14 +671,12 @@ useHead({
                   {{ t('step4.preview') }}
                 </h3>
               </template>
-              <div
-                :class="[
-                  'bg-neutral-900 rounded-xl overflow-hidden mx-auto',
-                  aspectRatio === '16:9' ? 'w-full aspect-video' : '',
-                  aspectRatio === '9:16' ? 'w-2/3 aspect-[9/16]' : '',
-                  aspectRatio === '1:1' ? 'w-2/3 aspect-square' : '',
-                ]"
-              >
+              <div :class="[
+                'bg-neutral-900 rounded-xl overflow-hidden mx-auto',
+                aspectRatio === '16:9' ? 'w-full aspect-video' : '',
+                aspectRatio === '9:16' ? 'w-2/3 aspect-[9/16]' : '',
+                aspectRatio === '1:1' ? 'w-2/3 aspect-square' : '',
+              ]">
                 <div v-if="videoPreviewUrl" class="w-full h-full flex items-center justify-center bg-neutral-900">
                   <div class="text-center space-y-3">
                     <UIcon name="i-lucide-video" class="text-5xl text-muted-foreground" />
@@ -873,8 +733,7 @@ useHead({
               <div class="p-2">
                 <button
                   class="w-full aspect-video rounded-xl border-2 border-dashed border-muted hover:border-muted-foreground/30 transition-colors flex flex-col items-center justify-center gap-2 bg-muted/20"
-                  @click="handleThumbnailUpload"
-                >
+                  @click="handleThumbnailUpload">
                   <template v-if="thumbnail">
                     <div class="w-full h-full bg-muted rounded-lg flex items-center justify-center">
                       <span class="text-xs text-muted-foreground font-mono">{{ t('step4.changeThumbnail') }}</span>
@@ -901,26 +760,20 @@ useHead({
                 </div>
               </template>
               <div class="space-y-1 p-1">
-                <button
-                  v-for="platform in platformOptions"
-                  :key="platform.value"
-                  :class="[
-                    'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all',
+                <button v-for="platform in platformOptions" :key="platform.value" :class="[
+                  'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all',
+                  selectedPlatforms.includes(platform.value)
+                    ? 'bg-primary/10 text-primary'
+                    : 'hover:bg-muted/50 text-muted-foreground hover:text-foreground',
+                ]" @click="togglePlatform(platform.value)">
+                  <div :class="[
+                    'w-5 h-5 rounded border-2 flex items-center justify-center transition-all',
                     selectedPlatforms.includes(platform.value)
-                      ? 'bg-primary/10 text-primary'
-                      : 'hover:bg-muted/50 text-muted-foreground hover:text-foreground',
-                  ]"
-                  @click="togglePlatform(platform.value)"
-                >
-                  <div
-                    :class="[
-                      'w-5 h-5 rounded border-2 flex items-center justify-center transition-all',
-                      selectedPlatforms.includes(platform.value)
-                        ? 'bg-primary border-primary'
-                        : 'border-muted-foreground/30',
-                    ]"
-                  >
-                    <UIcon v-if="selectedPlatforms.includes(platform.value)" name="i-lucide-check" class="w-3 h-3 text-primary-foreground" />
+                      ? 'bg-primary border-primary'
+                      : 'border-muted-foreground/30',
+                  ]">
+                    <UIcon v-if="selectedPlatforms.includes(platform.value)" name="i-lucide-check"
+                      class="w-3 h-3 text-primary-foreground" />
                   </div>
                   <UIcon :name="platform.icon" class="w-4 h-4 shrink-0" />
                   <span>{{ platform.label }}</span>
@@ -937,22 +790,12 @@ useHead({
               </template>
               <div class="space-y-4 p-2">
                 <div class="flex gap-2">
-                  <UButton
-                    :variant="scheduleOption === 'now' ? 'soft' : 'outline'"
-                    color="neutral"
-                    block
-                    size="sm"
-                    @click="scheduleOption = 'now'"
-                  >
+                  <UButton :variant="scheduleOption === 'now' ? 'soft' : 'outline'" color="neutral" block size="sm"
+                    @click="scheduleOption = 'now'">
                     {{ t('step4.scheduleNow') }}
                   </UButton>
-                  <UButton
-                    :variant="scheduleOption === 'later' ? 'soft' : 'outline'"
-                    color="neutral"
-                    block
-                    size="sm"
-                    @click="scheduleOption = 'later'"
-                  >
+                  <UButton :variant="scheduleOption === 'later' ? 'soft' : 'outline'" color="neutral" block size="sm"
+                    @click="scheduleOption = 'later'">
                     {{ t('step4.scheduleLater') }}
                   </UButton>
                 </div>
@@ -969,15 +812,8 @@ useHead({
               </div>
             </UCard>
 
-            <UButton
-              :loading="isPublishing"
-              :disabled="selectedPlatforms.length === 0"
-              block
-              size="xl"
-              color="primary"
-              class="py-6 text-lg font-bold"
-              @click="onPublish"
-            >
+            <UButton :loading="isPublishing" :disabled="selectedPlatforms.length === 0" block size="xl" color="primary"
+              class="py-6 text-lg font-bold" @click="onPublish">
               <UIcon name="i-lucide-send" class="mr-2" />
               {{ isPublishing ? t('step4.publishing') : t('step4.publish') }}
             </UButton>
@@ -986,26 +822,14 @@ useHead({
       </div>
 
       <!-- Navigation -->
-      <div class="flex items-center justify-between pt-4 border-t border-border">
-        <UButton
-          v-if="currentStep > 0"
-          color="neutral"
-          variant="outline"
-          icon="i-lucide-arrow-left"
-          @click="prevStep"
-        >
+      <div class="flex items-center justify-between pt-4 ">
+        <UButton v-if="currentStep > 0" color="neutral" variant="outline" icon="i-lucide-arrow-left" @click="prevStep">
           {{ t('navigation.back') }}
         </UButton>
         <div v-else />
 
-        <UButton
-          v-if="currentStep < totalSteps - 1"
-          color="primary"
-          :disabled="!canProceed"
-          icon="i-lucide-arrow-right"
-          trailing
-          @click="nextStep"
-        >
+        <UButton v-if="currentStep < totalSteps - 1" color="primary" :disabled="!canProceed" icon="i-lucide-arrow-right"
+          trailing @click="nextStep">
           {{ t('navigation.next') }}
         </UButton>
       </div>

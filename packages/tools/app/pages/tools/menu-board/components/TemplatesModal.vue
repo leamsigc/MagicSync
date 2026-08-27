@@ -25,16 +25,12 @@ function pick(id: string): void {
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[70vh] overflow-y-auto pr-1">
-          <button
-v-for="template in MENU_TEMPLATES" :key="template.id"
+          <button v-for="template in MENU_TEMPLATES" :key="template.id"
             class="border-2 border-border rounded-xl p-4 text-left cursor-pointer hover:border-primary hover:shadow-md transition-all group"
             :data-testid="`template-card-${template.id}`" @click="pick(template.id)">
-            <div
-              class="aspect-video bg-muted rounded-lg mb-3 overflow-hidden relative border border-border pointer-events-none">
+            <div class="aspect-video bg-muted rounded-lg mb-3 overflow-hidden relative  pointer-events-none">
               <!-- eslint-disable-next-line vue/no-v-html -->
-              <div
-class="absolute inset-0 origin-top-left scale-[0.25] w-[400%] h-[400%]"
-                v-html="template.content" />
+              <div class="absolute inset-0 origin-top-left scale-[0.25] w-[400%] h-[400%]" v-html="template.content" />
             </div>
             <h3 class="font-semibold text-foreground">{{ template.name }}</h3>
             <p class="text-sm text-muted-foreground">Click to use this template</p>

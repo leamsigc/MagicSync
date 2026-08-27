@@ -300,18 +300,15 @@ const handleDeleteAsset = (asset: Asset) => {
           </UButton>
         </div>
         <div class="flex rounded-lg  overflow-hidden">
-          <UButton variant="ghost" size="sm"
-            :class="{ 'bg-accent text-accent-foreground': viewMode === 'masonry' }"
+          <UButton variant="ghost" size="sm" :class="{ 'bg-accent text-accent-foreground': viewMode === 'masonry' }"
             @click="viewMode = 'masonry'">
             <Icon name="lucide:layout-grid" class="w-4 h-4" />
           </UButton>
-          <UButton variant="ghost" size="sm"
-            :class="{ 'bg-accent text-accent-foreground': viewMode === 'grid' }"
+          <UButton variant="ghost" size="sm" :class="{ 'bg-accent text-accent-foreground': viewMode === 'grid' }"
             @click="viewMode = 'grid'">
             <Icon name="lucide:grid-3x3" class="w-4 h-4" />
           </UButton>
-          <UButton variant="ghost" size="sm"
-            :class="{ 'bg-accent text-accent-foreground': viewMode === 'list' }"
+          <UButton variant="ghost" size="sm" :class="{ 'bg-accent text-accent-foreground': viewMode === 'list' }"
             @click="viewMode = 'list'">
             <Icon name="lucide:list" class="w-4 h-4" />
           </UButton>
@@ -344,25 +341,22 @@ const handleDeleteAsset = (asset: Asset) => {
     </div>
 
     <div v-if="viewMode === 'masonry'" class="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4">
-      <div v-for="(asset, index) in filteredAssets" :key="asset.id"
-        class="break-inside-avoid mb-4 group cursor-pointer" @click="handleAssetClick(asset)">
+      <div v-for="(asset, index) in filteredAssets" :key="asset.id" class="break-inside-avoid mb-4 group cursor-pointer"
+        @click="handleAssetClick(asset)">
         <div class="bg-card  rounded-xl overflow-hidden transition-shadow hover:shadow-md"
           :class="{ 'ring-2 ring-primary': props.selectable && isAssetSelected(asset) }">
           <div class="relative overflow-hidden">
             <div class="relative w-full">
-              <video v-if="getAssetType(asset.mimeType) === 'video'"
-                :src="asset.url" :alt="getAssetDisplayName(asset)"
+              <video v-if="getAssetType(asset.mimeType) === 'video'" :src="asset.url" :alt="getAssetDisplayName(asset)"
                 class="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105 aspect-video"
                 loading="lazy" />
               <img v-else-if="getAssetType(asset.mimeType) === 'image'" :src="getAssetPreviewUrl(asset)"
                 :alt="getAssetDisplayName(asset)"
                 class="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105"
                 loading="lazy" />
-              <div v-else
-                class="aspect-square bg-muted flex items-center justify-center relative">
+              <div v-else class="aspect-square bg-muted flex items-center justify-center relative">
                 <div class="text-center p-6">
-                  <Icon name="lucide:file"
-                    class="w-12 h-12 text-muted-foreground mx-auto mb-2" />
+                  <Icon name="lucide:file" class="w-12 h-12 text-muted-foreground mx-auto mb-2" />
                   <p class="text-sm text-muted-foreground font-medium">
                     {{ getAssetDisplayName(asset) }}
                   </p>
@@ -370,22 +364,21 @@ const handleDeleteAsset = (asset: Asset) => {
               </div>
             </div>
 
-            <div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center bg-black/90">
+            <div
+              class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center bg-black/90">
               <div class="flex items-center justify-center gap-2">
                 <UButton size="sm" variant="outline"
                   @click.stop="() => { previewAsset = asset; showPreviewModal = true; }">
                   <Icon name="lucide:eye" class="w-4 h-4" />
                 </UButton>
-                <UButton size="sm" variant="outline"
-                  @click.stop="handleOpenInNewTab(asset)">
+                <UButton size="sm" variant="outline" @click.stop="handleOpenInNewTab(asset)">
                   <Icon name="lucide:download" class="w-4 h-4" />
                 </UButton>
                 <UButton v-if="getAssetType(asset.mimeType) === 'image'" size="sm" variant="outline"
                   @click.stop="handleOpedEditModal(asset)">
                   <Icon name="lucide:edit" class="w-4 h-4" />
                 </UButton>
-                <UButton size="sm" variant="outline"
-                  @click.stop="handleDeleteAsset(asset)">
+                <UButton size="sm" variant="outline" @click.stop="handleDeleteAsset(asset)">
                   <Icon name="lucide:trash-2" class="w-4 h-4" />
                 </UButton>
               </div>
@@ -435,14 +428,13 @@ const handleDeleteAsset = (asset: Asset) => {
     </div>
 
     <div v-else-if="viewMode === 'grid'" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-      <div v-for="(asset, index) in filteredAssets" :key="asset.id"
-        class="group cursor-pointer" @click="handleAssetClick(asset)">
+      <div v-for="(asset, index) in filteredAssets" :key="asset.id" class="group cursor-pointer"
+        @click="handleAssetClick(asset)">
         <div class="bg-card  rounded-xl overflow-hidden transition-shadow hover:shadow-md"
           :class="{ 'ring-2 ring-primary': props.selectable && isAssetSelected(asset) }">
           <div class="aspect-square bg-muted relative overflow-hidden">
             <div class="relative w-full h-full">
-              <video v-if="getAssetType(asset.mimeType) === 'video'"
-                :src="asset.url" :alt="getAssetDisplayName(asset)"
+              <video v-if="getAssetType(asset.mimeType) === 'video'" :src="asset.url" :alt="getAssetDisplayName(asset)"
                 class="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105" />
               <img v-else-if="getAssetType(asset.mimeType) === 'image'" :src="getAssetPreviewUrl(asset)"
                 :alt="getAssetDisplayName(asset)"
@@ -484,8 +476,7 @@ const handleDeleteAsset = (asset: Asset) => {
 
         <div class="w-12 h-12 bg-muted rounded flex items-center justify-center shrink-0 overflow-hidden">
           <div class="relative w-full h-full">
-            <video v-if="getAssetType(asset.mimeType) === 'video'"
-              :src="asset.url" :alt="getAssetDisplayName(asset)"
+            <video v-if="getAssetType(asset.mimeType) === 'video'" :src="asset.url" :alt="getAssetDisplayName(asset)"
               class="w-full h-full object-cover" />
             <img v-else-if="getAssetType(asset.mimeType) === 'image'" :src="getAssetPreviewUrl(asset)"
               :alt="getAssetDisplayName(asset)" class="w-full h-full object-cover" />
@@ -548,8 +539,7 @@ const handleDeleteAsset = (asset: Asset) => {
           <img v-if="previewAsset && getAssetType(previewAsset.mimeType) === 'image'"
             :src="getAssetPreviewUrl(previewAsset)" :alt="getAssetDisplayName(previewAsset)"
             class="max-w-full max-h-[70vh] object-contain rounded-lg" />
-          <div v-else-if="previewAsset && getAssetType(previewAsset.mimeType) === 'video'"
-            class="w-full max-w-2xl">
+          <div v-else-if="previewAsset && getAssetType(previewAsset.mimeType) === 'video'" class="w-full max-w-2xl">
             <video :src="previewAsset.url" controls class="w-full aspect-video rounded-lg"></video>
           </div>
           <div v-else-if="previewAsset" class="w-64 h-64 bg-muted rounded-lg flex items-center justify-center">
@@ -560,7 +550,7 @@ const handleDeleteAsset = (asset: Asset) => {
           </div>
         </div>
 
-        <div v-if="previewAsset" class="px-6 py-4 space-y-3 border-t border-border">
+        <div v-if="previewAsset" class="px-6 py-4 space-y-3 ">
           <div class="grid grid-cols-2 gap-4 text-sm">
             <div>
               <span class="text-muted-foreground">{{ t('preview_modal.size') }}</span>
@@ -701,6 +691,7 @@ const handleDeleteAsset = (asset: Asset) => {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);

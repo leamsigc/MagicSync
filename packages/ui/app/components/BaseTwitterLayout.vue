@@ -25,7 +25,7 @@ const { size = 'md' } = defineProps<Props>();
         'max-w-xl': size === 'sm'
       }">
         <div class=" rounded-2xl min-h-screen ">
-          <div class="sticky top-0 z-10  rounded-t-2xl border-b border-border px-5 py-4">
+          <div class="sticky top-0 z-10  rounded-t-2xl border-b border-primary/10 px-5 py-4">
             <h1 class="text-xl font-bold text-highlighted">Home</h1>
           </div>
           <div class="p-4">

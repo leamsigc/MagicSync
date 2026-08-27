@@ -1,0 +1,58 @@
+{
+  "en": {
+    "title": "Audio Player — Play audio with waveform visualization",
+    "description": "Play audio files with waveform visualization",
+    "app_title": "Audio Player",
+    "drop_here": "Drop your audio file here or click to browse",
+    "supported_formats": "Supports MP3, WAV, OGG, FLAC, M4A and more",
+    "upload_to_start": "Upload an audio file to get started",
+    "feature_player": "Audio Player",
+    "feature_player_desc": "Play audio files with waveform visualization",
+    "feature_controls": "Playback Controls",
+    "feature_controls_desc": "Full control: play, pause, seek, and speed adjustment",
+    "feature_local": "Local Playback",
+    "feature_local_desc": "Process audio files locally in your browser"
+  },
+  "es": {
+    "title": "Reproductor de Audio — Reproduce audio con visualización de ondas",
+    "description": "Reproduce archivos de audio con visualización de ondas",
+    "app_title": "Reproductor de Audio",
+    "drop_here": "Suelta tu archivo de audio aquí o haz clic para explorar",
+    "supported_formats": "Compatible con MP3, WAV, OGG, FLAC, M4A y más",
+    "upload_to_start": "Sube un archivo de audio para comenzar",
+    "feature_player": "Reproductor de Audio",
+    "feature_player_desc": "Reproduce archivos de audio con visualización de ondas",
+    "feature_controls": "Controles de reproducción",
+    "feature_controls_desc": "Control total: reproducir, pausar, buscar y ajustar velocidad",
+    "feature_local": "Reproducción local",
+    "feature_local_desc": "Procesa archivos de audio localmente en tu navegador"
+  },
+  "de": {
+    "title": "Audio-Player — Audio mit Wellenform-Visualisierung abspielen",
+    "description": "Spiele Audiodateien mit Wellenform-Visualisierung ab",
+    "app_title": "Audio-Player",
+    "drop_here": "Lege deine Audiodatei hier ab oder klicke zum Auswählen",
+    "supported_formats": "Unterstützt MP3, WAV, OGG, FLAC, M4A und mehr",
+    "upload_to_start": "Lade eine Audiodatei hoch, um loszulegen",
+    "feature_player": "Audio-Player",
+    "feature_player_desc": "Spiele Audiodateien mit Wellenform-Visualisierung ab",
+    "feature_controls": "Wiedergabesteuerung",
+    "feature_controls_desc": "Volle Kontrolle: Wiedergabe, Pause, Suchlauf und Geschwindigkeit",
+    "feature_local": "Lokale Wiedergabe",
+    "feature_local_desc": "Verarbeite Audiodateien lokal in deinem Browser"
+  },
+  "fr": {
+    "title": "Lecteur Audio — Écoutez l'audio avec visualisation d'onde",
+    "description": "Écoutez vos fichiers audio avec visualisation d'onde",
+    "app_title": "Lecteur Audio",
+    "drop_here": "Déposez votre fichier audio ici ou cliquez pour parcourir",
+    "supported_formats": "Prend en charge MP3, WAV, OGG, FLAC, M4A et plus",
+    "upload_to_start": "Importez un fichier audio pour commencer",
+    "feature_player": "Lecteur Audio",
+    "feature_player_desc": "Écoutez vos fichiers audio avec visualisation d'onde",
+    "feature_controls": "Contrôles de lecture",
+    "feature_controls_desc": "Contrôle total : lecture, pause, position et vitesse",
+    "feature_local": "Lecture locale",
+    "feature_local_desc": "Traitez les fichiers audio localement dans votre navigateur"
+  }
+}

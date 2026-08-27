@@ -196,42 +196,31 @@ const columns: TableColumn<AdminBusiness>[] = [
         <p class="text-muted-foreground">View and manage all businesses</p>
       </div>
       <div class="flex flex-col sm:flex-row gap-2">
-        <UInput
-          v-model="searchQuery"
-          placeholder="Search businesses..."
-          icon="i-heroicons-magnifying-glass"
-          size="sm"
-          class="sm:w-64"
-        />
+        <UInput v-model="searchQuery" placeholder="Search businesses..." icon="i-heroicons-magnifying-glass" size="sm"
+          class="sm:w-64" />
         <UButtonGroup size="sm">
-          <UButton
-            :variant="viewMode === 'cards' ? 'solid' : 'outline'"
-            icon="i-lucide-layout-grid"
-            @click="() => { viewMode = 'cards' }"
-          >
+          <UButton :variant="viewMode === 'cards' ? 'solid' : 'outline'" icon="i-lucide-layout-grid"
+            @click="() => { viewMode = 'cards' }">
             Cards
           </UButton>
-          <UButton
-            :variant="viewMode === 'table' ? 'solid' : 'outline'"
-            icon="i-lucide-table"
-            @click="() => { viewMode = 'table' }"
-          >
+          <UButton :variant="viewMode === 'table' ? 'solid' : 'outline'" icon="i-lucide-table"
+            @click="() => { viewMode = 'table' }">
             Table
           </UButton>
         </UButtonGroup>
       </div>
     </div>
 
-    <div v-if="loading" class="bg-elevated rounded-2xl flex justify-center py-12">
+    <div v-if="loading" class="rounded flex justify-center py-12">
       <UIcon name="i-heroicons-arrow-path" class="w-6 h-6 animate-spin text-muted-foreground" />
     </div>
 
-    <div v-else-if="filteredBusinesses.length === 0" class="bg-elevated rounded-2xl text-center py-12 text-muted-foreground">
+    <div v-else-if="filteredBusinesses.length === 0" class="rounded text-center py-12 text-muted-foreground">
       No businesses found
     </div>
 
     <div v-else-if="viewMode === 'cards'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      <div v-for="biz in filteredBusinesses" :key="biz.id" class="bg-elevated rounded-2xl p-4 hover:shadow-lg transition-shadow">
+      <div v-for="biz in filteredBusinesses" :key="biz.id" class="rounded p-4 hover:shadow-lg transition-shadow">
         <div class="space-y-3">
           <div class="flex items-start justify-between gap-2">
             <div class="flex-1 min-w-0">
@@ -253,14 +242,16 @@ const columns: TableColumn<AdminBusiness>[] = [
           </div>
           <div class="flex gap-2 pt-1">
             <UButton size="xs" icon="i-lucide-pencil" variant="outline" @click="() => openEdit(biz)">Edit</UButton>
-            <UButton size="xs" icon="i-lucide-trash-2" variant="outline" color="error" @click="() => confirmDelete(biz)">Delete</UButton>
+            <UButton size="xs" icon="i-lucide-trash-2" variant="outline" color="error"
+              @click="() => confirmDelete(biz)">Delete</UButton>
           </div>
         </div>
       </div>
     </div>
 
-    <div v-else class="bg-elevated rounded-2xl overflow-hidden">
-      <UTable ref="table" :data="filteredBusinesses" :columns="columns" class="flex-1" />
+    <div v-else class="rounded overflow-hidden">
+      <UTable ref="table" :data="filteredBusinesses" :columns="columns" class="flex-1"
+        :ui="{ 'tr': 'bg-transparent', 'td': 'border-0', 'th': 'border-0' }" />
     </div>
 
     <UModal v-model:open="showEditModal">

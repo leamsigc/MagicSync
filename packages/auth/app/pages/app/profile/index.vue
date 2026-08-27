@@ -59,11 +59,10 @@ useHead({
     </div>
 
     <template v-else>
-      <div class="bg-elevated border border-border rounded-2xl overflow-hidden mb-6">
+      <div class="bg-elevated  rounded-2xl overflow-hidden mb-6">
         <div class="h-20 bg-gradient-to-r from-primary/25 via-primary/10 to-transparent" aria-hidden="true" />
         <div class="px-6 pb-6 -mt-9 flex flex-col sm:flex-row sm:items-end gap-4">
-          <UAvatar
-:src="user.image || undefined" :alt="user.name || 'User'" size="3xl"
+          <UAvatar :src="user.image || undefined" :alt="user.name || 'User'" size="3xl"
             class="ring-4 ring-background shrink-0" />
           <div class="flex-1 min-w-0 sm:pb-1">
             <p class="text-lg font-semibold text-highlighted truncate">
@@ -79,15 +78,14 @@ useHead({
 
       <div class="grid gap-6 lg:grid-cols-3">
         <div class="lg:col-span-1 space-y-6" data-tour="profile-step-0">
-          <div class="bg-elevated border border-border rounded-2xl p-5">
+          <div class="bg-elevated  rounded-2xl p-5">
             <ProfileAvatar />
           </div>
 
-          <div class="bg-elevated border border-border rounded-2xl p-5">
+          <div class="bg-elevated  rounded-2xl p-5">
             <h2 class="text-sm font-semibold text-highlighted mb-3">{{ t('shortcuts.title') }}</h2>
             <nav class="space-y-1">
-              <NuxtLink
-v-for="link in shortcutLinks" :key="link.to" :to="link.to"
+              <NuxtLink v-for="link in shortcutLinks" :key="link.to" :to="link.to"
                 class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-default hover:bg-accent hover:text-accent-foreground transition-colors min-h-11">
                 <UIcon :name="link.icon" class="size-4 text-muted shrink-0" />
                 <span class="flex-1">{{ link.label }}</span>
@@ -98,16 +96,15 @@ v-for="link in shortcutLinks" :key="link.to" :to="link.to"
         </div>
 
         <div class="lg:col-span-2 space-y-6" data-tour="profile-step-1">
-          <div class="bg-elevated border border-border rounded-2xl overflow-hidden">
+          <div class="bg-elevated  rounded-2xl overflow-hidden">
             <ProfileForm />
           </div>
 
-          <div class="bg-elevated border border-border rounded-2xl p-5">
+          <div class="bg-elevated  rounded-2xl p-5">
             <h2 class="text-base font-semibold text-highlighted mb-1">{{ t('theme.title') }}</h2>
             <p class="text-sm text-muted mb-4">{{ t('theme.description') }}</p>
             <div class="flex flex-wrap gap-3">
-              <UButton
-v-for="themeOption in themes" :key="themeOption.id" :disabled="saving" variant="outline"
+              <UButton v-for="themeOption in themes" :key="themeOption.id" :disabled="saving" variant="outline"
                 class="gap-2 flex-1 min-w-28 justify-center rounded-xl"
                 :class="theme === themeOption.id ? 'ring-2 ring-primary' : ''" @click="selectTheme(themeOption.id)">
                 <span class="size-4 rounded-full shrink-0" :style="{ backgroundColor: themeOption.color }" />

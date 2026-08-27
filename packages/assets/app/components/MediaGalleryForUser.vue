@@ -116,18 +116,17 @@ const items = [{
                     {{ t('selected') }}
                   </div>
                   <div class="relative w-full h-full">
-                    <video v-if="getAssetType(asset.mimeType) === 'video'"
-                      :src="asset.url" :alt="asset.originalName"
+                    <video v-if="getAssetType(asset.mimeType) === 'video'" :src="asset.url" :alt="asset.originalName"
                       class="w-full h-full object-cover rounded-lg shadow-md aspect-square" />
-                    <img v-else-if="getAssetType(asset.mimeType) === 'image'"
-                      :src="asset.url" :alt="asset.originalName"
+                    <img v-else-if="getAssetType(asset.mimeType) === 'image'" :src="asset.url" :alt="asset.originalName"
                       class="w-full h-full object-cover rounded-lg shadow-md aspect-square" />
                     <div v-else
                       class="w-full h-full flex items-center justify-center bg-muted rounded-lg shadow-md aspect-square">
-                      <Icon :name="getAssetIcon(getAssetType(asset.mimeType))" class="w-12 h-12 text-muted-foreground" />
+                      <Icon :name="getAssetIcon(getAssetType(asset.mimeType))"
+                        class="w-12 h-12 text-muted-foreground" />
                     </div>
                     <div
-                      class="absolute top-1 start-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold uppercase bg-background/80 backdrop-blur-sm text-foreground border border-border">
+                      class="absolute top-1 start-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold uppercase bg-background/80 backdrop-blur-sm text-foreground ">
                       {{ t(getAssetType(asset.mimeType)) }}
                     </div>
                   </div>

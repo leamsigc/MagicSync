@@ -32,7 +32,7 @@ const panClamped = computed(() => Math.min(Math.max(flow.value.panCount, 2), 4, 
 <template>
   <div class="space-y-5" data-testid="deck-panel">
     <section class="space-y-2">
-      <p class="text-xs font-semibold uppercase tracking-wider text-neutral-400">{{ t('deck.brand') }}</p>
+      <p class="text-xs font-semibold uppercase tracking-wider text-muted">{{ t('deck.brand') }}</p>
       <UFormField :label="t('deck.handle')" size="xs">
         <UInput
           v-model="handle"
@@ -42,13 +42,13 @@ const panClamped = computed(() => Math.min(Math.max(flow.value.panCount, 2), 4, 
           data-testid="field-handle"
         />
       </UFormField>
-      <p class="text-[10px] text-neutral-500 leading-relaxed">{{ t('deck.handleHint') }}</p>
+      <p class="text-[10px] text-muted leading-relaxed">{{ t('deck.handleHint') }}</p>
     </section>
 
     <USeparator />
 
     <section class="space-y-2" data-testid="flow-panel">
-      <p class="text-xs font-semibold uppercase tracking-wider text-neutral-400">{{ t('flow.label') }}</p>
+      <p class="text-xs font-semibold uppercase tracking-wider text-muted">{{ t('flow.label') }}</p>
       <div class="grid grid-cols-3 gap-1.5" data-testid="flow-modes">
         <UButton
           v-for="item in modeItems"
@@ -59,13 +59,13 @@ const panClamped = computed(() => Math.min(Math.max(flow.value.panCount, 2), 4, 
           block
           :data-testid="`flow-mode-${item.value}`"
           :data-active="flow.mode === item.value"
-          :class="flow.mode === item.value ? 'ring-1 ring-primary bg-primary/10 text-primary' : 'text-neutral-400'"
+          :class="flow.mode === item.value ? 'ring-1 ring-primary bg-primary/10 text-primary' : 'text-muted'"
           @click="() => flow.mode = item.value as typeof flow.mode"
         >
           {{ item.label }}
         </UButton>
       </div>
-      <p class="text-[10px] text-neutral-500 leading-relaxed">{{ modeHint }}</p>
+      <p class="text-[10px] text-muted leading-relaxed">{{ modeHint }}</p>
 
       <template v-if="needsImage">
         <div v-if="flow.mode === 'pan'" class="grid grid-cols-2 gap-2 items-end">
@@ -79,7 +79,7 @@ const panClamped = computed(() => Math.min(Math.max(flow.value.panCount, 2), 4, 
               data-testid="flow-pan-count"
             />
           </UFormField>
-          <p class="text-[10px] text-neutral-500 pb-1.5">
+          <p class="text-[10px] text-muted pb-1.5">
             {{ t('flow.panSlides', { count: panClamped }) }}
           </p>
         </div>
@@ -91,21 +91,21 @@ const panClamped = computed(() => Math.min(Math.max(flow.value.panCount, 2), 4, 
 
         <div v-if="flow.mode === 'plane'" class="grid grid-cols-2 gap-2">
           <label class="space-y-1">
-            <span class="text-[10px] uppercase tracking-wide text-neutral-500">{{ t('flow.from') }}</span>
+            <span class="text-[10px] uppercase tracking-wide text-muted">{{ t('flow.from') }}</span>
             <input
               v-model="flow.gradientFrom"
               type="color"
               data-testid="flow-gradient-from"
-              class="h-8 w-full cursor-pointer rounded border border-neutral-700 bg-transparent"
+              class="h-8 w-full cursor-pointer rounded border border-default bg-transparent"
             >
           </label>
           <label class="space-y-1">
-            <span class="text-[10px] uppercase tracking-wide text-neutral-500">{{ t('flow.to') }}</span>
+            <span class="text-[10px] uppercase tracking-wide text-muted">{{ t('flow.to') }}</span>
             <input
               v-model="flow.gradientTo"
               type="color"
               data-testid="flow-gradient-to"
-              class="h-8 w-full cursor-pointer rounded border border-neutral-700 bg-transparent"
+              class="h-8 w-full cursor-pointer rounded border border-default bg-transparent"
             >
           </label>
         </div>

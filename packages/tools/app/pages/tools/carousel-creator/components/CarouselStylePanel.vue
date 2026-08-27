@@ -23,6 +23,11 @@ function applyPreset(preset: typeof PALETTES[number]): void {
   applyPalette({ bg: preset.bg, text: preset.text, accent: preset.accent })
 }
 
+function onPaletteInput(field: 'bg' | 'text' | 'accent', e: Event): void {
+  const value = (e.target as HTMLInputElement).value
+  applyPalette({ ...palette.value, [field]: value })
+}
+
 const showKicker = computed(() => ['title-kicker', 'tips-list', 'full-photo'].includes(currentSlide.value.templateKey))
 const showBody = computed(() => ['title-kicker', 'qa', 'cta', 'stat-highlight', 'photo-left', 'full-photo'].includes(currentSlide.value.templateKey))
 const showItems = computed(() => ['tips-list', 'steps', 'checklist', 'comparison', 'myth-fact'].includes(currentSlide.value.templateKey))
@@ -45,7 +50,7 @@ function previewFor(templateKey: string): string {
 <template>
   <div class="space-y-5">
     <section class="space-y-2">
-      <p class="text-xs font-semibold uppercase tracking-wider text-neutral-400">{{ t('style.layout') }}</p>
+      <p class="text-xs font-semibold uppercase tracking-wider text-muted">{{ t('style.layout') }}</p>
       <div class="grid grid-cols-2 gap-2">
         <button
           v-for="tpl in CAROUSEL_TEMPLATES"
@@ -54,12 +59,12 @@ function previewFor(templateKey: string): string {
           :data-testid="`layout-card-${tpl.key}`"
           :data-active="currentSlide.templateKey === tpl.key"
           class="group relative rounded-lg overflow-hidden border text-left transition-colors"
-          :class="currentSlide.templateKey === tpl.key ? 'border-primary ring-2 ring-primary/50' : 'border-neutral-700/60 hover:border-primary/50'"
+          :class="currentSlide.templateKey === tpl.key ? 'border-primary ring-2 ring-primary/50' : 'border-default hover:border-primary/50'"
           :title="tpl.description"
           :aria-label="`${t('style.layout')}: ${tpl.title}`"
           @click="() => applyTemplateToCurrent(tpl.key)"
         >
-          <span class="block relative aspect-[4/5] bg-neutral-800 overflow-hidden">
+          <span class="block relative aspect-[4/5] bg-muted overflow-hidden">
             <span
               class="absolute top-0 left-0 origin-top-left pointer-events-none block"
               :style="{ width: '1080px', height: '1350px', transform: 'scale(0.125)' }"
@@ -67,7 +72,7 @@ function previewFor(templateKey: string): string {
             />
           </span>
           <span class="flex items-center justify-between gap-1 px-2 py-1.5">
-            <span class="text-[11px] font-medium text-neutral-200 truncate">{{ tpl.title }}</span>
+            <span class="text-[11px] font-medium text-default truncate">{{ tpl.title }}</span>
             <span
               v-if="PHOTO_TEMPLATES.has(tpl.key)"
               class="shrink-0 text-[9px] uppercase tracking-wide px-1 rounded bg-primary/15 text-primary"
@@ -78,13 +83,13 @@ function previewFor(templateKey: string): string {
     </section>
 
     <section class="space-y-2">
-      <p class="text-xs font-semibold uppercase tracking-wider text-neutral-400">{{ t('style.palette') }}</p>
+      <p class="text-xs font-semibold uppercase tracking-wider text-muted">{{ t('style.palette') }}</p>
       <div class="grid grid-cols-4 gap-2">
         <button
           v-for="preset in PALETTES"
           :key="preset.name"
           type="button"
-          class="rounded-lg border border-neutral-700/60 p-1.5 hover:border-primary/60 transition-colors"
+          class="rounded-lg border border-default p-1.5 hover:border-primary/60 transition-colors"
           :title="preset.name"
           :aria-label="preset.name"
           @click="() => applyPreset(preset)"
@@ -97,33 +102,33 @@ function previewFor(templateKey: string): string {
       </div>
       <div class="grid grid-cols-3 gap-2">
         <label class="space-y-1">
-          <span class="text-[10px] uppercase tracking-wide text-neutral-500">{{ t('palette.bg') }}</span>
+          <span class="text-[10px] uppercase tracking-wide text-muted">{{ t('palette.bg') }}</span>
           <input
             type="color"
             :value="palette.bg"
             data-testid="palette-bg"
-            class="h-8 w-full cursor-pointer rounded border border-neutral-700 bg-transparent"
-            @input="() => applyPalette({ ...palette, bg: ($event.target as HTMLInputElement).value })"
+            class="h-8 w-full cursor-pointer rounded border border-default bg-transparent"
+            @change="(e: Event) => onPaletteInput('bg', e)"
           >
         </label>
         <label class="space-y-1">
-          <span class="text-[10px] uppercase tracking-wide text-neutral-500">{{ t('palette.text') }}</span>
+          <span class="text-[10px] uppercase tracking-wide text-muted">{{ t('palette.text') }}</span>
           <input
             type="color"
             :value="palette.text"
             data-testid="palette-text"
-            class="h-8 w-full cursor-pointer rounded border border-neutral-700 bg-transparent"
-            @input="() => applyPalette({ ...palette, text: ($event.target as HTMLInputElement).value })"
+            class="h-8 w-full cursor-pointer rounded border border-default bg-transparent"
+            @change="(e: Event) => onPaletteInput('text', e)"
           >
         </label>
         <label class="space-y-1">
-          <span class="text-[10px] uppercase tracking-wide text-neutral-500">{{ t('palette.accent') }}</span>
+          <span class="text-[10px] uppercase tracking-wide text-muted">{{ t('palette.accent') }}</span>
           <input
             type="color"
             :value="palette.accent"
             data-testid="palette-accent"
-            class="h-8 w-full cursor-pointer rounded border border-neutral-700 bg-transparent"
-            @input="() => applyPalette({ ...palette, accent: ($event.target as HTMLInputElement).value })"
+            class="h-8 w-full cursor-pointer rounded border border-default bg-transparent"
+            @change="(e: Event) => onPaletteInput('accent', e)"
           >
         </label>
       </div>
@@ -132,7 +137,7 @@ function previewFor(templateKey: string): string {
     <USeparator />
 
     <section class="space-y-3">
-      <p class="text-xs font-semibold uppercase tracking-wider text-neutral-400">{{ t('style.content') }}</p>
+      <p class="text-xs font-semibold uppercase tracking-wider text-muted">{{ t('style.content') }}</p>
       <UFormField v-if="showKicker" :label="t('fields.kicker')" size="xs">
         <UInput
           :model-value="currentSlide.data.kicker ?? ''"
@@ -173,7 +178,7 @@ function previewFor(templateKey: string): string {
           data-testid="field-items"
           @update:model-value="(v: string) => itemsText = v"
         />
-        <p class="text-[10px] text-neutral-500 mt-1">{{ t('fields.itemsHint') }}</p>
+        <p class="text-[10px] text-muted mt-1">{{ t('fields.itemsHint') }}</p>
       </UFormField>
       <template v-if="showQuote">
         <UFormField :label="t('fields.quote')" size="xs">
@@ -226,7 +231,7 @@ function previewFor(templateKey: string): string {
     <USeparator />
 
     <section class="space-y-2">
-      <p class="text-xs font-semibold uppercase tracking-wider text-neutral-400">{{ t('style.pattern') }}</p>
+      <p class="text-xs font-semibold uppercase tracking-wider text-muted">{{ t('style.pattern') }}</p>
       <div class="grid grid-cols-5 gap-1.5" data-testid="pattern-grid">
         <button
           v-for="pattern in CAROUSEL_PATTERNS"
@@ -235,7 +240,7 @@ function previewFor(templateKey: string): string {
           :data-testid="`pattern-${pattern.key}`"
           :data-active="currentSlide.pattern === pattern.key"
           class="relative aspect-square rounded-md border overflow-hidden transition-transform hover:scale-105"
-          :class="currentSlide.pattern === pattern.key ? 'ring-2 ring-primary border-transparent' : 'border-neutral-700/60'"
+          :class="currentSlide.pattern === pattern.key ? 'ring-2 ring-primary border-transparent' : 'border-default'"
           :title="pattern.key"
           :aria-label="`${t('style.pattern')}: ${pattern.key}`"
           @click="() => currentSlide.pattern = pattern.key"
@@ -253,16 +258,16 @@ function previewFor(templateKey: string): string {
         </button>
       </div>
       <div class="flex items-center gap-3">
-        <label class="flex items-center gap-2 text-xs text-neutral-400">
+        <label class="flex items-center gap-2 text-xs text-muted">
           {{ t('style.patternColor') }}
           <input
             v-model="currentSlide.patternColor"
             type="color"
             data-testid="pattern-color"
-            class="h-7 w-10 cursor-pointer rounded border border-neutral-700 bg-transparent"
+            class="h-7 w-10 cursor-pointer rounded border border-default bg-transparent"
           >
         </label>
-        <label class="flex items-center gap-2 text-xs text-neutral-400 flex-1">
+        <label class="flex items-center gap-2 text-xs text-muted flex-1">
           {{ t('style.patternOpacity') }}
           <USlider
             v-model="currentSlide.patternOpacity"
@@ -273,6 +278,30 @@ function previewFor(templateKey: string): string {
           />
         </label>
       </div>
+      <UFormField :label="t('style.borderRadius')" size="xs">
+        <USlider
+          v-model="currentSlide.borderRadius"
+          :min="0"
+          :max="40"
+          :step="1"
+        />
+      </UFormField>
+    </section>
+
+    <USeparator />
+
+    <section class="space-y-2">
+      <p class="text-xs font-semibold uppercase tracking-wider text-muted">{{ t('style.font') }}</p>
+      <USelect
+        :model-value="palette.font ?? null"
+        :items="props.fonts"
+        placeholder="Default"
+        class="w-full"
+        data-testid="font-select"
+        :aria-label="t('style.font')"
+        @update:model-value="(v: string | null) => applyPalette({ ...palette.value, font: v ?? undefined })"
+      />
+      <p class="text-[10px] text-muted">{{ t('style.fontHint') }}</p>
     </section>
 
     <p class="sr-only">{{ props.fonts.length }} fonts available</p>

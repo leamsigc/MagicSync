@@ -1,10 +1,13 @@
+<i18n src="../index.json"></i18n>
 <script setup lang="ts">
 /**
  *
  * BoardSettingsModal — transition time + unlock PIN for the board display.
  *
  */
-import type { MenuBoardSettings } from '../types'
+import { TV_DISPLAY_SIZES, type MenuBoardSettings } from '../types'
+
+const { t } = useI18n()
 
 const props = defineProps<{ settings: MenuBoardSettings }>()
 const emit = defineEmits<{
@@ -21,6 +24,7 @@ function save(): void {
   emit('update:settings', {
     transitionTime: Math.max(1, Number(draft.value.transitionTime) || 10),
     unlockPin: draft.value.unlockPin,
+    displaySize: draft.value.displaySize,
   })
   emit('close')
   open.value = false
@@ -32,28 +36,36 @@ function save(): void {
     <template #content>
       <div class="p-6 space-y-6" data-testid="board-settings-modal">
         <div class="flex justify-between items-center">
-          <h2 class="text-xl font-semibold tracking-tight">Display Settings</h2>
+          <h2 class="text-xl font-semibold tracking-tight">{{ t('display_settings') }}</h2>
           <UButton variant="ghost" color="neutral" icon="i-lucide-x" @click="() => { open = false }" />
         </div>
 
         <UFormField
-label="Transition Time (seconds)"
-          description="How long each page is displayed before switching to the next.">
+:label="t('transition_time')"
+          :description="t('transition_time_desc')">
           <UInput
 v-model.number="draft.transitionTime" type="number" :min="1" :max="3600" class="w-full"
             data-testid="settings-transition-time" />
         </UFormField>
 
         <UFormField
-label="Unlock PIN"
-          description="Required to exit display mode when locked. Keep this safe!">
+:label="t('display_size')"
+          :description="t('display_size_desc')">
+          <USelect
+            v-model="draft.displaySize" :items="TV_DISPLAY_SIZES.map(s => ({ label: s.label, value: s.key }))"
+            class="w-full" data-testid="settings-display-size" />
+        </UFormField>
+
+        <UFormField
+:label="t('unlock_pin')"
+          :description="t('unlock_pin_desc')">
           <UInput
 v-model="draft.unlockPin" class="w-full" placeholder="e.g. 1234"
             data-testid="settings-unlock-pin" />
         </UFormField>
 
         <div class="flex justify-end">
-          <UButton data-testid="settings-save" @click="save">Save Settings</UButton>
+          <UButton data-testid="settings-save" @click="save">{{ t('save_settings') }}</UButton>
         </div>
       </div>
     </template>
