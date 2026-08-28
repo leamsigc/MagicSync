@@ -59,29 +59,15 @@ function handleSaveOnly(): void {
 </script>
 
 <template>
-  <UModal
-    v-model:open="open"
-    :title="t('aiTemplate.title')"
-    :description="t('aiTemplate.description')"
-    class="max-w-lg"
-    @closed="dismiss"
-  >
+  <UModal v-model:open="open" :title="t('aiTemplate.title')" :description="t('aiTemplate.description')" class="max-w-lg"
+    @closed="dismiss">
     <template #body>
       <div class="space-y-4">
-        <UAlert
-          v-if="error"
-          color="error"
-          variant="subtle"
-          icon="i-lucide-triangle-alert"
-          :title="t('aiTemplate.errorTitle')"
-          :description="error"
-        />
+        <UAlert v-if="error" color="error" variant="subtle" icon="i-lucide-triangle-alert"
+          :title="t('aiTemplate.errorTitle')" :description="error" />
 
-        <div
-          v-if="generated"
-          class="rounded-xl border border-success/30 bg-success/10 p-4 space-y-3"
-          data-testid="ai-template-success"
-        >
+        <div v-if="generated" class="rounded-xl border border-success/30 bg-success/10 p-4 space-y-3"
+          data-testid="ai-template-success">
           <div class="flex items-center gap-2">
             <UIcon name="i-lucide-circle-check" class="w-5 h-5 text-success" />
             <p class="font-semibold text-highlighted">{{ t('aiTemplate.successTitle') }}</p>
@@ -91,11 +77,8 @@ function handleSaveOnly(): void {
             <span class="text-[11px] font-mono px-2 py-1 rounded-full bg-elevated border border-default text-toned">
               {{ generated.slides.length }} {{ t('aiTemplate.pages') }}
             </span>
-            <span
-              v-for="slide in generated.slides"
-              :key="slide.templateKey"
-              class="text-[10px] px-1.5 py-0.5 rounded bg-accented text-toned"
-            >
+            <span v-for="slide in generated.slides" :key="slide.templateKey"
+              class="text-[10px] px-1.5 py-0.5 rounded bg-accented text-toned">
               {{ slide.templateKey }}
             </span>
           </div>
@@ -103,20 +86,15 @@ function handleSaveOnly(): void {
             <span class="text-[11px] text-muted">{{ t('style.palette') }}</span>
             <span class="h-4 w-4 rounded-full border border-white/20" :style="{ background: generated.palette.bg }" />
             <span class="h-4 w-4 rounded-full border border-white/20" :style="{ background: generated.palette.text }" />
-            <span class="h-4 w-4 rounded-full border border-white/20" :style="{ background: generated.palette.accent }" />
+            <span class="h-4 w-4 rounded-full border border-white/20"
+              :style="{ background: generated.palette.accent }" />
           </div>
         </div>
 
         <template v-else>
           <UFormField :label="t('aiTemplate.promptLabel')" size="sm">
-            <UTextarea
-              v-model="prompt"
-              :rows="4"
-              :maxlength="600"
-              :placeholder="t('aiTemplate.promptPlaceholder')"
-              class="w-full"
-              data-testid="ai-template-prompt"
-            />
+            <UTextarea v-model="prompt" :rows="4" :maxlength="10000" :placeholder="t('aiTemplate.promptPlaceholder')"
+              class="w-full" data-testid="ai-template-prompt" />
           </UFormField>
           <div class="flex items-center justify-between gap-2 -mt-2">
             <p class="text-[11px] text-muted">{{ t('aiTemplate.promptHint') }}</p>
@@ -124,28 +102,15 @@ function handleSaveOnly(): void {
           </div>
 
           <div class="flex flex-wrap gap-1.5">
-            <UButton
-              v-for="example in examples"
-              :key="example"
-              size="xs"
-              color="neutral"
-              variant="outline"
-              :disabled="generating"
-              data-testid="ai-template-example"
-              @click="prompt = example"
-            >
+            <UButton v-for="example in examples" :key="example" size="xs" color="neutral" variant="outline"
+              :disabled="generating" data-testid="ai-template-example" @click="prompt = example">
               {{ example }}
             </UButton>
           </div>
 
           <UFormField :label="t('aiTemplate.pageLabel')" size="sm">
-            <USelect
-              v-model="slideCount"
-              :items="pageItems"
-              value-key="value"
-              size="sm"
-              data-testid="ai-template-pages"
-            />
+            <USelect v-model="slideCount" :items="pageItems" value-key="value" size="sm"
+              data-testid="ai-template-pages" />
           </UFormField>
         </template>
       </div>
@@ -154,38 +119,17 @@ function handleSaveOnly(): void {
     <template #footer>
       <div class="flex justify-end gap-2 w-full">
         <template v-if="generated">
-          <UButton
-            color="neutral"
-            variant="ghost"
-            :label="t('aiTemplate.saveOnly')"
-            data-testid="btn-ai-template-save-only"
-            @click="handleSaveOnly"
-          />
-          <UButton
-            color="primary"
-            icon="i-lucide-sparkles"
-            :label="t('aiTemplate.apply')"
-            data-testid="btn-ai-template-apply"
-            @click="handleApplyAndClose"
-          />
+          <UButton color="neutral" variant="ghost" :label="t('aiTemplate.saveOnly')"
+            data-testid="btn-ai-template-save-only" @click="handleSaveOnly" />
+          <UButton color="primary" icon="i-lucide-sparkles" :label="t('aiTemplate.apply')"
+            data-testid="btn-ai-template-apply" @click="handleApplyAndClose" />
         </template>
         <template v-else>
-          <UButton
-            color="neutral"
-            variant="ghost"
-            :label="t('templates.cancel')"
-            :disabled="generating"
-            @click="close"
-          />
-          <UButton
-            color="primary"
-            icon="i-lucide-wand-2"
-            :loading="generating"
-            :label="generating ? t('aiTemplate.generating') : t('aiTemplate.generate')"
-            :disabled="!canGenerate"
-            data-testid="btn-ai-template-generate"
-            @click="generate"
-          />
+          <UButton color="neutral" variant="ghost" :label="t('templates.cancel')" :disabled="generating"
+            @click="close" />
+          <UButton color="primary" icon="i-lucide-wand-2" :loading="generating"
+            :label="generating ? t('aiTemplate.generating') : t('aiTemplate.generate')" :disabled="!canGenerate"
+            data-testid="btn-ai-template-generate" @click="generate" />
         </template>
       </div>
     </template>

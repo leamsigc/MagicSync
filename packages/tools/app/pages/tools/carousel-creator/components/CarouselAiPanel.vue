@@ -60,7 +60,8 @@ async function generate(): Promise<void> {
   <div class="space-y-3" data-testid="ai-panel">
     <template v-if="loggedIn">
       <UFormField :label="t('ai.topic')" size="xs">
-        <UTextarea v-model="topic" :placeholder="t('ai.topicPlaceholder')" :rows="3" :maxlength="1000" class="w-full" />
+        <UTextarea v-model="topic" :placeholder="t('ai.topicPlaceholder')" :rows="3" :maxlength="10000"
+          class="w-full" />
       </UFormField>
 
       <div class="grid grid-cols-2 gap-2">

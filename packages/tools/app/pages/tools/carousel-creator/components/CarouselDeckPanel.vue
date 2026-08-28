@@ -34,13 +34,8 @@ const panClamped = computed(() => Math.min(Math.max(flow.value.panCount, 2), 4, 
     <section class="space-y-2">
       <p class="text-xs font-semibold uppercase tracking-wider text-muted">{{ t('deck.brand') }}</p>
       <UFormField :label="t('deck.handle')" size="xs">
-        <UInput
-          v-model="handle"
-          :placeholder="t('deck.handlePlaceholder')"
-          size="sm"
-          class="w-full"
-          data-testid="field-handle"
-        />
+        <UInput v-model="handle" :placeholder="t('deck.handlePlaceholder')" size="sm" class="w-full"
+          data-testid="field-handle" />
       </UFormField>
       <p class="text-[10px] text-muted leading-relaxed">{{ t('deck.handleHint') }}</p>
     </section>
@@ -50,18 +45,10 @@ const panClamped = computed(() => Math.min(Math.max(flow.value.panCount, 2), 4, 
     <section class="space-y-2" data-testid="flow-panel">
       <p class="text-xs font-semibold uppercase tracking-wider text-muted">{{ t('flow.label') }}</p>
       <div class="grid grid-cols-3 gap-1.5" data-testid="flow-modes">
-        <UButton
-          v-for="item in modeItems"
-          :key="item.value"
-          size="sm"
-          variant="soft"
-          color="neutral"
-          block
-          :data-testid="`flow-mode-${item.value}`"
-          :data-active="flow.mode === item.value"
+        <UButton v-for="item in modeItems" :key="item.value" size="sm" variant="soft" color="neutral" block
+          :data-testid="`flow-mode-${item.value}`" :data-active="flow.mode === item.value"
           :class="flow.mode === item.value ? 'ring-1 ring-primary bg-primary/10 text-primary' : 'text-muted'"
-          @click="() => flow.mode = item.value as typeof flow.mode"
-        >
+          @click="() => flow.mode = item.value as typeof flow.mode">
           {{ item.label }}
         </UButton>
       </div>
@@ -70,53 +57,31 @@ const panClamped = computed(() => Math.min(Math.max(flow.value.panCount, 2), 4, 
       <template v-if="needsImage">
         <div v-if="flow.mode === 'pan'" class="grid grid-cols-2 gap-2 items-end">
           <UFormField :label="t('flow.panRun')" size="xs">
-            <USelect
-              v-model="flow.panCount"
-              :items="panCountItems"
-              value-key="value"
-              size="sm"
-              class="w-full"
-              data-testid="flow-pan-count"
-            />
+            <USelect v-model="flow.panCount" :items="panCountItems" value-key="value" size="sm" class="w-full"
+              data-testid="flow-pan-count" />
           </UFormField>
           <p class="text-[10px] text-muted pb-1.5">
             {{ t('flow.panSlides', { count: panClamped }) }}
           </p>
         </div>
 
-        <OgMediaPicker
-          v-model="flow.image"
-          :label="imageLabel"
-        />
+        <OgMediaPicker v-model="flow.image" :label="imageLabel" />
 
         <div v-if="flow.mode === 'plane'" class="grid grid-cols-2 gap-2">
           <label class="space-y-1">
             <span class="text-[10px] uppercase tracking-wide text-muted">{{ t('flow.from') }}</span>
-            <input
-              v-model="flow.gradientFrom"
-              type="color"
-              data-testid="flow-gradient-from"
-              class="h-8 w-full cursor-pointer rounded border border-default bg-transparent"
-            >
+            <input v-model="flow.gradientFrom" type="color" data-testid="flow-gradient-from"
+              class="h-8 w-full cursor-pointer rounded border border-default bg-transparent">
           </label>
           <label class="space-y-1">
             <span class="text-[10px] uppercase tracking-wide text-muted">{{ t('flow.to') }}</span>
-            <input
-              v-model="flow.gradientTo"
-              type="color"
-              data-testid="flow-gradient-to"
-              class="h-8 w-full cursor-pointer rounded border border-default bg-transparent"
-            >
+            <input v-model="flow.gradientTo" type="color" data-testid="flow-gradient-to"
+              class="h-8 w-full cursor-pointer rounded border border-default bg-transparent">
           </label>
         </div>
 
         <UFormField :label="`${t('flow.dim')} (${Math.round(flow.dim * 100)}%)`" size="xs">
-          <USlider
-            v-model="flow.dim"
-            :min="0"
-            :max="0.8"
-            :step="0.05"
-          />
+          <USlider v-model="flow.dim" :min="0" :max="0.8" :step="0.05" />
         </UFormField>
       </template>
     </section>
