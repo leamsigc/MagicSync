@@ -1,6 +1,7 @@
 <i18n src="../carousel-creator.json"></i18n>
 <script lang="ts" setup>
 import { useCarouselDeck } from '../composables/useCarouselDeck'
+import CarouselAnimateModal from './CarouselAnimateModal.vue'
 
 const {
   slides,
@@ -12,6 +13,8 @@ const {
 
 const { t } = useI18n()
 
+const animateOpen = ref(false)
+
 function getStage(): HTMLElement {
   return document.getElementById('carousel-export-stage')!
 }
@@ -19,6 +22,13 @@ function getStage(): HTMLElement {
 
 <template>
   <div class="space-y-2" data-testid="export-panel">
+    <UButton
+      block
+      icon="i-lucide-clapperboard"
+      :label="t('export.animate')"
+      data-testid="btn-animate"
+      @click="animateOpen = true"
+    />
     <UButton
       block
       icon="i-lucide-download"
@@ -52,5 +62,7 @@ function getStage(): HTMLElement {
     <p class="text-[11px] text-muted leading-relaxed">
       {{ t('export.hint') }}
     </p>
+
+    <CarouselAnimateModal v-model:open="animateOpen" />
   </div>
 </template>

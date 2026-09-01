@@ -13,13 +13,16 @@ import SaveAsAssetModal from './components/SaveAsAssetModal.vue'
 import UploadDropZone from './components/UploadDropZone.vue'
 import { useExport } from './composables/useExport'
 import { useVideoCropper } from './composables/useVideoCropper'
+import { useAudioPreview } from './composables/useAudioPreview'
 
 const { t } = useI18n()
 const toast = useToast()
 
+useAudioPreview()
+
 const {
   videoMetadata, videoFile, hasVideo, layers, settings, fitMode,
-  finalVideoAspectRatio, subtitleText, subtitleStyle,
+  finalVideoAspectRatio, resolvedCues, subtitleStyle, audioTracks,
   restartSession, loadVideoUrl, handleGlobalKeydown,
 } = useVideoCropper()
 const { runExport, cancelExport, isExporting } = useExport()
@@ -41,8 +44,9 @@ async function handleExport() {
     settings.value,
     fitMode.value,
     finalVideoAspectRatio.value,
-    subtitleText.value,
+    resolvedCues.value,
     subtitleStyle.value,
+    audioTracks.value,
     () => {},
   )
   if (blob) {

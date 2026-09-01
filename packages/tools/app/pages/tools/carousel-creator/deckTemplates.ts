@@ -1,9 +1,14 @@
 import type { SlideData } from './templates'
 import type { DeckPalette } from './composables/useCarouselDeck'
+import type { LayerSpec } from './layers/types'
 
 export interface DeckSlideSpec {
   templateKey: string
   data: SlideData
+  /** Layer-based deck slides (new format). When present, `templateKey`/`data` are ignored. */
+  layers?: LayerSpec[]
+  /** AI-generated full slide HTML. When present, becomes an html layer. */
+  html?: string
 }
 
 export interface DeckTemplate {

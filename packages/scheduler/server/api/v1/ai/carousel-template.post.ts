@@ -5,6 +5,7 @@ const requestSchema = z.object({
   prompt: z.string().min(5, 'Prompt is required').max(600, 'Prompt must be 600 chars or fewer'),
   slideCount: z.number().int().min(3).max(10).default(5),
   language: z.string().max(10).optional(),
+  format: z.enum(['html', 'structured']).default('html').describe('html = full slide HTML per slide (default); structured = layout template keys only'),
 })
 
 const HEX_COLOR = z.string().transform((val) => {
@@ -32,8 +33,9 @@ const slideSchema = z.object({
     if (normalized.includes('image-focus') || normalized.includes('image_focus')) return 'image-focus'
     return 'big-statement'
   }),
+  html: z.string().max(9000).optional().nullable().describe('COMPLETE self-contained HTML for this slide (inline styles only, no scripts, no external URLs, must fit 1080×1350 portrait, use the palette colors). Primary output format.'),
   kicker: z.string().max(80).optional().nullable().transform(v => v?.trim() || undefined),
-  headline: z.string().max(220).describe('Main headline'),
+  headline: z.string().max(220).describe('Main headline (also used when html is not provided)'),
   body: z.string().max(500).optional().nullable().transform(v => v?.trim() || undefined),
   items: z.array(z.string().max(200)).max(8).optional().nullable().transform(v => v?.filter(Boolean) || undefined),
   quote: z.string().max(300).optional().nullable().transform(v => v?.trim() || undefined),
@@ -86,6 +88,16 @@ const TEMPLATE_GUIDE = `Available slide layouts:
 - timeline: vertical timeline (headline, body, items up to 5 — each = one milestone)
 - image-focus: large image with caption bar (kicker, headline, body)
 
+HTML SLIDE FORMAT (PRIMARY — every slide MUST include it):
+For each slide write a COMPLETE standalone HTML fragment that:
+- fits exactly 1080×1350 (portrait) — root div is position:relative;width:1080px;height:1350px;overflow:hidden
+- uses ONLY inline styles (style="..." attributes) — no <style> tags, no <script>, no external URLs/fonts/images
+- uses the deck palette colors above for background/text/accent
+- is visually DISTINCT from the other slides (vary layout, not just text) — mix asymmetric layouts, big type, cards, bands, badges
+- stays readable: high contrast, generous padding (min 60px), max ~40 words per slide
+- empty image placeholders: use a colored div with "+ Add image" text (no external URLs)
+Return it in the html field. Keep headline/body/items etc. filled too as fallback.
+
 Patterns: ${VALID_PATTERNS.join(', ')}
 Fonts: Arial, Arial Black, Impact, Georgia, Courier New, Verdana, Trebuchet MS, Comic Sans MS, Palatino, Century Gothic`
 
@@ -99,7 +111,7 @@ export default defineLazyEventHandler(async () => {
       log.set({ validationError: true })
       throw createError({ statusCode: 400, message: 'Validation failed', data: validation.error.flatten() })
     }
-    const { prompt, slideCount, language } = validation.data
+    const { prompt, slideCount, language, format } = validation.data
 
     const fallback = (): z.infer<typeof responseSchema> => ({
       key: `ai-${Date.now().toString(36)}`,
@@ -124,11 +136,14 @@ export default defineLazyEventHandler(async () => {
       try {
         log.set({ userId: user.id, promptLength: prompt.length, slideCount, attempt })
         const languageSection = language ? `\nWrite all text in language: ${language}.` : ''
+        const formatSection = format === 'structured'
+          ? '\nOUTPUT FORMAT: structured mode — do NOT include the html field. Use the layout template keys below and fill headline/body/items/etc.'
+          : '\nOUTPUT FORMAT: html mode — every slide MUST include the html field (see HTML SLIDE FORMAT below).'
 
         const aiPrompt = `You are designing a WORLD-CLASS reusable Instagram carousel TEMPLATE.
 
 User wants: "${prompt.slice(0, 580)}"
-Need EXACTLY ${slideCount} slides. ${languageSection}
+Need EXACTLY ${slideCount} slides. ${languageSection} ${formatSection}
 
 ${TEMPLATE_GUIDE}
 

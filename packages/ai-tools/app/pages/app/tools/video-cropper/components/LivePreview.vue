@@ -2,12 +2,13 @@
 
 <script lang="ts" setup>
 import { useVideoCropper } from '../composables/useVideoCropper'
+import { getActiveCue, drawCue } from '../composables/subtitles'
 
 const { t } = useI18n()
 
 const {
   videoMetadata, layers, currentTime, finalVideoAspectRatio, fitMode,
-  subtitleStyle, subtitleText, settings,
+  subtitleStyle, resolvedCues, settings,
   interpolateCropBox, getVideo,
 } = useVideoCropper()
 
@@ -81,6 +82,10 @@ function drawPreview() {
     ctx.fillStyle = '#ffffff'
     ctx.fillText(text, dX + 16, dy + 22)
   })
+  const cue = getActiveCue(resolvedCues.value, currentTime.value)
+  if (cue && subtitleStyle.value) {
+    drawCue(ctx, exportW, exportH, cue, subtitleStyle.value)
+  }
 }
 
 useRafFn(() => {

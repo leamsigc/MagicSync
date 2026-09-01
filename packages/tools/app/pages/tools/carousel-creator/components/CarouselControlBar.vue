@@ -3,7 +3,8 @@
 import DialKnob from './DialKnob.vue'
 import CarouselGenerateTemplateModal from './CarouselGenerateTemplateModal.vue'
 import { CAROUSEL_PATTERNS } from '../patterns'
-import { CAROUSEL_TEMPLATES, PALETTES } from '../templates'
+import { CAROUSEL_SLIDE_TEMPLATES } from '../slideTemplates'
+import { PALETTES } from '../templates'
 import { useCarouselDeck, FRAME_PRESETS, type DeckFrame } from '../composables/useCarouselDeck'
 
 defineProps<{
@@ -23,6 +24,7 @@ const emit = defineEmits<{
   'download-all': []
   'save-all': []
   'use-in-post': []
+  'use-in-post-video': []
   'save': []
   'share': []
   'unshare': []
@@ -189,7 +191,7 @@ function applyFrame(preset: DeckFrame): void {
               <span class="text-[11px] font-medium text-toned">{{ t('templates.blankPage') }}</span>
             </button>
             <button
-              v-for="tpl in CAROUSEL_TEMPLATES"
+              v-for="tpl in CAROUSEL_SLIDE_TEMPLATES"
               :key="tpl.key"
               :data-testid="`bar-template-${tpl.key}`"
               type="button"
@@ -236,7 +238,7 @@ function applyFrame(preset: DeckFrame): void {
         <template #content>
           <div class="w-56 space-y-1 p-1">
             <button
-              v-for="tpl in CAROUSEL_TEMPLATES"
+              v-for="tpl in CAROUSEL_SLIDE_TEMPLATES"
               :key="tpl.key"
               type="button"
               :data-testid="`bar-layout-${tpl.key}`"
@@ -483,14 +485,25 @@ function applyFrame(preset: DeckFrame): void {
 
       <span class="h-6 w-px bg-accented" aria-hidden="true" />
 
-      <button
-        type="button"
-        class="rounded-full bg-yellow-400 px-4 py-1.5 text-[11px] font-bold uppercase tracking-wider text-neutral-950 transition-colors hover:bg-yellow-300 disabled:opacity-50"
-        data-testid="pill-use-in-post"
-        @click="emit('use-in-post')"
-      >
-        {{ t('actions.useInPost') }}
-      </button>
+      <UPopover>
+        <UButton
+          color="warning"
+          variant="solid"
+          size="xs"
+          class="rounded-full font-bold uppercase tracking-wider"
+          :label="t('actions.useInPost')"
+          trailing-icon="i-lucide-chevron-down"
+          data-testid="pill-use-in-post"
+        />
+        <template #content>
+          <div class="p-2 space-y-1 w-56">
+            <p class="text-xs font-semibold text-toned px-1">{{ t('actions.useInPost') }}</p>
+            <UButton block size="sm" color="primary" variant="soft" icon="i-lucide-gallery-horizontal" :label="t('actions.useAsCarousel')" data-testid="btn-use-as-carousel" @click="() => emit('use-in-post')" />
+            <UButton block size="sm" color="neutral" variant="soft" icon="i-lucide-clapperboard" :label="t('actions.useAsVideo')" data-testid="btn-use-as-video" @click="() => emit('use-in-post-video')" />
+            <p class="text-[10px] text-muted px-1">{{ t('actions.useInPostHint') }}</p>
+          </div>
+        </template>
+      </UPopover>
     </div>
 
     <CarouselGenerateTemplateModal v-model:open="aiTemplateOpen" />

@@ -6,9 +6,13 @@ import type {
   StackingDirection,
   CustomAudioTrack,
   SubtitleStyle,
+  SubtitleCue,
+  SubtitleTimingMode,
+  SubtitleAutoGranularity,
   ExportProgress,
 } from '../components/types'
 import { LAYER_COLORS } from '../components/types'
+import { computeTrimEnd, resolveCues } from './subtitles'
 
 // ── Module-level singleton state ──────────────────────────────────
 
@@ -35,6 +39,11 @@ const subtitleStyle = ref<SubtitleStyle>({
   bgColor: 'rgba(0,0,0,0.6)',
 })
 const subtitleText = ref('')
+const subtitleTimingMode = ref<SubtitleTimingMode>('auto')
+const subtitleGranularity = ref<SubtitleAutoGranularity>('word')
+const subtitleWordsPerCue = ref(3)
+const subtitleSecondsPerCue = ref<number | null>(null)
+const subtitleCues = ref<SubtitleCue[]>([])
 
 const settings = ref<ExportSettings>({
   fps: 30,
@@ -58,6 +67,24 @@ const exportProgress = ref<ExportProgress>({
 const hasVideo = computed(() => !!videoMetadata.value)
 const activeLayer = computed(() => layers.value.find(l => l.id === activeLayerId.value))
 const interpolation = computed(() => settings.value.interpolation)
+
+/** The total duration that will be rendered (trimmed to the last keyframe). */
+const exportDuration = computed(() => {
+  const vm = videoMetadata.value
+  if (!vm) return 0
+  return computeTrimEnd(layers.value, vm.duration)
+})
+
+/** The final cue list (auto-distributed or manually timed) used by preview and export. */
+const resolvedCues = computed(() => resolveCues({
+  sourceText: subtitleText.value,
+  cues: subtitleCues.value,
+  mode: subtitleTimingMode.value,
+  granularity: subtitleGranularity.value,
+  wordsPerCue: subtitleWordsPerCue.value,
+  durationSec: exportDuration.value,
+  secondsPerCue: subtitleSecondsPerCue.value,
+}))
 
 function getVideo(): HTMLVideoElement | null {
   return document.querySelector<HTMLVideoElement>('video[aria-label="source-video"]')
@@ -423,6 +450,11 @@ function restartSession() {
   layers.value = []; activeLayerId.value = ''
   cropBoxAspectRatio.value = null; finalVideoAspectRatio.value = null; fitMode.value = 'cover'
   audioTracks.value = []; subtitleText.value = ''
+  subtitleTimingMode.value = 'auto'
+  subtitleGranularity.value = 'word'
+  subtitleWordsPerCue.value = 3
+  subtitleSecondsPerCue.value = null
+  subtitleCues.value = []
   currentTime.value = 0; duration.value = 0; isPlaying.value = false
   exportProgress.value = { status: 'idle', statusText: '', processedFrames: 0, totalFrames: 0, percentage: 0, elapsedTime: 0, estimatedTimeRemaining: 0 }
   const el = getVideo()
@@ -446,7 +478,10 @@ export function useVideoCropper() {
     videoFile, videoMetadata, layers, activeLayerId,
     cropBoxAspectRatio, finalVideoAspectRatio, fitMode,
     audioTracks, isPlaying, isMuted, volume, currentTime, duration,
-    subtitleStyle, subtitleText, settings, exportProgress,
+    subtitleStyle, subtitleText, subtitleTimingMode, subtitleGranularity,
+    subtitleWordsPerCue, subtitleSecondsPerCue, subtitleCues,
+    resolvedCues, exportDuration,
+    settings, exportProgress,
     hasVideo, activeLayer, interpolation,
 
     // Video loading

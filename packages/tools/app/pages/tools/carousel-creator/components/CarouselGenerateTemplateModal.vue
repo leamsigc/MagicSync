@@ -14,6 +14,7 @@ const { t } = useI18n()
 const {
   prompt,
   slideCount,
+  format,
   generating,
   error,
   generated,
@@ -81,6 +82,10 @@ function handleSaveOnly(): void {
               class="text-[10px] px-1.5 py-0.5 rounded bg-accented text-toned">
               {{ slide.templateKey }}
             </span>
+            <span v-if="generated.slides.some(s => (s as any).html)"
+              class="text-[10px] px-1.5 py-0.5 rounded bg-primary/15 text-primary">
+              HTML
+            </span>
           </div>
           <div class="flex items-center gap-2">
             <span class="text-[11px] text-muted">{{ t('style.palette') }}</span>
@@ -112,6 +117,14 @@ function handleSaveOnly(): void {
             <USelect v-model="slideCount" :items="pageItems" value-key="value" size="sm"
               data-testid="ai-template-pages" />
           </UFormField>
+
+          <UFormField :label="t('aiTemplate.formatLabel')" size="sm">
+            <USelect :model-value="format" :items="[
+              { label: t('aiTemplate.formatHtml'), value: 'html' },
+              { label: t('aiTemplate.formatStructured'), value: 'structured' },
+            ]" value-key="value" size="sm" data-testid="ai-template-format" />
+          </UFormField>
+          <p class="text-[11px] text-muted">{{ t('aiTemplate.formatHint') }}</p>
         </template>
       </div>
     </template>

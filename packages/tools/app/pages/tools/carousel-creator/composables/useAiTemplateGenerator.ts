@@ -4,6 +4,7 @@ import { useCarouselDeck, type AiDeckTemplate } from './useCarouselDeck'
 interface ApiSlide {
   template?: string
   templateKey?: string
+  html?: string
   kicker?: string
   headline?: string
   body?: string
@@ -44,7 +45,7 @@ function mapSlideData(slide: ApiSlide): DeckSlideSpec['data'] {
   }
 }
 
-function transformApiToDeckTemplate(api: ApiResponse): DeckTemplate {
+function transformApiToDeckTemplate(api: ApiResponse, format: 'html' | 'structured'): DeckTemplate {
   return {
     key: api.key,
     title: api.title,
@@ -54,6 +55,7 @@ function transformApiToDeckTemplate(api: ApiResponse): DeckTemplate {
     slides: (api.slides ?? []).map(s => ({
       templateKey: resolveTemplateKey(s),
       data: mapSlideData(s),
+      html: format === 'html' ? (s.html?.trim() || undefined) : undefined,
     })),
   }
 }
@@ -77,6 +79,7 @@ export function useAiTemplateGenerator() {
 
   const prompt = ref('')
   const slideCount = ref(5)
+  const format = ref<'html' | 'structured'>('html')
   const generating = ref(false)
   const error = ref('')
   const generated = ref<AiDeckTemplate | null>(null)
@@ -86,6 +89,7 @@ export function useAiTemplateGenerator() {
   function reset(): void {
     prompt.value = ''
     slideCount.value = 5
+    format.value = 'html'
     generating.value = false
     error.value = ''
     generated.value = null
@@ -134,9 +138,10 @@ export function useAiTemplateGenerator() {
           prompt: value.slice(0, 600),
           slideCount: slideCount.value,
           language: locale.value,
+          format: format.value,
         },
       })
-      const result = transformApiToDeckTemplate(rawResult)
+      const result = transformApiToDeckTemplate(rawResult, format.value)
       addCustomDeckTemplate(result)
       const newest = customDecks.value[0]
       if (!newest) throw new Error('Generated template missing')
@@ -171,6 +176,7 @@ export function useAiTemplateGenerator() {
   return {
     prompt,
     slideCount,
+    format,
     generating,
     error,
     generated,

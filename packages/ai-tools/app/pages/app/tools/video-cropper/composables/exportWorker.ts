@@ -3,9 +3,8 @@ import {
   ALL_FORMATS, VideoSample, Conversion,
   getFirstEncodableVideoCodec, getFirstEncodableAudioCodec,
 } from 'mediabunny'
-
-interface CropKeyframe { id: string; time: number; x: number; y: number; width: number; height: number }
-interface CropLayer { id: string; name: string; keyframes: CropKeyframe[]; color: string }
+import { computeTrimEnd, getActiveCue, drawCue } from './subtitles'
+import type { CropLayer, SubtitleCue, SubtitleStyle } from '../components/types'
 
 function interpolateCropBox(
   time: number,
@@ -29,45 +28,61 @@ function interpolateCropBox(
   return { x: prev.x + (next.x - prev.x) * val, y: prev.y + (next.y - prev.y) * val, width: prev.width + (next.width - prev.width) * val, height: prev.height + (next.height - prev.height) * val }
 }
 
-function drawSubtitles(
+function drawFrame(
   ctx: OffscreenCanvasRenderingContext2D,
-  width: number, height: number, text: string,
-  style: { font: string; size: number; color: string; position: string; background: boolean; bgColor: string },
+  exportWidth: number,
+  exportHeight: number,
+  timestamp: number,
+  videoW: number,
+  videoH: number,
+  layersData: CropLayer[],
+  stackingDirection: string,
+  currentFit: string,
+  interpolation: string,
+  sample: VideoSample,
+  subtitleCues: SubtitleCue[],
+  subtitleStyle: SubtitleStyle,
 ) {
-  const fontSize = Math.round(style.size * (height / 1080))
-  ctx.font = `bold ${fontSize}px ${style.font}`
-  ctx.textAlign = 'center'
-  const lines = text.split('\n')
-  const lineHeight = fontSize * 1.4
-  const totalHeight = lines.length * lineHeight
-  let startY: number
-  switch (style.position) {
-    case 'top': startY = totalHeight + 40; break
-    case 'middle': startY = height / 2 - totalHeight / 2; break
-    default: startY = height - totalHeight - 40
-  }
-  lines.forEach((line, i) => {
-    const y = startY + i * lineHeight
-    if (style.background) {
-      const metrics = ctx.measureText(line)
-      const padX = 20; const padY = 8
-      const bx = width / 2 - metrics.width / 2 - padX
-      const by = y - fontSize - padY
-      ctx.fillStyle = style.bgColor
-      ctx.beginPath()
-      ctx.roundRect(bx, by, metrics.width + padX * 2, fontSize + padY * 2, 8)
-      ctx.fill()
+  ctx.fillStyle = '#0a0a0b'
+  ctx.fillRect(0, 0, exportWidth, exportHeight)
+  layersData.forEach((layer, index) => {
+    const crop = interpolateCropBox(timestamp, layer.keyframes, interpolation)
+    const sx = crop.x * videoW; const sy = crop.y * videoH
+    const sW = crop.width * videoW; const sH = crop.height * videoH
+    if (sW <= 0 || sH <= 0) return
+    let dx = 0; let dy = 0; let dW = exportWidth; let dH = exportHeight
+    if (stackingDirection === 'vertical') { dH = exportHeight / layersData.length; dy = index * dH }
+    else { dW = exportWidth / layersData.length; dx = index * dW }
+    let fSx = sx; let fSy = sy; let fSW = sW; let fSH = sH
+    let dX = dx; let dY = dy; let dW2 = dW; let dH2 = dH
+    if (currentFit === 'cover') {
+      const srcA = sW / sH; const dstA = dW / dH
+      if (srcA > dstA) { fSW = sH * dstA; fSx = sx + (sW - fSW) / 2 }
+      else if (srcA < dstA) { fSH = sW / dstA; fSy = sy + (sH - fSH) / 2 }
+    } else if (currentFit === 'contain') {
+      const srcA = sW / sH; const dstA = dW / dH
+      if (srcA > dstA) { const aH = dW / srcA; dY += (dH - aH) / 2; dH2 = aH }
+      else { const aW = dH * srcA; dX += (dW - aW) / 2; dW2 = aW }
     }
-    ctx.fillStyle = style.color
-    ctx.fillText(line, width / 2, y)
+    sample.draw(ctx, fSx, fSy, fSW, fSH, dX, dY, dW2, dH2)
+    if (index > 0) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.lineWidth = 3.5; ctx.beginPath()
+      if (stackingDirection === 'vertical') { ctx.moveTo(0, dy); ctx.lineTo(exportWidth, dy) }
+      else { ctx.moveTo(dx, 0); ctx.lineTo(dx, exportHeight) }
+      ctx.stroke()
+    }
   })
+  if (subtitleCues.length > 0 && subtitleStyle) {
+    const cue = getActiveCue(subtitleCues, timestamp)
+    if (cue) drawCue(ctx, exportWidth, exportHeight, cue, subtitleStyle)
+  }
 }
 
 let activeConversion: any = null
 
 self.onmessage = async (e: MessageEvent) => {
   const msg = e.data
-  const { id, videoData, videoUrl, videoMetadata, layers, settings, fitMode, finalVideoAspectRatio, subtitleText, subtitleStyle } = msg
+  const { id, videoData, videoFileType, videoMetadata, layers, settings, fitMode, finalVideoAspectRatio, subtitleCues, subtitleStyle, audioMode } = msg
 
   try {
     const ratio = finalVideoAspectRatio !== null ? finalVideoAspectRatio : videoMetadata.aspectRatio
@@ -93,25 +108,10 @@ self.onmessage = async (e: MessageEvent) => {
     const interpolation = settings.interpolation
     const stackingDirection = settings.stackingDirection
     const currentFit = fitMode
+    const trimEndTime = computeTrimEnd(layers, videoMetadata.duration)
+    const trim = trimEndTime > 0 && trimEndTime < videoMetadata.duration ? { end: trimEndTime } : undefined
 
-    let trimEndTime: number | undefined
-    let lastKeyframeTime = 0
-    for (const layer of layers) {
-      for (const kf of layer.keyframes) {
-        if (kf.time > lastKeyframeTime) lastKeyframeTime = kf.time
-      }
-    }
-    if (lastKeyframeTime > 0 && lastKeyframeTime < videoMetadata.duration) {
-      trimEndTime = lastKeyframeTime
-    }
-
-    let inputBlob: Blob
-    if (videoData) {
-      inputBlob = new Blob([videoData], { type: msg.videoFileType || 'video/mp4' })
-    } else {
-      const res = await fetch(videoUrl)
-      inputBlob = await res.blob()
-    }
+    const inputBlob = new Blob([videoData], { type: videoFileType || 'video/mp4' })
 
     const source = new BlobSource(inputBlob)
     const input = new Input({ source, formats: ALL_FORMATS })
@@ -129,13 +129,13 @@ self.onmessage = async (e: MessageEvent) => {
     const containableAudioCodecs = output.format.getSupportedAudioCodecs()
     const supportedAudioCodec = await getFirstEncodableAudioCodec(containableAudioCodecs)
 
-    const audioOptions = settings.includeAudio
+    const audioOptions = audioMode === 'source'
       ? supportedAudioCodec ? { codec: supportedAudioCodec, forceTranscode: true } : {}
       : { discard: true }
 
     const conversionOptions: any = {
       input, output,
-      trim: trimEndTime ? { end: trimEndTime } : undefined,
+      trim,
       video: {
         frameRate: fps,
         codec: supportedCodec,
@@ -144,39 +144,7 @@ self.onmessage = async (e: MessageEvent) => {
           const canvas = new OffscreenCanvas(exportWidth, exportHeight)
           const ctx = canvas.getContext('2d')
           if (ctx) {
-            ctx.fillStyle = '#0a0a0b'
-            ctx.fillRect(0, 0, exportWidth, exportHeight)
-            const timestamp = sample.timestamp
-            layersData.forEach((layer, index) => {
-              const crop = interpolateCropBox(timestamp, layer.keyframes, interpolation)
-              const sx = crop.x * videoW; const sy = crop.y * videoH
-              const sW = crop.width * videoW; const sH = crop.height * videoH
-              if (sW <= 0 || sH <= 0) return
-              let dx = 0; let dy = 0; let dW = exportWidth; let dH = exportHeight
-              if (stackingDirection === 'vertical') { dH = exportHeight / layersData.length; dy = index * dH }
-              else { dW = exportWidth / layersData.length; dx = index * dW }
-              let fSx = sx; let fSy = sy; let fSW = sW; let fSH = sH
-              let dX = dx; let dY = dy; let dW2 = dW; let dH2 = dH
-              if (currentFit === 'cover') {
-                const srcA = sW / sH; const dstA = dW / dH
-                if (srcA > dstA) { fSW = sH * dstA; fSx = sx + (sW - fSW) / 2 }
-                else if (srcA < dstA) { fSH = sW / dstA; fSy = sy + (sH - fSH) / 2 }
-              } else if (currentFit === 'contain') {
-                const srcA = sW / sH; const dstA = dW / dH
-                if (srcA > dstA) { const aH = dW / srcA; dY += (dH - aH) / 2; dH2 = aH }
-                else { const aW = dH * srcA; dX += (dW - aW) / 2; dW2 = aW }
-              }
-              sample.draw(ctx, fSx, fSy, fSW, fSH, dX, dY, dW2, dH2)
-              if (index > 0) {
-                ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.lineWidth = 3.5; ctx.beginPath()
-                if (stackingDirection === 'vertical') { ctx.moveTo(0, dy); ctx.lineTo(exportWidth, dy) }
-                else { ctx.moveTo(dx, 0); ctx.lineTo(dx, exportHeight) }
-                ctx.stroke()
-              }
-            })
-            if (subtitleText && subtitleStyle) {
-              drawSubtitles(ctx, exportWidth, exportHeight, subtitleText, subtitleStyle)
-            }
+            drawFrame(ctx, exportWidth, exportHeight, sample.timestamp, videoW, videoH, layersData, stackingDirection, currentFit, interpolation, sample, subtitleCues, subtitleStyle)
           }
           return canvas
         },
@@ -209,7 +177,9 @@ self.onmessage = async (e: MessageEvent) => {
     if (!finalBuffer) throw new Error('Transcoder yielded an empty output buffer')
 
     const exportedBlob = new Blob([finalBuffer], { type: 'video/mp4' })
-    self.postMessage({ id, type: 'complete', blob: exportedBlob })
+    // When audio is discarded, the blob is only the video pass — the main thread muxes the
+    // mixed audio afterwards (pass1). Otherwise this is the final file (complete).
+    self.postMessage({ id, type: audioMode === 'discard' ? 'pass1' : 'complete', blob: exportedBlob })
   } catch (err: any) {
     if (err.name === 'ConversionCanceledError') {
       self.postMessage({ id, type: 'cancelled' })

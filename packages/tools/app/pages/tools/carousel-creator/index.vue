@@ -4,17 +4,19 @@
 import CarouselStage from './components/CarouselStage.vue'
 import CarouselAiPanel from './components/CarouselAiPanel.vue'
 import CarouselMediaPanel from './components/CarouselMediaPanel.vue'
-import CarouselStylePanel from './components/CarouselStylePanel.vue'
 import CarouselExportPanel from './components/CarouselExportPanel.vue'
 import CarouselDeckPanel from './components/CarouselDeckPanel.vue'
-import CarouselDeckTemplatesPanel from './components/CarouselDeckTemplatesPanel.vue'
 import CollapsibleSection from './components/CollapsibleSection.vue'
 import CarouselControlBar from './components/CarouselControlBar.vue'
 import CarouselPlatformPreview from './components/CarouselPlatformPreview.vue'
 import CarouselStripPreview from './components/CarouselStripPreview.vue'
 import CarouselSlidesRail from './components/CarouselSlidesRail.vue'
 import CarouselDeckShowcase from './components/CarouselDeckShowcase.vue'
+import CarouselLayersPanel from './components/CarouselLayersPanel.vue'
+import CarouselDesignTabs from './components/CarouselDesignTabs.vue'
+import LayerStylePanel from './components/LayerStylePanel.vue'
 import { useCarouselDeck, fxStyle } from './composables/useCarouselDeck'
+import { useCarouselVideoExport } from './composables/useCarouselVideoExport'
 import { useCarouselSaveShare } from '../../../composables/useCarouselSaveShare'
 import { getAllLocalCarousels } from '../../../utils/carousel-db'
 import type { SlideData, SlidePalette } from './templates'
@@ -26,7 +28,7 @@ const { loggedIn, fetchSession } = UseUser()
 interface SavedCarousel {
   id: string
   name: string
-  slides: Array<{ templateKey: string; data: SlideData; pattern: string; patternColor: string; patternOpacity: number; bgImage: unknown; customHtml: string }>
+  slides: Array<{ templateKey: string; data: SlideData; pattern: string; patternColor: string; patternOpacity: number; bgImage: unknown; customHtml: string; layers?: unknown[] }>
   palette: SlidePalette
   pattern?: string
   handle?: string
@@ -50,7 +52,24 @@ const {
   downloadSlide,
   downloadAllSlides,
   saveAllSlides,
+  renderSlideToPng,
+  migrateAllSlides,
+  showFromImageModal,
+  showFromHtmlModal,
+  slicedImageGroup,
+  updateSlicedImageCount,
+  addSlide: addBlankSlide,
+  duplicateSlide: duplicateCurrentSlide,
 } = useCarouselDeck()
+
+const { exportCarouselVideo, exporting: videoExporting } = useCarouselVideoExport()
+
+const sliceCountProxy = computed({
+  get: () => slicedImageGroup.value?.count ?? 3,
+  set: (v: number) => {
+    if (slicedImageGroup.value) updateSlicedImageCount(v)
+  },
+})
 
 const currentCarousel = computed(() => {
   if (slides.value.length === 0) return null
@@ -66,6 +85,7 @@ const currentCarousel = computed(() => {
       patternOpacity: s.patternOpacity,
       bgImage: s.bgImage,
       customHtml: s.customHtml,
+      layers: s.layers,
     })),
     palette: palette.value,
     handle: handle.value,
@@ -143,7 +163,6 @@ async function loadCarouselIntoEditor(carousel: SavedCarousel): Promise<void> {
   }
 
   try {
-    // Directly apply slides and palette to the deck
     slides.value = carousel.slides.map(s => ({
       id: `slide-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
       templateKey: s.templateKey,
@@ -153,9 +172,11 @@ async function loadCarouselIntoEditor(carousel: SavedCarousel): Promise<void> {
       patternOpacity: s.patternOpacity ?? 0.08,
       bgImage: s.bgImage ?? null,
       customHtml: s.customHtml ?? '',
+      layers: s.layers ? JSON.parse(JSON.stringify(s.layers)) : undefined,
     }))
     palette.value = { ...carousel.palette }
     handle.value = carousel.handle ?? ''
+    migrateAllSlides()
     currentIndex.value = 0
     currentCarouselName.value = carousel.name
     toast.add({ title: 'Carousel loaded', description: `"${carousel.name}" loaded into editor.`, color: 'success', icon: 'i-lucide-check-circle' })
@@ -166,6 +187,7 @@ async function loadCarouselIntoEditor(carousel: SavedCarousel): Promise<void> {
 
 onMounted(async () => {
   await loadSavedCarousels()
+  migrateAllSlides()
 })
 
 useHead({
@@ -181,7 +203,7 @@ function getExportStage(): HTMLElement | null {
 }
 
 function handleSaveError(error: unknown): void {
-  const shape = error as any
+  const shape = error as { status?: number; statusCode?: number }
   const status = shape?.status ?? shape?.statusCode
   if (status === 401 || status === 403) {
     toast.add({
@@ -259,6 +281,52 @@ async function handleUseInPost(): Promise<void> {
         mediaAssets: ids,
       }),
     )
+    await navigateTo('/app/posts/new')
+  } catch (error) {
+    handleSaveError(error)
+  }
+}
+
+async function handleUseInPostVideo(): Promise<void> {
+  const stage = getExportStage()
+  if (!stage) return
+  if (!await ensureAuth()) return
+  try {
+    toast.add({ title: t('actions.renderingVideo'), description: t('actions.renderingVideoDesc'), color: 'neutral' })
+    const blob = await exportCarouselVideo(
+      (idx: number) => renderSlideToPng(stage, idx),
+      slides.value.length,
+      {
+        fps: 30,
+        secondsPerSlide: 3,
+        crossfade: false,
+        crossfadeSeconds: 0.5,
+        motions: slides.value.map(() => 'none' as const),
+        music: null,
+        width: frame.value.w,
+        height: frame.value.h,
+      },
+    )
+    if (!blob) {
+      toast.add({ title: t('toasts.failedTitle'), description: 'Video export failed', color: 'error' })
+      return
+    }
+    const form = new FormData()
+    form.append('files', new File([blob], `carousel_${Date.now()}.mp4`, { type: 'video/mp4' }))
+    const result = await $fetch<{ success: boolean, data: Array<{ id: string }> }>('/api/v1/assets', { method: 'POST', body: form })
+    const id = result.data[0]!.id
+    sessionStorage.setItem(
+      'repurposed-content',
+      JSON.stringify({
+        content: '',
+        fullContent: '',
+        platform: 'instagram',
+        isThread: false,
+        comments: [],
+        mediaAssets: [id],
+      }),
+    )
+    toast.add({ title: t('actions.videoReady'), description: t('actions.videoReadyDesc'), color: 'success' })
     await navigateTo('/app/posts/new')
   } catch (error) {
     handleSaveError(error)
@@ -343,7 +411,7 @@ async function handleCopyLink(): Promise<void> {
         </UPopover>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
+      <div class="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6 items-start">
         <div class="min-w-0 space-y-4">
           <template v-if="mode === 'deck'">
             <CarouselStripPreview v-if="previewPlatform === 'strip'" />
@@ -354,6 +422,23 @@ async function handleCopyLink(): Promise<void> {
               :fx-style="stageFx" :editable="true" />
           </template>
           <CarouselAiPanel v-else @generated="() => mode = 'deck'" />
+
+          <!-- Sliced image group controls (add/trim pages of the slice run) -->
+          <div v-if="mode === 'deck' && slicedImageGroup" class="mx-auto max-w-md w-full rounded-xl border border-default bg-elevated/80 backdrop-blur p-3 space-y-2"
+            data-testid="sliced-group-controls">
+            <div class="flex items-center justify-between gap-2">
+              <p class="text-xs font-semibold text-muted flex items-center gap-1.5">
+                <UIcon name="i-lucide-scissors" class="size-3.5" />
+                {{ t('quickActions.sliceImage') }}
+              </p>
+              <span class="text-[10px] font-mono text-muted">{{ slicedImageGroup.count }} · {{ slicedImageGroup.direction }}</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="text-[10px] uppercase tracking-wide text-muted shrink-0">{{ t('fromImage.slices') }}</span>
+              <USlider v-model="sliceCountProxy" :min="1" :max="9" :step="1" class="flex-1" data-testid="sliced-count-slider" />
+            </div>
+            <p class="text-[10px] text-muted">{{ t('quickActions.sliceImageDesc') }}</p>
+          </div>
 
           <div v-if="mode === 'deck'" class="flex flex-col items-center gap-3">
             <div class="flex items-center justify-center gap-4">
@@ -395,33 +480,47 @@ async function handleCopyLink(): Promise<void> {
           </div>
 
           <div class="sticky bottom-4 z-30 flex justify-center">
-            <CarouselControlBar v-model:mode="mode" v-model:guides="guides" :exporting="exporting"
+            <CarouselControlBar v-model:mode="mode" v-model:guides="guides" :exporting="exporting || videoExporting"
               :export-progress="exportProgress" :is-saving="isSaving" :is-public="isPublic" :share-url="shareUrl"
               @download="handleDownloadCurrent" @download-all="handleDownloadAll"
-              @save-all="handleSaveAll" @use-in-post="handleUseInPost"
+              @save-all="handleSaveAll" @use-in-post="handleUseInPost" @use-in-post-video="handleUseInPostVideo"
               @save="handleSaveToCloud" @share="handleShare" @unshare="handleUnshare" @copy-link="handleCopyLink" />
           </div>
         </div>
 
         <aside
           class="w-full rounded-2xl border border-default bg-elevated/70 backdrop-blur-md p-4 space-y-6 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
-          <CollapsibleSection :title="t('templates.deckTitle')" :default-open="true" testid="section-templates">
-            <CarouselDeckTemplatesPanel />
-          </CollapsibleSection>
-          <CollapsibleSection :title="t('slide.label')" :default-open="true" testid="section-slides">
-            <CarouselSlidesRail />
-          </CollapsibleSection>
-          <CollapsibleSection :title="`${t('deck.brand')} & ${t('flow.label')}`" :default-open="true"
-            testid="section-brand">
-            <CarouselDeckPanel />
+          <CollapsibleSection :title="t('layers.title')" :default-open="true" testid="section-layers">
+            <CarouselLayersPanel />
           </CollapsibleSection>
           <CollapsibleSection :title="t('style.label')" :default-open="true" testid="section-style">
-            <CarouselStylePanel :fonts="fonts" />
+            <LayerStylePanel />
           </CollapsibleSection>
-          <CollapsibleSection :title="t('media.label')" :default-open="true" testid="section-media">
+          <CollapsibleSection :title="t('design.label')" :default-open="true" testid="section-design">
+            <CarouselDesignTabs />
+          </CollapsibleSection>
+          <CollapsibleSection :title="t('quickActions.label')" :default-open="true" testid="section-quick-actions">
+            <div class="space-y-3">
+              <div class="grid grid-cols-2 gap-2">
+                <UButton size="xs" color="primary" variant="soft" icon="i-lucide-scissors" :label="t('quickActions.sliceImage')" data-testid="btn-quick-slice-image" @click="() => showFromImageModal = true" />
+                <UButton size="xs" color="neutral" variant="soft" icon="i-lucide-file-plus" :label="t('quickActions.addBlank')" data-testid="btn-quick-add-blank" @click="() => addBlankSlide()" />
+                <UButton size="xs" color="neutral" variant="soft" icon="i-lucide-code-2" :label="t('quickActions.addHtml')" data-testid="btn-quick-add-html" @click="() => showFromHtmlModal = true" />
+                <UButton size="xs" color="neutral" variant="soft" icon="i-lucide-copy" :label="t('quickActions.duplicate')" :disabled="slides.length >= 10" data-testid="btn-quick-duplicate" @click="() => duplicateCurrentSlide(currentIndex)" />
+              </div>
+              <p class="text-[10px] text-muted">{{ t('quickActions.sliceImageDesc') }}</p>
+            </div>
+          </CollapsibleSection>
+          <CollapsibleSection :title="`${t('deck.brand')} & ${t('flow.label')}`" :default-open="false"
+            testid="section-brand">
+            <CarouselDeckPanel :fonts="fonts" />
+          </CollapsibleSection>
+          <CollapsibleSection :title="t('slide.label')" :default-open="false" testid="section-slides">
+            <CarouselSlidesRail />
+          </CollapsibleSection>
+          <CollapsibleSection :title="t('media.label')" :default-open="false" testid="section-media">
             <CarouselMediaPanel />
           </CollapsibleSection>
-          <CollapsibleSection :title="t('export.label')" :default-open="true" testid="section-export">
+          <CollapsibleSection :title="t('export.label')" :default-open="false" testid="section-export">
             <CarouselExportPanel />
           </CollapsibleSection>
         </aside>

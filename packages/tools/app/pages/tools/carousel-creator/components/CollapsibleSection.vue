@@ -13,6 +13,7 @@ const open = ref(props.defaultOpen ?? true)
     <button
       type="button"
       class="flex items-center justify-between w-full text-xs font-semibold uppercase tracking-wider text-muted hover:text-default transition-colors"
+      :data-testid="testid ? `${testid}-toggle` : undefined"
       @click="open = !open"
     >
       <span>{{ title }}</span>

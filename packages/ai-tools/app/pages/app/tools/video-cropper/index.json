@@ -61,7 +61,8 @@
       "select_file": "Select Audio File",
       "url_placeholder": "https://example.com/music.mp3",
       "save_track": "Save Track",
-      "volume": "Volume"
+      "volume": "Volume",
+      "loop": "Loop"
     },
     "subtitles": {
       "title": "Subtitles",
@@ -83,7 +84,26 @@
       "white": "White",
       "yellow": "Yellow",
       "cyan": "Cyan",
-      "pink": "Pink"
+      "pink": "Pink",
+      "timing": "Timing",
+      "mode_auto": "Auto",
+      "mode_manual": "Manual",
+      "granularity": "Show text as",
+      "gran_word": "Word by word",
+      "gran_words": "Words per cue",
+      "gran_line": "Line",
+      "gran_sentence": "Sentence",
+      "words_per_cue": "Words per cue",
+      "fixed_duration": "Fixed seconds per cue",
+      "stretch_to_fill": "Stretch to fill video",
+      "schedule": "Schedule: {count} cues × {seconds}s",
+      "manual_hint": "Set the exact time range for each cue.",
+      "cue_text": "Subtitle text",
+      "start": "Start (s)",
+      "end": "End (s)",
+      "add_cue": "Add Cue",
+      "generate_from_text": "Generate cues from text",
+      "no_cues": "No cues yet — add one or generate from your text"
     },
     "export": {
       "title": "Transcoding Config & Export",
@@ -202,7 +222,8 @@
       "select_file": "Seleccionar Archivo de Audio",
       "url_placeholder": "https://ejemplo.com/musica.mp3",
       "save_track": "Guardar Pista",
-      "volume": "Volumen"
+      "volume": "Volumen",
+      "loop": "Repetir"
     },
     "subtitles": {
       "title": "Subtítulos",
@@ -224,7 +245,26 @@
       "white": "Blanco",
       "yellow": "Amarillo",
       "cyan": "Cian",
-      "pink": "Rosa"
+      "pink": "Rosa",
+      "timing": "Sincronización",
+      "mode_auto": "Automático",
+      "mode_manual": "Manual",
+      "granularity": "Mostrar texto como",
+      "gran_word": "Palabra por palabra",
+      "gran_words": "Palabras por bloque",
+      "gran_line": "Línea",
+      "gran_sentence": "Frase",
+      "words_per_cue": "Palabras por bloque",
+      "fixed_duration": "Segundos fijos por bloque",
+      "stretch_to_fill": "Distribuir en el video",
+      "schedule": "Agenda: {count} bloques × {seconds}s",
+      "manual_hint": "Define el rango de tiempo exacto de cada bloque.",
+      "cue_text": "Texto del subtítulo",
+      "start": "Inicio (s)",
+      "end": "Fin (s)",
+      "add_cue": "Agregar Bloque",
+      "generate_from_text": "Generar bloques desde el texto",
+      "no_cues": "Aún no hay bloques — agrega uno o genera desde tu texto"
     },
     "export": {
       "title": "Configuración de Transcódigo y Exportación",
@@ -327,7 +367,15 @@
     "audio": {
       "title": "Hintergrund-Audiospuren",
       "add_track": "Spur Hinzufügen",
-      "no_tracks": "Keine Hintergrund-Audiospuren hinzugefügt"
+      "no_tracks": "Keine Hintergrund-Audiospuren hinzugefügt",
+      "new_track": "Neuer Hintergrund-Audio",
+      "local_file": "Lokale Datei",
+      "audio_url": "Audio-URL",
+      "select_file": "Audiodatei auswählen",
+      "url_placeholder": "https://beispiel.com/musik.mp3",
+      "save_track": "Spur Speichern",
+      "volume": "Lautstärke",
+      "loop": "Wiederholen"
     },
     "subtitles": {
       "title": "Untertitel",
@@ -345,7 +393,26 @@
       "style_minimal": "Minimalistisch",
       "bottom": "Unten",
       "middle": "Mitte",
-      "top": "Oben"
+      "top": "Oben",
+      "timing": "Zeitsteuerung",
+      "mode_auto": "Automatisch",
+      "mode_manual": "Manuell",
+      "granularity": "Text anzeigen als",
+      "gran_word": "Wort für Wort",
+      "gran_words": "Wörter pro Einblendung",
+      "gran_line": "Zeile",
+      "gran_sentence": "Satz",
+      "words_per_cue": "Wörter pro Einblendung",
+      "fixed_duration": "Feste Sekunden pro Einblendung",
+      "stretch_to_fill": "Über Video verteilen",
+      "schedule": "Zeitplan: {count} Einblendungen × {seconds}s",
+      "manual_hint": "Lege den genauen Zeitraum jeder Einblendung fest.",
+      "cue_text": "Untertiteltext",
+      "start": "Start (s)",
+      "end": "Ende (s)",
+      "add_cue": "Einblendung Hinzufügen",
+      "generate_from_text": "Einblendungen aus Text erzeugen",
+      "no_cues": "Noch keine Einblendungen — füge eine hinzu oder erzeuge sie aus deinem Text"
     },
     "export": {
       "title": "Transkodierungskonfiguration & Export",
@@ -439,7 +506,15 @@
     "audio": {
       "title": "Pistes Audio de Fond",
       "add_track": "Ajouter une Piste",
-      "no_tracks": "Aucune piste audio de fond ajoutée"
+      "no_tracks": "Aucune piste audio de fond ajoutée",
+      "new_track": "Nouvel Audio de Fond",
+      "local_file": "Fichier Local",
+      "audio_url": "URL Audio",
+      "select_file": "Sélectionner un Fichier Audio",
+      "url_placeholder": "https://exemple.com/musique.mp3",
+      "save_track": "Enregistrer la Piste",
+      "volume": "Volume",
+      "loop": "Boucle"
     },
     "subtitles": {
       "title": "Sous-titres",
@@ -457,7 +532,26 @@
       "style_minimal": "Minimaliste",
       "bottom": "Bas",
       "middle": "Milieu",
-      "top": "Haut"
+      "top": "Haut",
+      "timing": "Synchronisation",
+      "mode_auto": "Automatique",
+      "mode_manual": "Manuel",
+      "granularity": "Afficher le texte en",
+      "gran_word": "Mot par mot",
+      "gran_words": "Mots par séquence",
+      "gran_line": "Ligne",
+      "gran_sentence": "Phrase",
+      "words_per_cue": "Mots par séquence",
+      "fixed_duration": "Durée fixe par séquence",
+      "stretch_to_fill": "Répartir sur la vidéo",
+      "schedule": "Planning : {count} séquences × {seconds}s",
+      "manual_hint": "Définissez l'intervalle exact de chaque séquence.",
+      "cue_text": "Texte du sous-titre",
+      "start": "Début (s)",
+      "end": "Fin (s)",
+      "add_cue": "Ajouter une Séquence",
+      "generate_from_text": "Générer depuis le texte",
+      "no_cues": "Aucune séquence — ajoutez-en une ou générez depuis votre texte"
     },
     "export": {
       "title": "Configuration du Transcodage & Exportation",

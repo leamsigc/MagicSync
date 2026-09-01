@@ -1,11 +1,13 @@
 <i18n src="../carousel-creator.json"></i18n>
 <script lang="ts" setup>
-import { CAROUSEL_DECK_TEMPLATES, type DeckTemplate } from '../deckTemplates'
+import type { DeckTemplate } from '../deckTemplates'
 import { renderSlideHtml, type SlidePalette } from '../templates'
 import { patternStyle } from '../patterns'
-import { useCarouselDeck, type AiDeckTemplate } from '../composables/useCarouselDeck'
+import { renderSlideLayers } from '../layers/render'
+import { instantiateLayers } from '../layers/types'
+import { useCarouselDeck } from '../composables/useCarouselDeck'
 
-const { applyDeckTemplate, slides, allDeckTemplates, customDecks, removeCustomDeck } = useCarouselDeck()
+const { applyDeckTemplate, slides, allDeckTemplates, customDecks, removeCustomDeck, frame } = useCarouselDeck()
 const { t } = useI18n()
 const toast = useToast()
 
@@ -23,6 +25,12 @@ function handleRemoveAi(key: string): void {
 function previewHtml(deck: DeckTemplate, slideIdx: number): string {
   const spec = deck.slides[slideIdx]
   if (!spec) return ''
+  if (spec.layers) {
+    return renderSlideLayers(instantiateLayers(JSON.parse(JSON.stringify(spec.layers))), frame.value, deck.palette, { index: slideIdx, total: deck.slides.length })
+  }
+  if (spec.html) {
+    return `<div style="position:relative;width:1080px;height:1350px;overflow:hidden;background:${deck.palette.bg}">${spec.html}</div>`
+  }
   const palette: SlidePalette = { bg: deck.palette.bg, text: deck.palette.text, accent: deck.palette.accent, patternColor: deck.palette.text, font: deck.palette.font }
   const patternKey = deck.pattern ?? 'dots'
   const patternHtml = `<div style="position:absolute;inset:0;${Object.entries(patternStyle(patternKey, palette.patternColor, 0.08)).map(([k, v]) => `${k.replace(/([A-Z])/g, '-$1').toLowerCase()}:${v}`).join(';')}"></div>`

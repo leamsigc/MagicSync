@@ -520,7 +520,7 @@ export const CAROUSEL_TEMPLATES: CarouselTemplate[] = [
         </div>
         <div style="margin-top:26px;font-size:64px;font-weight:800;line-height:1.08;letter-spacing:-0.02em">${esc(d.headline)}</div>
         ${d.body ? `<div style="margin-top:20px;font-size:30px;line-height:1.5;opacity:0.78;max-width:820px">${esc(d.body)}</div>` : ''}
-        ${toArray(d.items).length ? `<div style="margin-top:28px;display:flex;flex-direction:column;gap:14px">${toArray(d.items).slice(0, 3).map(item => `<div style=\"display:flex;gap:14px;align-items:center;font-size:27px\"><span style=\"width:10px;height:10px;border-radius:9999px;background:${esc(p.accent)};flex-shrink:0\"></span><span>${esc(item)}</span></div>`).join('')}</div>` : ''}
+        ${toArray(d.items).length ? `<div style="margin-top:28px;display:flex;flex-direction:column;gap:14px">${toArray(d.items).slice(0, 3).map(item => `<div style="display:flex;gap:14px;align-items:center;font-size:27px"><span style="width:10px;height:10px;border-radius:9999px;background:${esc(p.accent)};flex-shrink:0"></span><span>${esc(item)}</span></div>`).join('')}</div>` : ''}
       </div>
       ${pageFooter(p, i, t, d.footer)}`,
   },

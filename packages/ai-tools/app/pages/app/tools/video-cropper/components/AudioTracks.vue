@@ -57,19 +57,38 @@ function handleFileSelect(e: Event) {
       <div
         v-for="track in audioTracks"
         :key="track.id"
-        class="flex items-center justify-between bg-default px-3 py-2 rounded-xl border border-default"
+        class="flex flex-col gap-1.5 bg-default px-3 py-2 rounded-xl border border-default"
       >
-        <div class="flex items-center gap-2">
-          <UIcon name="i-lucide-music" class="w-4 h-4 text-primary" />
-          <span class="text-xs font-mono text-highlighted truncate max-w-30">{{ track.name }}</span>
+        <div class="flex items-center justify-between gap-2">
+          <div class="flex items-center gap-2 min-w-0">
+            <UIcon name="i-lucide-music" class="w-4 h-4 text-primary shrink-0" />
+            <span class="text-xs font-mono text-highlighted truncate">{{ track.name }}</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <UCheckbox v-model="track.loop" :label="t('audio.loop')" size="xs" />
+            <UButton
+              color="neutral"
+              variant="ghost"
+              size="xs"
+              icon="i-lucide-x"
+              @click="removeAudioTrack(track.id)"
+            />
+          </div>
         </div>
-        <UButton
-          color="neutral"
-          variant="ghost"
-          size="xs"
-          icon="i-lucide-x"
-          @click="removeAudioTrack(track.id)"
-        />
+        <div class="flex items-center gap-2">
+          <UIcon name="i-lucide-volume-2" class="w-3.5 h-3.5 text-dimmed shrink-0" />
+          <USlider
+            :model-value="track.volume"
+            :min="0"
+            :max="1"
+            :step="0.05"
+            size="sm"
+            color="primary"
+            class="flex-1"
+            @update:model-value="(e)=>{track.volume = e as number}"
+          />
+          <span class="text-[10px] font-mono text-dimmed w-8 text-right">{{ Math.round((track.volume ?? 1) * 100) }}%</span>
+        </div>
       </div>
     </div>
 

@@ -27,6 +27,8 @@ export interface CarouselSlide {
   patternOpacity: number
   bgImage: { url: string; dim: number; shadow: { x: number; y: number; blur: number; opacity: number }; transform?: { x: number; y: number; scale: number } } | null
   customHtml: string
+  /** Layer-based slides (new format). Opaque here — the tools layer owns the shape. */
+  layers?: Array<Record<string, unknown>>
 }
 
 export interface CarouselPalette {

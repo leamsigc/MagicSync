@@ -1,6 +1,8 @@
 <script lang="ts" setup>
 import { renderSlideHtml, type SlideData, type SlidePalette } from '../../carousel-creator/templates'
 import { patternStyle } from '../../carousel-creator/patterns'
+import { renderSlideLayers } from '../../carousel-creator/layers/render'
+import type { SlideLayer } from '../../carousel-creator/layers/types'
 
 interface SharedSlide {
   id: string
@@ -11,6 +13,7 @@ interface SharedSlide {
   patternOpacity: number
   bgImage: { url: string; dim: number; shadow: { x: number; y: number; blur: number; opacity: number }; transform?: { x: number; y: number; scale: number } } | null
   customHtml: string
+  layers?: SlideLayer[]
 }
 
 interface SharedPalette {
@@ -77,6 +80,14 @@ function buildPatternHtml(pattern: string, color: string, opacity: number): stri
 
 function slideHtml(slide: SharedSlide, index: number): string {
   if (!carousel.value) return ''
+  if (slide.layers?.length) {
+    return renderSlideLayers(slide.layers, { w: 1080, h: 1350 }, {
+      bg: carousel.value.palette.bg,
+      text: carousel.value.palette.text,
+      accent: carousel.value.palette.accent,
+      font: carousel.value.palette.font,
+    }, { index, total: carousel.value.slides.length, handle: carousel.value.handle })
+  }
   const palette = buildPalette(carousel.value)
   const patternKey = slide.pattern ?? carousel.value.pattern ?? 'dots'
   const patternHtml = buildPatternHtml(patternKey, palette.patternColor, slide.patternOpacity ?? 0.08)

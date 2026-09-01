@@ -66,6 +66,25 @@ export interface SubtitleStyle {
   bgColor: string
 }
 
+export interface SubtitleCue {
+  id: string
+  text: string
+  start: number
+  end: number
+}
+
+export type SubtitleTimingMode = 'auto' | 'manual'
+
+export type SubtitleAutoGranularity = 'word' | 'words-per-cue' | 'line' | 'sentence'
+
+export interface SubtitleTimingOptions {
+  mode: SubtitleTimingMode
+  granularity: SubtitleAutoGranularity
+  wordsPerCue: number
+  /** When set, each auto-generated cue stays visible for this many seconds (sequentially). Null = stretch cues evenly across the video. */
+  secondsPerCue: number | null
+}
+
 export interface CropperState {
   videoFile: File | null
   videoMetadata: VideoMetadata | null

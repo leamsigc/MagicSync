@@ -2,11 +2,16 @@
 <script lang="ts" setup>
 import OgMediaPicker from '../../og-image-generator/components/OgMediaPicker.vue'
 import { useCarouselDeck } from '../composables/useCarouselDeck'
+import { PALETTES } from '../templates'
+
+const props = defineProps<{ fonts: string[] }>()
 
 const {
   flow,
   handle,
   slides,
+  palette,
+  applyPalette,
 } = useCarouselDeck()
 
 const { t } = useI18n()
@@ -27,6 +32,14 @@ const modeHint = computed(() => {
   return t('flow.offHint')
 })
 const panClamped = computed(() => Math.min(Math.max(flow.value.panCount, 2), 4, Math.max(slides.value.length - 1, 0)))
+
+function applyPreset(preset: typeof PALETTES[number]): void {
+  applyPalette({ bg: preset.bg, text: preset.text, accent: preset.accent })
+}
+
+function onPaletteInput(field: 'bg' | 'text' | 'accent', value: string): void {
+  applyPalette({ ...palette.value, [field]: value })
+}
 </script>
 
 <template>
@@ -42,6 +55,72 @@ const panClamped = computed(() => Math.min(Math.max(flow.value.panCount, 2), 4, 
 
     <USeparator />
 
+    <section class="space-y-2">
+      <p class="text-xs font-semibold uppercase tracking-wider text-muted">{{ t('style.palette') }}</p>
+      <div class="grid grid-cols-4 gap-2">
+        <button
+          v-for="preset in PALETTES"
+          :key="preset.name"
+          type="button"
+          class="rounded-lg border border-default p-1.5 hover:border-primary/60 transition-colors"
+          :title="preset.name"
+          :aria-label="preset.name"
+          :data-testid="`palette-preset-${preset.name.toLowerCase()}`"
+          @click="() => applyPreset(preset)"
+        >
+          <span class="flex h-8 overflow-hidden rounded-md">
+            <span class="flex-1" :style="{ background: preset.bg }" />
+            <span class="flex-1" :style="{ background: preset.accent }" />
+          </span>
+        </button>
+      </div>
+      <div class="grid grid-cols-3 gap-2">
+        <label class="space-y-1">
+          <span class="text-[10px] uppercase tracking-wide text-muted">{{ t('palette.bg') }}</span>
+          <input
+            type="color"
+            :value="palette.bg"
+            data-testid="palette-bg"
+            class="h-8 w-full cursor-pointer rounded border border-default bg-transparent"
+            @change="(e: Event) => onPaletteInput('bg', (e.target as HTMLInputElement).value)"
+          >
+        </label>
+        <label class="space-y-1">
+          <span class="text-[10px] uppercase tracking-wide text-muted">{{ t('palette.text') }}</span>
+          <input
+            type="color"
+            :value="palette.text"
+            data-testid="palette-text"
+            class="h-8 w-full cursor-pointer rounded border border-default bg-transparent"
+            @change="(e: Event) => onPaletteInput('text', (e.target as HTMLInputElement).value)"
+          >
+        </label>
+        <label class="space-y-1">
+          <span class="text-[10px] uppercase tracking-wide text-muted">{{ t('palette.accent') }}</span>
+          <input
+            type="color"
+            :value="palette.accent"
+            data-testid="palette-accent"
+            class="h-8 w-full cursor-pointer rounded border border-default bg-transparent"
+            @change="(e: Event) => onPaletteInput('accent', (e.target as HTMLInputElement).value)"
+          >
+        </label>
+      </div>
+      <UFormField :label="t('style.font')" size="xs">
+        <USelect
+          :model-value="palette.font ?? null"
+          :items="props.fonts"
+          placeholder="Default"
+          class="w-full"
+          data-testid="font-select"
+          :aria-label="t('style.font')"
+          @update:model-value="(v: string | null) => applyPalette({ ...palette.value, font: v ?? undefined })"
+        />
+      </UFormField>
+    </section>
+
+    <USeparator />
+
     <section class="space-y-2" data-testid="flow-panel">
       <p class="text-xs font-semibold uppercase tracking-wider text-muted">{{ t('flow.label') }}</p>
       <div class="grid grid-cols-3 gap-1.5" data-testid="flow-modes">
@@ -53,6 +132,7 @@ const panClamped = computed(() => Math.min(Math.max(flow.value.panCount, 2), 4, 
         </UButton>
       </div>
       <p class="text-[10px] text-muted leading-relaxed">{{ modeHint }}</p>
+      <p class="text-[10px] text-muted leading-relaxed">{{ t('flow.layersNote') }}</p>
 
       <template v-if="needsImage">
         <div v-if="flow.mode === 'pan'" class="grid grid-cols-2 gap-2 items-end">

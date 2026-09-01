@@ -42,17 +42,22 @@ async function generate(): Promise<void> {
     emit('generated')
   }
   catch (error: unknown) {
-    const shape = error as { status?: number, statusCode?: number, data?: { message?: string } }
-    const status = shape?.status ?? shape?.statusCode
-    useToast().add({
-      title: status === 401 || status === 403 ? t('toasts.loginRequired') : t('ai.failedTitle'),
-      description: status === 401 || status === 403 ? undefined : shape?.data?.message,
-      color: status === 401 || status === 403 ? 'warning' : 'error',
-    })
+    handleGenerateError(error)
   }
   finally {
     generating.value = false
   }
+}
+
+function handleGenerateError(error: unknown): void {
+  const shape = error as { status?: number, statusCode?: number, data?: { message?: string } }
+  const status = shape?.status ?? shape?.statusCode
+  const isAuth = status === 401 || status === 403
+  useToast().add({
+    title: isAuth ? t('toasts.loginRequired') : t('ai.failedTitle'),
+    description: isAuth ? undefined : shape?.data?.message,
+    color: isAuth ? 'warning' : 'error',
+  })
 }
 </script>
 

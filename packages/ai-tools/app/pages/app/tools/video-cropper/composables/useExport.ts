@@ -1,15 +1,22 @@
-import type { CropLayer, VideoMetadata, ExportSettings, ExportProgress } from '../components/types'
+import type {
+  CropLayer, VideoMetadata, ExportSettings, ExportProgress,
+  CustomAudioTrack, SubtitleCue, SubtitleStyle,
+} from '../components/types'
 import {
   BlobSource, Input, Output, BufferTarget, Mp4OutputFormat,
   ALL_FORMATS, VideoSample, Conversion,
   getFirstEncodableVideoCodec, getFirstEncodableAudioCodec,
 } from 'mediabunny'
+import { computeTrimEnd, getActiveCue, drawCue } from './subtitles'
+import { mixAudio, type MixedPcm } from './audioMix'
+import { muxVideoWithAudio } from './muxExport'
 
 // ── Module-level singleton state ──────────────────────────────────
 
 let worker: Worker | null = null
 let activeConversion: any = null
 let activeId = 0
+let muxCancelled = false
 
 const exportProgress = ref<ExportProgress>({
   status: 'idle',
@@ -44,40 +51,6 @@ function interpolateCropBox(
   return { x: prev.x + (next.x - prev.x) * val, y: prev.y + (next.y - prev.y) * val, width: prev.width + (next.width - prev.width) * val, height: prev.height + (next.height - prev.height) * val }
 }
 
-function drawSubtitles(
-  ctx: OffscreenCanvasRenderingContext2D,
-  width: number, height: number, text: string,
-  style: { font: string; size: number; color: string; position: string; background: boolean; bgColor: string },
-) {
-  const fontSize = Math.round(style.size * (height / 1080))
-  ctx.font = `bold ${fontSize}px ${style.font}`
-  ctx.textAlign = 'center'
-  const lines = text.split('\n')
-  const lineHeight = fontSize * 1.4
-  const totalHeight = lines.length * lineHeight
-  let startY: number
-  switch (style.position) {
-    case 'top': startY = totalHeight + 40; break
-    case 'middle': startY = height / 2 - totalHeight / 2; break
-    default: startY = height - totalHeight - 40
-  }
-  lines.forEach((line, i) => {
-    const y = startY + i * lineHeight
-    if (style.background) {
-      const metrics = ctx.measureText(line)
-      const padX = 20; const padY = 8
-      const bx = width / 2 - metrics.width / 2 - padX
-      const by = y - fontSize - padY
-      ctx.fillStyle = style.bgColor
-      ctx.beginPath()
-      ctx.roundRect(bx, by, metrics.width + padX * 2, fontSize + padY * 2, 8)
-      ctx.fill()
-    }
-    ctx.fillStyle = style.color
-    ctx.fillText(line, width / 2, y)
-  })
-}
-
 function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60)
   const s = Math.floor(seconds % 60)
@@ -85,15 +58,68 @@ function formatTime(seconds: number): string {
   return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}.${ms}`
 }
 
+interface DrawFrameContext {
+  ctx: OffscreenCanvasRenderingContext2D
+  exportWidth: number
+  exportHeight: number
+  timestamp: number
+  videoW: number
+  videoH: number
+  layersData: CropLayer[]
+  stackingDirection: 'vertical' | 'horizontal'
+  currentFit: 'cover' | 'contain' | 'fill'
+  interpolation: 'linear' | 'ease' | 'step'
+}
+
+/** Draws all crop layers + the active subtitle cue for one frame. */
+function drawFrame({ ctx, exportWidth, exportHeight, timestamp, videoW, videoH, layersData, stackingDirection, currentFit, interpolation }: DrawFrameContext, sample: VideoSample, subtitleCues: SubtitleCue[], subtitleStyle: SubtitleStyle) {
+  ctx.fillStyle = '#0a0a0b'
+  ctx.fillRect(0, 0, exportWidth, exportHeight)
+  layersData.forEach((layer, index) => {
+    const crop = interpolateCropBox(timestamp, layer.keyframes, interpolation)
+    const sx = crop.x * videoW; const sy = crop.y * videoH
+    const sW = crop.width * videoW; const sH = crop.height * videoH
+    if (sW <= 0 || sH <= 0) return
+    let dx = 0; let dy = 0; let dW = exportWidth; let dH = exportHeight
+    if (stackingDirection === 'vertical') { dH = exportHeight / layersData.length; dy = index * dH }
+    else { dW = exportWidth / layersData.length; dx = index * dW }
+    let fSx = sx; let fSy = sy; let fSW = sW; let fSH = sH
+    let dX = dx; let dY = dy; let dW2 = dW; let dH2 = dH
+    if (currentFit === 'cover') {
+      const srcA = sW / sH; const dstA = dW / dH
+      if (srcA > dstA) { fSW = sH * dstA; fSx = sx + (sW - fSW) / 2 }
+      else if (srcA < dstA) { fSH = sW / dstA; fSy = sy + (sH - fSH) / 2 }
+    } else if (currentFit === 'contain') {
+      const srcA = sW / sH; const dstA = dW / dH
+      if (srcA > dstA) { const aH = dW / srcA; dY += (dH - aH) / 2; dH2 = aH }
+      else { const aW = dH * srcA; dX += (dW - aW) / 2; dW2 = aW }
+    }
+    sample.draw(ctx, fSx, fSy, fSW, fSH, dX, dY, dW2, dH2)
+    if (index > 0) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.lineWidth = 3.5; ctx.beginPath()
+      if (stackingDirection === 'vertical') { ctx.moveTo(0, dy); ctx.lineTo(exportWidth, dy) }
+      else { ctx.moveTo(dx, 0); ctx.lineTo(dx, exportHeight) }
+      ctx.stroke()
+    }
+  })
+  if (subtitleCues.length > 0 && subtitleStyle) {
+    const cue = getActiveCue(subtitleCues, timestamp)
+    if (cue) drawCue(ctx, exportWidth, exportHeight, cue, subtitleStyle)
+  }
+}
+
+// ── Inline (main thread) pipeline ────────────────────────────────
+
 async function runExportInline(
-  videoFile: File | null,
+  inputBlob: Blob,
   videoMetadata: VideoMetadata,
   layers: CropLayer[],
   settings: ExportSettings,
   fitMode: 'cover' | 'contain' | 'fill',
   finalVideoAspectRatio: number | null,
-  subtitleText: string,
-  subtitleStyle: { font: string; size: number; color: string; position: string; background: boolean; bgColor: string },
+  subtitleCues: SubtitleCue[],
+  subtitleStyle: SubtitleStyle,
+  audioMode: 'source' | 'discard',
   onProgress: (pct: number, processedTime: number) => void,
 ): Promise<Blob | null> {
   const ratio = finalVideoAspectRatio !== null ? finalVideoAspectRatio : videoMetadata.aspectRatio
@@ -119,28 +145,9 @@ async function runExportInline(
   const interpolation = settings.interpolation
   const stackingDirection = settings.stackingDirection
   const currentFit = fitMode
+  const trimEndTime = computeTrimEnd(layers, videoMetadata.duration)
+  const trim = trimEndTime > 0 && trimEndTime < videoMetadata.duration ? { end: trimEndTime } : undefined
 
-  let trimEndTime: number | undefined
-  let lastKeyframeTime = 0
-  for (const layer of layers) {
-    for (const kf of layer.keyframes) {
-      if (kf.time > lastKeyframeTime) lastKeyframeTime = kf.time
-    }
-  }
-  if (lastKeyframeTime > 0 && lastKeyframeTime < videoMetadata.duration) {
-    trimEndTime = lastKeyframeTime
-  }
-
-  let inputBlob: Blob
-  if (videoFile) {
-    inputBlob = videoFile
-  } else {
-    exportProgress.value = { ...exportProgress.value, statusText: 'Buffering sample video file...' }
-    const res = await fetch(videoMetadata.url)
-    inputBlob = await res.blob()
-  }
-
-  exportProgress.value = { ...exportProgress.value, statusText: 'Opening WebCodecs decoder...' }
   const source = new BlobSource(inputBlob)
   const input = new Input({ source, formats: ALL_FORMATS })
   const target = new BufferTarget()
@@ -158,13 +165,13 @@ async function runExportInline(
   const containableAudioCodecs = output.format.getSupportedAudioCodecs()
   const supportedAudioCodec = await getFirstEncodableAudioCodec(containableAudioCodecs)
 
-  const audioOptions = settings.includeAudio
+  const audioOptions = audioMode === 'source'
     ? supportedAudioCodec ? { codec: supportedAudioCodec, forceTranscode: true } : {}
     : { discard: true }
 
   const conversionOptions: any = {
     input, output,
-    trim: trimEndTime ? { end: trimEndTime } : undefined,
+    trim,
     video: {
       frameRate: fps,
       codec: supportedCodec,
@@ -173,39 +180,7 @@ async function runExportInline(
         const canvas = new OffscreenCanvas(exportWidth, exportHeight)
         const ctx = canvas.getContext('2d')
         if (ctx) {
-          ctx.fillStyle = '#0a0a0b'
-          ctx.fillRect(0, 0, exportWidth, exportHeight)
-          const timestamp = sample.timestamp
-          layersData.forEach((layer, index) => {
-            const crop = interpolateCropBox(timestamp, layer.keyframes, interpolation)
-            const sx = crop.x * videoW; const sy = crop.y * videoH
-            const sW = crop.width * videoW; const sH = crop.height * videoH
-            if (sW <= 0 || sH <= 0) return
-            let dx = 0; let dy = 0; let dW = exportWidth; let dH = exportHeight
-            if (stackingDirection === 'vertical') { dH = exportHeight / layersData.length; dy = index * dH }
-            else { dW = exportWidth / layersData.length; dx = index * dW }
-            let fSx = sx; let fSy = sy; let fSW = sW; let fSH = sH
-            let dX = dx; let dY = dy; let dW2 = dW; let dH2 = dH
-            if (currentFit === 'cover') {
-              const srcA = sW / sH; const dstA = dW / dH
-              if (srcA > dstA) { fSW = sH * dstA; fSx = sx + (sW - fSW) / 2 }
-              else if (srcA < dstA) { fSH = sW / dstA; fSy = sy + (sH - fSH) / 2 }
-            } else if (currentFit === 'contain') {
-              const srcA = sW / sH; const dstA = dW / dH
-              if (srcA > dstA) { const aH = dW / srcA; dY += (dH - aH) / 2; dH2 = aH }
-              else { const aW = dH * srcA; dX += (dW - aW) / 2; dW2 = aW }
-            }
-            sample.draw(ctx, fSx, fSy, fSW, fSH, dX, dY, dW2, dH2)
-            if (index > 0) {
-              ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.lineWidth = 3.5; ctx.beginPath()
-              if (stackingDirection === 'vertical') { ctx.moveTo(0, dy); ctx.lineTo(exportWidth, dy) }
-              else { ctx.moveTo(dx, 0); ctx.lineTo(dx, exportHeight) }
-              ctx.stroke()
-            }
-          })
-          if (subtitleText && subtitleStyle) {
-            drawSubtitles(ctx, exportWidth, exportHeight, subtitleText, subtitleStyle)
-          }
+          drawFrame({ ctx, exportWidth, exportHeight, timestamp: sample.timestamp, videoW, videoH, layersData, stackingDirection, currentFit, interpolation }, sample, subtitleCues, subtitleStyle)
         }
         return canvas
       },
@@ -239,25 +214,24 @@ async function runExportInline(
   return new Blob([finalBuffer], { type: 'video/mp4' })
 }
 
+// ── Worker pipeline ──────────────────────────────────────────────
+
 async function runExportWorker(
-  videoFile: File | null,
+  inputBlob: Blob,
   videoMetadata: VideoMetadata,
   layers: CropLayer[],
   settings: ExportSettings,
   fitMode: 'cover' | 'contain' | 'fill',
   finalVideoAspectRatio: number | null,
-  subtitleText: string,
-  subtitleStyle: { font: string; size: number; color: string; position: string; background: boolean; bgColor: string },
+  subtitleCues: SubtitleCue[],
+  subtitleStyle: SubtitleStyle,
+  audioMode: 'source' | 'discard',
+  awaitingMux: boolean,
   onProgress: (pct: number, processedTime: number) => void,
-): Promise<Blob | null> {
+): Promise<{ blob: Blob; videoOnly: boolean } | null> {
   const id = ++activeId
-  let payloadVideoData: ArrayBuffer | null = null
-  let payloadVideoFileType = ''
-
-  if (videoFile) {
-    payloadVideoData = await videoFile.arrayBuffer()
-    payloadVideoFileType = videoFile.type
-  }
+  const payloadVideoData = await inputBlob.arrayBuffer()
+  const payloadVideoFileType = inputBlob.type || 'video/mp4'
 
   return new Promise((resolve) => {
     worker = new Worker(new URL('./exportWorker.ts', import.meta.url), { type: 'module' })
@@ -267,11 +241,16 @@ async function runExportWorker(
       if (msg.id !== id) return
 
       if (msg.type === 'progress') {
-        exportProgress.value = { ...exportProgress.value, ...msg.progress }
-        onProgress(msg.progress.percentage, msg.progress.elapsedTime / 1000)
+        const scaled = awaitingMux ? Math.round(msg.progress.percentage * 0.9) : msg.progress.percentage
+        exportProgress.value = { ...exportProgress.value, ...msg.progress, percentage: scaled }
+        onProgress(scaled, msg.progress.elapsedTime / 1000)
       } else if (msg.type === 'complete') {
         exportProgress.value = { ...exportProgress.value, status: 'completed', statusText: 'Completed successfully!', percentage: 100 }
-        resolve(msg.blob)
+        resolve({ blob: msg.blob, videoOnly: false })
+        cleanupWorker()
+      } else if (msg.type === 'pass1') {
+        exportProgress.value = { ...exportProgress.value, statusText: 'Preparing final video...', percentage: 90 }
+        resolve({ blob: msg.blob, videoOnly: true })
         cleanupWorker()
       } else if (msg.type === 'cancelled') {
         exportProgress.value = { ...exportProgress.value, status: 'idle', statusText: '' }
@@ -291,22 +270,47 @@ async function runExportWorker(
     }
 
     const payload: any = {
-      id, videoMetadata,
+      id,
+      // ref() makes object values deeply reactive; reactive proxies can't be
+      // structured-cloned, so serialize everything data-like to plain JSON.
+      videoMetadata: JSON.parse(JSON.stringify(videoMetadata)),
       layers: JSON.parse(JSON.stringify(layers)),
       settings: { ...settings }, fitMode, finalVideoAspectRatio,
-      subtitleText, subtitleStyle,
+      subtitleCues: JSON.parse(JSON.stringify(subtitleCues)),
+      subtitleStyle: JSON.parse(JSON.stringify(subtitleStyle)),
+      audioMode,
+      videoData: payloadVideoData,
+      videoFileType: payloadVideoFileType,
     }
 
-    if (payloadVideoData) {
-      payload.videoData = payloadVideoData
-      payload.videoFileType = payloadVideoFileType
-    } else {
-      payload.videoUrl = videoMetadata.url
-    }
-
-    worker.postMessage(payload)
+    worker.postMessage(payload, [payloadVideoData])
   })
 }
+
+// ── Final mux (audio) pass ───────────────────────────────────────
+
+async function runMux(videoOnlyBlob: Blob, pcm: MixedPcm, fps: number): Promise<Blob | null> {
+  muxCancelled = false
+  exportProgress.value = { ...exportProgress.value, statusText: 'Muxing audio track...', percentage: 90 }
+  try {
+    const blob = await muxVideoWithAudio(videoOnlyBlob, pcm, fps, (pct, statusText) => {
+      exportProgress.value = { ...exportProgress.value, statusText, percentage: 90 + Math.round(pct * 0.1) }
+    }, () => muxCancelled)
+    if (muxCancelled) {
+      exportProgress.value = { status: 'idle', statusText: '', processedFrames: 0, totalFrames: 0, percentage: 0, elapsedTime: 0, estimatedTimeRemaining: 0 }
+      return null
+    }
+    return blob
+  } catch (err: any) {
+    if (muxCancelled) {
+      exportProgress.value = { status: 'idle', statusText: '', processedFrames: 0, totalFrames: 0, percentage: 0, elapsedTime: 0, estimatedTimeRemaining: 0 }
+      return null
+    }
+    throw err
+  }
+}
+
+// ── Public entry ─────────────────────────────────────────────────
 
 async function runExport(
   videoFile: File | null,
@@ -315,22 +319,51 @@ async function runExport(
   settings: ExportSettings,
   fitMode: 'cover' | 'contain' | 'fill',
   finalVideoAspectRatio: number | null,
-  subtitleText: string,
-  subtitleStyle: { font: string; size: number; color: string; position: string; background: boolean; bgColor: string },
+  subtitleCues: SubtitleCue[],
+  subtitleStyle: SubtitleStyle,
+  audioTracks: CustomAudioTrack[],
   onProgress: (pct: number, processedTime: number) => void,
 ): Promise<Blob | null> {
   exportProgress.value = { ...exportProgress.value, status: 'processing', statusText: 'Analyzing source tracks...', percentage: 0 }
 
   try {
+    const exportDuration = computeTrimEnd(layers, videoMetadata.duration)
+    const needsBgMix = settings.includeAudio && audioTracks.length > 0
+    const audioMode: 'source' | 'discard' = (!settings.includeAudio || needsBgMix) ? 'discard' : 'source'
+
+    let inputBlob: Blob
+    if (videoFile) {
+      inputBlob = videoFile
+    } else {
+      exportProgress.value = { ...exportProgress.value, statusText: 'Buffering video file...' }
+      const res = await fetch(videoMetadata.url)
+      inputBlob = await res.blob()
+    }
+
+    let pcm: MixedPcm | null = null
+    if (needsBgMix) {
+      exportProgress.value = { ...exportProgress.value, statusText: 'Mixing background audio...', percentage: 2 }
+      pcm = await mixAudio(inputBlob, audioTracks, exportDuration)
+    }
+
     let result: Blob | null
     if (settings.useWorker) {
-      result = await runExportWorker(videoFile, videoMetadata, layers, settings, fitMode, finalVideoAspectRatio, subtitleText, subtitleStyle, onProgress)
+      const workerResult = await runExportWorker(inputBlob, videoMetadata, layers, settings, fitMode, finalVideoAspectRatio, subtitleCues, subtitleStyle, audioMode, pcm !== null, onProgress)
+      if (!workerResult) return null
+      result = workerResult.blob
+      if (workerResult.videoOnly && pcm) {
+        result = await runMux(workerResult.blob, pcm, settings.fps)
+      }
     } else {
-      result = await runExportInline(videoFile, videoMetadata, layers, settings, fitMode, finalVideoAspectRatio, subtitleText, subtitleStyle, onProgress)
+      result = await runExportInline(inputBlob, videoMetadata, layers, settings, fitMode, finalVideoAspectRatio, subtitleCues, subtitleStyle, audioMode, onProgress)
+      if (!result) return null
+      if (audioMode === 'discard' && pcm) {
+        result = await runMux(result, pcm, settings.fps)
+      }
     }
-    if (result) {
-      exportProgress.value = { ...exportProgress.value, status: 'completed', statusText: 'Completed successfully!', percentage: 100 }
-    }
+
+    if (!result) return null
+    exportProgress.value = { ...exportProgress.value, status: 'completed', statusText: 'Completed successfully!', percentage: 100 }
     return result
   } catch (err: any) {
     exportProgress.value = { ...exportProgress.value, status: 'failed', statusText: err.message || 'Export failed', error: err.message || 'Export failed' }
@@ -339,6 +372,7 @@ async function runExport(
 }
 
 function cancelExport() {
+  muxCancelled = true
   if (activeConversion) {
     activeConversion.cancel()
     activeConversion = null
