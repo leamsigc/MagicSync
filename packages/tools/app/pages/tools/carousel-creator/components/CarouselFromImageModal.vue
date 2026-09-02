@@ -90,7 +90,7 @@ watch(open, (value) => {
           </div>
 
           <!-- Split preview -->
-          <div class="relative w-2/3 mx-auto max-h-64 overflow-hidden rounded-lg border border-default"
+          <div class="relative w-2/3 aspect-4/5 mx-auto max-h-64 overflow-hidden  border border-default"
             :style="{ backgroundColor: backdropColor }" data-testid="from-image-preview">
             <div class="absolute inset-0" :style="{ padding: `${padding}px`, backgroundImage: `url(${imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundClip: 'content-box' }" />
             <div v-if="direction === 'vertical'" class="absolute" :style="{ inset: `${padding}px`, display: 'grid', gridTemplateRows: `repeat(${actualCount}, 1fr)` }">

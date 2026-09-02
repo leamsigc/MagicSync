@@ -72,7 +72,7 @@ export default defineEventHandler(async (event) => {
     }
   })
 
-  onClosed(event, () => cleanup())
+  event.node.req.on('close', cleanup)
 
-  return sendEventStream(event, stream)
+  return sendStream(event, stream)
 })

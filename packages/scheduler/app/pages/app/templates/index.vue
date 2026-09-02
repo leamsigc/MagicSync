@@ -1,5 +1,7 @@
 <script lang="ts" setup>
 
+import TemplatesCarouselList from './components/TemplatesCarouselList.vue'
+import TemplatesAiList from './components/TemplatesAiList.vue'
 
 interface SavedCarousel {
   id: string
