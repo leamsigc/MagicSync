@@ -12,12 +12,16 @@
     "lint": "eslint .",
     "test:e2e": "playwright test"
   },
+  "dependencies": {
+    "@local-monorepo/assets": "workspace:*",
+    "@local-monorepo/auth": "workspace:*",
+    "@local-monorepo/db": "workspace:*",
+    "@local-monorepo/ui": "workspace:*"
+  },
   "devDependencies": {
     "@ai-sdk/google": "catalog:",
     "@browser-ai/transformers-js": "catalog:",
     "@huggingface/transformers": "catalog:",
-    "@local-monorepo/assets": "workspace:*",
-    "@local-monorepo/ui": "workspace:*",
     "@nuxt/eslint": "catalog:",
     "@nuxt/fonts": "catalog:",
     "@nuxtjs/i18n": "catalog:",

@@ -6,21 +6,9 @@ import type { LinkedInPage } from '#layers/BaseConnect/utils/LinkedInPages';
 import { useConnectionManager } from '../composables/useConnectionManager';
 import EditConnectionModal from './EditConnectionModal.vue';
 
-/**
- *
- * Integration card
- *
- * @author Reflect-Media <reflect.media GmbH>
- * @version 0.0.1
- *
- * @todo [ ] Test the component
- * @todo [ ] Integration test.
- * @todo [✔] Update the typescript.
- */
-
 interface HealthStatus {
-  status: 'healthy' | 'expiring_soon' | 'expired' | 'unknown'
-  daysRemaining: number | null
+  status: 'healthy' | 'expiring_soon' | 'expired' | 'unknown';
+  daysRemaining: number | null;
 }
 
 interface Props {
@@ -34,10 +22,12 @@ interface Props {
   showPages?: boolean;
   showMenu?: boolean;
   health?: HealthStatus;
+  platform?: string;
+  accountId?: string;
 }
 
 const { t } = useI18n();
-const { getPagesForIntegration, HandleConnectToFacebook, facebookPages, handleDisconnect, HandleConnectToLinkedIn, HandleConnectToYoutube, HandleConnectToGMB, getAllSocialMediaAccounts } = useConnectionManager();
+const { getPagesForIntegration, HandleConnectToFacebook, facebookPages, handleDisconnect, HandleConnectToLinkedIn, HandleConnectToYoutube, HandleConnectToGMB, HandleReconnect } = useConnectionManager();
 
 const modalStatus = ref(false);
 const toggleModal = () => {
@@ -46,42 +36,47 @@ const toggleModal = () => {
 
 const editModalStatus = ref(false);
 
-const props = withDefaults(defineProps<Props>(), { showPages: true, showMenu: true });
+const props = withDefaults(defineProps<Props>(), { showPages: true, showMenu: true, platform: '', accountId: '' });
+
+const reconnectPlatform = computed(() => props.platform || props.name);
+const reconnectAccountId = computed(() => props.accountId || props.id);
 
 const items = computed(() => [
   [
-    ...(props.showPages ? [{
-      label: $t('menu.pages'),
-      icon: 'i-heroicons-viewfinder-circle',
-      onSelect: async () => {
-        console.log("Get all pages for the current user", props.name);
-        //Get all pages for the integration
-        await getPagesForIntegration(props.name);
-        toggleModal();
-      },
-    }] : []),
+    ...(props.showPages
+      ? [
+          {
+            label: $t('menu.pages'),
+            icon: 'i-heroicons-viewfinder-circle',
+            onSelect: async () => {
+              await getPagesForIntegration(props.name);
+              toggleModal();
+            },
+          },
+        ]
+      : []),
     {
       label: $t('menu.reconnect'),
       icon: 'i-heroicons-arrow-path',
       onSelect: () => {
-        // Handle reconnect action
-        console.log('Reconnect onSelected');
+        HandleReconnect(reconnectAccountId.value, reconnectPlatform.value);
       },
-    }, {
+    },
+    {
       label: $t('menu.disconnect'),
       icon: 'i-heroicons-link-slash',
       onSelect: () => {
-        // Handle disconnect action
         handleDisconnect(props.id);
       },
-    }, {
+    },
+    {
       label: $t('menu.edit'),
       icon: 'i-heroicons-pencil',
       onSelect: () => {
-        // Handle edit action
         editModalStatus.value = true;
       },
-    }]
+    },
+  ],
 ]);
 
 const HandleConnectTo = async (page: unknown) => {
@@ -105,8 +100,12 @@ const HandleConnectTo = async (page: unknown) => {
 };
 
 const handleEditSaved = async () => {
-  await getAllSocialMediaAccounts();
+  // handled by parent
 };
+
+const hasExpiredToken = computed(() => props.health?.status === 'expired');
+const isExpiringSoon = computed(() => props.health?.status === 'expiring_soon');
+const showReconnectBanner = computed(() => hasExpiredToken.value || isExpiringSoon.value);
 </script>
 
 <template>
@@ -114,12 +113,12 @@ const handleEditSaved = async () => {
   <UPageCard :ui="{ body: 'flex-col p-0', root: 'md:min-h-60 p-0', wrapper: 'p-2', container: 'p-0 sm:p-2' }">
     <section class="relative flex flex-col items-center justify-center p-4">
       <div class="relative mb-3">
-        <UAvatar :src="props.image" class="size-14 border-2" :class="{ 'border-primary': connected }" />
+        <UAvatar :src="props.image" class="size-14 border-2" :class="{ 'border-primary': connected, 'border-red-500 animate-pulse': showReconnectBanner }" />
         <span
-v-if="props.icon"
+          v-if="props.icon"
           class="absolute -bottom-1.5 -right-1.5 rounded-full ring-2 ring-background inline-flex">
           <UAvatar
-:icon="props.icon === 'logos:linkedin-page' ? 'logos:linkedin' : props.icon" size="sm"
+            :icon="props.icon === 'logos:linkedin-page' ? 'logos:linkedin' : props.icon" size="sm"
             class="bg-white dark:bg-gray-900" />
         </span>
       </div>
@@ -138,14 +137,14 @@ v-if="props.icon"
               </span>
             </UTooltip>
             <UTooltip
-v-else-if="props.health.status === 'expiring_soon'"
+              v-else-if="props.health.status === 'expiring_soon'"
               :text="`Expires in ${props.health.daysRemaining} day${props.health.daysRemaining === 1 ? '' : 's'}`">
               <span class="inline-flex items-center gap-1 text-xs text-yellow-600 dark:text-yellow-400">
                 <span class="w-2 h-2 rounded-full bg-yellow-600 dark:bg-yellow-400" />
                 <span class="font-medium">{{ props.health.daysRemaining }}d</span>
               </span>
             </UTooltip>
-            <UTooltip v-else-if="props.health.status === 'expired'" text="Token expired — reconnect">
+            <UTooltip v-else-if="props.health.status === 'expired'" text="Token expired — click Reconnect">
               <span class="inline-flex items-center gap-1 text-xs text-red-600 dark:text-red-400">
                 <span class="w-2 h-2 rounded-full bg-red-600 dark:bg-red-400 animate-pulse" />
                 <span class="font-medium">Expired</span>
@@ -158,6 +157,12 @@ v-else-if="props.health.status === 'expiring_soon'"
             </UTooltip>
           </template>
         </div>
+        <UButton v-if="showReconnectBanner" color="primary" variant="soft" size="sm" class="mt-3"
+          :label="props.health?.status === 'expired' ? 'Token Expired — Reconnect' : 'Token Expiring Soon — Reconnect'"
+          icon="i-heroicons-arrow-path" @click="HandleReconnect(reconnectAccountId.value, reconnectPlatform.value)" />
+        <UButton v-if="showReconnectBanner && !props.connected" color="red" variant="solid" size="sm" class="mt-2"
+          label="Account Inactive — Reconnect"
+          icon="i-heroicons-link-slash" @click="HandleReconnect(reconnectAccountId.value, reconnectPlatform.value)" />
       </section>
       <div v-if="props.showMenu" class="absolute top-1 right-1">
         <UDropdownMenu :items="items" :popper="{ placement: 'bottom-start' }">
@@ -167,7 +172,7 @@ v-else-if="props.health.status === 'expiring_soon'"
     </section>
   </UPageCard>
   <UModal
-v-model:open="modalStatus" :title="t('modal.select_page_title')"
+    v-model:open="modalStatus" :title="t('modal.select_page_title')"
     :description="t('modal.select_page_description')" class="md:min-w-4xl">
 
     <template #body>
@@ -193,7 +198,7 @@ v-model:open="modalStatus" :title="t('modal.select_page_title')"
   </UModal>
   <!-- eslint-disable-next-line vue/no-multiple-template-root -- intentional Vue 3 fragment -->
   <EditConnectionModal
-v-model="editModalStatus" :connection-id="props.id" :connection-name="props.name"
+    v-model="editModalStatus" :connection-id="props.id" :connection-name="props.name"
     @saved="handleEditSaved" />
 </template>
 <style scoped></style>

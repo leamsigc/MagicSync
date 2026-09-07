@@ -6,10 +6,27 @@ import { platformConfigurations } from '#layers/BaseScheduler/shared/platformCon
 import { getPublicUrlForAsset, fetchedImageBase64 } from '../../utils/ScheduleUtils';
 import type { FacebookPage } from '#layers/BaseConnect/utils/FacebookPages';
 import { Readable } from 'stream';
+import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service';
 
 export class YouTubePlugin extends BaseSchedulerPlugin {
   static readonly pluginName = 'youtube';
   readonly pluginName = 'youtube';
+
+  private async persistTokens(socialMediaAccount: PluginSocialMediaAccount, oauth2Client: google.auth.OAuth2) {
+    try {
+      const newAccessToken = oauth2Client.credentials?.access_token
+      const newRefreshToken = oauth2Client.credentials?.refresh_token
+      if (newAccessToken || newRefreshToken) {
+        await socialMediaAccountService.updateAccount(socialMediaAccount.id, {
+          accessToken: newAccessToken || socialMediaAccount.accessToken,
+          refreshToken: newRefreshToken || socialMediaAccount.refreshToken || undefined,
+          lastSyncAt: new Date(),
+        })
+      }
+    } catch (error) {
+      log.error({ content: 'Failed to persist refreshed tokens', plugin: 'youtube', error: (error as Error).message })
+    }
+  }
 
   private getPlatformData(postDetails: PluginPostDetails) {
     const platformName = this.pluginName;
@@ -59,7 +76,7 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
     return Promise.resolve(errors);
   }
 
-  async getChannels(accessToken: string): Promise<youtube_v3.Schema$Channel[]> {
+  async getChannels(accessToken: string, socialMediaAccount?: PluginSocialMediaAccount): Promise<youtube_v3.Schema$Channel[]> {
     try {
       const auth = new google.auth.OAuth2();
       auth.setCredentials({ access_token: accessToken });
@@ -69,8 +86,7 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
         part: ['snippet', 'contentDetails', 'statistics'],
         mine: true,
       });
-      log.info(response);
-
+      if (socialMediaAccount) await this.persistTokens(socialMediaAccount, auth);
       return response.data.items || [];
     } catch (error: unknown) {
       log.error({ content: 'Failed to fetch YouTube channels', plugin: 'youtube', error: (error as Error).message });
@@ -82,7 +98,7 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
   /**
    * Get available video categories
    */
-  async getVideoCategories(regionCode: string, accessToken: string): Promise<youtube_v3.Schema$VideoCategory[]> {
+  async getVideoCategories(regionCode: string, accessToken: string, socialMediaAccount?: PluginSocialMediaAccount): Promise<youtube_v3.Schema$VideoCategory[]> {
     try {
       const auth = new google.auth.OAuth2();
       auth.setCredentials({ access_token: accessToken });
@@ -92,7 +108,7 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
         part: ['snippet'],
         regionCode: regionCode || 'US',
       });
-
+      if (socialMediaAccount) await this.persistTokens(socialMediaAccount, auth);
       return response.data.items || [];
     } catch (error: unknown) {
       log.error({ content: 'Failed to fetch YouTube categories', plugin: 'youtube', error: (error as Error).message });
@@ -103,9 +119,9 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
 
 
 
-  async pages(_: unknown, accessToken: string): Promise<FacebookPage[]> {
+  async pages(_: unknown, accessToken: string, socialMediaAccount?: PluginSocialMediaAccount): Promise<FacebookPage[]> {
     try {
-      const channels = await this.getChannels(accessToken);
+      const channels = await this.getChannels(accessToken, socialMediaAccount);
       log.info(channels)
 
       const pages = channels.map(channel => ({
@@ -192,6 +208,8 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
         },
       });
 
+      await this.persistTokens(socialMediaAccount, auth);
+
       const videoId = uploadResponse.data.id;
 
       if (!videoId) {
@@ -252,6 +270,7 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
       });
 
       const { token } = await auth.getAccessToken();
+      await this.persistTokens(socialMediaAccount, auth);
       const channelId = socialMediaAccount.accountId;
 
       const body: Record<string, unknown> = {
@@ -327,6 +346,7 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
         part: ['snippet', 'statistics'],
         mine: true,
       })
+      await this.persistTokens(socialMediaAccount, oauth2Client)
 
       const channel = channelsResponse.data.items?.[0]
       if (!channel) {
@@ -487,7 +507,7 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
     }
   }
 
-  async getPostInsights(
+  override async getPostInsights(
     postDetails: PluginPostDetails,
     socialMediaAccount: PluginSocialMediaAccount
   ): Promise<PostInsight[]> {
@@ -508,6 +528,7 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
         part: ['statistics', 'snippet'],
         id: [externalPostId],
       });
+      await this.persistTokens(socialMediaAccount, oauth2Client)
 
       const video = videosResponse.data.items?.[0];
       if (!video) {
@@ -567,6 +588,8 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
           snippet: snippet
         }
       });
+
+      await this.persistTokens(socialMediaAccount, oauth2Client);
 
       const postResponse: PostResponse = {
         id: postDetails.id,
@@ -635,6 +658,7 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
           },
         },
       });
+      await this.persistTokens(socialMediaAccount, auth);
 
       const commentId = commentResponse.data.id;
 
@@ -712,6 +736,7 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
         pageToken: options?.cursor,
         order: 'time',
       });
+      await this.persistTokens(socialMediaAccount, oauth2Client)
 
       const comments: PlatformComment[] = (response.data.items || []).map((c) => this.transformComment(c));
 
@@ -772,6 +797,7 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
           },
         },
       });
+      await this.persistTokens(socialMediaAccount, oauth2Client);
 
       const comment = response.data.snippet?.topLevelComment;
 

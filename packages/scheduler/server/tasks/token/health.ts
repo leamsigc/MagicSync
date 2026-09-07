@@ -1,9 +1,10 @@
 import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service'
+import { auth } from '#layers/BaseAuth/lib/auth'
 
 export default defineTask({
   meta: {
     name: 'token:health',
-    description: 'Check token health status for all active accounts and log accounts that need attention',
+    description: 'Check token health status for all active accounts and refresh expired tokens via Better Auth',
   },
   async run({ payload, context }) {
     const accounts = await socialMediaAccountService.getAccounts({ isActive: true })
@@ -18,19 +19,52 @@ export default defineTask({
     }
 
     const byPlatform: Record<string, number> = {}
+    let refreshedCount = 0
+
     for (const a of needsAttention) {
       byPlatform[a.platform] = (byPlatform[a.platform] || 0) + 1
+      try {
+        // Use Better Auth to refresh token — it handles provider-specific logic,
+        // PKCE, and client credentials internally. Pass userId + providerId + accountId
+        // so Better Auth can locate the correct account even without a request context.
+        const tokenResp = await auth.api.getAccessToken({
+          body: {
+            providerId: a.platform,
+            accountId: a.id,
+            userId: a.userId,
+          },
+          // Background jobs have no session headers; Better Auth will still
+          // refresh using stored refresh_token when userId/providerId are provided.
+          headers: new Headers(),
+        } as any)
+
+        const freshToken = (tokenResp as any)?.accessToken
+        const expiresAt = (tokenResp as any)?.accessTokenExpiresAt
+        if (freshToken) {
+          await socialMediaAccountService.updateAccount(a.id, {
+            isActive: true,
+            lastSyncAt: new Date(),
+            ...(expiresAt ? { tokenExpiresAt: new Date(expiresAt) } : {}),
+          })
+          refreshedCount++
+        }
+      } catch (error) {
+        console.error(`[token:health] Failed to refresh token for ${a.platform} account ${a.id}`, error)
+        // Mark as inactive if refresh fails — user will need to reconnect
+        await socialMediaAccountService.updateAccount(a.id, { isActive: false })
+      }
     }
 
     console.warn(
-      `[token:health] ${needsAttention.length}/${accounts.length} accounts need attention:`,
+      `[token:health] ${needsAttention.length}/${accounts.length} accounts needed attention, ${refreshedCount} refreshed`,
       Object.entries(byPlatform).map(([p, c]) => `${p}: ${c}`).join(', ')
     )
 
     return {
-      result: 'Attention needed',
+      result: refreshedCount > 0 ? 'Tokens refreshed' : 'Attention needed',
       checked: accounts.length,
       needsAttention: needsAttention.length,
+      refreshedCount,
       platforms: byPlatform,
     }
   },

@@ -677,21 +677,59 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
       return createPostInsightsFallback(this.pluginName);
     }
 
+    const token = socialMediaAccount.accessToken
+    // Try Insights API first (reach/views require insights, not direct fields)
     try {
-      const fields = 'id,caption,media_type,like_count,comments_count,reach,views,saved,share_count,timestamp';
-      const url = this._getGraphApiUrl(`${externalPostId}?fields=${fields}&access_token=${socialMediaAccount.accessToken}`);
+      // Instagram Graph API v19+ : insights metrics for media
+      const insightsUrl = this._getGraphApiUrl(
+        `${externalPostId}/insights?metric=reach,views,likes,comments,shares,saved,engagement,impressions&access_token=${token}`
+      )
+      const insightsRes = await fetch(insightsUrl)
+      if (insightsRes.ok) {
+        const insightsJson = await insightsRes.json() as { data?: Array<{ name: string; values: Array<{ value: number }> }> }
+        if (insightsJson.data?.length) {
+          const val = (name: string) => insightsJson.data!.find(d => d.name === name)?.values?.[0]?.value || 0
+          // Prefer insights, but will fallback to direct fields if insight metric missing (e.g. likes)
+          const likes = val('likes') || 0
+          const comments = val('comments') || 0
+          // If insights succeeded, still need direct fields for like_count fallback
+          const fields = 'like_count,comments_count'
+          const mediaUrl = this._getGraphApiUrl(`${externalPostId}?fields=${fields}&access_token=${token}`)
+          const mediaRes = await fetch(mediaUrl).then(r => r.json()).catch(() => ({} as any))
+          return [
+            { label: 'Likes', value: likes || mediaRes.like_count || 0 },
+            { label: 'Comments', value: comments || mediaRes.comments_count || 0 },
+            { label: 'Reach', value: val('reach') || 0 },
+            { label: 'Views', value: val('views') || val('impressions') || 0 },
+            { label: 'Saves', value: val('saved') || 0 },
+            { label: 'Shares', value: val('shares') || 0 },
+            { label: 'Engagement', value: val('engagement') || 0 },
+          ]
+        }
+      } else {
+        const errText = await insightsRes.text().catch(() => '')
+        log.warn({ content: '[Instagram] Insights API non-OK, falling back to direct fields', status: insightsRes.status, body: errText })
+      }
+    } catch (e) {
+      log.warn({ content: '[Instagram] Insights fetch failed, fallback', error: String(e) })
+    }
+
+    // Fallback: direct media fields (like_count, comments_count always available)
+    try {
+      const fields = 'id,caption,media_type,like_count,comments_count,timestamp,share_count';
+      const url = this._getGraphApiUrl(`${externalPostId}?fields=${fields}&access_token=${token}`);
       const response = await fetch(url);
       if (!response.ok) {
-        log.warn({ content: '[Instagram] Post insights error', status: response.status, body: await response.text() });
+        log.warn({ content: '[Instagram] Post insights fallback error', status: response.status, body: await response.text() });
         return createPostInsightsFallback(this.pluginName);
       }
-      const media = await response.json();
+      const media = await response.json() as any;
 
       return [
         { label: 'Likes', value: media.like_count || 0 },
         { label: 'Comments', value: media.comments_count || 0 },
         { label: 'Reach', value: media.reach || 0 },
-        { label: 'Views', value: media.views || 0 },
+        { label: 'Views', value: media.views || media.impressions || 0 },
         { label: 'Saves', value: media.saved || 0 },
         { label: 'Shares', value: media.share_count || 0 },
       ];

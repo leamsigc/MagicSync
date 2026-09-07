@@ -7,8 +7,8 @@ import type {
   ServiceResponse
 } from './types'
 import type { BusinessProfileServiceType } from './interfaces'
-import { and, eq, not, sql } from 'drizzle-orm'
-import { businessProfiles, entityDetails } from '#layers/BaseDB/db/schema'
+import { and, eq, inArray, not, sql } from 'drizzle-orm'
+import { businessProfiles, entityDetails, member, organization } from '#layers/BaseDB/db/schema'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
 import {
   createGMBClient,
@@ -209,6 +209,80 @@ export class BusinessProfileService implements BusinessProfileServiceType {
     }
   }
 
+  /**
+   * Find all businesses for a user including those where they are org members.
+   * Used for listing businesses in the UI - invited members should see the business.
+   */
+  async findByUserIdWithMembership(userId: string, options: QueryOptions = {}): Promise<PaginatedResponse<BusinessProfile>> {
+    try {
+      const { pagination = { page: 1, limit: 10 } } = options
+      const offset = ((pagination.page || 1) - 1) * (pagination.limit || 10)
+
+      // Owned businesses
+      const owned = await this.db
+        .select()
+        .from(businessProfiles)
+        .where(eq(businessProfiles.userId, userId))
+
+      // Member via organization: member -> organization -> metadata.businessId
+      const memberships = await this.db
+        .select({ organizationId: member.organizationId })
+        .from(member)
+        .where(eq(member.userId, userId))
+
+      const orgIds = memberships.map(m => m.organizationId)
+      let memberBusinessIds: string[] = []
+      if (orgIds.length) {
+        const orgs = await this.db
+          .select({ id: organization.id, metadata: organization.metadata })
+          .from(organization)
+          .where(inArray(organization.id, orgIds))
+        memberBusinessIds = orgs
+          .map(o => {
+            try {
+              const meta = JSON.parse(o.metadata || '{}') as Record<string, unknown>
+              return meta.businessId as string | undefined
+            } catch { return undefined }
+          })
+          .filter((id): id is string => !!id)
+      }
+
+      // Deduplicate and fetch member businesses not already owned
+      const ownedIds = new Set(owned.map(b => b.id))
+      const memberOnlyIds = memberBusinessIds.filter(id => !ownedIds.has(id))
+      let memberBusinesses: BusinessProfile[] = []
+      if (memberOnlyIds.length) {
+        memberBusinesses = await this.db
+          .select()
+          .from(businessProfiles)
+          .where(inArray(businessProfiles.id, memberOnlyIds))
+      }
+
+      const all = [...owned, ...memberBusinesses]
+      // Simple pagination on combined array (owned + member, small numbers)
+      const paginated = all.slice(offset, offset + (pagination.limit || 10))
+
+      return {
+        success: true,
+        data: paginated,
+        pagination: {
+          page: pagination.page || 1,
+          limit: pagination.limit || 10,
+          total: all.length,
+          totalPages: Math.ceil(all.length / (pagination.limit || 10))
+        }
+      }
+    } catch (error) {
+      return { success: false, error: 'Failed to fetch business profiles' } as PaginatedResponse<BusinessProfile>
+    }
+  }
+
+  async findAllWithMembership(userId: string): Promise<ServiceResponse<BusinessProfile[]>> {
+    const res = await this.findByUserIdWithMembership(userId, { pagination: { page: 1, limit: 100 } })
+    if (!res.success) return { success: false, error: res.error }
+    return { success: true, data: res.data ?? [] }
+  }
+
   async update(id: string, userId: string, data: UpdateBusinessProfileData): Promise<ServiceResponse<BusinessProfile>> {
     try {
       // Check if profile exists and belongs to user
@@ -288,11 +362,20 @@ export class BusinessProfileService implements BusinessProfileServiceType {
       return { success: false, error: 'Failed to delete business profile' }
     }
   }
-  async setActive(userId: string, data: { id: string, isActive: boolean }): Promise<ServiceResponse<BusinessProfile>> {
+  async setActive(userId: string, data: { id: string, isActive: boolean }, event?: H3Event): Promise<ServiceResponse<BusinessProfile>> {
     try {
-      const existingResult = await this.findById(data.id, userId)
+      const existingResult = await this.findById(data.id, userId, event)
       if (!existingResult.data) {
         return existingResult
+      }
+
+      const business = existingResult.data
+      const isOwner = business.userId === userId
+
+      // For members (not owner), don't update global isActive - just return business as active for this user session
+      // Client manages activeBusinessId via useState, DB isActive is per-business not per-user
+      if (!isOwner) {
+        return { success: true, data: { ...business, isActive: true } as BusinessProfile }
       }
 
       const [updated] = await this.db
@@ -303,7 +386,7 @@ export class BusinessProfileService implements BusinessProfileServiceType {
         })
         .where(and(eq(businessProfiles.id, data.id), eq(businessProfiles.userId, userId)))
         .returning()
-      // Update all others to false
+      // Update all others to false (only for owned businesses)
       await this.db
         .update(businessProfiles)
         .set({

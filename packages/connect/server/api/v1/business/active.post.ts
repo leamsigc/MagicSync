@@ -15,7 +15,7 @@ export default defineEventHandler(async (event) => {
   const newBusiness = await businessProfileService.setActive(user.id, {
     id: body.businessId,
     isActive: body.isActive
-  });
+  }, event);
 
   log.info({ message: 'Active business set', businessId: body.businessId, isActive: body.isActive })
 

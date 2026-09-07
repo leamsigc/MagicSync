@@ -25,9 +25,9 @@ onMounted(async () => {
   status.value = 'accepting'
 
   try {
-    await $fetch('/api/auth/accept-invitation', {
+    await $fetch('/api/auth/organization/accept-invitation', {
       method: 'POST',
-      body: { id: invitationId.value }
+      body: { invitationId: invitationId.value }
     })
     status.value = 'success'
     setTimeout(() => router.push('/app/business'), 2000)

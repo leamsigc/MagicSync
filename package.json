@@ -1,6 +1,6 @@
 {
   "name": "magic-sync",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Social media scheduler using Nuxt layers",
   "scripts": {
     "packages": "dotenv -- pnpm --filter",
@@ -57,7 +57,7 @@
   },
   "devDependencies": {
     "dotenv-cli": "^11.0.0",
-    "pnpm": "^10.33.0"
+    "pnpm": "^12.3.4"
   },
   "workspaces": [
     "packages/*"
@@ -65,8 +65,8 @@
   "keywords": [],
   "author": "Ismael Garcia <leamsigc@leamsigc.com>",
   "license": "MIT",
-  "packageManager": "pnpm@10.33.0",
+  "packageManager": "pnpm@12.3.4",
   "dependencies": {
-    "jose": "^6.2.2"
+    "jose": "^6.2.12"
   }
 }

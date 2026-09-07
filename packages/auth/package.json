@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@better-auth/utils": "catalog:",
+    "@local-monorepo/shared": "workspace:*",
     "@local-monorepo/db": "workspace:*",
     "@local-monorepo/email": "workspace:*",
     "@local-monorepo/ui": "workspace:*",

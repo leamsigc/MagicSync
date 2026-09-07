@@ -86,11 +86,11 @@ watch(accountsList, () => {
       <div data-tour="connect-social-media-step-1">
         <ConnectAddAccount />
       </div>
-      <ConnectIntegrationCard
-v-for="connection in accountsList" :id="connection.id" :key="connection.id"
+<ConnectIntegrationCard
+ v-for="connection in accountsList" :id="connection.id" :key="connection.id"
         :name="connection.providerId" :image="user && user.image ? user.image : ''" :icon="`logos:${connection.providerId}`"
         :tags="[]" :time="dayjs(connection.createdAt as unknown as string).format('YYYY-MM-DD')" connected
-        :health="accountHealth.get(connection.id)" />
+        :health="accountHealth.get(connection.id)" :platform="connection.providerId" :accountId="connection.id" />
     </div>
     <div v-if="healthSummary.needsAttention > 0" class="flex items-center gap-2 p-3 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800">
       <UIcon name="lucide:alert-triangle" class="w-5 h-5 text-yellow-600 dark:text-yellow-400 shrink-0" />
@@ -105,20 +105,21 @@ v-for="connection in accountsList" :id="connection.id" :key="connection.id"
     <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4" data-tour="connect-social-media-step-2">
       <template v-for="account in accountsList">
         <template v-if="account.entityDetail && account.entityDetail.details.pages">
-          <ConnectIntegrationCard
-v-for="social in account.entityDetail.details.pages" :id="social.id"
+        <ConnectIntegrationCard
+ v-for="social in account.entityDetail.details.pages" :id="social.id"
             :key="social.id" :name="social.name" :image="social.imageBase64 || ''" :icon="`logos:${account.providerId}`"
             :tags="[social.id]" :time="dayjs(account.createdAt as unknown as string).format('YYYY-MM-DD')"
-            :connected="connectedAccounts.includes(social.id)" :show-pages="false" :show-menu="false" />
+            :connected="connectedAccounts.includes(social.id)" :show-pages="false" :show-menu="false"
+            :platform="account.providerId" :accountId="social.accountId" />
         </template>
       </template>
       <template v-for="social in pagesList" :key="social.id">
         <ConnectIntegrationCard
-v-if="!accountPages.includes(social.accountId)" :id="social.id"
-          :name="social.accountName" :image="social.entityDetail.details.picture ? social.entityDetail.details.picture : ''"
-          :icon="`logos:${social.platform}`" :tags="[social.accountId]"
-          :time="dayjs(social.createdAt as unknown as string).format('YYYY-MM-DD')" connected :show-pages="false"
-          :health="socialHealth.get(social.id)" />
+ v-if="!accountPages.includes(social.accountId)" :id="social.id"
+           :name="social.accountName" :image="social.entityDetail.details.picture ? social.entityDetail.details.picture : ''"
+           :icon="`logos:${social.platform}`" :tags="[social.accountId]"
+           :time="dayjs(social.createdAt as unknown as string).format('YYYY-MM-DD')" connected :show-pages="false"
+           :health="socialHealth.get(social.id)" :platform="social.platform" :accountId="social.accountId" />
       </template>
     </div>
   </div>

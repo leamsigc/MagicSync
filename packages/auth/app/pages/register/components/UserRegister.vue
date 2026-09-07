@@ -96,14 +96,8 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
 }
 
 async function HandleRegisterUser(data: Schema) {
-
-  add({
-    title: t('messages.register_error'),
-    description: "Registration only available by invitation code",
-    color: 'error'
-  })
-  return;
-  // TODO: For now only google is available
+  // Allow registration via invitation - the redirect will contain invitationId if invited
+  // Previously blocked all email signups; now we allow it and let the invitation flow handle access
   await signUp.email({
     email: data.email,
     password: data.password,
