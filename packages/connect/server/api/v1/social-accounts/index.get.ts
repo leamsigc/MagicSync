@@ -57,6 +57,7 @@ export default defineEventHandler(async (event) => {
       "linkedin-page": LinkedInPagePlugin,
       youtube: YouTubePlugin,
       google: GooglePlugin,
+      googlemybusiness: GooglePlugin,
     }
     if (!matcher[platform] || !accounts.length) {
       throw createError({
@@ -78,11 +79,13 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // Refresh social media tokens if necessary
+    // Refresh social media tokens if necessary. `account` here is a Better
+    // Auth row, so pass its row id (the only identifier /get-access-token
+    // resolves) — never the provider account id.
     const tokenData = await getAccessTokenHelper(getHeaders(event), {
       providerId: platform,
       userId: user.id,
-      accountId: account.accountId,
+      accountId: account.id,
     }).catch(() => null)
 
     if (tokenData?.accessToken) {

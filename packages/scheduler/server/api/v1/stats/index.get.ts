@@ -7,13 +7,12 @@
  *   - accountId: filter by specific account
  *   - startDate: filter by snapshot date (ISO string)
  *   - endDate: filter by snapshot date (ISO string)
- *   - mode: 'current' | 'aggregated' | 'timeseries' | 'history'
- *   - days: number of days for timeseries (default: 30)
+ *   - mode: 'current' | 'aggregated' | 'timeseries' | 'history' | 'comparison' | 'post-metrics' | 'top-posts'
+ *   - days: number of days for timeseries/comparison/top-posts (default: 30, supports 7/30/90)
  *   - metric: 'followers' | 'posts' | 'engagement' for timeseries
- *   - limit: history pagination limit (default: 100)
- *   - offset: history pagination offset (default: 0)
+ *   - limit: history/top-posts pagination limit (default: 100/10)
  */
-import { platformStatsService } from '#layers/BaseScheduler/server/services/PlatformStats.service'
+import { analyticsService } from '#layers/BaseScheduler/server/services/Analytics.service'
 import type { SocialMediaPlatform } from '#layers/BaseDB/server/services/social-media-account.service'
 import type { PlatformStatsFilters } from '#layers/BaseScheduler/server/services/PlatformStats.service'
 
@@ -49,30 +48,45 @@ export default defineEventHandler(async (event) => {
     if (startDate) filters.startDate = startDate as string
     if (endDate) filters.endDate = endDate as string
 
+    const daysNum = days ? parseInt(days as string) : 30
+
     let data: unknown
 
     switch (mode) {
       case 'aggregated': {
-        data = await platformStatsService.getAggregatedByPlatform(filters)
+        data = await analyticsService.getAggregatedByPlatform(filters)
         break
       }
       case 'timeseries': {
-        data = await platformStatsService.getTimeSeriesData(filters, {
-          days: days ? parseInt(days as string) : 30,
-          interval: 'week'
-        })
+        const allowedMetrics = ['followers', 'posts', 'engagement'] as const
+        const metricParam = allowedMetrics.includes(metric as typeof allowedMetrics[number])
+          ? (metric as typeof allowedMetrics[number])
+          : undefined
+        data = await analyticsService.getTimeSeriesData({ ...filters, metric: metricParam }, { days: daysNum })
         break
       }
       case 'history': {
-        data = await platformStatsService.getStatsHistory(filters, {
+        data = await analyticsService.getStatsHistory(filters, {
           limit: limit ? parseInt(limit as string) : 100,
           offset: offset ? parseInt(offset as string) : 0,
         })
         break
       }
+      case 'comparison': {
+        data = await analyticsService.getComparison(filters, daysNum)
+        break
+      }
+      case 'post-metrics': {
+        data = await analyticsService.getPostMetricsHistory({ ...filters, postId: (query.postId as string) || undefined })
+        break
+      }
+      case 'top-posts': {
+        data = await analyticsService.getTopPosts(filters, { days: daysNum, limit: limit ? parseInt(limit as string) : 10 })
+        break
+      }
       default: {
         // 'current' — latest snapshot per account
-        data = await platformStatsService.getCurrentStats(filters)
+        data = await analyticsService.getCurrentStats(filters)
       }
     }
 

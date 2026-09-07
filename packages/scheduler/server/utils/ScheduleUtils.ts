@@ -161,8 +161,8 @@ const platformProviderMap: Record<string, string> = {
   'instagram-standalone': 'instagram',
   threads: 'threads',
   tiktok: 'tiktok',
-  youtube: 'google',
-  googlemybusiness: 'google',
+  youtube: 'youtube',
+  googlemybusiness: 'googlemybusiness',
   discord: 'discord',
   reddit: 'reddit',
   dribbble: 'dribbble',
@@ -182,14 +182,20 @@ export const ScheduleRefreshSocialMediaTokens = async (fullPost: PostWithAllData
   if (needsRefresh.length === 0) return
 
   await Promise.allSettled(needsRefresh.map(async (platformPost) => {
-    const providerId = platformProviderMap[platformPost.platformPostId || '']
+    let providerId: string | undefined = platformPost.platformPostId || ''
+    providerId = platformProviderMap[providerId]
     let socialMediaAccount = await socialMediaAccountService.getActualAccountByAccountId(platformPost.socialAccountId);
     if (!providerId) return
-    let account = await socialMediaAccountService.getBetterAuthAccountId(providerId, userId, socialMediaAccount?.accountId ?? '')
-    // Check if platformPost.platformPostId is youtube then check google account because youtube social media accountId is the page or channel id
-    if (platformPost.platformPostId === 'youtube') {
-      const googleAccounts = await socialMediaAccountService.getAccountsForPlatform('google', userId);
-      account = googleAccounts[0] || null;
+    // Resolve the Better Auth row: its row id is the only identifier
+    // /get-access-token accepts (provider account id / channel id never match).
+    let resolved = await socialMediaAccountService.findBetterAuthAccountForRefresh(userId, providerId)
+    let account = resolved.success ? resolved.data : null
+    // Fallback: YouTube channels authorized via the `google` provider (which
+    // carries youtube.force-ssl) refresh through the google account.
+    if (platformPost.platformPostId === 'youtube' && !account) {
+      const googleFallback = await socialMediaAccountService.findBetterAuthAccountForRefresh(userId, 'google');
+      account = googleFallback.success ? googleFallback.data : null;
+      providerId = 'google';
     }
 
     log.info({ message: 'Single account found', providerId })
@@ -203,7 +209,7 @@ export const ScheduleRefreshSocialMediaTokens = async (fullPost: PostWithAllData
     const tokenData = await getAccessTokenHelper(headers, {
       providerId,
       userId,
-      accountId: account.accountId,
+      accountId: account.id,
     });
 
     log.error({ message: 'Token data', tokenData })

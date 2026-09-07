@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import type { Asset, PostCreateBase } from '#layers/BaseDB/db/schema';
 import type { PlatformConfig, SocialMediaPlatformConfigurations, PostFormat } from '../composables/usePlatformConfiguration';
+import { usePlatformIcons, type SocialMediaPlatform } from '#layers/BaseUI/app/composables/usePlatformIcons';
 
 const FacebookPreview = defineAsyncComponent(() => import('./FacebookPreview.vue'));
 const InstagramPreview = defineAsyncComponent(() => import('./InstagramPreview.vue'));
@@ -35,6 +36,7 @@ const emit = defineEmits<{
 }>();
 
 const selectedFormat = ref<PostFormat>(props.format);
+const { getPlatformIcon } = usePlatformIcons();
 
 watch(() => props.format, (newFormat) => {
   selectedFormat.value = newFormat;
@@ -123,7 +125,7 @@ const formatLabels: Record<PostFormat, string> = {
     <div v-if="supportedFormats.length > 1"
       class="mb-4 w-full md:max-w-[320px] flex items-center justify-between bg-zinc-900/80 p-2 rounded-xl border border-white/10 backdrop-blur shadow-xl">
       <div class="flex items-center gap-2">
-        <Icon :name="`logos:${platform}`" class="w-5 h-5" v-if="platform !== 'default'" />
+        <Icon :name="getPlatformIcon(props.platform as unknown as SocialMediaPlatform)" class="w-5 h-5" v-if="platform !== 'default'" />
         <span class="text-sm font-bold text-zinc-200">{{ platformConfig?.logo || platform }}</span>
       </div>
       <div class="md:flex bg-zinc-800 rounded-lg p-1 gap-1 hidden">

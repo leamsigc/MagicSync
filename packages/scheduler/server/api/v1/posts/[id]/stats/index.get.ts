@@ -1,17 +1,18 @@
 /**
  * GET /api/v1/posts/[id]/stats - Get post stats for all platforms
  *
- * Returns an array of stats per platform. Each platform's data is cached
- * in entityDetails (social_media_post_stats) scoped by post+platform+account
- * and served forever until a refresh is requested via ?refresh=1.
+ * Serves metric history from the `post_metrics` time-series table.
+ * `?refresh=1` forces a live collection for every published platform post
+ * (bypasses the adaptive due-gating), otherwise the latest stored snapshot
+ * per platform post is returned.
  */
 
 import { postService } from '#layers/BaseDB/server/services/post.service';
 import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service';
 import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers';
-import { AutoPostService } from '#layers/BaseScheduler/server/services/AutoPost.service';
-import { getPostStatsCache, savePostStatsCache } from '#layers/BaseScheduler/server/utils/PostStatsCache';
-import type { Account } from '#layers/BaseDB/db/schema';
+import { statsCollectorService } from '#layers/BaseScheduler/server/services/StatsCollector.service';
+import { analyticsService } from '#layers/BaseScheduler/server/services/Analytics.service';
+import type { SocialMediaAccount } from '#layers/BaseDB/db/schema';
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event);
@@ -29,75 +30,54 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 404, statusMessage: 'Post not found' });
     }
 
-    const trigger = new AutoPostService();
     const publishedPosts = post.platformPosts?.filter((pp) => pp.status === 'published') || [];
 
     if (publishedPosts.length === 0) {
-      return { success: true, data: [], cached: false };
+      return { success: true, data: [], history: [] };
     }
 
     const query = getQuery(event);
     const forceRefresh = query.refresh === '1' || query.refresh === 'true';
 
-    const results = await Promise.all(publishedPosts.map(async (platformPost) => {
-      const platform = platformPost.platformPostId || platformPost.platform;
-      const platformData: {
-        platform: string;
-        socialAccountId: string;
-        status: string;
-        publishedAt: unknown;
-        error?: string;
-        stats?: unknown;
-        cached?: boolean;
-        updatedAt?: unknown;
-      } = {
-        platform,
+    if (forceRefresh) {
+      for (const platformPost of publishedPosts) {
+        const socialAccount = await socialMediaAccountService.getAccountById(platformPost.socialAccountId);
+        if (!socialAccount) continue;
+        await statsCollectorService.collectPostMetric({
+          postFull: post,
+          platformPost,
+          account: socialAccount as unknown as SocialMediaAccount,
+        });
+      }
+    }
+
+    const history = await analyticsService.getPostMetricsHistory({ postId });
+    const byPlatformPost = new Map<string, typeof history>();
+    for (const point of history) {
+      if (!point.platformPostId) continue;
+      const list = byPlatformPost.get(point.platformPostId) || [];
+      list.push(point);
+      byPlatformPost.set(point.platformPostId, list);
+    }
+
+    const results = publishedPosts.map((platformPost) => {
+      const points = byPlatformPost.get(platformPost.id) || [];
+      const latest = points.length > 0 ? points[points.length - 1] : undefined;
+      return {
+        platform: platformPost.platform,
+        platformPostId: platformPost.id,
         socialAccountId: platformPost.socialAccountId,
         status: platformPost.status,
         publishedAt: platformPost.publishedAt,
+        stats: latest?.metrics ?? null,
+        cached: !forceRefresh && points.length > 0,
+        updatedAt: latest?.collectedAt,
+        error: latest?.status === 'failed' ? latest.error : undefined,
+        history: points.map((point) => ({ collectedAt: point.collectedAt, status: point.status, metrics: point.metrics })),
       };
+    });
 
-      try {
-        const isSupportedPlatform = trigger.isSupportedPlatform(platform);
-        if (!isSupportedPlatform) {
-          platformData.error = `Unsupported platform: ${platform}`;
-          return platformData;
-        }
-
-        const socialAccount = await socialMediaAccountService.getAccountById(platformPost.socialAccountId);
-        if (!socialAccount) {
-          platformData.error = 'Social media account not found';
-          return platformData;
-        }
-
-        const latestCache = await getPostStatsCache(postId, platform, platformPost.socialAccountId);
-
-        if (!forceRefresh && latestCache) {
-          platformData.stats = latestCache.details;
-          platformData.cached = true;
-          platformData.updatedAt = latestCache.updatedAt;
-          return platformData;
-        }
-
-        const insights = await trigger.getPostInsights({
-          post,
-          socialAccount: socialAccount as unknown as Account,
-          platform,
-        });
-
-        await savePostStatsCache(postId, platform, platformPost.socialAccountId, insights);
-
-        platformData.stats = insights;
-        platformData.cached = false;
-        platformData.updatedAt = new Date().toISOString();
-      } catch (err: unknown) {
-        platformData.error = err instanceof Error ? err.message : 'Failed to fetch stats';
-      }
-
-      return platformData;
-    }));
-
-    return { success: true, data: results };
+    return { success: true, data: results, history };
   } catch (error: unknown) {
     if (error && typeof error === 'object' && 'statusCode' in error) throw error;
     if (error instanceof Error && error.message === 'Post not found') {

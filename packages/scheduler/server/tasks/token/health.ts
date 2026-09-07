@@ -24,19 +24,27 @@ export default defineTask({
     for (const a of needsAttention) {
       byPlatform[a.platform] = (byPlatform[a.platform] || 0) + 1
       try {
+        // Resolve the Better Auth row id first: passing our own account id
+        // (or the provider account id) never matches and throws
+        // ACCOUNT_NOT_FOUND.
+        const resolved = await socialMediaAccountService.findBetterAuthAccountForRefresh(
+          a.userId,
+          a.platform
+        )
+        const providerAccount = resolved.success ? resolved.data : null
+        if (!providerAccount) {
+          throw new Error('No linked provider account found for refresh')
+        }
         // Use Better Auth to refresh token — it handles provider-specific logic,
-        // PKCE, and client credentials internally. Pass userId + providerId + accountId
-        // so Better Auth can locate the correct account even without a request context.
+        // PKCE, and client credentials internally. userId is passed because
+        // background jobs have no session headers.
         const tokenResp = await auth.api.getAccessToken({
           body: {
-            providerId: a.platform,
-            accountId: a.id,
+            accountId: providerAccount.id,
             userId: a.userId,
           },
-          // Background jobs have no session headers; Better Auth will still
-          // refresh using stored refresh_token when userId/providerId are provided.
           headers: new Headers(),
-        } as any)
+        })
 
         const freshToken = (tokenResp as any)?.accessToken
         const expiresAt = (tokenResp as any)?.accessTokenExpiresAt

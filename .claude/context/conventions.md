@@ -88,6 +88,31 @@ export default defineEventHandler(async (event) => {
 })
 ```
 
+## imports
+- Nuxt have autoimport enabled by default just and importing specific from layers
+
+## Do and Dont
+
+>Don't  `@click="() => previewPlatform = 'editor'"`
+```vue
+<template>
+  <CustomButton @click="() => previewPlatform = 'editor'">Submit</CustomButton>
+</template>
+```
+
+>Do
+```vue
+<script setup lang="ts">
+const previewPlatform = ref('editor')
+const HandleSwitch = (platform: string) => {
+  previewPlatform.value = platform
+}
+</script>
+<template>
+  <CustomButton @click="HandleSwitch('editor')">Editor</CustomButton>
+</template>
+```
+
 ## Verify Checklist
 
 Before presenting any code:

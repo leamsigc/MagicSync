@@ -23,11 +23,25 @@ export default defineEventHandler(async (event) => {
 
         if (validatedData.markAll) {
             // Mark all notifications as read
-            result = await notificationService.markAllAsRead(user.id)
+            const allResult = await notificationService.markAllAsRead(user.id)
+            if (allResult.error || !allResult.data) {
+                throw createError({
+                    statusCode: 500,
+                    statusMessage: allResult.error || 'Failed to mark notification as read'
+                })
+            }
+            result = allResult.data
             log.info({ content: 'All notifications marked as read' })
         } else if (validatedData.notificationId) {
             // Mark single notification as read
-            result = await notificationService.markAsRead(validatedData.notificationId, user.id)
+            const single = await notificationService.markAsRead(validatedData.notificationId, user.id)
+            if (single.error || !single.data) {
+                throw createError({
+                    statusCode: single.code === 'NOT_FOUND' ? 404 : 500,
+                    statusMessage: single.error || 'Failed to mark notification as read'
+                })
+            }
+            result = single.data
             log.info({ content: 'Notification marked as read', notificationId: validatedData.notificationId })
         } else {
             throw createError({

@@ -76,7 +76,33 @@ export interface DashboardData {
   }
   currentStats: PlatformStats[]
   platformGraphs: PlatformGraph[]
+  freshness?: FreshnessEntry[]
 }
+
+export interface FreshnessEntry {
+  accountId: string
+  platform: string
+  accountName: string
+  lastCollectedAt?: string
+  nextDueAt?: string
+  status: string
+  consecutiveFailures: number
+  lastError?: string
+}
+
+export interface TopPost {
+  postId: string
+  content: string
+  platform: string
+  accountId: string
+  externalPostId?: string
+  metrics: Record<string, number>
+  lastCollectedAt: string
+}
+
+export type StatsRange = 7 | 30 | 90
+
+export const STATS_RANGES: StatsRange[] = [7, 30, 90]
 
 export interface CollectStatsResult {
   accountId: string
@@ -88,12 +114,15 @@ export interface CollectStatsResult {
 }
 
 export const usePlatformStats = () => {
-  const stats = ref<PlatformStats[]>([])
-  const aggregated = ref<Record<string, AggregatedPlatform>>({})
-  const timeSeries = ref<TimeSeriesData>({ labels: [], datasets: [] })
-  const dashboard = ref<DashboardData | null>(null)
+  const stats = useState<PlatformStats[]>('platform-stats', () => [])
+  const aggregated = useState<Record<string, AggregatedPlatform>>('platform-stats-aggregated', () => ({}))
+  const timeSeries = useState<TimeSeriesData>('platform-stats-timeseries', () => ({ labels: [], datasets: [] }))
+  const dashboard = useState<DashboardData | null>('platform-stats-dashboard', () => null)
+  const topPosts = useState<TopPost[]>('platform-stats-top-posts', () => [])
+  const range = useState<StatsRange>('platform-stats-range', () => 30)
   const loading = ref(false)
   const collecting = ref(false)
+  const exporting = ref(false)
   const error = ref<string>('')
 
   const apiBase = '/api/v1/stats'
@@ -151,13 +180,13 @@ export const usePlatformStats = () => {
     }
   }
 
-  // Fetch dashboard overview data
-  const fetchDashboard = async (filters: StatsFilters & { days?: number } = {}) => {
+  // Fetch dashboard overview data for the selected range
+  const fetchDashboard = async (filters: StatsFilters & { days?: number; refresh?: boolean } = {}) => {
     try {
       loading.value = true
       error.value = ''
       const res = await $fetch<{ success: boolean; data: DashboardData }>('/api/v1/stats/dashboard', {
-        query: filters,
+        query: { ...filters, days: filters.days || range.value },
       })
       if (res.success) dashboard.value = res.data
     } catch (err: unknown) {
@@ -165,6 +194,53 @@ export const usePlatformStats = () => {
       error.value = fetchError.data?.message || fetchError.message || 'Failed to fetch dashboard'
     } finally {
       loading.value = false
+    }
+  }
+
+  // Fetch top performing posts for the selected range
+  const fetchTopPosts = async (filters: StatsFilters & { days?: number; limit?: number } = {}) => {
+    try {
+      error.value = ''
+      const res = await $fetch<{ success: boolean; data: TopPost[] }>(apiBase, {
+        query: { ...filters, mode: 'top-posts', days: filters.days || range.value, limit: filters.limit || 5 },
+      })
+      if (res.success) topPosts.value = res.data
+    } catch (err: unknown) {
+      const fetchError = err as { data?: { message?: string }; message?: string }
+      error.value = fetchError.data?.message || fetchError.message || 'Failed to fetch top posts'
+    }
+  }
+
+  // Change the analytics range and reload dashboard data
+  const setRange = async (next: StatsRange, filters: StatsFilters = {}) => {
+    range.value = next
+    await Promise.all([fetchDashboard(filters), fetchTopPosts(filters)])
+  }
+
+  // Download analytics history as CSV
+  const exportCsv = async (filters: StatsFilters = {}) => {
+    try {
+      exporting.value = true
+      error.value = ''
+      const blob = await $fetch<Blob>(`${apiBase}/export`, {
+        query: { ...filters, days: range.value },
+        responseType: 'blob',
+      })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `analytics-${range.value}d-${new Date().toISOString().slice(0, 10)}.csv`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      URL.revokeObjectURL(url)
+      return true
+    } catch (err: unknown) {
+      const fetchError = err as { data?: { message?: string }; message?: string }
+      error.value = fetchError.data?.message || fetchError.message || 'Failed to export stats'
+      return false
+    } finally {
+      exporting.value = false
     }
   }
 
@@ -208,14 +284,55 @@ export const usePlatformStats = () => {
     stats.value.map(s => s.platform)
   )
 
+  // Fetch comparison data (current vs previous period)
+  const fetchComparison = async (filters: StatsFilters = {}) => {
+    try {
+      loading.value = true
+      error.value = ''
+      const res = await $fetch<{ success: boolean; data: { days: number; entries: { platform: string; accountId: string; username: string; current: { followers: number; following: number; posts: number; engagement: number }; previous: { followers: number; following: number; posts: number; engagement: number }; delta: { followers: number; following: number; posts: number; engagement: number } }[] } }>(apiBase, {
+        query: { ...filters, mode: 'comparison', days: range.value },
+      })
+      if (res.success) return res.data
+      return null
+    } catch (err: unknown) {
+      const fetchError = err as { data?: { message?: string }; message?: string }
+      error.value = fetchError.data?.message || fetchError.message || 'Failed to fetch comparison'
+      return null
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // Fetch post metrics history for a specific post
+  const fetchPostMetrics = async (postId: string, filters: StatsFilters = {}) => {
+    try {
+      loading.value = true
+      error.value = ''
+      const res = await $fetch<{ success: boolean; data: { postId: string; platform: string; history: { date: string; metrics: Record<string, number> }[] }[] }>(`/api/v1/posts/${postId}/stats`, {
+        query: { ...filters },
+      })
+      if (res.success) return res.data
+      return []
+    } catch (err: unknown) {
+      const fetchError = err as { data?: { message?: string }; message?: string }
+      error.value = fetchError.data?.message || fetchError.message || 'Failed to fetch post metrics'
+      return []
+    } finally {
+      loading.value = false
+    }
+  }
+
   return {
     // State
     stats: stats,
     aggregated: aggregated,
     timeSeries: timeSeries,
     dashboard: dashboard,
+    topPosts: topPosts,
+    range: range,
     loading: loading,
     collecting: collecting,
+    exporting: exporting,
     error: error,
 
     // Computed
@@ -229,6 +346,11 @@ export const usePlatformStats = () => {
     fetchAggregated,
     fetchTimeSeries,
     fetchDashboard,
+    fetchTopPosts,
+    fetchComparison,
+    fetchPostMetrics,
+    setRange,
+    exportCsv,
     collectStats,
   }
 }

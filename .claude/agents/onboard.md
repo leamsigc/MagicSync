@@ -117,3 +117,9 @@ Current focus: [module/feature]
 - `cd packages/db && pnpm db:generate` - Generate database schema
 - `cd python-backend && pnpm dev` - Start Python backend (port 8000)
 ```
+
+
+
+#### MUST PASS ON THE GENERATED CODE ### 
+
+pass cyclomatic complexity lint.

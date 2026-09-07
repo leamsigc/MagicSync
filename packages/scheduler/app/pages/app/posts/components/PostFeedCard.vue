@@ -9,6 +9,7 @@
  * @version 0.0.1
  */
 import type { PostWithAllData } from '#layers/BaseDB/db/schema';
+import { usePlatformIcons, type SocialMediaPlatform } from '#layers/BaseUI/app/composables/usePlatformIcons';
 import dayjs from 'dayjs';
 
 const props = defineProps<{
@@ -17,12 +18,13 @@ const props = defineProps<{
 
 const router = useRouter();
 const showComments = ref(false);
+const { getPlatformIcon } = usePlatformIcons();
 
 const openPost = () => {
   router.push(`/app/posts/feeds/${props.post.id}`);
 };
 
-const platformIcon = (id?: string | null) => `logos:${id || 'facebook'}`;
+const platformIcon = (id?: string | null) => getPlatformIcon((id || 'facebook') as SocialMediaPlatform);
 
 const statusColor = (status?: string | null) => {
   switch (status) {

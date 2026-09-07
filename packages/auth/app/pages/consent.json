@@ -1,0 +1,24 @@
+{
+  "en": {
+    "title": "Authorize application",
+    "description": "Grant an external application access to your MagicSync business",
+    "loading": "Loading authorization request…",
+    "working": "Completing authorization…",
+    "failed": "Authorization failed",
+    "errorHeading": "Invalid authorization request",
+    "heading": "Authorize {client}?",
+    "subheading": "An external AI assistant wants access to your MagicSync account",
+    "businessLabel": "Business",
+    "businessHint": "The app will ONLY see and act on this one business. Nothing else.",
+    "businessPlaceholder": "Select a business",
+    "pickBusinessFirst": "Pick a business first — access is always scoped to exactly one",
+    "accessLabel": "Access level",
+    "accessRead": "Read only",
+    "accessReadHint": "Posts, stats, calendar, media. The app can never publish or delete.",
+    "accessFull": "Read and publish",
+    "accessFullHint": "Create, schedule, publish and delete posts on your behalf. You can revoke anytime.",
+    "scopesLabel": "Requested permissions",
+    "deny": "Deny",
+    "allow": "Allow access"
+  }
+}

@@ -3,7 +3,8 @@
     "page": {
       "title": "AI Content Repurpose",
       "description": "Transform your long-form content into platform-optimized posts",
-      "back": "Back"
+      "back": "Back",
+      "prefilledFromAnalytics": "Content loaded from your top post"
     },
     "input": {
       "contentTab": "Long Form Content",
@@ -37,7 +38,8 @@
     "page": {
       "title": "Reutilización de Contenido con IA",
       "description": "Transforma tu contenido extenso en publicaciones optimizadas para cada plataforma",
-      "back": "Volver"
+      "back": "Volver",
+      "prefilledFromAnalytics": "Contenido cargado desde tu mejor publicación"
     },
     "input": {
       "contentTab": "Contenido Extenso",
@@ -71,7 +73,8 @@
     "page": {
       "title": "Réutilisation de Contenu IA",
       "description": "Transformez votre contenu long en publications optimisées pour chaque plateforme",
-      "back": "Retour"
+      "back": "Retour",
+      "prefilledFromAnalytics": "Contenu chargé depuis votre meilleure publication"
     },
     "input": {
       "contentTab": "Contenu Long",
@@ -105,7 +108,8 @@
     "page": {
       "title": "KI-Inhaltsumwandlung",
       "description": "Verwandeln Sie Ihren langen Inhalt in plattformoptimierte Beiträge",
-      "back": "Zurück"
+      "back": "Zurück",
+      "prefilledFromAnalytics": "Inhalt aus deinem Top-Beitrag geladen"
     },
     "input": {
       "contentTab": "Langer Inhalt",

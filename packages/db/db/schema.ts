@@ -5,6 +5,7 @@ import { user } from './auth/auth'
 // Import tables for relations
 import { businessProfiles } from './business/business'
 import { entityDetails } from './entityDetails/entityDetails'
+import { jwks, oauthAccessToken, oauthClient, oauthClientAssertion, oauthClientResource, oauthConsent, oauthRefreshToken, oauthResource } from './oauth/oauth'
 import { notifications } from './notifications/notifications'
 import { platformPosts, posts } from './posts/posts'
 import { reviews } from './reviews/reviews'
@@ -13,11 +14,15 @@ import { subscriptions } from './subscriptions/subscriptions'
 import { templates, templateAssets } from './templates/templates'
 import { documents, documentChunks, chatThreads, chatMessages, agentSessions } from './rag/rag'
 import { userLlmConfigs } from './llm/llm'
+import { accountMetrics, postMetrics, statsSyncState } from './stats/stats'
+import { inboxItems } from './inbox/inbox'
 
 export * from './assets/assets'
 
 // Export auth tables and types
 export * from './auth/auth'
+// OAuth 2.1 / MCP authorization-server tables (better-auth mcp + jwt plugins)
+export * from './oauth/oauth'
 // Export feature-specific tables and types
 export * from './business/business'
 export * from './posts/posts'
@@ -32,6 +37,8 @@ export * from './notifications/notifications'
 export * from './rag/rag'
 export * from './llm/llm'
 export * from './skills/skills'
+export * from './stats/stats'
+export * from './inbox/inbox'
 
 /***
 * Cross-feature relationships
@@ -49,7 +56,8 @@ export const userRelations = relations(user, ({ many }) => ({
   templates: many(templates),
   documents: many(documents),
   chatThreads: many(chatThreads),
-  llmConfigs: many(userLlmConfigs)
+  llmConfigs: many(userLlmConfigs),
+  inboxItems: many(inboxItems)
 }))
 
 // Business profile relations - connecting to dependent features
@@ -78,7 +86,13 @@ export const socialMediaAccountsRelations = relations(socialMediaAccounts, ({ on
     fields: [socialMediaAccounts.entityDetailId],
     references: [entityDetails.id]
   }),
-  platformPosts: many(platformPosts)
+  platformPosts: many(platformPosts),
+  accountMetrics: many(accountMetrics),
+  postMetrics: many(postMetrics),
+  statsSyncState: one(statsSyncState, {
+    fields: [socialMediaAccounts.id],
+    references: [statsSyncState.socialAccountId]
+  })
 }))
 
 // Asset relations
@@ -103,17 +117,60 @@ export const postsRelations = relations(posts, ({ one, many }) => ({
     fields: [posts.businessId],
     references: [businessProfiles.id]
   }),
-  platformPosts: many(platformPosts)
+  platformPosts: many(platformPosts),
+  postMetrics: many(postMetrics)
 }))
 
 // Platform post relations
-export const platformPostsRelations = relations(platformPosts, ({ one }) => ({
+export const platformPostsRelations = relations(platformPosts, ({ one, many }) => ({
   post: one(posts, {
     fields: [platformPosts.postId],
     references: [posts.id]
   }),
   socialMediaAccount: one(socialMediaAccounts, {
     fields: [platformPosts.socialAccountId],
+    references: [socialMediaAccounts.id]
+  }),
+  postMetrics: many(postMetrics)
+}))
+
+// Stats relations
+export const accountMetricsRelations = relations(accountMetrics, ({ one }) => ({
+  socialMediaAccount: one(socialMediaAccounts, {
+    fields: [accountMetrics.socialAccountId],
+    references: [socialMediaAccounts.id]
+  })
+}))
+
+export const postMetricsRelations = relations(postMetrics, ({ one }) => ({
+  post: one(posts, {
+    fields: [postMetrics.postId],
+    references: [posts.id]
+  }),
+  socialMediaAccount: one(socialMediaAccounts, {
+    fields: [postMetrics.socialAccountId],
+    references: [socialMediaAccounts.id]
+  })
+}))
+
+export const statsSyncStateRelations = relations(statsSyncState, ({ one }) => ({
+  socialMediaAccount: one(socialMediaAccounts, {
+    fields: [statsSyncState.socialAccountId],
+    references: [socialMediaAccounts.id]
+  })
+}))
+
+export const inboxItemsRelations = relations(inboxItems, ({ one }) => ({
+  user: one(user, {
+    fields: [inboxItems.userId],
+    references: [user.id]
+  }),
+  post: one(posts, {
+    fields: [inboxItems.postId],
+    references: [posts.id]
+  }),
+  socialMediaAccount: one(socialMediaAccounts, {
+    fields: [inboxItems.socialAccountId],
     references: [socialMediaAccounts.id]
   })
 }))

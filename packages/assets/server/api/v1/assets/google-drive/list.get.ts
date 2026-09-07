@@ -31,7 +31,7 @@ export default defineEventHandler(async (event) => {
       log.error('No Google Drive token found for user', { userId: user.id })
       throw createError({
         statusCode: 401,
-        statusMessage: 'Google Drive not connected. Please connect your Google account first.',
+        statusMessage: 'Google Drive not connected. Please connect Google Drive from the media library first.',
       })
     }
 

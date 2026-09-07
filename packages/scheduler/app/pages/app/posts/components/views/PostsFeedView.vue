@@ -1,3 +1,5 @@
+<!--  Translation file -->
+<i18n src="../../posts.json"></i18n>
 <script lang="ts" setup>
 /**
  *
@@ -14,6 +16,10 @@ import PostFeedCard from '../PostFeedCard.vue';
 const props = defineProps<{
   posts: PostWithAllData[];
 }>();
+
+// Local scope: resolves the <i18n> block above. Template $t alone falls
+// back to global messages (which lack feeds.*) — same pattern as PostStatsView.
+const { t } = useI18n();
 </script>
 
 <template>
@@ -24,13 +30,13 @@ const props = defineProps<{
 
     <div v-else class="rounded  text-center py-16">
       <UIcon name="i-heroicons-newspaper" class="w-14 h-14 text-dimmed mx-auto mb-4" />
-      <p class="text-muted text-lg">{{ $t('feeds.noPostsFound') }}</p>
+      <p class="text-muted text-lg">{{ t('feeds.noPostsFound') }}</p>
     </div>
 
     <div v-if="props.posts.length" class="text-center mt-4">
       <NuxtLink to="/app/posts/feeds"
         class="text-sm text-primary hover:underline inline-flex items-center gap-1.5 min-h-11 justify-center w-full sm:w-auto sm:min-h-0">
-        {{ $t('feeds.openFullFeed') }}
+        {{ t('feeds.openFullFeed') }}
         <UIcon name="i-lucide-arrow-right" class="size-4" />
       </NuxtLink>
     </div>

@@ -13,6 +13,7 @@
 */
 
 import type { Asset, PostCreateBase, PostWithAllData } from '#layers/BaseDB/db/schema';
+import { usePlatformIcons, type SocialMediaPlatform } from '#layers/BaseUI/app/composables/usePlatformIcons';
 import type { SocialMediaPlatformConfigurations } from '../pages/app/posts/composables/usePlatformConfiguration';
 const FacebookPreview = defineAsyncComponent(() => import('../pages/app/posts/components/FacebookPreview.vue'));
 const InstagramPreview = defineAsyncComponent(() => import('../pages/app/posts/components/InstagramPreview.vue'));
@@ -33,6 +34,8 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+
+const { getPlatformIcon } = usePlatformIcons();
 
 const formattedTime = computed(() => {
   if (props.post.scheduledAt) {
@@ -87,7 +90,7 @@ const postToCreate = ref<PostCreateBase & { comment: string[] }>({
         <div class="mt-2 flex items-center justify-between">
           <div class="flex items-center space-x-1">
             <section v-for="platform in post.platformPosts">
-              <Icon :name="`logos:${platform.platformPostId ?? 'facebook'}`" :key="platform.id" />
+              <Icon :name="getPlatformIcon((platform.platformPostId ?? 'facebook') as SocialMediaPlatform)" :key="platform.id" />
             </section>
           </div>
           <div class="flex items-center space-x-1 text-xs text-gray-500 dark:text-gray-400">
@@ -103,7 +106,7 @@ const postToCreate = ref<PostCreateBase & { comment: string[] }>({
       <section class="flex flex-col gap-4 p-4">
         <div v-for="platformPost in props.post.platformPosts" :key="platformPost.id" class="border p-2 rounded-lg">
           <h3 class="font-semibold mb-2 flex items-center gap-2">
-            <Icon :name="`logos:${platformPost.platformPostId ?? 'default'}`" />
+            <Icon :name="getPlatformIcon((platformPost.platformPostId ?? 'default') as SocialMediaPlatform)" />
             {{ platformPost.platformPostId }}
           </h3>
           <component :is="previewsMap[(platformPost.platformPostId || 'default') as keyof typeof previewsMap]"

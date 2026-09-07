@@ -33,6 +33,7 @@ const blogRootRedirects = Object.fromEntries(
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
+  compatibilityDate: '2026-09-07',
   routeRules: {
     "/": { swr: 1200 },
     "/blog": { swr: true },
@@ -89,6 +90,8 @@ export default defineNuxtConfig({
     experimental: {
       openAPI: true,
       tasks: true,
+      // REQUIRED for useEvent() inside MCP tool handlers (@nuxtjs/mcp-toolkit)
+      asyncContext: true,
     },
   },
   // Cross-origin isolation scoped to the on-device WASM-using tools.
@@ -182,7 +185,11 @@ export default defineNuxtConfig({
     '@local-monorepo/ai-tools',
   ],
 
-  modules: ['@nuxtjs/seo', '@nuxtjs/i18n', '@nuxt/hints', 'nuxt-umami', 'evlog/nuxt', '@comark/nuxt'],
+  modules: ['@nuxtjs/seo', '@nuxtjs/i18n', '@nuxt/hints', 'nuxt-umami', 'evlog/nuxt', '@comark/nuxt', '@nuxtjs/mcp-toolkit'],
+  mcp: {
+    name: 'MagicSync MCP',
+    route: '/mcp',
+  },
   i18n: {
     vueI18n: join(currentDir, './translations/i18n.config.ts'),
     baseUrl: process.env.NUXT_APP_URL,
@@ -286,6 +293,35 @@ export default defineNuxtConfig({
           }
         }
       }
-    }
+    },
+    'vite:extendConfig': (viteInlineConfig) => {
+      // NUXT_B7002: @nuxt/content and @nuxtjs/mdc register
+      // vite.optimizeDeps.include entries (slugify, remark-*, rehype-*,
+      // parse5, unist-util-visit, unified, debug, extend) that cannot be
+      // resolved in dev. This hook runs after all `vite:config` hooks
+      // (including the modules'), so filtering here actually sticks.
+      // The modules work fine without pre-bundling these.
+      const optimizeDeps = (viteInlineConfig as { optimizeDeps?: { include?: unknown[] } }).optimizeDeps
+      if (optimizeDeps?.include) {
+        const unresolvable = new Set([
+          'slugify',
+          'remark-gfm',
+          'remark-emoji',
+          'remark-mdc',
+          'remark-rehype',
+          'rehype-raw',
+          'parse5',
+          'unist-util-visit',
+          'unified',
+          'debug',
+          'extend',
+        ])
+        optimizeDeps.include = optimizeDeps.include.filter((entry) => {
+          if (typeof entry !== 'string') return true
+          const leaf = entry.split('>').pop()?.trim() ?? entry
+          return !unresolvable.has(leaf)
+        })
+      }
+    },
   }
 })

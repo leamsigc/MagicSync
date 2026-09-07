@@ -9,6 +9,7 @@ import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
 import { entityDetailsService } from '#layers/BaseDB/server/services/entity-details.service'
 import { businessProfiles, account } from '#layers/BaseDB/db/schema';
 import type { SocialMediaAccountServiceType } from './interfaces';
+import type { ServiceResponse } from './types'
 
 export type SocialMediaPlatform =
   | 'facebook'
@@ -118,6 +119,56 @@ export class SocialMediaAccountService implements SocialMediaAccountServiceType 
         eq(account.accountId, smAccountId)
       )
     }) || null;
+  }
+
+  /**
+   * Get a Better Auth OAuth row by its own id, scoped to the user.
+   * Needed because provider-level UI cards carry this id, while page-level
+   * cards carry the social_media_accounts id.
+   */
+  async getBetterAuthAccountById(id: string, userId: string): Promise<ServiceResponse<Account | null>> {
+    try {
+      const row = await this.db.query.account.findFirst({
+        where: and(
+          eq(account.id, id),
+          eq(account.userId, userId)
+        ),
+      })
+      return { success: true, data: row ?? null }
+    }
+    catch (error) {
+      return { success: false, error: 'Failed to find provider account' }
+    }
+  }
+
+  /**
+   * Find the Better Auth OAuth row to refresh through.
+   *
+   * Better Auth resolves `/get-access-token` strictly by its own row id
+   * (`account.id`), NOT by the provider's account id and NOT by our
+   * social_media_accounts id (for YouTube those are channel id / Google sub —
+   * three different identifiers). Callers must pass the returned row's id.
+   * Prefers the most recently updated row that still holds a refresh token.
+   */
+  async findBetterAuthAccountForRefresh(
+    userId: string,
+    providerId: string
+  ): Promise<ServiceResponse<Account | null>> {
+    try {
+      const rows = await this.db.query.account.findMany({
+        where: and(
+          eq(account.userId, userId),
+          eq(account.providerId, providerId)
+        ),
+        orderBy: [desc(account.updatedAt)],
+      })
+      if (rows.length === 0) return { success: true, data: null }
+      const withRefresh = rows.find((row) => !!row.refreshToken)
+      return { success: true, data: withRefresh ?? rows[0] ?? null }
+    }
+    catch (error) {
+      return { success: false, error: 'Failed to find provider account' }
+    }
   }
   async getUserAccountsCompleteDetails(id: string) {
     const userAccounts = await this.db.query.account.findMany({
@@ -341,11 +392,12 @@ export class SocialMediaAccountService implements SocialMediaAccountServiceType 
         : null
     }
 
-    if (data.refreshToken !== undefined) {
+    // Never wipe a stored refresh token with null/undefined. Providers omit
+    // refresh_token on re-grants (Google only sends it with a consent grant),
+    // and Better Auth preserves the previous one — the mirror must do the same.
+    if (data.refreshToken) {
       encryptedData.refreshToken = data.refreshToken
-      encryptedData.refresh_token_encrypted = data.refreshToken
-        ? await encryptKey(data.refreshToken)
-        : null
+      encryptedData.refresh_token_encrypted = await encryptKey(data.refreshToken)
     }
 
     if (data.accountName !== undefined) encryptedData.accountName = data.accountName
@@ -419,7 +471,9 @@ export class SocialMediaAccountService implements SocialMediaAccountServiceType 
         {
           accountName: name,
           accessToken: access_token,
-          refreshToken: refresh_token,
+          // Pass through only when truthy: updateAccount skips undefined, so a
+          // missing refresh_token can never wipe the stored one.
+          refreshToken: refresh_token || undefined,
           tokenExpiresAt: computedExpiry,
           lastSyncAt: new Date(),
           isActive: true,
@@ -570,9 +624,11 @@ export class SocialMediaAccountService implements SocialMediaAccountServiceType 
     // Short-lived OAuth (Google/YouTube/GMB) - refresh token handles renewal, only warn within 1h
     const shortLivedPlatforms = ['google', 'googlemybusiness', 'youtube']
     if (shortLivedPlatforms.includes(account.platform)) {
-      // If we have a refresh token, token is auto-refreshable via Better Auth - consider healthy unless expired
+      // If we have a refresh token, Better Auth renews on demand — a 1h Google
+      // token would otherwise report expiring_soon from the moment of connect
+      // (60min remaining <= 60min threshold). Warn only in the final minutes.
       if (account.refreshToken || account.refreshTokenEncrypted) {
-        if (hoursRemaining <= 1) return { status: 'expiring_soon', expiresAt, daysRemaining }
+        if (msRemaining <= 10 * 60 * 1000) return { status: 'expiring_soon', expiresAt, daysRemaining }
         return { status: 'healthy', expiresAt, daysRemaining }
       }
       if (hoursRemaining <= 24) return { status: 'expiring_soon', expiresAt, daysRemaining }

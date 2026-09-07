@@ -35,6 +35,20 @@ export const useGoogleDrive = () => {
 
   const toast = useToast()
 
+  // True when the Drive API answers 401 → user hasn't granted Drive access yet.
+  const needsConnection = ref(false)
+
+  const isUnauthorized = (err: any) =>
+    err?.statusCode === 401 || err?.response?.status === 401 || err?.data?.statusCode === 401
+
+  const connectDrive = async () => {
+    const { linkSocial } = await import('#layers/BaseAuth/lib/auth-client')
+    await linkSocial({
+      provider: 'google-drive',
+      callbackURL: '/app/media',
+    })
+  }
+
   const clearError = () => {
     error.value = null
   }
@@ -59,7 +73,11 @@ export const useGoogleDrive = () => {
         files.value = response.files
       }
       nextPageToken.value = response.nextPageToken
+      needsConnection.value = false
     } catch (err: any) {
+      if (isUnauthorized(err)) {
+        needsConnection.value = true
+      }
       error.value = err.data?.message || err.message || 'Failed to list Google Drive files'
       toast.add({
         title: 'Error',
@@ -124,6 +142,9 @@ export const useGoogleDrive = () => {
       clearSelectedFiles()
       return response.data
     } catch (err: any) {
+      if (isUnauthorized(err)) {
+        needsConnection.value = true
+      }
       error.value = err.data?.message || err.message || 'Failed to download files'
       toast.add({
         title: 'Error',
@@ -143,6 +164,7 @@ export const useGoogleDrive = () => {
     isLoading,
     isDownloading,
     error,
+    needsConnection,
     query,
     nextPageToken,
     totalFiles,
@@ -150,6 +172,7 @@ export const useGoogleDrive = () => {
     clearError,
     listFiles,
     searchFiles,
+    connectDrive,
     loadNextPage,
     loadPrevPage,
     toggleSelectFile,

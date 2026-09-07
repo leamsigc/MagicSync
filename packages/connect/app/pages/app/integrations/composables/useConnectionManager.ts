@@ -30,8 +30,10 @@ export const useConnectionManager = () => {
     connectionList.value = [
       // Better Auth OAuth platforms (native support)
       { name: 'Facebook', icon: 'logos:facebook', url: '#', platform: 'facebook', authType: 'better-auth', active: true },
-      { name: 'Google', icon: 'logos:google', url: '#', platform: "google", authType: 'better-auth', active: true },
-      { name: 'Google Business', icon: 'logos:google', url: '#', platform: "googlemybusiness", authType: 'better-auth', active: true },
+      // NOTE: no generic 'Google' card — Google login is identity-only
+      // (Google rejects scope bundles). YouTube, Google Business and Drive
+      // are connected separately via incremental auth below.
+      { name: 'Google Business', icon: 'logos:google-icon', url: '#', platform: "googlemybusiness", authType: 'manual-oauth', active: true },
       { name: 'LinkedIn', icon: 'logos:linkedin-icon', url: '#', platform: "linkedin", authType: 'better-auth', active: true },
       { name: 'X (Twitter)', icon: 'logos:twitter', url: '#', platform: "twitter", authType: 'better-auth', active: true },
       { name: 'TikTok', icon: 'logos:tiktok-icon', url: '#', platform: "tiktok", authType: 'better-auth', active: false },
@@ -47,7 +49,7 @@ export const useConnectionManager = () => {
 
       // API Key / Credential-based platforms
       { name: 'Bluesky', icon: 'fa6-brands:bluesky', url: '#', platform: "bluesky", authType: 'api-key', active: true },
-      { name: 'Dev.to', icon: 'logos:dev-badge', url: '#', platform: "devto", authType: 'api-key', active: false },
+      { name: 'Dev.to', icon: 'simple-icons:devdotto', url: '#', platform: "devto", authType: 'api-key', active: false },
       { name: 'WordPress', icon: 'logos:wordpress-icon', url: '#', platform: "wordpress", authType: 'api-key', active: false },
     ]
   }
@@ -219,7 +221,9 @@ export const useConnectionManager = () => {
   const HandleConnectToGMB = async (page: FacebookPage & { platformType?: string }) => {
     try {
       const { activeBusinessId } = useBusinessManager()
-      const res = await $fetch<Promise<SocialMediaAccount>>(`/api/v1/social-accounts/googlemybusiness/${page.id}`, {
+      // GMB location ids are resource names (`accounts/.../locations/...`)
+      // containing slashes — encode so they stay a single route segment.
+      const res = await $fetch<Promise<SocialMediaAccount>>(`/api/v1/social-accounts/googlemybusiness/${encodeURIComponent(page.id)}`, {
         method: 'POST',
         body: { ...page, platformId: 'googlemybusiness', businessId: activeBusinessId.value },
       });
@@ -281,7 +285,7 @@ export const useConnectionManager = () => {
   const HandleReconnect = async (accountId: string, platform: string) => {
     try {
       const response = await $fetch<{ success: boolean; data: { hasValidToken: boolean } }>(
-        `/api/v1/social-accounts/${accountId}/refresh`,
+        `/api/v1/social-accounts/refresh/${accountId}`,
         { method: 'POST' }
       );
       if (response.success) {

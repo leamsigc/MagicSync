@@ -19,6 +19,7 @@
 import { computed } from 'vue'
 import { processTemplate } from '../../utils/templateProcessor'
 import { distributePostsAcrossDates } from '../../utils/dateDistribution'
+import { usePlatformIcons, type SocialMediaPlatform } from '#layers/BaseUI/app/composables/usePlatformIcons'
 
 interface Props {
   template: string
@@ -29,6 +30,7 @@ interface Props {
   businessHoursOnly?: boolean
 }
 const { t } = useI18n()
+const { getPlatformIcon } = usePlatformIcons()
 const props = defineProps<Props>()
 
 const previewPosts = computed(() => {
@@ -90,7 +92,7 @@ const previewPosts = computed(() => {
         </p>
 
         <div class="flex gap-1.5 pt-1">
-          <Icon v-for="platform in platforms" :key="platform" :name="`logos:${platform.toLowerCase()}`"
+          <Icon v-for="platform in platforms" :key="platform" :name="getPlatformIcon(platform.toLowerCase() as SocialMediaPlatform)"
             class="w-3.5 h-3.5 opacity-60" />
         </div>
       </div>

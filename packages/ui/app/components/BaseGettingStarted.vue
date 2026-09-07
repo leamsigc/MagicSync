@@ -69,7 +69,7 @@ function handleDismiss() {
 
     <ol class="grid gap-3 sm:grid-cols-3">
       <li v-for="(step, index) in steps" :key="step.key">
-        <component :is="step.done ? 'div' : resolveComponent('NuxtLink')" :to="step.done ? undefined : step.to"
+        <component :is="step.done ? 'div' : 'NuxtLink'" :to="step.done ? undefined : step.to"
           class="relative flex items-center gap-3 rounded-lg border p-3 h-full transition-colors"
           :class="step.done
             ? 'border-border bg-muted/40 opacity-75'

@@ -3,6 +3,7 @@
 
 <script lang="ts" setup>
 import type { SocialMediaComplete } from '#layers/BaseDB/db/schema'
+import { usePlatformIcons, type SocialMediaPlatform } from '#layers/BaseUI/app/composables/usePlatformIcons'
 
 /**
  * Component Description: Horizontal list of social platforms with selection state and validation badges
@@ -16,6 +17,7 @@ interface Props {
 }
 
 const { t } = useI18n()
+const { getPlatformIcon } = usePlatformIcons()
 const props = withDefaults(defineProps<Props>(), {
   validationStatus: () => ({})
 });
@@ -56,7 +58,7 @@ const getStatus = (accountId: string) => {
           ]" @click="handleToggle(account)">
           <UAvatar :src="account.entityDetail?.details?.picture" :alt="account.accountName"
             v-if="account.entityDetail?.details?.picture" />
-          <UButton :icon="`logos:${account.platform}`" color="neutral" variant="ghost" v-else />
+          <UButton :icon="getPlatformIcon(account.platform as SocialMediaPlatform)" color="neutral" variant="ghost" v-else />
 
           <template #content v-if="isSelected(account.id)">
             <Icon :name="getStatus(account.id).isValid ? 'heroicons:check' : 'heroicons:x-circle'" class="w-2 h-2" />
@@ -67,7 +69,7 @@ const getStatus = (accountId: string) => {
           <section
             class="backdrop-blur-xl rounded-xl shadow-2xl pointer-events-none animate-in fade-in zoom-in-95 duration-200 min-w-[200px]">
             <div class="p-3 border-b border-white/5 flex items-center gap-2">
-              <Icon :name="`logos:${account.platform}`" class="w-4 h-4" />
+              <Icon :name="getPlatformIcon(account.platform as SocialMediaPlatform)" class="w-4 h-4" />
               <span class="font-bold text-sm text-zinc-200">{{ account.accountName }}</span>
             </div>
 

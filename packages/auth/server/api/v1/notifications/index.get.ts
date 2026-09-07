@@ -21,13 +21,19 @@ export default defineEventHandler(async (event) => {
         log.set({ unreadOnly: validatedQuery.unreadOnly })
 
         // Get notifications
-        const notifications = await notificationService.getNotifications(user.id, validatedQuery)
+        const result = await notificationService.getNotifications(user.id, validatedQuery)
+        if (result.error || !result.data) {
+            throw createError({
+                statusCode: 500,
+                statusMessage: result.error || 'Failed to get notifications'
+            })
+        }
 
-        log.info({ content: 'Notifications retrieved', count: notifications.length })
+        log.info({ content: 'Notifications retrieved', count: result.data.length })
 
         return {
             success: true,
-            data: notifications,
+            data: result.data,
             pagination: {
                 limit: validatedQuery.limit,
                 offset: validatedQuery.offset

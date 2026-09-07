@@ -6,6 +6,7 @@ import type { NuxtPage } from 'nuxt/schema'
 const currentDir = dirname(fileURLToPath(import.meta.url))
 
 export default defineNuxtConfig({
+  compatibilityDate: '2026-09-07',
   routeRules: {
     "/": { static: true },
     "/blog": { swr: true },

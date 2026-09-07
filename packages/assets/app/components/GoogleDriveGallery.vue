@@ -10,10 +10,12 @@ const {
   query,
   selectedFiles,
   hasNextPage,
+  needsConnection,
   listFiles,
   loadNextPage,
   toggleSelectFile,
   downloadSelectedFiles,
+  connectDrive,
 } = useGoogleDrive()
 
 const { t } = useI18n({ useScope: 'local' })
@@ -35,6 +37,10 @@ const handleSelectAndDownload = async () => {
   if (assets.length > 0) {
     $emit('select-images', assets)
   }
+}
+
+const handleConnectDrive = async () => {
+  await connectDrive()
 }
 
 onMounted(async () => {
@@ -62,6 +68,14 @@ const fileIcon = (mimeType: string) => {
 
     <div v-if="isLoading && files.length === 0" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
       <USkeleton v-for="i in 6" :key="i" class="aspect-square rounded-lg" />
+    </div>
+
+    <div v-else-if="needsConnection" class="flex flex-col items-center justify-center py-16 text-muted-foreground">
+      <Icon name="logos:google-drive" class="w-16 h-16 mb-4 opacity-50" />
+      <p class="text-lg mb-4">{{ t('googleDriveNotConnected') }}</p>
+      <UButton icon="logos:google" color="primary" @click="handleConnectDrive">
+        {{ t('connectDrive') }}
+      </UButton>
     </div>
 
     <div v-else-if="!hasAttemptedLoad || (files.length === 0 && !isLoading)"

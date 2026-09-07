@@ -4,6 +4,7 @@
 <script lang="ts" setup>
 import { useConnectionManager } from './composables/useConnectionManager'
 import { useBusinessManager } from '../business/composables/useBusinessManager'
+import { usePlatformIcons, type SocialMediaPlatform } from '#layers/BaseUI/app/composables/usePlatformIcons'
 import dayjs from "dayjs"
 import ConnectIntegrationCard from './components/ConnectIntegrationCard.vue'
 
@@ -14,6 +15,7 @@ interface TokenHealth {
 
 const { getAllSocialMediaAccounts, pagesList, getTokenHealth } = useConnectionManager()
 const { activeBusinessId, getAllBusinesses } = useBusinessManager()
+const { getPlatformIcon } = usePlatformIcons()
 
 const healthMap = ref<Map<string, TokenHealth>>(new Map())
 
@@ -72,7 +74,7 @@ useHead({
     <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
       <ConnectIntegrationCard v-for="social in filteredAccounts" :name="social.accountName" :key="social.id"
         :image="social.entityDetail?.details?.picture ? social.entityDetail.details.picture : ''"
-        :icon="social.platform ? 'logos:' + social.platform : ''" :tags="[social.accountId]" :id="social.id"
+        :icon="social.platform ? getPlatformIcon(social.platform as SocialMediaPlatform) : ''" :tags="[social.accountId]" :id="social.id"
         :time="dayjs(social.createdAt as unknown as string).format('YYYY-MM-DD')" connected :show-pages="false"
         :health="healthMap.get(social.id)" :platform="social.platform" :accountId="social.accountId" />
     </div>

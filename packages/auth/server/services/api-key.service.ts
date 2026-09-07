@@ -11,6 +11,11 @@ export interface ApiKeyContext {
   businessId: string
   connectedPlatforms: string[]
   name: string | null
+  /**
+   * Effective scope. API keys default to full (Wave 1); OAuth tokens carry
+   * the granted scope (mcp:read/mcp:full). Enforced by requireScope().
+   */
+  mcpScope?: 'read' | 'full'
 }
 
 export interface ApiKeyVerificationResult {

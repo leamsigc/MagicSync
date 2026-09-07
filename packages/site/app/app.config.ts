@@ -25,12 +25,12 @@ export default defineAppConfig({
                 },
                 {
                     name: 'LinkedIn',
-                    icon: 'logos:linkedin-icon',
+                    icon: 'logos:linkedin',
                     url: 'https://linkedin.com/in/leamsigc'
                 },
                 {
                     name: 'YouTube',
-                    icon: 'logos:youtube-icon',
+                    icon: 'logos:youtube',
                     url: 'https://youtube.com/leamsigc'
                 }
             ]

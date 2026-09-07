@@ -97,6 +97,7 @@ export default withMermaid(defineConfig({
             { text: 'Features Overview', link: '/guide/features' },
             { text: 'Free Tools', link: '/guide/tools' },
             { text: 'Growth Strategy & Content Pipeline', link: '/guide/growth-strategy' },
+            { text: 'MCP Server', link: '/guide/mcp' },
           ],
         },
       ],

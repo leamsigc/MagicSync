@@ -15,10 +15,11 @@ import type { SocialMediaPlatform } from '#layers/BaseUI/app/composables/usePlat
 import { usePlatformIcons } from '#layers/BaseUI/app/composables/usePlatformIcons'
 import type { EChartsOption } from 'echarts'
 import type { CollectStatsResult, PlatformStats, PlatformGraph } from '~~/app/composables/usePlatformStats'
+import { useTimeAgo } from '@vueuse/core'
 
 const { t } = useI18n()
 const { getPlatformIcon } = usePlatformIcons()
-const { dashboard, fetchDashboard, collectStats, collecting } = usePlatformStats()
+const { dashboard, fetchDashboard, collectStats, collecting, topPosts, fetchTopPosts, setRange, range, exportCsv, exporting } = usePlatformStats()
 const { user } = UseUser()
 const toast = useToast()
 const colorMode = useColorMode()
@@ -48,6 +49,50 @@ async function handleCollectStats() {
     }
   }
 }
+
+async function handleRangeChange(newRange: 7 | 30 | 90) {
+  setRange(newRange)
+  await fetchDashboard({})
+  await fetchTopPosts({ days: newRange })
+}
+
+async function handleExport() {
+  await exportCsv({ days: range.value })
+  toast.add({
+    title: 'Export Complete',
+    description: 'CSV file downloaded',
+    color: 'success'
+  })
+}
+
+function handleRepurposePost(content: string) {
+  navigateTo({
+    path: '/app/tools/content-split',
+    query: { content },
+  })
+}
+function getFreshnessColor(status: string): 'success' | 'info' | 'error' | 'warning' | 'neutral' {
+  switch (status) {
+    case 'idle': return 'success'
+    case 'running': return 'info'
+    case 'error': return 'error'
+    case 'rate_limited': return 'warning'
+    default: return 'neutral'
+  }
+}
+
+function getFreshnessLabel(entry: { status: string; lastCollectedAt?: string }) {
+  if (entry.status === 'error') return 'Sync error'
+  if (!entry.lastCollectedAt) return 'Never collected'
+  return useTimeAgo(new Date(entry.lastCollectedAt)).value
+}
+
+const timeAgo = computed(() => {
+  return (date: string | undefined) => {
+    if (!date) return '—'
+    return useTimeAgo(new Date(date)).value
+  }
+})
 
 function avgGrowth(stats: PlatformStats[], field: 'followers' | 'posts' | 'engagement'): { absolute: number; percentage: number } {
   let absolute = 0; let percentage = 0; let count = 0
@@ -223,6 +268,7 @@ function getChartOptions(platformGraph: PlatformGraph): EChartsOption {
 onMounted(async () => {
   if (user.value?.id) {
     await Promise.all([fetchDashboard({}), fetchSetupState()])
+    await fetchTopPosts({ days: 30 })
   }
 })
 </script>
@@ -244,26 +290,46 @@ onMounted(async () => {
     </div>
 
     <BaseDashboardOverviewCards :display-metrics="displayMetrics">
-    <template v-if="dashboard">
-      <div class="col-span-1 lg:col-span-3">
-        <div class="flex items-center justify-between mb-6">
-          <h2 class="text-lg font-semibold tracking-tight text-white">
-            {{ t('platformPerformance') }}
-          </h2>
-          <UButton size="sm" variant="ghost" color="neutral" :loading="collecting" @click="handleCollectStats">
-            <UIcon name="i-heroicons-arrow-path" class="w-4 h-4 mr-2" />
-            {{ t('refreshStats') }}
-          </UButton>
-        </div>
-      </div>
+      <template v-if="dashboard">
+        <div class="col-span-1 lg:col-span-3">
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+            <h2 class="text-lg font-semibold tracking-tight text-white">
+              {{ t('platformPerformance') }}
+            </h2>
+            <div class="flex items-center gap-2">
+              <USelectMenu :model-value="range" :options="[
+                { label: t('range7'), value: 7 },
+                { label: t('range30'), value: 30 },
+                { label: t('range90'), value: 90 },
+              ]" size="sm" @update:model-value="(v: 7 | 30 | 90) => handleRangeChange(v)" />
+              <UButton size="sm" variant="outline" color="neutral" :loading="exporting" @click="handleExport">
+                <UIcon name="i-lucide-download" class="w-4 h-4 mr-1" />
+                {{ t('exportCsv') }}
+              </UButton>
+              <UButton size="sm" variant="ghost" color="neutral" :loading="collecting" @click="handleCollectStats">
+                <UIcon name="i-heroicons-arrow-path" class="w-4 h-4 mr-1" />
+                {{ t('refreshStats') }}
+              </UButton>
+            </div>
+          </div>
 
-      <template v-if="dashboard.platformGraphs.length > 0">
-        <div v-for="platformGraph in dashboard.platformGraphs" :key="platformGraph.platform + platformGraph.accountId"
-          class="col-span-1">
-          <UCard class="h-full" :ui="{ title: 'p-0 sm:px-2', }">
-            <template #header>
-              <div class=" flex items-center gap-3">
-                <!-- <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-secondary">
+          <!-- Freshness chips -->
+          <div v-if="dashboard.freshness?.length" class="flex flex-wrap gap-2 mb-4">
+            <UBadge v-for="entry in dashboard.freshness" :key="entry.accountId" :color="getFreshnessColor(entry.status)"
+              variant="subtle" size="xs" :title="`${entry.accountName} · ${entry.status}`">
+              <Icon :name="getPlatformIcon(entry.platform as SocialMediaPlatform)" class="w-3 h-3 mr-1" />
+              {{ getFreshnessLabel(entry) }}
+            </UBadge>
+          </div>
+        </div>
+
+        <template v-if="dashboard.platformGraphs.length > 0">
+          <div v-for="platformGraph in dashboard.platformGraphs" :key="platformGraph.platform + platformGraph.accountId"
+            class="col-span-1">
+            <UCard class="h-full" :ui="{ title: 'p-0 sm:px-2', }">
+              <template #header>
+                <div class=" flex items-center gap-3">
+                  <!-- <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-secondary">
                   <Icon :name="getPlatformIcon(platformGraph.platform as SocialMediaPlatform)"
                     class="w-4 h-4 text-secondary-foreground" />
                 </div>
@@ -283,105 +349,164 @@ onMounted(async () => {
                     {{ t('followers') }}
                   </p>
                 </div> -->
-              </div>
-            </template>
+                </div>
+              </template>
 
-            <BaseChart v-if="platformGraph.labels.length > 0" :title="t('last30Days')"
-              :description="`${platformGraph.accountName} performance over time`"
-              :icon="getPlatformIcon(platformGraph.platform as SocialMediaPlatform)"
-              :chart-options="getChartOptions(platformGraph)" />
+              <BaseChart v-if="platformGraph.labels.length > 0" :title="t('last30Days')"
+                :description="`${platformGraph.accountName} performance over time`"
+                :icon="getPlatformIcon(platformGraph.platform as SocialMediaPlatform)"
+                :chart-options="getChartOptions(platformGraph)" />
 
-            <div class="grid grid-cols-3 gap-4">
-              <div class="text-center p-3 rounded-lg bg-muted/50">
-                <p class="text-xl font-bold text-foreground">
-                  {{ formatNumber(platformGraph.current.followers) }}
-                </p>
-                <p class="text-xs text-muted-foreground">
-                  {{ t('followers') }}
-                </p>
+              <div class="grid grid-cols-3 gap-4">
+                <div class="text-center p-3 rounded-lg bg-muted/50">
+                  <p class="text-xl font-bold text-foreground">
+                    {{ formatNumber(platformGraph.current.followers) }}
+                  </p>
+                  <p class="text-xs text-muted-foreground">
+                    {{ t('followers') }}
+                  </p>
+                </div>
+                <div class="text-center p-3 rounded-lg bg-muted/50">
+                  <p class="text-xl font-bold text-foreground">
+                    {{ formatNumber(platformGraph.current.following) }}
+                  </p>
+                  <p class="text-xs text-muted-foreground">
+                    {{ t('following') }}
+                  </p>
+                </div>
+                <div class="text-center p-3 rounded-lg bg-muted/50">
+                  <p class="text-xl font-bold text-foreground">
+                    {{ formatNumber(platformGraph.current.engagement) }}
+                  </p>
+                  <p class="text-xs text-muted-foreground">
+                    {{ t('engagement') }}
+                  </p>
+                </div>
               </div>
-              <div class="text-center p-3 rounded-lg bg-muted/50">
-                <p class="text-xl font-bold text-foreground">
-                  {{ formatNumber(platformGraph.current.following) }}
-                </p>
-                <p class="text-xs text-muted-foreground">
-                  {{ t('following') }}
-                </p>
+
+              <div class="grid grid-cols-3 gap-2 mt-3">
+                <div v-if="getPlatformStat(platformGraph, 'likes') > 0" class="text-center p-2 rounded-lg bg-muted/30">
+                  <p class="text-xs font-semibold text-foreground">{{ formatNumber(getPlatformStat(platformGraph,
+                    'likes')) }}</p>
+                  <p class="text-[10px] text-muted-foreground">{{ t('likes') }}</p>
+                </div>
+                <div v-if="getPlatformStat(platformGraph, 'comments') > 0"
+                  class="text-center p-2 rounded-lg bg-muted/30">
+                  <p class="text-xs font-semibold text-foreground">{{ formatNumber(getPlatformStat(platformGraph,
+                    'comments')) }}</p>
+                  <p class="text-[10px] text-muted-foreground">{{ t('comments') }}</p>
+                </div>
+                <div v-if="getPlatformStat(platformGraph, 'impressions') > 0"
+                  class="text-center p-2 rounded-lg bg-muted/30">
+                  <p class="text-xs font-semibold text-foreground">{{ formatNumber(getPlatformStat(platformGraph,
+                    'impressions')) }}
+                  </p>
+                  <p class="text-[10px] text-muted-foreground">{{ t('impressions') }}</p>
+                </div>
+                <div v-if="getPlatformStat(platformGraph, 'saves') > 0" class="text-center p-2 rounded-lg bg-muted/30">
+                  <p class="text-xs font-semibold text-foreground">{{ formatNumber(getPlatformStat(platformGraph,
+                    'saves')) }}</p>
+                  <p class="text-[10px] text-muted-foreground">{{ t('saves') }}</p>
+                </div>
+                <div v-if="getPlatformStat(platformGraph, 'shares') > 0" class="text-center p-2 rounded-lg bg-muted/30">
+                  <p class="text-xs font-semibold text-foreground">{{ formatNumber(getPlatformStat(platformGraph,
+                    'shares')) }}</p>
+                  <p class="text-[10px] text-muted-foreground">{{ t('shares') }}</p>
+                </div>
+                <div v-if="getPlatformStat(platformGraph, 'views') > 0" class="text-center p-2 rounded-lg bg-muted/30">
+                  <p class="text-xs font-semibold text-foreground">{{ formatNumber(getPlatformStat(platformGraph,
+                    'views')) }}</p>
+                  <p class="text-[10px] text-muted-foreground">{{ t('views') }}</p>
+                </div>
               </div>
-              <div class="text-center p-3 rounded-lg bg-muted/50">
-                <p class="text-xl font-bold text-foreground">
-                  {{ formatNumber(platformGraph.current.engagement) }}
-                </p>
-                <p class="text-xs text-muted-foreground">
-                  {{ t('engagement') }}
-                </p>
+
+              <div v-if="getPlatformGrowth(platformGraph)" class="flex items-center justify-end gap-2 mt-2">
+                <UBadge :color="(getPlatformGrowth(platformGraph)?.percentage ?? 0) >= 0 ? 'success' : 'error'"
+                  variant="subtle" size="sm">
+                  <Icon
+                    :name="(getPlatformGrowth(platformGraph)?.percentage ?? 0) >= 0 ? 'lucide:trending-up' : 'lucide:trending-down'"
+                    class="w-3 h-3 mr-1" />
+                  {{ (getPlatformGrowth(platformGraph)?.percentage ?? 0) >= 0 ? '+' : '' }}{{
+                    (getPlatformGrowth(platformGraph)?.percentage ?? 0).toFixed(1) }}%
+                </UBadge>
+                <span class="text-[10px] text-muted-foreground">{{ t('followerGrowth') }}</span>
               </div>
+
+
+            </UCard>
+          </div>
+        </template>
+
+        <template v-if="topPosts.length > 0">
+          <div class="col-span-1 lg:col-span-3">
+            <UCard>
+              <template #header>
+                <div class="flex items-center justify-between">
+                  <div>
+                    <h3 class="font-semibold text-foreground">{{ t('topPosts') }}</h3>
+                    <p class="text-xs text-muted-foreground mt-0.5">{{ t('topPostsDescription') }}</p>
+                  </div>
+                </div>
+              </template>
+              <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                  <thead>
+                    <tr class="border-b border-border">
+                      <th class="text-left py-2 px-3 font-medium text-muted-foreground">{{ t('platform') }}</th>
+                      <th class="text-left py-2 px-3 font-medium text-muted-foreground">{{ t('post') }}</th>
+                      <th class="text-right py-2 px-3 font-medium text-muted-foreground">{{ t('likes') }}</th>
+                      <th class="text-right py-2 px-3 font-medium text-muted-foreground">{{ t('comments') }}</th>
+                      <th class="text-right py-2 px-3 font-medium text-muted-foreground">{{ t('shares') }}</th>
+                      <th class="text-right py-2 px-3 font-medium text-muted-foreground">{{ t('views') }}</th>
+                      <th class="text-right py-2 px-3 font-medium text-muted-foreground">{{ t('engagement') }}</th>
+                      <th class="text-right py-2 px-3 font-medium text-muted-foreground">{{ t('actions') }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="post in topPosts" :key="post.postId" class="border-b border-border/50 hover:bg-muted/30">
+                      <td class="py-2 px-3">
+                        <Icon :name="getPlatformIcon(post.platform)" class="w-4 h-4" />
+                      </td>
+                      <td class="py-2 px-3 max-w-[200px] truncate">
+                        <span class="text-foreground">{{ post.content || post.postId }}</span>
+                      </td>
+                      <td class="py-2 px-3 text-right text-foreground">{{ formatNumber(post.metrics?.likes ?? 0) }}</td>
+                      <td class="py-2 px-3 text-right text-foreground">{{ formatNumber(post.metrics?.comments ?? 0) }}</td>
+                      <td class="py-2 px-3 text-right text-foreground">{{ formatNumber(post.metrics?.shares ?? 0) }}</td>
+                      <td class="py-2 px-3 text-right text-foreground">{{ formatNumber(post.metrics?.views ?? 0) }}</td>
+                      <td class="py-2 px-3 text-right text-foreground">{{ formatNumber(post.metrics?.total ?? 0) }}</td>
+                      <td class="py-2 px-3 text-right">
+                        <UButton size="xs" variant="ghost" color="primary"
+                          @click="handleRepurposePost(post.content || '')">
+                          {{ t('repurpose') }}
+                        </UButton>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </UCard>
+          </div>
+        </template>
+
+        <div v-else class="col-span-1 lg:col-span-3">
+          <div class="flex flex-col items-center justify-center py-12 text-center">
+            <div class="flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4">
+              <Icon name="i-heroicons-chart-bar" class="w-8 h-8 text-muted-foreground" />
             </div>
-
-            <div class="grid grid-cols-3 gap-2 mt-3">
-              <div v-if="getPlatformStat(platformGraph, 'likes') > 0" class="text-center p-2 rounded-lg bg-muted/30">
-                <p class="text-xs font-semibold text-foreground">{{ formatNumber(getPlatformStat(platformGraph, 'likes')) }}</p>
-                <p class="text-[10px] text-muted-foreground">{{ t('likes') }}</p>
-              </div>
-              <div v-if="getPlatformStat(platformGraph, 'comments') > 0" class="text-center p-2 rounded-lg bg-muted/30">
-                <p class="text-xs font-semibold text-foreground">{{ formatNumber(getPlatformStat(platformGraph, 'comments')) }}</p>
-                <p class="text-[10px] text-muted-foreground">{{ t('comments') }}</p>
-              </div>
-              <div v-if="getPlatformStat(platformGraph, 'impressions') > 0" class="text-center p-2 rounded-lg bg-muted/30">
-                <p class="text-xs font-semibold text-foreground">{{ formatNumber(getPlatformStat(platformGraph, 'impressions')) }}</p>
-                <p class="text-[10px] text-muted-foreground">{{ t('impressions') }}</p>
-              </div>
-              <div v-if="getPlatformStat(platformGraph, 'saves') > 0" class="text-center p-2 rounded-lg bg-muted/30">
-                <p class="text-xs font-semibold text-foreground">{{ formatNumber(getPlatformStat(platformGraph, 'saves')) }}</p>
-                <p class="text-[10px] text-muted-foreground">{{ t('saves') }}</p>
-              </div>
-              <div v-if="getPlatformStat(platformGraph, 'shares') > 0" class="text-center p-2 rounded-lg bg-muted/30">
-                <p class="text-xs font-semibold text-foreground">{{ formatNumber(getPlatformStat(platformGraph, 'shares')) }}</p>
-                <p class="text-[10px] text-muted-foreground">{{ t('shares') }}</p>
-              </div>
-              <div v-if="getPlatformStat(platformGraph, 'views') > 0" class="text-center p-2 rounded-lg bg-muted/30">
-                <p class="text-xs font-semibold text-foreground">{{ formatNumber(getPlatformStat(platformGraph, 'views')) }}</p>
-                <p class="text-[10px] text-muted-foreground">{{ t('views') }}</p>
-              </div>
-            </div>
-
-            <div v-if="getPlatformGrowth(platformGraph)" class="flex items-center justify-end gap-2 mt-2">
-              <UBadge
-                :color="(getPlatformGrowth(platformGraph)?.percentage ?? 0) >= 0 ? 'success' : 'error'"
-                variant="subtle" size="sm"
-              >
-                <Icon
-                  :name="(getPlatformGrowth(platformGraph)?.percentage ?? 0) >= 0 ? 'lucide:trending-up' : 'lucide:trending-down'"
-                  class="w-3 h-3 mr-1"
-                />
-                {{ (getPlatformGrowth(platformGraph)?.percentage ?? 0) >= 0 ? '+' : '' }}{{ (getPlatformGrowth(platformGraph)?.percentage ?? 0).toFixed(1) }}%
-              </UBadge>
-              <span class="text-[10px] text-muted-foreground">{{ t('followerGrowth') }}</span>
-            </div>
-
-
-          </UCard>
+            <p class="text-gray-400 mb-4">{{ t('noStatsCollected') }}</p>
+            <UButton color="primary" :loading="collecting" @click="handleCollectStats">
+              {{ t('collectStats') }}
+            </UButton>
+          </div>
         </div>
       </template>
 
-      <div v-else class="col-span-1 lg:col-span-3">
-        <div class="flex flex-col items-center justify-center py-12 text-center">
-          <div class="flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4">
-            <Icon name="i-heroicons-chart-bar" class="w-8 h-8 text-muted-foreground" />
-          </div>
-          <p class="text-gray-400 mb-4">{{ t('noStatsCollected') }}</p>
-          <UButton color="primary" :loading="collecting" @click="handleCollectStats">
-            {{ t('collectStats') }}
-          </UButton>
+      <template v-else>
+        <div class="col-span-1 lg:col-span-3 flex justify-center py-12">
+          <UIcon name="i-heroicons-arrow-path" class="w-8 h-8 animate-spin text-muted-foreground" />
         </div>
-      </div>
-    </template>
-
-    <template v-else>
-      <div class="col-span-1 lg:col-span-3 flex justify-center py-12">
-        <UIcon name="i-heroicons-arrow-path" class="w-8 h-8 animate-spin text-muted-foreground" />
-      </div>
-    </template>
+      </template>
     </BaseDashboardOverviewCards>
   </div>
 </template>

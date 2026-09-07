@@ -168,6 +168,41 @@ export class GooglePlugin extends BaseSchedulerPlugin {
     }
   }
 
+  /**
+   * Resolve a GMB location resource name (`accounts/.../locations/...`) to
+   * connectable page details via the Business Information API.
+   */
+  async fetchGmbLocationInformation(pageId: string, accessToken: string): Promise<{
+    id: string;
+    name: string;
+    access_token: string;
+    picture: string;
+    username: string;
+  }> {
+    try {
+      const location = await fetch(
+        `${BUSINESS_INFO_API_BASE}/${pageId}?readMask=name,title,profile,metadata`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      if (!location.ok) {
+        throw new Error(`Business Information API error: ${location.status}`);
+      }
+      const data = await location.json() as { name?: string; title?: string };
+      const title = data.title || data.name || pageId;
+      return {
+        id: data.name || pageId,
+        name: title,
+        access_token: accessToken,
+        picture: '',
+        username: title,
+      };
+    } catch (error: unknown) {
+      log.error({ content: 'Failed to fetch GMB location info', plugin: 'google', error: (error as Error).message });
+      this.logPluginEvent('fetch-gmb-information', 'failure', `Error: ${(error as Error).message}`);
+      return { id: pageId, name: '', access_token: accessToken, picture: '', username: '' };
+    }
+  }
+
   async fetchPageInformation(_: GooglePlugin, pageId: string, accessToken: string): Promise<{
     id: string;
     name: string;
@@ -175,6 +210,12 @@ export class GooglePlugin extends BaseSchedulerPlugin {
     picture: string;
     username: string;
   }> {
+    // GMB locations use resource names like `accounts/123/locations/456`
+    // (contain slashes) — resolve them via the Business Information API.
+    // Anything else is treated as a YouTube channel id.
+    if (pageId.startsWith('accounts/')) {
+      return this.fetchGmbLocationInformation(pageId, accessToken);
+    }
     try {
       const auth = new google.auth.OAuth2();
       auth.setCredentials({ access_token: accessToken });

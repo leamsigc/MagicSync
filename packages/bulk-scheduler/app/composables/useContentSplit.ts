@@ -24,7 +24,7 @@ export const useContentSplit = () => {
 
   const platforms: { value: Platform; label: string; icon: string }[] = [
     { value: 'facebook', label: 'Facebook', icon: 'logos:facebook' },
-    { value: 'googlemybusiness', label: 'Google Business', icon: 'logos:google' },
+    { value: 'googlemybusiness', label: 'Google Business', icon: 'logos:google-icon' },
     { value: 'linkedin', label: 'LinkedIn', icon: 'logos:linkedin-icon' },
     { value: 'twitter', label: 'X (Twitter)', icon: 'logos:twitter' },
     { value: 'tiktok', label: 'TikTok', icon: 'logos:tiktok-icon' },
@@ -35,7 +35,7 @@ export const useContentSplit = () => {
     { value: 'threads', label: 'Threads', icon: 'fa6-brands:square-threads' },
     { value: 'dribbble', label: 'Dribbble', icon: 'logos:dribbble-icon' },
     { value: 'bluesky', label: 'Bluesky', icon: 'fa6-brands:bluesky' },
-    { value: 'devto', label: 'Dev.to', icon: 'logos:dev-badge' },
+    { value: 'devto', label: 'Dev.to', icon: 'simple-icons:devdotto' },
     { value: 'wordpress', label: 'WordPress', icon: 'logos:wordpress-icon' },
     { value: 'email', label: 'Email Subject Lines', icon: 'lucide:mail' },
   ];

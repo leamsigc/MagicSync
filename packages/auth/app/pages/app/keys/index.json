@@ -41,6 +41,18 @@
       "created": "Created",
       "expires": "Expires",
       "actions": "Actions"
-    }
+    },
+    "connectedApps": "Connected Apps",
+    "connectedAppsDescription": "AI assistants and apps you authorized via OAuth. Revoking cuts their access immediately.",
+    "noGrants": "No connected apps",
+    "noGrantsDescription": "Connect ChatGPT or Claude via OAuth and they will appear here.",
+    "grantClient": "App",
+    "grantScopes": "Access",
+    "grantGranted": "Granted",
+    "grantRevoke": "Revoke",
+    "grantRevoked": "Access revoked",
+    "grantRevokeFailed": "Failed to revoke access",
+    "scopeFull": "Read + publish",
+    "scopeRead": "Read only"
   }
 }

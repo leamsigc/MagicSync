@@ -63,6 +63,56 @@
 
 **Social media scheduling platform built with Nuxt 4 monorepo** — Schedule posts across Facebook, Twitter/X, Instagram, Bluesky, LinkedIn, and more with AI-powered content generation.
 
+
+## SelfHost:
+
+```yml
+services:
+  magicsync:
+    image: ghcr.io/leamsigc/magicsync:latest
+    container_name: magicsync
+    restart: unless-stopped
+    ports:
+      - "8888:8888"
+    volumes:
+      - magicsync-data:/app/.data
+    environment:
+      - NUXT_SESSION_SECRET=${NUXT_SESSION_SECRET:-change-me-in-production}
+      - DATABASE_URL=sqlite:///app/.data/magicsync.db
+      # Uncomment and configure for PostgreSQL
+      # - DATABASE_URL=postgresql://magicsync:magicsync@db:5432/magicsync
+      # Add your API keys
+      # - GOOGLE_CLIENT_ID=
+      # - GOOGLE_CLIENT_SECRET=
+      # - OPENAI_API_KEY=
+      # - ANTHROPIC_API_KEY=
+      # - GOOGLE_AI_API_KEY=
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--spider", "http://localhost:8888/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Uncomment for PostgreSQL instead of SQLite
+  # db:
+  #   image: postgres:16-alpine
+  #   container_name: magicsync-db
+  #   restart: unless-stopped
+  #   environment:
+  #     - POSTGRES_DB=magicsync
+  #     - POSTGRES_USER=magicsync
+  #     - POSTGRES_PASSWORD=magicsync
+  #   volumes:
+  #     - magicsync-pgdata:/var/lib/postgresql/data
+
+volumes:
+  magicsync-data:
+  # magicsync-pgdata:
+
+```
+
+
 ![Home](./images/HomePage.png)
 ![Home 2](./images/HomePage-2.png)
 ![Business Initial](./images/Business-initila.png)

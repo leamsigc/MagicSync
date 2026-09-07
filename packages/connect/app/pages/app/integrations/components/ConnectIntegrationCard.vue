@@ -118,7 +118,7 @@ const showReconnectBanner = computed(() => hasExpiredToken.value || isExpiringSo
           v-if="props.icon"
           class="absolute -bottom-1.5 -right-1.5 rounded-full ring-2 ring-background inline-flex">
           <UAvatar
-            :icon="props.icon === 'logos:linkedin-page' ? 'logos:linkedin' : props.icon" size="sm"
+            :icon="props.icon" size="sm"
             class="bg-white dark:bg-gray-900" />
         </span>
       </div>

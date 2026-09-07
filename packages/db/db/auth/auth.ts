@@ -37,7 +37,9 @@ export const session = sqliteTable('session', {
   ipAddress: text('ip_address'),
   userAgent: text('user_agent'),
   userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
-  impersonatedBy: text('impersonated_by')
+  impersonatedBy: text('impersonated_by'),
+  // Required by the better-auth organization plugin (active org per session).
+  activeOrganizationId: text('active_organization_id')
 })
 
 export const account = sqliteTable('account', {
@@ -52,6 +54,8 @@ export const account = sqliteTable('account', {
   refreshTokenExpiresAt: integer('refresh_token_expires_at', { mode: 'timestamp' }),
   scope: text('scope'),
   password: text('password'),
+  // Required by better-auth >=1.4 (OIDC issuer tracking). Nullable for back-compat.
+  issuer: text('issuer'),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull()
 })

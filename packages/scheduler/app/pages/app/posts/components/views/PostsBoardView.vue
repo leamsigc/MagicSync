@@ -1,7 +1,10 @@
 <script lang="ts" setup>
 import { computed } from 'vue';
 import type { PlatformPost, PostWithAllData, PublishDetail } from '#layers/BaseDB/db/posts/posts';
+import { usePlatformIcons, type SocialMediaPlatform } from '#layers/BaseUI/app/composables/usePlatformIcons';
 import dayjs from 'dayjs';
+
+const { getPlatformIcon } = usePlatformIcons();
 
 const props = defineProps<{
   posts: PostWithAllData[];
@@ -73,7 +76,7 @@ const openPost = (id: string) => {
               <div class="flex flex-wrap gap-1.5">
                 <UBadge v-for="platform in post.platformPosts" :key="platform.id" color="primary" variant="soft"
                   size="xs">
-                  <Icon :name="`logos:${platform.platformPostId ?? 'facebook'}`" class="size-3" />
+                  <Icon :name="getPlatformIcon((platform.platformPostId ?? 'facebook') as SocialMediaPlatform)" class="size-3" />
                   {{ platform.status }}
                 </UBadge>
               </div>

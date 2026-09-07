@@ -30,7 +30,9 @@
     "video": "Video",
     "pdf": "PDF",
     "image": "Image",
-    "fileTypeBadge": "File type badge"
+    "fileTypeBadge": "File type badge",
+    "googleDriveNotConnected": "Google Drive is not connected yet.",
+    "connectDrive": "Connect Google Drive"
   },
   "es": {
     "local": "Local",
@@ -63,7 +65,9 @@
     "video": "Video",
     "pdf": "PDF",
     "image": "Imagen",
-    "fileTypeBadge": "Indicador de tipo de archivo"
+    "fileTypeBadge": "Indicador de tipo de archivo",
+    "googleDriveNotConnected": "Google Drive aún no está conectado.",
+    "connectDrive": "Conectar Google Drive"
   },
   "de": {
     "local": "Lokal",
@@ -96,7 +100,9 @@
     "video": "Video",
     "pdf": "PDF",
     "image": "Bild",
-    "fileTypeBadge": "Dateityp-Abzeichen"
+    "fileTypeBadge": "Dateityp-Abzeichen",
+    "googleDriveNotConnected": "Google Drive ist noch nicht verbunden.",
+    "connectDrive": "Google Drive verbinden"
   },
   "fr": {
     "local": "Local",
@@ -129,6 +135,8 @@
     "video": "Vidéo",
     "pdf": "PDF",
     "image": "Image",
-    "fileTypeBadge": "Badge de type de fichier"
+    "fileTypeBadge": "Badge de type de fichier",
+    "googleDriveNotConnected": "Google Drive n'est pas encore connecté.",
+    "connectDrive": "Connecter Google Drive"
   }
 }

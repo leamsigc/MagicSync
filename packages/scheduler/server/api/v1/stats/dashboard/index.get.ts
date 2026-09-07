@@ -12,7 +12,8 @@
  *   - days: number of days for historical data (default: 30)
  *   - refresh: when '1'/'true', re-collects fresh stats from connected platforms before responding
  */
-import { platformStatsService } from '#layers/BaseScheduler/server/services/PlatformStats.service'
+import { analyticsService } from '#layers/BaseScheduler/server/services/Analytics.service'
+import { statsCollectorService } from '#layers/BaseScheduler/server/services/StatsCollector.service'
 import { postStatsService } from '#layers/BaseDB/server/services/post.service'
 import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service'
 import dayjs from 'dayjs'
@@ -34,24 +35,25 @@ export default defineEventHandler(async (event) => {
     if (businessId) filters.businessId = businessId as string
 
     if (forceRefresh) {
-      await platformStatsService.collectAllStats(filters)
+      await statsCollectorService.collectAllDue(filters, { force: true })
     }
 
     const startDate = dayjs().subtract(daysNum, 'day').toISOString()
 
-    const [postsCount, currentStats, timeSeries, connectedAccounts] = await Promise.all([
+    const [postsCount, currentStats, timeSeries, connectedAccounts, freshness] = await Promise.all([
       postStatsService.countPosts({
         userId: user.id,
         businessId: businessId as string | undefined,
         startDate,
       }),
-      platformStatsService.getCurrentStats(filters),
-      platformStatsService.getStatsHistory(filters, { limit: 500 }),
+      analyticsService.getCurrentStats(filters),
+      analyticsService.getStatsHistory(filters, { startDate, limit: 1000 }),
       socialMediaAccountService.getAccounts({
         userId: user.id,
         businessId: businessId as string | undefined,
         isActive: true,
       }),
+      analyticsService.getFreshness(filters),
     ])
 
     const totalFollowers = currentStats.reduce((sum, s) => sum + (s.followers ?? 0), 0)
@@ -86,6 +88,7 @@ export default defineEventHandler(async (event) => {
           extra: s.extra,
         })),
         platformGraphs,
+        freshness,
       },
     }
   } catch (error: any) {

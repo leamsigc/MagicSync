@@ -20,10 +20,16 @@ export default defineEventHandler(async (event) => {
 
         // Delete notification
         const result = await notificationService.deleteNotification(validatedData.notificationId, user.id)
+        if (result.error || !result.data) {
+            throw createError({
+                statusCode: result.code === 'NOT_FOUND' ? 404 : 500,
+                statusMessage: result.error || 'Failed to delete notification'
+            })
+        }
 
         log.info({ content: 'Notification deleted', notificationId: validatedData.notificationId })
 
-        return result
+        return result.data
     } catch (error: unknown) {
         const msg = error instanceof Error ? error.message : 'Unknown error'
         log.error({ content: 'Failed to delete notification', error: msg })

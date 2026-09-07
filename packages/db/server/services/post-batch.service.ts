@@ -1,7 +1,7 @@
 import type { Post, PostWithAllData, PlatformPost, PublishDetail, Asset } from '#layers/BaseDB/db/schema'
 import type { PostBatchServiceType } from './interfaces'
 import type { ServiceResponse, PostResponse } from './types'
-import { and, eq, isNull, lte, or, inArray } from 'drizzle-orm'
+import { and, eq, isNull, lte, or, inArray, sql, isNotNull } from 'drizzle-orm'
 import { posts, platformPosts, assets } from '#layers/BaseDB/db/schema'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
 import { postService } from './post.service'
@@ -116,6 +116,99 @@ export class PostBatchService implements PostBatchServiceType {
 
     await postService.updateStatus(post.id, post.user.id, response.status)
     await postService.updatePlatformPost(socialPlatform.id, { publishDetail: detailsString, status: response.status })
+  }
+
+  async getDueReposts(now: Date): Promise<ServiceResponse<Post[]>> {
+    try {
+      const rows = await this.db.query.posts.findMany({
+        where: and(
+          isNotNull(posts.autoRepost),
+          eq(posts.status, 'published')
+        )
+      })
+      return { success: true, data: rows }
+    } catch {
+      return { success: false, error: 'Failed to fetch due reposts' }
+    }
+  }
+
+  async createRepost(data: {
+    originalPostId: string
+    userId: string
+    businessId: string
+    content: string
+    mediaAssets: string[]
+    targetPlatforms: string[]
+    platformContent?: Record<string, unknown>
+    platformSettings?: Record<string, unknown>
+    postFormat: string
+    scheduledAt: Date
+    repostParentId: string
+  }): Promise<ServiceResponse<Post>> {
+    try {
+      const id = crypto.randomUUID()
+      const now = new Date()
+
+      const [created] = await this.db.insert(posts).values({
+        id,
+        userId: data.userId,
+        businessId: data.businessId,
+        content: data.content,
+        mediaAssets: JSON.stringify(data.mediaAssets),
+        targetPlatforms: JSON.stringify(data.targetPlatforms),
+        platformContent: data.platformContent ? JSON.stringify(data.platformContent) : null,
+        platformSettings: data.platformSettings ? JSON.stringify(data.platformSettings) : null,
+        postFormat: data.postFormat as 'post' | 'reel' | 'story' | 'short',
+        scheduledAt: data.scheduledAt,
+        status: 'pending',
+        repostParentId: data.repostParentId,
+        createdAt: now,
+        updatedAt: now
+      }).returning()
+
+      if (!created) {
+        return { success: false, error: 'Failed to create repost' }
+      }
+      return { success: true, data: created }
+    } catch {
+      return { success: false, error: 'Failed to create repost' }
+    }
+  }
+
+  async updateAutoRepostConfig(postId: string, config: Record<string, unknown>): Promise<ServiceResponse<Post>> {
+    try {
+      const [updated] = await this.db.update(posts)
+        .set({
+          autoRepost: JSON.stringify(config),
+          updatedAt: new Date()
+        })
+        .where(eq(posts.id, postId))
+        .returning()
+      if (!updated) {
+        return { success: false, error: 'Post not found', code: 'NOT_FOUND' }
+      }
+      return { success: true, data: updated }
+    } catch {
+      return { success: false, error: 'Failed to update auto-repost config' }
+    }
+  }
+
+  async incrementRepostCount(postId: string): Promise<ServiceResponse<Post>> {
+    try {
+      const [updated] = await this.db.update(posts)
+        .set({
+          repostCount: sql`${posts.repostCount} + 1`,
+          updatedAt: new Date()
+        })
+        .where(eq(posts.id, postId))
+        .returning()
+      if (!updated) {
+        return { success: false, error: 'Post not found', code: 'NOT_FOUND' }
+      }
+      return { success: true, data: updated }
+    } catch {
+      return { success: false, error: 'Failed to increment repost count' }
+    }
   }
 }
 

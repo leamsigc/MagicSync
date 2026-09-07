@@ -49,11 +49,14 @@ export const getAccessTokenHelper = async (
 
   log.info({ message: '### Token Helper####', providerId: options.providerId, accountId: options.accountId, userId: options.userId })
   try {
+    // NOTE: Better Auth's /get-access-token schema accepts ONLY { accountId }
+    // and/or { userId } (strictObject) and resolves strictly by its own row
+    // id. providerId must NOT be forwarded, and accountId must be the
+    // Better Auth row id — never our social_media_accounts id.
     const resp = await auth.api.getAccessToken({
       body: {
-        providerId: options.providerId,
-        accountId: options.accountId,
-        userId: options.userId
+        ...(options.accountId ? { accountId: options.accountId } : {}),
+        ...(options.userId ? { userId: options.userId } : {}),
       },
       headers: eventOrHeaders // headers containing the user's session token
     })

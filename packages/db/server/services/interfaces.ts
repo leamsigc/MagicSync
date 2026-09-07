@@ -273,6 +273,8 @@ export type SocialMediaAccountServiceType = {
   getUserByAccountId: (id: string) => Promise<User | undefined>
   getActualAccountByAccountId: (id: string) => Promise<SocialMediaAccount | undefined>
   getBetterAuthAccountId: (providerId: string, userId: string, smAccountId: string) => Promise<Account | null>
+  getBetterAuthAccountById: (id: string, userId: string) => Promise<ServiceResponse<Account | null>>
+  findBetterAuthAccountForRefresh: (userId: string, providerId: string) => Promise<ServiceResponse<Account | null>>
   getUserAccountsCompleteDetails: (id: string) => Promise<Array<Account & Partial<EntityDetails>>>
   createAccount: (data: CreateSocialMediaAccountData) => Promise<SocialMediaAccount>
   getAccountById: (id: string, userId?: string) => Promise<SocialMediaAccount | undefined>
@@ -352,6 +354,22 @@ export type PostBatchServiceType = {
   getPostsToProcessNow: () => Promise<PostWithAllData[]>
   scheduleRetry: (postId: string, currentRetryCount: number, error: string) => Promise<ServiceResponse<Post>>
   updatePostBaseOnResponse: (post: PostWithAllData, response: PostResponse, socialPlatform: PlatformPost) => Promise<void>
+  getDueReposts: (now: Date) => Promise<ServiceResponse<Post[]>>
+  createRepost: (data: {
+    originalPostId: string
+    userId: string
+    businessId: string
+    content: string
+    mediaAssets: string[]
+    targetPlatforms: string[]
+    platformContent?: Record<string, unknown>
+    platformSettings?: Record<string, unknown>
+    postFormat: string
+    scheduledAt: Date
+    repostParentId: string
+  }) => Promise<ServiceResponse<Post>>
+  updateAutoRepostConfig: (postId: string, config: Record<string, unknown>) => Promise<ServiceResponse<Post>>
+  incrementRepostCount: (postId: string) => Promise<ServiceResponse<Post>>
 }
 
 export type UserLlmConfigServiceType = {

@@ -9,12 +9,18 @@ export default defineEventHandler(async (event) => {
 
         // Get unread count
         const result = await notificationService.getUnreadCount(user.id)
+        if (result.error || !result.data) {
+            throw createError({
+                statusCode: 500,
+                statusMessage: result.error || 'Failed to get unread count'
+            })
+        }
 
-        log.info({ content: 'Unread notification count retrieved', count: result })
+        log.info({ content: 'Unread notification count retrieved', count: result.data })
 
         return {
             success: true,
-            data: result
+            data: result.data
         }
     } catch (error: unknown) {
         const msg = error instanceof Error ? error.message : 'Unknown error'

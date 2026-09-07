@@ -1,6 +1,9 @@
 <script lang="ts" setup>
 import DefaultPreview from '../DefaultPreview.vue';
 import type { PostWithAllData } from '#layers/BaseDB/db/posts/posts';
+import { usePlatformIcons, type SocialMediaPlatform } from '#layers/BaseUI/app/composables/usePlatformIcons';
+
+const { getPlatformIcon } = usePlatformIcons();
 
 defineProps<{
   posts: PostWithAllData[];
@@ -17,7 +20,7 @@ v-for="post in posts" :key="post.id" :to="`/app/posts/feeds/${post.id}`"
           <template v-for="platform in post.platformPosts" :key="platform.id">
             <UChip
               :color="platform.status === 'published' ? 'success' : platform.status === 'pending' ? 'warning' : 'error'">
-              <UButton :icon="`logos:${platform.platformPostId}`" color="neutral" variant="ghost" size="xs" />
+              <UButton :icon="getPlatformIcon(platform.platformPostId as SocialMediaPlatform)" color="neutral" variant="ghost" size="xs" />
             </UChip>
           </template>
         </div>

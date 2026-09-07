@@ -15,6 +15,7 @@
 import ConnectIntegrationCard from './components/ConnectIntegrationCard.vue';
 import ConnectAddAccount from './components/ConnectAddAccount.vue';
 import { useConnectionManager } from './composables/useConnectionManager';
+import { usePlatformIcons, type SocialMediaPlatform } from '#layers/BaseUI/app/composables/usePlatformIcons';
 import dayjs from '#layers/BaseDB/server/utils/dayjs';
 
 interface TokenHealth {
@@ -30,6 +31,7 @@ const accountHealth = ref<Map<string, TokenHealth>>(new Map())
 const socialHealth = ref<Map<string, TokenHealth>>(new Map())
 
 const { getAllSocialMediaAccounts, pagesList, getAllAccountDetails, accountsList } = useConnectionManager();
+const { getPlatformIcon } = usePlatformIcons();
 
 async function fetchTokenHealth() {
   try {
@@ -88,7 +90,7 @@ watch(accountsList, () => {
       </div>
 <ConnectIntegrationCard
  v-for="connection in accountsList" :id="connection.id" :key="connection.id"
-        :name="connection.providerId" :image="user && user.image ? user.image : ''" :icon="`logos:${connection.providerId}`"
+        :name="connection.providerId" :image="user && user.image ? user.image : ''" :icon="getPlatformIcon(connection.providerId as SocialMediaPlatform)"
         :tags="[]" :time="dayjs(connection.createdAt as unknown as string).format('YYYY-MM-DD')" connected
         :health="accountHealth.get(connection.id)" :platform="connection.providerId" :accountId="connection.id" />
     </div>
@@ -107,7 +109,7 @@ watch(accountsList, () => {
         <template v-if="account.entityDetail && account.entityDetail.details.pages">
         <ConnectIntegrationCard
  v-for="social in account.entityDetail.details.pages" :id="social.id"
-            :key="social.id" :name="social.name" :image="social.imageBase64 || ''" :icon="`logos:${account.providerId}`"
+            :key="social.id" :name="social.name" :image="social.imageBase64 || ''" :icon="getPlatformIcon(account.providerId as SocialMediaPlatform)"
             :tags="[social.id]" :time="dayjs(account.createdAt as unknown as string).format('YYYY-MM-DD')"
             :connected="connectedAccounts.includes(social.id)" :show-pages="false" :show-menu="false"
             :platform="account.providerId" :accountId="social.accountId" />
@@ -117,7 +119,7 @@ watch(accountsList, () => {
         <ConnectIntegrationCard
  v-if="!accountPages.includes(social.accountId)" :id="social.id"
            :name="social.accountName" :image="social.entityDetail.details.picture ? social.entityDetail.details.picture : ''"
-           :icon="`logos:${social.platform}`" :tags="[social.accountId]"
+           :icon="getPlatformIcon(social.platform as SocialMediaPlatform)" :tags="[social.accountId]"
            :time="dayjs(social.createdAt as unknown as string).format('YYYY-MM-DD')" connected :show-pages="false"
            :health="socialHealth.get(social.id)" :platform="social.platform" :accountId="social.accountId" />
       </template>

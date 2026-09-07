@@ -59,10 +59,15 @@ export async function getAccountInfo(event: H3Event, accountId: string) {
 /**
  * Fetch a valid access token for an existing linked account.
  * Automatically refreshes if needed.
+ *
+ * NOTE: accountId must be the Better Auth row id (see
+ * socialMediaAccountService.findBetterAuthAccountForRefresh). providerId is
+ * accepted for logging/compat but never forwarded — Better Auth's schema
+ * rejects unknown keys and resolves strictly by row id.
  */
 export async function getAccessToken(event: H3Event, provider: SocialMediaPlatform, accountId?: string) {
   const resp = await useAuthApi(event).getAccessToken({
-    body: { providerId: provider, accountId }
+    body: { accountId }
   })
   return resp.accessToken
 }

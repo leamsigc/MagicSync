@@ -165,7 +165,7 @@ export function useAuthApi(event: H3Event) {
       })
     },
 
-    getAccessToken(params: { body: { providerId: string; accountId?: string; userId?: string } }) {
+    getAccessToken(params: { body: { accountId?: string; userId?: string } }) {
       return auth.api.getAccessToken({
         ...params,
         headers: headers()

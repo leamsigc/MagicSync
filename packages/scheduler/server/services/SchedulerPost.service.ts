@@ -282,6 +282,28 @@ export abstract class BaseSchedulerPlugin implements SchedulerPlugin {
     commentId: string,
     replyText: string
   ): Promise<ReplyCommentResponse>;
+  likeComment(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount,
+    commentId: string
+  ): Promise<{ success: boolean; error?: string }> {
+    return Promise.resolve({ success: false, error: 'Not implemented' });
+  }
+  hideComment(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount,
+    commentId: string,
+    isHidden: boolean
+  ): Promise<{ success: boolean; error?: string }> {
+    return Promise.resolve({ success: false, error: 'Not implemented' });
+  }
+  deleteComment(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount,
+    commentId: string
+  ): Promise<{ success: boolean; error?: string }> {
+    return Promise.resolve({ success: false, error: 'Not implemented' });
+  }
 }
 
 export class SchedulerPost extends EventEmitter {
@@ -444,6 +466,43 @@ export class SchedulerPost extends EventEmitter {
     const plugin = this.plugins.get(socialMediaAccount.platform);
     if (plugin) {
       return plugin.replyToComment(postDetails, socialMediaAccount, commentId, replyText);
+    }
+    throw new Error('Plugin not registered for this socialMediaAccount');
+  }
+
+  async likeComment(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount,
+    commentId: string
+  ): Promise<{ success: boolean; error?: string }> {
+    const plugin = this.plugins.get(socialMediaAccount.platform);
+    if (plugin) {
+      return plugin.likeComment(postDetails, socialMediaAccount, commentId);
+    }
+    throw new Error('Plugin not registered for this socialMediaAccount');
+  }
+
+  async hideComment(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount,
+    commentId: string,
+    isHidden: boolean
+  ): Promise<{ success: boolean; error?: string }> {
+    const plugin = this.plugins.get(socialMediaAccount.platform);
+    if (plugin) {
+      return plugin.hideComment(postDetails, socialMediaAccount, commentId, isHidden);
+    }
+    throw new Error('Plugin not registered for this socialMediaAccount');
+  }
+
+  async deleteComment(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount,
+    commentId: string
+  ): Promise<{ success: boolean; error?: string }> {
+    const plugin = this.plugins.get(socialMediaAccount.platform);
+    if (plugin) {
+      return plugin.deleteComment(postDetails, socialMediaAccount, commentId);
     }
     throw new Error('Plugin not registered for this socialMediaAccount');
   }

@@ -7,6 +7,7 @@ const currentDir = dirname(fileURLToPath(import.meta.url))
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
+  compatibilityDate: '2026-09-07',
   devtools: { enabled: true },
   experimental: {
     viteEnvironmentApi: true,
@@ -21,8 +22,8 @@ export default defineNuxtConfig({
       tasks: true,
     },
     scheduledTasks: {
-      // Run `social:post` every 15 minutes to process scheduled posts
-      '*/15 * * * *': ['social:post'],
+      // Run `social:post` + adaptive stats collection every 15 minutes
+      '*/15 * * * *': ['social:post', 'stats:collect', 'repost:process'],
       // Run `token:health` every 6 hours to log expiring/expired tokens
       '0 */6 * * *': ['token:health'],
     }

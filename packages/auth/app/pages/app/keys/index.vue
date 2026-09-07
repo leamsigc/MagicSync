@@ -3,6 +3,7 @@
 <script lang="ts" setup>
 import type { ApiKey } from '@better-auth/api-key';
 import type { TableColumn } from '@nuxt/ui'
+import type { OAuthGrantItem } from '../../../composables/useOAuthGrants'
 
 const { t } = useI18n()
 const activeBusinessId = useState<string>('business:id');
@@ -19,6 +20,13 @@ const {
   closeKeyModal,
   copyToClipboard
 } = useApiKeyManagement()
+const {
+  grants,
+  loading: grantsLoading,
+  fetchGrants,
+  revokeGrant,
+} = useOAuthGrants()
+const revokeLoading = ref<string | null>(null)
 
 const showCreateModal = ref(false)
 const newKeyName = ref('')
@@ -41,6 +49,28 @@ watch(activeBusinessId, (newVal) => {
     fetchApiKeys(newVal)
   }
 }, { immediate: true })
+
+onMounted(() => {
+  void fetchGrants()
+})
+
+function grantAccessLabel(scopes: string[]): string {
+  return scopes.includes('mcp:full') ? t('scopeFull') : t('scopeRead')
+}
+
+async function handleRevokeGrant(id: string): Promise<void> {
+  revokeLoading.value = id
+  try {
+    await revokeGrant(id)
+    toast.add({ title: t('grantRevoked'), color: 'success' })
+  }
+  catch (err: unknown) {
+    toast.add({ title: err instanceof Error ? err.message : t('grantRevokeFailed'), color: 'error' })
+  }
+  finally {
+    revokeLoading.value = null
+  }
+}
 
 
 const handleCreate = async () => {
@@ -98,8 +128,7 @@ useHead({
 })
 
 
-const columns: TableColumn<ApiKey>[] = [
-  {
+const columns: TableColumn<ApiKey>[] = [  {
     accessorKey: 'id',
     header: '#',
     cell: ({ row }) => `#${row.getValue('id')}`
@@ -137,6 +166,35 @@ const columns: TableColumn<ApiKey>[] = [
   }
 
 ]
+
+const grantColumns: TableColumn<OAuthGrantItem>[] = [
+  {
+    accessorKey: 'clientName',
+    header: t('grantClient'),
+    cell: ({ row }) => row.getValue('clientName') || row.getValue('clientId'),
+  },
+  {
+    accessorKey: 'scopes',
+    header: t('grantScopes'),
+    cell: ({ row }) => h(UBadge, { variant: 'soft' }, () => grantAccessLabel(row.getValue('scopes'))),
+  },
+  {
+    accessorKey: 'createdAt',
+    header: t('grantGranted'),
+    cell: ({ row }) => formatDate(row.getValue('createdAt')),
+  },
+  {
+    header: t('columns.actions'),
+    cell: ({ row }) => h(UButton, {
+      variant: 'ghost',
+      color: 'error',
+      size: 'sm',
+      icon: 'i-lucide-unplug',
+      loading: revokeLoading.value === row.getValue('id'),
+      onClick: () => handleRevokeGrant(row.getValue('id')),
+    }),
+  },
+]
 </script>
 
 <template>
@@ -170,6 +228,21 @@ const columns: TableColumn<ApiKey>[] = [
     <UTable v-else :data="apiKeys" :columns="columns" :loading="loading" class="flex-1 overflow-scroll"
       :ui="{ 'tr': 'bg-transparent', 'td': 'border-0', 'th': 'border-0' }">
     </UTable>
+
+    <div class="mt-12">
+      <h2 class="text-2xl font-bold mb-2">{{ t('connectedApps') }}</h2>
+      <p class="text-muted-foreground mb-6">{{ t('connectedAppsDescription') }}</p>
+
+      <div v-if="grants.length === 0 && !grantsLoading" class="text-center py-8">
+        <UIcon name="i-lucide-plug" class="w-10 h-10 text-muted-foreground mb-3" />
+        <h3 class="text-lg font-medium mb-1">{{ t('noGrants') }}</h3>
+        <p class="text-muted-foreground">{{ t('noGrantsDescription') }}</p>
+      </div>
+
+      <UTable v-else :data="grants" :columns="grantColumns" :loading="grantsLoading" class="flex-1 overflow-scroll"
+        :ui="{ 'tr': 'bg-transparent', 'td': 'border-0', 'th': 'border-0' }">
+      </UTable>
+    </div>
 
     <UModal v-model:open="showCreateModal" :title="t('createButton')">
       <template #body>

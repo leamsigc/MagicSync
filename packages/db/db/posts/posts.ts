@@ -25,7 +25,10 @@ export const posts = sqliteTable('posts', {
   updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => /* @__PURE__ */ new Date()).notNull(),
   retryCount: integer('retry_count').notNull().default(0),
   nextRetryAt: integer('next_retry_at', { mode: 'timestamp' }),
-  lastError: text('last_error')
+  lastError: text('last_error'),
+  autoRepost: text('auto_repost', { mode: 'json' }),
+  repostCount: integer('repost_count').notNull().default(0),
+  repostParentId: text('repost_parent_id'),
 })
 
 // Platform-specific post tracking

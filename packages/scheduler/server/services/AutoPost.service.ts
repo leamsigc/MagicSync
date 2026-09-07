@@ -82,19 +82,26 @@ export class AutoPostService {
           await postBatchService.scheduleRetry(post.id, post.retryCount ?? 0, err)
           return
         }
-        // Refresh the access token via Better Auth before posting
-        // Better Auth handles provider-specific refresh (Google, etc.) using
-        // stored refresh_token + client credentials. We pass userId + providerId + accountId
-        // so it can locate the account without a request context.
+        // Refresh the access token via Better Auth before posting.
+        // Better Auth resolves strictly by its own account row id — passing
+        // our social_media_accounts id (or the provider account id) yields
+        // ACCOUNT_NOT_FOUND, so resolve the row first.
         try {
+          const resolved = await socialMediaAccountService.findBetterAuthAccountForRefresh(
+            socialMediaAccount.userId,
+            platform
+          )
+          const providerAccount = resolved.success ? resolved.data : null
+          if (!providerAccount) {
+            throw new Error('No linked provider account found for refresh')
+          }
           const tokenResp = await auth.api.getAccessToken({
             body: {
-              providerId: platform,
-              accountId: socialMediaAccount.id,
+              accountId: providerAccount.id,
               userId: socialMediaAccount.userId,
             },
             headers: new Headers(),
-          } as any)
+          })
           const freshToken = (tokenResp as any)?.accessToken
           const expiresAt = (tokenResp as any)?.accessTokenExpiresAt
           if (freshToken && freshToken !== socialMediaAccount.accessToken) {
@@ -244,5 +251,61 @@ export class AutoPostService {
     scheduler.use(plugin);
 
     return await scheduler.getStatistic({} as unknown as PluginPostDetails, account as unknown as PluginSocialMediaAccount);
+  }
+
+  async likeComment({
+    post,
+    socialAccount,
+    platform,
+    commentId,
+  }: {
+    post: PostWithAllData;
+    socialAccount: Account;
+    platform: string;
+    commentId: string;
+  }) {
+    const scheduler = new SchedulerPost({ post, accounts: [socialAccount] });
+    const plugin = this.matcher[platform];
+    if (!plugin) throw new Error(`Unsupported platform: ${platform}`);
+    scheduler.use(plugin);
+    return await scheduler.likeComment(post, socialAccount as unknown as PluginSocialMediaAccount, commentId);
+  }
+
+  async hideComment({
+    post,
+    socialAccount,
+    platform,
+    commentId,
+    isHidden,
+  }: {
+    post: PostWithAllData;
+    socialAccount: Account;
+    platform: string;
+    commentId: string;
+    isHidden: boolean;
+  }) {
+    const scheduler = new SchedulerPost({ post, accounts: [socialAccount] });
+    const plugin = this.matcher[platform];
+    if (!plugin) throw new Error(`Unsupported platform: ${platform}`);
+    scheduler.use(plugin);
+    return await scheduler.hideComment(post, socialAccount as unknown as PluginSocialMediaAccount, commentId, isHidden);
+  }
+
+  async deleteComment({
+    post,
+    socialAccount,
+    platform,
+    commentId,
+  }: {
+    post: PostWithAllData;
+    socialAccount: Account;
+    platform: string;
+    commentId: string;
+  }) {
+    const scheduler = new SchedulerPost({ post, accounts: [socialAccount] });
+    const plugin = this.matcher[platform];
+    if (!plugin) throw new Error(`Unsupported platform: ${platform}`);
+    scheduler.use(plugin);
+    return await scheduler.deleteComment(post, socialAccount as unknown as PluginSocialMediaAccount, commentId);
   }
 }

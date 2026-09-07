@@ -3,6 +3,7 @@ import { socialMediaAccountService, type CreateSocialMediaAccountData, type Soci
 import { FacebookPlugin } from '#layers/BaseScheduler/server/services/plugins/facebook.plugin';
 import { LinkedInPagePlugin } from '#layers/BaseScheduler/server/services/plugins/linkedin-page.plugin';
 import { YouTubePlugin } from '#layers/BaseScheduler/server/services/plugins/youtube.plugin';
+import { GooglePlugin } from '#layers/BaseScheduler/server/services/plugins/google.plugin';
 import { SchedulerPost, type SchedulerPluginConstructor } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import { checkUserIsLogin, getAccessTokenHelper } from '#layers/BaseAuth/server/utils/AuthHelpers';
 import { H3Error, readBody } from 'h3';
@@ -57,6 +58,7 @@ export default defineEventHandler(async (event) => {
       facebook: FacebookPlugin,
       'linkedin-page': LinkedInPagePlugin,
       youtube: YouTubePlugin,
+      googlemybusiness: GooglePlugin,
     }
     if (!matcher[platform] || !account || account.length === 0) {
       throw createError({
@@ -78,10 +80,12 @@ export default defineEventHandler(async (event) => {
       })
     }
 
+    // platformAccount is a Better Auth row: resolve tokens by its row id
+    // (the only identifier /get-access-token accepts).
     const tokenData = await getAccessTokenHelper(event as any, {
       providerId: platform,
       userId: user.id,
-      accountId: platformAccount.accountId,
+      accountId: platformAccount.id,
     }).catch(() => null)
 
     if (tokenData?.accessToken) {

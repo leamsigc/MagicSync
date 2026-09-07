@@ -9,7 +9,7 @@
  *   - topContent: best performing posts per platform
  *   - targetMetrics: suggested targets for new content
  */
-import { platformStatsService } from '#layers/BaseScheduler/server/services/PlatformStats.service'
+import { analyticsService } from '#layers/BaseScheduler/server/services/Analytics.service'
 import { postService } from '#layers/BaseDB/server/services/post.service'
 import type { SocialMediaPlatform } from '#layers/BaseDB/server/services/social-media-account.service'
 import dayjs from 'dayjs'
@@ -35,8 +35,8 @@ export default defineEventHandler(async (event) => {
     const startDate = dayjs().subtract(daysNum, 'day').toISOString()
 
     const [currentStats, timeSeries] = await Promise.all([
-      platformStatsService.getCurrentStats(filters),
-      platformStatsService.getStatsHistory(filters, { limit: 500 }),
+      analyticsService.getCurrentStats(filters),
+      analyticsService.getStatsHistory(filters, { startDate, limit: 500 }),
     ])
 
     const platformPerformance = currentStats

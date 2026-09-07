@@ -4,7 +4,10 @@ import { APIError, betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { apiKey } from "@better-auth/api-key"
 import { createAuthMiddleware } from "better-auth/api"
-import { admin, genericOAuth, organization } from 'better-auth/plugins'
+import { admin, genericOAuth, jwt, organization } from 'better-auth/plugins'
+import { mcp } from "@better-auth/mcp"
+import { cimd } from "@better-auth/cimd"
+import { fetchClientMetadataResource } from "@better-auth/cimd/node"
 import * as schema from '#layers/BaseDB/db/schema'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
 import { logAuditService } from '#layers/BaseDB/server/services/auditLog.service'
@@ -111,7 +114,7 @@ export const auth = betterAuth({
       allowDifferentEmails: true,
       updateUserInfoOnLink: true,
       allowUnlinkingAll: false,
-      trustedProviders: ['google', 'facebook', 'email-password', 'linkedin', 'linkedin-page', 'twitter', 'tiktok', 'threads', 'youtube', 'reddit', 'discord', 'dribbble', 'instagram', 'x', 'canva'],
+      trustedProviders: ['google', 'google-drive', 'googlemybusiness', 'facebook', 'email-password', 'linkedin', 'linkedin-page', 'twitter', 'tiktok', 'threads', 'youtube', 'reddit', 'discord', 'dribbble', 'instagram', 'x', 'canva'],
     },
   },
   socialProviders: {
@@ -119,20 +122,25 @@ export const auth = betterAuth({
       clientId: process.env.NUXT_GOOGLE_CLIENT_ID as string,
       clientSecret: process.env.NUXT_GOOGLE_CLIENT_SECRET as string,
       accessType: "offline",
-      prompt: "consent",
-      // plus.business.manage removed (G+ deprecated). youtube covers readonly+upload.
-      // youtube.force-ssl needed for thumbnails/captions updates.
+      // prompt: "consent",
+      prompt: "select_account consent",
+      // LOGIN ONLY — identity scopes. Google rejects ANY cross-family scope
+      // bundle in a single request with Error 400 "scopes that cannot be
+      // requested together" (verified: even business.manage +
+      // youtube.force-ssl together fails). YouTube / Business / Drive access
+      // is granted separately via incremental auth through the dedicated
+      // `youtube`, `googlemybusiness` and `google-drive` providers below.
       scope: [
         'openid',
         'email',
         'profile',
-        'https://www.googleapis.com/auth/business.manage',
-        'https://www.googleapis.com/auth/youtube',
-        'https://www.googleapis.com/auth/youtube.upload',
-        'https://www.googleapis.com/auth/youtube.force-ssl',
-        'https://www.googleapis.com/auth/drive.file',
-        'https://www.googleapis.com/auth/drive.readonly',
-      ]
+      ],
+      // CRITICAL: better-auth sends include_granted_scopes=true by default,
+      // which makes Google merge scopes from PRIOR grants into every login.
+      // Accounts that previously granted the old invalid bundle (youtube x4
+      // + drive.file) then fail with 400 on EVERY login — even with clean
+      // scopes configured. false => each login requests only its own scopes.
+      includeGrantedScopes: false,
     },
     facebook: {
       clientId: process.env.NUXT_FACEBOOK_CLIENT_ID as string,
@@ -311,7 +319,11 @@ export const auth = betterAuth({
           // pkce: false,
         },
 
-        // YouTube (uses Google OAuth with YouTube scopes) - not natively supported
+        // YouTube (uses Google OAuth with YouTube scopes) - not natively supported.
+        // Request ONLY youtube.force-ssl: it supersedes `youtube`,
+        // `youtube.upload` and `youtube.readonly`. Requesting a scope together
+        // with its own subset makes Google reject the request with
+        // "scopes that cannot be requested together".
         {
           providerId: 'youtube',
           clientId: process.env.NUXT_GOOGLE_CLIENT_ID as string,
@@ -321,14 +333,61 @@ export const auth = betterAuth({
             'openid',
             'email',
             'profile',
-            'https://www.googleapis.com/auth/youtube',
-            'https://www.googleapis.com/auth/youtube.upload',
-            'https://www.googleapis.com/auth/youtube.readonly',
             'https://www.googleapis.com/auth/youtube.force-ssl',
           ],
           accessType: 'offline',
           prompt: 'consent',
           pkce: false,
+          // Incremental auth: keep previously granted scopes on the shared
+          // Google grant when connecting youtube/drive/business separately.
+          authorizationUrlParams: { include_granted_scopes: 'true' },
+        },
+        // Google Drive (asset browser: list/download images & videos).
+        // Drive-only scopes on purpose: Google rejects YouTube scopes mixed
+        // with Drive scopes in a single request ("scopes that cannot be
+        // requested together"), so Drive is connected separately via
+        // incremental auth (linkSocial with provider 'google-drive').
+        // Uses drive.readonly so the in-app file browser can list the user's
+        // images/videos. NOTE: drive.readonly is a restricted scope — before
+        // production launch it requires Google verification + security
+        // assessment. The alternative (drive.file + Google Picker) is
+        // non-sensitive but only exposes files the user explicitly picks.
+        {
+          providerId: 'google-drive',
+          clientId: process.env.NUXT_GOOGLE_CLIENT_ID as string,
+          clientSecret: process.env.NUXT_GOOGLE_CLIENT_SECRET as string,
+          discoveryUrl: 'https://accounts.google.com/.well-known/openid-configuration',
+          scopes: [
+            'openid',
+            'email',
+            'profile',
+            'https://www.googleapis.com/auth/drive.readonly',
+          ],
+          accessType: 'offline',
+          prompt: 'consent',
+          pkce: false,
+          authorizationUrlParams: { include_granted_scopes: 'true' },
+        },
+        // Google Business (GMB locations) — separate provider because even
+        // business.manage + youtube.force-ssl together is rejected by Google
+        // with "scopes that cannot be requested together" (verified 400).
+        // Connected separately via incremental auth (linkSocial with provider
+        // 'googlemybusiness') after login.
+        {
+          providerId: 'googlemybusiness',
+          clientId: process.env.NUXT_GOOGLE_CLIENT_ID as string,
+          clientSecret: process.env.NUXT_GOOGLE_CLIENT_SECRET as string,
+          discoveryUrl: 'https://accounts.google.com/.well-known/openid-configuration',
+          scopes: [
+            'openid',
+            'email',
+            'profile',
+            'https://www.googleapis.com/auth/business.manage',
+          ],
+          accessType: 'offline',
+          prompt: 'consent',
+          pkce: false,
+          authorizationUrlParams: { include_granted_scopes: 'true' },
         },
         // Dribbble OAuth - not natively supported
         {
@@ -437,7 +496,38 @@ export const auth = betterAuth({
           maxRequests: 50, // 50 requests per day
         },
       },
-    ])
+    ]),
+    // OAuth 2.1 authorization server + MCP protected resource (Wave 2a-B).
+    // jwt() provides the signing key + /jwks. mcp() IS the OAuth provider —
+    // never register a separate oauthProvider() alongside it. cimd() serves
+    // the MCP 2026-07-28 client-identity profile; DCR fallback stays ON until
+    // Claude/ChatGPT speak CIMD (see PRD decision #5).
+    jwt(),
+    mcp({
+      loginPage: '/login',
+      consentPage: '/consent',
+      // Per-deployment public identifier, never hardcoded: prod =
+      // https://magicsync.dev/mcp, self-hosters = their own domain + /mcp.
+      // HTTP accepted by the plugin on loopback hosts only (dev).
+      resource: `${process.env.NUXT_APP_URL || 'http://localhost:3000'}/mcp`,
+      scopes: ['openid', 'profile', 'email', 'offline_access', 'mcp:read', 'mcp:full'],
+      allowDynamicClientRegistration: true,
+      allowUnauthenticatedClientRegistration: true,
+      // Business binding: every OAuth grant carries exactly one businessId,
+      // picked on the consent screen. Column lives on oauthConsent in
+      // packages/db/db/oauth/oauth.ts.
+      schema: {
+        oauthConsent: {
+          fields: {
+            businessId: { type: 'string', required: false },
+          },
+        },
+      },
+    }),
+    cimd({
+      fetchClientMetadataResource,
+      metadataProfile: 'mcp-2026-07-28',
+    }),
   ],
   databaseHooks: {
     account: {
@@ -598,7 +688,14 @@ export const auth = betterAuth({
                   id: channel.id,
                   name: channel.snippet.title,
                   access_token: account.accessToken as string,
-                  refresh_token: account.refreshToken as string,
+                  // Google omits refresh_token on re-grants without a consent
+                  // screen — pass undefined (never null) so a stored token is
+                  // preserved instead of wiped.
+                  refresh_token: account.refreshToken ?? undefined,
+                  // Store the real provider expiry instead of the 1h default.
+                  tokenExpiresAt: account.accessTokenExpiresAt
+                    ? new Date(account.accessTokenExpiresAt)
+                    : undefined,
                   picture: channel.snippet.thumbnails.default.url,
                   username: channel.snippet.title,
                   platformId: 'youtube',

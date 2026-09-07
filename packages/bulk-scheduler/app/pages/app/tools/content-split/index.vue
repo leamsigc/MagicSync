@@ -19,6 +19,9 @@ import { usePostManager } from '#layers/BaseScheduler/app/pages/app/posts/compos
 import { CalendarDate, type DateValue } from '@internationalized/date';
 import dayjs from 'dayjs';
 import type { Asset, PostCreateBase } from '#layers/BaseDB/db/schema';
+import { usePlatformIcons, type SocialMediaPlatform } from '#layers/BaseUI/app/composables/usePlatformIcons';
+
+const { getPlatformIcon } = usePlatformIcons();
 
 const { t } = useI18n();
 const router = useRouter();
@@ -55,6 +58,17 @@ const {
   copyToClipboard,
   getContentAsString,
 } = useContentSplit();
+
+const route = useRoute()
+const prefilledFromAnalytics = ref(false)
+onMounted(() => {
+  const queryContent = route.query.content
+  if (typeof queryContent === 'string' && queryContent.trim()) {
+    content.value = queryContent
+    prefilledFromAnalytics.value = true
+    toast.add({ title: t('page.prefilledFromAnalytics'), color: 'info' })
+  }
+})
 
 const selectedAssets = ref<Asset[]>([])
 const localSelectedPlatforms = ref<string[]>([])
@@ -274,7 +288,7 @@ const handleTogglePlatform = (account: { id: string, platform: string }) => {
               <p>{{ t('results.noResults') }}</p>
             </div>
 
-            <UTabs v-else :items="Object.keys(results).map(p => ({ label: '', icon: `logos:${p}`, slot: p }))"
+            <UTabs v-else :items="Object.keys(results).map(p => ({ label: '', icon: getPlatformIcon(p as SocialMediaPlatform), slot: p }))"
               class="w-full">
               <template v-for="(platform, key) in results" :key="key" #[key]>
                 <div class="py-4 space-y-4">

@@ -31,7 +31,7 @@ export default defineAppConfig({
         },
         {
           name: 'YouTube',
-          icon: 'logos:youtube-icon',
+          icon: 'logos:youtube',
           url: '#',
         }
       ]

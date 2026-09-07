@@ -20,6 +20,8 @@
     "@nuxtjs/i18n": "catalog:",
     "better-auth": "catalog:",
     "@better-auth/api-key": "catalog:",
+    "@better-auth/cimd": "catalog:",
+    "@better-auth/mcp": "catalog:",
     "better-sqlite3": "catalog:",
     "evlog": "catalog:"
   },

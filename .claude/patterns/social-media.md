@@ -79,6 +79,7 @@ Social accounts are stored with these key fields:
 - Platform content limits vary (Twitter: 280 chars, Instagram: 2200, etc.)
 - Media requirements differ by platform (aspect ratios, file sizes, formats)
 - Some platforms require business accounts for certain features
+- **Facebook Graph API deprecations**: several Page/Post Insights metrics were removed in Graph API v25.0 (Feb 2026) and deprecated for all versions by mid-2026. Deprecated metrics include `post_impressions_unique`, `post_impressions_paid_unique`, `post_video_views_unique`, and the `page_posts_impressions_*` family. When fetching post insights, use the documented replacements (`post_total_media_view_unique` / `post_media_view` for unique views/reach) and compute Facebook's Content Library "Engagement" as `Reactions + Comments + Shares` (not `post_engaged_users`, which counts distinct engaged users only). Prefer reading exact reaction/comment/share totals from the post object via `fields=reactions.summary(total_count),comments.summary(total_count),shares.count`.
 
 ## Verify
 
@@ -86,6 +87,7 @@ Social accounts are stored with these key fields:
 - [ ] Handle token expiration with refresh flow
 - [ ] Platform-specific content limits enforced
 - [ ] Error responses from platform are logged and user notified
+- [ ] Impacted Facebook insight metric names checked against the current Graph API version before use
 
 ## Debug
 
