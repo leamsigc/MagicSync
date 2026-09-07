@@ -1,6 +1,6 @@
 import type { FacebookPage } from '#layers/BaseConnect/utils/FacebookPages';
 
-import { linkSocial, oauth2, signIn } from "#layers/BaseAuth/lib/auth-client";
+import { linkSocial } from "#layers/BaseAuth/lib/auth-client";
 import type { AccountComplete, SocialMediaAccount, SocialMediaComplete } from "#layers/BaseDB/db/schema";
 import { useBusinessManager } from "../../business/composables/useBusinessManager";
 
@@ -25,6 +25,7 @@ export const useConnectionManager = () => {
   const accountsList = useState<AccountComplete[]>("accounts:List", () => []);
   const facebookPages = ref<FacebookPage[]>([]);
   const router = useRouter();
+  const activeBusinessId = ref<string>('');
   const setConnectionList = () => {
     connectionList.value = [
       // Better Auth OAuth platforms (native support)
@@ -86,8 +87,8 @@ export const useConnectionManager = () => {
           color: 'info',
         });
       } else if (connection.authType === 'manual-oauth') {
-        oauth2.link({
-          providerId: connection.platform,
+        linkSocial({
+          provider: connection.platform,
           callbackURL: `/api/v1/social-accounts/callback/${connection.platform}?businessId=${activeBusinessId.value}`,
         })
       }
@@ -121,9 +122,13 @@ export const useConnectionManager = () => {
       throw error;
     }
   }
-  const getAllSocialMediaAccounts = async () => {
+  const getAllSocialMediaAccounts = async (businessId?: string) => {
     try {
-      const response = await $fetch<Promise<SocialMediaComplete[]>>('/api/v1/social-accounts');
+      const targetBusinessId = businessId || useBusinessManager().activeBusinessId.value
+      const url = targetBusinessId
+        ? `/api/v1/social-accounts?businessId=${targetBusinessId}`
+        : '/api/v1/social-accounts'
+      const response = await $fetch<Promise<SocialMediaComplete[]>>(url);
       pagesList.value = response
     } catch (error) {
       console.error('Error adding business:', error);
@@ -261,7 +266,6 @@ export const useConnectionManager = () => {
         icon: 'i-heroicons-check-circle',
         color: 'success',
       })
-
     } catch (error) {
       toast.add({
         title: t('messages.error.title'),
@@ -273,12 +277,51 @@ export const useConnectionManager = () => {
       throw error;
     }
   }
+
+  const HandleReconnect = async (accountId: string, platform: string) => {
+    try {
+      const response = await $fetch<{ success: boolean; data: { hasValidToken: boolean } }>(
+        `/api/v1/social-accounts/${accountId}/refresh`,
+        { method: 'POST' }
+      );
+      if (response.success) {
+        toast.add({
+          title: 'Token Refreshed',
+          description: `Successfully refreshed ${platform} token`,
+          icon: 'i-heroicons-check-circle',
+          color: 'success',
+        });
+        await getAllSocialMediaAccounts();
+      }
+    } catch (error) {
+      toast.add({
+        title: 'Reconnect Failed',
+        description: 'Failed to refresh token. Please reconnect the account.',
+        icon: 'i-heroicons-x-circle',
+        color: 'error',
+      });
+      throw error;
+    }
+  }
+
+  const getTokenHealth = async (businessId?: string) => {
+    try {
+      const url = businessId ? `/api/v1/social-accounts/health?businessId=${businessId}` : '/api/v1/social-accounts/health'
+      const response = await $fetch<{ accounts: Array<{ id: string; platform: string; health: { status: string; expiresAt: Date | null; daysRemaining: number | null } }>; summary: any }>(url)
+      return response
+    } catch (error) {
+      console.error('Failed to fetch token health:', error)
+      return null
+    }
+  }
+
   return {
     connectionList,
     allConnections,
     pagesList,
     facebookPages,
     accountsList,
+    activeBusinessId,
     handleDisconnect,
     setConnectionList,
     getAllConnections,
@@ -289,6 +332,8 @@ export const useConnectionManager = () => {
     HandleConnectToYoutube,
     HandleConnectToGMB,
     getAllSocialMediaAccounts,
-    getAllAccountDetails
+    getAllAccountDetails,
+    HandleReconnect,
+    getTokenHealth,
   }
 };

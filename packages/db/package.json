@@ -17,6 +17,7 @@
     "db:studio": "npx dotenv -e ../../.env -- drizzle-kit studio --config ./config/drizzle.config.ts"
   },
   "dependencies": {
+    "@local-monorepo/shared": "workspace:*",
     "dayjs": "catalog:",
     "drizzle-orm": "catalog:",
     "jsonwebtoken": "^9.0.3"

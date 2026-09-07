@@ -119,18 +119,19 @@ export const auth = betterAuth({
       clientId: process.env.NUXT_GOOGLE_CLIENT_ID as string,
       clientSecret: process.env.NUXT_GOOGLE_CLIENT_SECRET as string,
       accessType: "offline",
-      // prompt: "select_account+consent",
+      prompt: "consent",
+      // plus.business.manage removed (G+ deprecated). youtube covers readonly+upload.
+      // youtube.force-ssl needed for thumbnails/captions updates.
       scope: [
         'openid',
         'email',
         'profile',
         'https://www.googleapis.com/auth/business.manage',
-        'https://www.googleapis.com/auth/plus.business.manage',
-        'https://www.googleapis.com/auth/youtube.upload',
         'https://www.googleapis.com/auth/youtube',
-        'https://www.googleapis.com/auth/youtube.readonly',
+        'https://www.googleapis.com/auth/youtube.upload',
+        'https://www.googleapis.com/auth/youtube.force-ssl',
+        'https://www.googleapis.com/auth/drive.file',
         'https://www.googleapis.com/auth/drive.readonly',
-        'https://www.googleapis.com/auth/drive.file'
       ]
     },
     facebook: {
@@ -316,8 +317,17 @@ export const auth = betterAuth({
           clientId: process.env.NUXT_GOOGLE_CLIENT_ID as string,
           clientSecret: process.env.NUXT_GOOGLE_CLIENT_SECRET as string,
           discoveryUrl: 'https://accounts.google.com/.well-known/openid-configuration',
-          scopes: ['openid', 'email', 'profile', 'https://www.googleapis.com/auth/youtube.upload', 'https://www.googleapis.com/auth/youtube'],
+          scopes: [
+            'openid',
+            'email',
+            'profile',
+            'https://www.googleapis.com/auth/youtube',
+            'https://www.googleapis.com/auth/youtube.upload',
+            'https://www.googleapis.com/auth/youtube.readonly',
+            'https://www.googleapis.com/auth/youtube.force-ssl',
+          ],
           accessType: 'offline',
+          prompt: 'consent',
           pkce: false,
         },
         // Dribbble OAuth - not natively supported

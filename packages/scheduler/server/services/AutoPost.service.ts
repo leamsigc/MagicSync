@@ -21,6 +21,7 @@ import { XPlugin } from '#layers/BaseScheduler/server/services/plugins/x.plugin'
 import { YouTubePlugin } from '#layers/BaseScheduler/server/services/plugins/youtube.plugin';
 import { PinterestPlugin } from '#layers/BaseScheduler/server/services/plugins/pinterest.plugin';
 import { platformRateLimiter } from './RateLimiter.service';
+import { auth } from '#layers/BaseAuth/lib/auth';
 export class AutoPostService {
 
   private matcher: Record<string, SchedulerPluginConstructor> = {
@@ -74,12 +75,43 @@ export class AutoPostService {
           post: post,
           accounts: accounts
         })
-        const socialMediaAccount = await socialMediaAccountService.getAccountById(platformPost.socialAccountId)
+        let socialMediaAccount = await socialMediaAccountService.getAccountById(platformPost.socialAccountId)
         if (!socialMediaAccount || !socialMediaAccount.accessToken) {
           const err = `No access token found for platform ${platform}`
           console.error(`[AutoPost] ${err} | Post ID: ${post.id}`)
           await postBatchService.scheduleRetry(post.id, post.retryCount ?? 0, err)
           return
+        }
+        // Refresh the access token via Better Auth before posting
+        // Better Auth handles provider-specific refresh (Google, etc.) using
+        // stored refresh_token + client credentials. We pass userId + providerId + accountId
+        // so it can locate the account without a request context.
+        try {
+          const tokenResp = await auth.api.getAccessToken({
+            body: {
+              providerId: platform,
+              accountId: socialMediaAccount.id,
+              userId: socialMediaAccount.userId,
+            },
+            headers: new Headers(),
+          } as any)
+          const freshToken = (tokenResp as any)?.accessToken
+          const expiresAt = (tokenResp as any)?.accessTokenExpiresAt
+          if (freshToken && freshToken !== socialMediaAccount.accessToken) {
+            await socialMediaAccountService.updateAccount(socialMediaAccount.id, {
+              lastSyncAt: new Date(),
+              ...(expiresAt ? { tokenExpiresAt: new Date(expiresAt) } : {}),
+            })
+            socialMediaAccount.accessToken = freshToken
+          } else if (freshToken) {
+            // Token still valid — update lastSyncAt and expiry if provided
+            await socialMediaAccountService.updateAccount(socialMediaAccount.id, {
+              lastSyncAt: new Date(),
+              ...(expiresAt ? { tokenExpiresAt: new Date(expiresAt) } : {}),
+            })
+          }
+        } catch (tokenRefreshError) {
+          console.warn(`[AutoPost] Token refresh via Better Auth failed for ${platform} | Post ID: ${post.id}`, tokenRefreshError)
         }
         // @ts-ignore - dynamic plugin resolution
         const plugin = this.matcher[platform];

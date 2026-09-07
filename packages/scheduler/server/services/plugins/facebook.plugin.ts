@@ -309,45 +309,57 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
 
     const accessToken = socialMediaAccount.accessToken;
 
-    // Metric list is kept to post-level metrics that remain valid in Graph API
-    // v25.0+. post_impressions_unique was removed in v25.0, so we rely on the
-    // documented replacements (post_media_view / post_total_media_view_unique)
-    // for reach/views, plus the post object's exact reaction/comment/share totals.
+    // v25+v26: post_impressions* deprecated June 2026 -> use media_view metrics
+    // One invalid metric fails entire request, so only request currently-valid metrics
     const metrics = [
-      'post_impressions',
-      'post_total_media_view_unique',
-      'post_media_view',
+      'post_total_media_view_unique', // new reach (replaces post_impressions_unique)
+      'post_media_view', // views
       'post_engaged_users',
       'post_clicks',
       'post_reactions_by_type_total',
+      'post_video_views', // for video posts, ignored for others
     ].join(',');
 
-    const [insightsRes, postRes] = await Promise.all([
-      this.fetch(
-        this._getGraphApiUrl(`/${externalPostId}/insights?metric=${metrics}&access_token=${accessToken}`),
-        undefined,
-        'fetch post insights'
-      ).then((r) => r.json() as Promise<{ data?: FacebookApiPostInsightMetric[]; error?: Record<string, unknown> }>),
-      this.fetch(
-        this._getGraphApiUrl(
-          `/${externalPostId}?fields=reactions.summary(total_count),comments.summary(total_count),shares.count&access_token=${accessToken}`
-        ),
-        undefined,
-        'fetch post engagement totals'
-      ).then((r) =>
+    // Fetch insights and post totals in parallel, but handle partial failures
+    // Insights may return 400 if metric not applicable to post type - don't fail entire op
+    const insightsRes = await this.fetch(
+      this._getGraphApiUrl(`/${externalPostId}/insights?metric=${metrics}&access_token=${accessToken}`),
+      undefined,
+      'fetch post insights'
+    )
+      .then((r) => r.json() as Promise<{ data?: FacebookApiPostInsightMetric[]; error?: Record<string, unknown> }>)
+      .catch((e) => ({ error: { message: String(e) } as Record<string, unknown> }))
+
+    const postRes = await this.fetch(
+      this._getGraphApiUrl(
+        `/${externalPostId}?fields=reactions.summary(total_count),comments.summary(total_count),shares.count,insights.metric(post_video_views,post_media_view).period(lifetime)&access_token=${accessToken}`
+      ),
+      undefined,
+      'fetch post engagement totals'
+    )
+      .then((r) =>
         r.json() as Promise<{
           reactions?: { summary?: { total_count?: number } };
           comments?: { summary?: { total_count?: number } };
           shares?: { count?: number };
+          insights?: { data?: FacebookApiPostInsightMetric[] };
           error?: Record<string, unknown>;
         }>
-      ),
-    ]);
+      )
+      .catch((e) => ({ error: { message: String(e) } as Record<string, unknown> }))
 
-    if (insightsRes.error || postRes.error) {
+    // If insights failed but post object succeeded, still return engagement totals
+    // Only fallback if both fail
+    if ((insightsRes.error && (insightsRes.data?.length ?? 0) === 0) && postRes.error) {
       const insightError = insightsRes.error ?? postRes.error;
-      log.warn({ content: '[Facebook] Post insights error', error: insightError })
+      log.warn({ content: '[Facebook] Post insights error - both queries failed', error: insightError })
       return createPostInsightsFallback(this.pluginName);
+    }
+    if (insightsRes.error) {
+      log.warn({ content: '[Facebook] Post insights partial error, using post object totals', error: insightsRes.error })
+    }
+    if (postRes.error) {
+      log.warn({ content: '[Facebook] Post object error', error: postRes.error })
     }
 
     const metricValue = (name: string): number => {
@@ -367,15 +379,22 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     const totalShares: number = postRes.shares?.count ?? 0;
     const totalEngagement: number = totalReactions + totalComments + totalShares;
 
+    // Merge insights from post object inline insights (video views) if present
+    const inlineMediaView = (postRes as any)?.insights?.data?.find((d: any) => d.name === 'post_media_view')?.values?.[0]?.value
+    const inlineVideoViews = (postRes as any)?.insights?.data?.find((d: any) => d.name === 'post_video_views')?.values?.[0]?.value
+    const viewsValue = metricValue('post_total_media_view_unique') || metricValue('post_media_view') || inlineMediaView || inlineVideoViews || 0
+    const impressionsValue = metricValue('post_media_view') || inlineMediaView || 0
+
     const insights: PostInsight[] = [
-      { label: 'Views', value: metricValue('post_total_media_view_unique') || metricValue('post_impressions') },
-      { label: 'Impressions', value: metricValue('post_impressions') },
+      { label: 'Views', value: viewsValue },
+      { label: 'Impressions', value: impressionsValue },
       { label: 'Engagement', value: totalEngagement },
       { label: 'Reactions', value: totalReactions },
       { label: 'Comments', value: totalComments },
       { label: 'Shares', value: totalShares },
       { label: 'Link Clicks', value: metricValue('post_clicks') },
       { label: 'Engaged Users', value: metricValue('post_engaged_users') },
+      { label: 'Video Views', value: metricValue('post_video_views') || inlineVideoViews || 0 },
     ];
 
     const reactionLabelMap: Record<string, string> = {
@@ -1180,44 +1199,78 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     socialMediaAccount: PluginSocialMediaAccount
   ): Promise<PlatformStats> {
     const pageId = socialMediaAccount.accountId
+    const token = socialMediaAccount.accessToken
 
-    const [profileData, insightsData] = await Promise.all([
+    // Fetch profile with modern fields (fan_count deprecated -> followers_count is source of truth)
+    // and insights with fallback for pages below 100 likes (insights empty)
+    const [profileData, insightsData, feedData] = await Promise.all([
       this.fetch(
-        this._getGraphApiUrl(`/${pageId}?fields=id,name,picture&access_token=${socialMediaAccount.accessToken}`),
+        this._getGraphApiUrl(`/${pageId}?fields=id,name,picture.type(large),fan_count,followers_count,posts.limit(0).summary(true)&access_token=${token}`),
         undefined,
         'fetch page profile'
-      ).then(r => r.json()),
-      this.getPageInsights(pageId, socialMediaAccount.accessToken, 7),
+      )
+        .then(r => r.json())
+        .catch(() => ({ id: pageId, name: socialMediaAccount.accountName })),
+      this.getPageInsights(pageId, token, 30).catch(() => []),
+      this.fetch(
+        this._getGraphApiUrl(`/${pageId}/feed?fields=id&limit=1&summary=false&access_token=${token}`),
+        undefined,
+        'fetch page feed'
+      )
+        .then(r => r.json())
+        .then((j: any) => j.summary?.total_count ?? j.data?.length ?? undefined)
+        .catch(() => undefined),
     ])
 
+    const followersCount = profileData.followers_count ?? profileData.fan_count ?? 0
+    const postsCount = typeof feedData === 'number' ? feedData : profileData.posts?.summary?.total_count ?? undefined
+
     let totalEngagement = 0
-    let totalReach = 0
-    let currentFollowers = 0
-    let previousFollowers = 0
+    let totalViews = 0
+    let insightsFollowersCurrent = 0
+    let insightsFollowersPrevious = 0
+    let hasInsights = false
 
     for (const metric of insightsData) {
       if (metric.label === 'Post Engagements') {
+        hasInsights = true
         // @ts-ignore
-        totalEngagement += metric.data?.reduce((sum, d) => sum + d.total, 0) || 0
+        totalEngagement += metric.data?.reduce((sum: number, d: any) => sum + (d.total || 0), 0) || 0
       }
-      if (metric.label === 'Reach') {
+      if (metric.label === 'Reach' || metric.label === 'Views') {
+        hasInsights = true
         // @ts-ignore
-        totalReach += metric.data?.reduce((sum, d) => sum + d.total, 0) || 0
+        totalViews += metric.data?.reduce((sum: number, d: any) => sum + (d.total || 0), 0) || 0
       }
-      if (metric.label === 'Followers' && metric.data?.length >= 2) {
-        previousFollowers = metric.data[0]?.total || 0
-        currentFollowers = metric.data[metric.data.length - 1]?.total || 0
+      if (metric.label === 'Followers' && metric.data?.length) {
+        hasInsights = true
+        if (metric.data.length >= 2) {
+          insightsFollowersPrevious = metric.data[0]?.total || 0
+          insightsFollowersCurrent = metric.data[metric.data.length - 1]?.total || 0
+        } else {
+          insightsFollowersCurrent = metric.data[metric.data.length - 1]?.total || 0
+        }
       }
     }
 
-    const followerAbsolute = currentFollowers - previousFollowers
+    // Prefer profile followers_count as source of truth (JS), insights for growth
+    // For pages below 100 likes insights returns empty -> use profile count
+    const currentFollowers = hasInsights && insightsFollowersCurrent ? insightsFollowersCurrent : followersCount
+    const previousFollowers = insightsFollowersPrevious || (hasInsights ? currentFollowers : 0)
+    const followerAbsolute = hasInsights ? currentFollowers - previousFollowers : 0
     const followerPercentage = previousFollowers > 0
       ? Math.round((followerAbsolute / previousFollowers) * 10000) / 100
       : 0
 
+    // Views fallback: if insights empty, views = 0 (will be populated once page passes threshold)
+    const totalReach = totalViews
+
     const base64Picture = profileData.picture?.data?.url
       ? await fetchedImageBase64(profileData.picture.data.url)
       : undefined
+
+    // Growth for engagement/views
+    const engagementGrowth = hasInsights && totalEngagement > 0 ? { absolute: totalEngagement, percentage: 0 } : undefined
 
     return {
       platform: 'facebook',
@@ -1226,9 +1279,10 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
       picture: base64Picture,
       fetchedAt: new Date().toISOString(),
       followers: currentFollowers,
-      posts: undefined,
+      posts: postsCount,
       engagement: {
         total: totalEngagement,
+        views: totalViews,
         reach: totalReach,
       },
       growth: {
@@ -1236,9 +1290,14 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
           absolute: followerAbsolute,
           percentage: followerPercentage,
         },
+        ...(engagementGrowth ? { engagement: engagementGrowth } : {}),
       },
       extra: {
         name: profileData.name,
+        fan_count: profileData.fan_count,
+        followers_count: followersCount,
+        hasInsights,
+        insightsMetrics: insightsData.map(m => m.label),
       },
     }
   }

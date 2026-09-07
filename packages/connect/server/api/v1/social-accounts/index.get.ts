@@ -25,8 +25,20 @@ export default defineEventHandler(async (event) => {
 
     const query = getQuery(event)
     const platform = query.platformId as string;
+    const businessId = query.businessId as string | undefined;
 
     if (!platform) {
+      // If businessId provided, return business's accounts if user is member/owner
+      if (businessId) {
+        const { businessProfileService } = await import('#layers/BaseDB/server/services/business-profile.service')
+        const businessRes = await businessProfileService.findById(businessId, user.id, event)
+        if (!businessRes.success) {
+          throw createError({ statusCode: 403, statusMessage: 'You do not have access to this business' })
+        }
+        const accounts = await socialMediaAccountService.getAccountsByBusinessId(businessId)
+        log.info({ message: 'Retrieved business social media accounts', businessId, count: accounts.length })
+        return accounts.map(sanitizeSocialMediaAccount)
+      }
       const accounts = await socialMediaAccountService.getAccountsByUserId(user.id)
       log.info({ message: 'Retrieved all social media accounts', count: accounts.length })
       // SECURITY: strip token columns before returning accounts to the browser

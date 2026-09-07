@@ -156,6 +156,18 @@ export class SocialMediaAccountService implements SocialMediaAccountServiceType 
       ? await encryptKey(data.refreshToken)
       : null
 
+    // Platform-specific expiry: Facebook page tokens are long-lived (~60d), Google short-lived (~1h) but refreshable
+    const platformExpiryDays: Record<string, number> = {
+      facebook: 60,
+      instagram: 60,
+      youtube: 1 / 24, // 1 hour
+      google: 1 / 24,
+      googlemybusiness: 1 / 24,
+    }
+    const defaultExpiry = data.tokenExpiresAt || (platformExpiryDays[data.platform]
+      ? new Date(Date.now() + platformExpiryDays[data.platform] * 24 * 60 * 60 * 1000)
+      : new Date(Date.now() + 60 * 24 * 60 * 60 * 1000))
+
     const accountData: SocialMediaAccount = {
       id: crypto.randomUUID(),
       userId: data.userId,
@@ -166,12 +178,12 @@ export class SocialMediaAccountService implements SocialMediaAccountServiceType 
       accessToken: data.accessToken,
       accessTokenEncrypted: accessTokenEncrypted,
       refreshTokenEncrypted: refreshTokenEncrypted,
-      tokenExpiresAt: data.tokenExpiresAt || null,
+      tokenExpiresAt: defaultExpiry,
       entityDetailId: data.entityDetailId || null,
       createdAt: new Date(),
       updatedAt: new Date(),
       isActive: true,
-      refreshToken: null,
+      refreshToken: data.refreshToken || null,
       lastSyncAt: null
     }
 
@@ -357,8 +369,9 @@ export class SocialMediaAccountService implements SocialMediaAccountServiceType 
 
   /**
    * Create or update social media account
+   * Handles platform-specific token expiry (Facebook 60d vs Google 1h)
    */
-  async createOrUpdateAccount({ id, name, access_token, refresh_token, picture, username, user, businessId, platformId }: {
+  async createOrUpdateAccount({ id, name, access_token, refresh_token, picture, username, user, businessId, platformId, tokenExpiresAt }: {
     id: string;
     name: string;
     access_token: string;
@@ -368,6 +381,7 @@ export class SocialMediaAccountService implements SocialMediaAccountServiceType 
     user: User,
     businessId: string
     platformId: SocialMediaPlatform
+    tokenExpiresAt?: Date
   }) {
     const account = await this.getAccountByAccountId(id);
 
@@ -386,6 +400,18 @@ export class SocialMediaAccountService implements SocialMediaAccountServiceType 
     }
 
 
+    // Compute platform-aware expiry if not explicitly provided
+    const platformExpiryDays: Record<string, number> = {
+      facebook: 60,
+      instagram: 60,
+      youtube: 1 / 24,
+      google: 1 / 24,
+      googlemybusiness: 1 / 24,
+    }
+    const computedExpiry = tokenExpiresAt || (platformExpiryDays[platformId]
+      ? new Date(Date.now() + platformExpiryDays[platformId] * 24 * 60 * 60 * 1000)
+      : new Date(Date.now() + 60 * 24 * 60 * 60 * 1000))
+
     if (account) {
 
       socialMediaAccount = await this.updateAccount(
@@ -394,6 +420,7 @@ export class SocialMediaAccountService implements SocialMediaAccountServiceType 
           accountName: name,
           accessToken: access_token,
           refreshToken: refresh_token,
+          tokenExpiresAt: computedExpiry,
           lastSyncAt: new Date(),
           isActive: true,
           entityDetailId: entityDetails?.id
@@ -409,6 +436,7 @@ export class SocialMediaAccountService implements SocialMediaAccountServiceType 
         accountName: name,
         accessToken: access_token,
         refreshToken: refresh_token,
+        tokenExpiresAt: computedExpiry,
         entityDetailId: entityDetails?.id
       });
     }
@@ -416,7 +444,7 @@ export class SocialMediaAccountService implements SocialMediaAccountServiceType 
     return socialMediaAccount;
   }
 
-  async createOrUpdateAccountFromAuth({ id, name, access_token, refresh_token, picture, username, platformId, user }: {
+  async createOrUpdateAccountFromAuth({ id, name, access_token, refresh_token, picture, username, platformId, user, tokenExpiresAt }: {
     id: string;
     name: string;
     access_token: string;
@@ -425,6 +453,7 @@ export class SocialMediaAccountService implements SocialMediaAccountServiceType 
     username: string;
     platformId: SocialMediaPlatform;
     user: User;
+    tokenExpiresAt?: Date;
   }) {
     // get business if from current user
 
@@ -433,7 +462,7 @@ export class SocialMediaAccountService implements SocialMediaAccountServiceType 
     });
 
 
-    return this.createOrUpdateAccount({ id, name, access_token, refresh_token, picture, username, user, businessId: businessFromUser?.id as string || '', platformId });
+    return this.createOrUpdateAccount({ id, name, access_token, refresh_token, picture, username, user, businessId: businessFromUser?.id as string || '', platformId, tokenExpiresAt });
 
   }
   async getAccountByAccountId(id: string, userId?: string) {
@@ -515,9 +544,13 @@ export class SocialMediaAccountService implements SocialMediaAccountServiceType 
 
   /**
    * Token health status for UI indicators
+   * Differentiates short-lived (Google/YouTube 1h, refreshable) vs long-lived (Facebook 60d)
    */
   getTokenHealth(account: SocialMediaAccount): { status: 'healthy' | 'expiring_soon' | 'expired' | 'unknown'; expiresAt: Date | null; daysRemaining: number | null } {
     if (!account.tokenExpiresAt) {
+      // No expiry stored: treat as healthy if we have a token, unknown otherwise
+      // For Google with refresh_token, token is always refreshable so don't warn
+      if (account.accessToken) return { status: 'healthy', expiresAt: null, daysRemaining: null }
       return { status: 'unknown', expiresAt: null, daysRemaining: null }
     }
 
@@ -528,11 +561,25 @@ export class SocialMediaAccountService implements SocialMediaAccountServiceType 
     const expiresAt = new Date(expirationTime)
     const msRemaining = expirationTime - Date.now()
     const daysRemaining = Math.floor(msRemaining / (1000 * 60 * 60 * 24))
+    const hoursRemaining = msRemaining / (1000 * 60 * 60)
 
     if (msRemaining <= 0) {
       return { status: 'expired', expiresAt, daysRemaining: 0 }
     }
 
+    // Short-lived OAuth (Google/YouTube/GMB) - refresh token handles renewal, only warn within 1h
+    const shortLivedPlatforms = ['google', 'googlemybusiness', 'youtube']
+    if (shortLivedPlatforms.includes(account.platform)) {
+      // If we have a refresh token, token is auto-refreshable via Better Auth - consider healthy unless expired
+      if (account.refreshToken || account.refreshTokenEncrypted) {
+        if (hoursRemaining <= 1) return { status: 'expiring_soon', expiresAt, daysRemaining }
+        return { status: 'healthy', expiresAt, daysRemaining }
+      }
+      if (hoursRemaining <= 24) return { status: 'expiring_soon', expiresAt, daysRemaining }
+      return { status: 'healthy', expiresAt, daysRemaining }
+    }
+
+    // Long-lived (Facebook/Instagram 60d): warn 7 days before expiry like before
     if (daysRemaining <= 7) {
       return { status: 'expiring_soon', expiresAt, daysRemaining }
     }

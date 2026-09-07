@@ -12,6 +12,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@local-monorepo/auth": "workspace:*",
     "@local-monorepo/db": "workspace:*",
     "@local-monorepo/ui": "workspace:*",
     "@nuxtjs/i18n": "catalog:",
