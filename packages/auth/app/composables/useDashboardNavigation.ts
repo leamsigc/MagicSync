@@ -82,6 +82,25 @@ export const useDashboardNavigation = () => {
         ]
       },
 
+      {
+        label: m.menu.inbox,
+        icon: 'i-lucide-inbox',
+        to: '/app/inbox',
+        active: route.path.startsWith('/app/inbox')
+      },
+      {
+        label: m.menu.grow,
+        icon: 'i-lucide-trending-up',
+        to: '/app/grow',
+        active: route.path.startsWith('/app/grow')
+      },
+      {
+        label: m.menu.autoReply || 'Auto-Reply',
+        icon: 'i-lucide-message-circle-heart',
+        to: '/app/auto-reply',
+        active: route.path.startsWith('/app/auto-reply')
+      },
+
       // ── Content ────────────────────────────────────────────
       { type: 'label', label: m.menu.sectionContent },
       {

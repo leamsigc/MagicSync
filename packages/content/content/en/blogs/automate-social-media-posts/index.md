@@ -32,16 +32,6 @@ head:
       content: index, follow
     - name: author
       content: MagicSync Team
-    - name: og:image
-      content: /img/home-light.png
-    - name: twitter:image
-      content: /img/home-light.png
-    - name: twitter:title
-      content: Social Media Automation: The 2026 Developer Blueprint
-    - name: twitter:card
-      content: summary_large_image
-    - name: twitter:description
-      content: A practical social media automation blueprint for developers and agencies: the 4-level automation ladder, platform API constraints, API/CLI pipelines.
 ---
 
 ::BaseBlogHero

@@ -16,16 +16,6 @@ head:
       content: MagicSync Team
     - name: description
       content: Explore articles and insights about MagicSync, a social media scheduling platform built with Nuxt layers, enabling users to manage business profiles, connect social media accounts, and schedule posts across platforms.
-    - name: og:image
-      content: /logo.png
-    - name: twitter:image
-      content: /logo.png
-    - name: twitter:title
-      content: Blog | MagicSync - Social Media Scheduling Platform
-    - name: twitter:card
-      content: summary_large_image
-    - name: twitter:description
-      content: Explore articles and insights about MagicSync, a social media scheduling platform built with Nuxt layers, enabling users to manage business profiles, connect social media accounts, and schedule posts across platforms.
 
 ogImage:
   component: BlogOgImage

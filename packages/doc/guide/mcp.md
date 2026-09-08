@@ -84,6 +84,54 @@ Verify with `claude mcp list` (or `/mcp` inside a session). For a team-shared se
 
 Same `mcpServers` shape with `url` + `headers` — check your client's docs for the exact config file path, which varies by version.
 
+### MCP Inspector (local testing)
+
+Against local dev (`pnpm dev`), point Inspector at `http://localhost:3000/mcp`:
+
+1. **Easiest — Dynamic Client Registration (no setup):** leave Inspector's Client Settings untouched. Our server keeps DCR enabled, so Inspector registers itself on first connect → log in with MagicSync → pick the business → Allow.
+2. **CIMD (preferred per MCP 2026-07-28, SEP-991):** our server advertises `client_id_metadata_document_supported: true` (see `/api/auth/.well-known/oauth-authorization-server`). In Inspector web → **Client Settings** → **Client ID Metadata Document**, paste `https://www.mcpjam.com/.well-known/oauth/client-metadata.json`, enable **Use Client ID Metadata Document**. That public document already lists Inspector's callback, so nothing to host. (Our consent screen will show the document's `client_name`, i.e. "MCPJam" — cosmetic only.)
+3. **Own CIMD (your name on the consent screen):** host a static JSON file at any public HTTPS URL. Our server fetches it server-side, so `localhost` files won't work. Minimum content — `client_id` must equal the URL exactly, and `redirect_uris` must contain Inspector's callback **exactly** (`localhost` ≠ `127.0.0.1`):
+
+```json
+{
+  "client_id": "https://your-domain.com/inspector-client.json",
+  "client_name": "My Inspector",
+  "redirect_uris": ["http://localhost:6274/oauth/callback"],
+  "grant_types": ["authorization_code", "refresh_token"],
+  "response_types": ["code"],
+  "token_endpoint_auth_method": "none",
+  "scope": "openid profile email mcp:read mcp:full"
+}
+```
+
+Callback URLs by surface: web → `http://localhost:6274/oauth/callback`; CLI/TUI → `http://127.0.0.1:6276/oauth/callback` (override with `--callback-url` / `MCP_OAUTH_CALLBACK_URL`).
+
+> **Enterprise IdP mode is not supported by this server.** Inspector's "enterprise-managed authorization" needs an enterprise IdP tenant *plus* a resource AS configured to trust it (ID-JAG validation). Our AS only honors its own users/tokens — see below. For testing, use DCR or CIMD above.
+
+### opencode
+
+Add to your project's `opencode.json` (or `~/.config/opencode/opencode.json` for global use):
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "magicsync": {
+      "type": "remote",
+      "url": "http://localhost:3000/mcp",
+      "headers": { "Authorization": "Bearer YOUR_API_KEY" }
+    }
+  }
+}
+```
+
+Notes:
+
+- Against **local dev** (`pnpm dev`), use `http://localhost:3000/mcp`. Against your hosted instance, use `https://your-domain/mcp`.
+- Keep the key out of git: `"headers": { "Authorization": "Bearer ${MAGICSYNC_API_KEY}" }` works with env expansion — export `MAGICSYNC_API_KEY` before launching opencode.
+- Verify inside opencode with `/mcp` (lists connected servers) — `magicsync` should show **18 tools**. Then try: *"Use magicsync to list my platforms and show next week's calendar."*
+- opencode speaks Streamable HTTP, same as the `/mcp` route serves — no SSE transport or extra bridge needed. If tools don't appear, re-check the header (a truncated key without its `org_` prefix authenticates as anonymous → zero tools, by design).
+
 ### Claude Desktop
 
 Claude Desktop speaks stdio, so bridge via `mcp-remote` in `claude_desktop_config.json`:
@@ -221,7 +269,7 @@ These call the AI backend with your saved LLM config. They need the AI service r
 | AI tools return errors | AI backend not running/reachable → start it; reads and scheduling still work |
 | `publish-now` succeeds but a platform stays pending/failed | Per-network rejection (bad token, rate limit) → check `post-platform-status` error messages, then `get-platform-health` |
 | ChatGPT can't reach the server | `localhost` or plain HTTP → expose public HTTPS (tunnel or hosted domain) |
-| Claude web shows no tools | Expected — see [Claude Web limitation](#claude-web-claude-ai-limited) |
+| Claude web shows no tools | API key pasted instead of OAuth, or grant revoked → use the OAuth flow under [Claude Web](#claude-web-claude-ai); check Connected Apps for the grant |
 
 ## For Developers
 

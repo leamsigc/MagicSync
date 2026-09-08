@@ -30,7 +30,20 @@
     "confirm_delete": "Are you sure you want to delete this item?",
     "reply_placeholder": "Write a reply...",
     "send": "Send",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "dm_select_account": "Select a Facebook page",
+    "dm_window_note": "Replies send through Meta's API. Messages can only be delivered within 24 hours of the customer's last message.",
+    "dm_no_accounts_title": "No Facebook pages connected",
+    "dm_no_accounts_hint": "Connect a Facebook page to read and reply to direct messages. Other platforms are coming soon.",
+    "dm_empty_conversations": "No conversations found for this page.",
+    "dm_reply_placeholder": "Write a message...",
+    "dm_sent_confirm": "Message sent.",
+    "dm_messages_count": "{count} messages",
+    "dm_unknown": "Unknown",
+    "show_all": "Show all",
+    "retry": "Retry",
+    "unknown_author": "Unknown author",
+    "show_unread": "Show unread"
   },
   "es": {
     "title": "Bandeja de entrada",
@@ -63,7 +76,20 @@
     "confirm_delete": "¿Seguro que quieres eliminar este elemento?",
     "reply_placeholder": "Escribe una respuesta...",
     "send": "Enviar",
-    "cancel": "Cancelar"
+    "cancel": "Cancelar",
+    "dm_select_account": "Selecciona una página de Facebook",
+    "dm_window_note": "Las respuestas se envían con la API de Meta. Solo se pueden entregar dentro de las 24 horas del último mensaje del cliente.",
+    "dm_no_accounts_title": "No hay páginas de Facebook conectadas",
+    "dm_no_accounts_hint": "Conecta una página de Facebook para leer y responder mensajes directos. Otras plataformas llegarán pronto.",
+    "dm_empty_conversations": "No se encontraron conversaciones para esta página.",
+    "dm_reply_placeholder": "Escribe un mensaje...",
+    "dm_sent_confirm": "Mensaje enviado.",
+    "dm_messages_count": "{count} mensajes",
+    "dm_unknown": "Desconocido",
+    "show_all": "Mostrar todo",
+    "retry": "Reintentar",
+    "unknown_author": "Autor desconocido",
+    "show_unread": "Mostrar no leídos"
   },
   "de": {
     "title": "Posteingang",
@@ -96,7 +122,20 @@
     "confirm_delete": "Sind Sie sicher, dass Sie dieses Element löschen möchten?",
     "reply_placeholder": "Antwort schreiben...",
     "send": "Senden",
-    "cancel": "Abbrechen"
+    "cancel": "Abbrechen",
+    "dm_select_account": "Facebook-Seite auswählen",
+    "dm_window_note": "Antworten werden über die Meta-API gesendet. Zustellung nur innerhalb von 24 Stunden nach der letzten Kundennachricht möglich.",
+    "dm_no_accounts_title": "Keine Facebook-Seiten verbunden",
+    "dm_no_accounts_hint": "Verbinden Sie eine Facebook-Seite, um Direktnachrichten zu lesen und zu beantworten. Weitere Plattformen folgen bald.",
+    "dm_empty_conversations": "Keine Unterhaltungen für diese Seite gefunden.",
+    "dm_reply_placeholder": "Nachricht schreiben...",
+    "dm_sent_confirm": "Nachricht gesendet.",
+    "dm_messages_count": "{count} Nachrichten",
+    "dm_unknown": "Unbekannt",
+    "show_all": "Alle anzeigen",
+    "retry": "Wiederholen",
+    "unknown_author": "Unbekannter Autor",
+    "show_unread": "Ungelesene anzeigen"
   },
   "fr": {
     "title": "Boîte de réception",
@@ -129,6 +168,19 @@
     "confirm_delete": "Êtes-vous sûr de vouloir supprimer cet élément ?",
     "reply_placeholder": "Écrire une réponse...",
     "send": "Envoyer",
-    "cancel": "Annuler"
+    "cancel": "Annuler",
+    "dm_select_account": "Sélectionner une page Facebook",
+    "dm_window_note": "Les réponses passent par l'API Meta. Livraison possible uniquement dans les 24 heures suivant le dernier message du client.",
+    "dm_no_accounts_title": "Aucune page Facebook connectée",
+    "dm_no_accounts_hint": "Connectez une page Facebook pour lire et répondre aux messages. D'autres plateformes arrivent bientôt.",
+    "dm_empty_conversations": "Aucune conversation trouvée pour cette page.",
+    "dm_reply_placeholder": "Écrire un message...",
+    "dm_sent_confirm": "Message envoyé.",
+    "dm_messages_count": "{count} messages",
+    "dm_unknown": "Inconnu",
+    "show_all": "Tout afficher",
+    "retry": "Réessayer",
+    "unknown_author": "Auteur inconnu",
+    "show_unread": "Afficher non lus"
   }
 }

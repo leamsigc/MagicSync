@@ -17,16 +17,6 @@ head:
       content: Equipo MagicSync
     - name: description
       content: Mantente al día con las últimas funciones, mejoras y correcciones en la plataforma de programación de redes sociales de MagicSync.
-    - name: og:image
-      content: /logo.png
-    - name: twitter:image
-      content: /logo.png
-    - name: twitter:title
-      content: Notas de Versión | MagicSync - Plataforma de Programación de Redes Sociales
-    - name: twitter:card
-      content: summary_large_image
-    - name: twitter:description
-      content: Mantente al día con las últimas funciones, mejoras y correcciones en la plataforma de programación de redes sociales de MagicSync.
 
 ogImage:
   component: BlogOgImage

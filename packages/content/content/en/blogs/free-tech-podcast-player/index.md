@@ -32,16 +32,6 @@ head:
       content: index, follow
     - name: author
       content: MagicSync Team
-    - name: og:image
-      content: /img/podcast-player.png
-    - name: twitter:image
-      content: /img/podcast-player.png
-    - name: twitter:title
-      content: Discover and Listen to the Best Tech Podcasts with a Free Global Player
-    - name: twitter:card
-      content: summary_large_image
-    - name: twitter:description
-      content: Explore top technology podcasts from around the world with MagicSync's free podcast player. Stream episodes, browse categories, and discover new shows.
 ---
 
 ::BaseBlogHero

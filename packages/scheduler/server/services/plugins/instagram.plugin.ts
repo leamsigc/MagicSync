@@ -876,6 +876,47 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
   }
 
   /**
+   * Send a private reply (comment-to-DM) via Instagram Graph API.
+   * POST /{comment-id}/private_replies?message={text}
+   * Requires instagram_manage_messages scope + IG Business/Creator account.
+   * Text-only API — tracked links are rendered inline as short URLs by the caller.
+   * Never throws: returns { success:false } on Meta errors (24h window, self-comment, etc.).
+   */
+  async sendPrivateReply(
+    socialMediaAccount: PluginSocialMediaAccount | Pick<SocialMediaAccount, 'accessToken'>,
+    commentId: string,
+    message: string
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    try {
+      const token = (socialMediaAccount as { accessToken: string }).accessToken;
+      if (!token) {
+        return { success: false, error: 'Missing access token' };
+      }
+      if (!commentId || !message?.trim()) {
+        return { success: false, error: 'commentId and message are required' };
+      }
+      const params = new URLSearchParams({
+        access_token: token,
+        message: message.slice(0, 1000),
+      });
+      const url = this._getGraphApiUrl(`${commentId}/private_replies?${params.toString()}`);
+      const response = await fetch(url, { method: 'POST' });
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => '');
+        this.logPluginEvent('private-reply-error', 'failure', `Error: ${errorText}`, commentId);
+        return { success: false, error: errorText || `Meta API error ${response.status}` };
+      }
+      const data = (await response.json().catch(() => ({}))) as { id?: string };
+      this.emit('instagram:private-reply:sent', { commentId, messageId: data.id });
+      return { success: true, messageId: data.id };
+    } catch (error) {
+      const msg = (error as Error).message || 'Failed to send private reply';
+      this.logPluginEvent('private-reply-error', 'failure', `Error: ${msg}`, commentId);
+      return { success: false, error: msg };
+    }
+  }
+
+  /**
    * Reply to a comment on Instagram
    */
   async replyToComment(

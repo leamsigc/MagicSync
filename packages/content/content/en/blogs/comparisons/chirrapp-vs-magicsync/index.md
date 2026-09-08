@@ -32,16 +32,6 @@ head:
       content: index, follow
     - name: author
       content: MagicSync Team
-    - name: og:image
-      content: /img/home-dark.png
-    - name: twitter:image
-      content: /img/home-dark.png
-    - name: twitter:title
-      content: "Chirr App vs MagicSync: Thread Building for X"
-    - name: twitter:card
-      content: summary_large_image
-    - name: twitter:description
-      content: Compare Chirr App thread builder with MagicSync. X thread features, multi-platform support, API access, and creative tools.
 ---
 
 ::BaseBlogHero

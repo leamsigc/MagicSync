@@ -90,6 +90,14 @@ export default withMermaid(defineConfig({
             { text: 'CSV Import', link: '/guide/csv-import' },
             { text: 'Bulk Generation', link: '/guide/bulk-generation' },
           ],
+        },
+        {
+          text: 'Automation',
+          collapsed: false,
+          items: [
+            { text: 'Auto-Reply (Comment → DM)', link: '/guide/auto-reply' },
+            { text: 'Facebook & Instagram Setup', link: '/guide/facebook-instagram-integration' },
+          ],
         },          {
           text: 'AI Tools',
           collapsed: false,

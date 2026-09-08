@@ -42,16 +42,6 @@ head:
       content: MagicSync
     - name: description
       content: Learn how to remove silence from a video free online — no downloads needed. Cut dead air, get clean auto jump cuts, and export platform-ready clips fast.
-    - name: og:image
-      content: /logo.png
-    - name: twitter:image
-      content: /logo.png
-    - name: twitter:title
-      content: How to Remove Silence From a Video (Free Online Guide)
-    - name: twitter:card
-      content: summary_large_image
-    - name: twitter:description
-      content: Learn how to remove silence from a video free online — no downloads needed. Cut dead air, get clean auto jump cuts, and export platform-ready clips fast.
 ---
 
 ::BaseBlogHero

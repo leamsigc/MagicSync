@@ -12,6 +12,21 @@ import * as schema from '#layers/BaseDB/db/schema'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
 import { logAuditService } from '#layers/BaseDB/server/services/auditLog.service'
 
+// Google OIDC profiles carry `given_name` / `family_name` / `name` — never our
+// `firstName` / `lastName` additionalFields. Map them so social sign-ups and
+// incremental links (youtube / google-drive / googlemybusiness) never fail
+// with MISSING_FIELD firstName.
+const mapGoogleProfileToName = (profile: any) => {
+  const given = profile?.given_name || profile?.firstName || ''
+  const family = profile?.family_name || profile?.lastName || ''
+  if (given || family) return { firstName: given, lastName: family }
+  if (profile?.name) {
+    const parts = String(profile.name).trim().split(/\s+/)
+    return { firstName: parts.shift() || '', lastName: parts.join(' ') }
+  }
+  return { firstName: '', lastName: '' }
+}
+
 
 export const auth = betterAuth({
   baseURL: process.env.NUXT_BETTER_AUTH_URL || 'http://localhost:3000',
@@ -63,14 +78,18 @@ export const auth = betterAuth({
         fieldName: 'firstName',
         returned: true,
         input: true,
-        required: true
+        // Must stay optional: social providers (Google/YouTube/Drive/GMB)
+        // only return `name` / `given_name` / `family_name`. `required: true`
+        // rejects every OAuth sign-in with MISSING_FIELD firstName.
+        // Email/password signup still enforces it via UserRegister.vue zod.
+        required: false
       },
       lastName: {
         type: 'string',
         fieldName: 'lastName',
         returned: true,
         input: true,
-        required: true
+        required: false
       },
       theme: {
         type: 'string',
@@ -123,7 +142,11 @@ export const auth = betterAuth({
       clientSecret: process.env.NUXT_GOOGLE_CLIENT_SECRET as string,
       accessType: "offline",
       // prompt: "consent",
+      // prompt: "select_account consent",
       prompt: "select_account consent",
+      // Split the Google OIDC profile into our firstName/lastName fields so
+      // social sign-ups never hit MISSING_FIELD (additionalFields are optional).
+      mapProfileToUser: mapGoogleProfileToName,
       // LOGIN ONLY — identity scopes. Google rejects ANY cross-family scope
       // bundle in a single request with Error 400 "scopes that cannot be
       // requested together" (verified: even business.manage +
@@ -338,9 +361,13 @@ export const auth = betterAuth({
           accessType: 'offline',
           prompt: 'consent',
           pkce: false,
-          // Incremental auth: keep previously granted scopes on the shared
-          // Google grant when connecting youtube/drive/business separately.
-          authorizationUrlParams: { include_granted_scopes: 'true' },
+          mapProfileToUser: mapGoogleProfileToName,
+          // Each provider stores its own token row, so each request carries
+          // ONLY its own scopes. 'false' is critical: accounts that granted
+          // the old invalid bundle (youtube x4 + drive.file) would otherwise
+          // get those stale scopes merged back in and Google rejects the
+          // combined set with 400 "scopes that cannot be requested together".
+          authorizationUrlParams: { include_granted_scopes: 'false' },
         },
         // Google Drive (asset browser: list/download images & videos).
         // Drive-only scopes on purpose: Google rejects YouTube scopes mixed
@@ -366,7 +393,10 @@ export const auth = betterAuth({
           accessType: 'offline',
           prompt: 'consent',
           pkce: false,
-          authorizationUrlParams: { include_granted_scopes: 'true' },
+          mapProfileToUser: mapGoogleProfileToName,
+          // Same as youtube above: 'false' so stale grants can never poison
+          // new requests with a 400.
+          authorizationUrlParams: { include_granted_scopes: 'false' },
         },
         // Google Business (GMB locations) — separate provider because even
         // business.manage + youtube.force-ssl together is rejected by Google
@@ -387,7 +417,10 @@ export const auth = betterAuth({
           accessType: 'offline',
           prompt: 'consent',
           pkce: false,
-          authorizationUrlParams: { include_granted_scopes: 'true' },
+          mapProfileToUser: mapGoogleProfileToName,
+          // Same as youtube above: 'false' so stale grants can never poison
+          // new requests with a 400.
+          authorizationUrlParams: { include_granted_scopes: 'false' },
         },
         // Dribbble OAuth - not natively supported
         {

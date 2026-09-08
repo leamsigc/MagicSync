@@ -32,16 +32,6 @@ head:
       content: index, follow
     - name: author
       content: MagicSync Team
-    - name: og:image
-      content: /img/home-light.png
-    - name: twitter:image
-      content: /img/home-light.png
-    - name: twitter:title
-      content: How to Use the MagicSync CLI for Social Media Automation
-    - name: twitter:card
-      content: summary_large_image
-    - name: twitter:description
-      content: Automate your social media publishing workflow with MagicSync's CLI tool. Validate content, schedule posts, and integrate with CI/CD pipelines from your terminal.
 ---
 
 ::BaseBlogHero

@@ -283,6 +283,15 @@ export const useConnectionManager = () => {
   }
 
   const HandleReconnect = async (accountId: string, platform: string) => {
+    if (!accountId) {
+      toast.add({
+        title: 'Reconnect Unavailable',
+        description: 'This card is missing its account id — please reload the page and try again.',
+        icon: 'i-heroicons-x-circle',
+        color: 'error',
+      });
+      return;
+    }
     try {
       const response = await $fetch<{ success: boolean; data: { hasValidToken: boolean } }>(
         `/api/v1/social-accounts/refresh/${accountId}`,

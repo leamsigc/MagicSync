@@ -50,6 +50,8 @@
       "imageTemplate": "Image template",
       "analytics": "Analytics",
       "posts": "Posts",
+      "inbox": "Inbox",
+      "grow": "Grow",
       "passwordReset": "Password Reset",
       "inviteUser": "Invite User",
       "blogs": "Blogs",
@@ -77,7 +79,8 @@
       "adminSection": "Administration",
       "admin": "Admin",
       "businesses": "Businesses",
-      "auditLog": "Audit Log"
+      "auditLog": "Audit Log",
+      "autoReply": "Auto-Reply"
     },
     "userNav": {
       "upgradeToPro": "Upgrade to Pro",
@@ -158,6 +161,8 @@
       "imageTemplate": "Plantilla de imagen",
       "analytics": "Análisis",
       "posts": "Publicaciones",
+      "inbox": "Bandeja de entrada",
+      "grow": "Crecer",
       "passwordReset": "Restablecer Contraseña",
       "inviteUser": "Invitar Usuario",
       "blogs": "Blogs",
@@ -187,7 +192,8 @@
       "adminSection": "Administración",
       "admin": "Admin",
       "businesses": "Negocios",
-      "auditLog": "Registro de Auditoría"
+      "auditLog": "Registro de Auditoría",
+      "autoReply": "Respuesta automática"
     },
     "userNav": {
       "upgradeToPro": "Actualizar a Pro",
@@ -268,6 +274,8 @@
       "imageTemplate": "Bildvorlage",
       "analytics": "Analysen",
       "posts": "Beiträge",
+      "inbox": "Posteingang",
+      "grow": "Wachsen",
       "passwordReset": "Passwort zurücksetzen",
       "inviteUser": "Benutzer einladen",
       "blogs": "Blogs",
@@ -297,7 +305,8 @@
       "adminSection": "Verwaltung",
       "admin": "Admin",
       "businesses": "Unternehmen",
-      "auditLog": "Audit-Protokoll"
+      "auditLog": "Audit-Protokoll",
+      "autoReply": "Auto-Antwort"
     },
     "userNav": {
       "upgradeToPro": "Auf Pro upgraden",
@@ -378,6 +387,8 @@
       "imageTemplate": "Modèle d'image",
       "analytics": "Analytique",
       "posts": "Publications",
+      "inbox": "Boîte de réception",
+      "grow": "Croître",
       "passwordReset": "Réinitialisation du mot de passe",
       "inviteUser": "Inviter un utilisateur",
       "blogs": "Blogs",
@@ -407,7 +418,8 @@
       "adminSection": "Administration",
       "admin": "Admin",
       "businesses": "Entreprises",
-      "auditLog": "Journal d'Audit"
+      "auditLog": "Journal d'Audit",
+      "autoReply": "Réponse auto"
     },
     "userNav": {
       "upgradeToPro": "Mettre à niveau vers Pro",

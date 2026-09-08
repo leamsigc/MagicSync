@@ -27,3 +27,5 @@ Lookup table for all pattern files in this directory. Check here before starting
 | [carousel-deck-templates.md](carousel-deck-templates.md) | Carousel deck templates (palette/font/pattern per deck), multi-image slide layouts, and the all-pages template gallery |
 | [browser-video-export-audio-mux.md](browser-video-export-audio-mux.md) | In-browser MP4 export that mixes background audio + source audio (mediabunny two-pass re-mux) and burns time-based subtitle cues |
 | [fullcalendar-nuxt.md](fullcalendar-nuxt.md) | Embedding FullCalendar 6 in Nuxt 4 without customRenderingMap crashes |
+| [seo-og.md](seo-og.md) | Fixing Open Graph / link previews on Nuxt Content + nuxt-og-image pages |
+| [entitydetails-kv.md](entitydetails-kv.md) | Storing a feature in `entity_details` KV rows with zero migrations |

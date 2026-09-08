@@ -32,16 +32,6 @@ head:
       content: index, follow
     - name: author
       content: MagicSync Team
-    - name: og:image
-      content: /img/home-dark.png
-    - name: twitter:image
-      content: /img/home-dark.png
-    - name: twitter:title
-      content: "Hypefury vs MagicSync: X Growth and Sales Scheduling"
-    - name: twitter:card
-      content: summary_large_image
-    - name: twitter:description
-      content: Compare Hypefury X-focused growth tool with MagicSync. Sales features, audience growth, multi-platform support, and creative tools.
 ---
 
 ::BaseBlogHero

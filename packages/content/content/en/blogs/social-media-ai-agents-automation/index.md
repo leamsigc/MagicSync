@@ -32,16 +32,6 @@ head:
       content: index, follow
     - name: author
       content: MagicSync Team
-    - name: og:image
-      content: /img/home-dark.png
-    - name: twitter:image
-      content: /img/home-dark.png
-    - name: twitter:title
-      content: How to Deploy AI Agents for Automated Social Media Management
-    - name: twitter:card
-      content: summary_large_image
-    - name: twitter:description
-      content: Learn how to deploy autonomous AI agents that create, validate, schedule, and publish social media content across multiple platforms using MagicSync's agent-ready API.
 ---
 
 ::BaseBlogHero

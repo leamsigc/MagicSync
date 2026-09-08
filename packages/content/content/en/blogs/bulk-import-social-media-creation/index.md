@@ -32,16 +32,6 @@ head:
       content: index, follow
     - name: author
       content: MagicSync Team
-    - name: og:image
-      content: /img/magicSync-bulkimportorcreate.png
-    - name: twitter:image
-      content: /img/magicSync-bulkimportorcreate.png
-    - name: twitter:title
-      content: Bulk Import and Bulk Create Social Media Posts with AI
-    - name: twitter:card
-      content: summary_large_image
-    - name: twitter:description
-      content: Save hours by importing CSV schedules or generating bulk social media posts with AI. MagicSync's bulk creation tools let you scale your content production.
 ---
 
 ::BaseBlogHero

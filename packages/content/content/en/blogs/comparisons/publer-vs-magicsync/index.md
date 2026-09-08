@@ -32,16 +32,6 @@ head:
       content: index, follow
     - name: author
       content: MagicSync Team
-    - name: og:image
-      content: /img/home-dark.png
-    - name: twitter:image
-      content: /img/home-dark.png
-    - name: twitter:title
-      content: "Publer vs MagicSync: Swiss Army Knife Social Media Tool"
-    - name: twitter:card
-      content: summary_large_image
-    - name: twitter:description
-      content: Compare Publer all-in-one social media scheduler with MagicSync. Features, platform support, API access, and built-in creative tools.
 ---
 
 ::BaseBlogHero

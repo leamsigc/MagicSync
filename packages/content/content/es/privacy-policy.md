@@ -17,16 +17,6 @@ head:
       content: Equipo MagicSync
     - name: description
       content: Aprende cómo MagicSync recopila, utiliza y protege tu información personal al usar nuestra plataforma de programación de redes sociales.
-    - name: og:image
-      content: /logo.png
-    - name: twitter:image
-      content: /logo.png
-    - name: twitter:title
-      content: Política de Privacidad | MagicSync - Plataforma de Programación de Redes Sociales
-    - name: twitter:card
-      content: summary_large_image
-    - name: twitter:description
-      content: Aprende cómo MagicSync recopila, utiliza y protege tu información personal al usar nuestra plataforma de programación de redes sociales.
 
 ogImage:
   component: BlogOgImage

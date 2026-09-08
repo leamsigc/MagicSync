@@ -17,16 +17,6 @@ head:
       content: Equipo MagicSync
     - name: description
       content: Lee los términos y condiciones para usar la plataforma y servicios de programación de redes sociales de MagicSync.
-    - name: og:image
-      content: /logo.png
-    - name: twitter:image
-      content: /logo.png
-    - name: twitter:title
-      content: Términos de Uso | MagicSync - Plataforma de Programación de Redes Sociales
-    - name: twitter:card
-      content: summary_large_image
-    - name: twitter:description
-      content: Lee los términos y condiciones para usar la plataforma y servicios de programación de redes sociales de MagicSync.
 
 ogImage:
   component: BlogOgImage

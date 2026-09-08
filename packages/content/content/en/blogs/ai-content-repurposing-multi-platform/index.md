@@ -32,16 +32,6 @@ head:
       content: index, follow
     - name: author
       content: MagicSync Team
-    - name: og:image
-      content: /img/magicSync-contentreporpuse.png
-    - name: twitter:image
-      content: /img/magicSync-contentreporpuse.png
-    - name: twitter:title
-      content: "AI Content Repurposing: Turn One Asset into Multi-Platform Social Posts"
-    - name: twitter:card
-      content: summary_large_image
-    - name: twitter:description
-      content: Learn how to repurpose a single video, blog post, or audio file into multiple social media formats. Maximize reach by adapting content for every platform.
 ---
 
 ::BaseBlogHero

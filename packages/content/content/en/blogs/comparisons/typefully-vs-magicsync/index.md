@@ -32,16 +32,6 @@ head:
       content: index, follow
     - name: author
       content: MagicSync Team
-    - name: og:image
-      content: /img/home-dark.png
-    - name: twitter:image
-      content: /img/home-dark.png
-    - name: twitter:title
-      content: "Typefully vs MagicSync: X/Threads Scheduling Compared"
-    - name: twitter:card
-      content: summary_large_image
-    - name: twitter:description
-      content: Compare Typefully X/Twitter thread scheduler with MagicSync. Features, platform support, API access, and built-in creative tools.
 ---
 
 ::BaseBlogHero

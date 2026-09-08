@@ -1,4 +1,3 @@
-import { useState } from 'vue'
 import type { InboxItem } from '#layers/BaseDB/db/inbox/inbox'
 
 export interface InboxFilters {
@@ -11,6 +10,30 @@ export interface InboxFilters {
   cursor?: string
 }
 
+export interface DmParticipant {
+  id?: string
+  name?: string
+  picture?: string
+}
+
+export interface DmConversation {
+  id: string
+  platform: string
+  accountId: string
+  participants?: DmParticipant[]
+  messageCount?: number
+  unreadCount?: number
+  updatedTime?: string
+  snippet?: string
+}
+
+export interface DmAccount {
+  id: string
+  platform: string
+  accountId: string
+  accountName: string
+}
+
 export function useInbox() {
   const inboxItems = useState<InboxItem[]>('inbox-items', () => [])
   const unreadCount = useState<number>('inbox-unread-count', () => 0)
@@ -18,6 +41,10 @@ export function useInbox() {
   const error = useState<string | null>('inbox-error', () => null)
   const nextCursor = useState<string | undefined>('inbox-next-cursor', () => undefined)
   const filters = useState<InboxFilters>('inbox-filters', () => ({}))
+  const dmAccounts = useState<DmAccount[]>('inbox-dm-accounts', () => [])
+  const conversations = useState<DmConversation[]>('inbox-conversations', () => [])
+  const dmLoading = useState<boolean>('inbox-dm-loading', () => false)
+  const dmError = useState<string | null>('inbox-dm-error', () => null)
 
   async function fetchInbox(params: InboxFilters = {}) {
     isLoading.value = true
@@ -115,6 +142,56 @@ export function useInbox() {
     fetchInbox()
   }
 
+  function toMessage(err: unknown, fallback: string) {
+    const fetchError = err as { data?: { statusMessage?: string; message?: string }; message?: string }
+    return fetchError.data?.statusMessage || fetchError.data?.message || fetchError.message || fallback
+  }
+
+  async function fetchDmAccounts() {
+    dmLoading.value = true
+    dmError.value = null
+    try {
+      const accounts = await $fetch<DmAccount[]>('/api/v1/social-accounts')
+      // Only platforms with wired DM support are selectable for now
+      dmAccounts.value = (accounts || []).filter((a) => a.platform === 'facebook')
+    } catch (err) {
+      dmError.value = toMessage(err, 'Failed to load accounts')
+    } finally {
+      dmLoading.value = false
+    }
+  }
+
+  async function fetchConversations(accountId: string) {
+    dmLoading.value = true
+    dmError.value = null
+    try {
+      const response = await $fetch<{ success: boolean; data: { conversations: DmConversation[] } }>(
+        `/api/v1/accounts/${accountId}/conversations`,
+      )
+      if (response.success) {
+        conversations.value = response.data.conversations
+      }
+    } catch (err) {
+      dmError.value = toMessage(err, 'Failed to load conversations')
+      conversations.value = []
+    } finally {
+      dmLoading.value = false
+    }
+  }
+
+  async function replyToConversation(accountId: string, conversationId: string, message: string) {
+    dmError.value = null
+    try {
+      await $fetch(`/api/v1/accounts/${accountId}/conversations/reply`, {
+        method: 'POST',
+        body: { conversationId, message },
+      })
+    } catch (err) {
+      dmError.value = String(err)
+      throw err
+    }
+  }
+
   return {
     inboxItems,
     unreadCount,
@@ -129,5 +206,12 @@ export function useInbox() {
     archiveItems,
     loadMore,
     setFilters,
+    dmAccounts,
+    conversations,
+    dmLoading,
+    dmError,
+    fetchDmAccounts,
+    fetchConversations,
+    replyToConversation,
   }
 }

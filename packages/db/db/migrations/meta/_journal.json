@@ -64,6 +64,13 @@
       "when": 1788806595671,
       "tag": "0008_account-oauth-stats-inbox-auto-repost",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1788822686947,
+      "tag": "0009_notifications-events-prefs",
+      "breakpoints": true
     }
   ]
 }

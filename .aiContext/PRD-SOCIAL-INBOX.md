@@ -1,7 +1,7 @@
 # PRD: Social Inbox — Unified Comment Management
 
 **Date:** 2026-09-07
-**Status:** IN PROGRESS
+**Status:** COMMENTS + NOTIFICATIONS DONE — DMs: Facebook vertical slice live (list + reply + Messages tab); X/Bluesky/IG/Mastodon pending (see PROGRESS.md Gap 2b)
 **Goal:** Match OpenPost's unified inbox with comment management, moderation, and DM support
 
 ---
@@ -94,7 +94,7 @@
 
 ## Database Schema
 
-### `inbox_items` table
+### `inbox_items` table 
 ```sql
 CREATE TABLE inbox_items (
   id TEXT PRIMARY KEY,
@@ -161,9 +161,9 @@ CREATE INDEX idx_inbox_items_account ON inbox_items(account_id);
 - [x] C1: Create inbox page
 - [x] C2: Create inbox composable
 - [x] C3: Create inbox components
-- [ ] D1: Create NotificationService
-- [ ] D2: Create notification API endpoints
-- [ ] D3: Add notification triggers
+- [x] D1: Create NotificationService (hardened `ServiceResponse`, prefs, email — see PRD-NOTIFICATIONS.md, all 4 slices done)
+- [x] D2: Create notification API endpoints (list/count/read/delete + preferences GET/PUT)
+- [x] D3: Add notification triggers (post_failed, comment_reply, bulk_done + daily digest)
 
 > **Polish fixes applied 2026-09-07 (verified):** inbox page reply body
 > `text` → `replyText` (matches `reply.post.ts` schema), `authorHandle` →

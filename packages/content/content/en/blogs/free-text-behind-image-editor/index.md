@@ -32,16 +32,6 @@ head:
       content: index, follow
     - name: author
       content: MagicSync Team
-    - name: og:image
-      content: /img/text-behind.png
-    - name: twitter:image
-      content: /img/text-behind.png
-    - name: twitter:title
-      content: Create Stunning Text Behind Image Graphics for Free Online
-    - name: twitter:card
-      content: summary_large_image
-    - name: twitter:description
-      content: Place elegant text behind any photo subject using our free online text behind image tool. Perfect for Instagram, LinkedIn, and blog headers.
 ---
 
 ::BaseBlogHero

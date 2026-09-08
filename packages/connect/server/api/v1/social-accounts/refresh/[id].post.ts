@@ -2,6 +2,7 @@ import { socialMediaAccountService, type SocialMediaPlatform } from "#layers/Bas
 import { auth } from '#layers/BaseAuth/lib/auth'
 import { useAuthApi } from '#layers/BaseAuth/server/utils/useAuthApi'
 import { checkUserIsLogin } from "#layers/BaseAuth/server/utils/AuthHelpers"
+import { refreshFacebookPageToken } from '#layers/BaseScheduler/server/services/TokenRefresh.service'
 
 // NOTE: lives under /refresh/[id] and NOT /[id]/refresh — Nitro routes the
 // latter to [platform]/[id]/index.post.ts (fully-dynamic 2-segment route
@@ -27,9 +28,11 @@ export default defineEventHandler(async (event) => {
 
     log.set({ accountId })
 
-    // The id may be a social_media_accounts row (page cards) or a Better Auth
+    // The id may be a social_media_accounts row PK, a provider-side account
+    // id (channel/page/DID, as rendered on some cards), or a Better Auth
     // row (provider cards) — resolve whichever it is.
-    const smAccount = await socialMediaAccountService.getAccountById(accountId)
+    const smAccount = (await socialMediaAccountService.getAccountById(accountId))
+      ?? await socialMediaAccountService.getAccountByProviderAccountId(user.id, accountId)
 
     if (smAccount && smAccount.userId !== user.id) {
       throw createError({
@@ -46,11 +49,39 @@ export default defineEventHandler(async (event) => {
       if (!ba.success || !ba.data) {
         throw createError({
           statusCode: 404,
-          statusMessage: 'Social media account not found'
+          statusMessage: `Social media account not found for id '${accountId}'`
         })
       }
       providerAccount = ba.data
       platform = ba.data.providerId
+    }
+
+    // Facebook has no refresh tokens: renew via token exchange + page
+    // token fetch (same path the background task uses).
+    if (platform === 'facebook' && smAccount) {
+      const renewed = await refreshFacebookPageToken(user.id, smAccount.id, smAccount.accountId)
+      if (renewed.error) {
+        log.error({ message: 'Token refresh failed', accountId, error: renewed.error })
+        await socialMediaAccountService.updateAccount(smAccount.id, { isActive: false })
+        throw createError({
+          statusCode: 400,
+          statusMessage: 'Failed to refresh tokens. Account may need to be reconnected.'
+        })
+      }
+      const fresh = await socialMediaAccountService.getAccountById(smAccount.id)
+      log.info({ message: 'Access token refreshed', accountId, platform })
+      return {
+        success: true,
+        message: 'Access token refreshed successfully',
+        data: {
+          id: smAccount.id,
+          platform: smAccount.platform,
+          accountName: smAccount.accountName,
+          isActive: fresh?.isActive ?? true,
+          lastSyncAt: fresh?.lastSyncAt ?? new Date(),
+          hasValidToken: true
+        }
+      }
     }
 
     try {
@@ -100,7 +131,8 @@ export default defineEventHandler(async (event) => {
       }
       let updatedAccount = null
       if (smAccount) {
-        updatedAccount = await socialMediaAccountService.updateAccount(accountId, mirror)
+        // Use the resolved row PK: accountId may be a provider-side id.
+        updatedAccount = await socialMediaAccountService.updateAccount(smAccount.id, mirror)
       }
       else if (platform) {
         const owned = await socialMediaAccountService.getAccountsByUserId(user.id)

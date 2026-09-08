@@ -32,16 +32,6 @@ head:
       content: index, follow
     - name: author
       content: MagicSync Team
-    - name: og:image
-      content: /img/magicSync-apikeys.png
-    - name: twitter:image
-      content: /img/magicSync-apikeys.png
-    - name: twitter:title
-      content: How to Use MagicSync API Keys for Programmable Social Media Management
-    - name: twitter:card
-      content: summary_large_image
-    - name: twitter:description
-      content: Generate and manage API keys for secure, programmatic access to MagicSync. Build custom integrations, automate workflows, and connect external tools.
 ---
 
 ::BaseBlogHero

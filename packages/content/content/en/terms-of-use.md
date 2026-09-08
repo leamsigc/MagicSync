@@ -17,16 +17,6 @@ head:
       content: MagicSync Team
     - name: description
       content: Read the terms and conditions for using MagicSync's social media scheduling platform and services.
-    - name: og:image
-      content: /logo.png
-    - name: twitter:image
-      content: /logo.png
-    - name: twitter:title
-      content: Terms of Use | MagicSync - Social Media Scheduling Platform
-    - name: twitter:card
-      content: summary_large_image
-    - name: twitter:description
-      content: Read the terms and conditions for using MagicSync's social media scheduling platform and services.
 
 ogImage:
   component: BlogOgImage

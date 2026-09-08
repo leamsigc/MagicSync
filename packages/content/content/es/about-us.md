@@ -17,16 +17,6 @@ head:
       content: Equipo MagicSync
     - name: description
       content: Conoce la misión de MagicSync de empoderar a las pequeñas empresas con herramientas integrales de gestión de redes sociales y capacidades de programación.
-    - name: og:image
-      content: /logo.png
-    - name: twitter:image
-      content: /logo.png
-    - name: twitter:title
-      content: Acerca de Nosotros | MagicSync - Plataforma de Programación de Redes Sociales
-    - name: twitter:card
-      content: summary_large_image
-    - name: twitter:description
-      content: Conoce la misión de MagicSync de empoderar a las pequeñas empresas con herramientas integrales de gestión de redes sociales y capacidades de programación.
 
 ogImage:
   component: BlogOgImage

@@ -36,10 +36,16 @@ export const businessOrgService = {
   async getOrCreateOrgForBusiness(event: H3Event, businessId: string): Promise<OrgDetails> {
     const authApi = useAuthApi(event)
     const { data: businessDetails } = await businessProfileService.findByIdOnly(businessId)
-    const business = await entityDetailsService.getDetailsByEntity(businessId, 'business_details')
+    let business = await entityDetailsService.getDetailsByEntity(businessId, 'business_details')
 
     if (!business) {
-      throw createError({ statusCode: 404, statusMessage: 'Business not found' })
+      // Businesses created without onboarding details (minimal API create)
+      // have no entityDetails row yet — create it so the org id can be bound.
+      business = await entityDetailsService.createDetails({
+        entityType: 'business_details',
+        entityId: businessId,
+        details: {} as unknown as import('#layers/BaseDB/db/schema').EntityDetails['details'],
+      })
     }
 
     const orgMetadata = (business.details ?? {}) as Record<string, unknown>

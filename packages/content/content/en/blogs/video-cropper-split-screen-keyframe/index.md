@@ -32,16 +32,6 @@ head:
       content: index, follow
     - name: author
       content: MagicSync Team
-    - name: og:image
-      content: /img/video-remover.png
-    - name: twitter:image
-      content: /img/video-remover.png
-    - name: twitter:title
-      content: Free Online Video Cropper with Split-Screen and Keyframe Motion Tracking
-    - name: twitter:card
-      content: summary_large_image
-    - name: twitter:description
-      content: Crop videos, create split-screen layouts, and add keyframe motion tracking with MagicSync's free online video editor. Perfect for multi-camera content.
 ---
 
 ::BaseBlogHero

@@ -32,16 +32,6 @@ head:
       content: index, follow
     - name: author
       content: MagicSync Team
-    - name: og:image
-      content: /img/home-dark.png
-    - name: twitter:image
-      content: /img/home-dark.png
-    - name: twitter:title
-      content: "Postsyncer vs MagicSync: Multi-Platform Posting Compared"
-    - name: twitter:card
-      content: summary_large_image
-    - name: twitter:description
-      content: Compare Postsyncer multi-posting tool with MagicSync. Features, platform support, API access, and built-in creative tools.
 ---
 
 ::BaseBlogHero

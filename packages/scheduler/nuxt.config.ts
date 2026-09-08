@@ -23,9 +23,11 @@ export default defineNuxtConfig({
     },
     scheduledTasks: {
       // Run `social:post` + adaptive stats collection every 15 minutes
-      '*/15 * * * *': ['social:post', 'stats:collect', 'repost:process'],
+      '*/15 * * * *': ['social:post', 'stats:collect', 'repost:process', 'autoreply:process'],
       // Run `token:health` every 6 hours to log expiring/expired tokens
       '0 */6 * * *': ['token:health'],
+      // Daily notification digest email (07:00 UTC)
+      '0 7 * * *': ['notifications:digest'],
     }
   },
   $meta: {

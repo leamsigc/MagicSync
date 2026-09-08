@@ -32,16 +32,6 @@ head:
       content: index, follow
     - name: author
       content: MagicSync Team
-    - name: og:image
-      content: /img/home-dark.png
-    - name: twitter:image
-      content: /img/home-dark.png
-    - name: twitter:title
-      content: "Ayrshare vs MagicSync: API-First Social Media Comparison"
-    - name: twitter:card
-      content: summary_large_image
-    - name: twitter:description
-      content: Compare Ayrshare API-first social media platform with MagicSync. Developer tools, API features, pricing, and built-in creative tools.
 ---
 
 ::BaseBlogHero

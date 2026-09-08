@@ -32,16 +32,6 @@ head:
       content: index, follow
     - name: author
       content: MagicSync Team
-    - name: og:image
-      content: /img/video-remover.png
-    - name: twitter:image
-      content: /img/video-remover.png
-    - name: twitter:title
-      content: "Edit Videos Faster: The Best Free Online Video Silence Remover"
-    - name: twitter:card
-      content: summary_large_image
-    - name: twitter:description
-      content: Remove silent parts and pauses from your videos automatically with MagicSync's free online de-silencing tool, built to boost viewer retention and engagement.
 ---
 
 ::BaseBlogHero

@@ -52,7 +52,7 @@ const tagsString = computed({
 <template>
   <div class="space-y-4">
     <UFormField label="Post Type" hint="Choose what type of YouTube content to create" required>
-      <div class="grid grid-cols-3 gap-2">
+      <div class="grid grid-cols-2 gap-2">
         <button type="button"
           class="flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-all cursor-pointer"
           :class="settings.postType === 'video' ? 'border-primary bg-primary/5 ring-2 ring-primary/30' : 'border-border hover:border-muted'"
@@ -69,18 +69,10 @@ const tagsString = computed({
           <span class="text-xs font-medium">Short</span>
           <span class="text-[10px] text-muted">Vertical &lt;60s</span>
         </button>
-        <button type="button"
-          class="flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-all cursor-pointer"
-          :class="settings.postType === 'post' ? 'border-primary bg-primary/5 ring-2 ring-primary/30' : 'border-border hover:border-muted'"
-          @click="settings.postType = 'post'">
-          <Icon name="lucide:message-square" class="w-5 h-5" />
-          <span class="text-xs font-medium">Community Post</span>
-          <span class="text-[10px] text-muted">Text &amp; images</span>
-        </button>
       </div>
     </UFormField>
 
-    <template v-if="settings.postType !== 'post'">
+    <template v-if="settings.postType === 'video' || settings.postType === 'short' || !settings.postType">
       <UFormField label="Video Title" hint="Required – displayed as the video title on YouTube" required>
         <UInput v-model="settings.title" placeholder="Enter a compelling video title" />
       </UFormField>
@@ -128,15 +120,6 @@ const tagsString = computed({
           </button>
         </div>
       </UFormField>
-    </template>
-
-    <template v-else>
-      <div class="p-4 border border-dashed border-muted rounded-lg">
-        <p class="text-sm text-muted text-center">
-          Community posts use text and images — no video required.
-          The post content will be published as a community update on your YouTube channel.
-        </p>
-      </div>
     </template>
   </div>
 </template>

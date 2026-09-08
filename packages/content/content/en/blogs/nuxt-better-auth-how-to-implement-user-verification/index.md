@@ -18,18 +18,6 @@ head:
       content: Nuxt Better Auth: How to Implement User Verification
     - name: description
       content: Step-by-step guide to implementing email user verification in Nuxt with Better Auth - setup, tokens, and resend flows.
-    - name: og:image
-      content: /logo.png
-    - name: twitter:image
-      content: /logo.png
-    - name: twitter:title
-      content: Nuxt Better Auth: How to Implement User Verification
-    - name: twitter:card
-      content: summary_large_image
-    - name: twitter:title
-      content: Nuxt Better Auth: How to Implement User Verification
-    - name: twitter:description
-      content: Nuxt Better Auth - How to implement user verification
 
 featured: true
 tags:

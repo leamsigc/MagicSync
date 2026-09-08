@@ -32,16 +32,6 @@ head:
       content: index, follow
     - name: author
       content: MagicSync Team
-    - name: og:image
-      content: /img/home-dark.png
-    - name: twitter:image
-      content: /img/home-dark.png
-    - name: twitter:title
-      content: "Planable vs MagicSync: Collaboration-First Social Media Management"
-    - name: twitter:card
-      content: summary_large_image
-    - name: twitter:description
-      content: Compare Planable collaboration-focused scheduler with MagicSync. Team workflows, approvals, features, and creative tools.
 ---
 
 ::BaseBlogHero

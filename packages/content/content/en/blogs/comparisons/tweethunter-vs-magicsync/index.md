@@ -32,16 +32,6 @@ head:
       content: index, follow
     - name: author
       content: MagicSync Team
-    - name: og:image
-      content: /img/home-dark.png
-    - name: twitter:image
-      content: /img/home-dark.png
-    - name: twitter:title
-      content: "Tweethunter vs MagicSync: X Growth and Viral Content"
-    - name: twitter:card
-      content: summary_large_image
-    - name: twitter:description
-      content: Compare Tweethunter X growth tool with MagicSync. Viral content features, audience building, multi-platform support, and creative tools.
 ---
 
 ::BaseBlogHero

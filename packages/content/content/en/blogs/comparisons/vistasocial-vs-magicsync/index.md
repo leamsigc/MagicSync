@@ -32,16 +32,6 @@ head:
       content: index, follow
     - name: author
       content: MagicSync Team
-    - name: og:image
-      content: /img/home-dark.png
-    - name: twitter:image
-      content: /img/home-dark.png
-    - name: twitter:title
-      content: "VistaSocial vs MagicSync: Enterprise Social Media Management"
-    - name: twitter:card
-      content: summary_large_image
-    - name: twitter:description
-      content: Compare VistaSocial enterprise social media tool with MagicSync. Features, enterprise compliance, platform support, and creative tools.
 ---
 
 ::BaseBlogHero

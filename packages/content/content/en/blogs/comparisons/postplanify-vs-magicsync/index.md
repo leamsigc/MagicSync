@@ -32,16 +32,6 @@ head:
       content: index, follow
     - name: author
       content: MagicSync Team
-    - name: og:image
-      content: /img/home-dark.png
-    - name: twitter:image
-      content: /img/home-dark.png
-    - name: twitter:title
-      content: "Postplanify vs MagicSync: Simple UI vs Complete Platform"
-    - name: twitter:card
-      content: summary_large_image
-    - name: twitter:description
-      content: Compare Postplanify simple social media scheduler with MagicSync. Features, ease of use, and built-in creative tools.
 ---
 
 ::BaseBlogHero

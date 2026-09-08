@@ -54,6 +54,7 @@
   "devDependencies": {
     "@nuxt/hints": "catalog:",
     "@nuxtjs/seo": "catalog:",
-    "@playwright/test": "catalog:"
+    "@playwright/test": "catalog:",
+    "nuxtseo-layer-devtools": "catalog:"
   }
 }

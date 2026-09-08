@@ -63,6 +63,20 @@ export interface TopPostEntry {
   lastCollectedAt: string
 }
 
+export interface BestTimeSlot {
+  platform: string
+  dayOfWeek: number
+  hour: number
+  avgEngagement: number
+  postCount: number
+}
+
+export interface BestTimesResult {
+  slots: BestTimeSlot[]
+  topSlots: BestTimeSlot[]
+  timezoneNote: string
+}
+
 export interface PostMetricsPoint {
   collectedAt: string
   status: string
@@ -298,6 +312,49 @@ export class AnalyticsService {
         metrics: row.metrics as Record<string, number>,
         lastCollectedAt: row.collectedAt.toISOString(),
       }))
+  }
+
+  async getBestTimes(filters: PlatformStatsFilters = {}, options: { days?: number } = {}): Promise<BestTimesResult> {
+    const accounts = await this.resolveAccounts(filters)
+    if (accounts.length === 0) return { slots: [], topSlots: [], timezoneNote: 'UTC' }
+    const days = options.days || 90
+    const since = dayjs().subtract(days, 'day').toDate()
+    const scoped = filters.accountId ? accounts.filter(a => a.id === filters.accountId) : accounts
+    const accountIds = scoped.map(a => a.id)
+    if (accountIds.length === 0) return { slots: [], topSlots: [], timezoneNote: 'UTC' }
+    const rows = await this.db.query.postMetrics.findMany({
+      where: and(inArray(postMetrics.socialAccountId, accountIds), eq(postMetrics.status, 'success'), gte(postMetrics.collectedAt, since)),
+      orderBy: desc(postMetrics.collectedAt),
+      limit: 2000,
+      with: { post: true },
+    })
+    // Latest snapshot per post, then bucket by publish hour (UTC)
+    const latestByPost = new Map<string, typeof rows[number]>()
+    for (const row of rows) {
+      if (!row.post) continue
+      if (!latestByPost.has(row.postId)) latestByPost.set(row.postId, row)
+    }
+    const buckets = new Map<string, { platform: string; dayOfWeek: number; hour: number; total: number; count: number }>()
+    for (const row of latestByPost.values()) {
+      const metrics = row.metrics as Record<string, number> | null
+      const engagement = metrics?.total ?? 0
+      const publishedAt = row.post!.publishedAt ?? row.post!.scheduledAt ?? row.collectedAt
+      const date = new Date(publishedAt)
+      const key = `${row.platform}|${date.getUTCDay()}|${date.getUTCHours()}`
+      const bucket = buckets.get(key)
+      if (bucket) {
+        bucket.total += engagement
+        bucket.count += 1
+      } else {
+        buckets.set(key, { platform: row.platform, dayOfWeek: date.getUTCDay(), hour: date.getUTCHours(), total: engagement, count: 1 })
+      }
+    }
+    const slots: BestTimeSlot[] = Array.from(buckets.values())
+      .map(b => ({ platform: b.platform, dayOfWeek: b.dayOfWeek, hour: b.hour, avgEngagement: Math.round((b.total / b.count) * 100) / 100, postCount: b.count }))
+      .sort((a, b) => b.avgEngagement - a.avgEngagement)
+    // Top slots need at least 2 posts to avoid single-post outliers
+    const topSlots = slots.filter(s => s.postCount >= 2).slice(0, 5)
+    return { slots, topSlots, timezoneNote: 'UTC' }
   }
 
   async getPostMetricsHistory(filters: PlatformStatsFilters & { postId?: string; platformPostId?: string } = {}): Promise<PostMetricsPoint[]> {

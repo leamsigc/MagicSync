@@ -43,6 +43,8 @@ last_updated: 2026-09-07
 
 ## Debug
 
+- `drizzle-kit migrate` hangs against sqld (localhost:8080) with no error: apply the generated statements directly via the pipeline instead, then record bookkeeping manually — `INSERT INTO __drizzle_migrations (hash, created_at)` with `hash = sha256(sql file)` and `when` from the journal entry. The migrator only compares max `created_at` vs journal `when`, so this is equivalent. Seen 2026-09-07.
+- `__drizzle_migrations` rows exist but schema objects are missing (recorded-but-not-applied, seen on dev after a hung migrate): verify ground truth with `sqlite_master`/`pragma_table_info` before trusting bookkeeping, delete the phantom rows, apply the real statements, then record.
 - `generate` reports "No changes": the base snapshot already matches schema — check that step 3 actually restored the journal and removed the new snapshots.
 - `migrate` fails on fresh DB: the generated SQL references a table created later in the same file — reorder or check FK targets in schema files.
 - Journal has gaps/duplicates after manual edits: restore from HEAD and regenerate instead of hand-editing.

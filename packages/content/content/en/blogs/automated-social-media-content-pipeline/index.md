@@ -32,16 +32,6 @@ head:
       content: index, follow
     - name: author
       content: MagicSync Team
-    - name: og:image
-      content: /img/magicSync-contentvalidation.png
-    - name: twitter:image
-      content: /img/magicSync-contentvalidation.png
-    - name: twitter:title
-      content: Build an Automated Social Media Content Pipeline from Draft to Publish
-    - name: twitter:card
-      content: summary_large_image
-    - name: twitter:description
-      content: Design a complete social media content pipeline with approval workflows, scheduling queues, and automated publishing. Streamline your team's content operations.
 ---
 
 ::BaseBlogHero

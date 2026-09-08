@@ -46,7 +46,8 @@ export interface UpdateSocialMediaAccountData {
   accountName?: string
   accessToken?: string
   refreshToken?: string
-  tokenExpiresAt?: Date
+  // null clears the expiry (e.g. non-expiring Facebook page tokens)
+  tokenExpiresAt?: Date | null
   isActive?: boolean
   lastSyncAt?: Date
   entityDetailId?: string
@@ -360,6 +361,25 @@ export class SocialMediaAccountService implements SocialMediaAccountServiceType 
         eq(socialMediaAccounts.userId, userId),
         eq(socialMediaAccounts.platform, platform),
         eq(socialMediaAccounts.accountId, accountId)
+      ),
+    })
+
+    return account || null
+  }
+
+  /**
+   * Get account by provider-side account ID, scoped to the user.
+   * Fallback for callers holding a channel/page/DID id instead of the row PK.
+   */
+  async getAccountByProviderAccountId(
+    userId: string,
+    providerAccountId: string
+  ): Promise<SocialMediaAccount | null> {
+
+    const account = await this.db.query.socialMediaAccounts.findFirst({
+      where: and(
+        eq(socialMediaAccounts.userId, userId),
+        eq(socialMediaAccounts.accountId, providerAccountId)
       ),
     })
 

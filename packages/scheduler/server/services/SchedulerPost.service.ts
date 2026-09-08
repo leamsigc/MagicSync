@@ -51,6 +51,27 @@ export interface ReplyCommentResponse {
   error?: string;
 }
 
+// Unified conversation shape — all plugin getConversations() methods return this.
+// DMs are account-level (not tied to a post), unlike comments.
+export interface PlatformConversation {
+  id: string;
+  platform: string;
+  accountId: string;
+  participants?: { id?: string; name?: string; picture?: string }[];
+  messageCount?: number;
+  unreadCount?: number;
+  updatedTime?: string;
+  snippet?: string;
+}
+
+export interface GetConversationsResponse {
+  platform: string;
+  accountId: string;
+  conversations: PlatformConversation[];
+  hasMore: boolean;
+  nextCursor?: string;
+}
+
 // Unified platform statistics interface — all plugin getStatistic() methods return this shape
 export interface PlatformStats {
   platform: string
@@ -199,6 +220,11 @@ export interface SchedulerPlugin {
     commentId: string,
     replyText: string
   ): Promise<ReplyCommentResponse>;
+  sendPrivateReply?(
+    socialMediaAccount: PluginSocialMediaAccount,
+    commentId: string,
+    message: string
+  ): Promise<{ success: boolean; messageId?: string; error?: string }>;
 }
 
 export interface SchedulerPluginConstructor {
@@ -302,6 +328,31 @@ export abstract class BaseSchedulerPlugin implements SchedulerPlugin {
     socialMediaAccount: PluginSocialMediaAccount,
     commentId: string
   ): Promise<{ success: boolean; error?: string }> {
+    return Promise.resolve({ success: false, error: 'Not implemented' });
+  }
+  sendPrivateReply(
+    _socialMediaAccount: PluginSocialMediaAccount,
+    _commentId: string,
+    _message: string
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    return Promise.resolve({ success: false, error: 'Not implemented' });
+  }
+  getConversations(
+    _socialMediaAccount: PluginSocialMediaAccount,
+    _options?: { limit?: number; cursor?: string }
+  ): Promise<GetConversationsResponse> {
+    return Promise.resolve({
+      platform: _socialMediaAccount.platform,
+      accountId: _socialMediaAccount.id,
+      conversations: [],
+      hasMore: false,
+    });
+  }
+  replyToConversation(
+    _socialMediaAccount: PluginSocialMediaAccount,
+    _conversationId: string,
+    _message: string
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
     return Promise.resolve({ success: false, error: 'Not implemented' });
   }
 }
@@ -503,6 +554,45 @@ export class SchedulerPost extends EventEmitter {
     const plugin = this.plugins.get(socialMediaAccount.platform);
     if (plugin) {
       return plugin.deleteComment(postDetails, socialMediaAccount, commentId);
+    }
+    throw new Error('Plugin not registered for this socialMediaAccount');
+  }
+
+  async sendPrivateReply(
+    socialMediaAccount: PluginSocialMediaAccount,
+    commentId: string,
+    message: string
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    const plugin = this.plugins.get(socialMediaAccount.platform);
+    if (plugin) {
+      const method = (plugin as unknown as Record<string, unknown>)['sendPrivateReply'];
+      if (typeof method === 'function') {
+        return (method as (a: PluginSocialMediaAccount, c: string, m: string) => Promise<{ success: boolean; messageId?: string; error?: string }>).call(plugin, socialMediaAccount, commentId, message);
+      }
+      return { success: false, error: 'Not implemented' };
+    }
+    throw new Error('Plugin not registered for this socialMediaAccount');
+  }
+
+  async getConversations(
+    socialMediaAccount: PluginSocialMediaAccount,
+    options?: { limit?: number; cursor?: string }
+  ): Promise<GetConversationsResponse> {
+    const plugin = this.plugins.get(socialMediaAccount.platform);
+    if (plugin) {
+      return plugin.getConversations(socialMediaAccount, options);
+    }
+    throw new Error('Plugin not registered for this socialMediaAccount');
+  }
+
+  async replyToConversation(
+    socialMediaAccount: PluginSocialMediaAccount,
+    conversationId: string,
+    message: string
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    const plugin = this.plugins.get(socialMediaAccount.platform);
+    if (plugin) {
+      return plugin.replyToConversation(socialMediaAccount, conversationId, message);
     }
     throw new Error('Plugin not registered for this socialMediaAccount');
   }

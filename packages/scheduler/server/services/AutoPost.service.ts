@@ -22,6 +22,7 @@ import { YouTubePlugin } from '#layers/BaseScheduler/server/services/plugins/you
 import { PinterestPlugin } from '#layers/BaseScheduler/server/services/plugins/pinterest.plugin';
 import { platformRateLimiter } from './RateLimiter.service';
 import { auth } from '#layers/BaseAuth/lib/auth';
+import { notificationService } from '#layers/BaseAuth/server/services/notification.service';
 export class AutoPostService {
 
   private matcher: Record<string, SchedulerPluginConstructor> = {
@@ -44,6 +45,22 @@ export class AutoPostService {
     youtube: YouTubePlugin as unknown as SchedulerPluginConstructor,
   }
 
+  private async notifyPostFailed(post: PostWithAllData, platform: string, error: string) {
+    try {
+      await notificationService.notify({
+        userId: post.user.id,
+        event: 'post_failed',
+        type: 'error',
+        title: 'Post failed to publish',
+        message: `Your post failed on ${platform}. ${error}`.slice(0, 500),
+        actionUrl: '/app/posts?status=failed',
+        metadata: { postId: post.id, platform },
+      })
+    } catch {
+      // Notifications must never break publishing
+    }
+  }
+
   async triggerSocialMediaPost(post: PostWithAllData): Promise<void> {
     await Promise.all(
       post.platformPosts.map(async (platformPost) => {
@@ -58,11 +75,14 @@ export class AutoPostService {
             `Retry in ${Math.round((rateCheck.retryAfterMs ?? 0) / 1000)}s. ` +
             `Post ID: ${post.id}`
           )
-          await postBatchService.scheduleRetry(
+          const retryResult = await postBatchService.scheduleRetry(
             post.id,
             post.retryCount ?? 0,
             `Rate limited on platform '${platform}'. Retry after ${Math.round((rateCheck.retryAfterMs ?? 0) / 1000)}s.`
           )
+          if (retryResult.code === 'RETRY_EXHAUSTED') {
+            await this.notifyPostFailed(post, platform, 'Rate limited — retries exhausted.')
+          }
           return
         }
 
@@ -79,7 +99,10 @@ export class AutoPostService {
         if (!socialMediaAccount || !socialMediaAccount.accessToken) {
           const err = `No access token found for platform ${platform}`
           console.error(`[AutoPost] ${err} | Post ID: ${post.id}`)
-          await postBatchService.scheduleRetry(post.id, post.retryCount ?? 0, err)
+          const retryResult = await postBatchService.scheduleRetry(post.id, post.retryCount ?? 0, err)
+          if (retryResult.code === 'RETRY_EXHAUSTED') {
+            await this.notifyPostFailed(post, platform, err)
+          }
           return
         }
         // Refresh the access token via Better Auth before posting.
@@ -95,17 +118,23 @@ export class AutoPostService {
           if (!providerAccount) {
             throw new Error('No linked provider account found for refresh')
           }
+          // No `headers`: passing even empty Headers makes Better Auth treat
+          // this as an HTTP caller and throw UNAUTHORIZED with no session.
+          // Omitting them marks it a trusted server-side call, and the
+          // explicit userId below is then accepted (see resolveUserId).
           const tokenResp = await auth.api.getAccessToken({
             body: {
               accountId: providerAccount.id,
               userId: socialMediaAccount.userId,
             },
-            headers: new Headers(),
           })
           const freshToken = (tokenResp as any)?.accessToken
           const expiresAt = (tokenResp as any)?.accessTokenExpiresAt
           if (freshToken && freshToken !== socialMediaAccount.accessToken) {
+            // Mirror the renewed token onto our row — otherwise plugins keep
+            // using the stale expired token and every publish fails.
             await socialMediaAccountService.updateAccount(socialMediaAccount.id, {
+              accessToken: freshToken,
               lastSyncAt: new Date(),
               ...(expiresAt ? { tokenExpiresAt: new Date(expiresAt) } : {}),
             })
@@ -135,6 +164,9 @@ export class AutoPostService {
           );
 
           await postBatchService.updatePostBaseOnResponse(post, response, platformPost);
+          if (response.status === 'failed') {
+            await this.notifyPostFailed(post, platform, response.error || 'Publish failed.')
+          }
         } catch (e) {
           console.error(e);
           await postBatchService.updatePostBaseOnResponse(
@@ -142,6 +174,7 @@ export class AutoPostService {
             { status: 'failed', id: platformPost.id, releaseURL: '', error: 'Post failed to post ', postId: post.id },
             platformPost
           );
+          await this.notifyPostFailed(post, platform, e instanceof Error ? e.message : 'Publish threw an error.')
         }
       }))
   }
@@ -307,5 +340,60 @@ export class AutoPostService {
     if (!plugin) throw new Error(`Unsupported platform: ${platform}`);
     scheduler.use(plugin);
     return await scheduler.deleteComment(post, socialAccount as unknown as PluginSocialMediaAccount, commentId);
+  }
+
+  private dmCapablePlatforms = new Set(['facebook']);
+
+  supportsDMs(platform: string) {
+    return this.dmCapablePlatforms.has(platform);
+  }
+
+  async getConversations({
+    socialAccount,
+    platform,
+    limit,
+    cursor,
+  }: {
+    socialAccount: Account;
+    platform: string;
+    limit?: number;
+    cursor?: string;
+  }) {
+    const scheduler = new SchedulerPost({
+      post: undefined as unknown as Post,
+      accounts: [socialAccount],
+    });
+    const plugin = this.matcher[platform];
+    if (!plugin) throw new Error(`Unsupported platform: ${platform}`);
+    scheduler.use(plugin);
+    return await scheduler.getConversations(
+      socialAccount as unknown as PluginSocialMediaAccount,
+      { limit, cursor },
+    );
+  }
+
+  async replyToConversation({
+    socialAccount,
+    platform,
+    conversationId,
+    message,
+  }: {
+    socialAccount: Account;
+    platform: string;
+    conversationId: string;
+    message: string;
+  }) {
+    const scheduler = new SchedulerPost({
+      post: undefined as unknown as Post,
+      accounts: [socialAccount],
+    });
+    const plugin = this.matcher[platform];
+    if (!plugin) throw new Error(`Unsupported platform: ${platform}`);
+    scheduler.use(plugin);
+    return await scheduler.replyToConversation(
+      socialAccount as unknown as PluginSocialMediaAccount,
+      conversationId,
+      message,
+    );
   }
 }

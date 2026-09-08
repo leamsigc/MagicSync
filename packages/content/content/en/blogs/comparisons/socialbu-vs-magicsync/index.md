@@ -32,16 +32,6 @@ head:
       content: index, follow
     - name: author
       content: MagicSync Team
-    - name: og:image
-      content: /img/home-dark.png
-    - name: twitter:image
-      content: /img/home-dark.png
-    - name: twitter:title
-      content: "SocialBu vs MagicSync: RSS Feeds and Automation Compared"
-    - name: twitter:card
-      content: summary_large_image
-    - name: twitter:description
-      content: Compare SocialBu RSS automation scheduler with MagicSync. Features, RSS support, API access, and built-in creative tools.
 ---
 
 ::BaseBlogHero

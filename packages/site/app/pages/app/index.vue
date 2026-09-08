@@ -19,7 +19,7 @@ import { useTimeAgo } from '@vueuse/core'
 
 const { t } = useI18n()
 const { getPlatformIcon } = usePlatformIcons()
-const { dashboard, fetchDashboard, collectStats, collecting, topPosts, fetchTopPosts, setRange, range, exportCsv, exporting } = usePlatformStats()
+const { dashboard, fetchDashboard, collectStats, collecting, topPosts, fetchTopPosts, bestTimes, fetchBestTimes, setRange, range, exportCsv, exporting } = usePlatformStats()
 const { user } = UseUser()
 const toast = useToast()
 const colorMode = useColorMode()
@@ -54,6 +54,16 @@ async function handleRangeChange(newRange: 7 | 30 | 90) {
   setRange(newRange)
   await fetchDashboard({})
   await fetchTopPosts({ days: newRange })
+  await fetchBestTimes({ days: newRange })
+}
+
+const bestTimeDayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
+function formatBestTimeSlot(slot: { dayOfWeek: number; hour: number }) {
+  const day = bestTimeDayNames[slot.dayOfWeek] ?? ''
+  const hour12 = slot.hour % 12 === 0 ? 12 : slot.hour % 12
+  const suffix = slot.hour < 12 ? 'AM' : 'PM'
+  return `${day} ${hour12}${suffix} UTC`
 }
 
 async function handleExport() {
@@ -269,6 +279,7 @@ onMounted(async () => {
   if (user.value?.id) {
     await Promise.all([fetchDashboard({}), fetchSetupState()])
     await fetchTopPosts({ days: 30 })
+    await fetchBestTimes({ days: 30 })
   }
 })
 </script>
@@ -286,6 +297,12 @@ onMounted(async () => {
       </UButton>
       <UButton to="/app/calendar" icon="i-lucide-calendar" variant="ghost" color="neutral" size="lg">
         {{ t('quickCalendar') }}
+      </UButton>
+      <UButton to="/app/inbox" icon="i-lucide-inbox" variant="outline" color="neutral" size="lg">
+        {{ t('quickInbox') }}
+      </UButton>
+      <UButton to="/app/auto-reply" icon="i-lucide-message-circle-heart" variant="outline" color="neutral" size="lg">
+        {{ t('quickAutoReply') }}
       </UButton>
     </div>
 
@@ -481,6 +498,46 @@ onMounted(async () => {
                           {{ t('repurpose') }}
                         </UButton>
                       </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </UCard>
+          </div>
+        </template>
+
+        <template v-if="bestTimes && bestTimes.topSlots.length > 0">
+          <div class="col-span-1 lg:col-span-3">
+            <UCard>
+              <template #header>
+                <div class="flex items-center justify-between">
+                  <div>
+                    <h3 class="font-semibold text-foreground">{{ t('bestTimes') }}</h3>
+                    <p class="text-xs text-muted-foreground mt-0.5">{{ t('bestTimesDescription') }}</p>
+                  </div>
+                </div>
+              </template>
+              <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                  <thead>
+                    <tr class="border-b border-border">
+                      <th class="text-left py-2 px-3 font-medium text-muted-foreground">{{ t('platform') }}</th>
+                      <th class="text-left py-2 px-3 font-medium text-muted-foreground">{{ t('bestTimeSlot') }}</th>
+                      <th class="text-right py-2 px-3 font-medium text-muted-foreground">{{ t('engagement') }}</th>
+                      <th class="text-right py-2 px-3 font-medium text-muted-foreground">{{ t('posts') }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(slot, idx) in bestTimes.topSlots" :key="`${slot.platform}-${slot.dayOfWeek}-${slot.hour}`" class="border-b border-border/50 hover:bg-muted/30">
+                      <td class="py-2 px-3">
+                        <span class="inline-flex items-center gap-2">
+                          <Icon :name="getPlatformIcon(slot.platform)" class="w-4 h-4" />
+                          <span v-if="idx === 0" class="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">{{ t('bestPick') }}</span>
+                        </span>
+                      </td>
+                      <td class="py-2 px-3 text-foreground">{{ formatBestTimeSlot(slot) }}</td>
+                      <td class="py-2 px-3 text-right text-foreground">{{ formatNumber(slot.avgEngagement) }}</td>
+                      <td class="py-2 px-3 text-right text-foreground">{{ slot.postCount }}</td>
                     </tr>
                   </tbody>
                 </table>

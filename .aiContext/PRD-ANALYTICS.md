@@ -103,12 +103,12 @@ Legend: `[ ]` not started · `[~]` in progress · `[x]` done (evidence required)
 - [x] `DashboardOverviewCards.json` — new keys (en/es/de/fr)
 
 ### Phase D — migration + patches (✅ COMPLETE)
-- [x] Migration `0009_quick_blink.sql` — tables already created and applied
+- [x] Migration `0008_account-oauth-stats-inbox-auto-repost.sql` — stats tables squashed into the single clean migration (see `db-migration-squash` pattern; earlier `0009_quick_blink.sql` reference was stale)
 - [x] Remove `SNAPSHOT_DAYS = 30` dead constant in `PlatformStats.service.ts`
 - [x] Delete legacy `PostStatsCache` utils
 - [x] Refactor `PlatformStats.service.ts` to delegate reads to Analytics.service
 - [x] Update `COMPETITIVE-FEATURES.md` row status for analytics
-- [ ] backfill: one-time copy of legacy `entity_details` → `account_metrics` (optional — new collection is live)
+- [x] backfill dropped (2026-09-07): legacy `entity_details` path removed, new time-series collection is live — no copy needed
 
 > **Polish fixes applied 2026-09-07 (verified):** `GET /api/v1/stats`
 > forwards whitelisted `metric` (followers/posts/engagement) to

@@ -1,5 +1,5 @@
 import { and, desc, eq } from 'drizzle-orm'
-import { oauthAccessToken, oauthClient, oauthConsent, oauthRefreshToken } from '#layers/BaseDB/db/schema'
+import { businessProfiles, oauthAccessToken, oauthClient, oauthConsent, oauthRefreshToken } from '#layers/BaseDB/db/schema'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
 import type { PaginatedResponse, QueryOptions, ServiceResponse } from './types'
 
@@ -9,6 +9,7 @@ export interface OAuthGrant {
   clientName: string | null
   scopes: string[]
   businessId: string | null
+  businessName: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -86,9 +87,11 @@ class OAuthConsentService {
         .select({
           consent: oauthConsent,
           clientName: oauthClient.name,
+          businessName: businessProfiles.name,
         })
         .from(oauthConsent)
         .leftJoin(oauthClient, eq(oauthClient.clientId, oauthConsent.clientId))
+        .leftJoin(businessProfiles, eq(businessProfiles.id, oauthConsent.businessId))
         .where(eq(oauthConsent.userId, userId))
         .orderBy(desc(oauthConsent.updatedAt))
         .limit(limit)
@@ -96,7 +99,7 @@ class OAuthConsentService {
 
       return {
         success: true,
-        data: rows.map(r => this.toGrantSync(r.consent, r.clientName)),
+        data: rows.map(r => this.toGrantSync(r.consent, r.clientName, r.businessName)),
         pagination: {
           page: pagination.page || 1,
           limit,
@@ -150,13 +153,14 @@ class OAuthConsentService {
     }
   }
 
-  private toGrantSync(consent: typeof oauthConsent.$inferSelect, clientName: string | null): OAuthGrant {
+  private toGrantSync(consent: typeof oauthConsent.$inferSelect, clientName: string | null, businessName: string | null = null): OAuthGrant {
     return {
       id: consent.id,
       clientId: consent.clientId,
       clientName,
       scopes: this.parseScopes(consent.scopes),
       businessId: consent.businessId,
+      businessName,
       createdAt: consent.createdAt,
       updatedAt: consent.updatedAt,
     }

@@ -17,16 +17,6 @@ head:
       content: MagicSync Team
     - name: description
       content: Stay up to date with the latest features, improvements, and fixes in MagicSync's social media scheduling platform.
-    - name: og:image
-      content: /logo.png
-    - name: twitter:image
-      content: /logo.png
-    - name: twitter:title
-      content: Release Notes | MagicSync - Social Media Scheduling Platform
-    - name: twitter:card
-      content: summary_large_image
-    - name: twitter:description
-      content: Stay up to date with the latest features, improvements, and fixes in MagicSync's social media scheduling platform.
 
 ogImage:
   component: BlogOgImage

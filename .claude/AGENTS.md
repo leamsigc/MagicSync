@@ -58,3 +58,5 @@ After every task: if no pattern exists for the task type you just completed, cre
 At the start of every session, read `ROUTER.md` before doing anything else.
 For full project context, patterns, and task guidance — everything is there.
 
+### Must do everitime
+it has to pass cyclomatic complexity lint

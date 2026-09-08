@@ -32,16 +32,6 @@ head:
       content: index, follow
     - name: author
       content: MagicSync Team
-    - name: og:image
-      content: /img/home-dark.png
-    - name: twitter:image
-      content: /img/home-dark.png
-    - name: twitter:title
-      content: "Loomly vs MagicSync: Team Social Media Management Compared"
-    - name: twitter:card
-      content: summary_large_image
-    - name: twitter:description
-      content: Compare Loomly team-focused social media scheduler with MagicSync. Features, calendar, approval workflows, API access, and creative tools.
 ---
 
 ::BaseBlogHero

@@ -32,16 +32,6 @@ head:
       content: index, follow
     - name: author
       content: MagicSync Team
-    - name: og:image
-      content: /img/home-dark.png
-    - name: twitter:image
-      content: /img/home-dark.png
-    - name: twitter:title
-      content: "Buffer vs MagicSync: The Baseline Compared to the Complete Platform"
-    - name: twitter:card
-      content: summary_large_image
-    - name: twitter:description
-      content: Compare Buffer social media scheduler with MagicSync. Features, pricing, platform support, API access, and built-in creative tools.
 ---
 
 ::BaseBlogHero

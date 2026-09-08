@@ -28,6 +28,22 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
     }
   }
 
+  private buildAuth(socialMediaAccount: PluginSocialMediaAccount) {
+    // Client ID/secret are REQUIRED for Google to refresh an expired access
+    // token. A bare `new google.auth.OAuth2()` can never refresh, which is why
+    // every YouTube call failed permanently once the access token expired.
+    // Same Google Cloud project as the OAuth flow (NUXT_GOOGLE_* env).
+    const auth = new google.auth.OAuth2(
+      process.env.NUXT_GOOGLE_CLIENT_ID,
+      process.env.NUXT_GOOGLE_CLIENT_SECRET,
+    );
+    auth.setCredentials({
+      access_token: socialMediaAccount.accessToken,
+      refresh_token: socialMediaAccount.refreshToken || undefined,
+    });
+    return auth;
+  }
+
   private getPlatformData(postDetails: PluginPostDetails) {
     const platformName = this.pluginName;
     const platformContent = (postDetails.platformContent as Record<string, { content: string; comments?: string[] } | undefined>)?.[platformName];
@@ -58,6 +74,14 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
     const settings = platformData?.youtube;
     const postType = settings?.postType || 'video';
 
+    if (postType === 'post') {
+      // YouTube Data API v3 has no community-post creation endpoint
+      // (POST /youtube/v3/posts returns 404). Block at validation so users
+      // get a clear message instead of a publish-time failure.
+      errors.push('YouTube community posts are not supported by the YouTube API — use video or short instead.');
+      return Promise.resolve(errors);
+    }
+
     if (postType === 'video' || postType === 'short') {
       if (!postWithAssets.assets || postWithAssets.assets.length === 0) {
         errors.push('At least one video is required for YouTube uploads.');
@@ -66,10 +90,6 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
       const hasVideo = postWithAssets.assets?.some((asset: Asset) => asset.mimeType?.includes('video'));
       if (!hasVideo) {
         errors.push('YouTube requires a video file.');
-      }
-    } else if (postType === 'post') {
-      if (!postWithAssets.content && !postWithAssets.assets?.length) {
-        errors.push('Community posts require text content or images.');
       }
     }
 
@@ -119,11 +139,14 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
 
 
 
-  async pages(_: unknown, accessToken: string, socialMediaAccount?: PluginSocialMediaAccount): Promise<FacebookPage[]> {
+  async pages(_: unknown, accessToken: string, socialMediaAccount?: PluginSocialMediaAccount): Promise<(FacebookPage & { platformType: string })[]> {
     try {
       const channels = await this.getChannels(accessToken, socialMediaAccount);
       log.info(channels)
 
+      // platformType is REQUIRED: the connect modal routes clicks on it.
+      // Without it, selecting a channel silently does nothing (modal just
+      // closes, no account created). Mirrors google.plugin.pages().
       const pages = channels.map(channel => ({
         id: channel.id || '',
         name: channel.snippet?.title || '',
@@ -132,6 +155,7 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
             url: channel.snippet?.thumbnails?.default?.url || '',
           },
         },
+        platformType: 'youtube',
       }));
 
       const imagePromises = pages.map(page =>
@@ -142,7 +166,7 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
       return pages.map((page, index) => ({
         ...page,
         imageBase64: imageBase64s[index],
-      })) as FacebookPage[];
+      }));
     } catch (error: unknown) {
       log.error({ content: 'Failed to fetch YouTube channels for pages', plugin: 'youtube', error: (error as Error).message });
       this.logPluginEvent('get-pages', 'failure', `Error: ${(error as Error).message}`);
@@ -160,7 +184,9 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
       const postType = settings?.postType || 'video';
 
       if (postType === 'post') {
-        return await this.createCommunityPost(postDetails, socialMediaAccount);
+        // Unreachable via publish() (validate() rejects it), kept as a guard:
+        // the YouTube API has no community-post creation endpoint.
+        throw new Error('YouTube community posts are not supported by the YouTube API — use video or short instead.');
       }
 
       if (!postDetails.assets || postDetails.assets.length === 0) {
@@ -175,11 +201,7 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
         throw new Error('No video file found in assets');
       }
 
-      const auth = new google.auth.OAuth2();
-      auth.setCredentials({
-        access_token: socialMediaAccount.accessToken,
-        refresh_token: socialMediaAccount.refreshToken,
-      });
+      const auth = this.buildAuth(socialMediaAccount);
 
       const youtube = google.youtube({ version: 'v3', auth });
 
@@ -256,89 +278,12 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
     }
   }
 
-  private async createCommunityPost(
-    postDetails: PluginPostDetails,
-    socialMediaAccount: PluginSocialMediaAccount
-  ): Promise<PostResponse> {
-    try {
-      const { content, settings } = this.getPlatformData(postDetails);
-
-      const auth = new google.auth.OAuth2();
-      auth.setCredentials({
-        access_token: socialMediaAccount.accessToken,
-        refresh_token: socialMediaAccount.refreshToken,
-      });
-
-      const { token } = await auth.getAccessToken();
-      await this.persistTokens(socialMediaAccount, auth);
-      const channelId = socialMediaAccount.accountId;
-
-      const body: Record<string, unknown> = {
-        snippet: {
-          channelId,
-          textOriginal: content || '',
-        },
-      };
-
-      const imageAssets = postDetails.assets?.filter(a => a.mimeType?.startsWith('image/')) || [];
-      if (imageAssets.length > 0) {
-        (body.snippet as Record<string, unknown>).media = imageAssets.map(a => ({
-          type: 'image',
-          url: getPublicUrlForAsset(a.url),
-        }));
-      }
-
-      const response = await fetch('https://www.googleapis.com/youtube/v3/posts?part=snippet', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(body),
-      });
-
-      if (!response.ok) {
-        const errorBody = await response.text();
-        throw new Error(`YouTube community post API error: ${response.status} ${errorBody}`);
-      }
-
-      const result = await response.json();
-
-      const postResponse: PostResponse = {
-        id: postDetails.id,
-        postId: result.id || '',
-        releaseURL: `https://www.youtube.com/channel/${channelId}/community`,
-        status: 'published',
-      };
-
-      this.emit('youtube:post:published', { postId: postResponse.postId, response: result });
-      return postResponse;
-    } catch (error: unknown) {
-      log.error({ content: 'YouTube community post failed', plugin: 'youtube', error: (error as Error).message });
-      this.logPluginEvent('community-post-error', 'failure', `Error: ${(error as Error).message}`, postDetails.id, {
-        error: `${error}`,
-      });
-
-      return {
-        id: postDetails.id,
-        postId: '',
-        releaseURL: '',
-        status: 'failed',
-        error: (error as Error).message,
-      };
-    }
-  }
-
   async getStatistic(
     postDetails: PluginPostDetails,
     socialMediaAccount: PluginSocialMediaAccount
   ): Promise<PlatformStats> {
     try {
-      const oauth2Client = new google.auth.OAuth2()
-      oauth2Client.setCredentials({
-        access_token: socialMediaAccount.accessToken,
-        refresh_token: socialMediaAccount.refreshToken,
-      })
+      const oauth2Client = this.buildAuth(socialMediaAccount)
 
       const youtube = google.youtube({ version: 'v3', auth: oauth2Client })
 
@@ -517,11 +462,7 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
     }
 
     try {
-      const oauth2Client = new google.auth.OAuth2();
-      oauth2Client.setCredentials({
-        access_token: socialMediaAccount.accessToken,
-        refresh_token: socialMediaAccount.refreshToken,
-      });
+      const oauth2Client = this.buildAuth(socialMediaAccount);
 
       const youtube = google.youtube({ version: 'v3', auth: oauth2Client });
       const videosResponse = await youtube.videos.list({
@@ -556,11 +497,7 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
     try {
       const { content, settings } = this.getPlatformData(postDetails);
       const publicationDetails = postDetails.platformPosts.find((platform) => platform.socialAccountId === socialMediaAccount.id);
-      const oauth2Client = new google.auth.OAuth2();
-      oauth2Client.setCredentials({
-        access_token: socialMediaAccount.accessToken,
-        refresh_token: socialMediaAccount.refreshToken,
-      });
+      const oauth2Client = this.buildAuth(socialMediaAccount);
 
       const youtube = google.youtube({ version: 'v3', auth: oauth2Client });
 
@@ -637,11 +574,7 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
         throw new Error('Video ID is required for commenting');
       }
 
-      const auth = new google.auth.OAuth2();
-      auth.setCredentials({
-        access_token: socialMediaAccount.accessToken,
-        refresh_token: socialMediaAccount.refreshToken
-      });
+      const auth = this.buildAuth(socialMediaAccount);
 
       const youtube = google.youtube({ version: 'v3', auth });
 
@@ -721,11 +654,7 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
     }
 
     try {
-      const oauth2Client = new google.auth.OAuth2();
-      oauth2Client.setCredentials({
-        access_token: socialMediaAccount.accessToken,
-        refresh_token: socialMediaAccount.refreshToken,
-      });
+      const oauth2Client = this.buildAuth(socialMediaAccount);
 
       const youtube = google.youtube({ version: 'v3', auth: oauth2Client });
 
@@ -766,11 +695,7 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
     replyText: string
   ): Promise<ReplyCommentResponse> {
     try {
-      const oauth2Client = new google.auth.OAuth2();
-      oauth2Client.setCredentials({
-        access_token: socialMediaAccount.accessToken,
-        refresh_token: socialMediaAccount.refreshToken,
-      });
+      const oauth2Client = this.buildAuth(socialMediaAccount);
 
       const youtube = google.youtube({ version: 'v3', auth: oauth2Client });
 

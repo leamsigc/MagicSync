@@ -1,5 +1,5 @@
 import type { User } from 'better-auth'
-import { userPasswordResetTemplate, userVerificationTemplate, organizationInvitationTemplate } from './emailTemplates'
+import { userPasswordResetTemplate, userVerificationTemplate, organizationInvitationTemplate, notificationTemplate, notificationDigestTemplate } from './emailTemplates'
 
 export interface EmailOptions {
   from: string
@@ -103,5 +103,37 @@ export const sendOrganizationInvitationEmail = async (email: string, url: string
     console.log('Invitation email sent successfully')
   } catch (error) {
     console.error('Failed to send invitation email:', error)
+  }
+}
+
+export const sendNotificationEmail = async (email: string, title: string, message: string, actionUrl?: string) => {
+  const emailHTML = await notificationTemplate(title, message, actionUrl)
+  try {
+    await useMailgun().send({
+      from: process.env.NUXT_MAIL_FROM_EMAIL || 'no-reply@localhost.com',
+      to: email,
+      subject: title,
+      html: emailHTML.html
+    })
+    console.log('Notification email sent successfully')
+  } catch (error) {
+    console.error('Failed to send notification email:', error)
+    throw error
+  }
+}
+
+export const sendNotificationDigestEmail = async (email: string, userName: string, items: { title: string; message: string; actionUrl?: string | null }[]) => {
+  const emailHTML = await notificationDigestTemplate(userName, items)
+  try {
+    await useMailgun().send({
+      from: process.env.NUXT_MAIL_FROM_EMAIL || 'no-reply@localhost.com',
+      to: email,
+      subject: `Your daily MagicSync digest (${items.length} unread)`,
+      html: emailHTML.html
+    })
+    console.log('Notification digest email sent successfully')
+  } catch (error) {
+    console.error('Failed to send notification digest email:', error)
+    throw error
   }
 }

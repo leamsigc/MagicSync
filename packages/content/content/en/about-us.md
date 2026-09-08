@@ -17,16 +17,6 @@ head:
       content: MagicSync Team
     - name: description
       content: Learn about MagicSync's mission to empower small businesses with comprehensive social media management tools and scheduling capabilities.
-    - name: og:image
-      content: /logo.png
-    - name: twitter:image
-      content: /logo.png
-    - name: twitter:title
-      content: About Us | MagicSync - Social Media Scheduling Platform
-    - name: twitter:card
-      content: summary_large_image
-    - name: twitter:description
-      content: Learn about MagicSync's mission to empower small businesses with comprehensive social media management tools and scheduling capabilities.
 
 ogImage:
   component: BlogOgImage

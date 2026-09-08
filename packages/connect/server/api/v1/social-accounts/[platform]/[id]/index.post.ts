@@ -94,7 +94,27 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    const accessToken = tokenData?.accessToken || platformAccount.accessToken;
+    let accessToken = tokenData?.accessToken || platformAccount.accessToken;
+
+    // Facebook: exchange the fresh short-lived user token for a 60-day one
+    // BEFORE fetching page info, so the stored page token doesn't expire.
+    // A page token inherits its remaining lifetime from the user token used
+    // to fetch it — skipping this is why page tokens kept dying in hours.
+    if (platform === 'facebook' && tokenData?.accessToken) {
+      try {
+        const fbPlugin = scheduler.getPlugin('facebook') as unknown as {
+          exchangeLongLivedUserToken: (t: string) => Promise<{ userToken: string }>
+        } | undefined
+        if (fbPlugin) {
+          const exchanged = await fbPlugin.exchangeLongLivedUserToken(tokenData.accessToken)
+          accessToken = exchanged.userToken
+        }
+      } catch (error) {
+        // Non-fatal: fall back to the short-lived token; background refresh
+        // and health warnings take over from here.
+        log.error({ message: 'Facebook long-lived token exchange failed at connect', error: String(error) })
+      }
+    }
 
     const pageDetails = await (scheduler as unknown as { fetchPageInformation: (pageId: string, token: string, options?: { instagramId?: string }) => Promise<{ id: string; name: string; access_token: string; picture: string; username: string }> }).fetchPageInformation(pageId, accessToken, { instagramId: body.instagram_business_account?.id });
 

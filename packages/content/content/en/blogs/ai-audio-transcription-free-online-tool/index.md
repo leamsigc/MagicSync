@@ -32,16 +32,6 @@ head:
       content: index, follow
     - name: author
       content: MagicSync Team
-    - name: og:image
-      content: /img/audio-transcription.png
-    - name: twitter:image
-      content: /img/audio-transcription.png
-    - name: twitter:title
-      content: Free AI Audio Transcription Online with Timestamps and Speaker Detection
-    - name: twitter:card
-      content: summary_large_image
-    - name: twitter:description
-      content: Transcribe audio files and videos to text with AI in your browser. Free, private, and no upload needed. Accurate timestamps and speaker labels included.
 ---
 
 ::BaseBlogHero

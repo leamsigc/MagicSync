@@ -31,6 +31,13 @@ const {
   archiveItems,
   loadMore,
   setFilters,
+  dmAccounts,
+  conversations,
+  dmLoading,
+  dmError,
+  fetchDmAccounts,
+  fetchConversations,
+  replyToConversation,
 } = useInbox()
 
 const activeTab = ref<'comment' | 'dm' | 'notification'>('comment')
@@ -39,6 +46,15 @@ const showUnreadOnly = ref(false)
 const replyingTo = ref<string | null>(null)
 const replyText = ref('')
 const showDeleteConfirm = ref<string | null>(null)
+const selectedDmAccount = ref<string | undefined>(undefined)
+const replyingConvo = ref<string | null>(null)
+const dmReplyText = ref('')
+const dmSentId = ref<string | null>(null)
+
+const dmAccountOptions = computed(() => [
+  { label: t('dm_select_account'), value: undefined },
+  ...dmAccounts.value.map((a) => ({ label: a.accountName, value: a.id })),
+])
 
 const platformOptions = computed(() => [
   { label: t('filter_all_platforms'), value: undefined },
@@ -53,10 +69,14 @@ const platformOptions = computed(() => [
   { label: 'Mastodon', value: 'mastodon' },
 ])
 
-const tabs = computed(() => [
-  { key: 'comment' as const, label: t('tabs_comments'), count: unreadCount.value },
-  { key: 'dm' as const, label: t('tabs_messages'), count: 0 },
-  { key: 'notification' as const, label: t('tabs_notifications'), count: 0 },
+const tabItems = computed(() => [
+  {
+    label: t('tabs_comments'),
+    value: 'comment',
+    badge: unreadCount.value > 0 ? unreadCount.value : undefined,
+  },
+  { label: t('tabs_messages'), value: 'dm' },
+  { label: t('tabs_notifications'), value: 'notification' },
 ])
 
 const filteredItems = computed(() => {
@@ -86,12 +106,57 @@ const timeAgo = (date: Date) => {
 
 const handleTabChange = (tab: 'comment' | 'dm' | 'notification') => {
   activeTab.value = tab
+  if (tab === 'dm') {
+    handleDmTabOpen()
+    return
+  }
   setFilters({ type: tab })
 }
 
-const handlePlatformChange = (platform: string | undefined) => {
-  selectedPlatform.value = platform
-  setFilters({ platform })
+const handleDmTabOpen = async () => {
+  await fetchDmAccounts()
+  const first = dmAccounts.value[0]
+  if (first && !selectedDmAccount.value) {
+    handleDmAccountChange(first.id)
+  }
+}
+
+const handleDmAccountChange = (accountId: string | { label?: string; value?: string } | undefined) => {
+  // USelect may emit the whole option object — normalize to the id string.
+  const id = typeof accountId === 'string' ? accountId : accountId?.value
+  selectedDmAccount.value = id
+  dmSentId.value = null
+  if (id) {
+    fetchConversations(id)
+  }
+}
+
+const handleDmReplyStart = (id: string) => {
+  replyingConvo.value = id
+  dmReplyText.value = ''
+  dmSentId.value = null
+}
+
+const handleDmReplyCancel = () => {
+  replyingConvo.value = null
+}
+
+const handleDmReplySend = async (conversationId: string) => {
+  if (!selectedDmAccount.value || !dmReplyText.value.trim()) return
+  try {
+    await replyToConversation(selectedDmAccount.value, conversationId, dmReplyText.value.trim())
+    replyingConvo.value = null
+    dmReplyText.value = ''
+    dmSentId.value = conversationId
+  } catch {
+    // Error surfaced via dmError
+  }
+}
+
+const handlePlatformChange = (platform: string | { label?: string; value?: string } | undefined) => {
+  const value = typeof platform === 'string' ? platform : platform?.value
+  selectedPlatform.value = value
+  setFilters({ platform: value })
 }
 
 const handleToggleUnread = () => {
@@ -178,6 +243,19 @@ const handleMarkRead = (ids: string[]) => {
   markAsRead(ids)
 }
 
+const handleDmRetry = () => {
+  if (selectedDmAccount.value) {
+    fetchConversations(selectedDmAccount.value)
+  } else {
+    handleDmTabOpen()
+  }
+}
+
+const convoParticipantNames = (convo: { participants?: { name?: string }[] }) => {
+  const names = (convo.participants || []).map((p) => p.name).filter(Boolean)
+  return names.length > 0 ? names.join(', ') : t('dm_unknown')
+}
+
 onMounted(() => {
   fetchInbox({ type: 'comment' })
   fetchUnreadCount()
@@ -185,68 +263,176 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
-    <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <div class="mb-8 flex items-center justify-between">
-        <div>
-          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
-            {{ t('title') }}
-          </h1>
-          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            {{ t('subtitle') }}
-          </p>
-        </div>
+  <UContainer class="py-8 max-w-6xl">
+    <div class="flex items-center justify-between mb-8">
+      <div>
+        <h1 class="text-3xl font-bold mb-2">{{ t('title') }}</h1>
+        <p class="text-muted-foreground">{{ t('description') }}</p>
+      </div>
+      <UButton
+        v-if="unreadCount > 0"
+        variant="outline"
+        icon="i-lucide-check-check"
+        @click="handleMarkAllRead"
+      >
+        {{ t('mark_all_read') }}
+      </UButton>
+    </div>
+
+    <UTabs :items="tabItems" :model-value="activeTab" class="w-full" @update:model-value="handleTabChange" />
+
+    <div v-if="activeTab === 'dm'" class="mt-6 space-y-4">
+      <div class="flex flex-wrap items-center gap-2">
+        <USelectMenu
+          :model-value="selectedDmAccount"
+          :items="dmAccountOptions"
+          :placeholder="t('dm_select_account')"
+          class="w-64"
+          @update:model-value="handleDmAccountChange"
+        />
+      </div>
+      <p class="text-xs text-muted-foreground">{{ t('dm_window_note') }}</p>
+
+      <div v-if="dmLoading" class="flex items-center justify-center py-12">
+        <UIcon name="i-heroicons-arrow-path" class="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+
+      <div
+        v-else-if="dmError"
+        class="rounded-lg bg-red-50 p-4 text-center dark:bg-red-900/20"
+      >
+        <UIcon name="i-heroicons-exclamation-triangle" class="mx-auto h-8 w-8 text-red-400" />
+        <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ dmError }}</p>
         <UButton
-          :label="t('mark_all_read')"
-          color="primary"
+          :label="t('retry')"
+          color="error"
           variant="soft"
-          :disabled="unreadCount === 0"
-          @click="handleMarkAllRead"
+          class="mt-4"
+          @click="handleDmRetry"
         />
       </div>
 
-      <div class="mb-6 border-b border-gray-200 dark:border-gray-700">
-        <nav class="-mb-px flex space-x-8">
-          <button
-            v-for="tab in tabs"
-            :key="tab.key"
-            :class="[
-              'border-b-2 px-1 py-4 text-sm font-medium transition-colors',
-              activeTab === tab.key
-                ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-                : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300',
-            ]"
-            @click="handleTabChange(tab.key)"
-          >
-            {{ tab.label }}
-            <span
-              v-if="tab.count > 0"
-              class="ml-2 rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900 dark:text-red-200"
-            >
-              {{ tab.count }}
-            </span>
-          </button>
-        </nav>
+      <div
+        v-else-if="dmAccounts.length === 0"
+        class="rounded-lg bg-muted/50 p-12 text-center"
+      >
+        <UIcon
+          name="i-heroicons-chat-bubble-left-right"
+          class="mx-auto h-12 w-12 text-muted-foreground"
+        />
+        <p class="mt-4 text-sm font-medium">{{ t('dm_no_accounts_title') }}</p>
+        <p class="mt-1 text-sm text-muted-foreground">{{ t('dm_no_accounts_hint') }}</p>
       </div>
 
-      <div class="mb-6 flex flex-wrap items-center gap-4">
-        <USelect
+      <div
+        v-else-if="conversations.length === 0"
+        class="rounded-lg bg-muted/50 p-12 text-center"
+      >
+        <UIcon
+          name="i-heroicons-inbox"
+          class="mx-auto h-12 w-12 text-muted-foreground"
+        />
+        <p class="mt-4 text-sm text-muted-foreground">{{ t('dm_empty_conversations') }}</p>
+      </div>
+
+      <UCard v-else>
+        <div class="divide-y divide-default">
+          <div
+            v-for="convo in conversations"
+            :key="convo.id"
+            class="flex items-start justify-between gap-4 py-3"
+          >
+            <div class="flex-1">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="text-sm font-medium">
+                  {{ convoParticipantNames(convo) }}
+                </span>
+                <UBadge
+                  v-if="convo.unreadCount"
+                  color="error"
+                  variant="subtle"
+                  size="xs"
+                >
+                  {{ convo.unreadCount }}
+                </UBadge>
+                <span
+                  v-if="convo.messageCount"
+                  class="text-xs text-muted-foreground"
+                >
+                  {{ t('dm_messages_count', { count: convo.messageCount }) }}
+                </span>
+                <span class="text-xs text-muted-foreground">
+                  {{ convo.updatedTime ? timeAgo(new Date(convo.updatedTime)) : '—' }}
+                </span>
+              </div>
+
+              <p v-if="convo.snippet" class="mt-2 text-sm text-muted-foreground">
+                {{ convo.snippet }}
+              </p>
+
+              <p v-if="dmSentId === convo.id" class="mt-2 text-sm text-green-600 dark:text-green-400">
+                {{ t('dm_sent_confirm') }}
+              </p>
+
+              <div v-if="replyingConvo === convo.id" class="mt-4">
+                <UTextarea
+                  v-model="dmReplyText"
+                  :placeholder="t('dm_reply_placeholder')"
+                  :rows="2"
+                  class="w-full"
+                />
+                <div class="mt-2 flex justify-end gap-2">
+                  <UButton
+                    :label="t('cancel')"
+                    color="neutral"
+                    variant="soft"
+                    size="sm"
+                    @click="handleDmReplyCancel"
+                  />
+                  <UButton
+                    :label="t('send')"
+                    color="primary"
+                    size="sm"
+                    :disabled="!dmReplyText.trim()"
+                    @click="handleDmReplySend(convo.id)"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div class="ml-4 flex items-center gap-2">
+              <UButton
+                icon="i-heroicons-chat-bubble-left"
+                color="neutral"
+                variant="ghost"
+                size="xs"
+                @click="handleDmReplyStart(convo.id)"
+              />
+            </div>
+          </div>
+        </div>
+      </UCard>
+    </div>
+
+    <div v-if="activeTab !== 'dm'" class="mt-6">
+      <div class="mb-6 flex flex-wrap items-center gap-2">
+        <USelectMenu
           :model-value="selectedPlatform"
           :items="platformOptions"
-          :placeholder="t('filter_platform')"
+          :placeholder="t('filter_all_platforms')"
           class="w-48"
           @update:model-value="handlePlatformChange"
         />
         <UButton
           :label="showUnreadOnly ? t('show_all') : t('show_unread')"
-          :color="showUnreadOnly ? 'primary' : 'gray'"
+          :color="showUnreadOnly ? 'primary' : 'neutral'"
           variant="soft"
           @click="handleToggleUnread"
         />
       </div>
 
       <div v-if="isLoading" class="flex items-center justify-center py-12">
-        <UIcon name="i-heroicons-arrow-path" class="h-8 w-8 animate-spin text-gray-400" />
+        <UIcon name="i-heroicons-arrow-path" class="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
 
       <div
@@ -257,7 +443,7 @@ onMounted(() => {
         <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ error }}</p>
         <UButton
           :label="t('retry')"
-          color="red"
+          color="error"
           variant="soft"
           class="mt-4"
           @click="fetchInbox({ type: activeTab })"
@@ -266,140 +452,145 @@ onMounted(() => {
 
       <div
         v-else-if="filteredItems.length === 0"
-        class="rounded-lg bg-gray-50 p-12 text-center dark:bg-gray-800"
+        class="rounded-lg bg-muted/50 p-12 text-center"
       >
         <UIcon
           name="i-heroicons-inbox"
-          class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500"
+          class="mx-auto h-12 w-12 text-muted-foreground"
         />
-        <p class="mt-4 text-sm text-gray-500 dark:text-gray-400">{{ t('empty_state') }}</p>
+        <p class="mt-4 text-sm font-medium">{{ t('empty_title') }}</p>
+        <p class="mt-1 text-sm text-muted-foreground">{{ t('empty_description') }}</p>
       </div>
 
-      <div v-else class="space-y-4">
-        <div
-          v-for="item in filteredItems"
-          :key="item.id"
-          :class="[
-            'rounded-lg border bg-white p-4 shadow-sm transition-shadow hover:shadow-md dark:bg-gray-800',
-            item.read ? 'border-gray-200 dark:border-gray-700' : 'border-primary-200 bg-primary-50/30 dark:border-primary-800 dark:bg-primary-900/10',
-          ]"
-        >
-          <div class="flex items-start justify-between">
-            <div class="flex-1">
-              <div class="flex items-center gap-2">
-                <span class="text-sm font-medium text-gray-900 dark:text-white">
-                  {{ item.authorName || t('unknown_author') }}
-                </span>
-                <span class="text-xs text-gray-500 dark:text-gray-400">
-                  @{{ item.authorId || 'unknown' }}
-                </span>
+      <UCard v-else>
+        <div class="divide-y divide-default">
+          <div
+            v-for="item in filteredItems"
+            :key="item.id"
+            class="py-3"
+          >
+            <div class="flex items-start justify-between gap-4">
+              <div class="flex min-w-0 flex-1 items-start gap-2">
                 <span
-                  class="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300"
-                >
-                  {{ platformLabel(item.platform) }}
-                </span>
-                <span class="text-xs text-gray-400 dark:text-gray-500">
-                  {{ timeAgo(item.createdAt) }}
-                </span>
-              </div>
-
-              <p class="mt-2 text-sm text-gray-700 dark:text-gray-300">
-                {{ item.content }}
-              </p>
-
-              <div v-if="replyingTo === item.id" class="mt-4">
-                <UTextarea
-                  v-model="replyText"
-                  :placeholder="t('reply_placeholder')"
-                  :rows="2"
-                  class="w-full"
+                  v-if="!item.read"
+                  class="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary"
+                  :title="t('filter_unread')"
                 />
-                <div class="mt-2 flex justify-end gap-2">
-                  <UButton
-                    :label="t('cancel')"
-                    color="gray"
-                    variant="soft"
-                    size="sm"
-                    @click="handleReplyCancel"
-                  />
-                  <UButton
-                    :label="t('send_reply')"
-                    color="primary"
-                    size="sm"
-                    :disabled="!replyText.trim()"
-                    @click="handleReplySend(item)"
-                  />
+                <div class="min-w-0 flex-1">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <span class="text-sm font-medium">
+                      {{ item.authorName || t('unknown_author') }}
+                    </span>
+                    <span class="text-xs text-muted-foreground">
+                      @{{ item.authorId || 'unknown' }}
+                    </span>
+                    <UBadge color="neutral" variant="subtle" size="xs">
+                      {{ platformLabel(item.platform) }}
+                    </UBadge>
+                    <span class="text-xs text-muted-foreground">
+                      {{ timeAgo(item.createdAt) }}
+                    </span>
+                  </div>
+
+                  <p class="mt-2 text-sm text-muted-foreground">
+                    {{ item.content }}
+                  </p>
+
+                  <div v-if="replyingTo === item.id" class="mt-4">
+                    <UTextarea
+                      v-model="replyText"
+                      :placeholder="t('reply_placeholder')"
+                      :rows="2"
+                      class="w-full"
+                    />
+                    <div class="mt-2 flex justify-end gap-2">
+                      <UButton
+                        :label="t('cancel')"
+                        color="neutral"
+                        variant="soft"
+                        size="sm"
+                        @click="handleReplyCancel"
+                      />
+                      <UButton
+                        :label="t('send')"
+                        color="primary"
+                        size="sm"
+                        :disabled="!replyText.trim()"
+                        @click="handleReplySend(item)"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
+
+              <div class="flex shrink-0 items-center gap-1">
+                <UButton
+                  icon="i-heroicons-chat-bubble-left"
+                  color="neutral"
+                  variant="ghost"
+                  size="xs"
+                  @click="handleReplyStart(item.id)"
+                />
+                <UButton
+                  icon="i-heroicons-heart"
+                  color="neutral"
+                  variant="ghost"
+                  size="xs"
+                  @click="handleLike(item)"
+                />
+                <UButton
+                  icon="i-heroicons-eye-slash"
+                  color="neutral"
+                  variant="ghost"
+                  size="xs"
+                  @click="handleHide(item)"
+                />
+                <UButton
+                  icon="i-heroicons-trash"
+                  color="error"
+                  variant="ghost"
+                  size="xs"
+                  @click="handleDeleteAsk(item.id)"
+                />
+              </div>
             </div>
 
-            <div class="ml-4 flex items-center gap-2">
-              <UButton
-                icon="i-heroicons-chat-bubble-left"
-                color="gray"
-                variant="ghost"
-                size="xs"
-                @click="handleReplyStart(item.id)"
-              />
-              <UButton
-                icon="i-heroicons-heart"
-                color="gray"
-                variant="ghost"
-                size="xs"
-                @click="handleLike(item)"
-              />
-              <UButton
-                icon="i-heroicons-eye-slash"
-                color="gray"
-                variant="ghost"
-                size="xs"
-                @click="handleHide(item)"
-              />
-              <UButton
-                icon="i-heroicons-trash"
-                color="red"
-                variant="ghost"
-                size="xs"
-                @click="handleDeleteAsk(item.id)"
-              />
-            </div>
-          </div>
-
-          <div
-            v-if="showDeleteConfirm === item.id"
-            class="mt-4 rounded-md bg-red-50 p-3 dark:bg-red-900/20"
-          >
-            <p class="text-sm text-red-700 dark:text-red-300">
-              {{ t('delete_confirm') }}
-            </p>
-            <div class="mt-2 flex justify-end gap-2">
-              <UButton
-                :label="t('cancel')"
-                color="gray"
-                variant="soft"
-                size="xs"
-                @click="handleDeleteCancel"
-              />
-              <UButton
-                :label="t('delete')"
-                color="red"
-                size="xs"
-                @click="handleDelete(item.id)"
-              />
+            <div
+              v-if="showDeleteConfirm === item.id"
+              class="mt-4 rounded-md bg-red-50 p-3 dark:bg-red-900/20"
+            >
+              <p class="text-sm text-red-700 dark:text-red-300">
+                {{ t('confirm_delete') }}
+              </p>
+              <div class="mt-2 flex justify-end gap-2">
+                <UButton
+                  :label="t('cancel')"
+                  color="neutral"
+                  variant="soft"
+                  size="xs"
+                  @click="handleDeleteCancel"
+                />
+                <UButton
+                  :label="t('delete')"
+                  color="error"
+                  size="xs"
+                  @click="handleDelete(item.id)"
+                />
+              </div>
             </div>
           </div>
         </div>
+      </UCard>
 
-        <div v-if="nextCursor" class="flex justify-center pt-4">
-          <UButton
-            :label="t('load_more')"
-            color="gray"
-            variant="soft"
-            :loading="isLoading"
-            @click="loadMore"
-          />
-        </div>
+      <div v-if="nextCursor" class="flex justify-center pt-4">
+        <UButton
+          :label="t('load_more')"
+          color="neutral"
+          variant="soft"
+          :loading="isLoading"
+          @click="loadMore"
+        />
       </div>
     </div>
-  </div>
+  </UContainer>
 </template>

@@ -215,6 +215,49 @@ export const organizationInvitationTemplate = async (url: string, inviterName: s
   return htmlOutput
 }
 
+export const notificationTemplate = async (title: string, message: string, actionUrl?: string) => {
+  const htmlOutput = await mjml2html(baseTemplate({
+    title,
+    bodyContent: `
+      <p>${message}</p>
+    `,
+    ...(actionUrl ? {
+      button: {
+        text: 'View in MagicSync',
+        url: actionUrl.startsWith('http') ? actionUrl : `${BASE_URL}${actionUrl}`
+      }
+    } : {})
+  }), options)
+
+  return htmlOutput
+}
+
+export const notificationDigestTemplate = async (userName: string, items: { title: string; message: string; actionUrl?: string | null }[]) => {
+  const rows = items.map(item => `
+    <tr>
+      <td style="padding: 12px 15px; border-bottom: 1px solid #eeeeee;">
+        <p style="font-size: 14px; color: ${HEADER_COLOR}; font-weight: bold; margin: 0 0 4px 0;">${item.title}</p>
+        <p style="font-size: 13px; color: ${TEXT_COLOR}; margin: 0;">${item.message}</p>
+      </td>
+    </tr>
+  `).join('')
+  const htmlOutput = await mjml2html(baseTemplate({
+    title: `Your daily digest, ${userName}`,
+    bodyContent: `
+      <p>You have ${items.length} unread notification${items.length === 1 ? '' : 's'} from the last 24 hours:</p>
+      <table style="width: 100%; border: 1px solid #e0e0e0; border-radius: 8px; margin: 15px 0; background: #fafafa;">
+        ${rows}
+      </table>
+    `,
+    button: {
+      text: 'Open Notifications',
+      url: `${BASE_URL}/app/notifications`
+    }
+  }), options)
+
+  return htmlOutput
+}
+
 export const newGoogleReviewAlertTemplate = async (businessName: string, reviewContent: string, reviewerName: string, reviewUrl: string) => {
   const htmlOutput = await mjml2html(baseTemplate({
     title: `New Google Review for ${businessName}!`,

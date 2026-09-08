@@ -32,16 +32,6 @@ head:
       content: index, follow
     - name: author
       content: MagicSync Team
-    - name: og:image
-      content: /img/home-dark.png
-    - name: twitter:image
-      content: /img/home-dark.png
-    - name: twitter:title
-      content: "Later vs MagicSync: Visual Instagram Planning vs Complete Platform"
-    - name: twitter:card
-      content: summary_large_image
-    - name: twitter:description
-      content: Compare Later visual social media scheduler with MagicSync. Instagram grid planning, features, API access, and built-in creative tools.
 ---
 
 ::BaseBlogHero

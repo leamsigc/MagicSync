@@ -1,6 +1,6 @@
 import { decryptKey } from '#layers/BaseAuth/server/utils/AuthHelpers';
 import { BaseSchedulerPlugin, createPostInsightsFallback, extractExternalPostId } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
-import type { PluginPostDetails, PluginSocialMediaAccount, PostResponse, GetCommentsResponse, ReplyCommentResponse, PlatformComment, PostInsight } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
+import type { PluginPostDetails, PluginSocialMediaAccount, PostResponse, GetCommentsResponse, ReplyCommentResponse, PlatformComment, PostInsight, SchedulerPost } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import type { Post, SocialMediaAccount, Asset, PlatformContentOverride } from '#layers/BaseDB/db/schema';
 import { AtpAgent, RichText, AppBskyFeedPost, AppBskyFeedDefs, BlobRef, AppBskyVideoDefs } from '@atproto/api';
 import type { BlueskySettings } from '#layers/BaseScheduler/shared/platformSettings';
@@ -69,6 +69,16 @@ class BadBody extends Error {
 export class BlueskyPlugin extends BaseSchedulerPlugin {
   static readonly pluginName = 'bluesky';
   readonly pluginName = 'bluesky';
+
+  constructor(scheduler: SchedulerPost, options?: Record<string, unknown>) {
+    super(scheduler, options);
+    // Re-run init AFTER super(): with define-semantics class fields,
+    // `private agent!` / `serviceUrl!` are wiped to undefined when the base
+    // constructor returns (base ctor calls init() too early). Without this,
+    // every method using this.agent throws "Cannot read properties of
+    // undefined". Verified with esbuild esnext output.
+    this.init(options as { serviceUrl: string } | undefined);
+  }
 
   private normalizeContent(content: string): string {
     if (!content) return '';
@@ -274,6 +284,110 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
       following: following.data.follows,
       cursor: following.data.cursor,
     };
+  }
+
+  /**
+   * Fresh authenticated agent per call. Never reuse this.agent across
+   * concurrent calls: AtpAgent.login() throws 'Concurrent login detected'
+   * when two logins race on the same instance.
+   */
+  private async freshAuthedAgent(socialMediaAccount: PluginSocialMediaAccount): Promise<AtpAgent> {
+    const pwd = await decryptKey(socialMediaAccount.accessToken);
+    const agent = new AtpAgent({ service: this.serviceUrl || 'https://bsky.social' });
+    await agent.login({ identifier: socialMediaAccount.accountName, password: pwd });
+    return agent;
+  }
+
+  /**
+   * Grow: followers who you don't follow back (high follow-back potential).
+   * Manual follow only — this method never follows anyone by itself.
+   */
+  async getGrowFollowbacks(
+    socialMediaAccount: PluginSocialMediaAccount,
+    options?: { limit?: number }
+  ): Promise<{ did: string; handle: string; displayName?: string; avatar?: string }[]> {
+    const agent = await this.freshAuthedAgent(socialMediaAccount);
+    const actor = socialMediaAccount.accountId;
+    const limit = Math.min(options?.limit || 50, 100);
+    const [followersRes, followingRes] = await Promise.all([
+      agent.getFollowers({ actor, limit }),
+      agent.getFollows({ actor, limit }),
+    ]);
+    const followingDids = new Set(
+      ((followingRes.data.follows || []) as { did?: string }[]).map(f => f.did)
+    );
+    return ((followersRes.data.followers || []) as { did?: string; handle?: string; displayName?: string; avatar?: string }[])
+      .filter(f => f.did && f.handle && !followingDids.has(f.did))
+      .slice(0, limit)
+      .map(f => ({ did: f.did as string, handle: f.handle as string, displayName: f.displayName, avatar: f.avatar }));
+  }
+
+  /**
+   * Grow: suggested follows based on your own network.
+   */
+  async getGrowSuggestions(
+    socialMediaAccount: PluginSocialMediaAccount,
+    options?: { limit?: number }
+  ): Promise<{ did: string; handle: string; displayName?: string; description?: string; avatar?: string; followersCount?: number }[]> {
+    const agent = await this.freshAuthedAgent(socialMediaAccount);
+    const limit = Math.min(options?.limit || 25, 50);
+    // NOTE: getSuggestedFollowsByActor accepts ONLY { actor } — passing
+    // limit throws 'Invalid query parameter: limit'. Slice client-side.
+    const [res, followingRes] = await Promise.all([
+      agent.app.bsky.graph.getSuggestedFollowsByActor({
+        actor: socialMediaAccount.accountId,
+      }),
+      agent.getFollows({ actor: socialMediaAccount.accountId, limit: 100 }),
+    ]);
+    const followingDids = new Set(
+      ((followingRes.data.follows || []) as { did?: string }[]).map(f => f.did)
+    );
+    const suggestions = ((res.data.suggestions || []) as { did?: string; handle?: string; displayName?: string; description?: string; avatar?: string; followersCount?: number }[])
+      .filter(s => s.did && s.handle && !followingDids.has(s.did))
+      .slice(0, limit)
+      .map(s => ({
+        did: s.did as string,
+        handle: s.handle as string,
+        displayName: s.displayName,
+        description: s.description,
+        avatar: s.avatar,
+        followersCount: s.followersCount,
+      }));
+    // Enrich with fresh profiles (follower counts), chunked: getProfiles
+    // accepts max 25 actors per call.
+    try {
+      const dids = suggestions.map(s => s.did);
+      for (let i = 0; i < dids.length; i += 25) {
+        const profiles = await agent.getProfiles({ actors: dids.slice(i, i + 25) });
+        const byDid = new Map(
+          ((profiles.data.profiles || []) as { did?: string; followersCount?: number }[]).map(p => [p.did, p.followersCount])
+        );
+        for (const s of suggestions) {
+          const count = byDid.get(s.did);
+          if (typeof count === 'number') s.followersCount = count;
+        }
+      }
+    } catch {
+      // Enrichment is best-effort; suggestions already carry data
+    }
+    return suggestions;
+  }
+
+  /**
+   * Grow: manually follow an account. Called only from explicit user action —
+   * never automatically.
+   */
+  async followAccount(
+    socialMediaAccount: PluginSocialMediaAccount,
+    did: string
+  ): Promise<{ success: boolean; uri?: string; error?: string }> {
+    try {
+      const agent = await this.freshAuthedAgent(socialMediaAccount);
+      const res = await agent.follow(did);
+      return { success: true, uri: res.uri };
+    } catch (error) {
+      return { success: false, error: (error as Error).message || 'Failed to follow account' };
+    }
   }
 
   /**
@@ -666,9 +780,25 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
     postDetails: PluginPostDetails,
     socialMediaAccount: PluginSocialMediaAccount
   ): Promise<PlatformStats> {
-    const handle = socialMediaAccount.accountId
-
-    const profileStats = await this.getProfile(handle, socialMediaAccount.accessToken)
+    // NOTE: bsky.social AppView requires auth even for profile/feed reads.
+    // Log in first (decrypts the stored app password, same as post flow).
+    // Do NOT pass the stored accessToken to getProfile: it is the encrypted
+    // app password, and getProfile would try agent.login() with it raw.
+    // accountId is the DID (always a valid actor); accountName is the handle.
+    await this.login(socialMediaAccount)
+    const actors = [socialMediaAccount.accountName, socialMediaAccount.accountId].filter(Boolean) as string[]
+    let profileStats: Awaited<ReturnType<BlueskyPlugin['getProfile']>> | undefined
+    let lastError: unknown
+    for (const actor of actors) {
+      try {
+        profileStats = await this.getProfile(actor)
+        break
+      } catch (error) {
+        lastError = error
+      }
+    }
+    if (!profileStats) throw lastError instanceof Error ? lastError : new Error('Failed to fetch Bluesky profile')
+    const handle = profileStats.handle || socialMediaAccount.accountId
 
     let totalEngagement = 0
     let totalPosts = 0

@@ -9,6 +9,13 @@ interface UnreadCountData {
   count: number
 }
 
+export interface NotificationPreferenceState {
+  event: string
+  inApp: boolean
+  email: boolean
+  customized: boolean
+}
+
 export function useNotificationManagement() {
     const { notifications, unreadCount, loading, error } = useNotification()
 
@@ -131,15 +138,65 @@ export function useNotificationManagement() {
         }
     }
 
+    const preferences = ref<NotificationPreferenceState[]>([])
+
+    const fetchPreferences = async () => {
+        loading.value = true
+        error.value = null
+
+        try {
+            const response = await $fetch<NotificationResponse<NotificationPreferenceState[]>>('/api/v1/notifications/preferences', {
+                method: 'GET'
+            })
+
+            if (response.success) {
+                preferences.value = response.data
+            }
+
+            return response
+        } catch (err: unknown) {
+            error.value = err instanceof Error ? err.message : 'Failed to fetch notification preferences'
+            throw err
+        } finally {
+            loading.value = false
+        }
+    }
+
+    const updatePreferences = async (prefs: { event: string; inApp?: boolean; email?: boolean }[]) => {
+        loading.value = true
+        error.value = null
+
+        try {
+            const response = await $fetch<NotificationResponse<NotificationPreferenceState[]>>('/api/v1/notifications/preferences', {
+                method: 'PUT',
+                body: { preferences: prefs }
+            })
+
+            if (response.success) {
+                preferences.value = response.data
+            }
+
+            return response
+        } catch (err: unknown) {
+            error.value = err instanceof Error ? err.message : 'Failed to update notification preferences'
+            throw err
+        } finally {
+            loading.value = false
+        }
+    }
+
     return {
         notifications,
         unreadCount,
         loading,
         error,
+        preferences,
         fetchNotifications,
         markAsRead,
         markAllAsRead,
         deleteNotification,
-        fetchUnreadCount
+        fetchUnreadCount,
+        fetchPreferences,
+        updatePreferences
     }
 }

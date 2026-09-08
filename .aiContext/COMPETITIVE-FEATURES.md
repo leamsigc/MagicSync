@@ -6,16 +6,17 @@
 |---|-----------|----------|---------------------|
 | **Platforms** | 8 | 10 | **18** |
 | **Analytics** | Deep (paid tiers) | Deep (adaptive collection) | **Deep (adaptive collection)** ✅ |
-| **Inbox/DMs** | Full unified inbox | Full unified inbox | Unified inbox (comments, no DMs) |
+| **Inbox/DMs** | Full unified inbox | Full unified inbox | Unified inbox (comments + Facebook DMs) |
 | **AI Features** | Caption writer, ideas | Basic AI writing | **Advanced (RAG, agents, carousel)** |
 | **Image Editor** | Basic crop/filter | Full canvas editor | **Full canvas + 19 plugins** |
 | **Video Editor** | Basic trim | Full timeline editor | **Multi-cam cropper + silence remover** |
 | **Content Studio** | Basic | Basic | **10+ creative tools** |
-| **MCP/Automation** | No | Full MCP server | Python client only |
+| **MCP/Automation** | No | Full MCP server | **Wave 1 live (18 tools + 4 resources on `/mcp`)** ✅ |
 | **Mobile App** | iOS + Android | Android | PWA-ready |
-| **Grow Feature** | No | Yes (Bluesky/Mastodon) | No |
+| **Grow Feature** | No | Yes (Bluesky/Mastodon) | **Yes (Bluesky)** ✅ |
 | **Auto-Repost** | No | Yes (4 platforms) | **Yes (rules + scheduler + UI)** |
-| **Notifications** | Full email + push | In-app + email | No |
+| **Notifications** | Full email + push | In-app + email | **In-app + email + digest** ✅ |
+| **Auto-Reply (comment→DM)** | Paid (Manychat) | No | No → **[PRD-AUTO-REPLY.md](./PRD-AUTO-REPLY.md)** |
 | **Self-Host** | No | Yes (Docker) | **Yes (Docker)** |
 
 ---
@@ -116,12 +117,12 @@ Full plugins with OAuth, posting, comments, stats:
 | Feature | Later | OpenPost | MagicSync |
 |---------|-------|----------|-----------|
 | Unified inbox | Yes | Yes | **Yes (/app/inbox)** ✅ |
-| DM management | IG, FB | X, Bluesky, FB, IG, Mastodon | **No** (planned) |
+| DM management | IG, FB | X, Bluesky, FB, IG, Mastodon | **Yes (Facebook; rest planned)** ✅ |
 | Comment management | IG, FB, TikTok | X, Mastodon, Bluesky, LinkedIn, Threads, FB, IG, YouTube | **Yes (reply/like/hide/delete)** ✅ |
 | Reply from inbox | Yes | Yes (per-platform support) | **Yes** ✅ |
 | Like from inbox | No | Yes (X, Mastodon) | **Yes** ✅ |
 | Moderate (hide/delete) | Limited | Yes (per-platform) | **Yes (FB, IG, X)** ✅ |
-| Notification system | Yes (push + email) | In-app + email (immediate/daily) | **No** (planned) |
+| Notification system | Yes (push + email) | In-app + email (immediate/daily) | **Yes (in-app + email + digest)** ✅ |
 
 ### HIGH-PRIORITY GAPS
 
@@ -129,22 +130,23 @@ Full plugins with OAuth, posting, comments, stats:
 - OpenPost: X, Mastodon, Bluesky, LinkedIn — auto-repost same platform
 - We have: Same-platform repost scheduling (interval/count rules per post, `repost:process` every 15m, config UI at `/app/posts/auto-repost`, `repost_count`/`repost_parent_id` tracking)
 
-#### 4. Grow Feature — MISSING
+#### 4. Grow Feature — BLUESKY DONE ✅ (Mastodon pending — no plugin yet)
 - OpenPost: Follow recommendations for Bluesky/Mastodon with discovery, mutuals, follow-back potential
-- We have: Nothing
+- We have: `/app/grow` — follow-back candidates + network suggestions with scoring, manual Follow buttons (never automatic)
 
-#### 5. Notification System — MISSING
+#### 5. Notification System — DONE ✅ (see PRD-NOTIFICATIONS.md)
 - OpenPost: In-app + email, per-event config, workspace muting, daily digest
-- We have: Nothing
+- We have: In-app + immediate email + daily digest (`notifications:digest`), per-event prefs, mute-with-expiry, triggers (post failures, comment replies, bulk ops)
 
-#### 6. MCP Server — INCOMPLETE
+#### 6. MCP Server — WAVE 1 DONE ✅ (see PRD-MCP-TOOLKIT.md; Wave 2+ pending)
 - OpenPost: Full MCP server (`search_operations`, `query_operation`, `execute_operation`)
-- We have: Python client only, no Nuxt MCP tools
+- We have: **18 tools + 4 resources live on `/mcp`** (posts CRUD/publish-now/retry/preview/status, platforms, account+post stats, AI caption/ideas/hashtags, media; calendar/platform-status/post-details/analytics-summary resources), Bearer `org_` keys + OAuth via `@better-auth/mcp`, audit logging
+- Pending (Wave 2+): scoped-key issuance UI, DB rate-limit tuning, Wave 4 tools (inbox/RAG/templates), ChatGPT-Token web e2e, `publish-now` live-fire
 
-#### 7. Best Time to Post — MISSING
+#### 7. Best Time to Post — DONE ✅ (2026-09-07)
 - Later: AI-powered per-platform
 - OpenPost: Not implemented
-- We have: Nothing
+- We have: Heuristic per-platform top slots from `post_metrics` history (avg engagement by publish hour/day UTC, min 2 posts per slot) — `GET /api/v1/stats?mode=best-times` + dashboard "Best Times to Post" card
 
 ### MEDIUM-PRIORITY GAPS
 
@@ -156,7 +158,15 @@ Full plugins with OAuth, posting, comments, stats:
 #### 9. Content Approval Workflows — MISSING
 - Later: Full approval flow
 - OpenPost: Workspace roles but no formal approval
-- We have: Schema support but no UI
+- We have: No approval model (`posts.status` is `pending/published/failed` only) and no UI
+
+### NEW GAPS (from OpenReply research, 2026-09-07)
+
+#### 16. Auto-Reply / Comment-to-DM — DONE ✅ Phase A (see PRD-AUTO-REPLY.md)
+- ManyChat: Paid keyword→DM automation; OpenReply (2.1k★ open-source): keyword→DM, story-DM triggers, tracked links, follow gate, inbox, DM logs
+- Later/OpenPost: Neither has this — **pure differentiator, now shipped**
+- We have: IG-first vertical slice — keyword campaigns (`/app/auto-reply`), `sendPrivateReply` on IG plugin, tracked `/r/{campaign}/{link}` links + clicks, DM logs + stats, `autoreply:process` every 15m, per-commenter cooldown, 750/hr cap — all state in `entity_details` (zero migrations, `db:generate` clean)
+- Phase B pending: webhooks, story-DM triggers, follow-gate enforcement, IG inbox read/reply
 
 #### 10. Link in Bio — MISSING
 - Later: Full implementation
@@ -207,10 +217,10 @@ Full plugins with OAuth, posting, comments, stats:
 - [ ] Add video editor timeline (not just cropper)
 
 ### 4. MCP Toolkit Integration (Unique)
-- [ ] **AI Agent Access**: Full MCP server in Nuxt
+- [x] **AI Agent Access**: Full MCP server in Nuxt (Wave 1: 18 tools + 4 resources on `/mcp`)
 - [ ] **Natural Language Scheduling**: "Schedule a post about X on Tuesday at 3pm"
-- [ ] **AI Assistant Tools**: Let AI agents create, edit, schedule, and analyze posts
-- [ ] **Programmatic API**: Full MCP server for developer integrations
+- [x] **AI Assistant Tools**: Let AI agents create, edit, schedule, and analyze posts (posts/stats/AI/media tools live)
+- [x] **Programmatic API**: Full MCP server for developer integrations (Bearer `org_` keys + OAuth)
 - [ ] **Custom Workflows**: User-defined AI automation rules
 
 ### 5. Self-Hosting Advantage
@@ -333,16 +343,16 @@ Full plugins with OAuth, posting, comments, stats:
 | **Analytics retention** | 2yr | Indefinite | **Indefinite** | **Indefinite** |
 | **Analytics collection** | Daily | Adaptive | **Adaptive** | **Adaptive** |
 | **Unified inbox** | Yes | Yes | **Yes (comments)** | **Yes** |
-| **DM support** | IG, FB | X, Bluesky, FB, IG, Mastodon | No | **Planned** |
+| **DM support** | IG, FB | X, Bluesky, FB, IG, Mastodon | **Facebook** | **Planned** |
 | **Comment moderation** | Limited | Full | **Full (reply/like/hide/delete)** | **Full (reply/like/hide/delete)** |
 | **Image editor** | Basic | Full | **Full (19 plugins)** | **Full (19 plugins)** |
 | **Video editor** | Basic | Full | **Multi-cam cropper** | **Timeline editor** |
 | **Creative tools** | 2-3 | 2-3 | **10+** | **10+** |
 | **AI features** | Caption, ideas | Basic | **Advanced (RAG, agents)** | **Advanced+** |
-| **MCP server** | No | Yes | Python client | **Full Nuxt MCP** |
+| **MCP server** | No | Yes | **Wave 1 (18 tools + 4 resources)** | **Full Nuxt MCP** |
 | **Auto-repost** | No | Yes | **Yes (rules + scheduler + UI)** | **Yes** |
-| **Grow feature** | No | Bluesky/Mastodon | No | **Bluesky/Mastodon** |
-| **Notifications** | Push + email | In-app + email | No | **In-app + email** |
+| **Grow feature** | No | Bluesky/Mastodon | **Bluesky** | **Bluesky/Mastodon** |
+| **Notifications** | Push + email | In-app + email | **In-app + email + digest** | **In-app + email** |
 | **Mobile app** | iOS + Android | Android | PWA-ready | **PWA + Android** |
 | **Self-host** | No | Yes | **Yes (Docker)** | **Yes (Docker)** |
 | **Bulk scheduling** | CSV | No | **CSV + AI** | **CSV + AI** |
@@ -354,3 +364,4 @@ Full plugins with OAuth, posting, comments, stats:
 | **Text behind image** | No | No | **Yes** | **Yes** |
 | **Carousel creator** | No | No | **Yes (animated)** | **Yes (animated)** |
 | **OG image generator** | No | No | **Yes** | **Yes** |
+| **Auto-reply (comment→DM)** | Paid (Manychat) | No | **Yes (Phase A live)** | **Yes** |

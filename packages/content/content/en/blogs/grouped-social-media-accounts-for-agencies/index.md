@@ -32,16 +32,6 @@ head:
       content: index, follow
     - name: author
       content: MagicSync Team
-    - name: og:image
-      content: /img/magicSync-connect-provider.png
-    - name: twitter:image
-      content: /img/magicSync-connect-provider.png
-    - name: twitter:title
-      content: "Grouped Social Media Accounts by Business: Agency Management Made Easy"
-    - name: twitter:card
-      content: summary_large_image
-    - name: twitter:description
-      content: Organize social media accounts by business or client with MagicSync's grouped account management. Perfect for agencies handling multiple brands from one dashboard.
 ---
 
 ::BaseBlogHero

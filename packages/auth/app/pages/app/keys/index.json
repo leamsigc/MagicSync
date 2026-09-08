@@ -48,6 +48,7 @@
     "noGrantsDescription": "Connect ChatGPT or Claude via OAuth and they will appear here.",
     "grantClient": "App",
     "grantScopes": "Access",
+    "grantBusiness": "Business",
     "grantGranted": "Granted",
     "grantRevoke": "Revoke",
     "grantRevoked": "Access revoked",

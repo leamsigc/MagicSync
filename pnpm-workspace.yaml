@@ -100,6 +100,7 @@ catalog:
   "wavesurfer.js": 7.12.11
   "@takumi-rs/core": "2.13.6"
   onnxruntime-web: 1.29.0
+  "nuxtseo-layer-devtools": "5.3.14"
 
 minimumReleaseAgeExclude:
   - '@ai-sdk/gateway@4.0.75'

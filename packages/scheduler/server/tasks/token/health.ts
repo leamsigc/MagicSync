@@ -1,5 +1,6 @@
 import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service'
 import { auth } from '#layers/BaseAuth/lib/auth'
+import { refreshFacebookPageToken } from '#layers/BaseScheduler/server/services/TokenRefresh.service'
 
 export default defineTask({
   meta: {
@@ -23,6 +24,19 @@ export default defineTask({
 
     for (const a of needsAttention) {
       byPlatform[a.platform] = (byPlatform[a.platform] || 0) + 1
+      // Facebook has no refresh tokens (Better Auth can't renew it): renew
+      // via token exchange + page token fetch instead. Page tokens obtained
+      // this way don't expire, so this also ends the 6-hour failure loop.
+      if (a.platform === 'facebook') {
+        const renewed = await refreshFacebookPageToken(a.userId, a.id, a.accountId)
+        if (renewed.error) {
+          console.error(`[token:health] Failed to refresh token for ${a.platform} account ${a.id}`, renewed.error)
+          await socialMediaAccountService.updateAccount(a.id, { isActive: false })
+        } else {
+          refreshedCount++
+        }
+        continue
+      }
       try {
         // Resolve the Better Auth row id first: passing our own account id
         // (or the provider account id) never matches and throws
@@ -38,18 +52,26 @@ export default defineTask({
         // Use Better Auth to refresh token — it handles provider-specific logic,
         // PKCE, and client credentials internally. userId is passed because
         // background jobs have no session headers.
+        // No `headers`: even empty Headers make Better Auth treat this as an
+        // HTTP caller and throw UNAUTHORIZED with no session. Omitted, the
+        // explicit userId below is accepted for trusted server-side calls.
         const tokenResp = await auth.api.getAccessToken({
           body: {
             accountId: providerAccount.id,
             userId: a.userId,
           },
-          headers: new Headers(),
         })
 
         const freshToken = (tokenResp as any)?.accessToken
+        const freshRefreshToken = (tokenResp as any)?.refreshToken
         const expiresAt = (tokenResp as any)?.accessTokenExpiresAt
         if (freshToken) {
+          // Mirror the renewed tokens onto our row. Previously only
+          // isActive/lastSyncAt/tokenExpiresAt were written, so plugins kept
+          // using the stale (expired) access token forever.
           await socialMediaAccountService.updateAccount(a.id, {
+            accessToken: freshToken,
+            ...(freshRefreshToken ? { refreshToken: freshRefreshToken } : {}),
             isActive: true,
             lastSyncAt: new Date(),
             ...(expiresAt ? { tokenExpiresAt: new Date(expiresAt) } : {}),

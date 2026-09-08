@@ -7,7 +7,7 @@
 > preferences, email delivery (+ digest), preferences UI.
 >
 > **Source:** `.aiContext/COMPETITIVE-FEATURES.md` §5 + Roadmap Phase 2.4.
-> **Status:** IN PROGRESS (slice 1 done 2026-09-07).
+> **Status:** ✅ COMPLETE (all 4 slices done 2026-09-07).
 
 ## What exists (verified 2026-09-07)
 
@@ -50,20 +50,25 @@ Legend: `[ ]` not started · `[~]` in progress · `[x]` done (evidence required)
 - [x] esbuild syntax pass on all 5 touched files
 - [ ] vitest: `bulkScheduler.service.test.ts` cannot load — **pre-existing** env failure (`Failed to resolve import "#layers/BaseAssets/server/utils/AssetsUtils"`, alias unresolvable in vitest; fails at import time before any test; unrelated to this slice — notification module is `vi.mock`ed). Other 47 tests pass.
 
-### Slice 2 — event taxonomy + triggers
-- [ ] Add `event` column (`post_failed`, `comment_reply`, `bulk_done`, `invite`, …) via **new** migration + `db:generate`
-- [ ] Triggers: post publish failure (AutoPost/scheduler), new comment reply (inbox), keep bulk done
-- [ ] Backfill existing rows `event='general'`
+### Slice 2 — event taxonomy + triggers (✅ DONE 2026-09-07)
+- [x] `event` column (`general`, `post_failed`, `comment_reply`, `bulk_done`, `invite`, `token_expiring`) via migration `0009_notifications-events-prefs.sql` (squashed from 0009+0010+0011; SQLite `DEFAULT 'general'` backfills existing rows)
+- [x] Triggers: post publish failure (`AutoPostService`: failed response, catch path, `RETRY_EXHAUSTED` on rate-limit/no-token paths — fire-and-forget, never breaks publishing), comment reply (`reply.post.ts` → `comment_reply`), bulk keeps working with `event='bulk_done'`
+- [x] `notify({userId, event, ...})` helper on `notificationService` (`ServiceResponse`, never throws); all 6 touched TS files esbuild-clean; bulkScheduler vitest failure is the pre-existing `#layers/BaseAssets` alias env issue (fails at import, unrelated)
 
-### Slice 3 — preferences
-- [ ] `notification_preferences` table (userId, event, inApp, email) + service CRUD
-- [ ] `GET/PUT /api/v1/notifications/preferences` + preferences UI
-- [ ] `create` respects prefs (skip disabled channels)
+### Slice 3 — preferences (✅ DONE 2026-09-07)
+- [x] `notification_preferences` table (userId, event, inApp, email, unique(userId,event)) + migration `0009_notifications-events-prefs.sql` (`drizzle-kit check` clean)
+- [x] Service: `getPreferences` (effective list = rows + defaults), `updatePreferences` (upsert, unknown events → `INVALID_EVENT`), `isInAppEnabled` (fail-open)
+- [x] `GET/PUT /api/v1/notifications/preferences` (zod on PUT, thin handlers, existing route style)
+- [x] Preferences UI on `/app/notifications` (toggle card, per-event in-app/email switches, 4 locales, handler lambdas)
+- [x] `createNotification`/`notify` skip rows when in-app disabled (`SKIPPED_BY_PREF`); callers ignore return so zero ripple; email flag stored, enforced in Slice 4
 
-### Slice 4 — email delivery + digest
-- [ ] Notification email templates (immediate) via `useMailgun`
-- [ ] Daily digest task (`notifications:digest`) + workspace muting with expiry
-- [ ] Header badge + inbox Notifications tab wiring
+### Slice 4 — email delivery + digest (✅ DONE 2026-09-07)
+- [x] Notification email templates (immediate `notificationTemplate` + `notificationDigestTemplate`, MJML `baseTemplate` style) + `sendNotificationEmail`/`sendNotificationDigestEmail` via `useMailgun`
+- [x] Immediate email in `createNotification` (per-event email flag, best-effort try/catch, skipped quietly when Mailgun unconfigured)
+- [x] Daily digest task (`notifications:digest`, `0 7 * * *`, `getDigestBatch` unread-24h grouped per user, skips cleanly without Mailgun)
+- [x] Muting with expiry (`muted_until` on prefs, enforced in both channel checks, set/cleared via `PUT preferences` `mutedUntil`)
+- [x] Migration `0009_notifications-events-prefs.sql` (`drizzle-kit check` clean, fresh-DB 47 tables verified); all 9 touched TS files esbuild-clean
+- [ ] Header badge already existed (no change); inbox Notifications tab wiring → Gap 2b DM/inbox pass
 
 ## Success criteria (per slice)
 

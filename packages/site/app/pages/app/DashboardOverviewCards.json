@@ -34,6 +34,7 @@
     "quickCreatePost": "Create post",
     "quickConnect": "Connect accounts",
     "quickCalendar": "View calendar",
+    "quickInbox": "Open inbox",
     "getting_started.business.label": "Set up your business",
     "getting_started.business.description": "Tell us about your business so we can tailor your content.",
     "getting_started.business.cta": "Add business",
@@ -44,6 +45,10 @@
     "getting_started.post.description": "Write once and publish everywhere.",
     "getting_started.post.cta": "Create post",
     "topPosts": "Top Posts",
+    "bestTimes": "Best Times to Post",
+    "bestTimesDescription": "Top posting slots by average engagement (UTC)",
+    "bestTimeSlot": "Slot",
+    "bestPick": "Best pick",
     "repurpose": "Repurpose",
     "exportCsv": "Export CSV",
     "range7": "7 Days",
@@ -55,7 +60,8 @@
     "syncStatus": "Sync status",
     "collecting": "Collecting...",
     "noTopPosts": "No top posts data yet",
-    "topPostsDescription": "Your best performing posts by engagement"
+    "topPostsDescription": "Your best performing posts by engagement",
+    "quickAutoReply": "Auto-reply"
   },
   "es": {
     "totalFollowers": "Total Seguidores",
@@ -92,6 +98,7 @@
     "quickCreatePost": "Crear publicación",
     "quickConnect": "Conectar cuentas",
     "quickCalendar": "Ver calendario",
+    "quickInbox": "Abrir bandeja",
     "getting_started.business.label": "Configura tu negocio",
     "getting_started.business.description": "Cuéntanos sobre tu negocio para personalizar tu contenido.",
     "getting_started.business.cta": "Agregar negocio",
@@ -102,6 +109,10 @@
     "getting_started.post.description": "Escribe una vez y publica en todas partes.",
     "getting_started.post.cta": "Crear publicación",
     "topPosts": "Publicaciones Destacadas",
+    "bestTimes": "Mejores horas para publicar",
+    "bestTimesDescription": "Mejores horarios por interacción media (UTC)",
+    "bestTimeSlot": "Horario",
+    "bestPick": "Mejor opción",
     "repurpose": "Reutilizar",
     "exportCsv": "Exportar CSV",
     "range7": "7 Días",
@@ -113,7 +124,8 @@
     "syncStatus": "Estado de sincronización",
     "collecting": "Recopilando...",
     "noTopPosts": "Aún no hay datos de publicaciones destacadas",
-    "topPostsDescription": "Tus mejores publicaciones por interacción"
+    "topPostsDescription": "Tus mejores publicaciones por interacción",
+    "quickAutoReply": "Respuesta automática"
   },
   "de": {
     "totalFollowers": "Follower Gesamt",
@@ -150,6 +162,7 @@
     "quickCreatePost": "Beitrag erstellen",
     "quickConnect": "Konten verbinden",
     "quickCalendar": "Kalender ansehen",
+    "quickInbox": "Posteingang öffnen",
     "getting_started.business.label": "Geschäft einrichten",
     "getting_started.business.description": "Erzählen Sie uns von Ihrem Geschäft, damit wir Inhalte anpassen können.",
     "getting_started.business.cta": "Geschäft hinzufügen",
@@ -160,6 +173,10 @@
     "getting_started.post.description": "Einmal schreiben und überall veröffentlichen.",
     "getting_started.post.cta": "Beitrag erstellen",
     "topPosts": "Top-Beiträge",
+    "bestTimes": "Beste Posting-Zeiten",
+    "bestTimesDescription": "Top-Zeitfenster nach Ø-Engagement (UTC)",
+    "bestTimeSlot": "Zeitfenster",
+    "bestPick": "Top-Wahl",
     "repurpose": "Wiederverwenden",
     "exportCsv": "CSV exportieren",
     "range7": "7 Tage",
@@ -171,7 +188,8 @@
     "syncStatus": "Sync-Status",
     "collecting": "Sammelt...",
     "noTopPosts": "Noch keine Top-Beiträge vorhanden",
-    "topPostsDescription": "Ihre besten Beiträge nach Engagement"
+    "topPostsDescription": "Ihre besten Beiträge nach Engagement",
+    "quickAutoReply": "Auto-Antwort"
   },
   "fr": {
     "totalFollowers": "Total Abonnés",
@@ -208,6 +226,7 @@
     "quickCreatePost": "Créer une publication",
     "quickConnect": "Connecter les comptes",
     "quickCalendar": "Voir le calendrier",
+    "quickInbox": "Ouvrir la boîte",
     "getting_started.business.label": "Configurez votre entreprise",
     "getting_started.business.description": "Parlez-nous de votre entreprise pour adapter votre contenu.",
     "getting_started.business.cta": "Ajouter une entreprise",
@@ -218,6 +237,10 @@
     "getting_started.post.description": "Écrivez une fois et publiez partout.",
     "getting_started.post.cta": "Créer une publication",
     "topPosts": "Publications Phares",
+    "bestTimes": "Meilleurs moments pour publier",
+    "bestTimesDescription": "Meilleurs créneaux par engagement moyen (UTC)",
+    "bestTimeSlot": "Créneau",
+    "bestPick": "Top choix",
     "repurpose": "Réutiliser",
     "exportCsv": "Exporter CSV",
     "range7": "7 Jours",
@@ -229,6 +252,7 @@
     "syncStatus": "État de synchronisation",
     "collecting": "Collecte...",
     "noTopPosts": "Aucune publication phare pour le moment",
-    "topPostsDescription": "Vos meilleures publications par engagement"
+    "topPostsDescription": "Vos meilleures publications par engagement",
+    "quickAutoReply": "Réponse auto"
   }
 }

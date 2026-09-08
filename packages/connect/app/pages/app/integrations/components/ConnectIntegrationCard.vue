@@ -39,7 +39,8 @@ const editModalStatus = ref(false);
 const props = withDefaults(defineProps<Props>(), { showPages: true, showMenu: true, platform: '', accountId: '' });
 
 const reconnectPlatform = computed(() => props.platform || props.name);
-const reconnectAccountId = computed(() => props.accountId || props.id);
+const reconnectAccountId = computed(() => props.accountId || props.id || '');
+const canReconnect = computed(() => reconnectAccountId.value.length > 0);
 
 const items = computed(() => [
   [
@@ -55,13 +56,17 @@ const items = computed(() => [
           },
         ]
       : []),
-    {
-      label: $t('menu.reconnect'),
-      icon: 'i-heroicons-arrow-path',
-      onSelect: () => {
-        HandleReconnect(reconnectAccountId.value, reconnectPlatform.value);
-      },
-    },
+    ...(canReconnect.value
+      ? [
+          {
+            label: $t('menu.reconnect'),
+            icon: 'i-heroicons-arrow-path',
+            onSelect: () => {
+              HandleReconnect(reconnectAccountId.value, reconnectPlatform.value);
+            },
+          },
+        ]
+      : []),
     {
       label: $t('menu.disconnect'),
       icon: 'i-heroicons-link-slash',
@@ -81,16 +86,27 @@ const items = computed(() => [
 
 const HandleConnectTo = async (page: unknown) => {
   const pageWithType = page as FacebookPage & { platformType?: string };
+  // Fall back to the card's own provider: some pages payloads omit
+  // platformType, and a silent no-op here used to just close the modal
+  // with no account created.
+  const platformType = pageWithType.platformType || props.platform || '';
 
   try {
-    if (pageWithType.platformType === 'youtube') {
+    if (platformType === 'youtube') {
       await HandleConnectToYoutube(pageWithType);
-    } else if (pageWithType.platformType === 'googlemybusiness') {
+    } else if (platformType === 'googlemybusiness') {
       await HandleConnectToGMB(pageWithType);
     } else if (props.name === 'facebook') {
       await HandleConnectToFacebook(page as FacebookPage);
     } else if (props.name === 'linkedin-page') {
       await HandleConnectToLinkedIn(page as LinkedInPage);
+    } else {
+      useToast().add({
+        title: 'Connection Failed',
+        description: `Unsupported page type for provider '${props.name}'`,
+        icon: 'i-heroicons-x-circle',
+        color: 'error',
+      });
     }
   } catch {
     // Error toast already handled by the respective handler
@@ -157,10 +173,10 @@ const showReconnectBanner = computed(() => hasExpiredToken.value || isExpiringSo
             </UTooltip>
           </template>
         </div>
-        <UButton v-if="showReconnectBanner" color="primary" variant="soft" size="sm" class="mt-3"
+        <UButton v-if="showReconnectBanner && canReconnect" color="primary" variant="soft" size="sm" class="mt-3"
           :label="props.health?.status === 'expired' ? 'Token Expired — Reconnect' : 'Token Expiring Soon — Reconnect'"
           icon="i-heroicons-arrow-path" @click="HandleReconnect(reconnectAccountId.value, reconnectPlatform.value)" />
-        <UButton v-if="showReconnectBanner && !props.connected" color="red" variant="solid" size="sm" class="mt-2"
+        <UButton v-if="showReconnectBanner && !props.connected && canReconnect" color="red" variant="solid" size="sm" class="mt-2"
           label="Account Inactive — Reconnect"
           icon="i-heroicons-link-slash" @click="HandleReconnect(reconnectAccountId.value, reconnectPlatform.value)" />
       </section>

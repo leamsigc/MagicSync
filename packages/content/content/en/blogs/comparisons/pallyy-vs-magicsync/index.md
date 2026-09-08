@@ -32,16 +32,6 @@ head:
       content: index, follow
     - name: author
       content: MagicSync Team
-    - name: og:image
-      content: /img/home-dark.png
-    - name: twitter:image
-      content: /img/home-dark.png
-    - name: twitter:title
-      content: "Pallyy vs MagicSync: Creator-Focused Visual Scheduling"
-    - name: twitter:card
-      content: summary_large_image
-    - name: twitter:description
-      content: Compare Pallyy visual social media scheduler with MagicSync. Instagram focus, visual planning, platform support, and creative tools.
 ---
 
 ::BaseBlogHero

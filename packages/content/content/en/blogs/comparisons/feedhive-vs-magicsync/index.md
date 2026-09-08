@@ -32,16 +32,6 @@ head:
       content: index, follow
     - name: author
       content: MagicSync Team
-    - name: og:image
-      content: /img/home-dark.png
-    - name: twitter:image
-      content: /img/home-dark.png
-    - name: twitter:title
-      content: "FeedHive vs MagicSync: AI-Powered Scheduling Compared"
-    - name: twitter:card
-      content: summary_large_image
-    - name: twitter:description
-      content: Compare FeedHive AI social media scheduler with MagicSync. AI features, queue management, platform support, and creative tools.
 ---
 
 ::BaseBlogHero

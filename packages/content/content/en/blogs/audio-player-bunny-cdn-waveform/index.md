@@ -32,16 +32,6 @@ head:
       content: index, follow
     - name: author
       content: MagicSync Team
-    - name: og:image
-      content: /img/audio-player.png
-    - name: twitter:image
-      content: /img/audio-player.png
-    - name: twitter:title
-      content: How to Stream Audio with a Custom Waveform Player from Bunny CDN
-    - name: twitter:card
-      content: summary_large_image
-    - name: twitter:description
-      content: Stream audio files from Bunny CDN or play local files with a beautiful waveform visualization player. Free online audio player with visualizer controls.
 ---
 
 ::BaseBlogHero

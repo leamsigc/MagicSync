@@ -40,3 +40,8 @@ The following should be avoided at all costs.
  @click="audioTab = 'file'"
 ```
 right within the `@click` handler. Instead, ` @click="() => {audioTab = 'file'}"`. or create a handler function in the script block.
+
+
+
+### Must do everitime
+it has to pass cyclomatic complexity lint

@@ -32,16 +32,6 @@ head:
       content: index, follow
     - name: author
       content: MagicSync Team
-    - name: og:image
-      content: /img/flutter-clipper.png
-    - name: twitter:image
-      content: /img/flutter-clipper.png
-    - name: twitter:title
-      content: How to Create Custom Shapes with Flutter Clipper Path Generator
-    - name: twitter:card
-      content: summary_large_image
-    - name: twitter:description
-      content: A comprehensive guide on creating complex custom shapes, waves, and organic designs for your Flutter applications with MagicSync's free Flutter Clipper online generator.
 ---
 
 ::BaseBlogHero

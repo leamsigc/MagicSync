@@ -32,16 +32,6 @@ head:
       content: index, follow
     - name: author
       content: MagicSync Team
-    - name: og:image
-      content: /img/ImageEditor.png
-    - name: twitter:image
-      content: /img/ImageEditor.png
-    - name: twitter:title
-      content: The Ultimate Free Online Image Editor for Social Media Managers
-    - name: twitter:card
-      content: summary_large_image
-    - name: twitter:description
-      content: Edit your images for free, resize designs using aspect-ratio templates, and create spectacular social media graphics with MagicSync's built-in canvas editor.
 ---
 
 ::BaseBlogHero

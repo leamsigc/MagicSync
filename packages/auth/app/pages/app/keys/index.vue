@@ -179,6 +179,11 @@ const grantColumns: TableColumn<OAuthGrantItem>[] = [
     cell: ({ row }) => h(UBadge, { variant: 'soft' }, () => grantAccessLabel(row.getValue('scopes'))),
   },
   {
+    accessorKey: 'businessName',
+    header: t('grantBusiness'),
+    cell: ({ row }) => row.getValue('businessName') || row.getValue('businessId') || '—',
+  },
+  {
     accessorKey: 'createdAt',
     header: t('grantGranted'),
     cell: ({ row }) => formatDate(row.getValue('createdAt')),

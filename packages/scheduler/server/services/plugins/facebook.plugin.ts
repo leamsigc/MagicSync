@@ -1,5 +1,5 @@
 import type { Asset, PostWithAllData, SocialMediaAccount, PlatformContentOverride } from '#layers/BaseDB/db/schema';
-import type { PostResponse, GetCommentsResponse, ReplyCommentResponse, PlatformComment, PluginPostDetails, PluginSocialMediaAccount, PostInsight, PlatformStats } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
+import type { PostResponse, GetCommentsResponse, ReplyCommentResponse, PlatformComment, PluginPostDetails, PluginSocialMediaAccount, PostInsight, PlatformStats, PlatformConversation, GetConversationsResponse } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import type { FacebookSettings } from '#layers/BaseScheduler/shared/platformSettings';
 import dayjs from 'dayjs';
 import { BaseSchedulerPlugin, createPostInsightsFallback, extractExternalPostId } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
@@ -9,7 +9,7 @@ type FacebookApiInsightValue = { value: number; end_time: string };
 type FacebookApiInsight = { name: string; values?: FacebookApiInsightValue[] };
 type FacebookApiMetric = { name: string; values?: { value: number }[] };
 type FacebookApiPostInsightMetric = { name: string; values?: { value: number | Record<string, number> }[] };
-type FacebookApiReactionType = { like?: number; love?: number; haha?: number; wow?: number; sorry?: number; anger?: number; [key: string]: number | undefined };
+type FacebookApiReactionType = { like?: number; love?: number; haha?: number; wow?: number; sorry?: number; anger?: number;[key: string]: number | undefined };
 type FacebookApiComment = {
   id: string;
   message?: string;
@@ -68,6 +68,14 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     };
   }
 
+  // NOTE: standard interface methods (getComments, replyToComment,
+  // deleteComment, hideComment, getConversations, replyToConversation,
+  // getPostInsights) must NOT be listed here. SchedulerPost.use() binds
+  // exposed methods with a prepended args array, which would shadow the
+  // prototype delegators and shift every argument by one — the plugin then
+  // receives [args] as socialMediaAccount (accountId/accessToken undefined
+  // → Meta "Cannot parse access token"). Only Facebook-specific helpers
+  // without a prototype equivalent belong below.
   public override exposedMethods = [
     'handleErrors',
     'reConnect',
@@ -75,19 +83,12 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     'fetchPageInformation',
     'analytics',
     'getPageInsights',
-    'getPostInsights',
-    'getComments',
     'getLatestComments',
     'getCommentCount',
-    'replyToComment',
-    'deleteComment',
-    'hideComment',
     'updateComment',
     'addCommentToPost',
     'getTaggedPosts',
     'getMentions',
-    'getConversations',
-    'replyToConversation',
     'getPageImpressionsUnique',
     'getPageReviews',
     'createPost',
@@ -116,6 +117,57 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
    */
   private _getGraphApiUrl(path: string): string {
     return `${this.GRAPH_API_BASE_URL}/${this.API_VERSION}${path}`;
+  }
+
+  /**
+   * Exchange any valid user token for a 60-day long-lived one.
+   */
+  async exchangeLongLivedUserToken(
+    userAccessToken: string
+  ): Promise<{ userToken: string }> {
+    const appId = process.env.NUXT_FACEBOOK_CLIENT_ID;
+    const appSecret = process.env.NUXT_FACEBOOK_CLIENT_SECRET;
+    if (!appId || !appSecret) {
+      throw new Error('Facebook app credentials are not configured');
+    }
+    const exchangeUrl = `${this.GRAPH_API_BASE_URL}/${this.API_VERSION}/oauth/access_token?` + new URLSearchParams({
+      grant_type: 'fb_exchange_token',
+      client_id: appId,
+      client_secret: appSecret,
+      fb_exchange_token: userAccessToken,
+    });
+    const exchangeRes = await fetch(exchangeUrl);
+    if (!exchangeRes.ok) {
+      throw new Error(`Facebook token exchange failed: ${await exchangeRes.text()}`);
+    }
+    const { access_token: longLivedToken } = await exchangeRes.json() as { access_token?: string };
+    if (!longLivedToken) {
+      throw new Error('Facebook token exchange returned no token');
+    }
+    return { userToken: longLivedToken };
+  }
+
+  /**
+   * Renew a page access token without user interaction.
+   * Exchange: user token → 60-day long-lived user token → non-expiring
+   * page token. Throws with Meta's message when the user token itself is
+   * dead (revoked/expired) — then only a manual reconnect helps.
+   */
+  async refreshPageToken(
+    pageId: string,
+    userAccessToken: string
+  ): Promise<{ pageAccessToken: string }> {
+    const { userToken: longLivedToken } = await this.exchangeLongLivedUserToken(userAccessToken);
+    const pageRes = await this.fetch(
+      this._getGraphApiUrl(`/${pageId}?fields=access_token&access_token=${longLivedToken}`),
+      undefined,
+      'refresh page token'
+    );
+    const { access_token: pageAccessToken } = await pageRes.json() as { access_token?: string };
+    if (!pageAccessToken) {
+      throw new Error('Facebook page token fetch returned no token');
+    }
+    return { pageAccessToken };
   }
 
   /**
@@ -585,6 +637,88 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     }
   }
 
+  /**
+   * Get page conversations (DMs) - implements BaseSchedulerPlugin interface.
+   * Note: Meta enforces a 24h customer-service window for replies — the API
+   * rejects messages outside it; the error is surfaced, never swallowed.
+   */
+  override async getConversations(
+    extra,
+    socialMediaAccount: PluginSocialMediaAccount,
+    options?: { limit?: number; cursor?: string }
+  ): Promise<GetConversationsResponse> {
+    log.info({ content: 'Fetching Facebook conversations', plugin: 'facebook', });
+    const pageId = socialMediaAccount.accountId;
+    const accessToken = socialMediaAccount.accessToken;
+
+    try {
+      const result = await this.getConversationsRaw(pageId, accessToken, {
+        limit: options?.limit,
+        after: options?.cursor,
+      });
+
+      const conversations: PlatformConversation[] = (result.data || []).map((c) => {
+        const convo = c as {
+          id: string;
+          message_count?: number;
+          unread_count?: number;
+          updated_time?: string;
+          participants?: { data?: { id?: string; name?: string }[] };
+          snippet?: string;
+        };
+        return {
+          id: convo.id,
+          platform: this.pluginName,
+          accountId: socialMediaAccount.id,
+          participants: (convo.participants?.data || []).map(p => ({ id: p.id, name: p.name })),
+          messageCount: convo.message_count,
+          unreadCount: convo.unread_count,
+          updatedTime: convo.updated_time,
+          snippet: convo.snippet,
+        };
+      });
+
+      return {
+        platform: this.pluginName,
+        accountId: socialMediaAccount.id,
+        conversations,
+        hasMore: !!(result.paging as { cursors?: { after?: string } } | undefined)?.cursors?.after,
+        nextCursor: (result.paging as { cursors?: { after?: string } } | undefined)?.cursors?.after,
+      };
+    } catch (error) {
+      log.error({ content: 'Error fetching Facebook conversations', plugin: 'facebook', error: (error as Error).message });
+      throw error;
+    }
+  }
+
+  /**
+   * Reply to a conversation (DM) - implements BaseSchedulerPlugin interface
+   */
+  override async replyToConversation(
+    socialMediaAccount: PluginSocialMediaAccount,
+    conversationId: string,
+    message: string
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    try {
+      const result = await this.replyToConversationRaw(conversationId, message, socialMediaAccount.accessToken);
+
+      if (result.error) {
+        return {
+          success: false,
+          error: result.error.message || 'Failed to reply to conversation',
+        };
+      }
+
+      return { success: true, messageId: result.id };
+    } catch (error) {
+      log.error({ content: 'Error replying to Facebook conversation', plugin: 'facebook', error: (error as Error).message });
+      return {
+        success: false,
+        error: (error as Error).message || 'Failed to reply to conversation',
+      };
+    }
+  }
+
   async deleteComment(
     commentId: string,
     accessToken: string
@@ -659,7 +793,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
   /**
    * Get page conversations/messages
    */
-  async getConversations(
+  async getConversationsRaw(
     pageId: string,
     accessToken: string,
     options?: { limit?: number; after?: string }
@@ -679,7 +813,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
   /**
    * Reply to a conversation
    */
-  async replyToConversation(
+  async replyToConversationRaw(
     conversationId: string,
     message: string,
     accessToken: string

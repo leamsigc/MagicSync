@@ -399,6 +399,7 @@ export class BulkSchedulerService {
   ) {
     try {
       await notificationService.createNotification(userId, {
+        event: 'bulk_done',
         type,
         title,
         message,

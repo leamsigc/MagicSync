@@ -41,7 +41,7 @@ Track progress through the competitive feature implementation.
 
 ---
 
-## Critical Gap 2 — Social Inbox ✅ COMPLETE
+## Critical Gap 2 — Social Inbox ✅ COMMENTS COMPLETE (DMs → Gap 2b, Notifications → Gap 5)
 
 ### Phase A — Comment Moderation Backend
 - [x] `SchedulerPost.service.ts` — `likeComment`, `hideComment`, `deleteComment` delegation methods
@@ -76,14 +76,34 @@ Track progress through the competitive feature implementation.
 - [x] Frontend: `useAutoRepost` composable + `/app/posts/auto-repost` config page (postId, interval, max, enable; currentCount/nextRepostAt display)
 - [x] Migration: squashed `0008_account-oauth-stats-inbox-auto-repost.sql` (check clean, fresh-DB 46 tables verified)
 
-### Gap 4 — Grow Feature
-- [ ] Backend: Follow recommendations for Bluesky/Mastodon
-- [ ] Frontend: Grow/discovery page
+### Gap 4 — Grow Feature ✅ BLUESKY COMPLETE (2026-09-07)
+- [x] Bluesky plugin: `getGrowFollowbacks` (followers-minus-following), `getGrowSuggestions` (`getSuggestedFollowsByActor` + `getProfiles` enrichment, excludes already-followed), `followAccount` (manual only)
+- [x] `Grow.service` (scoring: follow-back 90, suggested 50+10, merged/deduped) + `GET /api/v1/accounts/[accountId]/grow` + `POST .../grow/follow` (zod DID, ownership check)
+- [x] Frontend: `useGrow` + `/app/grow` page (account picker, recommendation cards, Follow buttons, i18n en/es/de/fr) + sidebar nav (Daily, after Inbox)
+- [ ] Next slice: Mastodon (needs a plugin first — none exists; not in platform enum)
 
-### Gap 5 — Notification System
-- [ ] Backend: Notification service, email delivery
-- [ ] Frontend: Notification preferences, in-app notifications
+### Gap 5 — Notification System (see PRD-NOTIFICATIONS.md)
+- [x] Slice 1: service hardened (`ServiceResponse<T>`, never throws), 4 routes unwrap, basic list UI + header badge
+- [x] Slices 2–4: `event` taxonomy + triggers, `notification_preferences` + CRUD + UI prefs, immediate email + digest + mute-with-expiry — single migration `0009_notifications-events-prefs.sql` (squashed from 0009+0010+0011 per `db-migration-squash`; fresh-DB 47 tables verified; dev DB applied + bookkeeping recorded), esbuild clean
 
-### Gap 6 — MCP Server
-- [ ] Nuxt MCP Toolkit integration
-- [ ] MCP tools: create-post, schedule-post, publish-post, get-analytics
+### Gap 2b — DM management ✅ FACEBOOK VERTICAL SLICE COMPLETE (2026-09-07)
+- [x] Base: `PlatformConversation`/`GetConversationsResponse` types + `getConversations`/`replyToConversation` defaults + `SchedulerPost` delegation
+- [x] Facebook plugin: `getConversations`/`replyToConversation` overrides (raw helpers renamed `*Raw`, 24h-window errors surfaced)
+- [x] `AutoPostService`: `getConversations`/`replyToConversation` + explicit `supportsDMs()` gate (facebook-only for now)
+- [x] Endpoints: `GET /api/v1/accounts/[accountId]/conversations` + `POST .../reply` (zod, ownership check, thin handlers)
+- [x] Frontend: `useInbox` conversations + `/app/inbox` Messages tab (FB account picker, conversation cards, reply box, 24h-window note, i18n en/es/de/fr)
+- [ ] Next slice: X/Bluesky/IG/Mastodon plugins + unified cross-account DM list
+
+### Gap 7 — Best Time to Post ✅ COMPLETE (2026-09-07)
+- [x] `Analytics.service.getBestTimes` (per-platform hour/day buckets from `post_metrics`, top-5 slots with ≥2 posts)
+- [x] `GET /api/v1/stats?mode=best-times` + `usePlatformStats.fetchBestTimes` + dashboard card (i18n en/es/de/fr)
+
+### Gate 0 — UI access (2026-09-07)
+- [x] Inbox in sidebar Daily section (`useDashboardNavigation.ts` + `Menu.json` en/es/de/fr)
+- [x] Inbox quick-action on `/app` dashboard (`quickInbox` en/es/de/fr)
+
+### Gap 6 — MCP Server ✅ WAVE 1 COMPLETE (see PRD-MCP-TOOLKIT.md; verified live 2026-09-07)
+- [x] Nuxt MCP Toolkit integration (`@nuxtjs/mcp-toolkit@0.19.0`, route `/mcp`, 18 tools + 4 resources, Bearer `org_` keys + OAuth via `@better-auth/mcp`)
+- [x] MCP tools: create-post, list/get/update/delete-post, publish-now, retry-post, preview-post, post-platform-status, platforms, analytics, AI, media
+- [x] Live e2e 2026-09-07: anon `tools/list` → `[]`; keyed `tools/list` → 18; create → get → status → retry(clean error) → calendar resource → delete; audit rows written
+- [ ] Wave 2+: scoped-key issuance UI, DB rate-limit tuning, Wave 4 tools (inbox/RAG/templates), ChatGPT-Token web e2e, `publish-now` live-fire (needs real platform credentials)

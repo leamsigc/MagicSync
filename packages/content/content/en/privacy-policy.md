@@ -17,16 +17,6 @@ head:
       content: MagicSync Team
     - name: description
       content: Learn about how MagicSync collects, uses, and protects your personal information when using our social media scheduling platform.
-    - name: og:image
-      content: /logo.png
-    - name: twitter:image
-      content: /logo.png
-    - name: twitter:title
-      content: Privacy Policy | MagicSync - Social Media Scheduling Platform
-    - name: twitter:card
-      content: summary_large_image
-    - name: twitter:description
-      content: Learn about how MagicSync collects, uses, and protects your personal information when using our social media scheduling platform.
 
 ogImage:
   component: BlogOgImage

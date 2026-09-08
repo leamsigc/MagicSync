@@ -33,16 +33,6 @@ head:
       content: index, follow
     - name: author
       content: MagicSync Team
-    - name: og:image
-      content: /img/home-light.png
-    - name: twitter:image
-      content: /img/home-light.png
-    - name: twitter:title
-      content: "Metricool vs Later vs MagicSync: Which Social Media Tool Wins for Creators?"
-    - name: twitter:card
-      content: summary_large_image
-    - name: twitter:description
-      content: Detailed comparison of Metricool, Later, and MagicSync for creators and agencies. Compare analytics, visual planning, automation, and built-in tools.
 ---
 
 ::BaseBlogHero

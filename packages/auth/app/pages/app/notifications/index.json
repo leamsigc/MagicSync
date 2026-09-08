@@ -17,6 +17,22 @@
             "title": "No notifications",
             "description": "You're all caught up! No new notifications."
         },
+        "preferences": {
+            "toggle": "Preferences",
+            "title": "Notification preferences",
+            "description": "Choose which events create in-app notifications. Email options apply once email delivery is enabled.",
+            "inApp": "In-app",
+            "email": "Email",
+            "emailSoon": "Email delivery is coming soon — your email choices are saved and will apply automatically.",
+            "events": {
+                "general": "General",
+                "post_failed": "Post failures",
+                "comment_reply": "Comment replies",
+                "bulk_done": "Bulk operations",
+                "invite": "Invitations",
+                "token_expiring": "Expiring connections"
+            }
+        },
         "types": {
             "info": "Info",
             "success": "Success",
@@ -47,6 +63,22 @@
         "empty": {
             "title": "Sin notificaciones",
             "description": "¡Estás al día! No hay nuevas notificaciones."
+        },
+        "preferences": {
+            "toggle": "Preferencias",
+            "title": "Preferencias de notificación",
+            "description": "Elige qué eventos crean notificaciones en la app. Las opciones de correo aplicarán cuando el envío esté activado.",
+            "inApp": "En la app",
+            "email": "Correo",
+            "emailSoon": "El envío por correo llegará pronto — tus opciones se guardan y aplicarán automáticamente.",
+            "events": {
+                "general": "General",
+                "post_failed": "Fallos de publicación",
+                "comment_reply": "Respuestas a comentarios",
+                "bulk_done": "Operaciones masivas",
+                "invite": "Invitaciones",
+                "token_expiring": "Conexiones por expirar"
+            }
         },
         "types": {
             "info": "Info",
@@ -79,6 +111,22 @@
             "title": "Keine Benachrichtigungen",
             "description": "Sie sind auf dem neuesten Stand! Keine neuen Benachrichtigungen."
         },
+        "preferences": {
+            "toggle": "Einstellungen",
+            "title": "Benachrichtigungseinstellungen",
+            "description": "Wählen Sie, welche Ereignisse In-App-Benachrichtigungen erzeugen. E-Mail-Optionen gelten nach Aktivierung des Versands.",
+            "inApp": "In der App",
+            "email": "E-Mail",
+            "emailSoon": "E-Mail-Versand folgt in Kürze — Ihre Auswahl wird gespeichert und automatisch angewendet.",
+            "events": {
+                "general": "Allgemein",
+                "post_failed": "Fehlgeschlagene Beiträge",
+                "comment_reply": "Kommentarantworten",
+                "bulk_done": "Massenoperationen",
+                "invite": "Einladungen",
+                "token_expiring": "Ablaufende Verbindungen"
+            }
+        },
         "types": {
             "info": "Info",
             "success": "Erfolg",
@@ -109,6 +157,22 @@
         "empty": {
             "title": "Aucune notification",
             "description": "Vous êtes à jour! Aucune nouvelle notification."
+        },
+        "preferences": {
+            "toggle": "Préférences",
+            "title": "Préférences de notification",
+            "description": "Choisissez quels événements créent des notifications. Les options e-mail s'appliqueront une fois l'envoi activé.",
+            "inApp": "Dans l'app",
+            "email": "E-mail",
+            "emailSoon": "L'envoi par e-mail arrive bientôt — vos choix sont enregistrés et s'appliqueront automatiquement.",
+            "events": {
+                "general": "Général",
+                "post_failed": "Échecs de publication",
+                "comment_reply": "Réponses aux commentaires",
+                "bulk_done": "Opérations en masse",
+                "invite": "Invitations",
+                "token_expiring": "Connexions expirantes"
+            }
         },
         "types": {
             "info": "Info",

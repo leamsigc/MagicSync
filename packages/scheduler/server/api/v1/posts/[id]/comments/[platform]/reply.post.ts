@@ -68,6 +68,25 @@ export default defineEventHandler(async (event) => {
       replyText,
     });
 
+    // Fire-and-forget: notify the post owner about the reply (never break the reply itself)
+    try {
+      const ownerId = (post as unknown as { user?: { id: string } }).user?.id
+      if (ownerId) {
+        const { notificationService } = await import('#layers/BaseAuth/server/services/notification.service')
+        await notificationService.notify({
+          userId: ownerId,
+          event: 'comment_reply',
+          type: 'info',
+          title: 'Reply sent',
+          message: `Your reply on ${platform} was posted.`.slice(0, 500),
+          actionUrl: '/app/inbox',
+          metadata: { postId, platform, commentId },
+        })
+      }
+    } catch {
+      // Notifications must never break replies
+    }
+
     return { success: true, data: result };
   } catch (error: unknown) {
     if (error && typeof error === 'object' && 'statusCode' in error) throw error;

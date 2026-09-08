@@ -7,7 +7,7 @@
  *   - accountId: filter by specific account
  *   - startDate: filter by snapshot date (ISO string)
  *   - endDate: filter by snapshot date (ISO string)
- *   - mode: 'current' | 'aggregated' | 'timeseries' | 'history' | 'comparison' | 'post-metrics' | 'top-posts'
+  *   - mode: 'current' | 'aggregated' | 'timeseries' | 'history' | 'comparison' | 'post-metrics' | 'top-posts' | 'best-times'
  *   - days: number of days for timeseries/comparison/top-posts (default: 30, supports 7/30/90)
  *   - metric: 'followers' | 'posts' | 'engagement' for timeseries
  *   - limit: history/top-posts pagination limit (default: 100/10)
@@ -82,6 +82,10 @@ export default defineEventHandler(async (event) => {
       }
       case 'top-posts': {
         data = await analyticsService.getTopPosts(filters, { days: daysNum, limit: limit ? parseInt(limit as string) : 10 })
+        break
+      }
+      case 'best-times': {
+        data = await analyticsService.getBestTimes(filters, { days: daysNum })
         break
       }
       default: {

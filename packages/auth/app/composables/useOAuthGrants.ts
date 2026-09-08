@@ -4,6 +4,7 @@ export interface OAuthGrantItem {
   clientName: string | null
   scopes: string[]
   businessId: string | null
+  businessName: string | null
   createdAt: string | null
   updatedAt: string | null
 }

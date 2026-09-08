@@ -32,16 +32,6 @@ head:
       content: index, follow
     - name: author
       content: MagicSync Team
-    - name: og:image
-      content: /img/home-dark.png
-    - name: twitter:image
-      content: /img/home-dark.png
-    - name: twitter:title
-      content: "Postiz vs MagicSync: In-Depth Comparison of Open Source vs Complete Social Media Platform"
-    - name: twitter:card
-      content: summary_large_image
-    - name: twitter:description
-      content: Comprehensive comparison of Postiz open source social media scheduler vs MagicSync. Features, pricing, API capabilities, platform support, self-hosting, AI tools, and built-in creative studio analyzed in detail.
 ---
 
 ::BaseBlogHero

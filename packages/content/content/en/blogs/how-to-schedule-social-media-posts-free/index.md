@@ -36,16 +36,6 @@ head:
       content: MagicSync Team
     - name: description
       content: Learn how to schedule social media posts free with a 60-minute weekly workflow, best posting times, and an honest free scheduler comparison for small business.
-    - name: og:image
-      content: /img/home-dark.png
-    - name: twitter:image
-      content: /img/home-dark.png
-    - name: twitter:title
-      content: How to Schedule Social Media Posts Free (2026 Playbook)
-    - name: twitter:card
-      content: summary_large_image
-    - name: twitter:description
-      content: Learn how to schedule social media posts free with a 60-minute weekly workflow, best posting times, and an honest free scheduler comparison for small business.
 ---
 
 ::BaseBlogHero

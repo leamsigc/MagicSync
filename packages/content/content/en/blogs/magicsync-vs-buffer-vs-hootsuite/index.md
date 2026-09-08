@@ -33,16 +33,6 @@ head:
       content: index, follow
     - name: author
       content: MagicSync Team
-    - name: og:image
-      content: /img/home-dark.png
-    - name: twitter:image
-      content: /img/home-dark.png
-    - name: twitter:title
-      content: "MagicSync vs Buffer vs Hootsuite: The Ultimate Social Media Scheduler Comparison"
-    - name: twitter:card
-      content: summary_large_image
-    - name: twitter:description
-      content: Compare MagicSync, Buffer, and Hootsuite across pricing, features, API access, and automation. Find out which social media scheduler is best for your business.
 ---
 
 ::BaseBlogHero

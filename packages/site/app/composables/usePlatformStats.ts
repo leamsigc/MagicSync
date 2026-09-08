@@ -100,6 +100,20 @@ export interface TopPost {
   lastCollectedAt: string
 }
 
+export interface BestTimeSlot {
+  platform: string
+  dayOfWeek: number
+  hour: number
+  avgEngagement: number
+  postCount: number
+}
+
+export interface BestTimes {
+  slots: BestTimeSlot[]
+  topSlots: BestTimeSlot[]
+  timezoneNote: string
+}
+
 export type StatsRange = 7 | 30 | 90
 
 export const STATS_RANGES: StatsRange[] = [7, 30, 90]
@@ -119,6 +133,7 @@ export const usePlatformStats = () => {
   const timeSeries = useState<TimeSeriesData>('platform-stats-timeseries', () => ({ labels: [], datasets: [] }))
   const dashboard = useState<DashboardData | null>('platform-stats-dashboard', () => null)
   const topPosts = useState<TopPost[]>('platform-stats-top-posts', () => [])
+  const bestTimes = useState<BestTimes | null>('platform-stats-best-times', () => null)
   const range = useState<StatsRange>('platform-stats-range', () => 30)
   const loading = ref(false)
   const collecting = ref(false)
@@ -211,10 +226,24 @@ export const usePlatformStats = () => {
     }
   }
 
+  // Fetch best posting times for the selected range
+  const fetchBestTimes = async (filters: StatsFilters & { days?: number } = {}) => {
+    try {
+      error.value = ''
+      const res = await $fetch<{ success: boolean; data: BestTimes }>(apiBase, {
+        query: { ...filters, mode: 'best-times', days: filters.days || range.value },
+      })
+      if (res.success) bestTimes.value = res.data
+    } catch (err: unknown) {
+      const fetchError = err as { data?: { message?: string }; message?: string }
+      error.value = fetchError.data?.message || fetchError.message || 'Failed to fetch best times'
+    }
+  }
+
   // Change the analytics range and reload dashboard data
   const setRange = async (next: StatsRange, filters: StatsFilters = {}) => {
     range.value = next
-    await Promise.all([fetchDashboard(filters), fetchTopPosts(filters)])
+    await Promise.all([fetchDashboard(filters), fetchTopPosts(filters), fetchBestTimes(filters)])
   }
 
   // Download analytics history as CSV
@@ -254,7 +283,9 @@ export const usePlatformStats = () => {
         data: { total: number; successful: number; failed: number; results: CollectStatsResult[] }
       }>('/api/v1/stats/collect', {
         method: 'POST',
-        body: filters,
+        // Manual refresh always forces: due-gating is for the background
+        // task. Without this, accounts in backoff report "0 of 0".
+        body: { ...filters, force: true },
       })
       if (res.success) {
         await fetchStats(filters)
@@ -329,6 +360,7 @@ export const usePlatformStats = () => {
     timeSeries: timeSeries,
     dashboard: dashboard,
     topPosts: topPosts,
+    bestTimes: bestTimes,
     range: range,
     loading: loading,
     collecting: collecting,
@@ -347,6 +379,7 @@ export const usePlatformStats = () => {
     fetchTimeSeries,
     fetchDashboard,
     fetchTopPosts,
+    fetchBestTimes,
     fetchComparison,
     fetchPostMetrics,
     setRange,
