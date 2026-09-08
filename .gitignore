@@ -1,5 +1,7 @@
-# Logs
-logs
+# Logs (root-only: bare `logs` also matched nested source dirs like
+# packages/.../[id]/logs/, silently excluding them from git — see 2026-09-08
+# auto-reply incident where the logs API route never deployed)
+/logs
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -174,7 +176,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+/lib/
 lib64/
 parts/
 sdist/
