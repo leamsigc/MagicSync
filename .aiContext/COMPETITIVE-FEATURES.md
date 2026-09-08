@@ -16,7 +16,7 @@
 | **Grow Feature** | No | Yes (Bluesky/Mastodon) | **Yes (Bluesky)** ✅ |
 | **Auto-Repost** | No | Yes (4 platforms) | **Yes (rules + scheduler + UI)** |
 | **Notifications** | Full email + push | In-app + email | **In-app + email + digest** ✅ |
-| **Auto-Reply (comment→DM)** | Paid (Manychat) | No | No → **[PRD-AUTO-REPLY.md](./PRD-AUTO-REPLY.md)** |
+| **Auto-Reply (comment→DM)** | Paid (Manychat) | No | **Yes (webhooks + story-DMs + follow gate + IG inbox)** ✅ |
 | **Self-Host** | No | Yes (Docker) | **Yes (Docker)** |
 
 ---
@@ -117,7 +117,7 @@ Full plugins with OAuth, posting, comments, stats:
 | Feature | Later | OpenPost | MagicSync |
 |---------|-------|----------|-----------|
 | Unified inbox | Yes | Yes | **Yes (/app/inbox)** ✅ |
-| DM management | IG, FB | X, Bluesky, FB, IG, Mastodon | **Yes (Facebook; rest planned)** ✅ |
+| DM management | IG, FB | X, Bluesky, FB, IG, Mastodon | **Yes (Facebook + Instagram)** ✅ |
 | Comment management | IG, FB, TikTok | X, Mastodon, Bluesky, LinkedIn, Threads, FB, IG, YouTube | **Yes (reply/like/hide/delete)** ✅ |
 | Reply from inbox | Yes | Yes (per-platform support) | **Yes** ✅ |
 | Like from inbox | No | Yes (X, Mastodon) | **Yes** ✅ |
@@ -162,11 +162,11 @@ Full plugins with OAuth, posting, comments, stats:
 
 ### NEW GAPS (from OpenReply research, 2026-09-07)
 
-#### 16. Auto-Reply / Comment-to-DM — DONE ✅ Phase A (see PRD-AUTO-REPLY.md)
+#### 16. Auto-Reply / Comment-to-DM — DONE ✅ Phase A + B (see PRD-AUTO-REPLY.md)
 - ManyChat: Paid keyword→DM automation; OpenReply (2.1k★ open-source): keyword→DM, story-DM triggers, tracked links, follow gate, inbox, DM logs
-- Later/OpenPost: Neither has this — **pure differentiator, now shipped**
-- We have: IG-first vertical slice — keyword campaigns (`/app/auto-reply`), `sendPrivateReply` on IG plugin, tracked `/r/{campaign}/{link}` links + clicks, DM logs + stats, `autoreply:process` every 15m, per-commenter cooldown, 750/hr cap — all state in `entity_details` (zero migrations, `db:generate` clean)
-- Phase B pending: webhooks, story-DM triggers, follow-gate enforcement, IG inbox read/reply
+- Later/OpenPost: Neither has this — **pure differentiator, now shipped past openreply parity**
+- We have: keyword campaigns (`/app/auto-reply`), `sendPrivateReply` + `sendDirectMessage` on IG plugin, tracked `/r/{campaign}/{link}` links + clicks, DM logs + stats, per-commenter cooldown, 750/hr cap — all state in `entity_details` (zero migrations, `db:generate` clean)
+- Phase B shipped: Meta webhooks (`/meta/webhooks`, HMAC dual-secret, idempotent `autoreply_seen` queue, inline drain + 15m backstop) → seconds-latency DMs; story-DM triggers (`messages`/`story_mentions`, referrals count); follow-gate enforcement (fail-open, openreply parity); IG inbox read/reply in `/app/inbox` Messages tab; `instagram_manage_messages` + `pages_messaging` + `pages_manage_metadata` scopes live in `auth.ts`
 
 #### 10. Link in Bio — MISSING
 - Later: Full implementation
@@ -343,7 +343,7 @@ Full plugins with OAuth, posting, comments, stats:
 | **Analytics retention** | 2yr | Indefinite | **Indefinite** | **Indefinite** |
 | **Analytics collection** | Daily | Adaptive | **Adaptive** | **Adaptive** |
 | **Unified inbox** | Yes | Yes | **Yes (comments)** | **Yes** |
-| **DM support** | IG, FB | X, Bluesky, FB, IG, Mastodon | **Facebook** | **Planned** |
+| **DM support** | IG, FB | X, Bluesky, FB, IG, Mastodon | **Facebook + Instagram** | **X/Bluesky next** |
 | **Comment moderation** | Limited | Full | **Full (reply/like/hide/delete)** | **Full (reply/like/hide/delete)** |
 | **Image editor** | Basic | Full | **Full (19 plugins)** | **Full (19 plugins)** |
 | **Video editor** | Basic | Full | **Multi-cam cropper** | **Timeline editor** |
@@ -364,4 +364,4 @@ Full plugins with OAuth, posting, comments, stats:
 | **Text behind image** | No | No | **Yes** | **Yes** |
 | **Carousel creator** | No | No | **Yes (animated)** | **Yes (animated)** |
 | **OG image generator** | No | No | **Yes** | **Yes** |
-| **Auto-reply (comment→DM)** | Paid (Manychat) | No | **Yes (Phase A live)** | **Yes** |
+| **Auto-reply (comment→DM)** | Paid (Manychat) | No | **Yes (webhooks + story + gate + inbox)** | **Yes** |

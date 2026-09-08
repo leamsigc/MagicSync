@@ -54,8 +54,12 @@ Request these in **App Review → Permissions and Features**, matching the code:
 | `instagram_content_publish` | IG containers + `media_publish` | `instagram_content_publish` |
 | `instagram_manage_insights` | IG insights metrics | `instagram_manage_insights` |
 | `instagram_manage_comments` | `getComments` / `replyToComment` / hide | `instagram_manage_comments` |
-| `instagram_manage_messages` ⚠️ | Auto-Reply `sendPrivateReply` — **not yet in `auth.ts` scopes; add it when enabling Auto-Reply** | `instagram_manage_messages` |
-| `pages_messaging` ⚠️ | FB inbox DMs (`getConversations`) + required alongside the above for private replies | `pages_messaging` |
+| `instagram_manage_messages` ✅ | Auto-Reply `sendPrivateReply` + story-DM `sendDirectMessage` + IG inbox | `instagram_manage_messages` |
+| `pages_messaging` ✅ | FB inbox DMs (`getConversations`) + required alongside the above for private replies | `pages_messaging` |
+| `pages_manage_metadata` ✅ | Page webhook subscription (`POST /{page-id}/subscribed_apps` via **Subscribe Page** in `/app/auto-reply`) | `pages_manage_metadata` |
+
+> After any scope change in `auth.ts`, every FB/IG account must **disconnect +
+> reconnect** — Meta grants scopes at consent time only.
 
 In **development mode** all of these work immediately but only for users with
 a role on the app — add testers under **App Roles → Roles** (or use
@@ -73,12 +77,47 @@ approval per permission.
 4. For Auto-Reply DMs, on the IG account enable **Settings → Privacy →
    Messages → Allow access to messages**.
 
-### 1.6 Webhooks (Phase B only — not needed today)
+### 1.6 Webhooks (Auto-Reply instant delivery — live)
 
-Skip for Phase A (polling). When building webhooks per PRD-AUTO-REPLY §6, add
-product **Webhooks**, subscribe the Page to `comments` + `messages` (+
-`story_mentions` for story-DM triggers), set a `hub.verify_token`, and
-implement the HMAC check before enqueueing.
+Polling (15 min) stays as the reconciler backstop; webhooks deliver events in
+seconds. Modeled on [diwenne/openreply](https://github.com/diwenne/openreply);
+unlike openreply we need no Redis/BullMQ — events land as `autoreply_seen`
+rows and the same sender path drains them inline + on the next task tick.
+
+**Dashboard setup (all three steps required):**
+
+1. **Add product → Webhooks.** In the product settings pick the **Instagram**
+   object and subscribe to **`comments`**, **`messages`**, **`story_mentions`**.
+   - `comments` → comment-to-DM (what most people come for).
+   - `messages` → inbound DMs + story replies (what the campaign **story-DM
+     toggle** runs on — without this the toggle looks enabled but never fires).
+2. **Callback URL:** `https://<your-domain>/meta/webhooks`
+   (local dev: expose port 3000 with a tunnel — Meta must reach it publicly).
+   **Verify Token:** the value of `NUXT_META_WEBHOOK_VERIFY_TOKEN` (§2).
+   Click **Verify and save** — the app echoes `hub.challenge` on token match
+   (`GET /meta/webhooks`, `packages/site/server/routes/meta/`).
+   - If the button is greyed out, re-paste the token (editing the URL clears it).
+   - Use the **Test** button's *Send to My Server* (second click — the first
+     only previews) to confirm delivery.
+3. **Page subscription:** in MagicSync go to **/app/auto-reply → Subscribe
+   Page** per IG account (`POST /{page-id}/subscribed_apps`, fields
+   `feed,messages`). Needs `pages_manage_metadata` (§1.4).
+
+**Security:** every POST is checked against `X-Hub-Signature-256` (HMAC-SHA256
+over the raw body, trying FB then IG app secret — Meta signs with either),
+timing-safe compare, 401 otherwise. Redeliveries are idempotent
+(deterministic `seen::…` entityIds).
+
+**Go-live gotchas (from openreply's setup guide):**
+- Real events only arrive when the app is **Live** — in Development mode only
+  the console Test button delivers. #1 cause of "nothing happens".
+- Every IG account needs a **role on the app**: invite the exact IG username
+  under App Roles → Instagram testers **and** accept it inside Instagram
+  (profile → menu → Settings → Apps and websites → Tester invites). Published
+  ≠ Advanced Access: Standard Access still covers only accounts with a role;
+  strangers need App Review.
+- Changing domains? Update the callback URL — Meta doesn't reliably follow
+  redirects, so webhooks silently stop.
 
 ## 2. Env vars (never commit — `.env` only)
 
@@ -88,6 +127,10 @@ NUXT_FACEBOOK_CLIENT_ID=...        # Settings → Basic → App ID
 NUXT_FACEBOOK_CLIENT_SECRET=...    # Settings → Basic → App secret
 NUXT_FACEBOOK_CONFIG_ID=...        # Facebook Login for Business → Configurations → ID
 NUXT_BETTER_AUTH_URL=http://localhost:3000  # prod: https://<your-domain>
+
+# Meta webhooks (Auto-Reply instant delivery): random per deploy, paste the
+# same value as Verify Token in the dashboard (§1.6)
+NUXT_META_WEBHOOK_VERIFY_TOKEN=<openssl-rand-hex-32>
 
 # Declared in packages/auth/nuxt.config.ts runtimeConfig (consumed by
 # site + scheduler layers via NUXT_ prefix):
@@ -124,22 +167,31 @@ Later: token:health task warns on expiry; FB has no refresh tokens —
 
 ## 5. Auto-Reply extras (on top of §1–§4)
 
-1. Add `instagram_manage_messages` (and `pages_messaging` if you also want FB
-   inbox) to `scope` in `packages/auth/lib/auth.ts` **and** request them in
-   App Review (§1.4). Existing users must **reconnect** — scopes are granted
-   at consent time only.
+1. Scopes are already in `auth.ts` (§1.4: `instagram_manage_messages`,
+   `pages_messaging`, `pages_manage_metadata`). After pulling, **reconnect**
+   any account connected before the scope change.
 2. `sendPrivateReply` calls
    `POST https://graph.facebook.com/v25.0/{comment-id}/private_replies?message=…`
    — text-only API, so campaign links are sent as tracked short URLs
-   (`/r/{campaign}/{link}`), not buttons (stated in the UI).
+   (`/r/{campaign}/{link}`), not buttons (stated in the UI). Story-DM triggers
+   use `POST /{ig-user-id}/messages` (`sendDirectMessage`) instead, since a
+   story reply has no comment to private-reply to.
 3. Only works on **your own media's comments**; the business commenting on
    itself is skipped and logged as `skipped/self` (Meta rejects self-DMs).
-4. Sandbox test: from a **tester-role account** (not the business), comment
-   `LINK` on a watched reel → `autoreply:process` (every 15 min,
-   `scheduler/nuxt.config.ts`) → DM + `autoreply_log` row `sent`. Trigger the
-   task manually from Nuxt DevTools → Nitro Tasks in dev.
-5. `followGate` is stored but enforced only with Phase B webhooks
-   (`is_user_follow_business` arrives on webhook payloads).
+4. Sandbox test: follow the full walkthrough in [Auto-Reply → Live end-to-end
+   verification](./auto-reply#live-end-to-end-verification-path-a) — comment,
+   story, and follow-gate tests with a per-step failure table. Without
+   webhooks the 15 min `autoreply:process` poll still delivers
+   (`scheduler/nuxt.config.ts`; trigger manually from Nuxt DevTools → Nitro
+   Tasks in dev).
+5. **Story-DM test:** enable the campaign's story-DM toggle, reply `LINK` to
+   one of the business's stories from the tester account → `messages` event →
+   link DM (`sent/story_dm`). Ad-tap referrals count as implicit matches.
+6. **Follow-gate test:** enable the gate, trigger from a non-following tester
+   account → follow-prompt DM + `skipped/follow_gate`; from a follower (or
+   when Meta sends no follow signal) → link DM (fails open, like openreply).
+7. **IG inbox test:** **/app/inbox → Messages tab** now lists Instagram
+   accounts alongside Facebook (24h customer-service window enforced by Meta).
 
 ## 6. Troubleshooting
 
@@ -153,6 +205,11 @@ Later: token:health task warns on expiry; FB has no refresh tokens —
 | Page token dies in hours | Long-lived exchange skipped/failed — check server logs at connect; `token:health` reports state every 6h |
 | `skipped/self` logs | Comment author is the business itself → expected |
 | `rate_limited_750` | Hourly Auto-Reply cap → retries next tick automatically |
+| Webhook Verify button fails | Wrong/missing `NUXT_META_WEBHOOK_VERIFY_TOKEN`, or app not saved — re-paste token, check server logs |
+| Webhook Test delivers, real events don't | App in Development mode (§1.6) or account lacks app role — publish + tester invite dance |
+| `skipped/follow_gate` logs | Follow gate blocked a non-follower → expected; prompt DM sent |
+| `401 Invalid signature` in logs | Proxy/CDN rewrote the body — Meta signs raw bytes; terminate TLS without body mutation |
+| Subscribe Page 502 | Missing `pages_manage_metadata` grant or expired page token → reconnect, then retry |
 
 ## 7. Checklist before marking done
 
@@ -163,3 +220,6 @@ Later: token:health task warns on expiry; FB has no refresh tokens —
 - [ ] Dev: tester roles added; prod: Business verification + approvals
 - [ ] Page ↔ IG Business linked; Messages access on (Auto-Reply)
 - [ ] Connect flow verified at **/app/integrations**; reconnect after any scope change
+- [ ] `NUXT_META_WEBHOOK_VERIFY_TOKEN` set; callback URL + Verify Token saved in dashboard (§1.6)
+- [ ] Dashboard subscribed to Instagram object fields `comments`, `messages`, `story_mentions`
+- [ ] **Subscribe Page** clicked per account in **/app/auto-reply**; app published for live events

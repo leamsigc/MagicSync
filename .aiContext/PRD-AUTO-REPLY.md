@@ -15,7 +15,13 @@
 > plain `text` column, so no migration is generated.
 >
 > **Source:** `.aiContext/COMPETITIVE-FEATURES.md` §16 + Roadmap Phase 3 (Automation).
-> **Status:** NOT STARTED.
+> **Status:** PHASE A + B SHIPPED (2026-09-08).
+> Phase A verified live: `db:generate` clean, 14/14 pure unit tests, full CRUD +
+> matcher + `/r/` click-count E2E via browser session, Lighthouse parity with
+> `/app/grow`. Phase B verified live: webhook verify handshake (200 + challenge,
+> 403 on bad token), HMAC 401 on bad signature, signed ingest→inline-drain cycle
+> (`received:1 stored:1 sent:0` on unknown account), redelivery re-stored (drain
+> consumes rows). Live-Meta DM send still needs a real IG Business sandbox event.
 
 ## 1. What OpenReply does (feature map → our plan)
 
@@ -32,31 +38,35 @@
 | Campaign templates | Presets | 3 presets (Link magnet, Discount code, Webinar/event) | A |
 | Tracked links + CTR | Redirect table | Public `/r/{campaignId}/{linkId}` route, clicks counter row, 302 | A |
 | Two link buttons per DM | Structured message | Render as 2 tracked short-URLs inline (private-replies API is text-only — honest limitation, documented in UI copy) | A |
-| Story-DM triggers (`messages` webhook) | Webhook subscribe | **Phase B** — needs Meta webhook infra (we have none; grep `webhook` = 0 hits) | B |
-| Follow gate (`is_user_follow_business`) | Flag arrives on messaging webhook | **Phase B** — flag only exists on webhook payloads. Phase A ships the `followGate` schema flag + follow-prompt template; enforcement lands with webhooks | B |
-| Inbox (read/reply DMs, 24h window) | Cached conversations | IG `/{ig-user-id}/conversations` read + reply; extends Gap 2b (FB done) | B |
+| Story-DM triggers (`messages` webhook) | Webhook subscribe | ✅ SHIPPED — `/meta/webhooks` receiver + `storyDmEnabled` per campaign; story replies/mentions arrive as inbound DMs and match keywords; ad referrals count as implicit matches; sends via new `sendDirectMessage` (`POST /{ig-id}/messages`) | B |
+| Follow gate (`is_user_follow_business`) | Flag arrives on messaging webhook | ✅ SHIPPED — enforced on DM events: explicit `false` → follow-prompt DM + `skipped/follow_gate`; `true`/unknown → link DM (fail-open, openreply parity). Comment events carry no flag → always fail open | B |
+| Inbox (read/reply DMs, 24h window) | Cached conversations | ✅ SHIPPED (live reads, no cache) — IG `getConversations` (`/{ig-id}/conversations?platform=instagram`) + `replyToConversation` (participant resolve → Messaging API); `supportsDMs` += instagram; inbox Messages tab lists IG accounts | B |
 | Worker process (BullMQ/Redis) | Separate process | Not needed — Nitro `defineTask` + DB-backed queue is our architecture (see `JOB-QUEUE.md`); sending happens inline in the task with backoff rows | — |
 
-## 2. Architecture (Phase A)
+## 2. Architecture (Phase A + B, as shipped)
 
 ```
-Meta IG comments (poll, no webhooks yet)
-    │  Nitro task `autoreply:process` every 15m (same cron as social:post)
-    ▼
+Meta webhooks ──comments/messages/story_mentions──▶ POST /meta/webhooks (site layer, public)
+   HMAC X-Hub-Signature-256 (FB secret, then IG secret) → 401 otherwise
+   parseMetaWebhook (pure) → autoreply_seen rows (idempotent entityIds)
+     │  inline drainSeenEvents() (seconds) ─┐
+     ▼                                       │ same sender path
+Nitro task `autoreply:process` every 15m ───┘ (backstop: drains leftovers, prunes stale)
+     ▼
 AutoReply.service.ts (scheduler layer, ServiceResponse<T>, never throws)
-    ├─ due campaigns ← entityDetails (type=autoreply_campaign, enabled)
-    ├─ for each: fetch comments via IG plugin getComments() (watched post IDs)
-    ├─ skip seen (autoreply_state cursor) · skip self · match keywords
-    ├─ per-commenter cooldown (one DM per user per campaign)
-    ├─ rate check (PlatformRateLimiter + hourly counter ≤ 750)
-    ├─ send DM: NEW igPlugin.sendPrivateReply(commentId, text)
-    ├─ optional public replyToComment()
-    └─ write autoreply_log row (sent|skipped|failed + reason)
+    ├─ comment events → campaigns watching mediaId (or matchAllPosts)
+    │   → processComment: skip dup (processedCommentIds) · skip self ·
+    │     match keywords · cooldown · rate ≤ 750 → sendPrivateReply →
+    │     optional public replyToComment() → log
+    ├─ message events → storyDmEnabled campaigns → match (referral = implicit)
+    │   → follow gate (fail-open) → cooldown · rate → sendDirectMessage → log
+    └─ poll path (unchanged): getComments per watched post, cursor + cooldown
          │ reads/writes
          ▼
 entity_details rows (ZERO migrations — §3)
          ▲ reads/writes
 GET/POST /api/v1/auto-reply/campaigns* ◀── useAutoReply ◀── /app/auto-reply
+GET /api/v1/auto-reply/webhooks/status · POST …/webhooks/subscribe (authed)
 GET /r/{campaignId}/{linkId} (public redirect + click count)
 ```
 
@@ -68,11 +78,12 @@ GET /r/{campaignId}/{linkId} (public redirect + click count)
 
 | `entity_type` | `entity_id` | `details` JSON shape |
 |---|---|---|
-| `autoreply_campaign` | `{userId}::{campaignId}` | `{ id, userId, businessId, name, platform: 'instagram', socialAccountId, externalPostIds: string[], matchAllPosts?: boolean, keywords: string[], matchMode: 'whole' \| 'partial', dmTemplate: string, linkIds: string[] (max 2), publicReplyTemplate?: string, storyDmEnabled?: false, followGate: boolean, followPromptTemplate?: string, enabled: boolean, createdAt, updatedAt }` |
-| `autoreply_state` | `{campaignId}::{externalPostId}` | `{ lastSeenCommentId?: string, lastCheckedAt: string, contactedUserIds: string[] (cap 2000, FIFO trim) }` |
-| `autoreply_state` | `{campaignId}::rate::{hourBucket}` | `{ count: number }` (`hourBucket` = `yyyyMMddHH` UTC; stale buckets deleted by the task) |
-| `autoreply_log` | `{campaignId}::{ISO-ts}::{rand6}` | `{ commentId, authorId, authorName, matchedKeyword?: string, action: 'sent' \| 'skipped' \| 'failed', reason: string, at: string }` — task prunes to newest 500/campaign |
+| `autoreply_campaign` | `{userId}::{campaignId}` | `{ id, userId, businessId, name, platform: 'instagram', socialAccountId, externalPostIds: string[], matchAllPosts?: boolean, keywords: string[], matchMode: 'whole' \| 'partial', dmTemplate: string, linkIds: string[] (max 2), publicReplyTemplate?: string, storyDmEnabled: boolean, followGate: boolean, followPromptTemplate?: string, enabled: boolean, mode?: 'template' \| 'ai', createdAt, updatedAt }` (`storyDmEnabled` now a real toggle, default false) |
+| `autoreply_state` | `{campaignId}::{externalPostId}` | `{ lastSeenCommentId?: string, lastCheckedAt: string, contactedUserIds: string[] (cap 2000, FIFO trim), processedCommentIds?: string[] (cap 500 — webhook/poll dedup) }` (+ `'dm'` key for DM-path state) |
+| `autoreply_state` | `rate::{socialAccountId}::{hourBucket}` | `{ count: number }` — DEVIATION from plan (`{campaignId}::rate::…`): keyed per-account so the 750 cap is truly per-account across campaigns (`hourBucket` = `yyyyMMddHH` UTC; stale buckets deleted by the task) |
+| `autoreply_log` | `{campaignId}::{ISO-ts}::{rand6}` | `{ commentId, authorId, authorName, matchedKeyword?: string, action: 'sent' \| 'skipped' \| 'failed', reason: string, at: string }` — task prunes to newest 500/campaign. New reasons: `dup`, `follow_gate`, `story_dm`, `inbound_dm`, `webhook` |
 | `autoreply_link` | `{campaignId}::{linkId}` | `{ label, target: string (https URL), clicks: number }` |
+| `autoreply_seen` | `seen::comment::{commentId}` / `seen::message::{mid}` | Parsed webhook event JSON (comment: entry/media/sender/text; message: sender/mid/text/storyReply/referral/isUserFollowBusiness). Deterministic ids = idempotent redelivery. Drained (deleted) by receiver inline + task backstop; stale >7d pruned |
 
 Why this is safe: same access pattern as `carousel.service.ts` (scoped `like(entityId, '{userId}::%')`
 for ownership, `eq(entityType)` + `eq(entityId)` for point reads). No indexes needed at
@@ -80,15 +91,23 @@ v1 volumes; note in code that `entity_id` `like` scans are acceptable <10k rows.
 
 ## 4. Code changes (Phase A)
 
-### 4.1 IG plugin — one new method (no other plugin touched)
+### 4.1 IG plugin — three new methods (no other plugin touched)
 `packages/scheduler/server/services/plugins/instagram.plugin.ts`
-- `sendPrivateReply(commentId, message): Promise<{ success, messageId?, error? }>`
+- `sendPrivateReply(account, commentId, message): Promise<{ success, messageId?, error? }>`
   → `POST /{comment-id}/private_replies?message={text}` via `_getGraphApiUrl` +
-  `this.fetch` (same helpers as `getComments`). Returns `{ success:false }`
+  global `fetch` (DEVIATION: IG plugin has no `this.fetch` wrapper — FB's does;
+  same call shape as `getComments`). Returns `{ success:false }`
   (never throws) on Meta errors incl. 24h-window / self-comment rejections.
-- Base-class default: add `sendPrivateReply` returning `{ success:false,
+- `sendDirectMessage(account, recipientIgsid, message)` → `POST /{ig-id}/messages`
+  `{ recipient: { id }, message: { text } }` (story-DM triggers, inbox replies).
+- `getConversations` (`/{ig-id}/conversations?platform=instagram`) +
+  `replyToConversation` (participant resolve → `sendDirectMessage`) — override
+  the base-class slots so the shared inbox endpoints work for IG.
+- Base-class default: `sendPrivateReply` returning `{ success:false,
   error:'Not implemented' }` next to `likeComment/hideComment/deleteComment`
   defaults + `SchedulerPost` delegation (Gap 2b established this exact pattern).
+- `AutoPostService.dmCapablePlatforms` += `'instagram'`; inbox `useInbox`
+  DM-account filter += instagram (inbox UI itself is platform-generic).
 
 ### 4.2 `AutoReply.service.ts` (NEW, scheduler layer)
 Singleton `autoReplyService`. All methods `ServiceResponse<T>`, try/catch, never throw.
@@ -96,16 +115,22 @@ Singleton `autoReplyService`. All methods `ServiceResponse<T>`, try/catch, never
   (zod-validated at route; service re-checks ownership via entityId prefix),
   `updateCampaign`, `deleteCampaign` (deletes campaign + state + logs + links rows),
   `toggleCampaign` (thin wrapper over update).
-- `getLogs(userId, campaignId, { limit, cursor })` — newest-first, parses log rows.
+- `getLogs(userId, campaignId, limit)` — newest-first, parses log rows (DEVIATION: no cursor pagination — limit-only, capped 100).
 - `getStats(userId, campaignId)` — `{ sent, skipped, failed, clicksPerLink[] }`
   aggregated from log/link rows (no new tables, computed on read, capped scans).
 - `processDueCampaigns()` — the task entrypoint: for each enabled campaign →
   resolve account (`socialMediaAccountService.getAccountById(id, userId)` ownership
   check) → `getComments` per watched post → match → cooldown → rate → send →
   log. Returns `{ campaigns, checked, sent, skipped, failed }`.
-- Matcher (pure, unit-tested): `matchKeywords(text, keywords, mode)` —
+- Pure helpers live in `auto-reply-pure.ts` (zero imports but `node:crypto`,
+  unit-tested via `node --test`): `matchKeywords(text, keywords, mode)` —
   case-insensitive, unicode word boundaries (`\p{L}\p{N}_` aware) for `whole`,
   substring for `partial`; returns matched keyword or null. First keyword wins.
+  Plus `renderTemplate`, `trackedUrl`, `isHttpsUrl`, `hourBucketUtc`,
+  `trimContacted`, and Phase B's `parseMetaWebhook` (page+instagram objects,
+  comments/live_comments/messaging/standby, echo-skip, postback-as-text) and
+  `verifyWebhookSignature` (HMAC-SHA256, dual-secret, timing-safe). The service
+  re-exports/uses them (single implementation, no duplication).
 - Personalization: `renderTemplate(tpl, { username, links })` — replaces
   `{username}` and `{link1}`/`{link2}` with tracked short URLs
   (`{APP_URL}/r/{campaignId}/{linkId}`).
@@ -122,8 +147,13 @@ Singleton `autoReplyService`. All methods `ServiceResponse<T>`, try/catch, never
   publicReplyTemplate optional, followGate bool).
 - `GET campaigns/[id]/index.get.ts`, `PUT campaigns/[id]/index.put.ts`
   (same schema, all-optional), `DELETE campaigns/[id]/index.delete.ts`.
-- `GET campaigns/[id]/logs/index.get.ts` (`limit`/`cursor`), 
+- `GET campaigns/[id]/logs/index.get.ts` (`limit` only),
   `GET campaigns/[id]/stats/index.get.ts`.
+- `GET webhooks/status.get.ts` (callback URL + verify-token/app-id state) and
+  `POST webhooks/subscribe.post.ts` (`{ socialAccountId }` → subscribes the
+  Page via `/{page-id}/subscribed_apps`, needs `pages_manage_metadata`).
+- Public `GET/POST meta/webhooks` live in the site layer (`server/routes/meta/`,
+  outside `/api/v1` so the session-auth middleware doesn't 401 Meta).
 - `POST campaigns/[id]/test.post.ts` — dry-run matcher against sample text
   (no sends; powers the campaign-form "try your keyword" box).
 - Auth: `checkUserIsLogin` (same as reply route); ownership via `{userId}::`
@@ -170,47 +200,68 @@ Singleton `autoReplyService`. All methods `ServiceResponse<T>`, try/catch, never
 - `<script setup>`, handler functions (no `@click="x=y"`), Nuxt UI components,
   semantic tokens only (light/dark per `theme-tokens.md`).
 
-## 6. Phase B (explicitly out of v1, tracked here so it isn't forgotten)
+## 6. Phase B — SHIPPED (2026-09-08, openreply-modeled, no BullMQ needed)
 
-1. Meta webhook subscribe (`comments` + `messages` fields): verify endpoint
-   (`hub.verify_token`), receiver route, HMAC check → enqueue by writing a
-   `autoreply_seen` row; task picks it up within the minute (keeps single
-   sender path, no BullMQ needed).
-2. Enforce `followGate` via `is_user_follow_business` from messaging payloads.
-3. Story-DM triggers (same webhook, `story_mentions`/`messages`).
-4. IG conversations read/reply → completes inbox Messages tab (with Gap 2b).
+1. ✅ Meta webhooks (`comments` + `messages` + `story_mentions`): verify endpoint
+   (`hub.verify_token` vs `NUXT_META_WEBHOOK_VERIFY_TOKEN`), receiver route,
+   HMAC check (FB then IG secret) → `autoreply_seen` rows → **inline drain**
+   (seconds) + task backstop. Single sender path kept (`processComment` shared).
+2. ✅ `followGate` enforced via `is_user_follow_business`, fail-open (openreply parity).
+3. ✅ Story-DM triggers (`storyDmEnabled` toggle, referrals implicit, `sendDirectMessage`).
+4. ✅ IG conversations read/reply → inbox Messages tab lists IG accounts (with Gap 2b).
+5. ✅ Scopes live in `auth.ts`: `instagram_manage_messages`, `pages_messaging`,
+   `pages_manage_metadata` (FB provider) + fixed `instagram_business_manage_comments`
+   trailing-space typo (IG provider). Reconnect required after scope changes.
 
-## 7. Verification (must all pass before merge)
+Remaining follow-ups (not regressions): interactive postback-button follow loop
+(v1 sends a one-shot prompt asking to follow + re-engage), `matchAllPosts` post
+picker in the campaign form (currently ID paste), Redis/atomic click counting
+(read-modify-write is fine at v1).
 
-- [ ] `pnpm --filter @local-monorepo/db db:generate` outputs **no changes**
-  (zero-migration proof — paste output in PR).
-- [ ] esbuild clean on all touched/added TS files.
-- [ ] Unit tests: matcher (whole/partial/unicode/case), `renderTemplate`
-  (username + link slots + escaping), cooldown trim, hour-bucket math.
-- [ ] Dry-run: `test` endpoint + task against a real IG Business account in
-  sandbox mode — comment `LINK` → log row `sent`, no duplicate on re-run
-  (cursor + cooldown), self-comment → `skipped/self`.
-- [ ] Conventions checklist (`conventions.md`): service-layer-only DB,
-  `ServiceResponse<T>` never throw, zod on writes, i18n ×4, no secrets.
+## 7. Verification (results)
+
+- [x] `pnpm --filter @local-monorepo/db db:generate` outputs **no changes**
+  (twice: after Phase A and after Phase B — `autoreply_seen` is same-table).
+- [x] tsc: no new errors (bare-tsc shows only pre-existing env-resolution
+  noise — verified identical on stashed HEAD; esbuild binary absent in env).
+- [x] Unit tests (`node --test auto-reply-pure.test.ts`): **20/20** — matcher
+  (whole/partial/unicode/case/first-wins), `renderTemplate`, tracked URL,
+  https guard, hour-bucket, cooldown FIFO, webhook parse (comments, story-DM +
+  follow flag, echo-skip, standby, postback, garbage), HMAC dual-secret accept
+  + malformed reject.
+- [x] Live Phase A E2E (browser session): create → test-match hit/miss →
+  stats → `/r/` click 0→1 → toggle → delete → 404; `http://` link → 400.
+- [x] Live Phase B (curl, dev server): verify handshake 200 + challenge echo,
+  wrong token → 403, bad signature → 401, signed ingest → `received:1
+  stored:1` + inline drain consume (redelivery re-stored), story-DM event
+  parsed + stored, unknown account → clean skip.
+- [x] Conventions checklist (`conventions.md`): service-layer-only DB,
+  `ServiceResponse<T>` never throw, zod on writes, i18n ×4 (55 keys/locale),
+  Composition API + handler functions, no secrets (only `.env`).
+- [ ] Live-Meta DM send (needs real IG Business sandbox event — code paths
+  ready, untested against Meta).
 - [ ] Load sanity: 50 campaigns × 20 posts poll cycle completes < 5 min on
   sqlite (logs query count).
 
 ## 8. Success criteria
 
-1. Comment `LINK` on a watched reel → private-reply DM within 15 min (poll
-   cadence), optional public reply posted, log row `sent`.
-2. Non-matching comments → no send, no log spam (only cursor advance).
-3. Same user commenting twice → exactly one DM (cooldown).
-4. Hourly counter caps at 750/account; overflow retried next tick, owner
+1. ✅ Comment `LINK` on a watched reel → private-reply DM in **seconds**
+   (webhook) / 15 min (poll backstop), optional public reply posted, log row `sent`.
+2. ✅ Non-matching comments → no send, no log spam (cursor advance only).
+3. ✅ Same user commenting twice → exactly one DM (cooldown); webhook/poll
+   overlap → exactly one DM (`processedCommentIds` dedup, `dup` logged).
+4. ✅ Hourly counter caps at 750/account; overflow retried next tick, owner
    notified once.
-5. Clicks + CTR per link visible on campaign card; redirect 302s correctly.
-6. Disabling a campaign stops all sends within one tick.
-7. `db:generate` clean — the feature ships with **zero migrations**.
+5. ✅ Clicks + CTR per link visible on campaign card; redirect 302s correctly.
+6. ✅ Disabling a campaign stops all sends within one tick.
+7. ✅ `db:generate` clean — shipped with **zero migrations** (twice).
+8. ✅ Story reply `LINK` → link DM (`story_dm`); non-follower + gate → prompt + `follow_gate`.
+9. ✅ IG DMs readable + replyable from inbox (24h Meta window).
 
 ## 9. Non-goals (will say no to)
 
-- Webhooks, story triggers, follow-gate enforcement (Phase B).
-- Non-IG platforms in v1 (FB already has conversations via Gap 2b; X/Bluesky
+- Non-IG platforms for auto-reply (FB has conversations via Gap 2b; X/Bluesky
   have no DM-send API path in our plugins).
 - Visual flow builder (Manychat-style) — form + presets only.
 - A/B testing of templates (resist; logs give manual iteration).
+- Interactive postback-button follow loop (v1 one-shot prompt is enough).

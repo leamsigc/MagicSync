@@ -153,7 +153,7 @@ export function useInbox() {
     try {
       const accounts = await $fetch<DmAccount[]>('/api/v1/social-accounts')
       // Only platforms with wired DM support are selectable for now
-      dmAccounts.value = (accounts || []).filter((a) => a.platform === 'facebook')
+      dmAccounts.value = (accounts || []).filter((a) => a.platform === 'facebook' || a.platform === 'instagram')
     } catch (err) {
       dmError.value = toMessage(err, 'Failed to load accounts')
     } finally {

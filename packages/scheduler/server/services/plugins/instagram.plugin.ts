@@ -1,4 +1,4 @@
-import type { PostResponse, GetCommentsResponse, ReplyCommentResponse, PlatformComment, PluginPostDetails, PluginSocialMediaAccount, PostInsight, PlatformStats } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
+import type { PostResponse, GetCommentsResponse, GetConversationsResponse, ReplyCommentResponse, PlatformComment, PlatformConversation, PluginPostDetails, PluginSocialMediaAccount, PostInsight, PlatformStats } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import { BaseSchedulerPlugin, createPostInsightsFallback, extractExternalPostId } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import type { Post, PostWithAllData, SocialMediaAccount, Asset, PlatformContentOverride } from '#layers/BaseDB/db/schema';
 import type { InstagramSettings } from '#layers/BaseScheduler/shared/platformSettings';
@@ -952,6 +952,133 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
         success: false,
         error: (error as Error).message || 'Failed to reply to comment',
       };
+    }
+  }
+
+  /**
+   * Send a 1:1 direct message via the Instagram Messaging API.
+   * Used by story-DM triggers (story replies arrive as inbound DMs, so there
+   * is no comment to private-reply to). Requires instagram_manage_messages.
+   * Never throws: returns { success:false } on Meta errors (24h window, etc.).
+   */
+  async sendDirectMessage(
+    socialMediaAccount: PluginSocialMediaAccount | Pick<SocialMediaAccount, 'accessToken' | 'accountId'>,
+    recipientIgsid: string,
+    message: string
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    try {
+      const token = (socialMediaAccount as { accessToken: string }).accessToken;
+      const igUserId = (socialMediaAccount as { accountId: string }).accountId;
+      if (!token || !igUserId) {
+        return { success: false, error: 'Missing access token or IG user id' };
+      }
+      if (!recipientIgsid || !message?.trim()) {
+        return { success: false, error: 'recipientIgsid and message are required' };
+      }
+      const params = new URLSearchParams({ access_token: token });
+      const url = this._getGraphApiUrl(`${igUserId}/messages?${params.toString()}`);
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          recipient: { id: recipientIgsid },
+          message: { text: message.slice(0, 1000) },
+        }),
+      });
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => '');
+        this.logPluginEvent('direct-message-error', 'failure', `Error: ${errorText}`, recipientIgsid);
+        return { success: false, error: errorText || `Meta API error ${response.status}` };
+      }
+      const data = (await response.json().catch(() => ({}))) as { message_id?: string };
+      this.emit('instagram:direct-message:sent', { recipientIgsid, messageId: data.message_id });
+      return { success: true, messageId: data.message_id };
+    } catch (error) {
+      const msg = (error as Error).message || 'Failed to send direct message';
+      this.logPluginEvent('direct-message-error', 'failure', `Error: ${msg}`, recipientIgsid);
+      return { success: false, error: msg };
+    }
+  }
+
+  private toConversation(raw: Record<string, unknown>, accountId: string): PlatformConversation {
+    const participants = raw['participants'] as { data?: { id?: string; username?: string }[] } | undefined;
+    return {
+      id: String(raw['id'] || ''),
+      platform: this.pluginName,
+      accountId,
+      participants: (participants?.data || []).map((p) => ({ id: p.id, name: p.username })),
+      messageCount: raw['message_count'] as number | undefined,
+      unreadCount: raw['unread_count'] as number | undefined,
+      updatedTime: raw['updated_time'] as string | undefined,
+      snippet: raw['snippet'] as string | undefined,
+    };
+  }
+
+  /**
+   * List IG conversations (DMs). Implements the base-class slot so the shared
+   * inbox conversations endpoints + useInbox work for Instagram, same as FB.
+   * Meta enforces a 24h customer-service window on replies — enforced below.
+   */
+  override async getConversations(
+    socialMediaAccount: PluginSocialMediaAccount,
+    options?: { limit?: number; cursor?: string }
+  ): Promise<GetConversationsResponse> {
+    try {
+      const params = new URLSearchParams({
+        access_token: socialMediaAccount.accessToken,
+        platform: 'instagram',
+        fields: 'id,participants,message_count,unread_count,updated_time,snippet',
+        limit: String(options?.limit || 25),
+      });
+      if (options?.cursor) params.append('after', options.cursor);
+      const url = this._getGraphApiUrl(`${socialMediaAccount.accountId}/conversations?${params.toString()}`);
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Instagram conversations failed: ${await response.text()}`);
+      }
+      const data = (await response.json()) as { data?: Record<string, unknown>[]; paging?: { cursors?: { after?: string } } };
+      return {
+        platform: this.pluginName,
+        accountId: socialMediaAccount.id,
+        conversations: (data.data || []).map((c) => this.toConversation(c, socialMediaAccount.id)),
+        hasMore: !!data.paging?.cursors?.after,
+        nextCursor: data.paging?.cursors?.after,
+      };
+    } catch (error) {
+      log.error({ content: 'Error fetching Instagram conversations', plugin: 'instagram', error: (error as Error).message });
+      this.logPluginEvent('get-conversations-error', 'failure', `Error: ${(error as Error).message}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Reply inside an IG conversation. Resolves the other participant, then
+   * sends via the Messaging API (same path as story-DM triggers).
+   */
+  override async replyToConversation(
+    socialMediaAccount: PluginSocialMediaAccount,
+    conversationId: string,
+    message: string
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    try {
+      const params = new URLSearchParams({
+        access_token: socialMediaAccount.accessToken,
+        fields: 'participants',
+      });
+      const convoUrl = this._getGraphApiUrl(`${conversationId}?${params.toString()}`);
+      const convoRes = await fetch(convoUrl);
+      if (!convoRes.ok) {
+        return { success: false, error: `Instagram conversation lookup failed: ${await convoRes.text()}` };
+      }
+      const convo = (await convoRes.json()) as { participants?: { data?: { id?: string }[] } };
+      const other = (convo.participants?.data || []).find((p) => p.id && p.id !== socialMediaAccount.accountId);
+      if (!other?.id) {
+        return { success: false, error: 'No other participant found in conversation' };
+      }
+      return this.sendDirectMessage(socialMediaAccount, other.id, message);
+    } catch (error) {
+      log.error({ content: 'Error replying to Instagram conversation', plugin: 'instagram', error: (error as Error).message });
+      return { success: false, error: (error as Error).message || 'Failed to reply to conversation' };
     }
   }
 }

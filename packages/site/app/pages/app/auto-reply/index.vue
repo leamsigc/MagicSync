@@ -1,14 +1,16 @@
 <i18n src="./index.json"></i18n>
 <script lang="ts" setup>
 /**
- * Auto-Reply campaign manager — comment-to-DM automation (Gap 16, PRD-AUTO-REPLY Phase A).
- * Instagram-first: keyword match → private-reply DM + optional public reply, tracked links, logs.
+ * Auto-Reply campaign manager — comment-to-DM automation (Gap 16, PRD-AUTO-REPLY).
+ * Instagram-first: keyword match → private-reply DM + optional public reply,
+ * tracked links, logs. Phase B: instant delivery via Meta webhooks, story-DM
+ * triggers, follow-gate enforcement.
  */
 import { useAutoReply, type AutoReplyCampaign, type AutoReplyLog } from '~/composables/useAutoReply'
 
 const { t } = useI18n()
 const toast = useToast()
-const { campaigns, loading, error, fetchCampaigns, createCampaign, updateCampaign, deleteCampaign, fetchLogs, fetchStats, testMatch } = useAutoReply()
+const { campaigns, loading, error, fetchCampaigns, createCampaign, updateCampaign, deleteCampaign, fetchLogs, fetchStats, fetchWebhookStatus, subscribeWebhooks, testMatch } = useAutoReply()
 
 const showForm = ref(false)
 const editing = ref<AutoReplyCampaign | null>(null)
@@ -25,6 +27,11 @@ const formLink2Label = ref('')
 const formLink2Target = ref('')
 const formPublicReply = ref('')
 const formAi = ref(false)
+const formStoryDm = ref(false)
+const formFollowGate = ref(false)
+const formFollowPrompt = ref('')
+const webhookStatus = ref<{ verifyTokenConfigured: boolean; callbackUrl: string; appIdConfigured: boolean } | null>(null)
+const subscribingId = ref<string | null>(null)
 const accounts = ref<Array<{ id: string; accountName: string; platform: string }>>([])
 const logsOpen = ref(false)
 const activeLogs = ref<AutoReplyLog[]>([])
@@ -54,6 +61,9 @@ function resetForm() {
   formLink2Target.value = ''
   formPublicReply.value = ''
   formAi.value = false
+  formStoryDm.value = false
+  formFollowGate.value = false
+  formFollowPrompt.value = ''
 }
 
 function handleOpenCreate() {
@@ -89,6 +99,9 @@ function handleEdit(c: AutoReplyCampaign) {
   formLink2Target.value = c.links?.[1]?.target || ''
   formPublicReply.value = c.publicReplyTemplate || ''
   formAi.value = c.mode === 'ai'
+  formStoryDm.value = !!c.storyDmEnabled
+  formFollowGate.value = !!c.followGate
+  formFollowPrompt.value = c.followPromptTemplate || ''
   showForm.value = true
 }
 
@@ -110,7 +123,9 @@ function buildPayload() {
     dmTemplate: formDm.value,
     links,
     publicReplyTemplate: formPublicReply.value.trim() || undefined,
-    followGate: false,
+    storyDmEnabled: formStoryDm.value,
+    followGate: formFollowGate.value,
+    followPromptTemplate: formFollowPrompt.value.trim() || undefined,
     enabled: true,
     mode: formAi.value ? 'ai' : 'template',
   }
@@ -174,13 +189,31 @@ async function loadAccounts() {
   }
 }
 
+async function loadWebhookStatus() {
+  webhookStatus.value = await fetchWebhookStatus()
+}
+
+async function handleSubscribe(accountId: string) {
+  subscribingId.value = accountId
+  try {
+    const fields = await subscribeWebhooks(accountId)
+    if (fields) {
+      toast.add({ title: t('subscribed'), description: fields.join(', '), color: 'success' })
+    } else {
+      toast.add({ title: t('subscribe_failed'), description: error.value || '', color: 'error' })
+    }
+  } finally {
+    subscribingId.value = null
+  }
+}
+
 useHead({
   title: t('title'),
   meta: [{ name: 'description', content: t('description') }],
 })
 
 onMounted(async () => {
-  await Promise.all([fetchCampaigns(), loadAccounts()])
+  await Promise.all([fetchCampaigns(), loadAccounts(), loadWebhookStatus()])
 })
 </script>
 
@@ -197,6 +230,36 @@ onMounted(async () => {
     </div>
 
     <UAlert color="neutral" variant="soft" icon="i-lucide-info" class="mb-6" :description="t('honesty')" />
+
+    <UCard class="mb-6">
+      <template #header>
+        <div class="flex items-center gap-2">
+          <UIcon name="i-lucide-webhook" class="w-4 h-4" />
+          <p class="font-semibold">{{ t('webhook_title') }}</p>
+          <UBadge :color="webhookStatus?.verifyTokenConfigured ? 'success' : 'warning'" variant="subtle" size="xs">
+            {{ webhookStatus?.verifyTokenConfigured ? t('webhook_ready') : t('webhook_missing_token') }}
+          </UBadge>
+        </div>
+      </template>
+      <div class="space-y-3 text-sm">
+        <p class="text-muted-foreground">{{ t('webhook_description') }}</p>
+        <UFormField :label="t('webhook_callback')" name="callback">
+          <UInput :model-value="webhookStatus?.callbackUrl || ''" readonly class="w-full font-mono text-xs" />
+        </UFormField>
+        <div v-if="accounts.length > 0" class="flex flex-wrap gap-2">
+          <UButton
+            v-for="a in accounts"
+            :key="a.id"
+            size="sm"
+            variant="outline"
+            :loading="subscribingId === a.id"
+            @click="() => handleSubscribe(a.id)"
+          >
+            {{ t('subscribe_button') }} · {{ a.accountName }}
+          </UButton>
+        </div>
+      </div>
+    </UCard>
 
     <div v-if="loading" class="flex justify-center py-12">
       <UIcon name="i-heroicons-arrow-path" class="h-8 w-8 animate-spin text-muted-foreground" />
@@ -220,6 +283,10 @@ onMounted(async () => {
         </template>
         <div class="space-y-2 text-sm">
           <p class="text-muted-foreground">{{ (c.keywords || []).join(', ') }} · {{ c.matchMode }}</p>
+          <div class="flex flex-wrap gap-1">
+            <UBadge v-if="c.storyDmEnabled" color="primary" variant="subtle" size="xs">{{ t('story_dm_badge') }}</UBadge>
+            <UBadge v-if="c.followGate" color="warning" variant="subtle" size="xs">{{ t('follow_gate_badge') }}</UBadge>
+          </div>
           <p v-if="c.links?.length" class="text-muted-foreground">
             {{ t('clicks') }}: {{ c.links.map((l) => `${l.label}: ${l.clicks}`).join(' · ') }}
           </p>
@@ -279,6 +346,17 @@ onMounted(async () => {
             <span class="text-sm">{{ t('ai_mode') }}</span>
             <USwitch v-model="formAi" />
           </div>
+          <div class="flex items-center justify-between">
+            <span class="text-sm">{{ t('story_dm') }}</span>
+            <USwitch v-model="formStoryDm" />
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-sm">{{ t('follow_gate') }}</span>
+            <USwitch v-model="formFollowGate" />
+          </div>
+          <UFormField v-if="formFollowGate" :label="t('follow_prompt')" name="followPrompt">
+            <UInput v-model="formFollowPrompt" class="w-full" />
+          </UFormField>
           <p class="text-xs text-muted-foreground">{{ t('follow_gate_note') }}</p>
           <UFormField :label="t('test_box')" name="test">
             <div class="flex gap-2">

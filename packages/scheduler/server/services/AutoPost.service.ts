@@ -342,7 +342,7 @@ export class AutoPostService {
     return await scheduler.deleteComment(post, socialAccount as unknown as PluginSocialMediaAccount, commentId);
   }
 
-  private dmCapablePlatforms = new Set(['facebook']);
+  private dmCapablePlatforms = new Set(['facebook', 'instagram']);
 
   supportsDMs(platform: string) {
     return this.dmCapablePlatforms.has(platform);

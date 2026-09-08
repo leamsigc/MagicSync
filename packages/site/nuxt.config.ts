@@ -87,6 +87,14 @@ export default defineNuxtConfig({
     serverOptions: {
       timeout: 300000,
     },
+    // papaparse must stay external: bundling it into the Nitro server output
+    // lets an SSR transform rewrite `typeof window` inside its worker-blob
+    // template string, producing unparseable JS that kills prerender with
+    // `RollupError: Expected ',', got 'undefined'`. Kept as a runtime
+    // require instead (used by bulk-scheduler csv-import.post.ts).
+    externals: {
+      external: ['papaparse'],
+    },
     experimental: {
       openAPI: true,
       tasks: true,
@@ -249,6 +257,15 @@ export default defineNuxtConfig({
   // (Consolidated into the single `routeRules` block above — a duplicate
   // key here used to silently overwrite the redirect/noindex rules.)
   vite: {
+    // papaparse must stay out of the SSR bundle: it builds a Web-Worker from
+    // a stringified function and Vite's SSR transform rewrites `typeof window`
+    // inside that string, emitting unparseable JS that kills the build at
+    // Nitro prerender (`RollupError: Expected ',', got 'undefined'`). Kept as
+    // a runtime import instead (bulk-scheduler csvParser, used client-side by
+    // csv-import/generate pages and server-side by csv-import.post.ts).
+    ssr: {
+      external: ['papaparse'],
+    },
     // Vite dev-server must also send the isolation headers so `/_nuxt/*`,
     // `/@fs/*`, and `/@vite/*` responses carry them. Without this, the page
     // HTML gets COOP/COEP via Nitro but the JS modules don't, so the page

@@ -5,8 +5,8 @@
  *   - limit: number (default 25, max 50)
  *   - cursor: string (for pagination)
  *
- * Currently wired for Facebook pages. Other platforms return 400 until
- * their plugins implement getConversations().
+ * Wired for Facebook pages + Instagram Business accounts. Other platforms
+ * return 400 until their plugins implement getConversations().
  */
 
 import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service';

@@ -9,9 +9,11 @@ import {
   hourBucketUtc,
   isHttpsUrl,
   matchKeywords,
+  parseMetaWebhook,
   renderTemplate,
   trackedUrl,
   trimContacted,
+  verifyWebhookSignature,
 } from './auto-reply-pure.ts'
 
 describe('matchKeywords — whole word', () => {
@@ -90,5 +92,85 @@ describe('trimContacted (cooldown FIFO)', () => {
   })
   it('passes through small lists', () => {
     assert.deepEqual(trimContacted(['a', 'b'], 2000), ['a', 'b'])
+  })
+})
+
+describe('parseMetaWebhook', () => {
+  it('parses comment changes', () => {
+    const evs = parseMetaWebhook({
+      object: 'instagram',
+      entry: [{
+        id: 'IG123', time: 1757318400000,
+        changes: [{ field: 'comments', value: { id: 'C1', text: 'LINK please', from: { id: 'U9', username: 'ana' }, media: { id: 'M7' } } }],
+      }],
+    })
+    assert.equal(evs.length, 1)
+    const ev = evs[0]
+    assert.equal(ev?.kind, 'comment')
+    if (ev?.kind === 'comment') {
+      assert.equal(ev.commentId, 'C1')
+      assert.equal(ev.mediaId, 'M7')
+      assert.equal(ev.senderId, 'U9')
+      assert.equal(ev.username, 'ana')
+      assert.equal(ev.text, 'LINK please')
+    }
+  })
+  it('parses story-reply DMs and follow flag', () => {
+    const evs = parseMetaWebhook({
+      object: 'instagram',
+      entry: [{
+        id: 'IG123', time: 1757318400000,
+        messaging: [{
+          sender: { id: 'U9' }, recipient: { id: 'IG123' }, timestamp: 1757318400000,
+          message: { mid: 'M1', text: 'LINK', reply_to: { story: { id: 'S1' } } },
+          is_user_follow_business: false,
+        }],
+      }],
+    })
+    assert.equal(evs.length, 1)
+    const ev = evs[0]
+    assert.equal(ev?.kind, 'message')
+    if (ev?.kind === 'message') {
+      assert.equal(ev.storyReply, true)
+      assert.equal(ev.isUserFollowBusiness, false)
+      assert.equal(ev.text, 'LINK')
+    }
+  })
+  it('skips own echoes, reads standby, ignores garbage', () => {
+    const evs = parseMetaWebhook({
+      object: 'page',
+      entry: [
+        { id: 'P1', time: 1, messaging: [{ sender: { id: 'P1' }, message: { mid: 'E1', text: 'hi' } }] },
+        { id: 'P1', time: 1, standby: [{ sender: { id: 'U2' }, message: { mid: 'M2', text: 'hey' } }] },
+        { id: '', time: 1, changes: [] },
+      ],
+    })
+    assert.equal(evs.length, 1)
+    assert.equal(evs[0]?.kind, 'message')
+    assert.deepEqual(parseMetaWebhook(null), [])
+    assert.deepEqual(parseMetaWebhook({ entry: 'nope' }), [])
+  })
+  it('reads postback taps as text', () => {
+    const evs = parseMetaWebhook({
+      object: 'instagram',
+      entry: [{ id: 'IG1', time: 1, messaging: [{ sender: { id: 'U3' }, postback: { title: 'Get link', payload: 'GET_LINK' } }] }],
+    })
+    assert.equal(evs.length, 1)
+    if (evs[0]?.kind === 'message') assert.equal(evs[0].text, 'Get link')
+  })
+})
+
+describe('verifyWebhookSignature', () => {
+  it('accepts a valid sha256 signature from either secret', async () => {
+    const { createHmac } = await import('node:crypto')
+    const body = '{"object":"instagram"}'
+    const sig = 'sha256=' + createHmac('sha256', 'ig-secret').update(body, 'utf8').digest('hex')
+    assert.equal(verifyWebhookSignature(body, sig, ['fb-secret', 'ig-secret']), true)
+    assert.equal(verifyWebhookSignature(body, sig, ['fb-secret']), false)
+  })
+  it('rejects malformed input', () => {
+    assert.equal(verifyWebhookSignature('', 'sha256=abc', ['s']), false)
+    assert.equal(verifyWebhookSignature('x', 'nope', ['s']), false)
+    assert.equal(verifyWebhookSignature('x', 'sha256=zz', ['s']), false)
   })
 })

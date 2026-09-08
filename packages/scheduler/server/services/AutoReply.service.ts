@@ -1,23 +1,28 @@
 import { and, desc, eq, like } from 'drizzle-orm'
 import { entityDetails } from '#layers/BaseDB/db/entityDetails/entityDetails'
 import { platformPosts } from '#layers/BaseDB/db/posts/posts'
+import { socialMediaAccounts } from '#layers/BaseDB/db/socialMedia/socialMedia'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
 import type { ServiceResponse } from '#layers/BaseDB/server/services/types'
 import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service'
 import { SchedulerPost, type PlatformComment, type PluginSocialMediaAccount } from '#layers/BaseScheduler/server/services/SchedulerPost.service'
 import { InstagramPlugin } from '#layers/BaseScheduler/server/services/plugins/instagram.plugin'
 import { platformRateLimiter } from '#layers/BaseScheduler/server/services/RateLimiter.service'
-import { hourBucketUtc as hourBucketUtcPure, isHttpsUrl as isHttpsUrlPure, matchKeywords as matchKeywordsPure, renderTemplate as renderTemplatePure, trackedUrl as trackedUrlPure, trimContacted as trimContactedPure } from '#layers/BaseScheduler/server/services/auto-reply-pure'
+import { hourBucketUtc as hourBucketUtcPure, isHttpsUrl as isHttpsUrlPure, matchKeywords as matchKeywordsPure, renderTemplate as renderTemplatePure, trackedUrl as trackedUrlPure, trimContacted as trimContactedPure, type WebhookCommentEvent, type WebhookMessageEvent } from '#layers/BaseScheduler/server/services/auto-reply-pure'
 
 export const AUTOREPLY_CAMPAIGN = 'autoreply_campaign'
 export const AUTOREPLY_STATE = 'autoreply_state'
 export const AUTOREPLY_LOG = 'autoreply_log'
 export const AUTOREPLY_LINK = 'autoreply_link'
+export const AUTOREPLY_SEEN = 'autoreply_seen'
 
 export const AUTOREPLY_RATE_CAP = 750
 const CONTACTED_CAP = 2000
 const LOG_CAP = 500
 const WATCHED_POST_CAP = 20
+const PROCESSED_CAP = 500
+const SEEN_DRAIN_CAP = 200
+const SEEN_MAX_AGE_DAYS = 7
 
 export interface AutoReplyLinkInput {
   label: string
@@ -39,6 +44,7 @@ export interface AutoReplyCampaign {
   linkIds: string[]
   links?: Array<{ id: string; label: string; target: string; clicks: number }>
   publicReplyTemplate?: string
+  storyDmEnabled?: boolean
   followGate: boolean
   followPromptTemplate?: string
   enabled: boolean
@@ -61,6 +67,8 @@ interface CampaignState {
   lastSeenCommentId?: string
   lastCheckedAt: string
   contactedUserIds: string[]
+  /** Webhook/poll dedup: comment ids + message mids already acted on (FIFO). */
+  processedCommentIds?: string[]
 }
 
 export const AUTO_REPLY_PRESETS: Array<{ key: string; name: string; keywords: string[]; dmTemplate: string; publicReplyTemplate: string }> = [
@@ -118,6 +126,14 @@ export function trackedUrl(campaignId: string, linkId: string): string {
 
 function trimContacted(ids: string[]): string[] {
   return trimContactedPure(ids, CONTACTED_CAP)
+}
+
+function trimProcessed(ids: string[] | undefined): string[] {
+  return trimContactedPure(ids || [], PROCESSED_CAP)
+}
+
+function markProcessed(state: CampaignState, key: string): void {
+  state.processedCommentIds = trimProcessed([...(state.processedCommentIds || []), key])
 }
 
 function parseDetails<T>(raw: unknown): T | null {
@@ -330,6 +346,7 @@ export class AutoReplyService {
         dmTemplate: input.dmTemplate,
         linkIds,
         publicReplyTemplate: input.publicReplyTemplate,
+        storyDmEnabled: input.storyDmEnabled || false,
         followGate: input.followGate || false,
         followPromptTemplate: input.followPromptTemplate,
         enabled: input.enabled !== false,
@@ -493,7 +510,9 @@ export class AutoReplyService {
   private async readPostState(campaignId: string, externalPostId: string): Promise<CampaignState> {
     const row = await this.store.getStateRow(stateEntityId(campaignId, externalPostId))
     const details = row ? parseDetails<CampaignState>(row.details) : null
-    if (details && Array.isArray(details.contactedUserIds)) return details
+    if (details && Array.isArray(details.contactedUserIds)) {
+      return { ...details, processedCommentIds: trimProcessed(details.processedCommentIds) }
+    }
     return { lastCheckedAt: new Date(0).toISOString(), contactedUserIds: [] }
   }
 
@@ -501,6 +520,7 @@ export class AutoReplyService {
     await this.store.saveStateRow(stateEntityId(campaignId, externalPostId), {
       ...state,
       contactedUserIds: trimContacted(state.contactedUserIds || []),
+      processedCommentIds: trimProcessed(state.processedCommentIds),
     })
   }
 
@@ -553,6 +573,9 @@ export class AutoReplyService {
     comment: PlatformComment,
     state: CampaignState,
   ): Promise<{ outcome: 'sent' | 'skipped' | 'failed'; reason: string }> {
+    if ((state.processedCommentIds || []).includes(comment.id)) {
+      return { outcome: 'skipped', reason: 'dup' }
+    }
     if (comment.authorId && String(comment.authorId) === String(account.accountId)) {
       return { outcome: 'skipped', reason: 'self' }
     }
@@ -589,6 +612,7 @@ export class AutoReplyService {
     if (comment.authorId) {
       state.contactedUserIds = trimContacted([...state.contactedUserIds, String(comment.authorId)])
     }
+    markProcessed(state, comment.id)
     await this.writeLog(campaign.id, {
       commentId: comment.id,
       authorId: String(comment.authorId || ''),
@@ -651,9 +675,261 @@ export class AutoReplyService {
         lastSeenCommentId: newestId || state.lastSeenCommentId,
         lastCheckedAt: new Date().toISOString(),
         contactedUserIds: state.contactedUserIds,
+        processedCommentIds: state.processedCommentIds,
       })
     }
     return { checked, sent, skipped, failed }
+  }
+
+  private async findAccountByProviderId(providerAccountId: string) {
+    try {
+      const db = useDrizzle()
+      const [row] = await db
+        .select()
+        .from(socialMediaAccounts)
+        .where(eq(socialMediaAccounts.accountId, providerAccountId))
+        .limit(1)
+      return row || null
+    } catch {
+      return null
+    }
+  }
+
+  private async listEnabledCampaigns(): Promise<AutoReplyCampaign[]> {
+    const db = useDrizzle()
+    const rows = await db.select().from(entityDetails).where(eq(entityDetails.entityType, AUTOREPLY_CAMPAIGN))
+    const campaigns: AutoReplyCampaign[] = []
+    for (const row of rows) {
+      const details = parseDetails<Omit<AutoReplyCampaign, 'id' | 'userId'>>(row.details)
+      if (!details || (details as { enabled?: boolean }).enabled === false) continue
+      const userId = row.entityId.split('::')[0] || ''
+      const id = row.entityId.split('::')[1] || row.entityId
+      if (!userId || !id) continue
+      campaigns.push({ ...(details as AutoReplyCampaign), id, userId })
+    }
+    return campaigns
+  }
+
+  private async checkRateLimit(
+    campaign: AutoReplyCampaign,
+    accountId: string,
+  ): Promise<{ ok: true; bucket: string } | { ok: false; reason: string }> {
+    const mem = platformRateLimiter.canMakeRequest(`autoreply-${accountId}`)
+    if (!mem.allowed) return { ok: false, reason: 'rate_limited_memory' }
+    const bucket = hourBucketUtc()
+    const used = await this.readRateCount(accountId, bucket)
+    if (used >= AUTOREPLY_RATE_CAP) {
+      await this.maybeNotifyFailure(campaign.userId, 'Auto-reply rate limit reached', `Campaign ${campaign.name} hit 750 DMs/hour. Overflow will retry next tick.`)
+      return { ok: false, reason: 'rate_limited_750' }
+    }
+    return { ok: true, bucket }
+  }
+
+  private async processSeenComment(
+    ev: WebhookCommentEvent,
+    campaigns: AutoReplyCampaign[],
+  ): Promise<{ sent: number; skipped: number; failed: number }> {
+    let sent = 0
+    let skipped = 0
+    let failed = 0
+    const account = await this.findAccountByProviderId(ev.entryId)
+    if (!account || account.platform !== 'instagram') {
+      return { sent, skipped: 1, failed }
+    }
+    const pluginAccount = account as unknown as PluginSocialMediaAccount
+    for (const campaign of campaigns) {
+      if (campaign.socialAccountId !== account.id) continue
+      if (!ev.mediaId && !campaign.matchAllPosts) continue
+      if (ev.mediaId && !campaign.matchAllPosts && !(campaign.externalPostIds || []).includes(ev.mediaId)) continue
+      const state = await this.readPostState(campaign.id, ev.mediaId || 'webhook')
+      const comment: PlatformComment = {
+        id: ev.commentId,
+        text: ev.text,
+        authorName: ev.username,
+        authorId: ev.senderId,
+        createdAt: ev.at,
+      }
+      const result = await this.processComment(campaign, pluginAccount, comment, state)
+      await this.writePostState(campaign.id, ev.mediaId || 'webhook', state)
+      if (result.outcome === 'sent') {
+        // processComment already wrote the sent log (reason keyword/ai).
+        sent++
+      } else if (result.outcome === 'failed') {
+        failed++
+        await this.writeLog(campaign.id, {
+          commentId: ev.commentId,
+          authorId: ev.senderId,
+          authorName: ev.username,
+          action: 'failed',
+          reason: result.reason,
+          at: new Date().toISOString(),
+        })
+      } else {
+        skipped++
+        if (result.reason !== 'no-match') {
+          await this.writeLog(campaign.id, {
+            commentId: ev.commentId,
+            authorId: ev.senderId,
+            authorName: ev.username,
+            action: 'skipped',
+            reason: result.reason,
+            at: new Date().toISOString(),
+          })
+        }
+      }
+    }
+    return { sent, skipped, failed }
+  }
+
+  private followPrompt(campaign: AutoReplyCampaign, username: string): string {
+    if (campaign.followPromptTemplate) {
+      return renderTemplate(campaign.followPromptTemplate, { username, links: [] })
+    }
+    return `Hey ${username}! Please follow us first, then reply again and I'll send your link right over.`
+  }
+
+  private async processSeenMessage(
+    ev: WebhookMessageEvent,
+    campaigns: AutoReplyCampaign[],
+  ): Promise<{ sent: number; skipped: number; failed: number }> {
+    let sent = 0
+    let skipped = 0
+    let failed = 0
+    const account = await this.findAccountByProviderId(ev.entryId)
+    if (!account || account.platform !== 'instagram') {
+      return { sent, skipped: 1, failed }
+    }
+    const pluginAccount = account as unknown as PluginSocialMediaAccount
+    const plugin = this.instagramPlugin()
+    for (const campaign of campaigns) {
+      if (campaign.socialAccountId !== account.id) continue
+      if (!campaign.storyDmEnabled) continue
+      const state = await this.readPostState(campaign.id, 'dm')
+      const dedupeKey = ev.mid || `${ev.senderId}::${ev.at}`
+      if ((state.processedCommentIds || []).includes(dedupeKey)) {
+        skipped++
+        continue
+      }
+      const matched = ev.referral
+        ? (matchKeywords(ev.text, campaign.keywords, campaign.matchMode) || 'referral')
+        : matchKeywords(ev.text, campaign.keywords, campaign.matchMode)
+      if (!matched) {
+        skipped++
+        continue
+      }
+      if (String(ev.senderId) === String(account.accountId)) {
+        skipped++
+        markProcessed(state, dedupeKey)
+        await this.writePostState(campaign.id, 'dm', state)
+        continue
+      }
+      // Follow gate (openreply parity: fails open when Meta gives no signal).
+      if (campaign.followGate && ev.isUserFollowBusiness === false) {
+        markProcessed(state, dedupeKey)
+        await this.writePostState(campaign.id, 'dm', state)
+        await plugin.sendDirectMessage(pluginAccount, ev.senderId, this.followPrompt(campaign, ev.senderId))
+        await this.writeLog(campaign.id, {
+          commentId: ev.mid || dedupeKey,
+          authorId: ev.senderId,
+          authorName: ev.senderId,
+          matchedKeyword: matched,
+          action: 'skipped',
+          reason: 'follow_gate',
+          at: new Date().toISOString(),
+        })
+        skipped++
+        continue
+      }
+      const gate = await this.checkRateLimit(campaign, account.id)
+      if (!gate.ok) {
+        failed++
+        await this.writeLog(campaign.id, {
+          commentId: ev.mid || dedupeKey,
+          authorId: ev.senderId,
+          authorName: ev.senderId,
+          matchedKeyword: matched,
+          action: 'failed',
+          reason: gate.reason,
+          at: new Date().toISOString(),
+        })
+        continue
+      }
+      const fallback = this.buildDmText(campaign, ev.senderId)
+      const resolved = await this.resolveAiText(campaign, {
+        id: dedupeKey, text: ev.text, authorName: ev.senderId, authorId: ev.senderId, createdAt: ev.at,
+      }, fallback)
+      const dm = await plugin.sendDirectMessage(pluginAccount, ev.senderId, resolved.text)
+      markProcessed(state, dedupeKey)
+      if (!state.contactedUserIds.includes(ev.senderId)) {
+        state.contactedUserIds = trimContacted([...state.contactedUserIds, ev.senderId])
+      }
+      await this.writePostState(campaign.id, 'dm', state)
+      if (!dm.success) {
+        failed++
+        await this.writeLog(campaign.id, {
+          commentId: ev.mid || dedupeKey,
+          authorId: ev.senderId,
+          authorName: ev.senderId,
+          matchedKeyword: matched,
+          action: 'failed',
+          reason: (dm.error || 'send_failed').slice(0, 120),
+          at: new Date().toISOString(),
+        })
+        continue
+      }
+      await this.bumpRateCount(account.id, gate.bucket)
+      await this.writeLog(campaign.id, {
+        commentId: ev.mid || dedupeKey,
+        authorId: ev.senderId,
+        authorName: ev.senderId,
+        matchedKeyword: matched,
+        action: 'sent',
+        reason: ev.storyReply ? 'story_dm' : 'inbound_dm',
+        at: new Date().toISOString(),
+      })
+      sent++
+    }
+    return { sent, skipped, failed }
+  }
+
+  /**
+   * Drain webhook-ingested `autoreply_seen` rows (Phase B live path).
+   * Same sender path as polling (cooldown, rate, logs); rows are deleted once
+   * consumed, stale rows (>7d, e.g. receiver wrote but account was deleted)
+   * are pruned. Called inline by the receiver AND by the 15m task as backstop.
+   */
+  async drainSeenEvents(): Promise<ServiceResponse<{ seen: number; sent: number; skipped: number; failed: number }>> {
+    try {
+      const db = useDrizzle()
+      const campaigns = await this.listEnabledCampaigns()
+      const rows = await db
+        .select()
+        .from(entityDetails)
+        .where(eq(entityDetails.entityType, AUTOREPLY_SEEN))
+        .limit(SEEN_DRAIN_CAP)
+      let seen = 0
+      let sent = 0
+      let skipped = 0
+      let failed = 0
+      const cutoff = Date.now() - SEEN_MAX_AGE_DAYS * 24 * 60 * 60 * 1000
+      for (const row of rows) {
+        const ev = parseDetails<WebhookCommentEvent | WebhookMessageEvent>(row.details)
+        const stale = !ev || Number.isNaN(Date.parse((ev as { at?: string }).at || '')) || Date.parse((ev as { at?: string }).at as string) < cutoff
+        if (!stale && ev) {
+          seen++
+          const totals = ev.kind === 'comment'
+            ? await this.processSeenComment(ev as WebhookCommentEvent, campaigns)
+            : await this.processSeenMessage(ev as WebhookMessageEvent, campaigns)
+          sent += totals.sent
+          skipped += totals.skipped
+          failed += totals.failed
+        }
+        await db.delete(entityDetails).where(eq(entityDetails.id, row.id))
+      }
+      return { success: true, data: { seen, sent, skipped, failed } }
+    } catch {
+      return { success: false, error: 'Failed to drain webhook events' }
+    }
   }
 
   async processDueCampaigns(): Promise<ServiceResponse<{ campaigns: number; checked: number; sent: number; skipped: number; failed: number }>> {
@@ -666,6 +942,12 @@ export class AutoReplyService {
       let skipped = 0
       let failed = 0
       await this.store.deleteStaleRateRows(hourBucketUtc())
+      const drained = await this.drainSeenEvents()
+      if (drained.success && drained.data) {
+        sent += drained.data.sent
+        skipped += drained.data.skipped
+        failed += drained.data.failed
+      }
       for (const row of rows) {
         const details = parseDetails<Omit<AutoReplyCampaign, 'id' | 'userId'>>(row.details)
         if (!details || (details as { enabled?: boolean }).enabled === false) continue

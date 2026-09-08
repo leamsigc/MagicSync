@@ -20,6 +20,7 @@ export interface AutoReplyCampaign {
   linkIds: string[]
   links?: AutoReplyLink[]
   publicReplyTemplate?: string
+  storyDmEnabled?: boolean
   followGate: boolean
   followPromptTemplate?: string
   enabled: boolean
@@ -144,6 +145,29 @@ export function useAutoReply() {
     }
   }
 
+  async function fetchWebhookStatus(): Promise<{ verifyTokenConfigured: boolean; callbackUrl: string; appIdConfigured: boolean } | null> {
+    try {
+      const res = await $fetch<{ success: boolean; data: { verifyTokenConfigured: boolean; callbackUrl: string; appIdConfigured: boolean } }>('/api/v1/auto-reply/webhooks/status')
+      return res.data
+    } catch (err) {
+      error.value = toMessage(err, 'Failed to load webhook status')
+      return null
+    }
+  }
+
+  async function subscribeWebhooks(socialAccountId: string): Promise<string[] | null> {
+    try {
+      const res = await $fetch<{ success: boolean; data: { subscribed_fields: string[] } }>('/api/v1/auto-reply/webhooks/subscribe', {
+        method: 'POST',
+        body: { socialAccountId },
+      })
+      return res.data?.subscribed_fields ?? null
+    } catch (err) {
+      error.value = toMessage(err, 'Failed to subscribe webhooks')
+      return null
+    }
+  }
+
   async function testMatch(id: string | null, text: string, keywords: string[], matchMode: 'whole' | 'partial'): Promise<string | null> {
     try {
       if (!id) {
@@ -179,6 +203,8 @@ export function useAutoReply() {
     toggleCampaign,
     fetchLogs,
     fetchStats,
+    fetchWebhookStatus,
+    subscribeWebhooks,
     testMatch,
   }
 }

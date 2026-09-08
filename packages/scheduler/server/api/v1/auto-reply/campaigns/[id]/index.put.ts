@@ -18,6 +18,7 @@ const updateSchema = z.object({
   dmTemplate: z.string().min(1).max(1000).optional(),
   links: z.array(linkSchema).max(2).optional(),
   publicReplyTemplate: z.string().max(500).optional(),
+  storyDmEnabled: z.boolean().optional(),
   followGate: z.boolean().optional(),
   followPromptTemplate: z.string().max(500).optional(),
   enabled: z.boolean().optional(),

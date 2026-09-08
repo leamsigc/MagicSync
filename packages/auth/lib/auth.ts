@@ -178,10 +178,19 @@ export const auth = betterAuth({
         'pages_manage_posts',
         'pages_read_engagement',
         'pages_manage_engagement',
+        // Webhook subscriptions: POST /{page-id}/subscribed_apps needs this.
+        'pages_manage_metadata',
+        // FB inbox DMs (Gap 2b) + required alongside instagram_manage_messages
+        // for IG private replies.
+        'pages_messaging',
         'instagram_basic',
         'instagram_content_publish',
         'instagram_manage_insights',
         'instagram_manage_comments',
+        // Auto-Reply comment→DM + story-DM triggers (Phase B webhooks).
+        // NOTE: granted at consent time only — after adding a scope here every
+        // FB/IG account must disconnect + reconnect to pick it up.
+        'instagram_manage_messages',
       ],
     },
     // Native Better Auth social providers
@@ -470,7 +479,7 @@ export const auth = betterAuth({
           authorizationUrl: 'https://instagram.com/oauth/authorize',
           tokenUrl: 'https://api.instagram.com/oauth/access_token',
           userInfoUrl: 'https://graph.instagram.com/me?fields=id,name,username,profile_picture_url',
-          scopes: ['instagram_business_basic', "instagram_business_manage_messages", "instagram_business_content_publish", "instagram_business_manage_insights", "instagram_business_manage_comments  "],
+          scopes: ['instagram_business_basic', "instagram_business_manage_messages", "instagram_business_content_publish", "instagram_business_manage_insights", "instagram_business_manage_comments"],
           pkce: false,
           mapProfileToUser: (profile: any) => {
             return {
