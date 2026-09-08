@@ -41,31 +41,60 @@ RUN bash ./scripts/tts_assets_folder.sh
 
 RUN pnpm site
 
-# The libsql package resolves its native binding at runtime via detect-libc,
-# so on Alpine it needs @libsql/linux-x64-musl. pnpm/Nitro may have bundled
-# the glibc variant (linux-x64-gnu) depending on the lockfile, so we explicitly
-# install the matching musl binding and copy it into the bundled server deps.
-# TODO: Remove this workaround once pnpm/Nitro reliably bundles the musl
-# binding when building on node:26-alpine.
+# The `libsql` package (native core behind `@libsql/client`) resolves its
+# platform binding at runtime via detect-libc, so on Alpine it needs
+# `@libsql/linux-x64-musl`. Nitro does not trace the dynamically-loaded
+# `index.node` binary, so the binding is missing from `.output/server` and we
+# inject it here. NOTE: pnpm installs only the platform-matching optional dep —
+# on Alpine that is the musl binding, never the gnu one — so the version must
+# come from the store's musl package (or the `libsql` release line, which the
+# bindings track in lockstep), NOT from a gnu lookup.
+# TODO: Remove this workaround once Nitro traces the native binding into
+# .output when building on node:26-alpine.
 RUN cat > /tmp/install-musl-binding.sh <<'EOF'
 #!/bin/sh
 set -e
-MUSL_DIR='/usr/app/packages/site/.output/server/node_modules/@libsql/linux-x64-musl'
-if [ -d "$MUSL_DIR" ] && [ -n "$(ls -A "$MUSL_DIR" 2>/dev/null)" ]; then
-  echo "Musl binding already bundled; skipping explicit install"
+DEST='/usr/app/packages/site/.output/server/node_modules/@libsql/linux-x64-musl'
+STAGE='/tmp/musl/node_modules/@libsql/linux-x64-musl'
+
+stage_from() {
+  SRC_DIR="$1"
+  echo "Staging musl binding from $SRC_DIR"
+  mkdir -p "$DEST" "$STAGE"
+  cp -r "$SRC_DIR/." "$DEST/"
+  cp -r "$SRC_DIR/." "$STAGE/"
+  ls -la "$STAGE/"
+}
+
+# 1. Already bundled by Nitro — still stage it, because the runtime image
+#    COPYs from /tmp/musl unconditionally.
+if [ -f "$DEST/package.json" ] && ls "$DEST"/*.node >/dev/null 2>&1; then
+  echo "Musl binding already bundled; staging copy for runtime image"
+  mkdir -p "$STAGE"
+  cp -r "$DEST/." "$STAGE/"
   exit 0
 fi
 
-GNU_PKG=$(find /usr/app -path '*/@libsql/linux-x64-gnu/package.json' -print -quit)
-if [ -z "$GNU_PKG" ]; then
-  echo "ERROR: Could not find installed @libsql/linux-x64-gnu binding" >&2
-  exit 1
+# 2. Normal case on Alpine: musl binding is in the pnpm store (pnpm skips the
+#    gnu optional dep on musl, so a gnu lookup would always fail here).
+MUSL_PKG=$(find /usr/app -path '*node_modules/@libsql/linux-x64-musl/package.json' -not -path '*/.output/*' -print -quit 2>/dev/null)
+if [ -n "$MUSL_PKG" ]; then
+  stage_from "$(dirname "$MUSL_PKG")"
+  exit 0
 fi
 
-VERSION=$(node -e "console.log(require('$GNU_PKG').version)")
-echo "Found @libsql/linux-x64-gnu version $VERSION; installing matching musl binding"
+# 3. Fallback: npm-install the musl binding matching the `libsql` release line.
+LIBSQL_PKG=$(find /usr/app -path '*node_modules/libsql/package.json' -not -path '*/.output/*' -print -quit 2>/dev/null)
+if [ -z "$LIBSQL_PKG" ]; then
+  echo "ERROR: no @libsql/linux-x64-musl binding and no libsql package found under /usr/app" >&2
+  exit 1
+fi
+VERSION=$(node -e "console.log(require('$LIBSQL_PKG').version)")
+echo "Musl binding absent from store; installing @libsql/linux-x64-musl@$VERSION to match libsql@$VERSION"
 npm install "@libsql/linux-x64-musl@$VERSION" --prefix /tmp/musl --no-save --no-package-lock
-ls -la /tmp/musl/node_modules/@libsql/linux-x64-musl/
+mkdir -p "$DEST"
+cp -r "$STAGE/." "$DEST/"
+ls -la "$STAGE/"
 EOF
 RUN sh /tmp/install-musl-binding.sh
 
