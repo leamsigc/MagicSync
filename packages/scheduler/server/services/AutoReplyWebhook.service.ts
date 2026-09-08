@@ -145,9 +145,22 @@ export class AutoReplyWebhookService {
       const response = await fetch(`https://graph.facebook.com/v25.0/${creds.pageId}/subscribed_apps?${params.toString()}`, {
         method: 'POST',
       })
-      const body = (await response.json().catch(() => ({}))) as { success?: boolean; subscribed_fields?: string[]; error?: { message?: string } }
+      const body = (await response.json().catch(() => ({}))) as { success?: boolean; subscribed_fields?: string[]; error?: { message?: string; code?: number } }
       if (!response.ok || body.error) {
-        return { success: false, error: body.error?.message || `Meta API error ${response.status}` }
+        const metaMessage = body.error?.message || `Meta API error ${response.status}`
+        // (#200) permission errors mean the stored token was granted WITHOUT the
+        // new scopes. Neither retrying nor token-refresh fixes that: the user must
+        // add the permissions to the Facebook Login for Business configuration
+        // (dashboard) and then fully disconnect + connect again (refresh reuses
+        // the old grant and can never add scopes).
+        if (/one of these permissions is needed|permission/i.test(metaMessage)) {
+          return {
+            success: false,
+            code: 'PERMISSIONS',
+            error: `Meta refused: ${metaMessage} — add the permissions to the Facebook Login for Business configuration, then disconnect + connect the account again (a token refresh is not enough).`,
+          }
+        }
+        return { success: false, error: metaMessage }
       }
       return { success: true, data: { subscribed_fields: body.subscribed_fields || ['feed', 'messages'] } }
     } catch {

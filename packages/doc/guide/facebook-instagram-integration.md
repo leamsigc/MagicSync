@@ -32,6 +32,7 @@ token server-side (`graph.facebook.com/v25.0`, see
 |---|---|
 | **Valid OAuth Redirect URIs** (exact match, one per environment) | Dev: `http://localhost:3000/api/auth/callback/facebook` · Prod: `https://<your-domain>/api/auth/callback/facebook` (pattern: `NUXT_BETTER_AUTH_URL` + `/api/auth/callback/facebook`) |
 | **Configuration ID** | Create a configuration under **Facebook Login for Business → Configurations**, copy its ID → `NUXT_FACEBOOK_CONFIG_ID` (the code passes it as `configId` in `auth.ts`; without it Business Login fails) |
+| **Configuration permissions** | Open that same configuration → enable **every permission from §1.4** (`pages_manage_metadata`, `pages_messaging`, `instagram_manage_messages`, …). The config acts as an allow-list: Meta never grants a scope that isn't enabled here, no matter what `auth.ts` requests. Revisit this list each time a scope is added in code |
 | Login with JavaScript / Embedded browser OAuth | Leave defaults unless you embed login in a WebView |
 
 `redirect_uri_mismatch` (Error 400) always means the URI above is missing or
@@ -205,7 +206,8 @@ Later: token:health task warns on expiry; FB has no refresh tokens —
 | `redirect_uri_mismatch` (400) | Callback URI missing/mismatched → §1.3, character-exact |
 | Business Login fails, no `configId` | `NUXT_FACEBOOK_CONFIG_ID` unset → §1.3 + §2 |
 | `(#200) Requires business account` | Personal IG → convert to Business/Creator + link to Page (§1.5) |
-| Permissions missing after connect | Scopes changed in code but user never re-consented → disconnect + reconnect |
+| Permissions missing after connect | Scopes changed in code but user never re-consented → full **Disconnect + Connect** (the in-app **Reconnect** button only refreshes the token and can never add scopes; the provider grant in Better Auth stays as-is) |
+| Subscribe `(#200) … permissions is needed` after reconnect | Permission not enabled in the Business Login **configuration** (§1.3) — fix there first, then Disconnect + Connect again |
 | `OAuthException (#10) Private replies not allowed` | `instagram_manage_messages` not granted or Messages access off → §1.4 + §1.5.4, then reconnect |
 | Page token dies in hours | Long-lived exchange skipped/failed — check server logs at connect; `token:health` reports state every 6h |
 | `skipped/self` logs | Comment author is the business itself → expected |
