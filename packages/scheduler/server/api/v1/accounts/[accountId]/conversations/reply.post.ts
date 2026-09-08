@@ -57,7 +57,9 @@ export default defineEventHandler(async (event) => {
     });
 
     if (!result.success) {
-      throw createError({ statusCode: 400, statusMessage: result.error || 'Failed to send reply' });
+      // statusMessage must stay single-line: Meta errors can contain newlines,
+      // which abort the Node response (Cloudflare then serves a 502 HTML page).
+      throw createError({ statusCode: 400, statusMessage: 'Failed to send reply', message: result.error || 'Failed to send reply' });
     }
 
     return { success: true, data: result };

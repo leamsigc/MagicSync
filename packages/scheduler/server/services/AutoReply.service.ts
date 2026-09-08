@@ -734,6 +734,9 @@ export class AutoReplyService {
     let failed = 0
     const account = await this.findAccountByProviderId(ev.entryId)
     if (!account || account.platform !== 'instagram') {
+      // Visible in server logs: entry.id must equal the IG row's accountId
+      // (professional user_id, not the app-scoped id — see auth.ts note).
+      console.warn(`[autoreply] webhook comment for unknown account entry=${ev.entryId.slice(0, 8)}… comment=${ev.commentId}`)
       return { sent, skipped: 1, failed }
     }
     const pluginAccount = account as unknown as PluginSocialMediaAccount
@@ -797,6 +800,7 @@ export class AutoReplyService {
     let failed = 0
     const account = await this.findAccountByProviderId(ev.entryId)
     if (!account || account.platform !== 'instagram') {
+      console.warn(`[autoreply] webhook DM for unknown account entry=${ev.entryId.slice(0, 8)}… sender=${ev.senderId.slice(0, 8)}…`)
       return { sent, skipped: 1, failed }
     }
     const pluginAccount = account as unknown as PluginSocialMediaAccount

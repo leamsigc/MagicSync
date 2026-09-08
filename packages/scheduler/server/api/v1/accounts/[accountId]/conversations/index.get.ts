@@ -64,7 +64,9 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 401, statusMessage: 'Facebook token expired or invalid. Please reconnect your account.' });
     }
     if (message.startsWith('Facebook API Error')) {
-      throw createError({ statusCode: 502, statusMessage: message });
+      // statusMessage must stay single-line (see reply.post.ts): full Meta
+      // text goes in `message`.
+      throw createError({ statusCode: 502, statusMessage: 'Upstream platform error', message });
     }
     throw createError({ statusCode: 500, statusMessage: 'Internal server error' });
   }

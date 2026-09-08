@@ -218,6 +218,26 @@ Remaining follow-ups (not regressions): interactive postback-button follow loop
 picker in the campaign form (currently ID paste), Redis/atomic click counting
 (read-modify-write is fine at v1).
 
+2026-09-08 prod debug: accounts connected via Instagram Login stored the
+**app-scoped** `id`, but webhooks carry `user_id` in `entry.id` → events
+silently matched nothing. Fixed in `auth.ts` (request + prefer `user_id`;
+audit log updated) + `console.warn` on unmatched entries
+(`webhook comment/DM for unknown account`). Pre-fix rows need
+disconnect + reconnect. Facebook-flow rows were always correct
+(`instagram_business_account.id` is the `user_id`).
+
+2026-09-08 prod debug #2 (live, magicsync.dev): Subscribe failed with Meta
+`(#200)` missing `pages_manage_metadata`/`pages_messaging` → token predates
+scopes → reconnect required (expected). Same session found a REAL bug:
+multi-line Meta text in `statusMessage` makes Node abort the response and
+Cloudflare serves its own 502 HTML page — fixed by keeping `statusMessage`
+single-line + full text in `message` (subscribe + both conversations routes),
+and the UI now detects HTML bodies + prefers `message`. Separately, the logs
+endpoint served the SPA 404 page as HTML-200 on the browser's origin while
+siblings return JSON → stale/split deployment still serving traffic (redeploy
+fully, stop old containers). Conversations 500 `(#3) capability` is again the
+pre-scope token → reconnect.
+
 ## 7. Verification (results)
 
 - [x] `pnpm --filter @local-monorepo/db db:generate` outputs **no changes**

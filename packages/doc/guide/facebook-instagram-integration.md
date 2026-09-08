@@ -164,6 +164,11 @@ Later: token:health task warns on expiry; FB has no refresh tokens —
 3. Verify it appears under **Connected**. Tokens live encrypted in
    `social_media_accounts` — never exposed to the client
    (`sanitizeSocialMediaAccount` strips them from API responses).
+4. **Account-ID trap:** IG rows store the professional `user_id` (the same ID
+   Meta puts in webhook `entry.id`), never the app-scoped id. Accounts
+   connected via Instagram Login *before* this fix store the wrong id and
+   silently miss every webhook event (server logs show `webhook comment for
+   unknown account`) — **disconnect + reconnect** such accounts once.
 
 ## 5. Auto-Reply extras (on top of §1–§4)
 
@@ -209,7 +214,9 @@ Later: token:health task warns on expiry; FB has no refresh tokens —
 | Webhook Test delivers, real events don't | App in Development mode (§1.6) or account lacks app role — publish + tester invite dance |
 | `skipped/follow_gate` logs | Follow gate blocked a non-follower → expected; prompt DM sent |
 | `401 Invalid signature` in logs | Proxy/CDN rewrote the body — Meta signs raw bytes; terminate TLS without body mutation |
-| Subscribe Page 502 | Missing `pages_manage_metadata` grant or expired page token → reconnect, then retry |
+| Subscribe Page 502 | Missing `pages_manage_metadata` grant or expired page token → disconnect + reconnect (scopes grant at consent), then retry |
+| Subscribe `(#200) … pages_manage_metadata / pages_messaging` | Token predates the scope change → disconnect + reconnect, then retry |
+| API URL returns the app's 404 page as HTML (status 200) | Stale deployment still serving traffic: the running server predates that route. Redeploy fully, stop old containers (`docker ps`), hard-refresh. Verify with an invalid param (e.g. `?limit=9999`) — a live handler answers JSON 400, a stale origin answers HTML |
 
 ## 7. Checklist before marking done
 

@@ -53,7 +53,14 @@ export function useAutoReply() {
 
   function toMessage(err: unknown, fallback: string): string {
     const e = err as { data?: { statusMessage?: string; message?: string }; message?: string }
-    return e.data?.statusMessage || e.data?.message || e.message || fallback
+    // Prefer `message` (carries the detailed reason, e.g. Meta's text);
+    // `statusMessage` is intentionally generic single-line (multi-line values
+    // abort the Node response and surface as a proxy HTML error page).
+    // Also detect proxy HTML bodies (Cloudflare 502/524 pages) and say so.
+    if (typeof e.data === 'string' && /<!DOCTYPE html|<html/i.test(e.data)) {
+      return 'Server returned an HTML error page instead of JSON (proxy/gateway failure) — check server logs'
+    }
+    return e.data?.message || e.data?.statusMessage || e.message || fallback
   }
 
   async function fetchCampaigns() {

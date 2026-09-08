@@ -607,14 +607,18 @@ export const auth = betterAuth({
               return;
             }
             if (account.providerId === "instagram") {
-              const response = await $fetch<{ id: string, name: string, username: string, account_type: string, website: string, media_count: number, followers_count: number, follows_count: number, biography: string, profile_picture_url: string }>(`https://graph.instagram.com/me?fields=id,name,username,account_type,website,media_count,followers_count,follows_count,biography,profile_picture_url`, {
+              // NOTE (account-ID trap, see openreply docs): /me returns BOTH an
+              // app-scoped `id` and the professional `user_id`. Webhooks put
+              // `user_id` in entry.id and the Messaging API needs it in the URL
+              // path — so it (not the app-scoped id) must be the stored accountId.
+              const response = await $fetch<{ id: string, user_id?: string, name: string, username: string, account_type: string, website: string, media_count: number, followers_count: number, follows_count: number, biography: string, profile_picture_url: string }>(`https://graph.instagram.com/me?fields=id,user_id,name,username,account_type,website,media_count,followers_count,follows_count,biography,profile_picture_url`, {
                 headers: {
                   Authorization: `Bearer ${account.accessToken}`,
                 },
               });
 
               await socialMediaAccountService.createOrUpdateAccountFromAuth({
-                id: response.id,
+                id: response.user_id || response.id,
                 name: response.name,
                 access_token: account.accessToken as string,
                 picture: response.profile_picture_url,
@@ -633,7 +637,7 @@ export const auth = betterAuth({
                 userAgent: "",
                 status: 'success',
                 // SAFE: only log non-sensitive profile fields, never tokens or full account object
-                details: `ig_user_id=${response.id} username=${response.username} from INSTAGRAM`,
+                details: `ig_user_id=${response.user_id || response.id} username=${response.username} from INSTAGRAM`,
               })
 
               return;

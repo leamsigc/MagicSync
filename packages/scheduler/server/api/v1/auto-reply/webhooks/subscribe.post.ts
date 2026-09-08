@@ -19,7 +19,10 @@ export default defineEventHandler(async (event) => {
   const result = await autoReplyWebhookService.subscribePage(body.socialAccountId, user.id)
   if (result.error) {
     const status = result.code === 'NOT_FOUND' ? 404 : 502
-    throw createError({ statusCode: status, statusMessage: result.error })
+    // NOTE: statusMessage must stay single-line ASCII — Meta's messages contain
+    // newlines, which make Node abort the response (Cloudflare then serves its
+    // own 502 HTML page). Full text goes in `message` (JSON body, always safe).
+    throw createError({ statusCode: status, statusMessage: 'Webhook subscription failed', message: result.error })
   }
   return { success: true, data: result.data }
 })
