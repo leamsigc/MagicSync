@@ -21,6 +21,7 @@ import { XPlugin } from '#layers/BaseScheduler/server/services/plugins/x.plugin'
 import { YouTubePlugin } from '#layers/BaseScheduler/server/services/plugins/youtube.plugin';
 import { PinterestPlugin } from '#layers/BaseScheduler/server/services/plugins/pinterest.plugin';
 import { platformRateLimiter } from './RateLimiter.service';
+import { usesPageToken, renewRowToken } from './TokenRefresh.service';
 import { auth } from '#layers/BaseAuth/lib/auth';
 import { notificationService } from '#layers/BaseAuth/server/services/notification.service';
 export class AutoPostService {
@@ -130,7 +131,31 @@ export class AutoPostService {
           })
           const freshToken = (tokenResp as any)?.accessToken
           const expiresAt = (tokenResp as any)?.accessTokenExpiresAt
-          if (freshToken && freshToken !== socialMediaAccount.accessToken) {
+          if (usesPageToken(platform)) {
+            // Facebook/Instagram rows hold PAGE tokens. Mirroring the Better
+            // Auth user token here breaks publishing — Meta rejects e.g.
+            // unpublished photo uploads with "(#200) Unpublished posts must be
+            // posted to a page as the page itself". Renew via exchange only
+            // when the stored token is missing/expiring (also heals rows that
+            // were corrupted by the old mirror), else keep using it.
+            const renewed = await renewRowToken({
+              id: socialMediaAccount.id,
+              userId: socialMediaAccount.userId,
+              platform,
+              accountId: socialMediaAccount.accountId,
+              accessToken: socialMediaAccount.accessToken,
+              tokenExpiresAt: socialMediaAccount.tokenExpiresAt,
+            })
+            if (renewed.success && renewed.data?.renewed) {
+              const fresh = await socialMediaAccountService.getAccountById(socialMediaAccount.id)
+              if (fresh?.accessToken) socialMediaAccount.accessToken = fresh.accessToken
+            } else if (renewed.error) {
+              console.warn(`[AutoPost] Page-token renewal skipped for ${platform} | Post ID: ${post.id}`, renewed.error)
+            }
+            await socialMediaAccountService.updateAccount(socialMediaAccount.id, {
+              lastSyncAt: new Date(),
+            })
+          } else if (freshToken && freshToken !== socialMediaAccount.accessToken) {
             // Mirror the renewed token onto our row — otherwise plugins keep
             // using the stale expired token and every publish fails.
             await socialMediaAccountService.updateAccount(socialMediaAccount.id, {

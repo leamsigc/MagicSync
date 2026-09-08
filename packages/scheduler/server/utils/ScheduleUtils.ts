@@ -2,6 +2,7 @@ import sharp from 'sharp';
 import { promises as fs } from 'node:fs'
 import { getAccessTokenHelper } from "#layers/BaseAuth/server/utils/AuthHelpers"
 import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service';
+import { usesPageToken, renewRowToken } from '#layers/BaseScheduler/server/services/TokenRefresh.service';
 import type { PostWithAllData } from '#layers/BaseDB/db/posts/posts';
 import { platformConfigurations, type PlatformConfig } from '#layers/BaseScheduler/shared/platformConstants';
 
@@ -212,12 +213,30 @@ export const ScheduleRefreshSocialMediaTokens = async (fullPost: PostWithAllData
       accountId: account.id,
     });
 
-    log.error({ message: 'Token data', tokenData })
+    // SAFE: never log token material — presence only.
+    log.info({ message: 'Token data refreshed', hasAccessToken: !!tokenData?.accessToken })
 
     if (tokenData?.accessToken) {
-      await socialMediaAccountService.updateAccount(platformPost.socialAccountId, {
-        accessToken: tokenData.accessToken
-      })
+      const platformKey = platformPost.platformPostId || ''
+      if (usesPageToken(platformKey) && socialMediaAccount) {
+        // Facebook/Instagram rows hold PAGE tokens — mirroring the user token
+        // corrupts them (Meta "(#200) Unpublished posts…" on publish).
+        const renewed = await renewRowToken({
+          id: platformPost.socialAccountId,
+          userId,
+          platform: platformKey,
+          accountId: socialMediaAccount.accountId,
+          accessToken: socialMediaAccount.accessToken,
+          tokenExpiresAt: socialMediaAccount.tokenExpiresAt,
+        })
+        if (renewed.error) {
+          log.warn({ message: 'Page-token renewal skipped', platform: platformKey, error: renewed.error })
+        }
+      } else if (!usesPageToken(platformKey)) {
+        await socialMediaAccountService.updateAccount(platformPost.socialAccountId, {
+          accessToken: tokenData.accessToken
+        })
+      }
     }
   }))
 }

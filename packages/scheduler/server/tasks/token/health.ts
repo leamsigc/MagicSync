@@ -1,6 +1,6 @@
 import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service'
 import { auth } from '#layers/BaseAuth/lib/auth'
-import { refreshFacebookPageToken } from '#layers/BaseScheduler/server/services/TokenRefresh.service'
+import { refreshFacebookPageToken, refreshInstagramPageToken } from '#layers/BaseScheduler/server/services/TokenRefresh.service'
 
 export default defineTask({
   meta: {
@@ -27,8 +27,13 @@ export default defineTask({
       // Facebook has no refresh tokens (Better Auth can't renew it): renew
       // via token exchange + page token fetch instead. Page tokens obtained
       // this way don't expire, so this also ends the 6-hour failure loop.
-      if (a.platform === 'facebook') {
-        const renewed = await refreshFacebookPageToken(a.userId, a.id, a.accountId)
+      // Instagram rows hold page tokens too — mirroring the Better Auth user
+      // token here would corrupt them (Meta then rejects publishes with
+      // "(#200) Unpublished posts must be posted to a page as the page itself").
+      if (a.platform === 'facebook' || a.platform === 'instagram') {
+        const renewed = a.platform === 'facebook'
+          ? await refreshFacebookPageToken(a.userId, a.id, a.accountId)
+          : await refreshInstagramPageToken(a.userId, a.id)
         if (renewed.error) {
           console.error(`[token:health] Failed to refresh token for ${a.platform} account ${a.id}`, renewed.error)
           await socialMediaAccountService.updateAccount(a.id, { isActive: false })

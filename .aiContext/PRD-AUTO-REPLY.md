@@ -252,6 +252,15 @@ page. Fixed by scoping to `/logs` (same for the `lib/` rule that earlier
 forced `-f` on `auth.ts`) and committing the route. Lesson: verify deploys
 from git content (`git ls-files`), not just the working tree.
 
+2026-09-08 prod debug #4 (live, magicsync.dev): FB photo publish failed with
+`(#200) Unpublished posts must be posted to a page as the page itself` —
+publish/health/refresh/ScheduleUtils paths mirrored the Better Auth USER token
+onto rows that hold PAGE tokens (facebook, instagram). Centralized fix in
+`TokenRefresh.service` (`usesPageToken`, `needsPageTokenRenewal`,
+`refreshInstagramPageToken`, `renewRowToken`); all four call sites route
+fb/ig through exchange renewal gated on need (heals corrupted rows), other
+platforms keep the mirror. Also removed a token-material log line.
+
 2026-09-08 prod debug #3 (live, magicsync.dev): comments visible on the reel
 (from the user's own other accounts) yet `checked 0` and empty logs. Two
 causes fixed in code: (1) match-all discovery read only `platformPosts`

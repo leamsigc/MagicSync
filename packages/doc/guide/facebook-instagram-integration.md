@@ -210,6 +210,7 @@ Later: token:health task warns on expiry; FB has no refresh tokens —
 | Subscribe `(#200) … permissions is needed` after reconnect | Permission not enabled in the Business Login **configuration** (§1.3) — fix there first, then Disconnect + Connect again |
 | `OAuthException (#10) Private replies not allowed` | `instagram_manage_messages` not granted or Messages access off → §1.4 + §1.5.4, then reconnect |
 | Page token dies in hours | Long-lived exchange skipped/failed — check server logs at connect; `token:health` reports state every 6h |
+| `(#200) Unpublished posts must be posted to a page as the page itself` | A Better Auth **user** token was mirrored onto the Page row (publish/health/refresh paths did this blindly) → fixed in code: FB/IG rows renew via exchange and never accept user tokens; corrupted rows self-heal on next publish (or reconnect immediately) |
 | `skipped/self` logs | Comment author is the business itself → expected |
 | `rate_limited_750` | Hourly Auto-Reply cap → retries next tick automatically |
 | Webhook Verify button fails | Wrong/missing `NUXT_META_WEBHOOK_VERIFY_TOKEN`, or app not saved — re-paste token, check server logs |
