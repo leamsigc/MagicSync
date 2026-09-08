@@ -2,6 +2,23 @@ import { socialMediaAccountService } from '#layers/BaseDB/server/services/social
 import { auth } from '#layers/BaseAuth/lib/auth'
 import { refreshFacebookPageToken, refreshInstagramPageToken } from '#layers/BaseScheduler/server/services/TokenRefresh.service'
 
+// Short-lived OAuth (YouTube/Google 1h access tokens) renewed from a stored
+// refresh token. Renewed proactively inside this window so rows don't sit
+// Expired between task runs (cadence below is 6h).
+const SHORT_LIVED_PLATFORMS: ReadonlySet<string> = new Set(['google', 'googlemybusiness', 'youtube'])
+const PROACTIVE_RENEW_BEFORE_MS = 7 * 60 * 60 * 1000
+
+function msUntilExpiry(expiresAt: unknown): number | null {
+  if (!expiresAt) return null
+  // social_media_accounts stores seconds-epoch (drizzle timestamp mode);
+  // tolerate ms numbers and Date-likes from other call shapes.
+  const asMs = typeof expiresAt === 'number'
+    ? (expiresAt < 1e12 ? expiresAt * 1000 : expiresAt)
+    : new Date(expiresAt as string | Date).getTime()
+  if (Number.isNaN(asMs)) return null
+  return asMs - Date.now()
+}
+
 export default defineTask({
   meta: {
     name: 'token:health',
@@ -12,7 +29,14 @@ export default defineTask({
 
     const needsAttention = accounts.filter(a => {
       const health = socialMediaAccountService.getTokenHealth(a)
-      return health.status === 'expired' || health.status === 'expiring_soon'
+      if (health.status === 'expired' || health.status === 'expiring_soon') return true
+      // Proactive: a 1h YouTube token would otherwise report Expired for
+      // most of the 6h cadence even though its refresh token is fine.
+      if (SHORT_LIVED_PLATFORMS.has(a.platform)) {
+        const left = msUntilExpiry(a.tokenExpiresAt)
+        if (left !== null && left < PROACTIVE_RENEW_BEFORE_MS) return true
+      }
+      return false
     })
 
     if (needsAttention.length === 0) {
@@ -50,7 +74,14 @@ export default defineTask({
           a.userId,
           a.platform
         )
-        const providerAccount = resolved.success ? resolved.data : null
+        let providerAccount = resolved.success ? resolved.data : null
+        // YouTube channels authorized via the `google` provider (which
+        // carries youtube.force-ssl) refresh through the google account —
+        // same fallback as the manual refresh endpoint and ScheduleUtils.
+        if (!providerAccount && a.platform === 'youtube') {
+          const googleFallback = await socialMediaAccountService.findBetterAuthAccountForRefresh(a.userId, 'google')
+          providerAccount = googleFallback.success ? googleFallback.data : null
+        }
         if (!providerAccount) {
           throw new Error('No linked provider account found for refresh')
         }
@@ -85,8 +116,13 @@ export default defineTask({
         }
       } catch (error) {
         console.error(`[token:health] Failed to refresh token for ${a.platform} account ${a.id}`, error)
-        // Mark as inactive if refresh fails — user will need to reconnect
-        await socialMediaAccountService.updateAccount(a.id, { isActive: false })
+        // Never deactivate a still-valid token on a transient refresh
+        // failure — it keeps working until its real expiry and the next tick
+        // retries. Only expired rows get parked for reconnect.
+        const left = msUntilExpiry(a.tokenExpiresAt)
+        if (left === null || left <= 0) {
+          await socialMediaAccountService.updateAccount(a.id, { isActive: false })
+        }
       }
     }
 

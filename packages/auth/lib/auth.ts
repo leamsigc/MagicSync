@@ -36,7 +36,12 @@ export const auth = betterAuth({
     level: 'debug',
     log: (level, message, ...args) => {
       // Custom logging implementation
-      log.info(`[${level}] ${message}`, ...args);
+      const serializedArgs = args.map((arg) => {
+        if (arg instanceof Error) return `${arg.name}: ${arg.message}`;
+        if (arg && typeof arg === 'object') return JSON.stringify(arg, Object.getOwnPropertyNames(arg));
+        return String(arg);
+      });
+      log.info(`[${level}] ${message}`, ...serializedArgs);
     }
   },
   trustedOrigins: (() => {
@@ -326,7 +331,7 @@ export const auth = betterAuth({
       config: [
         // LinkedIn Page (Organization) OAuth - not natively supported
         {
-          // http://localhost:3000/api/auth/oauth2/callback/linkedin-page
+          // Callback: {NUXT_BETTER_AUTH_URL}/api/auth/callback/linkedin-page
           providerId: 'linkedin-page',
           clientId: process.env.NUXT_LINKEDIN_CLIENT_ID as string,
           clientSecret: process.env.NUXT_LINKEDIN_CLIENT_SECRET as string,
@@ -340,15 +345,32 @@ export const auth = betterAuth({
             'rw_organization_admin',
             'w_organization_social',
             'r_organization_social',],
+          getUserInfo: async (tokens) => {
+            const response: any = await $fetch('https://api.linkedin.com/v2/userinfo', {
+              method: 'GET',
+              headers: { Authorization: `Bearer ${tokens.accessToken}` },
+              ignoreResponseError: true
+            });
+            log.info({ message: `[linkedin-page] userinfo response: ${JSON.stringify(response)}` });
+            if (!response?.sub) return null;
+            return {
+              ...response,
+              id: response.sub,
+              name: response.name || [response.given_name, response.family_name].filter(Boolean).join(' '),
+              email: response.email || `${response.sub}@linkedin.com`,
+              emailVerified: true,
+              image: response.picture || response.profile_picture_url
+            };
+          },
           mapProfileToUser: (profile: any) => {
             return {
               ...profile,
-              image: profile.profile_picture_url,
-              email: `${profile.id}@linkedin.com`,
+              image: profile.picture || profile.profile_picture_url,
+              email: profile.email || `${profile.sub || profile.id}@linkedin.com`,
               emailVerified: true
             };
           },
-          // pkce: false,
+          pkce: false,
         },
 
         // YouTube (uses Google OAuth with YouTube scopes) - not natively supported.
