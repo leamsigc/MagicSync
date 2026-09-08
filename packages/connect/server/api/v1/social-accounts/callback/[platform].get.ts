@@ -17,50 +17,56 @@ export default defineEventHandler(async (event) => {
     const state = query.state as string
     const error = query.error as string
 
-    // Validate required state parameter for CSRF protection
-    if (!state) {
-      log.error({ message: 'OAuth callback missing state parameter' })
-      throw createError({
-        statusCode: 400,
-        statusMessage: 'OAuth state parameter is required'
-      })
+    // Use businessId from validated state instead of untrusted query param.
+    // State is optional: Better Auth's own linkSocial flow already verified
+    // its OAuth state at /api/auth/callback and redirects here with only
+    // ?businessId= — requiring our own state here turned every successful
+    // link into an error redirect. When present, it must still validate.
+    let businessId = query.businessId as string | undefined
+    if (state) {
+      // Validate state format (must be base64url encoded JSON)
+      let statePayload: { businessId: string; timestamp: number }
+      try {
+        const decodedState = Buffer.from(state, 'base64url').toString('utf-8')
+        statePayload = JSON.parse(decodedState)
+      } catch {
+        log.error({ message: 'OAuth callback has invalid state format' })
+        throw createError({
+          statusCode: 400,
+          statusMessage: 'Invalid OAuth state format'
+        })
+      }
+
+      // Validate state payload structure
+      if (!statePayload.businessId || typeof statePayload.businessId !== 'string') {
+        log.error({ message: 'OAuth state missing valid businessId' })
+        throw createError({
+          statusCode: 400,
+          statusMessage: 'Invalid OAuth state: missing businessId'
+        })
+      }
+
+      // Validate state timestamp (prevent replay attacks - state valid for 10 minutes)
+      const now = Date.now()
+      const stateAge = (now - statePayload.timestamp) / 1000 // in seconds
+      if (stateAge > STATE_COOKIE_MAX_AGE || stateAge < -60) {
+        log.error({ message: 'OAuth state has expired or is invalid', stateAge, maxAge: STATE_COOKIE_MAX_AGE })
+        throw createError({
+          statusCode: 400,
+          statusMessage: 'OAuth state has expired. Please try connecting again.'
+        })
+      }
+
+      businessId = statePayload.businessId
     }
 
-    // Validate state format (must be base64url encoded JSON)
-    let statePayload: { businessId: string; timestamp: number }
-    try {
-      const decodedState = Buffer.from(state, 'base64url').toString('utf-8')
-      statePayload = JSON.parse(decodedState)
-    } catch {
-      log.error({ message: 'OAuth callback has invalid state format' })
+    if (!businessId || typeof businessId !== 'string') {
+      log.error({ message: 'OAuth callback missing businessId' })
       throw createError({
         statusCode: 400,
-        statusMessage: 'Invalid OAuth state format'
+        statusMessage: 'Invalid OAuth callback: missing businessId'
       })
     }
-
-    // Validate state payload structure
-    if (!statePayload.businessId || typeof statePayload.businessId !== 'string') {
-      log.error({ message: 'OAuth state missing valid businessId' })
-      throw createError({
-        statusCode: 400,
-        statusMessage: 'Invalid OAuth state: missing businessId'
-      })
-    }
-
-    // Validate state timestamp (prevent replay attacks - state valid for 10 minutes)
-    const now = Date.now()
-    const stateAge = (now - statePayload.timestamp) / 1000 // in seconds
-    if (stateAge > STATE_COOKIE_MAX_AGE || stateAge < -60) {
-      log.error({ message: 'OAuth state has expired or is invalid', stateAge, maxAge: STATE_COOKIE_MAX_AGE })
-      throw createError({
-        statusCode: 400,
-        statusMessage: 'OAuth state has expired. Please try connecting again.'
-      })
-    }
-
-    // Use businessId from validated state instead of untrusted query param
-    const businessId = statePayload.businessId
 
     // Handle OAuth errors
     if (error) {

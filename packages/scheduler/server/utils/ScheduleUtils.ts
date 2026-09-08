@@ -204,7 +204,8 @@ export const ScheduleRefreshSocialMediaTokens = async (fullPost: PostWithAllData
 
 
     const expired = socialMediaAccountService.isTokenExpired(account)
-    log.info({ message: 'Token expired', account, providerId, expired })
+    // SAFE: never log token material — ids + expiry only (account holds accessToken).
+    log.info({ message: 'Token expired', accountId: account.id, providerId, expired })
     if (!expired) return
 
     const tokenData = await getAccessTokenHelper(headers, {

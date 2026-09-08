@@ -98,7 +98,7 @@ const HandleConnectTo = async (page: unknown) => {
       await HandleConnectToGMB(pageWithType);
     } else if (props.name === 'facebook') {
       await HandleConnectToFacebook(page as FacebookPage);
-    } else if (props.name === 'linkedin-page') {
+    } else if (props.name === 'linkedin-page' || platformType === 'linkedin-page') {
       await HandleConnectToLinkedIn(page as LinkedInPage);
     } else {
       useToast().add({

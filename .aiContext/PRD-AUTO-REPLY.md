@@ -271,6 +271,21 @@ poll exceptions are now caught per post (`failed++` + warn) instead of
 aborting the run silently. Remaining unknowns on the user side: app Live
 status, tester roles for the commenting accounts.
 
+2026-09-08 prod debug #5 (live, magicsync.dev) — the tester-role unknowns
+from #3 RESOLVED against the Meta dashboard (read-only check): all messaging
+perms (`instagram_manage_messages`, `pages_messaging`,
+`instagram_business_manage_{messages,comments}`, `instagram_manage_comments`)
+sit at **Standard access, 0 successful calls, no review requested**. Standard
+only covers role/tester accounts, so comments from real followers read fine
+but `private_replies` dies with Meta `100/33` ("does not exist … missing
+permissions"), logged as `failed`. Live mode does NOT widen this — only
+Advanced access via App Review (business verification first; portfolio was
+Unverified, which also disables the `pages_messaging` request button) does.
+Rule, now documented in `packages/doc/guide/auto-reply.md` ("Standard vs
+Advanced access") + new `packages/doc/guide/meta-app-review.md` (adapted from
+openreply's `META_APP_REVIEW.md` + AI-assistant setup prompt): **testers for
+your own accounts, App Review for strangers.**
+
 ## 7. Verification (results)
 
 - [x] `pnpm --filter @local-monorepo/db db:generate` outputs **no changes**

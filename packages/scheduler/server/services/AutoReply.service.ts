@@ -8,6 +8,7 @@ import { socialMediaAccountService } from '#layers/BaseDB/server/services/social
 import { SchedulerPost, type PlatformComment, type PluginSocialMediaAccount } from '#layers/BaseScheduler/server/services/SchedulerPost.service'
 import { InstagramPlugin } from '#layers/BaseScheduler/server/services/plugins/instagram.plugin'
 import { platformRateLimiter } from '#layers/BaseScheduler/server/services/RateLimiter.service'
+import { renewRowToken } from '#layers/BaseScheduler/server/services/TokenRefresh.service'
 import { hourBucketUtc as hourBucketUtcPure, isHttpsUrl as isHttpsUrlPure, matchKeywords as matchKeywordsPure, renderTemplate as renderTemplatePure, trackedUrl as trackedUrlPure, trimContacted as trimContactedPure, type WebhookCommentEvent, type WebhookMessageEvent } from '#layers/BaseScheduler/server/services/auto-reply-pure'
 
 export const AUTOREPLY_CAMPAIGN = 'autoreply_campaign'
@@ -1003,10 +1004,30 @@ export class AutoReplyService {
         const id = row.entityId.split('::')[1] || row.entityId
         if (!userId || !id) continue
         const campaign = { ...(details as AutoReplyCampaign), id, userId }
-        const account = await socialMediaAccountService.getAccountById(campaign.socialAccountId, userId)
+        let account = await socialMediaAccountService.getAccountById(campaign.socialAccountId, userId)
         if (!account) {
           failed++
           continue
+        }
+        // Heal page-token rows before sending (same pattern as the AutoPost
+        // publish path): a mirrored user token makes private_replies fail
+        // with Meta 100/33. Renewal is a no-op for healthy rows and never
+        // throws, so a failure here must not block processing.
+        try {
+          const renewed = await renewRowToken({
+            id: account.id,
+            userId,
+            platform: account.platform,
+            accountId: account.accountId,
+            accessToken: account.accessToken,
+            tokenExpiresAt: account.tokenExpiresAt,
+          })
+          if (renewed.success && renewed.data?.renewed) {
+            const fresh = await socialMediaAccountService.getAccountById(campaign.socialAccountId, userId)
+            if (fresh?.accessToken) account = fresh
+          }
+        } catch {
+          // Fall through with the stored token — the send error is logged per comment.
         }
         const watched = await this.resolveWatchedPosts(campaign)
         if (watched.length === 0) continue

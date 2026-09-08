@@ -7,12 +7,18 @@ const { currentPageTitle } = useDashboardNavigation()
 const tokenHealthCount = ref(0)
 
 const { checkAndNotify } = useTokenHealthNotification()
-callOnce('token-health-notification', async () => {
-  const summary = await checkAndNotify()
-  if (summary) {
-    tokenHealthCount.value = summary.needsAttention
-  }
-})
+// Client-only: same SSR-cookie reason as DashboardLayout — the dashboard
+// layout already ran this check after hydration.
+// Own callOnce key: the dashboard layout runs the same check under a
+// different key, and sharing it would leave this badge permanently at 0.
+if (import.meta.client) {
+  callOnce('token-health-notification-header', async () => {
+    const summary = await checkAndNotify()
+    if (summary) {
+      tokenHealthCount.value = summary.needsAttention
+    }
+  })
+}
 </script>
 
 <template>

@@ -4,7 +4,12 @@ import DashboardSidebar from './dashboard/Sidebar.vue';
 import UserNav from './dashboard/UserNav.vue';
 
 const { checkAndNotify } = useTokenHealthNotification()
-await callOnce('token-health-notification', () => checkAndNotify());
+// Client-only: during SSR there is no session cookie, so the check would
+// 401 against our own API on every first paint (caught, but noisy). The
+// browser run right after hydration covers it.
+if (import.meta.client) {
+  await callOnce('token-health-notification', () => checkAndNotify());
+}
 </script>
 
 <template>

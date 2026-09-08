@@ -48,30 +48,47 @@ export default defineEventHandler(async (event) => {
     log.set({ platform })
 
     // Get social media accounts with filters
-    const accounts = await socialMediaAccountService.getAccountsForPlatform(
+    let accounts = await socialMediaAccountService.getAccountsForPlatform(
       platform,
       user.id
     )
+    // LinkedIn personal ('linkedin') and Page ('linkedin-page') OAuth rows
+    // carry the same org scopes, so an org picker works off either — fall
+    // back to whichever the user connected instead of a dead-end 400.
+    let effectivePlatform = platform
+    if (!accounts.length && (platform === 'linkedin' || platform === 'linkedin-page')) {
+      const fallback = platform === 'linkedin' ? 'linkedin-page' : 'linkedin'
+      accounts = await socialMediaAccountService.getAccountsForPlatform(fallback, user.id)
+      if (accounts.length) effectivePlatform = fallback
+    }
     const matcher: Record<string, SchedulerPluginConstructor> = {
       facebook: FacebookPlugin,
+      linkedin: LinkedInPagePlugin,
       "linkedin-page": LinkedInPagePlugin,
       youtube: YouTubePlugin,
       google: GooglePlugin,
       googlemybusiness: GooglePlugin,
     }
-    if (!matcher[platform] || !accounts.length) {
+    if (!matcher[effectivePlatform]) {
       throw createError({
         statusCode: 400,
         statusMessage: 'Invalid platform'
+      })
+    }
+    if (!accounts.length) {
+      throw createError({
+        statusCode: 404,
+        statusMessage: `No ${platform} connection found — connect the account first`,
+        message: `No ${platform} connection found — connect the account first`,
       })
     }
 
     const scheduler = new SchedulerPost({
       accounts: accounts
     });
-    scheduler.use(matcher[platform]);
+    scheduler.use(matcher[effectivePlatform]);
 
-    const account = accounts.find(account => account.providerId === platform);
+    const account = accounts.find(account => account.providerId === effectivePlatform);
     if (!account) {
       throw createError({
         statusCode: 400,
@@ -83,7 +100,7 @@ export default defineEventHandler(async (event) => {
     // Auth row, so pass its row id (the only identifier /get-access-token
     // resolves) — never the provider account id.
     const tokenData = await getAccessTokenHelper(getHeaders(event), {
-      providerId: platform,
+      providerId: effectivePlatform,
       userId: user.id,
       accountId: account.id,
     }).catch(() => null)
@@ -106,12 +123,31 @@ export default defineEventHandler(async (event) => {
 
     log.info({ message: 'Social media pages retrieved', platform, pageCount: pagesBaseOnTheAccount.length })
 
+    // Tag LinkedIn orgs so the picker routes them to the Page-connect
+    // handler even when listed from a personal-row token.
+    if (effectivePlatform === 'linkedin' || effectivePlatform === 'linkedin-page') {
+      for (const page of pagesBaseOnTheAccount) {
+        (page as FacebookPage & { platformType?: string }).platformType = 'linkedin-page'
+      }
+    }
+
     return pagesBaseOnTheAccount
   } catch (error) {
     log.error({ message: 'Failed to fetch social media accounts', error })
 
     if (error instanceof H3Error) {
       throw error
+    }
+    const message = error instanceof Error ? error.message : String(error)
+    // Surface upstream OAuth/API failures instead of a generic 500: expired
+    // tokens must tell the user to reconnect (LinkedIn tokens live 60 days
+    // and have no refresh path here), other API errors carry the reason.
+    if (/validating access token|expired|revoked|invalid.*token|unauthorized|401/i.test(message)) {
+      throw createError({ statusCode: 401, statusMessage: 'Connection token expired or invalid. Please reconnect your account.' })
+    }
+    if (message.startsWith('LinkedIn API Error') || message.startsWith('LinkedIn API unreachable')) {
+      // statusMessage must stay single-line: full upstream text goes in `message`.
+      throw createError({ statusCode: 502, statusMessage: 'Upstream platform error', message })
     }
 
     throw createError({

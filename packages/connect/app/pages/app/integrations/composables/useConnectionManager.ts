@@ -110,14 +110,21 @@ export const useConnectionManager = () => {
     try {
       const response = await $fetch<Promise<SocialMediaAccount[]>>('/api/v1/social-accounts?platformId=' + connectionId);
 
-      if (connectionId === 'facebook' || connectionId === 'linkedin-page' || connectionId === 'youtube' || connectionId === 'google') {
+      if (connectionId === 'facebook' || connectionId === 'linkedin' || connectionId === 'linkedin-page' || connectionId === 'youtube' || connectionId === 'google') {
         facebookPages.value = (response as unknown as FacebookPage[])
       }
     } catch (error) {
       console.error('Error adding business:', error);
+      const status = (error as { statusCode?: number; data?: { statusMessage?: string } })?.statusCode
+        ?? (error as { response?: { status?: number } })?.response?.status
+      const serverMessage = (error as { data?: { message?: string; statusMessage?: string } })?.data?.message
+        || (error as { data?: { message?: string; statusMessage?: string } })?.data?.statusMessage
+      const isNotConnected = status === 404
       toast.add({
-        title: 'Failed to Fetch Pages',
-        description: `Could not retrieve pages for ${connectionId}. The token may have expired. Try reconnecting.`,
+        title: isNotConnected ? 'Account Not Connected' : 'Failed to Fetch Pages',
+        description: isNotConnected
+          ? `Connect your ${connectionId} account first, then open the page picker again.`
+          : (serverMessage || `Could not retrieve pages for ${connectionId}. The token may have expired. Try reconnecting.`),
         icon: 'i-heroicons-x-circle',
         color: 'error',
       });

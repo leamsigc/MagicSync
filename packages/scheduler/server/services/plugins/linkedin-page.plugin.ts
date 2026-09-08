@@ -242,10 +242,14 @@ export class LinkedInPagePlugin extends BaseSchedulerPlugin {
 
   /**
    * Get organization information
+   * Never swallows API errors: an expired/revoked token or missing scope must
+   * surface (the connect UI maps it to a reconnect prompt) instead of an
+   * empty picker that looks like "no pages".
    */
   async pages(_: unknown, accessToken: string): Promise<FacebookPage[]> {
-    const { elements, ...all } = await (
-      await fetch(
+    let response: Response
+    try {
+      response = await fetch(
         'https://api.linkedin.com/v2/organizationalEntityAcls?q=roleAssignee&role=ADMINISTRATOR&projection=(elements*(organizationalTarget~(localizedName,vanityName,logoV2(original~:playableStreams))))',
         {
           headers: {
@@ -255,7 +259,16 @@ export class LinkedInPagePlugin extends BaseSchedulerPlugin {
           },
         }
       )
-    ).json();
+    } catch (error) {
+      this.logPluginEvent('get-pages', 'failure', `Error: ${(error as Error).message}`)
+      throw new Error(`LinkedIn API unreachable: ${(error as Error).message}`)
+    }
+    if (!response.ok) {
+      const errorBody = await response.text().catch(() => '')
+      this.logPluginEvent('get-pages', 'failure', `Error: ${errorBody}`)
+      throw new Error(`LinkedIn API Error (list organizations ${response.status}): ${errorBody}`)
+    }
+    const { elements, ...all } = await response.json() as { elements?: LinkedInApiOrgElement[] };
     const imagePromises = await Promise.all(
       (elements || []).map((e: LinkedInApiOrgElement) => {
         const url = e['organizationalTarget~'].logoV2?.['original~']?.elements?.[0]?.identifiers?.[0]?.identifier;

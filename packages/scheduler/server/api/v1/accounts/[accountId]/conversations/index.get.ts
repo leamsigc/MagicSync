@@ -63,7 +63,15 @@ export default defineEventHandler(async (event) => {
     if (/validating access token|expired|revoked|invalid oauth|session has expired/i.test(message)) {
       throw createError({ statusCode: 401, statusMessage: 'Facebook token expired or invalid. Please reconnect your account.' });
     }
-    if (message.startsWith('Facebook API Error')) {
+    // Instagram/Facebook capability + permission errors are actionable:
+    // app not Live, tester role missing, or scopes predate reconnect.
+    if (/does not have the capability|\(#3\)/i.test(message)) {
+      throw createError({ statusCode: 502, statusMessage: 'Upstream platform error', message: `${message.slice(0, 500)} — Meta capability error: set the app Live, add the account as tester, and reconnect to grant instagram_manage_messages.` });
+    }
+    if (/\(#200\)|missing permissions|permission/i.test(message)) {
+      throw createError({ statusCode: 502, statusMessage: 'Upstream platform error', message: `${message.slice(0, 500)} — Meta permission error: reconnect to grant the latest scopes.` });
+    }
+    if (message.startsWith('Facebook API Error') || message.startsWith('Instagram conversations failed')) {
       // statusMessage must stay single-line (see reply.post.ts): full Meta
       // text goes in `message`.
       throw createError({ statusCode: 502, statusMessage: 'Upstream platform error', message });

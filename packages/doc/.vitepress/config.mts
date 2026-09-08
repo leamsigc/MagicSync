@@ -97,6 +97,7 @@ export default withMermaid(defineConfig({
           items: [
             { text: 'Auto-Reply (Comment → DM)', link: '/guide/auto-reply' },
             { text: 'Facebook & Instagram Setup', link: '/guide/facebook-instagram-integration' },
+            { text: 'Meta App Review', link: '/guide/meta-app-review' },
           ],
         },          {
           text: 'AI Tools',

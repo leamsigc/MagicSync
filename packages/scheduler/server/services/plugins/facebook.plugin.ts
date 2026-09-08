@@ -182,18 +182,20 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     options?: RequestInit,
     context?: string
   ): Promise<Response> {
+    // SAFE: audit rows are readable via admin API — never persist access_token.
+    const safeUrl = url.replace(/access_token=[^&]*/g, 'access_token=***')
     try {
       const response = await fetch(url, options);
       if (!response.ok) {
         const errorBody = await response.text();
         log.error({ content: `Facebook API Error (${context})`, status: response.status, errorBody });
-        await this.logPluginEvent('fetch-error:response', 'failure', `Error: ${errorBody}, Context: ${context}`, url, { options });
+        await this.logPluginEvent('fetch-error:response', 'failure', `Error: ${errorBody}, Context: ${context}`, safeUrl);
         throw new Error(`Facebook API Error (${context}): ${errorBody}`);
       }
       return response;
     } catch (error) {
       log.error({ content: `Network or Fetch Error (${context})`, error: (error as Error).message });
-      await this.logPluginEvent('fetch-error', 'failure', `Error: ${(error as Error).message}, Context: ${context}`, url, { options });
+      await this.logPluginEvent('fetch-error', 'failure', `Error: ${(error as Error).message}, Context: ${context}`, safeUrl);
       throw error;
     }
   }

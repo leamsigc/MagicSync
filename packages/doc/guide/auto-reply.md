@@ -51,6 +51,37 @@ delivers). One-time setup, all on the **/app/auto-reply** webhook card:
 
 Full click-path: [Facebook & Instagram integration](./facebook-instagram-integration#16-webhooks-auto-reply-instant-delivery--live).
 
+## Standard vs Advanced access (who actually receives DMs)
+
+> **If the commenter is not on your app's tester list (and you lack Advanced
+> access), commenting the keyword does nothing for them.** Read that twice —
+> it is the single most misunderstood part of this feature.
+
+With **Standard access** (the default — no App Review yet), the messaging
+permissions (`instagram_manage_messages`, `pages_messaging`,
+`instagram_business_manage_messages`) only apply to Instagram accounts that
+have a **role on your Meta app** (admin, developer, or accepted Instagram
+tester). Here is exactly what happens when someone **without** a role comments
+your keyword:
+
+1. The poll reads their comment normally — reading is not gated.
+2. The keyword matches normally.
+3. The DM send is rejected by Meta with `100/33` ("does not exist …
+   missing permissions").
+4. You (the owner) get a **`failed` log row** with Meta's message — so the
+   attempt is visible to you in the campaign's Logs drawer.
+5. The commenter gets **nothing**: no DM, and no public reply either (the
+   public reply is only posted after a successful DM).
+
+Retrying changes nothing: the poll cursor moves past the comment, and every
+future comment from that user fails the same way until access changes.
+
+Publishing the app (Live mode) does **not** widen this — Live + Standard
+still only covers role accounts. DMs to real followers need **Advanced
+access**, granted only through App Review (business verification first).
+Practical rule: **testers for your own accounts, App Review for strangers.**
+Full path: [Meta App Review](./meta-app-review).
+
 ## Test before going live
 
 Use the **Try your keyword** box in the campaign form, or:
@@ -125,7 +156,7 @@ is fine), and admin access to your Meta app.
 |---|---|
 | Dashboard Test → Send doesn't arrive | Meta can't reach you: wrong callback URL, tunnel down, or HMAC failing (check server logs for `401`). App still in Development is fine for this button. |
 | Real comment arrives, no DM, **no log row at all** | Event never reached the app: fields not subscribed, app not **Live** (dev mode only delivers Test clicks), or account lacks an app role (Step 2). |
-| `failed` row with Meta's message | Permission/token problem: reconnect the account (scopes), check Messages access is on (IG Settings → Privacy → Messages). |
+| `failed` row with Meta's message | Permission/token problem: reconnect the account (scopes), check Messages access is on (IG Settings → Privacy → Messages). If the message is Meta `100/33` ("does not exist … missing permissions"), the **commenter has no app role and you lack Advanced access** — add them as testers or complete [App Review](./meta-app-review). |
 | `skipped/self` | You commented from the business account — expected, use the second account. |
 | `skipped/follow_gate` | Gate working as designed — test from a follower for the link path. |
 | `rate_limited_750` | Hourly cap — retries automatically next tick. |
@@ -149,6 +180,65 @@ is fine), and admin access to your Meta app.
 - Follow gate **fails open** (sends the link) when Meta returns no follow
   status — like openreply — so real followers are never trapped.
 - Dev-mode Meta apps only deliver dashboard Test events; publish for live ones.
+- Standard access only covers role/tester accounts — real followers need
+  Advanced access ([App Review](./meta-app-review)).
+
+## Set it up with an AI assistant
+
+Adapted from [openreply's AI-assistant setup](https://github.com/diwenne/openreply/blob/main/docs/setup.md#set-it-up-with-an-ai-assistant).
+If you run an AI coding assistant, it can drive most of this inside a clone of
+this repo. Paste the prompt below. Only share secrets with a tool and
+environment you trust, and rotate them afterward if unsure.
+
+MagicSync differences the assistant must respect: single Nuxt container (no
+separate worker/Redis — the DB-backed `autoreply_seen` queue + `autoreply:process`
+Nitro task every 15m is the job system); all auto-reply state lives in
+`entity_details` (zero migrations — `db:generate` must stay clean); webhooks
+live at `/meta/webhooks` (public, HMAC-verified) and Pages subscribe from the
+**/app/auto-reply** webhook card, not the Meta dashboard alone.
+
+```
+You are helping me set up MagicSync's auto-reply (Instagram comment-to-DM
+automation) in this repository. Read packages/doc/guide/auto-reply.md and
+.aiContext/PRD-AUTO-REPLY.md first, then help me get it working end to end.
+
+My goal: <describe it. For example: DM a link to anyone commenting LINK on my
+reel, or test with my own two accounts only.>
+
+Work through this in order and stop to ask me whenever you need a value or an
+action only I can do:
+
+1. Environment. Confirm NUXT_META_WEBHOOK_VERIFY_TOKEN is set and tell me the
+   public /meta/webhooks callback URL for this deploy.
+
+2. Webhooks. Walk me through subscribing comments/messages/story_mentions in
+   the Meta dashboard plus the Subscribe Page button in /app/auto-reply, using
+   my public URL. Local dev needs a tunnel — localhost never works.
+
+3. Campaign. Help me create one (watch-all or specific media, 1-10 keywords,
+   DM template with {username}/{link1}, up to 2 https links).
+
+4. Access check. Tell me plainly who can receive DMs under my app's current
+   access: Standard = only role/tester accounts; real followers need Advanced
+   via App Review. If my commenter isn't covered, have me add them as a tester
+   (both halves: dashboard invite + accept inside Instagram) before testing.
+
+5. Test. Have me comment the keyword from the second account (never the
+   business itself — self-DMs are rejected), then confirm a `sent` row in the
+   campaign Logs drawer and the DM on the receiver.
+
+Rules for you:
+- Never invent Meta dashboard steps. If a screen does not match the guide, ask
+  me to screenshot it.
+- Diagnose from the campaign Logs drawer first (sent/skipped/failed + reason),
+  then the audit log (plugin category) for Meta's raw error. A 100/33 means
+  the commenter lacks an app role under Standard access — say so directly.
+- Never write raw Drizzle queries in routes; use the service layer. Never
+  commit secrets. All Vue components use <script setup>.
+- Remind me to rotate any secret I paste to you before real use.
+
+Start by reading the docs, then ask me about my goal and my Meta app state.
+```
 
 ## API reference
 

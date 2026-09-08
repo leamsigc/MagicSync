@@ -200,7 +200,10 @@ export default defineNuxtConfig({
   },
   i18n: {
     vueI18n: join(currentDir, './translations/i18n.config.ts'),
-    baseUrl: process.env.NUXT_APP_URL,
+    // NUXT_APP_URL is unset in some deploys (Coolify) — fall back instead of
+    // emitting "baseUrl is required" on every SSR render. Must stay an
+    // absolute production URL for valid SEO hreflang/canonical tags.
+    baseUrl: process.env.NUXT_APP_URL || process.env.NUXT_BASE_URL || process.env.APP_URL || 'https://magicsync.dev',
     locales: [
       { code: 'en', language: 'en-US', name: 'English' },
       { code: 'es', language: 'es-ES', name: 'Español' },
