@@ -1,9 +1,9 @@
 # ============ BUILDER ============
-FROM node:22-alpine AS builder
+FROM node:26-alpine AS builder
 
 # bash is required by ./scripts/tts_assets_folder.sh (bash-only constructs:
-# [[ ]], arrays, (( )). node:22-alpine ships only busybox sh by default.
-# curl is required by the same script — node:22-alpine does NOT include curl
+# [[ ]], arrays, (( )). node:26-alpine ships only busybox sh by default.
+# curl is required by the same script — node:26-alpine does NOT include curl
 # (busybox has wget, but the script's --retry/--location semantics need curl).
 # NOTE: do NOT add vips-dev here. sharp's install/check.js detects a global
 # libvips and switches from its vendored prebuilt binary to a node-gyp source
@@ -26,7 +26,7 @@ RUN pnpm --version
 
 COPY . .
 
-# The runtime image is node:22-alpine (musl libc). Hint to pnpm that it should
+# The runtime image is node:26-alpine (musl libc). Hint to pnpm that it should
 # resolve native optional dependencies for musl. This is a best-effort hint;
 # the real fix below explicitly installs the musl binding because pnpm/Nitro
 # may still bundle the glibc variant depending on the lockfile.
@@ -46,7 +46,7 @@ RUN pnpm site
 # the glibc variant (linux-x64-gnu) depending on the lockfile, so we explicitly
 # install the matching musl binding and copy it into the bundled server deps.
 # TODO: Remove this workaround once pnpm/Nitro reliably bundles the musl
-# binding when building on node:22-alpine.
+# binding when building on node:26-alpine.
 RUN cat > /tmp/install-musl-binding.sh <<'EOF'
 #!/bin/sh
 set -e
@@ -70,7 +70,7 @@ EOF
 RUN sh /tmp/install-musl-binding.sh
 
 # ============ RUNTIME ============
-FROM node:22-alpine
+FROM node:26-alpine
 
 WORKDIR /usr/app
 

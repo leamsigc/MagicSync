@@ -1,4 +1,4 @@
-FROM node:24-alpine AS serve
+FROM node:26-alpine AS serve
 
 WORKDIR /usr/app/frontend
 

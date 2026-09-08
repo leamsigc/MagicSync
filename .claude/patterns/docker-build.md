@@ -18,7 +18,7 @@ last_updated: 2026-08-16
 ## Context
 
 The CI pipeline (`/.github/workflows/build-docker-image.yml`) builds the site with
-`docker/build-push-action` using the root `Dockerfile` (builder = `node:22-alpine`).
+`docker/build-push-action` using the root `Dockerfile` (builder = `node:26-alpine`).
 All package installs in containers go through `pnpm i`.
 
 ## Gotcha 1 — pnpm version must be pinned (native @pnpm/exe verification)
@@ -45,7 +45,7 @@ RUN npm install -g pnpm@$(node -p "require('./package.json').packageManager.spli
 
 ## Gotcha 2 — Alpine (musl) native binding for libsql
 
-The runtime image is `node:22-alpine` (musl). libsql resolves its native binding
+The runtime image is `node:26-alpine` (musl). libsql resolves its native binding
 via detect-libc, so `@libsql/linux-x64-musl` must be installed explicitly and
 copied into `.output/server/node_modules/` (see the `install-musl-binding.sh`
 section in the Dockerfile).
@@ -53,7 +53,7 @@ section in the Dockerfile).
 ## Steps
 
 1. Reproduce the failing step locally with the exact container:
-   `docker run --rm -v <build-dir>:/usr/app --workdir /usr/app node:22-alpine sh -c "<apt/deps>; npm i -g pnpm@<pinned>; pnpm i"`
+    `docker run --rm -v <build-dir>:/usr/app --workdir /usr/app node:26-alpine sh -c "<apt/deps>; npm i -g pnpm@<pinned>; pnpm i"`
 2. If `@pnpm/exe` verification fails → apply Gotcha 1.
 3. Rebuild through the failing step to confirm, then clean up
    (`docker rmi`, delete temp build dir — build artifacts are root-owned).

@@ -76,7 +76,7 @@ export default defineNuxtConfig({
   future: {
     compatibilityVersion: 5
   },
-  devtools: { enabled: true },
+  devtools: { enabled: process.env.NODE_ENV !== 'production' && !process.env.CI },
   colorMode: {
     preference: 'light',
     fallback: 'light',
