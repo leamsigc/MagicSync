@@ -5,7 +5,13 @@ FROM node:22-alpine AS builder
 # [[ ]], arrays, (( )). node:22-alpine ships only busybox sh by default.
 # curl is required by the same script — node:22-alpine does NOT include curl
 # (busybox has wget, but the script's --retry/--location semantics need curl).
-RUN apk add --no-cache bash curl g++ make py3-pip vips-dev
+# NOTE: do NOT add vips-dev here. sharp's install/check.js detects a global
+# libvips and switches from its vendored prebuilt binary to a node-gyp source
+# build — which fails under pnpm ("Please add node-gyp to your dependencies")
+# and breaks `pnpm i` (sharp@0.34.5 via @huggingface/transformers/nuxt-og-image).
+# Without vips-dev, sharp uses its prebuilt linuxmusl binaries, which also keeps
+# the runtime image working (it ships no system libvips).
+RUN apk add --no-cache bash curl g++ make py3-pip
 
 WORKDIR /usr/app
 
