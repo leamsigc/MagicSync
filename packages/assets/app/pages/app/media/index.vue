@@ -34,12 +34,14 @@ const {
   error,
   deleteAssets,
   getStorageUsage,
-  clearError
+  clearError,
+  refreshAssets
 } = useAssetManagement()
 
 // Local state
 const showUploader = ref(false)
 const showEditor = ref(false)
+const selectedTab = ref('library')
 const selectedAssetForEdit = ref<Asset | null>(null)
 const filterType = ref<'all' | 'image' | 'video' | 'document'>('all')
 const searchQuery = ref('')
@@ -114,6 +116,29 @@ const handleDeleteAsset = (asset: Asset[]) => {
     color: 'success'
   })
 }
+
+const mediaTabs = computed(() => [{
+  label: t('tabs.library'),
+  icon: 'lucide:folder',
+  value: 'library',
+  slot: 'library' as const
+}, {
+  label: t('tabs.googleDrive'),
+  icon: 'lucide:folder-open',
+  value: 'google-drive',
+  slot: 'google-drive' as const
+}])
+
+const handleDriveImport = async (imported: Asset[]) => {
+  toast.add({
+    title: 'Success',
+    description: `${imported.length} asset(s) imported from Google Drive.`,
+    color: 'success'
+  })
+  if (selectedBusinessId.value) {
+    await refreshAssets(selectedBusinessId.value)
+  }
+}
 </script>
 
 <template>
@@ -152,17 +177,36 @@ const handleDeleteAsset = (asset: Asset[]) => {
       <!-- Stats -->
       <MediaStats :asset-stats="assetStats" :storage-usage="storageUsage" />
 
-      <!-- Filters and Search -->
-      <MediaFilters v-model:filter-type="filterType" v-model:search-query="searchQuery" v-model:view-mode="viewMode"
-        hide-view-mode data-tour="add-assets-step-1" />
+      <!-- Library / Google Drive tabs -->
+      <UTabs v-model="selectedTab" :items="mediaTabs" class="w-full">
+        <template #default="{ item }">
+          <div class="flex items-center gap-2 relative">
+            <span class="truncate">{{ item.label }}</span>
+          </div>
+        </template>
 
-      <!-- Asset Gallery -->
-      <UCard class="p-6" variant="soft" data-tour="add-assets-step-2">
-        <MediaGallery :business-id="selectedBusinessId" :selectable="true" :multi-select="true" :show-uploader="false"
-          :filter-type="filterType" @select="(asset: Asset) => console.log('Selected:', asset)"
-          @deselect="(asset: Asset) => console.log('Deselected:', asset)" @upload="handleFileUpload"
-          @delete="handleDeleteAsset" @open-edit-modal="handleOpenEditModal" />
-      </UCard>
+        <template #library>
+          <div class="space-y-4 mt-4">
+            <!-- Filters and Search -->
+            <MediaFilters v-model:filter-type="filterType" v-model:search-query="searchQuery" v-model:view-mode="viewMode"
+              hide-view-mode data-tour="add-assets-step-1" />
+
+            <!-- Asset Gallery -->
+            <UCard class="p-6" variant="soft" data-tour="add-assets-step-2">
+              <MediaGallery :business-id="selectedBusinessId" :selectable="true" :multi-select="true" :show-uploader="false"
+                :filter-type="filterType" @select="(asset: Asset) => console.log('Selected:', asset)"
+                @deselect="(asset: Asset) => console.log('Deselected:', asset)" @upload="handleFileUpload"
+                @delete="handleDeleteAsset" @open-edit-modal="handleOpenEditModal" />
+            </UCard>
+          </div>
+        </template>
+
+        <template #google-drive>
+          <UCard class="p-6 mt-4" variant="soft">
+            <GoogleDriveGallery @select-images="handleDriveImport" />
+          </UCard>
+        </template>
+      </UTabs>
     </div>
 
     <!-- Upload Dialog -->

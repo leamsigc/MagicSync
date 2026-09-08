@@ -26,6 +26,32 @@ const $emit = defineEmits<{
 const toast = useToast()
 const hasAttemptedLoad = ref(false)
 
+// Per-file preview state: proxy (same-origin, server-fetched with the Drive
+// token) -> direct thumbnailLink -> icon fallback. Drive thumbnailLinks need
+// Google credentials the browser <img> request doesn't carry, so they often
+// render broken without the proxy.
+const previewState = reactive<Record<string, 'proxy' | 'direct' | 'icon'>>({})
+
+const previewSrc = (file: { id: string; thumbnailLink?: string }) => {
+  const state = previewState[file.id] ?? 'proxy'
+  if (state === 'direct') return file.thumbnailLink || ''
+  return `/api/v1/assets/google-drive/thumbnail?fileId=${file.id}`
+}
+
+const handlePreviewError = (file: { id: string; thumbnailLink?: string }) => {
+  const state = previewState[file.id] ?? 'proxy'
+  if (state === 'proxy' && file.thumbnailLink) {
+    previewState[file.id] = 'direct'
+  } else {
+    previewState[file.id] = 'icon'
+  }
+}
+
+const showPreview = (file: { id: string; thumbnailLink?: string }) => {
+  if ((previewState[file.id] ?? 'proxy') === 'icon') return false
+  return !!previewSrc(file)
+}
+
 const handleListFiles = async () => {
   hasAttemptedLoad.value = true
   await listFiles()
@@ -89,8 +115,8 @@ const fileIcon = (mimeType: string) => {
         <UCard v-for="file in files" :key="file.id" :ui="{ body: 'p-0' }"
           :class="['relative cursor-pointer group overflow-hidden rounded-lg', { 'ring-2 ring-primary': selectedFiles.some((f) => f.id === file.id) }]">
           <div class="aspect-square relative" @click="toggleSelectFile(file)">
-            <img v-if="isImageMime(file.mimeType) && file.thumbnailLink" :src="file.thumbnailLink" :alt="file.name"
-              class="w-full h-full object-cover" loading="lazy" />
+            <img v-if="isImageMime(file.mimeType) && showPreview(file)" :src="previewSrc(file)" :alt="file.name"
+              class="w-full h-full object-cover" loading="lazy" @error="handlePreviewError(file)" />
             <div v-else class="w-full h-full flex items-center justify-center bg-muted">
               <Icon :name="fileIcon(file.mimeType)" class="w-12 h-12 text-muted-foreground" />
             </div>

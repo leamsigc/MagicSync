@@ -28,7 +28,7 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    const accessToken = await getGoogleDriveToken(user.id)
+    const accessToken = await getGoogleDriveToken(user.id, useAuthApi(event).headers())
     if (!accessToken) {
       log.error('No Google Drive token found for user', { userId: user.id })
       throw createError({

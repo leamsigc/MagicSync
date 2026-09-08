@@ -2,6 +2,10 @@
   "en": {
     "title": "Asset Gallery",
     "description": "Manage your media files and assets",
+    "tabs": {
+      "library": "Library",
+      "googleDrive": "Google Drive"
+    },
     "buttons": {
       "upload_assets": "Upload Assets",
       "delete_selected": "Delete Selected ({count})",
@@ -60,6 +64,10 @@
   "es": {
     "title": "Galería de Recursos",
     "description": "Gestiona tus archivos multimedia y recursos",
+    "tabs": {
+      "library": "Biblioteca",
+      "googleDrive": "Google Drive"
+    },
     "buttons": {
       "upload_assets": "Subir Recursos",
       "delete_selected": "Eliminar Seleccionados ({count})",
@@ -114,6 +122,10 @@
   "de": {
     "title": "Asset-Galerie",
     "description": "Verwalten Sie Ihre Mediendateien und Assets",
+    "tabs": {
+      "library": "Bibliothek",
+      "googleDrive": "Google Drive"
+    },
     "buttons": {
       "upload_assets": "Assets Hochladen",
       "delete_selected": "Ausgewählte Löschen ({count})",
@@ -168,6 +180,10 @@
   "fr": {
     "title": "Galerie de Ressources",
     "description": "Gérez vos fichiers multimédias et ressources",
+    "tabs": {
+      "library": "Bibliothèque",
+      "googleDrive": "Google Drive"
+    },
     "buttons": {
       "upload_assets": "Télécharger Ressources",
       "delete_selected": "Supprimer Sélectionnés ({count})",

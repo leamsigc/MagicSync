@@ -26,7 +26,7 @@ export default defineEventHandler(async (event) => {
     const pageSize = parseInt(query.pageSize as string) || 15
     const pageToken = (query.pageToken as string) || ''
 
-    const accessToken = await getGoogleDriveToken(user.id)
+    const accessToken = await getGoogleDriveToken(user.id, useAuthApi(event).headers())
     if (!accessToken) {
       log.error('No Google Drive token found for user', { userId: user.id })
       throw createError({
@@ -35,7 +35,9 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    let driveQuery = `'root' in parents and trashed=false and (mimeType contains 'image/' or mimeType contains 'video/' or mimeType='application/pdf')`
+    // Search the whole Drive, not just root: users keep photos in folders.
+    // ('root' in parents hid everything outside My Drive root.)
+    let driveQuery = `trashed=false and (mimeType contains 'image/' or mimeType contains 'video/' or mimeType='application/pdf')`
     if (searchQuery) {
       driveQuery = `name contains '${searchQuery.replace(/'/g, "\\'")}' and trashed=false and (mimeType contains 'image/' or mimeType contains 'video/' or mimeType='application/pdf')`
     }
