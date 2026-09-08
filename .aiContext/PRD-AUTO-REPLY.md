@@ -238,6 +238,16 @@ siblings return JSON → stale/split deployment still serving traffic (redeploy
 fully, stop old containers). Conversations 500 `(#3) capability` is again the
 pre-scope token → reconnect.
 
+2026-09-08 prod debug #3 (live, magicsync.dev): comments visible on the reel
+(from the user's own other accounts) yet `checked 0` and empty logs. Two
+causes fixed in code: (1) match-all discovery read only `platformPosts`
+(posts published THROUGH MagicSync) — natively posted reels were invisible;
+`resolveWatchedPosts` now lists live media via `/{ig-id}/media` first
+(new `getRecentMediaIds`, never throws), DB discovery second. (2) Per-post
+poll exceptions are now caught per post (`failed++` + warn) instead of
+aborting the run silently. Remaining unknowns on the user side: app Live
+status, tester roles for the commenting accounts.
+
 ## 7. Verification (results)
 
 - [x] `pnpm --filter @local-monorepo/db db:generate` outputs **no changes**

@@ -1000,6 +1000,39 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
     }
   }
 
+  /**
+   * List recent media IDs for the account (match-all discovery).
+   * platformPosts only knows posts published THROUGH MagicSync — natively
+   * posted reels would otherwise be invisible to match-all campaigns.
+   * Never throws: returns [] on Meta errors (caller falls back).
+   */
+  async getRecentMediaIds(
+    socialMediaAccount: PluginSocialMediaAccount | Pick<SocialMediaAccount, 'accessToken' | 'accountId'>,
+    limit = 20
+  ): Promise<string[]> {
+    try {
+      const token = (socialMediaAccount as { accessToken: string }).accessToken;
+      const igUserId = (socialMediaAccount as { accountId: string }).accountId;
+      if (!token || !igUserId) return [];
+      const params = new URLSearchParams({
+        access_token: token,
+        fields: 'id',
+        limit: String(Math.min(Math.max(limit, 1), 50)),
+      });
+      const url = this._getGraphApiUrl(`${igUserId}/media?${params.toString()}`);
+      const response = await fetch(url);
+      if (!response.ok) {
+        this.logPluginEvent('recent-media-error', 'failure', `Status: ${response.status}`);
+        return [];
+      }
+      const data = (await response.json()) as { data?: { id?: string }[] };
+      return (data.data || []).map((m) => m.id).filter((id): id is string => !!id);
+    } catch (error) {
+      this.logPluginEvent('recent-media-error', 'failure', `Error: ${(error as Error).message}`);
+      return [];
+    }
+  }
+
   private toConversation(raw: Record<string, unknown>, accountId: string): PlatformConversation {
     const participants = raw['participants'] as { data?: { id?: string; username?: string }[] } | undefined;
     return {

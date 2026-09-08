@@ -468,6 +468,25 @@ export class AutoReplyService {
   private async resolveWatchedPosts(campaign: AutoReplyCampaign): Promise<string[]> {
     const explicit = (campaign.externalPostIds || []).slice(0, WATCHED_POST_CAP)
     if (!campaign.matchAllPosts) return explicit
+    const merged = [...explicit]
+    const addIds = (ids: string[]) => {
+      for (const id of ids) {
+        if (merged.length >= WATCHED_POST_CAP) break
+        if (id && !merged.includes(id)) merged.push(id)
+      }
+    }
+    // Live media listing first: platformPosts only knows posts published
+    // THROUGH MagicSync — natively posted reels (the common case) would
+    // otherwise be invisible to match-all campaigns.
+    try {
+      const account = await socialMediaAccountService.getAccountById(campaign.socialAccountId, campaign.userId)
+      if (account) {
+        const plugin = this.instagramPlugin()
+        addIds(await plugin.getRecentMediaIds(account as unknown as PluginSocialMediaAccount, WATCHED_POST_CAP))
+      }
+    } catch {
+      // Fall through to DB discovery below.
+    }
     try {
       const db = useDrizzle()
       const rows = await db.select().from(platformPosts).where(eq(platformPosts.socialAccountId, campaign.socialAccountId)).limit(50)
@@ -485,14 +504,10 @@ export class AutoReplyService {
         const ext = byAccount || flat
         if (ext && !discovered.includes(ext)) discovered.push(ext)
       }
-      const merged = [...explicit]
-      for (const id of discovered) {
-        if (merged.length >= WATCHED_POST_CAP) break
-        if (!merged.includes(id)) merged.push(id)
-      }
+      addIds(discovered)
       return merged
     } catch {
-      return explicit
+      return merged.length > 0 ? merged : explicit
     }
   }
 
@@ -640,8 +655,17 @@ export class AutoReplyService {
       const postDetails = {
         platformPosts: [{ socialAccountId: account.id, publishDetail: JSON.stringify({ postId: externalPostId }) }],
       } as unknown as Parameters<InstagramPlugin['getComments']>[0]
-      const res = await plugin.getComments(postDetails, account, { limit: 50 })
-      const comments = (res.comments || []) as PlatformComment[]
+      let comments: PlatformComment[] = []
+      try {
+        const res = await plugin.getComments(postDetails, account, { limit: 50 })
+        comments = (res.comments || []) as PlatformComment[]
+      } catch (error) {
+        // One bad post (deleted media, dead token) must not abort the run —
+        // and must be visible: failed++ surfaces in the task summary line.
+        console.warn(`[autoreply] getComments failed for post ${externalPostId.slice(0, 12)}…: ${(error as Error).message}`)
+        failed++
+        continue
+      }
       checked += comments.length
       let newestId = state.lastSeenCommentId
       for (const comment of comments) {
