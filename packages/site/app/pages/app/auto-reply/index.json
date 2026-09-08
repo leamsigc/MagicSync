@@ -54,7 +54,13 @@
     "webhook_callback": "Callback URL for the Meta dashboard",
     "subscribe_button": "Subscribe Page",
     "subscribed": "Page subscribed",
-    "subscribe_failed": "Subscription failed"
+    "subscribe_failed": "Subscription failed",
+    "select_posts": "Select posts",
+    "watched_posts_hint": "Instagram media IDs (the long numbers like 1789...), NOT MagicSync internal post IDs. Easiest: use Select posts to pick from this account. Watch-all covers every post including natively posted reels.",
+    "picker_title": "Pick posts to watch",
+    "picker_description": "Latest 10 posts from the selected account. Click to select up to 20.",
+    "no_media": "No posts found for this account.",
+    "track_selected": "Track {count} post(s)"
   },
   "es": {
     "title": "Respuesta automática",
@@ -111,7 +117,13 @@
     "webhook_callback": "URL de devolución para el panel de Meta",
     "subscribe_button": "Suscribir página",
     "subscribed": "Página suscrita",
-    "subscribe_failed": "Error al suscribir"
+    "subscribe_failed": "Error al suscribir",
+    "select_posts": "Elegir publicaciones",
+    "watched_posts_hint": "IDs de medios de Instagram (números largos como 1789...), NO los IDs internos de MagicSync. Lo más fácil: usa Elegir publicaciones. Vigilar todo cubre cada publicación.",
+    "picker_title": "Elige publicaciones a vigilar",
+    "picker_description": "Últimas 10 publicaciones de la cuenta. Clic para seleccionar hasta 20.",
+    "no_media": "No se encontraron publicaciones.",
+    "track_selected": "Vigilar {count} publicación(es)"
   },
   "de": {
     "title": "Auto-Antwort",
@@ -168,7 +180,13 @@
     "webhook_description": "Callback-URL in der Meta-App eintragen (Instagram-Objekt → comments, messages, story_mentions abonnieren), dann jede Page abonnieren.",
     "subscribe_button": "Page abonnieren",
     "subscribed": "Page abonniert",
-    "subscribe_failed": "Abo fehlgeschlagen"
+    "subscribe_failed": "Abo fehlgeschlagen",
+    "select_posts": "Beiträge wählen",
+    "watched_posts_hint": "Instagram-Medien-IDs (lange Nummern wie 1789...), NICHT MagicSync-interne IDs. Am einfachsten: Beiträge wählen. Alle beobachten deckt jeden Beitrag ab.",
+    "picker_title": "Zu beobachtende Beiträge wählen",
+    "picker_description": "Neueste 10 Beiträge des Kontos. Klicken zum Auswählen (max. 20).",
+    "no_media": "Keine Beiträge gefunden.",
+    "track_selected": "{count} Beitrag/Beiträge beobachten"
   },
   "fr": {
     "title": "Réponse auto",
@@ -225,6 +243,12 @@
     "webhook_description": "Collez l’URL dans votre app Meta (objet Instagram → abonnez comments, messages, story_mentions), puis abonnez chaque Page.",
     "subscribe_button": "Abonner la Page",
     "subscribed": "Page abonnée",
-    "subscribe_failed": "Échec de l’abonnement"
+    "subscribe_failed": "Échec de l’abonnement",
+    "select_posts": "Choisir des posts",
+    "watched_posts_hint": "IDs de médias Instagram (longs numéros comme 1789...), PAS les IDs internes MagicSync. Le plus simple : Choisir des posts. Tout surveiller couvre chaque publication.",
+    "picker_title": "Choisir les posts à surveiller",
+    "picker_description": "10 derniers posts du compte. Cliquez pour sélectionner (max 20).",
+    "no_media": "Aucun post trouvé.",
+    "track_selected": "Surveiller {count} post(s)"
   }
 }

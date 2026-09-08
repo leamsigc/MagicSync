@@ -46,6 +46,16 @@ export interface AutoReplyStats {
   clicksPerLink: Array<{ linkId: string; label: string; target: string; clicks: number }>
 }
 
+export interface AutoReplyMediaItem {
+  id: string
+  caption?: string
+  mediaType?: string
+  imageUrl?: string
+  timestamp?: string
+  likeCount?: number
+  commentsCount?: number
+}
+
 export function useAutoReply() {
   const campaigns = useState<AutoReplyCampaign[]>('auto-reply-campaigns', () => [])
   const loading = useState<boolean>('auto-reply-loading', () => false)
@@ -175,6 +185,18 @@ export function useAutoReply() {
     }
   }
 
+  async function fetchRecentMedia(socialAccountId: string, limit = 10): Promise<AutoReplyMediaItem[]> {
+    try {
+      const res = await $fetch<{ success: boolean; data: AutoReplyMediaItem[] }>('/api/v1/auto-reply/media', {
+        query: { socialAccountId, limit },
+      })
+      return res.data || []
+    } catch (err) {
+      error.value = toMessage(err, 'Failed to load recent posts')
+      return []
+    }
+  }
+
   async function testMatch(id: string | null, text: string, keywords: string[], matchMode: 'whole' | 'partial'): Promise<string | null> {
     try {
       if (!id) {
@@ -212,6 +234,7 @@ export function useAutoReply() {
     fetchStats,
     fetchWebhookStatus,
     subscribeWebhooks,
+    fetchRecentMedia,
     testMatch,
   }
 }

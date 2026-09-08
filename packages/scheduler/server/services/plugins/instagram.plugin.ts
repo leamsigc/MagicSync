@@ -19,6 +19,17 @@ type InstagramApiComment = {
   parent?: { id?: string };
 };
 
+export interface InstagramRecentMedia {
+  id: string;
+  caption?: string;
+  mediaType?: string;
+  /** Direct image URL (IMAGE/CAROUSEL) or thumbnail (VIDEO). For the picker UI. */
+  imageUrl?: string;
+  timestamp?: string;
+  likeCount?: number;
+  commentsCount?: number;
+}
+
 export class InstagramPlugin extends BaseSchedulerPlugin {
   static readonly pluginName = 'instagram';
   readonly pluginName = 'instagram';
@@ -1001,22 +1012,22 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
   }
 
   /**
-   * List recent media IDs for the account (match-all discovery).
+   * List recent media for the account (match-all discovery + post picker UI).
    * platformPosts only knows posts published THROUGH MagicSync — natively
    * posted reels would otherwise be invisible to match-all campaigns.
    * Never throws: returns [] on Meta errors (caller falls back).
    */
-  async getRecentMediaIds(
+  async getRecentMedia(
     socialMediaAccount: PluginSocialMediaAccount | Pick<SocialMediaAccount, 'accessToken' | 'accountId'>,
     limit = 20
-  ): Promise<string[]> {
+  ): Promise<InstagramRecentMedia[]> {
     try {
       const token = (socialMediaAccount as { accessToken: string }).accessToken;
       const igUserId = (socialMediaAccount as { accountId: string }).accountId;
       if (!token || !igUserId) return [];
       const params = new URLSearchParams({
         access_token: token,
-        fields: 'id',
+        fields: 'id,caption,media_type,media_url,thumbnail_url,timestamp,like_count,comments_count',
         limit: String(Math.min(Math.max(limit, 1), 50)),
       });
       const url = this._getGraphApiUrl(`${igUserId}/media?${params.toString()}`);
@@ -1025,12 +1036,34 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
         this.logPluginEvent('recent-media-error', 'failure', `Status: ${response.status}`);
         return [];
       }
-      const data = (await response.json()) as { data?: { id?: string }[] };
-      return (data.data || []).map((m) => m.id).filter((id): id is string => !!id);
+      const data = (await response.json()) as { data?: Record<string, unknown>[] };
+      return (data.data || [])
+        .map((m) => ({
+          id: String(m['id'] || ''),
+          caption: typeof m['caption'] === 'string' ? m['caption'] : undefined,
+          mediaType: typeof m['media_type'] === 'string' ? m['media_type'] : undefined,
+          imageUrl: (typeof m['thumbnail_url'] === 'string' && m['thumbnail_url'])
+            || (typeof m['media_url'] === 'string' && !String(m['media_url']).match(/\.(mp4|mov)$/i) ? String(m['media_url']) : undefined),
+          timestamp: typeof m['timestamp'] === 'string' ? m['timestamp'] : undefined,
+          likeCount: typeof m['like_count'] === 'number' ? m['like_count'] : undefined,
+          commentsCount: typeof m['comments_count'] === 'number' ? m['comments_count'] : undefined,
+        }))
+        .filter((m) => !!m.id);
     } catch (error) {
       this.logPluginEvent('recent-media-error', 'failure', `Error: ${(error as Error).message}`);
       return [];
     }
+  }
+
+  /**
+   * List recent media IDs for the account (match-all discovery).
+   * Thin wrapper over getRecentMedia — same never-throws contract.
+   */
+  async getRecentMediaIds(
+    socialMediaAccount: PluginSocialMediaAccount | Pick<SocialMediaAccount, 'accessToken' | 'accountId'>,
+    limit = 20
+  ): Promise<string[]> {
+    return (await this.getRecentMedia(socialMediaAccount, limit)).map((m) => m.id);
   }
 
   private toConversation(raw: Record<string, unknown>, accountId: string): PlatformConversation {

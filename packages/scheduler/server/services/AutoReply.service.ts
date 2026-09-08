@@ -449,6 +449,26 @@ export class AutoReplyService {
     }
   }
 
+  /**
+   * Recent IG media for the post-picker UI (and match-all discovery uses the
+   * same plugin call). Ownership-checked; never throws.
+   */
+  async listRecentMedia(userId: string, socialAccountId: string, limit = 10): Promise<ServiceResponse<Array<{ id: string; caption?: string; mediaType?: string; imageUrl?: string; timestamp?: string; likeCount?: number; commentsCount?: number }>>> {
+    try {
+      const account = await socialMediaAccountService.getAccountById(socialAccountId, userId)
+      if (!account) return { success: false, error: 'Social media account not found', code: 'NOT_FOUND' }
+      if (account.platform !== 'instagram') {
+        return { success: false, error: 'Post picker is only supported for Instagram accounts', code: 'UNSUPPORTED' }
+      }
+      const plugin = this.instagramPlugin()
+      const capped = Math.min(Math.max(limit, 1), 25)
+      const media = await plugin.getRecentMedia(account as unknown as PluginSocialMediaAccount, capped)
+      return { success: true, data: media }
+    } catch {
+      return { success: false, error: 'Failed to load recent posts' }
+    }
+  }
+
   testMatch(text: string, keywords: string[], mode: 'whole' | 'partial'): ServiceResponse<{ matched: string | null }> {
     try {
       return { success: true, data: { matched: matchKeywords(text, keywords, mode) } }

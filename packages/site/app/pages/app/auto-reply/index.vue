@@ -6,11 +6,11 @@
  * tracked links, logs. Phase B: instant delivery via Meta webhooks, story-DM
  * triggers, follow-gate enforcement.
  */
-import { useAutoReply, type AutoReplyCampaign, type AutoReplyLog } from '~/composables/useAutoReply'
+import { useAutoReply, type AutoReplyCampaign, type AutoReplyLog, type AutoReplyMediaItem } from '~/composables/useAutoReply'
 
 const { t } = useI18n()
 const toast = useToast()
-const { campaigns, loading, error, fetchCampaigns, createCampaign, updateCampaign, deleteCampaign, fetchLogs, fetchStats, fetchWebhookStatus, subscribeWebhooks, testMatch } = useAutoReply()
+const { campaigns, loading, error, fetchCampaigns, createCampaign, updateCampaign, deleteCampaign, fetchLogs, fetchStats, fetchWebhookStatus, subscribeWebhooks, fetchRecentMedia, testMatch } = useAutoReply()
 
 const showForm = ref(false)
 const editing = ref<AutoReplyCampaign | null>(null)
@@ -39,6 +39,10 @@ const activeCampaign = ref<AutoReplyCampaign | null>(null)
 const statsText = ref('')
 const testText = ref('')
 const testResult = ref<string | null>(null)
+const pickerOpen = ref(false)
+const pickerLoading = ref(false)
+const pickerItems = ref<AutoReplyMediaItem[]>([])
+const pickerSelected = ref<string[]>([])
 
 const presets = [
   { name: 'Link magnet', keywords: 'LINK, INFO', dm: 'Hey {username}! Here is your link: {link1}', pub: 'Sent you a DM!' },
@@ -168,6 +172,48 @@ async function handleOpenLogs(c: AutoReplyCampaign) {
   const stats = await fetchStats(c.id)
   statsText.value = stats ? `${stats.sent} sent · ${stats.skipped} skipped · ${stats.failed} failed` : ''
   logsOpen.value = true
+}
+
+function captionExcerpt(item: AutoReplyMediaItem) {
+  const caption = (item.caption || '').trim()
+  if (!caption) return item.id
+  return caption.length > 90 ? `${caption.slice(0, 90)}…` : caption
+}
+
+function formatMediaDate(iso: string | undefined) {
+  if (!iso) return ''
+  try {
+    return new Date(iso).toLocaleDateString()
+  } catch {
+    return ''
+  }
+}
+
+async function handleOpenPicker() {
+  if (!formAccount.value) return
+  pickerOpen.value = true
+  pickerLoading.value = true
+  try {
+    pickerItems.value = await fetchRecentMedia(formAccount.value, 10)
+    pickerSelected.value = formPosts.value.split(',').map((s) => s.trim()).filter(Boolean)
+  } finally {
+    pickerLoading.value = false
+  }
+}
+
+function handleTogglePick(id: string) {
+  pickerSelected.value = pickerSelected.value.includes(id)
+    ? pickerSelected.value.filter((picked) => picked !== id)
+    : [...pickerSelected.value, id].slice(0, 20)
+}
+
+function handleConfirmPicker() {
+  formPosts.value = pickerSelected.value.join(', ')
+  pickerOpen.value = false
+}
+
+function handleClosePicker() {
+  pickerOpen.value = false
 }
 
 async function handleTest(c: AutoReplyCampaign | null) {
@@ -319,8 +365,21 @@ onMounted(async () => {
           <UFormField :label="t('account')" name="account">
             <USelectMenu v-model="formAccount" :items="accounts.map((a) => ({ label: a.accountName, value: a.id }))" label-key="label" value-key="value" :placeholder="t('select_account')" class="w-full" />
           </UFormField>
-          <UFormField :label="t('watched_posts')" name="posts">
-            <UInput v-model="formPosts" class="w-full" placeholder="1789..., 1790..." />
+          <UFormField name="posts">
+            <template #label>
+              <span class="inline-flex items-center gap-1">
+                {{ t('watched_posts') }}
+                <UTooltip :text="t('watched_posts_hint')">
+                  <UIcon name="i-lucide-circle-help" class="w-4 h-4 text-muted-foreground" />
+                </UTooltip>
+              </span>
+            </template>
+            <div class="flex gap-2">
+              <UInput v-model="formPosts" class="flex-1" placeholder="1789..., 1790..." />
+              <UButton variant="outline" :disabled="!formAccount" @click="handleOpenPicker">
+                {{ t('select_posts') }}
+              </UButton>
+            </div>
           </UFormField>
           <div class="flex items-center justify-between">
             <span class="text-sm">{{ t('match_all') }}</span>
@@ -371,6 +430,47 @@ onMounted(async () => {
         <div class="flex justify-end gap-2">
           <UButton variant="ghost" @click="handleCloseForm">{{ t('cancel') }}</UButton>
           <UButton color="primary" :loading="loading" @click="handleSave">{{ editing ? t('save') : t('create') }}</UButton>
+        </div>
+      </template>
+    </UModal>
+
+    <UModal v-model:open="pickerOpen" :title="t('picker_title')" :description="t('picker_description')" :ui="{ content: 'md:min-w-[720px]' }">
+      <template #body>
+        <div v-if="pickerLoading" class="flex justify-center py-12">
+          <UIcon name="i-heroicons-arrow-path" class="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+        <div v-else-if="pickerItems.length === 0" class="text-sm text-muted-foreground text-center py-8">
+          {{ t('no_media') }}
+        </div>
+        <div v-else class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <button
+            v-for="item in pickerItems"
+            :key="item.id"
+            type="button"
+            class="relative rounded-lg overflow-hidden border-2 text-left transition"
+            :class="pickerSelected.includes(item.id) ? 'border-primary' : 'border-transparent hover:border-muted'"
+            @click="() => handleTogglePick(item.id)"
+          >
+            <img v-if="item.imageUrl" :src="item.imageUrl" :alt="captionExcerpt(item)" class="aspect-square w-full object-cover" loading="lazy" />
+            <div v-else class="aspect-square w-full flex items-center justify-center bg-muted">
+              <UIcon name="i-lucide-image-off" class="h-8 w-8 text-muted-foreground" />
+            </div>
+            <div class="absolute top-1 right-1">
+              <UBadge v-if="pickerSelected.includes(item.id)" color="primary" variant="solid" size="xs">✓</UBadge>
+            </div>
+            <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+              <p class="text-[11px] text-white line-clamp-2 leading-tight">{{ captionExcerpt(item) }}</p>
+              <p v-if="formatMediaDate(item.timestamp)" class="text-[10px] text-white/70">{{ formatMediaDate(item.timestamp) }}</p>
+            </div>
+          </button>
+        </div>
+      </template>
+      <template #footer>
+        <div class="flex justify-end gap-2">
+          <UButton variant="ghost" @click="handleClosePicker">{{ t('cancel') }}</UButton>
+          <UButton color="primary" :disabled="pickerSelected.length === 0" @click="handleConfirmPicker">
+            {{ t('track_selected', { count: pickerSelected.length }) }}
+          </UButton>
         </div>
       </template>
     </UModal>

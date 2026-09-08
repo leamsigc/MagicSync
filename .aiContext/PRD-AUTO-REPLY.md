@@ -214,9 +214,14 @@ Singleton `autoReplyService`. All methods `ServiceResponse<T>`, try/catch, never
    trailing-space typo (IG provider). Reconnect required after scope changes.
 
 Remaining follow-ups (not regressions): interactive postback-button follow loop
-(v1 sends a one-shot prompt asking to follow + re-engage), `matchAllPosts` post
-picker in the campaign form (currently ID paste), Redis/atomic click counting
-(read-modify-write is fine at v1).
+(v1 sends a one-shot prompt asking to follow + re-engage), Redis/atomic click
+counting (read-modify-write is fine at v1).
+
+2026-09-08 UX: watched-post IDs clarified as Instagram media IDs (info tooltip)
++ post-picker modal (latest 10 with thumbnails, multi-select ≤ 20) backed by
+new `GET /api/v1/auto-reply/media` → `listRecentMedia` →
+`getRecentMedia` (`/{ig-id}/media` with thumbnail/caption/counts);
+`getRecentMediaIds` now delegates to it.
 
 2026-09-08 prod debug: accounts connected via Instagram Login stored the
 **app-scoped** `id`, but webhooks carry `user_id` in `entry.id` → events
@@ -237,6 +242,15 @@ endpoint served the SPA 404 page as HTML-200 on the browser's origin while
 siblings return JSON → stale/split deployment still serving traffic (redeploy
 fully, stop old containers). Conversations 500 `(#3) capability` is again the
 pre-scope token → reconnect.
+
+2026-09-08 prod debug #4 — the logs-HTML mystery SOLVED, and it was not stale
+containers: root `.gitignore` line `logs` (Node template, meant for a top-level
+dir) matches a directory named `logs` AT ANY DEPTH, so
+`.../campaigns/[id]/logs/index.get.ts` was never committed — `git status`
+stayed clean, dev worked, prod (built from git) 404-fell-through to the SPA
+page. Fixed by scoping to `/logs` (same for the `lib/` rule that earlier
+forced `-f` on `auth.ts`) and committing the route. Lesson: verify deploys
+from git content (`git ls-files`), not just the working tree.
 
 2026-09-08 prod debug #3 (live, magicsync.dev): comments visible on the reel
 (from the user's own other accounts) yet `checked 0` and empty logs. Two
