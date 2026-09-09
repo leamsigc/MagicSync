@@ -139,6 +139,13 @@ export function useAuthApi(event: H3Event) {
       })
     },
 
+    removeUser(params: { body: { userId: string } }) {
+      return auth.api.removeUser({
+        ...params,
+        headers: headers()
+      })
+    },
+
     listUsers(params: { query?: { limit?: number; offset?: number; sortBy?: string; sortDirection?: string } } = {}) {
       return auth.api.listUsers({
         ...params,

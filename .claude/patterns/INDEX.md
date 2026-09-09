@@ -30,3 +30,4 @@ Lookup table for all pattern files in this directory. Check here before starting
 | [seo-og.md](seo-og.md) | Fixing Open Graph / link previews on Nuxt Content + nuxt-og-image pages |
 | [entitydetails-kv.md](entitydetails-kv.md) | Storing a feature in `entity_details` KV rows with zero migrations |
 | [safe-build.md](safe-build.md) | Building the site without freezing the machine — heap caps, concurrency limits |
+| [auth-session-lifecycle.md](auth-session-lifecycle.md) | better-auth session lifecycle — $sessionSignal listeners, fetchSession, logout without get-session floods |

@@ -21,22 +21,106 @@ export interface SlidePalette {
   font?: string
 }
 
+const SANS_FALLBACK = "'Helvetica Neue', Arial, sans-serif"
+const SERIF_FALLBACK = "Georgia, 'Times New Roman', serif"
+const MONO_FALLBACK = "'Courier New', Courier, monospace"
+const SCRIPT_FALLBACK = "'Segoe Script', 'Bradley Hand', cursive"
+
 export const FONT_STACKS: Record<string, string> = {
-  'Arial': "'Arial', 'Helvetica Neue', Helvetica, sans-serif",
-  'Arial Black': "'Arial Black', 'Arial Bold', Gadget, sans-serif",
-  'Impact': "Impact, Haettenschweiler, 'Franklin Gothic Bold', 'Arial Narrow Bold', sans-serif",
-  'Georgia': "Georgia, 'Times New Roman', Times, serif",
-  'Courier New': "'Courier New', Courier, 'Lucida Console', monospace",
-  'Verdana': "Verdana, Geneva, Tahoma, sans-serif",
-  'Trebuchet MS': "'Trebuchet MS', 'Lucida Grande', 'Lucida Sans Unicode', sans-serif",
-  'Comic Sans MS': "'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', cursive",
-  'Palatino': "'Palatino Linotype', 'Book Antiqua', Palatino, serif",
-  'Century Gothic': "'Century Gothic', CenturyGothic, AppleGothic, Futura, sans-serif",
-  'Brush Script MT': "'Brush Script MT', 'Segoe Script', 'Bradley Hand', cursive",
+  // System stacks (always available, zero download)
+  'Arial': `'Arial', ${SANS_FALLBACK}`,
+  'Arial Black': `'Arial Black', 'Arial Bold', Gadget, sans-serif`,
+  'Impact': `Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif`,
+  'Georgia': `Georgia, 'Times New Roman', Times, serif`,
+  'Courier New': `'Courier New', Courier, 'Lucida Console', monospace`,
+  'Verdana': `Verdana, Geneva, Tahoma, sans-serif`,
+  'Trebuchet MS': `'Trebuchet MS', 'Lucida Grande', 'Lucida Sans Unicode', sans-serif`,
+  'Comic Sans MS': `'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', cursive`,
+  'Palatino': `'Palatino Linotype', 'Book Antiqua', Palatino, serif`,
+  'Century Gothic': `'Century Gothic', CenturyGothic, AppleGothic, Futura, sans-serif`,
+  'Brush Script MT': `'Brush Script MT', 'Segoe Script', 'Bradley Hand', cursive`,
+  // Google Fonts (loaded via @nuxt/fonts, see packages/tools/nuxt.config.ts).
+  // Fallbacks keep the stage readable offline or before first paint.
+  'Roboto': `'Roboto', ${SANS_FALLBACK}`,
+  'Open Sans': `'Open Sans', ${SANS_FALLBACK}`,
+  'Lato': `'Lato', ${SANS_FALLBACK}`,
+  'Montserrat': `'Montserrat', ${SANS_FALLBACK}`,
+  'Oswald': `'Oswald', ${SANS_FALLBACK}`,
+  'Source Sans 3': `'Source Sans 3', ${SANS_FALLBACK}`,
+  'Slabo 27px': `'Slabo 27px', ${SERIF_FALLBACK}`,
+  'Raleway': `'Raleway', ${SANS_FALLBACK}`,
+  'PT Sans': `'PT Sans', ${SANS_FALLBACK}`,
+  'Merriweather': `'Merriweather', ${SERIF_FALLBACK}`,
+  'Noto Sans': `'Noto Sans', ${SANS_FALLBACK}`,
+  'Noto Serif': `'Noto Serif', ${SERIF_FALLBACK}`,
+  'Nunito Sans': `'Nunito Sans', ${SANS_FALLBACK}`,
+  'Concert One': `'Concert One', ${SANS_FALLBACK}`,
+  'Prompt': `'Prompt', ${SANS_FALLBACK}`,
+  'Work Sans': `'Work Sans', ${SANS_FALLBACK}`,
+  'Inter': `'Inter', ${SANS_FALLBACK}`,
+  'Instrument Sans': `'Instrument Sans', ${SANS_FALLBACK}`,
+  'Instrument Serif': `'Instrument Serif', ${SERIF_FALLBACK}`,
+  'Epilogue': `'Epilogue', ${SANS_FALLBACK}`,
+  'Syne': `'Syne', ${SANS_FALLBACK}`,
+  'DM Sans': `'DM Sans', ${SANS_FALLBACK}`,
+  'DM Mono': `'DM Mono', ${MONO_FALLBACK}`,
+  'Questrial': `'Questrial', ${SANS_FALLBACK}`,
+  'Alegreya': `'Alegreya', ${SERIF_FALLBACK}`,
+  'Alegreya Sans': `'Alegreya Sans', ${SANS_FALLBACK}`,
+  'News Cycle': `'News Cycle', ${SANS_FALLBACK}`,
+  'Plus Jakarta Sans': `'Plus Jakarta Sans', ${SANS_FALLBACK}`,
+  'Mona Sans': `'Mona Sans', ${SANS_FALLBACK}`,
+  'Hubot Sans': `'Hubot Sans', ${SANS_FALLBACK}`,
+  'Urbanist': `'Urbanist', ${SANS_FALLBACK}`,
+  'Mulish': `'Mulish', ${SANS_FALLBACK}`,
+  'Outfit': `'Outfit', ${SANS_FALLBACK}`,
+  'League Spartan': `'League Spartan', ${SANS_FALLBACK}`,
+  'Tenor Sans': `'Tenor Sans', ${SANS_FALLBACK}`,
+  'Andika': `'Andika', ${SANS_FALLBACK}`,
+  'Asul': `'Asul', ${SANS_FALLBACK}`,
+  'Salsa': `'Salsa', ${SANS_FALLBACK}`,
+  'Red Rose': `'Red Rose', ${SANS_FALLBACK}`,
+  'Bricolage Grotesque': `'Bricolage Grotesque', ${SANS_FALLBACK}`,
+  'Young Serif': `'Young Serif', ${SERIF_FALLBACK}`,
+  'Fraunces': `'Fraunces', ${SERIF_FALLBACK}`,
+  'Newsreader': `'Newsreader', ${SERIF_FALLBACK}`,
+  'Lora': `'Lora', ${SERIF_FALLBACK}`,
+  'EB Garamond': `'EB Garamond', ${SERIF_FALLBACK}`,
+  'Averia Serif Libre': `'Averia Serif Libre', ${SERIF_FALLBACK}`,
+  'Besley': `'Besley', ${SERIF_FALLBACK}`,
+  'IBM Plex Serif': `'IBM Plex Serif', ${SERIF_FALLBACK}`,
+  'IBM Plex Mono': `'IBM Plex Mono', ${MONO_FALLBACK}`,
+  'Libre Baskerville': `'Libre Baskerville', ${SERIF_FALLBACK}`,
+  'Nanum Myeongjo': `'Nanum Myeongjo', ${SERIF_FALLBACK}`,
+  'Trocchi': `'Trocchi', ${SERIF_FALLBACK}`,
+  'Old Standard TT': `'Old Standard TT', ${SERIF_FALLBACK}`,
+  'Space Mono': `'Space Mono', ${MONO_FALLBACK}`,
+  'JetBrains Mono': `'JetBrains Mono', ${MONO_FALLBACK}`,
+  'Silkscreen': `'Silkscreen', ${MONO_FALLBACK}`,
+  'La Belle Aurore': `'La Belle Aurore', ${SCRIPT_FALLBACK}`,
+  'Felipa': `'Felipa', ${SCRIPT_FALLBACK}`,
+  'Great Vibes': `'Great Vibes', ${SCRIPT_FALLBACK}`,
+  'Pinyon Script': `'Pinyon Script', ${SCRIPT_FALLBACK}`,
+  'Alex Brush': `'Alex Brush', ${SCRIPT_FALLBACK}`,
+  'Oregano': `'Oregano', ${SCRIPT_FALLBACK}`,
+  'Birthstone': `'Birthstone', ${SCRIPT_FALLBACK}`,
+  'Birthstone Bounce': `'Birthstone Bounce', ${SCRIPT_FALLBACK}`,
+  'Borel': `'Borel', ${SCRIPT_FALLBACK}`,
+  'Smooch': `'Smooch', ${SCRIPT_FALLBACK}`,
+  'Spicy Rice': `'Spicy Rice', ${SCRIPT_FALLBACK}`,
+  'Slackey': `'Slackey', ${SCRIPT_FALLBACK}`,
+  'Fontdiner Swanky': `'Fontdiner Swanky', ${SCRIPT_FALLBACK}`,
+  'Moo Lah Lah': `'Moo Lah Lah', ${SCRIPT_FALLBACK}`,
+  'Mouse Memoirs': `'Mouse Memoirs', ${SCRIPT_FALLBACK}`,
+  'Marmelad': `'Marmelad', ${SERIF_FALLBACK}`,
+  'Aboreto': `'Aboreto', ${SERIF_FALLBACK}`,
 }
 
+/** Single source of truth for every font picker in the carousel creator. */
+export const CAROUSEL_FONT_OPTIONS: string[] = Object.keys(FONT_STACKS)
+
 export function fontFamilyStack(name?: string): string {
-  if (!name) return ''
+  if (!name || typeof name !== 'string') return ''
   const clean = name.replace(/['"]/g, '')
   return FONT_STACKS[clean] ?? `'${clean}', sans-serif`
 }
@@ -97,8 +181,13 @@ export interface CarouselTemplate {
   render: (data: SlideData, palette: SlidePalette, index: number, total: number, bgImage?: BgImageLayer) => string
 }
 
-const esc = (s: string): string =>
-  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+// Never throws: render pipelines feed this palette colors, image URLs and
+// user content that can all arrive undefined (partial saved/AI palettes,
+// sparse slide data). Coercing keeps one bad value from blanking the stage.
+const esc = (s: unknown): string => {
+  if (s === undefined || s === null) return ''
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+}
 
 function toArray(items: unknown): string[] {
   if (Array.isArray(items)) return items.filter((x): x is string => typeof x === 'string' && x.trim() !== '')
@@ -613,6 +702,139 @@ export const CAROUSEL_TEMPLATES: CarouselTemplate[] = [
       </div>
       ${pageFooter(p, i, t, d.footer)}`
     },
+  },
+  {
+    key: 'wireframe-hero',
+    title: 'Wireframe Hero',
+    description: 'Dark 3D-conf hero — orbit rings, mono kicker, giant condensed headline',
+    render: (d, p, i, t, bg) => `
+      ${bgLayer(p, bg)}
+      ${patternLayer('__PATTERN__')}
+      <div style="position:relative;height:100%;display:flex;flex-direction:column;justify-content:center;gap:30px;padding:96px 80px 140px;color:${esc(p.text)};overflow:hidden">
+        <svg style="position:absolute;top:-230px;right:-230px;width:780px;height:780px;opacity:0.55;pointer-events:none" viewBox="0 0 200 200" fill="none">
+          <circle cx="100" cy="100" r="90" stroke="${esc(p.accent)}" stroke-opacity="0.35" stroke-width="1"/>
+          <circle cx="100" cy="100" r="66" stroke="${esc(p.accent)}" stroke-opacity="0.5" stroke-width="1"/>
+          <ellipse cx="100" cy="100" rx="90" ry="34" stroke="${esc(p.accent)}" stroke-opacity="0.65" stroke-width="1.5"/>
+          <ellipse cx="100" cy="100" rx="90" ry="34" stroke="${esc(p.accent)}" stroke-opacity="0.35" stroke-width="1" transform="rotate(60 100 100)"/>
+          <ellipse cx="100" cy="100" rx="90" ry="34" stroke="${esc(p.accent)}" stroke-opacity="0.35" stroke-width="1" transform="rotate(120 100 100)"/>
+          <circle cx="100" cy="100" r="7" fill="${esc(p.accent)}"/>
+        </svg>
+        ${d.kicker ? `<div style="align-self:flex-start;padding:10px 20px;border:1px solid ${esc(p.accent)};border-radius:9999px;color:${esc(p.accent)};font-size:20px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase">${esc(d.kicker)}</div>` : ''}
+        <div style="font-size:112px;font-weight:900;line-height:0.98;letter-spacing:-0.02em;max-width:900px">${esc(d.headline)}</div>
+        ${d.body ? `<div style="font-size:30px;line-height:1.5;opacity:0.75;max-width:720px">${esc(d.body)}</div>` : ''}
+      </div>
+      ${pageFooter(p, i, t, d.footer)}`,
+  },
+  {
+    key: 'terminal-window',
+    title: 'Terminal Window',
+    description: 'Ship-it console card — traffic lights, mono prompt, hairline frame',
+    render: (d, p, i, t, bg) => `
+      ${bgLayer(p, bg)}
+      ${patternLayer('__PATTERN__')}
+      <div style="position:relative;height:100%;display:flex;flex-direction:column;justify-content:center;padding:96px 80px 140px;color:${esc(p.text)}">
+        <div style="border:1px solid ${esc(p.accent)}55;border-radius:20px;overflow:hidden">
+          <div style="display:flex;gap:12px;align-items:center;padding:20px 28px;border-bottom:1px solid ${esc(p.accent)}33">
+            <span style="width:16px;height:16px;border-radius:9999px;background:#ff5f57"></span>
+            <span style="width:16px;height:16px;border-radius:9999px;background:#febc2e"></span>
+            <span style="width:16px;height:16px;border-radius:9999px;background:#28c840"></span>
+            ${d.kicker ? `<span style="margin-left:12px;font-size:20px;letter-spacing:0.18em;text-transform:uppercase;color:${esc(p.accent)};font-weight:700">${esc(d.kicker)}</span>` : ''}
+          </div>
+          <div style="padding:48px 44px;display:flex;flex-direction:column;gap:20px">
+            <div style="font-size:62px;font-weight:800;line-height:1.12"><span style="color:${esc(p.accent)}">$</span> ${esc(d.headline)}</div>
+            ${d.body ? `<div style="font-size:28px;line-height:1.5;opacity:0.75">${esc(d.body)}</div>` : ''}
+          </div>
+        </div>
+      </div>
+      ${pageFooter(p, i, t, d.footer)}`,
+  },
+  {
+    key: 'gallery-wall',
+    title: 'Gallery Wall',
+    description: 'Asymmetric image wall — one tall frame, two stacked, caption below',
+    render: (d, p, i, t, bg) => {
+      const imgs = toImagesArray(d.images).slice(0, 3)
+      const cell = (idx: number, flex: string): string => {
+        const url = imgs[idx]
+        return `<div data-image-slot="wall-${idx}" style="position:relative;flex:${flex};border-radius:20px;overflow:hidden;background:${esc(p.accent)}22;cursor:pointer;min-height:0">
+          ${url
+            ? `<img data-image="wall-${idx}" src="${esc(url)}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" draggable="false">`
+            : `<div data-image-empty="wall-${idx}" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;font-size:22px;font-weight:700;color:${esc(p.accent)};opacity:0.6"><span style="font-size:32px">+</span>Add</div>`}
+        </div>`
+      }
+      return `
+      ${bgLayer(p, bg)}
+      ${patternLayer('__PATTERN__')}
+      <div style="position:relative;height:100%;display:flex;flex-direction:column;gap:28px;padding:88px 80px 140px;color:${esc(p.text)}">
+        <div style="flex:1;display:flex;gap:16px;min-height:0">
+          ${cell(0, '1.15')}
+          <div style="flex:1;display:flex;flex-direction:column;gap:16px;min-height:0">${cell(1, '1')}${cell(2, '1')}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          ${d.kicker ? `<div style="font-size:22px;letter-spacing:0.24em;text-transform:uppercase;color:${esc(p.accent)};font-weight:700">${esc(d.kicker)}</div>` : ''}
+          <div style="font-size:52px;font-weight:800;line-height:1.08">${esc(d.headline)}</div>
+          ${d.body ? `<div style="font-size:26px;line-height:1.45;opacity:0.75">${esc(d.body)}</div>` : ''}
+        </div>
+      </div>
+      ${pageFooter(p, i, t, d.footer)}`
+    },
+  },
+  {
+    key: 'mono-statement',
+    title: 'Mono Statement',
+    description: 'Restrained centered hero — dot mark, grotesque headline, quiet subline',
+    render: (d, p, i, t, bg) => `
+      ${bgLayer(p, bg)}
+      ${patternLayer('__PATTERN__')}
+      <div style="position:relative;height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:34px;padding:96px 90px 140px;color:${esc(p.text)}">
+        <div style="width:20px;height:20px;border-radius:9999px;background:${esc(p.accent)}"></div>
+        <div style="font-size:86px;font-weight:800;line-height:1.06;letter-spacing:-0.02em;max-width:880px">${esc(d.headline)}</div>
+        ${d.body ? `<div style="font-size:30px;line-height:1.5;opacity:0.7;max-width:700px">${esc(d.body)}</div>` : ''}
+      </div>
+      ${pageFooter(p, i, t, d.footer)}`,
+  },
+  {
+    key: 'duotone-stat',
+    title: 'Duotone Stat',
+    description: 'Bold duotone band with a giant numeral over headline and proof',
+    render: (d, p, i, t, bg) => `
+      ${bgLayer(p, bg)}
+      ${patternLayer('__PATTERN__')}
+      <div style="position:relative;height:100%;display:flex;flex-direction:column;color:${esc(p.text)}">
+        <div style="background:${esc(p.accent)};color:${esc(p.bg)};padding:110px 80px 56px;display:flex;flex-direction:column;gap:12px">
+          ${d.kicker ? `<div style="font-size:22px;letter-spacing:0.24em;text-transform:uppercase;font-weight:800;opacity:0.75">${esc(d.kicker)}</div>` : ''}
+          <div style="font-size:190px;font-weight:900;line-height:1;letter-spacing:-0.03em">${esc(d.stat ?? d.headline)}</div>
+        </div>
+        <div style="padding:44px 80px 140px;display:flex;flex-direction:column;gap:14px">
+          ${d.stat ? `<div style="font-size:52px;font-weight:800;line-height:1.1">${esc(d.headline)}</div>` : ''}
+          ${d.statLabel ? `<div style="font-size:28px;line-height:1.45;opacity:0.8">${esc(d.statLabel)}</div>` : ''}
+          ${d.body ? `<div style="font-size:26px;line-height:1.45;opacity:0.7">${esc(d.body)}</div>` : ''}
+        </div>
+      </div>
+      ${pageFooter(p, i, t, d.footer)}`,
+  },
+  {
+    key: 'clay-cards',
+    title: 'Clay Cards',
+    description: 'Soft pastel cards with pill chips — friendly feature stacks',
+    render: (d, p, i, t, bg) => `
+      ${bgLayer(p, bg)}
+      ${patternLayer('__PATTERN__')}
+      <div style="position:relative;height:100%;display:flex;flex-direction:column;gap:28px;padding:88px 72px 140px;color:${esc(p.text)}">
+        <div style="display:flex;flex-direction:column;gap:12px">
+          ${d.kicker ? `<div style="font-size:22px;letter-spacing:0.22em;text-transform:uppercase;color:${esc(p.accent)};font-weight:800">${esc(d.kicker)}</div>` : ''}
+          <div style="font-size:56px;font-weight:800;line-height:1.08">${esc(d.headline)}</div>
+          ${d.body ? `<div style="font-size:26px;line-height:1.45;opacity:0.75">${esc(d.body)}</div>` : ''}
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:18px;min-height:0;justify-content:center">
+          ${toArray(d.items).slice(0, 3).map(item => `
+            <div style="display:flex;align-items:center;gap:20px;padding:26px 28px;border-radius:28px;background:rgba(255,255,255,0.72);box-shadow:0 18px 40px rgba(60,30,10,0.12), inset 0 2px 0 rgba(255,255,255,0.9)">
+              <span style="flex-shrink:0;width:52px;height:52px;border-radius:9999px;background:${esc(p.accent)};color:${esc(p.bg)};font-weight:800;font-size:24px;display:flex;align-items:center;justify-content:center">${esc((item.trim().slice(0, 1) || '•').toUpperCase())}</span>
+              <span style="font-size:27px;line-height:1.35;font-weight:600;color:#3d2b23">${esc(item)}</span>
+            </div>`).join('')}
+        </div>
+      </div>
+      ${pageFooter(p, i, t, d.footer)}`,
   },
 ]
 

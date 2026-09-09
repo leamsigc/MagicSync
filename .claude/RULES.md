@@ -585,5 +585,5 @@ const items = [{
 
 
 
-### Must do everitime
+### Must do
 it has to pass cyclomatic complexity lint

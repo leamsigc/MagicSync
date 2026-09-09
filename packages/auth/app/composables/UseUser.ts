@@ -1,4 +1,3 @@
-import type { RouteLocationRaw } from 'vue-router'
 import { authClient } from '#layers/BaseAuth/lib/auth-client'
 import type { User } from '#layers/BaseDB/db/schema'
 import type { Session } from 'better-auth'
@@ -7,15 +6,28 @@ import type { Session } from 'better-auth'
 
 const client = authClient
 
+// Register the $sessionSignal listener exactly once per client session.
+// UseUser() runs on every navigation (route middleware) and from many
+// components, so subscribing inside the composable body leaks one listener
+// per call. On logout better-auth flips $sessionSignal and every leaked
+// listener fires fetchSession() concurrently — the request flood that
+// freezes the tab on the logout click.
+let sessionSignalListening = false
+
 export function UseUser() {
 
   // Todo: Move to store and pinia
   const user = useState<User | null>('auth:user')
   const session = useState<Session | null>('auth:session')
   const sessionFetching = import.meta.server ? ref(false) : useState('auth:sessionFetching', () => false)
-  const headers = import.meta.server ? useRequestHeaders() : undefined
 
   const listAccounts = useState('auth:listAccounts')
+
+  const clearLocalSession = () => {
+    session.value = null
+    user.value = null
+    clearNuxtData('auth-session')
+  }
 
   const fetchSession = async () => {
     if (sessionFetching.value) {
@@ -23,33 +35,37 @@ export function UseUser() {
     }
     sessionFetching.value = true
 
-    // Use useFetch for better SSR support and hydration
-    const { data: sessionData } = await useFetch<{ session: Session, user: User }>('/api/auth/get-session', {
-      headers: import.meta.server ? useRequestHeaders() : undefined,
-      key: 'auth-session',
-      retry: 0
-    })
+    try {
+      // Use useFetch for better SSR support and hydration
+      const { data: sessionData } = await useFetch<{ session: Session, user: User }>('/api/auth/get-session', {
+        headers: import.meta.server ? useRequestHeaders() : undefined,
+        key: 'auth-session',
+        retry: 0
+      })
 
 
-    const data = sessionData.value
-    session.value = data?.session || null
-    console.log("Fetched session");
-    const userDefaults = {
-      image: null,
-      role: null,
-      banReason: null,
-      banned: null,
-      banExpires: null,
-      stripeCustomerId: null
+      const data = sessionData.value
+      session.value = data?.session || null
+      const userDefaults = {
+        image: null,
+        role: null,
+        banReason: null,
+        banned: null,
+        banExpires: null,
+        stripeCustomerId: null
+      }
+      user.value = data?.user
+        ? Object.assign({}, userDefaults, data.user)
+        : null
+      // Session fetched successfully
+      return data
     }
-    user.value = data?.user
-      ? Object.assign({}, userDefaults, data.user)
-      : null
-    sessionFetching.value = false
-    // Session fetched successfully
-    return data
+    finally {
+      sessionFetching.value = false
+    }
   }
-  if (import.meta.client) {
+  if (import.meta.client && !sessionSignalListening) {
+    sessionSignalListening = true
     client.$store.listen('$sessionSignal', async (signal) => {
       if (!signal)
         return
@@ -72,20 +88,32 @@ export function UseUser() {
     resetPassword: client.resetPassword,
     sendVerificationEmail: client.sendVerificationEmail,
     errorCodes: client.$ERROR_CODES,
-    async signOut({ redirectTo }: { redirectTo?: RouteLocationRaw } = {}) {
-      await client.signOut({
-        fetchOptions: {
-          onSuccess: async () => {
-            session.value = null
-            user.value = null
-            if (redirectTo) {
-              await reloadNuxtApp({
-                path: redirectTo.toString()
-              })
+    async signOut({ redirectTo = '/' }: { redirectTo?: string } = {}) {
+      try {
+        await client.signOut({
+          fetchOptions: {
+            onSuccess: async () => {
+              clearLocalSession()
+            },
+            onError: async () => {
+              clearLocalSession()
             }
           }
+        })
+      }
+      finally {
+        // Always leave the authenticated area: a failed sign-out request must
+        // never strand the user on a dead page with no redirect.
+        clearLocalSession()
+        if (import.meta.client) {
+          // Full reload wipes every client-side store (auth, business, caches)
+          // so the next session starts clean.
+          await reloadNuxtApp({ path: redirectTo })
         }
-      })
+        else {
+          await navigateTo(redirectTo, { replace: true })
+        }
+      }
     },
     client,
     getUserAccountList,

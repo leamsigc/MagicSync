@@ -858,6 +858,20 @@ export function useCarouselDeck() {
     if (layer.stroke && map[layer.stroke.color]) layer.stroke.color = map[layer.stroke.color]!
   }
 
+  /**
+   * Palettes arrive from outside our control (saved carousels, AI designs).
+   * A missing bg/text/accent would poison every render (esc(undefined)),
+   * so fall back to defaults per field instead of trusting the shape.
+   */
+  function sanitizePalette(raw: Partial<DeckPalette>): DeckPalette {
+    return {
+      bg: raw.bg || DEFAULT_PALETTE.bg,
+      text: raw.text || DEFAULT_PALETTE.text,
+      accent: raw.accent || DEFAULT_PALETTE.accent,
+      font: typeof raw.font === 'string' ? raw.font : undefined,
+    }
+  }
+
   function applyPalette(newPalette: DeckPalette): void {
     const old = palette.value
     const map: Record<string, string> = {}
@@ -877,7 +891,8 @@ export function useCarouselDeck() {
   }
 
   function applyAiDesign(result: AiDesignResult): void {
-    palette.value = { ...result.palette }
+    const safePalette = sanitizePalette(result.palette)
+    palette.value = safePalette
     const mapped: CarouselSlide[] = result.slides.slice(0, MAX_CAROUSEL_SLIDES).map(aiSlide => {
       const base = blankSlide()
       const layers: SlideLayer[] = [
@@ -889,7 +904,7 @@ export function useCarouselDeck() {
           locked: false,
           opacity: 1,
           transform: { x: 0, y: 0, w: FRAME_W, h: frame.value.h, rotate: 0 },
-          fill: { kind: 'color', color: result.palette.bg },
+          fill: { kind: 'color', color: safePalette.bg },
         },
       ]
       if (aiSlide.html) {
@@ -949,6 +964,9 @@ export function useCarouselDeck() {
     const host = stage.querySelector<HTMLElement>('#carousel-export-canvas')
     if (!host) throw new Error('Export stage missing')
     host.innerHTML = html
+    // Webfonts (deck font, layer fonts) must be in the document before the
+    // snapshot or the PNG bakes in fallback glyphs.
+    await document.fonts?.ready?.catch(() => undefined)
     await new Promise(r => setTimeout(r, 120))
     return await domToPng(stage, {
       quality: 1,
@@ -1058,6 +1076,7 @@ export function useCarouselDeck() {
     setGalleryImage,
     applyTemplateToCurrent,
     applyPalette,
+    sanitizePalette,
     applyAiDesign,
     applyDeckTemplate,
     addCustomDeckTemplate,

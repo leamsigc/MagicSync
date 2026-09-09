@@ -58,5 +58,24 @@ After every task: if no pattern exists for the task type you just completed, cre
 At the start of every session, read `ROUTER.md` before doing anything else.
 For full project context, patterns, and task guidance — everything is there.
 
-### Must do everitime
-it has to pass cyclomatic complexity lint
+### Must do every time (per-task verification gate)
+Run these checks after every task, before presenting the result. All must pass:
+
+1. **Cyclomatic complexity** — every new/changed function ≤ 5 branches
+   (`if`/`else if`/`case`/`catch`/loops/`&&`/`||`/`??`/ternary each count 1).
+   Extract helpers instead of adding branches. No `complexity` eslint rule is
+   configured repo-wide yet, so count manually and state the max you found.
+2. **i18n** — no hardcoded user-facing strings. Pages/components carry a locale
+   JSON alongside (`<i18n src="./x.json">` first line, `const { t } = useI18n()`),
+   all copy via `t()` with interpolation (`{name}`, `{count}`), and every used
+   key exists in the JSON. Grep template text nodes to prove nothing is left.
+3. **Event handlers** — named functions only. Never assign state inline
+   (`@click="x = 'y'"` is forbidden, arrow wrappers included).
+4. **Conventions checklist** — walk `context/conventions.md` Verify Checklist
+   item by item and report each explicitly.
+5. **Patterns** — check `patterns/INDEX.md` for a matching pattern and follow
+   it; leave no `console.*` or dead code behind.
+6. **Interaction feedback** — every user-triggered change shows feedback:
+   async buttons carry `:loading`, outcomes raise toasts (failures never
+   silent), conditionally rendered UI animates on enter via `@vueuse/motion`
+   (see `context/conventions.md` Motion section).

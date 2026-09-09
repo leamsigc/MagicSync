@@ -20,6 +20,7 @@ import { useCarouselVideoExport } from './composables/useCarouselVideoExport'
 import { useCarouselSaveShare } from '../../../composables/useCarouselSaveShare'
 import { getAllLocalCarousels } from '../../../utils/carousel-db'
 import type { SlideData, SlidePalette } from './templates'
+import { CAROUSEL_FONT_OPTIONS } from './templates'
 
 const { t } = useI18n()
 const toast = useToast()
@@ -60,6 +61,7 @@ const {
   updateSlicedImageCount,
   addSlide: addBlankSlide,
   duplicateSlide: duplicateCurrentSlide,
+  sanitizePalette,
 } = useCarouselDeck()
 
 const { exportCarouselVideo, exporting: videoExporting } = useCarouselVideoExport()
@@ -107,18 +109,7 @@ const currentHtmlStr = computed(() => {
   return currentHtml()
 })
 
-const fonts = ref<string[]>([
-  'Arial',
-  'Arial Black',
-  'Impact',
-  'Georgia',
-  'Courier New',
-  'Verdana',
-  'Trebuchet MS',
-  'Comic Sans MS',
-  'Palatino',
-  'Century Gothic',
-])
+const fonts = ref<string[]>([...CAROUSEL_FONT_OPTIONS])
 const mode = ref<'deck' | 'ai'>('deck')
 const guides = ref(false)
 const previewPlatform = ref<'editor' | 'instagram' | 'linkedin' | 'strip'>('editor')
@@ -163,18 +154,19 @@ async function loadCarouselIntoEditor(carousel: SavedCarousel): Promise<void> {
   }
 
   try {
+    const safePalette = sanitizePalette(carousel.palette ?? {})
     slides.value = carousel.slides.map(s => ({
       id: `slide-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
       templateKey: s.templateKey,
       data: { ...s.data },
       pattern: s.pattern ?? 'dots',
-      patternColor: s.patternColor ?? carousel.palette.text,
+      patternColor: s.patternColor ?? safePalette.text,
       patternOpacity: s.patternOpacity ?? 0.08,
       bgImage: s.bgImage ?? null,
       customHtml: s.customHtml ?? '',
       layers: s.layers ? JSON.parse(JSON.stringify(s.layers)) : undefined,
     }))
-    palette.value = { ...carousel.palette }
+    palette.value = safePalette
     handle.value = carousel.handle ?? ''
     migrateAllSlides()
     currentIndex.value = 0

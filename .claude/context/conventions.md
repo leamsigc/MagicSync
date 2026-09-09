@@ -113,6 +113,55 @@ const HandleSwitch = (platform: string) => {
 </template>
 ```
 
+## Motion & interaction feedback
+
+`@vueuse/motion` ships via the BaseUI layer (`@vueuse/motion/nuxt` in
+`packages/ui/nuxt.config.ts`) — its directives work in every layer that
+extends it, with no imports needed.
+
+Every user-triggered change must give visible feedback:
+
+- Async buttons carry `:loading` while work is in flight.
+- Outcomes raise a toast (success and failure — failures must never be silent).
+- Conditionally rendered UI animates on enter.
+
+Presets already used in this repo: `v-motion-fade`, `v-motion-fade-visible`,
+`v-motion-fade-visible-once`, `v-motion-slide-bottom`, and bare `v-motion`
+with `:initial` / `:enter`. Tune with `:delay` / `:duration`, keep durations
+short (200–300ms).
+
+Limits learned the hard way:
+
+- `UTable` rows share one global `tr` class with no per-row hooks — animate
+  the chrome around the table (bars, headers, counts), not rows. See
+  `patterns/admin-data-views.md`.
+- Cells built with `h()` render functions cannot take template directives —
+  animate them with transition classes or key-change remounts (`:key` on the
+  element re-triggers its enter animation, useful for count ticks and badge
+  flips).
+- Never animate large lists row-by-row — it janks. One entrance animation on
+  the container is enough.
+
+>Do
+```vue
+<template>
+  <div v-if="selectedCount > 0" v-motion-slide-bottom :duration="250">
+    <!-- bulk bar -->
+  </div>
+  <UButton :loading="bulkBusy" @click="handleBulkBan">Ban</UButton>
+</template>
+```
+
+>Don't — silent state flips with no feedback
+```vue
+<template>
+  <div v-if="selectedCount > 0">
+    <!-- appears with a snap, button gives no busy state -->
+  </div>
+  <UButton @click="handleBulkBan">Ban</UButton>
+</template>
+```
+
 ## Verify Checklist
 
 Before presenting any code:
@@ -124,3 +173,5 @@ Before presenting any code:
 - [ ] Translation JSON files alongside Vue pages
 - [ ] Components in app/components are global (no explicit imports needed)
 - [ ] Middleware files numbered for execution order (e.g., `01.auth.global.ts`)
+- [ ] User interactions give feedback: async buttons show `:loading`, outcomes
+  raise toasts, conditionally rendered UI animates on enter via `@vueuse/motion`

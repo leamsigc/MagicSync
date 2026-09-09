@@ -1,0 +1,446 @@
+{
+  "en": {
+    "title": "Users",
+    "description": "Manage user accounts and roles",
+    "searchPlaceholder": "Search users...",
+    "createUser": "Create User",
+    "noUsers": "No users found",
+    "unnamed": "Unnamed",
+    "defaultBanReason": "Violated terms of service",
+    "columns": {
+      "user": "User",
+      "role": "Role",
+      "status": "Status",
+      "verified": "Verified",
+      "actions": "Actions"
+    },
+    "status": {
+      "banned": "Banned",
+      "active": "Active",
+      "verified": "Verified",
+      "unverified": "Unverified"
+    },
+    "roles": {
+      "user": "User",
+      "admin": "Admin"
+    },
+    "menu": {
+      "title": "Actions",
+      "edit": "Edit",
+      "ban": "Ban",
+      "unban": "Unban",
+      "delete": "Delete"
+    },
+    "a11y": {
+      "selectAll": "Select all",
+      "selectRow": "Select row",
+      "actions": "Actions dropdown"
+    },
+    "footer": {
+      "selected": "{selected} of {total} row(s) selected."
+    },
+    "bulk": {
+      "selected": "{count} selected",
+      "ban": "Ban",
+      "unban": "Unban",
+      "delete": "Delete",
+      "clear": "Clear"
+    },
+    "deleteModal": {
+      "titleSingle": "Delete User",
+      "titleMany": "Delete {count} Users",
+      "descriptionSingle": "This permanently removes this account. This cannot be undone.",
+      "descriptionMany": "This permanently removes these accounts. This cannot be undone.",
+      "more": "+{count} more",
+      "cancel": "Cancel",
+      "confirm": "Delete"
+    },
+    "createModal": {
+      "title": "Create User",
+      "name": "Name",
+      "namePlaceholder": "Full name",
+      "email": "Email",
+      "emailPlaceholder": "user{'@'}example.com",
+      "password": "Password",
+      "passwordPlaceholder": "Temporary password",
+      "role": "Role",
+      "cancel": "Cancel",
+      "submit": "Create User"
+    },
+    "editModal": {
+      "title": "Edit User",
+      "role": "Role",
+      "banReason": "Ban Reason",
+      "banReasonPlaceholder": "Enter reason for ban...",
+      "cancel": "Cancel",
+      "ban": "Ban User",
+      "save": "Save Changes"
+    },
+    "toast": {
+      "error": "Error",
+      "loadFailed": "Failed to load users",
+      "createRequiresFields": "Name, email and password are required",
+      "created": "User Created",
+      "createdDescription": "{name} has been created",
+      "createFailed": "Failed to create user",
+      "updated": "User Updated",
+      "updatedDescription": "{name} has been updated",
+      "updateFailed": "Failed to update user",
+      "banned": "User Banned",
+      "bannedDescription": "{name} has been banned",
+      "banFailed": "Failed to ban user",
+      "unbanned": "User Unbanned",
+      "unbannedDescription": "{name} has been unbanned",
+      "unbanFailed": "Failed to unban user",
+      "deleted": "User Deleted",
+      "deletedDescription": "{name} has been deleted",
+      "deleteFailed": "Failed to delete user",
+      "bulkTitle": "Bulk update",
+      "bulkSuccess": "{count} user(s) {action}",
+      "actionBanned": "banned",
+      "actionUnbanned": "unbanned",
+      "actionDeleted": "deleted",
+      "bulkPartial": "Some actions failed",
+      "bulkFailed": "Bulk operation failed",
+      "noSelection": "No users selected",
+      "noSelectionDescription": "Select at least one user first",
+      "nothingToDo": "Nothing to do",
+      "selfAction": "You cannot act on your own account",
+      "skippedSelf": "Skipped yourself",
+      "skippedSelfDescription": "Your own account was left untouched"
+    }
+  },
+  "es": {
+    "title": "Usuarios",
+    "description": "Gestionar cuentas de usuario y roles",
+    "searchPlaceholder": "Buscar usuarios...",
+    "createUser": "Crear usuario",
+    "noUsers": "No se encontraron usuarios",
+    "unnamed": "Sin nombre",
+    "defaultBanReason": "Violación de los términos del servicio",
+    "columns": {
+      "user": "Usuario",
+      "role": "Rol",
+      "status": "Estado",
+      "verified": "Verificado",
+      "actions": "Acciones"
+    },
+    "status": {
+      "banned": "Bloqueado",
+      "active": "Activo",
+      "verified": "Verificado",
+      "unverified": "Sin verificar"
+    },
+    "roles": {
+      "user": "Usuario",
+      "admin": "Administrador"
+    },
+    "menu": {
+      "title": "Acciones",
+      "edit": "Editar",
+      "ban": "Bloquear",
+      "unban": "Desbloquear",
+      "delete": "Eliminar"
+    },
+    "a11y": {
+      "selectAll": "Seleccionar todo",
+      "selectRow": "Seleccionar fila",
+      "actions": "Menú de acciones"
+    },
+    "footer": {
+      "selected": "{selected} de {total} fila(s) seleccionada(s)."
+    },
+    "bulk": {
+      "selected": "{count} seleccionados",
+      "ban": "Bloquear",
+      "unban": "Desbloquear",
+      "delete": "Eliminar",
+      "clear": "Limpiar"
+    },
+    "deleteModal": {
+      "titleSingle": "Eliminar usuario",
+      "titleMany": "Eliminar {count} usuarios",
+      "descriptionSingle": "Esto elimina permanentemente esta cuenta. Esta acción no se puede deshacer.",
+      "descriptionMany": "Esto elimina permanentemente estas cuentas. Esta acción no se puede deshacer.",
+      "more": "+{count} más",
+      "cancel": "Cancelar",
+      "confirm": "Eliminar"
+    },
+    "createModal": {
+      "title": "Crear usuario",
+      "name": "Nombre",
+      "namePlaceholder": "Nombre completo",
+      "email": "Correo electrónico",
+      "emailPlaceholder": "usuario{'@'}ejemplo.com",
+      "password": "Contraseña",
+      "passwordPlaceholder": "Contraseña temporal",
+      "role": "Rol",
+      "cancel": "Cancelar",
+      "submit": "Crear usuario"
+    },
+    "editModal": {
+      "title": "Editar usuario",
+      "role": "Rol",
+      "banReason": "Motivo del bloqueo",
+      "banReasonPlaceholder": "Ingrese el motivo del bloqueo...",
+      "cancel": "Cancelar",
+      "ban": "Bloquear usuario",
+      "save": "Guardar cambios"
+    },
+    "toast": {
+      "error": "Error",
+      "loadFailed": "No se pudieron cargar los usuarios",
+      "createRequiresFields": "Nombre, correo y contraseña son obligatorios",
+      "created": "Usuario creado",
+      "createdDescription": "{name} ha sido creado",
+      "createFailed": "No se pudo crear el usuario",
+      "updated": "Usuario actualizado",
+      "updatedDescription": "{name} ha sido actualizado",
+      "updateFailed": "No se pudo actualizar el usuario",
+      "banned": "Usuario bloqueado",
+      "bannedDescription": "{name} ha sido bloqueado",
+      "banFailed": "No se pudo bloquear el usuario",
+      "unbanned": "Usuario desbloqueado",
+      "unbannedDescription": "{name} ha sido desbloqueado",
+      "unbanFailed": "No se pudo desbloquear el usuario",
+      "deleted": "Usuario eliminado",
+      "deletedDescription": "{name} ha sido eliminado",
+      "deleteFailed": "No se pudo eliminar el usuario",
+      "bulkTitle": "Actualización masiva",
+      "bulkSuccess": "{count} usuario(s) {action}",
+      "actionBanned": "bloqueados",
+      "actionUnbanned": "desbloqueados",
+      "actionDeleted": "eliminados",
+      "bulkPartial": "Algunas acciones fallaron",
+      "bulkFailed": "La operación masiva falló",
+      "noSelection": "Ningún usuario seleccionado",
+      "noSelectionDescription": "Seleccione al menos un usuario",
+      "nothingToDo": "Nada que hacer",
+      "selfAction": "No puede actuar sobre su propia cuenta",
+      "skippedSelf": "Usted fue omitido",
+      "skippedSelfDescription": "Su propia cuenta no fue modificada"
+    }
+  },
+  "de": {
+    "title": "Benutzer",
+    "description": "Benutzerkonten und Rollen verwalten",
+    "searchPlaceholder": "Benutzer suchen...",
+    "createUser": "Benutzer erstellen",
+    "noUsers": "Keine Benutzer gefunden",
+    "unnamed": "Unbenannt",
+    "defaultBanReason": "Verstoß gegen die Nutzungsbedingungen",
+    "columns": {
+      "user": "Benutzer",
+      "role": "Rolle",
+      "status": "Status",
+      "verified": "Verifiziert",
+      "actions": "Aktionen"
+    },
+    "status": {
+      "banned": "Gesperrt",
+      "active": "Aktiv",
+      "verified": "Verifiziert",
+      "unverified": "Unverifiziert"
+    },
+    "roles": {
+      "user": "Benutzer",
+      "admin": "Administrator"
+    },
+    "menu": {
+      "title": "Aktionen",
+      "edit": "Bearbeiten",
+      "ban": "Sperren",
+      "unban": "Entsperren",
+      "delete": "Löschen"
+    },
+    "a11y": {
+      "selectAll": "Alle auswählen",
+      "selectRow": "Zeile auswählen",
+      "actions": "Aktionsmenü"
+    },
+    "footer": {
+      "selected": "{selected} von {total} Zeile(n) ausgewählt."
+    },
+    "bulk": {
+      "selected": "{count} ausgewählt",
+      "ban": "Sperren",
+      "unban": "Entsperren",
+      "delete": "Löschen",
+      "clear": "Auswahl aufheben"
+    },
+    "deleteModal": {
+      "titleSingle": "Benutzer löschen",
+      "titleMany": "{count} Benutzer löschen",
+      "descriptionSingle": "Dies entfernt dieses Konto dauerhaft. Dies kann nicht rückgängig gemacht werden.",
+      "descriptionMany": "Dies entfernt diese Konten dauerhaft. Dies kann nicht rückgängig gemacht werden.",
+      "more": "+{count} weitere",
+      "cancel": "Abbrechen",
+      "confirm": "Löschen"
+    },
+    "createModal": {
+      "title": "Benutzer erstellen",
+      "name": "Name",
+      "namePlaceholder": "Vollständiger Name",
+      "email": "E-Mail",
+      "emailPlaceholder": "benutzer{'@'}beispiel.com",
+      "password": "Passwort",
+      "passwordPlaceholder": "Temporäres Passwort",
+      "role": "Rolle",
+      "cancel": "Abbrechen",
+      "submit": "Benutzer erstellen"
+    },
+    "editModal": {
+      "title": "Benutzer bearbeiten",
+      "role": "Rolle",
+      "banReason": "Sperrgrund",
+      "banReasonPlaceholder": "Grund für die Sperrung eingeben...",
+      "cancel": "Abbrechen",
+      "ban": "Benutzer sperren",
+      "save": "Änderungen speichern"
+    },
+    "toast": {
+      "error": "Fehler",
+      "loadFailed": "Benutzer konnten nicht geladen werden",
+      "createRequiresFields": "Name, E-Mail und Passwort sind erforderlich",
+      "created": "Benutzer erstellt",
+      "createdDescription": "{name} wurde erstellt",
+      "createFailed": "Benutzer konnte nicht erstellt werden",
+      "updated": "Benutzer aktualisiert",
+      "updatedDescription": "{name} wurde aktualisiert",
+      "updateFailed": "Benutzer konnte nicht aktualisiert werden",
+      "banned": "Benutzer gesperrt",
+      "bannedDescription": "{name} wurde gesperrt",
+      "banFailed": "Benutzer konnte nicht gesperrt werden",
+      "unbanned": "Benutzer entsperrt",
+      "unbannedDescription": "{name} wurde entsperrt",
+      "unbanFailed": "Benutzer konnte nicht entsperrt werden",
+      "deleted": "Benutzer gelöscht",
+      "deletedDescription": "{name} wurde gelöscht",
+      "deleteFailed": "Benutzer konnte nicht gelöscht werden",
+      "bulkTitle": "Massenaktualisierung",
+      "bulkSuccess": "{count} Benutzer {action}",
+      "actionBanned": "gesperrt",
+      "actionUnbanned": "entsperrt",
+      "actionDeleted": "gelöscht",
+      "bulkPartial": "Einige Aktionen sind fehlgeschlagen",
+      "bulkFailed": "Massenvorgang fehlgeschlagen",
+      "noSelection": "Keine Benutzer ausgewählt",
+      "noSelectionDescription": "Wählen Sie mindestens einen Benutzer aus",
+      "nothingToDo": "Nichts zu tun",
+      "selfAction": "Sie können keine Aktion für Ihr eigenes Konto ausführen",
+      "skippedSelf": "Übersprungen",
+      "skippedSelfDescription": "Ihr eigenes Konto wurde nicht verändert"
+    }
+  },
+  "fr": {
+    "title": "Utilisateurs",
+    "description": "Gérer les comptes utilisateurs et les rôles",
+    "searchPlaceholder": "Rechercher des utilisateurs...",
+    "createUser": "Créer un utilisateur",
+    "noUsers": "Aucun utilisateur trouvé",
+    "unnamed": "Sans nom",
+    "defaultBanReason": "Violation des conditions d'utilisation",
+    "columns": {
+      "user": "Utilisateur",
+      "role": "Rôle",
+      "status": "Statut",
+      "verified": "Vérifié",
+      "actions": "Actions"
+    },
+    "status": {
+      "banned": "Banni",
+      "active": "Actif",
+      "verified": "Vérifié",
+      "unverified": "Non vérifié"
+    },
+    "roles": {
+      "user": "Utilisateur",
+      "admin": "Administrateur"
+    },
+    "menu": {
+      "title": "Actions",
+      "edit": "Modifier",
+      "ban": "Bannir",
+      "unban": "Débannir",
+      "delete": "Supprimer"
+    },
+    "a11y": {
+      "selectAll": "Tout sélectionner",
+      "selectRow": "Sélectionner la ligne",
+      "actions": "Menu d'actions"
+    },
+    "footer": {
+      "selected": "{selected} sur {total} ligne(s) sélectionnée(s)."
+    },
+    "bulk": {
+      "selected": "{count} sélectionné(s)",
+      "ban": "Bannir",
+      "unban": "Débannir",
+      "delete": "Supprimer",
+      "clear": "Effacer"
+    },
+    "deleteModal": {
+      "titleSingle": "Supprimer l'utilisateur",
+      "titleMany": "Supprimer {count} utilisateurs",
+      "descriptionSingle": "Cela supprime définitivement ce compte. Cette action est irréversible.",
+      "descriptionMany": "Cela supprime définitivement ces comptes. Cette action est irréversible.",
+      "more": "+{count} autres",
+      "cancel": "Annuler",
+      "confirm": "Supprimer"
+    },
+    "createModal": {
+      "title": "Créer un utilisateur",
+      "name": "Nom",
+      "namePlaceholder": "Nom complet",
+      "email": "E-mail",
+      "emailPlaceholder": "utilisateur{'@'}exemple.com",
+      "password": "Mot de passe",
+      "passwordPlaceholder": "Mot de passe temporaire",
+      "role": "Rôle",
+      "cancel": "Annuler",
+      "submit": "Créer un utilisateur"
+    },
+    "editModal": {
+      "title": "Modifier l'utilisateur",
+      "role": "Rôle",
+      "banReason": "Motif du bannissement",
+      "banReasonPlaceholder": "Saisissez le motif du bannissement...",
+      "cancel": "Annuler",
+      "ban": "Bannir l'utilisateur",
+      "save": "Enregistrer"
+    },
+    "toast": {
+      "error": "Erreur",
+      "loadFailed": "Échec du chargement des utilisateurs",
+      "createRequiresFields": "Le nom, l'e-mail et le mot de passe sont requis",
+      "created": "Utilisateur créé",
+      "createdDescription": "{name} a été créé",
+      "createFailed": "Échec de la création de l'utilisateur",
+      "updated": "Utilisateur mis à jour",
+      "updatedDescription": "{name} a été mis à jour",
+      "updateFailed": "Échec de la mise à jour",
+      "banned": "Utilisateur banni",
+      "bannedDescription": "{name} a été banni",
+      "banFailed": "Échec du bannissement",
+      "unbanned": "Utilisateur débanni",
+      "unbannedDescription": "{name} a été débanni",
+      "unbanFailed": "Échec du débannissement",
+      "deleted": "Utilisateur supprimé",
+      "deletedDescription": "{name} a été supprimé",
+      "deleteFailed": "Échec de la suppression",
+      "bulkTitle": "Mise à jour groupée",
+      "bulkSuccess": "{count} utilisateur(s) {action}",
+      "actionBanned": "bannis",
+      "actionUnbanned": "débannis",
+      "actionDeleted": "supprimés",
+      "bulkPartial": "Certaines actions ont échoué",
+      "bulkFailed": "L'opération groupée a échoué",
+      "noSelection": "Aucun utilisateur sélectionné",
+      "noSelectionDescription": "Sélectionnez au moins un utilisateur",
+      "nothingToDo": "Rien à faire",
+      "selfAction": "Vous ne pouvez pas agir sur votre propre compte",
+      "skippedSelf": "Ignoré",
+      "skippedSelfDescription": "Votre propre compte n'a pas été modifié"
+    }
+  }
+}

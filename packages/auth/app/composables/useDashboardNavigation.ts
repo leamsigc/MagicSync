@@ -335,23 +335,27 @@ export const useDashboardNavigation = () => {
     return findLabel(navigationLinks.value) ?? 'MagicSync'
   })
 
+  // Composables live at setup scope: calling UseUser() or useColorMode()
+  // inside the computed below re-subscribed to $sessionSignal on every
+  // recompute and leaked a listener per evaluation.
+  const colorMode = useColorMode()
+  const { signOut, user: navUser } = UseUser()
+
+  const handleSignOut = async () => {
+    await signOut({ redirectTo: '/' })
+  }
+
+  const setAppearance = (mode: string) => {
+    if (mode === 'system') {
+      colorMode.preference = 'system'
+    } else {
+      colorMode.value = mode
+    }
+  }
+
   const userMenuItems = computed(() => {
     const menuData = menuItems.value
-    const colorMode = useColorMode()
-    const { signOut, user } = UseUser()
-
-    const handleSignOut = async () => {
-      await signOut()
-      navigateTo('/')
-    }
-
-    const setAppearance = (mode: string) => {
-      if (mode === 'system') {
-        colorMode.preference = 'system'
-      } else {
-        colorMode.value = mode
-      }
-    }
+    const user = navUser
 
     return [
       [
@@ -438,7 +442,7 @@ export const useDashboardNavigation = () => {
         {
           label: menuData.userNav.logout,
           icon: 'i-heroicons-arrow-right-on-rectangle',
-          onSelect: () => handleSignOut()
+          onSelect: handleSignOut
         }
       ]
     ]

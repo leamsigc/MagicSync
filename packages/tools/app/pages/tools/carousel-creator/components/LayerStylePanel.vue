@@ -3,6 +3,7 @@
 import OgMediaPicker from '../../og-image-generator/components/OgMediaPicker.vue'
 import { useCarouselDeck } from '../composables/useCarouselDeck'
 import { CAROUSEL_PATTERNS, PATTERN_SIZES } from '../patterns'
+import { CAROUSEL_FONT_OPTIONS } from '../templates'
 import { FRAMES, OVERLAYS, EFFECTS } from '../designAssets'
 import type { BackgroundLayer, EffectLayer, FrameLayer, GradientSpec, HtmlLayer, ImageLayer, OverlayLayer, PatternLayer, ShapeLayer, SlideLayer, TextLayer } from '../layers/types'
 import { findSlideTemplate } from '../slideTemplates'
@@ -18,10 +19,7 @@ const {
 
 const { t } = useI18n()
 
-const FONT_OPTIONS = [
-  'Arial', 'Arial Black', 'Impact', 'Georgia', 'Courier New', 'Verdana',
-  'Trebuchet MS', 'Comic Sans MS', 'Palatino', 'Century Gothic', 'Brush Script MT',
-]
+const FONT_OPTIONS = CAROUSEL_FONT_OPTIONS
 
 const SHAPE_OPTIONS = [
   { label: 'Rectangle', value: 'rect' },

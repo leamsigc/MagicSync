@@ -45,8 +45,12 @@ export interface RenderOptions {
   backgroundOverride?: (index: number, total: number) => string
 }
 
-const esc = (s: string): string =>
-  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+// Never throws — see templates.ts esc(): layer fields (src, content) can be
+// undefined on migrated/AI-imported slides; one bad layer must not kill render.
+const esc = (s: unknown): string => {
+  if (s === undefined || s === null) return ''
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+}
 
 function gradientCss(g: GradientSpec): string {
   const stops = g.stops.map(s => `${s.color} ${s.pos}%`).join(', ')
@@ -131,7 +135,7 @@ function renderText(l: TextLayer): string {
   const radius = l.radius ? `border-radius:${l.radius}px;` : ''
   const shadow = shadowCss(l.shadow)
   const align = l.align === 'center' ? 'center' : l.align === 'right' ? 'right' : 'left'
-  const content = l.content.split('\n').map(esc).join('<br>')
+  const content = (l.content ?? '').split('\n').map(esc).join('<br>')
   return wrap(l, `<div style="font-family:${fontStack};font-size:${l.fontSize}px;font-weight:${l.fontWeight};text-align:${align};line-height:${l.lineHeight};letter-spacing:${l.letterSpacing}px;color:${color};${bg}${pad}${radius}${shadow}${extra}white-space:pre-wrap;width:100%;height:100%;overflow:hidden">${content}</div>`)
 }
 

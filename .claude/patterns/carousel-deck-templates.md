@@ -18,6 +18,10 @@ Adding deck (multi-slide) template styles to the carousel creator, adding new sl
 - Gallery previews must build their own pattern HTML per deck (`deck.pattern`), not assume `dots`.
 - Vue SFCs here need a single template root when a `UModal` accompanies the section — wrap both in one `<div>`.
 - v-html warnings are accepted in this folder (sanitised by construction; data is user-authored).
+- **Nil-safe rendering (2026-09 font-crash post-mortem):** `esc()` in `templates.ts` and `layers/render.ts` must never throw — palettes arrive partial (saved carousels, AI designs) and slide data sparse. Coerce (`?? ''` / `String(s ?? '')`), never trust the shape. `fontFamilyStack` guards non-strings, `renderText` guards `content`.
+- **Sanitize palettes at the boundary:** `sanitizePalette()` (exported from `useCarouselDeck`) merges any incoming palette over `DEFAULT_PALETTE`. Use it in every full-replacement writer (`applyAiDesign`, `loadCarouselIntoEditor`). Never `palette.value = { ...foreign.palette }`.
+- **Fonts:** Google families are declared in `packages/tools/nuxt.config.ts` (`fonts.families`, `global: true` — required because the creator applies fonts via inline styles in JS strings, which `@nuxt/fonts` cannot auto-detect). `FONT_STACKS` + `CAROUSEL_FONT_OPTIONS` in `templates.ts` is the single source of truth for all three pickers (layer style, deck panel, `index.vue` fonts ref). Export waits `document.fonts.ready` before PNG snapshot. Excluded names that don't resolve via providers (base `Playwrite`, `Kablamo`) — they would fail the build (`throwOnError`).
+- **E2E:** `packages/tools/tests/e2e/carousel-font.spec.ts` applies Timeline/Image-Focus/Quote decks and cycles deck fonts asserting zero page errors — extend it when adding render paths.
 
 ## Testids
 `deck-showcase`, `showcase-deck-*`, `btn-showcase-use-*`, `showcase-strip`, `grid-images`, `btn-remove-image-*`, `font-select`.
