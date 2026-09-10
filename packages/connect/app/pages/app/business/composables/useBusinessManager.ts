@@ -5,17 +5,20 @@ import { ref } from 'vue';
 
 
 
-const businesses = ref<PaginatedResponse<BusinessProfile>>({
-  data: [] as BusinessProfile[],
-  pagination: {
-    page: 1,
-    limit: 10,
-    total: 0,
-    totalPages: 0
-  }
-});
-
 export const useBusinessManager = () => {
+
+  // MUST stay useState (never module-scope ref): module state is a process
+  // singleton on the server, so one request's businesses leak into the next
+  // request's SSR HTML (wrong-user data + hydration mismatch -> 500 on /app).
+  const businesses = useState<PaginatedResponse<BusinessProfile>>('business:list', () => ({
+    data: [] as BusinessProfile[],
+    pagination: {
+      page: 1,
+      limit: 10,
+      total: 0,
+      totalPages: 0
+    }
+  }));
 
   const activeBusinessId = useState<string | undefined>('business:id');
   const getAllBusinesses = async () => {
@@ -25,41 +28,31 @@ export const useBusinessManager = () => {
       if (data.pagination?.total === 0) {
         activeBusinessId.value = undefined
       }
-    } catch (error) {
-      console.error('Error fetching businesses:', error);
+    } catch {
+      // Non-critical: callers render the last known list when refresh fails.
     }
   };
 
   const addBusiness = async (business: Record<string, unknown>): Promise<BusinessProfile | undefined> => {
-    try {
-      const response = await $fetch<ServiceResponse<BusinessProfile>>('/api/v1/business', {
-        method: 'POST',
-        body: { ...business },
-      });
-      
-      if (response.error) {
-        throw new Error(response.error);
-      }
-      
-      await getAllBusinesses();
-      return response.data;
-    } catch (error) {
-      console.error('Error adding business:', error);
-      throw error;
+    const response = await $fetch<ServiceResponse<BusinessProfile>>('/api/v1/business', {
+      method: 'POST',
+      body: { ...business },
+    });
+
+    if (response.error) {
+      throw new Error(response.error);
     }
+
+    await getAllBusinesses();
+    return response.data;
   };
 
   const extractBusinessInfo = async (payload: { url: string; explanation: string; competitors?: string[] }) => {
-    try {
-      const result = await $fetch<InformationSchemaBusinessResponse>('/api/v1/ai/information', {
-        method: 'POST',
-        body: payload
-      });
-      return result;
-    } catch (error) {
-      console.error('Error extracting business info:', error);
-      throw error;
-    }
+    const result = await $fetch<InformationSchemaBusinessResponse>('/api/v1/ai/information', {
+      method: 'POST',
+      body: payload
+    });
+    return result;
   };
 
   /**
@@ -118,31 +111,21 @@ export const useBusinessManager = () => {
   };
 
   const updateBusiness = async (id: string, updatedFields: Partial<BusinessProfile>) => {
-    try {
-      const updatedBusiness = await $fetch<BusinessProfile>(`/api/v1/business/${id}`, {
-        method: 'PUT',
-        body: updatedFields,
-      });
-      await getAllBusinesses();
-    } catch (error) {
-      console.error(`Error updating business with ID ${id}:`, error);
-      throw error;
-    }
+    await $fetch<BusinessProfile>(`/api/v1/business/${id}`, {
+      method: 'PUT',
+      body: updatedFields,
+    });
+    await getAllBusinesses();
   };
 
   const deleteBusiness = async (id: string) => {
     if (id === activeBusinessId.value) {
       activeBusinessId.value = undefined
     }
-    try {
-      await $fetch(`/api/v1/business/${id}`, {
-        method: 'DELETE',
-      });
-      await getAllBusinesses();
-    } catch (error) {
-      console.error(`Error deleting business with ID ${id}:`, error);
-      throw error;
-    }
+    await $fetch(`/api/v1/business/${id}`, {
+      method: 'DELETE',
+    });
+    await getAllBusinesses();
   };
   const setActiveBusiness = async (id: string) => {
     activeBusinessId.value = id

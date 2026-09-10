@@ -31,6 +31,21 @@ last_updated: 2026-09-09
 
 ## Gotchas
 
+- Hydration-deferred `useFetch` (real incident 2026-09, MCP `/consent` bounce):
+  `useFetch()` issued from `onMounted` while the app is still hydrating is
+  deferred to a `beforeMount` hook that never fires for the already-mounting
+  component, so it resolves `{ data: null, status: 'idle' }` with NO network
+  request. A session gate built on that null wrongly concludes "logged out".
+  Pages whose middleware skips the SSR session fetch (e.g. `/consent`) must
+  gate on the session at `<script setup>` top-level instead — setup-scope
+  `useFetch` runs on `beforeMount` during hydration and populates the SSR
+  payload (cookies forwarded) on direct loads.
+- Middleware must never drop `?redirect=` when bouncing a logged-in user off
+  `/login|/register` — resume to the same-origin redirect instead, or one
+  transient `get-session` failure permanently destroys flows like OAuth
+  consent (same `/consent` incident: `/consent` → `/login` → `/app`).
+  Accept leading-`/` paths only, never `//` (open-redirect guard).
+
 - Leaked `$sessionSignal` listeners turn one logout broadcast into N concurrent `/api/auth/get-session` requests. Symptom: `Fetched session`-style log spam every millisecond and a frozen tab on logout click.
 - `useFetch(..., { key: 'auth-session' })` cache survives `session.value = null` — always clear it when dropping local state.
 - `reloadNuxtApp` wipes all client stores (auth, business, caches); prefer it over `navigateTo` on logout so the next login starts clean.

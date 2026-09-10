@@ -19,6 +19,7 @@
     "accessFullHint": "Create, schedule, publish and delete posts on your behalf. You can revoke anytime.",
     "scopesLabel": "Requested permissions",
     "deny": "Deny",
-    "allow": "Allow access"
+    "allow": "Allow access",
+    "missingClientId": "Missing client_id — open this page from the app requesting access."
   }
 }

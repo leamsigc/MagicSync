@@ -113,6 +113,18 @@ const fonts = ref<string[]>([...CAROUSEL_FONT_OPTIONS])
 const mode = ref<'deck' | 'ai'>('deck')
 const guides = ref(false)
 const previewPlatform = ref<'editor' | 'instagram' | 'linkedin' | 'strip'>('editor')
+
+function setPreviewPlatform(mode: 'editor' | 'instagram' | 'linkedin' | 'strip') {
+  previewPlatform.value = mode
+}
+
+function openFromImageModal() {
+  showFromImageModal.value = true
+}
+
+function openFromHtmlModal() {
+  showFromHtmlModal.value = true
+}
 const stageFx = computed(() => fxStyle(fx.value))
 
 // Carousel selector state
@@ -450,19 +462,19 @@ async function handleCopyLink(): Promise<void> {
               <UButton size="xs" :variant="previewPlatform === 'editor' ? 'solid' : 'ghost'"
                 :color="previewPlatform === 'editor' ? 'primary' : 'neutral'" icon="i-lucide-pencil"
                 :label="t('preview.editor')" data-testid="preview-editor" :aria-pressed="previewPlatform === 'editor'"
-                @click="() => previewPlatform = 'editor'" />
+                @click="setPreviewPlatform('editor')" />
               <UButton size="xs" :variant="previewPlatform === 'strip' ? 'solid' : 'ghost'"
                 :color="previewPlatform === 'strip' ? 'primary' : 'neutral'" icon="i-lucide-gallery-horizontal"
                 :label="t('preview.strip')" data-testid="preview-strip" :aria-pressed="previewPlatform === 'strip'"
-                @click="() => previewPlatform = 'strip'" />
+                @click="setPreviewPlatform('strip')" />
               <UButton size="xs" :variant="previewPlatform === 'instagram' ? 'solid' : 'ghost'"
                 :color="previewPlatform === 'instagram' ? 'primary' : 'neutral'" icon="i-lucide-instagram"
                 :label="t('preview.instagram')" data-testid="preview-instagram"
-                :aria-pressed="previewPlatform === 'instagram'" @click="() => previewPlatform = 'instagram'" />
+                :aria-pressed="previewPlatform === 'instagram'" @click="setPreviewPlatform('instagram')" />
               <UButton size="xs" :variant="previewPlatform === 'linkedin' ? 'solid' : 'ghost'"
                 :color="previewPlatform === 'linkedin' ? 'primary' : 'neutral'" icon="i-lucide-linkedin"
                 :label="t('preview.linkedin')" data-testid="preview-linkedin"
-                :aria-pressed="previewPlatform === 'linkedin'" @click="() => previewPlatform = 'linkedin'" />
+                :aria-pressed="previewPlatform === 'linkedin'" @click="setPreviewPlatform('linkedin')" />
             </div>
             <p v-if="previewPlatform !== 'editor'" class="text-[11px] text-muted">
               {{ previewPlatform === 'instagram' ? t('preview.igHint') : previewPlatform === 'linkedin' ?
@@ -494,9 +506,9 @@ async function handleCopyLink(): Promise<void> {
           <CollapsibleSection :title="t('quickActions.label')" :default-open="true" testid="section-quick-actions">
             <div class="space-y-3">
               <div class="grid grid-cols-2 gap-2">
-                <UButton size="xs" color="primary" variant="soft" icon="i-lucide-scissors" :label="t('quickActions.sliceImage')" data-testid="btn-quick-slice-image" @click="() => showFromImageModal = true" />
-                <UButton size="xs" color="neutral" variant="soft" icon="i-lucide-file-plus" :label="t('quickActions.addBlank')" data-testid="btn-quick-add-blank" @click="() => addBlankSlide()" />
-                <UButton size="xs" color="neutral" variant="soft" icon="i-lucide-code-2" :label="t('quickActions.addHtml')" data-testid="btn-quick-add-html" @click="() => showFromHtmlModal = true" />
+                <UButton size="xs" color="primary" variant="soft" icon="i-lucide-scissors" :label="t('quickActions.sliceImage')" data-testid="btn-quick-slice-image" @click="openFromImageModal" />
+                <UButton size="xs" color="neutral" variant="soft" icon="i-lucide-file-plus" :label="t('quickActions.addBlank')" data-testid="btn-quick-add-blank" @click="addBlankSlide" />
+                <UButton size="xs" color="neutral" variant="soft" icon="i-lucide-code-2" :label="t('quickActions.addHtml')" data-testid="btn-quick-add-html" @click="openFromHtmlModal" />
                 <UButton size="xs" color="neutral" variant="soft" icon="i-lucide-copy" :label="t('quickActions.duplicate')" :disabled="slides.length >= 10" data-testid="btn-quick-duplicate" @click="() => duplicateCurrentSlide(currentIndex)" />
               </div>
               <p class="text-[10px] text-muted">{{ t('quickActions.sliceImageDesc') }}</p>

@@ -1,26 +1,27 @@
-import type { User } from "#layers/BaseDB/db/auth/auth"
-import type { Session } from "better-auth/types"
+const getRouteArea = (path: string): 'app' | 'auth' | null => {
+  if (path.startsWith('/app')) return 'app'
+  if (path.startsWith('/login') || path.startsWith('/register')) return 'auth'
+  return null
+}
 
+const isSafeRedirectPath = (redirect: unknown): redirect is string =>
+  typeof redirect === 'string' && redirect.startsWith('/') && !redirect.startsWith('//')
+
+const resumeRedirect = (redirect: unknown): string =>
+  isSafeRedirectPath(redirect) ? redirect : '/app'
 
 export default defineNuxtRouteMiddleware(async (to) => {
 
-  const isUserNavigatingToTheApp = to.path.startsWith('/app') || to.path.startsWith('/app/')
-  const isNavigatingToLoginOrRegister = to.path.startsWith('/login') || to.path.startsWith('/register')
-  // console.log("Navigating:", to.fullPath);
-  // console.log("App:", isUserNavigatingToTheApp);
-
-  if (!isUserNavigatingToTheApp && !isNavigatingToLoginOrRegister) {
-    return;
-  }
+  const area = getRouteArea(to.path)
+  if (!area) return
 
   const { loggedIn, fetchSession } = UseUser()
 
   await fetchSession()
 
-  if (isUserNavigatingToTheApp && !loggedIn.value) {
-    return navigateTo('/login')
+  if (!loggedIn.value) {
+    if (area === 'app') return navigateTo('/login')
+    return
   }
-  if (loggedIn.value && isNavigatingToLoginOrRegister || isNavigatingToLoginOrRegister && loggedIn.value) {
-    return navigateTo('/app')
-  }
+  if (area === 'auth') return navigateTo(resumeRedirect(to.query.redirect))
 })

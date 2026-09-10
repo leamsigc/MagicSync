@@ -19,6 +19,12 @@ const oauthQuery = computed(() => {
 })
 const clientId = computed(() => route.query.client_id as string || '')
 
+const { fetchSession } = UseUser()
+
+const sessionData = await fetchSession()
+const hasSession = !!sessionData?.user
+if (!hasSession) await navigateTo({ path: '/login', query: { redirect: route.fullPath } })
+
 const SCOPE_DESCRIPTIONS: Record<string, string> = {
   openid: 'Verify your identity',
   profile: 'See your name and picture',
@@ -34,33 +40,45 @@ function scopeDescription(scope: string): string {
 
 const showAccessChoice = computed(() => requestedScopes.value.includes('mcp:full'))
 
+const parseRequestedScopes = (scope: unknown): string[] =>
+  ((scope as string) || '').split(' ').filter(Boolean)
+
+const toErrorMessage = (error: unknown): string =>
+  error instanceof Error ? error.message : t('failed')
+
+type ConsentContext = {
+  clientName: string
+  scopes: string[]
+  businesses: Array<{ id: string, name: string }>
+}
+
+const loadConsentContext = async (clientId: string, scope: unknown): Promise<ConsentContext> => {
+  if (!clientId) throw new Error(t('missingClientId'))
+  const [client, biz] = await Promise.all([
+    $fetch<{ name?: string }>(`/api/v1/oauth/client?client_id=${encodeURIComponent(clientId)}`),
+    $fetch<{ data?: Array<{ id: string, name: string }> }>('/api/v1/business'),
+  ])
+  return {
+    clientName: client?.name || clientId,
+    scopes: parseRequestedScopes(scope),
+    businesses: biz?.data || [],
+  }
+}
+
 async function loadContext(): Promise<void> {
   status.value = 'loading'
+  if (!hasSession) return
   try {
-    const { loggedIn, fetchSession } = UseUser()
-    await fetchSession()
-    if (!loggedIn.value) {
-      await navigateTo({ path: '/login', query: { redirect: route.fullPath } })
-      return
-    }
-    if (!clientId.value) {
-      throw new Error('Missing client_id — open this page from the app requesting access.')
-    }
-    const [client, biz] = await Promise.all([
-      $fetch<{ name?: string }>(`/api/v1/oauth/client?client_id=${encodeURIComponent(clientId.value)}`),
-      $fetch<{ data?: Array<{ id: string, name: string }> }>('/api/v1/business'),
-    ])
-    clientName.value = client?.name || clientId.value
-    requestedScopes.value = ((route.query.scope as string) || '').split(' ').filter(Boolean)
-    businesses.value = biz?.data || []
-    if (businesses.value.length === 1 && businesses.value[0]) {
-      pickedBusinessId.value = businesses.value[0].id
-    }
+    const context = await loadConsentContext(clientId.value, route.query.scope)
+    clientName.value = context.clientName
+    requestedScopes.value = context.scopes
+    businesses.value = context.businesses
+    if (context.businesses.length === 1 && context.businesses[0]) pickedBusinessId.value = context.businesses[0].id
     status.value = 'ready'
   }
   catch (error) {
     status.value = 'error'
-    errorMsg.value = error instanceof Error ? error.message : 'Failed to load authorization request'
+    errorMsg.value = toErrorMessage(error)
   }
 }
 

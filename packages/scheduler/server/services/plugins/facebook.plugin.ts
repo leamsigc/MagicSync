@@ -105,8 +105,9 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
   private readonly OAUTH_DIALOG_URL = 'https://www.facebook.com/v20.0/dialog/oauth';
   private readonly baseUrl = process.env.NUXT_BASE_URL || 'http://localhost:3000'
 
-  protected init(options?: Record<string, unknown>): void {
-    console.log('Facebook plugin initialized', options);
+  protected init(_options?: Record<string, unknown>): void {
+    // No logging here: plugin init runs on every scheduler boot and the
+    // options object is noise in production logs.
   }
 
 
@@ -363,15 +364,17 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
 
     const accessToken = socialMediaAccount.accessToken;
 
-    // v25+v26: post_impressions* deprecated June 2026 -> use media_view metrics
-    // One invalid metric fails entire request, so only request currently-valid metrics
+    // v25+v26: post_impressions* deprecated June 2026 -> use media_view metrics.
+    // One invalid metric fails the entire request, so only request
+    // currently-valid metrics. NOTE: post_video_views was removed here after
+    // Meta started rejecting the batch with (#100) invalid-metric — video
+    // views now fall back to post_media_view below.
     const metrics = [
       'post_total_media_view_unique', // new reach (replaces post_impressions_unique)
       'post_media_view', // views
       'post_engaged_users',
       'post_clicks',
       'post_reactions_by_type_total',
-      'post_video_views', // for video posts, ignored for others
     ].join(',');
 
     // Fetch insights and post totals in parallel, but handle partial failures
@@ -384,9 +387,12 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
       .then((r) => r.json() as Promise<{ data?: FacebookApiPostInsightMetric[]; error?: Record<string, unknown> }>)
       .catch((e) => ({ error: { message: String(e) } as Record<string, unknown> }))
 
+    // NOTE: no inline insights.* fragment here — edge modifiers like
+    // insights.metric(...).period(...) are not valid post-object fields
+    // (Graph #2500 syntax error). Insights come from the /insights call above.
     const postRes = await this.fetch(
       this._getGraphApiUrl(
-        `/${externalPostId}?fields=reactions.summary(total_count),comments.summary(total_count),shares.count,insights.metric(post_video_views,post_media_view).period(lifetime)&access_token=${accessToken}`
+        `/${externalPostId}?fields=reactions.summary(total_count),comments.summary(total_count),shares.count&access_token=${accessToken}`
       ),
       undefined,
       'fetch post engagement totals'
@@ -396,7 +402,6 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
           reactions?: { summary?: { total_count?: number } };
           comments?: { summary?: { total_count?: number } };
           shares?: { count?: number };
-          insights?: { data?: FacebookApiPostInsightMetric[] };
           error?: Record<string, unknown>;
         }>
       )
@@ -433,11 +438,8 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     const totalShares: number = postRes.shares?.count ?? 0;
     const totalEngagement: number = totalReactions + totalComments + totalShares;
 
-    // Merge insights from post object inline insights (video views) if present
-    const inlineMediaView = (postRes as any)?.insights?.data?.find((d: any) => d.name === 'post_media_view')?.values?.[0]?.value
-    const inlineVideoViews = (postRes as any)?.insights?.data?.find((d: any) => d.name === 'post_video_views')?.values?.[0]?.value
-    const viewsValue = metricValue('post_total_media_view_unique') || metricValue('post_media_view') || inlineMediaView || inlineVideoViews || 0
-    const impressionsValue = metricValue('post_media_view') || inlineMediaView || 0
+    const viewsValue = metricValue('post_total_media_view_unique') || metricValue('post_media_view') || 0
+    const impressionsValue = metricValue('post_media_view') || 0
 
     const insights: PostInsight[] = [
       { label: 'Views', value: viewsValue },
@@ -448,7 +450,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
       { label: 'Shares', value: totalShares },
       { label: 'Link Clicks', value: metricValue('post_clicks') },
       { label: 'Engaged Users', value: metricValue('post_engaged_users') },
-      { label: 'Video Views', value: metricValue('post_video_views') || inlineVideoViews || 0 },
+      { label: 'Video Views', value: metricValue('post_media_view') || 0 },
     ];
 
     const reactionLabelMap: Record<string, string> = {
@@ -1295,8 +1297,6 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     if (!postId) {
       throw new Error('Post details not found');
     }
-
-    console.log(`Attempting to update Facebook post ${postId} with details:`, postDetails);
 
     const { content, settings } = this.getPlatformData(postDetails);
 

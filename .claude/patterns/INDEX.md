@@ -31,3 +31,4 @@ Lookup table for all pattern files in this directory. Check here before starting
 | [entitydetails-kv.md](entitydetails-kv.md) | Storing a feature in `entity_details` KV rows with zero migrations |
 | [safe-build.md](safe-build.md) | Building the site without freezing the machine — heap caps, concurrency limits |
 | [auth-session-lifecycle.md](auth-session-lifecycle.md) | better-auth session lifecycle — $sessionSignal listeners, fetchSession, logout without get-session floods |
+| [ssr-safe-state.md](ssr-safe-state.md) | SSR-safe state — no module-scope ref/reactive for request-varying data, useState only |

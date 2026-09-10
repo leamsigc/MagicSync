@@ -52,6 +52,7 @@
     "driver.js": "catalog:"
   },
   "devDependencies": {
+    "@libsql/client": "catalog:",
     "@nuxt/hints": "catalog:",
     "@nuxtjs/seo": "catalog:",
     "@playwright/test": "catalog:",

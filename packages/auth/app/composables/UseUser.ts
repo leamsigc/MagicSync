@@ -29,9 +29,23 @@ export function UseUser() {
     clearNuxtData('auth-session')
   }
 
+  const waitForInflightFetch = () => new Promise<void>((resolve) => {
+    const stop = watch(sessionFetching, (fetching) => {
+      if (!fetching) {
+        stop()
+        resolve()
+      }
+    })
+    setTimeout(() => {
+      stop()
+      resolve()
+    }, 15000)
+  })
+
   const fetchSession = async () => {
     if (sessionFetching.value) {
-      return
+      await waitForInflightFetch()
+      return { session: session.value, user: user.value }
     }
     sessionFetching.value = true
 
