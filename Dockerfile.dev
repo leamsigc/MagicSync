@@ -1,5 +1,12 @@
 FROM node:26-alpine AS serve
 
+# node-canvas (`canvas@3.x`, via `fabric/node` in @local-monorepo/tools)
+# publishes NO musl prebuilds, so `pnpm i` falls back to `node-gyp rebuild`,
+# which needs these system headers (see root Dockerfile for details).
+# NOTE: do NOT add vips-dev — it forces sharp into a failing source build.
+RUN apk add --no-cache python3 make g++ pkgconfig \
+  cairo-dev pango-dev jpeg-dev giflib-dev librsvg-dev pixman-dev
+
 WORKDIR /usr/app/frontend
 
 # Pin pnpm to the same version as the "packageManager" field in package.json.

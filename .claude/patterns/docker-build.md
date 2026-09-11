@@ -69,11 +69,46 @@ fall back to `npm install @libsql/linux-x64-musl@$VERSION` with `$VERSION`
 read from the store's `libsql` package. Every success path must populate
 `/tmp/musl` — including the already-bundled early exit.
 
-Red herring seen 2026-09-08: a `pkg-config pixman-1` error in CI logs blamed
-`canvas` — but `canvas` is not a dependency of any workspace package, and
-`RUN pnpm i` had already succeeded (the build reached `✨ Build complete!`).
-Check `grep '"canvas"' packages/*/package.json` and step ordering before
-adding cairo/pango system deps to the image.
+## Gotcha 4 — node-canvas has NO musl prebuilds (Alpine always compiles from source)
+
+`canvas@3.x` (pulled in by `fabric/node` in `@local-monorepo/tools` for the
+carousel render API — `packages/tools/package.json` → catalog `canvas: 3.2.1`)
+publishes no `linux-musl` prebuilds (upstream PR #2370 still open), so on
+Alpine `prebuild-install -r napi` always 404s and falls back to
+`node-gyp rebuild`. Without system headers `pnpm i` fails with:
+
+```
+.../canvas@3.2.1/node_modules/canvas install: Failed
+canvas@3.2.1 install: `prebuild-install -r napi || node-gyp rebuild` (exit 1)
+```
+
+Fix — builder stage needs the cairo/pango stack (safe for sharp: it only
+probes for libvips, so everything below is fine — just never add `vips-dev`):
+
+```dockerfile
+RUN apk add --no-cache bash curl python3 make g++ pkgconfig \
+  cairo-dev pango-dev jpeg-dev giflib-dev librsvg-dev pixman-dev
+```
+
+And the runtime stage must ship the shared libs the compiled `canvas.node`
+links against, plus a font (bare Alpine ships zero fonts → Pango renders
+tofu). Verified 2026-09-11 with a two-stage `node:26-alpine` build that
+`npm i canvas@3.2.1` + renders a PNG in both stages:
+
+```dockerfile
+RUN apk add --no-cache cairo pango giflib libjpeg-turbo librsvg pixman freetype fontconfig ttf-dejavu
+```
+
+Notes:
+- `canvas@3.2.1` contains the GCC 15 fix (upstream #2546) — no
+  `CXXFLAGS="-include cstdint"` workaround needed. Do NOT downgrade to 3.0.x.
+- `pnpm-workspace.yaml` already has `allowBuilds: canvas: true`, so no
+  `pnpm approve-builds` step is needed in CI.
+- Historical note: on 2026-09-08 a `pkg-config pixman-1` error blamed canvas
+  when canvas was NOT a dependency of any workspace package — that time it was
+  a red herring. Since `canvas` became a direct dependency of
+  `@local-monorepo/tools`, this failure signature is real: check
+  `grep '"canvas"' packages/*/package.json` and step ordering first.
 
 1. Reproduce the failing step locally with the exact container:
     `docker run --rm -v <build-dir>:/usr/app --workdir /usr/app node:26-alpine sh -c "<apt/deps>; npm i -g pnpm@<pinned>; pnpm i"`

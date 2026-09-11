@@ -11,7 +11,15 @@ FROM node:26-alpine AS builder
 # and breaks `pnpm i` (sharp@0.34.5 via @huggingface/transformers/nuxt-og-image).
 # Without vips-dev, sharp uses its prebuilt linuxmusl binaries, which also keeps
 # the runtime image working (it ships no system libvips).
-RUN apk add --no-cache bash curl g++ make py3-pip
+#
+# node-canvas (`canvas@3.x`, via `fabric/node` in @local-monorepo/tools for the
+# carousel render API) publishes NO musl prebuilds, so on Alpine
+# `prebuild-install -r napi` always 404s and falls back to `node-gyp rebuild`.
+# That source build needs cairo/pango/jpeg/gif/svg headers + pkgconfig —
+# without them `pnpm i` fails with `canvas install: Failed`. These -dev
+# packages do NOT affect sharp (it only probes for libvips).
+RUN apk add --no-cache bash curl python3 make g++ pkgconfig \
+  cairo-dev pango-dev jpeg-dev giflib-dev librsvg-dev pixman-dev
 
 WORKDIR /usr/app
 
@@ -100,6 +108,13 @@ RUN sh /tmp/install-musl-binding.sh
 
 # ============ RUNTIME ============
 FROM node:26-alpine
+
+# node-canvas is compiled against these shared libs in the builder stage, so
+# the runtime image must ship them too — otherwise the carousel render API
+# (`fabric/node` → canvas.node) fails at startup with
+# "Error loading shared library libcairo.so.2". ttf-dejavu gives Pango a
+# real font to fall back to (bare Alpine ships zero fonts → tofu text).
+RUN apk add --no-cache cairo pango giflib libjpeg-turbo librsvg pixman freetype fontconfig ttf-dejavu
 
 WORKDIR /usr/app
 
