@@ -1,0 +1,38 @@
+{
+  "en": {
+    "viewingAs": "You are viewing as {name}",
+    "viewingAsHint": "Everything you do now happens as this user. Exit to return to your admin account.",
+    "backToAccount": "Back to my account",
+    "stopped": "Impersonation ended",
+    "stoppedDescription": "You are back in your admin account",
+    "error": "Error",
+    "stopFailed": "Failed to stop impersonating"
+  },
+  "es": {
+    "viewingAs": "Estás viendo como {name}",
+    "viewingAsHint": "Todo lo que hagas ahora será como este usuario. Sal para volver a tu cuenta de administrador.",
+    "backToAccount": "Volver a mi cuenta",
+    "stopped": "Suplantación terminada",
+    "stoppedDescription": "Has vuelto a tu cuenta de administrador",
+    "error": "Error",
+    "stopFailed": "No se pudo terminar la suplantación"
+  },
+  "de": {
+    "viewingAs": "Sie sehen die App als {name}",
+    "viewingAsHint": "Alles, was Sie jetzt tun, geschieht als dieser Benutzer. Beenden Sie, um zu Ihrem Administratorkonto zurückzukehren.",
+    "backToAccount": "Zurück zu meinem Konto",
+    "stopped": "Übernahme beendet",
+    "stoppedDescription": "Sie sind zurück in Ihrem Administratorkonto",
+    "error": "Fehler",
+    "stopFailed": "Übernahme konnte nicht beendet werden"
+  },
+  "fr": {
+    "viewingAs": "Vous naviguez en tant que {name}",
+    "viewingAsHint": "Tout ce que vous faites maintenant se fait en tant que cet utilisateur. Quittez pour revenir à votre compte administrateur.",
+    "backToAccount": "Retour à mon compte",
+    "stopped": "Usurpation terminée",
+    "stoppedDescription": "Vous êtes de retour sur votre compte administrateur",
+    "error": "Erreur",
+    "stopFailed": "Échec de la fin de l'usurpation"
+  }
+}

@@ -478,7 +478,7 @@ onMounted(() => {
         <div class="vite-chip__edge" :class="{ 'edge--animated': isChromiumBrowser }"></div>
       </div>
       <div class="vite-chip__filter" />
-      <img :src="isUwu ? '/logo-uwu.webp' : '/logo.svg'" :alt="isUwu ? 'Vite Kawaii Logo by @icarusgkx' : 'Vite Logo'"
+      <img :src="isUwu ? '/logo-uwu.webp' : '/logo.png'" :alt="isUwu ? 'Vite Leamsigc Logo' : 'Vite Logo'"
         class="vite-chip__logo" :class="{ uwu: isUwu }" />
     </div>
   </div>
@@ -495,11 +495,12 @@ onMounted(() => {
   overflow: hidden;
   margin: -100px auto 0;
   min-height: 600px;
+
   @media (max-width: 1630px) {
     left: 50%;
     transform: translate3d(-50%, 0, 0);
   }
-  
+
   @media (max-width: 768px) {
     left: 50%;
     transform: translate3d(-50%, 0, 0) scale(0.9);

@@ -10,7 +10,6 @@ import { postService } from '#layers/BaseDB/server/services/post.service';
 import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service';
 import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers';
 import { AutoPostService } from '#layers/BaseScheduler/server/services/AutoPost.service';
-import type { Account } from '#layers/BaseDB/db/schema';
 
 
 export default defineEventHandler(async (event) => {
@@ -62,7 +61,7 @@ export default defineEventHandler(async (event) => {
 
     const result = await trigger.replyToComment({
       post,
-      socialAccount: socialAccount as unknown as Account,
+      socialAccount: socialAccount,
       platform,
       commentId,
       replyText,
@@ -70,7 +69,7 @@ export default defineEventHandler(async (event) => {
 
     // Fire-and-forget: notify the post owner about the reply (never break the reply itself)
     try {
-      const ownerId = (post as unknown as { user?: { id: string } }).user?.id
+      const ownerId = (post as { user?: { id: string } }).user?.id
       if (ownerId) {
         const { notificationService } = await import('#layers/BaseAuth/server/services/notification.service')
         await notificationService.notify({

@@ -1,4 +1,5 @@
 import { ValidationError } from '#layers/BaseShared/server/types/errors';
+import { parseJsonObject } from '#layers/BaseShared/utils/json';
 import { type Post, type SocialMediaAccount as Integration, type Account, type SocialMediaAccount, type PostWithAllData } from '#layers/BaseDB/db/schema';
 import { EventEmitter } from 'events';
 import { logAuditService } from '#layers/BaseDB/server/services/auditLog.service';
@@ -136,7 +137,7 @@ export function extractExternalPostId(
   let publishDetail: Record<string, unknown> = {};
   if (typeof raw === 'string') {
     try {
-      publishDetail = JSON.parse(raw) as Record<string, unknown>;
+      publishDetail = parseJsonObject(raw);
     } catch {
       publishDetail = {};
     }
@@ -359,12 +360,12 @@ export abstract class BaseSchedulerPlugin implements SchedulerPlugin {
 
 export class SchedulerPost extends EventEmitter {
   private post: Post | null = null;
-  private accounts: Account[] | null = null;
+  private accounts: Array<Integration | Account> | null = null;
 
   private plugins: Map<string, SchedulerPlugin> = new Map();
   [key: string]: unknown;
 
-  constructor({ post, accounts }: { post?: Post, accounts?: Account[] }) {
+  constructor({ post, accounts }: { post?: Post, accounts?: Array<Integration | Account> }) {
     super();
     if (post) {
       this.post = post;
@@ -428,7 +429,7 @@ export class SchedulerPost extends EventEmitter {
     const plugin = this.plugins.get(socialMediaAccount.platform);
     if (plugin) {
       try {
-        const responses = await (plugin[action] as unknown as (...args: unknown[]) => Promise<PostResponse>)(...params, socialMediaAccount);
+        const responses = await (plugin[action] as (...args: unknown[]) => Promise<PostResponse>)(...params, socialMediaAccount);
         this.emit(`${eventPrefix}:published`, { socialMediaAccountId: socialMediaAccount.accountId, responses, ...extraData });
         return responses;
       } catch (error: unknown) {
@@ -565,7 +566,7 @@ export class SchedulerPost extends EventEmitter {
   ): Promise<{ success: boolean; messageId?: string; error?: string }> {
     const plugin = this.plugins.get(socialMediaAccount.platform);
     if (plugin) {
-      const method = (plugin as unknown as Record<string, unknown>)['sendPrivateReply'];
+      const method = plugin['sendPrivateReply'];
       if (typeof method === 'function') {
         return (method as (a: PluginSocialMediaAccount, c: string, m: string) => Promise<{ success: boolean; messageId?: string; error?: string }>).call(plugin, socialMediaAccount, commentId, message);
       }

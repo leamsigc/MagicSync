@@ -102,10 +102,8 @@ export default defineEventHandler(async (event) => {
     // to fetch it — skipping this is why page tokens kept dying in hours.
     if (platform === 'facebook' && tokenData?.accessToken) {
       try {
-        const fbPlugin = scheduler.getPlugin('facebook') as unknown as {
-          exchangeLongLivedUserToken: (t: string) => Promise<{ userToken: string }>
-        } | undefined
-        if (fbPlugin) {
+        const fbPlugin = scheduler.getPlugin('facebook')
+        if (fbPlugin instanceof FacebookPlugin) {
           const exchanged = await fbPlugin.exchangeLongLivedUserToken(tokenData.accessToken)
           accessToken = exchanged.userToken
         }
@@ -116,7 +114,11 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    const pageDetails = await (scheduler as unknown as { fetchPageInformation: (pageId: string, token: string, options?: { instagramId?: string }) => Promise<{ id: string; name: string; access_token: string; picture: string; username: string }> }).fetchPageInformation(pageId, accessToken, { instagramId: body.instagram_business_account?.id });
+    const facebookPlugin = scheduler.getPlugin('facebook')
+    if (!facebookPlugin || !(facebookPlugin instanceof FacebookPlugin)) {
+      throw createError({ statusCode: 400, statusMessage: 'Facebook plugin not available' })
+    }
+    const pageDetails = await facebookPlugin.fetchPageInformation(pageId, accessToken, { instagramId: body.instagram_business_account?.id });
 
     await logAuditService.logAuditEvent({
       userId: user.id,

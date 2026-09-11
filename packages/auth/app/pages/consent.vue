@@ -82,6 +82,19 @@ async function loadContext(): Promise<void> {
   }
 }
 
+type ConsentResult = {
+  redirect_uri?: string
+  redirect?: string | boolean
+  url?: string
+}
+
+const resolveConsentRedirect = (result: ConsentResult | null): string | undefined => {
+  if (!result) return undefined
+  if (result.redirect_uri) return result.redirect_uri
+  if (result.url) return result.url
+  return typeof result.redirect === 'string' ? result.redirect : undefined
+}
+
 async function handleDecision(accept: boolean): Promise<void> {
   if (accept && !pickedBusinessId.value) {
     toast.add({ title: t('pickBusinessFirst'), color: 'error' })
@@ -98,7 +111,7 @@ async function handleDecision(accept: boolean): Promise<void> {
     }
     // NOTE: the plugin consent endpoint is called browser-direct — it needs
     // the HTTP request context and fails via server-to-server auth.api calls.
-    const result = await $fetch<{ redirect_uri?: string, redirect?: string }>('/api/auth/oauth2/consent', {
+    const result = await $fetch<ConsentResult>('/api/auth/oauth2/consent', {
       method: 'POST',
       body: {
         accept,
@@ -106,8 +119,8 @@ async function handleDecision(accept: boolean): Promise<void> {
         ...(oauthQuery.value ? { oauth_query: oauthQuery.value } : {}),
       },
     })
-    const redirectUri = result?.redirect_uri || result?.redirect
-    if (!redirectUri) throw new Error('No redirect returned')
+    const redirectUri = resolveConsentRedirect(result)
+    if (!redirectUri) throw new Error(t('failed'))
     // Bind the picked business BEFORE leaving: order controlled here.
     if (accept && pickedBusinessId.value) {
       await $fetch('/api/v1/oauth/consent-business', {

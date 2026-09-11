@@ -1,6 +1,7 @@
 <i18n src="../carousel-creator.json"></i18n>
 <script lang="ts" setup>
 import { useCarouselDeck } from '../composables/useCarouselDeck'
+import { parseJsonArray } from '#layers/BaseShared/utils/json';
 import { CAROUSEL_SLIDE_TEMPLATES, type SlideTemplate, replaceTokens } from '../slideTemplates'
 import { renderSlideLayers } from '../layers/render'
 import { instantiateLayers, FRAME_W } from '../layers/types'
@@ -232,7 +233,7 @@ const createTemplateDesc = ref('')
 if (import.meta.client) {
   try {
     const raw = localStorage.getItem(CUSTOM_SLIDE_TEMPLATES_KEY)
-    if (raw) customSlideTemplates.value = JSON.parse(raw) as SlideTemplate[]
+    if (raw) customSlideTemplates.value = parseJsonArray<SlideTemplate>(raw)
   } catch { void 0 }
 }
 

@@ -57,6 +57,75 @@
   <a href="https://leamsigc.github.io/MagicSync/guide/features">Public API</a><br />
 </p>
 
+<br />
+
+<h2 align="center">Everything you need to grow on social media</h2>
+
+<div align="center" style="border: 2px solid #7c5cff; border-radius: 12px; padding: 24px; margin: 24px 0;">
+<h3>AI-native: MCP server + one-click Claude.ai connection</h3>
+<p>MagicSync exposes <strong>18 tools + 4 resources</strong> over MCP (<code>/mcp</code>). Connect <a href="https://claude.ai/">Claude.ai</a> as a custom connector and let your AI assistant create, schedule, publish and analyze posts for you — with read-only or full-access scopes, OAuth or API keys, and audit logging on every call.</p>
+<p><a href="https://magicsync.dev/app/keys">Get API keys »</a></p>
+</div>
+
+<div align="center" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; padding: 8px 0; text-align: left;">
+
+<div style="border: 1px solid #ddd; border-radius: 8px; padding: 16px;">
+<h3>18 social platforms</h3>
+<p>Instagram, Facebook, Twitter/X, LinkedIn, TikTok, YouTube, Bluesky, Threads, Pinterest, Reddit, Discord, Mastodon, Dribbble, Dev.to, WordPress, Google Business — more than Buffer, Later or OpenPost.</p>
+</div>
+
+<div style="border: 1px solid #ddd; border-radius: 8px; padding: 16px;">
+<h3>Content Studio: 10+ in-browser tools</h3>
+<p><a href="https://magicsync.dev/tools/image-editor">Image editor</a> (19 plugins), AI background removal, <a href="https://magicsync.dev/tools/text-behind-image-free">text behind image</a>, multi-camera <a href="https://magicsync.dev/app/tools/video-cropper">video cropper</a>, <a href="https://magicsync.dev/tools/video-silence-remover">silence remover</a>, animated <a href="https://magicsync.dev/tools/carousel-creator">carousel creator</a>, <a href="https://magicsync.dev/tools/og-image-generator">OG image generator</a>, teleprompter recorder, <a href="https://magicsync.dev/tools/menu-board">menu board</a>, <a href="https://magicsync.dev/tools/flutter-clipper">flutter clipper</a> — no desktop apps needed.</p>
+</div>
+
+<div style="border: 1px solid #ddd; border-radius: 8px; padding: 16px;">
+<h3>AI content engine</h3>
+<p>Caption generator, cross-platform repurposing, 22 carousel templates, RAG agents with skills and sub-agents, 6 LLM providers (Google, Ollama, OpenAI, Anthropic, OpenRouter, DeepSeek) and PII redaction built in.</p>
+</div>
+
+<div style="border: 1px solid #ddd; border-radius: 8px; padding: 16px;">
+<h3>Deep analytics</h3>
+<p>Adaptive metric collection, indefinite retention, unified cross-platform dashboard, CSV export and best-time-to-post recommendations from your own history.</p>
+</div>
+
+<div style="border: 1px solid #ddd; border-radius: 8px; padding: 16px;">
+<h3>Unified social inbox</h3>
+<p><a href="https://magicsync.dev/app/inbox">One inbox</a> for comments plus Facebook and Instagram DMs — reply, like, hide or delete without leaving MagicSync.</p>
+</div>
+
+<div style="border: 1px solid #ddd; border-radius: 8px; padding: 16px;">
+<h3>Auto-reply comment to DM</h3>
+<p><a href="https://magicsync.dev/app/auto-reply">Keyword campaigns</a>, instant webhooks, story-mention triggers and follow gates turn comments into conversations — a free Manychat alternative neither Later nor OpenPost has.</p>
+</div>
+
+<div style="border: 1px solid #ddd; border-radius: 8px; padding: 16px;">
+<h3>Auto-repost + Bluesky grow</h3>
+<p><a href="https://magicsync.dev/app/posts/auto-repost">Rule-based reposting</a> keeps evergreen content alive, and <a href="https://magicsync.dev/app/grow">follow-back scoring</a> grows your Bluesky audience.</p>
+</div>
+
+<div style="border: 1px solid #ddd; border-radius: 8px; padding: 16px;">
+<h3>Bulk scheduling + templates</h3>
+<p>CSV import with AI template generation, reusable variable templates and pre-publish validation across date ranges.</p>
+</div>
+
+<div style="border: 1px solid #ddd; border-radius: 8px; padding: 16px;">
+<h3>Notifications everywhere</h3>
+<p>In-app, immediate email and daily digest with per-event preferences — post failures, replies and bulk ops never go unnoticed.</p>
+</div>
+
+</div>
+
+<br />
+
+|  | Later | OpenPost | MagicSync |
+|---|---|---|---|
+| Platforms | 8 | 10 | **18** |
+| Creative tools | 2–3 | 2–3 | **10+** |
+| MCP / AI agents | No | Partial | **18 tools + 4 resources** |
+| Comment to DM automation | Paid add-on | No | **Built-in, free** |
+| Self-host | No | Yes | **Yes (Docker)** |
+
 <br /><br />
 
 # MagicSync
@@ -141,9 +210,12 @@ volumes:
 
 MagicSync is a comprehensive social media management platform that enables you to:
 
-- **Connect multiple platforms** — Facebook, Twitter/X, Instagram, Bluesky, LinkedIn, TikTok, YouTube, Threads, Reddit, Dribbble, WordPress
+- **Connect multiple platforms** — Facebook, Twitter/X, Instagram, Bluesky, LinkedIn, TikTok, YouTube, Threads, Reddit, Dribbble, WordPress and more (18 total)
 - **Schedule posts** — Plan content with a powerful calendar view (Month, Week, Day)
 - **AI-powered content generation** — Generate engaging posts using AI based on your business details
+- **AI-native with MCP** — Connect Claude.ai in one click and control MagicSync from any AI assistant via 18 tools + 4 resources
+- **Unified inbox + auto-reply** — Answer comments and DMs in one place, and turn comments into conversations automatically
+- **Analytics that learn** — Adaptive collection, cross-platform dashboard and best-time-to-post recommendations
 - **Bulk scheduling** — Create and schedule multiple posts at once across date ranges
 - **Media management** — Upload, organize, and manage your images and videos
 - **Template system** — Use variable templates and chat templates for consistent branding
@@ -303,6 +375,12 @@ pnpm site:dev
 - Hover preview on scheduled posts
 - Chat templates & variable templates
 - Business profile management
+- MCP server (18 tools + 4 resources) with Claude.ai one-click connection
+- Unified social inbox (comments + Facebook/Instagram DMs)
+- Auto-reply comment-to-DM campaigns
+- Auto-repost rules and Bluesky grow
+- Adaptive analytics with best-time-to-post
+- Notifications (in-app + email + digest)
 
 ---
 

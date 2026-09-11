@@ -1,0 +1,102 @@
+{
+  "en": {
+    "openFeedback": "Send feedback",
+    "categories": {
+      "bug": "Bug report",
+      "feature": "Feature request",
+      "praise": "Praise",
+      "other": "Other"
+    },
+    "modal": {
+      "title": "Send Feedback",
+      "description": "Tell us what works and what doesn't.",
+      "category": "Category",
+      "message": "Message",
+      "messagePlaceholder": "Describe the issue or idea (at least 10 characters)...",
+      "cancel": "Cancel",
+      "submit": "Send"
+    },
+    "toast": {
+      "error": "Error",
+      "messageTooShort": "Please write at least 10 characters",
+      "sent": "Feedback Sent",
+      "sentDescription": "Thanks — our team will review it",
+      "sendFailed": "Failed to send feedback"
+    }
+  },
+  "es": {
+    "openFeedback": "Enviar comentarios",
+    "categories": {
+      "bug": "Error",
+      "feature": "Nueva función",
+      "praise": "Felicitación",
+      "other": "Otro"
+    },
+    "modal": {
+      "title": "Enviar comentarios",
+      "description": "Cuéntanos qué funciona y qué no.",
+      "category": "Categoría",
+      "message": "Mensaje",
+      "messagePlaceholder": "Describe el problema o la idea (al menos 10 caracteres)...",
+      "cancel": "Cancelar",
+      "submit": "Enviar"
+    },
+    "toast": {
+      "error": "Error",
+      "messageTooShort": "Escribe al menos 10 caracteres",
+      "sent": "Comentario enviado",
+      "sentDescription": "Gracias — nuestro equipo lo revisará",
+      "sendFailed": "No se pudo enviar el comentario"
+    }
+  },
+  "de": {
+    "openFeedback": "Feedback senden",
+    "categories": {
+      "bug": "Fehlerbericht",
+      "feature": "Funktionswunsch",
+      "praise": "Lob",
+      "other": "Sonstiges"
+    },
+    "modal": {
+      "title": "Feedback senden",
+      "description": "Sagen Sie uns, was funktioniert und was nicht.",
+      "category": "Kategorie",
+      "message": "Nachricht",
+      "messagePlaceholder": "Beschreiben Sie das Problem oder die Idee (mindestens 10 Zeichen)...",
+      "cancel": "Abbrechen",
+      "submit": "Senden"
+    },
+    "toast": {
+      "error": "Fehler",
+      "messageTooShort": "Bitte schreiben Sie mindestens 10 Zeichen",
+      "sent": "Feedback gesendet",
+      "sentDescription": "Danke — unser Team wird es prüfen",
+      "sendFailed": "Feedback konnte nicht gesendet werden"
+    }
+  },
+  "fr": {
+    "openFeedback": "Envoyer un commentaire",
+    "categories": {
+      "bug": "Signaler un bug",
+      "feature": "Demande de fonctionnalité",
+      "praise": "Compliment",
+      "other": "Autre"
+    },
+    "modal": {
+      "title": "Envoyer un commentaire",
+      "description": "Dites-nous ce qui fonctionne et ce qui ne fonctionne pas.",
+      "category": "Catégorie",
+      "message": "Message",
+      "messagePlaceholder": "Décrivez le problème ou l'idée (au moins 10 caractères)...",
+      "cancel": "Annuler",
+      "submit": "Envoyer"
+    },
+    "toast": {
+      "error": "Erreur",
+      "messageTooShort": "Veuillez écrire au moins 10 caractères",
+      "sent": "Commentaire envoyé",
+      "sentDescription": "Merci — notre équipe va l'examiner",
+      "sendFailed": "Échec de l'envoi du commentaire"
+    }
+  }
+}

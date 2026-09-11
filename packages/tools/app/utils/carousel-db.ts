@@ -1,5 +1,6 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb'
 import type { CarouselSlide, CarouselPalette } from '../composables/useCarouselSaveShare'
+import type { SlideSceneSnapshot } from '../../shared/carousel-scene/scene-snapshot'
 
 export interface LocalCarousel {
   id: string
@@ -8,6 +9,8 @@ export interface LocalCarousel {
   palette: CarouselPalette
   pattern?: string
   handle?: string
+  /** Fabric scene snapshots (Task 1.4). Additive — old rows simply lack it. */
+  scene?: SlideSceneSnapshot[]
   lastModified: number
 }
 

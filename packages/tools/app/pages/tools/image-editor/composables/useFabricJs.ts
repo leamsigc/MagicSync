@@ -11,6 +11,16 @@ const editor = shallowRef<FabricEditor | null>(null);
  */
 const zoomPercent = ref(100);
 
+/**
+ * Shared right-panel tab so the header Export action can reveal
+ * the export panel. Module-scoped like the editor instance.
+ */
+const propertiesTab = ref('design');
+
+const setPropertiesTab = (tab: string) => {
+  propertiesTab.value = tab;
+};
+
 function refreshZoomPercent() {
   const canvas = editor.value?.fabricCanvas;
   if (canvas) {
@@ -18,9 +28,41 @@ function refreshZoomPercent() {
   }
 }
 
+export type BgRemovalOutcome =
+  | 'started'
+  | 'no-canvas'
+  | 'no-selection'
+  | 'no-source'
+  | 'failed';
+
+const fetchImageFile = async (src: string): Promise<File | null> => {
+  try {
+    const res = await fetch(src);
+    const blob = await res.blob();
+    return new File([blob], 'image_for_bg_removal.png', { type: blob.type });
+  } catch {
+    return null;
+  }
+};
+
+const renderObjectToFile = (activeObject: FabricImage): Promise<File | null> => {
+  const tempCanvas = document.createElement('canvas');
+  tempCanvas.width = activeObject.width ?? 0;
+  tempCanvas.height = activeObject.height ?? 0;
+  const tempCtx = tempCanvas.getContext('2d');
+  if (!tempCtx) return Promise.resolve(null);
+  activeObject.render(tempCtx);
+  return new Promise((resolve) => {
+    tempCanvas.toBlob((blob) => {
+      if (blob) resolve(new File([blob], 'image_for_bg_removal.png', { type: 'image/png' }));
+      else resolve(null);
+    }, 'image/png');
+  });
+};
+
 export const useFabricJs = () => {
 
-  const { run: imageRun, result } = useImageTransformer();
+  const { run: imageRun, result, status: bgStatus, error: bgError, progress: bgProgress, isBusy: isBgBusy, isLoaded: isBgLoaded } = useImageTransformer();
 
 
   const run = (elementRef: Ref<HTMLCanvasElement | null>, plugins: FabricPluginConstructor[] = []) => {
@@ -45,53 +87,33 @@ export const useFabricJs = () => {
   };
 
 
-  const triggerRemoveBackground = () => {
-    if (!editor.value?.fabricCanvas) {
-      console.warn('Canvas or background remover worker not initialized.');
-      return;
-    }
+  const isRemovableImage = (obj: unknown): obj is FabricImage => !!obj && obj instanceof FabricImage;
+
+  const runWithFetchedFile = async (src: string): Promise<BgRemovalOutcome> => {
+    const file = await fetchImageFile(src);
+    if (!file) return 'failed';
+    await imageRun(file);
+    return 'started';
+  };
+
+  const runWithRenderedFile = async (activeObject: FabricImage): Promise<BgRemovalOutcome> => {
+    const fallbackFile = await renderObjectToFile(activeObject);
+    if (!fallbackFile) return 'no-source';
+    await imageRun(fallbackFile);
+    return 'started';
+  };
+
+  const runRemovalFor = async (activeObject: FabricImage): Promise<BgRemovalOutcome> => {
+    const imageElement = activeObject.getElement();
+    if (imageElement instanceof HTMLImageElement && imageElement.src) return runWithFetchedFile(imageElement.src);
+    return runWithRenderedFile(activeObject);
+  };
+
+  const triggerRemoveBackground = async (): Promise<BgRemovalOutcome> => {
+    if (!editor.value?.fabricCanvas) return 'no-canvas';
     const activeObject = editor.value.fabricCanvas.getActiveObject();
-    if (activeObject && activeObject instanceof FabricImage) {
-      const imageElement = activeObject.getElement();
-      if (imageElement instanceof HTMLImageElement && imageElement.src) {
-        fetch(imageElement.src)
-          .then((res) => res.blob())
-          .then((blob) => {
-            const file = new File([blob], 'image_for_bg_removal.png', {
-              type: blob.type,
-            });
-            console.log("Removing image background");
-            imageRun(file);
-          })
-          .catch((error) =>
-            console.error(
-              'Error fetching image for background removal:',
-              error,
-            ),
-          );
-      } else {
-        console.warn(
-          'Active object is not a simple image or its source is not directly accessible for background removal.',
-        );
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = activeObject.width!;
-        tempCanvas.height = activeObject.height!;
-        const tempCtx = tempCanvas.getContext('2d');
-        if (tempCtx) {
-          activeObject.render(tempCtx);
-          tempCanvas.toBlob(async (blob) => {
-            if (blob) {
-              const file = new File([blob], 'image_for_bg_removal.png', {
-                type: 'image/png',
-              });
-              await imageRun(file);
-            }
-          }, 'image/png');
-        }
-      }
-    } else {
-      console.warn('No active image object selected for background removal.');
-    }
+    if (!isRemovableImage(activeObject)) return 'no-selection';
+    return runRemovalFor(activeObject);
   };
 
   const undo = () => {
@@ -140,6 +162,8 @@ export const useFabricJs = () => {
   return {
     editor,
     zoomPercent,
+    propertiesTab,
+    setPropertiesTab,
     undo,
     redo,
     zoomIn,
@@ -148,6 +172,11 @@ export const useFabricJs = () => {
     getFrameDataUrl,
     exportCurrentCanvas,
     run,
-    triggerRemoveBackground
+    triggerRemoveBackground,
+    bgStatus,
+    bgError,
+    bgProgress,
+    isBgBusy,
+    isBgLoaded
   };
 };

@@ -1,3 +1,4 @@
+import { parseJsonObject, toJsonString } from '#layers/BaseShared/utils/json';
 import type { PostResponse, Integration, PluginPostDetails, PluginSocialMediaAccount, PlatformStats, GetCommentsResponse, ReplyCommentResponse, PlatformComment, PostInsight } from '../SchedulerPost.service';
 import { BaseSchedulerPlugin, type MediaContent, createPostInsightsFallback, extractExternalPostId } from '../SchedulerPost.service';
 import type { Post, PostWithAllData, SocialMediaAccount, Asset, PlatformContentOverride } from '#layers/BaseDB/db/schema';
@@ -36,9 +37,9 @@ export class LinkedInPlugin extends BaseSchedulerPlugin {
     const platformName = this.pluginName;
     const platformPostSettings = (platformPost?.platformSettings as Record<string, unknown> | undefined) || {};
     const platformContent = (platformPostSettings?.platformContent as Record<string, PlatformContentOverride | undefined> | undefined) ||
-      (postDetails.platformContent as unknown as Record<string, PlatformContentOverride | undefined>)?.[platformName];
+      (postDetails.platformContent as Record<string, PlatformContentOverride | undefined>)?.[platformName];
     const platformSettings = platformPostSettings ||
-      (postDetails.platformSettings as unknown as Record<string, unknown>)?.[platformName] as LinkedInSettings | undefined;
+      (postDetails.platformSettings as Record<string, unknown>)?.[platformName] as LinkedInSettings | undefined;
 
     const rawContent = platformContent?.content || postDetails.content;
 
@@ -130,7 +131,7 @@ export class LinkedInPlugin extends BaseSchedulerPlugin {
       headers: {
         'Content-Type': 'application/octet-stream',
       },
-      body: imageBuffer as unknown as BodyInit,
+      body: imageBuffer as BodyInit,
     });
 
     return asset;
@@ -255,7 +256,7 @@ export class LinkedInPlugin extends BaseSchedulerPlugin {
       throw new Error('Published platform details not found');
     }
 
-    const publishedDetails = publishedPlatformDetails.publishDetail ? JSON.parse(publishedPlatformDetails.publishDetail as string) as PostResponse : null;
+    const publishedDetails = publishedPlatformDetails.publishDetail ? parseJsonObject(toJsonString(publishedPlatformDetails.publishDetail)) as PostResponse : null;
     if (!publishedDetails) {
       throw new Error('Published details not found');
     }

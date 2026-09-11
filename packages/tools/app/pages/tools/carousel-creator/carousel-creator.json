@@ -244,7 +244,27 @@
       "savedDescription": "{count} slides added to your library.",
       "loginRequired": "Sign in to save to your library",
       "failedTitle": "Export failed",
-      "failedDescription": "Something went wrong while exporting your slides."
+      "failedDescription": "Something went wrong while exporting your slides.",
+      "downloadedTitle": "Download started",
+      "downloadedDescription": "Your slides are downloading.",
+      "emptyTitle": "Empty carousel",
+      "emptyDescription": "This carousel has no slides.",
+      "loadedTitle": "Carousel loaded",
+      "loadedDescription": "\"{name}\" loaded into editor.",
+      "loadFailedTitle": "Load failed",
+      "loadFailedDescription": "Could not load carousel.",
+      "videoFailedDescription": "Video export failed"
+    },
+    "library": {
+      "empty": "No saved carousels",
+      "publicBadge": "Public",
+      "manageTemplates": "Manage all templates"
+    },
+    "fabric": {
+      "title": "Fabric preview (beta)",
+      "hint": "Same slide rendered with the Fabric engine. Parity workbench for the rebuild.",
+      "legacyHint": "This slide uses legacy HTML and has no layer data yet.",
+      "skipped": "{count} engine layers skipped"
     },
     "bar": {
       "dialRotate": "Rotate",
@@ -358,12 +378,16 @@
       "music": "Music",
       "chooseMusic": "Choose music",
       "volume": "Music volume",
-      "musicHint": "Music loops (or trims) to fit the video length.",
+      "musicHint": "Tracks mix together, then loop or trim to fit the video.",
       "crossfade": "Crossfade between slides",
       "motions": "Slide motion",
       "cancel": "Cancel",
       "render": "Render video",
-      "download": "Download MP4"
+      "download": "Download MP4",
+      "addTrack": "Add audio",
+      "loop": "Loop",
+      "removeTrack": "Remove track",
+      "unsupportedFile": "Please choose audio files only."
     },
     "quickActions": {
       "label": "Quick actions",
@@ -619,7 +643,27 @@
       "savedDescription": "{count} diapositives ajoutées à votre bibliothèque.",
       "loginRequired": "Connectez-vous pour enregistrer dans votre bibliothèque",
       "failedTitle": "Échec de l'export",
-      "failedDescription": "Une erreur est survenue lors de l'export de vos diapositives."
+      "failedDescription": "Une erreur est survenue lors de l'export de vos diapositives.",
+      "downloadedTitle": "Téléchargement démarré",
+      "downloadedDescription": "Vos diapositives sont en cours de téléchargement.",
+      "emptyTitle": "Carrousel vide",
+      "emptyDescription": "Ce carrousel ne contient aucune diapositive.",
+      "loadedTitle": "Carrousel chargé",
+      "loadedDescription": "« {name} » chargé dans l'éditeur.",
+      "loadFailedTitle": "Échec du chargement",
+      "loadFailedDescription": "Impossible de charger le carrousel.",
+      "videoFailedDescription": "Échec de l'export vidéo"
+    },
+    "library": {
+      "empty": "Aucun carrousel enregistré",
+      "publicBadge": "Public",
+      "manageTemplates": "Gérer tous les modèles"
+    },
+    "fabric": {
+      "title": "Aperçu Fabric (bêta)",
+      "hint": "La même diapositive rendue avec le moteur Fabric. Banc d'essai pour la migration.",
+      "legacyHint": "Cette diapositive utilise du HTML hérité sans données de calques.",
+      "skipped": "{count} calques moteur ignorés"
     },
     "bar": {
       "dialRotate": "Rotation",
@@ -733,12 +777,16 @@
       "music": "Musique",
       "chooseMusic": "Choisir la musique",
       "volume": "Volume",
-      "musicHint": "La musique boucle (ou se coupe) pour s'adapter à la vidéo.",
+      "musicHint": "Les pistes sont mixées, puis bouclées ou rognées selon la vidéo.",
       "crossfade": "Fondu entre diapositives",
       "motions": "Mouvement",
       "cancel": "Annuler",
       "render": "Rendre la vidéo",
-      "download": "Télécharger MP4"
+      "download": "Télécharger MP4",
+      "addTrack": "Ajouter un audio",
+      "loop": "Boucle",
+      "removeTrack": "Retirer la piste",
+      "unsupportedFile": "Choisissez uniquement des fichiers audio."
     },
     "quickActions": {
       "label": "Actions rapides",
@@ -994,7 +1042,27 @@
       "savedDescription": "{count} diapositivas añadidas a tu biblioteca.",
       "loginRequired": "Inicia sesión para guardar en tu biblioteca",
       "failedTitle": "Error al exportar",
-      "failedDescription": "Algo salió mal al exportar tus diapositivas."
+      "failedDescription": "Algo salió mal al exportar tus diapositivas.",
+      "downloadedTitle": "Descarga iniciada",
+      "downloadedDescription": "Tus diapositivas se están descargando.",
+      "emptyTitle": "Carrusel vacío",
+      "emptyDescription": "Este carrusel no tiene diapositivas.",
+      "loadedTitle": "Carrusel cargado",
+      "loadedDescription": "«{name}» cargado en el editor.",
+      "loadFailedTitle": "Error al cargar",
+      "loadFailedDescription": "No se pudo cargar el carrusel.",
+      "videoFailedDescription": "Error al exportar el video"
+    },
+    "library": {
+      "empty": "No hay carruseles guardados",
+      "publicBadge": "Público",
+      "manageTemplates": "Gestionar todas las plantillas"
+    },
+    "fabric": {
+      "title": "Vista previa de Fabric (beta)",
+      "hint": "La misma diapositiva renderizada con el motor Fabric. Banco de pruebas para la migración.",
+      "legacyHint": "Esta diapositiva usa HTML heredado sin datos de capas.",
+      "skipped": "{count} capas de motor omitidas"
     },
     "bar": {
       "dialRotate": "Rotar",
@@ -1108,12 +1176,16 @@
       "music": "Música",
       "chooseMusic": "Elegir música",
       "volume": "Volumen",
-      "musicHint": "La música se repite (o recorta) para ajustarse al vídeo.",
+      "musicHint": "Las pistas se mezclan y se repiten o recortan según el video.",
       "crossfade": "Fundido entre diapositivas",
       "motions": "Movimiento",
       "cancel": "Cancelar",
       "render": "Renderizar vídeo",
-      "download": "Descargar MP4"
+      "download": "Descargar MP4",
+      "addTrack": "Añadir audio",
+      "loop": "Repetir",
+      "removeTrack": "Quitar pista",
+      "unsupportedFile": "Elige solo archivos de audio."
     },
     "quickActions": {
       "label": "Acciones rápidas",
@@ -1369,7 +1441,27 @@
       "savedDescription": "{count} Folien zu deiner Bibliothek hinzugefügt.",
       "loginRequired": "Melde dich an, um in deiner Bibliothek zu speichern",
       "failedTitle": "Export fehlgeschlagen",
-      "failedDescription": "Beim Exportieren deiner Folien ist etwas schiefgelaufen."
+      "failedDescription": "Beim Exportieren deiner Folien ist etwas schiefgelaufen.",
+      "downloadedTitle": "Download gestartet",
+      "downloadedDescription": "Deine Folien werden heruntergeladen.",
+      "emptyTitle": "Leeres Karussell",
+      "emptyDescription": "Dieses Karussell enthält keine Folien.",
+      "loadedTitle": "Karussell geladen",
+      "loadedDescription": "„{name}“ in den Editor geladen.",
+      "loadFailedTitle": "Laden fehlgeschlagen",
+      "loadFailedDescription": "Karussell konnte nicht geladen werden.",
+      "videoFailedDescription": "Videoexport fehlgeschlagen"
+    },
+    "library": {
+      "empty": "Keine gespeicherten Karussells",
+      "publicBadge": "Öffentlich",
+      "manageTemplates": "Alle Vorlagen verwalten"
+    },
+    "fabric": {
+      "title": "Fabric-Vorschau (Beta)",
+      "hint": "Dieselbe Folie, mit der Fabric-Engine gerendert. Prüfstand für die Migration.",
+      "legacyHint": "Diese Folie verwendet Legacy-HTML ohne Ebenendaten.",
+      "skipped": "{count} Engine-Ebenen übersprungen"
     },
     "bar": {
       "dialRotate": "Drehen",
@@ -1483,12 +1575,16 @@
       "music": "Musik",
       "chooseMusic": "Musik wählen",
       "volume": "Lautstärke",
-      "musicHint": "Musik wird auf die Videolänge geloopt (oder gekürzt).",
+      "musicHint": "Spuren werden gemischt und per Schleife oder Schnitt ans Video angepasst.",
       "crossfade": "Überblendung zwischen Folien",
       "motions": "Bewegung",
       "cancel": "Abbrechen",
       "render": "Video rendern",
-      "download": "MP4 herunterladen"
+      "download": "MP4 herunterladen",
+      "addTrack": "Audio hinzufügen",
+      "loop": "Schleife",
+      "removeTrack": "Spur entfernen",
+      "unsupportedFile": "Bitte nur Audiodateien wählen."
     },
     "quickActions": {
       "label": "Schnellaktionen",

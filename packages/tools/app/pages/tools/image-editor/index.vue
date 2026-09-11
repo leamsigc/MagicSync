@@ -8,7 +8,8 @@ import ImageEditorProperties from './components/ImageEditorProperties.vue';
 
 /**
  *
- * Image editor using fabric js
+ * Image editor using fabric js — Figma-style layout:
+ * top bar / left tool rail + panel / canvas / right properties.
  *
  * @author Reflect-Media <reflect.media GmbH>
  * @version 0.0.1
@@ -31,21 +32,15 @@ defineOgImage("BlogOgImage", {
 </script>
 
 <template>
-  <main class="h-screen w-screen overflow-hidden flex flex-col bg-background text-foreground">
-    <!-- Top Bar -->
+  <main class="h-screen w-screen overflow-hidden flex flex-col bg-default text-highlighted">
     <ImageEditorHeader class="shrink-0" />
 
-    <!-- Main Content Area -->
     <div class="flex-1 flex overflow-hidden">
-      <!-- Left Sidebar (Tools, Layers, Templates) -->
       <ImageEditorSidebar class="shrink-0" />
 
-      <!-- Middle Canvas Area -->
       <ImageCanvasEditor class="flex-1 relative z-0" />
 
-      <!-- Right Sidebar (Properties) -->
       <ImageEditorProperties class="shrink-0" />
     </div>
   </main>
 </template>
-<style scoped></style>

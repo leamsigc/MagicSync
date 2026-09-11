@@ -101,7 +101,7 @@ export class StatsCollectorService {
         following: stats.following ?? null,
         posts: stats.posts ?? null,
         engagement: (stats.engagement as Record<string, unknown> | undefined) ?? null,
-        rawPayload: stats as unknown as Record<string, unknown>,
+        rawPayload: stats,
         source,
         status: 'success',
         collectedAt: now,
@@ -197,7 +197,7 @@ export class StatsCollectorService {
     try {
       const insights = await this.autoPostService.getPostInsights({
         post: item.postFull,
-        socialAccount: item.account as unknown as Account,
+        socialAccount: item.account,
         platform: item.account.platform,
       })
       const normalized = normalizePostInsights(insights as PostInsight[])
@@ -212,7 +212,7 @@ export class StatsCollectorService {
         platform: item.account.platform,
         externalPostId: externalPostId || null,
         metrics: normalized,
-        rawPayload: insights as unknown as Record<string, unknown>,
+        rawPayload: insights,
         status: unavailable ? 'failed' : 'success',
         error: unavailable ? 'Insights unavailable for this platform' : null,
         collectedAt: now,

@@ -81,17 +81,22 @@ export const useBusinessManager = () => {
     let completed: InformationSchemaBusinessResponse | undefined;
     let failure: Error | undefined;
 
+    const EVENT_TYPES = ['step', 'complete', 'error'];
+    const isExtractionEvent = (value: unknown): value is InformationExtractionEvent => {
+      return typeof value === 'object' && value !== null && EVENT_TYPES.includes((value as { type?: unknown }).type as string);
+    };
     const processLine = (line: string) => {
       if (!line.trim()) return;
-      let event: InformationExtractionEvent;
+      let parsed: unknown;
       try {
-        event = JSON.parse(line) as InformationExtractionEvent;
+        parsed = JSON.parse(line);
       } catch {
         return;
       }
-      onEvent(event);
-      if (event.type === 'complete') completed = event.data;
-      if (event.type === 'error') failure = new Error(event.message || 'Extraction failed');
+      if (!isExtractionEvent(parsed)) return;
+      onEvent(parsed);
+      if (parsed.type === 'complete') completed = parsed.data;
+      if (parsed.type === 'error') failure = new Error(parsed.message || 'Extraction failed');
     };
 
     while (true) {

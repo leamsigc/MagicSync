@@ -1,4 +1,4 @@
-import type { Post, PostWithAllData, Account } from '#layers/BaseDB/db/schema';
+import type { Post, PostWithAllData, SocialMediaAccount } from '#layers/BaseDB/db/schema';
 import { postBatchService } from '#layers/BaseDB/server/services/post.service';
 import { socialMediaAccountService, } from '#layers/BaseDB/server/services/social-media-account.service';
 import { SchedulerPos, SchedulerPost } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
@@ -27,23 +27,23 @@ import { notificationService } from '#layers/BaseAuth/server/services/notificati
 export class AutoPostService {
 
   private matcher: Record<string, SchedulerPluginConstructor> = {
-    facebook: FacebookPlugin as unknown as SchedulerPluginConstructor,
-    bluesky: BlueskyPlugin as unknown as SchedulerPluginConstructor,
-    devto: DevToPlugin as unknown as SchedulerPluginConstructor,
-    discord: DiscordPlugin as unknown as SchedulerPluginConstructor,
-    dribbble: DribbblePlugin as unknown as SchedulerPluginConstructor,
-    googlemybusiness: GoogleMyBusinessPlugin as unknown as SchedulerPluginConstructor,
-    instagram: InstagramPlugin as unknown as SchedulerPluginConstructor,
-    'instagram-standalone': InstagramStandalonePlugin as unknown as SchedulerPluginConstructor,
-    linkedin: LinkedInPlugin as unknown as SchedulerPluginConstructor,
-    'linkedin-page': LinkedInPagePlugin as unknown as SchedulerPluginConstructor,
-    reddit: RedditPlugin as unknown as SchedulerPluginConstructor,
-    threads: ThreadsPlugin as unknown as SchedulerPluginConstructor,
-    tiktok: TikTokPlugin as unknown as SchedulerPluginConstructor,
-    wordpress: WordPressPlugin as unknown as SchedulerPluginConstructor,
-    twitter: XPlugin as unknown as SchedulerPluginConstructor,
-    pinterest: PinterestPlugin as unknown as SchedulerPluginConstructor,
-    youtube: YouTubePlugin as unknown as SchedulerPluginConstructor,
+    facebook: FacebookPlugin as SchedulerPluginConstructor,
+    bluesky: BlueskyPlugin as SchedulerPluginConstructor,
+    devto: DevToPlugin as SchedulerPluginConstructor,
+    discord: DiscordPlugin as SchedulerPluginConstructor,
+    dribbble: DribbblePlugin as SchedulerPluginConstructor,
+    googlemybusiness: GoogleMyBusinessPlugin as SchedulerPluginConstructor,
+    instagram: InstagramPlugin as SchedulerPluginConstructor,
+    'instagram-standalone': InstagramStandalonePlugin as SchedulerPluginConstructor,
+    linkedin: LinkedInPlugin as SchedulerPluginConstructor,
+    'linkedin-page': LinkedInPagePlugin as SchedulerPluginConstructor,
+    reddit: RedditPlugin as SchedulerPluginConstructor,
+    threads: ThreadsPlugin as SchedulerPluginConstructor,
+    tiktok: TikTokPlugin as SchedulerPluginConstructor,
+    wordpress: WordPressPlugin as SchedulerPluginConstructor,
+    twitter: XPlugin as SchedulerPluginConstructor,
+    pinterest: PinterestPlugin as SchedulerPluginConstructor,
+    youtube: YouTubePlugin as SchedulerPluginConstructor,
   }
 
   private async notifyPostFailed(post: PostWithAllData, platform: string, error: string) {
@@ -212,7 +212,7 @@ export class AutoPostService {
 
   }: {
     post: PostWithAllData;
-    socialAccount: Account[];
+    socialAccount: SocialMediaAccount[];
     platform: string;
     pagination: { limit: number; cursor: string | undefined; };
   }) {
@@ -227,7 +227,7 @@ export class AutoPostService {
     }
     scheduler.use(plugin);
 
-    return await scheduler.getComments(post, socialAccount as unknown as PluginSocialMediaAccount, pagination);
+    return await scheduler.getComments(post, socialAccount as PluginSocialMediaAccount, pagination);
 
   }
 
@@ -243,7 +243,7 @@ export class AutoPostService {
     replyText,
   }: {
     post: PostWithAllData;
-    socialAccount: Account;
+    socialAccount: SocialMediaAccount;
     platform: string;
     commentId: string;
     replyText: string;
@@ -261,7 +261,7 @@ export class AutoPostService {
 
     return await scheduler.replyToComment(
       post,
-      socialAccount as unknown as PluginSocialMediaAccount,
+      socialAccount as PluginSocialMediaAccount,
       commentId,
       replyText
     );
@@ -273,7 +273,7 @@ export class AutoPostService {
     platform,
   }: {
     post: PostWithAllData;
-    socialAccount: Account;
+    socialAccount: SocialMediaAccount;
     platform: string;
   }) {
     const scheduler = new SchedulerPost({
@@ -287,7 +287,7 @@ export class AutoPostService {
     }
     scheduler.use(plugin);
 
-    return await scheduler.getPostInsights(post, socialAccount as unknown as PluginSocialMediaAccount);
+    return await scheduler.getPostInsights(post, socialAccount as PluginSocialMediaAccount);
   }
 
   async getStatisticForAccount({
@@ -295,10 +295,10 @@ export class AutoPostService {
     account,
   }: {
     platform: string;
-    account: Account;
+    account: SocialMediaAccount;
   }) {
     const scheduler = new SchedulerPost({
-      post: undefined as unknown as Post,
+      post: undefined,
       accounts: [account],
     });
 
@@ -308,7 +308,7 @@ export class AutoPostService {
     }
     scheduler.use(plugin);
 
-    return await scheduler.getStatistic({} as unknown as PluginPostDetails, account as unknown as PluginSocialMediaAccount);
+    return await scheduler.getStatistic({} as PluginPostDetails, account as PluginSocialMediaAccount);
   }
 
   async likeComment({
@@ -318,7 +318,7 @@ export class AutoPostService {
     commentId,
   }: {
     post: PostWithAllData;
-    socialAccount: Account;
+    socialAccount: SocialMediaAccount;
     platform: string;
     commentId: string;
   }) {
@@ -326,7 +326,7 @@ export class AutoPostService {
     const plugin = this.matcher[platform];
     if (!plugin) throw new Error(`Unsupported platform: ${platform}`);
     scheduler.use(plugin);
-    return await scheduler.likeComment(post, socialAccount as unknown as PluginSocialMediaAccount, commentId);
+    return await scheduler.likeComment(post, socialAccount as PluginSocialMediaAccount, commentId);
   }
 
   async hideComment({
@@ -337,7 +337,7 @@ export class AutoPostService {
     isHidden,
   }: {
     post: PostWithAllData;
-    socialAccount: Account;
+    socialAccount: SocialMediaAccount;
     platform: string;
     commentId: string;
     isHidden: boolean;
@@ -346,7 +346,7 @@ export class AutoPostService {
     const plugin = this.matcher[platform];
     if (!plugin) throw new Error(`Unsupported platform: ${platform}`);
     scheduler.use(plugin);
-    return await scheduler.hideComment(post, socialAccount as unknown as PluginSocialMediaAccount, commentId, isHidden);
+    return await scheduler.hideComment(post, socialAccount as PluginSocialMediaAccount, commentId, isHidden);
   }
 
   async deleteComment({
@@ -356,7 +356,7 @@ export class AutoPostService {
     commentId,
   }: {
     post: PostWithAllData;
-    socialAccount: Account;
+    socialAccount: SocialMediaAccount;
     platform: string;
     commentId: string;
   }) {
@@ -364,7 +364,7 @@ export class AutoPostService {
     const plugin = this.matcher[platform];
     if (!plugin) throw new Error(`Unsupported platform: ${platform}`);
     scheduler.use(plugin);
-    return await scheduler.deleteComment(post, socialAccount as unknown as PluginSocialMediaAccount, commentId);
+    return await scheduler.deleteComment(post, socialAccount as PluginSocialMediaAccount, commentId);
   }
 
   private dmCapablePlatforms = new Set(['facebook', 'instagram']);
@@ -379,20 +379,20 @@ export class AutoPostService {
     limit,
     cursor,
   }: {
-    socialAccount: Account;
+    socialAccount: SocialMediaAccount;
     platform: string;
     limit?: number;
     cursor?: string;
   }) {
     const scheduler = new SchedulerPost({
-      post: undefined as unknown as Post,
+      post: undefined,
       accounts: [socialAccount],
     });
     const plugin = this.matcher[platform];
     if (!plugin) throw new Error(`Unsupported platform: ${platform}`);
     scheduler.use(plugin);
     return await scheduler.getConversations(
-      socialAccount as unknown as PluginSocialMediaAccount,
+      socialAccount as PluginSocialMediaAccount,
       { limit, cursor },
     );
   }
@@ -403,20 +403,20 @@ export class AutoPostService {
     conversationId,
     message,
   }: {
-    socialAccount: Account;
+    socialAccount: SocialMediaAccount;
     platform: string;
     conversationId: string;
     message: string;
   }) {
     const scheduler = new SchedulerPost({
-      post: undefined as unknown as Post,
+      post: undefined,
       accounts: [socialAccount],
     });
     const plugin = this.matcher[platform];
     if (!plugin) throw new Error(`Unsupported platform: ${platform}`);
     scheduler.use(plugin);
     return await scheduler.replyToConversation(
-      socialAccount as unknown as PluginSocialMediaAccount,
+      socialAccount as PluginSocialMediaAccount,
       conversationId,
       message,
     );

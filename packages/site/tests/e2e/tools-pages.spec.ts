@@ -180,8 +180,7 @@ test.describe('Audio Player', () => {
     await expect(page.getByText('tone.wav')).toBeVisible()
 
     // The X (icon-only) button inside the file card
-    const card = page.locator('.bg-emerald-500\\/10')
-    await card.getByRole('button').click()
+    await page.locator('button[data-testid="audio-clear-file"]').click()
 
     await expect(page.getByText('Upload an audio file to get started')).toBeVisible()
   })

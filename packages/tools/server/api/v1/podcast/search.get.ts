@@ -1,3 +1,5 @@
+import { parseJsonObject, toJsonString } from '#layers/BaseShared/utils/json';
+
 export default defineEventHandler(async (event) => {
   const log = useLogger(event)
   const query = getQuery(event)
@@ -19,10 +21,12 @@ export default defineEventHandler(async (event) => {
     headers: { Accept: 'application/json' },
   });
 
-  const data = JSON.parse((requestSting as unknown as string) || '{}')
+  // iTunes serves text/javascript, so $fetch may hand back a raw string or
+  // an already-parsed object — normalize both before reading results.
+  const data = parseJsonObject(toJsonString(requestSting))
 
 
-  const results = (data.results || []).filter((p: Record<string, unknown>) => {
+  const results = (Array.isArray(data.results) ? data.results : []).filter((p: Record<string, unknown>) => {
     return p.feedUrl
   }).map((p: Record<string, unknown>) => ({
     collectionId: p.collectionId,

@@ -202,8 +202,8 @@ export class LinkedInPagePlugin extends BaseSchedulerPlugin {
 
   private getPlatformData(postDetails: PluginPostDetails) {
     const platformName = this.pluginName;
-    const platformContent = (postDetails.platformContent as unknown as Record<string, PlatformContentOverride | undefined>)?.[platformName];
-    const platformSettings = (postDetails.platformSettings as unknown as Record<string, unknown>)?.[platformName] as LinkedInSettings | undefined;
+    const platformContent = (postDetails.platformContent as Record<string, PlatformContentOverride | undefined>)?.[platformName];
+    const platformSettings = (postDetails.platformSettings as Record<string, unknown>)?.[platformName] as LinkedInSettings | undefined;
     return {
       content: platformContent?.content || postDetails.content,
       settings: platformSettings,
@@ -372,7 +372,7 @@ export class LinkedInPagePlugin extends BaseSchedulerPlugin {
       headers: {
         'Content-Type': 'application/octet-stream',
       },
-      body: imageBuffer as unknown as BodyInit,
+      body: imageBuffer as BodyInit,
     });
 
     return asset;

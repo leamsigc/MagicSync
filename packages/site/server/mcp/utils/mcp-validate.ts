@@ -17,12 +17,7 @@ export function validatePlatformContent(
   imageCount = 0,
   videoCount = 0
 ): PlatformValidation {
-  const configs = platformConfigurations as unknown as Record<string, {
-    maxPostLength: number
-    maxImages: number
-    supportsVideo: boolean
-    supportsCarousel: boolean
-  }>
+  const configs = platformConfigurations
   const config = configs[platform] ?? configs.default
   const errors: string[] = []
   const warnings: string[] = []

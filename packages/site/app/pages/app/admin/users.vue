@@ -37,7 +37,7 @@ const searchQuery = ref('')
 const rowSelection = ref<Record<string, boolean>>({})
 const bulkBusy = ref(false)
 
-const { user: currentUser } = UseUser()
+const { user: currentUser, fetchSession } = UseUser()
 
 const selectedCount = computed(() => Object.values(rowSelection.value).filter(Boolean).length)
 
@@ -223,6 +223,31 @@ function handleBanFromEdit() {
   }
 }
 
+const impersonatingId = ref<string | null>(null)
+
+function canImpersonate(target: AdminUser) {
+  if (target.id === currentUser.value?.id) return false
+  if (target.role === 'admin') return false
+  return true
+}
+
+async function handleImpersonate(target: AdminUser) {
+  if (!canImpersonate(target)) return
+  impersonatingId.value = target.id
+  try {
+    const { error } = await authClient.admin.impersonateUser({ userId: target.id })
+    if (error) throw error
+    clearNuxtData('auth-session')
+    await fetchSession()
+    toast.add({ title: t('toast.impersonated'), description: t('toast.impersonatedDescription', { name: target.name || target.email }), color: 'success' })
+    await navigateTo('/app')
+  } catch {
+    toast.add({ title: t('toast.error'), description: t('toast.impersonateFailed'), color: 'error' })
+  } finally {
+    impersonatingId.value = null
+  }
+}
+
 async function deleteUser(user: AdminUser) {
   const index = users.value.findIndex(item => item.id === user.id)
   const snapshot = index === -1 ? null : users.value[index]
@@ -354,6 +379,7 @@ function getRowItems(row: Row<AdminUser>) {
     { type: 'label', label: t('menu.title') },
     { label: t('menu.edit'), onSelect: () => openEdit(row.original) },
     { label: row.original.banned ? t('menu.unban') : t('menu.ban'), disabled: isSelf, onSelect: () => toggleBan(row.original) },
+    { label: t('menu.impersonate'), disabled: !canImpersonate(row.original) || impersonatingId.value === row.original.id, onSelect: () => handleImpersonate(row.original) },
     { type: 'separator' },
     { label: t('menu.delete'), disabled: isSelf, onSelect: () => askDeleteSingle(row.original) }
   ]

@@ -1,4 +1,7 @@
 import { eq, and, sql, or, inArray } from 'drizzle-orm';
+import { mkdir, writeFile } from 'fs/promises';
+import { join } from 'path';
+import { parseJsonObject, toJsonString } from '../../utils/json';
 import {
   type ServiceResponse,
   ValidationError,
@@ -26,6 +29,51 @@ export type AssetMetadata = {
   storagePath?: string;
   [key: string]: unknown;
 };
+
+export type AssetFromUrlInput = {
+  url: string;
+  businessId?: string;
+  originalName?: string;
+};
+
+export type AssetFromBase64Input = {
+  data: string;
+  mimeType: string;
+  businessId?: string;
+  originalName?: string;
+};
+
+const FILE_STORAGE_MOUNT = process.env.NUXT_FILE_STORAGE_MOUNT || './upload/files';
+
+const MIME_BY_EXTENSION: Record<string, string> = {
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  gif: 'image/gif',
+  webp: 'image/webp',
+  svg: 'image/svg+xml',
+  mp4: 'video/mp4',
+  webm: 'video/webm',
+  mov: 'video/quicktime',
+  avi: 'video/x-msvideo',
+  mkv: 'video/x-matroska',
+  pdf: 'application/pdf',
+  txt: 'text/plain',
+};
+
+function mimeFromFilename(filename: string): string {
+  const ext = filename.split('.').pop()?.toLowerCase() || '';
+  return MIME_BY_EXTENSION[ext] || 'application/octet-stream';
+}
+
+function extFromMime(mimeType: string): string {
+  const entry = Object.entries(MIME_BY_EXTENSION).find(([, mime]) => mime === mimeType);
+  return entry ? entry[0] as string : 'bin';
+}
+
+function userUploadDir(userId: string): string {
+  return join(process.cwd(), FILE_STORAGE_MOUNT, 'userFiles', userId);
+}
 
 export type FileUploadOptions = {
   maxSize?: number;
@@ -240,9 +288,10 @@ export class AssetService {
         return existingResult;
       }
 
-      const storagePath = existingResult.data?.metadata
-        ? (JSON.parse(existingResult.data.metadata as string) as AssetMetadata).storagePath
-        : undefined;
+      const storedMetadata = existingResult.data?.metadata
+        ? parseJsonObject(toJsonString(existingResult.data.metadata))
+        : {}
+      const storagePath = typeof storedMetadata.storagePath === 'string' ? storedMetadata.storagePath : undefined
 
       const [deleted] = await this.db
         .delete(assets)
@@ -341,6 +390,81 @@ export class AssetService {
     if (this.isVideoAsset(mimeType)) return 'video';
     if (mimeType.includes('pdf') || mimeType.includes('document')) return 'document';
     return 'other';
+  }
+
+  async createFromUrl(userId: string, input: AssetFromUrlInput): Promise<ServiceResponse<Asset>> {
+    try {
+      if (!/^https?:\/\//i.test(input.url)) {
+        return { success: false, error: 'Only http(s) URLs can be imported' };
+      }
+      const originalName = input.originalName || input.url.split('/').pop() || 'downloaded-asset';
+      const ext = originalName.split('.').pop()?.toLowerCase() || 'bin';
+      const downloaded: unknown = await $fetch(input.url);
+      const arrayBuffer = downloaded instanceof Blob ? await downloaded.arrayBuffer() : downloaded as ArrayBuffer;
+      const buffer = Buffer.from(arrayBuffer);
+      if (buffer.length === 0) {
+        return { success: false, error: 'Downloaded file is empty' };
+      }
+      return await this.storeBuffer(userId, buffer, {
+        originalName,
+        ext,
+        mimeType: mimeFromFilename(originalName),
+        businessId: input.businessId,
+        metadata: { sourceUrl: input.url },
+      });
+    } catch (error) {
+      console.error('assetService.createFromUrl failed:', error);
+      return { success: false, error: 'Failed to import asset from URL' };
+    }
+  }
+
+  async createFromBase64(userId: string, input: AssetFromBase64Input): Promise<ServiceResponse<Asset>> {
+    try {
+      const match = input.data.match(/^data:([^;]+);base64,(.*)$/s);
+      const mimeType = match?.[1] ?? input.mimeType;
+      const payload = (match?.[2] ?? input.data).replace(/\s+/g, '');
+      const buffer = Buffer.from(payload, 'base64');
+      if (buffer.length === 0) {
+        return { success: false, error: 'Decoded image is empty' };
+      }
+      const ext = extFromMime(mimeType);
+      return await this.storeBuffer(userId, buffer, {
+        originalName: input.originalName || `upload.${ext}`,
+        ext,
+        mimeType,
+        businessId: input.businessId,
+        metadata: { inlineUpload: true },
+      });
+    } catch (error) {
+      console.error('assetService.createFromBase64 failed:', error);
+      return { success: false, error: 'Failed to create asset from inline image' };
+    }
+  }
+
+  private async storeBuffer(
+    userId: string,
+    buffer: Buffer,
+    file: { originalName: string; ext: string; mimeType: string; businessId?: string; metadata?: Record<string, unknown> }
+  ): Promise<ServiceResponse<Asset>> {
+    const uniqueFilename = crypto.randomUUID();
+    const fullFilename = `${uniqueFilename}.${file.ext}`;
+    const userDir = userUploadDir(userId);
+    await mkdir(userDir, { recursive: true });
+    await writeFile(join(userDir, fullFilename), buffer);
+    return this.create(userId, {
+      businessId: file.businessId,
+      filename: uniqueFilename,
+      originalName: file.originalName,
+      mimeType: file.mimeType,
+      size: buffer.length,
+      url: `/api/v1/assets/serve/${fullFilename}`,
+      metadata: {
+        uploadedAt: new Date(),
+        originalSize: buffer.length,
+        storedPath: fullFilename,
+        ...file.metadata,
+      },
+    });
   }
 }
 

@@ -24,6 +24,7 @@ Lookup table for all pattern files in this directory. Check here before starting
 | [ai-extraction-streaming.md](ai-extraction-streaming.md) | Long-running AI extraction endpoints — NDJSON progress streaming, parallel generateObject calls, backend-driven loaders |
 | [theme-tokens.md](theme-tokens.md) | Fixing UI that breaks in light/dark mode — hardcoded colors → Nuxt UI semantic tokens |
 | [tool-control-bar.md](tool-control-bar.md) | Camera-style bottom control bar for tools (`/tools/*`) — segmented mode, scrubbable dials, icon cluster popovers, yellow primary pill |
+| [figma-editor-refresh.md](figma-editor-refresh.md) | Figma-style refresh of a `/tools/*` canvas editor — top bar, icon rail, stage, properties panel with tokens, i18n, AI worker UX |
 | [carousel-deck-templates.md](carousel-deck-templates.md) | Carousel deck templates (palette/font/pattern per deck), multi-image slide layouts, and the all-pages template gallery |
 | [browser-video-export-audio-mux.md](browser-video-export-audio-mux.md) | In-browser MP4 export that mixes background audio + source audio (mediabunny two-pass re-mux) and burns time-based subtitle cues |
 | [fullcalendar-nuxt.md](fullcalendar-nuxt.md) | Embedding FullCalendar 6 in Nuxt 4 without customRenderingMap crashes |
@@ -32,3 +33,5 @@ Lookup table for all pattern files in this directory. Check here before starting
 | [safe-build.md](safe-build.md) | Building the site without freezing the machine — heap caps, concurrency limits |
 | [auth-session-lifecycle.md](auth-session-lifecycle.md) | better-auth session lifecycle — $sessionSignal listeners, fetchSession, logout without get-session floods |
 | [ssr-safe-state.md](ssr-safe-state.md) | SSR-safe state — no module-scope ref/reactive for request-varying data, useState only |
+| [client-only-node-builtins.md](client-only-node-builtins.md) | Client-bundle 500s from Node builtins (`events`, `buffer`, `path`) imported in `app/` code |
+| [playwright-golden-oracles.md](playwright-golden-oracles.md) | Deterministic screenshot goldens — dev-overlay suppression, motion settle, dark-mode forcing |

@@ -108,10 +108,10 @@ export const useConnectionManager = () => {
   }
   const getPagesForIntegration = async (connectionId: string) => {
     try {
-      const response = await $fetch<Promise<SocialMediaAccount[]>>('/api/v1/social-accounts?platformId=' + connectionId);
+      const response = await $fetch<FacebookPage[]>('/api/v1/social-accounts?platformId=' + connectionId);
 
       if (connectionId === 'facebook' || connectionId === 'linkedin' || connectionId === 'linkedin-page' || connectionId === 'youtube' || connectionId === 'google') {
-        facebookPages.value = (response as unknown as FacebookPage[])
+        facebookPages.value = response
       }
     } catch (error) {
       console.error('Error adding business:', error);

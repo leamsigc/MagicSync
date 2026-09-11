@@ -191,8 +191,8 @@ export class ThreadsPlugin extends BaseSchedulerPlugin {
 
   private getPlatformData(postDetails: PluginPostDetails) {
     const platformName = this.pluginName;
-    const platformContent = (postDetails.platformContent as unknown as Record<string, PlatformContentOverride | undefined>)?.[platformName];
-    const platformSettings = (postDetails.platformSettings as unknown as Record<string, unknown>)?.[platformName] as ThreadsSettings | undefined;
+    const platformContent = (postDetails.platformContent as Record<string, PlatformContentOverride | undefined>)?.[platformName];
+    const platformSettings = (postDetails.platformSettings as Record<string, unknown>)?.[platformName] as ThreadsSettings | undefined;
     return {
       content: platformContent?.content || postDetails.content,
       settings: platformSettings,

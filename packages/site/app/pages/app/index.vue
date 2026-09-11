@@ -308,6 +308,7 @@ onMounted(async () => {
 
     <BaseDashboardOverviewCards :display-metrics="displayMetrics">
       <template v-if="dashboard">
+        <AnnouncementBanner class="col-span-1 lg:col-span-3" />
         <div class="col-span-1 lg:col-span-3">
           <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
             <h2 class="text-lg font-semibold tracking-tight text-white">

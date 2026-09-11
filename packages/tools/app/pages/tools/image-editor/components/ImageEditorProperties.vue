@@ -1,8 +1,8 @@
 <i18n src="../ImageEditor.json"></i18n>
 <script lang="ts" setup>
 import { computed, watch, ref } from 'vue';
-import { IText, FabricImage, type ITextProps } from 'fabric';
-import { useFabricJs } from '../composables/useFabricJs';
+import { BG_BUSY_CODE } from '../../../../composables/useImageTransformer';
+import { useFabricJs, type BgRemovalOutcome } from '../composables/useFabricJs';
 
 // --- IMPORTS REUSE ---
 interface TextAdjustmentProps {
@@ -22,18 +22,19 @@ const toast = useToast();
 const {
   editor,
   triggerRemoveBackground,
+  bgStatus,
+  bgError,
+  bgProgress,
+  isBgBusy,
+  propertiesTab: activeTab,
 } = useFabricJs();
 
-const { start, status } = useImageTransformer();
-
-// --- STATE ---
-const activeTab = ref('design'); // design | export
+const { start, result, error } = useImageTransformer();
 
 
 const activeLayer = computed(() => editor?.value?.activeLayer?.value);
 const isTextLayerActive = computed(() => activeLayer.value?.type === 'i-text' || activeLayer.value?.type === 'text');
 const isImageLayerActive = computed(() => activeLayer.value?.type === 'image');
-const isShapeLayerActive = computed(() => ['rect', 'circle', 'triangle', 'path'].includes(activeLayer.value?.type || ''));
 const isNoSelection = computed(() => !activeLayer.value);
 
 // --- TRANSFORM STATE ---
@@ -57,7 +58,7 @@ const shadow = ref({
 });
 
 // --- TEXT STATE ---
-const localTextSettings = ref<TextAdjustmentProps>({});
+const localTextSettings = ref<TextAdjustmentProps>({ fontSize: 16, fontFamily: 'Arial', fill: '#000000' });
 const textProps = ref({
   letterSpacing: 0,
   lineHeight: 1.16
@@ -65,6 +66,12 @@ const textProps = ref({
 
 // --- FILTER STATE ---
 const presetFilter = ref('None');
+const presetFilterItems = computed(() => [
+  { label: t('section.presetNone'), value: 'None' },
+  { label: t('section.presetGrayscale'), value: 'Grayscale' },
+  { label: t('section.presetSepia'), value: 'Sepia' },
+  { label: t('section.presetContrast'), value: 'Contrast' },
+]);
 const filtersRef = ref({
   Brightness: 0,
   Contrast: 0,
@@ -72,6 +79,13 @@ const filtersRef = ref({
   Hue: 0,
   Blur: 0,
 });
+const adjustmentLabelKeys: Record<string, string> = {
+  Brightness: 'adj.brightness',
+  Contrast: 'adj.contrast',
+  Saturation: 'adj.saturation',
+  Hue: 'adj.hue',
+  Blur: 'adj.blur',
+};
 
 // --- RULER STATE ---
 const showRulers = ref(false);
@@ -86,6 +100,30 @@ const background = ref({
   gradientColors: ['#ffffff', '#000000'],
   gradientAngle: 0
 });
+const backgroundType = ref('none');
+const backgroundTypeItems = computed(() => [
+  { label: t('adjust.background.none'), value: 'none' },
+  { label: t('adjust.background.solid'), value: 'solid' },
+  { label: t('adjust.background.gradient'), value: 'gradient' },
+]);
+
+// --- AI STATE ---
+const bgStatusLabel = computed(() => {
+  if (bgStatus.value === 'loading') return t('ai.statusLoading');
+  if (bgStatus.value === 'processing') return t('ai.statusProcessing');
+  if (bgStatus.value === 'loaded' || bgStatus.value === 'done') return t('ai.statusReady');
+  if (bgStatus.value === 'error') return t('ai.statusError');
+  return t('ai.statusIdle');
+});
+const isBgFailed = computed(() => bgStatus.value === 'error');
+const lastNotifiedError = ref<string | null>(null);
+
+const BG_OUTCOME_KEYS: Record<Exclude<BgRemovalOutcome, 'started'>, string> = {
+  'no-canvas': 'ai.errNoCanvas',
+  'no-selection': 'ai.errNoSelection',
+  'no-source': 'ai.errNoSource',
+  'failed': 'ai.errFailed',
+};
 
 
 // --- WATCHERS & HELPERS ---
@@ -135,6 +173,35 @@ watch(activeLayer, (newVal) => {
   }
 }, { immediate: true });
 
+const notifyAiError = (message: string | null) => {
+  if (!message || message === lastNotifiedError.value) return;
+  lastNotifiedError.value = message;
+  toast.add({
+    title: t('ai.errorTitle'),
+    description: toUserError(message),
+    icon: 'i-heroicons-exclamation-triangle',
+    color: 'error'
+  });
+};
+
+const toUserError = (message: string) => {
+  if (message === BG_BUSY_CODE) return t('ai.errBusy');
+  return message;
+};
+
+watch(error, (message) => notifyAiError(message));
+
+watch(result, (files) => {
+  if (files && files.length > 0) {
+    toast.add({
+      title: t('ai.successTitle'),
+      description: t('ai.successDesc'),
+      icon: 'i-heroicons-check-circle',
+      color: 'success'
+    });
+  }
+});
+
 // --- ACTIONS ---
 const updatePosition = () => editor.value?.setPosition?.(position.value.x, position.value.y);
 const handleOpacityUpdate = () => editor.value?.applyOpacity?.(opacity.value / 100);
@@ -167,6 +234,23 @@ const handleFilterUpdate = (name: string) => {
   editor?.value?.applyImageAdjustment?.(name, (filtersRef.value as any)[name] / 100);
 };
 
+const handleBackgroundTypeChange = (value: string | null) => {
+  const next = value ?? 'none';
+  backgroundType.value = next;
+  background.value.type = next;
+  handleBackgroundUpdate();
+};
+
+const gradientKindItems = computed(() => [
+  { label: t('section.gradientLinear'), value: 'linear' },
+  { label: t('section.gradientRadial'), value: 'radial' },
+]);
+
+const handleGradientKindChange = (value: string | null) => {
+  background.value.gradientType = value ?? 'linear';
+  handleBackgroundUpdate();
+};
+
 const handleBackgroundUpdate = () => {
   if (background.value.type === 'none') editor.value?.clearBackground?.();
   else if (background.value.type === 'solid') editor.value?.setBackgroundColor?.(background.value.solidColor);
@@ -188,9 +272,21 @@ const handleRemoveGuideline = (id: string) => {
   guidelines.value = guidelines.value.filter(g => g.id !== id);
 };
 
-onMounted(() => {
-  if (start) start();
-});
+const getGuideLabel = (guide: { orientation: string; position: number }) => {
+  const kind = guide.orientation === 'horizontal' ? t('section.guideH') : t('section.guideV');
+  return `${kind} · ${guide.position}`;
+};
+
+const isBgIdle = computed(() => bgStatus.value === 'idle');
+
+const handleLoadModel = async () => {
+  if (isBgBusy.value) return;
+  try {
+    await start();
+  } catch {
+    notifyAiError(error.value);
+  }
+};
 
 const fontFamilies = ['Arial', 'Verdana', 'Helvetica', 'Times New Roman', 'Courier New', 'Roboto', 'Open Sans', 'Lato'];
 
@@ -200,15 +296,39 @@ const HandleAlignObjects = (position: 'left' | 'center' | 'right' | 'top' | 'mid
 const HandleDistributeObjects = (position: 'horizontal' | 'vertical') => {
   editor.value?.distributeObjects?.(position)
 }
-const HandleFlipObjects = (position: 'horizontal' | 'vertical') => {
-  editor.value?.flipObjects?.(position)
+const HandleFlipObjects = (direction: 'horizontal' | 'vertical') => {
+  editor.value?.flip?.(direction)
 }
-const HandleRotateObjects = (position: 'left' | 'center' | 'right') => {
-  editor.value?.flipObjects?.(position)
+const HandleRotateObjects = (direction: 'left' | 'right') => {
+  editor.value?.rotateObject?.(direction)
+}
+const HandleBringForward = () => {
+  editor.value?.arrangeFront?.()
+}
+const HandleSendBackward = () => {
+  editor.value?.arrangeBack?.()
+}
+const HandleGroupSelection = () => {
+  editor.value?.group?.()
+}
+const HandleUngroupSelection = () => {
+  editor.value?.ungroup?.()
+}
+const HandleDuplicateSelection = () => {
+  editor.value?.clone?.()
+}
+const HandleDeleteSelection = () => {
+  editor.value?.deleteLayer?.()
 }
 
 const HandleSetCanvasSize = (width?: number, height?: number) => {
   editor.value?.updateFrameSettings?.({ width, height })
+}
+const handleCanvasWidthChange = (width: number | undefined) => {
+  HandleSetCanvasSize(width || 0, editor.value?.globalSettings.value.height)
+}
+const handleCanvasHeightChange = (height: number | undefined) => {
+  HandleSetCanvasSize(editor.value?.globalSettings.value.width, height || 0)
 }
 const HandleToggleRulers = () => {
   editor.value?.editorState.toggleRulers?.()
@@ -244,372 +364,516 @@ const HandleUpdateGradientAngle = (angle?: number) => {
     angle: background.value.gradientAngle
   });
 }
+
+const handleSwitchTab = (tab: string) => {
+  activeTab.value = tab;
+}
+
+const handleDownloadPng = () => {
+  editor.value?.downloadCanvasImage?.();
+}
+
+const handleExportJson = () => {
+  editor.value?.exportCurrentCanvas?.();
+}
+
+const handleRemoveBackground = async () => {
+  if (isBgIdle.value) {
+    toast.add({
+      title: t('ai.errNeedLoad'),
+      icon: 'i-heroicons-arrow-down-tray',
+      color: 'warning'
+    });
+    return;
+  }
+  if (isBgBusy.value) {
+    toast.add({
+      title: t('ai.errBusy'),
+      icon: 'i-heroicons-clock',
+      color: 'warning'
+    });
+    return;
+  }
+  const outcome = await triggerRemoveBackground();
+  if (outcome !== 'started') {
+    toast.add({
+      title: t(BG_OUTCOME_KEYS[outcome]),
+      icon: 'i-heroicons-exclamation-triangle',
+      color: 'warning'
+    });
+  }
+};
+
+const handleFontFamilyChange = (value: string | null) => {
+  localTextSettings.value.fontFamily = value ?? localTextSettings.value.fontFamily;
+  updateTextSettings({ fontFamily: localTextSettings.value.fontFamily });
+};
+
+const handleFontSizeChange = () => {
+  updateTextSettings({ fontSize: localTextSettings.value.fontSize });
+};
+
+const handleTextFillInput = () => {
+  updateTextSettings({ fill: localTextSettings.value.fill });
+};
+
+const handleToggleBold = () => {
+  const next = localTextSettings.value.fontWeight === 'bold' ? 'normal' : 'bold';
+  localTextSettings.value.fontWeight = next;
+  updateTextSettings({ fontWeight: next });
+};
+
+const handleToggleItalic = () => {
+  const next = localTextSettings.value.fontStyle === 'italic' ? 'normal' : 'italic';
+  localTextSettings.value.fontStyle = next;
+  updateTextSettings({ fontStyle: next });
+};
+
+const handleToggleUnderline = () => {
+  const next = !localTextSettings.value.underline;
+  localTextSettings.value.underline = next;
+  updateTextSettings({ underline: next });
+};
+
+const handleTextAlign = (align: 'left' | 'center' | 'right') => {
+  localTextSettings.value.textAlign = align;
+  updateTextSettings({ textAlign: align });
+};
+
+const handleToggleShadow = () => {
+  shadow.value.enabled = !shadow.value.enabled;
+  handleShadowUpdate();
+};
+
+const handlePresetFilterChange = (value: string | null) => {
+  const next = value ?? 'None';
+  presetFilter.value = next;
+  editor?.value?.applyPresetFilter?.(next);
+};
+
+const getAdjustmentLabel = (name: string) => t(adjustmentLabelKeys[name] ?? 'section.adjustTitle');
+
+const isBoldActive = computed(() => localTextSettings.value.fontWeight === 'bold');
+const isItalicActive = computed(() => localTextSettings.value.fontStyle === 'italic');
+const isUnderlineActive = computed(() => !!localTextSettings.value.underline);
 </script>
 
 <template>
-  <div class="h-full border-l border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 w-[280px] flex flex-col">
+  <div class="h-full border-l border-default bg-default w-[300px] flex flex-col" data-testid="right-panel">
 
     <!-- Tabs -->
-    <div class="flex border-b border-gray-200 dark:border-gray-800">
-      <button
-class="flex-1 py-3 text-xs font-medium border-b-2 transition-colors"
-        :class="activeTab === 'design' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'"
-        @click="activeTab = 'design'">
-        Design
-      </button>
-      <button
-class="flex-1 py-3 text-xs font-medium border-b-2 transition-colors"
-        :class="activeTab === 'export' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'"
-        @click="activeTab = 'export'">
-        Export
-      </button>
+    <div class="flex gap-1 border-b border-default p-2 shrink-0">
+      <UButton
+        :variant="activeTab === 'design' ? 'soft' : 'ghost'" color="neutral" size="xs" block
+        @click="handleSwitchTab('design')">
+        {{ t('tabs.design') }}
+      </UButton>
+      <UButton
+        :variant="activeTab === 'export' ? 'soft' : 'ghost'" color="neutral" size="xs" block
+        @click="handleSwitchTab('export')">
+        {{ t('tabs.export') }}
+      </UButton>
     </div>
 
     <!-- Content -->
-    <div class="flex-1 overflow-y-auto p-4 custom-scrollbar">
+    <div class="flex-1 overflow-y-auto p-3">
 
-      <div v-if="activeTab === 'design'" class="space-y-6">
+      <div v-if="activeTab === 'design'" class="space-y-5">
 
-        <!-- ALIGNMENT (Always visible if selection) -->
-        <div v-if="!isNoSelection">
-          <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Align</h3>
-          <div class="grid grid-cols-4 gap-1 mb-2">
-            <UButton
-size="xs" variant="outline" icon="lucide:align-start-vertical" data-testid="align-left"
-              @click="HandleAlignObjects('left')" />
-            <UButton
-size="xs" variant="outline" icon="lucide:align-center-vertical"
-              data-testid="align-center" @click="HandleAlignObjects('center')" />
-            <UButton
-size="xs" variant="outline" icon="lucide:align-end-vertical" data-testid="align-right"
-              @click="HandleAlignObjects('right')" />
-            <UButton
-size="xs" variant="outline" icon="lucide:align-start-horizontal" data-testid="align-top"
-              @click="HandleAlignObjects('top')" />
+        <!-- ARRANGE (selection) -->
+        <section v-if="!isNoSelection">
+          <h3 class="text-[11px] font-semibold text-dimmed uppercase tracking-wider mb-2">{{ t('section.arrangeTitle') }}</h3>
+          <div class="grid grid-cols-4 gap-1">
+            <UTooltip :text="t('section.bringForward')" class="min-w-0">
+              <UButton block size="xs" variant="outline" color="neutral" icon="lucide:arrow-up-to-line" :aria-label="t('section.bringForward')" @click="HandleBringForward" />
+            </UTooltip>
+            <UTooltip :text="t('section.sendBackward')" class="min-w-0">
+              <UButton block size="xs" variant="outline" color="neutral" icon="lucide:arrow-down-to-line" :aria-label="t('section.sendBackward')" @click="HandleSendBackward" />
+            </UTooltip>
+            <UTooltip :text="t('section.group')" class="min-w-0">
+              <UButton block size="xs" variant="outline" color="neutral" icon="lucide:group" :aria-label="t('section.group')" @click="HandleGroupSelection" />
+            </UTooltip>
+            <UTooltip :text="t('section.ungroup')" class="min-w-0">
+              <UButton block size="xs" variant="outline" color="neutral" icon="lucide:ungroup" :aria-label="t('section.ungroup')" @click="HandleUngroupSelection" />
+            </UTooltip>
           </div>
-          <div class="grid grid-cols-2 gap-2">
-            <UButton size="xs" variant="ghost" class="text-[10px]" @click="HandleDistributeObjects('horizontal')">Dist.
-              Horiz</UButton>
-            <UButton size="xs" variant="ghost" class="text-[10px]" @click="HandleDistributeObjects('vertical')">Dist.
-              Vert</UButton>
+          <div class="grid grid-cols-2 gap-1 mt-1">
+            <UButton size="xs" variant="ghost" color="neutral" icon="lucide:copy-plus" :label="t('header.duplicate')" @click="HandleDuplicateSelection" />
+            <UButton size="xs" variant="ghost" color="error" icon="lucide:trash-2" :label="t('header.delete')" @click="HandleDeleteSelection" />
           </div>
-        </div>
+        </section>
 
-        <!-- TRANSFORM (Always visible if selection) -->
-        <div v-if="!isNoSelection">
-          <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Transform</h3>
+        <!-- ALIGNMENT (selection) -->
+        <section v-if="!isNoSelection">
+          <h3 class="text-[11px] font-semibold text-dimmed uppercase tracking-wider mb-2">{{ t('section.alignTitle') }}</h3>
+          <div class="grid grid-cols-6 gap-1 mb-1">
+            <UTooltip :text="t('section.alignLeft')" class="min-w-0">
+              <UButton block size="xs" variant="outline" color="neutral" icon="lucide:align-start-vertical" data-testid="align-left" @click="HandleAlignObjects('left')" />
+            </UTooltip>
+            <UTooltip :text="t('section.alignCenter')" class="min-w-0">
+              <UButton block size="xs" variant="outline" color="neutral" icon="lucide:align-center-vertical" data-testid="align-center" @click="HandleAlignObjects('center')" />
+            </UTooltip>
+            <UTooltip :text="t('section.alignRight')" class="min-w-0">
+              <UButton block size="xs" variant="outline" color="neutral" icon="lucide:align-end-vertical" data-testid="align-right" @click="HandleAlignObjects('right')" />
+            </UTooltip>
+            <UTooltip :text="t('section.alignTop')" class="min-w-0">
+              <UButton block size="xs" variant="outline" color="neutral" icon="lucide:align-start-horizontal" data-testid="align-top" @click="HandleAlignObjects('top')" />
+            </UTooltip>
+            <UTooltip :text="t('section.alignMiddle')" class="min-w-0">
+              <UButton block size="xs" variant="outline" color="neutral" icon="lucide:align-center-horizontal" data-testid="align-middle" @click="HandleAlignObjects('middle')" />
+            </UTooltip>
+            <UTooltip :text="t('section.alignBottom')" class="min-w-0">
+              <UButton block size="xs" variant="outline" color="neutral" icon="lucide:align-end-horizontal" data-testid="align-bottom" @click="HandleAlignObjects('bottom')" />
+            </UTooltip>
+          </div>
+          <div class="grid grid-cols-2 gap-1">
+            <UButton size="xs" variant="ghost" color="neutral" :label="t('section.distributeH')" @click="HandleDistributeObjects('horizontal')" />
+            <UButton size="xs" variant="ghost" color="neutral" :label="t('section.distributeV')" @click="HandleDistributeObjects('vertical')" />
+          </div>
+        </section>
+
+        <!-- TRANSFORM (selection) -->
+        <section v-if="!isNoSelection">
+          <h3 class="text-[11px] font-semibold text-dimmed uppercase tracking-wider mb-2">{{ t('section.transformTitle') }}</h3>
           <div class="grid grid-cols-2 gap-2 mb-2">
-            <div>
-              <label class="text-[10px] text-gray-500 block mb-1">X</label>
+            <UFormField :label="t('section.x')" size="xs">
               <UInput v-model.number="position.x" type="number" size="xs" @change="updatePosition" />
-            </div>
-            <div>
-              <label class="text-[10px] text-gray-500 block mb-1">Y</label>
+            </UFormField>
+            <UFormField :label="t('section.y')" size="xs">
               <UInput v-model.number="position.y" type="number" size="xs" @change="updatePosition" />
-            </div>
+            </UFormField>
           </div>
           <div class="grid grid-cols-2 gap-2">
-            <div>
-              <label class="text-[10px] text-gray-500 block mb-1">W</label>
+            <UFormField :label="t('section.w')" size="xs">
               <UInput v-model.number="size.width" type="number" size="xs" disabled />
-            </div>
-            <div>
-              <label class="text-[10px] text-gray-500 block mb-1">H</label>
+            </UFormField>
+            <UFormField :label="t('section.h')" size="xs">
               <UInput v-model.number="size.height" type="number" size="xs" disabled />
-            </div>
+            </UFormField>
           </div>
           <!-- Rotation / Opacity -->
           <div class="mt-2">
-            <label class="text-[10px] text-gray-500 block mb-1">Opacity {{ opacity.toFixed(0) }}%</label>
+            <div class="flex justify-between mb-1">
+              <label class="text-xs text-muted">{{ t('section.opacity', { value: opacity.toFixed(0) }) }}</label>
+            </div>
             <USlider v-model="opacity" :min="0" :max="100" size="xs" @update:model-value="handleOpacityUpdate" />
           </div>
           <!-- Flip & Rotate -->
-          <div class="grid grid-cols-4 gap-1 my-4">
-            <UButton
-size="xs" variant="outline" icon="lucide:flip-horizontal" data-testid="btn-flip-h"
-              @click="HandleFlipObjects('horizontal')" />
-            <UButton
-size="xs" variant="outline" icon="lucide:flip-vertical" data-testid="btn-flip-v"
-              @click="HandleFlipObjects('vertical')" />
-            <UButton
-size="xs" variant="outline" icon="lucide:rotate-ccw" data-testid="btn-rotate-l"
-              @click="HandleRotateObjects('left')" />
-            <UButton
-size="xs" variant="outline" icon="lucide:rotate-cw" data-testid="btn-rotate-r"
-              @click="HandleRotateObjects('right')" />
+          <div class="grid grid-cols-4 gap-1 mt-3">
+            <UTooltip :text="t('section.flipH')" class="min-w-0">
+              <UButton block size="xs" variant="outline" color="neutral" icon="lucide:flip-horizontal" data-testid="btn-flip-h" @click="HandleFlipObjects('horizontal')" />
+            </UTooltip>
+            <UTooltip :text="t('section.flipV')" class="min-w-0">
+              <UButton block size="xs" variant="outline" color="neutral" icon="lucide:flip-vertical" data-testid="btn-flip-v" @click="HandleFlipObjects('vertical')" />
+            </UTooltip>
+            <UTooltip :text="t('section.rotateL')" class="min-w-0">
+              <UButton block size="xs" variant="outline" color="neutral" icon="lucide:rotate-ccw" data-testid="btn-rotate-l" @click="HandleRotateObjects('left')" />
+            </UTooltip>
+            <UTooltip :text="t('section.rotateR')" class="min-w-0">
+              <UButton block size="xs" variant="outline" color="neutral" icon="lucide:rotate-cw" data-testid="btn-rotate-r" @click="HandleRotateObjects('right')" />
+            </UTooltip>
           </div>
-        </div>
+        </section>
 
         <!-- TEXT PROPERTIES -->
-        <div v-if="isTextLayerActive">
-          <hr class="border-gray-100 dark:border-gray-800 my-4" >
-          <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Text</h3>
+        <section v-if="isTextLayerActive">
+          <USeparator class="my-1" />
+          <h3 class="text-[11px] font-semibold text-dimmed uppercase tracking-wider my-2">{{ t('section.textTitle') }}</h3>
 
           <div class="space-y-3">
-            <USelect
-v-model="localTextSettings.fontFamily" :options="fontFamilies" size="xs"
-              data-testid="select-font-family"
-              @change="updateTextSettings({ fontFamily: localTextSettings.fontFamily })" />
+            <UFormField :label="t('section.fontFamily')" size="xs">
+              <USelect
+                v-model="localTextSettings.fontFamily" :items="fontFamilies" size="xs"
+                data-testid="select-font-family"
+                @update:model-value="handleFontFamilyChange" />
+            </UFormField>
 
-            <div class="flex items-center gap-2">
-              <UInput
-v-model.number="localTextSettings.fontSize" type="number" size="xs" class="w-16"
-                data-testid="input-font-size" @change="updateTextSettings({ fontSize: localTextSettings.fontSize })" />
-              <div class="relative w-8 h-8 rounded overflow-hidden border border-gray-200 dark:border-gray-700">
-                <input
-v-model="localTextSettings.fill" type="color"
-                  class="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] cursor-pointer p-0 border-0"
-                  @input="updateTextSettings({ fill: localTextSettings.fill })" >
-              </div>
+            <div class="flex items-end gap-2">
+              <UFormField :label="t('section.fontSize')" size="xs" class="w-20">
+                <UInput
+                  v-model.number="localTextSettings.fontSize" type="number" size="xs"
+                  data-testid="input-font-size" @change="handleFontSizeChange" />
+              </UFormField>
+              <UFormField :label="t('section.textColor')" size="xs" class="flex-1">
+                <UColorPicker v-model="localTextSettings.fill" @update:model-value="handleTextFillInput" />
+              </UFormField>
             </div>
 
             <div class="flex gap-1">
               <UButton
-:variant="localTextSettings.fontWeight === 'bold' ? 'solid' : 'outline'" size="xs"
+                :variant="isBoldActive ? 'solid' : 'outline'" color="neutral" size="xs"
                 icon="lucide:bold" class="flex-1"
                 data-testid="btn-bold"
-                @click="() => { localTextSettings.fontWeight = localTextSettings.fontWeight === 'bold' ? 'normal' : 'bold'; updateTextSettings({ fontWeight: localTextSettings.fontWeight }) }" />
+                @click="handleToggleBold" />
               <UButton
-:variant="localTextSettings.fontStyle === 'italic' ? 'solid' : 'outline'" size="xs"
+                :variant="isItalicActive ? 'solid' : 'outline'" color="neutral" size="xs"
                 icon="lucide:italic" class="flex-1"
                 data-testid="btn-italic"
-                @click="() => { localTextSettings.fontStyle = localTextSettings.fontStyle === 'italic' ? 'normal' : 'italic'; updateTextSettings({ fontStyle: localTextSettings.fontStyle }) }" />
+                @click="handleToggleItalic" />
               <UButton
-:variant="localTextSettings.underline ? 'solid' : 'outline'" size="xs" icon="lucide:underline"
+                :variant="isUnderlineActive ? 'solid' : 'outline'" color="neutral" size="xs" icon="lucide:underline"
                 class="flex-1"
                 data-testid="btn-underline"
-                @click="() => { localTextSettings.underline = !localTextSettings.underline; updateTextSettings({ underline: localTextSettings.underline }) }" />
+                @click="handleToggleUnderline" />
             </div>
 
-            <section size="xs" class="w-full flex">
+            <div class="flex gap-1">
               <UButton
-:variant="localTextSettings.textAlign === 'left' ? 'solid' : 'outline'" icon="lucide:align-left"
-                class="flex-1" @click="updateTextSettings({ textAlign: 'left' })" />
+                :variant="localTextSettings.textAlign === 'left' ? 'solid' : 'outline'" color="neutral" icon="lucide:align-left"
+                class="flex-1" size="xs" @click="handleTextAlign('left')" />
               <UButton
-:variant="localTextSettings.textAlign === 'center' ? 'solid' : 'outline'"
-                icon="lucide:align-center" class="flex-1" @click="updateTextSettings({ textAlign: 'center' })" />
+                :variant="localTextSettings.textAlign === 'center' ? 'solid' : 'outline'" color="neutral"
+                icon="lucide:align-center" class="flex-1" size="xs" @click="handleTextAlign('center')" />
               <UButton
-:variant="localTextSettings.textAlign === 'right' ? 'solid' : 'outline'"
-                icon="lucide:align-right" class="flex-1" @click="updateTextSettings({ textAlign: 'right' })" />
-            </section>
+                :variant="localTextSettings.textAlign === 'right' ? 'solid' : 'outline'" color="neutral"
+                icon="lucide:align-right" class="flex-1" size="xs" @click="handleTextAlign('right')" />
+            </div>
           </div>
-        </div>
+        </section>
 
         <!-- FILL (Shape/Text) -->
-        <div v-if="!isNoSelection && !isImageLayerActive">
-          <hr class="border-gray-100 dark:border-gray-800 my-4" >
-          <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Fill</h3>
-          <div class="relative w-full h-8 rounded overflow-hidden border border-gray-200 dark:border-gray-700">
-            <input
-v-model="objectFill" type="color"
-              class="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] cursor-pointer p-0 border-0"
-              data-testid="input-fill" @input="handleObjectFillUpdate" >
-          </div>
-        </div>
+        <section v-if="!isNoSelection && !isImageLayerActive">
+          <USeparator class="my-1" />
+          <h3 class="text-[11px] font-semibold text-dimmed uppercase tracking-wider my-2">{{ t('section.fillTitle') }}</h3>
+          <UColorPicker
+            v-model="objectFill"
+            data-testid="input-fill" @update:model-value="handleObjectFillUpdate" />
+        </section>
 
         <!-- STROKE -->
-        <div v-if="!isNoSelection && !isTextLayerActive">
-          <hr class="border-gray-100 dark:border-gray-800 my-4" >
-          <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Stroke</h3>
+        <section v-if="!isNoSelection && !isTextLayerActive">
+          <USeparator class="my-1" />
+          <h3 class="text-[11px] font-semibold text-dimmed uppercase tracking-wider my-2">{{ t('section.strokeTitle') }}</h3>
           <div class="space-y-2">
-            <div class="flex justify-between items-center">
-              <div class="relative w-8 h-8 rounded overflow-hidden border border-gray-200 dark:border-gray-700">
-                <input
-v-model="stroke.color" type="color"
-                  class="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] cursor-pointer p-0 border-0"
-                  @input="handleStrokeUpdate" >
-              </div>
-              <div class="flex items-center gap-1 w-16">
-                <UInput
-v-model.number="stroke.width" type="number" size="xs" class="text-right"
-                  data-testid="input-stroke-width" @change="handleStrokeUpdate" />
-                <span class="text-[10px] text-gray-400">px</span>
-              </div>
-            </div>
+            <UFormField :label="t('section.textColor')" size="xs">
+              <UColorPicker v-model="stroke.color" @update:model-value="handleStrokeUpdate" />
+            </UFormField>
+            <UFormField :label="`${t('section.strokeWidth')} (${t('section.strokePx')})`" size="xs">
+              <UInput
+                v-model.number="stroke.width" type="number" size="xs"
+                data-testid="input-stroke-width" @change="handleStrokeUpdate" />
+            </UFormField>
           </div>
-        </div>
+        </section>
 
         <!-- EFFECTS (Shadow) -->
-        <div v-if="!isNoSelection">
-          <hr class="border-gray-100 dark:border-gray-800 my-4" >
-          <div class="flex items-center justify-between mb-2">
-            <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Effects</h3>
+        <section v-if="!isNoSelection">
+          <USeparator class="my-1" />
+          <div class="flex items-center justify-between my-2">
+            <h3 class="text-[11px] font-semibold text-dimmed uppercase tracking-wider">{{ t('section.effectsTitle') }}</h3>
             <UButton
-size="xs" variant="ghost" icon="lucide:plus"
-              data-testid="add-shadow" @click="shadow.enabled = !shadow.enabled; handleShadowUpdate()" />
+              size="xs" variant="ghost" color="neutral" icon="lucide:plus"
+              data-testid="add-shadow" @click="handleToggleShadow" />
           </div>
 
-          <div v-if="shadow.enabled" class="space-y-2 bg-gray-50 dark:bg-gray-800 p-2 rounded">
+          <div v-if="shadow.enabled" v-motion-fade-visible :duration="200" class="space-y-2 bg-elevated p-2.5 rounded-xl border border-default">
             <div class="flex justify-between items-center">
-              <span class="text-xs">Shadow</span>
+              <span class="text-xs">{{ t('section.shadow') }}</span>
               <USwitch v-model="shadow.enabled" size="xs" @update:model-value="handleShadowUpdate" />
             </div>
-            <div class="grid grid-cols-2 gap-2">
-              <UInput v-model.number="shadow.offsetX" size="xs" placeholder="X" @change="handleShadowUpdate" />
-              <UInput v-model.number="shadow.offsetY" size="xs" placeholder="Y" @change="handleShadowUpdate" />
-              <UInput v-model.number="shadow.blur" size="xs" placeholder="Blur" @change="handleShadowUpdate" />
-              <div class="relative w-full h-8 rounded-md overflow-hidden border border-gray-200 dark:border-gray-700">
-                <input
-v-model="shadow.color" type="color"
-                  class="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] cursor-pointer p-0 border-0"
-                  @input="handleShadowUpdate" >
-              </div>
+            <div class="grid grid-cols-3 gap-2">
+              <UFormField :label="t('section.shadowX')" size="xs">
+                <UInput v-model.number="shadow.offsetX" size="xs" @change="handleShadowUpdate" />
+              </UFormField>
+              <UFormField :label="t('section.shadowY')" size="xs">
+                <UInput v-model.number="shadow.offsetY" size="xs" @change="handleShadowUpdate" />
+              </UFormField>
+              <UFormField :label="t('section.shadowBlur')" size="xs">
+                <UInput v-model.number="shadow.blur" size="xs" :placeholder="t('section.shadowBlur')" @change="handleShadowUpdate" />
+              </UFormField>
             </div>
+            <UFormField :label="t('section.shadowColor')" size="xs">
+              <UColorPicker v-model="shadow.color" @update:model-value="handleShadowUpdate" />
+            </UFormField>
           </div>
-        </div>
+        </section>
 
         <!-- AI TOOLS -->
-        <div v-if="isImageLayerActive">
-          <hr class="border-gray-100 dark:border-gray-800 my-4" >
-          <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">AI Tools</h3>
-          <UButton
-block variant="soft" icon="lucide:sparkles"
-            :loading="status === 'loading' || status === 'processing'" @click="triggerRemoveBackground()">
-            Remove Background
-          </UButton>
-        </div>
+        <section v-if="isImageLayerActive">
+          <USeparator class="my-1" />
+          <h3 class="text-[11px] font-semibold text-dimmed uppercase tracking-wider my-2">{{ t('ai.title') }}</h3>
+          <div class="rounded-xl border border-default bg-elevated/50 p-3 space-y-2.5">
+            <div v-if="isBgIdle" v-motion-fade-visible :duration="200" class="space-y-2.5 text-center">
+              <Icon name="lucide:sparkles" class="w-8 h-8 text-primary mx-auto" />
+              <p class="text-xs text-muted">{{ t('ai.loadDesc') }}</p>
+              <UButton
+                block variant="soft" color="primary" icon="lucide:download"
+                data-testid="btn-load-model"
+                :label="t('ai.loadModel')" @click="handleLoadModel" />
+            </div>
+            <UButton
+              v-else
+              block variant="soft" color="primary" icon="lucide:sparkles"
+              data-testid="btn-remove-bg"
+              :loading="isBgBusy" @click="handleRemoveBackground">
+              {{ t('ai.removeBackground') }}
+            </UButton>
+            <div v-if="isBgBusy" v-motion-fade-visible :duration="200" class="space-y-1.5" data-testid="bg-status">
+              <div class="flex items-center gap-2 text-xs text-muted">
+                <Icon name="svg-spinners:270-ring-with-bg" class="w-4 h-4 shrink-0" />
+                <span class="truncate">{{ bgStatusLabel }}</span>
+                <span class="ml-auto font-mono shrink-0">{{ Math.round(bgProgress) }}%</span>
+              </div>
+              <UProgress :model-value="bgProgress" :max="100" size="xs" />
+            </div>
+            <div v-else class="text-xs text-muted" data-testid="bg-status">
+              {{ bgStatusLabel }}
+            </div>
+            <UAlert
+              v-if="isBgFailed"
+              v-motion-fade-visible :duration="200"
+              color="error" variant="subtle" icon="i-heroicons-exclamation-triangle"
+              :title="t('ai.statusError')" :description="bgError ?? undefined" />
+            <UButton
+              v-if="isBgFailed"
+              block size="xs" variant="soft" color="error" icon="lucide:rotate-ccw"
+              :label="t('ai.retry')" @click="handleLoadModel" />
+          </div>
+        </section>
 
         <!-- IMAGE FILTERS -->
-        <div v-if="isImageLayerActive">
-          <hr class="border-gray-100 dark:border-gray-800 my-4" >
+        <section v-if="isImageLayerActive">
+          <USeparator class="my-1" />
 
-          <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Filters</h3>
+          <h3 class="text-[11px] font-semibold text-dimmed uppercase tracking-wider my-2">{{ t('section.filtersTitle') }}</h3>
 
-          <div class="space-y-4">
-            <USelect
-v-model="presetFilter" :options="['None', 'Grayscale', 'Sepia', 'Contrast']" size="xs"
-              @change="editor?.value?.applyPresetFilter?.(presetFilter)" />
+          <div class="space-y-3">
+            <UFormField :label="t('section.preset')" size="xs">
+              <USelect
+                :model-value="presetFilter" :items="presetFilterItems" value-key="value" size="xs"
+                @update:model-value="handlePresetFilterChange" />
+            </UFormField>
 
             <div v-for="(val, name) in filtersRef" :key="name">
               <div class="flex justify-between mb-1">
-                <label class="text-[10px] text-gray-500">{{ name }}</label>
+                <label class="text-xs text-muted">{{ getAdjustmentLabel(name) }}</label>
+                <span class="text-xs font-mono text-muted">{{ (filtersRef as any)[name] }}</span>
               </div>
               <USlider
-v-model="(filtersRef as any)[name]" :min="-100" :max="100" size="xs"
+                v-model="(filtersRef as any)[name]" :min="-100" :max="100" size="xs"
                 @update:model-value="handleFilterUpdate(name)" />
             </div>
           </div>
-        </div>
+        </section>
 
 
         <!-- CANVAS BACKGROUND (No selection) -->
-        <div v-if="isNoSelection">
-          <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Canvas</h3>
+        <section v-if="isNoSelection">
+          <h3 class="text-[11px] font-semibold text-dimmed uppercase tracking-wider mb-2">{{ t('section.canvasTitle') }}</h3>
 
           <div class="space-y-4">
             <!-- CANVAS RESIZE -->
             <div>
               <div class="flex justify-between items-center mb-2">
-                <span class="text-xs">Size:
+                <span class="text-xs text-muted">{{ t('section.canvasSize') }}:
                   {{ editor?.globalSettings.value.width }} x {{ editor?.globalSettings.value.height }}</span>
               </div>
               <div v-if="editor" class="grid grid-cols-2 gap-2 mb-2">
-                <div>
-                  <label class="text-[10px] text-gray-500 block mb-1">W</label>
+                <UFormField :label="t('section.w')" size="xs">
                   <UInputNumber
-v-model="editor.globalSettings.value.width"
-                    @update:model-value="(n) => { HandleSetCanvasSize(n || 0, editor?.globalSettings.value.height) }" />
-                </div>
-                <div>
-                  <label class="text-[10px] text-gray-500 block mb-1">H</label>
+                    v-model="editor.globalSettings.value.width" size="xs"
+                    @update:model-value="handleCanvasWidthChange" />
+                </UFormField>
+                <UFormField :label="t('section.h')" size="xs">
                   <UInputNumber
-v-model="editor.globalSettings.value.height"
-                    @update:model-value="(n) => { HandleSetCanvasSize(editor?.globalSettings.value.width, n || 0) }" />
-                </div>
+                    v-model="editor.globalSettings.value.height" size="xs"
+                    @update:model-value="handleCanvasHeightChange" />
+                </UFormField>
               </div>
-              <div class="grid grid-cols-3 gap-1">
-                <UButton size="xs" variant="outline" class="text-[10px] px-1" @click="HandleSetCanvasSize(1080, 1080)">
-                  IG Post</UButton>
-                <UButton size="xs" variant="outline" class="text-[10px] px-1" @click="HandleSetCanvasSize(1080, 1920)">
-                  Story</UButton>
-                <UButton size="xs" variant="outline" class="text-[10px] px-1" @click="HandleSetCanvasSize(1920, 1080)">
-                  Full HD</UButton>
-                <UButton size="xs" variant="outline" class="text-[10px] px-1" @click="HandleSetCanvasSize(1080, 750)">
-                  Facebook Cover</UButton>
+              <div class="grid grid-cols-2 gap-1">
+                <UButton size="xs" variant="outline" color="neutral" @click="HandleSetCanvasSize(1080, 1080)">
+                  {{ t('section.presetIgPost') }}</UButton>
+                <UButton size="xs" variant="outline" color="neutral" @click="HandleSetCanvasSize(1080, 1920)">
+                  {{ t('section.presetStory') }}</UButton>
+                <UButton size="xs" variant="outline" color="neutral" @click="HandleSetCanvasSize(1920, 1080)">
+                  {{ t('section.presetFullHd') }}</UButton>
+                <UButton size="xs" variant="outline" color="neutral" @click="HandleSetCanvasSize(1080, 750)">
+                  {{ t('section.presetFbCover') }}</UButton>
               </div>
             </div>
 
-            <hr class="border-gray-100 dark:border-gray-800" >
+            <USeparator />
             <!-- RULERS -->
             <div class="space-y-2">
+              <h3 class="text-[11px] font-semibold text-dimmed uppercase tracking-wider">{{ t('section.rulersTitle') }}</h3>
               <div class="flex justify-between items-center">
-                <span class="text-xs">Rulers</span>
+                <span class="text-xs">{{ t('section.rulersShow') }}</span>
                 <USwitch
-v-model="showRulers" size="xs" data-testid="toggle-rulers"
+                  v-model="showRulers" size="xs" data-testid="toggle-rulers"
                   @update:model-value="HandleToggleRulers" />
               </div>
               <div class="flex justify-between items-center">
-                <span class="text-xs">Snap to Guides</span>
+                <span class="text-xs">{{ t('section.rulersSnap') }}</span>
                 <USwitch
-v-model="snapToGuides" size="xs" data-testid="toggle-snap-to-guides"
+                  v-model="snapToGuides" size="xs" data-testid="toggle-snap-to-guides"
                   @update:model-value="HandleToggleSnapToGuides" />
               </div>
-              <div class="flex gap-2">
-                <UButton size="xs" variant="outline" class="flex-1" @click="handleAddGuideline('horizontal')">+ H Guide
+              <div class="flex gap-1">
+                <UButton size="xs" variant="outline" color="neutral" class="flex-1" @click="handleAddGuideline('horizontal')">{{ t('section.guideH') }}
                 </UButton>
-                <UButton size="xs" variant="outline" class="flex-1" @click="handleAddGuideline('vertical')">+ V Guide
+                <UButton size="xs" variant="outline" color="neutral" class="flex-1" @click="handleAddGuideline('vertical')">{{ t('section.guideV') }}
                 </UButton>
+              </div>
+              <div v-if="guidelines.length > 0" class="flex flex-wrap gap-1">
+                <UBadge
+                  v-for="guide in guidelines" :key="guide.id" color="neutral" variant="soft" size="xs"
+                  class="cursor-pointer" @click="handleRemoveGuideline(guide.id)">
+                  {{ getGuideLabel(guide) }}
+                </UBadge>
               </div>
             </div>
 
-            <hr class="border-gray-100 dark:border-gray-800" >
+            <USeparator />
 
             <div>
-              <label class="text-[10px] text-gray-500 block mb-1">Color</label>
-              <div class="flex gap-2 items-center">
+              <h3 class="text-[11px] font-semibold text-dimmed uppercase tracking-wider mb-2">{{ t('section.bgTitle') }}</h3>
+              <UFormField :label="t('section.bgType')" size="xs">
                 <USelect
-v-model="background.type" :items="['none', 'solid', 'gradient']" size="xs" class="flex-1"
-                  data-testid="select-bg-type" @change="handleBackgroundUpdate" />
-
-              </div>
-              <div v-if="background.type === 'solid'" class="my-4  p-4">
+                  :model-value="backgroundType" :items="backgroundTypeItems" value-key="value" size="xs"
+                  data-testid="select-bg-type" @update:model-value="handleBackgroundTypeChange" />
+              </UFormField>
+              <div v-if="background.type === 'solid'" v-motion-fade-visible :duration="200" class="mt-3 rounded-xl border border-default bg-elevated/50 p-3">
                 <UColorPicker
-v-if="background.type === 'solid'" v-model="background.solidColor"
+                  v-model="background.solidColor"
                   @update:model-value="handleBackgroundUpdate" />
               </div>
-              <div v-if="background.type === 'gradient'" class="my-4  p-4">
-                <section class="flex mb-4 gap-1">
+              <div v-if="background.type === 'gradient'" v-motion-fade-visible :duration="200" class="mt-3 rounded-xl border border-default bg-elevated/50 p-3 space-y-3">
+                <UFormField :label="t('section.bgType')" size="xs">
+                  <USelect
+                    :model-value="background.gradientType" :items="gradientKindItems" value-key="value" size="xs"
+                    data-testid="select-gradient-kind" @update:model-value="handleGradientKindChange" />
+                </UFormField>
+                <div>
+                  <div class="flex justify-between mb-1">
+                    <label class="text-xs text-muted">{{ t('section.bgGradientAngle') }}</label>
+                    <span class="text-xs font-mono text-muted">{{ background.gradientAngle }}°</span>
+                  </div>
                   <USlider
-v-model="background.gradientAngle" :min="0" :max="360" class=""
+                    v-model="background.gradientAngle" :min="0" :max="360" size="xs"
                     @update:model-value="HandleUpdateGradientAngle" />
-                  <span>{{ background.gradientAngle }}</span>
-                </section>
-                <UColorPicker
-v-for="(color, index) in background.gradientColors" v-if="background.type === 'gradient'" :key="color"
-                  :default-value="color" class="mb-4"
-                  @update:model-value="(c) => HandleUpdateGradientColorByPosition(index, c)" />
+                </div>
+                <div class="flex gap-2">
+                  <UColorPicker
+                    v-for="(color, index) in background.gradientColors" :key="`${index}-${color}`"
+                    :default-value="color"
+                    @update:model-value="(c) => HandleUpdateGradientColorByPosition(index, c)" />
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </section>
 
       </div>
 
-      <div v-if="activeTab === 'export'" class="flex flex-col h-full justify-center items-center text-center p-4">
-        <Icon name="lucide:image" class="w-12 h-12 text-gray-300 mb-4" />
-        <p class="text-sm text-gray-500 mb-4">Export your creation to share it with the world.</p>
-        <UButton color="primary" block @click="editor?.downloadCanvasImage()">Download PNG</UButton>
+      <div v-if="activeTab === 'export'" v-motion-fade-visible :duration="200" class="flex flex-col h-full justify-center items-center text-center p-4">
+        <Icon name="lucide:image" class="w-12 h-12 text-dimmed mb-4" />
+        <p class="text-sm text-muted mb-4">{{ t('section.exportHint') }}</p>
+        <div class="w-full space-y-2">
+          <UButton color="primary" block icon="lucide:download" :label="t('section.downloadPng')" @click="handleDownloadPng" />
+          <UButton color="neutral" variant="outline" block icon="lucide:file-json" :label="t('section.exportJson')" @click="handleExportJson" />
+        </div>
       </div>
 
     </div>
   </div>
 </template>
-
-<style scoped>
-.custom-scrollbar::-webkit-scrollbar {
-  width: 4px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #e5e7eb;
-  border-radius: 4px;
-}
-
-.dark .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #374151;
-}
-</style>

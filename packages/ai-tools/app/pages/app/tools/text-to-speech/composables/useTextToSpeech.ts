@@ -414,7 +414,13 @@ async function playAudio(audio?: Float32Array, sampleRate?: number) {
   const rate = sampleRate || resultSampleRate.value
   if (!data) return
   stopPlayback()
-  if (!audioContext) audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)()
+  if (!audioContext) {
+    interface WindowWithWebkitAudio extends Window {
+      webkitAudioContext: typeof AudioContext
+    }
+    const AudioCtor = window.AudioContext || (window as WindowWithWebkitAudio).webkitAudioContext
+    audioContext = new AudioCtor()
+  }
   const buffer = audioContext.createBuffer(1, data.length, rate)
   buffer.getChannelData(0).set(data)
   const src = audioContext.createBufferSource()

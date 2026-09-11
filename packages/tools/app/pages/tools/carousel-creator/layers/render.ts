@@ -10,7 +10,7 @@
  * - frames render last (above content) regardless of position — they are the
  *   "outer" chrome; everything else keeps full user-controlled stacking
  */
-import { fontFamilyStack, type SlideData } from '../templates'
+import { fontFamilyStack, toSlideData } from '../templates'
 import { patternStyle } from '../patterns'
 import { effectPreset, framePreset, overlayPreset } from '../designAssets'
 import { renderHtmlTemplateContent } from './legacy'
@@ -191,7 +191,7 @@ function renderHtml(l: HtmlLayer, palette: RenderPalette, opts: RenderOptions): 
   if (l.bindings?.templateKey) {
     content = renderHtmlTemplateContent(
       l.bindings.templateKey,
-      l.bindings.data as unknown as SlideData,
+      toSlideData(l.bindings.data),
       { bg: palette.bg, text: palette.text, accent: palette.accent, patternColor: palette.accent, font: palette.font },
       opts.index,
       opts.total,

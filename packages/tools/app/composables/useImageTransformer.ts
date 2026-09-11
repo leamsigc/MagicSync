@@ -6,78 +6,115 @@ type WorkerStatus =
   | 'loaded'
   | 'processing'
   | 'done'
+  | 'unloaded'
   | 'error';
+
+export const BG_BUSY_CODE = 'ERR_BG_BUSY';
 
 const worker = ref<Worker | null>(null);
 const status = ref<WorkerStatus>('idle');
 const progress = ref<number>(0);
 const error = ref<string | null>(null);
 const result = ref<File[]>([]);
-const selectedModel = ref<string>('briaai/RMBG-1.4');
-// const selectedModel = ref<string>('onnx-community/BEN2-ONNX');
+// Must stay a `model_type` supported by the installed transformers
+// `background-removal` pipeline (see worker note). `briaai/RMBG-1.4`
+// fails to resolve — `Xenova/modnet` is this version's default.
+const selectedModel = ref<string>('Xenova/modnet');
+
+let loadPromise: Promise<void> | null = null;
+let resolveLoad: (() => void) | null = null;
+let rejectLoad: ((reason?: unknown) => void) | null = null;
+
+const settleLoadSuccess = () => {
+  resolveLoad?.();
+  clearLoadHandles();
+};
+
+const settleLoadError = (message: string) => {
+  error.value = message;
+  rejectLoad?.(new Error(message));
+  clearLoadHandles();
+};
+
+function clearLoadHandles() {
+  resolveLoad = null;
+  rejectLoad = null;
+}
+
+const isLoadInFlight = () => status.value === 'loading';
+
+const isModelReady = () =>
+  status.value === 'loaded' || status.value === 'done';
+
+const handleWorkerStatus = (workerStatus: WorkerStatus, workerProgress?: number) => {
+  if (workerStatus === 'unloaded') status.value = 'idle';
+  else status.value = workerStatus;
+  if (workerProgress !== undefined) progress.value = workerProgress;
+  if (workerStatus === 'loaded' || workerStatus === 'done') settleLoadSuccess();
+};
+
+const handleWorkerResult = (workerResult: File) => {
+  result.value = [workerResult];
+};
+
+const handleWorkerError = (message: string) => {
+  status.value = 'error';
+  if (loadPromise) settleLoadError(message);
+  else error.value = message;
+};
 
 export const useImageTransformer = () => {
   const initWorker = () => {
-    if (!worker.value) {
-      worker.value = new ImageBackgroundTransformer();
+    if (worker.value) return;
+    worker.value = new ImageBackgroundTransformer();
 
-      worker.value.onmessage = (event) => {
-        console.log('Worker message:', event.data);
+    worker.value.onmessage = (event) => {
+      const {
+        type,
+        status: workerStatus,
+        progress: workerProgress,
+        error: workerError,
+        result: workerResult,
+      } = event.data;
 
-        const {
-          type,
-          status: workerStatus,
-          progress: workerProgress,
-          error: workerError,
-          result: workerResult,
-        } = event.data;
-
-        switch (type) {
-          case 'status':
-            status.value = workerStatus;
-            if (workerProgress !== undefined) {
-              progress.value = workerProgress;
-            }
-            break;
-          case 'error':
-            status.value = 'error';
-            error.value = workerError;
-            break;
-          case 'result':
-            result.value = [workerResult];
-            break;
-        }
-      };
-    }
+      if (type === 'status') handleWorkerStatus(workerStatus, workerProgress);
+      else if (type === 'result') handleWorkerResult(workerResult);
+      else handleWorkerError(workerError);
+    };
   };
 
-  const start = async () => {
+  const start = (): Promise<void> => {
     initWorker();
+    if (isModelReady() || isLoadInFlight()) return loadPromise ?? Promise.resolve();
+    error.value = null;
+    status.value = 'loading';
+    loadPromise = new Promise<void>((resolve, reject) => {
+      resolveLoad = resolve;
+      rejectLoad = reject;
+    });
     worker.value?.postMessage({
       type: 'loadModel',
       payload: { model: selectedModel.value },
     });
+    return loadPromise;
   };
-  const startWithModel = async () => {
-    if (!worker.value) {
-      initWorker();
-    } else {
-      worker.value.postMessage({ type: 'unloadModel' });
-    }
-
-    worker.value?.postMessage({
-      type: 'loadModel',
-      payload: { model: selectedModel.value },
-    });
+  const startWithModel = (): Promise<void> => {
+    initWorker();
+    worker.value?.postMessage({ type: 'unloadModel' });
+    status.value = 'idle';
+    loadPromise = null;
+    return start();
   };
 
-  const run = async (image: File) => {
-    if (status.value === 'idle') {
-      await start();
+  const run = async (image: File): Promise<void> => {
+    initWorker();
+    if (status.value === 'processing') {
+      error.value = BG_BUSY_CODE;
+      return;
     }
-
+    error.value = null;
     try {
-      // Convert AudioBuffer to Float32Array for the worker
+      await start();
       worker.value?.postMessage({
         type: 'run',
         payload: {
@@ -91,6 +128,11 @@ export const useImageTransformer = () => {
     }
   };
 
+  const handleChangeModel = (model: string) => {
+    selectedModel.value = model;
+    startWithModel();
+  };
+
   return {
     start,
     run,
@@ -102,10 +144,9 @@ export const useImageTransformer = () => {
       () => status.value === 'loaded' || status.value === 'done',
     ),
     isRunning: computed(() => status.value === 'processing'),
+    isLoading: computed(() => status.value === 'loading'),
+    isBusy: computed(() => status.value === 'loading' || status.value === 'processing'),
     selectedModel,
-    changeModel: (model: string) => {
-      selectedModel.value = model;
-      startWithModel();
-    },
+    changeModel: handleChangeModel,
   };
 };

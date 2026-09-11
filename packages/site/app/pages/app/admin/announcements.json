@@ -1,0 +1,246 @@
+{
+  "en": {
+    "title": "Announcements",
+    "description": "Broadcast banners to all users from the dashboard",
+    "createAnnouncement": "New Announcement",
+    "searchPlaceholder": "Search announcements...",
+    "noAnnouncements": "No announcements yet",
+    "columns": {
+      "title": "Title",
+      "schedule": "Schedule",
+      "status": "Status",
+      "actions": "Actions",
+      "created": "Created"
+    },
+    "status": {
+      "active": "Active",
+      "scheduled": "Scheduled",
+      "expired": "Expired"
+    },
+    "menu": {
+      "title": "Actions",
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "a11y": {
+      "actions": "Actions dropdown"
+    },
+    "modal": {
+      "createTitle": "New Announcement",
+      "editTitle": "Edit Announcement",
+      "titleLabel": "Title",
+      "titlePlaceholder": "Short headline for the banner",
+      "contentLabel": "Content",
+      "publishLabel": "Publish at",
+      "expiryLabel": "Expires at",
+      "noExpiry": "No expiry date",
+      "scheduleHint": "The banner shows on every user's dashboard while the current time is within this window.",
+      "cancel": "Cancel",
+      "submit": "Save Announcement"
+    },
+    "deleteModal": {
+      "title": "Delete Announcement",
+      "description": "Delete \"{title}\"? Users will no longer see this banner.",
+      "cancel": "Cancel",
+      "confirm": "Delete"
+    },
+    "toast": {
+      "error": "Error",
+      "loadFailed": "Failed to load announcements",
+      "titleRequired": "A title is required",
+      "contentRequired": "Content is required",
+      "scheduleRequired": "A valid publish date is required",
+      "created": "Announcement Created",
+      "createdDescription": "The banner is now scheduled",
+      "updated": "Announcement Updated",
+      "updatedDescription": "The banner has been updated",
+      "saveFailed": "Failed to save announcement",
+      "deleted": "Announcement Deleted",
+      "deletedDescription": "The banner has been removed",
+      "deleteFailed": "Failed to delete announcement"
+    }
+  },
+  "es": {
+    "title": "Anuncios",
+    "description": "Mostrar avisos a todos los usuarios desde el panel",
+    "createAnnouncement": "Nuevo anuncio",
+    "searchPlaceholder": "Buscar anuncios...",
+    "noAnnouncements": "Aún no hay anuncios",
+    "columns": {
+      "title": "Título",
+      "schedule": "Programación",
+      "status": "Estado",
+      "actions": "Acciones",
+      "created": "Creado"
+    },
+    "status": {
+      "active": "Activo",
+      "scheduled": "Programado",
+      "expired": "Expirado"
+    },
+    "menu": {
+      "title": "Acciones",
+      "edit": "Editar",
+      "delete": "Eliminar"
+    },
+    "a11y": {
+      "actions": "Menú de acciones"
+    },
+    "modal": {
+      "createTitle": "Nuevo anuncio",
+      "editTitle": "Editar anuncio",
+      "titleLabel": "Título",
+      "titlePlaceholder": "Titular breve del aviso",
+      "contentLabel": "Contenido",
+      "publishLabel": "Publicar el",
+      "expiryLabel": "Expira el",
+      "noExpiry": "Sin fecha de expiración",
+      "scheduleHint": "El aviso se muestra en el panel de cada usuario mientras la hora actual esté dentro de este intervalo.",
+      "cancel": "Cancelar",
+      "submit": "Guardar anuncio"
+    },
+    "deleteModal": {
+      "title": "Eliminar anuncio",
+      "description": "¿Eliminar «{title}»? Los usuarios dejarán de ver este aviso.",
+      "cancel": "Cancelar",
+      "confirm": "Eliminar"
+    },
+    "toast": {
+      "error": "Error",
+      "loadFailed": "No se pudieron cargar los anuncios",
+      "titleRequired": "El título es obligatorio",
+      "contentRequired": "El contenido es obligatorio",
+      "scheduleRequired": "Se requiere una fecha de publicación válida",
+      "created": "Anuncio creado",
+      "createdDescription": "El aviso ya está programado",
+      "updated": "Anuncio actualizado",
+      "updatedDescription": "El aviso ha sido actualizado",
+      "saveFailed": "No se pudo guardar el anuncio",
+      "deleted": "Anuncio eliminado",
+      "deletedDescription": "El aviso ha sido eliminado",
+      "deleteFailed": "No se pudo eliminar el anuncio"
+    }
+  },
+  "de": {
+    "title": "Ankündigungen",
+    "description": "Banner für alle Benutzer im Dashboard anzeigen",
+    "createAnnouncement": "Neue Ankündigung",
+    "searchPlaceholder": "Ankündigungen suchen...",
+    "noAnnouncements": "Noch keine Ankündigungen",
+    "columns": {
+      "title": "Titel",
+      "schedule": "Zeitplan",
+      "status": "Status",
+      "actions": "Aktionen",
+      "created": "Erstellt"
+    },
+    "status": {
+      "active": "Aktiv",
+      "scheduled": "Geplant",
+      "expired": "Abgelaufen"
+    },
+    "menu": {
+      "title": "Aktionen",
+      "edit": "Bearbeiten",
+      "delete": "Löschen"
+    },
+    "a11y": {
+      "actions": "Aktionsmenü"
+    },
+    "modal": {
+      "createTitle": "Neue Ankündigung",
+      "editTitle": "Ankündigung bearbeiten",
+      "titleLabel": "Titel",
+      "titlePlaceholder": "Kurze Überschrift für das Banner",
+      "contentLabel": "Inhalt",
+      "publishLabel": "Veröffentlichen am",
+      "expiryLabel": "Läuft ab am",
+      "noExpiry": "Kein Ablaufdatum",
+      "scheduleHint": "Das Banner wird im Dashboard jedes Benutzers angezeigt, solange die aktuelle Zeit in diesem Zeitraum liegt.",
+      "cancel": "Abbrechen",
+      "submit": "Ankündigung speichern"
+    },
+    "deleteModal": {
+      "title": "Ankündigung löschen",
+      "description": "„{title}“ löschen? Benutzer sehen dieses Banner dann nicht mehr.",
+      "cancel": "Abbrechen",
+      "confirm": "Löschen"
+    },
+    "toast": {
+      "error": "Fehler",
+      "loadFailed": "Ankündigungen konnten nicht geladen werden",
+      "titleRequired": "Ein Titel ist erforderlich",
+      "contentRequired": "Inhalt ist erforderlich",
+      "scheduleRequired": "Ein gültiges Veröffentlichungsdatum ist erforderlich",
+      "created": "Ankündigung erstellt",
+      "createdDescription": "Das Banner ist jetzt geplant",
+      "updated": "Ankündigung aktualisiert",
+      "updatedDescription": "Das Banner wurde aktualisiert",
+      "saveFailed": "Ankündigung konnte nicht gespeichert werden",
+      "deleted": "Ankündigung gelöscht",
+      "deletedDescription": "Das Banner wurde entfernt",
+      "deleteFailed": "Ankündigung konnte nicht gelöscht werden"
+    }
+  },
+  "fr": {
+    "title": "Annonces",
+    "description": "Diffuser des bannières à tous les utilisateurs depuis le tableau de bord",
+    "createAnnouncement": "Nouvelle annonce",
+    "searchPlaceholder": "Rechercher des annonces...",
+    "noAnnouncements": "Aucune annonce pour le moment",
+    "columns": {
+      "title": "Titre",
+      "schedule": "Planification",
+      "status": "Statut",
+      "actions": "Actions",
+      "created": "Créée"
+    },
+    "status": {
+      "active": "Active",
+      "scheduled": "Planifiée",
+      "expired": "Expirée"
+    },
+    "menu": {
+      "title": "Actions",
+      "edit": "Modifier",
+      "delete": "Supprimer"
+    },
+    "a11y": {
+      "actions": "Menu d'actions"
+    },
+    "modal": {
+      "createTitle": "Nouvelle annonce",
+      "editTitle": "Modifier l'annonce",
+      "titleLabel": "Titre",
+      "titlePlaceholder": "Titre court de la bannière",
+      "contentLabel": "Contenu",
+      "publishLabel": "Publier le",
+      "expiryLabel": "Expire le",
+      "noExpiry": "Pas de date d'expiration",
+      "scheduleHint": "La bannière s'affiche sur le tableau de bord de chaque utilisateur tant que l'heure actuelle est dans cette fenêtre.",
+      "cancel": "Annuler",
+      "submit": "Enregistrer l'annonce"
+    },
+    "deleteModal": {
+      "title": "Supprimer l'annonce",
+      "description": "Supprimer « {title} » ? Les utilisateurs ne verront plus cette bannière.",
+      "cancel": "Annuler",
+      "confirm": "Supprimer"
+    },
+    "toast": {
+      "error": "Erreur",
+      "loadFailed": "Échec du chargement des annonces",
+      "titleRequired": "Un titre est requis",
+      "contentRequired": "Le contenu est requis",
+      "scheduleRequired": "Une date de publication valide est requise",
+      "created": "Annonce créée",
+      "createdDescription": "La bannière est désormais planifiée",
+      "updated": "Annonce mise à jour",
+      "updatedDescription": "La bannière a été mise à jour",
+      "saveFailed": "Échec de l'enregistrement",
+      "deleted": "Annonce supprimée",
+      "deletedDescription": "La bannière a été retirée",
+      "deleteFailed": "Échec de la suppression"
+    }
+  }
+}

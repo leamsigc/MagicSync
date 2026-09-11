@@ -33,13 +33,21 @@ const fps = ref(30)
 const secondsPerSlide = ref(3)
 const crossfade = ref(false)
 const motions = ref<SlideMotionKey[]>([])
-const musicFile = ref<File | null>(null)
-const musicVolume = ref(0.8)
+
+interface AnimateMusicTrack {
+  id: string
+  file: File
+  volume: number
+  loop: boolean
+}
+
+const toast = useToast()
+const musicTracks = ref<AnimateMusicTrack[]>([])
 const musicInput = ref<HTMLInputElement | null>(null)
 
 watch(open, (value) => {
   if (!value) {
-    musicFile.value = null
+    musicTracks.value = []
   }
 })
 
@@ -54,12 +62,48 @@ function setMotion(index: number, value: SlideMotionKey): void {
   motions.value[index] = value
 }
 
-function onMusicChange(e: Event): void {
+const isAudioFile = (file: File): boolean => file.type.startsWith('audio/')
+
+const handleChooseMusicClick = (): void => {
+  musicInput.value?.click()
+}
+
+const handleMusicFiles = (e: Event): void => {
   const input = e.target as HTMLInputElement
-  const file = input.files?.[0]
-  if (!file) return
-  musicFile.value = file
+  const files = Array.from(input.files ?? [])
   input.value = ''
+  const audioFiles = files.filter(isAudioFile)
+  appendTracks(audioFiles)
+  if (files.length > 0 && audioFiles.length === 0) showUnsupportedFile()
+}
+
+const appendTracks = (files: File[]): void => {
+  files.forEach(addTrack)
+}
+
+const addTrack = (file: File): void => {
+  musicTracks.value.push({ id: crypto.randomUUID(), file, volume: 0.8, loop: true })
+}
+
+const showUnsupportedFile = (): void => {
+  toast.add({ title: t('animate.unsupportedFile'), color: 'warning', icon: 'i-lucide-triangle-alert' })
+}
+
+const handleRemoveTrack = (id: string): void => {
+  musicTracks.value = musicTracks.value.filter(track => track.id !== id)
+}
+
+const updateTrack = (id: string, patch: Partial<Pick<AnimateMusicTrack, 'volume' | 'loop'>>): void => {
+  const track = musicTracks.value.find(entry => entry.id === id)
+  if (track) Object.assign(track, patch)
+}
+
+const handleTrackVolume = (id: string, value: number | undefined): void => {
+  updateTrack(id, { volume: value ?? 0.8 })
+}
+
+const handleTrackLoop = (id: string, value: boolean): void => {
+  updateTrack(id, { loop: value })
 }
 
 function getStage(): HTMLElement {
@@ -75,7 +119,13 @@ async function handleRender(): Promise<void> {
     crossfade: crossfade.value,
     crossfadeSeconds: 0.5,
     motions: motions.value,
-    music: musicFile.value ? { blob: musicFile.value, volume: musicVolume.value } : null,
+    tracks: musicTracks.value.map(track => ({
+      id: track.id,
+      blob: track.file,
+      name: track.file.name,
+      volume: track.volume,
+      loop: track.loop,
+    })),
     width: frame.value.w,
     height: frame.value.h,
   }
@@ -106,20 +156,39 @@ async function handleRender(): Promise<void> {
           </UFormField>
         </div>
 
-        <!-- Music -->
+        <!-- Music tracks -->
         <div class="space-y-2 rounded-lg border border-default bg-muted p-3">
           <div class="flex items-center justify-between gap-2">
             <p class="text-xs font-semibold uppercase tracking-wider text-muted">{{ t('animate.music') }}</p>
             <UButton size="xs" variant="soft" color="primary" icon="i-lucide-music-2"
-              :label="musicFile ? musicFile.name : t('animate.chooseMusic')" data-testid="btn-choose-music"
-              @click="musicInput?.click()" />
+              :label="t('animate.addTrack')" data-testid="btn-choose-music"
+              @click="handleChooseMusicClick" />
           </div>
-          <template v-if="musicFile">
-            <UFormField :label="`${t('animate.volume')} (${Math.round(musicVolume * 100)}%)`" size="xs">
-              <USlider :model-value="musicVolume" :min="0" :max="1" :step="0.05" data-testid="animate-volume"
-                @update:model-value="(v: number | undefined) => musicVolume = v ?? 0.8" />
+          <div
+            v-for="(track, index) in musicTracks" :key="track.id"
+            :data-testid="`animate-track-${index}`"
+            class="space-y-2 rounded-lg border border-default bg-default p-2.5">
+            <div class="flex items-center gap-2">
+              <Icon name="i-lucide-music-2" class="size-4 shrink-0 text-primary" />
+              <span class="min-w-0 flex-1 truncate text-xs font-medium">{{ track.file.name }}</span>
+              <UButton
+                size="xs" variant="ghost" color="error" icon="i-lucide-x"
+                :aria-label="t('animate.removeTrack')" :data-testid="`animate-remove-${index}`"
+                @click="handleRemoveTrack(track.id)" />
+            </div>
+            <UFormField :label="`${t('animate.volume')} (${Math.round(track.volume * 100)}%)`" size="xs">
+              <USlider
+                :model-value="track.volume" :min="0" :max="1" :step="0.05"
+                :data-testid="`animate-volume-${index}`"
+                @update:model-value="(value) => handleTrackVolume(track.id, value)" />
             </UFormField>
-          </template>
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-muted">{{ t('animate.loop') }}</span>
+              <USwitch
+                :model-value="track.loop" size="xs" :data-testid="`animate-loop-${index}`"
+                @update:model-value="(value) => handleTrackLoop(track.id, value)" />
+            </div>
+          </div>
           <p class="text-[10px] text-muted">{{ t('animate.musicHint') }}</p>
         </div>
 
@@ -160,8 +229,9 @@ async function handleRender(): Promise<void> {
             data-testid="btn-animate-download" @click="downloadResult()" />
         </div>
       </div>
-      <input ref="musicInput" type="file" accept="audio/*" class="hidden" data-testid="animate-music-input"
-        @change="onMusicChange" />
+      <input
+        ref="musicInput" type="file" accept="audio/*" multiple class="hidden" data-testid="animate-music-input"
+        @change="handleMusicFiles" />
     </template>
     <template #footer>
       <div class="flex justify-end gap-2 w-full">

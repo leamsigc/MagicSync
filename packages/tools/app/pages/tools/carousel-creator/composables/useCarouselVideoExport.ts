@@ -3,11 +3,16 @@
  *
  * Flow (patterns proven in useVideoRecorder.ts and video-cropper/useExport.ts):
  *  1. each slide is pre-rendered to PNG (modern-screenshot, via the caller)
- *  2. an OffscreenCanvas + CanvasSource push one frame per `1/fps` with the
+ *  2. audio tracks are decoded + resampled + mixed to one stereo buffer
+ *     (pure math in `audioMix.ts`) sized exactly to the video duration
+ *  3. an OffscreenCanvas + CanvasSource push one frame per `1/fps` with the
  *     slide's motion transform interpolated from time
- *  3. optional music: WebAudio decode → loop/trim to video duration into one
- *     AudioBuffer → AudioBufferSource → output.addAudioTrack()
- *  4. Output(Mp4OutputFormat) + finalize() → MP4 blob
+ *  4. only after the last video frame is written, the mixed audio buffer is
+ *     fed to the AudioBufferSource with explicit 0→duration timestamps, then
+ *     Output(Mp4OutputFormat) + finalize() → MP4 blob. Feeding audio last
+ *     keeps the mux deterministic at every frame rate: at low fps the short
+ *     video loop used to race ahead of the still-encoding upfront audio,
+ *     cutting the tail.
  */
 import {
   Output,
@@ -18,6 +23,7 @@ import {
   getFirstEncodableVideoCodec,
   getFirstEncodableAudioCodec,
 } from 'mediabunny'
+import { mixTracksToStereo, resampleLinear } from './audioMix'
 
 export type SlideMotionKey =
   | 'none' | 'fade' | 'zoom-in' | 'zoom-out'
@@ -46,13 +52,21 @@ export const MOTION_PRESETS: MotionPreset[] = [
   { key: 'blur-in', label: 'Blur in' },
 ]
 
+export interface MusicTrack {
+  id: string
+  blob: Blob
+  name: string
+  volume: number
+  loop: boolean
+}
+
 export interface VideoExportSettings {
   fps: number
   secondsPerSlide: number
   crossfade: boolean
   crossfadeSeconds: number
   motions: SlideMotionKey[]
-  music: { blob: Blob, volume: number } | null
+  tracks: MusicTrack[]
   width: number
   height: number
 }
@@ -104,36 +118,36 @@ async function decodeMusic(blob: Blob): Promise<AudioBuffer> {
   }
 }
 
-/** Loops (or trims) the decoded music into an AudioBuffer of exactly `durationSec`, applies volume + fade-out. */
-function fitAudioBuffer(decoded: AudioBuffer, durationSec: number, volume: number): AudioBuffer {
-  const sampleRate = decoded.sampleRate
-  const channels = Math.min(2, decoded.numberOfChannels)
-  const totalSamples = Math.max(1, Math.round(durationSec * sampleRate))
-  const out = new AudioBuffer({ length: totalSamples, sampleRate, numberOfChannels: 2 })
+const clamp01 = (value: number): number => Math.min(1, Math.max(0, value));
 
-  for (let ch = 0; ch < 2; ch++) {
-    const src = decoded.getChannelData(Math.min(ch, channels - 1))
-    const dst = out.getChannelData(ch)
-    let write = 0
-    while (write < totalSamples) {
-      const chunk = Math.min(src.length, totalSamples - write)
-      dst.set(src.subarray(0, chunk), write)
-      write += chunk
-      if (src.length > totalSamples) break
-    }
+const resampledChannels = (buffer: AudioBuffer, targetRate: number, totalSamples: number): Float32Array[] => {
+  const out: Float32Array[] = []
+  for (let ch = 0; ch < buffer.numberOfChannels; ch++) {
+    out.push(resampleLinear(buffer.getChannelData(ch), buffer.sampleRate, targetRate, totalSamples))
   }
+  return out
+};
 
-  // volume + fade out over the final second
-  const fadeSamples = Math.min(sampleRate, totalSamples)
-  for (let ch = 0; ch < 2; ch++) {
-    const dst = out.getChannelData(ch)
-    for (let i = 0; i < totalSamples; i++) {
-      let gain = volume
-      const fromEnd = totalSamples - i
-      if (fromEnd <= fadeSamples) gain *= fromEnd / fadeSamples
-      dst[i] = dst[i] * gain
-    }
-  }
+/** Mixes decoded tracks to a stereo AudioBuffer of exactly `durationSec` (loop/trim + volume + fade-out). */
+function mixTracksToBuffer(
+  decoded: { buffer: AudioBuffer, volume: number, loop: boolean }[],
+  durationSec: number,
+): AudioBuffer | null {
+  if (decoded.length === 0) return null
+  const targetRate = Math.max(...decoded.map(entry => entry.buffer.sampleRate))
+  const totalSamples = Math.max(1, Math.round(durationSec * targetRate))
+  const { left, right } = mixTracksToStereo(
+    decoded.map(entry => ({
+      channels: resampledChannels(entry.buffer, targetRate, totalSamples),
+      volume: clamp01(entry.volume),
+      loop: entry.loop,
+    })),
+    totalSamples,
+    Math.min(targetRate, totalSamples),
+  )
+  const out = new AudioBuffer({ length: totalSamples, sampleRate: targetRate, numberOfChannels: 2 })
+  out.getChannelData(0).set(left)
+  out.getChannelData(1).set(right)
   return out
 }
 
@@ -184,19 +198,22 @@ export function useCarouselVideoExport() {
     return { ctx, output, canvasSource }
   }
 
-  async function attachMusic(
-    output: Output,
-    music: { blob: Blob, volume: number } | null,
+  async function prepareAudio(
+    tracks: MusicTrack[],
     duration: number,
     report: (percent: number, status: string) => void,
-  ): Promise<AudioBufferSource | null> {
-    if (!music) {
-      await output.start()
-      return null
-    }
+  ): Promise<AudioBuffer | null> {
+    if (tracks.length === 0) return null
     report(0.26, 'Preparing music…')
-    const decoded = await decodeMusic(music.blob)
-    const fitted = fitAudioBuffer(decoded, duration, Math.min(1, Math.max(0, music.volume)))
+    const decoded = await Promise.all(tracks.map(async track => ({
+      buffer: await decodeMusic(track.blob),
+      volume: track.volume,
+      loop: track.loop,
+    })))
+    return mixTracksToBuffer(decoded, duration)
+  }
+
+  async function createAudioTrack(output: Output, fitted: AudioBuffer): Promise<AudioBufferSource> {
     const audioCodec = await getFirstEncodableAudioCodec(
       output.format.getSupportedAudioCodecs(),
       { numberOfChannels: 2, sampleRate: fitted.sampleRate, bitrate: 192e3 },
@@ -208,8 +225,6 @@ export function useCarouselVideoExport() {
       numberOfChannels: 2,
     })
     output.addAudioTrack(audioSource)
-    await output.start()
-    await audioSource.add(fitted)
     return audioSource
   }
 
@@ -265,6 +280,45 @@ export function useCarouselVideoExport() {
     ctx.restore()
   }
 
+  async function renderVideoFrames(
+    io: {
+      ctx: OffscreenCanvasRenderingContext2D,
+      output: Output,
+      canvasSource: CanvasSource,
+      images: HTMLImageElement[],
+      slideCount: number,
+      width: number,
+      height: number,
+    },
+    opts: {
+      fps: number,
+      secondsPerSlide: number,
+      crossfade: boolean,
+      crossfadeSeconds: number,
+      motions: SlideMotionKey[],
+    },
+    report: (percent: number, status: string) => void,
+  ): Promise<boolean> {
+    const totalFrames = Math.round(io.slideCount * opts.secondsPerSlide * opts.fps)
+    for (let f = 0; f < totalFrames; f++) {
+      if (cancelled) {
+        await io.output.cancel()
+        return false
+      }
+      const t = f / opts.fps
+      const slideIdx = Math.min(Math.floor(t / opts.secondsPerSlide), io.slideCount - 1)
+      const local = (t - slideIdx * opts.secondsPerSlide) / opts.secondsPerSlide
+      const motion = opts.motions[Math.min(slideIdx, opts.motions.length - 1)] ?? 'none'
+
+      drawFrame(io.ctx, io.images, slideIdx, io.slideCount, local, motion, io.width, io.height, opts.crossfade, opts.crossfadeSeconds, opts.secondsPerSlide)
+      await io.canvasSource.add(t, 1 / opts.fps)
+      if (f % 5 === 0 || f === totalFrames - 1) {
+        report(0.28 + (0.7 * (f + 1) / totalFrames), `Rendering frame ${f + 1}/${totalFrames}`)
+      }
+    }
+    return true
+  }
+
   async function exportCarouselVideo(
     renderSlidePng: (index: number) => Promise<string>,
     slideCount: number,
@@ -276,7 +330,7 @@ export function useCarouselVideoExport() {
     progress.value = 0
     error.value = ''
     resultUrl.value = null
-    const { fps, secondsPerSlide, crossfade, crossfadeSeconds, motions, music, width, height } = settings
+    const { fps, secondsPerSlide, crossfade, crossfadeSeconds, motions, tracks, width, height } = settings
 
     const report = (percent: number, status: string): void => {
       progress.value = percent
@@ -290,26 +344,25 @@ export function useCarouselVideoExport() {
 
       const { ctx, output, canvasSource } = await openEncoder(width, height, fps)
       const duration = slideCount * secondsPerSlide
-      await attachMusic(output, music, duration, report)
-
-      const totalFrames = Math.round(duration * fps)
-      for (let f = 0; f < totalFrames; f++) {
-        if (cancelled) {
-          await output.cancel()
-          return null
-        }
-        const t = f / fps
-        const slideIdx = Math.min(Math.floor(t / secondsPerSlide), slideCount - 1)
-        const local = (t - slideIdx * secondsPerSlide) / secondsPerSlide
-        const motion = motions[Math.min(slideIdx, motions.length - 1)] ?? 'none'
-
-        drawFrame(ctx, images, slideIdx, slideCount, local, motion, width, height, crossfade, crossfadeSeconds, secondsPerSlide)
-        await canvasSource.add(t, 1 / fps)
-        if (f % 5 === 0 || f === totalFrames - 1) {
-          report(0.28 + (0.7 * (f + 1) / totalFrames), `Rendering frame ${f + 1}/${totalFrames}`)
-        }
+      const fittedAudio = await prepareAudio(tracks, duration, report)
+      if (cancelled) {
+        await output.cancel()
+        return null
       }
+      const audioSource = fittedAudio ? await createAudioTrack(output, fittedAudio) : null
+      await output.start()
 
+      const completed = await renderVideoFrames(
+        { ctx, output, canvasSource, images, slideCount, width, height },
+        { fps, secondsPerSlide, crossfade, crossfadeSeconds, motions },
+        report,
+      )
+      if (!completed) return null
+
+      if (audioSource && fittedAudio) {
+        report(0.98, 'Adding music…')
+        await audioSource.add(fittedAudio)
+      }
       return await finalizeExport(output, report)
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Video export failed'

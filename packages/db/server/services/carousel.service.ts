@@ -44,6 +44,10 @@ export interface CarouselData {
   palette: CarouselPalette
   pattern?: string
   handle?: string
+  /** Fabric scene snapshots, one per slide (Task 1.4). Opaque here — the
+   * tools layer builds them via shared/carousel-scene; storage never reads
+   * inside. Absent on rows saved before snapshots existed. */
+  scene?: Array<{ slideId: string, scene: unknown }>
 }
 
 interface CarouselDetailsRow {
@@ -52,7 +56,7 @@ interface CarouselDetailsRow {
   updatedAt: Date | null
 }
 
-type CarouselResult = { id: string; name: string; slides: CarouselSlide[]; palette: CarouselPalette; pattern?: string; handle?: string; isPublic?: boolean; shareSlug?: string; updatedAt?: string }
+type CarouselResult = { id: string; name: string; slides: CarouselSlide[]; palette: CarouselPalette; pattern?: string; handle?: string; scene?: Array<{ slideId: string, scene: unknown }>; isPublic?: boolean; shareSlug?: string; updatedAt?: string }
 
 const CAROUSEL_TYPE = 'carousel'
 const PUBLIC_TYPE = 'carousel_public'
@@ -79,6 +83,7 @@ function toCarousel(row: CarouselDetailsRow): CarouselResult | null {
     palette: details.palette ?? DEFAULT_PALETTE,
     pattern: details.pattern,
     handle: details.handle,
+    scene: Array.isArray(details.scene) ? details.scene : undefined,
     updatedAt: row.updatedAt ? new Date(row.updatedAt).toISOString() : undefined,
   }
 }
@@ -90,6 +95,7 @@ function serializeDetails(data: CarouselData) {
     palette: data.palette,
     pattern: data.pattern,
     handle: data.handle,
+    scene: data.scene,
   }))
 }
 

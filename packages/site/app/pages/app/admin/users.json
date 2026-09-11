@@ -29,6 +29,7 @@
       "edit": "Edit",
       "ban": "Ban",
       "unban": "Unban",
+      "impersonate": "Impersonate",
       "delete": "Delete"
     },
     "a11y": {
@@ -106,6 +107,9 @@
       "noSelectionDescription": "Select at least one user first",
       "nothingToDo": "Nothing to do",
       "selfAction": "You cannot act on your own account",
+      "impersonated": "Impersonating user",
+      "impersonatedDescription": "You are now viewing as {name}",
+      "impersonateFailed": "Failed to impersonate user",
       "skippedSelf": "Skipped yourself",
       "skippedSelfDescription": "Your own account was left untouched"
     }
@@ -140,6 +144,7 @@
       "edit": "Editar",
       "ban": "Bloquear",
       "unban": "Desbloquear",
+      "impersonate": "Suplantar",
       "delete": "Eliminar"
     },
     "a11y": {
@@ -217,6 +222,9 @@
       "noSelectionDescription": "Seleccione al menos un usuario",
       "nothingToDo": "Nada que hacer",
       "selfAction": "No puede actuar sobre su propia cuenta",
+      "impersonated": "Suplantando usuario",
+      "impersonatedDescription": "Ahora está viendo como {name}",
+      "impersonateFailed": "No se pudo suplantar al usuario",
       "skippedSelf": "Usted fue omitido",
       "skippedSelfDescription": "Su propia cuenta no fue modificada"
     }
@@ -251,6 +259,7 @@
       "edit": "Bearbeiten",
       "ban": "Sperren",
       "unban": "Entsperren",
+      "impersonate": "Übernehmen",
       "delete": "Löschen"
     },
     "a11y": {
@@ -328,6 +337,9 @@
       "noSelectionDescription": "Wählen Sie mindestens einen Benutzer aus",
       "nothingToDo": "Nichts zu tun",
       "selfAction": "Sie können keine Aktion für Ihr eigenes Konto ausführen",
+      "impersonated": "Benutzer wird übernommen",
+      "impersonatedDescription": "Sie sehen die App jetzt als {name}",
+      "impersonateFailed": "Benutzer konnte nicht übernommen werden",
       "skippedSelf": "Übersprungen",
       "skippedSelfDescription": "Ihr eigenes Konto wurde nicht verändert"
     }
@@ -362,6 +374,7 @@
       "edit": "Modifier",
       "ban": "Bannir",
       "unban": "Débannir",
+      "impersonate": "Se faire passer pour",
       "delete": "Supprimer"
     },
     "a11y": {
@@ -439,6 +452,9 @@
       "noSelectionDescription": "Sélectionnez au moins un utilisateur",
       "nothingToDo": "Rien à faire",
       "selfAction": "Vous ne pouvez pas agir sur votre propre compte",
+      "impersonated": "Usurpation d'identité",
+      "impersonatedDescription": "Vous naviguez désormais en tant que {name}",
+      "impersonateFailed": "Échec de l'usurpation d'identité",
       "skippedSelf": "Ignoré",
       "skippedSelfDescription": "Votre propre compte n'a pas été modifié"
     }

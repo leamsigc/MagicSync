@@ -254,3 +254,69 @@ test.describe('Instagram Carousel Creator', () => {
     await expect(page.getByTestId('animate-motion-0')).toBeVisible()
   })
 })
+
+/** Minimal valid WAV: 44-byte header + 1s of 8kHz mono PCM. */
+function makeWavBuffer(): Buffer {
+  const sampleRate = 8000
+  const numSamples = sampleRate
+  const dataSize = numSamples * 2
+  const buffer = Buffer.alloc(44 + dataSize)
+  buffer.write('RIFF', 0)
+  buffer.writeUInt32LE(36 + dataSize, 4)
+  buffer.write('WAVE', 8)
+  buffer.write('fmt ', 12)
+  buffer.writeUInt32LE(16, 16)
+  buffer.writeUInt16LE(1, 20)
+  buffer.writeUInt16LE(1, 22)
+  buffer.writeUInt32LE(sampleRate, 24)
+  buffer.writeUInt32LE(sampleRate * 2, 28)
+  buffer.writeUInt16LE(2, 32)
+  buffer.writeUInt16LE(16, 34)
+  buffer.write('data', 36)
+  buffer.writeUInt32LE(dataSize, 40)
+  for (let i = 0; i < numSamples; i++) {
+    buffer.writeInt16LE(Math.round(Math.sin(i / 20) * 5000), 44 + i * 2)
+  }
+  return buffer
+}
+
+test.describe('Animate modal - audio tracks', () => {
+  test.beforeEach(async ({ page }) => {
+    await blockHeavyAssets(page)
+    await page.goto('/tools/carousel-creator')
+    await waitForHydration(page)
+    await page.addStyleTag({ content: '.fixed.bottom-6.right-6.z-50 { display: none !important; }' })
+    await expect(page.locator('#carousel-stage')).toBeVisible()
+    await page.getByTestId('section-export-toggle').click()
+    await page.getByTestId('btn-animate').click()
+    await expect(page.getByRole('heading', { name: /animate & export/i })).toBeVisible()
+  })
+
+  test('supports multiple audio tracks with per-track controls', async ({ page }) => {
+    const wav = makeWavBuffer()
+    await page.locator('input[data-testid="animate-music-input"]').setInputFiles([
+      { name: 'track-a.wav', mimeType: 'audio/wav', buffer: wav },
+      { name: 'track-b.wav', mimeType: 'audio/wav', buffer: wav },
+    ])
+
+    const first = page.getByTestId('animate-track-0')
+    const second = page.getByTestId('animate-track-1')
+    await expect(first).toContainText('track-a.wav')
+    await expect(second).toContainText('track-b.wav')
+    await expect(page.getByTestId('animate-volume-0')).toBeVisible()
+    await expect(page.getByTestId('animate-loop-0')).toBeVisible()
+    await expect(page.getByTestId('animate-volume-1')).toBeVisible()
+
+    await page.getByTestId('animate-remove-0').click()
+    await expect(page.getByTestId('animate-track-0')).toContainText('track-b.wav')
+    await expect(page.getByTestId('animate-track-1')).toHaveCount(0)
+  })
+
+  test('rejects non-audio files with a toast', async ({ page }) => {
+    await page.locator('input[data-testid="animate-music-input"]').setInputFiles({
+      name: 'notes.txt', mimeType: 'text/plain', buffer: Buffer.from('hello'),
+    })
+    await expect(page.getByText('Please choose audio files only.')).toBeVisible({ timeout: 10000 })
+    await expect(page.getByTestId('animate-track-0')).toHaveCount(0)
+  })
+})

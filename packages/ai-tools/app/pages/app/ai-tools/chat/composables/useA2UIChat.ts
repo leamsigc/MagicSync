@@ -120,7 +120,10 @@ export function useA2UIChat() {
           if (!jsonStr) continue
 
           try {
-            const chunk: StreamChunk = JSON.parse(jsonStr)
+            const parsed: unknown = JSON.parse(jsonStr)
+            if (typeof parsed !== 'object' || parsed === null) continue
+            if (typeof (parsed as { type?: unknown }).type !== 'string') continue
+            const chunk = parsed as StreamChunk
             console.log('[Chat] Received chunk type:', chunk.type, 'toolName:', chunk.toolName, 'toolCallId:', chunk.toolCallId)
 
             if (chunk.type === 'thinking' && chunk.content) {

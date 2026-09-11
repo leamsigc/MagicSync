@@ -46,6 +46,7 @@ export interface PlatformConfig {
 }
 
 export interface SocialMediaPlatformConfigurations {
+  [key: string]: PlatformConfig;
   facebook: PlatformConfig;
   instagram: PlatformConfig;
   twitter: PlatformConfig; // X (Twitter)

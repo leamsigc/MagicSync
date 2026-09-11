@@ -1,3 +1,4 @@
+import { parseJsonObject, toJsonString } from '#layers/BaseShared/utils/json';
 import type { PostDetails, PostResponse, Integration, PluginPostDetails, PluginSocialMediaAccount, GetCommentsResponse, ReplyCommentResponse, PlatformComment, PlatformStats, PostInsight } from '../SchedulerPost.service';
 import { BaseSchedulerPlugin, type MediaContent, createPostInsightsFallback, extractExternalPostId } from '../SchedulerPost.service';
 import type { Post, PostWithAllData, SocialMediaAccount, Asset, PlatformContentOverride } from '#layers/BaseDB/db/schema';
@@ -85,8 +86,8 @@ export class XPlugin extends BaseSchedulerPlugin {
   }
   private getPlatformData(postDetails: PostWithAllData, platformPost?: Record<string, unknown>) {
     const platformName = this.pluginName;
-    const platformContent = (postDetails.platformContent as unknown as Record<string, PlatformContentOverride | undefined>)?.[platformName];
-    const platformSettings = (postDetails.platformSettings as unknown as Record<string, unknown>)?.[platformName] as TwitterSettings | undefined;
+    const platformContent = (postDetails.platformContent as Record<string, PlatformContentOverride | undefined>)?.[platformName];
+    const platformSettings = (postDetails.platformSettings as Record<string, unknown>)?.[platformName] as TwitterSettings | undefined;
     const rawContent = platformContent?.content || postDetails.content;
     const postFormat = postDetails.postFormat ?? 'post';
     const comments = platformContent?.comments || [];
@@ -117,7 +118,7 @@ export class XPlugin extends BaseSchedulerPlugin {
       const { comments: postComments } = this.getPlatformData(postDetails);
 
       // Use platform-specific content if available, otherwise use master content
-      const postPlatformContent = postDetails.platformContent as unknown as Record<string, PlatformContentOverride | undefined> | undefined;
+      const postPlatformContent = postDetails.platformContent as Record<string, PlatformContentOverride | undefined> | undefined;
       const platformContent = postPlatformContent?.twitter
         || postPlatformContent?.x;
       const rawContent = platformContent?.content || postDetails.content;
@@ -175,7 +176,7 @@ export class XPlugin extends BaseSchedulerPlugin {
       // }
 
       // Platform-specific settings from platformSettings
-      const postPlatformSettings = postDetails.platformSettings as unknown as Record<string, TwitterSettings> | undefined;
+      const postPlatformSettings = postDetails.platformSettings as Record<string, TwitterSettings> | undefined;
       const platformSettings = postPlatformSettings?.twitter || postPlatformSettings?.x;
       if (platformSettings) {
         // Handle who_can_reply setting
@@ -254,7 +255,7 @@ export class XPlugin extends BaseSchedulerPlugin {
       if (!publicationDetails) {
         throw new Error('Published platform details not found');
       }
-      const details = JSON.parse(publicationDetails.publishDetail as unknown as string || '{}') as PostResponse;
+      const details = parseJsonObject(toJsonString(publicationDetails.publishDetail)) as PostResponse;
       const postId = details.postId;
 
       if (!postId) {
@@ -417,7 +418,7 @@ export class XPlugin extends BaseSchedulerPlugin {
       const tweet = await client.v2.singleTweet(externalPostId, {
         'tweet.fields': ['public_metrics', 'created_at'],
       });
-      const metrics = (tweet.data as unknown as { public_metrics?: Record<string, number> })?.public_metrics || {};
+      const metrics = (tweet.data as { public_metrics?: Record<string, number> })?.public_metrics || {};
 
       return [
         { label: 'Likes', value: metrics.like_count || 0 },
@@ -484,8 +485,8 @@ export class XPlugin extends BaseSchedulerPlugin {
 
     // Parse the publishDetail which is stored as JSON string
     try {
-      const detail = JSON.parse(platformPost.publishDetail as unknown as string || '{}');
-      return detail.postId || null;
+      const detail = parseJsonObject(toJsonString(platformPost.publishDetail));
+      return typeof detail.postId === 'string' ? detail.postId : null;
     } catch {
       return null;
     }

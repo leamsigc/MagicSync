@@ -3,6 +3,7 @@ import type { PostBatchServiceType } from './interfaces'
 import type { ServiceResponse, PostResponse } from './types'
 import { and, eq, isNull, lte, or, inArray, sql, isNotNull } from 'drizzle-orm'
 import { posts, platformPosts, assets } from '#layers/BaseDB/db/schema'
+import { parseJsonArray, parseJsonObject, toJsonString } from '#layers/BaseShared/utils/json'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
 import { postService } from './post.service'
 
@@ -30,13 +31,7 @@ export class PostBatchService implements PostBatchServiceType {
     })
 
     const allAssetIds = list
-      .flatMap(post => {
-        try {
-          return post.mediaAssets ? JSON.parse(post.mediaAssets as unknown as string) : []
-        } catch {
-          return []
-        }
-      })
+      .flatMap(post => parseJsonArray<string>(toJsonString(post.mediaAssets, '[]')))
       .filter((id): id is string => typeof id === 'string')
 
     const assetsMap = new Map<string, Asset>()
@@ -51,8 +46,8 @@ export class PostBatchService implements PostBatchServiceType {
       let assetsList: Asset[] = []
       if (post.mediaAssets) {
         try {
-          const assetIds = JSON.parse(post.mediaAssets as unknown as string) as string[]
-          if (assetIds && assetIds.length > 0) {
+          const assetIds = parseJsonArray<string>(toJsonString(post.mediaAssets, '[]'))
+          if (assetIds.length > 0) {
             assetsList = assetIds.map(id => assetsMap.get(id)).filter((a): a is Asset => !!a)
           }
         } catch {
@@ -104,7 +99,7 @@ export class PostBatchService implements PostBatchServiceType {
 
   async updatePostBaseOnResponse(post: PostWithAllData, response: PostResponse, socialPlatform: PlatformPost) {
     const socialPlatformId = socialPlatform.socialAccountId
-    const oldDetails = JSON.parse(socialPlatform.publishDetail as unknown as string || '{}')
+    const oldDetails = parseJsonObject(toJsonString(socialPlatform.publishDetail))
 
     const platformSpecificDetails = {
       publishedId: response.postId,

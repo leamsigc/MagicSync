@@ -17,7 +17,7 @@ async function facebookPlugin(): Promise<FacebookPlugin> {
   scheduler.use(FacebookPlugin)
   const plugin = scheduler.getPlugin('facebook')
   if (!plugin) throw new Error('Facebook plugin not registered')
-  return plugin as unknown as FacebookPlugin
+  return plugin as FacebookPlugin
 }
 
 /**

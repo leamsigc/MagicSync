@@ -7,6 +7,7 @@ import type {
 import type { PostServiceType } from './interfaces'
 import { and, eq, gte, inArray, lte, or, sql } from 'drizzle-orm'
 import { assets, businessProfiles, member, organization, platformPosts, posts, socialMediaAccounts } from '#layers/BaseDB/db/schema'
+import { parseJsonObject, toJsonString } from '#layers/BaseShared/utils/json'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
 import { ValidationError } from './types'
 
@@ -331,7 +332,7 @@ export class PostService implements PostServiceType {
         .where(inArray(organization.id, orgIds))
 
       for (const org of orgs) {
-        const meta = JSON.parse(org.metadata ?? '{}') as Record<string, unknown>
+        const meta = parseJsonObject(toJsonString(org.metadata))
         if (typeof meta.businessId === 'string' && meta.businessId) {
           ids.add(meta.businessId)
         }

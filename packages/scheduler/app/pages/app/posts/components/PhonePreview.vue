@@ -18,11 +18,17 @@ const BlueskyPreview = defineAsyncComponent(() => import('./BlueskyPreview.vue')
 const DefaultPreview = defineAsyncComponent(() => import('./TwitterPreview.vue'));
 const VerticalVideoPreview = defineAsyncComponent(() => import('./VerticalVideoPreview.vue'));
 
+/** Minimal post shape the preview chain actually reads (comments only —
+ * content and assets travel via dedicated props). */
+export interface PreviewPost {
+  comment?: string[];
+}
+
 interface Props {
   postContent: string;
   mediaAssets: Asset[];
   platform: keyof SocialMediaPlatformConfigurations;
-  post: PostCreateBase;
+  post: PreviewPost;
   currentPlatformConfig: PlatformConfig;
   format?: PostFormat;
 }
@@ -36,7 +42,7 @@ const emit = defineEmits<{
 }>();
 
 const selectedFormat = ref<PostFormat>(props.format);
-const { getPlatformIcon } = usePlatformIcons();
+const { getPlatformIcon, isPlatformSupported } = usePlatformIcons();
 
 watch(() => props.format, (newFormat) => {
   selectedFormat.value = newFormat;
@@ -125,7 +131,7 @@ const formatLabels: Record<PostFormat, string> = {
     <div v-if="supportedFormats.length > 1"
       class="mb-4 w-full md:max-w-[320px] flex items-center justify-between bg-zinc-900/80 p-2 rounded-xl border border-white/10 backdrop-blur shadow-xl">
       <div class="flex items-center gap-2">
-        <Icon :name="getPlatformIcon(props.platform as unknown as SocialMediaPlatform)" class="w-5 h-5" v-if="platform !== 'default'" />
+        <Icon :name="getPlatformIcon(isPlatformSupported(props.platform) ? props.platform : 'default')" class="w-5 h-5" v-if="platform !== 'default'" />
         <span class="text-sm font-bold text-zinc-200">{{ platformConfig?.logo || platform }}</span>
       </div>
       <div class="md:flex bg-zinc-800 rounded-lg p-1 gap-1 hidden">

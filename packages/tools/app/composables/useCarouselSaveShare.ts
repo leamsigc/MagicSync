@@ -8,6 +8,7 @@
  * Sharing to a public URL is available for logged-in users only.
  */
 import type { Ref } from 'vue'
+import type { SlideSceneSnapshot } from '../../shared/carousel-scene/scene-snapshot'
 import {
   saveLocalCarousel,
   getLocalCarousel,
@@ -57,6 +58,8 @@ export interface CarouselData {
   palette: CarouselPalette
   pattern?: string
   handle?: string
+  /** Fabric scene snapshots (Task 1.4) — opaque to storage, built by the editor. */
+  scene?: SlideSceneSnapshot[]
 }
 
 export interface SavedCarousel {
@@ -155,6 +158,7 @@ export function useCarouselSaveShare(currentCarousel: Ref<CarouselData | null>) 
       palette: currentCarousel.value.palette,
       pattern: currentCarousel.value.pattern,
       handle: currentCarousel.value.handle,
+      scene: currentCarousel.value.scene,
     }
   }
 
@@ -179,6 +183,7 @@ export function useCarouselSaveShare(currentCarousel: Ref<CarouselData | null>) 
       palette: currentCarousel.value.palette,
       pattern: currentCarousel.value.pattern,
       handle: currentCarousel.value.handle,
+      scene: currentCarousel.value.scene,
     })
     notifySuccess('Carousel saved', `"${currentCarousel.value.name}" saved locally.`)
     return true

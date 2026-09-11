@@ -50,7 +50,7 @@ export default defineEventHandler(async (event) => {
     }
 
     const result = await trigger.replyToConversation({
-      socialAccount: socialAccount as unknown as Account,
+      socialAccount: socialAccount,
       platform: socialAccount.platform,
       conversationId,
       message,

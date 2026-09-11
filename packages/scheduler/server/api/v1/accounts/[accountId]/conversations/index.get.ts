@@ -44,7 +44,7 @@ export default defineEventHandler(async (event) => {
     }
 
     const result = await trigger.getConversations({
-      socialAccount: socialAccount as unknown as Account,
+      socialAccount: socialAccount,
       platform: socialAccount.platform,
       limit: parsedLimit,
       cursor: cursor as string | undefined,

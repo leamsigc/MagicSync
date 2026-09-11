@@ -20,18 +20,24 @@ const isSaving = ref(false);
 
 const responseResult = ref<InformationSchemaBusinessResponse | null>(null);
 
+const isDetailsShape = (value: unknown): value is { companyInformation?: string; brandDetails?: Record<string, unknown> } => {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
 const safeParseDetails = (details: unknown): { companyInformation?: string; brandDetails?: Record<string, unknown> } => {
   try {
     if (typeof details === 'string') {
-      return JSON.parse(details);
+      const parsed: unknown = JSON.parse(details)
+      return isDetailsShape(parsed) ? parsed : {}
     }
     if (typeof details === 'object' && details !== null) {
       const keys = Object.keys(details);
       if (keys.every(k => /^\d+$/.test(k))) {
         const reconstructed = keys.sort((a, b) => parseInt(a) - parseInt(b)).map(k => (details as Record<string, string>)[k]).join('');
-        return JSON.parse(reconstructed);
+        const reparsed: unknown = JSON.parse(reconstructed)
+        return isDetailsShape(reparsed) ? reparsed : {}
       }
-      return details as { companyInformation?: string; brandDetails?: Record<string, unknown> };
+      return isDetailsShape(details) ? details : {}
     }
   } catch {
     console.warn('Failed to parse entity details, using base business data only');

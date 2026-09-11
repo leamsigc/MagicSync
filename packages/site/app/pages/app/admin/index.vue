@@ -38,6 +38,8 @@ const adminLinks = [
   { label: 'Users', to: '/app/admin/users', icon: 'lucide:users', description: 'Manage user accounts and roles' },
   { label: 'Businesses', to: '/app/admin/businesses', icon: 'lucide:building-2', description: 'View and manage all businesses' },
   { label: 'Integrations', to: '/app/admin/integrations', icon: 'lucide:plug', description: 'Monitor platform connections' },
+  { label: 'Announcements', to: '/app/admin/announcements', icon: 'lucide:megaphone', description: 'Broadcast banners to all users' },
+  { label: 'Feedback', to: '/app/admin/feedbacks', icon: 'lucide:message-square-heart', description: 'Review user feedback' },
   { label: 'Audit Log', to: '/app/admin/audit', icon: 'lucide:scroll-text', description: 'Review system activity logs' }
 ]
 </script>

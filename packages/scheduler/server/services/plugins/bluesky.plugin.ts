@@ -1,4 +1,5 @@
 import { decryptKey } from '#layers/BaseAuth/server/utils/AuthHelpers';
+import { parseJsonObject, toJsonString } from '#layers/BaseShared/utils/json';
 import { BaseSchedulerPlugin, createPostInsightsFallback, extractExternalPostId } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import type { PluginPostDetails, PluginSocialMediaAccount, PostResponse, GetCommentsResponse, ReplyCommentResponse, PlatformComment, PostInsight, SchedulerPost } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import type { Post, SocialMediaAccount, Asset, PlatformContentOverride } from '#layers/BaseDB/db/schema';
@@ -90,8 +91,8 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
 
   private getPlatformData(postDetails: PluginPostDetails, platformPost?: Record<string, unknown>) {
     const platformName = this.pluginName;
-    const platformContent = (postDetails.platformContent as unknown as Record<string, PlatformContentOverride | undefined>)?.[platformName];
-    const platformSettings = (postDetails.platformSettings as unknown as Record<string, unknown>)?.[platformName] as BlueskySettings | undefined;
+    const platformContent = (postDetails.platformContent as Record<string, PlatformContentOverride | undefined>)?.[platformName];
+    const platformSettings = (postDetails.platformSettings as Record<string, unknown>)?.[platformName] as BlueskySettings | undefined;
     const rawContent = platformContent?.content || postDetails.content;
     const postFormat = postDetails.postFormat ?? 'post';
     const comments = platformContent?.comments || [];
@@ -587,7 +588,7 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
       throw new Error('Published platform details not found');
     }
 
-    const publishedDetails = publishedPlatformDetails.publishDetail ? JSON.parse(publishedPlatformDetails.publishDetail as string) as PostResponse : null;
+    const publishedDetails = publishedPlatformDetails.publishDetail ? parseJsonObject(toJsonString(publishedPlatformDetails.publishDetail)) as PostResponse : null;
     if (!publishedDetails) {
       throw new Error('Published details not found');
     }
@@ -648,7 +649,7 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
         throw new Error('Published platform details not found');
       }
 
-      const publishedDetails = publishedPlatformDetails.publishDetail ? JSON.parse(publishedPlatformDetails.publishDetail as string) as PostResponse : null;
+    const publishedDetails = publishedPlatformDetails.publishDetail ? parseJsonObject(toJsonString(publishedPlatformDetails.publishDetail)) as PostResponse : null;
       if (!publishedDetails) {
         throw new Error('Published details not found');
       }
@@ -763,7 +764,7 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
         throw new BadBody(
           'bluesky',
           JSON.stringify({}),
-          {} as unknown as Response,
+          new Response(JSON.stringify({})),
           'Could not upload video, job failed'
         );
       }
@@ -895,7 +896,8 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
     try {
       // externalPostId for Bluesky is the at:// URI
       const threadResponse = await this.agent.getPostThread({ uri: externalPostId });
-      const post = threadResponse.data.thread?.post as unknown as {
+      const rawPost: unknown = threadResponse.data.thread?.post
+      const post = (typeof rawPost === 'object' && rawPost !== null ? rawPost : undefined) as {
         likeCount?: number;
         repostCount?: number;
         replyCount?: number;

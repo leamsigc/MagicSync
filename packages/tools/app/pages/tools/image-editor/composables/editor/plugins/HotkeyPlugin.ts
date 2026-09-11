@@ -1,6 +1,19 @@
 import { Canvas, FabricObject } from 'fabric';
 import { BaseFabricPlugin, FabricEditor } from '../FabricEditor';
 
+const FORM_CONTROL_SELECTOR = 'input, textarea, select, button, [role="slider"], [role="combobox"], [role="listbox"], [role="menu"], [role="dialog"], [contenteditable="true"]';
+
+/**
+ * Canvas hotkeys must stay out of the way while the user operates form
+ * controls (sliders, selects, dialogs). Otherwise arrow keys nudge the
+ * canvas object AND prevent UI widgets from receiving them.
+ */
+const isFormControlEvent = (e: KeyboardEvent) => {
+  const target = e.target as HTMLElement | null;
+  if (!target || typeof target.closest !== 'function') return false;
+  return target.closest(FORM_CONTROL_SELECTOR) !== null;
+};
+
 export class HotkeyPlugin extends BaseFabricPlugin {
   static readonly pluginName = 'hotkey';
   override readonly pluginName = 'hotkey';
@@ -16,7 +29,7 @@ export class HotkeyPlugin extends BaseFabricPlugin {
   }
 
   private handleKeyDown(e: KeyboardEvent) {
-    if ((e.target as HTMLElement).tagName === 'INPUT' || (e.target as HTMLElement).tagName === 'TEXTAREA') return;
+    if (isFormControlEvent(e)) return;
 
     if (e.key === 'Delete' || e.key === 'Backspace') {
       const activeObject = this.canvas?.getActiveObject();

@@ -309,6 +309,16 @@ export const useDashboardNavigation = () => {
               label: m.menu.auditLog,
               to: '/app/admin/audit',
               icon: 'i-lucide-scroll-text'
+            },
+            {
+              label: m.menu.announcements,
+              to: '/app/admin/announcements',
+              icon: 'i-lucide-megaphone'
+            },
+            {
+              label: m.menu.feedback,
+              to: '/app/admin/feedbacks',
+              icon: 'i-lucide-message-square-heart'
             }
           ]
         }

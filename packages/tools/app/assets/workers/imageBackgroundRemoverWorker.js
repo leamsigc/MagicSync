@@ -1,7 +1,20 @@
 import { pipeline } from '@huggingface/transformers';
 
-const BASE_MODEL = 'onnx-community/BEN2-ONNX';
+// NOTE: the model MUST have a `model_type` supported by the installed
+// transformers version for the `background-removal` task
+// (see MODEL_FOR_*_SEGMENTATION mappings + CUSTOM_ARCHITECTURES).
+// `briaai/RMBG-1.4` fails with:
+//   Unsupported model type "SegformerForSemanticSegmentation"
+// `Xenova/modnet` is this version's documented pipeline default.
+const BASE_MODEL = 'Xenova/modnet';
 let extractor = null;
+
+const reportFileProgress = (fileProgress) => {
+  const fractions = Object.values(fileProgress);
+  if (fractions.length === 0) return;
+  const average = fractions.reduce((sum, value) => sum + value, 0) / fractions.length;
+  self.postMessage({ type: 'status', status: 'loading', progress: Math.round(average * 100) });
+};
 
 self.onmessage = async (event) => {
   const { type, payload } = event.data;
@@ -10,14 +23,20 @@ self.onmessage = async (event) => {
     case 'loadModel':
       try {
         self.postMessage({ type: 'status', status: 'loading', progress: 0 });
-        console.log('Loading model:', payload.model || BASE_MODEL);
+        const fileProgress = {};
         extractor = await pipeline(
           'background-removal',
           payload.model || BASE_MODEL,
+          {
+            progress_callback: (data) => {
+              if (data.status !== 'progress' || !data.total) return;
+              fileProgress[data.file] = (data.loaded ?? 0) / data.total;
+              reportFileProgress(fileProgress);
+            },
+          },
         );
         self.postMessage({ type: 'status', status: 'loaded', progress: 100 });
       } catch (error) {
-        console.log('Main error', error);
         self.postMessage({ type: 'error', error: error.message });
       }
       break;
@@ -29,17 +48,21 @@ self.onmessage = async (event) => {
       }
       try {
         self.postMessage({ type: 'status', status: 'processing', progress: 0 });
-        const { image, model } = payload;
-        console.log('processing image:', image, 'model:', model);
+        const { image } = payload;
 
-        let imageUrl = image;
-        if (image instanceof File) {
-          imageUrl = URL.createObjectURL(image);
+        let imageInput = image;
+        if (image instanceof File || image instanceof Blob) {
+          imageInput = URL.createObjectURL(image);
         }
-        const result = await extractor(imageUrl);
-        const file = new File([await result[0].toBlob()], image.name, {
-          type: result[0].type,
-        });
+        // Single input -> single RawImage (not an array)
+        const output = await extractor(imageInput);
+        const cutout = Array.isArray(output) ? output[0] : output;
+        const blob = await cutout.toBlob('image/png');
+        if (imageInput !== image && typeof imageInput === 'string') URL.revokeObjectURL(imageInput);
+        const name = typeof image?.name === 'string' && image.name
+          ? image.name.replace(/\.[^.]+$/, '') + '-no-bg.png'
+          : 'no-background.png';
+        const file = new File([blob], name, { type: 'image/png' });
         self.postMessage({ type: 'status', status: 'done', progress: 100 });
         self.postMessage({ type: 'result', result: file });
       } catch (error) {

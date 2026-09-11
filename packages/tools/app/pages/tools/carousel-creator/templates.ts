@@ -125,6 +125,38 @@ export function fontFamilyStack(name?: string): string {
   return FONT_STACKS[clean] ?? `'${clean}', sans-serif`
 }
 
+function textField(record: Record<string, unknown>, key: string): string | undefined {
+  return typeof record[key] === 'string' ? record[key] : undefined
+}
+
+function stringListField(record: Record<string, unknown>, key: string): string[] | undefined {
+  const value = record[key]
+  if (!Array.isArray(value)) return undefined
+  return value.every((item): item is string => typeof item === 'string') ? value : undefined
+}
+
+/**
+ * Rebuild SlideData from an untyped bindings record (stored decks predate
+ * strict shapes). Corrupt fields fall back to undefined/empty — never throw.
+ */
+export function toSlideData(value: unknown): SlideData {
+  const record = typeof value === 'object' && value !== null ? value as Record<string, unknown> : {}
+  return {
+    headline: textField(record, 'headline') ?? '',
+    kicker: textField(record, 'kicker'),
+    body: textField(record, 'body'),
+    items: stringListField(record, 'items'),
+    quote: textField(record, 'quote'),
+    author: textField(record, 'author'),
+    stat: textField(record, 'stat'),
+    statLabel: textField(record, 'statLabel'),
+    cta: textField(record, 'cta'),
+    footer: textField(record, 'footer'),
+    images: stringListField(record, 'images'),
+    borderRadius: typeof record.borderRadius === 'number' ? record.borderRadius : undefined,
+  }
+}
+
 export interface ImageTransform {
   x: number
   y: number

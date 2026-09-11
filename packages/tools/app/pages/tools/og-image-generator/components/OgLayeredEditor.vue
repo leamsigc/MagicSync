@@ -102,7 +102,7 @@ const onPointerUp = () => {
 const numberField = (label: string, key: 'x' | 'y' | 'width' | 'height' | 'rotation' | 'opacity' | 'fontSize' | 'radius', max: number) => ({
   label,
   get: () => selectedLayer.value?.[key] ?? 0,
-  set: (v: number) => { if (selectedLayer.value) (selectedLayer.value as unknown as Record<string, number>)[key] = v },
+  set: (v: number) => { const layer = selectedLayer.value; if (layer) layer[key] = v },
   max
 })
 

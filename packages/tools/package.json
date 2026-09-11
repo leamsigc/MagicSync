@@ -10,13 +10,15 @@
     "generate": "nuxt generate .playground",
     "preview": "nuxt preview .playground",
     "lint": "eslint .",
-    "test:e2e": "playwright test"
+    "test:e2e": "pnpm --filter @local-monorepo/site exec playwright test tests/e2e/tools",
+    "test:unit": "vitest run"
   },
   "dependencies": {
     "@local-monorepo/assets": "workspace:*",
     "@local-monorepo/auth": "workspace:*",
     "@local-monorepo/db": "workspace:*",
-    "@local-monorepo/ui": "workspace:*"
+    "@local-monorepo/ui": "workspace:*",
+    "canvas": "catalog:"
   },
   "devDependencies": {
     "@ai-sdk/google": "catalog:",
@@ -36,7 +38,9 @@
     "modern-screenshot": "catalog:",
     "nuxt": "catalog:",
     "typescript": "catalog:",
+    "vitest": "catalog:",
     "vue": "catalog:",
-    "wavesurfer.js": "catalog:"
+    "wavesurfer.js": "catalog:",
+    "zod": "catalog:"
   }
 }

@@ -1,4 +1,4 @@
-import type { Account } from '#layers/BaseDB/db/schema';
+import type { SocialMediaAccount } from '#layers/BaseDB/db/schema';
 import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service';
 import { SchedulerPost } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import type { PluginSocialMediaAccount } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
@@ -46,12 +46,12 @@ export class GrowService {
     return { account };
   }
 
-  private blueskyPlugin(account: Account) {
+  private blueskyPlugin(account: SocialMediaAccount) {
     const scheduler = new SchedulerPost({ accounts: [account] });
     scheduler.use(BlueskyPlugin);
     const plugin = scheduler.getPlugin('bluesky');
     if (!plugin) throw new Error('Bluesky plugin not registered');
-    return plugin as unknown as BlueskyPlugin;
+    return plugin as BlueskyPlugin;
   }
 
   async getRecommendations({
@@ -68,7 +68,7 @@ export class GrowService {
     const { account } = resolved;
 
     const plugin = this.blueskyPlugin(account);
-    const pluginAccount = account as unknown as PluginSocialMediaAccount;
+    const pluginAccount = account as PluginSocialMediaAccount;
     const capped = Math.min(Math.max(limit, 1), 50);
 
     const [followbacks, suggested] = await Promise.all([
@@ -112,7 +112,7 @@ export class GrowService {
     const { account } = resolved;
 
     const plugin = this.blueskyPlugin(account);
-    return plugin.followAccount(account as unknown as PluginSocialMediaAccount, did);
+    return plugin.followAccount(account as PluginSocialMediaAccount, did);
   }
 }
 

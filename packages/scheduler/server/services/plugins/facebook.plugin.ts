@@ -1,3 +1,4 @@
+import { parseJsonObject, toJsonString } from '#layers/BaseShared/utils/json';
 import type { Asset, PostWithAllData, SocialMediaAccount, PlatformContentOverride } from '#layers/BaseDB/db/schema';
 import type { PostResponse, GetCommentsResponse, ReplyCommentResponse, PlatformComment, PluginPostDetails, PluginSocialMediaAccount, PostInsight, PlatformStats, PlatformConversation, GetConversationsResponse } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import type { FacebookSettings } from '#layers/BaseScheduler/shared/platformSettings';
@@ -54,8 +55,8 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
 
   private getPlatformData(postDetails: PostWithAllData, platformPost?: Record<string, unknown>) {
     const platformName = this.pluginName;
-    const platformContent = (postDetails.platformContent as unknown as Record<string, PlatformContentOverride | undefined>)?.[platformName];
-    const platformSettings = (postDetails.platformSettings as unknown as Record<string, unknown>)?.[platformName] as FacebookSettings | undefined;
+    const platformContent = (postDetails.platformContent as Record<string, PlatformContentOverride | undefined>)?.[platformName];
+    const platformSettings = (postDetails.platformSettings as Record<string, unknown>)?.[platformName] as FacebookSettings | undefined;
     const rawContent = platformContent?.content || postDetails.content;
     const postFormat = postDetails.postFormat ?? 'post';
     const comments = platformContent?.comments || [];
@@ -1292,7 +1293,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     if (!publicationDetails) {
       throw new Error('Published platform details not found');
     }
-    const details = JSON.parse(publicationDetails.publishDetail as unknown as string || '{}') as PostResponse;
+    const details = parseJsonObject(toJsonString(publicationDetails.publishDetail)) as PostResponse;
     const postId = details.postId;
     if (!postId) {
       throw new Error('Post details not found');

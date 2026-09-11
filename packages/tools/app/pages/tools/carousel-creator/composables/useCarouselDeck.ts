@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, no-empty */
 import { domToPng } from 'modern-screenshot'
+import { parseJsonArray } from '#layers/BaseShared/utils/json';
 import {
   CAROUSEL_TEMPLATES,
   DEFAULT_FLOW,
@@ -345,7 +346,7 @@ const customDecks = ref<AiDeckTemplate[]>([])
 if (import.meta.client) {
   try {
     const raw = localStorage.getItem(CUSTOM_DECKS_KEY)
-    if (raw) customDecks.value = JSON.parse(raw) as AiDeckTemplate[]
+    if (raw) customDecks.value = parseJsonArray<AiDeckTemplate>(raw)
   } catch {}
 }
 
@@ -362,7 +363,10 @@ const allDeckTemplates = computed<DeckTemplate[]>(() => [
 ])
 
 if (import.meta.client) {
-  const w = window as unknown as { __CAROUSEL_DECK_LOADS__?: number }
+  interface WindowWithDeckLoads extends Window {
+    __CAROUSEL_DECK_LOADS__?: number
+  }
+  const w = window as WindowWithDeckLoads
   w.__CAROUSEL_DECK_LOADS__ = (w.__CAROUSEL_DECK_LOADS__ ?? 0) + 1
 }
 

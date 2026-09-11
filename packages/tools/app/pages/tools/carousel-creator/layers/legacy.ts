@@ -105,7 +105,7 @@ export function migrateLegacySlide(slide: LegacySlideShape, palette: { bg: strin
     layers.push(buildHtmlLayer('Content', {
       bindings: {
         templateKey: slide.templateKey,
-        data: (slide.data ?? { headline: 'Your headline here' }) as unknown as Record<string, unknown>,
+        data: { ...(slide.data ?? { headline: 'Your headline here' }) },
       },
     }, frameH))
   }

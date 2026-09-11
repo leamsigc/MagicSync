@@ -1,17 +1,17 @@
 <i18n src="../ImageEditor.json"></i18n>
 
 <script lang="ts" setup>
+import { ref, computed } from 'vue';
 import { useFabricJs } from '../composables/useFabricJs';
-import type { TabsItem } from '@nuxt/ui';
-import { ref, computed, nextTick } from 'vue';
 
 const { t } = useI18n();
+const toast = useToast();
 const {
   editor,
 } = useFabricJs();
 
 // --- STATE ---
-const activeTab = ref('layers'); // Default to layers
+const activeTab = ref('layers'); // layers | shapes-alias(elements) | text | uploads | templates
 
 // --- LAYERS LOGIC ---
 const layers = ref<any[]>([]);
@@ -22,6 +22,9 @@ const updateLayers = () => {
 
 // Reversed layers to show top layer first (visual stacking order)
 const reversedLayers = computed(() => [...layers.value].reverse());
+const layerCountLabel = computed(() => reversedLayers.value.length === 1
+  ? t('panel.layerSingle')
+  : t('panel.layersCount', { count: reversedLayers.value.length }));
 const activeLayer = computed(() => editor?.value?.activeLayer?.value);
 
 const handleLayerClick = (layer: any) => {
@@ -32,7 +35,6 @@ const handleLayerClick = (layer: any) => {
 };
 
 const handleDeleteLayer = (layer: any) => {
-  // @ts-ignore
   editor.value?.deleteLayer?.(layer);
   editor.value?.fabricCanvas?.requestRenderAll();
   updateLayers();
@@ -41,42 +43,45 @@ const handleDeleteLayer = (layer: any) => {
 const handleToggleVisibility = (layer: any) => {
   const currentVisibility = layer.visible !== false;
 
-  // @ts-ignore
   editor.value?.toggleLayerVisibility?.(layer, !currentVisibility);
   updateLayers();
 };
 
 const moveLayerUp = (layer: any) => {
-  // @ts-ignore
   editor.value?.arrangeFront?.(layer);
   updateLayers();
 };
 
 const moveLayerDown = (layer: any) => {
-  // @ts-ignore
   editor.value?.arrangeBack?.(layer);
   updateLayers();
 };
 
-const getLayerType = (layer: any) => {
-  if (layer.type === 'image') return 'Image';
-  if (layer.type === 'i-text' || layer.type === 'text') return 'Text';
-  if (layer.type === 'rect') return 'Rectangle';
-  if (layer.type === 'circle') return 'Circle';
-  if (layer.type === 'triangle') return 'Triangle';
-  if (layer.type === 'path') return 'Drawing';
-  return layer.type || 'Object';
+const LAYER_KIND_KEYS: Record<string, string> = {
+  image: 'panel.layerKind.image',
+  text: 'panel.layerKind.text',
+  rect: 'panel.layerKind.rect',
+  circle: 'panel.layerKind.circle',
+  triangle: 'panel.layerKind.triangle',
+  path: 'panel.layerKind.path',
+};
+const LAYER_ICONS: Record<string, string> = {
+  image: 'lucide:image',
+  text: 'lucide:type',
+  rect: 'lucide:square',
+  circle: 'lucide:circle',
+  triangle: 'lucide:triangle',
+  path: 'lucide:pencil',
 };
 
-const getLayerIcon = (layer: any) => {
-  if (layer.type === 'image') return "lucide:image";
-  if (layer.type === 'i-text' || layer.type === 'text') return "lucide:type";
-  if (layer.type === 'rect') return "lucide:square";
-  if (layer.type === 'circle') return "lucide:circle";
-  if (layer.type === 'triangle') return "lucide:triangle";
-  if (layer.type === 'path') return "lucide:pencil";
-  return "lucide:box";
+const normalizeLayerKind = (type: string | undefined) => {
+  if (type === 'i-text') return 'text';
+  return type ?? 'object';
 };
+
+const getLayerType = (layer: any) => t(LAYER_KIND_KEYS[normalizeLayerKind(layer.type)] ?? 'panel.layerKind.object');
+
+const getLayerIcon = (layer: any) => LAYER_ICONS[normalizeLayerKind(layer.type)] ?? 'lucide:box';
 
 // Watch for changes in canvas to update layers
 // Note: In a real app we might want a better event system
@@ -145,34 +150,60 @@ const loadTemplate = (jsonStr: string) => {
 
 
 // --- UPLOAD LOGIC ---
-const onFileSelect = (files: FileList) => {
-  if (files.length > 0) {
-    editor.value?.addImageLayer?.(files[0]);
-    updateLayers();
+const handleUploadFiles = (files: File | File[] | undefined) => {
+  const list = normalizeUploadFiles(files);
+  if (list.length === 0) {
+    toast.add({ title: t('panel.uploadsInvalid'), color: 'warning', icon: 'i-heroicons-exclamation-triangle' });
+    return;
   }
-}
+  list.forEach(addUploadLayer);
+  updateLayers();
+};
+
+const normalizeUploadFiles = (files: File | File[] | undefined): File[] => {
+  if (!files) return [];
+  const list = Array.isArray(files) ? files : [files];
+  return list.filter(isImageFile);
+};
+
+const isImageFile = (file: File) => file.type.startsWith('image/');
+
+const addUploadLayer = (file: File) => {
+  editor.value?.addImageLayer?.(file);
+};
 const onTemplateSelect = async (files: FileList) => {
   if (files.length > 0) {
     const reader = new FileReader();
     reader.onload = (e: any) => {
-      templates.value.push({ title: "Custom Template", description: 'Uploaded template', json: e.target.result });
+      templates.value.push({ title: t('panel.templateCustom'), description: 'Uploaded template', json: e.target.result });
     }
     await reader.readAsText(files[0] as Blob);
   }
-}
-const fileInput = ref<HTMLInputElement>();
+};
 const templateInput = ref<HTMLInputElement>();
 
 
 
 // --- TABS CONFIG ---
 const tabs = [
-  { id: 'templates', icon: 'lucide:layout-template', label: 'Templates' },
-  { id: 'elements', icon: 'lucide:shapes', label: 'Elements' },
-  { id: 'text', icon: 'lucide:type', label: 'Text' },
-  { id: 'uploads', icon: 'lucide:upload', label: 'Uploads' },
-  { id: 'layers', icon: 'lucide:layers', label: 'Layers' },
+  { id: 'layers', icon: 'lucide:layers', labelKey: 'rail.layers' },
+  { id: 'elements', icon: 'lucide:shapes', labelKey: 'rail.shapes' },
+  { id: 'text', icon: 'lucide:type', labelKey: 'rail.text' },
+  { id: 'uploads', icon: 'lucide:upload', labelKey: 'rail.uploads' },
+  { id: 'templates', icon: 'lucide:layout-template', labelKey: 'rail.templates' },
 ];
+
+const panelTitle = computed(() => {
+  if (activeTab.value === 'layers') return t('panel.layersTitle');
+  if (activeTab.value === 'elements') return t('panel.shapesTitle');
+  if (activeTab.value === 'text') return t('panel.textTitle');
+  if (activeTab.value === 'uploads') return t('panel.uploadsTitle');
+  return t('panel.templatesTitle');
+});
+
+// --- BRUSH STATE ---
+const brushColor = ref('#000000');
+const brushWidth = ref(5);
 
 const HandleAddTextLayer = ({ text = 'Add a heading', fontSize = 32, fontWeight = 'bold' }: { text?: string, fontSize?: number, fontWeight?: string }) => {
   editor.value?.stopDrawingMode?.();
@@ -182,182 +213,216 @@ const selectTab = (id: string) => {
   activeTab.value = id;
   editor.value?.stopDrawingMode?.();
 }
+const HandleSelectTool = () => {
+  editor.value?.stopDrawingMode?.();
+  editor.value?.selectLayer?.();
+  activeTab.value = 'layers';
+}
 const HandleAddShapeLayer = (type: string, options: any) => {
   editor.value?.stopDrawingMode?.();
   editor.value?.addShapeLayer?.(type, options);
 }
 const HandleAddBrushLayer = () => {
   editor.value?.stopDrawingMode?.();
-  editor.value?.addBrushLayer?.('black', 5)
+  editor.value?.addBrushLayer?.(brushColor.value, brushWidth.value)
+}
+const handleUploadTemplateClick = () => {
+  templateInput.value?.click();
+}
+const handleTemplateFileChange = (event: Event) => {
+  const files = (event.target as HTMLInputElement).files;
+  if (files) onTemplateSelect(files);
 }
 </script>
 
 <template>
-  <div class="h-full flex flex-row border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 w-[360px]">
+  <div class="h-full flex flex-row border-r border-default bg-default w-[300px]">
 
-    <!-- Icon Strip -->
+    <!-- Icon rail -->
     <div
-      class="w-16 flex flex-col items-center py-4 border-r border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950/50 gap-4">
+      class="w-14 flex flex-col items-center py-3 border-r border-default bg-muted/50 gap-1.5">
+      <UTooltip :text="t('rail.select')" placement="right">
+        <UButton
+          color="neutral" variant="ghost"
+          icon="lucide:mouse-pointer-2"
+          :aria-label="t('rail.select')"
+          data-testid="tool-select" @click="HandleSelectTool" />
+      </UTooltip>
+      <div class="h-px w-8 bg-accented my-1" aria-hidden="true" />
       <template v-for="tab in tabs" :key="tab.id">
-        <UTooltip :text="tab.label" placement="right">
-          <button
-class="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200"
-            :class="activeTab === tab.id ? 'bg-primary text-primary-foreground shadow-sm' : 'text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800'"
-            :data-testid="`tab-${tab.id}`" @click="selectTab(tab.id)">
-            <Icon :name="tab.icon" class="w-5 h-5" />
-          </button>
+        <UTooltip :text="t(tab.labelKey)" placement="right">
+          <UButton
+            :color="activeTab === tab.id ? 'primary' : 'neutral'"
+            :variant="activeTab === tab.id ? 'soft' : 'ghost'"
+            :icon="tab.icon"
+            :aria-label="t(tab.labelKey)"
+            :data-testid="`tab-${tab.id}`" @click="selectTab(tab.id)" />
         </UTooltip>
       </template>
     </div>
 
-    <!-- Content Area -->
+    <!-- Contextual panel -->
     <div class="flex-1 flex flex-col min-w-0">
-      <header class="h-14 border-b border-gray-200 dark:border-gray-800 flex items-center px-4">
-        <h2 class="font-semibold text-sm capitalize">{{ activeTab }}</h2>
+      <header class="h-12 border-b border-default flex items-center px-3 shrink-0">
+        <h2 class="font-semibold text-sm">{{ panelTitle }}</h2>
       </header>
 
-      <div class="flex-1 overflow-y-auto p-4 thin-scrollbar">
+      <div class="flex-1 overflow-y-auto p-3">
 
         <!-- TEMPLATES TAB -->
-        <div v-if="activeTab === 'templates'" class="space-y-4">
-          <!-- Import template json only -->
+        <div v-if="activeTab === 'templates'" v-motion-fade-visible :duration="200" class="space-y-3">
           <section>
-            <UButton block icon="lucide:upload" @click="templateInput?.click()">
-              Upload Template
+            <UButton block icon="lucide:upload" variant="outline" @click="handleUploadTemplateClick">
+              {{ t('panel.templatesUpload') }}
             </UButton>
             <input
-ref="templateInput" type="file" accept='application/json' class="hidden"
-              @change="(e) => onTemplateSelect((e.target as HTMLInputElement).files!)" >
+              ref="templateInput" type="file" accept='application/json' class="hidden"
+              @change="handleTemplateFileChange" >
 
-            <div class="text-xs text-center text-gray-500 mt-4">
-              Uploaded templates will appear here
+            <div class="text-xs text-center text-muted mt-3">
+              {{ t('panel.templatesHint') }}
             </div>
           </section>
           <div
-v-for="(tpl, idx) in templates" :key="idx"
-            class="border border-gray-200 dark:border-gray-800 rounded-lg p-2 hover:border-primary cursor-pointer transition-colors"
+            v-for="(tpl, idx) in templates" :key="idx"
+            class="border border-default rounded-xl p-2 hover:border-primary cursor-pointer transition-colors bg-elevated/50"
             @click="loadTemplate(tpl.json)">
-            <div class="aspect-3/4 bg-gray-100 dark:bg-gray-800 rounded-md mb-2 flex items-center justify-center">
-              <Icon name="lucide:layout-template" class="w-8 h-8 text-gray-400" />
+            <div class="aspect-3/4 bg-muted rounded-lg mb-2 flex items-center justify-center">
+              <Icon name="lucide:layout-template" class="w-8 h-8 text-dimmed" />
             </div>
             <div class="text-xs font-medium">{{ tpl.title }}</div>
-            <div class="text-[10px] text-gray-500">{{ tpl.description }}</div>
+            <div class="text-[11px] text-muted">{{ tpl.description }}</div>
           </div>
         </div>
 
         <!-- ELEMENTS TAB -->
-        <div v-if="activeTab === 'elements'" class="space-y-6">
+        <div v-if="activeTab === 'elements'" v-motion-fade-visible :duration="200" class="space-y-5">
           <div>
-            <h3 class="text-xs font-semibold text-gray-500 mb-3 uppercase">Basic Shapes</h3>
-            <div class="grid grid-cols-3 gap-3">
+            <h3 class="text-[11px] font-semibold text-dimmed mb-2 uppercase tracking-wider">{{ t('panel.shapesBasic') }}</h3>
+            <div class="grid grid-cols-3 gap-2">
               <UButton
-                class="aspect-square border border-gray-200 dark:border-gray-800 rounded flex flex-col items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-600"
-                data-testid="add-rect" variant="ghost" @click="HandleAddShapeLayer('rect', { fill: '#333' })">
-                <Icon name="lucide:square" class="w-6 h-6 mb-1" />
-                <span class="text-[10px]">Rect</span>
+                variant="outline" data-testid="add-rect"
+                class="aspect-square flex-col gap-1 h-auto py-3" @click="HandleAddShapeLayer('rect', { fill: '#333' })">
+                <Icon name="lucide:square" class="w-5 h-5" />
+                <span class="text-[10px]">{{ t('panel.rect') }}</span>
               </UButton>
               <UButton
-                class="aspect-square border border-gray-200 dark:border-gray-800 rounded flex flex-col items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-600"
-                variant="ghost" data-testid="add-circle" @click="HandleAddShapeLayer('circle', { fill: '#333' })">
-                <Icon name="lucide:circle" class="w-6 h-6 mb-1" />
-                <span class="text-[10px]">Circle</span>
+                variant="outline" data-testid="add-circle"
+                class="aspect-square flex-col gap-1 h-auto py-3" @click="HandleAddShapeLayer('circle', { fill: '#333' })">
+                <Icon name="lucide:circle" class="w-5 h-5" />
+                <span class="text-[10px]">{{ t('panel.circle') }}</span>
               </UButton>
               <UButton
-                class="aspect-square border border-gray-200 dark:border-gray-800 rounded flex flex-col items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-600"
-                data-testid="add-triangle" variant="ghost" @click="HandleAddShapeLayer('triangle', { fill: '#333' })">
-                <Icon name="lucide:triangle" class="w-6 h-6 mb-1" />
-                <span class="text-[10px]">Triangle</span>
+                variant="outline" data-testid="add-triangle"
+                class="aspect-square flex-col gap-1 h-auto py-3" @click="HandleAddShapeLayer('triangle', { fill: '#333' })">
+                <Icon name="lucide:triangle" class="w-5 h-5" />
+                <span class="text-[10px]">{{ t('panel.triangle') }}</span>
               </UButton>
             </div>
           </div>
 
           <div>
-            <h3 class="text-xs font-semibold text-gray-500 mb-3 uppercase">Drawing</h3>
-            <UButton block variant="outline" icon="lucide:pencil" @click="HandleAddBrushLayer">
-              Enable Brush
-            </UButton>
+            <h3 class="text-[11px] font-semibold text-dimmed mb-2 uppercase tracking-wider">{{ t('panel.drawingTitle') }}</h3>
+            <div class="space-y-3 rounded-xl border border-default bg-elevated/50 p-3">
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-xs text-toned">{{ t('panel.brushColor') }}</span>
+                <UColorPicker v-model="brushColor" />
+              </div>
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-xs text-toned">{{ t('panel.brushWidth') }}</span>
+                  <span class="text-xs font-mono text-muted">{{ brushWidth }}px</span>
+                </div>
+                <USlider v-model="brushWidth" :min="1" :max="50" size="xs" />
+              </div>
+              <UButton block variant="soft" icon="lucide:pencil" @click="HandleAddBrushLayer">
+                {{ t('rail.draw') }}
+              </UButton>
+            </div>
           </div>
         </div>
 
         <!-- TEXT TAB -->
-        <div v-if="activeTab === 'text'" class="space-y-4">
+        <div v-if="activeTab === 'text'" v-motion-fade-visible :duration="200" class="space-y-2">
           <UButton
-block size="lg" color="neutral" variant="soft"
+            block size="lg" color="neutral" variant="soft"
             @click="HandleAddTextLayer({ text: 'Add a heading', fontSize: 32, fontWeight: 'bold' })">
-            Add a heading
+            {{ t('panel.heading') }}
           </UButton>
           <UButton
-block size="md" color="neutral" variant="soft"
+            block size="md" color="neutral" variant="soft"
             @click="HandleAddTextLayer({ text: 'Add a subheading', fontSize: 24, fontWeight: 'semi-bold' })">
-            Add a subheading
+            {{ t('panel.subheading') }}
           </UButton>
           <UButton
-block size="sm" color="neutral" variant="soft"
+            block size="sm" color="neutral" variant="soft"
             @click="HandleAddTextLayer({ text: 'Add a little bit of body text', fontSize: 16 })">
-            Add body text
+            {{ t('panel.body') }}
           </UButton>
         </div>
 
         <!-- UPLOADS TAB -->
-        <div v-if="activeTab === 'uploads'" class="space-y-4">
-          <UButton block icon="lucide:upload" @click="fileInput?.click()">
-            Upload Image
-          </UButton>
-          <input
-ref="fileInput" type="file" accept="image/*" class="hidden"
-            @change="(e) => onFileSelect((e.target as HTMLInputElement).files!)" >
+        <div v-if="activeTab === 'uploads'" v-motion-fade-visible :duration="200" class="space-y-3">
+          <UFileUpload
+            accept="image/*" :multiple="true" class="min-h-48"
+            :label="t('panel.uploadsTitle')" :description="t('panel.uploadsHint')"
+            @update:model-value="handleUploadFiles" />
 
-          <div class="text-xs text-center text-gray-500 mt-4">
-            Uploaded images will appear here (Not persisted in this demo)
+          <div class="text-xs text-center text-muted">
+            {{ t('panel.uploadsHint') }}
           </div>
         </div>
 
         <!-- LAYERS TAB -->
-        <div v-if="activeTab === 'layers'" class="space-y-2">
-          <div class="flex justify-between items-center mb-2">
-            <span class="text-xs text-gray-500">{{ reversedLayers.length }} Layers</span>
-            <UButton size="xs" variant="ghost" icon="lucide:refresh-ccw" @click="updateLayers" />
+        <div v-if="activeTab === 'layers'" v-motion-fade-visible :duration="200" class="space-y-1.5">
+          <div class="flex justify-between items-center mb-1">
+            <span class="text-xs text-muted">{{ layerCountLabel }}</span>
+            <UButton size="xs" variant="ghost" color="neutral" icon="lucide:refresh-ccw" :aria-label="t('panel.layersTitle')" @click="updateLayers" />
           </div>
 
-          <div v-if="reversedLayers.length === 0" class="text-center py-8 text-gray-400 text-sm">
-            No layers. Add something!
+          <div v-if="reversedLayers.length === 0" class="text-center py-8 text-muted text-sm">
+            {{ t('panel.layersEmpty') }}
           </div>
 
           <div
-v-for="(layer, index) in reversedLayers" :key="`layer-${index}`"
-            class="group flex items-center gap-2 p-2 rounded-md cursor-pointer border border-transparent hover:border-gray-200 dark:hover:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800"
-            :class="{ 'bg-primary/5 border-primary/20': layer === activeLayer }" @click="handleLayerClick(layer)">
+            v-for="(layer, index) in reversedLayers" :key="`layer-${index}`"
+            class="group flex items-center gap-1.5 p-1.5 rounded-lg cursor-pointer border transition-colors"
+            :class="layer === activeLayer ? 'bg-primary/10 border-primary/30' : 'border-transparent hover:border-default hover:bg-elevated'" @click="handleLayerClick(layer)">
 
             <UButton
-class="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200" variant="ghost"
+              variant="ghost" color="neutral" size="xs"
+              :icon="layer.visible !== false ? 'lucide:eye' : 'lucide:eye-off'"
+              :aria-label="t('panel.layersTitle')"
               @click.stop="handleToggleVisibility(layer)">
-              <Icon :name="layer.visible !== false ? 'lucide:eye' : 'lucide:eye-off'" class="w-4 h-4" />
             </UButton>
 
             <div
-              class="w-8 h-8 rounded bg-white dark:bg-gray-800 flex items-center justify-center border border-gray-100 dark:border-gray-700 shrink-0">
-              <Icon :name="getLayerIcon(layer)" class="w-4 h-4 text-gray-500" />
+              class="w-8 h-8 rounded-lg bg-elevated flex items-center justify-center border border-default shrink-0">
+              <Icon :name="getLayerIcon(layer)" class="w-4 h-4 text-muted" />
             </div>
 
             <div class="flex-1 min-w-0">
               <div class="text-xs font-medium truncate select-none">{{ getLayerType(layer) }}</div>
             </div>
 
-            <div class="flex gap-1 opacity-50 group-hover:opacity-100 transition-opacity">
+            <div class="flex gap-0.5 opacity-60 group-hover:opacity-100 transition-opacity">
               <UButton
-class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded" variant="ghost"
+                variant="ghost" color="neutral" size="xs"
+                icon="lucide:arrow-up"
+                :aria-label="t('section.bringForward')"
                 @click.stop="moveLayerUp(layer)">
-                <Icon name="lucide:arrow-up" class="w-3 h-3 text-gray-500" />
               </UButton>
               <UButton
-class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded" variant="ghost"
+                variant="ghost" color="neutral" size="xs"
+                icon="lucide:arrow-down"
+                :aria-label="t('section.sendBackward')"
                 @click.stop="moveLayerDown(layer)">
-                <Icon name="lucide:arrow-down" class="w-3 h-3 text-gray-500" />
               </UButton>
               <UButton
-class="p-1 hover:bg-red-100 dark:hover:bg-red-900/30 rounded text-red-500"
-                variant="ghost" @click.stop="handleDeleteLayer(layer)">
-                <Icon name="lucide:trash-2" class="w-3 h-3" />
+                variant="ghost" color="error" size="xs"
+                icon="lucide:trash-2"
+                :aria-label="t('header.delete')"
+                @click.stop="handleDeleteLayer(layer)">
               </UButton>
             </div>
           </div>
@@ -367,23 +432,3 @@ class="p-1 hover:bg-red-100 dark:hover:bg-red-900/30 rounded text-red-500"
     </div>
   </div>
 </template>
-
-<style scoped>
-.thin-scrollbar::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-.thin-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.thin-scrollbar::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 3px;
-}
-
-.dark .thin-scrollbar::-webkit-scrollbar-thumb {
-  background: #475569;
-}
-</style>

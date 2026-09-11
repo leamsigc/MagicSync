@@ -32,7 +32,9 @@ if (import.meta.client) {
 
       <section class="flex flex-1 overflow-hidden">
         <main class="flex-1 overflow-x-hidden overflow-y-auto">
+          <ImpersonationBanner />
           <DashboardHeader />
+          <FeedbackFab />
           <div class="p-4 md:p-6">
             <slot />
           </div>

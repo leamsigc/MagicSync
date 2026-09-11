@@ -250,7 +250,7 @@ interface ValidationResult {
 
 
 export function validateContentForPlatform(platform: string, content: { text?: string; mediaUrls?: string[] }): ValidationResult {
-  const config: PlatformConfig = (platformConfigurations as unknown as Record<string, PlatformConfig>)[platform] ?? platformConfigurations.default
+  const config: PlatformConfig = platformConfigurations[platform] ?? platformConfigurations.default
   const errors: string[] = []
   const warnings: string[] = []
 

@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 
+import { parseJsonArray } from '#layers/BaseShared/utils/json';
 import TemplatesCarouselList from './components/TemplatesCarouselList.vue'
 import TemplatesAiList from './components/TemplatesAiList.vue'
 
@@ -49,7 +50,7 @@ function mapLocalToSaved(c: { id: string; name: string; slides: unknown[]; palet
 }
 
 function parseAiTemplates(raw: string): AiTemplate[] {
-  const decks = JSON.parse(raw) as Record<string, unknown>[]
+  const decks = parseJsonArray<Record<string, unknown>>(raw)
   return decks.map(d => ({
     key: d.key as string,
     title: d.title as string,
@@ -105,7 +106,7 @@ function deleteAiTemplate(key: string) {
   try {
     const raw = localStorage.getItem('carousel-ai-decks')
     if (!raw) return
-    const decks = JSON.parse(raw) as Record<string, unknown>[]
+    const decks = parseJsonArray<Record<string, unknown>>(raw)
     const updated = decks.filter(d => d.key !== key)
     localStorage.setItem('carousel-ai-decks', JSON.stringify(updated))
     aiTemplates.value = aiTemplates.value.filter(t => t.key !== key)

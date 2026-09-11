@@ -31,7 +31,11 @@ const extractAudio = async (file: File): Promise<{ buffer: Float32Array; duratio
     reader.onload = async (e) => {
       const arrayBuffer = e.target?.result as ArrayBuffer
       try {
-        const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)({
+        interface WindowWithWebkitAudio extends Window {
+          webkitAudioContext: typeof AudioContext
+        }
+        const AudioCtor = window.AudioContext || (window as WindowWithWebkitAudio).webkitAudioContext
+        const audioContext = new AudioCtor({
           sampleRate: 16000,
         })
         const audioBuffer = await audioContext.decodeAudioData(arrayBuffer)

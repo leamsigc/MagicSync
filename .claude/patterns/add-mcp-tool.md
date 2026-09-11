@@ -79,6 +79,11 @@ Auth context flows via `AsyncLocalStorage` (see Gotchas), NOT via handler args.
 - NO `useEvent()` from h3 — h3 v1 doesn't export it and the toolkit never forwards
   the H3 event to tool handlers. Auth context comes from `utils/mcp-request.ts`
   AsyncLocalStorage (set by `server/mcp/index.ts` middleware wrapping `next()`).
+- `$fetch(url)` returns a **Blob** for binary payloads, not `ArrayBuffer` —
+  `Buffer.from(await $fetch<ArrayBuffer>(url))` throws (`Received an instance
+  of Blob`). Normalize first:
+  `const dl: unknown = await $fetch(url); const ab = dl instanceof Blob ? await dl.arrayBuffer() : dl as ArrayBuffer`.
+  (The REST `POST /api/v1/assets` URL branch has the same latent bug.)
 - `inputSchema` is a PLAIN OBJECT of zod schemas, not `z.object()`. Handler receives
   `(args, extra)` — `args` is the validated input directly.
 - `PostService.create/update` status games: service always writes `pending`; a

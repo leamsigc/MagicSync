@@ -36,7 +36,7 @@ export default defineMcpTool({
       throw new Error(result.error || 'Failed to list media')
     }
     return {
-      assets: result.data.map(a => shapeAsset(a as unknown as Record<string, unknown>)),
+      assets: result.data.map(a => shapeAsset({ ...a })),
       pagination: result.pagination,
     }
   },

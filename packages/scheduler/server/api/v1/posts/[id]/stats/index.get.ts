@@ -46,7 +46,7 @@ export default defineEventHandler(async (event) => {
         await statsCollectorService.collectPostMetric({
           postFull: post,
           platformPost,
-          account: socialAccount as unknown as SocialMediaAccount,
+          account: socialAccount,
         });
       }
     }

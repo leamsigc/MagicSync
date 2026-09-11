@@ -1,5 +1,6 @@
 import { eq } from 'drizzle-orm'
 import type { H3Event } from 'h3'
+import { parseJsonObject, toJsonString } from '#layers/BaseShared/utils/json'
 import { businessProfiles, organization as organizationTable } from '#layers/BaseDB/db/schema'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
 import { auth } from '#layers/BaseAuth/lib/auth'
@@ -44,7 +45,7 @@ export const businessOrgService = {
       business = await entityDetailsService.createDetails({
         entityType: 'business_details',
         entityId: businessId,
-        details: {} as unknown as import('#layers/BaseDB/db/schema').EntityDetails['details'],
+        details: { pages: [], username: '', picture: '' },
       })
     }
 
@@ -110,7 +111,7 @@ export const businessOrgService = {
       .from(organizationTable)
       .where(eq(organizationTable.id, orgId))
       .get()
-    const metadata = JSON.parse(org?.metadata ?? {}) as Record<string, unknown>
+    const metadata = parseJsonObject(toJsonString(org?.metadata))
     return metadata.businessId as string
   },
 

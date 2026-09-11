@@ -37,8 +37,8 @@ export const useTheme = () => {
 
   function initTheme() {
     if (import.meta.client) {
-      const saved = localStorage.getItem(STORAGE_KEY) as ThemeId | null
-      const valid = saved && THEMES.some(t => t.id === saved) ? saved : 'orange'
+      const saved = localStorage.getItem(STORAGE_KEY)
+      const valid: ThemeId = (saved && THEMES.some(t => t.id === saved) ? saved : 'orange') as ThemeId
       applyTheme(valid)
     }
   }

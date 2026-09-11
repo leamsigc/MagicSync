@@ -1,3 +1,4 @@
+import { parseJsonObject, toJsonString } from '#layers/BaseShared/utils/json';
 import type { PostDetails, PostResponse, Integration, PluginPostDetails, PluginSocialMediaAccount, GetCommentsResponse, ReplyCommentResponse, PlatformComment, PlatformStats, PostInsight } from '../SchedulerPost.service';
 import { BaseSchedulerPlugin, type MediaContent, createPostInsightsFallback, extractExternalPostId } from '../SchedulerPost.service';
 import type { Post, PostWithAllData, SocialMediaAccount, Asset } from '#layers/BaseDB/db/schema';
@@ -257,7 +258,7 @@ export class RedditPlugin extends BaseSchedulerPlugin {
       if (!publicationDetails) {
         throw new Error('Published platform details not found');
       }
-      const details = JSON.parse(publicationDetails.publishDetail as unknown as string || '{}') as PostResponse;
+      const details = parseJsonObject(toJsonString(publicationDetails.publishDetail)) as PostResponse;
       const postId = details.postId;
 
       if (!postId) {

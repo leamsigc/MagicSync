@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { computed } from 'vue';
+import { parseJsonObject, toJsonString } from '#layers/BaseShared/utils/json';
 import type { PlatformPost, PostWithAllData, PublishDetail } from '#layers/BaseDB/db/posts/posts';
 import { usePlatformIcons, type SocialMediaPlatform } from '#layers/BaseUI/app/composables/usePlatformIcons';
 import dayjs from 'dayjs';
@@ -33,7 +34,7 @@ const groupedPosts = computed(() => {
 });
 
 const getPlatformDetails = (platform: PlatformPost): PublishDetail => {
-  const details = JSON.parse(platform.publishDetail as unknown as string || '{}');
+  const details = parseJsonObject(toJsonString(platform.publishDetail));
   return new Map(Object.entries(details));
 };
 

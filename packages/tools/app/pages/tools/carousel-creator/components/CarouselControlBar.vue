@@ -57,6 +57,9 @@ function handleAddBlankPage(): void {
   insertSlideAt(currentIndex.value + 1, currentSlide.value.templateKey)
   addPageOpen.value = false
 }
+function openAiTemplate(): void {
+  aiTemplateOpen.value = true
+}
 
 function randomizePattern(): void {
   const pattern = CAROUSEL_PATTERNS[Math.floor(Math.random() * CAROUSEL_PATTERNS.length)]!
@@ -214,8 +217,8 @@ function applyFrame(preset: DeckFrame): void {
         size="xs"
         class="rounded-xl"
         data-testid="bar-generate-template"
-        aria-label="Generate AI template"
-        @click="aiTemplateOpen = true"
+        :aria-label="t('aiTemplate.generate')"
+        @click="openAiTemplate"
       />
     </UTooltip>
 
@@ -422,6 +425,7 @@ function applyFrame(preset: DeckFrame): void {
           color="neutral"
           size="sm"
           class="rounded-xl"
+          :loading="exporting"
           :aria-label="t('actions.saveAll')"
           data-testid="pill-save-all"
           @click="emit('save-all')"
@@ -498,8 +502,8 @@ function applyFrame(preset: DeckFrame): void {
         <template #content>
           <div class="p-2 space-y-1 w-56">
             <p class="text-xs font-semibold text-toned px-1">{{ t('actions.useInPost') }}</p>
-            <UButton block size="sm" color="primary" variant="soft" icon="i-lucide-gallery-horizontal" :label="t('actions.useAsCarousel')" data-testid="btn-use-as-carousel" @click="() => emit('use-in-post')" />
-            <UButton block size="sm" color="neutral" variant="soft" icon="i-lucide-clapperboard" :label="t('actions.useAsVideo')" data-testid="btn-use-as-video" @click="() => emit('use-in-post-video')" />
+            <UButton block size="sm" color="primary" variant="soft" icon="i-lucide-gallery-horizontal" :label="t('actions.useAsCarousel')" :loading="exporting" data-testid="btn-use-as-carousel" @click="emit('use-in-post')" />
+            <UButton block size="sm" color="neutral" variant="soft" icon="i-lucide-clapperboard" :label="t('actions.useAsVideo')" :loading="exporting" data-testid="btn-use-as-video" @click="emit('use-in-post-video')" />
             <p class="text-[10px] text-muted px-1">{{ t('actions.useInPostHint') }}</p>
           </div>
         </template>

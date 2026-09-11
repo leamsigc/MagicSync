@@ -1,3 +1,4 @@
+import { parseJsonObject, toJsonString } from '#layers/BaseShared/utils/json';
 import type { PostResponse, GetCommentsResponse, GetConversationsResponse, ReplyCommentResponse, PlatformComment, PlatformConversation, PluginPostDetails, PluginSocialMediaAccount, PostInsight, PlatformStats } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import { BaseSchedulerPlugin, createPostInsightsFallback, extractExternalPostId } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import type { Post, PostWithAllData, SocialMediaAccount, Asset, PlatformContentOverride } from '#layers/BaseDB/db/schema';
@@ -51,8 +52,8 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
 
   private getPlatformData(postDetails: PostWithAllData, platformPost?: Record<string, unknown>) {
     const platformName = this.pluginName;
-    const platformContent = (postDetails.platformContent as unknown as Record<string, PlatformContentOverride | undefined>)?.[platformName];
-    const platformSettings = (postDetails.platformSettings as unknown as Record<string, unknown>)?.[platformName] as InstagramSettings | undefined;
+    const platformContent = (postDetails.platformContent as Record<string, PlatformContentOverride | undefined>)?.[platformName];
+    const platformSettings = (postDetails.platformSettings as Record<string, unknown>)?.[platformName] as InstagramSettings | undefined;
     const rawContent = platformContent?.content || postDetails.content;
     const postFormat = postDetails.postFormat ?? 'post';
     const comments = platformContent?.comments || [];
@@ -429,7 +430,7 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
       throw new Error('Published platform details not found');
     }
 
-    const publishedDetails = publishedPlatformDetails.publishDetail ? JSON.parse(publishedPlatformDetails.publishDetail as string) as PostResponse : null;
+    const publishedDetails = publishedPlatformDetails.publishDetail ? parseJsonObject(toJsonString(publishedPlatformDetails.publishDetail)) as PostResponse : null;
     if (!publishedDetails) {
       throw new Error('Published details not found');
     }
@@ -762,7 +763,7 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
       if (!publishedPlatformDetails) {
         throw new Error('Published platform details not found');
       }
-      const details = JSON.parse(publishedPlatformDetails.publishDetail as unknown as string || '{}') as PostResponse;
+      const details = parseJsonObject(toJsonString(publishedPlatformDetails.publishDetail)) as PostResponse;
       const postId = details.postId;
       if (!postId) {
         throw new Error('Post details not found');
@@ -836,7 +837,7 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
     options?: { limit?: number; cursor?: string }
   ): Promise<GetCommentsResponse> {
     const platformPost = postDetails.platformPosts?.find((pp: { socialAccountId: string }) => pp.socialAccountId === socialMediaAccount.id);
-    const publishDetail = platformPost?.publishDetail ? JSON.parse(platformPost.publishDetail as unknown as string) : {};
+      const publishDetail = platformPost?.publishDetail ? parseJsonObject(toJsonString(platformPost.publishDetail)) : {};
     const externalPostId = publishDetail[socialMediaAccount.id]?.publishedId || publishDetail.postId;
 
     if (!externalPostId) {

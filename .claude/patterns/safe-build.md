@@ -40,6 +40,22 @@ last_updated: 2026-09-08
 
 ## Gotchas
 
+- `NITRO_PRERENDER_CONCURRENCY=1` as an env var does NOT limit Nitro — the
+  concurrency must live in `nuxt.config.ts` (`nitro.prerender.concurrency`).
+  Same for crawl: only `nitro.prerender.crawlLinks: false` stops the
+  259-pages-x-4-locales + ogImage crawl. Env-only attempts still freeze.
+- Do NOT lower the heap below 8192 to "save RAM" — the Nitro server-bundle
+  step needs ~6 GB; a 6144 cap GC-thrashes (100% CPU, swap freeze) instead
+  of helping. Free RAM/swap/disk instead.
+- Disk full (<10 GB free) and swap full (check `free -h`, `swapon --show`)
+  turn a slow build into a full-system freeze. Reclaim first:
+  `docker system prune`, `pnpm store prune`, `rm -rf packages/site/.output
+  packages/site/.nuxt`. The repo itself is only ~6 GB — the hog is usually
+  Docker images/volumes/build-cache.
+- `/app/**` must carry `prerender: false` in `routeRules` (not just
+  `swr: false`) or the crawler prerenders the authenticated dashboard and
+  hits Turso/auth during build.
+
 - `pnpm site` (no `:build`) is the legacy script used by `Dockerfile`. Prefer
   `pnpm site:build` locally; both run the same capped build.
 - `pnpm build` output showing many `nuxt build .playground` lines means you are

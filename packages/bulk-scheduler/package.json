@@ -12,7 +12,7 @@
     "lint": "eslint .",
     "test": "vitest",
     "test:unit": "vitest run",
-    "test:e2e": "playwright test",
+    "test:e2e": "pnpm --filter @local-monorepo/site exec playwright test tests/e2e/bulk-scheduler",
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {

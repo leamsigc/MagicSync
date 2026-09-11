@@ -90,7 +90,7 @@ const handleTimeUpdate = (time: number) => {
                 <p class="text-xs text-dimmed">{{ (selectedFile.size / 1024 / 1024).toFixed(2) }} MB</p>
               </div>
             </div>
-            <UButton variant="ghost" size="sm" icon="i-lucide-x" @click="clearFile" />
+            <UButton variant="ghost" size="sm" icon="i-lucide-x" data-testid="audio-clear-file" @click="clearFile" />
           </div>
         </div>
       </div>

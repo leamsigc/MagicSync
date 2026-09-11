@@ -71,8 +71,9 @@ const platformStatuses = computed(() => {
 const comments = computed(() => {
   const platformContent = postData.value?.platformContent
   if (!platformContent) return []
-  //@ts-ignore
-  return (postData.value?.platformContent?.comment) as unknown as string[] || []
+  const comment: unknown = (platformContent as Record<string, unknown>).comment
+  if (Array.isArray(comment)) return comment.filter((c): c is string => typeof c === 'string')
+  return typeof comment === 'string' ? [comment] : []
 })
 
 const mediaAssets = computed(() => postData.value?.assets || [])

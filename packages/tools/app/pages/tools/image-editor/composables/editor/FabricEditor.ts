@@ -1,6 +1,6 @@
 import { ref, onMounted, onUnmounted, type Ref } from 'vue';
-import { InteractiveFabricObject, type FabricObject, Canvas, type CanvasEvents,  type TClassProperties } from 'fabric';
-import EventEmitter from 'events';
+import { InteractiveFabricObject, type FabricObject, Canvas, type CanvasEvents, type TClassProperties } from 'fabric';
+import { SimpleEventEmitter } from './EventBus';
 import { useEditorState, type EditorStateInstance } from './EditorState';
 import { createEditorContext, type EditorContext, type PluginRegistrationOptions, type PluginMetadata } from './PluginContext';
 import EventBus, { EditorEvent } from './EventBus';
@@ -151,7 +151,7 @@ interface PluginEntry {
 /**
  * Enhanced Fabric Editor
  */
-export class FabricEditor extends EventEmitter {
+export class FabricEditor extends SimpleEventEmitter {
   private canvas: Canvas | null = null;
   private plugins: Map<string, PluginEntry> = new Map();
   private eventBus: EventBus;

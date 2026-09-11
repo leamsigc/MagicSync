@@ -113,7 +113,14 @@ export default defineEventHandler(async (event) => {
 
     const accessToken = tokenData?.accessToken || account.accessToken;
 
-    const pagesBaseOnTheAccount = await (scheduler as unknown as { pages: (token: string) => Promise<FacebookPage[]> }).pages(accessToken);
+    const facebookPlugin = scheduler.getPlugin('facebook')
+    if (!facebookPlugin || !(facebookPlugin instanceof FacebookPlugin)) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Facebook plugin not available'
+      })
+    }
+    const pagesBaseOnTheAccount = await facebookPlugin.pages(accessToken);
 
     entityDetailsService.createOrUpdateDetails({
       entityId: account.id,

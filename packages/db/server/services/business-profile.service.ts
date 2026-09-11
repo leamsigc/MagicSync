@@ -8,6 +8,7 @@ import type {
 } from './types'
 import type { BusinessProfileServiceType } from './interfaces'
 import { and, eq, inArray, not, sql } from 'drizzle-orm'
+import { parseJsonObject, toJsonString } from '#layers/BaseShared/utils/json'
 import { businessProfiles, entityDetails, member, organization } from '#layers/BaseDB/db/schema'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
 import {
@@ -240,7 +241,7 @@ export class BusinessProfileService implements BusinessProfileServiceType {
         memberBusinessIds = orgs
           .map(o => {
             try {
-              const meta = JSON.parse(o.metadata || '{}') as Record<string, unknown>
+              const meta = parseJsonObject(toJsonString(o.metadata))
               return meta.businessId as string | undefined
             } catch { return undefined }
           })
@@ -318,7 +319,7 @@ export class BusinessProfileService implements BusinessProfileServiceType {
         .where(eq(businessProfiles.id, id))
         .returning()
 
-      return updated ? { data: updated } : { error: 'Business profile not found', code: '404' }
+      return updated ? { success: true, data: updated } : { success: false, error: 'Business profile not found', code: '404' }
     } catch (error) {
       return { success: false, error: 'Failed to update business profile' }
     }

@@ -15,6 +15,9 @@ import CarouselDeckShowcase from './components/CarouselDeckShowcase.vue'
 import CarouselLayersPanel from './components/CarouselLayersPanel.vue'
 import CarouselDesignTabs from './components/CarouselDesignTabs.vue'
 import LayerStylePanel from './components/LayerStylePanel.vue'
+import FabricStage from './components/FabricStage.vue'
+import { slideToFabricScene } from '../../../../shared/carousel-scene/scene'
+import { resolveSlideLayers, buildSceneSnapshots } from '../../../../shared/carousel-scene/scene-snapshot'
 import { useCarouselDeck, fxStyle } from './composables/useCarouselDeck'
 import { useCarouselVideoExport } from './composables/useCarouselVideoExport'
 import { useCarouselSaveShare } from '../../../composables/useCarouselSaveShare'
@@ -55,6 +58,9 @@ const {
   saveAllSlides,
   renderSlideToPng,
   migrateAllSlides,
+  selectLayer,
+  updateLayerTransform,
+  selectedLayerId,
   showFromImageModal,
   showFromHtmlModal,
   slicedImageGroup,
@@ -75,22 +81,24 @@ const sliceCountProxy = computed({
 
 const currentCarousel = computed(() => {
   if (slides.value.length === 0) return null
+  const mappedSlides = slides.value.map((s, i) => ({
+    id: `slide-${i}`,
+    templateKey: s.templateKey,
+    data: s.data,
+    pattern: s.pattern,
+    patternColor: s.patternColor,
+    patternOpacity: s.patternOpacity,
+    bgImage: s.bgImage,
+    customHtml: s.customHtml,
+    layers: s.layers,
+  }))
   return {
     id: `carousel-${Date.now()}`,
     name: 'My Carousel',
-    slides: slides.value.map((s, i) => ({
-      id: `slide-${i}`,
-      templateKey: s.templateKey,
-      data: s.data,
-      pattern: s.pattern,
-      patternColor: s.patternColor,
-      patternOpacity: s.patternOpacity,
-      bgImage: s.bgImage,
-      customHtml: s.customHtml,
-      layers: s.layers,
-    })),
+    slides: mappedSlides,
     palette: palette.value,
     handle: handle.value,
+    scene: buildSceneSnapshots(mappedSlides, palette.value, frame.value),
   }
 })
 
@@ -116,6 +124,58 @@ const previewPlatform = ref<'editor' | 'instagram' | 'linkedin' | 'strip'>('edit
 
 function setPreviewPlatform(mode: 'editor' | 'instagram' | 'linkedin' | 'strip') {
   previewPlatform.value = mode
+}
+function handleAiGenerated(): void {
+  mode.value = 'deck'
+}
+
+const route = useRoute()
+/** Beta fabric-renderer workbench, gated behind `?fabric=1` for the rebuild. */
+const showFabricPreview = computed(() => route.query.fabric === '1')
+
+/** Beta stage edits back only native object layers; converted legacy slides
+ * stay read-only (their source of truth is templateKey + data). */
+const fabricNative = computed(() => {
+  const slide = slides.value[currentIndex.value]
+  return !!slide?.layers?.length && !slide.layers.some(l => l.type === 'html')
+})
+
+const fabricScene = computed(() => {
+  const slide = slides.value[currentIndex.value]
+  if (!slide) return null
+  // Object layers paint natively; legacy html-bound slides convert through
+  // the shared auto-layout engine so every template kind previews on fabric.
+  const layers = resolveSlideLayers(
+    { id: slide.id, templateKey: slide.templateKey, data: slide.data, layers: slide.layers },
+    palette.value,
+    frame.value,
+    currentIndex.value,
+    slides.value.length,
+  )
+  return slideToFabricScene(layers, { width: frame.value.w, height: frame.value.h, palette: palette.value })
+})
+
+const fabricSelectedIndex = computed(() => {
+  const layers = slides.value[currentIndex.value]?.layers
+  if (!selectedLayerId.value || !layers) return null
+  const idx = layers.findIndex(l => l.id === selectedLayerId.value)
+  return idx >= 0 ? idx : null
+})
+
+function handleFabricSelect(index: number | null): void {
+  const slide = slides.value[currentIndex.value]
+  if (index == null || !slide?.layers) {
+    selectLayer(null)
+    return
+  }
+  const layer = slide.layers[index]
+  selectLayer(layer ? layer.id : null)
+}
+
+function handleFabricModify(index: number, patch: { x: number, y: number, w: number, h?: number, rotate: number }): void {
+  const layer = slides.value[currentIndex.value]?.layers?.[index]
+  if (!layer) return
+  updateLayerTransform(layer.id, patch)
 }
 
 function openFromImageModal() {
@@ -161,7 +221,7 @@ async function loadSavedCarousels(): Promise<void> {
 
 async function loadCarouselIntoEditor(carousel: SavedCarousel): Promise<void> {
   if (!carousel.slides?.length) {
-    toast.add({ title: 'Empty carousel', description: 'This carousel has no slides.', color: 'warning', icon: 'i-lucide-alert-circle' })
+    toast.add({ title: t('toasts.emptyTitle'), description: t('toasts.emptyDescription'), color: 'warning', icon: 'i-lucide-alert-circle' })
     return
   }
 
@@ -183,9 +243,9 @@ async function loadCarouselIntoEditor(carousel: SavedCarousel): Promise<void> {
     migrateAllSlides()
     currentIndex.value = 0
     currentCarouselName.value = carousel.name
-    toast.add({ title: 'Carousel loaded', description: `"${carousel.name}" loaded into editor.`, color: 'success', icon: 'i-lucide-check-circle' })
+    toast.add({ title: t('toasts.loadedTitle'), description: t('toasts.loadedDescription', { name: carousel.name }), color: 'success', icon: 'i-lucide-check-circle' })
   } catch {
-    toast.add({ title: 'Load failed', description: 'Could not load carousel.', color: 'error', icon: 'i-lucide-alert-circle' })
+    toast.add({ title: t('toasts.loadFailedTitle'), description: t('toasts.loadFailedDescription'), color: 'error', icon: 'i-lucide-alert-circle' })
   }
 }
 
@@ -306,13 +366,13 @@ async function handleUseInPostVideo(): Promise<void> {
         crossfade: false,
         crossfadeSeconds: 0.5,
         motions: slides.value.map(() => 'none' as const),
-        music: null,
+        tracks: [],
         width: frame.value.w,
         height: frame.value.h,
       },
     )
     if (!blob) {
-      toast.add({ title: t('toasts.failedTitle'), description: 'Video export failed', color: 'error' })
+      toast.add({ title: t('toasts.failedTitle'), description: t('toasts.videoFailedDescription'), color: 'error' })
       return
     }
     const form = new FormData()
@@ -342,6 +402,7 @@ async function handleDownloadCurrent(): Promise<void> {
   if (!stage) return
   try {
     await downloadSlide(stage, currentIndex.value)
+    toast.add({ title: t('toasts.downloadedTitle'), description: t('toasts.downloadedDescription'), color: 'success' })
   } catch (error) {
     handleSaveError(error)
   }
@@ -352,6 +413,7 @@ async function handleDownloadAll(): Promise<void> {
   if (!stage) return
   try {
     await downloadAllSlides(stage)
+    toast.add({ title: t('toasts.downloadedTitle'), description: t('toasts.downloadedDescription'), color: 'success' })
   } catch (error) {
     handleSaveError(error)
   }
@@ -391,7 +453,7 @@ async function handleCopyLink(): Promise<void> {
           <template #content>
             <div class="p-2 w-72 max-h-96 overflow-y-auto">
               <div v-if="savedCarousels.length === 0" class="px-3 py-2 text-sm text-muted">
-                No saved carousels
+                {{ t('library.empty') }}
               </div>
               <button
                 v-for="carousel in savedCarousels"
@@ -403,12 +465,11 @@ async function handleCopyLink(): Promise<void> {
                 <UIcon name="i-lucide-gallery-horizontal-end" class="size-4 shrink-0" />
                 <span class="truncate">{{ carousel.name }}</span>
                 <UBadge v-if="carousel.isPublic" color="info" variant="subtle" size="sm" class="ml-auto">
-                  Public
+                  {{ t('library.publicBadge') }}
                 </UBadge>
               </button>
               <USeparator class="my-2" />
-              <UButton variant="ghost" block icon="i-lucide-plus" to="/app/templates">
-                Manage all templates
+              <UButton variant="ghost" block icon="i-lucide-plus" to="/app/templates" :label="t('library.manageTemplates')">
               </UButton>
             </div>
           </template>
@@ -425,7 +486,13 @@ async function handleCopyLink(): Promise<void> {
             <CarouselStage v-else :html="currentHtmlStr" :width="frame.w" :height="frame.h" :guides="guides"
               :fx-style="stageFx" :editable="true" />
           </template>
-          <CarouselAiPanel v-else @generated="() => mode = 'deck'" />
+          <CarouselAiPanel v-else @generated="handleAiGenerated" />
+          <CollapsibleSection v-if="showFabricPreview" :title="t('fabric.title')" :default-open="true" testid="section-fabric">
+            <p class="text-[11px] text-muted px-1 pb-2">{{ t('fabric.hint') }}</p>
+            <ClientOnly>
+              <FabricStage :scene="fabricScene" :editable="fabricNative" :selected-index="fabricSelectedIndex" @select="handleFabricSelect" @modify="handleFabricModify" />
+            </ClientOnly>
+          </CollapsibleSection>
 
           <!-- Sliced image group controls (add/trim pages of the slice run) -->
           <div v-if="mode === 'deck' && slicedImageGroup" class="mx-auto max-w-md w-full rounded-xl border border-default bg-elevated/80 backdrop-blur p-3 space-y-2"
@@ -483,7 +550,7 @@ async function handleCopyLink(): Promise<void> {
             </p>
           </div>
 
-          <div class="sticky bottom-4 z-30 flex justify-center">
+          <div v-motion-slide-bottom :duration="250" class="sticky bottom-4 z-30 flex justify-center">
             <CarouselControlBar v-model:mode="mode" v-model:guides="guides" :exporting="exporting || videoExporting"
               :export-progress="exportProgress" :is-saving="isSaving" :is-public="isPublic" :share-url="shareUrl"
               @download="handleDownloadCurrent" @download-all="handleDownloadAll"

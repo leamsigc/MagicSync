@@ -46,12 +46,11 @@ const loadComments = async () => {
     }
 
     if (thread?.post) {
-      const baseTreat = {
-        ...thread,
+      post.value = {
         isReply: false,
+        post: thread.post,
         replies: []
       };
-      post.value = baseTreat as unknown as DisplayThread;
     }
   } catch (e) {
     // Error is set to display user-friendly message
@@ -118,19 +117,19 @@ const fetchReplies = async (atUri: string) => {
   return await response.json() as Thread
 }
 
-const processReplies = (replyThreads: ThreadViewPost[], isReply = false) => {
-  return replyThreads.map(reply => {
-
+const processReplies = (replyThreads: ThreadViewPost[], isReply = false): DisplayThread[] => {
+  const threads: DisplayThread[] = []
+  for (const reply of replyThreads) {
     if (reply.post.record.text.trim() === "📌") {
-      return null
+      continue
     }
-
-    (reply as unknown as DisplayThread).isReply = isReply
-    if (reply.replies) {
-      (reply as unknown as DisplayThread).replies = processReplies(reply.replies, true)
-    }
-    return reply as unknown as DisplayThread;
-  }).filter(Boolean) as DisplayThread[];
+    threads.push({
+      isReply,
+      post: reply.post,
+      replies: reply.replies ? processReplies(reply.replies, true) : [],
+    })
+  }
+  return threads
 }
 
 

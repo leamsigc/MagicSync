@@ -1,6 +1,6 @@
 # MagicSync MCP Server
 
-Control all of MagicSync from any AI assistant: schedule posts, check analytics, generate captions, and manage media — in plain language. MagicSync exposes a [Model Context Protocol](https://modelcontextprotocol.io) (MCP) server at `/mcp` with **18 tools and 4 resources**, wrapping the same services as the dashboard.
+Control all of MagicSync from any AI assistant: schedule posts, check analytics, generate captions, and manage media — in plain language. MagicSync exposes a [Model Context Protocol](https://modelcontextprotocol.io) (MCP) server at `/mcp` with **33 tools and 4 resources**, wrapping the same services as the dashboard.
 
 ```
 You:  "Schedule a launch post for Tuesday 2pm on Instagram and X"
@@ -129,7 +129,7 @@ Notes:
 
 - Against **local dev** (`pnpm dev`), use `http://localhost:3000/mcp`. Against your hosted instance, use `https://your-domain/mcp`.
 - Keep the key out of git: `"headers": { "Authorization": "Bearer ${MAGICSYNC_API_KEY}" }` works with env expansion — export `MAGICSYNC_API_KEY` before launching opencode.
-- Verify inside opencode with `/mcp` (lists connected servers) — `magicsync` should show **18 tools**. Then try: *"Use magicsync to list my platforms and show next week's calendar."*
+- Verify inside opencode with `/mcp` (lists connected servers) — `magicsync` should show **33 tools**. Then try: *"Use magicsync to list my platforms and show next week's calendar."*
 - opencode speaks Streamable HTTP, same as the `/mcp` route serves — no SSE transport or extra bridge needed. If tools don't appear, re-check the header (a truncated key without its `org_` prefix authenticates as anonymous → zero tools, by design).
 
 ### Claude Desktop
@@ -232,6 +232,37 @@ These call the AI backend with your saved LLM config. They need the AI service r
 | `list-media` | `mimeType` (image/video), `page`, `limit` (max 50) | Returns asset **IDs** — feed them to `create-post` as `mediaAssetIds`, never raw URLs |
 | `search-media` | `query`, `mimeType`, `limit` | Matches filenames (no full-text index — scans newest 100) |
 
+### Carousels
+
+Carousel decks are user-scoped: one business key resolves to a single owner, so all key holders share the same decks (v1 limitation, documented). Iterate with `update-carousel` on the same row — never create duplicates per tweak.
+
+| Tool | What it does | Key inputs |
+|------|--------------|------------|
+| `create-carousel` | Create a deck from structured slides (templateKey + copy) | `name`, `slides[1..15]` (`templateKey`, `headline`, `kicker`/`body`/`items`/`quote`/`author`/`stat`/`statLabel`/`cta`/`footer`/`images`), `palette`, `handle` |
+| `list-carousels` | Deck summaries, newest first | (none) |
+| `get-carousel` | Full deck: slides, palette, share URL when published | `carouselId` |
+| `update-carousel` | Edit in place: name, full slide replacement, palette, handle | `carouselId` + fields to change |
+| `delete-carousel` | Permanently delete deck + share link | `carouselId` |
+| `publish-carousel` | Public share link (`/tools/carousel/shared/[slug]`) for pixel-final review | `carouselId` |
+| `unpublish-carousel` | Remove the share link, keep the deck | `carouselId` |
+| `export-carousel-images` | Render slides to 1080×1350 PNGs server-side, store as assets, create a placeholder post (24h out) | `carouselId`, `platforms[]` (default Instagram), `caption` |
+
+Decks allow 1–15 slides; Instagram export enforces 2–10 at `export-carousel-images` time. The export draft never publishes on its own — always follow with `update-post` for the final caption + schedule.
+
+### Menu Boards
+
+TV signage (save/share only — boards never become social posts). Same ownership model as carousels.
+
+| Tool | What it does | Key inputs |
+|------|--------------|------------|
+| `create-menu-board` | Create a board with HTML/image pages + display settings | `name`, `pages[]` (`name`, `type` html/image, `content`, `isActive`, `order`), `settings` (`transitionTime`, `unlockPin`) |
+| `list-menu-boards` | Board summaries, newest first | (none) |
+| `get-menu-board` | Full board: pages, settings, share URL when published | `boardId` |
+| `update-menu-board` | Edit in place; republish to refresh the public snapshot | `boardId` + fields to change |
+| `delete-menu-board` | Permanently delete board + share link | `boardId` |
+| `publish-menu-board` | Public fullscreen display URL (`/tools/menu-board/shared/[slug]`, active pages only) | `boardId` |
+| `unpublish-menu-board` | Remove the display URL, keep the board | `boardId` |
+
 ## Resources
 
 | URI | What it returns |
@@ -250,6 +281,10 @@ These call the AI backend with your saved LLM config. They need the AI service r
 **Fix failures.** *"Any failed posts in the last 24h? Show me the errors and retry the ones that look transient."* (get-post-stats → post-platform-status → retry-post)
 
 **Repurpose.** *"Take my best-performing tweet this month and adapt it for LinkedIn and Instagram, scheduled for tomorrow morning."* (get-post-stats → get-post → generate-caption → create-post)
+
+**Carousel post.** *"Make an Instagram carousel about our launch: 5 slides, bold tone."* (design in chat → create-carousel → export-carousel-images → update-post with the final caption + schedule)
+
+**Menu board.** *"Build a lunch menu board for the downtown store and give me the TV link."* (create-menu-board → publish-menu-board)
 
 ## Security Model
 

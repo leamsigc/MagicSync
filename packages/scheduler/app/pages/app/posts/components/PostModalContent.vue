@@ -24,6 +24,7 @@ import PostPlatformSelector from './editor/PostPlatformSelector.vue';
 import { CalendarDate } from '@internationalized/date'
 import type { DateValue } from '@internationalized/date'
 import { useValidation } from '../composables/useValidation';
+import { parseJsonArray, toJsonString } from '#layers/BaseShared/utils/json';
 import PhonePreview from './PhonePreview.vue';
 import PostContextSwitcher from './editor/PostContextSwitcher.vue';
 import PostContentEditor from './editor/PostContentEditor.vue';
@@ -159,7 +160,7 @@ async function loadInitialPost(post: typeof initialPost): Promise<void> {
     ? initialCommentsRaw
     : (initialCommentsRaw ? [initialCommentsRaw] : []);
 
-  const initialMediaAssetsRaw = JSON.parse((post.mediaAssets as unknown as string) || "[]");
+  const initialMediaAssetsRaw = parseJsonArray<unknown>(toJsonString(post.mediaAssets, '[]'));
   const processedMediaAssetsIds: string[] = Array.isArray(initialMediaAssetsRaw)
     ? initialMediaAssetsRaw
     : (initialMediaAssetsRaw ? [initialMediaAssetsRaw] : []);
@@ -759,7 +760,7 @@ const handleAutoFormatApply = (overrides: Record<string, PlatformContentOverride
           <ClientOnly>
             <PhonePreview :postContent="formatPostContent(postForm.content, currentPreviewPlatform)"
               :mediaAssets="postMediaAssets" :platform="currentPreviewPlatform"
-              :post="(postForm as unknown as PostCreateBase)" :currentPlatformConfig="currentPlatformConfig"
+              :post="postForm" :currentPlatformConfig="currentPlatformConfig"
               v-model:format="selectedPostFormat" />
             <template #fallback>
               <div class="flex items-center justify-center h-[882px] w-[433px]">

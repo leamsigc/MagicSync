@@ -463,7 +463,7 @@ export class AutoReplyService {
       }
       const plugin = this.instagramPlugin()
       const capped = Math.min(Math.max(limit, 1), 25)
-      const media = await plugin.getRecentMedia(account as unknown as PluginSocialMediaAccount, capped)
+      const media = await plugin.getRecentMedia(account as PluginSocialMediaAccount, capped)
       return { success: true, data: media }
     } catch {
       return { success: false, error: 'Failed to load recent posts' }
@@ -483,7 +483,7 @@ export class AutoReplyService {
     scheduler.use(InstagramPlugin)
     const plugin = scheduler.getPlugin('instagram')
     if (!plugin) throw new Error('Instagram plugin not registered')
-    return plugin as unknown as InstagramPlugin
+    return plugin as InstagramPlugin
   }
 
   private async resolveWatchedPosts(campaign: AutoReplyCampaign): Promise<string[]> {
@@ -503,7 +503,7 @@ export class AutoReplyService {
       const account = await socialMediaAccountService.getAccountById(campaign.socialAccountId, campaign.userId)
       if (account) {
         const plugin = this.instagramPlugin()
-        addIds(await plugin.getRecentMediaIds(account as unknown as PluginSocialMediaAccount, WATCHED_POST_CAP))
+        addIds(await plugin.getRecentMediaIds(account as PluginSocialMediaAccount, WATCHED_POST_CAP))
       }
     } catch {
       // Fall through to DB discovery below.
@@ -513,7 +513,7 @@ export class AutoReplyService {
       const rows = await db.select().from(platformPosts).where(eq(platformPosts.socialAccountId, campaign.socialAccountId)).limit(50)
       const discovered: string[] = []
       for (const row of rows) {
-        const raw = (row as unknown as { publishDetail?: unknown }).publishDetail
+        const raw = row.publishDetail
         let detail: Record<string, unknown> = {}
         if (typeof raw === 'string') {
           try { detail = JSON.parse(raw) } catch { detail = {} }
@@ -675,7 +675,7 @@ export class AutoReplyService {
       const state = await this.readPostState(campaign.id, externalPostId)
       const postDetails = {
         platformPosts: [{ socialAccountId: account.id, publishDetail: JSON.stringify({ postId: externalPostId }) }],
-      } as unknown as Parameters<InstagramPlugin['getComments']>[0]
+      } as Parameters<InstagramPlugin['getComments']>[0]
       let comments: PlatformComment[] = []
       try {
         const res = await plugin.getComments(postDetails, account, { limit: 50 })
@@ -784,7 +784,7 @@ export class AutoReplyService {
       console.warn(`[autoreply] webhook comment for unknown account entry=${ev.entryId.slice(0, 8)}… comment=${ev.commentId}`)
       return { sent, skipped: 1, failed }
     }
-    const pluginAccount = account as unknown as PluginSocialMediaAccount
+    const pluginAccount = account as PluginSocialMediaAccount
     for (const campaign of campaigns) {
       if (campaign.socialAccountId !== account.id) continue
       if (!ev.mediaId && !campaign.matchAllPosts) continue
@@ -848,7 +848,7 @@ export class AutoReplyService {
       console.warn(`[autoreply] webhook DM for unknown account entry=${ev.entryId.slice(0, 8)}… sender=${ev.senderId.slice(0, 8)}…`)
       return { sent, skipped: 1, failed }
     }
-    const pluginAccount = account as unknown as PluginSocialMediaAccount
+    const pluginAccount = account as PluginSocialMediaAccount
     const plugin = this.instagramPlugin()
     for (const campaign of campaigns) {
       if (campaign.socialAccountId !== account.id) continue
@@ -1032,7 +1032,7 @@ export class AutoReplyService {
         const watched = await this.resolveWatchedPosts(campaign)
         if (watched.length === 0) continue
         campaigns++
-        const totals = await this.processCampaignPosts(campaign, account as unknown as PluginSocialMediaAccount, watched)
+        const totals = await this.processCampaignPosts(campaign, account as PluginSocialMediaAccount, watched)
         checked += totals.checked
         sent += totals.sent
         skipped += totals.skipped

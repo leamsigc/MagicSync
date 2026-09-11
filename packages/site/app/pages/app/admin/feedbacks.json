@@ -1,0 +1,242 @@
+{
+  "en": {
+    "title": "Feedback",
+    "description": "Review what users tell you",
+    "searchPlaceholder": "Search feedback...",
+    "noFeedback": "No feedback yet",
+    "unknownUser": "Unknown user",
+    "columns": {
+      "feedback": "Feedback",
+      "category": "Category",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "categories": {
+      "bug": "Bug",
+      "feature": "Feature",
+      "praise": "Praise",
+      "other": "Other"
+    },
+    "status": {
+      "new": "New",
+      "reviewed": "Reviewed",
+      "resolved": "Resolved"
+    },
+    "filters": {
+      "all": "All statuses"
+    },
+    "menu": {
+      "title": "Actions",
+      "view": "View",
+      "delete": "Delete"
+    },
+    "a11y": {
+      "actions": "Actions dropdown"
+    },
+    "detail": {
+      "title": "Feedback Details",
+      "status": "Status",
+      "adminNote": "Internal note",
+      "adminNotePlaceholder": "Note for the team (not visible to the user)...",
+      "cancel": "Cancel",
+      "save": "Save Changes",
+      "delete": "Delete"
+    },
+    "deleteModal": {
+      "title": "Delete Feedback",
+      "description": "Permanently delete this feedback? This cannot be undone.",
+      "cancel": "Cancel",
+      "confirm": "Delete"
+    },
+    "toast": {
+      "error": "Error",
+      "loadFailed": "Failed to load feedback",
+      "updated": "Feedback Updated",
+      "updatedDescription": "The feedback status has been saved",
+      "updateFailed": "Failed to update feedback",
+      "deleted": "Feedback Deleted",
+      "deletedDescription": "The feedback has been removed",
+      "deleteFailed": "Failed to delete feedback"
+    }
+  },
+  "es": {
+    "title": "Comentarios",
+    "description": "Revisa lo que dicen los usuarios",
+    "searchPlaceholder": "Buscar comentarios...",
+    "noFeedback": "Aún no hay comentarios",
+    "unknownUser": "Usuario desconocido",
+    "columns": {
+      "feedback": "Comentario",
+      "category": "Categoría",
+      "status": "Estado",
+      "actions": "Acciones"
+    },
+    "categories": {
+      "bug": "Error",
+      "feature": "Función",
+      "praise": "Felicitación",
+      "other": "Otro"
+    },
+    "status": {
+      "new": "Nuevo",
+      "reviewed": "Revisado",
+      "resolved": "Resuelto"
+    },
+    "filters": {
+      "all": "Todos los estados"
+    },
+    "menu": {
+      "title": "Acciones",
+      "view": "Ver",
+      "delete": "Eliminar"
+    },
+    "a11y": {
+      "actions": "Menú de acciones"
+    },
+    "detail": {
+      "title": "Detalle del comentario",
+      "status": "Estado",
+      "adminNote": "Nota interna",
+      "adminNotePlaceholder": "Nota para el equipo (no visible para el usuario)...",
+      "cancel": "Cancelar",
+      "save": "Guardar cambios",
+      "delete": "Eliminar"
+    },
+    "deleteModal": {
+      "title": "Eliminar comentario",
+      "description": "¿Eliminar este comentario permanentemente? Esta acción no se puede deshacer.",
+      "cancel": "Cancelar",
+      "confirm": "Eliminar"
+    },
+    "toast": {
+      "error": "Error",
+      "loadFailed": "No se pudieron cargar los comentarios",
+      "updated": "Comentario actualizado",
+      "updatedDescription": "El estado ha sido guardado",
+      "updateFailed": "No se pudo actualizar",
+      "deleted": "Comentario eliminado",
+      "deletedDescription": "El comentario ha sido eliminado",
+      "deleteFailed": "No se pudo eliminar"
+    }
+  },
+  "de": {
+    "title": "Feedback",
+    "description": "Lesen Sie, was Benutzer Ihnen mitteilen",
+    "searchPlaceholder": "Feedback suchen...",
+    "noFeedback": "Noch kein Feedback",
+    "unknownUser": "Unbekannter Benutzer",
+    "columns": {
+      "feedback": "Feedback",
+      "category": "Kategorie",
+      "status": "Status",
+      "actions": "Aktionen"
+    },
+    "categories": {
+      "bug": "Fehler",
+      "feature": "Funktion",
+      "praise": "Lob",
+      "other": "Sonstiges"
+    },
+    "status": {
+      "new": "Neu",
+      "reviewed": "Geprüft",
+      "resolved": "Gelöst"
+    },
+    "filters": {
+      "all": "Alle Status"
+    },
+    "menu": {
+      "title": "Aktionen",
+      "view": "Ansehen",
+      "delete": "Löschen"
+    },
+    "a11y": {
+      "actions": "Aktionsmenü"
+    },
+    "detail": {
+      "title": "Feedback-Details",
+      "status": "Status",
+      "adminNote": "Interne Notiz",
+      "adminNotePlaceholder": "Notiz für das Team (für Benutzer nicht sichtbar)...",
+      "cancel": "Abbrechen",
+      "save": "Änderungen speichern",
+      "delete": "Löschen"
+    },
+    "deleteModal": {
+      "title": "Feedback löschen",
+      "description": "Dieses Feedback dauerhaft löschen? Dies kann nicht rückgängig gemacht werden.",
+      "cancel": "Abbrechen",
+      "confirm": "Löschen"
+    },
+    "toast": {
+      "error": "Fehler",
+      "loadFailed": "Feedback konnte nicht geladen werden",
+      "updated": "Feedback aktualisiert",
+      "updatedDescription": "Der Status wurde gespeichert",
+      "updateFailed": "Feedback konnte nicht aktualisiert werden",
+      "deleted": "Feedback gelöscht",
+      "deletedDescription": "Das Feedback wurde entfernt",
+      "deleteFailed": "Feedback konnte nicht gelöscht werden"
+    }
+  },
+  "fr": {
+    "title": "Commentaires",
+    "description": "Consultez ce que disent les utilisateurs",
+    "searchPlaceholder": "Rechercher des commentaires...",
+    "noFeedback": "Aucun commentaire pour le moment",
+    "unknownUser": "Utilisateur inconnu",
+    "columns": {
+      "feedback": "Commentaire",
+      "category": "Catégorie",
+      "status": "Statut",
+      "actions": "Actions"
+    },
+    "categories": {
+      "bug": "Bug",
+      "feature": "Fonctionnalité",
+      "praise": "Compliment",
+      "other": "Autre"
+    },
+    "status": {
+      "new": "Nouveau",
+      "reviewed": "Examiné",
+      "resolved": "Résolu"
+    },
+    "filters": {
+      "all": "Tous les statuts"
+    },
+    "menu": {
+      "title": "Actions",
+      "view": "Voir",
+      "delete": "Supprimer"
+    },
+    "a11y": {
+      "actions": "Menu d'actions"
+    },
+    "detail": {
+      "title": "Détail du commentaire",
+      "status": "Statut",
+      "adminNote": "Note interne",
+      "adminNotePlaceholder": "Note pour l'équipe (invisible pour l'utilisateur)...",
+      "cancel": "Annuler",
+      "save": "Enregistrer",
+      "delete": "Supprimer"
+    },
+    "deleteModal": {
+      "title": "Supprimer le commentaire",
+      "description": "Supprimer définitivement ce commentaire ? Cette action est irréversible.",
+      "cancel": "Annuler",
+      "confirm": "Supprimer"
+    },
+    "toast": {
+      "error": "Erreur",
+      "loadFailed": "Échec du chargement des commentaires",
+      "updated": "Commentaire mis à jour",
+      "updatedDescription": "Le statut a été enregistré",
+      "updateFailed": "Échec de la mise à jour",
+      "deleted": "Commentaire supprimé",
+      "deletedDescription": "Le commentaire a été retiré",
+      "deleteFailed": "Échec de la suppression"
+    }
+  }
+}

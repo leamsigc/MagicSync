@@ -1,4 +1,5 @@
 import { postBatchService } from '#layers/BaseDB/server/services/post-batch.service'
+import { toJsonString } from '#layers/BaseShared/utils/json'
 import type { ServiceResponse } from '#layers/BaseDB/server/services/types'
 import type { Post } from '#layers/BaseDB/db/schema'
 
@@ -15,6 +16,14 @@ export interface DueRepostItem {
   config: AutoRepostConfig;
 }
 
+function isAutoRepostConfig(value: unknown): value is AutoRepostConfig {
+  if (typeof value !== 'object' || value === null) return false
+  const record = value as Record<string, unknown>
+  return typeof record.enabled === 'boolean'
+    && typeof record.maxReposts === 'number'
+    && typeof record.currentCount === 'number'
+}
+
 export class AutoRepostService {
   async getDueReposts(): Promise<ServiceResponse<DueRepostItem[]>> {
     try {
@@ -28,7 +37,9 @@ export class AutoRepostService {
       for (const post of result.data) {
         if (!post.autoRepost) continue;
         try {
-          const config: AutoRepostConfig = JSON.parse(post.autoRepost);
+          const parsed: unknown = JSON.parse(toJsonString(post.autoRepost, ''));
+          if (!isAutoRepostConfig(parsed)) continue;
+          const config = parsed;
           if (!config.enabled) continue;
           if (config.currentCount >= config.maxReposts) continue;
           if (!config.nextRepostAt) continue;

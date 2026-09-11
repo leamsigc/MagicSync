@@ -36,6 +36,7 @@ Then read this file fully before doing anything else in this session.
 - Nuxt Content for blog pages
 - **Agentic RAG Layer** — Chat, document ingestion, hybrid search, tools, sub-Agents
 - **Auto-Repost** — Same-platform repost scheduling (rules per post, `repost:process` every 15m, `/app/posts/auto-repost` UI)
+- **Image editor (Figma-style)** — `/tools/image-editor` redesigned: top bar with AI status badge, left tool rail + panels, dotted stage with AI progress pill, right properties for all plugins (arrange/align/transform/text/fill/stroke/shadow/filters/canvas/AI). Bg-removal worker race fixed (`run()` awaits model load). See `patterns/figma-editor-refresh.md`
 
 ## Session Commands
 

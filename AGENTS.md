@@ -51,18 +51,19 @@ Run these checks after every task, before presenting the result. All must pass:
    `??`/`?.` null-defaults don't count). Extract helpers instead of adding
    branches. No `complexity` eslint rule is configured repo-wide yet, so
    count manually and state the max you found.
-2. **i18n** — no hardcoded user-facing strings. Pages/components carry a locale
+2. **Nuxt doctor** — Run `pnpm dlx vite-doctor .` to check for diagnostics and warnings  then fix any errors or warnings.
+3. **i18n** — no hardcoded user-facing strings. Pages/components carry a locale
    JSON alongside (`<i18n src="./x.json">` first line, `const { t } = useI18n()`),
    all copy via `t()` with interpolation (`{name}`, `{count}`), and every used
    key exists in the JSON. Grep template text nodes to prove nothing is left.
-3. **Event handlers** — prefer named functions; never bare state assignment
+4. **Event handlers** — prefer named functions; never bare state assignment
    (`@click="x = 'y'"` is forbidden). Arrow wrappers only to forward
    arguments (`@click="saveUser(user.id)"`).
-4. **Conventions checklist** — walk `context/conventions.md` Verify Checklist
+5. **Conventions checklist** — walk `context/conventions.md` Verify Checklist
    item by item and report each explicitly.
-5. **Patterns** — check `patterns/INDEX.md` for a matching pattern and follow
+6. **Patterns** — check `patterns/INDEX.md` for a matching pattern and follow
    it; leave no `console.*` or dead code behind.
-6. **Interaction feedback** — every user-triggered change shows feedback:
+7. **Interaction feedback** — every user-triggered change shows feedback:
    async buttons carry `:loading`, outcomes raise toasts (failures never
    silent), conditionally rendered UI animates on enter via `@vueuse/motion`
    (see `context/conventions.md` Motion section).

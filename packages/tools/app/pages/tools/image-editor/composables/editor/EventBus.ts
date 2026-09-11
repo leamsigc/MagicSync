@@ -1,10 +1,69 @@
-import EventEmitter from 'events';
+type EventHandler = (...args: any[]) => void;
+
+/**
+ * Minimal browser-safe event emitter.
+ * Replaces Node's `events` builtin, which has no default export in the
+ * Vite client bundle (`Class extends value #<Object> is not a
+ * constructor`, minified as `Qc.default is not a constructor`).
+ */
+export class SimpleEventEmitter {
+  private listeners = new Map<string, Set<EventHandler>>();
+  private maxListeners = 100;
+
+  setMaxListeners(n: number): this {
+    this.maxListeners = n;
+    return this;
+  }
+
+  on(event: string, handler: EventHandler): this {
+    let handlers = this.listeners.get(event);
+    if (!handlers) {
+      handlers = new Set();
+      this.listeners.set(event, handlers);
+    }
+    handlers.add(handler);
+    return this;
+  }
+
+  off(event: string, handler: EventHandler): this {
+    const handlers = this.listeners.get(event);
+    if (!handlers) return this;
+    handlers.delete(handler);
+    return this;
+  }
+
+  once(event: string, handler: EventHandler): this {
+    const wrapper: EventHandler = (...args: any[]) => {
+      this.off(event, wrapper);
+      handler(...args);
+    };
+    return this.on(event, wrapper);
+  }
+
+  emit(event: string, ...args: any[]): boolean {
+    const handlers = this.listeners.get(event);
+    if (!handlers) return false;
+    for (const handler of [...handlers]) {
+      handler(...args);
+    }
+    return true;
+  }
+
+  removeAllListeners(event?: string): this {
+    if (event === undefined) {
+      this.listeners.clear();
+    } else {
+      this.listeners.delete(event);
+    }
+    return this;
+  }
+}
 
 /**
  * Event Bus for decoupled communication between editor components
  * Provides a centralized event system separate from the main editor
  */
-export class EventBus extends EventEmitter {
+export class EventBus extends SimpleEventEmitter {
     private static instance: EventBus;
 
     private constructor() {

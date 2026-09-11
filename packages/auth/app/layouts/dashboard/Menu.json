@@ -80,7 +80,9 @@
       "admin": "Admin",
       "businesses": "Businesses",
       "auditLog": "Audit Log",
-      "autoReply": "Auto-Reply"
+      "autoReply": "Auto-Reply",
+      "announcements": "Announcements",
+      "feedback": "Feedback"
     },
     "userNav": {
       "upgradeToPro": "Upgrade to Pro",
@@ -193,7 +195,9 @@
       "admin": "Admin",
       "businesses": "Negocios",
       "auditLog": "Registro de Auditoría",
-      "autoReply": "Respuesta automática"
+      "autoReply": "Respuesta automática",
+      "announcements": "Anuncios",
+      "feedback": "Comentarios"
     },
     "userNav": {
       "upgradeToPro": "Actualizar a Pro",
@@ -306,7 +310,9 @@
       "admin": "Admin",
       "businesses": "Unternehmen",
       "auditLog": "Audit-Protokoll",
-      "autoReply": "Auto-Antwort"
+      "autoReply": "Auto-Antwort",
+      "announcements": "Ankündigungen",
+      "feedback": "Feedback"
     },
     "userNav": {
       "upgradeToPro": "Auf Pro upgraden",
@@ -419,7 +425,9 @@
       "admin": "Admin",
       "businesses": "Entreprises",
       "auditLog": "Journal d'Audit",
-      "autoReply": "Réponse auto"
+      "autoReply": "Réponse auto",
+      "announcements": "Annonces",
+      "feedback": "Commentaires"
     },
     "userNav": {
       "upgradeToPro": "Mettre à niveau vers Pro",

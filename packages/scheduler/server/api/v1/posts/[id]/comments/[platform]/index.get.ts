@@ -10,7 +10,6 @@ import { postService } from '#layers/BaseDB/server/services/post.service';
 import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service';
 import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers';
 import { AutoPostService } from '#layers/BaseScheduler/server/services/AutoPost.service';
-import type { Account } from '#layers/BaseDB/db/schema';
 
 
 export default defineEventHandler(async (event) => {
@@ -56,7 +55,7 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 400, statusMessage: `Unsupported platform: ${platform}` });
     }
     const result = await trigger.getCommentsFromPost({
-      post, socialAccount: socialAccount as unknown as Account, platform, pagination:
+      post, socialAccount: socialAccount, platform, pagination:
         { limit: parseInt(limit as string, 10), cursor: cursor as string | undefined }
     });
 

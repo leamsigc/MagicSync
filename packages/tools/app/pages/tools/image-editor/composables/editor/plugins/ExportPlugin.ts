@@ -1,6 +1,6 @@
 import { Group } from 'fabric';
 import { BaseFabricPlugin, type FabricObjectWithName } from '../FabricEditor';
-import type { CorePlugin } from '../CorePlugin';
+import { CorePlugin } from '../CorePlugin';
 
 export class ExportPlugin extends BaseFabricPlugin {
   static readonly pluginName = 'export';
@@ -26,8 +26,8 @@ export class ExportPlugin extends BaseFabricPlugin {
   ): string | null {
     if (!this.canvas) return null;
 
-    const core = this.editor.getPlugin('core') as unknown as { getWorkspace?: () => FabricObjectWithName } | undefined;
-    const frame = core?.getWorkspace();
+    const corePlugin = this.editor.getPlugin('core')
+    const frame = corePlugin instanceof CorePlugin ? corePlugin.getWorkspace() : undefined;
 
     if (!frame) {
       console.warn('Main frame not found for export.');
@@ -79,7 +79,7 @@ export class ExportPlugin extends BaseFabricPlugin {
       const groupLayer = this.groupLayers();
       if (!groupLayer) return;
 
-      (groupLayer as unknown as FabricObjectWithName).id = 'workspace';
+      (groupLayer as FabricObjectWithName).id = 'workspace';
       this.canvas.clear();
       this.canvas.add(groupLayer);
 
@@ -128,7 +128,7 @@ export class ExportPlugin extends BaseFabricPlugin {
         const corePlugin = this.editor.getPlugin('core') as CorePlugin;
         if (corePlugin) {
           // Re-initialize core workspace if missing
-          (corePlugin as unknown as { _initWorkspace?: () => void })._initWorkspace?.();
+          corePlugin._initWorkspace?.();
         }
       }
     }

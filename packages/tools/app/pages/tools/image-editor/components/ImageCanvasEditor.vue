@@ -1,4 +1,6 @@
+<i18n src="../ImageEditor.json"></i18n>
 <script lang="ts" setup>
+import { computed } from 'vue';
 import { CorePlugin } from '../composables/editor/CorePlugin';
 import { HooksPlugin } from '../composables/editor/HooksPlugin';
 import { HistoryPlugin } from '../composables/editor/plugins/HistoryPlugin';
@@ -20,10 +22,18 @@ import { TransformPlugin } from '../composables/editor/plugins/TransformPlugin';
 import { ToolsPlugin } from '../composables/editor/ToolsPlugin';
 import { useFabricJs } from '../composables/useFabricJs';
 
-const { run, editor } = useFabricJs();
-const { start } = useImageTransformer();
+const { t } = useI18n();
+const toast = useToast();
+const { run, editor, bgStatus, bgProgress } = useFabricJs();
 const canvas = useTemplateRef('canvas');
 const route = useRoute();
+
+const isAiBusy = computed(() => bgStatus.value === 'loading' || bgStatus.value === 'processing');
+const aiOverlayLabel = computed(() => {
+  const progress = Math.round(bgProgress.value);
+  if (bgStatus.value === 'processing') return t('canvas.aiWorking', { progress });
+  return t('canvas.aiLoading', { progress });
+});
 
 onMounted(async () => {
   if (editor.value) {
@@ -52,10 +62,8 @@ onMounted(async () => {
     TransformPlugin
   ]);
 
-  if (editor.value) {
-    // Start the image transformer if needed
-    start();
-  }
+  // Note: the AI model preload lives in ImageEditorProperties (single
+  // idempotent start()) — the status pill below reflects shared state.
 
   // Handle query param image
   const imageId = route.query.imageId as string;
@@ -68,37 +76,73 @@ onMounted(async () => {
       if (response.ok) {
         editor.value?.addImageLayerFromUrl(url);
       }
-    } catch (error) {
-      console.error('Failed to load image from query param:', error);
+    } catch {
+      showImageLoadFailed();
     }
   }
 
 });
 
+const showImageLoadFailed = () => {
+  toast.add({
+    title: t('ai.errFailed'),
+    icon: 'i-heroicons-exclamation-triangle',
+    color: 'warning'
+  });
+};
+
 // Handle Drag and Drop on the workspace to add images
 const onDrop = (e: DragEvent) => {
   e.preventDefault();
-  if (e.dataTransfer?.files && e.dataTransfer.files[0]) {
-    const file = e.dataTransfer.files[0];
-    if (file.type.startsWith('image/')) {
-      editor.value?.addImageLayer(file);
-    }
+  const file = e.dataTransfer?.files?.[0];
+  if (!file) return;
+  if (isSupportedDrop(file)) {
+    editor.value?.addImageLayer(file);
+  } else {
+    showDropRejected();
   }
-}
+};
+
+const isSupportedDrop = (file: File) => file.type.startsWith('image/');
+
+const showDropRejected = () => {
+  toast.add({
+    title: t('panel.uploadsInvalid'),
+    icon: 'i-heroicons-exclamation-triangle',
+    color: 'warning'
+  });
+};
 </script>
 
 <template>
   <div
-id="workspace"
-    class="flex-1 overflow-hidden bg-gray-100 dark:bg-gray-950/50 relative flex items-center justify-center"
+    id="workspace"
+    class="canvas-dots flex-1 overflow-hidden bg-muted relative flex items-center justify-center"
     @dragover.prevent @drop="onDrop">
     <div class="canvas-box shadow-2xl">
       <canvas ref="canvas" class="editor" />
+    </div>
+
+    <!-- Floating AI status pill -->
+    <div
+      v-if="isAiBusy"
+      v-motion-fade-visible :duration="250"
+      data-testid="canvas-ai-status"
+      class="absolute top-3 left-1/2 -translate-x-1/2 flex items-center gap-2.5 rounded-full border border-default bg-elevated/90 backdrop-blur-md px-4 py-2 shadow-lg">
+      <Icon name="svg-spinners:270-ring-with-bg" class="w-4 h-4 shrink-0 text-primary" />
+      <span class="text-xs font-medium whitespace-nowrap">{{ aiOverlayLabel }}</span>
+      <UProgress :model-value="bgProgress" :max="100" size="xs" class="w-24" />
     </div>
   </div>
 </template>
 
 <style scoped>
+.canvas-dots {
+  background-image: radial-gradient(color-mix(in srgb, currentColor 14%, transparent) 1px, transparent 1px);
+  background-size: 22px 22px;
+  color: var(--ui-text-dimmed, #a8a8a8);
+}
+
 .canvas-box {
   position: relative;
   /* initial shadow or border can go here */

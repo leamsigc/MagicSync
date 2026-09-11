@@ -1,3 +1,4 @@
+import { parseJsonObject, toJsonString } from '#layers/BaseShared/utils/json';
 import { BaseSchedulerPlugin, type PluginPostDetails, type PluginSocialMediaAccount, type GetCommentsResponse, type ReplyCommentResponse, type PlatformComment, type PlatformStats, type PostResponse, type PostInsight, createPostInsightsFallback, extractExternalPostId } from '../SchedulerPost.service';
 import type { Post, PostWithAllData, Asset } from '#layers/BaseDB/db/schema';
 import { google, youtube_v3 } from 'googleapis';
@@ -504,7 +505,7 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
       if (!publicationDetails) {
         throw new Error('Published platform details not found');
       }
-      const details = JSON.parse(publicationDetails.publishDetail as unknown as string || '{}') as PostResponse;
+      const details = parseJsonObject(toJsonString(publicationDetails.publishDetail)) as PostResponse;
       const postId = details.postId;
 
       if (!postId) {
@@ -567,7 +568,7 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
       if (!publicationDetails) {
         throw new Error('Published platform details not found');
       }
-      const details = JSON.parse(publicationDetails.publishDetail as unknown as string || '{}') as PostResponse;
+      const details = parseJsonObject(toJsonString(publicationDetails.publishDetail)) as PostResponse;
       const postId = details.postId;
 
       if (!postId) {
