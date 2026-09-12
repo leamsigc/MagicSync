@@ -1,0 +1,5 @@
+# MagicSync tool bridge bundle layer. Installed via:
+#   dsh plugin --profile <name> add file:/path/to/dsh-plugin
+insert:
+  - id: magicsync-tools
+    name: '@magicsync/dsh-tools'

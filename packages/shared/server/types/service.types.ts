@@ -1,9 +1,6 @@
-export type ServiceResponse<T = unknown> = {
-  success: boolean
-  data?: T
-  error?: string
-  code?: string
-}
+export type ServiceResponse<T = unknown> =
+  | { success: true, data: T, error?: string, code?: string }
+  | { success: false, error: string, code?: string, data?: T }
 
 export type PaginationOptions = {
   page?: number

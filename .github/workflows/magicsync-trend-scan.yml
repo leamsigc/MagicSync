@@ -1,0 +1,74 @@
+# MagicSync manual-first automation: trend scan (T130).
+#
+# Manual runs only until validated: keep the cron schedule commented out.
+# Every backend request is timestamp+HMAC signed (MAGICSYNC_MACHINE_SECRET).
+# Required secrets: MAGICSYNC_API_URL, MAGICSYNC_MACHINE_SECRET.
+name: MagicSync trend scan
+
+on:
+  workflow_dispatch:
+    inputs:
+      businessId:
+        description: 'Business ID to scan'
+        required: true
+      lookbackDays:
+        description: 'Lookback window in days'
+        required: false
+        default: '30'
+      platform:
+        description: 'Platform filter (optional)'
+        required: false
+        default: ''
+  # Cron stays commented until manual runs pass (T130 manual-first rule).
+  # schedule:
+  #   - cron: '0 7 * * MON'
+
+jobs:
+  trend-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Signed trend scan
+        env:
+          MAGICSYNC_API_URL: ${{ secrets.MAGICSYNC_API_URL }}
+          MAGICSYNC_MACHINE_SECRET: ${{ secrets.MAGICSYNC_MACHINE_SECRET }}
+          BUSINESS_ID: ${{ inputs.businessId }}
+          LOOKBACK_DAYS: ${{ inputs.lookbackDays }}
+          PLATFORM: ${{ inputs.platform }}
+        run: |
+          python3 - <<'EOF' > trend-scan.json
+          import hashlib, hmac, json, os, time, urllib.request
+
+          body = json.dumps({
+              "businessId": os.environ["BUSINESS_ID"],
+              "lookbackDays": int(os.environ.get("LOOKBACK_DAYS") or 30),
+              "platform": os.environ.get("PLATFORM") or None,
+          }).encode()
+          timestamp = str(int(time.time()))
+          signature = hmac.new(
+              os.environ["MAGICSYNC_MACHINE_SECRET"].encode(),
+              timestamp.encode() + b"." + body,
+              hashlib.sha256,
+          ).hexdigest()
+          request = urllib.request.Request(
+              os.environ["MAGICSYNC_API_URL"].rstrip("/") + "/api/v1/cli/trend-scan",
+              data=body,
+              headers={
+                  "Content-Type": "application/json",
+                  "X-Machine-Timestamp": timestamp,
+                  "X-Machine-Signature": signature,
+              },
+          )
+          with urllib.request.urlopen(request) as response:
+              print(response.read().decode())
+          EOF
+          cat trend-scan.json
+      - name: Upload run summary
+        if: always()
+        run: |
+          {
+            echo "## Trend scan summary"
+            echo ""
+            echo '```json'
+            cat trend-scan.json 2>/dev/null || echo '{"error": "no result file"}'
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

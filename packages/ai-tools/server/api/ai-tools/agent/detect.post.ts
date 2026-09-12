@@ -14,6 +14,9 @@ export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const backendUrl = config.pythonBackendUrl || 'http://localhost:8000'
 
+  const llmJwtResult = await aiToolsFacade.getLlmJwtContext(user.id, user.email || '')
+  const llmJwt = llmJwtResult.data?.token ?? ''
+
   const result = await $fetch<{
     should_spawn: boolean
     task_type: string | null
@@ -25,7 +28,7 @@ export default defineEventHandler(async (event) => {
       message: body.message,
       context: body.context || [],
     },
-    headers: { 'X-User-Id': user.id },
+    headers: { Authorization: `Bearer ${llmJwt}` },
   })
 
   return result

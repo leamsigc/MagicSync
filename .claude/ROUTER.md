@@ -35,6 +35,7 @@ Then read this file fully before doing anything else in this session.
 - **Business-owner-first UI** — grouped sidebar (Daily/Content/Setup), Getting Started onboarding checklist, dashboard quick actions. See `.aiContext/UI-SIMPLIFICATION.md` and `patterns/business-onboarding-ux.md`
 - Nuxt Content for blog pages
 - **Agentic RAG Layer** — Chat, document ingestion, hybrid search, tools, sub-Agents
+- **Nuxt-native agent layer (T01 done)** — `packages/agent` (`@local-monorepo/agent`, `BaseAgent`) runs the pi SDK in-process: `pi-runtime.ts` model runtime with in-memory credentials/models + deployment `server/agent/models.json`, hermetic SSE stub test seam. Execution plan: `.aiContext/PRD.md`; pattern: `patterns/pi-agent-layer.md`
 - **Auto-Repost** — Same-platform repost scheduling (rules per post, `repost:process` every 15m, `/app/posts/auto-repost` UI)
 - **Image editor (Figma-style)** — `/tools/image-editor` redesigned: top bar with AI status badge, left tool rail + panels, dotted stage with AI progress pill, right properties for all plugins (arrange/align/transform/text/fill/stroke/shadow/filters/canvas/AI). Bg-removal worker race fixed (`run()` awaits model load). See `patterns/figma-editor-refresh.md`
 

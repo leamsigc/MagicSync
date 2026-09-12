@@ -14,6 +14,9 @@ export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const backendUrl = config.pythonBackendUrl || 'http://localhost:8000'
 
+  const llmJwtResult = await aiToolsFacade.getLlmJwtContext(user.id, user.email || '')
+  const llmJwt = llmJwtResult.data?.token ?? ''
+
   const result = await $fetch<{
     query: string
     sql: string
@@ -22,7 +25,7 @@ export default defineEventHandler(async (event) => {
   }>(`${backendUrl}/api/v1/tools/text-to-sql`, {
     method: 'POST',
     body: { query: body.query },
-    headers: { 'X-User-Id': user.id },
+    headers: { Authorization: `Bearer ${llmJwt}` },
   })
 
   return result

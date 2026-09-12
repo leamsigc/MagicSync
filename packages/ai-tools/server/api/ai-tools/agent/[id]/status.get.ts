@@ -14,6 +14,9 @@ export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const backendUrl = config.pythonBackendUrl || 'http://localhost:8000'
 
+  const llmJwtResult = await aiToolsFacade.getLlmJwtContext(user.id, user.email || '')
+  const llmJwt = llmJwtResult.data?.token ?? ''
+
   const result = await $fetch<{
     id: string
     task: string
@@ -25,7 +28,7 @@ export default defineEventHandler(async (event) => {
     error: string | null
     message_count: number
   }>(`${backendUrl}/api/v1/agent/${id}/status`, {
-    headers: { 'X-User-Id': user.id },
+    headers: { Authorization: `Bearer ${llmJwt}` },
   })
 
   await aiToolsFacade.updateAgentSession(id, user.id, {

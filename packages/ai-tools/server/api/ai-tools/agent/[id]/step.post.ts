@@ -14,6 +14,9 @@ export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const backendUrl = config.pythonBackendUrl || 'http://localhost:8000'
 
+  const llmJwtResult = await aiToolsFacade.getLlmJwtContext(user.id, user.email || '')
+  const llmJwt = llmJwtResult.data?.token ?? ''
+
   const result = await $fetch<{
     content: string | null
     done: boolean
@@ -22,7 +25,7 @@ export default defineEventHandler(async (event) => {
     error: string | null
   }>(`${backendUrl}/api/v1/agent/${id}/step`, {
     method: 'POST',
-    headers: { 'X-User-Id': user.id },
+    headers: { Authorization: `Bearer ${llmJwt}` },
   })
 
   const updateData: any = { stepCount: result.step_count }

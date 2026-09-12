@@ -11,7 +11,9 @@ import { generateText } from 'ai'
 import { google } from '@ai-sdk/google'
 import { anthropic } from '@ai-sdk/anthropic'
 import { openai } from '@ai-sdk/openai'
+import type { H3Event } from 'h3'
 import { userLlmConfigService } from '#layers/BaseDB/server/services/user-llm-config.service'
+import { businessContextResolver, contextErrorStatus } from '#layers/BaseDB/server/services/business-context-resolver.service'
 
 const SYSTEM_DEFAULT_PROVIDER = 'google'
 const SYSTEM_DEFAULT_MODEL = 'gemini-2.5-flash'
@@ -94,25 +96,57 @@ async function resolveConfig(userId?: string): Promise<ResolvedConfig> {
   }
 }
 
+export interface ToolsBrandGrounding {
+  businessId?: string | null
+  useBusinessContext?: boolean
+  event?: H3Event
+}
+
+function wantsBrandGrounding(userId?: string, grounding?: ToolsBrandGrounding): boolean {
+  return !!userId
+    && !!grounding
+    && grounding.useBusinessContext === true
+    && typeof grounding.businessId === 'string'
+    && grounding.businessId.length > 0
+}
+
+async function brandSystemPrefix(
+  userId: string | undefined,
+  grounding: ToolsBrandGrounding | undefined,
+): Promise<{ prefix: string, editionId: string | null }> {
+  if (!wantsBrandGrounding(userId, grounding)) return { prefix: '', editionId: null }
+  const result = await businessContextResolver.resolve(userId as string, {
+    businessId: grounding?.businessId,
+    useBusinessContext: true,
+  }, grounding?.event)
+  if (!result.success) {
+    throw createError({ statusCode: contextErrorStatus(result.code), message: result.error })
+  }
+  if (!result.data.enabled || !result.data.prompt) return { prefix: '', editionId: null }
+  return { prefix: `${result.data.prompt}\n\n---\n\n`, editionId: result.data.editionId }
+}
+
 export const toolsUnifiedAI = {
   async generateText(options: {
     systemPrompt?: string
     prompt: string
     temperature?: number
     userId?: string
-  }): Promise<{ text: string }> {
+  } & ToolsBrandGrounding): Promise<{ text: string, contextEditionId?: string | null }> {
     const { systemPrompt, prompt, temperature = DEFAULT_TEMPERATURE, userId } = options
 
     const config = await resolveConfig(userId)
     const aiModel = createModel(config.provider, config.model, config.apiKey, config.apiBaseUrl)
+    const brand = await brandSystemPrefix(userId, options)
+    const system = brand.prefix ? `${brand.prefix}${systemPrompt ?? ''}` : systemPrompt
 
     const { text } = await generateText({
       model: aiModel,
-      system: systemPrompt,
+      system,
       prompt,
       temperature,
     })
 
-    return { text }
+    return { text, contextEditionId: brand.editionId }
   },
 }

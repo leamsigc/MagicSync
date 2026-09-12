@@ -30,7 +30,11 @@ async function fetchMembers() {
     const data = await $fetch<{ members: Member[] }>(`/api/v1/business/${props.businessId}/members`)
     members.value = data.members ?? []
   } catch {
-    console.error('Failed to fetch members')
+    toast.add({
+      title: t('states.error'),
+      description: t('states.something_went_wrong'),
+      color: 'error'
+    })
   } finally {
     loadingMembers.value = false
   }

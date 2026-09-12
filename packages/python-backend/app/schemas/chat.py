@@ -9,7 +9,7 @@ class Message(BaseModel):
 
 class ChatRequest(BaseModel):
     messages: list[Message] = Field(default_factory=list)
-    model: str = "qwen3.5"
+    model: str = "gemini-3-flash-preview"
     temperature: float | None = Field(default=None, ge=0.0, le=2.0)
     max_tokens: int | None = Field(default=None, gt=0, le=8192)
     thread_id: str | None = None
@@ -18,6 +18,10 @@ class ChatRequest(BaseModel):
     api_base: str | None = None
     enable_tools: bool = True  # Enable/disable function calling
     provider_fallback: list | None = None  # List of fallback providers [{"provider": "ollama", "model": "qwen3.5"}]
+    business_context: str | None = None  # Opt-in Digital Home brand_context grounding
+    business_id: str | None = None  # Business scope (verified Nuxt-side via membership)
+    use_business_context: bool = False  # Explicit opt-in flag
+    context_edition_id: str | None = None  # Resolved playbook edition (traceability)
 
 
 class ChatResponse(BaseModel):

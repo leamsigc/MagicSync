@@ -3,6 +3,7 @@
 import { useBusinessManager } from '../composables/useBusinessManager';
 import BusinessFormStep from '../components/BusinessFormStep.vue';
 import InviteTeamMember from '../components/InviteTeamMember.vue';
+import AiModelSettings from '#layers/BaseAuth/app/pages/app/account/components/AiModelSettings.vue';
 import type { BusinessProfile, EntityDetails } from '#layers/BaseDB/db/schema';
 import type { InformationSchemaBusinessResponse } from '#layers/BaseScheduler/server/api/v1/ai/information/index.post';
 import type { BodySchemaCreateBusinessType } from '#layers/BaseConnect/server/api/v1/business/index.post';
@@ -40,7 +41,6 @@ const safeParseDetails = (details: unknown): { companyInformation?: string; bran
       return isDetailsShape(details) ? details : {}
     }
   } catch {
-    console.warn('Failed to parse entity details, using base business data only');
   }
   return {};
 };
@@ -48,7 +48,6 @@ const safeParseDetails = (details: unknown): { companyInformation?: string; bran
 onMounted(async () => {
   try {
     const { data } = await useFetch<{ data: BusinessProfile, entityDetails: EntityDetails }>(`/api/v1/business/${businessId}`);
-    console.log(data.value);
 
 
     if (data.value?.data) {
@@ -76,7 +75,6 @@ onMounted(async () => {
       router.push('/app/business');
     }
   } catch (error) {
-    console.error('Error loading business:', error);
     toast.add({
       title: t('states.error'),
       description: t('states.something_went_wrong'),
@@ -108,7 +106,6 @@ const handleSubmit = async (payload: BodySchemaCreateBusinessType) => {
 
     router.push('/app/business');
   } catch (error: unknown) {
-    console.error('Error updating business:', error);
     const errorMessage = extractErrorMessage(error);
     toast.add({
       title: t('states.error'),
@@ -143,6 +140,10 @@ const handleCancel = () => {
   router.push('/app/business');
 };
 
+function handleAiSaved() {
+  return undefined
+}
+
 useHead({
   title: t('seo_title_edit'),
   meta: [
@@ -165,6 +166,12 @@ useHead({
       <UDivider class="my-8" />
 
       <InviteTeamMember :business-id="businessId" />
+
+      <UDivider class="my-8" />
+
+      <div v-motion-fade :duration="250">
+        <AiModelSettings mode="override" :business-id="businessId" @saved="handleAiSaved" />
+      </div>
     </div>
   </div>
 </template>

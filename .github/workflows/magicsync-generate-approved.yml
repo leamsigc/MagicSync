@@ -1,0 +1,74 @@
+# MagicSync manual-first automation: approved content generation (T130).
+#
+# Starts a graph workflow run for manual review. Nothing publishes: the run
+# pauses at the human review gate and waits in the dashboard/oversight UI.
+# Required secrets: MAGICSYNC_API_URL, MAGICSYNC_MACHINE_SECRET.
+name: MagicSync approved generation
+
+on:
+  workflow_dispatch:
+    inputs:
+      businessId:
+        description: 'Business ID that owns the workflow'
+        required: true
+      pipelineId:
+        description: 'Workflow (pipeline) ID to run'
+        required: true
+      brief:
+        description: 'Generation brief'
+        required: true
+  # Cron stays commented until manual runs pass (T130 manual-first rule).
+  # schedule:
+  #   - cron: '0 8 * * MON'
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Signed generation trigger
+        env:
+          MAGICSYNC_API_URL: ${{ secrets.MAGICSYNC_API_URL }}
+          MAGICSYNC_MACHINE_SECRET: ${{ secrets.MAGICSYNC_MACHINE_SECRET }}
+          BUSINESS_ID: ${{ inputs.businessId }}
+          PIPELINE_ID: ${{ inputs.pipelineId }}
+          BRIEF: ${{ inputs.brief }}
+        run: |
+          python3 - <<'EOF' > generate.json
+          import hashlib, hmac, json, os, time, urllib.request
+
+          body = json.dumps({
+              "businessId": os.environ["BUSINESS_ID"],
+              "pipelineId": os.environ["PIPELINE_ID"],
+              "input": {"brief": os.environ["BRIEF"], "useBusinessContext": True},
+          }).encode()
+          timestamp = str(int(time.time()))
+          signature = hmac.new(
+              os.environ["MAGICSYNC_MACHINE_SECRET"].encode(),
+              timestamp.encode() + b"." + body,
+              hashlib.sha256,
+          ).hexdigest()
+          request = urllib.request.Request(
+              os.environ["MAGICSYNC_API_URL"].rstrip("/") + "/api/v1/cli/generate-approved",
+              data=body,
+              headers={
+                  "Content-Type": "application/json",
+                  "X-Machine-Timestamp": timestamp,
+                  "X-Machine-Signature": signature,
+              },
+          )
+          with urllib.request.urlopen(request) as response:
+              print(response.read().decode())
+          EOF
+          cat generate.json
+      - name: Upload run summary
+        if: always()
+        run: |
+          {
+            echo "## Approved generation summary"
+            echo ""
+            echo "Run created — review it in the pipeline runs UI before anything publishes."
+            echo ""
+            echo '```json'
+            cat generate.json 2>/dev/null || echo '{"error": "no result file"}'
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

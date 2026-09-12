@@ -25,7 +25,7 @@ async def spawn_agent(
     user: UserContext = Depends(require_user),
 ):
     """Spawn a new sub-agent with isolated context."""
-    agent = sub_agent_service.spawn(
+    agent = await sub_agent_service.spawn(
         task=request.task,
         parent_message_id=request.parent_message_id,
         user_id=user.user_id,
@@ -48,7 +48,7 @@ async def list_agents(
     user: UserContext = Depends(require_user),
 ):
     """List all sub-agents for the current user."""
-    agents = sub_agent_service.list_agents(
+    agents = await sub_agent_service.list_agents(
         user_id=user.user_id,
         parent_message_id=parent_message_id,
     )
@@ -121,9 +121,9 @@ async def add_message(
         raise HTTPException(status_code=403, detail="Access denied")
 
     if request.role == "tool" and request.tool_name:
-        sub_agent_service.add_tool_result(agent_id, request.tool_name, request.content)
+        await sub_agent_service.add_tool_result(agent_id, request.tool_name, request.content)
     else:
-        sub_agent_service.add_message(agent_id, request.role, request.content)
+        await sub_agent_service.add_message(agent_id, request.role, request.content)
 
     updated = sub_agent_service.get_agent(agent_id)
     return AgentMessageResponse(message_count=len(updated.messages))
@@ -178,7 +178,7 @@ async def delete_agent(
     if agent.user_id != user.user_id:
         raise HTTPException(status_code=403, detail="Access denied")
 
-    sub_agent_service.delete_agent(agent_id)
+    await sub_agent_service.delete_agent(agent_id)
     return {"deleted": True}
 
 

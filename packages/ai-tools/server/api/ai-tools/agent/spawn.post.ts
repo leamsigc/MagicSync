@@ -18,6 +18,10 @@ export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const backendUrl = config.pythonBackendUrl || 'http://localhost:8000'
 
+  const spawnBusinessId = typeof body.businessId === 'string' ? body.businessId : (typeof body.business_id === 'string' ? body.business_id : null)
+  const llmJwtResult = await aiToolsFacade.getLlmJwtContext(user.id, user.email || '', spawnBusinessId)
+  const llmJwt = llmJwtResult.data?.token ?? ''
+
   // Spawn on Python backend
   const result = await $fetch<{
     id: string
@@ -33,8 +37,10 @@ export default defineEventHandler(async (event) => {
       parent_message_id: body.parent_message_id,
       context: body.context || null,
       max_steps: body.max_steps || 10,
+      business_id: spawnBusinessId,
+      use_business_context: body.useBusinessContext === true || body.use_business_context === true,
     },
-    headers: { 'X-User-Id': user.id },
+    headers: { Authorization: `Bearer ${llmJwt}` },
   })
 
   // Persist in DB

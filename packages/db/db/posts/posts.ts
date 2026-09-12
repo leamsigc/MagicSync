@@ -15,7 +15,7 @@ export const posts = sqliteTable('posts', {
   scheduledAt: integer('scheduled_at', { mode: 'timestamp' }),
   publishedAt: integer('published_at', { mode: 'timestamp' }),
   status: text('status', {
-    enum: ['pending', 'published', 'failed']
+    enum: ['draft', 'pending', 'published', 'failed']
   }).notNull().default('pending'),
   targetPlatforms: text('target_platforms').notNull(),
   platformContent: text('platform_content', { mode: 'json' }),
@@ -71,7 +71,7 @@ export type PostCreateBase = PostCreate & {
   targetPlatforms: string[]
   mediaAssets: string[]
   comment: string[]
-  platformContent?: Record<string, PlatformContentOverride>
-  platformSettings?: PlatformSettingsRecord
+  platformContent?: Record<string, PlatformContentOverride> | null
+  platformSettings?: PlatformSettingsRecord | null
   postFormat?: 'post' | 'reel' | 'story' | 'short'
 }

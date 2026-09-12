@@ -15,6 +15,9 @@ export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const backendUrl = config.pythonBackendUrl || 'http://localhost:8000'
 
+  const llmJwtResult = await aiToolsFacade.getLlmJwtContext(user.id, user.email || '')
+  const llmJwt = llmJwtResult.data?.token ?? ''
+
   setResponseHeader(event, 'Content-Type', 'text/event-stream')
   setResponseHeader(event, 'Cache-Control', 'no-cache')
   setResponseHeader(event, 'Connection', 'keep-alive')
@@ -25,7 +28,7 @@ export default defineEventHandler(async (event) => {
     async start(controller) {
       try {
         const response = await fetch(`${backendUrl}/api/v1/agent/${id}/stream`, {
-          headers: { 'X-User-Id': user.id },
+          headers: { Authorization: `Bearer ${llmJwt}` },
         })
 
         if (!response.ok) {

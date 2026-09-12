@@ -10,6 +10,7 @@
     "generate": "nuxt generate .playground",
     "preview": "nuxt preview .playground",
     "lint": "eslint .",
+    "test:services": "node --test --import ./tests/register-hook.mjs --import ./tests/globals.mjs \"tests/*.test.mjs\"",
     "db:generate": "drizzle-kit generate --config ./config/drizzle.config.ts",
     "db:generate:local": "npx dotenv -e ../../.env -- drizzle-kit generate --config ./config/drizzle.config.ts",
     "db:migrate": "drizzle-kit migrate --config ./config/drizzle.config.ts",

@@ -29,7 +29,9 @@ import { google } from '@ai-sdk/google';
 import { anthropic } from '@ai-sdk/anthropic';
 import { openai } from '@ai-sdk/openai';
 import { z } from 'zod';
+import type { H3Event } from 'h3';
 import { userLlmConfigService } from '#layers/BaseDB/server/services/user-llm-config.service';
+import { businessContextResolver, contextErrorStatus } from '#layers/BaseDB/server/services/business-context-resolver.service';
 
 // System default configuration
 const SYSTEM_DEFAULT_PROVIDER = 'google';
@@ -119,10 +121,20 @@ async function resolveConfig(userId?: string): Promise<ResolvedConfig> {
   };
 }
 
+/** Opt-in branded grounding (T20). Resolved to the current playbook edition only. */
+export interface SchedulerBrandGrounding {
+  /** Business to ground in. Required with useBusinessContext. */
+  businessId?: string | null;
+  /** Explicit opt-in; without it no brand prompt is attached. */
+  useBusinessContext?: boolean;
+  /** Request event for member access checks. */
+  event?: H3Event;
+}
+
 /**
  * Options for generateText calls
  */
-export interface SchedulerGenerateTextOptions {
+export interface SchedulerGenerateTextOptions extends SchedulerBrandGrounding {
   /** System prompt - can be a custom string */
   systemPrompt?: string;
   /** The user prompt */
@@ -140,7 +152,7 @@ export interface SchedulerGenerateTextOptions {
 /**
  * Options for generateObject calls
  */
-export interface SchedulerGenerateObjectOptions<T extends z.ZodSchema> {
+export interface SchedulerGenerateObjectOptions<T extends z.ZodSchema> extends SchedulerBrandGrounding {
   /** System prompt - can be a custom string */
   systemPrompt?: string;
   /** The user prompt */
@@ -162,6 +174,37 @@ export interface SchedulerGenerateObjectOptions<T extends z.ZodSchema> {
  */
 export interface SchedulerGenerateTextResult {
   text: string;
+  /** Resolved playbook edition when branded grounding was applied. */
+  contextEditionId?: string | null;
+}
+
+function hasGroundingRequest(userId?: string, grounding?: SchedulerBrandGrounding): boolean {
+  return !!userId
+    && !!grounding
+    && grounding.useBusinessContext === true
+    && typeof grounding.businessId === 'string'
+    && grounding.businessId.length > 0;
+}
+
+async function resolveBrandPrompt(
+  userId: string | undefined,
+  grounding: SchedulerBrandGrounding | undefined,
+): Promise<{ prefix: string, editionId: string | null }> {
+  if (!hasGroundingRequest(userId, grounding)) return { prefix: '', editionId: null };
+  const result = await businessContextResolver.resolve(userId as string, {
+    businessId: grounding?.businessId,
+    useBusinessContext: true,
+  }, grounding?.event);
+  if (!result.success) {
+    throw createError({ statusCode: contextErrorStatus(result.code), message: result.error });
+  }
+  if (!result.data.enabled || !result.data.prompt) return { prefix: '', editionId: null };
+  return { prefix: `${result.data.prompt}\n\n---\n\n`, editionId: result.data.editionId };
+}
+
+function withBrandPrefix(systemPrompt: string | undefined, prefix: string): string | undefined {
+  if (!prefix) return systemPrompt;
+  return `${prefix}${systemPrompt ?? ''}`;
 }
 
 /**
@@ -186,15 +229,16 @@ export const schedulerUnifiedAI = {
     const modelName = modelOverride || config.model;
 
     const aiModel = createModel(provider, modelName, config.apiKey, config.apiBaseUrl);
+    const brand = await resolveBrandPrompt(userId, options);
 
     const { text } = await generateText({
       model: aiModel,
-      system: systemPrompt,
+      system: withBrandPrefix(systemPrompt, brand.prefix),
       prompt,
       temperature,
     });
 
-    return { text };
+    return { text, contextEditionId: brand.editionId };
   },
 
   /**
@@ -202,7 +246,7 @@ export const schedulerUnifiedAI = {
    */
   async generateObject<T extends z.ZodSchema>(
     options: SchedulerGenerateObjectOptions<T>
-  ): Promise<{ object: z.infer<T> }> {
+  ): Promise<{ object: z.infer<T>, contextEditionId?: string | null }> {
     const {
       systemPrompt,
       prompt,
@@ -218,16 +262,17 @@ export const schedulerUnifiedAI = {
     const modelName = modelOverride || config.model;
 
     const aiModel = createModel(provider, modelName, config.apiKey, config.apiBaseUrl);
+    const brand = await resolveBrandPrompt(userId, options);
 
     const { object } = await generateObject({
       model: aiModel,
-      system: systemPrompt,
+      system: withBrandPrefix(systemPrompt, brand.prefix),
       schema,
       prompt,
       temperature,
     });
 
-    return { object };
+    return { object, contextEditionId: brand.editionId };
   },
 };
 

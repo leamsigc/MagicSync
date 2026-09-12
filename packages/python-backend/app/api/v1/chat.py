@@ -224,7 +224,19 @@ async def chat_stream(
         f"Chat request received - thread_id: {request.thread_id}, messages count: {len(request.messages)}"
     )
     messages = [{"role": m.role, "content": m.content} for m in request.messages]
-    logger.info(f"Converted messages: {messages}")
+    if request.business_context and request.business_context.strip():
+        messages = [
+            {"role": "system", "content": request.business_context.strip()},
+            *[m for m in messages if m["role"] != "system" or not request.business_context],
+        ]
+        # Traceability without content: never log the context prompt itself.
+        logger.info(
+            "Branded chat grounded business_id=%s edition=%s context_chars=%d",
+            request.business_id,
+            request.context_edition_id,
+            len(request.business_context),
+        )
+    logger.info("Converted message count: %d (thread %s)", len(messages), request.thread_id)
 
     tool_manager = ToolManager(user.user_id)
 
@@ -563,6 +575,17 @@ async def chat_complete(
     user: UserContext = Depends(require_user),
 ):
     messages = [{"role": m.role, "content": m.content} for m in request.messages]
+    if request.business_context and request.business_context.strip():
+        messages = [
+            {"role": "system", "content": request.business_context.strip()},
+            *[m for m in messages if m["role"] != "system" or not request.business_context],
+        ]
+        logger.info(
+            "Branded complete grounded business_id=%s edition=%s context_chars=%d",
+            request.business_id,
+            request.context_edition_id,
+            len(request.business_context),
+        )
 
     tool_manager = ToolManager(user.user_id)
 

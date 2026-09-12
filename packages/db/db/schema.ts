@@ -4,6 +4,7 @@ import { assets } from './assets/assets'
 import { user } from './auth/auth'
 // Import tables for relations
 import { businessProfiles } from './business/business'
+import { businessBrandKeys, businessCorpusSections } from './business/corpus'
 import { entityDetails } from './entityDetails/entityDetails'
 import { jwks, oauthAccessToken, oauthClient, oauthClientAssertion, oauthClientResource, oauthConsent, oauthRefreshToken, oauthResource } from './oauth/oauth'
 import { notifications } from './notifications/notifications'
@@ -13,6 +14,8 @@ import { socialMediaAccountManagers, socialMediaAccounts } from './socialMedia/s
 import { subscriptions } from './subscriptions/subscriptions'
 import { templates, templateAssets } from './templates/templates'
 import { documents, documentChunks, chatThreads, chatMessages, agentSessions } from './rag/rag'
+import { pipelines, pipelineRuns, agentRuns } from './pipelines/pipelines'
+import { publishConnections } from './publishing/publishing'
 import { userLlmConfigs } from './llm/llm'
 import { accountMetrics, postMetrics, statsSyncState } from './stats/stats'
 import { inboxItems } from './inbox/inbox'
@@ -25,6 +28,7 @@ export * from './auth/auth'
 export * from './oauth/oauth'
 // Export feature-specific tables and types
 export * from './business/business'
+export * from './business/corpus'
 export * from './posts/posts'
 export * from './reviews/reviews'
 export * from './socialMedia/socialMedia'
@@ -37,6 +41,13 @@ export * from './notifications/notifications'
 export * from './rag/rag'
 export * from './llm/llm'
 export * from './skills/skills'
+export * from './skills/registry'
+export * from './pipelines/pipelines'
+export * from './pipelines/workflow-graph'
+export * from './content/contracts'
+export * from './content/artifacts'
+export * from './content/templates'
+export * from './publishing/publishing'
 export * from './stats/stats'
 export * from './inbox/inbox'
 
@@ -57,7 +68,11 @@ export const userRelations = relations(user, ({ many }) => ({
   documents: many(documents),
   chatThreads: many(chatThreads),
   llmConfigs: many(userLlmConfigs),
-  inboxItems: many(inboxItems)
+  inboxItems: many(inboxItems),
+  pipelines: many(pipelines),
+  pipelineRuns: many(pipelineRuns),
+  agentRuns: many(agentRuns),
+  publishConnections: many(publishConnections)
 }))
 
 // Business profile relations - connecting to dependent features
@@ -69,7 +84,12 @@ export const businessProfilesRelations = relations(businessProfiles, ({ one, man
   socialMediaAccounts: many(socialMediaAccounts),
   assets: many(assets),
   posts: many(posts),
-  reviews: many(reviews)
+  reviews: many(reviews),
+  corpusSections: many(businessCorpusSections),
+  brandKeys: many(businessBrandKeys),
+  publishConnections: many(publishConnections),
+  pipelines: many(pipelines),
+  pipelineRuns: many(pipelineRuns)
 }))
 
 // Social media account relations - connecting to posts

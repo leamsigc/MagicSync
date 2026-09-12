@@ -177,6 +177,9 @@ Return JSON matching the schema. Make every word count.`
           schema: responseSchema,
           temperature: attempt === 0 ? 0.85 : 0.6,
           userId: user.id,
+          businessId: body.businessId ?? body.business_id ?? null,
+          useBusinessContext: body.useBusinessContext === true || body.use_business_context === true,
+          event,
         })
 
         // Ensure unique key if missing

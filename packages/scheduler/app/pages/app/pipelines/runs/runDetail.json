@@ -1,0 +1,478 @@
+{
+  "en": {
+    "back": "Back to pipelines",
+    "refresh": "Refresh",
+    "title": "Pipeline run",
+    "description": "Follow each agent step and review the output before it finishes.",
+    "seo_title": "Pipeline run detail",
+    "seo_description": "Follow each agent step and review the output before it finishes.",
+    "timeline": {
+      "title": "Steps",
+      "current": "Current",
+      "done": "Done",
+      "pending": "Pending"
+    },
+    "defaults": {
+      "research": "Research topics",
+      "writer": "Write post",
+      "humanizer": "Humanize",
+      "design": "Design HTML",
+      "review": "Human review"
+    },
+    "results": {
+      "title": "Step results",
+      "empty": "No step output yet. Results appear here as the agents work.",
+      "entry": "Result {index}"
+    },
+    "steer": {
+      "runNext": "Run next step",
+      "finishedHint": "This run has finished — there are no more steps to execute.",
+      "briefTitle": "Steer brief",
+      "briefDescription": "Adjust the brief and context before the next step runs.",
+      "briefLabel": "Brief",
+      "briefPlaceholder": "What should the agents create next?",
+      "useContext": "Use business context",
+      "saveBrief": "Save brief"
+    },
+    "steps": {
+      "title": "Step detail",
+      "description": "Outputs and reruns for each pipeline step.",
+      "expand": "Show more",
+      "collapse": "Show less",
+      "rerun": "Rerun from here",
+      "noOutput": "No output for this step yet.",
+      "started": "{name}: researching…",
+      "finishedIn": "{name} done in {seconds}s",
+      "paused": "Run paused",
+      "resumed": "Run resumed",
+      "pause": "Pause",
+      "resume": "Resume",
+      "retryHint": "This run failed — rerun the current or a failed step to retry.",
+      "attempt": "Attempt {index}",
+      "outputEmpty": "No output recorded for this attempt.",
+      "errorsTitle": "Errors",
+      "todosTitle": "To-dos",
+      "filesTitle": "Files",
+      "rounds": "{count} rounds",
+      "elapsed": "Live · {seconds}s"
+    },
+    "review": {
+      "title": "Human review",
+      "description": "The agents are waiting on you. Approve to finish, or send feedback for another pass.",
+      "approve": "Approve",
+      "requestChanges": "Request changes",
+      "feedback": "Feedback",
+      "feedbackPlaceholder": "What should the agents change?",
+      "feedbackRequired": "Please write feedback for the agents first"
+    },
+    "quick": {
+      "title": "Quick actions",
+      "description": "Turn this run into scheduled content. Drafts first — publishing connections live under Setup.",
+      "days": "Days",
+      "posts": "Generate posts",
+      "carousels": "Generate carousels",
+      "reels": "Generate reels",
+      "repurpose": "Repurpose",
+      "comingSoon": "Coming soon",
+      "comingSoonDescription": "{action} will be available once publishing connects.",
+      "queuedTitle": "Content queued",
+      "queuedDescription": "{count} {action} runs created as drafts",
+      "repurposed": "Post repurposed",
+      "repurposeFailed": "Failed to repurpose post",
+      "repurposeModal": {
+        "title": "Repurpose a post",
+        "description": "Pick a published post and choose the formats to regenerate.",
+        "empty": "No published posts yet. Publish something first, then repurpose it here.",
+        "sourceLabel": "Source post",
+        "formatsLabel": "Formats",
+        "formatPost": "Post",
+        "formatCarousel": "Carousel",
+        "formatReel": "Reel",
+        "cancel": "Cancel",
+        "confirm": "Repurpose",
+        "selectRequired": "Select a source post first",
+        "formatsRequired": "Choose at least one format",
+        "selected": "Selected"
+      }
+    },
+    "meta": {
+      "status": "Status",
+      "pipeline": "Pipeline",
+      "started": "Started",
+      "updated": "Updated"
+    },
+    "toast": {
+      "loadFailed": "Failed to load the pipeline run",
+      "stepExecuted": "Step {step} finished",
+      "executeFailed": "Failed to run the next step",
+      "resetDone": "Run reset to step {step}",
+      "resetFailed": "Failed to reset the run",
+      "inputSaved": "Brief updated",
+      "inputFailed": "Failed to update the brief",
+      "refreshed": "Run refreshed"
+    },
+    "statuses": {
+      "running": "Running",
+      "waiting_input": "Waiting for review",
+      "completed": "Completed",
+      "failed": "Failed"
+    }
+  },
+  "es": {
+    "back": "Volver a pipelines",
+    "refresh": "Actualizar",
+    "title": "Ejecución del pipeline",
+    "description": "Sigue cada paso de los agentes y revisa el resultado antes de finalizar.",
+    "seo_title": "Detalle de la ejecución",
+    "seo_description": "Sigue cada paso de los agentes y revisa el resultado antes de finalizar.",
+    "timeline": {
+      "title": "Pasos",
+      "current": "Actual",
+      "done": "Hecho",
+      "pending": "Pendiente"
+    },
+    "defaults": {
+      "research": "Investigar temas",
+      "writer": "Escribir publicación",
+      "humanizer": "Humanizar",
+      "design": "Diseñar HTML",
+      "review": "Revisión humana"
+    },
+    "results": {
+      "title": "Resultados de los pasos",
+      "empty": "Aún no hay resultados. Aparecerán aquí mientras trabajan los agentes.",
+      "entry": "Resultado {index}"
+    },
+    "steer": {
+      "runNext": "Ejecutar siguiente paso",
+      "finishedHint": "Esta ejecución ya terminó — no hay más pasos que ejecutar.",
+      "briefTitle": "Dirigir el brief",
+      "briefDescription": "Ajusta el brief y el contexto antes del siguiente paso.",
+      "briefLabel": "Brief",
+      "briefPlaceholder": "¿Qué deben crear los agentes ahora?",
+      "useContext": "Usar contexto del negocio",
+      "saveBrief": "Guardar brief"
+    },
+    "steps": {
+      "title": "Detalle por paso",
+      "description": "Salidas y reintentos de cada paso del pipeline.",
+      "expand": "Ver más",
+      "collapse": "Ver menos",
+      "rerun": "Repetir desde aquí",
+      "noOutput": "Aún sin salida para este paso.",
+      "started": "{name}: investigando…",
+      "finishedIn": "{name} terminado en {seconds}s",
+      "paused": "Ejecución en pausa",
+      "resumed": "Ejecución reanudada",
+      "pause": "Pausar",
+      "resume": "Reanudar",
+      "retryHint": "Esta ejecución falló — repite el paso actual o uno fallido para reintentar.",
+      "attempt": "Intento {index}",
+      "outputEmpty": "Sin salida registrada para este intento.",
+      "errorsTitle": "Errores",
+      "todosTitle": "Pendientes",
+      "filesTitle": "Archivos",
+      "rounds": "{count} rondas",
+      "elapsed": "En vivo · {seconds}s"
+    },
+    "review": {
+      "title": "Revisión humana",
+      "description": "Los agentes te esperan. Aprueba para finalizar o envía comentarios para otra pasada.",
+      "approve": "Aprobar",
+      "requestChanges": "Solicitar cambios",
+      "feedback": "Comentarios",
+      "feedbackPlaceholder": "¿Qué deben cambiar los agentes?",
+      "feedbackRequired": "Escribe primero comentarios para los agentes"
+    },
+    "quick": {
+      "title": "Acciones rápidas",
+      "description": "Convierte esta ejecución en contenido programado. Primero borradores.",
+      "days": "Días",
+      "posts": "Generar publicaciones",
+      "carousels": "Generar carruseles",
+      "reels": "Generar reels",
+      "repurpose": "Reutilizar",
+      "comingSoon": "Próximamente",
+      "comingSoonDescription": "{action} estará disponible cuando se conecte la publicación.",
+      "queuedTitle": "Contenido programado",
+      "queuedDescription": "{count} ejecuciones de {action} creadas como borradores",
+      "repurposed": "Publicación reutilizada",
+      "repurposeFailed": "No se pudo reutilizar la publicación",
+      "repurposeModal": {
+        "title": "Reutilizar una publicación",
+        "description": "Elige una publicación y los formatos a regenerar.",
+        "empty": "Aún no hay publicaciones. Publica algo primero y reutilízalo aquí.",
+        "sourceLabel": "Publicación de origen",
+        "formatsLabel": "Formatos",
+        "formatPost": "Publicación",
+        "formatCarousel": "Carrusel",
+        "formatReel": "Reel",
+        "cancel": "Cancelar",
+        "confirm": "Reutilizar",
+        "selectRequired": "Elige primero una publicación de origen",
+        "formatsRequired": "Elige al menos un formato",
+        "selected": "Elegida"
+      }
+    },
+    "meta": {
+      "status": "Estado",
+      "pipeline": "Pipeline",
+      "started": "Iniciada",
+      "updated": "Actualizada"
+    },
+    "toast": {
+      "loadFailed": "No se pudo cargar la ejecución",
+      "stepExecuted": "Paso {step} terminado",
+      "executeFailed": "No se pudo ejecutar el siguiente paso",
+      "resetDone": "Ejecución reiniciada en el paso {step}",
+      "resetFailed": "No se pudo reiniciar la ejecución",
+      "inputSaved": "Brief actualizado",
+      "inputFailed": "No se pudo actualizar el brief",
+      "refreshed": "Ejecución actualizada"
+    },
+    "statuses": {
+      "running": "En curso",
+      "waiting_input": "Esperando revisión",
+      "completed": "Completada",
+      "failed": "Fallida"
+    }
+  },
+  "de": {
+    "back": "Zurück zu Pipelines",
+    "refresh": "Aktualisieren",
+    "title": "Pipeline-Lauf",
+    "description": "Verfolge jeden Agenten-Schritt und prüfe das Ergebnis vor dem Abschluss.",
+    "seo_title": "Pipeline-Lauf im Detail",
+    "seo_description": "Verfolge jeden Agenten-Schritt und prüfe das Ergebnis vor dem Abschluss.",
+    "timeline": {
+      "title": "Schritte",
+      "current": "Aktuell",
+      "done": "Fertig",
+      "pending": "Ausstehend"
+    },
+    "defaults": {
+      "research": "Themen recherchieren",
+      "writer": "Beitrag schreiben",
+      "humanizer": "Humanisieren",
+      "design": "HTML designen",
+      "review": "Menschliche Prüfung"
+    },
+    "results": {
+      "title": "Schritt-Ergebnisse",
+      "empty": "Noch keine Ergebnisse. Sie erscheinen hier, während die Agenten arbeiten.",
+      "entry": "Ergebnis {index}"
+    },
+    "steer": {
+      "runNext": "Nächsten Schritt ausführen",
+      "finishedHint": "Dieser Lauf ist beendet — es gibt keine weiteren Schritte.",
+      "briefTitle": "Brief steuern",
+      "briefDescription": "Passe Brief und Kontext vor dem nächsten Schritt an.",
+      "briefLabel": "Brief",
+      "briefPlaceholder": "Was sollen die Agenten als Nächstes erstellen?",
+      "useContext": "Business-Kontext verwenden",
+      "saveBrief": "Brief speichern"
+    },
+    "steps": {
+      "title": "Detail pro Schritt",
+      "description": "Outputs und Wiederholungen pro Pipeline-Schritt.",
+      "expand": "Mehr anzeigen",
+      "collapse": "Weniger anzeigen",
+      "rerun": "Ab hier wiederholen",
+      "noOutput": "Noch keine Ausgabe für diesen Schritt.",
+      "started": "{name}: recherchiert…",
+      "finishedIn": "{name} in {seconds}s fertig",
+      "paused": "Lauf pausiert",
+      "resumed": "Lauf fortgesetzt",
+      "pause": "Pausieren",
+      "resume": "Fortsetzen",
+      "retryHint": "Dieser Lauf ist fehlgeschlagen — wiederhole den aktuellen oder einen fehlgeschlagenen Schritt.",
+      "attempt": "Versuch {index}",
+      "outputEmpty": "Keine Ausgabe für diesen Versuch.",
+      "errorsTitle": "Fehler",
+      "todosTitle": "Aufgaben",
+      "filesTitle": "Dateien",
+      "rounds": "{count} Runden",
+      "elapsed": "Live · {seconds}s"
+    },
+    "review": {
+      "title": "Menschliche Prüfung",
+      "description": "Die Agenten warten auf dich. Genehmige zum Abschließen oder sende Feedback für einen weiteren Durchlauf.",
+      "approve": "Genehmigen",
+      "requestChanges": "Änderungen anfordern",
+      "feedback": "Feedback",
+      "feedbackPlaceholder": "Was sollen die Agenten ändern?",
+      "feedbackRequired": "Schreibe zuerst Feedback für die Agenten"
+    },
+    "quick": {
+      "title": "Schnellaktionen",
+      "description": "Verwandle diesen Lauf in geplante Inhalte. Erst Entwürfe.",
+      "days": "Tage",
+      "posts": "Beiträge generieren",
+      "carousels": "Karussells generieren",
+      "reels": "Reels generieren",
+      "repurpose": "Wiederverwenden",
+      "comingSoon": "Demnächst",
+      "comingSoonDescription": "{action} ist verfügbar, sobald Publishing angebunden ist.",
+      "queuedTitle": "Inhalte eingereiht",
+      "queuedDescription": "{count} {action}-Läufe als Entwürfe erstellt",
+      "repurposed": "Beitrag wiederverwendet",
+      "repurposeFailed": "Beitrag konnte nicht wiederverwendet werden",
+      "repurposeModal": {
+        "title": "Beitrag wiederverwenden",
+        "description": "Wähle einen veröffentlichten Beitrag und die neu zu erstellenden Formate.",
+        "empty": "Noch keine veröffentlichten Beiträge. Veröffentliche zuerst etwas und verwende es hier wieder.",
+        "sourceLabel": "Quellbeitrag",
+        "formatsLabel": "Formate",
+        "formatPost": "Beitrag",
+        "formatCarousel": "Karussell",
+        "formatReel": "Reel",
+        "cancel": "Abbrechen",
+        "confirm": "Wiederverwenden",
+        "selectRequired": "Wähle zuerst einen Quellbeitrag",
+        "formatsRequired": "Wähle mindestens ein Format",
+        "selected": "Gewählt"
+      }
+    },
+    "meta": {
+      "status": "Status",
+      "pipeline": "Pipeline",
+      "started": "Gestartet",
+      "updated": "Aktualisiert"
+    },
+    "toast": {
+      "loadFailed": "Pipeline-Lauf konnte nicht geladen werden",
+      "stepExecuted": "Schritt {step} abgeschlossen",
+      "executeFailed": "Nächster Schritt konnte nicht ausgeführt werden",
+      "resetDone": "Lauf auf Schritt {step} zurückgesetzt",
+      "resetFailed": "Lauf konnte nicht zurückgesetzt werden",
+      "inputSaved": "Brief gespeichert",
+      "inputFailed": "Brief konnte nicht gespeichert werden",
+      "refreshed": "Lauf aktualisiert"
+    },
+    "statuses": {
+      "running": "Läuft",
+      "waiting_input": "Wartet auf Prüfung",
+      "completed": "Abgeschlossen",
+      "failed": "Fehlgeschlagen"
+    }
+  },
+  "fr": {
+    "back": "Retour aux pipelines",
+    "refresh": "Actualiser",
+    "title": "Exécution du pipeline",
+    "description": "Suivez chaque étape des agents et validez le résultat avant la fin.",
+    "seo_title": "Détail de l'exécution",
+    "seo_description": "Suivez chaque étape des agents et validez le résultat avant la fin.",
+    "timeline": {
+      "title": "Étapes",
+      "current": "Actuelle",
+      "done": "Terminée",
+      "pending": "En attente"
+    },
+    "defaults": {
+      "research": "Rechercher des sujets",
+      "writer": "Rédiger le post",
+      "humanizer": "Humaniser",
+      "design": "Designer le HTML",
+      "review": "Révision humaine"
+    },
+    "results": {
+      "title": "Résultats des étapes",
+      "empty": "Aucun résultat pour le moment. Ils apparaîtront ici pendant le travail des agents.",
+      "entry": "Résultat {index}"
+    },
+    "steer": {
+      "runNext": "Exécuter l'étape suivante",
+      "finishedHint": "Cette exécution est terminée — plus aucune étape à exécuter.",
+      "briefTitle": "Piloter le brief",
+      "briefDescription": "Ajustez le brief et le contexte avant la prochaine étape.",
+      "briefLabel": "Brief",
+      "briefPlaceholder": "Que doivent créer les agents ensuite ?",
+      "useContext": "Utiliser le contexte business",
+      "saveBrief": "Enregistrer le brief"
+    },
+    "steps": {
+      "title": "Détail par étape",
+      "description": "Sorties et relances pour chaque étape du pipeline.",
+      "expand": "Voir plus",
+      "collapse": "Voir moins",
+      "rerun": "Relancer d'ici",
+      "noOutput": "Pas encore de sortie pour cette étape.",
+      "started": "{name} : recherche en cours…",
+      "finishedIn": "{name} terminé en {seconds}s",
+      "paused": "Exécution en pause",
+      "resumed": "Exécution reprise",
+      "pause": "Pause",
+      "resume": "Reprendre",
+      "retryHint": "Cette exécution a échoué — relancez l'étape actuelle ou une étape échouée.",
+      "attempt": "Tentative {index}",
+      "outputEmpty": "Aucune sortie enregistrée pour cette tentative.",
+      "errorsTitle": "Erreurs",
+      "todosTitle": "À faire",
+      "filesTitle": "Fichiers",
+      "rounds": "{count} tours",
+      "elapsed": "En direct · {seconds}s"
+    },
+    "review": {
+      "title": "Révision humaine",
+      "description": "Les agents vous attendent. Approuvez pour terminer ou envoyez un retour pour un nouveau passage.",
+      "approve": "Approuver",
+      "requestChanges": "Demander des modifications",
+      "feedback": "Retours",
+      "feedbackPlaceholder": "Que doivent changer les agents ?",
+      "feedbackRequired": "Rédigez d'abord un retour pour les agents"
+    },
+    "quick": {
+      "title": "Actions rapides",
+      "description": "Transformez cette exécution en contenu planifié. Brouillons d’abord.",
+      "days": "Jours",
+      "posts": "Générer des posts",
+      "carousels": "Générer des carrousels",
+      "reels": "Générer des reels",
+      "repurpose": "Réutiliser",
+      "comingSoon": "Bientôt disponible",
+      "comingSoonDescription": "{action} sera disponible une fois la publication connectée.",
+      "queuedTitle": "Contenu planifié",
+      "queuedDescription": "{count} exécutions {action} créées en brouillons",
+      "repurposed": "Post réutilisé",
+      "repurposeFailed": "Échec de la réutilisation du post",
+      "repurposeModal": {
+        "title": "Réutiliser un post",
+        "description": "Choisissez un post publié et les formats à régénérer.",
+        "empty": "Aucun post publié pour le moment. Publiez quelque chose, puis réutilisez-le ici.",
+        "sourceLabel": "Post source",
+        "formatsLabel": "Formats",
+        "formatPost": "Post",
+        "formatCarousel": "Carrousel",
+        "formatReel": "Reel",
+        "cancel": "Annuler",
+        "confirm": "Réutiliser",
+        "selectRequired": "Choisissez un post source",
+        "formatsRequired": "Choisissez au moins un format",
+        "selected": "Sélectionné"
+      }
+    },
+    "meta": {
+      "status": "Statut",
+      "pipeline": "Pipeline",
+      "started": "Démarrée",
+      "updated": "Mise à jour"
+    },
+    "toast": {
+      "loadFailed": "Échec du chargement de l'exécution",
+      "stepExecuted": "Étape {step} terminée",
+      "executeFailed": "Échec de l'exécution de l'étape suivante",
+      "resetDone": "Exécution relancée à l'étape {step}",
+      "resetFailed": "Échec du redémarrage de l'exécution",
+      "inputSaved": "Brief enregistré",
+      "inputFailed": "Échec de l'enregistrement du brief",
+      "refreshed": "Exécution actualisée"
+    },
+    "statuses": {
+      "running": "En cours",
+      "waiting_input": "En attente de révision",
+      "completed": "Terminée",
+      "failed": "Échouée"
+    }
+  }
+}

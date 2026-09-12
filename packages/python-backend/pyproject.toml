@@ -54,7 +54,12 @@ mcp = [
     "mcp>=1.0.0",
     "tiktoken>=0.7.0",
 ]
-harness = []
+harness = [
+    # Pinned SmartScraper backend (optional). Default extraction is the
+    # managed jina-reader channel (no browser deps); install this extra only
+    # where the bundled browser runtime is available (T50).
+    "scrapegraphai==1.76.0",
+]
 pdf-enhanced = [
     "pdfplumber>=0.11.0",
 ]

@@ -3,6 +3,7 @@ from typing import Optional
 from dataclasses import dataclass
 from app.services.agent.workspace import WorkspaceService, TodoService
 from app.services.agent.sub_agent import SubAgentService
+from app.core.config import settings
 from app.services.llm import llm_service
 
 logger = logging.getLogger(__name__)
@@ -22,18 +23,31 @@ class DeepModeConfig:
 class DeepModeAgent:
     """Autonomous agent with planning, workspace, and sub-agent delegation."""
 
-    def __init__(self, user_id: str, thread_id: str, config: Optional[DeepModeConfig] = None):
+    def __init__(self, user_id: str, thread_id: str, config: Optional[DeepModeConfig] = None, llm: Optional[dict] = None):
         self.user_id = user_id
         self.thread_id = thread_id
         self.config = config or DeepModeConfig()
+        self.llm = llm or {}
         
         self.workspace = WorkspaceService(user_id)
         self.todos = TodoService(user_id)
-        self.sub_agent = SubAgentService(user_id)
+        self.sub_agent = SubAgentService()
         
         self.rounds = 0
         self.messages: list[dict] = []
         self.errors: list[dict] = []
+
+    def _llm_kwargs(self) -> dict:
+        """Resolve provider/model/keys: per-request JWT config, else system default."""
+        return {
+            "provider": self.llm.get("provider") or settings.default_provider,
+            "model": self.llm.get("model") or settings.google_default_model,
+            "api_key": self.llm.get("api_key"),
+            "api_base": self.llm.get("api_base"),
+        }
+
+    async def _chat(self, messages: list[dict], **kwargs) -> str:
+        return await llm_service.chat_text(messages, **{**self._llm_kwargs(), **kwargs})
 
     async def run(self, initial_task: str) -> dict:
         """Run the deep mode agent loop."""
@@ -71,6 +85,25 @@ class DeepModeAgent:
             "final_state": await self._get_state()
         }
 
+    @staticmethod
+    def _parse_todos(response: str) -> list | None:
+        """Extract a todo list from possibly fenced JSON output."""
+        import json
+
+        text = (response or "").strip()
+        if text.startswith("```"):
+            text = text.split("\n", 1)[1] if "\n" in text else ""
+            text = text.rsplit("```", 1)[0]
+        try:
+            parsed = json.loads(text)
+        except (json.JSONDecodeError, ValueError):
+            return None
+        if isinstance(parsed, list):
+            return parsed
+        if isinstance(parsed, dict) and isinstance(parsed.get("todos"), list):
+            return parsed["todos"]
+        return None
+
     async def _plan(self) -> dict:
         """Plan the next steps based on current state."""
         current_todos = await self.todos.read_todos(self.thread_id)
@@ -86,18 +119,22 @@ Previous errors: {self.errors[-5:] if self.errors else []}
 Create a plan to complete this task. Output a JSON array of todos:
 [{{"content": "step description", "status": "pending"}}]
 """
-        response = await llm_service.chat([
-            {"role": "system", "content": "You are an autonomous agent. Plan the next steps to complete the task."},
+        response = await self._chat([
+            {"role": "system", "content": "You are an autonomous agent. Plan the next steps to complete the task. Reply with a raw JSON array only, no code fences."},
             {"role": "user", "content": prompt}
         ], json_mode=True)
-        
-        try:
-            import json
-            todos = json.loads(response)
-            await self.todos.write_todos(self.thread_id, todos)
-            return {"plan": "created", "todos": todos}
-        except Exception as e:
-            return {"error": f"Failed to create plan: {e}"}
+
+        todos = self._parse_todos(response)
+        if todos is None:
+            retry = await self._chat([
+                {"role": "system", "content": "Reply with a raw JSON array only, no code fences, no commentary."},
+                {"role": "user", "content": f"Reformat as a JSON array of {{\"content\": ..., \"status\": \"pending\"}} objects:\n{response[:2000]}"}
+            ], json_mode=True)
+            todos = self._parse_todos(retry)
+        if todos is None:
+            return {"error": "Planner returned unparseable output twice; retry the step."}
+        await self.todos.write_todos(self.thread_id, todos)
+        return {"plan": "created", "todos": todos}
 
     async def _execute(self, plan: dict) -> dict:
         """Execute the current plan."""
@@ -143,7 +180,7 @@ Context:
 
 Execute and report the result."""
 
-        response = await llm_service.chat([
+        response = await self._chat([
             {"role": "system", "content": "You are executing a task from a todo list. Complete it and report the result."},
             {"role": "user", "content": prompt}
         ])
@@ -204,7 +241,7 @@ Execute and report the result."""
 {content}
 
 Output as JSON: {{"filename": "...", "content": "..."}}"""
-            response = await llm_service.chat([
+            response = await self._chat([
                 {"role": "system", "content": "Extract structured data from text. Output valid JSON only."},
                 {"role": "user", "content": prompt}
             ], json_mode=True)
@@ -232,7 +269,7 @@ Output as JSON: {{"filename": "...", "content": "..."}}"""
 {content}
 
 Output as JSON: {{"filename": "..."}}"""
-            response = await llm_service.chat([
+            response = await self._chat([
                 {"role": "system", "content": "Extract structured data from text. Output valid JSON only."},
                 {"role": "user", "content": prompt}
             ], json_mode=True)

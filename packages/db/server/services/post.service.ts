@@ -12,7 +12,7 @@ import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
 import { ValidationError } from './types'
 
 
-export interface UpdatePostData extends Omit<PostCreateBase, 'businessId' | 'userId'> { }
+export interface UpdatePostData extends Partial<Omit<PostCreateBase, 'businessId' | 'userId'>> { }
 
 export interface CreatePlatformPostData {
   postId: string
@@ -358,11 +358,11 @@ export class PostService implements PostServiceType {
           updatedAt: dayjs.utc().toDate()
         }
 
-        // Handle JSON fields
-        if (data.mediaAssets !== undefined && data.mediaAssets.length > 0) {
+        // Handle JSON fields (empty arrays stringify too — raw arrays cannot bind)
+        if (data.mediaAssets !== undefined) {
           updateData.mediaAssets = data.mediaAssets ? JSON.stringify(data.mediaAssets) : null
         }
-        if (data.targetPlatforms !== undefined && data.targetPlatforms.length > 0) {
+        if (data.targetPlatforms !== undefined) {
           updateData.targetPlatforms = JSON.stringify(data.targetPlatforms)
         }
 

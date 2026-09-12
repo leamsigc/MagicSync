@@ -62,7 +62,6 @@ const fetchSettings = async () => {
       .filter(m => m.user)
       .map(m => m.user!.id)
   } catch (error) {
-    console.error('Error fetching connection settings:', error)
     toast.add({
       title: t('messages.error.title'),
       description: 'Failed to load connection settings',
@@ -98,7 +97,6 @@ const saveSettings = async () => {
     emit('saved')
     isOpen.value = false
   } catch (error) {
-    console.error('Error saving connection settings:', error)
     toast.add({
       title: t('messages.error.title'),
       description: 'Failed to save connection settings',

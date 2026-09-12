@@ -1,7 +1,8 @@
 import { z } from 'zod'
 import { defineMcpTool } from '@nuxtjs/mcp-toolkit/server'
 import { PLATFORMS } from '../../utils/platforms'
-import { requireMcp, resolveUserId } from '../../utils/mcp-context'
+import { requireMcp } from '../../utils/mcp-context'
+import { resolveMcpAiContext } from '../../utils/mcp-ai-context'
 import { logMcpCall } from '../../utils/mcp-audit'
 
 interface HooksResponse {
@@ -21,15 +22,23 @@ export default defineMcpTool({
   annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: false },
   async handler(args) {
     const mcp = requireMcp()
-    const userId = await resolveUserId(mcp)
+    const ai = await resolveMcpAiContext(mcp)
     const config = useRuntimeConfig()
     const backendUrl = config.pythonBackendUrl || 'http://localhost:8000'
 
     try {
       const result = await $fetch<HooksResponse>(`${backendUrl}/api/v1/social-media/generate-hooks`, {
         method: 'POST',
-        body: { topic: args.topic, platform: args.platform, count: args.count },
-        headers: { 'X-User-Id': userId },
+        body: {
+          topic: args.topic,
+          platform: args.platform,
+          count: args.count,
+          business_id: mcp.businessId,
+          use_business_context: !!ai.businessContext,
+          context_edition_id: ai.editionId,
+          business_context: ai.businessContext,
+        },
+        headers: { Authorization: `Bearer ${ai.token}` },
       })
       if (result.error || !result.hooks) {
         throw new Error(result.error || 'Idea generation failed')

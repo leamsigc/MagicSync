@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "@iconify/utils": "catalog:",
+    "@local-monorepo/agent": "workspace:*",
     "@local-monorepo/ai-tools": "workspace:*",
     "@local-monorepo/assets": "workspace:*",
     "@local-monorepo/auth": "workspace:*",

@@ -1,5 +1,8 @@
 import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
 import { chatService } from '#layers/BaseDB/server/services/chat.service'
+import { businessContextResolver, contextErrorStatus } from '#layers/BaseDB/server/services/business-context-resolver.service'
+import { userLlmConfigService } from '#layers/BaseDB/server/services/user-llm-config.service'
+import { createLlmJwt } from '#layers/BaseDB/server/utils/llm-jwt'
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event)
@@ -15,6 +18,17 @@ export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const backendUrl = config.pythonBackendUrl || 'http://localhost:8000'
 
+  const contextResult = await businessContextResolver.resolve(user.id, {
+    businessId: body.businessId ?? body.business_id ?? null,
+    useBusinessContext: body.useBusinessContext === true || body.use_business_context === true,
+  }, event)
+  if (!contextResult.success || !contextResult.data) {
+    throw createError({ statusCode: contextErrorStatus(contextResult.code), message: contextResult.error })
+  }
+  const brandContext = contextResult.data
+  const llmConfig = await userLlmConfigService.getEffectiveConfig(user.id, brandContext.businessId)
+  const llmJwt = createLlmJwt(user.id, user.email || '', llmConfig.data ?? null)
+
   // Build a system-readable message from the A2UI action
   const actionMessage = `[A2UI Action] ${body.action} on component ${body.componentId || 'unknown'} (surface: ${body.surfaceId || 'default'})${body.payload ? ` with data: ${JSON.stringify(body.payload)}` : ''}`
 
@@ -23,14 +37,19 @@ export default defineEventHandler(async (event) => {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-User-Id': user.id,
+      Authorization: `Bearer ${llmJwt}`,
     },
     body: {
+      // /chat/complete injects business_context as the system message.
       messages: [
         { role: 'user', content: actionMessage },
       ],
       model: 'llama3.2',
       temperature: 0.3,
+      business_id: brandContext.businessId,
+      use_business_context: brandContext.enabled,
+      context_edition_id: brandContext.editionId,
+      business_context: brandContext.prompt || undefined,
     },
   })
 

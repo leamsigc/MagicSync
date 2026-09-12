@@ -1,5 +1,7 @@
-import jwt
 import base64
+import hashlib
+import jwt
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from fastapi import HTTPException, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Optional
@@ -14,8 +16,8 @@ security = HTTPBearer(auto_error=False)
 class LlmConfig:
     """LLM configuration extracted from JWT."""
 
-    provider: str = "ollama"
-    model: str = "qwen3.5"
+    provider: str = "google"
+    model: str = "gemini-3-flash-preview"
     api_key: str | None = None
     api_base: str | None = None
     temperature: float = 0.7
@@ -32,6 +34,40 @@ class UserContext:
     llm_config: LlmConfig
 
 
+ENC_PREFIX = "enc:v1:"
+
+
+def _b64url_decode(part: str) -> bytes:
+    padding = "=" * (-len(part) % 4)
+    return base64.urlsafe_b64decode(part + padding)
+
+
+def _encryption_key() -> bytes:
+    secret = settings.nuxt_publish_secret or settings.llm_jwt_secret
+    return hashlib.scrypt(secret.encode("utf-8"), salt=b"magicsync-publish", n=16384, r=8, p=1, dklen=32)
+
+
+def decrypt_secret(stored: str | None) -> str | None:
+    """Decrypt a publish-crypto `enc:v1:` envelope. Fail closed to None.
+
+    Legacy plaintext and base64 values are never returned: the caller must
+    treat None as "credential must be re-entered".
+    """
+    if not stored:
+        return None
+    if not stored.startswith(ENC_PREFIX):
+        return None
+    try:
+        iv_part, tag_part, ct_part = stored[len(ENC_PREFIX):].split(".")
+        nonce = _b64url_decode(iv_part)
+        tag = _b64url_decode(tag_part)
+        ciphertext = _b64url_decode(ct_part)
+        plaintext = AESGCM(_encryption_key()).decrypt(nonce, ciphertext + tag, None)
+        return plaintext.decode("utf-8")
+    except Exception:
+        return None
+
+
 def decode_llm_jwt(token: str) -> UserContext | None:
     """
     Decode and validate JWT token from Nuxt backend.
@@ -46,17 +82,15 @@ def decode_llm_jwt(token: str) -> UserContext | None:
             audience="magicsync-python",
         )
 
-        # Decrypt API key if present
+        # Decrypt API key if present (AES-256-GCM envelope, fail closed)
         api_key = None
-        if payload.get("apiKeyEncrypted"):
-            try:
-                api_key = base64.b64decode(payload["apiKeyEncrypted"]).decode("utf-8")
-            except Exception:
-                api_key = None
+        raw_key = payload.get("apiKeyEncrypted")
+        if raw_key:
+            api_key = decrypt_secret(raw_key)
 
         llm_config = LlmConfig(
-            provider=payload.get("provider", "ollama"),
-            model=payload.get("model", settings.ollama_default_model),
+            provider=payload.get("provider", settings.default_provider),
+            model=payload.get("model", settings.google_default_model),
             api_key=api_key,
             api_base=payload.get("apiBaseUrl"),
             temperature=payload.get("temperature", 0.7),
@@ -84,7 +118,7 @@ async def get_current_user(
     - email: User email
     - provider: LLM provider (ollama, openai, anthropic, openrouter)
     - model: Model name
-    - apiKeyEncrypted: Base64 encoded API key (if user has BYOK)
+    - apiKeyEncrypted: AES-256-GCM envelope (enc:v1:) with the API key, if user has BYOK
     - apiBaseUrl: Custom API base URL
     - temperature: Default temperature
     - maxTokens: Default max tokens

@@ -14,6 +14,9 @@ export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const backendUrl = config.pythonBackendUrl || 'http://localhost:8000'
 
+  const llmJwtResult = await aiToolsFacade.getLlmJwtContext(user.id, user.email || '')
+  const llmJwt = llmJwtResult.data?.token ?? ''
+
   const result = await $fetch<{
     query: string
     results: Array<{ title: string; url: string; snippet: string }>
@@ -21,7 +24,7 @@ export default defineEventHandler(async (event) => {
   }>(`${backendUrl}/api/v1/tools/web-search`, {
     method: 'POST',
     body: { query: body.query, max_results: body.max_results || 5 },
-    headers: { 'X-User-Id': user.id },
+    headers: { Authorization: `Bearer ${llmJwt}` },
   })
 
   return result

@@ -96,7 +96,6 @@ const handleExtractionSubmit = async (payload: FormSubmitEvent<ExtractionForm>) 
     }, 600);
 
   } catch (error) {
-    console.error('Extraction failed:', error);
     toast.add({
       title: t('toast.extraction_failed'),
       description: t('toast.extraction_failed_desc'),
@@ -117,7 +116,6 @@ const submitFinalForm = async (payload: BodySchemaCreateBusinessType) => {
     }
 
     if (!response.id) {
-      console.error('Invalid response:', response);
       throw new Error('Failed to create business - invalid response');
     }
 
@@ -136,10 +134,11 @@ const submitFinalForm = async (payload: BodySchemaCreateBusinessType) => {
 
     if (initialSetup.value) {
       router.push('/app/integrations');
+    } else {
+      router.push(`/app/business/${response.id}/playbook`);
     }
 
   } catch (error: any) {
-    console.error('Form submit error:', error);
     toast.add({
       title: t('states.error'),
       description: error?.message || t('states.something_went_wrong'),
@@ -202,7 +201,7 @@ const handleCancel = () => {
       <UCard class="w-full h-full min-w-5xl overflow-auto">
         <div class="flex items-center justify-end  sticky top-0 z-10">
           <div class="flex items-center gap-2">
-            <UButton icon="lucide:x" color="neutral" variant="ghost" @click="handleCancel" title="Close" />
+            <UButton icon="lucide:x" color="neutral" variant="ghost" @click="handleCancel" :title="t('actions.close')" />
           </div>
         </div>
 

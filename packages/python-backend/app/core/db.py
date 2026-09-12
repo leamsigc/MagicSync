@@ -147,9 +147,57 @@ async def get_db_pool() -> DatabasePool:
     return _db_connection
 
 
+async def ensure_agent_tables():
+    """Create agent workspace/harness tables if they don't exist."""
+    pool = await get_db_pool()
+    async with pool.acquire() as conn:
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS agent_todos (
+                id TEXT PRIMARY KEY,
+                thread_id TEXT NOT NULL,
+                user_id TEXT NOT NULL,
+                content TEXT NOT NULL DEFAULT '',
+                status TEXT NOT NULL DEFAULT 'pending',
+                order_index INTEGER NOT NULL DEFAULT 0,
+                created_at INTEGER NOT NULL,
+                updated_at INTEGER NOT NULL
+            )
+        """)
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS workspace_files (
+                id TEXT PRIMARY KEY,
+                thread_id TEXT NOT NULL,
+                user_id TEXT NOT NULL,
+                filename TEXT NOT NULL,
+                content TEXT NOT NULL DEFAULT '',
+                mime_type TEXT NOT NULL DEFAULT 'text/plain',
+                created_at INTEGER NOT NULL,
+                updated_at INTEGER NOT NULL
+            )
+        """)
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS harness_runs (
+                id TEXT PRIMARY KEY,
+                thread_id TEXT NOT NULL DEFAULT '',
+                user_id TEXT NOT NULL DEFAULT '',
+                harness_type TEXT NOT NULL DEFAULT '',
+                status TEXT NOT NULL DEFAULT 'running',
+                current_phase INTEGER NOT NULL DEFAULT 0,
+                phase_results TEXT NOT NULL DEFAULT '[]',
+                metadata TEXT NOT NULL DEFAULT '{}',
+                started_at INTEGER NOT NULL DEFAULT 0,
+                completed_at INTEGER,
+                created_at INTEGER NOT NULL DEFAULT 0
+            )
+        """)
+
+
 async def init_db():
-    """Initialize database connection (alias for get_db_pool)."""
-    return await get_db_pool()
+    """Initialize database connection and ensure agent tables exist."""
+    pool = await get_db_pool()
+    await ensure_sub_agents_table()
+    await ensure_agent_tables()
+    return pool
 
 
 async def close_db():

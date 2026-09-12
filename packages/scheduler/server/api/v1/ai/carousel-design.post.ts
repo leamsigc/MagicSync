@@ -164,6 +164,9 @@ Return JSON matching the schema. Make every word count — this carousel should 
           schema: responseSchema,
           temperature: attempt === 0 ? 0.7 : 0.5,
           userId: user.id,
+          businessId: body.businessId ?? body.business_id ?? null,
+          useBusinessContext: body.useBusinessContext === true || body.use_business_context === true,
+          event,
         });
 
         // Basic sanity: if LLM returned wrong count, clamp

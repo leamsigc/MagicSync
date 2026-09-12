@@ -1,0 +1,226 @@
+{
+  "en": {
+    "title": "Agents & skills",
+    "description": "Versioned specialists with explicit tool scopes. Runs pin exact versions.",
+    "seed": {
+      "cta": "Seed built-ins",
+      "needsBusiness": "Select a business before seeding built-ins",
+      "done": "Seeded {skills} skills and {agents} agents",
+      "failed": "Seeding failed"
+    },
+    "form": {
+      "cta": "New agent",
+      "title": "Create agent",
+      "name": "Name",
+      "description": "Description",
+      "systemPrompt": "System prompt",
+      "tools": "Allowed tools (comma separated)",
+      "cancel": "Cancel",
+      "save": "Create agent",
+      "nameRequired": "A name is required"
+    },
+    "agents": {
+      "title": "Specialized agents",
+      "description": "Each run records the exact agent and skill versions used.",
+      "empty": "No agents yet — seed the built-ins or create one.",
+      "reviewRequired": "Human review"
+    },
+    "skills": {
+      "title": "Skill registry",
+      "description": "Reusable instructions with approved tool scopes. Drafts cannot run.",
+      "empty": "No registry skills yet.",
+      "imported": "Imported — review required",
+      "builtin": "Built-in"
+    },
+    "actions": {
+      "publish": "Publish",
+      "disable": "Disable",
+      "delete": "Delete"
+    },
+    "statuses": {
+      "draft": "Draft",
+      "active": "Active",
+      "disabled": "Disabled",
+      "archived": "Archived"
+    },
+    "toast": {
+      "loadFailed": "Failed to load agents",
+      "createDone": "Agent created as draft",
+      "createFailed": "Failed to create agent",
+      "publishDone": "Published",
+      "publishFailed": "Publish failed",
+      "disableDone": "Disabled",
+      "disableFailed": "Disable failed",
+      "deleteDone": "Deleted",
+      "deleteFailed": "Delete failed"
+    }
+  },
+  "es": {
+    "title": "Agentes y habilidades",
+    "description": "Especialistas versionados con permisos explícitos. Las ejecuciones fijan versiones exactas.",
+    "seed": {
+      "cta": "Cargar integrados",
+      "needsBusiness": "Selecciona un negocio antes de cargar",
+      "done": "{skills} habilidades y {agents} agentes cargados",
+      "failed": "Error al cargar"
+    },
+    "form": {
+      "cta": "Nuevo agente",
+      "title": "Crear agente",
+      "name": "Nombre",
+      "description": "Descripción",
+      "systemPrompt": "Prompt del sistema",
+      "tools": "Herramientas permitidas (separadas por comas)",
+      "cancel": "Cancelar",
+      "save": "Crear agente",
+      "nameRequired": "El nombre es obligatorio"
+    },
+    "agents": {
+      "title": "Agentes especializados",
+      "description": "Cada ejecución registra las versiones exactas usadas.",
+      "empty": "Aún no hay agentes — carga los integrados o crea uno.",
+      "reviewRequired": "Revisión humana"
+    },
+    "skills": {
+      "title": "Registro de habilidades",
+      "description": "Instrucciones reutilizables con permisos aprobados. Los borradores no se ejecutan.",
+      "empty": "Aún no hay habilidades.",
+      "imported": "Importada — requiere revisión",
+      "builtin": "Integrada"
+    },
+    "actions": {
+      "publish": "Publicar",
+      "disable": "Desactivar",
+      "delete": "Eliminar"
+    },
+    "statuses": {
+      "draft": "Borrador",
+      "active": "Activa",
+      "disabled": "Desactivada",
+      "archived": "Archivada"
+    },
+    "toast": {
+      "loadFailed": "Error al cargar agentes",
+      "createDone": "Agente creado como borrador",
+      "createFailed": "Error al crear",
+      "publishDone": "Publicado",
+      "publishFailed": "Error al publicar",
+      "disableDone": "Desactivado",
+      "disableFailed": "Error al desactivar",
+      "deleteDone": "Eliminado",
+      "deleteFailed": "Error al eliminar"
+    }
+  },
+  "de": {
+    "title": "Agenten & Skills",
+    "description": "Versionierte Spezialisten mit expliziten Tool-Rechten. Läufe pinnen exakte Versionen.",
+    "seed": {
+      "cta": "Built-ins laden",
+      "needsBusiness": "Wähle zuerst ein Unternehmen",
+      "done": "{skills} Skills und {agents} Agenten geladen",
+      "failed": "Laden fehlgeschlagen"
+    },
+    "form": {
+      "cta": "Neuer Agent",
+      "title": "Agent erstellen",
+      "name": "Name",
+      "description": "Beschreibung",
+      "systemPrompt": "System-Prompt",
+      "tools": "Erlaubte Tools (kommagetrennt)",
+      "cancel": "Abbrechen",
+      "save": "Agent erstellen",
+      "nameRequired": "Ein Name ist erforderlich"
+    },
+    "agents": {
+      "title": "Spezialisierte Agenten",
+      "description": "Jeder Lauf zeichnet die exakten Versionen auf.",
+      "empty": "Noch keine Agenten — lade die Built-ins oder erstelle einen.",
+      "reviewRequired": "Menschliche Prüfung"
+    },
+    "skills": {
+      "title": "Skill-Registry",
+      "description": "Wiederverwendbare Anweisungen mit genehmigten Rechten. Entwürfe laufen nicht.",
+      "empty": "Noch keine Skills.",
+      "imported": "Importiert — Prüfung erforderlich",
+      "builtin": "Integriert"
+    },
+    "actions": {
+      "publish": "Veröffentlichen",
+      "disable": "Deaktivieren",
+      "delete": "Löschen"
+    },
+    "statuses": {
+      "draft": "Entwurf",
+      "active": "Aktiv",
+      "disabled": "Deaktiviert",
+      "archived": "Archiviert"
+    },
+    "toast": {
+      "loadFailed": "Agenten konnten nicht geladen werden",
+      "createDone": "Agent als Entwurf erstellt",
+      "createFailed": "Erstellen fehlgeschlagen",
+      "publishDone": "Veröffentlicht",
+      "publishFailed": "Veröffentlichen fehlgeschlagen",
+      "disableDone": "Deaktiviert",
+      "disableFailed": "Deaktivieren fehlgeschlagen",
+      "deleteDone": "Gelöscht",
+      "deleteFailed": "Löschen fehlgeschlagen"
+    }
+  },
+  "fr": {
+    "title": "Agents et compétences",
+    "description": "Spécialistes versionnés aux autorisations explicites. Les exécutions épinglent les versions exactes.",
+    "seed": {
+      "cta": "Charger les intégrés",
+      "needsBusiness": "Sélectionne d’abord une entreprise",
+      "done": "{skills} compétences et {agents} agents chargés",
+      "failed": "Échec du chargement"
+    },
+    "form": {
+      "cta": "Nouvel agent",
+      "title": "Créer un agent",
+      "name": "Nom",
+      "description": "Description",
+      "systemPrompt": "Prompt système",
+      "tools": "Outils autorisés (séparés par des virgules)",
+      "cancel": "Annuler",
+      "save": "Créer l’agent",
+      "nameRequired": "Un nom est requis"
+    },
+    "agents": {
+      "title": "Agents spécialisés",
+      "description": "Chaque exécution enregistre les versions exactes utilisées.",
+      "empty": "Aucun agent — charge les intégrés ou crées-en un.",
+      "reviewRequired": "Révision humaine"
+    },
+    "skills": {
+      "title": "Registre de compétences",
+      "description": "Instructions réutilisables aux autorisations approuvées. Les brouillons ne s’exécutent pas.",
+      "empty": "Aucune compétence.",
+      "imported": "Importée — révision requise",
+      "builtin": "Intégrée"
+    },
+    "actions": {
+      "publish": "Publier",
+      "disable": "Désactiver",
+      "delete": "Supprimer"
+    },
+    "statuses": {
+      "draft": "Brouillon",
+      "active": "Actif",
+      "disabled": "Désactivé",
+      "archived": "Archivé"
+    },
+    "toast": {
+      "loadFailed": "Échec du chargement des agents",
+      "createDone": "Agent créé comme brouillon",
+      "createFailed": "Échec de la création",
+      "publishDone": "Publié",
+      "publishFailed": "Échec de la publication",
+      "disableDone": "Désactivé",
+      "disableFailed": "Échec de la désactivation",
+      "deleteDone": "Supprimé",
+      "deleteFailed": "Échec de la suppression"
+    }
+  }
+}

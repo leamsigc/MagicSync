@@ -41,7 +41,7 @@ export const auth = betterAuth({
         if (arg && typeof arg === 'object') return JSON.stringify(arg, Object.getOwnPropertyNames(arg));
         return String(arg);
       });
-      log.info(`[${level}] ${message}`, ...serializedArgs);
+      console.info(`[${level}] ${message}`, ...serializedArgs);
     }
   },
   trustedOrigins: (() => {

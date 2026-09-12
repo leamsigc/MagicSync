@@ -11,9 +11,13 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Query is required' })
   }
 
-  // Get query embedding from Python backend
+  // Get query embedding from Python backend (personal RAG stays separate
+  // from business context by design — no brand prompt is attached here).
   const config = useRuntimeConfig()
   const backendUrl = config.pythonBackendUrl || 'http://localhost:8000'
+
+  const llmJwtResult = await aiToolsFacade.getLlmJwtContext(user.id, user.email || '')
+  const llmJwt = llmJwtResult.data?.token ?? ''
 
   const retrieveResult = await $fetch<{
     query: string
@@ -26,7 +30,7 @@ export default defineEventHandler(async (event) => {
       top_k: body.top_k || 5,
     },
     headers: {
-      'X-User-Id': user.id,
+      Authorization: `Bearer ${llmJwt}`,
     },
   })
 

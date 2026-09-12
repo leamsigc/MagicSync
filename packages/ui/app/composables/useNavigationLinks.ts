@@ -124,6 +124,11 @@ export const useNavigationLinks = () => {
           icon: 'i-lucide-wrench'
         },
         {
+          label: 'Agents',
+          to: `/app/ai-tools/agents`,
+          icon: 'i-lucide-bot'
+        },
+        {
           label: 'Tools',
           to: `/app/ai-tools/tools`,
           icon: 'i-lucide-hammer'
@@ -133,11 +138,6 @@ export const useNavigationLinks = () => {
           to: `/app/ai-tools/growth-stratergy`,
           icon: 'i-lucide-rocket'
         },
-        {
-          label: 'Settings',
-          to: `/app/ai-tools/settings`,
-          icon: 'i-lucide-settings'
-        }
       ]
     }
   ])

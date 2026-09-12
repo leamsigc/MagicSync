@@ -27,5 +27,8 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode, statusMessage: result.error })
   }
 
-  return result.data
+  if (!result.data) {
+    throw createError({ statusCode: 500, statusMessage: 'Failed to update LLM config' })
+  }
+  return aiToolsFacade.maskLlmConfig(result.data)
 })

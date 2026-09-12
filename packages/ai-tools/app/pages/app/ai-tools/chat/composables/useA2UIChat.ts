@@ -37,11 +37,30 @@ interface StreamChunk {
 
 const THREAD_ID_STORAGE_KEY = 'ai-chat-thread-id'
 
+export interface BusinessContextOptions {
+  useBusinessContext?: boolean
+  businessId?: string
+}
+
 function generateId(): string {
   return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
 }
 
+async function readResponseMessage(response: Response): Promise<string> {
+  try {
+    const data = await response.json() as { message?: unknown, statusMessage?: unknown }
+    if (typeof data.message === 'string' && data.message) return data.message
+    if (typeof data.statusMessage === 'string' && data.statusMessage) return data.statusMessage
+  }
+  catch {
+    // Fall through to the status fallback below
+  }
+  return `HTTP error: ${response.status}`
+}
+
 export function useA2UIChat() {
+  const { t } = useI18n()
+  const toast = useToast()
   const threads = ref<Thread[]>([])
   const isLoadingThreads = ref(false)
   const threadId = ref<string | null>(null)
@@ -54,7 +73,7 @@ export function useA2UIChat() {
   let loadThreads: () => Promise<void>
   let loadThreadMessages: (id: string) => Promise<void>
 
-  async function sendMessage(content: string, enableTools: boolean = true) {
+  async function sendMessage(content: string, enableTools: boolean = true, opts: BusinessContextOptions = {}) {
     const userMessage: ChatMessage = {
       id: generateId(),
       role: 'user',
@@ -87,12 +106,14 @@ export function useA2UIChat() {
             })),
           thread_id: threadId.value,
           enable_tools: enableTools,
+          use_business_context: opts.useBusinessContext ?? false,
+          business_id: opts.businessId ?? null,
         }),
         signal: abortController.signal,
       })
 
       if (!response.ok) {
-        throw new Error(`HTTP error: ${response.status}`)
+        throw new Error(await readResponseMessage(response))
       }
 
       const reader = response.body?.getReader()
@@ -124,7 +145,6 @@ export function useA2UIChat() {
             if (typeof parsed !== 'object' || parsed === null) continue
             if (typeof (parsed as { type?: unknown }).type !== 'string') continue
             const chunk = parsed as StreamChunk
-            console.log('[Chat] Received chunk type:', chunk.type, 'toolName:', chunk.toolName, 'toolCallId:', chunk.toolCallId)
 
             if (chunk.type === 'thinking' && chunk.content) {
               currentReasoning += chunk.content
@@ -148,7 +168,6 @@ export function useA2UIChat() {
               assistantMessage.parts = assistantMessage.parts || []
               assistantMessage.parts.push({ type: 'tool', tool: chunk.toolName })
             } else if (chunk.type === 'tool_result' && chunk.output) {
-              console.log('[Chat] tool_result chunk:', chunk)
               // Find tool call - try by ID first, then by toolName
               let toolCall = null
 
@@ -165,19 +184,14 @@ export function useA2UIChat() {
                 toolCall = assistantMessage.toolCalls?.find((tc) => tc.name === chunk.toolName)
               }
 
-              console.log('[Chat] Found toolCall:', toolCall, 'id:', chunk.id, 'toolCallId:', chunk.toolCallId, 'toolName:', chunk.toolName)
-              console.log('[Chat] Available toolCalls:', assistantMessage.toolCalls?.map(tc => ({ id: tc.id, name: tc.name })))
               if (toolCall) {
                 toolCall.result = chunk.output
                 if (chunk.errorText) toolCall.error = chunk.errorText
-                console.log('[Chat] Updated toolCall result:', toolCall.result)
-              } else {
-                console.log('[Chat] Warning: Could not find tool call for result')
               }
             } else if (chunk.type === 'error') {
-              console.error('Stream error:', chunk.content)
+              // Stream errors carry no renderable content; the reply simply ends
             } else if (chunk.type === 'done') {
-              console.log('[Chat] Received done signal')
+              // Done signal received; the reader loop exits on completion
             }
           } catch {
             // Skip malformed JSON
@@ -186,7 +200,6 @@ export function useA2UIChat() {
 
         // Check if we got a done signal
         if (buffer.includes('"done":true') || buffer.includes('"done" : true')) {
-          console.log('[Chat] Stream completed with done signal')
           break
         }
       }
@@ -198,7 +211,6 @@ export function useA2UIChat() {
 
       if (hasToolCalls && !hasTextContent) {
         // Tools ran but no final text - show tool results as final content
-        console.log('[Chat] Tools executed but no text response, showing tool results')
         const toolOutputs = toolCalls
           .filter(tc => tc.result)
           .map(tc => `${tc.name}: ${tc.result}`)
@@ -218,8 +230,13 @@ export function useA2UIChat() {
     } catch (error: unknown) {
       if (error instanceof DOMException && error.name === 'AbortError') {
         // AbortError is expected when user cancels
-      } else if (error instanceof Error) {
-        console.error('Chat error:', error)
+      } else {
+        toast.add({
+          title: t('error'),
+          description: error instanceof Error ? error.message : undefined,
+          icon: 'i-heroicons-x-circle',
+          color: 'error',
+        })
       }
     } finally {
       isStreaming.value = false

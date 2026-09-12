@@ -16,6 +16,56 @@ import httpx
 
 logger = logging.getLogger(__name__)
 
+# Import quarantine bounds (PRD-SKILLS-AGENTS §5). Imports land disabled and
+# require explicit review before any run can use them.
+SKILL_ZIP_MAX_BYTES = 5 * 1024 * 1024
+SKILL_ZIP_MAX_FILES = 100
+SKILL_FILE_MAX_BYTES = 1024 * 1024
+SKILL_ALLOWED_EXTENSIONS = frozenset({".md", ".txt", ".json", ".yaml", ".yml", ".py"})
+SKILL_BLOCKED_NAMES = frozenset(
+    {"setup.py", "setup.cfg", "install.sh", "postinstall.js", "package.json", "Makefile"}
+)
+
+
+def _reject_traversal(name: str) -> str | None:
+    """Reject zip-slip paths. Returns an error string or None."""
+    normalized = name.replace("\\", "/")
+    if normalized.startswith("/") or ".." in normalized.split("/"):
+        return f"Unsafe archive path: {name!r}"
+    return None
+
+
+def _reject_blocked_file(name: str, size: int) -> str | None:
+    """Reject install scripts, disallowed extensions, and oversized files."""
+    base = name.rsplit("/", 1)[-1].lower()
+    if base in SKILL_BLOCKED_NAMES:
+        return f"Install scripts are not allowed in skill imports: {base!r}"
+    if "." + base.rsplit(".", 1)[-1] not in SKILL_ALLOWED_EXTENSIONS and "." in base:
+        return f"File extension not allowed in skill imports: {base!r}"
+    if size > SKILL_FILE_MAX_BYTES:
+        return f"Skill file too large: {base!r} ({size} bytes)"
+    return None
+
+
+def validate_skill_archive(zip_content: bytes) -> str | None:
+    """Validate an imported skill ZIP. Returns an error string or None."""
+    if len(zip_content) > SKILL_ZIP_MAX_BYTES:
+        return f"Skill archive too large ({len(zip_content)} bytes)"
+    try:
+        with zipfile.ZipFile(io.BytesIO(zip_content)) as zf:
+            members = [info for info in zf.infolist() if not info.is_dir()]
+            if len(members) > SKILL_ZIP_MAX_FILES:
+                return f"Skill archive has too many files ({len(members)})"
+            for info in members:
+                blocked = _reject_traversal(info.filename) or _reject_blocked_file(
+                    info.filename, info.file_size
+                )
+                if blocked:
+                    return blocked
+    except zipfile.BadZipFile:
+        return "Invalid ZIP file format"
+    return None
+
 
 # =============================================================================
 # CodeSandbox Configuration
@@ -658,7 +708,7 @@ class SkillTools:
         from app.core.db import get_db_pool
 
         try:
-            pool = get_db_pool()
+            pool = await get_db_pool()
             async with pool.acquire() as conn:
                 result = await conn.execute(
                     """SELECT id, name, description, instructions 
@@ -692,7 +742,7 @@ class SkillTools:
         from app.core.db import get_db_pool
 
         try:
-            pool = get_db_pool()
+            pool = await get_db_pool()
             async with pool.acquire() as conn:
                 skill_id = f"skill-{self.user_id}-{name}"
 
@@ -719,7 +769,7 @@ class SkillTools:
         from app.core.db import get_db_pool
 
         try:
-            pool = get_db_pool()
+            pool = await get_db_pool()
             async with pool.acquire() as conn:
                 result = await conn.execute(
                     """SELECT name, description FROM skills 
@@ -740,7 +790,7 @@ class SkillTools:
         from app.core.db import get_db_pool
 
         try:
-            pool = get_db_pool()
+            pool = await get_db_pool()
             async with pool.acquire() as conn:
                 result = await conn.execute(
                     """SELECT sf.filename, sf.content, sf.mime_type 
@@ -766,7 +816,13 @@ class SkillTools:
             return {"error": str(e)}
 
     async def import_skill_from_zip(self, zip_content: bytes) -> dict:
-        """Import a skill from ZIP file in agentskills.io format."""
+        """Import a skill from ZIP file in agentskills.io format.
+
+        Imports are quarantined (disabled) until explicit review.
+        """
+        quarantine_error = validate_skill_archive(zip_content)
+        if quarantine_error:
+            return {"error": quarantine_error}
         try:
             with zipfile.ZipFile(io.BytesIO(zip_content)) as zf:
                 namelist = zf.namelist()
@@ -818,11 +874,11 @@ class SkillTools:
 
                 skill_id = f"skill-{self.user_id}-{name}"
 
-                pool = get_db_pool()
+                pool = await get_db_pool()
                 async with pool.acquire() as conn:
                     await conn.execute(
                         """INSERT OR REPLACE INTO skills (id, user_id, name, description, instructions, is_global, enabled)
-                           VALUES (?, ?, ?, ?, ?, 0, 1)""",
+                           VALUES (?, ?, ?, ?, ?, 0, 0)""",
                         (skill_id, self.user_id, name, description, instructions),
                     )
 
@@ -859,9 +915,15 @@ class SkillTools:
 
     async def import_skill_from_url(self, url: str) -> dict:
         """Import a skill from a URL (ZIP file)."""
+        from app.services.research.ssrf import SSRFError, validate_url
+
+        try:
+            safe_url = validate_url(url)
+        except SSRFError as exc:
+            return {"error": f"Blocked URL: {exc}"}
         try:
             async with httpx.AsyncClient() as client:
-                response = await client.get(url, timeout=30.0)
+                response = await client.get(safe_url, timeout=30.0)
                 response.raise_for_status()
 
                 content_type = response.headers.get("content-type", "")
@@ -921,7 +983,7 @@ class SkillTools:
 
             skill_id = f"skill-{self.user_id}-{name}"
 
-            pool = get_db_pool()
+            pool = await get_db_pool()
             async with pool.acquire() as conn:
                 await conn.execute(
                     """INSERT OR REPLACE INTO skills (id, user_id, name, description, instructions, is_global, enabled)

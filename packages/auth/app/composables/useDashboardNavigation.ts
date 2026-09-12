@@ -110,6 +110,24 @@ export const useDashboardNavigation = () => {
         active: route.path.startsWith('/app/toolbox')
       },
       {
+        label: m.menu.pipelines,
+        icon: 'i-lucide-workflow',
+        to: '/app/pipelines',
+        active: route.path.startsWith('/app/pipelines'),
+        children: [
+          {
+            label: m.menu.allPipelines,
+            to: '/app/pipelines',
+            icon: 'i-lucide-list'
+          },
+          {
+            label: m.menu.agentOversight,
+            to: '/app/pipelines/agents',
+            icon: 'i-lucide-bot'
+          }
+        ]
+      },
+      {
         label: m.menu.media,
         icon: 'i-lucide-image',
         to: '/app/media',

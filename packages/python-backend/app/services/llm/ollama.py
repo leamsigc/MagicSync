@@ -27,6 +27,18 @@ class LLMService:
         litellm.failure_callback = [_log_failure]
         logger.info("LLMService initialized | callbacks registered")
 
+    async def chat_text(
+        self,
+        messages: list[dict],
+        **kwargs,
+    ) -> str:
+        """Non-streaming convenience: collect streamed chunks into full text."""
+        kwargs.pop('json_mode', None)
+        parts = []
+        async for chunk in self.chat(messages, **kwargs):
+            parts.append(chunk)
+        return "".join(parts)
+
     async def chat(
         self,
         messages: list[dict],
@@ -45,8 +57,9 @@ class LLMService:
 
         Falls back to platform defaults if no provider/model specified.
         """
-        provider = provider or "ollama"
-        model = model or settings.ollama_default_model
+        provider = provider or settings.default_provider
+        model = model or settings.google_default_model
+        temperature = self._resolve_temperature(provider, model, temperature)
         api_base = api_base or (
             settings.ollama_base_url if provider == "ollama" else None
         )
@@ -131,8 +144,9 @@ class LLMService:
 
         Falls back to platform defaults if no provider/model specified.
         """
-        provider = provider or "ollama"
-        model = model or settings.ollama_default_model
+        provider = provider or settings.default_provider
+        model = model or settings.google_default_model
+        temperature = self._resolve_temperature(provider, model, temperature)
         api_base = api_base or (
             settings.ollama_base_url if provider == "ollama" else None
         )
@@ -181,6 +195,44 @@ class LLMService:
             "model": response.model,
         }
 
+    async def test_connection(
+        self,
+        provider: str | None = None,
+        model: str | None = None,
+        api_key: str | None = None,
+        api_base: str | None = None,
+    ) -> dict:
+        """One tiny non-streaming completion to verify provider credentials."""
+        provider = provider or settings.default_provider
+        model = model or settings.google_default_model
+        temperature = self._resolve_temperature(provider, model, 0.7)
+        if not api_base and provider == "ollama":
+            api_base = settings.ollama_base_url
+        litellm_model = self._format_model(model, provider)
+        t0 = time.monotonic()
+        response = await litellm.acompletion(
+            model=litellm_model,
+            messages=[{"role": "user", "content": "ping"}],
+            max_tokens=8,
+            temperature=temperature,
+            api_key=api_key,
+            api_base=api_base,
+        )
+        latency_ms = int((time.monotonic() - t0) * 1000)
+        content = ""
+        if response.choices:
+            content = response.choices[0].message.content or ""
+        logger.info("test_connection ok model=%s latency=%dms", litellm_model, latency_ms)
+        return {"ok": True, "model_used": litellm_model, "latency_ms": latency_ms, "reply_preview": content[:64]}
+
+    @staticmethod
+    def _resolve_temperature(provider: str, model: str, temperature: float) -> float:
+        """Gemini 3 models degrade below temperature 1.0 — clamp it."""
+        if provider == "google" and "gemini-3" in model and temperature < 1.0:
+            logger.info("forcing temperature=1.0 for Gemini 3 model (lower values degrade reasoning)")
+            return 1.0
+        return temperature
+
     def _format_model(self, model: str, provider: str) -> str:
         """Format model string for LiteLLM based on provider."""
         if "/" in model:
@@ -191,7 +243,8 @@ class LLMService:
             "openai": model,
             "anthropic": f"anthropic/{model}",
             "openrouter": f"openrouter/{model}",
-            "google": f"google/{model}",
+            "google": f"gemini/{model}",
+            "deepseek": f"deepseek/{model}",
         }
 
         return provider_prefix_map.get(provider, model)

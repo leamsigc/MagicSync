@@ -12,6 +12,10 @@ class GeneratePostRequest(BaseModel):
     additional_context: str = Field(default="", description="Additional context or requirements")
     max_length: int | None = Field(default=None, description="Override platform's default max length")
     moderate: bool = Field(default=True, description="Whether to run content moderation (PII, harmful content)")
+    business_id: str | None = Field(default=None, description="Business scope (verified Nuxt-side)")
+    use_business_context: bool = Field(default=False, description="Explicit branded-context opt-in")
+    context_edition_id: str | None = Field(default=None, description="Resolved playbook edition")
+    business_context: str | None = Field(default=None, description="Resolved branded prompt (UNTRUSTED data)")
 
 
 class GenerateBatchRequest(BaseModel):
@@ -22,6 +26,10 @@ class GenerateBatchRequest(BaseModel):
     include_hashtags: bool = Field(default=True, description="Whether to include hashtags")
     include_cta: bool = Field(default=False, description="Whether to include CTAs")
     count_per_platform: int = Field(default=1, ge=1, le=5, description="Variations per platform")
+    business_id: str | None = Field(default=None, description="Business scope (verified Nuxt-side)")
+    use_business_context: bool = Field(default=False, description="Explicit branded-context opt-in")
+    context_edition_id: str | None = Field(default=None, description="Resolved playbook edition")
+    business_context: str | None = Field(default=None, description="Resolved branded prompt (UNTRUSTED data)")
 
 
 class GenerateThreadRequest(BaseModel):
@@ -31,6 +39,10 @@ class GenerateThreadRequest(BaseModel):
     tweet_count: int = Field(default=5, ge=2, le=25, description="Number of tweets in thread")
     hook_first: bool = Field(default=True, description="Whether to start with a hook")
     moderate: bool = Field(default=True, description="Whether to run content moderation")
+    business_id: str | None = Field(default=None, description="Business scope (verified Nuxt-side)")
+    use_business_context: bool = Field(default=False, description="Explicit branded-context opt-in")
+    context_edition_id: str | None = Field(default=None, description="Resolved playbook edition")
+    business_context: str | None = Field(default=None, description="Resolved branded prompt (UNTRUSTED data)")
 
 
 class GenerateVariationsRequest(BaseModel):
@@ -39,6 +51,10 @@ class GenerateVariationsRequest(BaseModel):
     platform: str = Field(..., description="Target platform")
     count: int = Field(default=3, ge=1, le=10, description="Number of variations")
     variation_type: str = Field(default="rephrase", description="Type (rephrase, expand, shorten)")
+    business_id: str | None = Field(default=None, description="Business scope (verified Nuxt-side)")
+    use_business_context: bool = Field(default=False, description="Explicit branded-context opt-in")
+    context_edition_id: str | None = Field(default=None, description="Resolved playbook edition")
+    business_context: str | None = Field(default=None, description="Resolved branded prompt (UNTRUSTED data)")
 
 
 class GenerateHooksRequest(BaseModel):
@@ -46,6 +62,10 @@ class GenerateHooksRequest(BaseModel):
     topic: str = Field(..., description="The post topic")
     platform: str = Field(..., description="Target platform")
     count: int = Field(default=5, ge=1, le=20, description="Number of hook options")
+    business_id: str | None = Field(default=None, description="Business scope (verified Nuxt-side)")
+    use_business_context: bool = Field(default=False, description="Explicit branded-context opt-in")
+    context_edition_id: str | None = Field(default=None, description="Resolved playbook edition")
+    business_context: str | None = Field(default=None, description="Resolved branded prompt (UNTRUSTED data)")
 
 
 class GenerateHashtagsRequest(BaseModel):
@@ -55,6 +75,10 @@ class GenerateHashtagsRequest(BaseModel):
     count: int = Field(default=5, ge=1, le=30, description="Number of hashtags")
     style: str = Field(default="mixed", description="Style (popular, niche, mixed, trending)")
     moderate: bool = Field(default=True, description="Whether to run content moderation")
+    business_id: str | None = Field(default=None, description="Business scope (verified Nuxt-side)")
+    use_business_context: bool = Field(default=False, description="Explicit branded-context opt-in")
+    context_edition_id: str | None = Field(default=None, description="Resolved playbook edition")
+    business_context: str | None = Field(default=None, description="Resolved branded prompt (UNTRUSTED data)")
 
 
 class GenerateBulkTemplateRequest(BaseModel):
@@ -63,6 +87,10 @@ class GenerateBulkTemplateRequest(BaseModel):
     platforms: list[str] = Field(..., description="Target platforms")
     template_variables: list[str] = Field(default=[], description="Variable names for template")
     tone: str = Field(default="professional", description="Tone of voice")
+    business_id: str | None = Field(default=None, description="Business scope (verified Nuxt-side)")
+    use_business_context: bool = Field(default=False, description="Explicit branded-context opt-in")
+    context_edition_id: str | None = Field(default=None, description="Resolved playbook edition")
+    business_context: str | None = Field(default=None, description="Resolved branded prompt (UNTRUSTED data)")
     include_hashtags: bool = Field(default=True, description="Whether to include hashtags")
     count: int = Field(default=10, ge=1, le=100, description="Number of content variations")
 

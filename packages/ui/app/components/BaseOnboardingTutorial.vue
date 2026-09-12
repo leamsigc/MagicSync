@@ -298,17 +298,6 @@ const tutorialDefinitions: TutorialDefinition[] = [
     ],
   },
   {
-    id: 'ai-settings',
-    icon: 'i-heroicons-cog-6-tooth',
-    routePatterns: ['/app/ai-tools/settings'],
-    stepCount: 3,
-    elements: [
-      '[data-tour="ai-settings-step-0"]',
-      '[data-tour="ai-settings-step-1"]',
-      '[data-tour="ai-settings-step-2"]',
-    ],
-  },
-  {
     id: 'tools',
     icon: 'i-heroicons-wrench-screwdriver',
     routePatterns: ['/app/tools'],
@@ -543,6 +532,10 @@ function startTutorial(id: string) {
   driverObj.drive()
 }
 
+function openTutorialModal() {
+  showModal.value = true
+}
+
 /** Navigate to the tutorial's first route pattern, then start the tutorial. */
 function navigateAndStart(tutorial: Tutorial) {
   showModal.value = false
@@ -580,7 +573,7 @@ function navigateAndStart(tutorial: Tutorial) {
         color="primary"
         variant="solid"
         class="w-12 h-12 rounded-full shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:scale-105 transition-all duration-200"
-        @click="showModal = true"
+        @click="openTutorialModal"
         aria-label="Open tutorials"
       >
         <UIcon name="i-heroicons-question-mark-circle-16-solid" class="w-6 h-6" />

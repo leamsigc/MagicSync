@@ -34,6 +34,29 @@ class HarnessRequest(BaseModel):
     thread_id: str
 
 
+class PhaseDefinition(BaseModel):
+    name: str
+    type: str
+    system_prompt: str | None = None
+    prompt: str | None = None
+    schema: str | None = None
+
+
+class HarnessPhaseRequest(BaseModel):
+    harness_type: str
+    phase_index: int
+    phase_input: dict
+    thread_id: str
+    phases: list[PhaseDefinition] | None = None
+
+
+class HarnessPhaseResponse(BaseModel):
+    phase: int
+    phase_name: str | None = None
+    phase_type: str | None = None
+    result: dict
+
+
 class HarnessResponse(BaseModel):
     run_id: str
     status: str
@@ -94,7 +117,13 @@ async def execute_harness(
             context={
                 "user_id": user.user_id,
                 "thread_id": request.thread_id,
-                "run_id": run_id
+                "run_id": run_id,
+                "llm": {
+                    "provider": user.llm_config.provider,
+                    "model": user.llm_config.model,
+                    "api_key": user.llm_config.api_key,
+                    "api_base": user.llm_config.api_base,
+                },
             }
         )
         
@@ -113,16 +142,75 @@ async def execute_harness(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.post("/harness/execute-phase", response_model=HarnessPhaseResponse)
+async def execute_harness_phase(
+    request: HarnessPhaseRequest,
+    user: UserContext = Depends(require_user),
+):
+    """Execute a single harness phase so the UI can show + steer each step."""
+    from app.services.dsh.status import record_run
+
+    run_key = f"{request.thread_id or user.user_id}:{request.phase_index}"
+    record_run(run_key, "running", {"harness_type": request.harness_type})
+    try:
+        result = await harness_engine.execute_phase(
+            harness_type=request.harness_type,
+            phase_index=request.phase_index,
+            phase_input=request.phase_input,
+            phases=[p.model_dump(exclude_none=True) for p in request.phases] if request.phases else None,
+            context={
+                "user_id": user.user_id,
+                "thread_id": request.thread_id,
+                "llm": {
+                    "provider": user.llm_config.provider,
+                    "model": user.llm_config.model,
+                    "api_key": user.llm_config.api_key,
+                    "api_base": user.llm_config.api_base,
+                },
+            },
+        )
+
+        if "error" in result:
+            record_run(run_key, "failed", {"error": str(result["error"])[:300]})
+            raise HTTPException(status_code=400, detail=result["error"])
+
+        record_run(run_key, "completed", {"phase": result.get("phase", request.phase_index)})
+        phase_result = result.get("result", {})
+        return HarnessPhaseResponse(
+            phase=result.get("phase", request.phase_index),
+            phase_name=result.get("phase_name"),
+            phase_type=str(result.get("phase_type", "")),
+            result=phase_result if isinstance(phase_result, dict) else {"result": phase_result},
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Harness phase error: {e}")
+        try:
+            from app.services.dsh.status import record_run as _record
+
+            _record(run_key, "failed", {"error": str(e)[:300]})
+        except Exception:
+            pass
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.get("/harness/{run_id}")
 async def get_harness_status(
     run_id: str,
     user: UserContext = Depends(require_user),
 ):
-    """Get status of a harness run."""
+    """Get status of a harness run (truthful: unknown runs are 404)."""
+    from app.services.dsh.status import get_run
+
+    record = get_run(run_id)
+    if record is None:
+        raise HTTPException(status_code=404, detail="Unknown harness run")
     return {
         "run_id": run_id,
-        "status": "completed",
-        "message": "Harness status endpoint"
+        "status": record.get("status", "unknown"),
+        "updated_at": record.get("updated_at"),
+        "detail": {k: v for k, v in record.items() if k not in ("run_id", "status", "updated_at")},
     }
 
 

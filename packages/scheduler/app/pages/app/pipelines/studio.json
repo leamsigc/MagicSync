@@ -1,0 +1,406 @@
+{
+  "en": {
+    "title": "Pipeline studio",
+    "description": "Design the AI content workflow as a flow: trigger, phases, review, shortcuts.",
+    "seo_title": "Pipeline studio",
+    "seo_description": "Design the AI content workflow as a flow: trigger, phases, review, shortcuts.",
+    "topbar": {
+      "pipeline": "Pipeline",
+      "pipelinePlaceholder": "Select a pipeline",
+      "newPlaceholder": "New pipeline name…",
+      "create": "Create",
+      "save": "Save",
+      "run": "Run",
+      "clear": "Clear",
+      "fit": "Fit view",
+      "back": "Back",
+      "clone": "Clone",
+      "activate": "Activate",
+      "archive": "Archive"
+    },
+    "palette": {
+      "title": "Nodes",
+      "hint": "Drag onto the canvas or use add to append.",
+      "triggers": "Triggers",
+      "phases": "Phases",
+      "actions": "Actions",
+      "add": "Add"
+    },
+    "canvas": {
+      "empty": "Drag a node here or add the manual trigger to start.",
+      "phases": "{count} phases",
+      "connections": "{count} connections"
+    },
+    "inspector": {
+      "title": "Inspector",
+      "empty": "Select a node to edit its name, prompt, and config.",
+      "name": "Name",
+      "prompt": "Prompt",
+      "promptPlaceholder": "What should the agent do with its input?",
+      "schema": "Output schema",
+      "schemaPlaceholder": "social_post",
+      "temperature": "Temperature",
+      "delete": "Delete node",
+      "kindLabel": "Kind",
+      "typeLabel": "Phase type"
+    },
+    "nodes": {
+      "triggerManual": "Manual trigger",
+      "research": "Research topics",
+      "writer": "Write post",
+      "humanizer": "Humanize",
+      "design": "Design HTML",
+      "virality": "Virality check",
+      "engagement": "Engagement plan",
+      "scrape": "Scrape sources",
+      "template": "Pick template",
+      "custom": "Custom prompt",
+      "humanReview": "Human review",
+      "createPost": "Create post",
+      "pushPublish": "Push to publish",
+      "openTts": "Open voiceover",
+      "quickBatch": "Quick batch"
+    },
+    "validation": {
+      "valid": "Flow is valid and ready to save.",
+      "noTrigger": "Add exactly one manual trigger to start the pipeline.",
+      "multiTrigger": "Keep exactly one trigger — remove the extra triggers.",
+      "cycle": "Remove the cycle so the flow runs in one direction.",
+      "actionNotAtEnd": "Action shortcuts must sit at the end of the chain."
+    },
+    "shortcuts": {
+      "title": "Post-run shortcuts"
+    },
+    "actions": {
+      "opened": "Opened {target}",
+      "batchHint": "Quick batch runs from the pipeline run page after this flow finishes."
+    },
+    "toast": {
+      "loadFailed": "Failed to load pipelines",
+      "pipelineCreated": "Pipeline created successfully",
+      "createFailed": "Failed to create pipeline",
+      "runStarted": "Pipeline run started",
+      "runStartFailed": "Failed to start pipeline run",
+      "pipelineSaved": "Pipeline saved",
+      "saveFailed": "Failed to save pipeline",
+      "cleared": "Canvas cleared",
+      "nodeAdded": "Added {name}",
+      "nodeDeleted": "Node deleted",
+      "connectInvalid": "Those nodes cannot be connected",
+      "nameRequired": "Give the new pipeline a name first",
+      "selectRequired": "Select a pipeline first",
+      "graphSaved": "Workflow graph saved",
+      "activated": "Workflow activated",
+      "archived": "Workflow archived",
+      "cloned": "Workflow cloned"
+    },
+    "workflow": {
+      "draft": "Draft",
+      "active": "Active",
+      "archived": "Archived"
+    }
+  },
+  "es": {
+    "title": "Estudio de pipelines",
+    "description": "Diseña el flujo de contenido con IA: disparador, fases, revisión y atajos.",
+    "seo_title": "Estudio de pipelines",
+    "seo_description": "Diseña el flujo de contenido con IA: disparador, fases, revisión y atajos.",
+    "topbar": {
+      "pipeline": "Pipeline",
+      "pipelinePlaceholder": "Selecciona un pipeline",
+      "newPlaceholder": "Nombre del nuevo pipeline…",
+      "create": "Crear",
+      "save": "Guardar",
+      "run": "Ejecutar",
+      "clear": "Limpiar",
+      "fit": "Encuadrar",
+      "back": "Volver",
+      "clone": "Clonar",
+      "activate": "Activar",
+      "archive": "Archivar"
+    },
+    "palette": {
+      "title": "Nodos",
+      "hint": "Arrastra al lienzo o usa añadir para agregar.",
+      "triggers": "Disparadores",
+      "phases": "Fases",
+      "actions": "Acciones",
+      "add": "Añadir"
+    },
+    "canvas": {
+      "empty": "Arrastra un nodo aquí o añade el disparador manual para empezar.",
+      "phases": "{count} fases",
+      "connections": "{count} conexiones"
+    },
+    "inspector": {
+      "title": "Inspector",
+      "empty": "Selecciona un nodo para editar su nombre, prompt y config.",
+      "name": "Nombre",
+      "prompt": "Prompt",
+      "promptPlaceholder": "¿Qué debe hacer el agente con su entrada?",
+      "schema": "Esquema de salida",
+      "schemaPlaceholder": "social_post",
+      "temperature": "Temperatura",
+      "delete": "Eliminar nodo",
+      "kindLabel": "Tipo",
+      "typeLabel": "Tipo de fase"
+    },
+    "nodes": {
+      "triggerManual": "Disparador manual",
+      "research": "Investigar temas",
+      "writer": "Escribir publicación",
+      "humanizer": "Humanizar",
+      "design": "Diseñar HTML",
+      "virality": "Chequeo de viralidad",
+      "engagement": "Plan de interacción",
+      "scrape": "Rastrear fuentes",
+      "template": "Elegir plantilla",
+      "custom": "Prompt personalizado",
+      "humanReview": "Revisión humana",
+      "createPost": "Crear publicación",
+      "pushPublish": "Enviar a publicar",
+      "openTts": "Abrir voz",
+      "quickBatch": "Lote rápido"
+    },
+    "validation": {
+      "valid": "El flujo es válido y está listo para guardar.",
+      "noTrigger": "Añade exactamente un disparador manual para iniciar el pipeline.",
+      "multiTrigger": "Conserva un solo disparador — elimina los disparadores extra.",
+      "cycle": "Elimina el ciclo para que el flujo avance en una dirección.",
+      "actionNotAtEnd": "Los atajos de acción deben ir al final de la cadena."
+    },
+    "shortcuts": {
+      "title": "Atajos post-ejecución"
+    },
+    "actions": {
+      "opened": "{target} abierto",
+      "batchHint": "El lote rápido se ejecuta desde la página de ejecución cuando termine este flujo."
+    },
+    "toast": {
+      "loadFailed": "No se pudieron cargar los pipelines",
+      "pipelineCreated": "Pipeline creado correctamente",
+      "createFailed": "No se pudo crear el pipeline",
+      "runStarted": "Ejecución del pipeline iniciada",
+      "runStartFailed": "No se pudo iniciar la ejecución",
+      "pipelineSaved": "Pipeline guardado",
+      "saveFailed": "No se pudo guardar el pipeline",
+      "cleared": "Lienzo limpio",
+      "nodeAdded": "{name} añadido",
+      "nodeDeleted": "Nodo eliminado",
+      "connectInvalid": "Esos nodos no se pueden conectar",
+      "nameRequired": "Dale primero un nombre al nuevo pipeline",
+      "selectRequired": "Selecciona primero un pipeline",
+      "graphSaved": "Grafo guardado",
+      "activated": "Flujo activado",
+      "archived": "Flujo archivado",
+      "cloned": "Flujo clonado"
+    },
+    "workflow": {
+      "draft": "Borrador",
+      "active": "Activo",
+      "archived": "Archivado"
+    }
+  },
+  "de": {
+    "title": "Pipeline-Studio",
+    "description": "Designe den KI-Content-Workflow als Flow: Trigger, Phasen, Prüfung, Shortcuts.",
+    "seo_title": "Pipeline-Studio",
+    "seo_description": "Designe den KI-Content-Workflow als Flow: Trigger, Phasen, Prüfung, Shortcuts.",
+    "topbar": {
+      "pipeline": "Pipeline",
+      "pipelinePlaceholder": "Pipeline auswählen",
+      "newPlaceholder": "Name der neuen Pipeline…",
+      "create": "Erstellen",
+      "save": "Speichern",
+      "run": "Starten",
+      "clear": "Leeren",
+      "fit": "Einpassen",
+      "back": "Zurück",
+      "clone": "Klonen",
+      "activate": "Aktivieren",
+      "archive": "Archivieren"
+    },
+    "palette": {
+      "title": "Knoten",
+      "hint": "Auf die Fläche ziehen oder per Hinzufügen anhängen.",
+      "triggers": "Trigger",
+      "phases": "Phasen",
+      "actions": "Aktionen",
+      "add": "Hinzufügen"
+    },
+    "canvas": {
+      "empty": "Ziehe einen Knoten hierher oder füge den manuellen Trigger hinzu.",
+      "phases": "{count} Phasen",
+      "connections": "{count} Verbindungen"
+    },
+    "inspector": {
+      "title": "Inspektor",
+      "empty": "Wähle einen Knoten, um Name, Prompt und Config zu bearbeiten.",
+      "name": "Name",
+      "prompt": "Prompt",
+      "promptPlaceholder": "Was soll der Agent mit seiner Eingabe tun?",
+      "schema": "Ausgabe-Schema",
+      "schemaPlaceholder": "social_post",
+      "temperature": "Temperatur",
+      "delete": "Knoten löschen",
+      "kindLabel": "Art",
+      "typeLabel": "Phasentyp"
+    },
+    "nodes": {
+      "triggerManual": "Manueller Trigger",
+      "research": "Themen recherchieren",
+      "writer": "Beitrag schreiben",
+      "humanizer": "Humanisieren",
+      "design": "HTML designen",
+      "virality": "Viralitäts-Check",
+      "engagement": "Engagement-Plan",
+      "scrape": "Quellen scrapen",
+      "template": "Template wählen",
+      "custom": "Eigener Prompt",
+      "humanReview": "Menschliche Prüfung",
+      "createPost": "Beitrag erstellen",
+      "pushPublish": "Zum Publishen senden",
+      "openTts": "Voiceover öffnen",
+      "quickBatch": "Schnell-Batch"
+    },
+    "validation": {
+      "valid": "Der Flow ist gültig und bereit zum Speichern.",
+      "noTrigger": "Füge genau einen manuellen Trigger hinzu, um die Pipeline zu starten.",
+      "multiTrigger": "Behalte genau einen Trigger — entferne die übrigen Trigger.",
+      "cycle": "Entferne den Zyklus, damit der Flow in eine Richtung läuft.",
+      "actionNotAtEnd": "Aktions-Shortcuts müssen am Ende der Kette stehen."
+    },
+    "shortcuts": {
+      "title": "Shortcuts nach dem Lauf"
+    },
+    "actions": {
+      "opened": "{target} geöffnet",
+      "batchHint": "Der Schnell-Batch läuft von der Lauf-Seite, sobald dieser Flow fertig ist."
+    },
+    "toast": {
+      "loadFailed": "Pipelines konnten nicht geladen werden",
+      "pipelineCreated": "Pipeline erfolgreich erstellt",
+      "createFailed": "Pipeline konnte nicht erstellt werden",
+      "runStarted": "Pipeline-Lauf gestartet",
+      "runStartFailed": "Pipeline-Lauf konnte nicht gestartet werden",
+      "pipelineSaved": "Pipeline gespeichert",
+      "saveFailed": "Pipeline konnte nicht gespeichert werden",
+      "cleared": "Fläche geleert",
+      "nodeAdded": "{name} hinzugefügt",
+      "nodeDeleted": "Knoten gelöscht",
+      "connectInvalid": "Diese Knoten können nicht verbunden werden",
+      "nameRequired": "Gib der neuen Pipeline zuerst einen Namen",
+      "selectRequired": "Wähle zuerst eine Pipeline",
+      "graphSaved": "Workflow-Graph gespeichert",
+      "activated": "Workflow aktiviert",
+      "archived": "Workflow archiviert",
+      "cloned": "Workflow geklont"
+    },
+    "workflow": {
+      "draft": "Entwurf",
+      "active": "Aktiv",
+      "archived": "Archiviert"
+    }
+  },
+  "fr": {
+    "title": "Studio de pipelines",
+    "description": "Concevez le workflow IA comme un flux : déclencheur, phases, révision, raccourcis.",
+    "seo_title": "Studio de pipelines",
+    "seo_description": "Concevez le workflow IA comme un flux : déclencheur, phases, révision, raccourcis.",
+    "topbar": {
+      "pipeline": "Pipeline",
+      "pipelinePlaceholder": "Sélectionner un pipeline",
+      "newPlaceholder": "Nom du nouveau pipeline…",
+      "create": "Créer",
+      "save": "Enregistrer",
+      "run": "Exécuter",
+      "clear": "Effacer",
+      "fit": "Ajuster",
+      "back": "Retour",
+      "clone": "Cloner",
+      "activate": "Activer",
+      "archive": "Archiver"
+    },
+    "palette": {
+      "title": "Nœuds",
+      "hint": "Glissez sur le canevas ou utilisez ajouter pour compléter.",
+      "triggers": "Déclencheurs",
+      "phases": "Phases",
+      "actions": "Actions",
+      "add": "Ajouter"
+    },
+    "canvas": {
+      "empty": "Glissez un nœud ici ou ajoutez le déclencheur manuel pour commencer.",
+      "phases": "{count} phases",
+      "connections": "{count} connexions"
+    },
+    "inspector": {
+      "title": "Inspecteur",
+      "empty": "Sélectionnez un nœud pour modifier son nom, son prompt et sa config.",
+      "name": "Nom",
+      "prompt": "Prompt",
+      "promptPlaceholder": "Que doit faire l'agent avec son entrée ?",
+      "schema": "Schéma de sortie",
+      "schemaPlaceholder": "social_post",
+      "temperature": "Température",
+      "delete": "Supprimer le nœud",
+      "kindLabel": "Genre",
+      "typeLabel": "Type de phase"
+    },
+    "nodes": {
+      "triggerManual": "Déclencheur manuel",
+      "research": "Rechercher des sujets",
+      "writer": "Rédiger le post",
+      "humanizer": "Humaniser",
+      "design": "Designer le HTML",
+      "virality": "Contrôle de viralité",
+      "engagement": "Plan d'engagement",
+      "scrape": "Explorer les sources",
+      "template": "Choisir un modèle",
+      "custom": "Prompt personnalisé",
+      "humanReview": "Révision humaine",
+      "createPost": "Créer un post",
+      "pushPublish": "Envoyer à publier",
+      "openTts": "Ouvrir la voix off",
+      "quickBatch": "Lot rapide"
+    },
+    "validation": {
+      "valid": "Le flux est valide et prêt à enregistrer.",
+      "noTrigger": "Ajoutez exactement un déclencheur manuel pour démarrer le pipeline.",
+      "multiTrigger": "Gardez un seul déclencheur — supprimez les déclencheurs en trop.",
+      "cycle": "Supprimez le cycle pour que le flux avance dans un seul sens.",
+      "actionNotAtEnd": "Les raccourcis d'action doivent rester en fin de chaîne."
+    },
+    "shortcuts": {
+      "title": "Raccourcis post-exécution"
+    },
+    "actions": {
+      "opened": "{target} ouvert",
+      "batchHint": "Le lot rapide se lance depuis la page d'exécution une fois ce flux terminé."
+    },
+    "toast": {
+      "loadFailed": "Échec du chargement des pipelines",
+      "pipelineCreated": "Pipeline créé avec succès",
+      "createFailed": "Échec de la création du pipeline",
+      "runStarted": "Exécution du pipeline démarrée",
+      "runStartFailed": "Échec du démarrage de l'exécution",
+      "pipelineSaved": "Pipeline enregistré",
+      "saveFailed": "Échec de l'enregistrement du pipeline",
+      "cleared": "Canevas effacé",
+      "nodeAdded": "{name} ajouté",
+      "nodeDeleted": "Nœud supprimé",
+      "connectInvalid": "Ces nœuds ne peuvent pas être connectés",
+      "nameRequired": "Nommez d'abord le nouveau pipeline",
+      "selectRequired": "Sélectionnez d'abord un pipeline",
+      "graphSaved": "Graphe enregistré",
+      "activated": "Workflow activé",
+      "archived": "Workflow archivé",
+      "cloned": "Workflow cloné"
+    },
+    "workflow": {
+      "draft": "Brouillon",
+      "active": "Actif",
+      "archived": "Archivé"
+    }
+  }
+}

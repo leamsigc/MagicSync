@@ -9,25 +9,21 @@ last_updated: 2026-03-31
 ## What This Is
 A social media scheduling platform built with Nuxt 4 monorepo — enables scheduling posts across multiple social platforms (Facebook, Twitter, Instagram, Bluesky, LinkedIn, etc.) with AI-powered content generation.
 
-## Current Focus: Episode 5 - Advanced Tool Use
+## Current Focus: Nuxt-Native Agent Layer + Content Board
 
-Episode 4 (Agent Skills & Sandbox) is complete with 193 Python tests passing.
+All remaining work is defined in the single implementation PRD:
+**`.aiContext/PRD.md`** (supersedes the Business Content Agent PRD set and the
+implementation tracker; both removed 2026-09-13). Work one task at a time;
+each task carries
+its own verification gate. The Python service is being decommissioned;
+agent execution moves to the pi SDK (`@earendil-works/pi-coding-agent`) inside
+a new `packages/agent` Nuxt layer, with a per-business content board and a
+single chat surface.
 
-Now implementing **Episode 5 - Advanced Tool Use** — enhanced tool capabilities for agents.
-
-See `.agent/plans/candidates/09-advanced-tool-use.md` for the plan.
-
-**Episode Roadmap:** [Claude Code Agentic RAG Series](https://github.com/theaiautomators/claude-code-agentic-rag-series)
-- Ep 1: Agentic RAG Layer (complete)
-- Ep 2: Knowledge Base Explorer (complete)
-- Ep 3: PII Redaction (complete)
-- Ep 4: Agent Skills & Sandbox (complete)
-- Ep 5: Advanced Tool Use (in_progress)
-- Ep 6: Agent Harness
+**Episode Roadmap (historical):** [Claude Code Agentic RAG Series](https://github.com/theaiautomators/claude-code-agentic-rag-series)
+- Ep 1–5 complete; Ep 6 (Agent Harness) is re-homed into `.aiContext/PRD.md`.
 
 **Database:** Using Turso (libSQL) with native vector support - no separate PostgreSQL needed
-
-**See [PROGRESS.md](./PROGRESS.md) for current module status.**
 
 ## Non-Negotiables
 

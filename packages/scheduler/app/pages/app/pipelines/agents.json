@@ -1,0 +1,154 @@
+{
+  "en": {
+    "title": "Agent oversight",
+    "description": "Every agent execution across your pipeline runs: status, tokens, duration.",
+    "seo_title": "Agent oversight",
+    "seo_description": "Every agent execution across your pipeline runs: status, tokens, duration.",
+    "refresh": "Refresh",
+    "empty": "No agent runs recorded yet.",
+    "columns": {
+      "agent": "Agent",
+      "run": "Pipeline run",
+      "status": "Status",
+      "tokens": "Tokens",
+      "duration": "Duration",
+      "summary": "Summary",
+      "cost": "Cost"
+    },
+    "toast": {
+      "loadFailed": "Failed to load agent runs"
+    },
+    "filters": {
+      "all": "All statuses"
+    },
+    "statuses": {
+      "running": "Running",
+      "completed": "Completed",
+      "failed": "Failed",
+      "cancelled": "Cancelled"
+    },
+    "tokensUnknown": "—",
+    "tokensHint": "Not reported by the provider",
+    "approvals": {
+      "title": "Approval history",
+      "empty": "No approvals yet",
+      "approved": "Approved",
+      "changes_requested": "Changes requested",
+      "rejected": "Rejected"
+    }
+  },
+  "es": {
+    "title": "Supervisión de agentes",
+    "description": "Cada ejecución de los agentes en tus pipelines: estado, tokens, duración.",
+    "seo_title": "Supervisión de agentes",
+    "seo_description": "Cada ejecución de los agentes en tus pipelines: estado, tokens, duración.",
+    "refresh": "Actualizar",
+    "empty": "Aún no hay ejecuciones de agentes registradas.",
+    "columns": {
+      "agent": "Agente",
+      "run": "Ejecución",
+      "status": "Estado",
+      "tokens": "Tokens",
+      "duration": "Duración",
+      "summary": "Resumen",
+      "cost": "Costo"
+    },
+    "toast": {
+      "loadFailed": "No se pudieron cargar las ejecuciones de agentes"
+    },
+    "filters": {
+      "all": "Todos los estados"
+    },
+    "statuses": {
+      "running": "En curso",
+      "completed": "Completada",
+      "failed": "Fallida",
+      "cancelled": "Cancelada"
+    },
+    "tokensUnknown": "—",
+    "tokensHint": "No informado por el proveedor",
+    "approvals": {
+      "title": "Historial de aprobaciones",
+      "empty": "Aún no hay aprobaciones",
+      "approved": "Aprobada",
+      "changes_requested": "Cambios solicitados",
+      "rejected": "Rechazada"
+    }
+  },
+  "de": {
+    "title": "Agenten-Aufsicht",
+    "description": "Jede Agenten-Ausführung deiner Pipeline-Läufe: Status, Tokens, Dauer.",
+    "seo_title": "Agenten-Aufsicht",
+    "seo_description": "Jede Agenten-Ausführung deiner Pipeline-Läufe: Status, Tokens, Dauer.",
+    "refresh": "Aktualisieren",
+    "empty": "Noch keine Agenten-Läufe aufgezeichnet.",
+    "columns": {
+      "agent": "Agent",
+      "run": "Pipeline-Lauf",
+      "status": "Status",
+      "tokens": "Tokens",
+      "duration": "Dauer",
+      "summary": "Zusammenfassung",
+      "cost": "Kosten"
+    },
+    "toast": {
+      "loadFailed": "Agenten-Läufe konnten nicht geladen werden"
+    },
+    "filters": {
+      "all": "Alle Status"
+    },
+    "statuses": {
+      "running": "Läuft",
+      "completed": "Abgeschlossen",
+      "failed": "Fehlgeschlagen",
+      "cancelled": "Abgebrochen"
+    },
+    "tokensUnknown": "—",
+    "tokensHint": "Vom Anbieter nicht gemeldet",
+    "approvals": {
+      "title": "Genehmigungsverlauf",
+      "empty": "Noch keine Genehmigungen",
+      "approved": "Genehmigt",
+      "changes_requested": "Änderungen angefordert",
+      "rejected": "Abgelehnt"
+    }
+  },
+  "fr": {
+    "title": "Supervision des agents",
+    "description": "Chaque exécution d'agent sur vos pipelines : statut, tokens, durée.",
+    "seo_title": "Supervision des agents",
+    "seo_description": "Chaque exécution d'agent sur vos pipelines : statut, tokens, durée.",
+    "refresh": "Actualiser",
+    "empty": "Aucune exécution d'agent enregistrée.",
+    "columns": {
+      "agent": "Agent",
+      "run": "Exécution",
+      "status": "Statut",
+      "tokens": "Tokens",
+      "duration": "Durée",
+      "summary": "Résumé",
+      "cost": "Coût"
+    },
+    "toast": {
+      "loadFailed": "Échec du chargement des exécutions d'agents"
+    },
+    "filters": {
+      "all": "Tous les statuts"
+    },
+    "statuses": {
+      "running": "En cours",
+      "completed": "Terminée",
+      "failed": "Échouée",
+      "cancelled": "Annulée"
+    },
+    "tokensUnknown": "—",
+    "tokensHint": "Non rapporté par le fournisseur",
+    "approvals": {
+      "title": "Historique des approbations",
+      "empty": "Aucune approbation",
+      "approved": "Approuvée",
+      "changes_requested": "Modifications demandées",
+      "rejected": "Rejetée"
+    }
+  }
+}

@@ -1,5 +1,12 @@
 import { aiToolsFacade } from '#layers/BaseAITools/server/services/aiToolsFacade.service';
+import { businessContextResolver, contextErrorStatus } from '#layers/BaseDB/server/services/business-context-resolver.service';
 import { generateId } from '@ai-sdk/provider-utils'
+
+function requestBusinessId(body: Record<string, unknown> | null | undefined): string | null {
+  if (typeof body?.business_id === 'string') return body.business_id
+  if (typeof body?.businessId === 'string') return body.businessId
+  return null
+}
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event)
@@ -34,7 +41,7 @@ export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const backendUrl = config.pythonBackendUrl || 'http://localhost:8000'
 
-  const llmJwtResult = await aiToolsFacade.getLlmJwtContext(user.id, user.email || '')
+  const llmJwtResult = await aiToolsFacade.getLlmJwtContext(user.id, user.email || '', requestBusinessId(body))
   const llmJwt = llmJwtResult.data?.token ?? ''
 
   let threadId = body.thread_id as string | undefined
@@ -49,6 +56,21 @@ export default defineEventHandler(async (event) => {
 
   const lastMessage = convertedMessages[convertedMessages.length - 1]
   const enableTools = body?.enable_tools !== false // Default to true
+
+  // Opt-in business context: current-edition-only, budgeted, redacted (T20).
+  // Fail loudly when requested context cannot be loaded.
+  const contextResult = await businessContextResolver.resolve(user.id, {
+    businessId: requestBusinessId(body),
+    useBusinessContext: body?.useBusinessContext === true || body?.use_business_context === true,
+    includePersonalKnowledge: body?.includePersonalKnowledge === true || body?.include_personal_knowledge === true,
+  }, event)
+  if (!contextResult.success || !contextResult.data) {
+    throw createError({ statusCode: contextErrorStatus(contextResult.code), message: contextResult.error })
+  }
+  const brandContext = contextResult.data
+  if (brandContext.enabled && brandContext.prompt) {
+    convertedMessages.unshift({ role: 'system', content: brandContext.prompt })
+  }
 
   if (threadId && lastMessage?.role === 'user') {
     await aiToolsFacade.addMessage(user.id, {
@@ -88,6 +110,10 @@ export default defineEventHandler(async (event) => {
             messages: convertedMessages,
             thread_id: threadId,
             enable_tools: enableTools,
+            business_id: brandContext.businessId,
+            use_business_context: brandContext.enabled,
+            context_edition_id: brandContext.editionId,
+            business_context: brandContext.prompt || undefined,
           }),
         })
 
@@ -109,46 +135,49 @@ export default defineEventHandler(async (event) => {
 
         const reader = backendResponse.body.getReader()
         const decoder = new TextDecoder()
+        // Spec-compliant SSE reassembly: accumulate `data:` lines until a
+        // blank line completes one event — no brace counting. Handles
+        // multi-line payloads and split chunks across reads.
         let buffer = ''
+        let eventLines: string[] = []
+
+        function drainCompleteEvents(): string[] {
+          const events: string[] = []
+          let newlineIndex = buffer.indexOf('\n')
+          while (newlineIndex !== -1) {
+            const line = buffer.slice(0, newlineIndex).replace(/\r$/, '')
+            buffer = buffer.slice(newlineIndex + 1)
+            if (line === '') {
+              if (eventLines.length > 0) {
+                events.push(eventLines.join('\n'))
+                eventLines = []
+              }
+            } else if (line.startsWith('data:')) {
+              eventLines.push(line.slice(5).trimStart())
+            }
+            newlineIndex = buffer.indexOf('\n')
+          }
+          return events
+        }
 
         log.info('Starting to read stream from backend', {})
 
-        while (true) {
+        let streamDone = false
+        while (!streamDone) {
           const { done, value } = await reader.read()
           if (done) {
-            if (buffer.startsWith('data: ')) {
-              const json = buffer.slice(12).trim()
-              if (json) {
-                try {
-                  const data = JSON.parse(json)
-                  if (data.done) break
-                } catch (e) {
-                  log.error('Failed to parse final SSE data', { error: String(e) })
-                }
-              }
-            }
+            buffer += '\n'
+          } else {
+            buffer += decoder.decode(value, { stream: true })
+          }
+          const payloads = drainCompleteEvents()
+          if (done && buffer.trim().length === 0 && payloads.length === 0 && eventLines.length === 0) {
             log.info('Stream completed', {})
             break
           }
 
-          buffer += decoder.decode(value, { stream: true })
-
-          let newlineIndex
-          while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
-            const line = buffer.slice(0, newlineIndex)
-            buffer = buffer.slice(newlineIndex + 1)
-
-            if (!line.startsWith('data: ')) continue
-            const json = line.slice(12).trim()
+          for (const json of payloads) {
             if (!json) continue
-
-            const openBraces = (json.match(/{/g) || []).length
-            const closeBraces = (json.match(/}/g) || []).length
-            if (openBraces > closeBraces || json.endsWith('"')) {
-              buffer = 'data: ' + json + '\n' + buffer
-              break
-            }
-
             try {
               const data = JSON.parse(json)
               const toolName = data.tool_call?.name || ''
@@ -210,7 +239,7 @@ export default defineEventHandler(async (event) => {
               } else if (data.done) {
                 log.info('Received done signal', {})
                 controller.enqueue(encoder.encode(sendChunk({ type: 'done', id: generateId() })))
-                break
+                streamDone = true
               }
             } catch (e) {
               log.error('Failed to parse SSE data', { error: String(e), json })

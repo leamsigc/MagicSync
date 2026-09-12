@@ -10,6 +10,7 @@ Lookup table for all pattern files in this directory. Check here before starting
 | [business-onboarding-ux.md](business-onboarding-ux.md) | Placing features in the business-owner navigation, setup checklists, dashboard quick actions |
 | [debug-api.md](debug-api.md) | Debugging API endpoint failures |
 | [social-media.md](social-media.md) | Working with social media platform integrations |
+| [research-channels.md](research-channels.md) | Adding a social-research channel (Agent-Reach style) to the Python backend |
 | [add-mcp-tool.md](add-mcp-tool.md) | Exposing a service operation as an MCP tool |
 | [db-migration-squash.md](db-migration-squash.md) | Squashing unpushed Drizzle migrations into one clean migration |
 | [media-gallery.md](media-gallery.md) | Paginated asset gallery with infinite scroll + large-file (multipart) uploads |
@@ -35,3 +36,7 @@ Lookup table for all pattern files in this directory. Check here before starting
 | [ssr-safe-state.md](ssr-safe-state.md) | SSR-safe state — no module-scope ref/reactive for request-varying data, useState only |
 | [client-only-node-builtins.md](client-only-node-builtins.md) | Client-bundle 500s from Node builtins (`events`, `buffer`, `path`) imported in `app/` code |
 | [playwright-golden-oracles.md](playwright-golden-oracles.md) | Deterministic screenshot goldens — dev-overlay suppression, motion settle, dark-mode forcing |
+| [modal-picker.md](modal-picker.md) | UModal select-list + options + confirm POST with loading/toast/i18n feedback |
+| [write-prd.md](write-prd.md) | Writing implementation-ready master and feature PRDs with dependency tracking |
+| [credential-envelope.md](credential-envelope.md) | Removing plaintext/base64 credential assumptions — AES-256-GCM envelopes, fail-closed reads, Node/Python parity |
+| [pi-agent-layer.md](pi-agent-layer.md) | Scaffolding a Nuxt layer package (`packages/agent`) and integrating the pi SDK in-process with a hermetic SSE stub test seam |

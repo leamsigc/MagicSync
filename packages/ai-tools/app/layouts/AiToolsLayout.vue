@@ -6,9 +6,9 @@ const navigation = [
   { name: 'Assets', href: '/app/ai-tools/chat/assets', icon: 'i-lucide-file-image' },
   { name: 'Knowledge', href: '/app/ai-tools/knowledge', icon: 'i-lucide-book-open' },
   { name: 'Skills', href: '/app/ai-tools/skills', icon: 'i-lucide-wrench' },
+  { name: 'Agents', href: '/app/ai-tools/agents', icon: 'i-lucide-bot' },
   { name: 'Tools', href: '/app/ai-tools/tools', icon: 'i-lucide-hammer' },
   { name: 'Growth', href: '/app/ai-tools/growth-stratergy', icon: 'i-lucide-rocket' },
-  { name: 'Settings', href: '/app/ai-tools/settings', icon: 'i-lucide-settings' },
 ]
 
 function isActive(href: string): boolean {

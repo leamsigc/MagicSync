@@ -82,15 +82,31 @@ export class AiToolsFacadeService {
     return checkUserIsLogin(event)
   }
 
-  async getLlmJwtContext(userId: string, email: string): Promise<ServiceResponse<LlmJwtContext>> {
+  async getLlmJwtContext(userId: string, email: string, businessId?: string | null): Promise<ServiceResponse<LlmJwtContext>> {
     try {
-      const configResult = await userLlmConfigService.getDefaultConfig(userId)
+      const configResult = await userLlmConfigService.getEffectiveConfig(userId, businessId ?? null)
       const config = configResult.data ?? null
       const token = createLlmJwt(userId, email, config)
       return { data: { userId, email, config, token } }
     } catch (error) {
       return { error: 'Failed to build LLM JWT context' }
     }
+  }
+
+  async getEffectiveLlmConfig(userId: string, businessId?: string | null) {
+    return userLlmConfigService.getEffectiveConfig(userId, businessId ?? null)
+  }
+
+  async getLlmOverride(userId: string, businessId: string) {
+    return userLlmConfigService.getOverride(userId, businessId)
+  }
+
+  async saveLlmOverride(userId: string, businessId: string, data: { provider: 'google' | 'ollama' | 'openai' | 'anthropic' | 'openrouter' | 'deepseek'; model: string; apiKey?: string | null; apiBaseUrl?: string | null; temperature?: number; maxTokens?: number }) {
+    return userLlmConfigService.saveOverride(userId, businessId, data)
+  }
+
+  async clearLlmOverride(userId: string, businessId: string) {
+    return userLlmConfigService.clearOverride(userId, businessId)
   }
 
   async createThread(userId: string, input: ChatThreadInput): Promise<ServiceResponse<ChatThread>> {
@@ -290,6 +306,14 @@ export class AiToolsFacadeService {
 
   async deleteLlmConfig(userId: string, configId: string): Promise<ServiceResponse<UserLlmConfig>> {
     return userLlmConfigService.deleteConfig(userId, configId)
+  }
+
+  maskLlmConfig(config: UserLlmConfig) {
+    return { ...config, apiKey: null, hasKey: !!config.apiKey }
+  }
+
+  maskLlmConfigs(configs: UserLlmConfig[]) {
+    return configs.map(c => this.maskLlmConfig(c))
   }
 
   async setDefaultLlmConfig(userId: string, configId: string): Promise<ServiceResponse<UserLlmConfig>> {

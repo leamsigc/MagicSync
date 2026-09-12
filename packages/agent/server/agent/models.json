@@ -1,0 +1,39 @@
+{
+  "providers": {
+    "ollama": {
+      "baseUrl": "http://127.0.0.1:11434/v1",
+      "api": "openai-completions",
+      "apiKey": "ollama",
+      "compat": {
+        "supportsDeveloperRole": false,
+        "supportsReasoningEffort": false
+      },
+      "models": [
+        { "id": "llama3.1:8b", "name": "Llama 3.1 8B (Ollama)" },
+        { "id": "qwen2.5:7b", "name": "Qwen 2.5 7B (Ollama)" }
+      ]
+    },
+    "deepseek": {
+      "baseUrl": "https://api.deepseek.com/v1",
+      "api": "openai-completions",
+      "apiKey": "$DEEPSEEK_API_KEY",
+      "models": [
+        { "id": "deepseek-chat", "name": "DeepSeek Chat" },
+        { "id": "deepseek-reasoner", "name": "DeepSeek Reasoner", "reasoning": true }
+      ]
+    },
+    "openrouter": {
+      "baseUrl": "https://openrouter.ai/api/v1",
+      "api": "openai-completions",
+      "apiKey": "$OPENROUTER_API_KEY",
+      "compat": {
+        "supportsDeveloperRole": false,
+        "supportsReasoningEffort": false
+      },
+      "models": [
+        { "id": "openai/gpt-4o-mini", "name": "GPT-4o mini (OpenRouter)" },
+        { "id": "anthropic/claude-sonnet-4", "name": "Claude Sonnet 4 (OpenRouter)" }
+      ]
+    }
+  }
+}

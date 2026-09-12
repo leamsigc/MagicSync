@@ -1,5 +1,6 @@
 import logging
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from app.schemas.tools import (
     TextToSQLRequest, TextToSQLResponse,
     TextToSQLExecuteRequest, TextToSQLExecuteResponse,
@@ -144,3 +145,38 @@ async def kb_read(
         raise HTTPException(status_code=404, detail=result["error"])
     
     return KbReadResponse(**result)
+
+
+class AnalyzeRequest(BaseModel):
+    """Direct analysis call for chat artifact actions (T80)."""
+
+    tool: str
+    args: dict = {}
+
+
+ANALYZE_ALLOWLIST = frozenset({"virality_check", "engagement_calc", "best_posts"})
+
+
+@router.post("/analyze")
+async def analyze(
+    request: AnalyzeRequest,
+    user: UserContext = Depends(require_user),
+):
+    """Run a read-only analytics tool for artifact actions.
+
+    Only allowlisted tools are reachable here; everything else (code
+    execution, skill mutation, generation) stays on its own endpoint.
+    """
+    if request.tool not in ANALYZE_ALLOWLIST:
+        raise HTTPException(status_code=400, detail=f"Tool {request.tool!r} is not available here")
+    from app.services.tools.manager import ToolManager
+
+    manager = ToolManager(user.user_id)
+    try:
+        result = await manager.execute_tool(request.tool, request.args or {})
+    except Exception as exc:
+        logger.error(f"Analyze tool error {request.tool}: {exc}")
+        raise HTTPException(status_code=502, detail=str(exc))
+    if isinstance(result, dict) and "error" in result:
+        raise HTTPException(status_code=502, detail=str(result["error"]))
+    return {"tool": request.tool, "result": result}

@@ -1,0 +1,282 @@
+{
+  "en": {
+    "kinds": {
+      "social_post": "Social post",
+      "carousel": "Carousel",
+      "reel_storyboard": "Reel storyboard",
+      "research": "Research",
+      "template": "Template"
+    },
+    "statuses": {
+      "generating": "Generating",
+      "review_required": "Needs review",
+      "approved": "Approved",
+      "changes_requested": "Changes requested",
+      "rejected": "Rejected",
+      "failed": "Failed",
+      "draft": "Draft",
+      "scheduled": "Scheduled",
+      "published": "Published",
+      "archived": "Archived"
+    },
+    "actions": {
+      "edit": "Edit",
+      "virality": "Virality",
+      "engagement": "Engagement",
+      "approve": "Approve",
+      "changes": "Request changes",
+      "draft": "Save draft",
+      "editor": "Open editor",
+      "save": "Save",
+      "cancel": "Cancel",
+      "schedule": "Schedule"
+    },
+    "checks": {
+      "virality": "Virality check",
+      "engagement": "Engagement check"
+    },
+    "feedback": {
+      "placeholder": "What should change?"
+    },
+    "structured": {
+      "title": "Structured output"
+    },
+    "schedule": {
+      "needsDate": "Pick a future date and time first"
+    },
+    "toast": {
+      "actionFailed": "Artifact action failed",
+      "editDone": "Edit saved as a new version",
+      "editFailed": "Edit failed",
+      "approvedDone": "Artifact approved",
+      "approvedFailed": "Approval failed",
+      "changes_requestedDone": "Changes requested",
+      "changes_requestedFailed": "Request failed",
+      "draftDone": "Draft post created",
+      "draftFailed": "Draft failed",
+      "scheduleDone": "Artifact scheduled",
+      "scheduleFailed": "Schedule failed",
+      "checkDone": "Check complete",
+      "checkFailed": "Check failed"
+    },
+    "carousel": {
+      "slides": "{count} slides",
+      "boundsOk": "Instagram ready (2-10)",
+      "boundsWarn": "Needs 2-10 slides for Instagram",
+      "untitled": "Untitled slide"
+    },
+    "reel": {
+      "scene": "Scene {index} · {seconds}s"
+    }
+  },
+  "es": {
+    "kinds": {
+      "social_post": "Publicación",
+      "carousel": "Carrusel",
+      "reel_storyboard": "Guion de reel",
+      "research": "Investigación",
+      "template": "Plantilla"
+    },
+    "statuses": {
+      "generating": "Generando",
+      "review_required": "Requiere revisión",
+      "approved": "Aprobada",
+      "changes_requested": "Cambios solicitados",
+      "rejected": "Rechazada",
+      "failed": "Fallida",
+      "draft": "Borrador",
+      "scheduled": "Programada",
+      "published": "Publicada",
+      "archived": "Archivada"
+    },
+    "actions": {
+      "edit": "Editar",
+      "virality": "Viralidad",
+      "engagement": "Interacción",
+      "approve": "Aprobar",
+      "changes": "Solicitar cambios",
+      "draft": "Guardar borrador",
+      "editor": "Abrir editor",
+      "save": "Guardar",
+      "cancel": "Cancelar",
+      "schedule": "Programar"
+    },
+    "checks": {
+      "virality": "Análisis de viralidad",
+      "engagement": "Análisis de interacción"
+    },
+    "feedback": {
+      "placeholder": "¿Qué debería cambiar?"
+    },
+    "structured": {
+      "title": "Resultado estructurado"
+    },
+    "schedule": {
+      "needsDate": "Elige primero una fecha futura"
+    },
+    "toast": {
+      "actionFailed": "La acción falló",
+      "editDone": "Edición guardada como nueva versión",
+      "editFailed": "Error al editar",
+      "approvedDone": "Artefacto aprobado",
+      "approvedFailed": "Error al aprobar",
+      "changes_requestedDone": "Cambios solicitados",
+      "changes_requestedFailed": "Error al solicitar",
+      "draftDone": "Borrador creado",
+      "draftFailed": "Error al crear borrador",
+      "scheduleDone": "Artefacto programado",
+      "scheduleFailed": "Error al programar",
+      "checkDone": "Análisis completo",
+      "checkFailed": "Análisis fallido"
+    },
+    "carousel": {
+      "slides": "{count} diapositivas",
+      "boundsOk": "Lista para Instagram (2-10)",
+      "boundsWarn": "Necesita 2-10 diapositivas",
+      "untitled": "Sin título"
+    },
+    "reel": {
+      "scene": "Escena {index} · {seconds}s"
+    }
+  },
+  "de": {
+    "kinds": {
+      "social_post": "Social-Media-Beitrag",
+      "carousel": "Karussell",
+      "reel_storyboard": "Reel-Storyboard",
+      "research": "Recherche",
+      "template": "Vorlage"
+    },
+    "statuses": {
+      "generating": "Wird erstellt",
+      "review_required": "Prüfung erforderlich",
+      "approved": "Freigegeben",
+      "changes_requested": "Änderungen angefordert",
+      "rejected": "Abgelehnt",
+      "failed": "Fehlgeschlagen",
+      "draft": "Entwurf",
+      "scheduled": "Geplant",
+      "published": "Veröffentlicht",
+      "archived": "Archiviert"
+    },
+    "actions": {
+      "edit": "Bearbeiten",
+      "virality": "Viralität",
+      "engagement": "Interaktion",
+      "approve": "Freigeben",
+      "changes": "Änderungen anfordern",
+      "draft": "Entwurf speichern",
+      "editor": "Editor öffnen",
+      "save": "Speichern",
+      "cancel": "Abbrechen",
+      "schedule": "Planen"
+    },
+    "checks": {
+      "virality": "Viralitätsprüfung",
+      "engagement": "Interaktionsprüfung"
+    },
+    "feedback": {
+      "placeholder": "Was soll sich ändern?"
+    },
+    "structured": {
+      "title": "Strukturierte Ausgabe"
+    },
+    "schedule": {
+      "needsDate": "Wähle zuerst ein Datum in der Zukunft"
+    },
+    "toast": {
+      "actionFailed": "Aktion fehlgeschlagen",
+      "editDone": "Bearbeitung als neue Version gespeichert",
+      "editFailed": "Bearbeiten fehlgeschlagen",
+      "approvedDone": "Artefakt freigegeben",
+      "approvedFailed": "Freigabe fehlgeschlagen",
+      "changes_requestedDone": "Änderungen angefordert",
+      "changes_requestedFailed": "Anfrage fehlgeschlagen",
+      "draftDone": "Entwurf erstellt",
+      "draftFailed": "Entwurf fehlgeschlagen",
+      "scheduleDone": "Artefakt geplant",
+      "scheduleFailed": "Planen fehlgeschlagen",
+      "checkDone": "Prüfung abgeschlossen",
+      "checkFailed": "Prüfung fehlgeschlagen"
+    },
+    "carousel": {
+      "slides": "{count} Folien",
+      "boundsOk": "Instagram-bereit (2-10)",
+      "boundsWarn": "Braucht 2-10 Folien für Instagram",
+      "untitled": "Ohne Titel"
+    },
+    "reel": {
+      "scene": "Szene {index} · {seconds}s"
+    }
+  },
+  "fr": {
+    "kinds": {
+      "social_post": "Publication",
+      "carousel": "Carrousel",
+      "reel_storyboard": "Storyboard de reel",
+      "research": "Recherche",
+      "template": "Modèle"
+    },
+    "statuses": {
+      "generating": "En cours",
+      "review_required": "Révision requise",
+      "approved": "Approuvé",
+      "changes_requested": "Modifications demandées",
+      "rejected": "Rejeté",
+      "failed": "Échoué",
+      "draft": "Brouillon",
+      "scheduled": "Planifié",
+      "published": "Publié",
+      "archived": "Archivé"
+    },
+    "actions": {
+      "edit": "Modifier",
+      "virality": "Viralité",
+      "engagement": "Engagement",
+      "approve": "Approuver",
+      "changes": "Demander des modifications",
+      "draft": "Enregistrer le brouillon",
+      "editor": "Ouvrir l’éditeur",
+      "save": "Enregistrer",
+      "cancel": "Annuler",
+      "schedule": "Planifier"
+    },
+    "checks": {
+      "virality": "Analyse de viralité",
+      "engagement": "Analyse d’engagement"
+    },
+    "feedback": {
+      "placeholder": "Que faut-il changer ?"
+    },
+    "structured": {
+      "title": "Sortie structurée"
+    },
+    "schedule": {
+      "needsDate": "Choisis d’abord une date future"
+    },
+    "toast": {
+      "actionFailed": "L’action a échoué",
+      "editDone": "Modification enregistrée comme nouvelle version",
+      "editFailed": "Échec de la modification",
+      "approvedDone": "Artefact approuvé",
+      "approvedFailed": "Échec de l’approbation",
+      "changes_requestedDone": "Modifications demandées",
+      "changes_requestedFailed": "Échec de la demande",
+      "draftDone": "Brouillon créé",
+      "draftFailed": "Échec du brouillon",
+      "scheduleDone": "Artefact planifié",
+      "scheduleFailed": "Échec de la planification",
+      "checkDone": "Analyse terminée",
+      "checkFailed": "Analyse échouée"
+    },
+    "carousel": {
+      "slides": "{count} diapositives",
+      "boundsOk": "Prêt pour Instagram (2-10)",
+      "boundsWarn": "Nécessite 2-10 diapositives",
+      "untitled": "Sans titre"
+    },
+    "reel": {
+      "scene": "Scène {index} · {seconds}s"
+    }
+  }
+}

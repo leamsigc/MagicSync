@@ -32,6 +32,11 @@ const menuActions = [
     onSelect: () => emit('edit', props.business.id),
   },
   {
+    label: t('actions.playbook'),
+    icon: 'i-lucide-book-open',
+    onSelect: () => handleOpenPlaybook(props.business.id),
+  },
+  {
     label: 'Google Business',
     icon: 'i-logos-google',
     onSelect: () => router.push(`/app/business/${props.business.id}/gmb`),
@@ -48,6 +53,10 @@ const { setActiveBusiness, activeBusinessId } = useBusinessManager();
 const HandleSetActive = async (id: string) => {
   await setActiveBusiness(id);
   emit('select', id);
+};
+
+const handleOpenPlaybook = (id: string) => {
+  router.push(`/app/business/${id}/playbook`);
 };
 </script>
 

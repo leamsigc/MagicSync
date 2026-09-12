@@ -36,7 +36,7 @@ class WorkspaceService:
         from app.core.db import get_db_pool
         
         try:
-            pool = get_db_pool()
+            pool = await get_db_pool()
             async with pool.acquire() as conn:
                 import time
                 now = int(time.time())
@@ -58,7 +58,7 @@ class WorkspaceService:
         from app.core.db import get_db_pool
         
         try:
-            pool = get_db_pool()
+            pool = await get_db_pool()
             async with pool.acquire() as conn:
                 result = await conn.execute(
                     """SELECT id, filename, content, mime_type FROM workspace_files 
@@ -96,14 +96,14 @@ class WorkspaceService:
         from app.core.db import get_db_pool
         
         try:
-            pool = get_db_pool()
+            pool = await get_db_pool()
             async with pool.acquire() as conn:
                 result = await conn.execute(
                     """SELECT id, filename, mime_type, created_at, updated_at FROM workspace_files 
                        WHERE thread_id = ? AND user_id = ? ORDER BY filename""",
                     (thread_id, self.user_id)
                 )
-                rows = result.all()
+                rows = result.fetchall()
                 
                 files = [
                     {
@@ -125,7 +125,7 @@ class WorkspaceService:
         from app.core.db import get_db_pool
         
         try:
-            pool = get_db_pool()
+            pool = await get_db_pool()
             async with pool.acquire() as conn:
                 await conn.execute(
                     "DELETE FROM workspace_files WHERE thread_id = ? AND user_id = ? AND filename = ?",
@@ -148,7 +148,7 @@ class TodoService:
         from app.core.db import get_db_pool
         
         try:
-            pool = get_db_pool()
+            pool = await get_db_pool()
             async with pool.acquire() as conn:
                 import time
                 now = int(time.time())
@@ -179,14 +179,14 @@ class TodoService:
         from app.core.db import get_db_pool
         
         try:
-            pool = get_db_pool()
+            pool = await get_db_pool()
             async with pool.acquire() as conn:
                 result = await conn.execute(
                     """SELECT id, content, status, order_index FROM agent_todos 
                        WHERE thread_id = ? AND user_id = ? ORDER BY order_index""",
                     (thread_id, self.user_id)
                 )
-                rows = result.all()
+                rows = result.fetchall()
                 
                 todos = [
                     {
@@ -207,7 +207,7 @@ class TodoService:
         from app.core.db import get_db_pool
         
         try:
-            pool = get_db_pool()
+            pool = await get_db_pool()
             async with pool.acquire() as conn:
                 import time
                 now = int(time.time())

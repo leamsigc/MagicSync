@@ -6,7 +6,35 @@
     "suggestion2": "Analyze my target audience",
     "suggestion3": "Research trending topics",
     "placeholder": "Ask me anything about your social media strategy...",
-    "error": "Something went wrong"
+    "error": "Something went wrong",
+    "threadActive": "Thread active",
+    "newConversation": "New conversation",
+    "toolsEnable": "Enable AI Tools",
+    "toolsDisable": "Disable AI Tools",
+    "toolsOff": "Off",
+    "showTools": "Show available tools",
+    "availableTools": "Available Tools",
+    "toolsHint": "Click to insert a tool reference into your message",
+    "reasoning": "Reasoning",
+    "thinking": "Thinking...",
+    "sending": "Sending...",
+    "send": "Send",
+    "businessContext": {
+      "enable": "Enable business context",
+      "disable": "Disable business context",
+      "off": "Off",
+      "noBusiness": "Select a business first",
+      "needsBusiness": "Select a business before enabling branded context",
+      "notReady": "Publish a playbook to enable",
+      "ready": "Branded"
+    },
+    "artifacts": {
+      "saveAs": "Save as artifact",
+      "created": "Artifact created for review",
+      "createFailed": "Could not create artifact",
+      "loadFailed": "Could not load artifacts",
+      "section": "Artifacts in this conversation"
+    }
   },
   "es": {
     "welcome": "Bienvenido a MagicSync AI",
@@ -15,7 +43,35 @@
     "suggestion2": "Analizar mi audiencia objetivo",
     "suggestion3": "Investigar temas de tendencia",
     "placeholder": "Pregúntame sobre tu estrategia de redes sociales...",
-    "error": "Algo salió mal"
+    "error": "Algo salió mal",
+    "threadActive": "Hilo activo",
+    "newConversation": "Nueva conversación",
+    "toolsEnable": "Activar herramientas de IA",
+    "toolsDisable": "Desactivar herramientas de IA",
+    "toolsOff": "Desactivado",
+    "showTools": "Mostrar herramientas disponibles",
+    "availableTools": "Herramientas disponibles",
+    "toolsHint": "Haz clic para insertar una referencia en tu mensaje",
+    "reasoning": "Razonamiento",
+    "thinking": "Pensando...",
+    "sending": "Enviando...",
+    "send": "Enviar",
+    "businessContext": {
+      "enable": "Activar contexto del negocio",
+      "disable": "Desactivar contexto del negocio",
+      "off": "Desactivado",
+      "noBusiness": "Selecciona primero un negocio",
+      "needsBusiness": "Selecciona un negocio antes de activar el contexto de marca",
+      "notReady": "Publica un playbook para activar",
+      "ready": "De marca"
+    },
+    "artifacts": {
+      "saveAs": "Guardar como artefacto",
+      "created": "Artefacto creado para revisión",
+      "createFailed": "No se pudo crear el artefacto",
+      "loadFailed": "No se pudieron cargar los artefactos",
+      "section": "Artefactos de esta conversación"
+    }
   },
   "de": {
     "welcome": "Willkommen bei MagicSync AI",
@@ -24,7 +80,35 @@
     "suggestion2": "Meine Zielgruppe analysieren",
     "suggestion3": "Aktuelle Themen recherchieren",
     "placeholder": "Fragen Sie mich alles über Ihre Social-Media-Strategie...",
-    "error": "Etwas ist schief gelaufen"
+    "error": "Etwas ist schief gelaufen",
+    "threadActive": "Thread aktiv",
+    "newConversation": "Neue Unterhaltung",
+    "toolsEnable": "KI-Tools aktivieren",
+    "toolsDisable": "KI-Tools deaktivieren",
+    "toolsOff": "Aus",
+    "showTools": "Verfügbare Tools anzeigen",
+    "availableTools": "Verfügbare Tools",
+    "toolsHint": "Klicken, um eine Tool-Referenz in deine Nachricht einzufügen",
+    "reasoning": "Überlegung",
+    "thinking": "Denke nach...",
+    "sending": "Wird gesendet...",
+    "send": "Senden",
+    "businessContext": {
+      "enable": "Unternehmenskontext aktivieren",
+      "disable": "Unternehmenskontext deaktivieren",
+      "off": "Aus",
+      "noBusiness": "Wähle zuerst ein Unternehmen",
+      "needsBusiness": "Wähle ein Unternehmen, bevor du den Markenkontext aktivierst",
+      "notReady": "Veröffentliche ein Playbook zum Aktivieren",
+      "ready": "Marke"
+    },
+    "artifacts": {
+      "saveAs": "Als Artefakt speichern",
+      "created": "Artefakt zur Prüfung erstellt",
+      "createFailed": "Artefakt konnte nicht erstellt werden",
+      "loadFailed": "Artefakte konnten nicht geladen werden",
+      "section": "Artefakte dieser Unterhaltung"
+    }
   },
   "fr": {
     "welcome": "Bienvenue sur MagicSync AI",
@@ -32,7 +116,35 @@
     "suggestion1": "Créer un post pour Twitter",
     "suggestion2": "Analyser mon audience cible",
     "suggestion3": "Rechercher les sujets tendance",
+    "threadActive": "Fil actif",
+    "newConversation": "Nouvelle conversation",
+    "toolsEnable": "Activer les outils IA",
+    "toolsDisable": "Désactiver les outils IA",
+    "toolsOff": "Désactivé",
+    "showTools": "Afficher les outils disponibles",
+    "availableTools": "Outils disponibles",
+    "toolsHint": "Cliquez pour insérer une référence dans votre message",
+    "reasoning": "Raisonnement",
+    "thinking": "Réflexion...",
+    "sending": "Envoi...",
+    "send": "Envoyer",
+    "businessContext": {
+      "enable": "Activer le contexte d'entreprise",
+      "disable": "Désactiver le contexte d'entreprise",
+      "off": "Désactivé",
+      "noBusiness": "Sélectionne d’abord une entreprise",
+      "needsBusiness": "Sélectionne une entreprise avant d’activer le contexte de marque",
+      "notReady": "Publie un playbook pour activer",
+      "ready": "Marque"
+    },
     "placeholder": "Demandez-moi tout sur votre stratégie de réseaux sociaux...",
-    "error": "Quelque chose s'est mal passé"
+    "error": "Quelque chose s'est mal passé",
+    "artifacts": {
+      "saveAs": "Enregistrer comme artefact",
+      "created": "Artefact créé pour révision",
+      "createFailed": "Impossible de créer l’artefact",
+      "loadFailed": "Impossible de charger les artefacts",
+      "section": "Artefacts de cette conversation"
+    }
   }
 }

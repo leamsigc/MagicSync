@@ -1,0 +1,226 @@
+{
+  "en": {
+    "back": "Back to playbook",
+    "title": "Brand corpus",
+    "description": "Edit every voice, positioning and proof section directly. Only filled sections feed AI context.",
+    "seo_title": "Brand corpus",
+    "seo_description": "Edit the business brand corpus sections and keys.",
+    "readiness": {
+      "title": "Context readiness",
+      "ready": "All sections filled",
+      "notReady": "{count} sections still empty",
+      "brandedReady": "Branded AI ready",
+      "brandedBlocked": "Branded AI blocked — publish a playbook first"
+    },
+    "sections": {
+      "title": "Corpus sections",
+      "voice_guide": "Voice guide",
+      "tone_examples": "Tone examples",
+      "content_hooks": "Content hooks",
+      "positioning": "Positioning",
+      "offer_architecture": "Offer architecture",
+      "competitors": "Competitors",
+      "seo_keywords": "SEO keywords",
+      "testimonials": "Testimonials"
+    },
+    "keys": {
+      "title": "Brand keys",
+      "cta_links": "CTA links",
+      "author": "Author",
+      "image_style": "Image style"
+    },
+    "actions": {
+      "save": "Save",
+      "emptyBadge": "Empty",
+      "filledBadge": "Filled",
+      "export": "Export",
+      "import": "Import"
+    },
+    "preview": {
+      "title": "Live context preview",
+      "description": "Exactly what branded AI calls receive. Empty sections are excluded.",
+      "empty": "No context yet — fill a section above."
+    },
+    "budget": {
+      "warning": "Context is {count} characters — consider shortening sections over the budget."
+    },
+    "toast": {
+      "loadFailed": "Failed to load the brand corpus",
+      "saveDone": "Section saved",
+      "saveFailed": "Failed to save the section",
+      "exportDone": "Corpus exported",
+      "exportFailed": "Corpus export failed",
+      "importDone": "Corpus imported",
+      "importFailed": "Corpus import failed",
+      "importInvalid": "Invalid corpus file"
+    }
+  },
+  "es": {
+    "back": "Volver al manual",
+    "title": "Corpus de marca",
+    "description": "Edita cada sección de voz, posicionamiento y pruebas. Solo las secciones completas alimentan la IA.",
+    "seo_title": "Corpus de marca",
+    "seo_description": "Edita las secciones y claves del corpus de marca.",
+    "readiness": {
+      "title": "Estado del contexto",
+      "ready": "Todas las secciones completas",
+      "notReady": "{count} secciones aún vacías",
+      "brandedReady": "IA de marca lista",
+      "brandedBlocked": "IA de marca bloqueada — publica un manual primero"
+    },
+    "sections": {
+      "title": "Secciones del corpus",
+      "voice_guide": "Guía de voz",
+      "tone_examples": "Ejemplos de tono",
+      "content_hooks": "Ganchos de contenido",
+      "positioning": "Posicionamiento",
+      "offer_architecture": "Arquitectura de oferta",
+      "competitors": "Competidores",
+      "seo_keywords": "Palabras clave SEO",
+      "testimonials": "Testimonios"
+    },
+    "keys": {
+      "title": "Claves de marca",
+      "cta_links": "Enlaces CTA",
+      "author": "Autor",
+      "image_style": "Estilo de imagen"
+    },
+    "actions": {
+      "save": "Guardar",
+      "emptyBadge": "Vacía",
+      "filledBadge": "Completa",
+      "export": "Exportar",
+      "import": "Importar"
+    },
+    "preview": {
+      "title": "Vista previa del contexto",
+      "description": "Exactamente lo que reciben las llamadas de IA. Las secciones vacías se excluyen.",
+      "empty": "Aún sin contexto — completa una sección."
+    },
+    "budget": {
+      "warning": "El contexto tiene {count} caracteres — considera acortar las secciones."
+    },
+    "toast": {
+      "loadFailed": "No se pudo cargar el corpus de marca",
+      "saveDone": "Sección guardada",
+      "saveFailed": "No se pudo guardar la sección",
+      "exportDone": "Corpus exportado",
+      "exportFailed": "Error al exportar",
+      "importDone": "Corpus importado",
+      "importFailed": "Error al importar",
+      "importInvalid": "Archivo de corpus inválido"
+    }
+  },
+  "de": {
+    "back": "Zurück zum Playbook",
+    "title": "Markenkorpus",
+    "description": "Bearbeite Stimme, Positionierung und Nachweise direkt. Nur gefüllte Bereiche fließen in den KI-Kontext.",
+    "seo_title": "Markenkorpus",
+    "seo_description": "Markenkorpus-Bereiche und Schlüssel bearbeiten.",
+    "readiness": {
+      "title": "Kontextstatus",
+      "ready": "Alle Bereiche gefüllt",
+      "notReady": "{count} Bereiche noch leer",
+      "brandedReady": "Marken-KI bereit",
+      "brandedBlocked": "Marken-KI blockiert — veröffentliche zuerst ein Playbook"
+    },
+    "sections": {
+      "title": "Korpusbereiche",
+      "voice_guide": "Stimmleitfaden",
+      "tone_examples": "Tonbeispiele",
+      "content_hooks": "Content-Hooks",
+      "positioning": "Positionierung",
+      "offer_architecture": "Angebotsarchitektur",
+      "competitors": "Wettbewerber",
+      "seo_keywords": "SEO-Keywords",
+      "testimonials": "Referenzen"
+    },
+    "keys": {
+      "title": "Markenschlüssel",
+      "cta_links": "CTA-Links",
+      "author": "Autor",
+      "image_style": "Bildstil"
+    },
+    "actions": {
+      "save": "Speichern",
+      "emptyBadge": "Leer",
+      "filledBadge": "Gefüllt",
+      "export": "Exportieren",
+      "import": "Importieren"
+    },
+    "preview": {
+      "title": "Live-Kontextvorschau",
+      "description": "Genau das erhalten Marken-KI-Aufrufe. Leere Bereiche werden ausgeschlossen.",
+      "empty": "Noch kein Kontext — fülle einen Bereich aus."
+    },
+    "budget": {
+      "warning": "Der Kontext hat {count} Zeichen — kürze überlange Bereiche."
+    },
+    "toast": {
+      "loadFailed": "Markenkorpus konnte nicht geladen werden",
+      "saveDone": "Bereich gespeichert",
+      "saveFailed": "Bereich konnte nicht gespeichert werden",
+      "exportDone": "Korpus exportiert",
+      "exportFailed": "Export fehlgeschlagen",
+      "importDone": "Korpus importiert",
+      "importFailed": "Import fehlgeschlagen",
+      "importInvalid": "Ungültige Korpus-Datei"
+    }
+  },
+  "fr": {
+    "back": "Retour au guide",
+    "title": "Corpus de marque",
+    "description": "Modifiez voix, positionnement et preuves directement. Seules les sections remplies alimentent l’IA.",
+    "seo_title": "Corpus de marque",
+    "seo_description": "Modifier les sections et clés du corpus de marque.",
+    "readiness": {
+      "title": "État du contexte",
+      "ready": "Toutes les sections remplies",
+      "notReady": "{count} sections encore vides",
+      "brandedReady": "IA de marque prête",
+      "brandedBlocked": "IA de marque bloquée — publiez d’abord un guide"
+    },
+    "sections": {
+      "title": "Sections du corpus",
+      "voice_guide": "Guide de voix",
+      "tone_examples": "Exemples de ton",
+      "content_hooks": "Accroches",
+      "positioning": "Positionnement",
+      "offer_architecture": "Architecture d’offre",
+      "competitors": "Concurrents",
+      "seo_keywords": "Mots-clés SEO",
+      "testimonials": "Témoignages"
+    },
+    "keys": {
+      "title": "Clés de marque",
+      "cta_links": "Liens CTA",
+      "author": "Auteur",
+      "image_style": "Style d’image"
+    },
+    "actions": {
+      "save": "Enregistrer",
+      "emptyBadge": "Vide",
+      "filledBadge": "Remplie",
+      "export": "Exporter",
+      "import": "Importer"
+    },
+    "preview": {
+      "title": "Aperçu du contexte",
+      "description": "Exactement ce que reçoivent les appels IA. Les sections vides sont exclues.",
+      "empty": "Aucun contexte — remplis une section."
+    },
+    "budget": {
+      "warning": "Le contexte fait {count} caractères — raccourcis les longues sections."
+    },
+    "toast": {
+      "loadFailed": "Échec du chargement du corpus",
+      "saveDone": "Section enregistrée",
+      "saveFailed": "Échec de l’enregistrement de la section",
+      "exportDone": "Corpus exporté",
+      "exportFailed": "Échec de l’export",
+      "importDone": "Corpus importé",
+      "importFailed": "Échec de l’import",
+      "importInvalid": "Fichier de corpus invalide"
+    }
+  }
+}

@@ -12,5 +12,5 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 500, statusMessage: result.error })
   }
 
-  return result.data
+  return aiToolsFacade.maskLlmConfigs(result.data ?? [])
 })

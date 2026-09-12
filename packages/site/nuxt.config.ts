@@ -191,6 +191,7 @@ export default defineNuxtConfig({
     '@local-monorepo/templates',
     '@local-monorepo/bulk-scheduler',
     '@local-monorepo/ai-tools',
+    '@local-monorepo/agent',
   ],
 
   modules: ['@nuxtjs/seo', '@nuxtjs/i18n', '@nuxt/hints', 'nuxt-umami', 'evlog/nuxt', '@comark/nuxt', '@nuxtjs/mcp-toolkit'],

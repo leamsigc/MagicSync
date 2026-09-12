@@ -87,11 +87,16 @@ class LLMSingleExecutor(PhaseExecutor):
         
         prompt = context.get("prompt", "")
         schema = context.get("schema")
-        
-        response = await llm_service.chat([
+        llm = context.get("llm") or {}
+
+        response = await llm_service.chat_text([
             {"role": "system", "content": context.get("system_prompt", "You are a helpful assistant.")},
             {"role": "user", "content": f"{prompt}\n\nInput: {phase_input}"}
-        ], json_mode=bool(schema))
+        ], json_mode=bool(schema),
+            provider=llm.get("provider"),
+            model=llm.get("model"),
+            api_key=llm.get("api_key"),
+            api_base=llm.get("api_base"))
         
         if schema:
             try:
@@ -113,7 +118,8 @@ class LLMAgentExecutor(PhaseExecutor):
         agent = DeepModeAgent(
             user_id=context.get("user_id", ""),
             thread_id=context.get("thread_id", ""),
-            config=config
+            config=config,
+            llm=context.get("llm"),
         )
         
         result = await agent.run(str(phase_input))
@@ -172,7 +178,7 @@ class LLMWaitUserExecutor(PhaseExecutor):
 Generate 3-5 clear questions to ask the user that will help complete this task.
 Output as JSON array: [{{"question": "...", "purpose": "..."}}]"""
         
-        response = await llm_service.chat([
+        response = await llm_service.chat_text([
             {"role": "system", "content": "You are helping gather context for a task."},
             {"role": "user", "content": prompt}
         ], json_mode=True)
@@ -224,6 +230,49 @@ class HarnessEngine:
             {"name": "Synthesize", "type": PhaseType.LLM_SINGLE},
         ]
 
+        # Social pipeline: Research -> Writer -> Humanizer -> HTML Design -> Human review.
+        # Editable at runtime via register_harness(); run from chat, frontend
+        # buttons, or quick actions. Design output is HTML only (asset templates).
+        self._harnesses["social_pipeline"] = [
+            {
+                "name": "Research topics",
+                "type": PhaseType.LLM_AGENT,
+                "system_prompt": (
+                    "You are a social media research agent. Given the user brief, "
+                    "business context, and any reference documents, return the best "
+                    "topics with angles, hooks, and source notes as JSON."
+                ),
+            },
+            {
+                "name": "Write post",
+                "type": PhaseType.LLM_SINGLE,
+                "system_prompt": (
+                    "You are a social media content writer. Use the research output "
+                    "and business context to write the post caption and slide copy."
+                ),
+                "schema": "social_post",
+            },
+            {
+                "name": "Humanize",
+                "type": PhaseType.LLM_SINGLE,
+                "system_prompt": (
+                    "You are a human behavior and sentiment editor. Rewrite the draft "
+                    "to sound human and emotional without changing facts or structure."
+                ),
+            },
+            {
+                "name": "Design HTML",
+                "type": PhaseType.LLM_SINGLE,
+                "system_prompt": (
+                    "You are a social design agent. Output HTML only for the post "
+                    "image, carousel slides, or hero thumbnail, referencing the "
+                    "provided asset/template slots. No explanations."
+                ),
+                "schema": "social_design",
+            },
+            {"name": "Human review", "type": PhaseType.LLM_HUMAN_INPUT},
+        ]
+
     def get_harness(self, harness_type: str) -> list[dict]:
         """Get harness phases by type."""
         return self._harnesses.get(harness_type, [])
@@ -237,14 +286,19 @@ class HarnessEngine:
         harness_type: str,
         phase_index: int,
         phase_input: Any,
-        context: dict
+        context: dict,
+        phases: list[dict] | None = None,
     ) -> dict:
-        """Execute a single phase."""
-        phases = self.get_harness(harness_type)
+        """Execute a single phase (registered harness or inline definitions)."""
+        phases = phases if phases is not None else self.get_harness(harness_type)
         if phase_index >= len(phases):
             return {"error": f"Phase {phase_index} not found"}
-        
+
         phase = phases[phase_index]
+        try:
+            PhaseType(phase.get("type", PhaseType.PROGRAMMATIC))
+        except ValueError:
+            return {"error": f"Unknown phase type {phase.get('type')}"}
         phase_type = PhaseType(phase.get("type", PhaseType.PROGRAMMATIC))
         
         executor = self.phase_executors.get(phase_type)
@@ -313,7 +367,7 @@ class HarnessEngine:
         try:
             from app.core.db import get_db_pool
             
-            pool = get_db_pool()
+            pool = await get_db_pool()
             async with pool.acquire() as conn:
                 import json
                 await conn.execute(

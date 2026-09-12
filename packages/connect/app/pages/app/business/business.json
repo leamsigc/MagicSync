@@ -63,6 +63,8 @@
     },
     "actions": {
       "edit": "Edit",
+      "playbook": "Playbook",
+      "close": "Close",
       "delete": "Delete"
     },
     "wizard": {
@@ -160,7 +162,15 @@
       "error": "Erreur",
       "something_went_wrong": "Quelque chose s'est mal passé. Veuillez réessayer.",
       "invitation_sent": "Invitation envoyée",
-      "invitation_sent_description": "L'invitation a été envoyée avec succès."
+      "invitation_sent_description": "L'invitation a été envoyée avec succès.",
+      "business_deleted": "L’entreprise a été supprimée avec succès.",
+      "business_updated": "Entreprise mise à jour",
+      "business_updated_successfully": "L’entreprise a été mise à jour avec succès.",
+      "confirm_delete": "Supprimer vraiment cette entreprise ?",
+      "confirm_delete_desc": "Cette action est irréversible. Toutes les données associées seront définitivement supprimées.",
+      "deleted": "Entreprise supprimée",
+      "deleting": "Suppression en cours",
+      "deleting_business": "Patiente pendant la suppression…"
     },
     "team": {
       "title": "Membres de l'équipe",
@@ -178,7 +188,10 @@
       "email": "Email",
       "website": "Site web",
       "save": "Enregistrer l'entreprise",
-      "cancel": "Annuler"
+      "cancel": "Annuler",
+      "name_required": "Le nom de l’entreprise est requis",
+      "email_invalid": "Adresse e-mail invalide",
+      "website_invalid": "URL du site invalide"
     },
     "placeholders": {
       "name": "Entrez le nom de l'entreprise",
@@ -190,6 +203,8 @@
     },
     "actions": {
       "edit": "Modifier",
+      "playbook": "Playbook",
+      "close": "Fermer",
       "delete": "Supprimer"
     },
     "wizard": {
@@ -244,7 +259,33 @@
       "step4_after": "Brand identity established",
       "step5_text": "Finalizing details...",
       "step5_after": "Details finalized"
-    }
+    },
+    "description_edit": "Mets à jour les détails de ton entreprise",
+    "seo_title_edit": "Modifier l’entreprise",
+    "seo_description_edit": "Mets à jour les détails de ton entreprise",
+    "step_zero": {
+      "title": "Commencer",
+      "subtitle": "Termine ces étapes optionnelles pour tirer le meilleur de ton entreprise.",
+      "progress": "{completed} sur {total} terminées",
+      "continue": "Continuer vers la création",
+      "skip": "Passer la configuration",
+      "skip_hint": "Tu pourras terminer ces étapes plus tard dans tes réglages.",
+      "actions": {
+        "star_github": "Mets une étoile sur GitHub",
+        "star_github_desc": "Soutiens le projet avec une étoile",
+        "follow_twitter": "Suis-nous sur Twitter",
+        "follow_twitter_desc": "Reste informé des nouveautés",
+        "follow_linkedin": "Suis-nous sur LinkedIn",
+        "follow_linkedin_desc": "Connecte-toi pour des actus pro",
+        "follow_bluesky": "Suis-nous sur Bluesky",
+        "follow_bluesky_desc": "Rejoins-nous sur le réseau décentralisé",
+        "follow_instagram": "Suis-nous sur Instagram",
+        "follow_instagram_desc": "Vois les visuels et les coulisses",
+        "follow_facebook": "Suis-nous sur Facebook",
+        "follow_facebook_desc": "Rejoins la communauté"
+      }
+    },
+    "title_edit": "Modifier l’entreprise"
   },
   "es": {
     "title": "Gestión de negocios",
@@ -265,7 +306,15 @@
       "error": "Error",
       "something_went_wrong": "Algo salió mal. Por favor, inténtalo de nuevo.",
       "invitation_sent": "Invitación enviada",
-      "invitation_sent_description": "La invitación se ha enviado correctamente."
+      "invitation_sent_description": "La invitación se ha enviado correctamente.",
+      "business_deleted": "El negocio se ha eliminado correctamente.",
+      "business_updated": "Negocio actualizado",
+      "business_updated_successfully": "El negocio se ha actualizado correctamente.",
+      "confirm_delete": "¿Seguro que quieres eliminar este negocio?",
+      "confirm_delete_desc": "Esta acción no se puede deshacer. Todos los datos asociados se eliminarán permanentemente.",
+      "deleted": "Negocio eliminado",
+      "deleting": "Eliminando negocio",
+      "deleting_business": "Espera mientras eliminamos el negocio…"
     },
     "team": {
       "title": "Miembros del equipo",
@@ -283,7 +332,10 @@
       "email": "Correo electrónico",
       "website": "Sitio web",
       "save": "Guardar negocio",
-      "cancel": "Cancelar"
+      "cancel": "Cancelar",
+      "name_required": "El nombre del negocio es obligatorio",
+      "email_invalid": "Dirección de correo no válida",
+      "website_invalid": "URL del sitio web no válida"
     },
     "placeholders": {
       "name": "Ingrese el nombre del negocio",
@@ -295,6 +347,8 @@
     },
     "actions": {
       "edit": "Editar",
+      "playbook": "Playbook",
+      "close": "Cerrar",
       "delete": "Eliminar"
     },
     "wizard": {
@@ -349,7 +403,33 @@
       "step4_after": "Brand identity established",
       "step5_text": "Finalizing details...",
       "step5_after": "Details finalized"
-    }
+    },
+    "description_edit": "Actualiza los datos de tu negocio",
+    "seo_title_edit": "Editar negocio",
+    "seo_description_edit": "Actualiza los datos de tu negocio",
+    "step_zero": {
+      "title": "Empieza",
+      "subtitle": "Completa estos pasos opcionales para aprovechar al máximo tu negocio.",
+      "progress": "{completed} de {total} completados",
+      "continue": "Continuar a crear negocio",
+      "skip": "Omitir configuración",
+      "skip_hint": "Siempre puedes completar estos pasos más tarde en tus ajustes.",
+      "actions": {
+        "star_github": "Danos una estrella en GitHub",
+        "star_github_desc": "Apoya el proyecto con una estrella",
+        "follow_twitter": "Síguenos en Twitter",
+        "follow_twitter_desc": "Mantente al día con las novedades",
+        "follow_linkedin": "Síguenos en LinkedIn",
+        "follow_linkedin_desc": "Conecta para novedades profesionales",
+        "follow_bluesky": "Síguenos en Bluesky",
+        "follow_bluesky_desc": "Únete en la red descentralizada",
+        "follow_instagram": "Síguenos en Instagram",
+        "follow_instagram_desc": "Mira el contenido visual y entre bastidores",
+        "follow_facebook": "Síguenos en Facebook",
+        "follow_facebook_desc": "Únete a la comunidad"
+      }
+    },
+    "title_edit": "Editar negocio"
   },
   "de": {
     "title": "Unternehmensverwaltung",
@@ -370,7 +450,15 @@
       "error": "Fehler",
       "something_went_wrong": "Etwas ist schief gelaufen. Bitte versuchen Sie es erneut.",
       "invitation_sent": "Einladung gesendet",
-      "invitation_sent_description": "Die Einladung wurde erfolgreich gesendet."
+      "invitation_sent_description": "Die Einladung wurde erfolgreich gesendet.",
+      "business_deleted": "Das Unternehmen wurde erfolgreich gelöscht.",
+      "business_updated": "Unternehmen aktualisiert",
+      "business_updated_successfully": "Das Unternehmen wurde erfolgreich aktualisiert.",
+      "confirm_delete": "Dieses Unternehmen wirklich löschen?",
+      "confirm_delete_desc": "Diese Aktion kann nicht rückgängig gemacht werden. Alle zugehörigen Daten werden dauerhaft entfernt.",
+      "deleted": "Unternehmen gelöscht",
+      "deleting": "Unternehmen wird gelöscht",
+      "deleting_business": "Bitte warten, während das Unternehmen gelöscht wird…"
     },
     "team": {
       "title": "Teammitglieder",
@@ -388,7 +476,10 @@
       "email": "E-Mail",
       "website": "Webseite",
       "save": "Unternehmen speichern",
-      "cancel": "Abbrechen"
+      "cancel": "Abbrechen",
+      "name_required": "Unternehmensname ist erforderlich",
+      "email_invalid": "Ungültige E-Mail-Adresse",
+      "website_invalid": "Ungültige Website-URL"
     },
     "placeholders": {
       "name": "Geben Sie den Firmennamen ein",
@@ -400,6 +491,8 @@
     },
     "actions": {
       "edit": "Bearbeiten",
+      "playbook": "Playbook",
+      "close": "Schließen",
       "delete": "Löschen"
     },
     "wizard": {
@@ -454,6 +547,32 @@
       "step4_after": "Brand identity established",
       "step5_text": "Finalizing details...",
       "step5_after": "Details finalized"
-    }
+    },
+    "description_edit": "Aktualisiere deine Unternehmensdaten",
+    "seo_title_edit": "Unternehmen bearbeiten",
+    "seo_description_edit": "Aktualisiere deine Unternehmensdaten",
+    "step_zero": {
+      "title": "Erste Schritte",
+      "subtitle": "Schließe diese optionalen Schritte ab, um das Beste herauszuholen.",
+      "progress": "{completed} von {total} abgeschlossen",
+      "continue": "Weiter zur Unternehmens-Erstellung",
+      "skip": "Setup überspringen",
+      "skip_hint": "Du kannst diese Schritte später in den Einstellungen nachholen.",
+      "actions": {
+        "star_github": "Gib uns einen Stern auf GitHub",
+        "star_github_desc": "Unterstütze das Projekt mit einem Stern",
+        "follow_twitter": "Folge uns auf Twitter",
+        "follow_twitter_desc": "Bleib bei Neuigkeiten auf dem Laufenden",
+        "follow_linkedin": "Folge uns auf LinkedIn",
+        "follow_linkedin_desc": "Vernetze dich für professionelle Updates",
+        "follow_bluesky": "Folge uns auf Bluesky",
+        "follow_bluesky_desc": "Sei dabei im dezentralen Netzwerk",
+        "follow_instagram": "Folge uns auf Instagram",
+        "follow_instagram_desc": "Sieh visuelle Inhalte und Blicke hinter die Kulissen",
+        "follow_facebook": "Folge uns auf Facebook",
+        "follow_facebook_desc": "Tritt der Community bei"
+      }
+    },
+    "title_edit": "Unternehmen bearbeiten"
   }
 }

@@ -12,6 +12,7 @@
 import AccountSettings from './components/AccountSettings.vue'
 import LinkedAccounts from './components/LinkedAccounts.vue'
 import DangerZone from './components/DangerZone.vue'
+import AiModelSettings from './components/AiModelSettings.vue'
 
 const { t } = useI18n()
 
@@ -31,6 +32,10 @@ useHead({
   ]
 })
 
+function handleAiSaved() {
+  return undefined
+}
+
 const items = computed(() => [
   {
     label: t('tabs.general'),
@@ -39,6 +44,10 @@ const items = computed(() => [
   {
     label: t('tabs.linked'),
     slot: 'linked'
+  },
+  {
+    label: t('tabs.ai'),
+    slot: 'ai'
   },
   {
     label: t('tabs.danger'),
@@ -63,6 +72,12 @@ const items = computed(() => [
 
       <template #linked>
         <LinkedAccounts class="mt-6" />
+      </template>
+
+      <template #ai>
+        <div v-motion-fade :duration="250">
+          <AiModelSettings mode="global" class="mt-6" @saved="handleAiSaved" />
+        </div>
       </template>
 
       <template #danger>

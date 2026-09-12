@@ -1,0 +1,78 @@
+# MagicSync manual-first automation: publish approved content (T130).
+#
+# Publishes only when the exact artifact version carries a current approval:
+# the service path (createJob + executeJob) fails closed otherwise, and every
+# delivery is idempotent by (artifact, version, connection, mode).
+# Required secrets: MAGICSYNC_API_URL, MAGICSYNC_MACHINE_SECRET.
+name: MagicSync publish approved
+
+on:
+  workflow_dispatch:
+    inputs:
+      businessId:
+        description: 'Business ID that owns the artifact'
+        required: true
+      connectionId:
+        description: 'Publishing connection ID'
+        required: true
+      artifactId:
+        description: 'Approved artifact ID'
+        required: true
+      artifactVersion:
+        description: 'Approved artifact version'
+        required: true
+  # Cron stays commented until manual runs pass (T130 manual-first rule).
+  # schedule:
+  #   - cron: '0 9 * * MON'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Signed publish trigger
+        env:
+          MAGICSYNC_API_URL: ${{ secrets.MAGICSYNC_API_URL }}
+          MAGICSYNC_MACHINE_SECRET: ${{ secrets.MAGICSYNC_MACHINE_SECRET }}
+          BUSINESS_ID: ${{ inputs.businessId }}
+          CONNECTION_ID: ${{ inputs.connectionId }}
+          ARTIFACT_ID: ${{ inputs.artifactId }}
+          ARTIFACT_VERSION: ${{ inputs.artifactVersion }}
+        run: |
+          python3 - <<'EOF' > publish.json
+          import hashlib, hmac, json, os, time, urllib.request
+
+          body = json.dumps({
+              "businessId": os.environ["BUSINESS_ID"],
+              "connectionId": os.environ["CONNECTION_ID"],
+              "artifactId": os.environ["ARTIFACT_ID"],
+              "artifactVersion": int(os.environ["ARTIFACT_VERSION"]),
+          }).encode()
+          timestamp = str(int(time.time()))
+          signature = hmac.new(
+              os.environ["MAGICSYNC_MACHINE_SECRET"].encode(),
+              timestamp.encode() + b"." + body,
+              hashlib.sha256,
+          ).hexdigest()
+          request = urllib.request.Request(
+              os.environ["MAGICSYNC_API_URL"].rstrip("/") + "/api/v1/cli/publish-approved",
+              data=body,
+              headers={
+                  "Content-Type": "application/json",
+                  "X-Machine-Timestamp": timestamp,
+                  "X-Machine-Signature": signature,
+              },
+          )
+          with urllib.request.urlopen(request) as response:
+              print(response.read().decode())
+          EOF
+          cat publish.json
+      - name: Upload run summary
+        if: always()
+        run: |
+          {
+            echo "## Publish summary"
+            echo ""
+            echo '```json'
+            cat publish.json 2>/dev/null || echo '{"error": "no result file"}'
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -25,7 +25,9 @@ class ToolManager:
             *self._get_retrieve_tool(),
             *self._get_rag_search_tool(),
             *self._get_web_search_tool(),
+            *self._get_scrape_tool(),
             *self._get_social_media_tools(),
+            *self._get_analytics_tools(),
         ]
 
         return [
@@ -157,8 +159,75 @@ class ToolManager:
             return await self._execute_generate_hashtags(arguments)
         if tool_name == "web_search":
             return await self._execute_web_search(arguments)
+        if tool_name == "scrape_url":
+            return await self._execute_scrape_url(arguments)
+        if tool_name == "virality_check":
+            return await self._execute_virality_check(arguments)
+        if tool_name == "engagement_calc":
+            return await self._execute_engagement_calc(arguments)
+        if tool_name == "best_posts":
+            return await self._execute_best_posts(arguments)
+        if tool_name == "destructure_post":
+            return await self._execute_destructure_post(arguments)
+        if tool_name == "apply_template":
+            return await self._execute_apply_template(arguments)
 
         return {"error": f"Unknown tool: {tool_name}"}
+
+    def _get_scrape_tool(self) -> list[dict]:
+        """Get structured URL extraction tool (ScrapeGraphAI with fallbacks)."""
+        return [
+            {
+                "name": "scrape_url",
+                "description": "Extract specific information from a web page as structured data (topics, offers, hooks, testimonials, pricing). Use when research needs details from a business site, blog post, or reference document — not just raw page text.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "url": {
+                            "type": "string",
+                            "description": "The page URL to extract from",
+                        },
+                        "prompt": {
+                            "type": "string",
+                            "description": "What to extract, e.g. 'list the offers, hooks and testimonials'",
+                        },
+                        "provider": {
+                            "type": "string",
+                            "description": "LLM provider for extraction",
+                            "default": "ollama",
+                        },
+                        "model": {
+                            "type": "string",
+                            "description": "LLM model for extraction",
+                            "default": "qwen3.5",
+                        },
+                    },
+                    "required": ["url", "prompt"],
+                },
+            }
+        ]
+
+    async def _execute_scrape_url(self, args: dict) -> dict:
+        """Execute structured URL extraction."""
+        from app.services.research import scraper
+
+        url = args.get("url", "")
+        prompt = args.get("prompt", "")
+        if not url or not prompt:
+            return {"error": "url and prompt are required", "backend": "none"}
+
+        try:
+            return await scraper.extract(
+                url,
+                prompt,
+                provider=args.get("provider", "ollama"),
+                model=args.get("model", "qwen3.5"),
+                api_key=args.get("api_key"),
+                api_base=args.get("api_base"),
+            )
+        except Exception as e:
+            logger.error(f"scrape_url failed: {e}")
+            return {"error": str(e), "backend": "none"}
 
     async def _execute_web_search(self, args: dict) -> dict:
         """Execute web search."""
@@ -303,7 +372,8 @@ class ToolManager:
         from app.services.skills.tools import SkillTools
 
         skill_tools = SkillTools(self.user_id)
-        return await skill_tools.load_skill(args.get("name", ""))
+        # Catalog parity: the DSH plugin sends `skill_name`; accept legacy `name`.
+        return await skill_tools.load_skill(args.get("skill_name") or args.get("name", ""))
 
     async def _execute_code(self, args: dict) -> dict:
         from app.services.skills.tools import CodeSandbox
@@ -599,6 +669,277 @@ class ToolManager:
         except Exception as e:
             logger.error(f"Hashtag generation failed: {e}")
             return {"error": f"Hashtag generation failed: {str(e)}"}
+
+    def _get_analytics_tools(self) -> list[dict]:
+        """Get chat analytics tool definitions for social posts."""
+        return [
+            {
+                "name": "virality_check",
+                "description": "Score how viral a post is (0-100 score plus sleeper/steady/viral/breakout tier). Use when the user asks how a post performed, whether a post went viral, or wants a take on a draft. Provide post_id for a published post, or content for an unpublished draft.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "post_id": {
+                            "type": "string",
+                            "description": "ID of a published post to score from collected metrics",
+                        },
+                        "content": {
+                            "type": "string",
+                            "description": "Draft post text to structurally assess (no metrics available)",
+                        },
+                    },
+                },
+            },
+            {
+                "name": "engagement_calc",
+                "description": "Calculate engagement rates for one or more published posts from collected metrics. Use when the user wants to compare performance across specific posts or needs exact engagement numbers.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "post_ids": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "List of published post IDs to score",
+                        },
+                    },
+                    "required": ["post_ids"],
+                },
+            },
+            {
+                "name": "best_posts",
+                "description": "Find the top-performing published posts from the last N days, ranked by engagement rate. Use when the user asks what performed best, what to repost or boost, or wants examples of winning content to imitate.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "days": {
+                            "type": "integer",
+                            "description": "Lookback window in days",
+                            "default": 7,
+                        },
+                        "platform": {
+                            "type": "string",
+                            "description": "Optional platform filter (e.g. twitter, linkedin, instagram)",
+                        },
+                        "limit": {
+                            "type": "integer",
+                            "description": "Maximum posts to return",
+                            "default": 5,
+                        },
+                    },
+                },
+            },
+            {
+                "name": "destructure_post",
+                "description": "Break a published post into a reusable content template (hook style, structure, CTA style, tone notes). Use when the user wants to replicate a winning post format or asks why a post worked structurally.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "post_id": {
+                            "type": "string",
+                            "description": "ID of the published post to destructure",
+                        },
+                    },
+                    "required": ["post_id"],
+                },
+            },
+            {
+                "name": "apply_template",
+                "description": "Apply a content template from destructure_post to a new theme, producing an outline plus caption draft notes. Use when the user wants a new post written in the style of a previous winner.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "template": {
+                            "type": "object",
+                            "description": "Template object returned by destructure_post",
+                        },
+                        "theme": {
+                            "type": "string",
+                            "description": "New topic or theme for the post",
+                        },
+                        "business_context": {
+                            "type": "string",
+                            "description": "Optional business context to weave into the draft notes",
+                            "default": "",
+                        },
+                    },
+                    "required": ["template", "theme"],
+                },
+            },
+        ]
+
+    async def _execute_virality_check(self, args: dict) -> dict:
+        """Score virality for a published post or draft content.
+
+        Metrics come from the authoritative Nuxt analytics service
+        (business-scoped); scores are never fabricated from zeros.
+        """
+        from app.core.config import settings
+        from app.services.analytics.nuxt import call_internal_analytics
+
+        post_id = args.get("post_id")
+        content = args.get("content")
+        business_id = args.get("business_id")
+        if not post_id and not isinstance(content, str):
+            return {
+                "error": "Provide post_id for a published post "
+                "or content for a draft."
+            }
+        if post_id and not business_id:
+            return {"error": "business_id is required for post virality."}
+
+        try:
+            if post_id:
+                data = await call_internal_analytics(
+                    settings,
+                    "/api/v1/internal/analytics/performance",
+                    {"userId": self.user_id, "businessId": business_id, "postId": post_id},
+                )
+                metrics = data.get("metrics") or {}
+                return {
+                    "post_id": post_id,
+                    "metrics": metrics,
+                    "engagement_rate": metrics.get("engagementRate"),
+                    "score": metrics.get("viralityScore"),
+                    "reason": "Measured engagement and reach"
+                    if metrics.get("viralityScore") is not None
+                    else "Insufficient metric coverage",
+                    "warnings": data.get("warnings", []),
+                    "source": "authoritative",
+                }
+            return {
+                "post_id": None,
+                "score": None,
+                "reason": "Draft content has no collected metrics",
+                "source": "authoritative",
+            }
+        except Exception as e:
+            logger.error(f"virality_check failed: {e}")
+            return {"error": f"virality_check failed: {e}"}
+
+    async def _execute_engagement_calc(self, args: dict) -> dict:
+        """Calculate engagement rates for a list of published posts."""
+        from app.core.config import settings
+        from app.services.analytics.nuxt import call_internal_analytics
+
+        post_ids = args.get("post_ids", [])
+        business_id = args.get("business_id")
+        if not isinstance(post_ids, list) or not post_ids:
+            return {"error": "Provide post_ids as a non-empty list of post IDs."}
+        if not business_id:
+            return {"error": "business_id is required for engagement calc."}
+
+        try:
+            data = await call_internal_analytics(
+                settings,
+                "/api/v1/internal/analytics/engagement",
+                {"userId": self.user_id, "businessId": business_id, "postIds": post_ids},
+            )
+            results = [
+                {"post_id": item["postId"], "engagement_rate": item["engagementRate"]}
+                for item in data.get("rates", [])
+            ]
+            return {"results": results, "count": len(results), "source": "authoritative"}
+        except Exception as e:
+            logger.error(f"engagement_calc failed: {e}")
+            return {"error": f"engagement_calc failed: {e}"}
+
+    async def _execute_best_posts(self, args: dict) -> dict:
+        """Return top published posts ranked by engagement rate.
+
+        Rankings use the latest valid snapshot per post (never summed
+        cumulative snapshots) from the authoritative analytics service.
+        """
+        from app.core.config import settings
+        from app.services.analytics.nuxt import call_internal_analytics
+
+        days = args.get("days", 7)
+        platform = args.get("platform")
+        limit = args.get("limit", 5)
+        business_id = args.get("business_id")
+        if not business_id:
+            return {"error": "business_id is required for best posts."}
+
+        try:
+            data = await call_internal_analytics(
+                settings,
+                "/api/v1/internal/analytics/best-posts",
+                {
+                    "userId": self.user_id,
+                    "businessId": business_id,
+                    "days": days,
+                    "platform": platform,
+                    "limit": limit,
+                },
+            )
+            ranked = data.get("posts", [])
+            return {
+                "posts": ranked,
+                "count": len(ranked),
+                "days": days,
+                "platform": platform,
+                "warnings": data.get("warnings", []),
+                "source": "authoritative",
+            }
+        except Exception as e:
+            logger.error(f"best_posts failed: {e}")
+            return {"error": f"best_posts failed: {e}"}
+
+    async def _execute_destructure_post(self, args: dict) -> dict:
+        """Break a published post into a reusable template."""
+        from app.core.config import settings
+        from app.services.analytics.nuxt import call_internal_analytics
+
+        post_id = args.get("post_id", "")
+        business_id = args.get("business_id")
+        if not post_id:
+            return {"error": "post_id is required."}
+        if not business_id:
+            return {"error": "business_id is required to destructure a post."}
+
+        try:
+            data = await call_internal_analytics(
+                settings,
+                "/api/v1/internal/analytics/performance",
+                {"userId": self.user_id, "businessId": business_id, "postId": post_id},
+            )
+            structure = data.get("structure", {})
+            metrics = data.get("metrics") or {}
+            blocks = structure.get("blocks", [])
+            return {
+                "sourcePostId": post_id,
+                "hook": {"style": structure.get("hookStyle", "statement")},
+                "structure": ["hook", "problem", "lesson", "cta"] if len(blocks) > 3 else ["hook", "body", "cta"],
+                "tone": ["direct"],
+                "cta": {"style": "question"},
+                "performance": {
+                    "engagementRate": metrics.get("engagementRate"),
+                    "viralityScore": metrics.get("viralityScore"),
+                },
+                "evidence": [f"post:{post_id}"],
+                "source": "authoritative",
+            }
+        except Exception as e:
+            logger.error(f"destructure_post failed: {e}")
+            return {"error": f"destructure_post failed: {e}"}
+
+    async def _execute_apply_template(self, args: dict) -> dict:
+        """Apply a content template to a new theme (no DB needed)."""
+        from app.services.analytics.posts import apply_template as _apply
+
+        template = args.get("template", {})
+        theme = args.get("theme", "")
+        business_context = args.get("business_context", "")
+        if not isinstance(template, dict) or not theme:
+            return {"error": "Provide template (object) and a non-empty theme."}
+
+        try:
+            context = (
+                business_context if isinstance(business_context, str) else ""
+            )
+            return _apply(template, theme, context)
+        except Exception as e:
+            logger.error(f"apply_template failed: {e}")
+            return {"error": f"apply_template failed: {e}"}
 
 
 def format_retrieve_result(result: dict) -> str:

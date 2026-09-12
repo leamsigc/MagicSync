@@ -69,6 +69,9 @@ Return JSON matching the schema.`;
         schema: responseSchema,
         temperature: 0.7,
         userId: user.id,
+        businessId: body.businessId ?? body.business_id ?? null,
+        useBusinessContext: body.useBusinessContext === true || body.use_business_context === true,
+        event,
       });
 
       return {

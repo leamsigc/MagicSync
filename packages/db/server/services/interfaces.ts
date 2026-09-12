@@ -379,4 +379,8 @@ export type UserLlmConfigServiceType = {
   updateConfig: (userId: string, configId: string, data: UpdateLlmConfigData) => Promise<ServiceResponse<UserLlmConfig>>
   deleteConfig: (userId: string, configId: string) => Promise<ServiceResponse<UserLlmConfig>>
   setDefault: (userId: string, configId: string) => Promise<ServiceResponse<UserLlmConfig>>
+  saveOverride: (userId: string, businessId: string, data: CreateLlmConfigData) => Promise<ServiceResponse<import('./user-llm-config.service').BusinessLlmOverride>>
+  getOverride: (userId: string, businessId: string) => Promise<ServiceResponse<import('./user-llm-config.service').BusinessLlmOverride | null>>
+  clearOverride: (userId: string, businessId: string) => Promise<ServiceResponse<boolean>>
+  getEffectiveConfig: (userId: string, businessId?: string | null) => Promise<ServiceResponse<UserLlmConfig>>
 }

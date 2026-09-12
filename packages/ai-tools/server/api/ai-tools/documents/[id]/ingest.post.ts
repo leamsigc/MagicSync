@@ -242,7 +242,7 @@ export default defineEventHandler(async (event) => {
           }>(`${backendUrl}/api/v1/rag/extract-metadata`, {
             method: 'POST',
             body: { text: ingestResult.extracted_text },
-            headers: { 'X-User-Id': user.id },
+            headers: { Authorization: `Bearer ${llmJwt}` },
           })
 
           await aiToolsFacade.updateDocumentMetadata(doc.id, user.id, {

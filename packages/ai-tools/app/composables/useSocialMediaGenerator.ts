@@ -33,7 +33,12 @@ export interface PlatformInfo {
   }
 }
 
-export interface GeneratePostOptions {
+export interface BusinessGrounding {
+  businessId?: string
+  useBusinessContext?: boolean
+}
+
+export interface GeneratePostOptions extends BusinessGrounding {
   topic: string
   platform: string
   tone?: 'professional' | 'casual' | 'humorous' | 'informative' | 'inspirational'
@@ -43,7 +48,7 @@ export interface GeneratePostOptions {
   max_length?: number
 }
 
-export interface GenerateBatchOptions {
+export interface GenerateBatchOptions extends BusinessGrounding {
   topic: string
   platforms: string[]
   tone?: 'professional' | 'casual' | 'humorous' | 'informative' | 'inspirational'
@@ -52,27 +57,27 @@ export interface GenerateBatchOptions {
   count_per_platform?: number
 }
 
-export interface GenerateThreadOptions {
+export interface GenerateThreadOptions extends BusinessGrounding {
   topic: string
   platform?: 'twitter' | 'threads' | 'bluesky'
   tweet_count?: number
   hook_first?: boolean
 }
 
-export interface GenerateVariationsOptions {
+export interface GenerateVariationsOptions extends BusinessGrounding {
   base_content: string
   platform: string
   count?: number
   variation_type?: 'rephrase' | 'expand' | 'shorten'
 }
 
-export interface GenerateHooksOptions {
+export interface GenerateHooksOptions extends BusinessGrounding {
   topic: string
   platform: string
   count?: number
 }
 
-export interface GenerateHashtagsOptions {
+export interface GenerateHashtagsOptions extends BusinessGrounding {
   topic: string
   platform: string
   count?: number

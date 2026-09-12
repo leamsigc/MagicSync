@@ -131,6 +131,21 @@ export async function createActiveBusiness(
   return { id: body.data.id as string, name: body.data.name as string }
 }
 
+export interface TestAccount {
+  id: string
+}
+
+/** Inserts a connected social account row straight into the dev database. */
+export async function createTestAccount(userId: string, businessId: string): Promise<TestAccount> {
+  const id = `e2e-${Date.now()}${Math.floor(Math.random() * 1000)}`
+  const now = Math.floor(Date.now() / 1000)
+  await getDb().execute({
+    sql: 'INSERT INTO social_media_accounts (id, user_id, business_id, platform, account_id, account_name, access_token, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?)',
+    args: [id, userId, businessId, 'twitter', `e2e-${id}`, 'E2E Account', 'e2e-token', now, now],
+  })
+  return { id }
+}
+
 /**
  * Blocks heavyweight external assets (ONNX models from HuggingFace, etc.)
  * that some tools start downloading on mount. The tools degrade to their

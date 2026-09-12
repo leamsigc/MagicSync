@@ -1,7 +1,8 @@
 import { z } from 'zod'
 import { defineMcpTool } from '@nuxtjs/mcp-toolkit/server'
 import { PLATFORMS } from '../../utils/platforms'
-import { requireMcp, resolveUserId } from '../../utils/mcp-context'
+import { requireMcp } from '../../utils/mcp-context'
+import { resolveMcpAiContext } from '../../utils/mcp-ai-context'
 import { logMcpCall } from '../../utils/mcp-audit'
 
 interface GenerateResponse {
@@ -30,7 +31,7 @@ export default defineMcpTool({
   annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: false },
   async handler(args) {
     const mcp = requireMcp()
-    const userId = await resolveUserId(mcp)
+    const ai = await resolveMcpAiContext(mcp)
     const config = useRuntimeConfig()
     const backendUrl = config.pythonBackendUrl || 'http://localhost:8000'
 
@@ -45,8 +46,12 @@ export default defineMcpTool({
           include_cta: args.includeCta,
           additional_context: args.additionalContext || '',
           max_length: args.maxLength,
+          business_id: mcp.businessId,
+          use_business_context: !!ai.businessContext,
+          context_edition_id: ai.editionId,
+          business_context: ai.businessContext,
         },
-        headers: { 'X-User-Id': userId },
+        headers: { Authorization: `Bearer ${ai.token}` },
       })
       if (result.error || !result.post) {
         throw new Error(result.error || 'AI generation failed')

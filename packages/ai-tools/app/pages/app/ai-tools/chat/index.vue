@@ -2,8 +2,10 @@
 
 <script setup lang="ts">
 import { useA2UIChat } from './composables/useA2UIChat'
+import { useChatArtifacts } from './composables/useChatArtifacts'
 import ChatSidebar from './components/ChatSidebar.vue'
 import ToolCallCard from './components/ToolCallCard.vue'
+import ArtifactCard from './components/ArtifactCard.vue'
 
 interface ChatPart {
   type: string
@@ -23,9 +25,23 @@ interface ToolCallInfo {
 definePageMeta({ layout: 'ai-tools-layout' })
 
 const { t } = useI18n()
+const toast = useToast()
 const input = ref('')
 const showToolsPanel = ref(false)
 const enableTools = ref(true)
+const useBusinessContext = ref(false)
+const activeBusinessId = useState<string | null>('business:id', () => null)
+const contextReady = ref<boolean | null>(null)
+const contextChecking = ref(false)
+const savingArtifactId = ref<string | null>(null)
+
+const {
+  artifacts: threadArtifacts,
+  busyId: artifactBusyId,
+  fetchArtifacts,
+  submitPostArtifact,
+  refreshArtifact,
+} = useChatArtifacts()
 
 const availableTools = [
   { name: 'retrieve', description: 'Search your knowledge base', category: 'RAG' },
@@ -54,17 +70,101 @@ const {
   loadThreadMessages,
   createNewThread,
   deleteThread,
-  handleSuggestionClick,
 } = useA2UIChat()
+
+async function refreshContextReadiness() {
+  const id = activeBusinessId.value
+  if (!id) {
+    contextReady.value = null
+    if (useBusinessContext.value) useBusinessContext.value = false
+    return
+  }
+  contextChecking.value = true
+  try {
+    const res = await $fetch<{ data?: { brandedReady?: boolean } }>(`/api/v1/business/${id}/playbook/readiness`)
+    contextReady.value = res.data?.brandedReady ?? false
+  }
+  catch {
+    contextReady.value = false
+  }
+  finally {
+    contextChecking.value = false
+  }
+}
+
+function requireBusinessForContext(): boolean {
+  if (!useBusinessContext.value || activeBusinessId.value) return true
+  toast.add({ title: t('businessContext.needsBusiness'), icon: 'i-heroicons-x-circle', color: 'error' })
+  return false
+}
+
+async function handleSaveMessageArtifact(messageId: string, text: string) {
+  if (!activeBusinessId.value || !text.trim()) {
+    return
+  }
+  savingArtifactId.value = messageId
+  try {
+    await submitPostArtifact(activeBusinessId.value, activeThreadId.value, text.trim())
+  }
+  finally {
+    savingArtifactId.value = null
+  }
+}
+
+async function handleArtifactChanged(id: string) {
+  if (!activeBusinessId.value) {
+    return
+  }
+  await refreshArtifact(activeBusinessId.value, id)
+}
 
 onMounted(() => {
   loadThreads()
+  void refreshContextReadiness()
 })
+
+watch(activeBusinessId, () => {
+  void refreshContextReadiness()
+})
+
+watch([activeThreadId, activeBusinessId], ([threadId, businessId]) => {
+  void fetchArtifacts(businessId, threadId)
+})
+
+function buildBusinessContextOpts() {
+  return {
+    useBusinessContext: useBusinessContext.value,
+    businessId: activeBusinessId.value ?? undefined,
+  }
+}
 
 function onSubmit() {
   if (!input.value.trim()) return
-  sendMessage(input.value, enableTools.value)
+  if (!requireBusinessForContext()) return
+  sendMessage(input.value, enableTools.value, buildBusinessContextOpts())
   input.value = ''
+}
+
+function handleSuggestionSelect(suggestion: string) {
+  if (!requireBusinessForContext()) return
+  sendMessage(suggestion, enableTools.value, buildBusinessContextOpts())
+}
+
+function handleToggleTools() {
+  enableTools.value = !enableTools.value
+}
+
+function handleToggleToolsPanel() {
+  showToolsPanel.value = !showToolsPanel.value
+}
+
+function handleToggleBusinessContext() {
+  if (!useBusinessContext.value && !activeBusinessId.value) {
+    toast.add({ title: t('businessContext.needsBusiness'), icon: 'i-heroicons-x-circle', color: 'error' })
+    return
+  }
+  useBusinessContext.value = !useBusinessContext.value
+  if (useBusinessContext.value) void refreshContextReadiness()
 }
 
 function handleNewThread() {
@@ -133,33 +233,64 @@ function isTextPart(part: ChatPart): boolean {
           <div>
             <h1 class="text-lg font-semibold">{{ t('welcome') }}</h1>
             <p class="text-xs text-muted">
-              {{ activeThreadId ? 'Thread active' : 'New conversation' }}
+              {{ activeThreadId ? t('threadActive') : t('newConversation') }}
             </p>
           </div>
         </div>
         <div class="flex items-center gap-2">
-          <UTooltip :text="enableTools ? 'Disable AI Tools' : 'Enable AI Tools'">
+          <UTooltip :text="enableTools ? t('toolsDisable') : t('toolsEnable')">
             <div class="flex items-center gap-1">
               <UButton
 :icon="enableTools ? 'i-lucide-wrench' : 'i-lucide-wrench'"
                 :color="enableTools ? 'primary' : 'neutral'" variant="ghost" size="sm"
-                @click="enableTools = !enableTools" />
-              <span v-if="!enableTools" class="text-xs text-muted">Off</span>
+                @click="handleToggleTools" />
+              <span v-if="!enableTools" v-motion-fade :duration="200" class="text-xs text-muted">{{ t('toolsOff') }}</span>
             </div>
           </UTooltip>
-          <UTooltip :text="'Show Available Tools'">
+          <UTooltip :text="activeBusinessId ? (useBusinessContext ? t('businessContext.disable') : t('businessContext.enable')) : t('businessContext.noBusiness')">
+            <div class="flex items-center gap-1">
+              <UButton
+icon="i-lucide-building-2"
+                data-testid="business-context-toggle"
+                :color="useBusinessContext ? 'primary' : 'neutral'" variant="ghost" size="sm"
+                :disabled="!activeBusinessId"
+                @click="handleToggleBusinessContext" />
+              <span v-if="!useBusinessContext" v-motion-fade :duration="200" class="text-xs text-muted">{{ t('businessContext.off') }}</span>
+              <UBadge
+                v-else-if="contextReady === true"
+                v-motion-fade
+                :duration="200"
+                color="success"
+                variant="subtle"
+                size="xs"
+              >
+                {{ t('businessContext.ready') }}
+              </UBadge>
+              <NuxtLink
+                v-else-if="contextReady === false && activeBusinessId"
+                v-motion-fade
+                :duration="200"
+                :to="`/app/business/${activeBusinessId}/playbook`"
+                data-testid="business-context-cta"
+                class="text-xs text-warning underline"
+              >
+                {{ t('businessContext.notReady') }}
+              </NuxtLink>
+            </div>
+          </UTooltip>
+          <UTooltip :text="t('showTools')">
             <UButton
 icon="i-lucide-list" color="neutral" variant="ghost" size="sm"
-              @click="showToolsPanel = !showToolsPanel" />
+              @click="handleToggleToolsPanel" />
           </UTooltip>
-          <UButton icon="i-lucide-rotate-cw" color="neutral" variant="ghost" size="sm" @click="createNewThread" />
+          <UButton icon="i-lucide-rotate-cw" color="neutral" variant="ghost" size="sm" @click="handleNewThread" />
         </div>
       </div>
 
-      <div v-if="showToolsPanel" class="border-b border-muted bg-muted/20 p-4">
+      <div v-if="showToolsPanel" v-motion-slide-bottom :duration="250" class="border-b border-muted bg-muted/20 p-4">
         <div class="max-w-3xl mx-auto">
-          <h3 class="text-sm font-semibold mb-2">Available Tools</h3>
-          <p class="text-xs text-muted mb-3">Click to insert tool reference into your message</p>
+          <h3 class="text-sm font-semibold mb-2">{{ t('availableTools') }}</h3>
+          <p class="text-xs text-muted mb-3">{{ t('toolsHint') }}</p>
           <div class="flex flex-wrap gap-2">
             <UButton
 v-for="tool in availableTools" :key="tool.name" size="xs" variant="outline"
@@ -181,7 +312,7 @@ v-for="tool in availableTools" :key="tool.name" size="xs" variant="outline"
 
             <div v-else-if="message.role === 'assistant'" class="flex flex-col gap-2">
               <div v-if="message.reasoningContent" class="bg-muted/50 p-3 rounded text-sm">
-                <p class="text-xs text-muted mb-1">Reasoning</p>
+                <p class="text-xs text-muted mb-1">{{ t('reasoning') }}</p>
                 <MDC :value="message.reasoningContent" class="*first:mt-0 *last:mb-0" />
               </div>
 
@@ -199,6 +330,15 @@ v-for="tool in availableTools" :key="tool.name" size="xs" variant="outline"
                   <MDC
 v-if="part.text" :value="part.text" :cache-key="`${message.id}-${index}`"
                     class="prose prose-sm max-w-none" />
+                  <div v-if="part.text && message.role === 'assistant' && activeBusinessId" class="mt-1">
+                    <UButton
+                      size="xs" variant="ghost" color="neutral" icon="i-heroicons-bookmark"
+                      :loading="savingArtifactId === message.id || artifactBusyId === 'new'"
+                      @click="handleSaveMessageArtifact(message.id, part.text ?? '')"
+                    >
+                      {{ t('artifacts.saveAs') }}
+                    </UButton>
+                  </div>
                 </template>
               </template>
 
@@ -206,13 +346,24 @@ v-if="part.text" :value="part.text" :cache-key="`${message.id}-${index}`"
 v-if="isStreaming && message.id === messages[messages.length - 1]?.id"
                 class="flex items-center gap-2 text-muted">
                 <UIcon name="i-lucide-ellipsis" class="w-6 h-6 animate-bounce" />
-                <span class="text-sm">Thinking...</span>
+                <span class="text-sm">{{ t('thinking') }}</span>
               </div>
             </div>
           </div>
         </div>
 
-        <div v-if="!messages.length" class="flex flex-col items-center justify-center h-full">
+        <div v-if="threadArtifacts.length > 0 && activeBusinessId" v-motion-fade :duration="250" class="mx-auto w-full max-w-3xl space-y-3">
+          <p class="text-xs font-semibold text-muted">{{ t('artifacts.section') }}</p>
+          <ArtifactCard
+            v-for="artifact in threadArtifacts"
+            :key="artifact.id"
+            :artifact="artifact"
+            :business-id="activeBusinessId"
+            @changed="handleArtifactChanged"
+          />
+        </div>
+
+        <div v-if="!messages.length" v-motion-fade :duration="200" class="flex flex-col items-center justify-center h-full">
           <div class="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
             <UIcon name="i-lucide-sparkles" class="w-8 h-8 text-primary" />
           </div>
@@ -224,7 +375,7 @@ v-if="isStreaming && message.id === messages[messages.length - 1]?.id"
             <UButton
 v-for="suggestion in [t('suggestion1'), t('suggestion2'), t('suggestion3')]" :key="suggestion"
               :label="suggestion" color="neutral" variant="outline" size="sm"
-              @click="handleSuggestionClick(suggestion)" />
+              @click="handleSuggestionSelect(suggestion)" />
           </div>
         </div>
       </div>
@@ -236,7 +387,7 @@ v-for="suggestion in [t('suggestion1'), t('suggestion2'), t('suggestion3')]" :ke
 v-model="input" :placeholder="t('placeholder')" class="flex-1" :disabled="isStreaming"
               @keydown.enter.prevent="onSubmit" />
             <UButton
-type="submit" :label="isStreaming ? 'Sending...' : 'Send'"
+type="submit" :label="isStreaming ? t('sending') : t('send')"
               :disabled="isStreaming || !input.trim()" />
           </form>
         </div>

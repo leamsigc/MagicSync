@@ -1,0 +1,306 @@
+{
+  "en": {
+    "title": "Content pipelines",
+    "description": "Run the AI content workflow: research, write, humanize, design, review.",
+    "seo_title": "Pipelines",
+    "seo_description": "Run the AI content workflow: research, write, humanize, design, review.",
+    "selector": {
+      "label": "Pipeline",
+      "placeholder": "Select a pipeline"
+    },
+    "view": {
+      "board": "Board",
+      "table": "Table"
+    },
+    "board": {
+      "empty": "No runs here yet. Start a run to see it on the board.",
+      "open": "Open run",
+      "step": "Step {current} of {total}"
+    },
+    "statuses": {
+      "running": "Running",
+      "waiting_input": "Waiting for review",
+      "completed": "Completed",
+      "failed": "Failed"
+    },
+    "table": {
+      "columns": {
+        "run": "Run",
+        "pipeline": "Pipeline",
+        "status": "Status",
+        "step": "Step",
+        "updated": "Updated",
+        "actions": "Actions"
+      },
+      "empty": "No runs yet. Start your first run to begin.",
+      "view": "View"
+    },
+    "startModal": {
+      "trigger": "Start run",
+      "title": "Start pipeline run",
+      "description": "Give the agents a brief. Review happens before anything finishes.",
+      "pipeline": "Pipeline",
+      "pipelinePlaceholder": "Select a pipeline",
+      "brief": "Brief",
+      "briefPlaceholder": "What should the agents create? Topic, tone, audience…",
+      "useContext": "Use business context",
+      "useContextHint": "Off by default. Turn on to share your business profile with the agents.",
+      "cancel": "Cancel",
+      "submit": "Start run"
+    },
+    "toast": {
+      "loadFailed": "Failed to load pipelines",
+      "runStarted": "Pipeline run started",
+      "runStartFailed": "Failed to start pipeline run",
+      "briefRequired": "Please write a brief for the agents first",
+      "pipelineRequired": "Please select a pipeline first",
+      "pipelineCreated": "Pipeline created successfully",
+      "createFailed": "Failed to create pipeline",
+      "runApproved": "Run approved",
+      "changesSent": "Feedback sent back to the agents",
+      "advanceFailed": "Failed to update the run",
+      "agentLogSoon": "Agent run logging is coming soon",
+      "quickFailed": "Failed to queue quick action",
+      "pipelineDeleted": "Pipeline deleted",
+      "pipelineDeleteFailed": "Failed to delete pipeline"
+    },
+    "studio": {
+      "open": "Open Studio"
+    },
+    "delete": {
+      "button": "Delete pipeline",
+      "title": "Delete pipeline?",
+      "description": "Delete \"{name}\" and all its runs? This cannot be undone.",
+      "cancel": "Cancel",
+      "confirm": "Delete"
+    }
+  },
+  "es": {
+    "title": "Pipelines de contenido",
+    "description": "Ejecuta el flujo de contenido con IA: investigar, escribir, humanizar, diseñar, revisar.",
+    "seo_title": "Pipelines",
+    "seo_description": "Ejecuta el flujo de contenido con IA: investigar, escribir, humanizar, diseñar, revisar.",
+    "selector": {
+      "label": "Pipeline",
+      "placeholder": "Selecciona un pipeline"
+    },
+    "view": {
+      "board": "Tablero",
+      "table": "Tabla"
+    },
+    "board": {
+      "empty": "Aún no hay ejecuciones aquí. Inicia una para verla en el tablero.",
+      "open": "Abrir ejecución",
+      "step": "Paso {current} de {total}"
+    },
+    "statuses": {
+      "running": "En curso",
+      "waiting_input": "Esperando revisión",
+      "completed": "Completada",
+      "failed": "Fallida"
+    },
+    "table": {
+      "columns": {
+        "run": "Ejecución",
+        "pipeline": "Pipeline",
+        "status": "Estado",
+        "step": "Paso",
+        "updated": "Actualizada",
+        "actions": "Acciones"
+      },
+      "empty": "Aún no hay ejecuciones. Inicia la primera para empezar.",
+      "view": "Ver"
+    },
+    "startModal": {
+      "trigger": "Iniciar ejecución",
+      "title": "Iniciar ejecución del pipeline",
+      "description": "Dale a los agentes un resumen. La revisión ocurre antes de finalizar.",
+      "pipeline": "Pipeline",
+      "pipelinePlaceholder": "Selecciona un pipeline",
+      "brief": "Resumen",
+      "briefPlaceholder": "¿Qué deben crear los agentes? Tema, tono, audiencia…",
+      "useContext": "Usar contexto del negocio",
+      "useContextHint": "Apagado por defecto. Actívalo para compartir tu perfil de negocio con los agentes.",
+      "cancel": "Cancelar",
+      "submit": "Iniciar ejecución"
+    },
+    "toast": {
+      "loadFailed": "No se pudieron cargar los pipelines",
+      "runStarted": "Ejecución del pipeline iniciada",
+      "runStartFailed": "No se pudo iniciar la ejecución",
+      "briefRequired": "Escribe primero un resumen para los agentes",
+      "pipelineRequired": "Selecciona primero un pipeline",
+      "pipelineCreated": "Pipeline creado correctamente",
+      "createFailed": "No se pudo crear el pipeline",
+      "runApproved": "Ejecución aprobada",
+      "changesSent": "Comentarios enviados a los agentes",
+      "advanceFailed": "No se pudo actualizar la ejecución",
+      "agentLogSoon": "El registro de agentes llegará pronto",
+      "quickFailed": "No se pudo programar la acción rápida",
+      "pipelineDeleted": "Pipeline eliminado",
+      "pipelineDeleteFailed": "No se pudo eliminar el pipeline"
+    },
+    "studio": {
+      "open": "Abrir estudio"
+    },
+    "delete": {
+      "button": "Eliminar pipeline",
+      "title": "¿Eliminar pipeline?",
+      "description": "¿Eliminar \"{name}\" y todas sus ejecuciones? No se puede deshacer.",
+      "cancel": "Cancelar",
+      "confirm": "Eliminar"
+    }
+  },
+  "de": {
+    "title": "Content-Pipelines",
+    "description": "KI-Content-Workflow starten: recherchieren, schreiben, humanisieren, designen, prüfen.",
+    "seo_title": "Pipelines",
+    "seo_description": "KI-Content-Workflow starten: recherchieren, schreiben, humanisieren, designen, prüfen.",
+    "selector": {
+      "label": "Pipeline",
+      "placeholder": "Pipeline auswählen"
+    },
+    "view": {
+      "board": "Board",
+      "table": "Tabelle"
+    },
+    "board": {
+      "empty": "Noch keine Läufe hier. Starte einen Lauf, um ihn auf dem Board zu sehen.",
+      "open": "Lauf öffnen",
+      "step": "Schritt {current} von {total}"
+    },
+    "statuses": {
+      "running": "Läuft",
+      "waiting_input": "Wartet auf Prüfung",
+      "completed": "Abgeschlossen",
+      "failed": "Fehlgeschlagen"
+    },
+    "table": {
+      "columns": {
+        "run": "Lauf",
+        "pipeline": "Pipeline",
+        "status": "Status",
+        "step": "Schritt",
+        "updated": "Aktualisiert",
+        "actions": "Aktionen"
+      },
+      "empty": "Noch keine Läufe. Starte deinen ersten Lauf.",
+      "view": "Ansehen"
+    },
+    "startModal": {
+      "trigger": "Lauf starten",
+      "title": "Pipeline-Lauf starten",
+      "description": "Gib den Agenten ein Briefing. Die Prüfung erfolgt vor dem Abschluss.",
+      "pipeline": "Pipeline",
+      "pipelinePlaceholder": "Pipeline auswählen",
+      "brief": "Briefing",
+      "briefPlaceholder": "Was sollen die Agenten erstellen? Thema, Ton, Zielgruppe…",
+      "useContext": "Business-Kontext verwenden",
+      "useContextHint": "Standardmäßig aus. Einschalten, um dein Business-Profil mit den Agenten zu teilen.",
+      "cancel": "Abbrechen",
+      "submit": "Lauf starten"
+    },
+    "toast": {
+      "loadFailed": "Pipelines konnten nicht geladen werden",
+      "runStarted": "Pipeline-Lauf gestartet",
+      "runStartFailed": "Pipeline-Lauf konnte nicht gestartet werden",
+      "briefRequired": "Schreibe zuerst ein Briefing für die Agenten",
+      "pipelineRequired": "Wähle zuerst eine Pipeline",
+      "pipelineCreated": "Pipeline erfolgreich erstellt",
+      "createFailed": "Pipeline konnte nicht erstellt werden",
+      "runApproved": "Lauf genehmigt",
+      "changesSent": "Feedback an die Agenten gesendet",
+      "advanceFailed": "Lauf konnte nicht aktualisiert werden",
+      "agentLogSoon": "Agent-Protokollierung kommt bald",
+      "quickFailed": "Schnellaktion konnte nicht gestartet werden",
+      "pipelineDeleted": "Pipeline gelöscht",
+      "pipelineDeleteFailed": "Pipeline konnte nicht gelöscht werden"
+    },
+    "studio": {
+      "open": "Studio öffnen"
+    },
+    "delete": {
+      "button": "Pipeline löschen",
+      "title": "Pipeline löschen?",
+      "description": "„{name}“ und alle Läufe löschen? Kann nicht rückgängig gemacht werden.",
+      "cancel": "Abbrechen",
+      "confirm": "Löschen"
+    }
+  },
+  "fr": {
+    "title": "Pipelines de contenu",
+    "description": "Lancez le workflow IA : recherche, rédaction, humanisation, design, révision.",
+    "seo_title": "Pipelines",
+    "seo_description": "Lancez le workflow IA : recherche, rédaction, humanisation, design, révision.",
+    "selector": {
+      "label": "Pipeline",
+      "placeholder": "Sélectionner un pipeline"
+    },
+    "view": {
+      "board": "Tableau",
+      "table": "Table"
+    },
+    "board": {
+      "empty": "Aucune exécution ici pour le moment. Démarrez-en une pour la voir.",
+      "open": "Ouvrir l'exécution",
+      "step": "Étape {current} sur {total}"
+    },
+    "statuses": {
+      "running": "En cours",
+      "waiting_input": "En attente de révision",
+      "completed": "Terminée",
+      "failed": "Échouée"
+    },
+    "table": {
+      "columns": {
+        "run": "Exécution",
+        "pipeline": "Pipeline",
+        "status": "Statut",
+        "step": "Étape",
+        "updated": "Mise à jour",
+        "actions": "Actions"
+      },
+      "empty": "Aucune exécution. Démarrez la première pour commencer.",
+      "view": "Voir"
+    },
+    "startModal": {
+      "trigger": "Démarrer",
+      "title": "Démarrer une exécution",
+      "description": "Donnez un brief aux agents. La révision a lieu avant la fin.",
+      "pipeline": "Pipeline",
+      "pipelinePlaceholder": "Sélectionner un pipeline",
+      "brief": "Brief",
+      "briefPlaceholder": "Que doivent créer les agents ? Sujet, ton, audience…",
+      "useContext": "Utiliser le contexte business",
+      "useContextHint": "Désactivé par défaut. Activez pour partager votre profil business avec les agents.",
+      "cancel": "Annuler",
+      "submit": "Démarrer"
+    },
+    "toast": {
+      "loadFailed": "Échec du chargement des pipelines",
+      "runStarted": "Exécution du pipeline démarrée",
+      "runStartFailed": "Échec du démarrage de l'exécution",
+      "briefRequired": "Rédigez d'abord un brief pour les agents",
+      "pipelineRequired": "Sélectionnez d'abord un pipeline",
+      "pipelineCreated": "Pipeline créé avec succès",
+      "createFailed": "Échec de la création du pipeline",
+      "runApproved": "Exécution approuvée",
+      "changesSent": "Retours envoyés aux agents",
+      "advanceFailed": "Échec de la mise à jour de l'exécution",
+      "agentLogSoon": "Le journal des agents arrive bientôt",
+      "quickFailed": "Échec du lancement de l'action rapide",
+      "pipelineDeleted": "Pipeline supprimé",
+      "pipelineDeleteFailed": "Échec de la suppression du pipeline"
+    },
+    "studio": {
+      "open": "Ouvrir le studio"
+    },
+    "delete": {
+      "button": "Supprimer le pipeline",
+      "title": "Supprimer le pipeline ?",
+      "description": "Supprimer « {name} » et toutes ses exécutions ? Irréversible.",
+      "cancel": "Annuler",
+      "confirm": "Supprimer"
+    }
+  }
+}

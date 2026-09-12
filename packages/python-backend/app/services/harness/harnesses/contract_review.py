@@ -66,7 +66,7 @@ async def classify_contract(phase_input: Any, context: Dict) -> Dict:
 Contract text:
 {text}"""
     
-    response = await llm_service.chat([
+    response = await llm_service.chat_text([
         {"role": "system", "content": "You classify contracts. Output valid JSON only."},
         {"role": "user", "content": prompt}
     ], json_mode=True)
@@ -131,7 +131,7 @@ Provide a 3-paragraph executive summary covering:
 Then output final JSON:
 {{"summary": "...", "recommendations": ["...", "..."], "risk_level": "low|medium|high"}}"""
 
-    response = await llm_service.chat([
+    response = await llm_service.chat_text([
         {"role": "system", "content": "You generate contract review summaries."},
         {"role": "user", "content": prompt}
     ], json_mode=True)

@@ -23,6 +23,18 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+def _grounded_topic(topic: str, business_context: str | None) -> str:
+    """Prepend resolved brand context (UNTRUSTED data) to the generation topic."""
+    if business_context and business_context.strip():
+        return f"{business_context.strip()}\n\n---\n\nTopic: {topic}"
+    return topic
+
+def _merge_context(business_context: str | None, additional_context: str | None) -> str:
+    """Combine brand context (first) with caller context for context-aware fields."""
+    parts = [part.strip() for part in [business_context or "", additional_context or ""] if part.strip()]
+    return "\n\n---\n\n".join(parts)
+
+
 @router.post("/generate", response_model=GeneratePostResponse)
 async def generate_post(
     request: GeneratePostRequest,
@@ -45,7 +57,7 @@ async def generate_post(
         tone=request.tone,
         include_hashtags=request.include_hashtags,
         include_cta=request.include_cta,
-        additional_context=request.additional_context,
+        additional_context=_merge_context(request.business_context, request.additional_context),
         max_length=request.max_length,
         moderate=request.moderate,
     )
@@ -75,7 +87,7 @@ async def generate_batch(
     generator = get_social_media_generator(user.user_id)
     
     result = await generator.generate_batch(
-        topic=request.topic,
+        topic=_grounded_topic(request.topic, request.business_context),
         platforms=request.platforms,
         tone=request.tone,
         include_hashtags=request.include_hashtags,
@@ -105,7 +117,7 @@ async def generate_thread(
     generator = get_social_media_generator(user.user_id, moderate=request.moderate)
 
     result = await generator.generate_thread(
-        topic=request.topic,
+        topic=_grounded_topic(request.topic, request.business_context),
         platform=request.platform,
         tweet_count=request.tweet_count,
         hook_first=request.hook_first,
@@ -141,7 +153,7 @@ async def generate_variations(
     generator = get_social_media_generator(user.user_id)
     
     result = await generator.generate_variations(
-        base_content=request.base_content,
+        base_content=_grounded_topic(request.base_content, request.business_context),
         platform=request.platform,
         count=request.count,
         variation_type=request.variation_type,
@@ -170,7 +182,7 @@ async def generate_hooks(
     generator = get_social_media_generator(user.user_id)
     
     result = await generator.generate_hooks(
-        topic=request.topic,
+        topic=_grounded_topic(request.topic, request.business_context),
         platform=request.platform,
         count=request.count,
     )
@@ -199,7 +211,7 @@ async def generate_hashtags(
     generator = get_social_media_generator(user.user_id, moderate=request.moderate)
 
     result = await generator.generate_hashtags(
-        topic=request.topic,
+        topic=_grounded_topic(request.topic, request.business_context),
         platform=request.platform,
         count=request.count,
         style=request.style,

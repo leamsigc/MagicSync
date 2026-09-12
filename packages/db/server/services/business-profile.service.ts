@@ -19,6 +19,7 @@ import {
 import {
   ValidationError
 } from './types'
+import { businessCorpusService } from './business-corpus.service'
 
 export interface CreateBusinessProfileData {
   name: string
@@ -53,6 +54,8 @@ export class BusinessProfileService implements BusinessProfileServiceType {
         createdAt: now,
         updatedAt: now
       }).returning()
+
+      await businessCorpusService.seedDefaults(id, userId)
 
       return { success: true, data: profile }
     } catch (error) {

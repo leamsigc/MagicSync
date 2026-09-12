@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken'
 import type { UserLlmConfig } from '#layers/BaseDB/db/schema'
+import { encryptSecret, isEncryptedSecret } from './publish-crypto'
 
 const JWT_EXPIRES_IN = '1h' // Short-lived token for API calls
 
@@ -33,16 +34,20 @@ export function createLlmJwt(
   email: string,
   config: UserLlmConfig | null,
 ): string {
-  // Encrypt API key if present (simple base64 for now, can be improved)
-  const apiKeyEncrypted = config?.apiKey
-    ? Buffer.from(config.apiKey).toString('base64')
-    : null
+  // Transport the API key as AES-256-GCM (same envelope as publish-crypto).
+  // The Python backend decrypts it with the shared publish/JWT secret.
+  // Values already in encrypted form are passed through, never double-wrapped.
+  const candidate = config?.apiKey
+  const rawKey = candidate && candidate.trim() ? candidate : null
+  const apiKeyEncrypted = !rawKey
+    ? null
+    : isEncryptedSecret(rawKey) ? rawKey : encryptSecret(rawKey)
 
   const payload: LlmJwtPayload = {
     userId,
     email,
-    provider: config?.provider || 'ollama',
-    model: config?.model || 'qwen3.5',
+    provider: config?.provider || 'google',
+    model: config?.model || 'gemini-3-flash-preview',
     apiKeyEncrypted,
     apiBaseUrl: config?.apiBaseUrl || null,
     temperature: config?.temperature ?? 0.7,
