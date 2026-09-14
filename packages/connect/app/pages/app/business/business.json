@@ -67,6 +67,14 @@
       "close": "Close",
       "delete": "Delete"
     },
+    "tabs": {
+      "business_details": "Business Details",
+      "company_info": "Company Info",
+      "brand_identity": "Brand Identity",
+      "details": "Details",
+      "playbook": "Playbook",
+      "settings": "Settings"
+    },
     "wizard": {
       "title": "Create New Project",
       "subtitle_step1": "Enter a website URL to automatically extract business details.",
@@ -87,11 +95,6 @@
       "skip_extraction": "Skip AI Extraction",
       "extract_ai": "Extract with AI",
       "extract_profile_manually": "Extract profile automatically or add manually"
-    },
-    "tabs": {
-      "business_details": "Business Details",
-      "company_info": "Company Info",
-      "brand_identity": "Brand Identity"
     },
     "company_info": {
       "label": "Company Information (Markdown)",
@@ -141,6 +144,10 @@
         "follow_facebook": "Follow us on Facebook",
         "follow_facebook_desc": "Join our community and stay connected"
       }
+    },
+    "settings": {
+      "title": "Settings",
+      "description": "Model overrides and advanced options for this business."
     }
   },
   "fr": {
@@ -231,7 +238,10 @@
     "tabs": {
       "business_details": "Business Details",
       "company_info": "Company Info",
-      "brand_identity": "Brand Identity"
+      "brand_identity": "Brand Identity",
+      "details": "Details",
+      "playbook": "Playbook",
+      "settings": "Settings"
     },
     "company_info": {
       "label": "Company Information (Markdown)",
@@ -285,7 +295,11 @@
         "follow_facebook_desc": "Rejoins la communauté"
       }
     },
-    "title_edit": "Modifier l’entreprise"
+    "title_edit": "Modifier l’entreprise",
+    "settings": {
+      "title": "Paramètres",
+      "description": "Surcharge du modèle et options avancées de cette entreprise."
+    }
   },
   "es": {
     "title": "Gestión de negocios",
@@ -375,7 +389,10 @@
     "tabs": {
       "business_details": "Business Details",
       "company_info": "Company Info",
-      "brand_identity": "Brand Identity"
+      "brand_identity": "Brand Identity",
+      "details": "Details",
+      "playbook": "Playbook",
+      "settings": "Settings"
     },
     "company_info": {
       "label": "Company Information (Markdown)",
@@ -429,7 +446,11 @@
         "follow_facebook_desc": "Únete a la comunidad"
       }
     },
-    "title_edit": "Editar negocio"
+    "title_edit": "Editar negocio",
+    "settings": {
+      "title": "Ajustes",
+      "description": "Ajustes del modelo y opciones avanzadas de este negocio."
+    }
   },
   "de": {
     "title": "Unternehmensverwaltung",
@@ -519,7 +540,10 @@
     "tabs": {
       "business_details": "Business Details",
       "company_info": "Company Info",
-      "brand_identity": "Brand Identity"
+      "brand_identity": "Brand Identity",
+      "details": "Details",
+      "playbook": "Playbook",
+      "settings": "Settings"
     },
     "company_info": {
       "label": "Company Information (Markdown)",
@@ -573,6 +597,10 @@
         "follow_facebook_desc": "Tritt der Community bei"
       }
     },
-    "title_edit": "Unternehmen bearbeiten"
+    "title_edit": "Unternehmen bearbeiten",
+    "settings": {
+      "title": "Einstellungen",
+      "description": "Modellüberschreibungen und erweiterte Optionen für dieses Unternehmen."
+    }
   }
 }

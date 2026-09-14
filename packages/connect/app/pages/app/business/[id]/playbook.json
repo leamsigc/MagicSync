@@ -37,7 +37,9 @@
       "pipelines": "Pipelines",
       "pipelinesHint": "Agent workflows",
       "publishing": "Publishing",
-      "publishingHint": "Connected accounts"
+      "publishingHint": "Connected accounts",
+      "board": "Content board",
+      "boardHint": "Per-business kanban"
     },
     "actions": {
       "title": "Draft actions",
@@ -194,7 +196,9 @@
       "pipelines": "Pipelines",
       "pipelinesHint": "Flujos de agentes",
       "publishing": "Publicación",
-      "publishingHint": "Cuentas conectadas"
+      "publishingHint": "Cuentas conectadas",
+      "board": "Tablero de contenido",
+      "boardHint": "Kanban por negocio"
     },
     "actions": {
       "title": "Acciones del borrador",
@@ -351,7 +355,9 @@
       "pipelines": "Pipelines",
       "pipelinesHint": "Agenten-Workflows",
       "publishing": "Publishing",
-      "publishingHint": "Verbundene Konten"
+      "publishingHint": "Verbundene Konten",
+      "board": "Content-Board",
+      "boardHint": "Kanban je Unternehmen"
     },
     "actions": {
       "title": "Entwurfsaktionen",
@@ -508,7 +514,9 @@
       "pipelines": "Pipelines",
       "pipelinesHint": "Workflows d'agents",
       "publishing": "Publication",
-      "publishingHint": "Comptes connectés"
+      "publishingHint": "Comptes connectés",
+      "board": "Tableau de contenu",
+      "boardHint": "Kanban par entreprise"
     },
     "actions": {
       "title": "Actions du brouillon",

@@ -100,7 +100,7 @@ const handleEditFromView = (template: Template) => {
 </script>
 
 <template>
-    <div class="container mx-auto py-6 space-y-6">
+    <div class=" p-4 lg:mx-auto lg:p-6">
         <BasePageHeader :title="t('title')" :description="t('description')">
             <template #actions>
                 <UButton icon="lucide:plus" color="primary" @click="handleCreate">

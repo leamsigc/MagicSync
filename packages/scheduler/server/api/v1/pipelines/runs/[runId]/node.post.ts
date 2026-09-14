@@ -4,8 +4,7 @@ import { postService } from "#layers/BaseDB/server/services/post.service"
 import { contentArtifactService, newDraftPostInput, resolveTargetAccountIds } from "#layers/BaseDB/server/services/content-artifact.service"
 import { publishingService } from "#layers/BaseDB/server/services/publishing.service"
 import { businessContextResolver, contextErrorStatus } from '#layers/BaseDB/server/services/business-context-resolver.service'
-import { userLlmConfigService } from '#layers/BaseDB/server/services/user-llm-config.service'
-import { createLlmJwt } from '#layers/BaseDB/server/utils/llm-jwt'
+import { completeForUser } from '#layers/BaseAgent/server/utils/run-config'
 
 const MODEL_NODE_KINDS = new Set(['agent', 'skill', 'research', 'write_post', 'humanize', 'design_fabric'])
 const MATERIALIZE_KINDS = new Set(['create_carousel', 'create_reel_storyboard'])
@@ -181,7 +180,7 @@ async function executeCreatePost(event: any, userId: string, runId: string, run:
 async function executeModelNode(
   event: any,
   userId: string,
-  userEmail: string,
+  _userEmail: string,
   runId: string,
   run: { businessId: string, nodeResults: string | null },
   node: SnapshotNode,
@@ -198,33 +197,22 @@ async function executeModelNode(
     throw createError({ statusCode: contextErrorStatus(brandResult.code), message: brandResult.error })
   }
   const brand = brandResult.data
-  const llmConfig = await userLlmConfigService.getEffectiveConfig(userId, run.businessId)
-  const llmJwt = createLlmJwt(userId, userEmail, llmConfig.data ?? null)
-  const config = useRuntimeConfig()
-  const backendUrl = config.pythonBackendUrl || 'http://localhost:8000'
-  const response = await fetch(`${backendUrl}/api/v1/agent-extended/harness/execute-phase`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${llmJwt}` },
-    body: JSON.stringify({
-      harness_type: 'node',
-      phase_index: 0,
-      phase_input: {
-        node_id: node.id,
-        node_kind: node.kind,
-        brief: priorOutputText(parseNodeResults(run.nodeResults)),
-        business_id: brand.businessId,
-        use_business_context: brand.enabled,
-        context_edition_id: brand.editionId,
-        business_context: brand.prompt || undefined,
-        node_config: node.config ?? {},
-      },
-    }),
+  const executedResult = await completeForUser(userId, {
+    businessId: run.businessId,
+    useBusinessContext: false,
+    event,
+    system: brand.enabled ? brand.prompt : undefined,
+    maxTokens: 1600,
+    prompt: [
+      `Execute pipeline node "${node.name ?? node.id}" of kind ${node.kind}.`,
+      `Brief: ${priorOutputText(parseNodeResults(run.nodeResults))}`,
+      `Node config: ${JSON.stringify(node.config ?? {})}`,
+    ].join('\n'),
   })
-  if (!response.ok) {
-    throw createError({ statusCode: 502, statusMessage: 'Agent backend failed to execute the node' })
+  if (!executedResult.success) {
+    throw createError({ statusCode: 400, statusMessage: executedResult.error })
   }
-  const executed = (await response.json()) as { result?: unknown }
-  const completed = await pipelineService.completeNode(userId, runId, node.id, executed.result ?? {}, event)
+  const completed = await pipelineService.completeNode(userId, runId, node.id, { text: executedResult.data.text }, event)
   if (!completed.success) {
     throw createError({ statusCode: 500, statusMessage: completed.error })
   }

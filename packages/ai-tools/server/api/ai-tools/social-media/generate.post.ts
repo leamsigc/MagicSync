@@ -1,58 +1,28 @@
-import { aiToolsFacade } from '#ai-tools/server/services/aiToolsFacade.service'
-import { businessContextResolver, contextErrorStatus } from '#layers/BaseDB/server/services/business-context-resolver.service'
+import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
+import { contextFlags, socialComplete, toSocialPost } from '#ai-tools/server/utils/socialAi'
 
 export default defineEventHandler(async (event) => {
-  const user = await aiToolsFacade.authenticate(event)
+  const user = await checkUserIsLogin(event)
   const body = await readBody(event)
 
-  if (!body?.topic?.trim()) {
-    throw createError({ statusCode: 400, statusMessage: 'Topic is required' })
-  }
+  if (!body?.topic?.trim()) throw createError({ statusCode: 400, statusMessage: 'Topic is required' })
+  if (!body?.platform?.trim()) throw createError({ statusCode: 400, statusMessage: 'Platform is required' })
 
-  if (!body?.platform?.trim()) {
-    throw createError({ statusCode: 400, statusMessage: 'Platform is required' })
-  }
-
-  const contextResult = await businessContextResolver.resolve(user.id, {
-    businessId: body.businessId ?? body.business_id ?? null,
-    useBusinessContext: body.useBusinessContext === true || body.use_business_context === true,
-  }, event)
-  if (!contextResult.success || !contextResult.data) {
-    throw createError({ statusCode: contextErrorStatus(contextResult.code), message: contextResult.error })
-  }
-  const brandContext = contextResult.data
-  const llmJwtResult = await aiToolsFacade.getLlmJwtContext(user.id, user.email || '', brandContext.businessId)
-  const llmJwt = llmJwtResult.data?.token ?? ''
-
-  const config = useRuntimeConfig()
-  const backendUrl = config.pythonBackendUrl || 'http://localhost:8000'
-
-  const result = await $fetch<{
-    post?: {
-      text: string
-      hashtags: string[]
-      platform: string
-      character_count: number
-      warning?: string
-    }
-    error?: string
-  }>(`${backendUrl}/api/v1/social-media/generate`, {
-    method: 'POST',
-    body: {
-      topic: body.topic,
-      platform: body.platform,
-      tone: body.tone || 'professional',
-      include_hashtags: body.include_hashtags ?? true,
-      include_cta: body.include_cta ?? false,
-      additional_context: body.additional_context || '',
-      max_length: body.max_length,
-      business_id: brandContext.businessId,
-      use_business_context: brandContext.enabled,
-      context_edition_id: brandContext.editionId,
-      business_context: brandContext.prompt || undefined,
-    },
-    headers: { Authorization: `Bearer ${llmJwt}` },
+  const context = contextFlags(body)
+  const data = await socialComplete(user.id, {
+    ...context,
+    event,
+    system: 'You are a social media copywriter. Return strict JSON only.',
+    prompt: [
+      `Write one ${body.platform} post about: ${body.topic}.`,
+      `Tone: ${body.tone || 'professional'}.`,
+      body.include_hashtags === false ? 'Do not include hashtags.' : 'Include 3-5 relevant hashtags.',
+      body.include_cta ? 'End with a clear call to action.' : '',
+      body.additional_context ? `Extra context: ${body.additional_context}` : '',
+      body.max_length ? `Keep the caption under ${body.max_length} characters.` : '',
+      'Return strict JSON: {"text": string, "hashtags": string[]}.',
+    ].filter(Boolean).join('\n'),
   })
 
-  return result
+  return { post: toSocialPost(data.json ?? { text: data.text }, body.platform) }
 })

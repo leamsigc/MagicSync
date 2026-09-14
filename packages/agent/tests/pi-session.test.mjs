@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
@@ -7,35 +7,9 @@ import { createAgentSession, defineTool, SessionManager, SettingsManager } from 
 import { Type } from 'typebox'
 import { applyRunApiKey, createAgentModelRuntime, resolveRunModel } from '../server/utils/pi-runtime.ts'
 import { startStubProvider } from './stub-provider.mjs'
+import { writeStubModelsConfig } from './stub-models.mjs'
 
 const STUB_TOOL = 'echo_note'
-
-function writeStubModelsConfig(dir, baseUrl) {
-  const modelsPath = join(dir, 'models.json')
-  writeFileSync(modelsPath, JSON.stringify({
-    providers: {
-      stub: {
-        name: 'Stub Provider',
-        baseUrl,
-        api: 'openai-completions',
-        apiKey: 'stub-key',
-        compat: {
-          supportsDeveloperRole: false,
-          supportsReasoningEffort: false,
-        },
-        models: [{
-          id: 'stub-model',
-          name: 'Stub Model',
-          reasoning: false,
-          input: ['text'],
-          contextWindow: 128000,
-          maxTokens: 4096,
-        }],
-      },
-    },
-  }, null, 2))
-  return modelsPath
-}
 
 function collectAssistantText(messages) {
   return messages

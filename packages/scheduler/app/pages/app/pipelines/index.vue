@@ -11,11 +11,14 @@ import PipelineRunsBoardView from './components/views/PipelineRunsBoardView.vue'
 import PipelineRunsTableView from './components/views/PipelineRunsTableView.vue'
 
 const activeBusinessId = useState<string>('business:id')
-const { pipelineList, runList, fetchPipelines, fetchRuns, deletePipeline, t } = usePipelineManager()
+const { pipelineList, runList, fetchPipelines, fetchRuns, deletePipeline, deleteRun, t } = usePipelineManager()
 const router = useRouter()
 const toast = useToast()
 const deleteOpen = ref(false)
 const deleting = ref(false)
+const runDeleteOpen = ref(false)
+const runDeleteTarget = ref('')
+const deletingRun = ref(false)
 
 useHead({
   title: t('seo_title'),
@@ -82,6 +85,30 @@ async function handleConfirmDelete() {
   }
 }
 
+function handleAskDeleteRun(id: string) {
+  runDeleteTarget.value = id
+  runDeleteOpen.value = true
+}
+
+function handleCloseDeleteRun() {
+  runDeleteOpen.value = false
+  runDeleteTarget.value = ''
+}
+
+async function handleConfirmDeleteRun() {
+  if (!runDeleteTarget.value) {
+    return
+  }
+  deletingRun.value = true
+  try {
+    await deleteRun(runDeleteTarget.value)
+    handleCloseDeleteRun()
+  }
+  finally {
+    deletingRun.value = false
+  }
+}
+
 onMounted(async () => {
   if (activeBusinessId.value) {
     await fetchPipelines(activeBusinessId.value)
@@ -91,69 +118,85 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="mx-auto space-y-6">
-    <BasePageHeader :title="t('title')" :description="t('description')">
-      <template #actions>
+  <div class="min-h-screen ">
+    <header class="sticky top-0 z-40 border-b border-white/5  backdrop-blur-xl">
+      <div class="mx-auto p-2 lg:p-6 flex items-center justify-between">
+        <div>
+          <h1 class="text-lg font-semibold text-white/90">{{ t('title') }}</h1>
+          <p class="text-xs text-white/40">{{ t('description') }}</p>
+        </div>
         <div class="flex flex-wrap items-center gap-2">
-          <UButton color="neutral" variant="outline" icon="i-heroicons-squares-2x2" data-testid="open-studio" @click="handleOpenStudio">
+          <UButton color="neutral" variant="outline" icon="i-heroicons-squares-2x2" data-testid="open-studio"
+            @click="handleOpenStudio" class="border-white/10 text-white/50">
             {{ t('studio.open') }}
           </UButton>
           <StartRunModal />
         </div>
-      </template>
-    </BasePageHeader>
+      </div>
+    </header>
 
-    <div class="p-2 flex flex-wrap justify-between items-center gap-3">
-      <section class="flex items-center gap-2">
-        <span class="text-sm text-muted">{{ t('selector.label') }}</span>
-        <USelect
-          :model-value="selectedPipeline?.id ?? ''"
-          :items="pipelineItems"
-          :placeholder="t('selector.placeholder')"
-          class="min-w-56"
-          @update:model-value="handlePipelineSelect"
-        />
-        <UButton
-          v-if="selectedPipeline"
-          color="error"
-          variant="ghost"
-          size="sm"
-          icon="i-heroicons-trash"
-          :title="t('delete.button')"
-          @click="handleAskDelete"
-        />
-      </section>
+    <main class="mx-auto max-w-7xl px-6 py-6 space-y-6">
+      <div
+        class="p-2 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-[#111111] border border-white/5 p-4">
+        <section class="flex items-center gap-3">
+          <span class="text-sm text-white/40">{{ t('selector.label') }}</span>
+          <USelect :model-value="selectedPipeline?.id ?? ''" :items="pipelineItems"
+            :placeholder="t('selector.placeholder')" class="min-w-64" @update:model-value="handlePipelineSelect" />
+          <UButton v-if="selectedPipeline" color="error" variant="ghost" size="sm" icon="i-heroicons-trash"
+            :title="t('delete.button')" @click="handleAskDelete" class="text-white/30" />
+        </section>
 
-      <section class="flex gap-1">
-        <UButton icon="i-heroicons-squares-2x2" :variant="currentView === 'Board' ? 'solid' : 'ghost'" size="sm" class="rounded-xl" @click="setView('Board')">
-          {{ t('view.board') }}
-        </UButton>
-        <UButton icon="i-heroicons-table-cells" :variant="currentView === 'Table' ? 'solid' : 'ghost'" size="sm" class="rounded-xl" @click="setView('Table')">
-          {{ t('view.table') }}
-        </UButton>
-      </section>
-    </div>
-
-    <div v-if="currentView === 'Board'" v-motion-fade-visible :duration="200" :key="`board-${selectedPipeline?.id}`">
-      <PipelineRunsBoardView :runs="visibleRuns" :pipeline-name="selectedPipeline?.name ?? ''" />
-    </div>
-
-    <div v-if="currentView === 'Table'" v-motion-fade-visible :duration="200" :key="`table-${selectedPipeline?.id}`">
-      <PipelineRunsTableView :runs="visibleRuns" />
-    </div>
-
-    <UModal v-model:open="deleteOpen" :title="t('delete.title')" :description="t('delete.description', { name: selectedPipeline?.name ?? '' })">
-      <template #footer>
-        <div class="flex flex-wrap justify-end gap-2">
-          <UButton color="neutral" variant="ghost" @click="handleCloseDelete">
-            {{ t('delete.cancel') }}
+        <section class="flex gap-1 rounded-lg bg-white/5 p-1">
+          <UButton icon="i-heroicons-squares-2x2" :variant="currentView === 'Board' ? 'solid' : 'ghost'" size="sm"
+            class="rounded-lg" @click="setView('Board')">
+            {{ t('view.board') }}
           </UButton>
-          <UButton color="error" variant="solid" icon="i-heroicons-trash" :loading="deleting" @click="handleConfirmDelete">
-            {{ t('delete.confirm') }}
+          <UButton icon="i-heroicons-table-cells" :variant="currentView === 'Table' ? 'solid' : 'ghost'" size="sm"
+            class="rounded-lg" @click="setView('Table')">
+            {{ t('view.table') }}
           </UButton>
-        </div>
-      </template>
-    </UModal>
+        </section>
+      </div>
+
+      <div v-if="currentView === 'Board'" v-motion-fade-visible :duration="200" :key="`board-${selectedPipeline?.id}`">
+        <PipelineRunsBoardView :runs="visibleRuns" :pipeline-name="selectedPipeline?.name ?? ''"
+          @delete="handleAskDeleteRun" />
+      </div>
+
+      <div v-if="currentView === 'Table'" v-motion-fade-visible :duration="200" :key="`table-${selectedPipeline?.id}`">
+        <PipelineRunsTableView :runs="visibleRuns" @delete="handleAskDeleteRun" />
+      </div>
+
+      <UModal v-model:open="deleteOpen" :title="t('delete.title')"
+        :description="t('delete.description', { name: selectedPipeline?.name ?? '' })">
+        <template #footer>
+          <div class="flex flex-wrap justify-end gap-2">
+            <UButton color="neutral" variant="ghost" @click="handleCloseDelete">
+              {{ t('delete.cancel') }}
+            </UButton>
+            <UButton color="error" variant="solid" icon="i-heroicons-trash" :loading="deleting"
+              @click="handleConfirmDelete">
+              {{ t('delete.confirm') }}
+            </UButton>
+          </div>
+        </template>
+      </UModal>
+
+      <UModal v-model:open="runDeleteOpen" :title="t('runDelete.title')"
+        :description="t('runDelete.description', { name: runDeleteTarget.slice(0, 8) })">
+        <template #footer>
+          <div class="flex flex-wrap justify-end gap-2">
+            <UButton color="neutral" variant="ghost" @click="handleCloseDeleteRun">
+              {{ t('runDelete.cancel') }}
+            </UButton>
+            <UButton color="error" variant="solid" icon="i-heroicons-trash" :loading="deletingRun"
+              @click="handleConfirmDeleteRun">
+              {{ t('runDelete.confirm') }}
+            </UButton>
+          </div>
+        </template>
+      </UModal>
+    </main>
   </div>
 </template>
 

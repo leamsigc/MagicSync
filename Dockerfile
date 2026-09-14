@@ -47,7 +47,23 @@ RUN pnpm dev:prepare
 # the site build. The asset directory is .gitignored to keep pushes small.
 RUN bash ./scripts/tts_assets_folder.sh
 
+# Pinned yt-dlp musllinux binary + sha256 verification (small). Copied into
+# the runtime image below for the download_video tool.
+RUN bash ./scripts/install-ytdlp.sh
+
+# Private-mode ONNX NER assets (~430 MB). Skip with
+#   docker build --build-arg INSTALL_PII=false .
+# for fast local builds; without the assets private mode fails closed at
+# runtime (by design) until PII_MODEL_PATH points at a mounted model.
+ARG INSTALL_PII=true
+RUN if [ "$INSTALL_PII" = "true" ]; then bash ./scripts/pii_assets.sh; fi
+
 RUN pnpm site
+
+# Nitro traces the sharp bindings and versioned libvips packages but not the
+# sibling paths their RPATH searches — stage those links before the runtime
+# COPY so the container can dlopen libvips (see scripts/stage-sharp-libvips.sh).
+RUN bash ./scripts/stage-sharp-libvips.sh
 
 # The `libsql` package (native core behind `@libsql/client`) resolves its
 # platform binding at runtime via detect-libc, so on Alpine it needs
@@ -114,11 +130,13 @@ FROM node:26-alpine
 # (`fabric/node` → canvas.node) fails at startup with
 # "Error loading shared library libcairo.so.2". ttf-dejavu gives Pango a
 # real font to fall back to (bare Alpine ships zero fonts → tofu text).
-RUN apk add --no-cache cairo pango giflib libjpeg-turbo librsvg pixman freetype fontconfig ttf-dejavu
+RUN apk add --no-cache cairo pango giflib libjpeg-turbo librsvg pixman freetype fontconfig ttf-dejavu ffmpeg
 
 WORKDIR /usr/app
 
 COPY --from=builder /usr/app/packages/site/.output ./.output
+# Pinned yt-dlp binary for the download_video tool (ffmpeg is installed above).
+COPY --from=builder /usr/app/.bin/yt-dlp /usr/local/bin/yt-dlp
 # Copy the musl native binding into the exact location where libsql resolves it.
 COPY --from=builder /tmp/musl/node_modules/@libsql/linux-x64-musl /usr/app/.output/server/node_modules/@libsql/linux-x64-musl
 
@@ -128,6 +146,9 @@ RUN node -e "require('/usr/app/.output/server/node_modules/@libsql/linux-x64-mus
 
 ENV NODE_ENV=production
 ENV NUXT_HOST=0.0.0.0
+ENV YTDLP_PATH=/usr/local/bin/yt-dlp
+# Baked in when INSTALL_PII=true (default); mount a model here otherwise.
+ENV PII_MODEL_PATH=/usr/app/.output/public/pii
 EXPOSE 3000
 
 CMD ["node", ".output/server/index.mjs"]

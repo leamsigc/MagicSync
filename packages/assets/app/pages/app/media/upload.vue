@@ -31,7 +31,7 @@ const handleFileUpload = async (files: File[]) => {
 </script>
 
 <template>
-  <div class="container mx-auto py-6 space-y-6">
+  <div class=" p-4 lg:mx-auto lg:p-6">
     <MediaPageHeader :selected-assets-count="0" :show-uploader="false">
       <template #title>
         {{ t('upload.title') }}

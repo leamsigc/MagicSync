@@ -1,7 +1,7 @@
 ---
 name: agents
 description: Always-loaded project anchor. Read this first. Contains project identity, non-negotiables, commands, and pointer to ROUTER.md for full context.
-last_updated: 2026-03-31
+last_updated: 2026-09-13
 ---
 
 # MagicSync
@@ -15,7 +15,7 @@ All remaining work is defined in the single implementation PRD:
 **`.aiContext/PRD.md`** (supersedes the Business Content Agent PRD set and the
 implementation tracker; both removed 2026-09-13). Work one task at a time;
 each task carries
-its own verification gate. The Python service is being decommissioned;
+its own verification gate. The original Python service is decommissioned (removed 2026-09-13); an optional, user-run Python tools sidecar (`packages/python-tools`) can be configured from AI settings and is never a deploy dependency;
 agent execution moves to the pi SDK (`@earendil-works/pi-coding-agent`) inside
 a new `packages/agent` Nuxt layer, with a per-business content board and a
 single chat surface.
@@ -40,7 +40,9 @@ single chat surface.
 - **Build site:** `pnpm site:build`
 - **Database:** `cd packages/db && pnpm db:generate` / `db:migrate`
 - **Lint UI:** `pnpm ui:lint`
-- **Python backend:** `cd python-backend && pnpm dev` — starts FastAPI on port 8000
+- **Agent tests:** `pnpm --filter @local-monorepo/agent test`
+- **Python tools (optional sidecar):** `pnpm python-tools:dev` — starts FastAPI on port 8100; configure its URL in AI settings
+- **DB service tests:** `pnpm --filter @local-monorepo/db test:services`
 
 ## Session Commands
 

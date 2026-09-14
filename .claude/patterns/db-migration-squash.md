@@ -22,24 +22,41 @@ last_updated: 2026-09-07
 
 ## Steps
 
-1. Confirm scope: `git diff --cached --name-only -- packages/db/db/migrations/` lists the staged (unpushed) migration files. Everything else stays untouched.
-2. Verify no schema drift: every `CREATE TABLE` in the staged SQL must have a matching `sqliteTable` definition reachable from `db/schema.ts`, and every staged `ALTER TABLE ... ADD` column must exist in the current schema files. If the schema is missing something, the regenerate in step 4 will silently drop it.
-3. Remove the staged migration files: `git rm -f <sql files> <snapshot files>`, then restore the journal: `git restore --staged <journal> && git restore <journal>`. Working tree must show no changes under `db/migrations/`.
-4. Regenerate one migration from current schema: `pnpm exec drizzle-kit generate --config ./config/drizzle.config.ts --name <scope-slug>` (e.g. `account-oauth-stats-inbox`). This produces a single `000N_<slug>.sql`, one snapshot, and one journal entry.
-5. Stage the result: `git add` the new `.sql`, the new snapshot, and `_journal.json`.
+1. Confirm scope: compare against what production actually runs (`git show origin/main:packages/db/db/migrations/meta/_journal.json | tail`), not just HEAD — local commits may already contain migrations production has never seen. Everything at or below production's last `idx` stays untouched.
+2. Prune dead schema first (do this before regenerating so the squashed migration also drops them): find tables with no runtime references and remove them from `db/**` plus any dead services/types/routes. Quick audit:
+   ```bash
+   rg -l "<tableName>" packages --glob '!**/node_modules/**' --glob '!**/tests/**' --glob '!**/migrations/**'
+   ```
+   Zero/self-only hits are candidates — verify the owning service has no live route/UI importers before deleting. Framework-managed tables (better-auth `oauth_*`, `session`, `account`, `verification`, `jwks`, `apikey`) have no app references but must stay.
+3. Verify no schema drift: every `CREATE TABLE` in the removed SQL must have a matching `sqliteTable` definition reachable from `db/schema.ts`, and every removed `ALTER TABLE ... ADD` column must exist in the current schema files. If the schema is missing something, regeneration silently drops it. Also capture the table list for the post-check:
+   ```bash
+   rg -o "CREATE TABLE \`[a-z_]+\`" <removed files> | sed 's/.*CREATE TABLE //' | tr -d '`' | sort -u
+   ```
+4. Remove the out-of-scope migration files (`git rm -f` for tracked, `rm` for untracked), then restore the journal to production's version: `git checkout origin/main -- meta/_journal.json`.
+5. Regenerate one migration from current schema: `pnpm exec drizzle-kit generate --config ./config/drizzle.config.ts --name <scope-slug>` (e.g. `agent-content-platform`). This produces a single `0010_<slug>.sql`, one snapshot, and one journal entry.
+6. Stage the result: `git add` the new `.sql`, the new snapshot, and `_journal.json`.
 
 ## Gotchas
 
+- **Rename prompts need a TTY.** When the diff contains new + dropped tables, `drizzle-kit generate` opens an interactive "created or renamed?" select for each new table. In a non-TTY shell it aborts with `Interactive prompts require a TTY terminal`. Run it through `script` and send `\r` to accept the default (`create table`) for every prompt:
+  ```bash
+  yes $'\r' | timeout 120 script -qec "cd packages/db && pnpm exec drizzle-kit generate --config ./config/drizzle.config.ts --name <slug>" /tmp/drizzle-gen.log
+  ```
+  `yes ''` (LF) does **not** advance the prompt — the TTY expects CR. The `script` wrapper may keep the pipeline alive after generation finishes; check for the new file instead of trusting the exit code, and clean up with `pkill -f "[d]rizzle-kit"` (bracket trick so pkill does not match its own command line).
 - Hand-written migration SQL bypasses `drizzle-kit` validation: a past `0012_inbox-items.sql` had a mismatched quote in an index name (`` `inbox_user_read_idx" ``), missing `statement-breakpoint` separators, and no `meta/` snapshot with a hand-edited journal timestamp. Regenerating from schema fixes all three — prefer `db:generate` over hand-writing SQL.
+- Dropping a table that production already has produces `DROP TABLE` in the squashed migration (correct for upgrade) — confirm the dropped names are intended and that no kept table references them via FK.
+- In a single squashed migration, columns that were added via `ALTER TABLE` in the old chain appear inside `CREATE TABLE` instead; zero `ALTER TABLE` statements is normal when every touched table is new.
 - A missing `meta/*_snapshot.json` for a SQL file means the journal was edited by hand. After squashing, journal entries must be exactly `0..N` with real `when` timestamps (drizzle writes these).
 - `drizzle.config.ts` defaults to `file:../../local.db` when `NUXT_TURSO_DATABASE_URL` is unset, so `generate`/`check` work offline with no env.
 
 ## Verify
 
 - [ ] `pnpm exec drizzle-kit check --config ./config/drizzle.config.ts` reports `Everything's fine`.
-- [ ] Fresh-DB migrate succeeds: `rm -f /tmp/test-squash.db && NUXT_TURSO_DATABASE_URL="file:/tmp/test-squash.db" pnpm exec drizzle-kit migrate --config ./config/drizzle.config.ts` (uses a temp file so the real `local.db` is untouched), then confirm table count and delete the temp file.
-- [ ] New SQL contains every table/alter from the removed staged files.
-- [ ] `git status --short -- packages/db/db/migrations/` shows exactly one new `.sql`, one new snapshot, and a modified `_journal.json` — nothing else.
+- [ ] Fresh-DB migrate succeeds: `rm -f /tmp/test-squash.db && NUXT_TURSO_DATABASE_URL="file:/tmp/test-squash.db" pnpm exec drizzle-kit migrate --config ./config/drizzle.config.ts` (uses a temp file so the real `local.db` is untouched).
+- [ ] New SQL contains every table/alter from the removed staged files (compare the captured `CREATE TABLE` list) and drops only the intended dead tables.
+- [ ] Fresh DB table count matches `main tables − dropped + created`; dropped tables absent, new tables present.
+- [ ] `pnpm --filter @local-monorepo/db test:services` and `pnpm --filter @local-monorepo/agent test` green (both harnesses apply migrations on a fresh file DB).
+- [ ] `git status --short -- packages/db/db/migrations/` shows exactly one new `.sql`, one new snapshot, a modified `_journal.json`, and deletions of the superseded migrations — nothing else.
 
 ## Debug
 

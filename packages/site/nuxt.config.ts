@@ -241,6 +241,12 @@ export default defineNuxtConfig({
     // zeroRuntime: true causes issues with dynamic content pages that use
     // defineOgImage(page.value?.ogImage) — disable for stability
   },
+  seoUtils: {
+    // twitter:card is deprecated — Open Graph is the modern standard.
+    // Disable automatic twitter meta inference so unhead doesn't emit
+    // `[unhead] twitter:card is deprecated` on every page view.
+    automaticTwitterTags: false,
+  },
   umami: {
     id: '55b75e65-727f-44ae-9f58-c2d67c2f3b4b',
     host: 'https://umami.giessen.dev',

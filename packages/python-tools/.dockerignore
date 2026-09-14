@@ -1,0 +1,12 @@
+# Local virtualenv / caches
+.venv
+venv
+__pycache__
+*.pyc
+.pytest_cache
+
+# Local env (tokens)
+.env
+
+# Tests are not needed in the image
+tests

@@ -1,5 +1,4 @@
 
-import { useI18n } from 'vue-i18n';
 import type { PostCreateBaseExtended } from '../types';
 import type { Asset } from '#layers/BaseDB/db/schema';
 import { platformConfigurations, type SocialMediaPlatformConfigurations } from '#layers/BaseScheduler/shared/platformConstants';

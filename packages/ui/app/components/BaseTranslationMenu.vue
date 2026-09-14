@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import { useI18n } from '#imports'
 
 /**
  *

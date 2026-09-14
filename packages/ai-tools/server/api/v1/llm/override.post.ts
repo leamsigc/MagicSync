@@ -1,5 +1,6 @@
 import { z } from 'zod'
-import { aiToolsFacade } from '#ai-tools/server/services/aiToolsFacade.service'
+import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
+import { userLlmConfigService } from '#layers/BaseDB/server/services/user-llm-config.service'
 
 const SUPPORTED = ['google', 'ollama', 'openai', 'anthropic', 'openrouter', 'deepseek'] as const
 
@@ -10,25 +11,25 @@ const OverrideSchema = z.object({
   apiKey: z.string().max(1024).nullish(),
   apiBaseUrl: z.string().max(512).nullish(),
   temperature: z.number().min(0).max(2).optional(),
-  maxTokens: z.number().int().min(128).max(128000).optional()
+  maxTokens: z.number().int().min(128).max(128000).optional(),
 })
 
 export default defineEventHandler(async (event) => {
-  const user = await aiToolsFacade.authenticate(event)
-  const body = await readValidatedBody(event, OverrideSchema.parse)
+  const user = await checkUserIsLogin(event)
+  const body = OverrideSchema.parse(await readBody(event))
 
-  const result = await aiToolsFacade.saveLlmOverride(user.id, body.businessId, {
+  const result = await userLlmConfigService.saveOverride(user.id, body.businessId, {
     provider: body.provider,
     model: body.model,
     apiKey: body.apiKey ?? null,
     apiBaseUrl: body.apiBaseUrl ?? null,
     temperature: body.temperature,
-    maxTokens: body.maxTokens
+    maxTokens: body.maxTokens,
   })
-
-  if (result.error || !result.data) {
-    throw createError({ statusCode: 500, statusMessage: result.error || 'Failed to save override' })
+  if (!result.success || !result.data) {
+    throw createError({ statusCode: 500, statusMessage: result.error ?? 'Failed to save override' })
   }
-  const { apiKey: _dropped, ...rest } = result.data
-  return { ...rest, apiKey: null }
+
+  const { apiKey, ...rest } = result.data
+  return { ...rest, apiKey: null, hasKey: Boolean(apiKey) }
 })

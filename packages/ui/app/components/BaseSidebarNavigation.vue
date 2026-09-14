@@ -6,10 +6,9 @@
  * @version 0.0.1
  */
 
-const { t } = useI18n()
 const appConfig = useAppConfig()
 const companyName = appConfig.BaseUiLayer.footer.companyName
-const { links } = useNavigationLinks()
+const { t, links } = useNavigationLinks()
 
 const user = {
   name: 'Ismael Garcia',

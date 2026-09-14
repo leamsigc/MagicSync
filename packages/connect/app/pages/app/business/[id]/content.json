@@ -1,0 +1,575 @@
+{
+  "en": {
+    "back": "Back to business",
+    "title": "Content Board",
+    "description": "Plan, review, and deliver content for this business.",
+    "seo_title": "Content Board",
+    "seo_description": "Plan, review, and deliver content for this business.",
+    "columns": {
+      "idea": "Ideas",
+      "research": "Research",
+      "drafting": "Drafting",
+      "review": "Review",
+      "approved": "Approved",
+      "delivery": "Delivery",
+      "archive": "Archive"
+    },
+    "states": {
+      "idea": "Idea",
+      "researching": "Researching",
+      "research_ready": "Research ready",
+      "drafting": "Drafting",
+      "review_required": "Review required",
+      "changes_requested": "Changes requested",
+      "approved": "Approved",
+      "materializing": "Materializing",
+      "ready": "Ready",
+      "scheduled": "Scheduled",
+      "published": "Published",
+      "failed": "Failed",
+      "archived": "Archived"
+    },
+    "actions": {
+      "create": "New card",
+      "refresh": "Refresh",
+      "save": "Create card",
+      "cancel": "Cancel",
+      "research": "Start research",
+      "generate": "Generate draft",
+      "requestChanges": "Request changes",
+      "approve": "Approve",
+      "schedule": "Schedule",
+      "publish": "Publish",
+      "archive": "Archive",
+      "openChat": "Work in chat",
+      "details": "Card actions",
+      "delete": "Delete",
+      "submitReview": "Submit for review",
+      "materialize": "Materialize",
+      "improve": "Fix issues"
+    },
+    "header": {
+      "create": "New card",
+      "batch": "Batch ideas",
+      "refresh": "Refresh",
+      "back": "Back to businesses",
+      "filter": "Filter",
+      "clear": "Clear",
+      "count": "{count} cards"
+    },
+    "filters": {
+      "search": "Search cards",
+      "platform": "Platform",
+      "allPlatforms": "All platforms",
+      "clear": "Clear filters",
+      "count": "{count} cards"
+    },
+    "empty": {
+      "title": "No content yet",
+      "description": "Create your first card to start the research, drafting, and review chain.",
+      "cta": "Create a card",
+      "scanCta": "Generate ideas from my business",
+      "filtered": "No cards match your filters."
+    },
+    "create": {
+      "title": "New content card",
+      "name": "Title",
+      "namePlaceholder": "e.g. 5 tips for faster onboarding",
+      "brief": "Brief",
+      "briefPlaceholder": "What should this content say?",
+      "platforms": "Platforms",
+      "platformsPlaceholder": "Pick target platforms",
+      "required": "A title is required"
+    },
+    "detail": {
+      "title": "Card details",
+      "brief": "Brief",
+      "timeline": "Activity",
+      "checks": "Checks",
+      "noEvents": "No activity yet.",
+      "noChecks": "No checks yet.",
+      "artifact": "Artifact",
+      "viewArtifact": "Open artifact",
+      "editBrief": "Edit research",
+      "save": "Save",
+      "createdAt": "Created",
+      "updatedAt": "Updated",
+      "draft": "Draft",
+      "mainPost": "Main post",
+      "noDraft": "No draft yet — generate one to preview the copy per platform.",
+      "ctaLabel": "Call to action",
+      "fix": "Fix",
+      "fixAll": "Fix all issues",
+      "fixFeedback": "Please fix the {kind} check findings on this draft.",
+      "primary": "Next step",
+      "researchAgain": "Re-run research with AI"
+    },
+    "feedback": {
+      "created": "Card created",
+      "moved": "Card moved to {state}",
+      "improved": "Draft improved",
+      "actionFailed": "Action failed: {error}",
+      "loadFailed": "Failed to load the board",
+      "detailFailed": "Failed to load card details",
+      "briefSaved": "Research brief saved",
+      "briefFailed": "Failed to save brief: {error}"
+    },
+    "delete": {
+      "title": "Delete card",
+      "description": "This permanently removes the card and its activity. This cannot be undone.",
+      "confirm": "Delete",
+      "cancel": "Cancel",
+      "deleted": "Card deleted",
+      "failed": "Delete failed: {error}"
+    },
+    "batch": {
+      "button": "Batch ideas",
+      "title": "Generate content ideas",
+      "kind": "What to create",
+      "days": "Days",
+      "count": "Count",
+      "topic": "Topic (optional)",
+      "topicPlaceholder": "e.g. March launch",
+      "submit": "Generate",
+      "created": "Created {count} cards",
+      "failed": "Batch failed: {error}"
+    },
+    "ideascan": {
+      "created": "Created {count} trend ideas",
+      "failed": "Idea scan failed: {error}"
+    },
+    "dnd": {
+      "invalid": "That move is not allowed from here"
+    },
+    "activity": {
+      "title": "Agent activity",
+      "empty": "No agent runs yet.",
+      "status": "Status",
+      "duration": "{ms} ms",
+      "tools": "{count} tools"
+    }
+  },
+  "es": {
+    "back": "Volver al negocio",
+    "title": "Tablero de contenido",
+    "description": "Planifica, revisa y publica contenido para este negocio.",
+    "seo_title": "Tablero de contenido",
+    "seo_description": "Planifica, revisa y publica contenido para este negocio.",
+    "columns": {
+      "idea": "Ideas",
+      "research": "Investigación",
+      "drafting": "Redacción",
+      "review": "Revisión",
+      "approved": "Aprobado",
+      "delivery": "Entrega",
+      "archive": "Archivo"
+    },
+    "states": {
+      "idea": "Idea",
+      "researching": "Investigando",
+      "research_ready": "Investigación lista",
+      "drafting": "Redactando",
+      "review_required": "Revisión requerida",
+      "changes_requested": "Cambios solicitados",
+      "approved": "Aprobado",
+      "materializing": "Materializando",
+      "ready": "Listo",
+      "scheduled": "Programado",
+      "published": "Publicado",
+      "failed": "Fallido",
+      "archived": "Archivado"
+    },
+    "actions": {
+      "create": "Nueva tarjeta",
+      "refresh": "Actualizar",
+      "save": "Crear tarjeta",
+      "cancel": "Cancelar",
+      "research": "Iniciar investigación",
+      "generate": "Generar borrador",
+      "requestChanges": "Solicitar cambios",
+      "approve": "Aprobar",
+      "schedule": "Programar",
+      "publish": "Publicar",
+      "archive": "Archivar",
+      "openChat": "Trabajar en el chat",
+      "details": "Acciones de la tarjeta",
+      "delete": "Eliminar",
+      "submitReview": "Enviar a revisión",
+      "materialize": "Materializar",
+      "improve": "Corregir problemas"
+    },
+    "filters": {
+      "search": "Buscar tarjetas",
+      "platform": "Plataforma",
+      "allPlatforms": "Todas las plataformas",
+      "clear": "Limpiar filtros",
+      "count": "{count} tarjetas"
+    },
+    "empty": {
+      "title": "Aún no hay contenido",
+      "description": "Crea tu primera tarjeta para iniciar la cadena de investigación, redacción y revisión.",
+      "cta": "Crear una tarjeta",
+      "scanCta": "Generar ideas desde mi negocio",
+      "filtered": "Ninguna tarjeta coincide con tus filtros."
+    },
+    "create": {
+      "title": "Nueva tarjeta de contenido",
+      "name": "Título",
+      "namePlaceholder": "p. ej. 5 consejos para incorporar más rápido",
+      "brief": "Resumen",
+      "briefPlaceholder": "¿Qué debe decir este contenido?",
+      "platforms": "Plataformas",
+      "platformsPlaceholder": "Elige plataformas objetivo",
+      "required": "Se requiere un título"
+    },
+    "detail": {
+      "title": "Detalles de la tarjeta",
+      "brief": "Resumen",
+      "timeline": "Actividad",
+      "checks": "Verificaciones",
+      "noEvents": "Aún no hay actividad.",
+      "noChecks": "Aún no hay verificaciones.",
+      "artifact": "Artefacto",
+      "viewArtifact": "Abrir artefacto",
+      "editBrief": "Editar investigación",
+      "save": "Guardar",
+      "createdAt": "Creado",
+      "updatedAt": "Actualizado",
+      "draft": "Borrador",
+      "mainPost": "Publicación principal",
+      "noDraft": "Aún no hay borrador — genera uno para ver el texto por plataforma.",
+      "ctaLabel": "Llamada a la acción",
+      "fix": "Corregir",
+      "fixAll": "Corregir todo",
+      "fixFeedback": "Corrige los hallazgos de la verificación {kind} en este borrador.",
+      "primary": "Siguiente paso",
+      "researchAgain": "Repetir investigación con IA"
+    },
+    "feedback": {
+      "created": "Tarjeta creada",
+      "moved": "Tarjeta movida a {state}",
+      "actionFailed": "Acción fallida: {error}",
+      "loadFailed": "No se pudo cargar el tablero",
+      "detailFailed": "No se pudieron cargar los detalles",
+      "briefSaved": "Resumen de investigación guardado",
+      "briefFailed": "No se pudo guardar el resumen: {error}",
+      "improved": "Borrador mejorado"
+    },
+    "delete": {
+      "title": "Eliminar tarjeta",
+      "description": "Esto elimina la tarjeta y su actividad de forma permanente. No se puede deshacer.",
+      "confirm": "Eliminar",
+      "cancel": "Cancelar",
+      "deleted": "Tarjeta eliminada",
+      "failed": "Falló la eliminación: {error}"
+    },
+    "batch": {
+      "button": "Ideas en lote",
+      "title": "Generar ideas de contenido",
+      "kind": "Qué crear",
+      "days": "Días",
+      "count": "Cantidad",
+      "topic": "Tema (opcional)",
+      "topicPlaceholder": "p. ej. lanzamiento de marzo",
+      "submit": "Generar",
+      "created": "Se crearon {count} tarjetas",
+      "failed": "Lote fallido: {error}"
+    },
+    "ideascan": {
+      "created": "Se crearon {count} ideas en tendencia",
+      "failed": "Falló el análisis de ideas: {error}"
+    },
+    "dnd": {
+      "invalid": "Ese movimiento no está permitido desde aquí"
+    },
+    "activity": {
+      "title": "Actividad del agente",
+      "empty": "Aún no hay ejecuciones.",
+      "status": "Estado",
+      "duration": "{ms} ms",
+      "tools": "{count} herramientas"
+    }
+  },
+  "de": {
+    "back": "Zurück zum Unternehmen",
+    "title": "Content-Board",
+    "description": "Inhalte für dieses Unternehmen planen, prüfen und veröffentlichen.",
+    "seo_title": "Content-Board",
+    "seo_description": "Inhalte für dieses Unternehmen planen, prüfen und veröffentlichen.",
+    "columns": {
+      "idea": "Ideen",
+      "research": "Recherche",
+      "drafting": "Entwurf",
+      "review": "Prüfung",
+      "approved": "Freigegeben",
+      "delivery": "Auslieferung",
+      "archive": "Archiv"
+    },
+    "states": {
+      "idea": "Idee",
+      "researching": "Recherche läuft",
+      "research_ready": "Recherche fertig",
+      "drafting": "Entwurf läuft",
+      "review_required": "Prüfung nötig",
+      "changes_requested": "Änderungen angefragt",
+      "approved": "Freigegeben",
+      "materializing": "Wird erstellt",
+      "ready": "Bereit",
+      "scheduled": "Geplant",
+      "published": "Veröffentlicht",
+      "failed": "Fehlgeschlagen",
+      "archived": "Archiviert"
+    },
+    "actions": {
+      "create": "Neue Karte",
+      "refresh": "Aktualisieren",
+      "save": "Karte erstellen",
+      "cancel": "Abbrechen",
+      "research": "Recherche starten",
+      "generate": "Entwurf generieren",
+      "requestChanges": "Änderungen anfragen",
+      "approve": "Freigeben",
+      "schedule": "Planen",
+      "publish": "Veröffentlichen",
+      "archive": "Archivieren",
+      "openChat": "Im Chat bearbeiten",
+      "details": "Kartenaktionen",
+      "delete": "Löschen",
+      "submitReview": "Zur Prüfung senden",
+      "materialize": "Materialisieren",
+      "improve": "Probleme beheben"
+    },
+    "filters": {
+      "search": "Karten suchen",
+      "platform": "Plattform",
+      "allPlatforms": "Alle Plattformen",
+      "clear": "Filter löschen",
+      "count": "{count} Karten"
+    },
+    "empty": {
+      "title": "Noch keine Inhalte",
+      "description": "Erstelle die erste Karte, um Recherche, Entwurf und Prüfung zu starten.",
+      "cta": "Karte erstellen",
+      "scanCta": "Ideen aus meinem Unternehmen generieren",
+      "filtered": "Keine Karten passen zu den Filtern."
+    },
+    "create": {
+      "title": "Neue Inhaltskarte",
+      "name": "Titel",
+      "namePlaceholder": "z. B. 5 Tipps für schnelleres Onboarding",
+      "brief": "Kurzbeschreibung",
+      "briefPlaceholder": "Was soll dieser Inhalt sagen?",
+      "platforms": "Plattformen",
+      "platformsPlaceholder": "Zielplattformen wählen",
+      "required": "Ein Titel ist erforderlich"
+    },
+    "detail": {
+      "title": "Kartendetails",
+      "brief": "Kurzbeschreibung",
+      "timeline": "Aktivität",
+      "checks": "Prüfungen",
+      "noEvents": "Noch keine Aktivität.",
+      "noChecks": "Noch keine Prüfungen.",
+      "artifact": "Artefakt",
+      "viewArtifact": "Artefakt öffnen",
+      "editBrief": "Recherche bearbeiten",
+      "save": "Speichern",
+      "createdAt": "Erstellt",
+      "updatedAt": "Aktualisiert",
+      "draft": "Entwurf",
+      "mainPost": "Hauptbeitrag",
+      "noDraft": "Noch kein Entwurf – generiere einen, um den Text pro Plattform zu sehen.",
+      "ctaLabel": "Handlungsaufforderung",
+      "fix": "Beheben",
+      "fixAll": "Alle beheben",
+      "fixFeedback": "Bitte behebe die {kind}-Prüfungshinweise in diesem Entwurf.",
+      "primary": "Nächster Schritt",
+      "researchAgain": "Recherche mit KI wiederholen"
+    },
+    "feedback": {
+      "created": "Karte erstellt",
+      "moved": "Karte verschoben nach {state}",
+      "actionFailed": "Aktion fehlgeschlagen: {error}",
+      "loadFailed": "Board konnte nicht geladen werden",
+      "detailFailed": "Kartendetails konnten nicht geladen werden",
+      "briefSaved": "Recherche-Brief gespeichert",
+      "briefFailed": "Brief konnte nicht gespeichert werden: {error}",
+      "improved": "Entwurf verbessert"
+    },
+    "delete": {
+      "title": "Karte löschen",
+      "description": "Dies entfernt die Karte und ihre Aktivität unwiderruflich. Das kann nicht rückgängig gemacht werden.",
+      "confirm": "Löschen",
+      "cancel": "Abbrechen",
+      "deleted": "Karte gelöscht",
+      "failed": "Löschen fehlgeschlagen: {error}"
+    },
+    "batch": {
+      "button": "Ideen-Batch",
+      "title": "Content-Ideen generieren",
+      "kind": "Was erstellen",
+      "days": "Tage",
+      "count": "Anzahl",
+      "topic": "Thema (optional)",
+      "topicPlaceholder": "z. B. März-Launch",
+      "submit": "Generieren",
+      "created": "{count} Karten erstellt",
+      "failed": "Batch fehlgeschlagen: {error}"
+    },
+    "ideascan": {
+      "created": "{count} Trend-Ideen erstellt",
+      "failed": "Ideen-Scan fehlgeschlagen: {error}"
+    },
+    "dnd": {
+      "invalid": "Dieser Zug ist von hier aus nicht erlaubt"
+    },
+    "activity": {
+      "title": "Agenten-Aktivität",
+      "empty": "Noch keine Läufe.",
+      "status": "Status",
+      "duration": "{ms} ms",
+      "tools": "{count} Tools"
+    }
+  },
+  "fr": {
+    "back": "Retour à l'entreprise",
+    "title": "Tableau de contenu",
+    "description": "Planifiez, révisez et publiez du contenu pour cette entreprise.",
+    "seo_title": "Tableau de contenu",
+    "seo_description": "Planifiez, révisez et publiez du contenu pour cette entreprise.",
+    "columns": {
+      "idea": "Idées",
+      "research": "Recherche",
+      "drafting": "Rédaction",
+      "review": "Révision",
+      "approved": "Approuvé",
+      "delivery": "Livraison",
+      "archive": "Archive"
+    },
+    "states": {
+      "idea": "Idée",
+      "researching": "Recherche en cours",
+      "research_ready": "Recherche prête",
+      "drafting": "Rédaction",
+      "review_required": "Révision requise",
+      "changes_requested": "Modifications demandées",
+      "approved": "Approuvé",
+      "materializing": "Création",
+      "ready": "Prêt",
+      "scheduled": "Programmé",
+      "published": "Publié",
+      "failed": "Échoué",
+      "archived": "Archivé"
+    },
+    "actions": {
+      "create": "Nouvelle carte",
+      "refresh": "Actualiser",
+      "save": "Créer la carte",
+      "cancel": "Annuler",
+      "research": "Lancer la recherche",
+      "generate": "Générer un brouillon",
+      "requestChanges": "Demander des modifications",
+      "approve": "Approuver",
+      "schedule": "Programmer",
+      "publish": "Publier",
+      "archive": "Archiver",
+      "openChat": "Travailler dans le chat",
+      "details": "Actions de la carte",
+      "delete": "Supprimer",
+      "submitReview": "Envoyer en révision",
+      "materialize": "Matérialiser",
+      "improve": "Corriger les problèmes"
+    },
+    "filters": {
+      "search": "Rechercher des cartes",
+      "platform": "Plateforme",
+      "allPlatforms": "Toutes les plateformes",
+      "clear": "Effacer les filtres",
+      "count": "{count} cartes"
+    },
+    "empty": {
+      "title": "Pas encore de contenu",
+      "description": "Créez votre première carte pour lancer la recherche, la rédaction et la révision.",
+      "cta": "Créer une carte",
+      "scanCta": "Générer des idées depuis mon entreprise",
+      "filtered": "Aucune carte ne correspond aux filtres."
+    },
+    "create": {
+      "title": "Nouvelle carte de contenu",
+      "name": "Titre",
+      "namePlaceholder": "ex. 5 astuces pour un onboarding plus rapide",
+      "brief": "Résumé",
+      "briefPlaceholder": "Que doit dire ce contenu ?",
+      "platforms": "Plateformes",
+      "platformsPlaceholder": "Choisir les plateformes cibles",
+      "required": "Un titre est requis"
+    },
+    "detail": {
+      "title": "Détails de la carte",
+      "brief": "Résumé",
+      "timeline": "Activité",
+      "checks": "Vérifications",
+      "noEvents": "Aucune activité.",
+      "noChecks": "Aucune vérification.",
+      "artifact": "Artefact",
+      "viewArtifact": "Ouvrir l'artefact",
+      "editBrief": "Modifier la recherche",
+      "save": "Enregistrer",
+      "createdAt": "Créé",
+      "updatedAt": "Mis à jour",
+      "draft": "Brouillon",
+      "mainPost": "Publication principale",
+      "noDraft": "Pas encore de brouillon — génère-en un pour voir le texte par plateforme.",
+      "ctaLabel": "Appel à l'action",
+      "fix": "Corriger",
+      "fixAll": "Tout corriger",
+      "fixFeedback": "Corrige les résultats de la vérification {kind} dans ce brouillon.",
+      "primary": "Prochaine étape",
+      "researchAgain": "Relancer la recherche avec l’IA"
+    },
+    "feedback": {
+      "created": "Carte créée",
+      "moved": "Carte déplacée vers {state}",
+      "actionFailed": "Échec de l'action : {error}",
+      "loadFailed": "Impossible de charger le tableau",
+      "detailFailed": "Impossible de charger les détails",
+      "briefSaved": "Résumé de recherche enregistré",
+      "briefFailed": "Échec de l'enregistrement du résumé : {error}",
+      "improved": "Brouillon amélioré"
+    },
+    "delete": {
+      "title": "Supprimer la carte",
+      "description": "Cela supprime définitivement la carte et son activité. Irréversible.",
+      "confirm": "Supprimer",
+      "cancel": "Annuler",
+      "deleted": "Carte supprimée",
+      "failed": "Échec de la suppression : {error}"
+    },
+    "batch": {
+      "button": "Idées en lot",
+      "title": "Générer des idées de contenu",
+      "kind": "Quoi créer",
+      "days": "Jours",
+      "count": "Nombre",
+      "topic": "Sujet (optionnel)",
+      "topicPlaceholder": "ex. lancement de mars",
+      "submit": "Générer",
+      "created": "{count} cartes créées",
+      "failed": "Échec du lot : {error}"
+    },
+    "ideascan": {
+      "created": "{count} idées tendance créées",
+      "failed": "Échec de l'analyse d'idées : {error}"
+    },
+    "dnd": {
+      "invalid": "Ce déplacement n'est pas autorisé depuis ici"
+    },
+    "activity": {
+      "title": "Activité de l'agent",
+      "empty": "Aucune exécution.",
+      "status": "Statut",
+      "duration": "{ms} ms",
+      "tools": "{count} outils"
+    }
+  }
+}

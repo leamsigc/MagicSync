@@ -50,15 +50,10 @@ export function UseUser() {
     sessionFetching.value = true
 
     try {
-      // Use useFetch for better SSR support and hydration
-      const { data: sessionData } = await useFetch<{ session: Session, user: User }>('/api/auth/get-session', {
+      const data = await $fetch<{ session: Session, user: User } | null>('/api/auth/get-session', {
         headers: import.meta.server ? useRequestHeaders() : undefined,
-        key: 'auth-session',
-        retry: 0
-      })
-
-
-      const data = sessionData.value
+        retry: 0,
+      } as any)
       session.value = data?.session || null
       const userDefaults = {
         image: null,

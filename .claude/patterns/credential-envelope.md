@@ -20,25 +20,27 @@ last_updated: 2026-09-12
 ## Context
 Secrets (LLM API keys, publishing tokens) must never rest as plaintext or
 base64 ("encryption" that isn't). The envelope is `enc:v1:<iv>.<tag>.<ct>`
-(AES-256-GCM, scrypt key from `NUXT_PUBLISH_SECRET || NUXT_LLM_JWT_SECRET`,
-`magicsync-publish` salt) in `packages/db/server/utils/publish-crypto.ts`.
-Python mirrors it in `packages/python-backend/app/core/security.py`
-(`decrypt_secret`, same scrypt params `n=16384,r=8,p=1,dklen=32`, AESGCM from
-`cryptography`). Scrypt parity was verified byte-for-byte across runtimes.
+(AES-256-GCM, scrypt key from `NUXT_PUBLISH_SECRET`, `magicsync-publish` salt)
+in `packages/db/server/utils/publish-crypto.ts`. The legacy
+`NUXT_LLM_JWT_SECRET` fallback still decrypts pre-T14 envelopes — new writes
+should always set `NUXT_PUBLISH_SECRET`. The old Python mirror was removed
+with `packages/python-backend` (T14); no non-Nuxt runtime reads these
+envelopes today.
 
 ## Steps
 1. **Map every touchpoint:** `rg` for `base64.*[Kk]ey`, `apiKeyEncrypted`,
    `encryptSecret|revealSecret|decryptSecret` across `packages/db/server` and
-   `packages/python-backend/app`. Classify each hit: credential-at-rest,
+   `packages/agent/server`. Classify each hit: credential-at-rest,
    credential-in-transit, or protocol-required encoding (GitHub file content,
    HTTP Basic framing, file-upload bytes — leave those).
 2. **At rest:** write path encrypts (`toStoredApiKey`-style helper: trim,
    empty→null, already-`enc:v1:`→passthrough, else `encryptSecret`); read path
    decrypts into memory only (`withRevealedKey`-style). Update paths must omit
    the key when the caller sends `undefined` so rotations don't wipe it.
-3. **In transit (Nuxt→Python JWT):** `createLlmJwt` puts the `enc:v1:`
-   envelope in `apiKeyEncrypted` (never base64, never double-wrap);
-   `decode_llm_jwt` decrypts and fails closed to `None`.
+3. **New integrations:** store user-supplied secrets (tool backends,
+   publishing tokens) with the same helpers — `undefined` keeps the stored
+   value, `''` clears it, text encrypts; read paths decrypt into memory only
+   and routes return presence booleans, never secrets.
 4. **Fail closed everywhere:** `decryptSecret` returns `null` for non-prefixed
    input — never the input itself. Callers already treat null as
    "re-enter credential" (publishing returns `VALIDATION_ERROR`; LLM resolves

@@ -62,7 +62,7 @@ test.describe('AI Chat Page', () => {
     await submitButton.click()
 
     // Check loading indicator appears
-    await expect(page.locator('.animate-bounce')).toBeVisible()
+    await expect(page.locator('[data-slot="indicator"]')).toBeVisible()
   })
 
   test('should send message on Enter key', async ({ page }) => {

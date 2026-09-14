@@ -4,16 +4,14 @@ import { PLATFORMS } from '../../utils/platforms'
 import { requireMcp } from '../../utils/mcp-context'
 import { resolveMcpAiContext } from '../../utils/mcp-ai-context'
 import { logMcpCall } from '../../utils/mcp-audit'
+import { completeForUser, extractJsonObject } from '#layers/BaseAgent/server/utils/run-config'
 
-interface GenerateResponse {
-  post?: {
-    text: string
-    hashtags: string[]
-    platform: string
-    character_count: number
-    warning?: string
-  }
-  error?: string
+interface GeneratePost {
+  text: string
+  hashtags: string[]
+  platform: string
+  character_count: number
+  warning?: string
 }
 
 export default defineMcpTool({
@@ -32,32 +30,34 @@ export default defineMcpTool({
   async handler(args) {
     const mcp = requireMcp()
     const ai = await resolveMcpAiContext(mcp)
-    const config = useRuntimeConfig()
-    const backendUrl = config.pythonBackendUrl || 'http://localhost:8000'
 
     try {
-      const result = await $fetch<GenerateResponse>(`${backendUrl}/api/v1/social-media/generate`, {
-        method: 'POST',
-        body: {
-          topic: args.topic,
-          platform: args.platform,
-          tone: args.tone,
-          include_hashtags: args.includeHashtags,
-          include_cta: args.includeCta,
-          additional_context: args.additionalContext || '',
-          max_length: args.maxLength,
-          business_id: mcp.businessId,
-          use_business_context: !!ai.businessContext,
-          context_edition_id: ai.editionId,
-          business_context: ai.businessContext,
-        },
-        headers: { Authorization: `Bearer ${ai.token}` },
+      const result = await completeForUser(ai.ownerId, {
+        businessId: mcp.businessId,
+        useBusinessContext: false,
+        system: ai.businessContext,
+        maxTokens: 1200,
+        prompt: [
+          `Write one ${args.platform} post about: ${args.topic}.`,
+          `Tone: ${args.tone}.`,
+          args.includeHashtags ? 'Include 3-5 relevant hashtags.' : 'Do not include hashtags.',
+          args.includeCta ? 'End with a clear call to action.' : '',
+          args.additionalContext ? `Extra context: ${args.additionalContext}` : '',
+          args.maxLength ? `Keep the caption under ${args.maxLength} characters.` : '',
+          'Return strict JSON: {"text": string, "hashtags": string[]}.',
+        ].filter(Boolean).join('\n'),
       })
-      if (result.error || !result.post) {
-        throw new Error(result.error || 'AI generation failed')
+      if (!result.success) throw new Error(result.error)
+      const json = result.data.json ?? extractJsonObject(result.data.text) ?? {}
+      const text = String(json.text ?? result.data.text)
+      const post: GeneratePost = {
+        text,
+        hashtags: Array.isArray(json.hashtags) ? json.hashtags.filter(item => typeof item === 'string') : [],
+        platform: args.platform,
+        character_count: text.length,
       }
       await logMcpCall(mcp, 'generate-caption', undefined, 'success', `platform=${args.platform}`)
-      return result.post
+      return post
     }
     catch (error) {
       await logMcpCall(mcp, 'generate-caption', undefined, 'failure', error instanceof Error ? error.message : String(error))

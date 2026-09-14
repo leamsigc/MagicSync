@@ -227,8 +227,100 @@ async function handleClear() {
   }
 }
 
+// ── Tool backends (ScrapeGraphAI + LangSearch + Python tools service) ────────
+interface ToolBackendsState {
+  scrapegraph: { hasKey: boolean }
+  langsearch: { hasKey: boolean }
+  python: { url: string | null, hasToken: boolean }
+}
+
+type ToolKind = 'scrapegraph' | 'langsearch' | 'python'
+
+const toolBackends = ref<ToolBackendsState | null>(null)
+const scrapegraphApiKey = ref('')
+const langsearchApiKey = ref('')
+const pythonBackendUrl = ref('')
+const pythonBackendToken = ref('')
+const toolSaving = ref(false)
+const toolTesting = ref<ToolKind | null>(null)
+const toolLatency = ref<{ scrapegraph: number | null, langsearch: number | null, python: number | null }>({ scrapegraph: null, langsearch: null, python: null })
+
+const scrapegraphKeyPlaceholder = computed(() =>
+  toolBackends.value?.scrapegraph.hasKey ? t('tools.scrapegraphKeySaved') : t('tools.scrapegraphKeyPlaceholder'),
+)
+const langsearchKeyPlaceholder = computed(() =>
+  toolBackends.value?.langsearch.hasKey ? t('tools.langsearchKeySaved') : t('tools.langsearchKeyPlaceholder'),
+)
+const pythonTokenPlaceholder = computed(() =>
+  toolBackends.value?.python.hasToken ? t('tools.pythonTokenSaved') : '',
+)
+
+async function loadToolBackends() {
+  if (props.mode !== 'global') return
+  try {
+    const data = await $fetch<ToolBackendsState>('/api/v1/integrations/tools')
+    toolBackends.value = data
+    pythonBackendUrl.value = data.python.url ?? ''
+  }
+  catch {
+    toast.add({ title: t('tools.loadError'), color: 'error' })
+  }
+}
+
+async function handleSaveToolBackends() {
+  toolSaving.value = true
+  try {
+    const data = await $fetch<ToolBackendsState>('/api/v1/integrations/tools', {
+      method: 'POST',
+      body: {
+        scrapegraphApiKey: scrapegraphApiKey.value || undefined,
+        langsearchApiKey: langsearchApiKey.value || undefined,
+        pythonBackendUrl: pythonBackendUrl.value.trim() || null,
+        pythonBackendToken: pythonBackendToken.value || undefined,
+      },
+    })
+    toolBackends.value = data
+    scrapegraphApiKey.value = ''
+    langsearchApiKey.value = ''
+    pythonBackendToken.value = ''
+    toast.add({ title: t('tools.saved'), color: 'success' })
+  }
+  catch {
+    toast.add({ title: t('tools.saveError'), color: 'error' })
+  }
+  finally {
+    toolSaving.value = false
+  }
+}
+
+function toolTestPayload(kind: ToolKind) {
+  if (kind === 'scrapegraph') return { kind, apiKey: scrapegraphApiKey.value || undefined }
+  if (kind === 'langsearch') return { kind, apiKey: langsearchApiKey.value || undefined }
+  return { kind, url: pythonBackendUrl.value.trim() || undefined, token: pythonBackendToken.value || undefined }
+}
+
+async function handleTestTool(kind: ToolKind) {
+  toolTesting.value = kind
+  toolLatency.value[kind] = null
+  try {
+    const result = await $fetch<{ ok: boolean, latencyMs: number }>('/api/v1/integrations/tools/test', {
+      method: 'POST',
+      body: toolTestPayload(kind),
+    })
+    toolLatency.value[kind] = result.latencyMs
+    toast.add({ title: t('tools.testOk', { ms: result.latencyMs }), color: 'success' })
+  }
+  catch {
+    toast.add({ title: t('tools.testError'), color: 'error' })
+  }
+  finally {
+    toolTesting.value = null
+  }
+}
+
 onMounted(() => {
   loadConfig()
+  loadToolBackends()
 })
 </script>
 
@@ -285,6 +377,102 @@ onMounted(() => {
         <UButton color="neutral" variant="outline" :loading="isTesting" @click="handleTest">{{ t('testConnection') }}</UButton>
         <UButton v-if="mode === 'override' && hasOverride" color="neutral" variant="ghost" :loading="isClearing" @click="handleClear">{{ t('clearOverride') }}</UButton>
       </div>
+    </div>
+  </UCard>
+
+  <UCard v-if="mode === 'global'" v-motion-fade-visible :duration="250" class="mt-6" data-testid="tool-backends-card">
+    <template #header>
+      <h2 class="text-xl font-semibold">{{ t('tools.title') }}</h2>
+      <p class="text-sm text-muted-foreground">{{ t('tools.subtitle') }}</p>
+    </template>
+
+    <div class="space-y-6">
+      <div class="space-y-3">
+        <h3 class="text-sm font-semibold">{{ t('tools.scrapegraphKey') }}</h3>
+        <UFormField :label="t('tools.scrapegraphKey')" name="scrapegraphApiKey">
+          <UInput
+            v-model="scrapegraphApiKey"
+            type="password"
+            :placeholder="scrapegraphKeyPlaceholder"
+            autocomplete="off"
+            class="w-full"
+            data-testid="scrapegraph-key"
+          />
+        </UFormField>
+        <p class="text-xs text-muted-foreground">{{ t('tools.scrapegraphHelp') }}</p>
+        <div class="flex items-center gap-2">
+          <UButton
+            color="neutral"
+            variant="outline"
+            :loading="toolTesting === 'scrapegraph'"
+            data-testid="scrapegraph-test"
+            @click="handleTestTool('scrapegraph')"
+          >
+            {{ t('tools.testScrapegraph') }}
+          </UButton>
+          <UBadge v-if="toolLatency.scrapegraph !== null" v-motion-fade :duration="200" color="success" variant="subtle">
+            {{ t('tools.testOk', { ms: toolLatency.scrapegraph }) }}
+          </UBadge>
+        </div>
+      </div>
+
+      <div class="space-y-3 border-t border-default pt-4">
+        <h3 class="text-sm font-semibold">{{ t('tools.langsearchKey') }}</h3>
+        <UFormField :label="t('tools.langsearchKey')" name="langsearchApiKey">
+          <UInput
+            v-model="langsearchApiKey"
+            type="password"
+            :placeholder="langsearchKeyPlaceholder"
+            autocomplete="off"
+            class="w-full"
+            data-testid="langsearch-key"
+          />
+        </UFormField>
+        <p class="text-xs text-muted-foreground">{{ t('tools.langsearchHelp') }}</p>
+        <div class="flex items-center gap-2">
+          <UButton
+            color="neutral"
+            variant="outline"
+            :loading="toolTesting === 'langsearch'"
+            data-testid="langsearch-test"
+            @click="handleTestTool('langsearch')"
+          >
+            {{ t('tools.testLangsearch') }}
+          </UButton>
+          <UBadge v-if="toolLatency.langsearch !== null" v-motion-fade :duration="200" color="success" variant="subtle">
+            {{ t('tools.testOk', { ms: toolLatency.langsearch }) }}
+          </UBadge>
+        </div>
+      </div>
+
+      <div class="space-y-3 border-t border-default pt-4">
+        <h3 class="text-sm font-semibold">{{ t('tools.pythonUrl') }}</h3>
+        <UFormField :label="t('tools.pythonUrl')" name="pythonBackendUrl">
+          <UInput v-model="pythonBackendUrl" :placeholder="t('tools.pythonUrlPlaceholder')" class="w-full" data-testid="python-backend-url" />
+        </UFormField>
+        <UFormField :label="t('tools.pythonToken')" name="pythonBackendToken">
+          <UInput v-model="pythonBackendToken" type="password" :placeholder="pythonTokenPlaceholder" autocomplete="off" class="w-full" data-testid="python-backend-token" />
+        </UFormField>
+        <p class="text-xs text-muted-foreground">{{ t('tools.pythonHelp') }}</p>
+        <div class="flex items-center gap-2">
+          <UButton
+            color="neutral"
+            variant="outline"
+            :loading="toolTesting === 'python'"
+            data-testid="python-backend-test"
+            @click="handleTestTool('python')"
+          >
+            {{ t('tools.testPython') }}
+          </UButton>
+          <UBadge v-if="toolLatency.python !== null" v-motion-fade :duration="200" color="success" variant="subtle">
+            {{ t('tools.testOk', { ms: toolLatency.python }) }}
+          </UBadge>
+        </div>
+      </div>
+
+      <UButton :loading="toolSaving" data-testid="tool-backends-save" @click="handleSaveToolBackends">
+        {{ t('tools.save') }}
+      </UButton>
     </div>
   </UCard>
 </template>

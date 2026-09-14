@@ -12,7 +12,7 @@ const here = path.dirname(fileURLToPath(import.meta.url))
 // hermetic without touching developer environments.
 process.env.NUXT_LLM_JWT_SECRET ??= 'test-llm-jwt-secret'
 process.env.NUXT_PUBLISH_SECRET ??= 'test-publish-secret'
-process.env.DSH_BRIDGE_SECRET ??= 'test-bridge-secret'
+process.env.MACHINE_BRIDGE_SECRET ??= 'test-bridge-secret'
 
 // Fresh file-backed SQLite with every committed migration applied in order.
 // Mirrors a new Turso database for service-layer tests.

@@ -54,6 +54,7 @@
     "doc": "pnpm packages magicsync-docs dev",
     "doc:build": "pnpm packages magicsync-docs build",
     "doc:start": "pnpm packages magicsync-docs preview",
+    "python-tools:dev": "cd packages/python-tools && uvicorn app.main:app --reload --port 8100",
     "tts:assets": "bash ./scripts/tts_assets_folder.sh",
     "tts:assets:force": "bash ./scripts/tts_assets_folder.sh --force"
   },

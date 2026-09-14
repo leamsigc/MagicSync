@@ -30,8 +30,14 @@ logs
 images/
 opencodetmp/
 
-# Python backend virtual env (902MB - not needed for site container)
-packages/python-backend/venv
+# Python virtual envs / caches (optional python-tools sidecar)
+.venv
+__pycache__
+*.pyc
+packages/python-tools/.env
+
+# Docs build artifacts (not needed for the site image)
+packages/doc/.vitepress
 
 # Git
 .git
@@ -42,14 +48,20 @@ docker-compose*
 
 # Docs and misc
 .github/
-# scripts/ is excluded by default, but the Dockerfile invokes this one script
-# to fetch ONNX model weights from HuggingFace. The !exception re-includes
-# just this file so the build context stays small.
+# scripts/ is excluded by default, but the Dockerfile invokes these to fetch
+# ONNX assets (TTS + PII NER) and to install the pinned yt-dlp binary. The
+# !exceptions re-include just those files so the build context stays small.
+# See `Dockerfile` (builder stage) before adding a new `RUN bash ./scripts/...`.
 scripts/*
 !scripts/tts_assets_folder.sh
+!scripts/pii_assets.sh
+!scripts/install-ytdlp.sh
+!scripts/stage-sharp-libvips.sh
 *.md
 CODE_OF_CONDUCT.md
 CONTRIBUTING.md
 PROMPT.md
 README.md
 images/
+# Local CLI binaries (downloaded by scripts/install-ytdlp.sh)
+.bin

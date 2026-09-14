@@ -120,7 +120,7 @@ watch(isOpen, (newValue) => {
     class="md:min-w-2xl" :ui="{ footer: 'justify-end' }">
     <template #body>
       <div v-if="isLoading && !settings" class="flex justify-center p-8">
-        <ULoader />
+        <UIcon name="i-lucide-loader-circle" class="size-6 animate-spin text-muted" />
       </div>
 
       <div v-else-if="settings" class="space-y-6">
@@ -137,7 +137,15 @@ watch(isOpen, (newValue) => {
                   : 'border-transparent hover:border-gray-200 dark:hover:border-gray-700'
               ]" @click="selectedBusinessId = business.id">
               <section class="flex items-center gap-3">
-                <URadio :modelValue="selectedBusinessId" :value="business.id" />
+                <span
+                  class="size-4 shrink-0 rounded-full border-2 flex items-center justify-center"
+                  :class="selectedBusinessId === business.id ? 'border-primary' : 'border-muted'"
+                >
+                  <span
+                    v-if="selectedBusinessId === business.id"
+                    class="size-2 rounded-full bg-primary"
+                  />
+                </span>
                 <div>
                   <p class="font-medium">{{ business.name }}</p>
                 </div>

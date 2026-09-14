@@ -243,7 +243,7 @@ useHead({
 </script>
 
 <template>
-  <div class="container mx-auto py-6 space-y-8">
+  <div class=" p-4 lg:mx-auto lg:p-6">
     <BasePageHeader :title="t('title')" :description="t('subtitle')">
       <template #actions>
         <UButton :loading="isSaving" icon="i-lucide-save" color="neutral" variant="outline" @click="onSaveDraft">

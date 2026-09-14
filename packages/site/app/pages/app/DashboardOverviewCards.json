@@ -61,7 +61,8 @@
     "collecting": "Collecting...",
     "noTopPosts": "No top posts data yet",
     "topPostsDescription": "Your best performing posts by engagement",
-    "quickAutoReply": "Auto-reply"
+    "quickAutoReply": "Auto-reply",
+    "quickContentBoard": "Content board"
   },
   "es": {
     "totalFollowers": "Total Seguidores",
@@ -125,7 +126,8 @@
     "collecting": "Recopilando...",
     "noTopPosts": "Aún no hay datos de publicaciones destacadas",
     "topPostsDescription": "Tus mejores publicaciones por interacción",
-    "quickAutoReply": "Respuesta automática"
+    "quickAutoReply": "Respuesta automática",
+    "quickContentBoard": "Tablero de contenido"
   },
   "de": {
     "totalFollowers": "Follower Gesamt",
@@ -189,7 +191,8 @@
     "collecting": "Sammelt...",
     "noTopPosts": "Noch keine Top-Beiträge vorhanden",
     "topPostsDescription": "Ihre besten Beiträge nach Engagement",
-    "quickAutoReply": "Auto-Antwort"
+    "quickAutoReply": "Auto-Antwort",
+    "quickContentBoard": "Content-Board"
   },
   "fr": {
     "totalFollowers": "Total Abonnés",
@@ -253,6 +256,7 @@
     "collecting": "Collecte...",
     "noTopPosts": "Aucune publication phare pour le moment",
     "topPostsDescription": "Vos meilleures publications par engagement",
-    "quickAutoReply": "Réponse auto"
+    "quickAutoReply": "Réponse auto",
+    "quickContentBoard": "Tableau de contenu"
   }
 }

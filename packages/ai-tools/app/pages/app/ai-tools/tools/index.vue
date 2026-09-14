@@ -31,7 +31,7 @@ async function onSearchSubmit() {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#0a0a0a]">
+  <div class="min-h-screen ">
     <div class="max-w-6xl mx-auto p-6">
       <header class="mb-12 mt-8">
         <h1 class="text-3xl font-semibold tracking-tight text-white mb-2">AI Tools</h1>
@@ -68,7 +68,7 @@ async function onSearchSubmit() {
           </div>
           <div class="relative">
             <pre
-              class="bg-[#0d0d0d] text-emerald-400 p-4 rounded-lg text-sm overflow-x-auto font-mono border border-gray-700/50">{{ sql }}</pre>
+              class=" text-emerald-400 p-4 rounded-lg text-sm overflow-x-auto font-mono border border-gray-700/50">{{ sql }}</pre>
             <UButton icon="i-heroicons-clipboard" size="xs" variant="solid" color="neutral"
               class="absolute top-2 right-2" @click="copySQL" />
           </div>

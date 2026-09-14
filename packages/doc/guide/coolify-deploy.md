@@ -123,22 +123,18 @@ services:
     image: ghcr.io/leamsigc/magicsync:v1.0.0  # Replace with the latest release tag
     depends_on:
       - db
-      - python-backend
     environment:
       - NUXT_HOST=0.0.0.0
-      - NUXT_PYTHON_API_URL=http://python-backend:8000
     volumes:
       - uploads:/usr/app/upload/files
 
-  python-backend:
-    depends_on:
-      - db
+  # Optional: Python-only tools sidecar. Remove if you do not need it.
+  python-tools:
     build:
-      context: ./packages/python-backend
+      context: ./packages/python-tools
       dockerfile: Dockerfile
-    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
-    volumes:
-      - uploads:/app/upload/files
+    environment:
+      - PYTHON_TOOLS_TOKEN=<optional-bearer-token>
 
   db:
     image: ghcr.io/tursodatabase/libsql-server:latest
@@ -158,8 +154,10 @@ volumes:
 - **Cache:** Docker may cache `latest`. To force a fresh pull, redeploy or use a specific tag.
 
 **What this does:**
-- The **site** uses the pre-built image, so no build is required.
-- The **python-backend** is built from `packages/python-backend/Dockerfile`.
+- The **site** uses the pre-built image, so no build is required. Chat, agents,
+  the content board, RAG, and video ingestion all run inside this container.
+- The **python-tools** sidecar is optional and only needed for Python-only
+  tools; point AI settings → Tool backends at `http://python-tools:8100`.
 - The **db** uses the official libSQL server image.
 - Named volumes persist the database and uploads across restarts.
 
@@ -199,36 +197,24 @@ NUXT_TURSO_DATABASE_URL=http://db:8080
 NUXT_TURSO_AUTH_TOKEN=<same-as-JWT>
 
 # ============================================================
-# PYTHON BACKEND
+# AGENT RUNTIME (in-process pi SDK)
 # ============================================================
-NUXT_PYTHON_API_URL=http://python-backend:8000
+MACHINE_BRIDGE_SECRET=<generate-with-openssl-rand-hex-32>
+NUXT_PUBLISH_SECRET=<generate-with-openssl-rand-hex-32>
 
 # ============================================================
-# LLM SERVICE (must match Python backend!)
+# TOOL BACKENDS (optional)
 # ============================================================
-NUXT_LLM_JWT_SECRET=<generate-with-openssl-rand-hex-32>
-
-# ============================================================
-# PYTHON BACKEND ENV VARS
-# ============================================================
-# These are passed to the python-backend service.
-# CORS_ORIGINS must be valid JSON with no trailing commas.
-# Use your public domain as the primary origin.
-CORS_ORIGINS=["https://magicsync.dev:8888"]
-# If the Nuxt site calls the Python backend from inside Docker, also add:
-# CORS_ORIGINS=["https://magicsync.dev:8888","http://site:3000"]
-LLM_JWT_SECRET=<same-as-NUXT_LLM_JWT_SECRET>
-BETTER_AUTH_URL=https://magicsync.dev:8888
-BETTER_AUTH_SECRET=<same-as-NUXT_BETTER_AUTH_SECRET>
+# Deployment fallbacks; users can set their own in AI settings.
+SGAI_API_KEY=<your-scrapegraphai-api-key>
+PYTHON_TOOLS_URL=http://python-tools:8100
+PYTHON_TOOLS_TOKEN=<optional-bearer-token>
 
 # ============================================================
 # OLLAMA (optional — for local AI)
 # ============================================================
-# If you want local AI, add an Ollama service to the compose file.
-# Otherwise, MagicSync can use cloud LLM providers via API keys.
-OLLAMA_BASE_URL=http://ollama:11434
-OLLAMA_DEFAULT_MODEL=qwen3.5
-OLLAMA_EMBEDDING_MODEL=mxbai-embed-large
+# Agents use pi ModelRuntime; select Ollama in AI settings with base URL
+# http://ollama:11434/v1. Otherwise use cloud provider keys below.
 
 # ============================================================
 # FILE STORAGE
@@ -266,7 +252,8 @@ openssl rand -hex 32  # SQLD_AUTH_JWT_KEY
 openssl rand -hex 32  # NUXT_SESSION_PASSWORD
 openssl rand -hex 32  # NUXT_BETTER_AUTH_SECRET
 openssl rand -hex 32  # BETTER_AUTH_SECRET
-openssl rand -hex 32  # NUXT_LLM_JWT_SECRET
+openssl rand -hex 32  # NUXT_PUBLISH_SECRET
+openssl rand -hex 32  # MACHINE_BRIDGE_SECRET
 ```
 
 **Important:** `JWT` and `NUXT_TURSO_AUTH_TOKEN` must be the same value.
@@ -276,7 +263,7 @@ openssl rand -hex 32  # NUXT_LLM_JWT_SECRET
 | In .env-example | In Coolify | Reason |
 |-----------------|------------|--------|
 | `NUXT_TURSO_DATABASE_URL=http://localhost:8080` | `http://db:8080` | Docker services communicate by name |
-| `NUXT_PYTHON_API_URL=http://localhost:8000` | `http://python-backend:8000` | Docker services communicate by name |
+| `PYTHON_TOOLS_URL=http://localhost:8100` | `http://python-tools:8100` | Docker services communicate by name (only if you run the optional sidecar) |
 | `NUXT_APP_URL=http://localhost:3000` | `https://magicsync.dev:8888` | Your public domain |
 
 ---
@@ -368,11 +355,18 @@ https://magicsync.dev:8888
 3. Verify `SQLD_AUTH_JWT_KEY` is set.
 4. Make sure `NUXT_TURSO_DATABASE_URL` is `http://db:8080`, not `localhost`.
 
-### Python backend cannot connect
+### Python tools sidecar cannot connect
 
-1. Verify `NUXT_PYTHON_API_URL` is `http://python-backend:8000`.
-2. Check that the `python-backend` container is running.
-3. Make sure `NUXT_LLM_JWT_SECRET` and `LLM_JWT_SECRET` match.
+1. Verify `PYTHON_TOOLS_URL` is `http://python-tools:8100` (or the URL set in AI settings).
+2. Check that the `python-tools` container is running.
+3. Use the Test button in AI settings → Tool backends; it probes `/health`.
+
+### Agents fail with `MODEL_NOT_CONFIGURED`
+
+Set a provider/model in Account → AI settings (global) or a per-business
+override; `AGENT_DEFAULT_PROVIDER` / `AGENT_DEFAULT_MODEL` are deployment
+fallbacks. ScrapeGraphAI errors (`SCRAPEGRAPH_NOT_CONFIGURED`) are fixed by
+adding a key in AI settings → Tool backends or setting `SGAI_API_KEY`.
 
 ### SSL certificate will not generate
 

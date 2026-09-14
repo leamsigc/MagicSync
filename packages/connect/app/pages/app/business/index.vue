@@ -62,13 +62,15 @@ useHead({
 </script>
 
 <template>
-  <div class="container mx-auto py-6 space-y-6">
+  <div class=" p-4 lg:mx-auto lg:p-6">
     <BasePageHeader :title="t('title')" :description="t('description')" />
     <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
-      <div data-tour="create-business-step-0"><AddBusiness /></div>
-      <div v-for="(business, index) in businesses.data" :key="business.id" :data-tour="index === 0 ? 'create-business-step-1' : undefined">
-        <BusinessCard :business="business"
-          @edit="handleEditBusiness" @delete="handleDeleteBusiness" />
+      <div data-tour="create-business-step-0">
+        <AddBusiness />
+      </div>
+      <div v-for="(business, index) in businesses.data" :key="business.id"
+        :data-tour="index === 0 ? 'create-business-step-1' : undefined">
+        <BusinessCard :business="business" @edit="handleEditBusiness" @delete="handleDeleteBusiness" />
       </div>
       <div v-if="!businesses.data" class="text-center text-gray-500 grid place-content-center bg-accented rounded">
         {{ t('states.no_businesses') }}

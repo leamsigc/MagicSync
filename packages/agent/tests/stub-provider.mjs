@@ -70,18 +70,20 @@ function isChatCompletionsRequest(req) {
   return req.method === 'POST' && (req.url ?? '').endsWith('/chat/completions')
 }
 
-function containsToolResult(payload) {
-  return payload.messages.some(message => message.role === 'tool')
+function countToolResults(payload) {
+  return payload.messages.filter(message => message.role === 'tool').length
 }
 
 /**
  * Minimal OpenAI-compatible /chat/completions stub.
- * First turn answers with a tool call, any turn after a tool result answers with
- * streamed text. No network, no API keys.
+ * Walks a scripted list of tool calls (one per turn) and then streams text.
+ * With no script it answers one tool call followed by text. No network.
  */
 export async function startStubProvider(options = {}) {
-  const toolName = options.toolName ?? 'echo_note'
-  const toolArgs = options.toolArgs ?? { note: 'hello from stub' }
+  const script = options.toolScript ?? [{
+    name: options.toolName ?? 'echo_note',
+    args: options.toolArgs ?? { note: 'hello from stub' },
+  }]
   const finalText = options.finalText ?? 'Stub finished the task.'
   const requests = []
 
@@ -98,11 +100,12 @@ export async function startStubProvider(options = {}) {
       'Cache-Control': 'no-cache',
       Connection: 'keep-alive',
     })
-    if (containsToolResult(payload)) {
-      writeTextTurn(res, finalText)
+    const step = countToolResults(payload)
+    if (step < script.length) {
+      writeToolCallTurn(res, script[step].name, script[step].args)
       return
     }
-    writeToolCallTurn(res, toolName, toolArgs)
+    writeTextTurn(res, finalText)
   })
 
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve))

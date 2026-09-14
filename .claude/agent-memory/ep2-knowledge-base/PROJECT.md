@@ -1,5 +1,9 @@
 # Episode 2: Knowledge Base Explorer — Project Definition
 
+> Historical note: the Python backend referenced here was removed (T14). The
+> KB exploration tools now ship in the Nuxt agent layer (`packages/agent`).
+> Current architecture: `.claude/context/architecture.md`.
+
 ## What This Is
 
 A Claude Code-inspired exploration layer for MagicSync's RAG system. Gives the AI agent filesystem-like tools to navigate, search, and read a hierarchical knowledge base stored in Turso. Users organize documents into nested folders (global or personal), and the agent can explore this structure using `ls`, `tree`, `grep`, `glob`, and `read` tools — just like Claude Code explores codebases.

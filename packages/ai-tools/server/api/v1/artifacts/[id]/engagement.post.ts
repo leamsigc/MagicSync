@@ -1,30 +1,27 @@
-import { aiToolsFacade } from '#ai-tools/server/services/aiToolsFacade.service'
-import { contentArtifactService } from '#layers/BaseDB/server/services/content-artifact.service'
+import { analyticsService } from '#layers/BaseDB/server/services/analytics.service'
+import { loadArtifactContext } from '#ai-tools/server/utils/artifact-context'
+import { generationErrorStatus, resolveCheckPostIds } from '#ai-tools/server/utils/socialAi'
 
 export default defineEventHandler(async (event) => {
-  const user = await aiToolsFacade.authenticate(event)
-  const id = getRouterParam(event, 'id')
-  if (!id) throw createError({ statusCode: 400, statusMessage: 'Artifact ID is required' })
-  const query = getQuery(event)
-  const businessId = typeof query.businessId === 'string' ? query.businessId : null
-  if (!businessId) throw createError({ statusCode: 400, statusMessage: 'businessId is required' })
-
-  const artifact = await contentArtifactService.getArtifact(user.id, id, businessId, event)
-  if (!artifact.success || !artifact.data) {
-    throw createError({ statusCode: 404, statusMessage: 'Artifact not found' })
+  const { userId, businessId, artifact } = await loadArtifactContext(event)
+  const body = (await readBody(event).catch(() => null)) ?? {} as { postIds?: unknown }
+  const postIds = resolveCheckPostIds(body, artifact.postId)
+  if (postIds.length === 0) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'This draft has no published post yet — engagement is measured from published posts',
+    })
   }
-  const llmJwtResult = await aiToolsFacade.getLlmJwtContext(user.id, user.email || '', businessId)
-  const llmJwt = llmJwtResult.data?.token ?? ''
-  const config = useRuntimeConfig()
-  const backendUrl = config.pythonBackendUrl || 'http://localhost:8000'
-  const body = await readBody(event).catch(() => ({})) as { postIds?: string[] }
-
-  return await $fetch(`${backendUrl}/api/v1/tools/analyze`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${llmJwt}` },
-    body: {
-      tool: 'engagement_calc',
-      args: { post_ids: body.postIds ?? [], content: artifact.data.output },
+  const rates = await analyticsService.calculateEngagement(userId, businessId, postIds, event)
+  if (!rates.success) {
+    throw createError({ statusCode: generationErrorStatus(rates.code), statusMessage: rates.error })
+  }
+  return {
+    result: {
+      results: rates.data.rates,
+      count: rates.data.rates.length,
+      source: 'authoritative',
+      version: rates.data.version,
     },
-  })
+  }
 })

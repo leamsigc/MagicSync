@@ -2,9 +2,7 @@ import type { H3Event } from 'h3'
 import { checkUserIsLogin } from "#layers/BaseAuth/server/utils/AuthHelpers"
 import { pipelineService } from "#layers/BaseDB/server/services/pipeline.service"
 import { businessContextResolver, contextErrorStatus } from '#layers/BaseDB/server/services/business-context-resolver.service'
-import { userLlmConfigService } from '#layers/BaseDB/server/services/user-llm-config.service'
-import { createLlmJwt } from '#layers/BaseDB/server/utils/llm-jwt'
-import { AI_KEY_MESSAGE, isAuthFailure } from '#layers/BaseDB/server/utils/ai-error'
+import { completeForUser } from '#layers/BaseAgent/server/utils/run-config'
 import type { PipelineStatus, PipelineStep } from '#layers/BaseDB/db/schema'
 
 const EXECUTABLE = new Set(['running', 'waiting_input'])
@@ -77,44 +75,36 @@ async function loadBrandContext(
   return { prompt: context.prompt, editionId: context.editionId, enabled: context.enabled }
 }
 
-function toPhaseDefinitions(steps: PipelineStep[]) {
-  return steps.map(step => ({
-    name: step.name,
-    type: step.type,
-    system_prompt: step.prompt ?? '',
-  }))
-}
-
-async function callHarnessPhase(
-  backendUrl: string,
-  llmJwt: string,
-  runId: string,
-  phaseIndex: number,
-  phaseInput: Record<string, unknown>,
-  steps: PipelineStep[],
+async function executeStep(
+  event: H3Event,
+  userId: string,
+  businessId: string,
+  brandPrompt: string,
+  input: Record<string, unknown>,
+  step: PipelineStep | undefined,
+  prior: unknown[],
 ) {
-  const response = await fetch(`${backendUrl}/api/v1/agent-extended/harness/execute-phase`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${llmJwt}`,
-    },
-    body: JSON.stringify({
-      harness_type: 'custom',
-      phase_index: phaseIndex,
-      phase_input: phaseInput,
-      thread_id: runId,
-      phases: toPhaseDefinitions(steps),
-    }),
+  const result = await completeForUser(userId, {
+    businessId,
+    useBusinessContext: false,
+    event,
+    system: brandPrompt || undefined,
+    maxTokens: 1600,
+    prompt: [
+      step?.prompt || `Execute pipeline step "${step?.name ?? 'step'}" (${step?.type ?? 'llm_single'}).`,
+      `Brief: ${String(input.brief ?? '')}`,
+      `Previous outputs: ${JSON.stringify(prior).slice(0, 4000)}`,
+    ].join('\n'),
   })
-  if (!response.ok) {
-    const detail = await response.text().catch(() => '')
-    if (isAuthFailure(detail)) {
-      throw createError({ statusCode: 400, statusMessage: AI_KEY_MESSAGE })
-    }
-    throw createError({ statusCode: 502, statusMessage: 'Agent backend failed to execute the step' })
+  if (!result.success) {
+    throw createError({ statusCode: 400, statusMessage: result.error })
   }
-  return (await response.json()) as { phase?: number, phase_name?: string, phase_type?: string, result?: unknown }
+  return {
+    phase: 0,
+    phase_name: step?.name,
+    phase_type: step?.type,
+    result: { text: result.data.text },
+  }
 }
 
 export default defineEventHandler(async (event) => {
@@ -136,20 +126,7 @@ export default defineEventHandler(async (event) => {
     const input = parseRunInput(stored.input)
     const brand = await loadBrandContext(input, stored.businessId, user.id, event)
 
-    const llmConfig = await userLlmConfigService.getEffectiveConfig(user.id, stored.businessId)
-    const llmJwt = createLlmJwt(user.id, user.email || '', llmConfig.data ?? null)
-
-    const config = useRuntimeConfig()
-    const backendUrl = config.pythonBackendUrl || 'http://localhost:8000'
-    const executed = await callHarnessPhase(backendUrl, llmJwt, runId, index, {
-      brief: input.brief ?? '',
-      business_id: stored.businessId,
-      use_business_context: brand.enabled,
-      context_edition_id: brand.editionId,
-      business_context: brand.prompt || undefined,
-      previous_outputs: prior,
-      step_index: index,
-    }, steps)
+    const executed = await executeStep(event, user.id, stored.businessId, brand.enabled ? brand.prompt : '', input, step, prior)
 
     const entry = {
       step: index,

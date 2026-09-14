@@ -13,7 +13,7 @@ interface TokenHealth {
   daysRemaining: number | null
 }
 
-const { getAllSocialMediaAccounts, pagesList, getTokenHealth } = useConnectionManager()
+const { t, getAllSocialMediaAccounts, pagesList, getTokenHealth } = useConnectionManager()
 const { activeBusinessId, getAllBusinesses } = useBusinessManager()
 const { getPlatformIcon } = usePlatformIcons()
 
@@ -51,7 +51,6 @@ watch(activeBusinessId, async (newId) => {
   }
 })
 
-const { t } = useI18n()
 useHead({
   title: t('seo_title_active'),
   meta: [
@@ -62,9 +61,10 @@ useHead({
 </script>
 
 <template>
-  <div class="container mx-auto py-6 space-y-6">
+  <div class=" p-4 lg:mx-auto lg:p-6">
     <BasePageHeader :title="t('title')" :description="t('description')" />
-    <div v-if="healthMap.size > 0" class="flex flex-wrap gap-2 p-3 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800">
+    <div v-if="healthMap.size > 0"
+      class="flex flex-wrap gap-2 p-3 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800">
       <UIcon name="lucide:alert-triangle" class="w-5 h-5 text-yellow-600 dark:text-yellow-400 shrink-0" />
       <p class="text-sm text-yellow-800 dark:text-yellow-200">
         Some connections have token issues — check the cards below to
@@ -74,7 +74,8 @@ useHead({
     <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
       <ConnectIntegrationCard v-for="social in filteredAccounts" :name="social.accountName" :key="social.id"
         :image="social.entityDetail?.details?.picture ? social.entityDetail.details.picture : ''"
-        :icon="social.platform ? getPlatformIcon(social.platform as SocialMediaPlatform) : ''" :tags="[social.accountId]" :id="social.id"
+        :icon="social.platform ? getPlatformIcon(social.platform as SocialMediaPlatform) : ''"
+        :tags="[social.accountId]" :id="social.id"
         :time="dayjs(social.createdAt as unknown as string).format('YYYY-MM-DD')" connected :show-pages="false"
         :health="healthMap.get(social.id)" :platform="social.platform" :accountId="social.accountId" />
     </div>

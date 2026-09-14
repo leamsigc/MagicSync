@@ -50,7 +50,7 @@ test.describe('AI Chat - Streaming & Tool Calls', () => {
     await expect(page.getByText('Done')).toBeVisible({ timeout: 10000 })
 
     // Loading indicator should be gone
-    await expect(page.locator('.animate-bounce')).not.toBeVisible()
+    await expect(page.locator('[data-slot="indicator"]')).not.toBeVisible()
   })
 
   test('should display tool call in chat', async ({ page }) => {

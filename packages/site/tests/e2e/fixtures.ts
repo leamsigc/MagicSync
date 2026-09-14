@@ -43,13 +43,15 @@ async function mockAuthSession(page: Page) {
 async function mockChatSSE(page: Page, response: string = 'Hello! How can I help?') {
   const words = response.split(' ')
   const chunks = words
-    .map(w => `data: ${JSON.stringify({ type: 'text', content: `${w} ` })}\n\n`)
+    .map(w => `data: ${JSON.stringify({ type: 'text.delta', id: `stub:${w}`, delta: `${w} ` })}\n\n`)
     .join('')
-  await page.route('**/api/ai-tools/chat', async (route) => {
+  const completed = `data: ${JSON.stringify({ type: 'message.completed', id: 'stub:done', sessionId: 'stub-session', threadId: 'new-thread-id', content: response })}\n\n`
+  await page.route('**/api/v1/agent/chat', async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'text/event-stream',
-      body: chunks + `data: ${JSON.stringify({ type: 'done' })}\n\n`,
+      headers: { 'X-Thread-Id': 'new-thread-id' },
+      body: chunks + completed,
     })
   })
 }

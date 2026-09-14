@@ -10,17 +10,28 @@
     "generate": "nuxt generate .playground",
     "preview": "nuxt preview .playground",
     "lint": "eslint .",
-    "test": "node --test \"tests/*.test.mjs\""
+    "test": "node --test --import ./tests/register-hook.mjs --import ./tests/globals.mjs \"tests/*.test.mjs\""
   },
   "dependencies": {
+    "@ai-sdk/google": "catalog:",
+    "@ai-sdk/openai": "catalog:",
     "@earendil-works/pi-agent-core": "catalog:",
     "@earendil-works/pi-ai": "catalog:",
     "@earendil-works/pi-coding-agent": "catalog:",
+    "@local-monorepo/auth": "workspace:*",
+    "@local-monorepo/db": "workspace:*",
     "@local-monorepo/shared": "workspace:*",
-    "typebox": "catalog:"
+    "ai": "catalog:",
+    "dayjs": "catalog:",
+    "mammoth": "catalog:",
+    "scrapegraph-js": "catalog:",
+    "typebox": "catalog:",
+    "unpdf": "catalog:"
   },
   "devDependencies": {
+    "@libsql/client": "catalog:",
     "@nuxt/eslint": "catalog:",
+    "drizzle-orm": "catalog:",
     "eslint": "catalog:",
     "nuxt": "catalog:",
     "typescript": "catalog:",

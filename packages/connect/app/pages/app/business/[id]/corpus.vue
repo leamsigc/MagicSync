@@ -259,21 +259,23 @@ onMounted(loadPage)
 </script>
 
 <template>
-  <div class="mx-auto max-w-5xl space-y-6">
+  <div class="mx-auto p-2 lg:p-6">
     <BasePageHeader :title="t('title')" :description="t('description')">
       <template #actions>
         <div class="flex flex-wrap gap-2">
-          <UButton variant="outline" color="neutral" icon="i-heroicons-arrow-down-tray" :loading="exporting" data-testid="corpus-export" @click="handleExportCorpus">
+          <UButton variant="outline" color="neutral" icon="i-heroicons-arrow-down-tray" :loading="exporting"
+            data-testid="corpus-export" @click="handleExportCorpus">
             {{ t('actions.export') }}
           </UButton>
-          <UButton variant="outline" color="neutral" icon="i-heroicons-arrow-up-tray" :loading="importing" data-testid="corpus-import" @click="handleTriggerCorpusImport">
+          <UButton variant="outline" color="neutral" icon="i-heroicons-arrow-up-tray" :loading="importing"
+            data-testid="corpus-import" @click="handleTriggerCorpusImport">
             {{ t('actions.import') }}
           </UButton>
           <UButton variant="ghost" color="neutral" icon="i-heroicons-arrow-left" @click="handleGoBack">
             {{ t('back') }}
           </UButton>
         </div>
-        <input ref="importInput" type="file" accept="application/json" class="hidden" @change="handleImportCorpusFile" >
+        <input ref="importInput" type="file" accept="application/json" class="hidden" @change="handleImportCorpusFile">
       </template>
     </BasePageHeader>
 
@@ -288,7 +290,9 @@ onMounted(loadPage)
         </template>
         <div v-if="readiness" class="flex flex-wrap items-center gap-2">
           <UBadge :color="readiness.corpus.ready ? 'success' : 'warning'" variant="subtle">
-            {{ readiness.corpus.ready ? t('readiness.ready') : t('readiness.notReady', { count: readiness.corpus.missingSections.length }) }}
+            {{ readiness.corpus.ready ? t('readiness.ready') : t('readiness.notReady', {
+              count:
+                readiness.corpus.missingSections.length }) }}
           </UBadge>
           <UBadge :color="readiness.brandedReady ? 'success' : 'neutral'" variant="subtle">
             {{ readiness.brandedReady ? t('readiness.brandedReady') : t('readiness.brandedBlocked') }}
@@ -307,15 +311,8 @@ onMounted(loadPage)
               <UBadge :color="isFilled(section) ? 'success' : 'neutral'" variant="subtle" size="xs">
                 {{ isFilled(section) ? t('actions.filledBadge') : t('actions.emptyBadge') }}
               </UBadge>
-              <UButton
-                class="ms-auto"
-                size="xs"
-                color="primary"
-                variant="outline"
-                :loading="busyKey === section"
-                :data-testid="`corpus-save-${section}`"
-                @click="handleSaveSection(section)"
-              >
+              <UButton class="ms-auto" size="xs" color="primary" variant="outline" :loading="busyKey === section"
+                :data-testid="`corpus-save-${section}`" @click="handleSaveSection(section)">
                 {{ t('actions.save') }}
               </UButton>
             </div>
@@ -332,15 +329,8 @@ onMounted(loadPage)
           <section v-for="key in KEY_IDS" :key="key" :data-testid="`corpus-key-${key}`">
             <div class="mb-1 flex items-center gap-2">
               <h3 class="text-sm font-semibold">{{ t(`keys.${key}`) }}</h3>
-              <UButton
-                class="ms-auto"
-                size="xs"
-                color="primary"
-                variant="outline"
-                :loading="busyKey === key"
-                :data-testid="`corpus-save-${key}`"
-                @click="handleSaveKey(key)"
-              >
+              <UButton class="ms-auto" size="xs" color="primary" variant="outline" :loading="busyKey === key"
+                :data-testid="`corpus-save-${key}`" @click="handleSaveKey(key)">
                 {{ t('actions.save') }}
               </UButton>
             </div>
@@ -354,10 +344,12 @@ onMounted(loadPage)
           <h2 class="font-semibold">{{ t('preview.title') }}</h2>
           <p class="text-sm text-muted">{{ t('preview.description') }}</p>
         </template>
-        <div v-if="overBudget" v-motion-fade :duration="200" class="mb-3 rounded-xl border border-warning/40 bg-warning/10 px-4 py-2 text-sm text-warning">
+        <div v-if="overBudget" v-motion-fade :duration="200"
+          class="mb-3 rounded-xl border border-warning/40 bg-warning/10 px-4 py-2 text-sm text-warning">
           {{ t('budget.warning', { count: previewLength }) }}
         </div>
-        <pre v-if="preview" data-testid="corpus-preview" class="max-h-96 overflow-auto rounded-xl bg-elevated p-3 font-mono text-xs">{{ preview }}</pre>
+        <pre v-if="preview" data-testid="corpus-preview"
+          class="max-h-96 overflow-auto rounded-xl bg-elevated p-3 font-mono text-xs">{{ preview }}</pre>
         <p v-else class="py-4 text-center text-sm text-muted">{{ t('preview.empty') }}</p>
       </UCard>
     </template>

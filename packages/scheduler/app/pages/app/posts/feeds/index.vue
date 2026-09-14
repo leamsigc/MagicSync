@@ -45,18 +45,18 @@ const fetchPosts = async (page: number, append = false) => {
       limit: '10'
     })
 
-    const { data: response } = await useFetch<PaginatedResponse<PostWithAllData>>(`/api/v1/posts?${query}`)
+    const response = await $fetch<PaginatedResponse<PostWithAllData>>(`/api/v1/posts?${query}`)
 
-    if (response.value?.data) {
+    if (response?.data) {
       if (append) {
-        posts.value.push(...response.value.data)
+        posts.value.push(...response.data)
       } else {
-        posts.value = response.value.data
+        posts.value = response.data
       }
 
-      if (response.value.pagination) {
-        totalPages.value = response.value.pagination.totalPages
-        currentPage.value = response.value.pagination.page
+      if (response.pagination) {
+        totalPages.value = response.pagination.totalPages
+        currentPage.value = response.pagination.page
       }
     }
   } catch (err) {
@@ -104,8 +104,6 @@ onMounted(async () => {
 })
 
 const HandleRefresh = async () => {
-  console.log("Should refresh....");
-
   posts.value = []
   await fetchPosts(1)
 }

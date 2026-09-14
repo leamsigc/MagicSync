@@ -110,18 +110,6 @@ generate_secrets() {
         fi
         ok "Secrets generated in .env"
     fi
-
-    # Generate LLM_JWT_SECRET in python-backend/.env (only if not already set)
-    if [[ -f "$SCRIPT_DIR/packages/python-backend/.env" ]]; then
-        if ! grep -q "^LLM_JWT_SECRET=$llm_jwt" "$SCRIPT_DIR/packages/python-backend/.env" 2>/dev/null; then
-            echo "" >> "$SCRIPT_DIR/packages/python-backend/.env"
-            echo "# =============================================================================" >> "$SCRIPT_DIR/packages/python-backend/.env"
-            echo "# JWT AUTH (Service-to-service communication with Nuxt)" >> "$SCRIPT_DIR/packages/python-backend/.env"
-            echo "# IMPORTANT: MUST MATCH NUXT_LLM_JWT_SECRET IN ROOT .env" >> "$SCRIPT_DIR/packages/python-backend/.env"
-            echo "# =============================================================================" >> "$SCRIPT_DIR/packages/python-backend/.env"
-            echo "LLM_JWT_SECRET=$llm_jwt" >> "$SCRIPT_DIR/packages/python-backend/.env"
-        fi
-    fi
 }
 
 ensure_env() {
@@ -129,9 +117,9 @@ ensure_env() {
         warn ".env not found — copying from .env-example"
         cp "$SCRIPT_DIR/.env-example" "$SCRIPT_DIR/.env"
     fi
-    if [[ ! -f "$SCRIPT_DIR/packages/python-backend/.env" ]]; then
-        if [[ -f "$SCRIPT_DIR/packages/python-backend/.env.example" ]]; then
-            cp "$SCRIPT_DIR/packages/python-backend/.env.example" "$SCRIPT_DIR/packages/python-backend/.env"
+    if [[ ! -f "$SCRIPT_DIR/packages/python-tools/.env" ]]; then
+        if [[ -f "$SCRIPT_DIR/packages/python-tools/.env.example" ]]; then
+            cp "$SCRIPT_DIR/packages/python-tools/.env.example" "$SCRIPT_DIR/packages/python-tools/.env"
         fi
     fi
 }
@@ -139,14 +127,14 @@ ensure_env() {
 cmd_dev() {
     check_deps
     ensure_env
-    info "Starting local development (site + python-backend)..."
+    info "Starting local development (site + python-tools)..."
 
     cmd_site &
     cmd_python &
 
-    ok "Site:        http://localhost:3000"
-    ok "Python API:  http://localhost:8000"
-    ok "API docs:    http://localhost:8000/docs"
+    ok "Site:         http://localhost:3000"
+    ok "Python tools: http://localhost:8100"
+    ok "API docs:     http://localhost:8100/docs"
     echo ""
     info "Press Ctrl+C to stop everything."
 
@@ -163,20 +151,24 @@ cmd_site() {
 cmd_python() {
     check_deps
     ensure_env
-    info "Starting Python backend on port 8000..."
-    cd "$SCRIPT_DIR/packages/python-backend"
-    if [[ -d venv ]]; then
+    info "Starting Python tools sidecar on port 8100..."
+    cd "$SCRIPT_DIR/packages/python-tools"
+    if [[ -d .venv ]]; then
+        source .venv/bin/activate
+    elif [[ -d venv ]]; then
         source venv/bin/activate
-        uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 --env-file .env
+    fi
+    if [[ -f .env ]]; then
+        uvicorn app.main:app --reload --host 0.0.0.0 --port 8100 --env-file .env
     else
-        uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 --env-file .env
+        uvicorn app.main:app --reload --host 0.0.0.0 --port 8100
     fi
 }
 
 cmd_dev_docker() {
     check_docker_deps
     ensure_env
-    info "Starting Docker development (site + python-backend + db)..."
+    info "Starting Docker development (site + db)..."
 
     docker compose -f "$SCRIPT_DIR/docker-compose.yml" up --build
 }
@@ -229,17 +221,20 @@ cmd_install_pnpm() {
 cmd_install_python() {
     check_deps
     info "Installing Python dependencies..."
-    cd "$SCRIPT_DIR/packages/python-backend"
-    
-    if [[ -d "venv" ]]; then
-        info "Using existing virtual environment..."
-        source venv/bin/activate
-        pip install -e .
-    else
-        info "Creating virtual environment and installing dependencies..."
-        uv sync
+    cd "$SCRIPT_DIR/packages/python-tools"
+
+    if [[ ! -d .venv && ! -d venv ]]; then
+        info "Creating virtual environment..."
+        python3 -m venv .venv
     fi
-    
+    if [[ -d .venv ]]; then
+        source .venv/bin/activate
+    else
+        source venv/bin/activate
+    fi
+    pip install -r requirements.txt
+
+    info "Optional: pip install -r requirements-scrapegraph.txt (ScrapeGraphAI tools)"
     ok "Python dependencies installed."
 }
 
@@ -257,12 +252,12 @@ cmd_setup() {
     ensure_env
     generate_secrets
 
-    if [[ -f "$SCRIPT_DIR/packages/python-backend/.env" ]]; then
-        sed -i 's|^CORS_ORIGINS=.*|CORS_ORIGINS=["http://localhost:3000"]|' "$SCRIPT_DIR/packages/python-backend/.env"
-    fi
-
     if [[ -f "$SCRIPT_DIR/.env" ]]; then
-        sed -i 's|^NUXT_PYTHON_API_URL=.*|NUXT_PYTHON_API_URL=http://localhost:8000|' "$SCRIPT_DIR/.env"
+        if grep -q "^PYTHON_TOOLS_URL=" "$SCRIPT_DIR/.env" 2>/dev/null; then
+            sed -i 's|^PYTHON_TOOLS_URL=.*|PYTHON_TOOLS_URL=http://localhost:8100|' "$SCRIPT_DIR/.env"
+        elif grep -q "^#.*PYTHON_TOOLS_URL=" "$SCRIPT_DIR/.env" 2>/dev/null; then
+            sed -i 's|^#.*PYTHON_TOOLS_URL=.*|PYTHON_TOOLS_URL=http://localhost:8100|' "$SCRIPT_DIR/.env"
+        fi
     fi
 
     ok "Setup complete!"
@@ -343,10 +338,10 @@ cmd_help() {
     echo -e "  ${YELLOW}install${NC}                Install all dependencies (pnpm + Python)"
     echo -e "  ${YELLOW}install:pnpm${NC}           Install only pnpm dependencies"
     echo -e "  ${YELLOW}install:python${NC}         Install only Python dependencies"
-    echo -e "  ${YELLOW}dev${NC}                    Start site + python-backend locally (hot reload)"
+    echo -e "  ${YELLOW}dev${NC}                    Start site + python-tools locally (hot reload)"
     echo -e "  ${YELLOW}dev:site${NC}               Start only Nuxt site locally (port 3000)"
-    echo -e "  ${YELLOW}dev:python${NC}             Start only Python backend locally (port 8000)"
-    echo -e "  ${YELLOW}dev:docker${NC}             Start all services in Docker (site + python + db)"
+    echo -e "  ${YELLOW}dev:python${NC}             Start only Python tools sidecar locally (port 8100)"
+    echo -e "  ${YELLOW}dev:docker${NC}             Start services in Docker (site + db)"
     echo -e "  ${YELLOW}dev:docker:bg${NC}         Start Docker in detached mode (background)"
     echo -e "  ${YELLOW}stop${NC}                   Stop Docker containers"
     echo -e "  ${YELLOW}stop:local${NC}             Stop local dev processes"
@@ -359,7 +354,7 @@ cmd_help() {
     echo -e "${GREEN}Quick Start:${NC}"
     echo -e "  1. ${YELLOW}./system.sh setup${NC}           Generate .env files + secrets"
     echo -e "  2. ${YELLOW}./system.sh install${NC}         Install all dependencies"
-    echo -e "  3. ${YELLOW}./system.sh dev${NC}              Start local dev (site + python)"
+    echo -e "  3. ${YELLOW}./system.sh dev${NC}              Start local dev (site + python-tools)"
     echo -e "  4. Or run separate: ${YELLOW}./system.sh dev:site${NC} or ${YELLOW}./system.sh dev:python${NC}"
     echo "  5. Open http://localhost:3000"
     echo ""
@@ -370,8 +365,9 @@ cmd_help() {
     echo ""
     echo -e "${GREEN}Ports:${NC}"
     echo "  Site:        http://localhost:3000"
-    echo "  Python API:  http://localhost:8000  (local dev only)"
+    echo "  Python tools: http://localhost:8100  (local dev only)"
     echo "  DB (sqld):   http://localhost:8080  (docker only)"
+    echo "  (Docker sidecar: docker compose --profile tools up python-tools)"
 }
 
 case "${1:-help}" in

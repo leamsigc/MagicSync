@@ -86,6 +86,38 @@ Welcome to the architecture behind MagicSync! Our project is organized as a mono
 
 ---
 
+## 🧠 The Brain Trust — `@local-monorepo/agent`
+
+**The Agent Layer** is where MagicSync thinks, plans, and reviews content!
+
+### What It Does
+- Runs the pi SDK **in-process** (no separate backend service)
+- Powers the business chat with streaming tools
+- Keeps one **content board** per business (ideas → review → approved → delivery)
+- Runs the content chain: research → write → humanize → SEO/GEO/link checks
+- Stores knowledge for retrieval (Turso-native vector search)
+- Protects private data with fail-closed PII filtering
+- Downloads video with the pinned yt-dlp + ffmpeg toolchain
+
+### Superpowers
+- Human approval gates before anything is scheduled or published
+- Server-owned tools with tenant isolation (model arguments never pick the business)
+- Per-business model choice (OpenAI, Anthropic, Google, OpenRouter, DeepSeek, Ollama)
+- Bring-your-own tool backends: ScrapeGraphAI key + optional Python tools service
+
+---
+
+## 🐍 The Toolsmith Annex — `packages/python-tools`
+
+**The Python Tools sidecar** is optional and user-run.
+
+### What It Does
+- Exposes Python-only tools over a small HTTP API (`/health`, `/tools`, `/tools/{name}/run`)
+- Ships `fetch_text` plus ScrapeGraphAI Python tools (`scrapegraph_smartscraper`, `scrapegraph_searchscraper`)
+- Is configured per user from **AI settings → Tool backends**; the agent calls it through `python_tools_*`
+
+---
+
 ## 🖼️ The Art Gallery — `@local-monorepo/assets`
 
 **The Assets Layer** stores images, icons, and files!
@@ -254,6 +286,8 @@ Database shows your data 🗃️
     ↓
 AI helps create content 🤖
     ↓
+Agent plans, researches, and drafts — humans approve the board 🧠
+    ↓
 Scheduler posts at the right time ⏰
     ↓
 Connect talks to social platforms 🤝
@@ -274,7 +308,9 @@ If you're a developer wanting to contribute:
 | UI | Nuxt 4, Nuxt UI v4, Tailwind CSS |
 | Auth | Better Auth, better-sqlite3 |
 | DB | Drizzle ORM, Turso (LibSQL) |
-| AI | Google Gemini 2.0 Flash, AI SDK |
+| AI | pi SDK (in-process), AI SDK embeddings |
+| Scraper | ScrapeGraphAI (`scrapegraph-js`) + raw-fetch fallback |
+| Python tools | FastAPI sidecar (optional, user-run, port 8100) |
 | Scheduler | FullCalendar, Platform APIs |
 | Email | MJML |
 | Content | Nuxt Content |

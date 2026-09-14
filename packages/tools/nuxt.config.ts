@@ -27,6 +27,17 @@ export default defineNuxtConfig({
   extends: ['@local-monorepo/ui', '@local-monorepo/db', '@local-monorepo/auth', '@local-monorepo/assets'],
   modules: ['@nuxtjs/i18n', '@nuxt/fonts', 'evlog/nuxt'],
   fonts: {
+    // Every declared family below lives on Google Fonts. Pin providers so
+    // builds never depend on bunny/fontshare uptime: @nuxt/fonts falls through
+    // to the next provider when a family lacks a weight/subset, and Bunny CDN
+    // fetches time out inside Docker builds (EAI/ETIMEDOUT on bunnyinfra.net),
+    // which previously failed `pnpm site` outright.
+    providers: {
+      bunny: false,
+      fontshare: false,
+      fontsource: false,
+      adobe: false,
+    },
     // Carousel + OG-image typefaces. `global: true` is required: the creator
     // applies fonts via inline styles in JS-generated HTML, which the module
     // cannot auto-detect in CSS. Browsers only download weights actually

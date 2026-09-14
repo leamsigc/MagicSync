@@ -6,7 +6,7 @@ import { initTestDb, insertUser } from './setup.mjs'
 // T100/T130 — HMAC machine auth over real SQLite.
 // Run: node --test --import ./tests/register-hook.mjs --import ./tests/globals.mjs tests/machine-auth.test.mjs
 
-process.env.DSH_BRIDGE_SECRET = 'test-machine-secret'
+process.env.MACHINE_BRIDGE_SECRET = 'test-machine-secret'
 
 const OWNER = 'machine-owner'
 
@@ -15,7 +15,7 @@ let svc
 
 function headersFor(body) {
   const timestamp = String(Math.floor(Date.now() / 1000))
-  const signature = createHmac('sha256', process.env.DSH_BRIDGE_SECRET)
+  const signature = createHmac('sha256', process.env.MACHINE_BRIDGE_SECRET)
     .update(`${timestamp}.${body}`)
     .digest('hex')
   return { timestamp, signature }
@@ -57,7 +57,7 @@ describe('machine auth (T100/T130)', () => {
     const tampered = fakeEvent({ 'x-machine-timestamp': timestamp, 'x-machine-signature': `${signature}00` })
     assert.match(svc.verifyMachineRequest(tampered, rawBody) ?? '', /Invalid/)
     const stale = String(Math.floor(Date.now() / 1000) - 9999)
-    const staleSig = createHmac('sha256', process.env.DSH_BRIDGE_SECRET).update(`${stale}.${rawBody}`).digest('hex')
+    const staleSig = createHmac('sha256', process.env.MACHINE_BRIDGE_SECRET).update(`${stale}.${rawBody}`).digest('hex')
     const staleEvent = fakeEvent({ 'x-machine-timestamp': stale, 'x-machine-signature': staleSig })
     assert.match(svc.verifyMachineRequest(staleEvent, rawBody) ?? '', /stale/)
     assert.match(svc.verifyMachineRequest(fakeEvent({}), rawBody) ?? '', /Missing/)

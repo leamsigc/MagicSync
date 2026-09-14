@@ -336,6 +336,7 @@ export const useConnectionManager = () => {
   }
 
   return {
+    t,
     connectionList,
     allConnections,
     pagesList,

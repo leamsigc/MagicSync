@@ -1,10 +1,9 @@
 <script lang="ts" setup>
-const { t } = useI18n()
 const appConfig = useAppConfig()
 const companyName = appConfig.BaseUiLayer.footer.companyName
 const companyLogo = appConfig.BaseUiLayer.main.logo
 
-const { links: items } = useNavigationLinks()
+const { t, links: items } = useNavigationLinks()
 </script>
 
 <template>

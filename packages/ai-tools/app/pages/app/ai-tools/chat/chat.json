@@ -9,6 +9,12 @@
     "error": "Something went wrong",
     "threadActive": "Thread active",
     "newConversation": "New conversation",
+    "newChat": "New chat",
+    "selectBusiness": "Switch business",
+    "allBusinesses": "All businesses",
+    "agent": "Agent",
+    "skills": "Skills",
+    "business": "Business",
     "toolsEnable": "Enable AI Tools",
     "toolsDisable": "Disable AI Tools",
     "toolsOff": "Off",
@@ -17,6 +23,11 @@
     "toolsHint": "Click to insert a tool reference into your message",
     "reasoning": "Reasoning",
     "thinking": "Thinking...",
+    "toolCall": {
+      "input": "Input",
+      "output": "Output",
+      "error": "Error"
+    },
     "sending": "Sending...",
     "send": "Send",
     "businessContext": {
@@ -26,7 +37,17 @@
       "noBusiness": "Select a business first",
       "needsBusiness": "Select a business before enabling branded context",
       "notReady": "Publish a playbook to enable",
-      "ready": "Branded"
+      "ready": "Branded",
+      "loadFailed": "Could not load businesses"
+    },
+    "header": {
+      "business": "Business",
+      "model": "Model",
+      "agent": "Agent",
+      "skills": "Skills",
+      "newChat": "New chat",
+      "search": "Search...",
+      "noBusinesses": "No businesses yet — create one"
     },
     "artifacts": {
       "saveAs": "Save as artifact",
@@ -34,10 +55,49 @@
       "createFailed": "Could not create artifact",
       "loadFailed": "Could not load artifacts",
       "section": "Artifacts in this conversation"
+    },
+    "privateMode": {
+      "enable": "Enable private mode",
+      "disable": "Disable private mode",
+      "off": "Private off",
+      "on": "Private"
+    },
+    "cardContext": {
+      "loading": "Loading card...",
+      "back": "Back to board",
+      "dismiss": "Dismiss card",
+      "noArtifact": "This card has no draft yet — ask me to research or generate one.",
+      "loadFailed": "Could not load the card: {error}",
+      "askMe": "Ask about this card",
+      "promptPrefix": "Help me improve \"{title}\": "
+    },
+    "emptyResponse": "No response received. Please try again.",
+    "agents": {
+      "contentWriter": "Content Writer",
+      "socialStrategist": "Social Strategist",
+      "brandAnalyst": "Brand Analyst",
+      "researchAgent": "Research Agent",
+      "creativeDirector": "Creative Director"
+    },
+    "skillOptions": {
+      "none": "None",
+      "seoOptimizer": "SEO Optimizer",
+      "hashtagGenerator": "Hashtag Generator",
+      "contentCalendar": "Content Calendar",
+      "competitorAnalysis": "Competitor Analysis"
     }
   },
   "es": {
     "welcome": "Bienvenido a MagicSync AI",
+    "header": {
+      "business": "Business",
+      "model": "Model",
+      "agent": "Agent",
+      "skills": "Skills",
+      "newChat": "New chat",
+      "search": "Search...",
+      "noBusinesses": "Aún no hay negocios — crea uno"
+    },
     "welcomeDescription": "Puedo ayudarte a crear publicaciones, analizar tu audiencia y gestionar el contenido de tus redes sociales con herramientas impulsadas por IA.",
     "suggestion1": "Crear una publicación para Twitter",
     "suggestion2": "Analizar mi audiencia objetivo",
@@ -46,6 +106,12 @@
     "error": "Algo salió mal",
     "threadActive": "Hilo activo",
     "newConversation": "Nueva conversación",
+    "newChat": "Nuevo chat",
+    "selectBusiness": "Cambiar negocio",
+    "allBusinesses": "Todos los negocios",
+    "agent": "Agente",
+    "skills": "Habilidades",
+    "business": "Negocio",
     "toolsEnable": "Activar herramientas de IA",
     "toolsDisable": "Desactivar herramientas de IA",
     "toolsOff": "Desactivado",
@@ -54,6 +120,11 @@
     "toolsHint": "Haz clic para insertar una referencia en tu mensaje",
     "reasoning": "Razonamiento",
     "thinking": "Pensando...",
+    "toolCall": {
+      "input": "Entrada",
+      "output": "Salida",
+      "error": "Error"
+    },
     "sending": "Enviando...",
     "send": "Enviar",
     "businessContext": {
@@ -63,7 +134,8 @@
       "noBusiness": "Selecciona primero un negocio",
       "needsBusiness": "Selecciona un negocio antes de activar el contexto de marca",
       "notReady": "Publica un playbook para activar",
-      "ready": "De marca"
+      "ready": "De marca",
+      "loadFailed": "No se pudieron cargar los negocios"
     },
     "artifacts": {
       "saveAs": "Guardar como artefacto",
@@ -71,10 +143,49 @@
       "createFailed": "No se pudo crear el artefacto",
       "loadFailed": "No se pudieron cargar los artefactos",
       "section": "Artefactos de esta conversación"
+    },
+    "privateMode": {
+      "enable": "Activar modo privado",
+      "disable": "Desactivar modo privado",
+      "off": "Privado off",
+      "on": "Privado"
+    },
+    "cardContext": {
+      "loading": "Cargando tarjeta...",
+      "back": "Volver al tablero",
+      "dismiss": "Descartar tarjeta",
+      "noArtifact": "Esta tarjeta aún no tiene borrador — pídeme que la investigue o genere uno.",
+      "loadFailed": "No se pudo cargar la tarjeta: {error}",
+      "askMe": "Preguntar sobre esta tarjeta",
+      "promptPrefix": "Ayúdame a mejorar \"{title}\": "
+    },
+    "emptyResponse": "No response received. Please try again.",
+    "agents": {
+      "contentWriter": "Redactor de contenido",
+      "socialStrategist": "Estratega social",
+      "brandAnalyst": "Analista de marca",
+      "researchAgent": "Agente de investigación",
+      "creativeDirector": "Director creativo"
+    },
+    "skillOptions": {
+      "none": "Ninguna",
+      "seoOptimizer": "Optimizador SEO",
+      "hashtagGenerator": "Generador de hashtags",
+      "contentCalendar": "Calendario de contenido",
+      "competitorAnalysis": "Análisis de competidores"
     }
   },
   "de": {
     "welcome": "Willkommen bei MagicSync AI",
+    "header": {
+      "business": "Business",
+      "model": "Model",
+      "agent": "Agent",
+      "skills": "Skills",
+      "newChat": "New chat",
+      "search": "Search...",
+      "noBusinesses": "Noch keine Unternehmen — erstelle eins"
+    },
     "welcomeDescription": "Ich kann Ihnen helfen, Beiträge zu erstellen, Ihr Publikum zu analysieren und Ihre Social-Media-Inhalte mit KI-gestützten Tools zu verwalten.",
     "suggestion1": "Einen Post für Twitter erstellen",
     "suggestion2": "Meine Zielgruppe analysieren",
@@ -83,6 +194,12 @@
     "error": "Etwas ist schief gelaufen",
     "threadActive": "Thread aktiv",
     "newConversation": "Neue Unterhaltung",
+    "newChat": "Neuer Chat",
+    "selectBusiness": "Geschäft wechseln",
+    "allBusinesses": "Alle Unternehmen",
+    "agent": "Agent",
+    "skills": "Fähigkeiten",
+    "business": "Geschäft",
     "toolsEnable": "KI-Tools aktivieren",
     "toolsDisable": "KI-Tools deaktivieren",
     "toolsOff": "Aus",
@@ -91,6 +208,11 @@
     "toolsHint": "Klicken, um eine Tool-Referenz in deine Nachricht einzufügen",
     "reasoning": "Überlegung",
     "thinking": "Denke nach...",
+    "toolCall": {
+      "input": "Eingabe",
+      "output": "Ausgabe",
+      "error": "Fehler"
+    },
     "sending": "Wird gesendet...",
     "send": "Senden",
     "businessContext": {
@@ -100,7 +222,8 @@
       "noBusiness": "Wähle zuerst ein Unternehmen",
       "needsBusiness": "Wähle ein Unternehmen, bevor du den Markenkontext aktivierst",
       "notReady": "Veröffentliche ein Playbook zum Aktivieren",
-      "ready": "Marke"
+      "ready": "Marke",
+      "loadFailed": "Unternehmen konnten nicht geladen werden"
     },
     "artifacts": {
       "saveAs": "Als Artefakt speichern",
@@ -108,16 +231,61 @@
       "createFailed": "Artefakt konnte nicht erstellt werden",
       "loadFailed": "Artefakte konnten nicht geladen werden",
       "section": "Artefakte dieser Unterhaltung"
+    },
+    "privateMode": {
+      "enable": "Privatmodus aktivieren",
+      "disable": "Privatmodus deaktivieren",
+      "off": "Privat aus",
+      "on": "Privat"
+    },
+    "cardContext": {
+      "loading": "Karte wird geladen...",
+      "back": "Zurück zum Board",
+      "dismiss": "Karte schließen",
+      "noArtifact": "Diese Karte hat noch keinen Entwurf – bitte mich, zu recherchieren oder einen zu erstellen.",
+      "loadFailed": "Karte konnte nicht geladen werden: {error}",
+      "askMe": "Zu dieser Karte fragen",
+      "promptPrefix": "Hilf mir, „{title}“ zu verbessern: "
+    },
+    "emptyResponse": "No response received. Please try again.",
+    "agents": {
+      "contentWriter": "Content-Autor",
+      "socialStrategist": "Social-Media-Stratege",
+      "brandAnalyst": "Markenanalyst",
+      "researchAgent": "Recherche-Agent",
+      "creativeDirector": "Kreativdirektor"
+    },
+    "skillOptions": {
+      "none": "Keine",
+      "seoOptimizer": "SEO-Optimierer",
+      "hashtagGenerator": "Hashtag-Generator",
+      "contentCalendar": "Content-Kalender",
+      "competitorAnalysis": "Wettbewerbsanalyse"
     }
   },
   "fr": {
     "welcome": "Bienvenue sur MagicSync AI",
+    "header": {
+      "business": "Business",
+      "model": "Model",
+      "agent": "Agent",
+      "skills": "Skills",
+      "newChat": "New chat",
+      "search": "Search...",
+      "noBusinesses": "Aucune entreprise — créez-en une"
+    },
     "welcomeDescription": "Je peux vous aider à créer des publications, analyser votre audience et gérer votre contenu de réseaux sociaux avec des outils alimentés par l'IA.",
     "suggestion1": "Créer un post pour Twitter",
     "suggestion2": "Analyser mon audience cible",
     "suggestion3": "Rechercher les sujets tendance",
     "threadActive": "Fil actif",
     "newConversation": "Nouvelle conversation",
+    "newChat": "Nouveau chat",
+    "selectBusiness": "Changer d'entreprise",
+    "allBusinesses": "Toutes les entreprises",
+    "agent": "Agent",
+    "skills": "Compétences",
+    "business": "Entreprise",
     "toolsEnable": "Activer les outils IA",
     "toolsDisable": "Désactiver les outils IA",
     "toolsOff": "Désactivé",
@@ -126,25 +294,61 @@
     "toolsHint": "Cliquez pour insérer une référence dans votre message",
     "reasoning": "Raisonnement",
     "thinking": "Réflexion...",
+    "toolCall": {
+      "input": "Entrée",
+      "output": "Sortie",
+      "error": "Erreur"
+    },
     "sending": "Envoi...",
     "send": "Envoyer",
     "businessContext": {
       "enable": "Activer le contexte d'entreprise",
       "disable": "Désactiver le contexte d'entreprise",
       "off": "Désactivé",
-      "noBusiness": "Sélectionne d’abord une entreprise",
-      "needsBusiness": "Sélectionne une entreprise avant d’activer le contexte de marque",
+      "noBusiness": "Sélectionne d'abord une entreprise",
+      "needsBusiness": "Sélectionne une entreprise avant d'activer le contexte de marque",
       "notReady": "Publie un playbook pour activer",
-      "ready": "Marque"
+      "ready": "Marque",
+      "loadFailed": "Impossible de charger les entreprises"
     },
     "placeholder": "Demandez-moi tout sur votre stratégie de réseaux sociaux...",
     "error": "Quelque chose s'est mal passé",
     "artifacts": {
       "saveAs": "Enregistrer comme artefact",
       "created": "Artefact créé pour révision",
-      "createFailed": "Impossible de créer l’artefact",
+      "createFailed": "Impossible de créer l'artefact",
       "loadFailed": "Impossible de charger les artefacts",
       "section": "Artefacts de cette conversation"
+    },
+    "privateMode": {
+      "enable": "Activer le mode privé",
+      "disable": "Désactiver le mode privé",
+      "off": "Privé off",
+      "on": "Privé"
+    },
+    "cardContext": {
+      "loading": "Chargement de la carte...",
+      "back": "Retour au tableau",
+      "dismiss": "Fermer la carte",
+      "noArtifact": "Cette carte n'a pas encore de brouillon — demande-moi de la rechercher ou d'en générer un.",
+      "loadFailed": "Impossible de charger la carte : {error}",
+      "askMe": "Poser une question sur cette carte",
+      "promptPrefix": "Aide-moi à améliorer « {title} » : "
+    },
+    "emptyResponse": "No response received. Please try again.",
+    "agents": {
+      "contentWriter": "Rédacteur de contenu",
+      "socialStrategist": "Stratège social",
+      "brandAnalyst": "Analyste de marque",
+      "researchAgent": "Agent de recherche",
+      "creativeDirector": "Directeur créatif"
+    },
+    "skillOptions": {
+      "none": "Aucune",
+      "seoOptimizer": "Optimiseur SEO",
+      "hashtagGenerator": "Générateur de hashtags",
+      "contentCalendar": "Calendrier de contenu",
+      "competitorAnalysis": "Analyse concurrentielle"
     }
   }
 }

@@ -104,7 +104,7 @@ useHead({
 </script>
 
 <template>
-  <div class="container mx-auto py-6 space-y-6">
+  <div class=" p-4 lg:mx-auto lg:p-6">
     <div class="flex items-center justify-between">
       <div>
         <h1 class="text-2xl font-bold">Google Business Profile</h1>
@@ -168,10 +168,12 @@ useHead({
             <p v-if="loc.phone">{{ loc.phone }}</p>
           </div>
           <div class="mt-4 flex gap-2">
-            <UButton size="xs" color="primary" variant="solid" @click="router.push(`/app/business/${businessId}/gmb/reviews?location=${loc.id}`)">
+            <UButton size="xs" color="primary" variant="solid"
+              @click="router.push(`/app/business/${businessId}/gmb/reviews?location=${loc.id}`)">
               Reviews
             </UButton>
-            <UButton size="xs" color="secondary" variant="outline" @click="router.push(`/app/business/${businessId}/gmb/analytics?location=${loc.id}`)">
+            <UButton size="xs" color="secondary" variant="outline"
+              @click="router.push(`/app/business/${businessId}/gmb/analytics?location=${loc.id}`)">
               Analytics
             </UButton>
           </div>

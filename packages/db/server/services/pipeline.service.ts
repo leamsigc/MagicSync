@@ -687,6 +687,25 @@ export class PipelineService {
     }
   }
 
+  async deleteRun(id: string, userId: string, event?: H3Event): Promise<ServiceResponse<{ id: string }>> {
+    try {
+      const scope = await this.scopedRunScope(id, userId, event)
+      if (!scope.success || !scope.data) {
+        return { success: false, error: scope.error ?? 'Pipeline run not found', code: 'NOT_FOUND' }
+      }
+      const [deleted] = await this.db
+        .delete(pipelineRuns)
+        .where(and(eq(pipelineRuns.id, id), eq(pipelineRuns.userId, scope.data.ownerId)))
+        .returning({ id: pipelineRuns.id })
+      if (!deleted) {
+        return { success: false, error: 'Pipeline run not found', code: 'NOT_FOUND' }
+      }
+      return { success: true, data: { id: deleted.id } }
+    } catch {
+      return { success: false, error: 'Failed to delete pipeline run' }
+    }
+  }
+
   async logAgentRun(userId: string, data: LogAgentRunData, event?: H3Event): Promise<ServiceResponse<AgentRun>> {
     try {
       if (!data.agentName) {

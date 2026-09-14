@@ -1,12 +1,9 @@
 import type { ApiKeyContext } from '#layers/BaseAuth/server/services/api-key.service'
 import { businessContextResolver } from '#layers/BaseDB/server/services/business-context-resolver.service'
 import { businessProfileService } from '#layers/BaseDB/server/services/business-profile.service'
-import { userLlmConfigService } from '#layers/BaseDB/server/services/user-llm-config.service'
-import { createLlmJwt } from '#layers/BaseDB/server/utils/llm-jwt'
 
 export interface McpAiContext {
   ownerId: string
-  token: string
   businessContext: string | undefined
   editionId: string | null
 }
@@ -33,11 +30,10 @@ export async function resolveMcpAiContext(mcp: ApiKeyContext): Promise<McpAiCont
     if (!brand.success && brand.code !== 'BRAND_CONTEXT_REQUIRED') {
       throw new Error(brand.error ?? 'Failed to resolve brand context')
     }
-  } else if (brand.data.enabled) {
+  }
+  else if (brand.data.enabled) {
     prompt = brand.data.prompt
     editionId = brand.data.editionId
   }
-  const llmConfig = await userLlmConfigService.getEffectiveConfig(ownerId, mcp.businessId)
-  const token = createLlmJwt(ownerId, '', llmConfig.data ?? null)
-  return { ownerId, token, businessContext: prompt, editionId }
+  return { ownerId, businessContext: prompt, editionId }
 }

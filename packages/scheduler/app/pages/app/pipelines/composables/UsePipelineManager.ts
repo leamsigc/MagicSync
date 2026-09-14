@@ -1,6 +1,6 @@
 import type { AgentRun, Pipeline, PipelineRun } from '#layers/BaseDB/db/schema'
 
-export type PipelineRunStatus = 'running' | 'waiting_input' | 'completed' | 'failed'
+export type PipelineRunStatus = 'queued' | 'running' | 'waiting_input' | 'waiting_review' | 'changes_requested' | 'completed' | 'failed' | 'cancelled'
 
 export interface PipelineRunInput {
   brief: string
@@ -541,6 +541,29 @@ export const usePipelineManager = () => {
   }
 
   /**
+   * Delete a single pipeline run and drop it from local state
+   */
+  const deleteRun = async (runId: string) => {
+    isLoading.value = true
+    error.value = null
+
+    try {
+      await $fetch(`/api/v1/pipelines/runs/${runId}`, { method: 'DELETE' })
+      runList.value = runList.value.filter(run => run.id !== runId)
+      toast.add({ title: t('toast.runDeleted'), icon: 'i-heroicons-check-circle', color: 'success' })
+      return true
+    }
+    catch (err: unknown) {
+      error.value = readError(err, t('toast.runDeleteFailed'))
+      toast.add({ title: t('toast.runDeleteFailed'), icon: 'i-heroicons-x-circle', color: 'error' })
+      throw err
+    }
+    finally {
+      isLoading.value = false
+    }
+  }
+
+  /**
    * Update a run's steerable input (brief + business-context flag)
    */
   const updateInput = async (runId: string, payload: { brief?: string, useBusinessContext?: boolean }) => {
@@ -608,6 +631,7 @@ export const usePipelineManager = () => {
     startRun,
     getRun,
     fetchRuns,
+    deleteRun,
     advanceRun,
     executeStep,
     resetRun,

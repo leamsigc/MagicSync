@@ -2,7 +2,6 @@
 <script lang="ts" setup>
 import type { Step } from './MultiStepLoader.vue'
 import MultiStepLoader from './MultiStepLoader.vue'
-import { useI18n } from 'vue-i18n'
 
 interface Props {
   steps: Step[]

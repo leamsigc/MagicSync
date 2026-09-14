@@ -58,16 +58,16 @@ async function handleStart() {
 </script>
 
 <template>
-  <UModal v-model:open="isOpen" :dismissible="false">
+  <UModal v-model:open="isOpen" :dismissible="false" :ui="{ content: 'bg-[#1a1a1a] border border-white/10' }">
     <UButton color="primary" variant="solid" icon="i-lucide-play" @click="openModal">
       {{ t('startModal.trigger') }}
     </UButton>
     <template #content>
-      <UCard>
+      <UCard class="bg-[#1a1a1a] border border-white/10">
         <template #header>
           <div>
-            <h2 class="text-lg font-semibold">{{ t('startModal.title') }}</h2>
-            <p class="text-sm text-muted">{{ t('startModal.description') }}</p>
+            <h2 class="text-lg font-semibold text-white/90">{{ t('startModal.title') }}</h2>
+            <p class="text-sm text-white/40">{{ t('startModal.description') }}</p>
           </div>
         </template>
 
@@ -87,7 +87,7 @@ async function handleStart() {
 
         <template #footer>
           <div class="flex justify-end gap-2">
-            <UButton color="neutral" variant="ghost" @click="closeModal">
+            <UButton color="neutral" variant="ghost" @click="closeModal" class="text-white/40">
               {{ t('startModal.cancel') }}
             </UButton>
             <UButton color="primary" variant="solid" :loading="isStarting" @click="handleStart">

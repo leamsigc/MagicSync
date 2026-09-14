@@ -72,6 +72,15 @@ const postToCreate = ref<PostCreateBase & { comment: string[] }>({
   scheduledAt: props.post.scheduledAt,
   businessId: props.post.businessId,
   status: props.post.status,
+  platformContent: undefined,
+  platformSettings: undefined,
+  postFormat: 'post',
+  retryCount: 0,
+  nextRetryAt: null,
+  lastError: null,
+  autoRepost: undefined,
+  repostCount: 0,
+  repostParentId: null
 });
 
 </script>
@@ -90,7 +99,8 @@ const postToCreate = ref<PostCreateBase & { comment: string[] }>({
         <div class="mt-2 flex items-center justify-between">
           <div class="flex items-center space-x-1">
             <section v-for="platform in post.platformPosts">
-              <Icon :name="getPlatformIcon((platform.platformPostId ?? 'facebook') as SocialMediaPlatform)" :key="platform.id" />
+              <Icon :name="getPlatformIcon((platform.platformPostId ?? 'facebook') as SocialMediaPlatform)"
+                :key="platform.id" />
             </section>
           </div>
           <div class="flex items-center space-x-1 text-xs text-gray-500 dark:text-gray-400">

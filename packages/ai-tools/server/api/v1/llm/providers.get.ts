@@ -1,54 +1,40 @@
-import { aiToolsFacade } from '#ai-tools/server/services/aiToolsFacade.service'
+import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
+import { userLlmConfigService } from '#layers/BaseDB/server/services/user-llm-config.service'
+import { createAgentModelRuntime, describeRuntimeProviders } from '#layers/BaseAgent/server/utils/pi-runtime'
 
-const FALLBACK_MODELS: Record<string, string | null> = {
-  google: 'gemini-3-flash-preview',
-  ollama: 'qwen3.5',
-  openai: 'gpt-4o',
-  anthropic: 'claude-3-5-sonnet-20241022',
-  openrouter: 'openai/gpt-4o',
-  deepseek: 'deepseek-chat'
-}
-
-function fallbackProviders(activeProvider: string, activeModel: string, hasKey: boolean) {
-  const providers = Object.entries(FALLBACK_MODELS).map(([provider, defaultModel]) => ({
-    provider,
-    default_model: defaultModel,
-    server_key_configured: false,
-    user_key_configured: provider === activeProvider ? hasKey : false
-  }))
-  return {
-    providers,
-    default_provider: 'google',
-    default_model: 'gemini-3-flash-preview',
-    active: { provider: activeProvider, model: activeModel }
-  }
-}
-
-function fallbackFor(effective: { provider?: string, model?: string, apiKey?: string | null } | null) {
-  const provider = effective?.provider || 'google'
-  const model = effective?.model || 'gemini-3-flash-preview'
-  return fallbackProviders(provider, model, !!effective?.apiKey)
+const SERVER_KEY_ENV: Record<string, string | undefined> = {
+  google: process.env.NUXT_GOOGLE_GENERATIVE_AI_API_KEY ?? process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+  openai: process.env.NUXT_OPENAI_API_KEY ?? process.env.OPENAI_API_KEY,
+  anthropic: process.env.ANTHROPIC_API_KEY,
+  openrouter: process.env.OPENROUTER_API_KEY,
+  deepseek: process.env.DEEPSEEK_API_KEY,
+  ollama: 'local',
 }
 
 export default defineEventHandler(async (event) => {
-  const user = await aiToolsFacade.authenticate(event)
+  const user = await checkUserIsLogin(event)
   const query = getQuery(event)
   const businessId = typeof query.businessId === 'string' ? query.businessId : null
 
-  const jwtResult = await aiToolsFacade.getLlmJwtContext(user.id, user.email || '', businessId)
-  const token = jwtResult.data?.token ?? ''
-  const effective = jwtResult.data?.config ?? null
+  const effective = await userLlmConfigService.getEffectiveConfig(user.id, businessId)
+  const runtime = await createAgentModelRuntime()
+  const discovered = await describeRuntimeProviders(runtime)
 
-  const config = useRuntimeConfig()
-  const backendUrl = config.pythonBackendUrl || 'http://localhost:8000'
-
-  try {
-    const response = await fetch(`${backendUrl}/api/v1/llm/providers`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-    if (!response.ok) return fallbackFor(effective)
-    return await response.json()
-  } catch {
-    return fallbackFor(effective)
+  return {
+    providers: discovered.map(provider => ({
+      provider: provider.id,
+      name: provider.name,
+      models: provider.models,
+      default_model: provider.models[0] ?? null,
+      server_key_configured: Boolean(SERVER_KEY_ENV[provider.id]),
+      user_key_configured: provider.id === effective.data?.provider && Boolean(effective.data?.apiKey),
+      configured: provider.configured,
+    })),
+    default_provider: effective.data?.provider ?? 'openai',
+    default_model: effective.data?.model ?? null,
+    active: {
+      provider: effective.data?.provider ?? null,
+      model: effective.data?.model ?? null,
+    },
   }
 })

@@ -115,7 +115,18 @@
       "running": "Running",
       "waiting_input": "Waiting for review",
       "completed": "Completed",
-      "failed": "Failed"
+      "failed": "Failed",
+      "queued": "Queued",
+      "waiting_review": "Waiting for review",
+      "changes_requested": "Changes requested",
+      "cancelled": "Cancelled"
+    },
+    "delete": {
+      "button": "Delete run",
+      "title": "Delete this run?",
+      "description": "Permanently delete this run and its history? This cannot be undone.",
+      "cancel": "Cancel",
+      "confirm": "Delete"
     }
   },
   "es": {
@@ -234,7 +245,18 @@
       "running": "En curso",
       "waiting_input": "Esperando revisión",
       "completed": "Completada",
-      "failed": "Fallida"
+      "failed": "Fallida",
+      "queued": "En cola",
+      "waiting_review": "Esperando revisión",
+      "changes_requested": "Cambios solicitados",
+      "cancelled": "Cancelada"
+    },
+    "delete": {
+      "button": "Eliminar ejecución",
+      "title": "¿Eliminar esta ejecución?",
+      "description": "¿Eliminar permanentemente esta ejecución y su historial? No se puede deshacer.",
+      "cancel": "Cancelar",
+      "confirm": "Eliminar"
     }
   },
   "de": {
@@ -353,7 +375,18 @@
       "running": "Läuft",
       "waiting_input": "Wartet auf Prüfung",
       "completed": "Abgeschlossen",
-      "failed": "Fehlgeschlagen"
+      "failed": "Fehlgeschlagen",
+      "queued": "Warteschlange",
+      "waiting_review": "Wartet auf Review",
+      "changes_requested": "Änderungen angefragt",
+      "cancelled": "Abgebrochen"
+    },
+    "delete": {
+      "button": "Lauf löschen",
+      "title": "Diesen Lauf löschen?",
+      "description": "Diesen Lauf und seinen Verlauf endgültig löschen? Kann nicht rückgängig gemacht werden.",
+      "cancel": "Abbrechen",
+      "confirm": "Löschen"
     }
   },
   "fr": {
@@ -472,7 +505,18 @@
       "running": "En cours",
       "waiting_input": "En attente de révision",
       "completed": "Terminée",
-      "failed": "Échouée"
+      "failed": "Échouée",
+      "queued": "En file",
+      "waiting_review": "En attente de relecture",
+      "changes_requested": "Modifications demandées",
+      "cancelled": "Annulée"
+    },
+    "delete": {
+      "button": "Supprimer l'exécution",
+      "title": "Supprimer cette exécution ?",
+      "description": "Supprimer définitivement cette exécution et son historique ? Irréversible.",
+      "cancel": "Annuler",
+      "confirm": "Supprimer"
     }
   }
 }

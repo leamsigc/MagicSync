@@ -4,11 +4,11 @@ import { PLATFORMS } from '../../utils/platforms'
 import { requireMcp } from '../../utils/mcp-context'
 import { resolveMcpAiContext } from '../../utils/mcp-ai-context'
 import { logMcpCall } from '../../utils/mcp-audit'
+import { completeForUser, extractJsonObject } from '#layers/BaseAgent/server/utils/run-config'
 
-interface HooksResponse {
-  hooks?: Array<{ hook: string, hook_type: string }>
-  count?: number
-  error?: string
+interface Hook {
+  hook: string
+  hook_type: string
 }
 
 export default defineMcpTool({
@@ -23,28 +23,28 @@ export default defineMcpTool({
   async handler(args) {
     const mcp = requireMcp()
     const ai = await resolveMcpAiContext(mcp)
-    const config = useRuntimeConfig()
-    const backendUrl = config.pythonBackendUrl || 'http://localhost:8000'
 
     try {
-      const result = await $fetch<HooksResponse>(`${backendUrl}/api/v1/social-media/generate-hooks`, {
-        method: 'POST',
-        body: {
-          topic: args.topic,
-          platform: args.platform,
-          count: args.count,
-          business_id: mcp.businessId,
-          use_business_context: !!ai.businessContext,
-          context_edition_id: ai.editionId,
-          business_context: ai.businessContext,
-        },
-        headers: { Authorization: `Bearer ${ai.token}` },
+      const result = await completeForUser(ai.ownerId, {
+        businessId: mcp.businessId,
+        useBusinessContext: false,
+        system: ai.businessContext,
+        maxTokens: 1200,
+        prompt: [
+          `Write ${args.count} scroll-stopping hooks for a ${args.platform} post about: ${args.topic}.`,
+          'Return strict JSON: {"hooks": [{"hook": string, "hook_type": string}]}.',
+        ].join('\n'),
       })
-      if (result.error || !result.hooks) {
-        throw new Error(result.error || 'Idea generation failed')
-      }
-      await logMcpCall(mcp, 'generate-ideas', undefined, 'success', `platform=${args.platform} count=${result.hooks.length}`)
-      return { hooks: result.hooks }
+      if (!result.success) throw new Error(result.error)
+      const json = result.data.json ?? extractJsonObject(result.data.text) ?? {}
+      const rawHooks = Array.isArray(json.hooks) ? json.hooks : []
+      const hooks = rawHooks
+        .filter((entry): entry is Record<string, unknown> => typeof entry === 'object' && entry !== null)
+        .map(entry => ({ hook: String(entry.hook ?? ''), hook_type: String(entry.hook_type ?? 'general') }))
+        .filter((entry): entry is Hook => entry.hook.length > 0)
+      if (hooks.length === 0) throw new Error('Idea generation failed')
+      await logMcpCall(mcp, 'generate-ideas', undefined, 'success', `platform=${args.platform} count=${hooks.length}`)
+      return { hooks }
     }
     catch (error) {
       await logMcpCall(mcp, 'generate-ideas', undefined, 'failure', error instanceof Error ? error.message : String(error))

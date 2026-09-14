@@ -99,7 +99,8 @@ export default withMermaid(defineConfig({
             { text: 'Facebook & Instagram Setup', link: '/guide/facebook-instagram-integration' },
             { text: 'Meta App Review', link: '/guide/meta-app-review' },
           ],
-        },          {
+        },
+        {
           text: 'AI Tools',
           collapsed: false,
           items: [
@@ -107,6 +108,15 @@ export default withMermaid(defineConfig({
             { text: 'Free Tools', link: '/guide/tools' },
             { text: 'Growth Strategy & Content Pipeline', link: '/guide/growth-strategy' },
             { text: 'MCP Server', link: '/guide/mcp' },
+          ],
+        },
+        {
+          text: 'Agent Platform',
+          collapsed: false,
+          items: [
+            { text: 'Overview & Chat', link: '/guide/agent-platform' },
+            { text: 'Content Board', link: '/guide/content-board' },
+            { text: 'Tool Backends', link: '/guide/tool-backends' },
           ],
         },
       ],

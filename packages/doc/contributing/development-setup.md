@@ -69,6 +69,9 @@ Access the application at `http://localhost:3000`
 # Database layer
 cd packages/db && pnpm dev
 
+# Agent layer (includes its playground)
+cd packages/agent && pnpm dev
+
 # UI layer
 cd packages/ui && pnpm dev
 
@@ -121,9 +124,13 @@ magicsync/
 │   ├── bulk-scheduler/   # Bulk operations
 │   ├── connect/          # Platform OAuth
 │   ├── tools/            # In-browser tools
-│   ├── ai-tools/         # AI content generation
+│   ├── ai-tools/         # AI content generation, LLM config, chat UI
+│   ├── agent/            # Agent runtime (pi SDK, tools, workflows, RAG, PII)
 │   ├── content/          # Blog & static content
 │   ├── email/            # Email templates
+│   ├── shared/           # Shared types & services
+│   ├── templates/        # Content templates
+│   ├── python-tools/     # Optional Python tools sidecar (FastAPI)
 │   ├── site/             # Main application (layer merge point)
 │   └── doc/              # Documentation (VitePress)
 ├── .env-example          # Environment template
@@ -137,21 +144,46 @@ magicsync/
 |-------|-------------|
 | site | `pnpm site:dev` |
 | db | `cd packages/db && pnpm dev` |
+| agent | `cd packages/agent && pnpm dev` |
 | ui | `cd packages/ui && pnpm dev` |
 | doc | `cd packages/doc && pnpm dev` |
+| python-tools (optional) | `pnpm python-tools:dev` |
 
 ## Code Quality
 
 ### Linting
 
+Each package exposes its own ESLint script:
+
 ```bash
-pnpm lint
+pnpm --filter @local-monorepo/site lint
+pnpm --filter @local-monorepo/db lint
 ```
 
-### Type Checking
+> Note: `typescript-eslint` does not yet support TypeScript 7, so the root lint
+> toolchain fails repo-wide until the pinned toolchain catches up. The per-task
+> verification gate therefore uses the test suites and `vite-doctor` instead.
+
+### Structural Diagnostics
 
 ```bash
-pnpm typecheck
+pnpm dlx vite-doctor .
+```
+
+New code must not add findings. The only remaining diagnostics are pre-existing
+ones in `packages/db` and `packages/scheduler`.
+
+### Tests
+
+```bash
+# Database services + schema (migrated file SQLite)
+pnpm --filter @local-monorepo/db test:services
+
+# Agent layer (stub provider; no network or API keys)
+pnpm --filter @local-monorepo/agent test
+
+# Production build (catches route/page regressions)
+pnpm site:build
 ```
 
 ## Debugging

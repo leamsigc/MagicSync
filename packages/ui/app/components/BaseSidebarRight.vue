@@ -10,8 +10,7 @@
  * @todo [ ] Integration test.
  * @todo [✔] Update the typescript.
  */
-const { footerLinks, features } = useNavigationLinks()
-const { t } = useI18n()
+const { t, footerLinks, features } = useNavigationLinks()
 </script>
 
 <template>

@@ -16,11 +16,9 @@ import { useConnectionManager, type Connection } from '../composables/useConnect
  */
 import * as z from 'zod'
 import type { AuthFormField, FormSubmitEvent } from '@nuxt/ui'
-const { connectionList, setConnectionList, HandleConnectTo } = useConnectionManager();
+const { t, connectionList, setConnectionList, HandleConnectTo } = useConnectionManager();
 
 setConnectionList();
-
-const { t } = useI18n();
 const blueskyModal = ref(false)
 const mainModal = ref(false)
 const HandleConnectBaseOnThePlatform = (connection: Connection) => {

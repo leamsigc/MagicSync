@@ -21,7 +21,11 @@
       "running": "Running",
       "waiting_input": "Waiting for review",
       "completed": "Completed",
-      "failed": "Failed"
+      "failed": "Failed",
+      "queued": "Queued",
+      "waiting_review": "Waiting for review",
+      "changes_requested": "Changes requested",
+      "cancelled": "Cancelled"
     },
     "table": {
       "columns": {
@@ -62,7 +66,9 @@
       "agentLogSoon": "Agent run logging is coming soon",
       "quickFailed": "Failed to queue quick action",
       "pipelineDeleted": "Pipeline deleted",
-      "pipelineDeleteFailed": "Failed to delete pipeline"
+      "pipelineDeleteFailed": "Failed to delete pipeline",
+      "runDeleted": "Run deleted",
+      "runDeleteFailed": "Failed to delete the run"
     },
     "studio": {
       "open": "Open Studio"
@@ -71,6 +77,13 @@
       "button": "Delete pipeline",
       "title": "Delete pipeline?",
       "description": "Delete \"{name}\" and all its runs? This cannot be undone.",
+      "cancel": "Cancel",
+      "confirm": "Delete"
+    },
+    "runDelete": {
+      "button": "Delete run",
+      "title": "Delete run?",
+      "description": "Delete run \"{name}\"? This cannot be undone.",
       "cancel": "Cancel",
       "confirm": "Delete"
     }
@@ -97,7 +110,11 @@
       "running": "En curso",
       "waiting_input": "Esperando revisión",
       "completed": "Completada",
-      "failed": "Fallida"
+      "failed": "Fallida",
+      "queued": "En cola",
+      "waiting_review": "Esperando revisión",
+      "changes_requested": "Cambios solicitados",
+      "cancelled": "Cancelada"
     },
     "table": {
       "columns": {
@@ -138,7 +155,9 @@
       "agentLogSoon": "El registro de agentes llegará pronto",
       "quickFailed": "No se pudo programar la acción rápida",
       "pipelineDeleted": "Pipeline eliminado",
-      "pipelineDeleteFailed": "No se pudo eliminar el pipeline"
+      "pipelineDeleteFailed": "No se pudo eliminar el pipeline",
+      "runDeleted": "Ejecución eliminada",
+      "runDeleteFailed": "No se pudo eliminar la ejecución"
     },
     "studio": {
       "open": "Abrir estudio"
@@ -147,6 +166,13 @@
       "button": "Eliminar pipeline",
       "title": "¿Eliminar pipeline?",
       "description": "¿Eliminar \"{name}\" y todas sus ejecuciones? No se puede deshacer.",
+      "cancel": "Cancelar",
+      "confirm": "Eliminar"
+    },
+    "runDelete": {
+      "button": "Eliminar ejecución",
+      "title": "¿Eliminar ejecución?",
+      "description": "¿Eliminar la ejecución \"{name}\"? No se puede deshacer.",
       "cancel": "Cancelar",
       "confirm": "Eliminar"
     }
@@ -173,7 +199,11 @@
       "running": "Läuft",
       "waiting_input": "Wartet auf Prüfung",
       "completed": "Abgeschlossen",
-      "failed": "Fehlgeschlagen"
+      "failed": "Fehlgeschlagen",
+      "queued": "Warteschlange",
+      "waiting_review": "Wartet auf Review",
+      "changes_requested": "Änderungen angefragt",
+      "cancelled": "Abgebrochen"
     },
     "table": {
       "columns": {
@@ -214,7 +244,9 @@
       "agentLogSoon": "Agent-Protokollierung kommt bald",
       "quickFailed": "Schnellaktion konnte nicht gestartet werden",
       "pipelineDeleted": "Pipeline gelöscht",
-      "pipelineDeleteFailed": "Pipeline konnte nicht gelöscht werden"
+      "pipelineDeleteFailed": "Pipeline konnte nicht gelöscht werden",
+      "runDeleted": "Lauf gelöscht",
+      "runDeleteFailed": "Lauf konnte nicht gelöscht werden"
     },
     "studio": {
       "open": "Studio öffnen"
@@ -223,6 +255,13 @@
       "button": "Pipeline löschen",
       "title": "Pipeline löschen?",
       "description": "„{name}“ und alle Läufe löschen? Kann nicht rückgängig gemacht werden.",
+      "cancel": "Abbrechen",
+      "confirm": "Löschen"
+    },
+    "runDelete": {
+      "button": "Lauf löschen",
+      "title": "Lauf löschen?",
+      "description": "Lauf \"{name}\" löschen? Kann nicht rückgängig gemacht werden.",
       "cancel": "Abbrechen",
       "confirm": "Löschen"
     }
@@ -249,7 +288,11 @@
       "running": "En cours",
       "waiting_input": "En attente de révision",
       "completed": "Terminée",
-      "failed": "Échouée"
+      "failed": "Échouée",
+      "queued": "En file",
+      "waiting_review": "En attente de relecture",
+      "changes_requested": "Modifications demandées",
+      "cancelled": "Annulée"
     },
     "table": {
       "columns": {
@@ -290,7 +333,9 @@
       "agentLogSoon": "Le journal des agents arrive bientôt",
       "quickFailed": "Échec du lancement de l'action rapide",
       "pipelineDeleted": "Pipeline supprimé",
-      "pipelineDeleteFailed": "Échec de la suppression du pipeline"
+      "pipelineDeleteFailed": "Échec de la suppression du pipeline",
+      "runDeleted": "Exécution supprimée",
+      "runDeleteFailed": "Impossible de supprimer l'exécution"
     },
     "studio": {
       "open": "Ouvrir le studio"
@@ -299,6 +344,13 @@
       "button": "Supprimer le pipeline",
       "title": "Supprimer le pipeline ?",
       "description": "Supprimer « {name} » et toutes ses exécutions ? Irréversible.",
+      "cancel": "Annuler",
+      "confirm": "Supprimer"
+    },
+    "runDelete": {
+      "button": "Supprimer l'exécution",
+      "title": "Supprimer l'exécution ?",
+      "description": "Supprimer l’exécution « {name} » ? Irréversible.",
       "cancel": "Annuler",
       "confirm": "Supprimer"
     }

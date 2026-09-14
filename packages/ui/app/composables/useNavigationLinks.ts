@@ -232,6 +232,7 @@ export const useNavigationLinks = () => {
   ])
 
   return {
+    t,
     links,
     footerLinks,
     features

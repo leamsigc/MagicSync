@@ -25,14 +25,15 @@ interface Thread {
 interface StreamChunk {
   type: string
   id?: string
-  content?: string
   delta?: string
+  sessionId?: string
+  toolCallId?: string
   toolName?: string
   args?: Record<string, unknown>
-  toolCallId?: string
-  output?: string
-  errorText?: string
-  finishReason?: string
+  isError?: boolean
+  result?: unknown
+  code?: string
+  message?: string
 }
 
 const THREAD_ID_STORAGE_KEY = 'ai-chat-thread-id'
@@ -40,22 +41,116 @@ const THREAD_ID_STORAGE_KEY = 'ai-chat-thread-id'
 export interface BusinessContextOptions {
   useBusinessContext?: boolean
   businessId?: string
+  privateMode?: boolean
+  cardId?: string
+  model?: string
+  agent?: string
+  skill?: string
 }
 
 function generateId(): string {
   return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
 }
 
-async function readResponseMessage(response: Response): Promise<string> {
+function toolResultText(result: unknown): string {
+  if (typeof result === 'string') return result
+  const content = (result as { content?: Array<{ type?: string, text?: string }> } | null)?.content
+  if (Array.isArray(content)) {
+    return content.filter(block => block.type === 'text').map(block => block.text ?? '').join('\n')
+  }
+  return JSON.stringify(result ?? null)
+}
+
+function appendText(message: ChatMessage, text: string) {
+  message.content += text
+  message.parts = message.parts ?? []
+  const lastPart = message.parts[message.parts.length - 1]
+  if (lastPart?.type === 'text') {
+    lastPart.text = (lastPart.text || '') + text
+    return
+  }
+  message.parts.push({ type: 'text', text })
+}
+
+function findToolCall(message: ChatMessage, chunk: StreamChunk) {
+  const calls = message.toolCalls ?? []
+  const id = chunk.toolCallId || chunk.id
+  return calls.find(call => call.id === id) ?? calls.find(call => call.name === chunk.toolName)
+}
+
+interface ChunkContext {
+  message: ChatMessage
+  onError: (chunk: StreamChunk) => void
+  onArtifact: () => void
+  onReasoning: (text: string) => void
+}
+
+const CHUNK_HANDLERS: Record<string, (chunk: StreamChunk, ctx: ChunkContext) => void> = {
+  'thinking.delta': (chunk, ctx) => {
+    if (chunk.delta) ctx.onReasoning(chunk.delta)
+  },
+  'text.delta': (chunk, ctx) => {
+    if (chunk.delta) appendText(ctx.message, chunk.delta)
+  },
+  'tool.started': (chunk, ctx) => {
+    ctx.message.toolCalls = ctx.message.toolCalls ?? []
+    ctx.message.toolCalls.push({ id: chunk.toolCallId || chunk.id || generateId(), name: chunk.toolName || 'unknown', args: chunk.args || {} })
+    ctx.message.parts = ctx.message.parts ?? []
+    ctx.message.parts.push({ type: 'tool', tool: chunk.toolName || 'unknown' })
+  },
+  'tool.finished': (chunk, ctx) => {
+    const toolCall = findToolCall(ctx.message, chunk)
+    if (!toolCall) return
+    toolCall.result = toolResultText(chunk.result)
+    if (chunk.isError) toolCall.error = toolCall.result
+  },
+  'error': (chunk, ctx) => {
+    ctx.onError(chunk)
+  },
+  'artifact.created': (_chunk, ctx) => {
+    ctx.onArtifact()
+  },
+  'review.required': (_chunk, ctx) => {
+    ctx.onArtifact()
+  },
+}
+
+function parseChunk(json: string): StreamChunk | null {
   try {
-    const data = await response.json() as { message?: unknown, statusMessage?: unknown }
-    if (typeof data.message === 'string' && data.message) return data.message
-    if (typeof data.statusMessage === 'string' && data.statusMessage) return data.statusMessage
+    const parsed: unknown = JSON.parse(json)
+    if (typeof parsed !== 'object' || parsed === null) return null
+    if (typeof (parsed as { type?: unknown }).type !== 'string') return null
+    return parsed as StreamChunk
   }
   catch {
-    // Fall through to the status fallback below
+    return null
   }
-  return `HTTP error: ${response.status}`
+}
+
+async function consumeEventStream(
+  body: ReadableStream<Uint8Array>,
+  context: ChunkContext,
+  onCompleted: (chunk: StreamChunk) => void,
+) {
+  const reader = body.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ''
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+    buffer += decoder.decode(value, { stream: true })
+    let newlineIndex = buffer.indexOf('\n')
+    while (newlineIndex !== -1) {
+      const line = buffer.slice(0, newlineIndex)
+      buffer = buffer.slice(newlineIndex + 1)
+      newlineIndex = buffer.indexOf('\n')
+      if (!line.startsWith('data: ')) continue
+      const chunk = parseChunk(line.slice(6).trim())
+      if (!chunk) continue
+      if (chunk.type === 'message.completed') onCompleted(chunk)
+      CHUNK_HANDLERS[chunk.type]?.(chunk, context)
+    }
+  }
 }
 
 export function useA2UIChat() {
@@ -66,6 +161,7 @@ export function useA2UIChat() {
   const threadId = ref<string | null>(null)
   const isStreaming = ref(false)
   const messages = ref<ChatMessage[]>([])
+  const artifactSignal = ref(0)
   const { saveMessageState, getMessageState } = useChatHistoryState()
 
   let abortController: AbortController | null = null
@@ -73,15 +169,28 @@ export function useA2UIChat() {
   let loadThreads: () => Promise<void>
   let loadThreadMessages: (id: string) => Promise<void>
 
-  async function sendMessage(content: string, enableTools: boolean = true, opts: BusinessContextOptions = {}) {
-    const userMessage: ChatMessage = {
-      id: generateId(),
-      role: 'user',
-      content,
-      parts: [{ type: 'text', text: content }],
-    }
-    messages.value.push(userMessage)
-    isStreaming.value = true
+  function handleStreamError(chunk: StreamChunk) {
+    toast.add({
+      title: t('error'),
+      description: chunk.message || chunk.code || 'Agent error',
+      icon: 'i-heroicons-x-circle',
+      color: 'error',
+    })
+  }
+
+  function notifyArtifacts() {
+    artifactSignal.value += 1
+  }
+
+async function sendMessage(content: string, opts: BusinessContextOptions = {}) {
+     const userMessage: ChatMessage = {
+       id: generateId(),
+       role: 'user',
+       content,
+       parts: [{ type: 'text', text: content }],
+     }
+     messages.value.push(userMessage)
+     isStreaming.value = true
 
     const assistantMessage: ChatMessage = {
       id: generateId(),
@@ -92,140 +201,54 @@ export function useA2UIChat() {
     messages.value.push(assistantMessage)
 
     abortController = new AbortController()
+    let reasoning = ''
+    const errorMessages: string[] = []
 
     try {
-      const response = await fetch('/api/ai-tools/chat', {
+      const response = await fetch('/api/v1/agent/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: messages.value
-            .filter((m) => m.role !== 'system')
-            .map((m) => ({
-              role: m.role,
-              parts: m.parts?.map((p) => ({ type: p.type, text: p.text || '' })),
-            })),
-          thread_id: threadId.value,
-          enable_tools: enableTools,
-          use_business_context: opts.useBusinessContext ?? false,
-          business_id: opts.businessId ?? null,
-        }),
+body: JSON.stringify({
+           businessId: opts.businessId,
+           message: content,
+           threadId: threadId.value,
+           cardId: opts.cardId ?? null,
+           useBusinessContext: opts.useBusinessContext ?? true,
+           privateMode: opts.privateMode ?? false,
+           model: opts.model ?? 'gpt-4o',
+           agent: opts.agent ?? 'content-writer',
+           skill: opts.skill ?? '',
+         }),
         signal: abortController.signal,
       })
 
       if (!response.ok) {
         throw new Error(await readResponseMessage(response))
       }
+      const responseThreadId = response.headers.get('X-Thread-Id')
+      if (responseThreadId) threadId.value = responseThreadId
+      if (!response.body) throw new Error('No response body')
 
-      const reader = response.body?.getReader()
-      if (!reader) {
-        throw new Error('No response body')
+      await consumeEventStream(response.body, {
+        message: assistantMessage,
+        onError: (chunk) => {
+          errorMessages.push(chunk.message || chunk.code || 'Agent error')
+          handleStreamError(chunk)
+        },
+        onArtifact: notifyArtifacts,
+        onReasoning: (text) => {
+          reasoning += text
+          assistantMessage.reasoningContent = reasoning
+        },
+      }, () => {
+        saveMessageState(assistantMessage.id, buildComponentStates(assistantMessage))
+      })
+
+      if (!assistantMessage.content && errorMessages.length > 0) {
+        assistantMessage.content = errorMessages[0] ?? ''
       }
-
-      const decoder = new TextDecoder()
-      let buffer = ''
-      let currentReasoning = ''
-
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-
-        buffer += decoder.decode(value, { stream: true })
-
-        let newlineIndex
-        while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
-          const line = buffer.slice(0, newlineIndex)
-          buffer = buffer.slice(newlineIndex + 1)
-
-          if (!line.startsWith('data: ')) continue
-          const jsonStr = line.slice(6).trim()
-          if (!jsonStr) continue
-
-          try {
-            const parsed: unknown = JSON.parse(jsonStr)
-            if (typeof parsed !== 'object' || parsed === null) continue
-            if (typeof (parsed as { type?: unknown }).type !== 'string') continue
-            const chunk = parsed as StreamChunk
-
-            if (chunk.type === 'thinking' && chunk.content) {
-              currentReasoning += chunk.content
-              assistantMessage.reasoningContent = currentReasoning
-            } else if (chunk.type === 'text' && chunk.content) {
-              assistantMessage.content += chunk.content
-              if (!assistantMessage.parts) assistantMessage.parts = []
-              const lastPart = assistantMessage.parts[assistantMessage.parts.length - 1]
-              if (lastPart?.type === 'text') {
-                lastPart.text = (lastPart.text || '') + chunk.content
-              } else {
-                assistantMessage.parts.push({ type: 'text', text: chunk.content })
-              }
-            } else if (chunk.type === 'tool' && chunk.toolName) {
-              if (!assistantMessage.toolCalls) assistantMessage.toolCalls = []
-              assistantMessage.toolCalls.push({
-                id: chunk.id || generateId(),
-                name: chunk.toolName,
-                args: chunk.args || {},
-              })
-              assistantMessage.parts = assistantMessage.parts || []
-              assistantMessage.parts.push({ type: 'tool', tool: chunk.toolName })
-            } else if (chunk.type === 'tool_result' && chunk.output) {
-              // Find tool call - try by ID first, then by toolName
-              let toolCall = null
-
-              // First try to find by ID from the chunk itself (id field)
-              toolCall = assistantMessage.toolCalls?.find((tc) => tc.id === chunk.id)
-
-              // If not found, try by toolCallId from backend
-              if (!toolCall && chunk.toolCallId) {
-                toolCall = assistantMessage.toolCalls?.find((tc) => tc.id === chunk.toolCallId)
-              }
-
-              // Last resort: find by toolName (chunk.toolName when not error/unknown)
-              if (!toolCall && chunk.toolName && chunk.toolName !== 'error' && chunk.toolName !== 'unknown') {
-                toolCall = assistantMessage.toolCalls?.find((tc) => tc.name === chunk.toolName)
-              }
-
-              if (toolCall) {
-                toolCall.result = chunk.output
-                if (chunk.errorText) toolCall.error = chunk.errorText
-              }
-            } else if (chunk.type === 'error') {
-              // Stream errors carry no renderable content; the reply simply ends
-            } else if (chunk.type === 'done') {
-              // Done signal received; the reader loop exits on completion
-            }
-          } catch {
-            // Skip malformed JSON
-          }
-        }
-
-        // Check if we got a done signal
-        if (buffer.includes('"done":true') || buffer.includes('"done" : true')) {
-          break
-        }
-      }
-
-      // If stream ended without explicit done signal, check if we have results
-      const toolCalls = assistantMessage.toolCalls || []
-      const hasToolCalls = toolCalls.length > 0
-      const hasTextContent = assistantMessage.content && assistantMessage.content.length > 0
-
-      if (hasToolCalls && !hasTextContent) {
-        // Tools ran but no final text - show tool results as final content
-        const toolOutputs = toolCalls
-          .filter(tc => tc.result)
-          .map(tc => `${tc.name}: ${tc.result}`)
-          .join('\n')
-        assistantMessage.content = `[Tool Results]\n${toolOutputs}`
-      }
-
-      isLoadingThreads.value = false
-      if (!threadId.value) {
-        loadThreads().then(() => {
-          if (threads.value.length === 1 && threads.value[0]) {
-            threadId.value = threads.value[0].id
-            localStorage.setItem(THREAD_ID_STORAGE_KEY, threadId.value)
-          }
-        })
+      if (!assistantMessage.content && !assistantMessage.toolCalls?.length) {
+        assistantMessage.content = t('emptyResponse')
       }
     } catch (error: unknown) {
       if (error instanceof DOMException && error.name === 'AbortError') {
@@ -241,7 +264,22 @@ export function useA2UIChat() {
     } finally {
       isStreaming.value = false
       abortController = null
+      if (!threads.value.some(thread => thread.id === threadId.value)) {
+        void loadThreads()
+      }
     }
+  }
+
+  function buildComponentStates(message: ChatMessage): ComponentState[] {
+    return (message.toolCalls ?? []).map(toolCall => ({
+      id: toolCall.id,
+      type: 'tool-call',
+      data: { name: toolCall.name, args: toolCall.args, output: toolCall.result, isError: Boolean(toolCall.error) },
+    }))
+  }
+
+  function abortStream() {
+    abortController?.abort()
   }
 
   loadThreads = async function () {
@@ -249,8 +287,13 @@ export function useA2UIChat() {
     try {
       const data = await $fetch<Thread[]>('/api/ai-tools/chat/threads')
       threads.value = data || []
-    } catch (e) {
-      console.error('Failed to load threads:', e)
+    } catch (error) {
+      toast.add({
+        title: t('error'),
+        description: error instanceof Error ? error.message : undefined,
+        icon: 'i-heroicons-x-circle',
+        color: 'error',
+      })
     } finally {
       isLoadingThreads.value = false
     }
@@ -270,40 +313,33 @@ export function useA2UIChat() {
 
       threadId.value = id
       messages.value = (data || []).map((m) => {
-        let metadata: Record<string, unknown> | undefined
         let toolCalls: ChatMessage['toolCalls'] | undefined
 
         if (m.metadata) {
           try {
             const parsed = JSON.parse(m.metadata)
-            metadata = parsed
             if (parsed.componentStates) {
               toolCalls = (parsed.componentStates as Array<{ id: string; data?: { name?: string; args?: Record<string, unknown>; arguments?: Record<string, unknown>; output?: string; isError?: boolean } }>).map((cs) => ({
                 id: cs.id,
                 name: cs.data?.name || 'unknown',
                 args: cs.data?.args || cs.data?.arguments || {},
-                result: cs.data?.output || '',  // Include tool result
+                result: cs.data?.output || '',
                 error: cs.data?.isError ? cs.data?.output : undefined,
               }))
             }
           } catch {
-            // ignore
+            // ignore malformed metadata
           }
         }
 
         const messageState = getMessageState(m.id)
-
-        // Build parts - include tool parts if there are tool calls
         let parts: ChatMessage['parts'] = []
         if (toolCalls && toolCalls.length > 0) {
-          // Add tool parts for each tool call
           parts = toolCalls.map((tc) => ({ type: 'tool' as const, tool: tc.name }))
         }
-        // Add text part if there's content
         if (m.content) {
           parts.push({ type: 'text' as const, text: m.content })
         }
-        // If no parts, at least add the content as text
         if (parts.length === 0) {
           parts = [{ type: 'text' as const, text: m.content || '' }]
         }
@@ -320,8 +356,13 @@ export function useA2UIChat() {
           })) : undefined),
         }
       })
-    } catch (e) {
-      console.error('Failed to load thread messages:', e)
+    } catch (error) {
+      toast.add({
+        title: t('error'),
+        description: error instanceof Error ? error.message : undefined,
+        icon: 'i-heroicons-x-circle',
+        color: 'error',
+      })
     }
   }
 
@@ -338,13 +379,18 @@ export function useA2UIChat() {
       if (threadId.value === id) {
         await createNewThread()
       }
-    } catch (e) {
-      console.error('Failed to delete thread:', e)
+    } catch (error) {
+      toast.add({
+        title: t('error'),
+        description: error instanceof Error ? error.message : undefined,
+        icon: 'i-heroicons-x-circle',
+        color: 'error',
+      })
     }
   }
 
-  function handleSuggestionClick(suggestion: string) {
-    sendMessage(suggestion)
+  function handleSuggestionClick(suggestion: string, opts: BusinessContextOptions = {}) {
+    return sendMessage(suggestion, opts)
   }
 
   onMounted(async () => {
@@ -369,11 +415,25 @@ export function useA2UIChat() {
     threads: computed(() => threads.value),
     isLoadingThreads: computed(() => isLoadingThreads.value),
     threadId: computed(() => threadId.value),
+    artifactSignal: computed(() => artifactSignal.value),
     sendMessage,
+    abortStream,
     loadThreads,
     loadThreadMessages,
     createNewThread,
     deleteThread,
     handleSuggestionClick,
   }
+}
+
+async function readResponseMessage(response: Response): Promise<string> {
+  try {
+    const data = await response.json() as { message?: unknown, statusMessage?: unknown }
+    if (typeof data.message === 'string' && data.message) return data.message
+    if (typeof data.statusMessage === 'string' && data.statusMessage) return data.statusMessage
+  }
+  catch {
+    // Fall through to the status fallback below
+  }
+  return `HTTP error: ${response.status}`
 }

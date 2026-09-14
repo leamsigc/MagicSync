@@ -1,63 +1,31 @@
-import { aiToolsFacade } from '#ai-tools/server/services/aiToolsFacade.service'
+import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
+import { documentIngestService } from '#layers/BaseDB/server/services/document-ingest.service'
+import { resolveEmbedder } from '#layers/BaseAgent/server/utils/embeddings'
 
 export default defineEventHandler(async (event) => {
-  const log = useLogger(event)
-  const user = await aiToolsFacade.authenticate(event)
+  const user = await checkUserIsLogin(event)
   const body = await readBody(event)
 
-  log.set({ query: body.query?.substring(0, 100) })
+  if (!body?.query?.trim()) throw createError({ statusCode: 400, statusMessage: 'Query is required' })
 
-  if (!body?.query) {
-    throw createError({ statusCode: 400, statusMessage: 'Query is required' })
+  const embedder = await resolveEmbedder(user.id, body.businessId ?? body.business_id ?? '')
+  if (!embedder.success) {
+    throw createError({ statusCode: 400, statusMessage: embedder.error, data: { code: embedder.code } })
   }
 
-  // Get query embedding from Python backend (personal RAG stays separate
-  // from business context by design — no brand prompt is attached here).
-  const config = useRuntimeConfig()
-  const backendUrl = config.pythonBackendUrl || 'http://localhost:8000'
-
-  const llmJwtResult = await aiToolsFacade.getLlmJwtContext(user.id, user.email || '')
-  const llmJwt = llmJwtResult.data?.token ?? ''
-
-  const retrieveResult = await $fetch<{
-    query: string
-    embedding: number[]
-    top_k: number
-  }>(`${backendUrl}/api/v1/rag/retrieve`, {
-    method: 'POST',
-    body: {
-      query: body.query,
-      top_k: body.top_k || 5,
-    },
-    headers: {
-      Authorization: `Bearer ${llmJwt}`,
-    },
-  })
-
-  // Build optional filters
-  const filters: { documentId?: string; metadataKey?: string; metadataValue?: string } = {}
-  if (body.document_id) {
-    filters.documentId = body.document_id
-  }
-  if (body.metadata_key && body.metadata_value) {
-    filters.metadataKey = body.metadata_key
-    filters.metadataValue = body.metadata_value
-  }
-
-  // Search chunks in Turso using vector similarity with optional filters
-  const searchResult = await aiToolsFacade.searchChunks(
-    user.id,
-    retrieveResult.embedding,
-    retrieveResult.top_k,
-    Object.keys(filters).length > 0 ? filters : undefined
-  )
-
-  if (searchResult.error) {
-    throw createError({ statusCode: 500, statusMessage: searchResult.error })
-  }
+  const searchResult = await documentIngestService.search(user.id, {
+    query: body.query,
+    limit: body.top_k ?? body.limit ?? 5,
+  }, embedder.data)
+  if (!searchResult.success) throw createError({ statusCode: 500, statusMessage: searchResult.error })
 
   return {
     query: body.query,
-    results: searchResult.data,
+    results: searchResult.data.map(hit => ({
+      id: hit.chunkId,
+      document_id: hit.documentId,
+      content: hit.content,
+      distance: hit.distance,
+    })),
   }
 })

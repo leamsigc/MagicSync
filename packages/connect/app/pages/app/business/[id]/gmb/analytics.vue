@@ -51,7 +51,7 @@ useHead({
 </script>
 
 <template>
-  <div class="container mx-auto py-6 space-y-6">
+  <div class=" p-4 lg:mx-auto lg:p-6">
     <div class="flex items-center justify-between">
       <div>
         <h1 class="text-2xl font-bold">Analytics & Insights</h1>
@@ -59,8 +59,7 @@ useHead({
       </div>
       <div class="flex gap-3 items-center">
         <USelect v-if="locations.length" v-model="selectedLocation"
-          :options="locations.map((l: any) => ({ label: l.name, value: l.id }))"
-          class="w-64" />
+          :options="locations.map((l: any) => ({ label: l.name, value: l.id }))" class="w-64" />
         <USelect v-model="selectedDays" :options="[
           { label: 'Last 7 days', value: 7 },
           { label: 'Last 30 days', value: 30 },
@@ -80,7 +79,8 @@ useHead({
             <h3 class="font-semibold">{{ metric.label }}</h3>
             <span class="text-sm text-gray-500">
               Total: {{ getTotalImpressions(metric) }}
-              <span v-if="metric.percentageChange" :class="metric.percentageChange >= 0 ? 'text-green-600' : 'text-red-600'">
+              <span v-if="metric.percentageChange"
+                :class="metric.percentageChange >= 0 ? 'text-green-600' : 'text-red-600'">
                 ({{ metric.percentageChange >= 0 ? '+' : '' }}{{ metric.percentageChange }}%)
               </span>
             </span>
@@ -91,7 +91,9 @@ useHead({
             <div v-for="point in metric.data.slice(-14)" :key="point.date" class="flex items-center gap-3">
               <span class="text-xs text-gray-500 w-24">{{ point.date }}</span>
               <div class="flex-1 bg-gray-100 rounded-full h-4 overflow-hidden">
-                <div class="bg-primary-500 h-full rounded-full transition-all" :style="{ width: Math.min((point.total / Math.max(...metric.data.map((d: any) => d.total))) * 100, 100) + '%' }"></div>
+                <div class="bg-primary-500 h-full rounded-full transition-all"
+                  :style="{ width: Math.min((point.total / Math.max(...metric.data.map((d: any) => d.total))) * 100, 100) + '%' }">
+                </div>
               </div>
               <span class="text-sm font-mono w-16 text-right">{{ point.total }}</span>
             </div>

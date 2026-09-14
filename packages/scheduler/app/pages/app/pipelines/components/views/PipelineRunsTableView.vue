@@ -18,6 +18,10 @@ defineProps<{
   runs: PipelineRun[]
 }>()
 
+const emit = defineEmits<{
+  delete: [id: string]
+}>()
+
 const router = useRouter()
 function openRun(id: string) {
   router.push(`/app/pipelines/runs/${id}`)
@@ -69,21 +73,32 @@ const columns: TableColumn<PipelineRun>[] = [
   {
     id: 'actions',
     header: () => t('table.columns.actions'),
-    cell: ({ row }) => h(UButton, {
-      color: 'neutral',
-      variant: 'ghost',
-      size: 'xs',
-      onClick: () => openRun(row.original.id)
-    }, () => t('table.view'))
+    cell: ({ row }) => h('div', { class: 'flex items-center gap-1' }, [
+      h(UButton, {
+        color: 'neutral',
+        variant: 'ghost',
+        size: 'xs',
+        onClick: () => openRun(row.original.id)
+      }, () => t('table.view')),
+      h(UButton, {
+        color: 'error',
+        variant: 'ghost',
+        size: 'xs',
+        icon: 'i-heroicons-trash',
+        title: t('runDelete.button'),
+        'aria-label': t('runDelete.button'),
+        onClick: () => emit('delete', row.original.id)
+      })
+    ])
   }
 ]
 </script>
 
 <template>
   <div class="mt-4" v-motion-fade-visible :duration="200">
-    <div class="rounded overflow-hidden">
+    <div class="rounded overflow-hidden border border-white/10 bg-[#111111]">
       <UTable :data="runs" :columns="columns" class="flex-1" :ui="{ 'tr': 'bg-transparent', 'td': 'border-0', 'th': 'border-0' }" />
-      <div v-if="runs.length === 0" class="px-5 py-10 text-sm text-muted text-center">
+      <div v-if="runs.length === 0" class="px-5 py-10 text-sm text-white/20 text-center">
         {{ t('table.empty') }}
       </div>
     </div>

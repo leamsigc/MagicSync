@@ -265,6 +265,20 @@ Organize your media assets efficiently with upload, categorization, and easy acc
 
 Generate AI-powered posts, use chat templates for consistent messaging, and manage business profiles.
 
+### Agent Platform & Content Board
+![Content Board](./images/magicSync-contentvalidation.png)
+
+A per-business content operating system on top of the existing Brand Playbook:
+
+- **Chat** — a single ChatGPT-style surface per business running the [pi SDK](https://www.npmjs.com/package/@earendil-works/pi-coding-agent) in-process (no Python). SSE events with stable IDs; tools are server-owned and tenant-scoped.
+- **Content board** — kanban at `/app/business/[id]/content` with `idea → research → drafting → review → approved → delivery → archive`. Cards run the research → writer → humanizer → checks chain and stay approval-gated before any schedule/publish.
+- **Trend scans** — best-post signals plus web research become idea cards; winners become templates.
+- **Checks** — SEO/GEO/link audits recorded per card before human review.
+- **RAG** — Turso-native vector search (`vector_distance_cos`) over ingested documents.
+- **PII private mode** — optional ONNX + regex anonymization that keeps PII out of provider requests and fails closed when the model is missing.
+- **Video ingestion** — pinned `yt-dlp` + `ffmpeg` in the Docker image.
+- **Tool backends** — bring your own ScrapeGraphAI key (default scraper) and, optionally, a Python tools sidecar (`packages/python-tools`) configured from AI settings.
+
 ### Built-in Tools
 ![Image Editor](./images/Screenshot%202025-10-17%20at%2011-20-51%20Image%20Editor%20%40local-monorepo_site.png)
 ![MagicSync Image Editor](./images/MagicSync-image-editor.png)
@@ -298,6 +312,24 @@ Use the **magic-sync** skill to:
 
 **Skill triggers:** "create social media post", "schedule post", "post to twitter", "post to instagram", "post to facebook", "post to bluesky", "post to linkedin", "social media", "cross-post"
 
+### Built-in Content-Agent Skills
+
+Every business gets these base skills seeded into the skill registry (idempotent, reviewable):
+
+| Skill | What it does |
+|-------|--------------|
+| `social-research` | Source-cited topic research with proof capture |
+| `social-writing` | Brand-voiced social drafting from research |
+| `humanizer` | Sentiment and readability edits without new claims |
+| `designer` | Fabric scene composition within brand constraints |
+| `web-researcher` | ScrapeGraphAI deep extraction with citations |
+| `seo-brief` | Search-intent briefs with keywords and outline |
+| `trend-scout` | Current angles from best posts + web signals |
+| `hook-writer` | Five hook variants per idea (question, contrarian, data, story, how-to) |
+| `carousel-architect` | Slide-by-slide carousel structure |
+| `link-auditor` | Verify links before publish |
+| `python-researcher` | Run tools from the configured Python backend |
+
 ---
 
 ## Tech Stack
@@ -307,8 +339,12 @@ Use the **magic-sync** skill to:
 | Frontend | Nuxt 4, Vue 3, @nuxt/ui |
 | Backend | Nuxt Server Routes, Better Auth |
 | Database | Turso (libSQL) with native vector support |
-| AI | LLM integration for content generation |
-| Python Backend | FastAPI (optional, port 8000) |
+| Agent runtime | pi SDK (`@earendil-works/pi-coding-agent`) in-process in `packages/agent` |
+| AI | Per-business provider/model via pi `ModelRuntime` (OpenAI, Anthropic, Google, OpenRouter, DeepSeek, Ollama) |
+| Scraping | ScrapeGraphAI (`scrapegraph-js`) default scraper, raw-fetch fallback |
+| RAG / PII | Turso vectors + `unpdf`/`mammoth`; ONNX NER (`@huggingface/transformers`) + regex |
+| Video | Pinned `yt-dlp` musllinux + `ffmpeg` in the Docker image |
+| Python sidecar | FastAPI (`packages/python-tools`, optional, user-run, port 8100) |
 
 ---
 
@@ -316,17 +352,20 @@ Use the **magic-sync** skill to:
 
 ```
 packages/
-├── db/          # Database layer (Drizzle ORM, Turso)
-├── auth/        # Authentication (Better Auth)
+├── db/          # Database layer (Drizzle ORM, Turso, services, migrations)
+├── auth/        # Authentication (Better Auth) + AI settings UI
 ├── assets/      # Media upload & management
 ├── scheduler/   # Post scheduling & calendar
-├── connect/     # Social platform connections
+├── connect/     # Social platform connections + content board UI
 ├── tools/       # In-browser tools (image editor, etc.)
-├── ai-tools/    # AI content generation
+├── ai-tools/    # AI content generation + LLM/tool-backend routes
+├── agent/       # Nuxt-native agent layer (pi SDK, tools, workflows, RAG, PII)
 ├── bulk-scheduler/  # Bulk post creation & scheduling
 ├── content/     # Static content & blog
 ├── ui/          # Base UI components (@nuxt/ui wrappers)
+├── shared/      # Shared types/services
 ├── email/       # Email templates & service
+├── python-tools/# Optional FastAPI sidecar for Python-only tools
 ├── site/        # Main application (layer merge point)
 ```
 
@@ -360,7 +399,10 @@ pnpm site:dev
 | `pnpm site:build` | Build main site |
 | `pnpm ui:lint` | Lint UI components |
 | `cd packages/db && pnpm db:generate` | Generate database schema |
-| `cd python-backend && pnpm dev` | Start FastAPI backend (port 8000) |
+| `pnpm --filter @local-monorepo/db test:services` | Run DB service tests (SQLite harness) |
+| `pnpm --filter @local-monorepo/agent test` | Run agent-layer tests (pi stub provider, no network) |
+| `pnpm python-tools:dev` | Start the optional Python tools sidecar (port 8100) |
+| `pnpm tts:assets` | Download TTS ONNX assets for Docker builds |
 
 ---
 
@@ -381,6 +423,10 @@ pnpm site:dev
 - Auto-repost rules and Bluesky grow
 - Adaptive analytics with best-time-to-post
 - Notifications (in-app + email + digest)
+- Nuxt-native agent platform: business chat (SSE), tool registry, content board kanban, trend scans, content chain with SEO/GEO/link checks
+- Brand Playbook grounding (current edition only) and human-approval gates before schedule/publish
+- Turso-native RAG (ingest + vector search) and PII private mode
+- ScrapeGraphAI default scraper + configurable tool backends (ScrapeGraphAI key, optional Python tools sidecar)
 
 ---
 

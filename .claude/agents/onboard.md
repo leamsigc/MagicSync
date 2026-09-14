@@ -35,9 +35,9 @@ Onboard Claude Code into the codebase. Scan structure, read key files, and provi
    - Review skills in `.claude/skills/`
    - Note relevant skills for the current project focus
 
-5. **Check Python backend** (if exists)
-   - Check `python-backend/` directory
-   - Look for `requirements.txt` or `pyproject.toml`
+5. **Check agent tooling** (optional)
+   - Check `packages/agent/` (layer, tests, tools)
+   - Check `packages/python-tools/` for the optional Python sidecar
 
 6. **Check active implementations**
    - Review `.agent/plans/active/*.md` for in-progress work
@@ -86,13 +86,14 @@ LinkedIn, and more with AI-powered content generation.
 - Frontend: Nuxt 4, Vue 3, @nuxt/ui
 - Backend: Nuxt Server Routes, Better Auth
 - Database: Turso (libSQL) with vector support
-- AI: LLM integration for content generation
-- Python Backend: FastAPI (optional, port 8000)
+- AI: pi SDK agent runtime in-process (`packages/agent`) with per-business provider/model routing
+- Tool backends: ScrapeGraphAI default scraper + optional Python tools sidecar (`packages/python-tools`)
 
 ### Organisation
 - `packages/` - Nuxt layer packages (db, auth, scheduler, connect, etc.)
+- `packages/agent/` - Nuxt-native agent layer (pi SDK, tools, workflows, RAG, PII, video)
+- `packages/python-tools/` - Optional user-run FastAPI sidecar for Python-only tools
 - `packages/site/` - Main application (layer merge point)
-- `python-backend/` - Python FastAPI backend (if used)
 - `.claude/` - AI agent context, patterns, and skills
 - `.config/opencode/skills/` - Agent skills
 
@@ -115,7 +116,9 @@ Current focus: [module/feature]
 - `pnpm site:dev` - Start dev server (port 3000)
 - `pnpm build` - Build all packages
 - `cd packages/db && pnpm db:generate` - Generate database schema
-- `cd python-backend && pnpm dev` - Start Python backend (port 8000)
+- `pnpm --filter @local-monorepo/agent test` - Run agent-layer tests
+- `pnpm --filter @local-monorepo/db test:services` - Run DB service tests
+- `pnpm python-tools:dev` - Start optional Python tools sidecar (port 8100)
 ```
 
 

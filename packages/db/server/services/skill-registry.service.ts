@@ -14,11 +14,11 @@ import {
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
 import { requireBusinessAccess } from '../utils/business-access'
 
-// Canonical DSH-exposed tool catalog (subset of the Python ToolManager).
+// Canonical tool catalog exposed to skills and agents (server-owned allowlist).
 // Privileged tools (execute_code, save_skill, skill imports, skill file
 // reads) stay Nuxt-mediated and can never appear in a skill/agent scope.
-// Parity with the manager + plugin is asserted in tests/api/test_dsh.py.
-export const APPROVED_DSH_TOOLS: string[] = [
+// Tools outside this list can never appear in a skill or agent scope.
+export const APPROVED_TOOL_NAMES: string[] = [
   'web_search',
   'scrape_url',
   'retrieve',
@@ -38,11 +38,37 @@ export const APPROVED_DSH_TOOLS: string[] = [
   'generate_social_post',
   'generate_thread',
   'generate_hashtags',
+  'scan_trends',
+  'research_topic',
+  'write_post',
+  'humanize',
+  'revise_draft',
+  'check_seo',
+  'check_geo',
+  'check_links',
+  'board_list',
+  'board_move',
+  'board_update',
+  'board_add_cards',
+  'download_video',
+  'create_carousel',
+  'create_reel_storyboard',
+  'schedule_post',
+  'publish',
+  'create_post',
+  'subagent',
+  'pii_scan',
+  'scrapegraph_scrape',
+  'scrapegraph_extract',
+  'scrapegraph_search',
+  'scrapegraph_credits',
+  'python_tools_list',
+  'python_tool_run',
 ]
 
 export function validateToolScope(tools: unknown): { ok: boolean, denied: string[] } {
   if (!Array.isArray(tools)) return { ok: false, denied: ['allowedTools must be an array'] }
-  const denied = tools.filter(tool => typeof tool !== 'string' || !APPROVED_DSH_TOOLS.includes(tool))
+  const denied = tools.filter(tool => typeof tool !== 'string' || !APPROVED_TOOL_NAMES.includes(tool))
   return { ok: denied.length === 0, denied }
 }
 

@@ -60,7 +60,7 @@ const templateTypes = [
 </script>
 
 <template>
-    <div class="container mx-auto py-6 space-y-6">
+    <div class=" p-4 lg:mx-auto lg:p-6">
         <BasePageHeader :title="t('title')" :description="t('description')" data-tour="templates-step-0" />
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" data-tour="templates-step-1">

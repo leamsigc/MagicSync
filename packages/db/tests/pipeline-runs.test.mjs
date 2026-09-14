@@ -171,4 +171,24 @@ describe('durable executor (T60.2)', () => {
     assert.deepEqual(before.order, ['trigger', 'research', 'write', 'review', 'publish', 'end'])
     assert.equal(before.workflowVersion, 2)
   })
+
+  it('deletes runs without leaking existence to outsiders', async () => {
+    const biz = await svc.businessProfileService.create(OWNER, { name: 'Pipe Co' })
+    const pipeline = await makePipeline(OWNER, biz.data.id)
+    const started = await svc.pipelineService.startRun(OWNER, {
+      pipelineId: pipeline.id,
+      businessId: biz.data.id,
+      input: { brief: 'delete me', useBusinessContext: false },
+    })
+    assert.equal(started.success, true)
+    const foreign = await svc.pipelineService.deleteRun(started.data.id, OUTSIDER)
+    assert.equal(foreign.success, false)
+    const deleted = await svc.pipelineService.deleteRun(started.data.id, OWNER)
+    assert.equal(deleted.success, true)
+    assert.equal(deleted.data.id, started.data.id)
+    const gone = await svc.pipelineService.getRun(started.data.id, OWNER)
+    assert.equal(gone.success, false)
+    const again = await svc.pipelineService.deleteRun(started.data.id, OWNER)
+    assert.equal(again.success, false)
+  })
 })

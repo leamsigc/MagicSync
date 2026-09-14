@@ -23,7 +23,7 @@ last_updated: 2026-09-13
 
 `packages/agent` (`@local-monorepo/agent`, `$meta.name: BaseAgent`) is the
 Nuxt layer that runs pi SDK agent sessions in-process. The Python service is
-being deleted; no child processes, no HTTP to a Python backend. Models come
+deleted (T14); no child processes, no HTTP to a Python backend. Models come
 from a deployment `server/agent/models.json` template plus per-run runtime
 API keys; credentials and model catalogs stay in memory.
 
@@ -68,6 +68,29 @@ API keys; credentials and model catalogs stay in memory.
    customTools: [...], sessionManager: SessionManager.inMemory(cwd, { id }),
    settingsManager: SettingsManager.inMemory({ compaction: { enabled: false },
    retry: { enabled: false } }) })`. `agentDir` must be server-owned.
+
+### DB-backed services in the agent layer (T02)
+
+1. The agent layer extends `@local-monorepo/db` (drop `@local-monorepo/shared`
+   — db already cascades it) and depends on `@local-monorepo/db` +
+   `dayjs` (pnpm does not hoist dayjs to the root; a test importing it fails
+   with `ERR_MODULE_NOT_FOUND` until it is a direct dep).
+2. Tables live with the other feature schemas (`packages/db/db/content/board.ts`),
+   exported from `db/schema.ts`; generate with
+   `cd packages/db && pnpm db:generate` (offline-safe: turso config falls back
+   to `file:../../local.db`, generate does not connect).
+3. Agent services import `#layers/BaseDB/db/schema` and
+   `#layers/BaseDB/server/utils/drizzle`, return `ServiceResponse<T>`, and
+   allocate ordered rows with one atomic
+   `UPDATE ... SET seq = seq + N ... RETURNING` before bulk insert.
+4. Agent tests need their own harness (`packages/agent/tests/register-hook.mjs`
+   + `resolve-hook.mjs` + `globals.mjs` + `setup.mjs`): map `#layers/BaseDB/`
+   to `packages/db`, point `#layers/BaseDB/server/utils/drizzle` at db's
+   `tests/stubs/drizzle-stub.mjs`, and reuse `packages/db/db/migrations` in
+   `initTestDb`. Test script:
+   `node --test --import ./tests/register-hook.mjs --import ./tests/globals.mjs "tests/*.test.mjs"`.
+5. SQLite cascade assertions need `PRAGMA foreign_keys = ON` first
+   (`client.execute`), even though inserts work without it.
 
 ## Gotchas
 

@@ -115,7 +115,7 @@ const HandleLayoutChange = async () => {
       </UButton>
     </UForm>
 
-    <UDivider class="my-8" />
+    <USeparator class="my-8" />
 
     <section class="space-y-6">
       <div>
@@ -124,12 +124,12 @@ const HandleLayoutChange = async () => {
       </div>
       <div class="flex items-center gap-3">
         <USwitch :model-value="userLayoutSetting === 'dashboard-layout'"
-          @update:model-value="HandleLayoutChange" />
+          @update:model-value="handleLayoutChange" />
         <span class="text-sm">{{ userLayoutSetting === 'dashboard-layout' ? 'Dashboard' : 'Twitter' }}</span>
       </div>
     </section>
 
-    <UDivider class="my-8" />
+    <USeparator class="my-8" />
 
     <section class="space-y-4">
       <div>

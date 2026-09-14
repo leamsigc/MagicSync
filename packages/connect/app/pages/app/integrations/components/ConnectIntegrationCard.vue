@@ -26,8 +26,7 @@ interface Props {
   accountId?: string;
 }
 
-const { t } = useI18n();
-const { getPagesForIntegration, HandleConnectToFacebook, facebookPages, handleDisconnect, HandleConnectToLinkedIn, HandleConnectToYoutube, HandleConnectToGMB, HandleReconnect } = useConnectionManager();
+const { t, getPagesForIntegration, HandleConnectToFacebook, facebookPages, handleDisconnect, HandleConnectToLinkedIn, HandleConnectToYoutube, HandleConnectToGMB, HandleReconnect } = useConnectionManager();
 
 const modalStatus = ref(false);
 const toggleModal = () => {

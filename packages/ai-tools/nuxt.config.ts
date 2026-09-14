@@ -16,9 +16,6 @@ export default defineNuxtConfig({
   future: {
     compatibilityVersion: 5
   },
-  runtimeConfig: {
-    pythonBackendUrl: process.env.PYTHON_BACKEND_URL || 'http://localhost:8000',
-  },
   nitro: {
     experimental: {
       openAPI: true,
@@ -33,7 +30,7 @@ export default defineNuxtConfig({
   $meta: {
     name: 'BaseAITools',
   },
-  extends: ['@local-monorepo/db', '@local-monorepo/ui', '@local-monorepo/auth', '@local-monorepo/tools'],
+  extends: ['@local-monorepo/db', '@local-monorepo/ui', '@local-monorepo/auth', '@local-monorepo/tools', '@local-monorepo/agent'],
   modules: ['@nuxtjs/i18n', 'evlog/nuxt','@comark/nuxt'],
   i18n: {
     vueI18n: join(currentDir, './translations/i18n.config.ts'),

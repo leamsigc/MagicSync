@@ -6,9 +6,9 @@ import { businessProfileService } from '../services/business-profile.service'
 const MACHINE_SKEW_SECONDS = 300
 
 function machineSecret(): string {
-  const secret = process.env.DSH_BRIDGE_SECRET
+  const secret = process.env.MACHINE_BRIDGE_SECRET
   if (!secret) {
-    throw new Error('[machine-auth] DSH_BRIDGE_SECRET is required for machine callbacks')
+    throw new Error('[machine-auth] MACHINE_BRIDGE_SECRET is required for machine callbacks')
   }
   return secret
 }

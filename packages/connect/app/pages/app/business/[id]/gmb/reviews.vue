@@ -139,7 +139,7 @@ useHead({
 </script>
 
 <template>
-  <div class="container mx-auto py-6 space-y-6">
+  <div class=" p-4 lg:mx-auto lg:p-6">
     <div class="flex items-center justify-between">
       <div>
         <h1 class="text-2xl font-bold">Review Management</h1>
@@ -203,7 +203,8 @@ useHead({
               <div v-if="review.responseContent" class="mt-3 pl-4 border-l-2 border-green-300 bg-green-50 rounded p-3">
                 <p class="text-xs font-semibold text-green-700">Your Response:</p>
                 <p class="text-sm text-green-800">{{ review.responseContent }}</p>
-                <p v-if="review.responseDate" class="text-xs text-green-600 mt-1">{{ formatDate(review.responseDate) }}</p>
+                <p v-if="review.responseDate" class="text-xs text-green-600 mt-1">{{ formatDate(review.responseDate) }}
+                </p>
               </div>
             </div>
           </div>
@@ -230,7 +231,8 @@ useHead({
     </div>
 
     <div v-if="pagination.totalPages > 1" class="flex justify-center">
-      <UPagination v-model="pagination.page" :page-count="pagination.limit" :total="pagination.total" @update:model-value="loadReviews" />
+      <UPagination v-model="pagination.page" :page-count="pagination.limit" :total="pagination.total"
+        @update:model-value="loadReviews" />
     </div>
 
     <UModal v-model="showReplyModal">
@@ -250,7 +252,8 @@ useHead({
           <div v-if="templates.length" class="space-y-2">
             <p class="text-xs font-semibold text-gray-500">Response Templates:</p>
             <div class="flex flex-wrap gap-2">
-              <UBadge v-for="(tmpl, i) in templates" :key="i" color="gray" variant="soft" class="cursor-pointer text-xs" @click="replyText = tmpl">
+              <UBadge v-for="(tmpl, i) in templates" :key="i" color="gray" variant="soft" class="cursor-pointer text-xs"
+                @click="replyText = tmpl">
                 {{ tmpl.substring(0, 60) }}...
               </UBadge>
             </div>

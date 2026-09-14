@@ -37,7 +37,7 @@ export interface AgentRunSnapshot {
   skills: Array<{ skillId: string, version: number, snapshot: Record<string, unknown> }>
 }
 
-interface BuiltinAgent {
+export interface BuiltinAgent {
   name: string
   description: string
   systemPrompt: string
@@ -45,6 +45,20 @@ interface BuiltinAgent {
   tools: string[]
   outputKind: string
   requiresHumanReview: boolean
+}
+
+export interface BuiltinSkill {
+  slug: string
+  name: string
+  description: string
+  instructions: string
+  tools: string[]
+}
+
+/** Caller-supplied built-in definitions (the agent layer is the runtime source of truth). */
+export interface BuiltinSeed {
+  agents?: BuiltinAgent[]
+  skills?: BuiltinSkill[]
 }
 
 const BUILTIN_AGENTS: BuiltinAgent[] = [
@@ -95,7 +109,7 @@ const BUILTIN_AGENTS: BuiltinAgent[] = [
   },
 ]
 
-const BUILTIN_SKILLS: Array<{ slug: string, name: string, description: string, instructions: string, tools: string[] }> = [
+const BUILTIN_SKILLS: BuiltinSkill[] = [
   {
     slug: 'social-research',
     name: 'Social research',
@@ -123,6 +137,55 @@ const BUILTIN_SKILLS: Array<{ slug: string, name: string, description: string, i
     description: 'Fabric scene composition within brand constraints.',
     instructions: 'Compose scenes with brand colors and fonts. Respect image restrictions. 2-10 slides for carousels.',
     tools: ['retrieve'],
+  },
+  {
+    slug: 'web-researcher',
+    name: 'Web researcher',
+    description: 'Deep web extraction and source capture with ScrapeGraphAI.',
+    instructions: 'Search first, then extract structured facts from the best sources. Cite a URL for every claim and mark assumptions explicitly.',
+    tools: ['scrapegraph_search', 'scrapegraph_extract', 'scrape_url', 'retrieve'],
+  },
+  {
+    slug: 'seo-brief',
+    name: 'SEO brief',
+    description: 'Search-intent briefs with keywords and outline.',
+    instructions: 'Derive search intent and keywords from the topic, outline H2 sections, and list target queries plus internal link ideas.',
+    tools: ['retrieve', 'scrape_url'],
+  },
+  {
+    slug: 'trend-scout',
+    name: 'Trend scout',
+    description: 'Find current angles from best posts and the web.',
+    instructions: 'Review best-performing posts and fresh web signals, then propose 5+ dated angles with sources and a confidence note.',
+    tools: ['best_posts', 'scan_trends', 'scrapegraph_search'],
+  },
+  {
+    slug: 'hook-writer',
+    name: 'Hook writer',
+    description: 'Scroll-stopping hooks with proof.',
+    instructions: 'Write five hook variants per idea: question, contrarian, data, story, how-to. Keep each under 12 words.',
+    tools: ['generate_hashtags'],
+  },
+  {
+    slug: 'carousel-architect',
+    name: 'Carousel architect',
+    description: 'Slide-by-slide carousel structure.',
+    instructions: 'Plan 5-10 slides: hook, problem, steps, proof, CTA. One idea per slide, no walls of text.',
+    tools: ['retrieve', 'apply_template'],
+  },
+  {
+    slug: 'link-auditor',
+    name: 'Link auditor',
+    description: 'Verify links in drafts before publish.',
+    instructions: 'Extract every URL, check reachability, and flag redirects or dead links before the approval step.',
+    tools: ['scrape_url'],
+  },
+  {
+    slug: 'python-researcher',
+    name: 'Python researcher',
+    description: 'Run Python tools from the configured backend.',
+    instructions: 'List the backend tools first, pick the best match, and run it with explicit arguments. Surface backend errors verbatim.',
+    tools: ['python_tools_list', 'python_tool_run'],
   },
 ]
 
@@ -444,21 +507,27 @@ export class AgentRegistryService {
     return Array.isArray(raw) ? raw.filter((item): item is string => typeof item === 'string') : []
   }
 
-  async ensureBuiltins(ownerUserId: string, businessId: string, actor: string, event?: H3Event): Promise<ServiceResponse<{ skills: number, agents: number }>> {
+  async ensureBuiltins(
+    ownerUserId: string,
+    businessId: string,
+    actor: string,
+    event?: H3Event,
+    seed: BuiltinSeed = {},
+  ): Promise<ServiceResponse<{ skills: number, agents: number }>> {
     try {
       const scope = await this.resolveScope(ownerUserId, businessId, event)
       if (!scope.success) return scope
-      const seededSkills = await this.seedBuiltinSkills(scope.data, actor)
-      const seededAgents = await this.seedBuiltinAgents(scope.data, actor)
+      const seededSkills = await this.seedBuiltinSkills(scope.data, actor, seed.skills ?? BUILTIN_SKILLS)
+      const seededAgents = await this.seedBuiltinAgents(scope.data, actor, seed.agents ?? BUILTIN_AGENTS)
       return { success: true, data: { skills: seededSkills, agents: seededAgents } }
     } catch {
       return { success: false, error: 'Failed to seed built-in agents' }
     }
   }
 
-  private async seedBuiltinSkills(scope: RegistryScope, actor: string): Promise<number> {
+  private async seedBuiltinSkills(scope: RegistryScope, actor: string, skills: BuiltinSkill[]): Promise<number> {
     let created = 0
-    for (const builtin of BUILTIN_SKILLS) {
+    for (const builtin of skills) {
       const [existing] = await this.db
         .select({ id: skillDefinitions.id })
         .from(skillDefinitions)
@@ -502,9 +571,9 @@ export class AgentRegistryService {
     return created
   }
 
-  private async seedBuiltinAgents(scope: RegistryScope, actor: string): Promise<number> {
+  private async seedBuiltinAgents(scope: RegistryScope, actor: string, agents: BuiltinAgent[]): Promise<number> {
     let created = 0
-    for (const builtin of BUILTIN_AGENTS) {
+    for (const builtin of agents) {
       const [existing] = await this.db
         .select({ id: agentDefinitions.id })
         .from(agentDefinitions)

@@ -55,8 +55,9 @@ MagicSync supports a wide range of social platforms:
 
 1. **Connect your accounts** — Link your social media profiles
 2. **Create content** — Write posts, upload media, or use AI assistance
-3. **Schedule posts** — Choose when each post goes live
-4. **Analyze results** — Track engagement and improve over time
+3. **Plan and review** — The agent researches and drafts on your content board; you approve
+4. **Schedule posts** — Choose when each post goes live
+5. **Analyze results** — Track engagement and improve over time
 
 ---
 
@@ -64,6 +65,8 @@ MagicSync supports a wide range of social platforms:
 
 - **Multi-platform scheduling** — Post to several networks at once
 - **AI content generation** — Generate captions, ideas, and hashtags
+- **Agent platform** — Business chat with tools, a per-business content board, trend scans, and approval-gated content chains
+- **Knowledge (RAG) & PII private mode** — Ground answers in your documents and keep personal data out of AI requests
 - **Media library** — Store and organize all your assets
 - **Analytics dashboard** — Track performance across platforms
 - **Team collaboration** — Invite users and set permissions
@@ -91,7 +94,6 @@ Learn more in the [Installation Guide](/guide/installation), [Self-Hosting Guide
 | AI content generation | ✅ | Usually extra cost |
 | Self-hosted option | ✅ | Often unavailable |
 | Open source | ✅ | Proprietary |
-| Open source | ✅ | Proprietary |
 
 MagicSync is designed for users who want control, transparency, and predictable costs.
 
@@ -101,5 +103,6 @@ MagicSync is designed for users who want control, transparency, and predictable 
 
 - [Installation](/guide/installation) — Set up MagicSync
 - [Quick Start](/guide/quick-start) — Create your first post
+- [Agent Platform](/guide/agent-platform) — Chat, content board, and tool backends
 - [Platform Keys](/guide/platform-keys) — Connect your accounts
 - [Free Tools](/guide/tools) — Explore the creative tools

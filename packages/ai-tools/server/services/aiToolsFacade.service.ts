@@ -2,21 +2,12 @@ import type { H3Event } from 'h3'
 import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
 import { chatService } from '#layers/BaseDB/server/services/chat.service'
 import { userLlmConfigService } from '#layers/BaseDB/server/services/user-llm-config.service'
-import { createLlmJwt } from '#layers/BaseDB/server/utils/llm-jwt'
 import { documentService, chunkService } from '#layers/BaseDB/server/services/document.service'
-import { agentService } from '#layers/BaseDB/server/services/agent.service'
 import { skillService } from '#layers/BaseDB/server/services/skill.service'
 import { folderService } from '#layers/BaseDB/server/services/folder.service'
-import type { ChatThread, ChatMessage, UserLlmConfig, Document, DocumentChunk, AgentSession, Skill, SkillFile, KnowledgeFolder } from '#layers/BaseDB/db/schema'
+import type { ChatThread, ChatMessage, UserLlmConfig, Document, DocumentChunk, Skill, KnowledgeFolder } from '#layers/BaseDB/db/schema'
 
 export type AuthenticatedUser = NonNullable<Awaited<ReturnType<typeof checkUserIsLogin>>>
-
-export type LlmJwtContext = {
-  userId: string
-  email: string
-  config: UserLlmConfig | null
-  token: string
-}
 
 export type ChatThreadInput = {
   title: string
@@ -51,17 +42,6 @@ export type ChunkCreateInput = {
   metadata?: Record<string, unknown>
 }
 
-export type AgentSessionInput = {
-  id: string
-  userId: string
-  parentMessageId: string
-  threadId?: string
-  task: string
-  taskType?: string
-  maxSteps?: number
-  metadata?: Record<string, unknown>
-}
-
 export type SkillCreateInput = {
   name: string
   description: string
@@ -80,17 +60,6 @@ export type FolderCreateInput = {
 export class AiToolsFacadeService {
   async authenticate(event: H3Event): Promise<AuthenticatedUser> {
     return checkUserIsLogin(event)
-  }
-
-  async getLlmJwtContext(userId: string, email: string, businessId?: string | null): Promise<ServiceResponse<LlmJwtContext>> {
-    try {
-      const configResult = await userLlmConfigService.getEffectiveConfig(userId, businessId ?? null)
-      const config = configResult.data ?? null
-      const token = createLlmJwt(userId, email, config)
-      return { data: { userId, email, config, token } }
-    } catch (error) {
-      return { error: 'Failed to build LLM JWT context' }
-    }
   }
 
   async getEffectiveLlmConfig(userId: string, businessId?: string | null) {
@@ -199,26 +168,6 @@ export class AiToolsFacadeService {
     return chunkService.search(userId, embedding, limit, filters)
   }
 
-  async createAgentSession(input: AgentSessionInput): Promise<ServiceResponse<AgentSession>> {
-    return agentService.create(input)
-  }
-
-  async getAgentSession(sessionId: string, userId: string): Promise<ServiceResponse<AgentSession>> {
-    return agentService.getById(sessionId, userId)
-  }
-
-  async listAgentSessions(userId: string, parentMessageId?: string): Promise<ServiceResponse<AgentSession[]>> {
-    return agentService.listByUser(userId, parentMessageId)
-  }
-
-  async updateAgentSession(sessionId: string, userId: string, data: { status?: 'created' | 'running' | 'completed' | 'failed'; stepCount?: number; result?: string; errorMessage?: string; metadata?: Record<string, unknown> }): Promise<ServiceResponse<AgentSession>> {
-    return agentService.update(sessionId, userId, data)
-  }
-
-  async deleteAgentSession(sessionId: string, userId: string): Promise<ServiceResponse<AgentSession>> {
-    return agentService.delete(sessionId, userId)
-  }
-
   async createSkill(userId: string, input: SkillCreateInput): Promise<ServiceResponse<Skill>> {
     return skillService.create(userId, { name: input.name, description: input.description, instructions: input.instructions, isGlobal: input.isGlobal })
   }
@@ -241,14 +190,6 @@ export class AiToolsFacadeService {
 
   async getSkillCatalog(userId: string): Promise<ServiceResponse<Array<{ name: string; description: string }>>> {
     return skillService.getCatalog(userId)
-  }
-
-  async createSkillFile(userId: string, data: { skillId: string; filename: string; content: string }): Promise<ServiceResponse<SkillFile>> {
-    return skillService.create(userId, data)
-  }
-
-  async getSkillFiles(skillId: string): Promise<ServiceResponse<SkillFile[]>> {
-    return skillService.findBySkill(skillId)
   }
 
   async createFolder(userId: string, input: FolderCreateInput): Promise<ServiceResponse<KnowledgeFolder>> {

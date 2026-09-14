@@ -21,7 +21,6 @@
 </template>
 
 <script setup lang="ts">
-import { useI18n } from 'vue-i18n'
 import { useContextWindow } from '../composables/useContextWindow'
 
 const { t } = useI18n()

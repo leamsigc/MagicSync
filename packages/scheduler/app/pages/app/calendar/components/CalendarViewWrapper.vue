@@ -29,18 +29,16 @@ const props = defineProps<{
   showPostFormatFilter?: boolean
 }>();
 
-const { t } = useI18n()
+const toast = useToast()
+const activeBusinessId = useState<string>('business:id');
+
+const { t, getPosts, postList } = usePostManager();
 useHead({
   title: t(`seo_title_${props.seoEndLabel}`),
   meta: [
     { name: 'description', content: t(`seo_description_${props.seoEndLabel}`) }
   ]
 })
-
-const toast = useToast()
-const activeBusinessId = useState<string>('business:id');
-
-const { getPosts, postList } = usePostManager();
 
 // Fetch posts based on provided startDate and endDate
 const startDate = ref(props.startDate);
@@ -66,10 +64,10 @@ const HandleRefresh = async () => {
     page: 1,
     limit: 100
   },
-  {
-    startDate: startDate.value,
-    endDate: endDate.value
-  }
+    {
+      startDate: startDate.value,
+      endDate: endDate.value
+    }
   );
 }
 HandleRefresh();
@@ -114,22 +112,15 @@ const HandleEventClicked = (event: EventClickArg) => {
   }
 }
 const handleDateChange = ({ start, end }: { start: string, end: string }) => {
-  console.log({ start, end });
-
   startDate.value = start;
   endDate.value = end;
-  //HandleRefresh();
 }
 </script>
 <template>
-  <div class="container mx-auto py-6 space-y-6">
+  <div class=" p-4 lg:mx-auto lg:p-6">
     <SchedulerPageHeader />
-    <PostFiltersBar
-      :show-platform-filter="showPlatformFilter"
-      :show-post-format-filter="showPostFormatFilter"
-      @filter-change="handleFilterChange"
-      @refresh="HandleRefresh"
-    />
+    <PostFiltersBar :show-platform-filter="showPlatformFilter" :show-post-format-filter="showPostFormatFilter"
+      @filter-change="handleFilterChange" @refresh="HandleRefresh" />
     <ScheduleCalendar :active-view="activeView" :events="events" @date-clicked="HandleDateClicked"
       @event-clicked="HandleEventClicked" @time-frame-change="handleDateChange" />
     <UpdatePostModal ref="updatePostModalRef" @refresh="HandleRefresh" />

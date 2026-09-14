@@ -18,6 +18,7 @@
   "dependencies": {
     "@ai-sdk/vue": "catalog:",
     "@comark/nuxt": "catalog:",
+    "@local-monorepo/agent": "workspace:*",
     "@local-monorepo/auth": "workspace:*",
     "@local-monorepo/db": "workspace:*",
     "@local-monorepo/tools": "workspace:*",

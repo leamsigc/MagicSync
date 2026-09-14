@@ -62,3 +62,40 @@ last_updated: 2026-03-30
 **Reasoning:** Separation of concerns — route handlers are thin wrappers around services. Services return typed `ServiceResponse<T>` objects for error handling without throwing exceptions.
 **Alternatives considered:** Fat route handlers (rejected — hard to test, duplicate logic), domain-driven modules (rejected — over-engineering for this project size)
 **Consequences:** Route handlers must not contain business logic, only validation and service calls
+
+### In-process pi SDK Agent Runtime (Python removed)
+**Date:** 2026-09-13
+**Status:** Active
+**Decision:** Agent execution runs in `packages/agent` via `@earendil-works/pi-coding-agent` in the Nuxt process; the FastAPI `packages/python-backend` service was deleted.
+**Reasoning:** One deployable runtime, one auth/tenant boundary, typed tools with server-injected context, and durable pi sessions in Turso. The pi SDK's in-memory session/settings managers plus a server-owned temp `cwd` keep tenants isolated.
+**Alternatives considered:** Keeping a separate Python agent service (rejected — duplicate infra, JWT bridging), child-process harness (rejected — no durable session store)
+**Consequences:** Model routing goes through pi `ModelRuntime`; tools are `defineTool` + `typebox`; limits come from `AGENT_*` env vars; the optional Python sidecar below is the only remaining Python.
+
+### Turso-native RAG (no separate vector database)
+**Date:** 2026-09-13
+**Status:** Active
+**Decision:** Document chunks store float32 embeddings as blobs and search uses `vector_distance_cos` in libSQL.
+**Reasoning:** Turso already backs the app; a vector extension removes a second datastore and keeps tenancy scoping in SQL.
+**Consequences:** Embeddings are provider-specific (OpenAI/Google via AI SDK); retrieve tools are scoped by user; PDF/DOCX parsing uses `unpdf`/`mammoth`.
+
+### PII Private Mode Is Fail-Closed
+**Date:** 2026-09-13
+**Status:** Active
+**Decision:** When private mode is enabled, chat refuses to call a provider unless the ONNX NER model is present; regex+NER surrogates are restored on output and mappings stored per thread.
+**Reasoning:** Privacy must not silently degrade. `PII_ALLOW_REGEX_ONLY=1` is the explicit, documented escape hatch.
+**Consequences:** `scripts/pii_assets.sh` runs in the Docker build; `PII_MODEL_MISSING` surfaces to the user.
+
+### External Tool Backends Are User-Configurable and Optional
+**Date:** 2026-09-13
+**Status:** Active
+**Decision:** ScrapeGraphAI (Node SDK) is the default scraper; users can also point MagicSync at their own Python tools service. Both live in **Account → AI settings → Tool backends**, stored in an `entity_details` KV row with AES-256-GCM encrypted secrets.
+**Reasoning:** Scraping keys and Python-only tooling are user/operator concerns, not platform dependencies. The Node SDK avoids a mandatory service hop; the sidecar stays available for Python-only libraries (ScrapeGraphAI Python, etc.).
+**Alternatives considered:** Hard-wiring a Python scraping service (rejected — extra deploy dependency), bundling the Python ScrapeGraphAI library into the Nuxt image (rejected — heavy LLM stack)
+**Consequences:** `scrape_url` falls back to raw fetch with a warning when ScrapeGraphAI is unconfigured or fails; `python_tools_*` return typed `PYTHON_BACKEND_*` errors when the sidecar is absent. Secrets never leave the server; routes expose presence booleans only.
+
+### Human Approval Gates Before External Side Effects
+**Date:** 2026-09-13
+**Status:** Active
+**Decision:** Scheduling, publishing, and materialization require an approved artifact version; agents can only move cards up to `review_required`.
+**Reasoning:** Agents generate drafts; humans own external side effects. The board service and delivery tools both enforce the gate.
+**Consequences:** `review_required → approved` requires a human review decision; `scheduled`/`published` require an approved artifact (and publishing jobs go through `publishingService`).

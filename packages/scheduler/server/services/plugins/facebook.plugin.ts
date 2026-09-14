@@ -5,11 +5,16 @@ import type { FacebookSettings } from '#layers/BaseScheduler/shared/platformSett
 import dayjs from 'dayjs';
 import { BaseSchedulerPlugin, createPostInsightsFallback, extractExternalPostId } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
 import type { FacebookPage } from '#layers/BaseConnect/utils/FacebookPages';
+import {
+  collectFacebookPostInsights,
+  type FacebookInsightMetric,
+  type FacebookInsightsQuery,
+} from './facebook-insights';
 
 type FacebookApiInsightValue = { value: number; end_time: string };
 type FacebookApiInsight = { name: string; values?: FacebookApiInsightValue[] };
 type FacebookApiMetric = { name: string; values?: { value: number }[] };
-type FacebookApiPostInsightMetric = { name: string; values?: { value: number | Record<string, number> }[] };
+type FacebookApiPostInsightMetric = FacebookInsightMetric;
 type FacebookApiReactionType = { like?: number; love?: number; haha?: number; wow?: number; sorry?: number; anger?: number;[key: string]: number | undefined };
 type FacebookApiComment = {
   id: string;
@@ -202,6 +207,29 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     }
   }
 
+  /**
+   * Optional insights batch. Uses raw fetch so an invalid-metric 400 (#100)
+   * never logs a plugin failure — the fallback ladder decides what to do next.
+   */
+  private async tryPostInsights(
+    externalPostId: string,
+    accessToken: string,
+    query: FacebookInsightsQuery,
+  ): Promise<FacebookApiPostInsightMetric[]> {
+    const metricType = query.metricType ? `&metric_type=${query.metricType}` : '';
+    const url = this._getGraphApiUrl(
+      `/${externalPostId}/insights?metric=${query.metrics}${metricType}&access_token=${accessToken}`
+    );
+    try {
+      const response = await fetch(url);
+      if (!response.ok) return [];
+      const json = await response.json() as { data?: FacebookApiPostInsightMetric[] };
+      return json.data ?? [];
+    } catch {
+      return [];
+    }
+  }
+
   handleErrors(body: string):
     | {
       type: 'refresh-token' | 'bad-body';
@@ -365,70 +393,52 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
 
     const accessToken = socialMediaAccount.accessToken;
 
-    // v25+v26: post_impressions* deprecated June 2026 -> use media_view metrics.
-    // One invalid metric fails the entire request, so only request
-    // currently-valid metrics. NOTE: post_video_views was removed here after
-    // Meta started rejecting the batch with (#100) invalid-metric — video
-    // views now fall back to post_media_view below.
-    const metrics = [
-      'post_total_media_view_unique', // new reach (replaces post_impressions_unique)
-      'post_media_view', // views
-      'post_engaged_users',
-      'post_clicks',
-      'post_reactions_by_type_total',
-    ].join(',');
-
-    // Fetch insights and post totals in parallel, but handle partial failures
-    // Insights may return 400 if metric not applicable to post type - don't fail entire op
-    const insightsRes = await this.fetch(
-      this._getGraphApiUrl(`/${externalPostId}/insights?metric=${metrics}&access_token=${accessToken}`),
-      undefined,
-      'fetch post insights'
-    )
-      .then((r) => r.json() as Promise<{ data?: FacebookApiPostInsightMetric[]; error?: Record<string, unknown> }>)
-      .catch((e) => ({ error: { message: String(e) } as Record<string, unknown> }))
-
-    // NOTE: no inline insights.* fragment here — edge modifiers like
-    // insights.metric(...).period(...) are not valid post-object fields
-    // (Graph #2500 syntax error). Insights come from the /insights call above.
-    const postRes = await this.fetch(
-      this._getGraphApiUrl(
-        `/${externalPostId}?fields=reactions.summary(total_count),comments.summary(total_count),shares.count&access_token=${accessToken}`
-      ),
-      undefined,
-      'fetch post engagement totals'
-    )
-      .then((r) =>
-        r.json() as Promise<{
-          reactions?: { summary?: { total_count?: number } };
-          comments?: { summary?: { total_count?: number } };
-          shares?: { count?: number };
-          error?: Record<string, unknown>;
-        }>
+    // Insights and post totals are fetched in parallel; insights walk a
+    // fallback ladder (see facebook-insights.ts) because one invalid metric
+    // fails the whole Graph batch with (#100) and metric validity varies by
+    // post type and API version.
+    const [insightsData, postRes] = await Promise.all([
+      collectFacebookPostInsights(query => this.tryPostInsights(externalPostId, accessToken, query)),
+      this.fetch(
+        // NOTE: no inline insights.* fragment here — edge modifiers like
+        // insights.metric(...).period(...) are not valid post-object fields
+        // (Graph #2500 syntax error). Insights come from the /insights calls.
+        this._getGraphApiUrl(
+          `/${externalPostId}?fields=reactions.summary(total_count),comments.summary(total_count),shares.count&access_token=${accessToken}`
+        ),
+        undefined,
+        'fetch post engagement totals'
       )
-      .catch((e) => ({ error: { message: String(e) } as Record<string, unknown> }))
+        .then((r) =>
+          r.json() as Promise<{
+            reactions?: { summary?: { total_count?: number } };
+            comments?: { summary?: { total_count?: number } };
+            shares?: { count?: number };
+            error?: Record<string, unknown>;
+          }>
+        )
+        .catch((e) => ({ error: { message: String(e) } as Record<string, unknown> })),
+    ])
 
-    // If insights failed but post object succeeded, still return engagement totals
-    // Only fallback if both fail
-    if ((insightsRes.error && (insightsRes.data?.length ?? 0) === 0) && postRes.error) {
-      const insightError = insightsRes.error ?? postRes.error;
-      log.warn({ content: '[Facebook] Post insights error - both queries failed', error: insightError })
+    // Only fall back when there is nothing at all to show.
+    if (insightsData.length === 0 && postRes.error) {
+      log.warn({ content: '[Facebook] Post insights error - both queries failed', error: postRes.error })
       return createPostInsightsFallback(this.pluginName);
     }
-    if (insightsRes.error) {
-      log.warn({ content: '[Facebook] Post insights partial error, using post object totals', error: insightsRes.error })
+    if (insightsData.length === 0) {
+      log.warn({ content: '[Facebook] Post insights unavailable for this post type, using post object totals' })
     }
     if (postRes.error) {
       log.warn({ content: '[Facebook] Post object error', error: postRes.error })
     }
 
     const metricValue = (name: string): number => {
-      const metric = insightsRes.data?.find((d) => d.name === name);
+      const metric = insightsData.find((d) => d.name === name);
       const value = metric?.values?.[0]?.value;
       return typeof value === 'number' ? value : 0;
     };
 
-    const reactionsByType = insightsRes.data?.find((d) => d.name === 'post_reactions_by_type_total');
+    const reactionsByType = insightsData.find((d) => d.name === 'post_reactions_by_type_total');
     const reactionValue = reactionsByType?.values?.[0]?.value;
     const reactionsFromInsights: number = reactionValue && typeof reactionValue === 'object'
       ? Object.values(reactionValue as FacebookApiReactionType).reduce<number>((sum, count) => sum + (Number(count) || 0), 0)

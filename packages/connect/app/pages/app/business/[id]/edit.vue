@@ -4,6 +4,7 @@ import { useBusinessManager } from '../composables/useBusinessManager';
 import BusinessFormStep from '../components/BusinessFormStep.vue';
 import InviteTeamMember from '../components/InviteTeamMember.vue';
 import AiModelSettings from '#layers/BaseAuth/app/pages/app/account/components/AiModelSettings.vue';
+import BusinessPlaybook from './components/BusinessPlaybook.vue';
 import type { BusinessProfile, EntityDetails } from '#layers/BaseDB/db/schema';
 import type { InformationSchemaBusinessResponse } from '#layers/BaseScheduler/server/api/v1/ai/information/index.post';
 import type { BodySchemaCreateBusinessType } from '#layers/BaseConnect/server/api/v1/business/index.post';
@@ -18,7 +19,7 @@ const { updateBusiness, getAllBusinesses } = useBusinessManager();
 
 const isLoading = ref(true);
 const isSaving = ref(false);
-
+const activeTab = ref('details');
 const responseResult = ref<InformationSchemaBusinessResponse | null>(null);
 
 const isDetailsShape = (value: unknown): value is { companyInformation?: string; brandDetails?: Record<string, unknown> } => {
@@ -47,12 +48,12 @@ const safeParseDetails = (details: unknown): { companyInformation?: string; bran
 
 onMounted(async () => {
   try {
-    const { data } = await useFetch<{ data: BusinessProfile, entityDetails: EntityDetails }>(`/api/v1/business/${businessId}`);
+    const data = await $fetch<{ data: BusinessProfile, entityDetails: EntityDetails }>(`/api/v1/business/${businessId}`);
 
 
-    if (data.value?.data) {
-      const business = data.value.data;
-      const parsedDetails = safeParseDetails(data.value.entityDetails?.details);
+    if (data?.data) {
+      const business = data.data;
+      const parsedDetails = safeParseDetails(data.entityDetails?.details);
       const brandDetails = safeParseDetails(parsedDetails.brandDetails || {});
       responseResult.value = {
         businessProfile: {
@@ -140,8 +141,8 @@ const handleCancel = () => {
   router.push('/app/business');
 };
 
-function handleAiSaved() {
-  return undefined
+function handleSelectTab(tab: string) {
+  activeTab.value = tab
 }
 
 useHead({
@@ -153,25 +154,57 @@ useHead({
 </script>
 
 <template>
-  <div>
-    <BasePageHeader :title="t('title_edit')" :description="t('description_edit')" />
-
-    <div v-if="isLoading" class="flex justify-center py-12">
-      <UProgress indicator />
-    </div>
-
-    <div v-else-if="responseResult" class="mt-6 space-y-6">
-      <BusinessFormStep :result="responseResult" @submit="handleSubmit" @cancel="handleCancel" />
-
-      <UDivider class="my-8" />
-
-      <InviteTeamMember :business-id="businessId" />
-
-      <UDivider class="my-8" />
-
-      <div v-motion-fade :duration="250">
-        <AiModelSettings mode="override" :business-id="businessId" @saved="handleAiSaved" />
+  <div class="min-h-screen ">
+    <header class="sticky top-0 z-40 border-b border-white/5  backdrop-blur-xl">
+      <div class="mx-auto max-w-5xl px-6 py-4 flex items-center justify-between">
+        <div>
+          <h1 class="text-lg font-semibold text-white/90">{{ t('title_edit') }}</h1>
+          <p class="text-xs text-white/40">{{ t('description_edit') }}</p>
+        </div>
       </div>
-    </div>
+    </header>
+
+    <main class=" p-4 lg:mx-auto lg:p-6">
+      <div v-if="isLoading" class="flex justify-center py-12">
+        <UProgress indicator />
+      </div>
+
+      <div v-else-if="responseResult" class="space-y-6">
+        <nav class="flex gap-1 rounded-lg bg-white/5 p-1">
+          <UButton :color="activeTab === 'details' ? 'primary' : 'neutral'" variant="ghost" size="sm" class="rounded-lg"
+            @click="handleSelectTab('details')">
+            {{ t('tabs.details') }}
+          </UButton>
+          <UButton :color="activeTab === 'playbook' ? 'primary' : 'neutral'" variant="ghost" size="sm"
+            class="rounded-lg" @click="handleSelectTab('playbook')">
+            {{ t('tabs.playbook') }}
+          </UButton>
+          <UButton :color="activeTab === 'settings' ? 'primary' : 'neutral'" variant="ghost" size="sm"
+            class="rounded-lg" @click="handleSelectTab('settings')">
+            {{ t('tabs.settings') }}
+          </UButton>
+        </nav>
+
+        <div v-motion-fade :duration="250">
+          <template v-if="activeTab === 'details'">
+            <BusinessFormStep :result="responseResult" @submit="handleSubmit" @cancel="handleCancel" />
+            <USeparator class="my-8 border-white/5" />
+            <InviteTeamMember :business-id="businessId" />
+          </template>
+          <template v-else-if="activeTab === 'playbook'">
+            <BusinessPlaybook :business-id="businessId" />
+          </template>
+          <template v-else-if="activeTab === 'settings'">
+            <UCard class="border border-white/5 bg-[#111111]">
+              <template #header>
+                <h2 class="font-semibold text-white/70">{{ t('settings.title') }}</h2>
+                <p class="text-sm text-white/30">{{ t('settings.description') }}</p>
+              </template>
+              <AiModelSettings mode="override" :business-id="businessId" />
+            </UCard>
+          </template>
+        </div>
+      </div>
+    </main>
   </div>
 </template>

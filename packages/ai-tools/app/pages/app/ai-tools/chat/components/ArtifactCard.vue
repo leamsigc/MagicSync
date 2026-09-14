@@ -5,6 +5,7 @@ import type { ChatArtifact } from '../composables/useChatArtifacts'
 const props = defineProps<{
   artifact: ChatArtifact
   businessId: string
+  itemId?: string | null
 }>()
 
 const emit = defineEmits<{
@@ -204,6 +205,197 @@ function handleSelectPlatform(platform: string) {
   activePlatform.value = platform
 }
 
+function resultRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {}
+}
+
+function stringList(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === 'string') : []
+}
+
+function viralityData(): Record<string, unknown> {
+  return resultRecord(virality.value)
+}
+
+function viralityScore(): number | null {
+  const score = viralityData().score
+  return typeof score === 'number' && Number.isFinite(score) ? score : null
+}
+
+function viralityTierLabel(): string {
+  const tier = viralityData().tier
+  return typeof tier === 'string' ? tier : ''
+}
+
+function viralityReason(): string {
+  const reason = viralityData().reason
+  return typeof reason === 'string' ? reason : ''
+}
+
+function viralityStrengths(): string[] {
+  return stringList(viralityData().strengths)
+}
+
+function viralitySuggestions(): string[] {
+  return stringList(viralityData().suggestions)
+}
+
+function viralityEngagementRate(): number | null {
+  const rate = viralityData().engagement_rate
+  return typeof rate === 'number' && Number.isFinite(rate) ? rate : null
+}
+
+function tierColor(tier: string): string {
+  if (tier === 'breakout') return 'success'
+  if (tier === 'viral') return 'primary'
+  if (tier === 'steady') return 'warning'
+  return 'neutral'
+}
+
+function ringArc(score: number): string {
+  return ((Math.min(100, Math.max(0, score)) / 100) * 113).toFixed(1)
+}
+
+function formatRate(rate: number | null): string {
+  return rate === null ? '—' : `${rate.toFixed(1)}%`
+}
+
+function rateWidth(rate: number | null): string {
+  return `${rate === null ? 0 : Math.min(100, Math.max(0, rate))}%`
+}
+
+interface EngagementRow {
+  postId: string
+  rate: number | null
+}
+
+interface ViralPlatform {
+  platform: string
+  score: number
+  tier: string
+  strengths: string[]
+  suggestions: string[]
+}
+
+function engagementRows(): EngagementRow[] {
+  const results = resultRecord(engagement.value).results
+  if (!Array.isArray(results)) return []
+  return results
+    .map((row) => {
+      const record = resultRecord(row)
+      const postId = typeof record.post_id === 'string' ? record.post_id : ''
+      const rate = typeof record.engagement_rate === 'number' ? record.engagement_rate : null
+      return { postId, rate }
+    })
+    .filter(row => row.postId !== '')
+}
+
+const expandedViralPlatform = ref<string | null>(null)
+const applyPlatforms = ref<string[]>([])
+
+function viralPlatforms(): ViralPlatform[] {
+  const list = viralityData().platforms
+  if (!Array.isArray(list)) return []
+  return list
+    .map((entry) => {
+      const record = resultRecord(entry)
+      const platform = typeof record.platform === 'string' ? record.platform : ''
+      const score = typeof record.score === 'number' ? record.score : 0
+      const tier = typeof record.tier === 'string' ? record.tier : viralityTierFallback(score)
+      return {
+        platform,
+        score,
+        tier,
+        strengths: stringList(record.strengths),
+        suggestions: stringList(record.suggestions),
+      }
+    })
+    .filter(entry => entry.platform !== '')
+}
+
+function viralityTierFallback(score: number): string {
+  if (score >= 80) return 'breakout'
+  if (score >= 60) return 'viral'
+  if (score >= 40) return 'steady'
+  return 'sleeper'
+}
+
+function viralPlatformNames(value: unknown): string[] {
+  const list = resultRecord(value).platforms
+  if (!Array.isArray(list)) return []
+  const names: string[] = []
+  for (const entry of list) {
+    const platform = resultRecord(entry).platform
+    if (typeof platform === 'string' && platform) names.push(platform)
+  }
+  return names
+}
+
+watch(virality, (value) => {
+  const names = viralPlatformNames(value)
+  applyPlatforms.value = names
+  expandedViralPlatform.value = names[0] ?? null
+})
+
+function isApplySelected(platform: string): boolean {
+  return applyPlatforms.value.includes(platform)
+}
+
+function handleToggleApplyPlatform(platform: string) {
+  if (applyPlatforms.value.includes(platform)) {
+    applyPlatforms.value = applyPlatforms.value.filter(entry => entry !== platform)
+  }
+  else {
+    applyPlatforms.value = [...applyPlatforms.value, platform]
+  }
+}
+
+function handleToggleExpandPlatform(platform: string) {
+  expandedViralPlatform.value = expandedViralPlatform.value === platform ? null : platform
+}
+
+const canApplyVirality = computed(() => !!props.itemId && (viralPlatforms().length > 0
+  ? applyPlatforms.value.length > 0
+  : viralitySuggestions().length > 0))
+
+const applyLabel = computed(() => {
+  if (viralPlatforms().length === 0) return t('checks.apply')
+  return t('checks.applySelected', { count: applyPlatforms.value.length })
+})
+
+function applyFeedbackText(): string {
+  const entries = viralPlatforms().filter(entry => applyPlatforms.value.includes(entry.platform))
+  const suggestions = entries.length > 0
+    ? entries.flatMap(entry => entry.suggestions.map(suggestion => `${entry.platform}: ${suggestion}`))
+    : viralitySuggestions()
+  return t('checks.applyFeedback', { suggestions: suggestions.join('; ') })
+}
+
+async function handleApplySuggestions() {
+  if (!props.itemId) return
+  busyAction.value = 'apply'
+  try {
+    await $fetch(`/api/v1/content-items/${props.itemId}/actions`, {
+      method: 'POST',
+      body: {
+        businessId: props.businessId,
+        action: 'improve',
+        feedback: applyFeedbackText(),
+        platforms: viralPlatforms().length > 0 ? applyPlatforms.value : undefined,
+      },
+    })
+    toast.add({ title: t('toast.applyDone'), icon: 'i-heroicons-check-circle', color: 'success' })
+    await refresh()
+    await handleVirality()
+  }
+  catch (err: unknown) {
+    toast.add({ title: t('toast.applyFailed'), description: readErrorMessage(err), icon: 'i-heroicons-x-circle', color: 'error' })
+  }
+  finally {
+    busyAction.value = null
+  }
+}
+
 function slideList(): Array<{ altText?: string, templateKey?: string }> {
   const slides = outputOf().slides
   if (!Array.isArray(slides)) return []
@@ -294,13 +486,108 @@ function statusColor(status: string): string {
         <pre class="mt-2 max-h-64 overflow-auto font-mono text-xs">{{ JSON.stringify(outputOf(), null, 2) }}</pre>
       </details>
 
-      <div v-if="virality" v-motion-fade :duration="200" class="rounded-xl bg-elevated p-3 text-xs">
-        <p class="font-semibold">{{ t('checks.virality') }}</p>
-        <pre class="mt-1 max-h-40 overflow-auto font-mono">{{ JSON.stringify(virality, null, 2) }}</pre>
+      <div v-if="virality" v-motion-fade :duration="200" class="space-y-2 rounded-xl bg-elevated p-3">
+        <div class="flex items-center gap-3">
+          <div v-if="viralityScore() !== null" class="relative size-11 shrink-0">
+            <svg viewBox="0 0 44 44" class="size-11 -rotate-90">
+              <circle cx="22" cy="22" r="18" fill="none" stroke="currentColor" stroke-width="5" class="text-muted" />
+              <circle
+                cx="22" cy="22" r="18" fill="none" stroke="currentColor" stroke-width="5"
+                stroke-linecap="round" class="text-primary"
+                :stroke-dasharray="`${ringArc(viralityScore() ?? 0)} 113`"
+              />
+            </svg>
+            <span class="absolute inset-0 flex items-center justify-center text-xs font-bold">{{ viralityScore() }}</span>
+          </div>
+          <div class="min-w-0">
+            <div class="flex flex-wrap items-center gap-2">
+              <p class="text-xs font-semibold">{{ t('checks.virality') }}</p>
+              <UBadge v-if="viralityTierLabel()" :color="tierColor(viralityTierLabel())" variant="subtle" size="xs" class="capitalize">
+                {{ viralityTierLabel() }}
+              </UBadge>
+            </div>
+            <p v-if="viralityReason()" class="mt-0.5 text-xs text-muted">{{ viralityReason() }}</p>
+            <p v-if="viralityEngagementRate() !== null" class="mt-0.5 text-xs text-muted">
+              {{ t('checks.engagementRate') }}: {{ formatRate(viralityEngagementRate()) }}
+            </p>
+          </div>
+        </div>
+        <div v-if="viralPlatforms().length > 0" class="space-y-1.5">
+          <p class="text-xs font-semibold text-muted">{{ t('checks.perPlatform') }}</p>
+          <div v-for="entry in viralPlatforms()" :key="entry.platform" class="rounded-lg bg-default p-2">
+            <div class="flex items-center gap-2 text-xs">
+              <UCheckbox
+                :model-value="isApplySelected(entry.platform)"
+                :aria-label="t('checks.applyToPlatform', { platform: entry.platform })"
+                @update:model-value="handleToggleApplyPlatform(entry.platform)"
+              />
+              <button type="button" class="flex min-w-0 flex-1 items-center gap-2 text-left" @click="handleToggleExpandPlatform(entry.platform)">
+                <span class="truncate font-medium">{{ entry.platform }}</span>
+                <span class="font-bold">{{ entry.score }}</span>
+                <UBadge :color="tierColor(entry.tier)" variant="subtle" size="xs" class="capitalize">
+                  {{ entry.tier }}
+                </UBadge>
+                <UIcon :name="expandedViralPlatform === entry.platform ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down'" class="ms-auto size-3.5 shrink-0 text-muted" />
+              </button>
+            </div>
+            <div v-if="expandedViralPlatform === entry.platform" class="mt-1.5 space-y-1">
+              <ul v-if="entry.strengths.length > 0" class="space-y-1">
+                <li v-for="(strength, strengthIndex) in entry.strengths" :key="`ps-${strengthIndex}`" class="flex items-start gap-1.5 text-xs">
+                  <UIcon name="i-heroicons-check-circle" class="mt-0.5 size-3.5 shrink-0 text-success" />
+                  <span>{{ strength }}</span>
+                </li>
+              </ul>
+              <ul v-if="entry.suggestions.length > 0" class="space-y-1">
+                <li v-for="(suggestion, suggestionIndex) in entry.suggestions" :key="`pg-${suggestionIndex}`" class="flex items-start gap-1.5 text-xs">
+                  <UIcon name="i-heroicons-light-bulb" class="mt-0.5 size-3.5 shrink-0 text-warning" />
+                  <span>{{ suggestion }}</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <ul v-else-if="viralityStrengths().length > 0" class="space-y-1">
+          <li v-for="(strength, index) in viralityStrengths()" :key="`s-${index}`" class="flex items-start gap-1.5 text-xs">
+            <UIcon name="i-heroicons-check-circle" class="mt-0.5 size-3.5 shrink-0 text-success" />
+            <span>{{ strength }}</span>
+          </li>
+        </ul>
+        <div v-else-if="viralitySuggestions().length > 0" class="space-y-1">
+          <p class="text-xs font-semibold text-muted">{{ t('checks.suggestions') }}</p>
+          <ul class="space-y-1">
+            <li v-for="(suggestion, index) in viralitySuggestions()" :key="`g-${index}`" class="flex items-start gap-1.5 text-xs">
+              <UIcon name="i-heroicons-light-bulb" class="mt-0.5 size-3.5 shrink-0 text-warning" />
+              <span>{{ suggestion }}</span>
+            </li>
+          </ul>
+        </div>
+        <UButton
+          v-if="canApplyVirality"
+          size="xs"
+          variant="outline"
+          color="primary"
+          icon="i-heroicons-sparkles"
+          :loading="busyAction === 'apply'"
+          :disabled="viralPlatforms().length > 0 && applyPlatforms.length === 0"
+          @click="handleApplySuggestions"
+        >
+          {{ applyLabel }}
+        </UButton>
       </div>
-      <div v-if="engagement" v-motion-fade :duration="200" class="rounded-xl bg-elevated p-3 text-xs">
-        <p class="font-semibold">{{ t('checks.engagement') }}</p>
-        <pre class="mt-1 max-h-40 overflow-auto font-mono">{{ JSON.stringify(engagement, null, 2) }}</pre>
+      <div v-if="engagement" v-motion-fade :duration="200" class="space-y-2 rounded-xl bg-elevated p-3">
+        <p class="text-xs font-semibold">{{ t('checks.engagement') }}</p>
+        <ul v-if="engagementRows().length > 0" class="space-y-1.5">
+          <li v-for="row in engagementRows()" :key="row.postId" class="text-xs">
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-mono">{{ row.postId.slice(0, 8) }}</span>
+              <span class="text-muted">{{ formatRate(row.rate) }}</span>
+            </div>
+            <div class="mt-0.5 h-1.5 overflow-hidden rounded-full bg-muted">
+              <div class="h-full rounded-full bg-primary" :style="{ width: rateWidth(row.rate) }" />
+            </div>
+          </li>
+        </ul>
+        <p v-else class="text-xs text-muted">{{ t('checks.noData') }}</p>
       </div>
 
       <div v-if="showFeedback" v-motion-fade :duration="200" class="space-y-2">

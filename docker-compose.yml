@@ -1,38 +1,63 @@
 services:
   site:
-    # Build locally from the fixed Dockerfile for verification.
-    # Once the GitHub workflow publishes a fixed image, switch back to:
+    # Build locally from the repo Dockerfile.
+    # To use the published image instead, comment out `build:` and uncomment:
     # image: ghcr.io/leamsigc/magicsync:latest
     build:
       dockerfile: Dockerfile
       context: .
+    restart: unless-stopped
     depends_on:
       - db
     env_file:
       - .env
     environment:
       - NUXT_HOST=0.0.0.0
-      - NUXT_PYTHON_API_URL=http://python-backend:8000
+      # Inside the Compose network `localhost` is the site container itself,
+      # not the db service — so override the host-dev default from .env
+      # (http://localhost:8080) with the Compose DNS name. `environment:`
+      # wins over `env_file:`, keeping host `pnpm site:dev` on localhost.
+      - NUXT_TURSO_DATABASE_URL=http://db:8080
+      # Optional: route the agent's Python tools proxy at the sidecar below.
+      # Users can also override this per user in AI settings -> Tool backends.
+      - PYTHON_TOOLS_URL=http://python-tools:8100
+      - PYTHON_TOOLS_TOKEN=${PYTHON_TOOLS_TOKEN:-}
     ports:
       - "3000:3000"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--spider", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
 
-  python-backend:
-    depends_on:
-      - db
-    env_file:
-      - packages/python-backend/.env
-    environment:
-      - BETTER_AUTH_URL=http://site:3000
-      - CORS_ORIGINS=["http://localhost:3000","http://site:3000"]
-    ports:
-      - "8000:8000"
+  # Optional Python-only tools sidecar for the agent (python_tools_list /
+  # python_tool_run). Not started by default:
+  #   docker compose --profile tools up -d
+  python-tools:
+    profiles: ["tools"]
     build:
       dockerfile: Dockerfile
-      context: ./packages/python-backend
-    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+      context: ./packages/python-tools
+      args:
+        # "true" bakes ScrapeGraphAI's Python library into the image (heavy).
+        WITH_SCRAPEGRAPH: "false"
+    environment:
+      - PYTHON_TOOLS_TOKEN=${PYTHON_TOOLS_TOKEN:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - SCRAPEGRAPH_MODEL=${SCRAPEGRAPH_MODEL:-openai/gpt-4o-mini}
+    ports:
+      - "8100:8100"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8100/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   db:
     image: ghcr.io/tursodatabase/libsql-server:latest
+    restart: unless-stopped
     env_file:
       - .env
     platform: linux/amd64

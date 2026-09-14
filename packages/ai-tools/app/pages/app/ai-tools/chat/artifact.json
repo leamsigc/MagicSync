@@ -33,7 +33,17 @@
     },
     "checks": {
       "virality": "Virality check",
-      "engagement": "Engagement check"
+      "engagement": "Engagement check",
+      "score": "Score",
+      "strengths": "Strengths",
+      "suggestions": "What to improve",
+      "engagementRate": "Engagement rate",
+      "noData": "No measured data yet.",
+      "apply": "Apply suggestions",
+      "applyFeedback": "Virality feedback to apply: {suggestions}",
+      "perPlatform": "Per-platform scores",
+      "applySelected": "Apply fix ({count})",
+      "applyToPlatform": "Apply fix to {platform}"
     },
     "feedback": {
       "placeholder": "What should change?"
@@ -57,7 +67,9 @@
       "scheduleDone": "Artifact scheduled",
       "scheduleFailed": "Schedule failed",
       "checkDone": "Check complete",
-      "checkFailed": "Check failed"
+      "checkFailed": "Check failed",
+      "applyDone": "Draft updated from feedback",
+      "applyFailed": "Could not apply feedback"
     },
     "carousel": {
       "slides": "{count} slides",
@@ -103,7 +115,17 @@
     },
     "checks": {
       "virality": "Análisis de viralidad",
-      "engagement": "Análisis de interacción"
+      "engagement": "Análisis de interacción",
+      "score": "Puntuación",
+      "strengths": "Fortalezas",
+      "suggestions": "Qué mejorar",
+      "engagementRate": "Tasa de interacción",
+      "noData": "Aún no hay datos medidos.",
+      "apply": "Aplicar sugerencias",
+      "applyFeedback": "Comentarios de viralidad para aplicar: {suggestions}",
+      "perPlatform": "Puntuación por plataforma",
+      "applySelected": "Aplicar corrección ({count})",
+      "applyToPlatform": "Aplicar corrección a {platform}"
     },
     "feedback": {
       "placeholder": "¿Qué debería cambiar?"
@@ -127,7 +149,9 @@
       "scheduleDone": "Artefacto programado",
       "scheduleFailed": "Error al programar",
       "checkDone": "Análisis completo",
-      "checkFailed": "Análisis fallido"
+      "checkFailed": "Análisis fallido",
+      "applyDone": "Borrador actualizado",
+      "applyFailed": "No se pudo aplicar"
     },
     "carousel": {
       "slides": "{count} diapositivas",
@@ -173,7 +197,17 @@
     },
     "checks": {
       "virality": "Viralitätsprüfung",
-      "engagement": "Interaktionsprüfung"
+      "engagement": "Interaktionsprüfung",
+      "score": "Wertung",
+      "strengths": "Stärken",
+      "suggestions": "Was verbessern",
+      "engagementRate": "Interaktionsrate",
+      "noData": "Noch keine gemessenen Daten.",
+      "apply": "Vorschläge anwenden",
+      "applyFeedback": "Anzuwendendes Viralitäts-Feedback: {suggestions}",
+      "perPlatform": "Wertung pro Plattform",
+      "applySelected": "Fix anwenden ({count})",
+      "applyToPlatform": "Fix auf {platform} anwenden"
     },
     "feedback": {
       "placeholder": "Was soll sich ändern?"
@@ -197,7 +231,9 @@
       "scheduleDone": "Artefakt geplant",
       "scheduleFailed": "Planen fehlgeschlagen",
       "checkDone": "Prüfung abgeschlossen",
-      "checkFailed": "Prüfung fehlgeschlagen"
+      "checkFailed": "Prüfung fehlgeschlagen",
+      "applyDone": "Entwurf aktualisiert",
+      "applyFailed": "Konnte nicht angewendet werden"
     },
     "carousel": {
       "slides": "{count} Folien",
@@ -243,7 +279,17 @@
     },
     "checks": {
       "virality": "Analyse de viralité",
-      "engagement": "Analyse d’engagement"
+      "engagement": "Analyse d’engagement",
+      "score": "Score",
+      "strengths": "Points forts",
+      "suggestions": "À améliorer",
+      "engagementRate": "Taux d'engagement",
+      "noData": "Aucune donnée mesurée pour le moment.",
+      "apply": "Appliquer les suggestions",
+      "applyFeedback": "Retours de viralité à appliquer : {suggestions}",
+      "perPlatform": "Score par plateforme",
+      "applySelected": "Appliquer le correctif ({count})",
+      "applyToPlatform": "Appliquer le correctif à {platform}"
     },
     "feedback": {
       "placeholder": "Que faut-il changer ?"
@@ -267,7 +313,9 @@
       "scheduleDone": "Artefact planifié",
       "scheduleFailed": "Échec de la planification",
       "checkDone": "Analyse terminée",
-      "checkFailed": "Analyse échouée"
+      "checkFailed": "Analyse échouée",
+      "applyDone": "Brouillon mis à jour",
+      "applyFailed": "Impossible d’appliquer"
     },
     "carousel": {
       "slides": "{count} diapositives",

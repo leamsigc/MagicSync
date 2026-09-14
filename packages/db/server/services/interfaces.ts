@@ -1,5 +1,4 @@
 import type {
-  AgentSession,
   Asset,
   BusinessProfile,
   ChatMessage,
@@ -15,7 +14,6 @@ import type {
   PostWithAllData,
   Review,
   Skill,
-  SkillFile,
   SocialMediaAccount,
   Subscription,
   Template,
@@ -36,10 +34,6 @@ import type {
   CreatePlatformPostData,
   UpdatePostData,
 } from './post.service'
-import type {
-  CreateAgentSessionData,
-  UpdateAgentSessionData,
-} from './agent.service'
 import type {
   CreateBusinessProfileData,
   UpdateBusinessProfileData,
@@ -70,7 +64,6 @@ import type {
 } from './search.service'
 import type {
   CreateSkillData,
-  CreateSkillFileData,
 } from './skill.service'
 import type {
   CreateSocialMediaAccountData,
@@ -106,14 +99,6 @@ export type PostServiceType = {
   updatePlatformPost: (id: string, data: Partial<CreatePlatformPostData>) => Promise<ServiceResponse<PlatformPost>>
   getPlatformPostsByPost: (postId: string) => Promise<ServiceResponse<PlatformPost[]>>
   retryFailedPost: (id: string, userId: string) => Promise<ServiceResponse<PostWithAllData>>
-}
-
-export type AgentServiceType = {
-  create: (data: CreateAgentSessionData) => Promise<ServiceResponse<AgentSession>>
-  getById: (sessionId: string, userId: string) => Promise<ServiceResponse<AgentSession>>
-  listByUser: (userId: string, parentMessageId?: string) => Promise<ServiceResponse<AgentSession[]>>
-  update: (sessionId: string, userId: string, data: UpdateAgentSessionData) => Promise<ServiceResponse<AgentSession>>
-  delete: (sessionId: string, userId: string) => Promise<ServiceResponse<AgentSession>>
 }
 
 export type LogAuditServiceType = {
@@ -262,11 +247,6 @@ export type SkillServiceType = {
   getCatalog: (userId: string) => Promise<ServiceResponse<Array<{ name: string; description: string }>>>
   update: (id: string, userId: string, data: Partial<CreateSkillData>) => Promise<ServiceResponse<Skill>>
   delete: (id: string, userId: string) => Promise<ServiceResponse<Skill>>
-}
-
-export type SkillFileServiceType = {
-  create: (userId: string, data: CreateSkillFileData) => Promise<ServiceResponse<SkillFile>>
-  findBySkill: (skillId: string) => Promise<ServiceResponse<SkillFile[]>>
 }
 
 export type SocialMediaAccountServiceType = {

@@ -10,7 +10,6 @@ Lookup table for all pattern files in this directory. Check here before starting
 | [business-onboarding-ux.md](business-onboarding-ux.md) | Placing features in the business-owner navigation, setup checklists, dashboard quick actions |
 | [debug-api.md](debug-api.md) | Debugging API endpoint failures |
 | [social-media.md](social-media.md) | Working with social media platform integrations |
-| [research-channels.md](research-channels.md) | Adding a social-research channel (Agent-Reach style) to the Python backend |
 | [add-mcp-tool.md](add-mcp-tool.md) | Exposing a service operation as an MCP tool |
 | [db-migration-squash.md](db-migration-squash.md) | Squashing unpushed Drizzle migrations into one clean migration |
 | [media-gallery.md](media-gallery.md) | Paginated asset gallery with infinite scroll + large-file (multipart) uploads |
@@ -40,3 +39,8 @@ Lookup table for all pattern files in this directory. Check here before starting
 | [write-prd.md](write-prd.md) | Writing implementation-ready master and feature PRDs with dependency tracking |
 | [credential-envelope.md](credential-envelope.md) | Removing plaintext/base64 credential assumptions — AES-256-GCM envelopes, fail-closed reads, Node/Python parity |
 | [pi-agent-layer.md](pi-agent-layer.md) | Scaffolding a Nuxt layer package (`packages/agent`) and integrating the pi SDK in-process with a hermetic SSE stub test seam |
+| [tool-backend-settings.md](tool-backend-settings.md) | User-configurable external tool backends (ScrapeGraphAI, Python tools service) with encrypted secrets, test routes, and agent proxy tools |
+| [web-grounded-research.md](web-grounded-research.md) | Grounding a board action in live web evidence — LLM brief, SSRF-safe scrape, synthesis, persist to brief |
+| [board-stage-agents.md](board-stage-agents.md) | Wiring content-board column drops to agent runs (research on drop, generate on drop) |
+| [port-not-ported.md](port-not-ported.md) | Replacing a NOT_PORTED 501 stub with a native Nuxt implementation |
+| [nuxt-ui-chat.md](nuxt-ui-chat.md) | Migrating a bespoke chat UI onto the Nuxt UI chat kit while keeping a custom streaming backend |

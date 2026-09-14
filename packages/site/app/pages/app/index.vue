@@ -23,6 +23,7 @@ const { dashboard, fetchDashboard, collectStats, collecting, topPosts, fetchTopP
 const { user } = UseUser()
 const toast = useToast()
 const colorMode = useColorMode()
+const activeBusinessId = useState<string | null>('business:id', () => null)
 const { steps: setupSteps, fetch: fetchSetupState } = useGettingStarted()
 
 async function handleCollectStats() {
@@ -285,7 +286,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="space-y-6">
+  <div class=" p-4 lg:mx-auto lg:p-6">
     <BaseGettingStarted v-if="user?.id" :steps="setupSteps" />
 
     <div class="flex flex-wrap items-center gap-2">
@@ -303,6 +304,10 @@ onMounted(async () => {
       </UButton>
       <UButton to="/app/auto-reply" icon="i-lucide-message-circle-heart" variant="outline" color="neutral" size="lg">
         {{ t('quickAutoReply') }}
+      </UButton>
+      <UButton v-if="activeBusinessId" :to="`/app/business/${activeBusinessId}/content`" icon="i-lucide-kanban"
+        variant="outline" color="neutral" size="lg">
+        {{ t('quickContentBoard') }}
       </UButton>
     </div>
 
@@ -489,8 +494,10 @@ onMounted(async () => {
                         <span class="text-foreground">{{ post.content || post.postId }}</span>
                       </td>
                       <td class="py-2 px-3 text-right text-foreground">{{ formatNumber(post.metrics?.likes ?? 0) }}</td>
-                      <td class="py-2 px-3 text-right text-foreground">{{ formatNumber(post.metrics?.comments ?? 0) }}</td>
-                      <td class="py-2 px-3 text-right text-foreground">{{ formatNumber(post.metrics?.shares ?? 0) }}</td>
+                      <td class="py-2 px-3 text-right text-foreground">{{ formatNumber(post.metrics?.comments ?? 0) }}
+                      </td>
+                      <td class="py-2 px-3 text-right text-foreground">{{ formatNumber(post.metrics?.shares ?? 0) }}
+                      </td>
                       <td class="py-2 px-3 text-right text-foreground">{{ formatNumber(post.metrics?.views ?? 0) }}</td>
                       <td class="py-2 px-3 text-right text-foreground">{{ formatNumber(post.metrics?.total ?? 0) }}</td>
                       <td class="py-2 px-3 text-right">
@@ -529,11 +536,16 @@ onMounted(async () => {
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="(slot, idx) in bestTimes.topSlots" :key="`${slot.platform}-${slot.dayOfWeek}-${slot.hour}`" class="border-b border-border/50 hover:bg-muted/30">
+                    <tr v-for="(slot, idx) in bestTimes.topSlots"
+                      :key="`${slot.platform}-${slot.dayOfWeek}-${slot.hour}`"
+                      class="border-b border-border/50 hover:bg-muted/30">
                       <td class="py-2 px-3">
                         <span class="inline-flex items-center gap-2">
                           <Icon :name="getPlatformIcon(slot.platform)" class="w-4 h-4" />
-                          <span v-if="idx === 0" class="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">{{ t('bestPick') }}</span>
+                          <span v-if="idx === 0"
+                            class="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">{{
+                              t('bestPick')
+                            }}</span>
                         </span>
                       </td>
                       <td class="py-2 px-3 text-foreground">{{ formatBestTimeSlot(slot) }}</td>

@@ -20,13 +20,11 @@
   "dependencies": {
     "@local-monorepo/shared": "workspace:*",
     "dayjs": "catalog:",
-    "drizzle-orm": "catalog:",
-    "jsonwebtoken": "^9.0.3"
+    "drizzle-orm": "catalog:"
   },
   "devDependencies": {
     "@libsql/client": "catalog:",
     "@nuxt/eslint": "catalog:",
-    "@types/jsonwebtoken": "^9.0.10",
     "dotenv-cli": "^11.0.0",
     "drizzle-kit": "catalog:",
     "eslint": "catalog:",

@@ -7,20 +7,60 @@ import type { PipelineRunStatus } from '../composables/UsePipelineManager'
 import dayjs from 'dayjs'
 
 const { t } = useI18n()
+const router = useRouter()
 
 const props = defineProps<{
   runs: PipelineRun[]
   pipelineName?: string
 }>()
 
-const runStatuses: PipelineRunStatus[] = ['running', 'waiting_input', 'completed', 'failed']
+const emit = defineEmits<{
+  delete: [id: string]
+}>()
+
+const runStatuses: PipelineRunStatus[] = [
+  'queued',
+  'running',
+  'waiting_input',
+  'waiting_review',
+  'changes_requested',
+  'completed',
+  'failed',
+  'cancelled'
+]
+
+const statusDot: Record<PipelineRunStatus, string> = {
+  queued: 'bg-neutral',
+  running: 'bg-info',
+  waiting_input: 'bg-warning',
+  waiting_review: 'bg-secondary',
+  changes_requested: 'bg-warning',
+  completed: 'bg-success',
+  failed: 'bg-error',
+  cancelled: 'bg-neutral'
+}
+
+const cardAccent: Record<PipelineRunStatus, string> = {
+  queued: 'border-t-neutral',
+  running: 'border-t-info',
+  waiting_input: 'border-t-warning',
+  waiting_review: 'border-t-secondary',
+  changes_requested: 'border-t-warning',
+  completed: 'border-t-success',
+  failed: 'border-t-error',
+  cancelled: 'border-t-neutral'
+}
 
 const groupedRuns = computed(() => {
   const groups: Record<PipelineRunStatus, PipelineRun[]> = {
+    queued: [],
     running: [],
     waiting_input: [],
+    waiting_review: [],
+    changes_requested: [],
     completed: [],
-    failed: []
+    failed: [],
+    cancelled: []
   }
   props.runs.forEach((run) => {
     const status = run.status as PipelineRunStatus
@@ -47,75 +87,78 @@ function formatDate(value: unknown) {
   return dayjs(value as string).format('MMM DD, HH:mm')
 }
 
-const router = useRouter()
 function openRun(id: string) {
   router.push(`/app/pipelines/runs/${id}`)
+}
+
+function handleAskDelete(id: string) {
+  emit('delete', id)
 }
 </script>
 
 <template>
-  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 mt-4">
-    <div v-for="status in runStatuses" :key="status" class="rounded overflow-hidden">
-      <div class="px-4 py-3.5">
-        <div class="flex items-center gap-2">
-          <span
-            class="w-2 h-2 rounded-full"
-            :class="{
-              'bg-info': status === 'running',
-              'bg-warning': status === 'waiting_input',
-              'bg-success': status === 'completed',
-              'bg-error': status === 'failed'
-            }"
-          />
-          <h3 class="font-semibold text-sm text-highlighted">{{ statusLabel(status) }}</h3>
-          <UBadge variant="soft" size="xs" color="neutral">{{ groupedRuns[status].length }}</UBadge>
-        </div>
-      </div>
-      <div class="p-3 space-y-3 max-h-[70vh] overflow-y-auto">
-        <div
-          v-if="groupedRuns[status].length === 0"
+  <div class="mt-4 flex snap-x snap-mandatory gap-4 overflow-x-auto pb-4" data-testid="runs-board">
+    <section
+      v-for="status in runStatuses"
+      :key="status"
+      v-motion-fade-visible
+      :duration="200"
+      class="w-72 shrink-0 snap-start rounded-2xl border border-white/10 bg-[#111111]"
+      :data-testid="`runs-column-${status}`"
+    >
+      <header class="flex items-center gap-2 border-b border-white/5 px-3 py-2">
+        <span class="size-2 rounded-full" :class="statusDot[status]" />
+        <h3 class="flex-1 text-sm font-semibold text-white/70">{{ statusLabel(status) }}</h3>
+        <UBadge color="neutral" variant="subtle" size="xs" class="text-white/40">{{ groupedRuns[status].length }}</UBadge>
+      </header>
+      <div class="flex max-h-[65vh] flex-col gap-2 overflow-y-auto p-2">
+        <p v-if="groupedRuns[status].length === 0" class="px-1 py-6 text-center text-xs text-white/20">
+          {{ t('board.empty') }}
+        </p>
+        <article
+          v-for="run in groupedRuns[status]"
+          :key="run.id"
           v-motion-fade-visible
           :duration="200"
-          class="text-xs text-muted px-2 py-6 text-center"
+          class="cursor-pointer rounded-xl border border-white/10 border-t-2 bg-white/5 p-3 shadow-xs transition hover:border-primary/40"
+          :class="cardAccent[run.status as PipelineRunStatus] ?? 'border-t-neutral'"
+          role="link"
+          tabindex="0"
+          :aria-label="t('board.open')"
+          :data-testid="`run-card-${run.id}`"
+          @click="openRun(run.id)"
+          @keydown.enter="openRun(run.id)"
         >
-          {{ t('board.empty') }}
-        </div>
-        <template v-for="run in groupedRuns[status]" :key="run.id">
-          <div
-            v-motion-fade-visible
-            :duration="200"
-            class="bg-elevated rounded-xl hover:shadow-sm hover:-translate-y-0.5 transition-all duration-180 overflow-hidden cursor-pointer"
-            role="link"
-            tabindex="0"
-            :aria-label="t('board.open')"
-            @click="openRun(run.id)"
-            @keydown.enter="openRun(run.id)"
-          >
-            <div class="p-3.5 space-y-3">
-              <div class="flex items-center gap-2">
-                <div class="size-5 rounded-lg bg-black/5 dark:bg-white/5 flex items-center justify-center shrink-0">
-                  <UIcon name="lucide:workflow" class="size-3 text-muted" />
-                </div>
-                <h3 class="text-sm font-medium text-highlighted flex-1 font-mono">{{ shortId(run.id) }}</h3>
-              </div>
-              <p v-if="pipelineName" class="text-sm text-toned line-clamp-2 leading-relaxed">{{ pipelineName }}</p>
-              <div class="flex items-center justify-between flex-wrap gap-2 pt-2">
-                <div class="flex items-center gap-2 text-xs text-muted flex-wrap">
-                  <UBadge color="neutral" variant="soft" size="xs">
-                    <UIcon name="lucide:list-ordered" class="size-3" />
-                    {{ stepLabel(run) }}
-                  </UBadge>
-                  <UBadge color="neutral" variant="soft" size="xs">
-                    <UIcon name="lucide:clock" class="size-3" />
-                    {{ formatDate(run.updatedAt) }}
-                  </UBadge>
-                </div>
-              </div>
+          <div class="flex items-start gap-2">
+            <div class="flex size-5 shrink-0 items-center justify-center rounded-lg bg-white/5">
+              <UIcon name="lucide:workflow" class="size-3 text-white/30" />
             </div>
+            <h4 class="min-w-0 flex-1 truncate font-mono text-sm font-medium text-white/60">{{ shortId(run.id) }}</h4>
+            <UButton
+              size="xs"
+              color="error"
+              variant="ghost"
+              icon="i-heroicons-trash"
+              :title="t('runDelete.button')"
+              :aria-label="t('runDelete.button')"
+              @click.stop="handleAskDelete(run.id)"
+              class="text-white/20"
+            />
           </div>
-        </template>
+          <p v-if="pipelineName" class="mt-1 line-clamp-2 text-xs text-white/30">{{ pipelineName }}</p>
+          <div class="mt-2 flex flex-wrap items-center gap-1">
+            <UBadge color="neutral" variant="outline" size="xs" class="text-white/30">
+              <UIcon name="lucide:list-ordered" class="size-3" />
+              {{ stepLabel(run) }}
+            </UBadge>
+            <UBadge color="neutral" variant="outline" size="xs" class="text-white/30">
+              <UIcon name="lucide:clock" class="size-3" />
+              {{ formatDate(run.updatedAt) }}
+            </UBadge>
+          </div>
+        </article>
       </div>
-    </div>
+    </section>
   </div>
 </template>
 

@@ -4,12 +4,7 @@ import { PLATFORMS } from '../../utils/platforms'
 import { requireMcp } from '../../utils/mcp-context'
 import { resolveMcpAiContext } from '../../utils/mcp-ai-context'
 import { logMcpCall } from '../../utils/mcp-audit'
-
-interface HashtagsResponse {
-  hashtags?: string[]
-  count?: number
-  error?: string
-}
+import { completeForUser, extractJsonObject } from '#layers/BaseAgent/server/utils/run-config'
 
 export default defineMcpTool({
   description: 'Suggest hashtags for a topic and platform, tuned for reach vs niche balance.',
@@ -24,29 +19,24 @@ export default defineMcpTool({
   async handler(args) {
     const mcp = requireMcp()
     const ai = await resolveMcpAiContext(mcp)
-    const config = useRuntimeConfig()
-    const backendUrl = config.pythonBackendUrl || 'http://localhost:8000'
 
     try {
-      const result = await $fetch<HashtagsResponse>(`${backendUrl}/api/v1/social-media/generate-hashtags`, {
-        method: 'POST',
-        body: {
-          topic: args.topic,
-          platform: args.platform,
-          count: args.count,
-          style: args.style,
-          business_id: mcp.businessId,
-          use_business_context: !!ai.businessContext,
-          context_edition_id: ai.editionId,
-          business_context: ai.businessContext,
-        },
-        headers: { Authorization: `Bearer ${ai.token}` },
+      const result = await completeForUser(ai.ownerId, {
+        businessId: mcp.businessId,
+        useBusinessContext: false,
+        system: ai.businessContext,
+        maxTokens: 800,
+        prompt: [
+          `Suggest ${args.count} ${args.style} hashtags for a ${args.platform} post about: ${args.topic}.`,
+          'Return strict JSON: {"hashtags": string[]}.',
+        ].join('\n'),
       })
-      if (result.error || !result.hashtags) {
-        throw new Error(result.error || 'Hashtag generation failed')
-      }
-      await logMcpCall(mcp, 'suggest-hashtags', undefined, 'success', `platform=${args.platform} count=${result.hashtags.length}`)
-      return { hashtags: result.hashtags }
+      if (!result.success) throw new Error(result.error)
+      const json = result.data.json ?? extractJsonObject(result.data.text) ?? {}
+      const hashtags = Array.isArray(json.hashtags) ? json.hashtags.filter(item => typeof item === 'string') : []
+      if (hashtags.length === 0) throw new Error('Hashtag generation failed')
+      await logMcpCall(mcp, 'suggest-hashtags', undefined, 'success', `platform=${args.platform} count=${hashtags.length}`)
+      return { hashtags }
     }
     catch (error) {
       await logMcpCall(mcp, 'suggest-hashtags', undefined, 'failure', error instanceof Error ? error.message : String(error))

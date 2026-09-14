@@ -379,3 +379,5 @@ __marimo__/
 .agent
 .vite-doctor
 .clinerules
+# Local CLI binaries (yt-dlp from scripts/install-ytdlp.sh)
+.bin/

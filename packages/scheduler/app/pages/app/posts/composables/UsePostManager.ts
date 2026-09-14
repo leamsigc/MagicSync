@@ -108,10 +108,9 @@ export const usePostManager = () => {
         }
       })
 
-      const { data: response } = await useFetch<PaginatedResponse<PostWithAllData>>(`/api/v1/posts?${query}`)
+      const response = await $fetch<PaginatedResponse<PostWithAllData>>(`/api/v1/posts?${query}`)
 
-
-      postList.value = response.value?.data ?? []
+      postList.value = response?.data ?? []
     } catch (err: unknown) {
       const fetchError = err as { data?: { message?: string }; message?: string }
       error.value = fetchError.data?.message || fetchError.message || 'Failed to fetch posts'
