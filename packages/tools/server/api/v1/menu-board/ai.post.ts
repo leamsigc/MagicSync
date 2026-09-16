@@ -50,6 +50,7 @@ export default defineEventHandler(async (event) => {
       businessId: body.businessId ?? body.business_id ?? null,
       useBusinessContext: body.useBusinessContext === true || body.use_business_context === true,
       event,
+      log,
     })
 
     return { html: stripMarkdownFence(text || '') }

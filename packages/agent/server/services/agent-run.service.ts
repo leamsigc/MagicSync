@@ -60,6 +60,18 @@ export class AgentRunService {
     }
   }
 
+  /**
+   * Best-effort progress update (stage summaries for polling UIs). Never
+   * throws — progress must not break the pipeline it reports on.
+   */
+  async touch(runId: string, summary: string): Promise<void> {
+    try {
+      await this.db.update(agentRuns).set({ summary }).where(eq(agentRuns.id, runId))
+    } catch {
+      // progress is best-effort
+    }
+  }
+
   async listByBusiness(userId: string, businessId: string, limit = 50): Promise<ServiceResponse<AgentRun[]>> {
     try {
       const rows = await this.db

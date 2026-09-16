@@ -1,6 +1,5 @@
 import { test, expect, type APIRequestContext } from '@playwright/test'
 import { createTestUser, createActiveBusiness, loginWith, waitForHydration, type TestUser, type TestBusiness } from './helpers/e2e-utils'
-import { mockThreads } from './fixtures'
 
 /**
  * End-to-end coverage for the Digital Home inheritance features:
@@ -345,18 +344,6 @@ test.describe('Pipeline studio', () => {
 
     const after = await api('get', `/api/v1/pipelines/${pipelineId}`)
     expect((await after.json()).data.steps as string).toBe(stepsBefore)
-  })
-})
-
-test.describe('Chat business toggle smoke', () => {
-  test('shows the business-context toggle', async ({ page }) => {
-    await loginWith(page, user)
-    await mockThreads(page)
-    await page.goto('/app/ai-tools/chat')
-    await waitForHydration(page)
-    await expect(page.getByTestId('business-context-toggle')).toBeVisible()
-    await page.getByTestId('business-context-toggle').click()
-    await expect(page.getByTestId('business-context-toggle')).toBeVisible()
   })
 })
 

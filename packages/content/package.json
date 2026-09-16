@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "better-sqlite3": "catalog:",
+    "evlog": "catalog:",
     "sass": "catalog:"
   }
 }

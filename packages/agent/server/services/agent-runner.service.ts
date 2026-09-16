@@ -2,6 +2,7 @@ import { mkdir, mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import type { H3Event } from 'h3'
+import type { RequestLogger } from 'evlog'
 import {
   createAgentSession,
   DefaultResourceLoader,
@@ -25,11 +26,12 @@ import {
 } from '../utils/agent-limits'
 import { resolveEmbedder } from '../utils/embeddings'
 import { applyRunApiKey, applyRunBaseUrl, createAgentComplete, createAgentModelRuntime, resolveRunModel } from '../utils/pi-runtime'
-import { anonymize, isPiiReady, SurrogateRestorer } from '../utils/pii'
+import { anonymize, isPiiReady, SurrogateRestorer } from '../agent/plugins/pii/detect'
 import { createAgentToolContext } from '../agent/tool-context'
 import { createAgentTools } from '../agent/tools'
 import { agentRunService } from './agent-run.service'
 import { agentSessionService } from './agent-session.service'
+import { skillRegistryService } from '#layers/BaseDB/server/services/skill-registry.service'
 import { piiMappingService } from './pii-mapping.service'
 import { AGENT_PROMPTS } from '../agent/prompts'
 import { findPredefinedAgent, PREDEFINED_AGENTS, type PredefinedAgent } from '../agent/agents'
@@ -50,6 +52,14 @@ export interface AgentRunInput {
   text: string
   /** Predefined agent profile (default orchestrator). */
   agentName?: string
+  /** User-selected tool subset; always intersected with the agent's own scope. */
+  allowedTools?: string[]
+  /** Extra bundled skill slugs loaded into the system prompt. */
+  extraSkillSlugs?: string[]
+  /** Extra registered skill ids (latest version) loaded into the system prompt. */
+  extraRegisteredSkillIds?: string[]
+  /** Pre-rendered extra prompt blocks (registered skill bodies). */
+  extraPromptBlocks?: string[]
   sessionId?: string | null
   systemContext?: string | null
   instructions?: string | null
@@ -64,6 +74,8 @@ export interface AgentRunInput {
   customTools?: ToolDefinition[]
   /** Headless task mode: no chat thread rows; fresh session per run. */
   headless?: boolean
+  /** Request logger for run-level observability (start/finish with usage). */
+  log?: RequestLogger
   /** Server-owned tenant context; tools are built inside the runner against the resolved model. */
   toolContext?: { userId: string, businessId: string, sessionId?: string, event?: H3Event }
 }
@@ -177,13 +189,38 @@ function loadedSkillBlocks(slugs: string[]): string[] {
     .map(skill => `# Loaded skill: ${skill.name}\n\n${skill.body}`)
 }
 
+interface RegisteredSkillSnapshot {
+  name?: unknown
+  description?: unknown
+  instructions?: unknown
+}
+
+/** Resolve registered skill ids to prompt blocks (latest version each). */
+async function loadRegisteredSkillBlocks(userId: string, businessId: string, ids: string[]): Promise<string[]> {
+  const listed = await skillRegistryService.listSkills(userId, businessId)
+  const allowed = new Set((listed.success ? listed.data : []).map(skill => skill.id))
+  const blocks: string[] = []
+  for (const id of [...new Set(ids)].slice(0, 8)) {
+    if (!allowed.has(id)) continue
+    const resolved = await skillRegistryService.resolveSkillVersion(id)
+    if (!resolved.success) continue
+    const snapshot = resolved.data.snapshot as RegisteredSkillSnapshot
+    const instructions = typeof snapshot.instructions === 'string' ? snapshot.instructions : ''
+    const name = typeof snapshot.name === 'string' ? snapshot.name : id
+    if (!instructions.trim()) continue
+    blocks.push(`# Loaded skill: ${name}\n\n${instructions}`)
+  }
+  return blocks
+}
+
 function buildSystemPrompt(input: AgentRunInput): string {
   const agent = resolveRunAgent(input.agentName)
   const parts = [
     AGENT_PROMPTS.base,
     AGENT_PROMPTS[agent.prompt],
     formatBundledSkillsForPrompt(selectBundledSkills(agent.skills)),
-    ...loadedSkillBlocks(agent.forceSkills),
+    ...loadedSkillBlocks([...agent.forceSkills, ...(input.extraSkillSlugs ?? [])]),
+    ...(input.extraPromptBlocks ?? []),
   ]
   if (input.systemContext) parts.push(input.systemContext)
   if (input.instructions) parts.push(input.instructions)
@@ -267,9 +304,11 @@ interface RunSetup {
 
 export class AgentRunnerService {
   async run(input: AgentRunInput, onEvent: AgentStreamEventListener): Promise<ServiceResponse<AgentRunSummary>> {
-    const runRow = await agentRunService.start(input.userId, { businessId: input.businessId, agentName: resolveRunAgent(input.agentName).name })
+    const agentName = resolveRunAgent(input.agentName).name
+    const runRow = await agentRunService.start(input.userId, { businessId: input.businessId, agentName })
     if (!runRow.success) return { success: false, error: runRow.error, code: runRow.code }
     const runId = runRow.data.id
+    input.log?.info({ content: 'Agent run started', agentName, runId, businessId: input.businessId, threadId: input.threadId, headless: input.headless ?? false, privateMode: input.privateMode ?? false })
     const state: RunState = {
       userId: input.userId,
       sessionId: '',
@@ -360,6 +399,8 @@ export class AgentRunnerService {
       toolEvents: state.toolEvents,
       summary: failure ? failure.message : summary.content.slice(0, 500),
     })
+    if (failure) input.log?.error({ content: 'Agent run failed', runId, code: failure.code, message: failure.message, tokensUsed: summary.tokensUsed, toolCalls: summary.toolCalls, turns: summary.turns, durationMs: summary.durationMs })
+    else input.log?.info({ content: 'Agent run completed', runId, tokensUsed: summary.tokensUsed, toolCalls: summary.toolCalls, turns: summary.turns, durationMs: summary.durationMs })
 
     if (!failure && summary.content && !input.headless) {
       await chatService.addMessage({
@@ -398,6 +439,7 @@ export class AgentRunnerService {
       const agent = resolveRunAgent(input.agentName)
       const toolContext = createAgentToolContext({
         ...input.toolContext,
+        log: input.toolContext?.log ?? input.log,
         sessionId: state.sessionId,
         emit: state.emit,
         complete: createAgentComplete(target.data.runtime, target.data.model),
@@ -407,9 +449,13 @@ export class AgentRunnerService {
       })
       const customTools = input.customTools
         ?? (input.toolContext
-          ? createAgentTools(toolContext).filter(tool => agent.tools.includes(tool.name))
+          ? createAgentTools(toolContext).filter(tool => agent.tools.includes(tool.name)
+            && (!input.allowedTools || input.allowedTools.includes(tool.name)))
           : [])
       toolContext.subagentTools = customTools
+      if (!input.extraPromptBlocks && (input.extraRegisteredSkillIds?.length ?? 0) > 0) {
+        input.extraPromptBlocks = await loadRegisteredSkillBlocks(input.userId, input.businessId, input.extraRegisteredSkillIds ?? [])
+      }
 
       const resourceLoader = new DefaultResourceLoader({
         cwd,

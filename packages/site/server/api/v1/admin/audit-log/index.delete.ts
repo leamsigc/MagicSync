@@ -8,6 +8,7 @@ const DeleteAuditLogSchema = z.object({
 })
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event)
   const currentUser = await checkUserIsLogin(event)
   if (currentUser.role !== 'admin') {
     throw createError({ statusCode: 403, message: 'Admin access required' })
@@ -37,7 +38,7 @@ export default defineEventHandler(async (event) => {
     targetType: 'audit_log',
     status: 'success',
     details: body.all ? 'Deleted all audit log entries' : `Deleted ${body.ids?.length} audit log entries`
-  })
+  }, { log })
 
   return { success: true }
 })

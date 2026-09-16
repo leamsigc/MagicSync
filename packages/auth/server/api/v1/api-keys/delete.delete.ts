@@ -45,7 +45,7 @@ export default defineEventHandler(async (event) => {
     targetId: keyId,
     status: 'success',
     details: `Deleted API key for business "${businessResult.data.name}"`
-  })
+  }, { log })
 
   return { success: true }
 })

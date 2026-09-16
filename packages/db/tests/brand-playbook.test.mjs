@@ -333,6 +333,71 @@ describe('playbook editions (T10.3)', () => {
     assert.deepEqual(playbook.safety.verifyBeforeClaim, ['Revenue figures'])
   })
 
+  it('maps refine sections to intake groups for deterministic merge', () => {
+    assert.equal(svc.mapRefineSectionToGroup('voice'), 'voice')
+    assert.equal(svc.mapRefineSectionToGroup('search'), 'keywords')
+    assert.equal(svc.mapRefineSectionToGroup('keywords'), 'keywords')
+    assert.equal(svc.mapRefineSectionToGroup('testimonials'), 'proof')
+    assert.equal(svc.mapRefineSectionToGroup('brand'), 'conversion')
+    assert.equal(svc.mapRefineSectionToGroup('general'), 'general')
+  })
+
+  it('folds refine answers into empty fields without AI', () => {
+    const draft = svc.normalizePlaybook(svc.BrandPlaybookSchema.parse({ businessName: 'Acme Co' }))
+    svc.applyRefineAnswers(draft, [
+      { section: 'voice', question: 'tone', answer: 'Bold and warm' },
+      { section: 'conversion', question: 'cta', answer: 'https://acme.test/start' },
+      { section: 'general', question: 'notes', answer: 'Just thinking aloud' },
+      { section: 'voice', question: 'blank', answer: '   ' },
+    ])
+    assert.equal(draft.voice.tone, 'Bold and warm')
+    assert.equal(draft.ctaLinks[0].url, 'https://acme.test/start')
+  })
+
+  it('merges AI output over the base without wiping filled fields', () => {
+    const base = svc.normalizePlaybook(svc.BrandPlaybookSchema.parse({
+      businessName: 'Acme Co',
+      positioning: { audience: '', problem: 'No time', differentiator: 'We deliver', alternatives: [], costOfInaction: '' },
+      offers: [{ name: 'Setup', transformation: 'Live in a day', price: '$99', availability: '', hidePrice: false }],
+    }))
+    const ai = svc.normalizePlaybook(svc.BrandPlaybookSchema.parse({
+      voice: { tone: 'Polished tone' },
+    }))
+    const merged = svc.mergeRefinedOverBase(base, ai)
+    assert.equal(merged.voice.tone, 'Polished tone')
+    assert.equal(merged.positioning.differentiator, 'We deliver')
+    assert.equal(merged.offers.length, 1)
+  })
+
+  it('loads a refine base from business details without persisting', async () => {
+    const biz = await makeBusiness(OWNER, { description: 'Short desc' })
+    await db.insert(schema.entityDetails).values({
+      id: crypto.randomUUID(),
+      entityId: biz.id,
+      entityType: 'business_details',
+      details: {
+        companyInformation: '## Products & Services\n- Setup — Live in a day — $99',
+        brandDetails: { personality: { tone: 'Warm' } },
+      },
+    })
+    const before = await svc.brandPlaybookService.listEditions(OWNER, biz.id)
+    const base = await svc.brandPlaybookService.getRefineBase(OWNER, biz.id)
+    assert.equal(base.success, true)
+    assert.equal(base.data.voice.tone, 'Warm')
+    assert.equal(base.data.offers.length, 1)
+    const after = await svc.brandPlaybookService.listEditions(OWNER, biz.id)
+    assert.equal(after.data.length, before.data.length)
+  })
+
+  it('prefers the current edition as refine base', async () => {
+    const biz = await makeBusiness(OWNER)
+    const saved = await svc.brandPlaybookService.saveDraft(OWNER, biz.id, fullPlaybook({ author: 'V1' }))
+    await svc.brandPlaybookService.publish(OWNER, biz.id, saved.data.id, OWNER)
+    const base = await svc.brandPlaybookService.getRefineBase(OWNER, biz.id)
+    assert.equal(base.success, true)
+    assert.equal(base.data.author, 'V1')
+  })
+
   it('keeps placeholder markers out of live context', async () => {
     const biz = await makeBusiness(OWNER)
     await svc.businessCorpusService.upsertSection(OWNER, {

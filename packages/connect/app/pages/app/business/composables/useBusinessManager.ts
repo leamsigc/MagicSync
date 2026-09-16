@@ -1,7 +1,20 @@
-import type { BusinessProfile, CreateBusinessProfileData } from '#layers/BaseDB/db/schema';
+import type { BusinessProfile } from '#layers/BaseDB/db/schema';
 import type { InformationSchemaBusinessResponse, InformationExtractionEvent } from '#layers/BaseScheduler/server/api/v1/ai/information/index.post';
 import type { ServiceResponse } from '#layers/BaseDB/server/services/types';
+import type { BusinessDeletePreview } from '#layers/BaseDB/server/services/business-profile.service';
 import { ref } from 'vue';
+
+export type { BusinessDeletePreview };
+
+export function extractDeleteErrorCode(error: unknown): string | undefined {
+  const nested = error as { data?: { code?: string, data?: { code?: string } } }
+  return nested?.data?.code ?? nested?.data?.data?.code
+}
+
+export function extractDeleteErrorMessage(error: unknown, fallback: string): string {
+  const shaped = error as { data?: { message?: string }, statusMessage?: string }
+  return shaped?.data?.message ?? shaped?.statusMessage ?? fallback
+}
 
 
 
@@ -123,13 +136,19 @@ export const useBusinessManager = () => {
     await getAllBusinesses();
   };
 
-  const deleteBusiness = async (id: string) => {
-    if (id === activeBusinessId.value) {
-      activeBusinessId.value = undefined
-    }
+  const getDeletePreview = async (id: string): Promise<BusinessDeletePreview> => {
+    return await $fetch<BusinessDeletePreview>(`/api/v1/business/${id}/delete-preview`);
+  };
+
+  const deleteBusiness = async (id: string, reassignSocialAccountsTo?: string) => {
+    const wasActive = id === activeBusinessId.value
     await $fetch(`/api/v1/business/${id}`, {
       method: 'DELETE',
+      body: { reassignSocialAccountsTo }
     });
+    if (wasActive) {
+      activeBusinessId.value = undefined
+    }
     await getAllBusinesses();
   };
   const setActiveBusiness = async (id: string) => {
@@ -150,6 +169,7 @@ export const useBusinessManager = () => {
     extractBusinessInfoWithProgress,
     updateBusiness,
     deleteBusiness,
+    getDeletePreview,
     setActiveBusiness
   };
 };

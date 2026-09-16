@@ -8,6 +8,8 @@ import humanize from './humanize.md?raw'
 import revise from './revise.md?raw'
 import trendScan from './trend-scan.md?raw'
 import ideaScan from './idea-scan.md?raw'
+import ideaGeneration from './idea-generation.md?raw'
+import topicScan from './topic-scan.md?raw'
 import pii from './pii.md?raw'
 
 /**
@@ -26,8 +28,22 @@ export const AGENT_PROMPTS = {
   revise,
   trendScan,
   ideaScan,
+  ideaGeneration,
+  topicScan,
   pii,
 } as const
+
+/**
+ * Per-kind format guidance for topic batches. Keyed by batch kind; the
+ * pipeline selects the entry and renders it into the topic-scan prompt
+ * (and the plugin's format hint) — no model-facing prose in services.
+ */
+export const TOPIC_SCAN_KIND_HINTS: Record<string, string> = {
+  days: 'One idea per day; each card title carries the angle and the brief opens with the hook.',
+  carousel: 'Each idea must work as a multi-slide carousel; the brief lists the slide angles in order.',
+  reel: 'Each idea must work as a short-form video; the brief opens with the spoken hook and notes the visual.',
+  repurpose: 'Each idea reframes the topic for the platform; the brief notes which angle it adapts.',
+}
 
 export type AgentPromptName = keyof typeof AGENT_PROMPTS
 

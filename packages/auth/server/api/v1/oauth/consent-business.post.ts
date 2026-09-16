@@ -45,6 +45,6 @@ export default defineEventHandler(async (event) => {
     targetId: body.clientId,
     status: 'success',
     details: `OAuth grant for business ${body.businessId}`,
-  })
+  }, { log })
   return { success: true }
 })

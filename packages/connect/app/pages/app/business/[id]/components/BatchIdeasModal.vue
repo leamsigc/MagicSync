@@ -39,6 +39,7 @@ function handleOpenChange(value: boolean) {
 }
 
 function handleSubmit() {
+  if (!topic.value.trim()) return
   emit('submit', {
     kind: kind.value,
     days: Math.min(Math.max(Number(days.value) || 1, 1), 31),
@@ -71,7 +72,7 @@ function handleSubmit() {
         <UButton color="neutral" variant="ghost" @click="handleOpenChange(false)">
           {{ t('actions.cancel') }}
         </UButton>
-        <UButton color="primary" :loading="saving" @click="handleSubmit">
+        <UButton color="primary" :loading="saving" :disabled="!topic.trim()" @click="handleSubmit">
           {{ t('batch.submit') }}
         </UButton>
       </div>

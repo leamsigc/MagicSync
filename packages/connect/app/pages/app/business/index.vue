@@ -14,13 +14,15 @@
  */
 import BusinessCard from './components/BusinessCard.vue';
 import AddBusiness from './components/AddBusiness.vue';
+import DeleteBusinessModal from './components/DeleteBusinessModal.vue';
 import { useBusinessManager } from './composables/useBusinessManager';
 import type { BusinessProfile } from '#layers/BaseDB/db/schema';
 
-const { businesses, getAllBusinesses, updateBusiness, deleteBusiness } = useBusinessManager();
+const { businesses, getAllBusinesses } = useBusinessManager();
 const editingBusiness = ref<BusinessProfile | null>(null);
+const businessToDelete = ref<string | null>(null);
+const deleteModalOpen = ref(false);
 const router = useRouter();
-const toast = useToast();
 
 const { data } = await useFetch<PaginatedResponse<BusinessProfile>>('/api/v1/business');
 
@@ -41,14 +43,19 @@ const handleEditBusiness = (id: string) => {
   router.push(`/app/business/${id}/edit`)
 };
 
-const handleDeleteBusiness = async (id: string) => {
+const handleDeleteBusiness = (id: string) => {
   if (!id) return
-  toast.add({
-    title: 'Deleting Business',
-    description: 'Please wait...'
-  });
-  await deleteBusiness(id);
+  businessToDelete.value = id;
+  deleteModalOpen.value = true;
+};
 
+const handleDeleteModalUpdate = (value: boolean) => {
+  deleteModalOpen.value = value;
+  if (!value) businessToDelete.value = null;
+};
+
+const handleBusinessDeleted = () => {
+  getAllBusinesses();
 };
 
 const { t } = useI18n();
@@ -77,7 +84,8 @@ useHead({
       </div>
     </div>
 
-
+    <DeleteBusinessModal :model-value="deleteModalOpen" :business-id="businessToDelete"
+      @update:model-value="handleDeleteModalUpdate" @deleted="handleBusinessDeleted" />
   </div>
 </template>
 <style scoped></style>

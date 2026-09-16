@@ -66,23 +66,72 @@ before(async () => {
 
 after(() => cleanup())
 
-describe('board batch quick actions (T12)', () => {
-  it('creates N idea cards and never publishes them', async () => {
-    const result = await agentWorkflowService.runBoardBatch({
+describe('topic batch validation (T12)', () => {
+  it('rejects empty topics without touching the database', async () => {
+    const runsBefore = await db.select().from(schema.agentRuns)
+    const result = await agentWorkflowService.startTopicBatch({
       userId: OWNER,
       businessId: BUSINESS,
       kind: 'days',
-      days: 4,
+      days: 7,
       platforms: ['twitter'],
-      topic: 'March plan',
+      topic: '   ',
+      event: {},
     })
-    assert.equal(result.success, true, result.error ?? '')
-    assert.equal(result.data.length, 4)
-    assert.ok(result.data.every(card => card.state === 'idea'))
-    assert.ok(result.data.every(card => card.scheduledAt === null && card.postId === null))
+    assert.equal(result.success, false)
+    assert.equal(result.code, 'TOPIC_REQUIRED')
+    const runsAfter = await db.select().from(schema.agentRuns)
+    assert.equal(runsAfter.length, runsBefore.length)
+  })
 
-    const runs = await db.select().from(schema.contentRuns).where(eq(schema.contentRuns.step, 'batch:days'))
-    assert.equal(runs.length, 4)
+  it('clamps idea counts per kind', async () => {
+    const { topicBatchCount } = await import('../server/services/topic-batch.pipeline.ts')
+    assert.equal(topicBatchCount('days', 7), 7)
+    assert.equal(topicBatchCount('days', 99), 31)
+    assert.equal(topicBatchCount('days', 0), 1)
+    assert.equal(topicBatchCount('carousel', 7), 3)
+    assert.equal(topicBatchCount('reel', 7), 3)
+    assert.equal(topicBatchCount('repurpose', 7), 3)
+  })
+
+  it('derives grounded ideas from a brief as the last resort', async () => {
+    const { deriveIdeasFromBrief } = await import('../server/content-intelligence/generate.ts')
+    const cards = deriveIdeasFromBrief({
+      brief: 'Early-bird pricing beats expectations. Launch day brings long queues every year.',
+      topic: 'March launch',
+      platforms: ['twitter'],
+      count: 2,
+      sourceUrl: 'https://example.com/launch',
+    })
+    assert.equal(cards.length, 2)
+    assert.ok(cards[0].title.length <= 90)
+    assert.deepEqual(cards[0].platforms, ['twitter'])
+    assert.equal(cards[0].sourceRef, 'https://example.com/launch')
+    assert.ok(cards[0].brief.includes('March launch'))
+    assert.deepEqual(deriveIdeasFromBrief({ brief: 'Too short', topic: 'x', platforms: [], count: 3 }), [])
+  })
+
+  it('composes trend scans grounded in research with platform rules', async () => {
+    const { composeTopicScanText } = await import('../server/services/topic-batch.pipeline.ts')
+    const text = composeTopicScanText({
+      topic: 'March launch',
+      platforms: ['twitter'],
+      count: 7,
+      kind: 'days',
+      brief: 'Evidence: launch date March 1st (source).',
+    })
+    assert.ok(text.includes('March launch'))
+    assert.ok(text.includes('exactly 7'))
+    assert.ok(text.includes('280 chars'), 'twitter virality rules reach the model')
+    assert.ok(text.includes('Evidence: launch date March 1st'))
+    const blog = composeTopicScanText({
+      topic: 'March launch',
+      platforms: ['wordpress'],
+      count: 3,
+      kind: 'days',
+      brief: 'Evidence.',
+    })
+    assert.ok(blog.includes('300-600 words'), 'wordpress long-form rules reach the model')
   })
 })
 

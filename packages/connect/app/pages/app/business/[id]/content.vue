@@ -13,8 +13,12 @@ interface AgentRunRow {
   tokensUsed: number
   durationMs: number | null
   toolEvents: string
+  summary: string
   startedAt: string
 }
+
+const BATCH_POLL_INTERVAL_MS = 4000
+const BATCH_POLL_TIMEOUT_MS = 5 * 60 * 1000
 
 const { t } = useI18n()
 const toast = useToast()
@@ -173,13 +177,13 @@ async function fetchRuns() {
 async function handleBatch(payload: { kind: string, days: number, platforms: string[], topic: string }) {
   batching.value = true
   try {
-    const response = await $fetch<{ items: BoardItem[], created: number }>('/api/v1/content-items/batch', {
+    const response = await $fetch<{ runId: string, count: number, status: string }>('/api/v1/content-items/batch', {
       method: 'POST',
       body: { businessId, ...payload },
     })
-    items.value = [...response.items, ...items.value]
     batchOpen.value = false
-    toast.add({ title: t('batch.created', { count: response.created }), icon: 'i-heroicons-check-circle', color: 'success' })
+    toast.add({ title: t('batch.started', { count: response.count }), icon: 'i-heroicons-sparkles', color: 'success' })
+    await pollBatchRun(response.runId)
   }
   catch (error) {
     toast.add({ title: t('batch.failed', { error: errorMessage(error) }), icon: 'i-heroicons-x-circle', color: 'error' })
@@ -187,6 +191,29 @@ async function handleBatch(payload: { kind: string, days: number, platforms: str
   finally {
     batching.value = false
   }
+}
+
+async function pollBatchRun(runId: string) {
+  const before = new Set(items.value.map(item => item.id))
+  const started = Date.now()
+  while (Date.now() - started < BATCH_POLL_TIMEOUT_MS) {
+    await new Promise(resolve => setTimeout(resolve, BATCH_POLL_INTERVAL_MS))
+    await fetchRuns()
+    const run = runs.value.find(row => row.id === runId)
+    if (run && run.status !== 'running') {
+      await fetchItems()
+      if (run.status === 'completed') {
+        const created = items.value.filter(item => !before.has(item.id)).length
+        toast.add({ title: t('batch.created', { count: created }), icon: 'i-heroicons-check-circle', color: 'success' })
+      }
+      else {
+        toast.add({ title: t('batch.failed', { error: run.summary || run.status }), icon: 'i-heroicons-x-circle', color: 'error' })
+      }
+      return
+    }
+  }
+  await fetchItems()
+  await fetchRuns()
 }
 
 function handleOpenCreate() {
@@ -269,7 +296,7 @@ function handleBack() {
 }
 
 function handleOpenChat(item: BoardItem) {
-  router.push({ path: '/app/ai-tools/chat', query: { businessId, cardId: item.id } })
+  router.push({ path: '/app/chat', query: { businessId, cardId: item.id } })
 }
 
 function handleBriefSaved(item: BoardItem) {

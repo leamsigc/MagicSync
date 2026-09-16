@@ -1,4 +1,5 @@
 import type { H3Event } from 'h3'
+import type { RequestLogger } from 'evlog'
 import type { Model } from '@earendil-works/pi-ai'
 import type { ModelRuntime, ToolDefinition } from '@earendil-works/pi-coding-agent'
 import type { AgentStreamEventListener } from './agent-events'
@@ -20,6 +21,8 @@ export interface AgentToolContext {
   businessId: string
   sessionId?: string
   event?: H3Event
+  /** Request logger for tool-level observability (agent calls, PII scans). */
+  log?: RequestLogger
   emit: AgentStreamEventListener
   complete?: AgentComplete
   embed?: AgentEmbedder
@@ -43,6 +46,7 @@ export function createAgentToolContext(input: {
   businessId: string
   sessionId?: string
   event?: H3Event
+  log?: RequestLogger
   emit?: AgentStreamEventListener
   complete?: AgentComplete
   embed?: AgentEmbedder
@@ -59,6 +63,7 @@ export function createAgentToolContext(input: {
     businessId: input.businessId,
     sessionId: input.sessionId,
     event: input.event,
+    log: input.log,
     emit: input.emit ?? (() => {}),
     complete: input.complete,
     embed: input.embed,

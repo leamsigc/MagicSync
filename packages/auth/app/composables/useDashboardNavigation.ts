@@ -100,6 +100,12 @@ export const useDashboardNavigation = () => {
         to: '/app/auto-reply',
         active: route.path.startsWith('/app/auto-reply')
       },
+      {
+        label: m.menu.chat,
+        icon: 'i-lucide-message-square',
+        to: '/app/chat',
+        active: route.path.startsWith('/app/chat')
+      },
 
       // ── Content ────────────────────────────────────────────
       { type: 'label', label: m.menu.sectionContent },
@@ -177,11 +183,6 @@ export const useDashboardNavigation = () => {
             icon: 'i-lucide-trending-up'
           },
           {
-            label: m.menu.chat,
-            to: '/app/ai-tools/chat',
-            icon: 'i-lucide-bot'
-          },
-          {
             label: m.menu.aiToolsData,
             to: '/app/ai-tools/knowledge',
             icon: 'i-lucide-folder-open'
@@ -190,6 +191,16 @@ export const useDashboardNavigation = () => {
             label: m.menu.aiToolsSkills,
             to: '/app/ai-tools/skills',
             icon: 'i-lucide-blocks'
+          },
+          {
+            label: m.menu.agents,
+            to: '/app/ai-tools/agents',
+            icon: 'i-lucide-bot'
+          },
+          {
+            label: m.menu.aiToolsTools,
+            to: '/app/ai-tools/tools',
+            icon: 'i-lucide-hammer'
           }
         ]
       },

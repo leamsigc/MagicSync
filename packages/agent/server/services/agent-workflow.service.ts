@@ -1,25 +1,23 @@
 import type { H3Event } from 'h3'
+import type { RequestLogger } from 'evlog'
 import { z } from 'zod'
 import type { ServiceResponse } from '#layers/BaseShared/server/types/service.types'
 import { contentBoardService } from '#layers/BaseDB/server/services/content-board.service'
 import type { ContentCheck, ContentItem, ContentItemState } from '#layers/BaseDB/db/schema'
 import type { AgentStreamEvent, AgentStreamEventListener } from '../agent/agent-events'
 import { findPredefinedAgent } from '../agent/agents'
-import { AGENT_PROMPTS, renderPrompt } from '../agent/prompts'
+import { renderPrompt } from '../agent/prompts'
 import { createAgentTools } from '../agent/tools'
 import { createAgentToolContext, type AgentComplete } from '../agent/tool-context'
 import { completeForUser, extractJsonObject, type RunConfig } from '../utils/run-config'
 import { contentChainService, formatBriefWithSources, type ChainContext, type DraftOutput } from './content-chain.service'
-import { agentRunnerService, type AgentRunInput, type AgentRunSummary } from './agent-runner.service'
-
-export interface WorkflowRunInput extends AgentRunInput {
-  event?: H3Event
-}
-
-export interface TrendScanResult {
-  run: AgentRunSummary
-  cards: ContentItem[]
-}
+import { agentRunnerService } from './agent-runner.service'
+import { emitLog } from '#layers/BaseShared/server/utils/evlog'
+import {
+  TopicBatchPipeline,
+  type TopicBatchExecution,
+  type TopicBatchInput,
+} from './topic-batch.pipeline'
 
 export interface ResearchTaskInput {
   userId: string
@@ -28,11 +26,13 @@ export interface ResearchTaskInput {
   run: RunConfig
   event?: H3Event
   onEvent?: AgentStreamEventListener
+  log?: RequestLogger
 }
 
 export interface ResearchTaskResult {
   brief: string
   citations: Array<{ label: string, url?: string }>
+  keyFacts: string[]
   sourcesUsed: number
   usedAgent: boolean
   agentRunId?: string
@@ -46,6 +46,7 @@ const AgentCitationSchema = z.union([
 const AgentResearchOutputSchema = z.object({
   brief: z.string().min(1),
   citations: z.array(AgentCitationSchema).optional(),
+  keyFacts: z.array(z.string()).optional(),
 })
 
 function normalizeAgentCitations(value: unknown): Array<{ label: string, url?: string }> {
@@ -95,22 +96,6 @@ function createChainEmitter(itemId: string, listener?: AgentStreamEventListener)
 }
 
 export class AgentWorkflowService {
-  async runTrendScan(input: WorkflowRunInput, onEvent: AgentStreamEventListener): Promise<ServiceResponse<TrendScanResult>> {
-    const startedAt = new Date()
-    const result = await agentRunnerService.run({ ...input, text: AGENT_PROMPTS.trendScan }, onEvent)
-    if (!result.success) return { success: false, error: result.error, code: result.code }
-
-    const cards = await this.collectRunCards(input, startedAt)
-    for (const card of cards) {
-      await contentBoardService.recordRun(input.userId, input.businessId, card.id, {
-        step: 'trend_scan',
-        agentRunId: result.data.runId,
-        status: 'completed',
-      })
-    }
-    return { success: true, data: { run: result.data, cards } }
-  }
-
   /**
    * Content chain: research → write → humanize → checks → review. A card in
    * changes_requested resumes at drafting. Nothing is scheduled or published.
@@ -252,8 +237,13 @@ export class AgentWorkflowService {
    * dead-ends on one flaky turn.
    */
   async runResearchTask(input: ResearchTaskInput): Promise<ServiceResponse<ResearchTaskResult>> {
+    emitLog(input.log, { message: 'research.started', topic: input.topic.slice(0, 200) })
     const viaAgent = await this.runResearchAgent(input)
-    if (viaAgent) return { success: true, data: viaAgent }
+    if (viaAgent) {
+      emitLog(input.log, { message: 'research.agent.completed', sourcesUsed: viaAgent.sourcesUsed, agentRunId: viaAgent.agentRunId })
+      return { success: true, data: viaAgent }
+    }
+    emitLog(input.log, { message: 'research.agent.unavailable', fallback: 'service' })
     return this.researchFallback(input)
   }
 
@@ -264,7 +254,8 @@ export class AgentWorkflowService {
       userId: input.userId,
       businessId: input.businessId,
       event: input.event,
-      emit: input.onEvent ?? (() => {}),
+      log: input.log,
+      emit: input.onEvent ?? (() => { }),
       complete: input.run.complete,
       modelRuntime: input.run.runtime,
       model: input.run.model,
@@ -284,6 +275,7 @@ export class AgentWorkflowService {
       modelRuntime: input.run.runtime,
       systemContext: input.run.systemContext,
       toolContext: { userId: input.userId, businessId: input.businessId, event: input.event },
+      log: input.log,
     }, input.onEvent)
     if (!result.success) return null
 
@@ -293,6 +285,7 @@ export class AgentWorkflowService {
     return {
       brief: formatBriefWithSources(parsed.data.brief, citations),
       citations,
+      keyFacts: parsed.data.keyFacts ?? [],
       sourcesUsed: citations.length,
       usedAgent: true,
       agentRunId: result.data.runId,
@@ -309,11 +302,13 @@ export class AgentWorkflowService {
     }
     const result = await contentChainService.researchWithWeb(ctx, { topic: input.topic })
     if (!result.success) return { success: false, error: result.error, code: result.code }
+    emitLog(input.log, { message: 'research.fallback.completed', sourcesUsed: result.data.sourcesUsed })
     return {
       success: true,
       data: {
         brief: result.data.brief,
         citations: result.data.citations,
+        keyFacts: [],
         sourcesUsed: result.data.sourcesUsed,
         usedAgent: false,
       },
@@ -351,53 +346,35 @@ export class AgentWorkflowService {
     return result
   }
 
-  /** Quick actions: batch-create idea cards (never published). */
-  async runBoardBatch(input: {
-    userId: string
-    businessId: string
-    kind: 'days' | 'carousel' | 'reel' | 'repurpose'
-    days?: number
-    count?: number
-    platforms?: string[]
-    topic?: string
-    event?: H3Event
-  }): Promise<ServiceResponse<ContentItem[]>> {
-    const requested = input.kind === 'days' ? (input.days ?? 7) : (input.count ?? 3)
-    const count = Math.min(Math.max(requested, 1), 31)
-    const label = input.kind === 'days' ? 'Post' : input.kind === 'carousel' ? 'Carousel' : input.kind === 'reel' ? 'Reel' : 'Repurpose'
-    const cards = Array.from({ length: count }, (_, index) => ({
-      title: input.topic ? `${input.topic} ${index + 1}` : `${label} ${index + 1}`,
-      brief: input.topic ?? '',
-      platforms: input.platforms ?? [],
-    }))
-    const sourceType = input.kind === 'repurpose' ? 'repurpose' : input.kind === 'days' ? 'manual' : 'template'
-    const added = await contentBoardService.addCards(input.userId, input.businessId, cards, {
-      sourceType,
-      actorKind: 'user',
-      actorUserId: input.userId,
-    }, input.event)
-    if (!added.success) return added
-    for (const card of added.data) {
-      await contentBoardService.recordRun(input.userId, input.businessId, card.id, {
-        step: `batch:${input.kind}`,
-        status: 'completed',
-      }, input.event)
-    }
-    return { success: true, data: added.data }
+  /**
+   * Topic batch pipeline (research → trend scan → platform-tailored ideas).
+   * The flow lives in TopicBatchPipeline so it reads start-to-end in one
+   * place; these methods preserve the service surface (routes, tools, tests).
+   */
+  private batches = new TopicBatchPipeline({ research: input => this.runResearchTask(input) })
+
+  async startTopicBatch(input: TopicBatchInput): Promise<ServiceResponse<{ runId: string, count: number }>> {
+    return this.batches.start(input)
+  }
+
+  async executeTopicBatch(input: TopicBatchExecution): Promise<void> {
+    return this.batches.execute(input)
   }
 
   /**
    * First-visit idea scan: one-shot LLM pass grounded in the business
    * context (profile, corpus, playbook) producing 10-20 trend-angled idea
-   * cards. Lighter than runTrendScan (no agent loop, no platform signals).
+   * cards. Lighter than a full trend-scout agent run (no agent loop, no platform signals).
    */
   async runIdeaScan(input: {
     userId: string
     businessId: string
     count?: number
     event?: H3Event
+    log?: RequestLogger
   }): Promise<ServiceResponse<ContentItem[]>> {
     const count = Math.min(Math.max(input.count ?? 15, 10), 20)
+    emitLog(input.log, { message: 'idea-scan.started', count })
     const completed = await completeForUser(input.userId, {
       businessId: input.businessId,
       useBusinessContext: true,
@@ -420,18 +397,10 @@ export class AgentWorkflowService {
         status: 'completed',
       }, input.event)
     }
+    emitLog(input.log, { message: 'idea-scan.completed', created: added.data.length })
     return { success: true, data: added.data }
   }
 
-  private async collectRunCards(input: WorkflowRunInput, startedAt: Date): Promise<ContentItem[]> {    const listed = await contentBoardService.list(input.userId, input.businessId, { state: 'idea' }, input.event)
-    if (!listed.success) return []
-    const cutoff = startedAt.getTime() - 1000
-    return listed.data.filter(card =>
-      card.createdBy === 'agent'
-      && card.sourceType === 'trend'
-      && new Date(card.createdAt).getTime() >= cutoff,
-    )
-  }
 }
 
 export const agentWorkflowService = new AgentWorkflowService()

@@ -510,17 +510,339 @@ export function applyIntakeGroups(draft: BrandPlaybook, grouped: Map<string, str
   }
 }
 
+const REFINE_SECTION_GROUPS = new Set([
+  'identity', 'audience', 'voice', 'positioning', 'offers', 'hooks',
+  'competitors', 'proof', 'testimonials', 'search', 'keywords',
+  'conversion', 'visuals', 'safety', 'verify',
+])
+
+const REFINE_SECTION_ALIASES: Record<string, string> = {
+  search: 'keywords',
+  keywords: 'keywords',
+  proof: 'proof',
+  testimonials: 'proof',
+}
+
+/**
+ * Map a quiz answer section to an intake group for deterministic merging.
+ * The quiz sends intake groups already (see quizGroupFor on the playbook
+ * page); aliases collapse duplicates and legacy `brand` answers fall back
+ * to conversion. Unknown sections pass through and are ignored by
+ * applyIntakeGroups — the AI prompt still sees the raw answers.
+ */
+export function mapRefineSectionToGroup(section: string): string {
+  const key = section.trim().toLowerCase()
+  if (REFINE_SECTION_GROUPS.has(key)) return REFINE_SECTION_ALIASES[key] ?? key
+  if (key === 'brand') return 'conversion'
+  return key
+}
+
+export interface RefineAnswerInput {
+  section?: string
+  group?: string
+  question?: string
+  answer: string
+}
+
+/** Deterministically fold quiz answers into a draft (no AI needed). */
+export function applyRefineAnswers(draft: BrandPlaybook, answers: RefineAnswerInput[]): void {
+  const intake: IntakeAnswer[] = answers
+    .filter(item => typeof item.answer === 'string' && item.answer.trim().length > 0)
+    .map(item => ({
+      group: mapRefineSectionToGroup(item.group ?? item.section ?? 'general'),
+      question: typeof item.question === 'string' ? item.question : '',
+      answer: item.answer.trim(),
+    }))
+  applyIntakeGroups(draft, groupIntakeAnswers(intake))
+}
+
+function isEmptyValue(value: unknown): boolean {
+  if (value === null || value === undefined) return true
+  if (typeof value === 'string') return value.trim().length === 0
+  if (Array.isArray(value)) return value.length === 0
+  if (typeof value === 'object') return Object.values(value).every(isEmptyValue)
+  return false
+}
+
+/**
+ * Overlay AI-refined fields onto the deterministic base. AI values that are
+ * empty never wipe base content — this guards against partial/truncated
+ * model output losing business data.
+ */
+export function mergeRefinedOverBase(base: BrandPlaybook, ai: BrandPlaybook): BrandPlaybook {
+  const merged = { ...base } as Record<string, unknown>
+  for (const [key, value] of Object.entries(ai)) {
+    if (!isEmptyValue(value)) merged[key] = value
+  }
+  return normalizePlaybook(merged as unknown as BrandPlaybook)
+}
+
 function stringField(value: unknown): string {
   return typeof value === 'string' ? value : ''
 }
 
-function applyLegacyKnownKeys(draft: BrandPlaybook, details: Record<string, unknown>): void {
+function parseJsonLoose(value: unknown): unknown {
+  if (typeof value !== 'string') return value
+  try {
+    return JSON.parse(value)
+  } catch {
+    return value
+  }
+}
+
+function asStringRecord(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null
+  return value as Record<string, unknown>
+}
+
+function fillTextIfEmpty(get: () => string, set: (value: string) => void, value: string): void {
+  if (!value.trim()) return
+  if (get().trim().length > 0) return
+  set(value.trim())
+}
+
+function fillListIfEmpty(get: () => string[], set: (values: string[]) => void, values: string[]): void {
+  if (values.length === 0) return
+  if (get().length > 0) return
+  set(values)
+}
+
+function ensureSource(draft: BrandPlaybook, label: string, kind: string): void {
+  const exists = draft.sources.some(item => item.label === label)
+  if (exists) return
+  draft.sources.push({ label, kind, verified: false, detail: '' })
+}
+
+function extractMarkdownSection(markdown: string, heading: string): string {
+  const lower = markdown.toLowerCase()
+  const start = lower.indexOf(`## ${heading.toLowerCase()}`)
+  if (start < 0) return ''
+  const bodyStart = markdown.indexOf('\n', start)
+  const body = bodyStart < 0 ? '' : markdown.slice(bodyStart + 1)
+  const next = body.search(/\n##(?!#)\s/)
+  const section = next < 0 ? body : body.slice(0, next)
+  return section.trim()
+}
+
+function toBulletLines(text: string): string[] {
+  return text
+    .split('\n')
+    .map(line => line.replace(/^[\s\-*•\d.)]+/, '').trim())
+    .filter(line => line.length > 0 && !line.startsWith('#'))
+}
+
+function firstLine(text: string): string {
+  const line = text.split('\n').map(part => part.trim()).find(part => part.length > 0)
+  return (line ?? '').replace(/^#+\s*/, '').slice(0, 300)
+}
+
+function competitorName(line: string): string {
+  const name = line.split(/\s*[—\-|:]\s*/)[0]
+  return (name ?? line).trim().slice(0, 120)
+}
+
+function extractPrimarySegment(markdown: string): string {
+  const match = /\*\*Primary segment:\*\*\s*(.+)/i.exec(markdown)
+  return (match?.[1] ?? '').trim().slice(0, 300)
+}
+
+function applyOverviewSection(draft: BrandPlaybook, markdown: string): void {
+  const overview = extractMarkdownSection(markdown, 'Company Overview')
+  if (!overview) return
+  const current = draft.positioning.problem.trim()
+  if (current.length > 0 && current.length >= overview.trim().length) return
+  draft.positioning.problem = overview.slice(0, 2000)
+}
+
+function applyProductsSection(draft: BrandPlaybook, markdown: string): void {
+  const section = extractMarkdownSection(markdown, 'Products')
+  if (!section) return
+  if (draft.offers.length > 0) return
+  const offers = toBulletLines(section).map(parseOfferLine)
+  if (offers.length === 0) return
+  draft.offers = offers
+}
+
+function applyUspSection(draft: BrandPlaybook, markdown: string): void {
+  const section = extractMarkdownSection(markdown, 'Unique Selling')
+  if (!section) return
+  if (draft.positioning.differentiator.trim().length > 0) return
+  draft.positioning.differentiator = section.replace(/\n+/g, '; ').slice(0, 1000)
+}
+
+function applyMessagingSection(draft: BrandPlaybook, markdown: string): void {
+  const section = extractMarkdownSection(markdown, 'Content & Messaging')
+  if (!section) return
+  if (!draft.voice.tone) draft.voice.tone = firstLine(section)
+  if (draft.hooks.length > 0) return
+  const hooks = toBulletLines(section).slice(0, 8)
+  if (hooks.length === 0) return
+  draft.hooks = hooks
+}
+
+function applyCompetitiveSection(draft: BrandPlaybook, markdown: string): void {
+  const section = extractMarkdownSection(markdown, 'Competitive')
+  if (!section) return
+  if (draft.competitors.length > 0) return
+  const names = toBulletLines(section).map(competitorName).filter(name => name.length > 0)
+  if (names.length === 0) return
+  draft.competitors = names.slice(0, 8).map(name => ({ name, whyWeWin: '' }))
+}
+
+function applyAudienceMarkdown(draft: BrandPlaybook, markdown: string): void {
+  const section = extractMarkdownSection(markdown, 'Target Audience')
+  if (!section && !markdown.includes('Primary segment')) return
+  const source = section || markdown
+  const primary = extractPrimarySegment(source)
+  fillTextIfEmpty(() => draft.audience.primary, value => draft.audience.primary = value, primary)
+  fillTextIfEmpty(() => draft.positioning.audience, value => draft.positioning.audience = value, primary)
+}
+
+function applyCompanyInformationText(draft: BrandPlaybook, info: unknown): void {
+  if (typeof info !== 'string') return
+  if (!info.trim()) return
+  const markdown = info.trim()
+  applyOverviewSection(draft, markdown)
+  applyProductsSection(draft, markdown)
+  applyUspSection(draft, markdown)
+  applyMessagingSection(draft, markdown)
+  applyCompetitiveSection(draft, markdown)
+  applyAudienceMarkdown(draft, markdown)
+  ensureSource(draft, 'business_details', 'business')
+}
+
+function stringList(value: unknown): string[] {
+  if (!Array.isArray(value)) return []
+  return value.filter((item): item is string => typeof item === 'string').map(item => item.trim()).filter(item => item.length > 0)
+}
+
+function applyAudienceDetail(draft: BrandPlaybook, target: unknown): void {
+  const record = asStringRecord(target)
+  if (!record) return
+  const primary = stringField(record.primarySegment)
+  fillTextIfEmpty(() => draft.audience.primary, value => draft.audience.primary = value, primary)
+  fillTextIfEmpty(() => draft.positioning.audience, value => draft.positioning.audience = value, primary)
+  const problem = stringList(record.painPoints).join('; ')
+  fillTextIfEmpty(() => draft.audience.problem, value => draft.audience.problem = value, problem)
+  const outcome = stringList(record.motivations).join('; ')
+  fillTextIfEmpty(() => draft.audience.outcome, value => draft.audience.outcome = value, outcome)
+  applyAudienceCollections(draft, record)
+}
+
+function applyAudienceCollections(draft: BrandPlaybook, record: Record<string, unknown>): void {
+  const segments = Array.isArray(record.secondarySegments) ? record.secondarySegments : []
+  const roles = segments
+    .map(segment => stringField((asStringRecord(segment) ?? {}).name))
+    .filter(name => name.length > 0)
+  fillListIfEmpty(() => draft.audience.roles, values => draft.audience.roles = values, roles)
+  const preferences = stringList(record.contentPreferences)
+  fillListIfEmpty(() => draft.hooks, values => draft.hooks = values, preferences.slice(0, 8))
+  fillListIfEmpty(() => draft.keywords.primary, values => { draft.keywords.primary = values }, preferences.slice(0, 10))
+  const platforms = stringList(record.preferredPlatforms)
+  fillListIfEmpty(() => draft.keywords.secondary, values => { draft.keywords.secondary = values }, platforms.slice(0, 10))
+}
+
+function colorValues(colors: unknown): string[] {
+  const record = asStringRecord(colors)
+  if (!record) return []
+  return Object.entries(record)
+    .map(([key, value]) => typeof value === 'string' && value.trim() ? `${key} ${value.trim()}` : '')
+    .filter(item => item.length > 0)
+}
+
+function fontValues(typography: unknown): string[] {
+  const record = asStringRecord(typography)
+  if (!record) return []
+  return [stringField(record.headingFont), stringField(record.bodyFont), stringField(record.baseSize)]
+    .map(font => font.trim())
+    .filter(font => font.length > 0)
+}
+
+function applyBrandPersonality(draft: BrandPlaybook, brand: Record<string, unknown>): void {
+  const personality = asStringRecord(brand.personality)
+  if (!personality) return
+  const tone = stringField(personality.tone)
+  fillTextIfEmpty(() => draft.voice.tone, value => draft.voice.tone = value, tone)
+  const voice = stringField(personality.voice)
+  if (voice && voice !== tone) fillVoiceInfluence(draft, voice)
+  const target = stringField(personality.targetAudience)
+  fillTextIfEmpty(() => draft.audience.primary, value => draft.audience.primary = value, target)
+}
+
+function fillVoiceInfluence(draft: BrandPlaybook, voice: string): void {
+  if (!voice.trim()) return
+  if (!draft.voice.tone) draft.voice.tone = voice.trim()
+  else if (!draft.voice.influences.includes(voice.trim())) draft.voice.influences.push(voice.trim())
+}
+
+function applyBrandVisuals(draft: BrandPlaybook, brand: Record<string, unknown>): void {
+  const colors = colorValues(brand.colors)
+  fillListIfEmpty(() => draft.visualStyle.colors, values => draft.visualStyle.colors = values, colors.slice(0, 8))
+  const fonts = fontValues(brand.typography)
+  fillListIfEmpty(() => draft.visualStyle.fonts, values => draft.visualStyle.fonts = values, fonts.slice(0, 4))
+}
+
+function buildImageStyle(brand: Record<string, unknown>): string {
+  const scheme = stringField(brand.colorScheme)
+  const images = asStringRecord(brand.images) ?? {}
+  const style = stringField(images.imageStyle ?? images.style)
+  const logo = stringField(images.logo)
+  return [scheme, style, logo ? `logo ${logo}` : ''].filter(part => part.trim().length > 0).join(' — ').slice(0, 500)
+}
+
+function applyBrandImagery(draft: BrandPlaybook, brand: Record<string, unknown>): void {
+  if (draft.imageStyle.trim().length > 0) return
+  const style = buildImageStyle(brand)
+  if (!style) return
+  draft.imageStyle = style
+}
+
+function parseBrandDetailsObject(raw: unknown): Record<string, unknown> | null {
+  const parsed = parseJsonLoose(raw)
+  return asStringRecord(parsed)
+}
+
+function applyRichBrandDetails(draft: BrandPlaybook, brandDetails: unknown): void {
+  const brand = parseBrandDetailsObject(brandDetails)
+  if (!brand) return
+  applyBrandPersonality(draft, brand)
+  applyBrandVisuals(draft, brand)
+  applyBrandImagery(draft, brand)
+  applyLegacyKnownKeys(draft, brand)
+  ensureSource(draft, 'business_details', 'business')
+}
+
+function applyFullBusinessDetails(
+  draft: BrandPlaybook,
+  payload: { companyInformation?: unknown, brandDetails?: unknown, targetAudience?: unknown },
+): void {
+  applyAudienceDetail(draft, payload.targetAudience)
+  applyRichBrandDetails(draft, payload.brandDetails)
+  applyLegacyBrandDetails(draft, payload.brandDetails)
+  applyCompanyInformationText(draft, payload.companyInformation)
+}
+
+function parseBusinessDetailsPayload(raw: string | null): { companyInformation?: unknown, brandDetails?: unknown, targetAudience?: unknown } {
+  if (!raw) return {}
+  try {
+    const parsed: unknown = JSON.parse(raw)
+    if (!parsed || typeof parsed !== 'object') return { companyInformation: raw }
+    return parsed as { companyInformation?: unknown, brandDetails?: unknown, targetAudience?: unknown }
+  } catch {
+    return { companyInformation: raw }
+  }
+}
+
+function applyLegacyVoiceKeys(draft: BrandPlaybook, details: Record<string, unknown>): void {
   const tone = stringField(details.tone)
-  if (tone && !draft.voice.tone) draft.voice.tone = tone
+  fillTextIfEmpty(() => draft.voice.tone, value => draft.voice.tone = value, tone)
   const audience = stringField(details.audience)
   if (audience) draft.positioning.audience = audience
   const differentiator = stringField(details.differentiator)
   if (differentiator) draft.positioning.differentiator = differentiator
+}
+
+function applyLegacyAuthorKeys(draft: BrandPlaybook, details: Record<string, unknown>): void {
   const author = stringField(details.author)
   if (author) draft.author = author
   const imageStyle = stringField(details.imageStyle ?? details.image_style)
@@ -528,22 +850,35 @@ function applyLegacyKnownKeys(draft: BrandPlaybook, details: Record<string, unkn
   applyLegacyIdentityKeys(draft, details)
 }
 
+function applyLegacyKnownKeys(draft: BrandPlaybook, details: Record<string, unknown>): void {
+  applyLegacyVoiceKeys(draft, details)
+  applyLegacyAuthorKeys(draft, details)
+}
+
 function applyLegacyIdentityKeys(draft: BrandPlaybook, details: Record<string, unknown>): void {
-  const website = stringField(details.website)
-  if (website && !draft.identity.website) draft.identity.website = website
-  const industry = stringField(details.industry ?? details.category)
-  if (industry && !draft.identity.industry) draft.identity.industry = industry
-  const location = stringField(details.location ?? details.address)
-  if (location && !draft.identity.location) draft.identity.location = location
+  fillTextIfEmpty(() => draft.identity.website, value => draft.identity.website = value, stringField(details.website))
+  fillTextIfEmpty(() => draft.identity.industry, value => draft.identity.industry = value, stringField(details.industry ?? details.category))
+  fillTextIfEmpty(() => draft.identity.location, value => draft.identity.location = value, stringField(details.location ?? details.address))
 }
 
 function applyLegacyBrandDetails(draft: BrandPlaybook, brandDetails: unknown): void {
   if (typeof brandDetails === 'string') {
-    if (!draft.voice.tone) draft.voice.tone = brandDetails
+    applyLegacyStringDetails(draft, brandDetails)
     return
   }
   if (!brandDetails || typeof brandDetails !== 'object') return
   applyLegacyKnownKeys(draft, brandDetails as Record<string, unknown>)
+}
+
+function applyLegacyStringDetails(draft: BrandPlaybook, raw: string): void {
+  if (!raw.trim()) return
+  const parsed = parseJsonLoose(raw)
+  const record = asStringRecord(parsed)
+  if (record) {
+    applyLegacyKnownKeys(draft, record)
+    return
+  }
+  fillTextIfEmpty(() => draft.voice.tone, value => draft.voice.tone = value, raw.slice(0, 500))
 }
 
 class PlaybookStore {
@@ -667,48 +1002,63 @@ export class BrandPlaybookService {
     }
   }
 
+  private buildBaseDraft(profile: { name: string, website?: string | null, category?: string | null, address?: string | null, description?: string | null }): BrandPlaybook {
+    return {
+      version: 1,
+      businessName: profile.name,
+      identity: {
+        name: profile.name,
+        website: profile.website ?? '',
+        industry: profile.category ?? '',
+        location: profile.address ?? '',
+      },
+      audience: { primary: '', roles: [], problem: '', outcome: '' },
+      voice: { tone: '', bannedPhrases: [], influences: [], examples: [] },
+      positioning: {
+        audience: '',
+        problem: profile.description ?? '',
+        differentiator: '',
+        alternatives: [],
+        costOfInaction: '',
+      },
+      offers: [],
+      hooks: [],
+      competitors: [],
+      testimonials: [],
+      proof: { caseStudies: [], permission: '' },
+      keywords: { primary: [], secondary: [] },
+      author: '',
+      ctaLinks: profile.website
+        ? [{ url: profile.website, label: profile.name, whenToUse: 'default CTA' }]
+        : [],
+      conversion: { ctaRules: '' },
+      imageStyle: '',
+      visualStyle: { colors: [], fonts: [], restrictions: [] },
+      sources: [],
+      safety: { neverSay: [], verifyBeforeClaim: [] },
+      completion: { filledGroups: [], missingFields: [], ready: false, updatedAt: null },
+      metadata: { schemaVersion: PLAYBOOK_SCHEMA_VERSION },
+    }
+  }
+
+  private async hydrateFromBusinessDetails(draft: BrandPlaybook, businessId: string): Promise<void> {
+    try {
+      const raw = await this.store.findLegacyDetails(businessId)
+      if (!raw) return
+      applyFullBusinessDetails(draft, parseBusinessDetailsPayload(raw))
+    } catch {
+      return
+    }
+  }
+
   async generateDraft(userId: string, businessId: string, event?: H3Event): Promise<ServiceResponse<PlaybookEdition>> {
     try {
       const owned = await this.ownBusiness(userId, businessId, event)
       if (!owned.success) return owned
-      const profile = owned.data.profile
-      const draft: BrandPlaybook = {
-        version: 1,
-        businessName: profile.name,
-        identity: {
-          name: profile.name,
-          website: profile.website ?? '',
-          industry: profile.category ?? '',
-          location: profile.address ?? '',
-        },
-        audience: { primary: '', roles: [], problem: '', outcome: '' },
-        voice: { tone: '', bannedPhrases: [], influences: [], examples: [] },
-        positioning: {
-          audience: '',
-          problem: profile.description ?? '',
-          differentiator: '',
-          alternatives: [],
-          costOfInaction: '',
-        },
-        offers: [],
-        hooks: [],
-        competitors: [],
-        testimonials: [],
-        proof: { caseStudies: [], permission: '' },
-        keywords: { primary: [], secondary: [] },
-        author: '',
-        ctaLinks: profile.website
-          ? [{ url: profile.website, label: profile.name, whenToUse: 'default CTA' }]
-          : [],
-        conversion: { ctaRules: '' },
-        imageStyle: '',
-        visualStyle: { colors: [], fonts: [], restrictions: [] },
-        sources: [],
-        safety: { neverSay: [], verifyBeforeClaim: [] },
-        completion: { filledGroups: [], missingFields: [], ready: false, updatedAt: null },
-        metadata: { schemaVersion: PLAYBOOK_SCHEMA_VERSION },
-      }
-      return await this.createEdition(owned.data.ownerId, businessId, draft, 'draft')
+      const draft = this.buildBaseDraft(owned.data.profile)
+      await this.hydrateFromBusinessDetails(draft, businessId)
+      const normalized = normalizePlaybook(draft)
+      return await this.createEdition(owned.data.ownerId, businessId, normalized, 'draft')
     } catch {
       return { success: false, error: 'Failed to generate playbook draft' }
     }
@@ -761,6 +1111,34 @@ export class BrandPlaybookService {
     return { success: true, data: parsed.data }
   }
 
+  /**
+   * Best-effort base for AI refinement without persisting anything.
+   * Prefers the current edition, then the newest non-discarded edition,
+   * then a fresh hydrated base — so refine never operates on a null draft.
+   */
+  async getRefineBase(
+    userId: string,
+    businessId: string,
+    event?: H3Event,
+  ): Promise<ServiceResponse<BrandPlaybook>> {
+    try {
+      const owned = await this.ownBusiness(userId, businessId, event)
+      if (!owned.success) return owned
+      const editions = await this.store.list(owned.data.ownerId, businessId)
+      const preferred = editions.find(item => item.status === 'current')
+        ?? editions.find(item => item.status !== 'discarded')
+      if (preferred) {
+        const parsed = BrandPlaybookSchema.safeParse(preferred.playbook)
+        if (parsed.success) return { success: true, data: normalizePlaybook(parsed.data) }
+      }
+      const draft = this.buildBaseDraft(owned.data.profile)
+      await this.hydrateFromBusinessDetails(draft, businessId)
+      return { success: true, data: normalizePlaybook(draft) }
+    } catch {
+      return { success: false, error: 'Failed to load playbook base' }
+    }
+  }
+
   private async findMigrationDuplicate(
     ownerId: string,
     businessId: string,
@@ -772,14 +1150,10 @@ export class BrandPlaybookService {
 
   private applyLegacyPayload(
     draft: BrandPlaybook,
-    legacy: { companyInformation?: unknown, brandDetails?: unknown },
+    legacy: { companyInformation?: unknown, brandDetails?: unknown, targetAudience?: unknown },
   ): void {
-    const companyInformation = stringField(legacy.companyInformation)
-    if (companyInformation && !draft.positioning.problem) {
-      draft.positioning.problem = companyInformation
-    }
-    applyLegacyBrandDetails(draft, legacy.brandDetails)
-    draft.sources = [...draft.sources, { label: 'legacy_entity_details', kind: 'legacy', verified: false, detail: '' }]
+    applyFullBusinessDetails(draft, legacy)
+    ensureSource(draft, 'legacy_entity_details', 'legacy')
   }
 
   private async stampMigration(
@@ -799,7 +1173,7 @@ export class BrandPlaybookService {
     userId: string,
     businessId: string,
     ownerId: string,
-    legacy: { companyInformation?: unknown, brandDetails?: unknown },
+    legacy: { companyInformation?: unknown, brandDetails?: unknown, targetAudience?: unknown },
     fingerprint: string,
     event?: H3Event,
   ): Promise<ServiceResponse<PlaybookEdition>> {
@@ -929,16 +1303,8 @@ export class BrandPlaybookService {
     }
   }
 
-  private parseLegacyPayload(raw: string): { companyInformation?: unknown, brandDetails?: unknown } {
-    try {
-      const parsed: unknown = JSON.parse(raw)
-      if (parsed && typeof parsed === 'object') {
-        return parsed as { companyInformation?: unknown, brandDetails?: unknown }
-      }
-      return { companyInformation: raw }
-    } catch {
-      return { companyInformation: raw }
-    }
+  private parseLegacyPayload(raw: string): { companyInformation?: unknown, brandDetails?: unknown, targetAudience?: unknown } {
+    return parseBusinessDetailsPayload(raw)
   }
 
   async publish(

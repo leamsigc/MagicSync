@@ -167,6 +167,7 @@ Return JSON matching the schema. Make every word count — this carousel should 
           businessId: body.businessId ?? body.business_id ?? null,
           useBusinessContext: body.useBusinessContext === true || body.use_business_context === true,
           event,
+          log,
         });
 
         // Basic sanity: if LLM returned wrong count, clamp

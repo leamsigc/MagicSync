@@ -1,49 +1,94 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
+import { mockAuthSession } from '../fixtures'
+
+function sse(events: Array<Record<string, unknown>>) {
+  return events.map(e => `data: ${JSON.stringify(e)}\n\n`).join('')
+}
+
+async function mockBusinessAndThreads(page: Page) {
+  await page.route('**/api/v1/business', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ data: [{ id: 'biz-1', name: 'Test Bakery' }] }),
+    })
+  })
+  await page.route('**/api/ai-tools/chat/threads', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([]),
+    })
+  })
+}
 
 test.describe('Chat Messaging', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/app/ai-tools/chat')
+    await mockAuthSession(page)
+    await mockBusinessAndThreads(page)
+    await page.goto('/app/chat')
   })
 
   test('should send a message and display user message', async ({ page }) => {
-    // Mock the chat API
-    await page.route('/api/ai-tools/chat', async (route) => {
+    await page.route('**/api/v1/agent/chat', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'text/event-stream',
-        body: 'data: {"content":"Hello!","done":false}\n\ndata: {"content":"","done":true}\n\n',
+        body: sse([
+          { type: 'text.delta', id: 's:1', delta: 'Hello! ' },
+          { type: 'message.completed', id: 's:2', sessionId: 'x', threadId: 't-1', content: 'Hello!' },
+        ]),
       })
     })
 
-    const chatInput = page.getByPlaceholder('Ask me anything about your social media strategy...')
+    const chatInput = page.getByPlaceholder('Tell me what you need...')
     await chatInput.fill('Hello AI')
     await chatInput.press('Enter')
 
-    // Check user message appears
     await expect(page.getByText('Hello AI').first()).toBeVisible()
   })
 
-  test('should display AI response after sending', async ({ page }) => {
-    // Mock the chat API with streaming response
-    await page.route('/api/ai-tools/chat', async (route) => {
+  test('should stream the assistant response after sending', async ({ page }) => {
+    await page.route('**/api/v1/agent/chat', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'text/event-stream',
-        body: 'data: {"content":"Hi there!","done":false}\n\ndata: {"content":" How can I help?","done":false}\n\ndata: {"content":"","done":true}\n\n',
+        body: sse([
+          { type: 'text.delta', id: 's:1', delta: 'Hi there! ' },
+          { type: 'text.delta', id: 's:2', delta: 'How can I help?' },
+          { type: 'message.completed', id: 's:3', sessionId: 'x', threadId: 't-1', content: 'Hi there! How can I help?' },
+        ]),
       })
     })
 
-    const chatInput = page.getByPlaceholder('Ask me anything about your social media strategy...')
-    await chatInput.fill('Hello')
-    await chatInput.press('Enter')
+    await page.getByPlaceholder('Tell me what you need...').fill('Hello')
+    await page.getByPlaceholder('Tell me what you need...').press('Enter')
 
-    // Wait for AI response
     await expect(page.getByText('Hi there! How can I help?')).toBeVisible({ timeout: 10000 })
   })
 
-  test('should handle API error gracefully', async ({ page }) => {
-    // Mock the chat API to return an error
-    await page.route('/api/ai-tools/chat', async (route) => {
+  test('should show the tool step badge when the agent uses a tool', async ({ page }) => {
+    await page.route('**/api/v1/agent/chat', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream',
+        body: sse([
+          { type: 'tool.started', id: 's:1', toolCallId: 'tool-1', toolName: 'execute_goal', args: {} },
+          { type: 'tool.finished', id: 's:2', toolCallId: 'tool-1', toolName: 'execute_goal', isError: false, result: 'done' },
+          { type: 'text.delta', id: 's:3', delta: 'Working on it.' },
+          { type: 'message.completed', id: 's:4', sessionId: 'x', threadId: 't-1', content: 'Working on it.' },
+        ]),
+      })
+    })
+
+    await page.getByPlaceholder('Tell me what you need...').fill('Help me get more customers.')
+    await page.getByPlaceholder('Tell me what you need...').press('Enter')
+
+    await expect(page.getByText('Execute goal')).toBeVisible({ timeout: 10000 })
+  })
+
+  test('should surface API errors inside the conversation', async ({ page }) => {
+    await page.route('**/api/v1/agent/chat', async (route) => {
       await route.fulfill({
         status: 500,
         contentType: 'application/json',
@@ -51,68 +96,119 @@ test.describe('Chat Messaging', () => {
       })
     })
 
-    const chatInput = page.getByPlaceholder('Ask me anything about your social media strategy...')
-    await chatInput.fill('Test message')
-    await chatInput.press('Enter')
+    await page.getByPlaceholder('Tell me what you need...').fill('Test message')
+    await page.getByPlaceholder('Tell me what you need...').press('Enter')
 
-    // Check error message appears
-    await expect(page.getByText('Something went wrong')).toBeVisible()
+    await expect(page.getByText('No response received. Please try again.')).toBeVisible({ timeout: 10000 })
   })
 
-  test('should clear messages when clicking new chat', async ({ page }) => {
-    // Mock the chat API
-    await page.route('/api/ai-tools/chat', async (route) => {
+  test('should clear messages when starting a new chat', async ({ page }) => {
+    await page.route('**/api/v1/agent/chat', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'text/event-stream',
-        body: 'data: {"content":"Response","done":false}\n\ndata: {"content":"","done":true}\n\n',
+        body: sse([
+          { type: 'text.delta', id: 's:1', delta: 'Response' },
+          { type: 'message.completed', id: 's:2', sessionId: 'x', threadId: 't-1', content: 'Response' },
+        ]),
       })
     })
 
-    // Send a message
-    const chatInput = page.getByPlaceholder('Ask me anything about your social media strategy...')
-    await chatInput.fill('Test')
-    await chatInput.press('Enter')
-
-    // Wait for message
+    await page.getByPlaceholder('Tell me what you need...').fill('Test')
+    await page.getByPlaceholder('Tell me what you need...').press('Enter')
     await expect(page.getByText('Response')).toBeVisible()
 
-    // Click new chat
-    await page.getByRole('button', { name: 'New Chat' }).click()
+    await page.getByRole('button', { name: 'New chat' }).click()
 
-    // Check messages are cleared
     await expect(page.getByText('Test')).not.toBeVisible()
     await expect(page.getByText('Response')).not.toBeVisible()
-    await expect(page.getByText('Welcome to MagicSync AI')).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'What do you need help with?' })).toBeVisible()
   })
 
-  test('should use suggestion button to send message', async ({ page }) => {
-    // Mock the chat API
-    await page.route('/api/ai-tools/chat', async (route) => {
+  test('should send the suggestion text when clicking a suggestion', async ({ page }) => {
+    await page.route('**/api/v1/agent/chat', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'text/event-stream',
-        body: 'data: {"content":"Creating post...","done":false}\n\ndata: {"content":"","done":true}\n\n',
+        body: sse([
+          { type: 'text.delta', id: 's:1', delta: 'Creating post...' },
+          { type: 'message.completed', id: 's:2', sessionId: 'x', threadId: 't-1', content: 'Creating post...' },
+        ]),
       })
     })
 
-    await page.getByRole('button', { name: 'Create a post for Twitter' }).click()
+    await page.getByRole('button', { name: 'Make me a great post for Facebook.' }).click()
 
-    // Check the suggestion message was sent
-    await expect(page.getByText('Create a post for Twitter').first()).toBeVisible()
+    await expect(page.getByText('Make me a great post for Facebook.').first()).toBeVisible()
   })
 
-  test('should show error when network fails', async ({ page }) => {
-    // Mock network failure
-    await page.route('/api/ai-tools/chat', async (route) => {
-      await route.abort('failed')
+  test('should send the selected agent, tools and skills with the message', async ({ page }) => {
+    await page.route('**/api/v1/agent/capabilities?*', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          agents: [{ name: 'writer', description: 'Writes drafts.', tools: ['write_post', 'retrieve'] }],
+          tools: [
+            { name: 'write_post', group: 'content', description: 'Draft a post.' },
+            { name: 'retrieve', group: 'research', description: 'Search knowledge.' },
+          ],
+          skills: {
+            bundled: [{ slug: 'content-writer', name: 'content-writer', description: 'Write posts.', scope: 'global' }],
+            registered: [],
+          },
+        }),
+      })
+    })
+    let requestBody: Record<string, unknown> | null = null
+    await page.route('**/api/v1/agent/chat', async (route) => {
+      requestBody = await route.request().postDataJSON() as Record<string, unknown>
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream',
+        body: sse([
+          { type: 'text.delta', id: 's:1', delta: 'Draft ready.' },
+          { type: 'message.completed', id: 's:2', sessionId: 'x', threadId: 't-1', content: 'Draft ready.' },
+        ]),
+      })
     })
 
-    const chatInput = page.getByPlaceholder('Ask me anything about your social media strategy...')
-    await chatInput.fill('Test')
-    await chatInput.press('Enter')
+    await page.goto('/app/chat')
+    await page.getByRole('button', { name: 'Options' }).click()
+    await page.locator('footer').getByRole('button', { name: 'Show popup' }).click()
+    await page.getByRole('option', { name: 'Writer' }).click()
+    await page.getByRole('checkbox', { name: 'retrieve' }).click()
+    await page.getByRole('checkbox', { name: 'content-writer' }).click()
+    await page.getByPlaceholder('Tell me what you need...').fill('Write a tip.')
+    await page.getByPlaceholder('Tell me what you need...').press('Enter')
+    await expect(page.getByText('Draft ready.')).toBeVisible({ timeout: 10000 })
 
-    // Check error state
-    await expect(page.getByText('Something went wrong')).toBeVisible()
+    expect(requestBody).toMatchObject({
+      agentName: 'writer',
+      allowedTools: ['write_post'],
+      skillSlugs: ['content-writer'],
+    })
+  })
+
+  test('should expand a tool row to show its output', async ({ page }) => {
+    await page.route('**/api/v1/agent/chat', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream',
+        body: sse([
+          { type: 'tool.started', id: 's:1', toolCallId: 'tool-1', toolName: 'execute_goal', args: {} },
+          { type: 'tool.finished', id: 's:2', toolCallId: 'tool-1', toolName: 'execute_goal', isError: false, result: 'goal-output-123' },
+          { type: 'text.delta', id: 's:3', delta: 'Done.' },
+          { type: 'message.completed', id: 's:4', sessionId: 'x', threadId: 't-1', content: 'Done.' },
+        ]),
+      })
+    })
+
+    await page.getByPlaceholder('Tell me what you need...').fill('Help me get more customers.')
+    await page.getByPlaceholder('Tell me what you need...').press('Enter')
+    await expect(page.getByText('Execute goal')).toBeVisible({ timeout: 10000 })
+
+    await page.getByRole('button', { name: 'Execute goal' }).click()
+    await expect(page.getByText('goal-output-123')).toBeVisible()
   })
 })

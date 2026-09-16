@@ -72,6 +72,7 @@ Return JSON matching the schema.`;
         businessId: body.businessId ?? body.business_id ?? null,
         useBusinessContext: body.useBusinessContext === true || body.use_business_context === true,
         event,
+        log,
       });
 
       return {

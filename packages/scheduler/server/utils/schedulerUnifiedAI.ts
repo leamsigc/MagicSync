@@ -25,6 +25,7 @@
  */
 
 import { generateText, generateObject, type LanguageModelV1 } from 'ai';
+import type { RequestLogger } from 'evlog';
 import { google } from '@ai-sdk/google';
 import { anthropic } from '@ai-sdk/anthropic';
 import { openai } from '@ai-sdk/openai';
@@ -32,6 +33,7 @@ import { z } from 'zod';
 import type { H3Event } from 'h3';
 import { userLlmConfigService } from '#layers/BaseDB/server/services/user-llm-config.service';
 import { businessContextResolver, contextErrorStatus } from '#layers/BaseDB/server/services/business-context-resolver.service';
+import { wrapAiModel } from '#layers/BaseShared/server/utils/evlog';
 
 // System default configuration
 const SYSTEM_DEFAULT_PROVIDER = 'google';
@@ -147,6 +149,8 @@ export interface SchedulerGenerateTextOptions extends SchedulerBrandGrounding {
   provider?: string;
   /** User ID to look up their configured AI provider */
   userId?: string;
+  /** Request logger — when provided, token/tool metrics are captured onto the wide event via evlog. */
+  log?: RequestLogger;
 }
 
 /**
@@ -167,6 +171,8 @@ export interface SchedulerGenerateObjectOptions<T extends z.ZodSchema> extends S
   provider?: string;
   /** User ID to look up their configured AI provider */
   userId?: string;
+  /** Request logger — when provided, token/tool metrics are captured onto the wide event via evlog. */
+  log?: RequestLogger;
 }
 
 /**
@@ -222,6 +228,7 @@ export const schedulerUnifiedAI = {
       model: modelOverride,
       provider: providerOverride,
       userId,
+      log,
     } = options;
 
     const config = await resolveConfig(userId);
@@ -232,7 +239,7 @@ export const schedulerUnifiedAI = {
     const brand = await resolveBrandPrompt(userId, options);
 
     const { text } = await generateText({
-      model: aiModel,
+      model: wrapAiModel(log, aiModel),
       system: withBrandPrefix(systemPrompt, brand.prefix),
       prompt,
       temperature,
@@ -255,6 +262,7 @@ export const schedulerUnifiedAI = {
       model: modelOverride,
       provider: providerOverride,
       userId,
+      log,
     } = options;
 
     const config = await resolveConfig(userId);
@@ -265,7 +273,7 @@ export const schedulerUnifiedAI = {
     const brand = await resolveBrandPrompt(userId, options);
 
     const { object } = await generateObject({
-      model: aiModel,
+      model: wrapAiModel(log, aiModel),
       system: withBrandPrefix(systemPrompt, brand.prefix),
       schema,
       prompt,

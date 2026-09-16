@@ -4,6 +4,7 @@ Lookup table for all pattern files in this directory. Check here before starting
 
 | Pattern | Use when |
 |---------|----------|
+| [agentic-goal-layer.md](agentic-goal-layer.md) | Adding goal skills, extending the orchestrator, approval gates, goal-run persistence |
 | [add-endpoint.md](add-endpoint.md) | Adding a new API endpoint to a layer package |
 | [add-service.md](add-service.md) | Adding a new service class in the db package |
 | [add-page.md](add-page.md) | Adding a new page in a layer package |
@@ -23,6 +24,8 @@ Lookup table for all pattern files in this directory. Check here before starting
 | [platform-thread-formatting.md](platform-thread-formatting.md) | Splitting long posts into per-platform threads (threadSplitter, platform overrides, comment length validation) |
 | [ai-extraction-streaming.md](ai-extraction-streaming.md) | Long-running AI extraction endpoints — NDJSON progress streaming, parallel generateObject calls, backend-driven loaders |
 | [theme-tokens.md](theme-tokens.md) | Fixing UI that breaks in light/dark mode — hardcoded colors → Nuxt UI semantic tokens |
+| [color-mode-assets.md](color-mode-assets.md) | Hydration attribute mismatch from color-mode-driven `src`/attributes — render both light/dark variants and let CSS choose |
+| [dev-hints-triage.md](dev-hints-triage.md) | `@nuxt/hints` console noise (`hints:hydration`, `htmlValidate`, `lazyLoad`) — real hydration/markup bugs vs. dev-only diagnostics |
 | [tool-control-bar.md](tool-control-bar.md) | Camera-style bottom control bar for tools (`/tools/*`) — segmented mode, scrubbable dials, icon cluster popovers, yellow primary pill |
 | [figma-editor-refresh.md](figma-editor-refresh.md) | Figma-style refresh of a `/tools/*` canvas editor — top bar, icon rail, stage, properties panel with tokens, i18n, AI worker UX |
 | [carousel-deck-templates.md](carousel-deck-templates.md) | Carousel deck templates (palette/font/pattern per deck), multi-image slide layouts, and the all-pages template gallery |
@@ -44,3 +47,4 @@ Lookup table for all pattern files in this directory. Check here before starting
 | [board-stage-agents.md](board-stage-agents.md) | Wiring content-board column drops to agent runs (research on drop, generate on drop) |
 | [port-not-ported.md](port-not-ported.md) | Replacing a NOT_PORTED 501 stub with a native Nuxt implementation |
 | [nuxt-ui-chat.md](nuxt-ui-chat.md) | Migrating a bespoke chat UI onto the Nuxt UI chat kit while keeping a custom streaming backend |
+| [evlog-observability.md](evlog-observability.md) | Wiring evlog request logging, AI SDK telemetry, Better Auth identity, and dual-write audits |

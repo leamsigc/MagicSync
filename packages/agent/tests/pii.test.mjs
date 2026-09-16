@@ -8,7 +8,7 @@ import { initTestDb, insertUser, insertBusiness } from './setup.mjs'
 import { startStubProvider } from './stub-provider.mjs'
 import { writeStubModelsConfig } from './stub-models.mjs'
 import { applyRunApiKey, createAgentModelRuntime } from '../server/utils/pi-runtime.ts'
-import { anonymizeWithRegex, detectRegex, restore, safeCutPoint, SurrogateRestorer, isPiiReady } from '../server/utils/pii.ts'
+import { anonymizeWithRegex, detectRegex, restore, safeCutPoint, SurrogateRestorer, isPiiReady } from '../server/agent/plugins/pii/detect.ts'
 
 // T09 — PII private mode: regex round trip, streaming restore, fail-closed, and
 // provider payloads that contain no raw PII.

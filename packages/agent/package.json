@@ -22,11 +22,13 @@
     "@local-monorepo/db": "workspace:*",
     "@local-monorepo/shared": "workspace:*",
     "ai": "catalog:",
+    "evlog": "catalog:",
     "dayjs": "catalog:",
     "mammoth": "catalog:",
     "scrapegraph-js": "catalog:",
     "typebox": "catalog:",
-    "unpdf": "catalog:"
+    "unpdf": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@libsql/client": "catalog:",

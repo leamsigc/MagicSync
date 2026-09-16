@@ -381,3 +381,4 @@ __marimo__/
 .clinerules
 # Local CLI binaries (yt-dlp from scripts/install-ytdlp.sh)
 .bin/
+.playwright-*

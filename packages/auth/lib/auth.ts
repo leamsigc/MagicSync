@@ -1,6 +1,7 @@
 import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service';
 import { sendOrganizationInvitationEmail } from '#layers/BaseEmail/server/utils/email';
 import { APIError, betterAuth } from 'better-auth'
+import { createLogger } from 'evlog'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { apiKey } from "@better-auth/api-key"
 import { createAuthMiddleware } from "better-auth/api"
@@ -28,6 +29,22 @@ const mapGoogleProfileToName = (profile: any) => {
 }
 
 
+const authLog = createLogger()
+
+function serializeAuthArgs(args: unknown[]): string[] {
+  return args.map((arg) => {
+    if (arg instanceof Error) return `${arg.name}: ${arg.message}`;
+    if (arg && typeof arg === 'object') return JSON.stringify(arg, Object.getOwnPropertyNames(arg));
+    return String(arg);
+  });
+}
+
+function forwardAuthLog(level: string, message: string, args: unknown[]): void {
+  const payload = { component: 'better-auth', level, message, args: serializeAuthArgs(args) };
+  if (level === 'error') authLog.error(payload)
+  else authLog.info(payload)
+}
+
 export const auth = betterAuth({
   baseURL: process.env.NUXT_BETTER_AUTH_URL || 'http://localhost:3000',
   logger: {
@@ -35,13 +52,8 @@ export const auth = betterAuth({
     disableColors: false,
     level: 'debug',
     log: (level, message, ...args) => {
-      // Custom logging implementation
-      const serializedArgs = args.map((arg) => {
-        if (arg instanceof Error) return `${arg.name}: ${arg.message}`;
-        if (arg && typeof arg === 'object') return JSON.stringify(arg, Object.getOwnPropertyNames(arg));
-        return String(arg);
-      });
-      console.info(`[${level}] ${message}`, ...serializedArgs);
+      // Into the evlog pipeline (same console sink, structured wide events)
+      forwardAuthLog(level, message, args);
     }
   },
   trustedOrigins: (() => {

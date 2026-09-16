@@ -12,8 +12,10 @@ import { google } from '@ai-sdk/google'
 import { anthropic } from '@ai-sdk/anthropic'
 import { openai } from '@ai-sdk/openai'
 import type { H3Event } from 'h3'
+import type { RequestLogger } from 'evlog'
 import { userLlmConfigService } from '#layers/BaseDB/server/services/user-llm-config.service'
 import { businessContextResolver, contextErrorStatus } from '#layers/BaseDB/server/services/business-context-resolver.service'
+import { wrapAiModel } from '#layers/BaseShared/server/utils/evlog'
 
 const SYSTEM_DEFAULT_PROVIDER = 'google'
 const SYSTEM_DEFAULT_MODEL = 'gemini-2.5-flash'
@@ -132,8 +134,10 @@ export const toolsUnifiedAI = {
     prompt: string
     temperature?: number
     userId?: string
+    /** Request logger — when provided, token metrics are captured onto the wide event via evlog. */
+    log?: RequestLogger
   } & ToolsBrandGrounding): Promise<{ text: string, contextEditionId?: string | null }> {
-    const { systemPrompt, prompt, temperature = DEFAULT_TEMPERATURE, userId } = options
+    const { systemPrompt, prompt, temperature = DEFAULT_TEMPERATURE, userId, log } = options
 
     const config = await resolveConfig(userId)
     const aiModel = createModel(config.provider, config.model, config.apiKey, config.apiBaseUrl)
@@ -141,7 +145,7 @@ export const toolsUnifiedAI = {
     const system = brand.prefix ? `${brand.prefix}${systemPrompt ?? ''}` : systemPrompt
 
     const { text } = await generateText({
-      model: aiModel,
+      model: wrapAiModel(log, aiModel),
       system,
       prompt,
       temperature,

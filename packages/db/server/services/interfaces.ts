@@ -35,7 +35,9 @@ import type {
   UpdatePostData,
 } from './post.service'
 import type {
+  BusinessDeletePreview,
   CreateBusinessProfileData,
+  DeleteBusinessOptions,
   UpdateBusinessProfileData,
 } from './business-profile.service'
 import type {
@@ -126,7 +128,8 @@ export type BusinessProfileServiceType = {
   findAll: (userId: string) => Promise<ServiceResponse<BusinessProfile[]>>
   update: (id: string, userId: string, data: UpdateBusinessProfileData) => Promise<ServiceResponse<BusinessProfile>>
   updateRaw: (id: string, data: UpdateBusinessProfileData) => Promise<ServiceResponse<BusinessProfile>>
-  delete: (id: string, userId: string) => Promise<ServiceResponse<void>>
+  delete: (id: string, userId: string, options?: DeleteBusinessOptions) => Promise<ServiceResponse<void>>
+  getDeletePreview: (id: string, userId: string) => Promise<ServiceResponse<BusinessDeletePreview>>
   deleteRaw: (id: string) => Promise<ServiceResponse<void>>
   setActive: (userId: string, data: { id: string, isActive: boolean }) => Promise<ServiceResponse<BusinessProfile>>
   getActive: (userId: string) => Promise<ServiceResponse<BusinessProfile>>

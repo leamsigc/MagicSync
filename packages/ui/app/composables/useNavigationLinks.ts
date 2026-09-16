@@ -98,20 +98,21 @@ export const useNavigationLinks = () => {
       active: route.path.startsWith(`/playground`)
     },
     {
+      label: t('navigation.assistant'),
+      icon: 'i-lucide-message-square',
+      to: `/app/chat`,
+      active: route.path.startsWith(`/app/chat`)
+    },
+    {
       label: t('navigation.aiTools'),
       icon: 'i-lucide-sparkles',
-      to: `/app/ai-tools/chat`,
+      to: `/app/chat`,
       active: route.path.startsWith(`/app/ai-tools`),
       children: [
         {
           label: 'Chat',
-          to: `/app/ai-tools/chat`,
+          to: `/app/chat`,
           icon: 'i-lucide-message-square'
-        },
-        {
-          label: 'Assets',
-          to: `/app/ai-tools/chat/assets`,
-          icon: 'i-lucide-file-image'
         },
         {
           label: 'Knowledge',
@@ -135,7 +136,7 @@ export const useNavigationLinks = () => {
         },
         {
           label: 'Growth Strategy',
-          to: `/app/ai-tools/growth-stratergy`,
+          to: `/app/tools/growth-stratergy`,
           icon: 'i-lucide-rocket'
         },
       ]

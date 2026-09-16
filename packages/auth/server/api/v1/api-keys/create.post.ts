@@ -53,7 +53,7 @@ export default defineEventHandler(async (event) => {
     targetId: apiKey.id,
     status: 'success',
     details: `Created API key "${name}" for business "${businessResult.data.name}"`
-  })
+  }, { log })
 
   return {
     id: apiKey.id,

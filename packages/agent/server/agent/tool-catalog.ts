@@ -1,6 +1,6 @@
 export interface AgentToolInfo {
   name: string
-  group: 'research' | 'content' | 'media' | 'delivery' | 'board' | 'skills' | 'safety'
+  group: 'research' | 'content' | 'media' | 'delivery' | 'board' | 'skills' | 'safety' | 'orchestration'
   description: string
 }
 
@@ -32,6 +32,7 @@ export const AGENT_TOOL_CATALOG: AgentToolInfo[] = [
   { name: 'load_skill', group: 'skills', description: 'Load a bundled skill body or a registered skill definition.' },
   { name: 'save_skill', group: 'skills', description: 'Save a draft skill for human review.' },
   { name: 'subagent', group: 'skills', description: 'Delegate a task to a predefined specialist agent in an isolated context.' },
+  { name: 'execute_goal', group: 'orchestration', description: 'Plan and execute a business-owner goal end to end with verified steps.' },
   { name: 'pii_scan', group: 'safety', description: 'Detect or anonymize personal data before external side effects.' },
 ]
 

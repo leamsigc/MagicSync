@@ -57,6 +57,9 @@ server and hydrates consistently to the client.
 
 - `insertBefore` + mismatch + 500 with clean APIs → grep module-scope
   `ref`/`reactive` in the render tree first.
+- Attribute mismatch (not `insertBefore`), e.g.
+  `Html`/`src` rendered on server ≠ expected on client → different root cause:
+  color-mode-driven attributes. See `patterns/color-mode-assets.md`.
 
 ## Update Scaffold
 - [ ] Update `.claude/ROUTER.md` "Current Project State" if what's working/not built has changed

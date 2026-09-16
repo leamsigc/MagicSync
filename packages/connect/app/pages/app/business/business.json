@@ -64,8 +64,25 @@
     "actions": {
       "edit": "Edit",
       "playbook": "Playbook",
+      "google_business": "Google Business",
       "close": "Close",
       "delete": "Delete"
+    },
+    "delete_modal": {
+      "title": "Delete business",
+      "description": "Choose what happens to connected social accounts before removal.",
+      "removed_hint": "Deleting {name} permanently removes its posts, pipelines, content and publishing connections.",
+      "count_posts": "{count} posts",
+      "count_pipelines": "{count} pipelines",
+      "count_content": "{count} content items",
+      "count_connections": "{count} publishing connections",
+      "social_section": "Connected social accounts ({count})",
+      "target_section": "Move social accounts to",
+      "no_targets_hint": "No other business exists yet. Create one first, then move the accounts there.",
+      "new_business_name": "New business name",
+      "new_business_name_required": "Enter a name for the new business first.",
+      "create_business": "Create business",
+      "select_target_required": "Select where the social accounts should move."
     },
     "tabs": {
       "business_details": "Business Details",
@@ -211,8 +228,25 @@
     "actions": {
       "edit": "Modifier",
       "playbook": "Playbook",
+      "google_business": "Google Business",
       "close": "Fermer",
       "delete": "Supprimer"
+    },
+    "delete_modal": {
+      "title": "Supprimer l'entreprise",
+      "description": "Choisissez où déplacer les comptes sociaux avant la suppression.",
+      "removed_hint": "La suppression de {name} retire définitivement ses posts, pipelines, contenus et connexions.",
+      "count_posts": "{count} posts",
+      "count_pipelines": "{count} pipelines",
+      "count_content": "{count} contenus",
+      "count_connections": "{count} connexions",
+      "social_section": "Comptes sociaux connectés ({count})",
+      "target_section": "Déplacer les comptes vers",
+      "no_targets_hint": "Aucune autre entreprise pour l'instant. Créez-en une d'abord, puis déplacez-y les comptes.",
+      "new_business_name": "Nom de la nouvelle entreprise",
+      "new_business_name_required": "Saisissez d'abord un nom pour la nouvelle entreprise.",
+      "create_business": "Créer l'entreprise",
+      "select_target_required": "Sélectionnez où déplacer les comptes sociaux."
     },
     "wizard": {
       "title": "Create New Project",
@@ -362,8 +396,25 @@
     "actions": {
       "edit": "Editar",
       "playbook": "Playbook",
+      "google_business": "Google Business",
       "close": "Cerrar",
       "delete": "Eliminar"
+    },
+    "delete_modal": {
+      "title": "Eliminar negocio",
+      "description": "Elige dónde mover las cuentas sociales antes de eliminar.",
+      "removed_hint": "Eliminar {name} borra sus posts, pipelines, contenidos y conexiones.",
+      "count_posts": "{count} posts",
+      "count_pipelines": "{count} pipelines",
+      "count_content": "{count} contenidos",
+      "count_connections": "{count} conexiones",
+      "social_section": "Cuentas sociales conectadas ({count})",
+      "target_section": "Mover cuentas a",
+      "no_targets_hint": "Aún no hay otro negocio. Crea uno primero y mueve allí las cuentas.",
+      "new_business_name": "Nombre del nuevo negocio",
+      "new_business_name_required": "Escribe primero un nombre para el nuevo negocio.",
+      "create_business": "Crear negocio",
+      "select_target_required": "Selecciona dónde mover las cuentas sociales."
     },
     "wizard": {
       "title": "Create New Project",
@@ -513,8 +564,25 @@
     "actions": {
       "edit": "Bearbeiten",
       "playbook": "Playbook",
+      "google_business": "Google Business",
       "close": "Schließen",
       "delete": "Löschen"
+    },
+    "delete_modal": {
+      "title": "Unternehmen löschen",
+      "description": "Wähle, wohin verbundene Social-Konten verschoben werden.",
+      "removed_hint": "{name} löschen entfernt Posts, Pipelines, Inhalte und Verbindungen.",
+      "count_posts": "{count} Posts",
+      "count_pipelines": "{count} Pipelines",
+      "count_content": "{count} Inhalte",
+      "count_connections": "{count} Verbindungen",
+      "social_section": "Verbundene Konten ({count})",
+      "target_section": "Konten verschieben nach",
+      "no_targets_hint": "Noch kein weiteres Unternehmen. Erstelle zuerst eines und verschiebe die Konten dorthin.",
+      "new_business_name": "Name des neuen Unternehmens",
+      "new_business_name_required": "Gib zuerst einen Namen für das neue Unternehmen ein.",
+      "create_business": "Unternehmen erstellen",
+      "select_target_required": "Wähle, wohin die Konten verschoben werden."
     },
     "wizard": {
       "title": "Create New Project",

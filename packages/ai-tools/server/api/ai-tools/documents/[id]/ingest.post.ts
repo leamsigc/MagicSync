@@ -17,7 +17,7 @@ export default defineEventHandler(async (event) => {
   }
   const doc = docResult.data
 
-  const embedder = await resolveEmbedder(user.id, '')
+  const embedder = await resolveEmbedder(user.id, '', { log })
   if (!embedder.success) {
     throw createError({ statusCode: 400, statusMessage: embedder.error, data: { code: embedder.code } })
   }

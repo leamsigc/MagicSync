@@ -130,7 +130,7 @@ export default defineEventHandler(async (event) => {
       userAgent: event.node.req.headers['user-agent'],
       status: 'success',
       details: JSON.stringify({ id: pageDetails.id, name: pageDetails.name, picture: pageDetails.picture, username: pageDetails.username }),
-    })
+    }, { log })
 
     log.info({ message: 'Social media page connected', platform, pageId, pageName: pageDetails.name })
 

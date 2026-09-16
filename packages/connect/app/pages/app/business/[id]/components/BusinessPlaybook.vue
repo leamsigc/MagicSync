@@ -476,7 +476,7 @@ const handleRefineQuiz = async () => {
   try {
     const answers = quizQuestions.value
       .filter(q => (quizAnswers.value[q.id] ?? '').trim().length > 0)
-      .map(q => ({ section: q.section, question: q.label, answer: quizAnswers.value[q.id].trim() }))
+      .map(q => ({ section: quizGroupFor(q.id, q.section), question: q.label, answer: quizAnswers.value[q.id].trim() }))
     const res = await $fetch<{ playbook?: Record<string, unknown> }>(
       `/api/v1/business/${businessId}/playbook/refine`,
       { method: 'POST', body: { answers, useBusinessContext: true } },

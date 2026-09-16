@@ -13,6 +13,7 @@ const IngestSchema = z.object({
 }).refine(value => Boolean(value.text || value.base64), { message: 'text or base64 is required' })
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event)
   const user = await checkUserIsLogin(event)
   const body = IngestSchema.parse(await readBody(event))
 
@@ -21,7 +22,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: accessErrorStatus(access.code), statusMessage: access.error })
   }
 
-  const embedder = await resolveEmbedder(user.id, body.businessId)
+  const embedder = await resolveEmbedder(user.id, body.businessId, { log })
   if (!embedder.success) {
     throw createError({ statusCode: 400, message: embedder.error })
   }

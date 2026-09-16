@@ -23,7 +23,7 @@ PII filtering, and video ingestion directly.
 | Tool backends | `server/utils/scrapegraph.ts` (default scraper), `server/utils/python-tools.ts` (sidecar proxy) |
 
 The content board UI lives in `packages/connect/app/pages/app/business/[id]/content.vue`;
-the chat UI in `packages/ai-tools/app/pages/app/ai-tools/chat/`.
+the chat UI in `packages/ai-tools/app/pages/app/chat/`.
 
 ## Commands
 

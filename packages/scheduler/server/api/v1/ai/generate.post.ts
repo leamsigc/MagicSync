@@ -60,6 +60,7 @@ export default defineLazyEventHandler(async () => {
         businessId: body.businessId ?? body.business_id ?? null,
         useBusinessContext: body.useBusinessContext === true || body.use_business_context === true,
         event,
+        log,
       });
 
       // For actions that return JSON arrays, parse them

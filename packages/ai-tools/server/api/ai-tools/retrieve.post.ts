@@ -3,12 +3,13 @@ import { documentIngestService } from '#layers/BaseDB/server/services/document-i
 import { resolveEmbedder } from '#layers/BaseAgent/server/utils/embeddings'
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event)
   const user = await checkUserIsLogin(event)
   const body = await readBody(event)
 
   if (!body?.query?.trim()) throw createError({ statusCode: 400, statusMessage: 'Query is required' })
 
-  const embedder = await resolveEmbedder(user.id, body.businessId ?? body.business_id ?? '')
+  const embedder = await resolveEmbedder(user.id, body.businessId ?? body.business_id ?? '', { log })
   if (!embedder.success) {
     throw createError({ statusCode: 400, statusMessage: embedder.error, data: { code: embedder.code } })
   }

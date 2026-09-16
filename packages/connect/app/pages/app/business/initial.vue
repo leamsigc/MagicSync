@@ -16,7 +16,7 @@ useHead({
 <template>
   <div>
     <BasePageHeader :title="t('title_initial')" :description="t('description_initial')" />
-    <BusinessInitial/>
+    <BusinessInitial />
   </div>
 </template>
 <style scoped></style>

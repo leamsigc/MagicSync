@@ -7,6 +7,9 @@ import { contentArtifactService } from '#layers/BaseDB/server/services/content-a
 import { contentBoardService } from '#layers/BaseDB/server/services/content-board.service'
 import { agentRunnerService } from '#layers/BaseAgent/server/services/agent-runner.service'
 import { buildAgentRunConfig, runConfigErrorStatus } from '#layers/BaseAgent/server/utils/run-config'
+import { AGENT_TOOL_NAMES } from '#layers/BaseAgent/server/agent/tool-catalog'
+import { BUNDLED_SKILLS } from '#layers/BaseAgent/server/agent/skills'
+import { PREDEFINED_AGENTS } from '#layers/BaseAgent/server/agent/agents'
 
 const ChatRequestSchema = z.object({
   businessId: z.string().min(1),
@@ -15,6 +18,10 @@ const ChatRequestSchema = z.object({
   sessionId: z.string().min(1).nullish(),
   cardId: z.string().min(1).nullish(),
   privateMode: z.boolean().optional(),
+  agentName: z.string().min(1).max(80).nullish(),
+  allowedTools: z.array(z.string().min(1).max(80)).max(40).nullish(),
+  skillSlugs: z.array(z.string().min(1).max(80)).max(12).nullish(),
+  registeredSkillIds: z.array(z.string().min(1).max(80)).max(12).nullish(),
 })
 
 type ChatRequest = z.infer<typeof ChatRequestSchema>
@@ -60,6 +67,7 @@ async function resolveThread(userId: string, body: ChatRequest) {
 }
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event)
   const user = await checkUserIsLogin(event)
   const body = ChatRequestSchema.parse(await readBody(event))
 
@@ -87,6 +95,15 @@ export default defineEventHandler(async (event) => {
   const supplement = body.cardId ? await cardSupplement(user.id, body.businessId, body.cardId, event) : null
   const systemContext = [runConfig.data.systemContext, supplement].filter(Boolean).join('\n\n')
 
+  const agentName = body.agentName && PREDEFINED_AGENTS.some(agent => agent.name === body.agentName)
+    ? body.agentName
+    : undefined
+  const toolNames = new Set(AGENT_TOOL_NAMES)
+  const allowedTools = body.allowedTools?.filter(tool => toolNames.has(tool))
+  const skillSlugs = new Set(BUNDLED_SKILLS.map(skill => skill.slug))
+  const extraSkillSlugs = body.skillSlugs?.filter(slug => skillSlugs.has(slug))
+  const extraRegisteredSkillIds = body.registeredSkillIds?.length ? body.registeredSkillIds : undefined
+
   const encoder = new TextEncoder()
   const stream = new ReadableStream({
     async start(controller) {
@@ -99,6 +116,10 @@ export default defineEventHandler(async (event) => {
         threadId: thread.data.id,
         sessionId: body.sessionId ?? null,
         text: body.message,
+        agentName,
+        allowedTools,
+        extraSkillSlugs,
+        extraRegisteredSkillIds,
         systemContext,
         provider: runConfig.data.provider,
         model: runConfig.data.modelId,
@@ -106,7 +127,8 @@ export default defineEventHandler(async (event) => {
         apiBaseUrl: runConfig.data.apiBaseUrl,
         modelRuntime: runConfig.data.runtime,
         privateMode: body.privateMode ?? false,
-        toolContext: { userId: user.id, businessId: body.businessId, event },
+        log,
+        toolContext: { userId: user.id, businessId: body.businessId, event, log },
       }, send)
       controller.close()
     },

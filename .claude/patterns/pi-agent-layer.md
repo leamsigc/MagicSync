@@ -92,6 +92,43 @@ API keys; credentials and model catalogs stay in memory.
 5. SQLite cascade assertions need `PRAGMA foreign_keys = ON` first
    (`client.execute`), even though inserts work without it.
 
+### Background pipelines + run logging
+
+1. Long pipelines live in one orchestrator class (`topic-batch.pipeline.ts`
+   `TopicBatchPipeline`: `start()` validates → run config → tracking run,
+   `execute()` runs the stages). The workflow service only delegates to
+   preserve its surface — never split one flow across services again.
+2. The route calls `start*` (persists an `agent_runs` row, returns `runId`)
+   and fires `execute*` without awaiting. The board polls `runs.get.ts`.
+3. `agentRunService.touch(runId, summary)` posts stage progress for polling;
+   `finish()` closes the run. `execute*` must catch everything and finish as
+   `failed` — a floating promise must never reject.
+4. Guarantee output with tiers, not hope: trend-scout agent → grounded
+   one-shot LLM (`generateWithLlm`) → deterministic `deriveIdeasFromBrief`.
+   Zero cards after all tiers is the only honest failure.
+5. Observability is evlog `useLogger` info events, never `console.*`:
+   `AgentRunInput.log` threads through runner → tool context. Log run
+   start/finish (tokens/tools/turns/duration), `pii_scan` findings as
+   type-counts with masked samples only (raw values never leave the tool),
+   PII screens at pipeline stage boundaries (counts only), and
+   predefined-action stages (research agent-vs-fallback, trend-scan
+   cards, idea tier used). Logging helpers must never throw — guard with
+   try/catch or `?.`.
+6. Node runs `.ts` in tests via native type stripping: no parameter
+   properties (`constructor(private x)`), no enums/namespaces in imported
+   server files.
+7. Put reusable intelligence (research → synthesis → generation → validation)
+   in `server/content-intelligence/` behind `createContentIntelligence(deps)`
+   / `generateContentIdeas()` — persistence-free, dependencies injected, no
+   imports from workflow services (one-directional: workflow → pipeline →
+   plugin). Orchestration and persistence stay in the pipeline.
+8. Consolidate PII in `server/agent/plugins/pii/` (detectors, `pii_scan`
+   tool, counts-only screen helper) following the pi extension factory
+   shape; the session guard stays in `server/agent/extensions/`. Model
+   prompts live in `server/agent/prompts/*.md` — never inline model-facing
+   prose in services. Delete dead orchestration (e.g. uncalled `runTrendScan`)
+   instead of leaving parallel implementations.
+
 ## Gotchas
 
 - `noTools: 'all'` alone still needs `tools: [<name>]` to enable a custom

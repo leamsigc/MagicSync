@@ -69,7 +69,7 @@
     },
     "empty": {
       "title": "No playbook yet",
-      "description": "Generate a first draft from the business profile. You can edit the JSON, save it as a draft and publish it when the voice feels right.",
+      "description": "Generate a first draft from business details, company information and brand identity. You can edit the JSON, save it as a draft and publish it when the voice feels right.",
       "cta": "Generate draft"
     },
     "toast": {
@@ -228,7 +228,7 @@
     },
     "empty": {
       "title": "Aún no hay manual",
-      "description": "Genera un primer borrador desde el perfil del negocio. Puedes editar el JSON, guardarlo como borrador y publicarlo cuando la voz suene bien.",
+      "description": "Genera un primer borrador desde los detalles del negocio, la información de la empresa y la identidad de marca. Puedes editar el JSON, guardarlo como borrador y publicarlo cuando la voz suene bien.",
       "cta": "Generar borrador"
     },
     "toast": {
@@ -387,7 +387,7 @@
     },
     "empty": {
       "title": "Noch kein Playbook",
-      "description": "Generiere einen ersten Entwurf aus dem Unternehmensprofil. Du kannst das JSON bearbeiten, als Entwurf speichern und veröffentlichen, wenn die Stimme passt.",
+      "description": "Generiere einen ersten Entwurf aus Unternehmensdetails, Firmeninformationen und Markenidentität. Du kannst das JSON bearbeiten, als Entwurf speichern und veröffentlichen, wenn die Stimme passt.",
       "cta": "Entwurf generieren"
     },
     "toast": {
@@ -546,7 +546,7 @@
     },
     "empty": {
       "title": "Aucun guide pour le moment",
-      "description": "Générez un premier brouillon depuis le profil du business. Vous pouvez modifier le JSON, l'enregistrer en brouillon et le publier quand la voix vous convient.",
+      "description": "Générez un premier brouillon depuis les détails du business, les informations de l'entreprise et l'identité de marque. Vous pouvez modifier le JSON, l'enregistrer en brouillon et le publier quand la voix vous convient.",
       "cta": "Générer un brouillon"
     },
     "toast": {

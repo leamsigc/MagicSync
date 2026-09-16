@@ -180,6 +180,7 @@ Return JSON matching the schema. Make every word count.`
           businessId: body.businessId ?? body.business_id ?? null,
           useBusinessContext: body.useBusinessContext === true || body.use_business_context === true,
           event,
+          log,
         })
 
         // Ensure unique key if missing

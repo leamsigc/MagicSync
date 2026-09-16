@@ -45,27 +45,18 @@ test.describe('AI context gating (T20)', () => {
   })
 
   test('streaming chat blocks branded calls without a current playbook', async () => {
-    const res = await authed.post('/api/ai-tools/chat', {
-      data: {
-        messages: [{ role: 'user', content: 'Hello' }],
-        business_id: business.id,
-        use_business_context: true,
-      },
+    const res = await authed.post('/api/v1/agent/chat', {
+      data: { businessId: business.id, message: 'Hello' },
     })
     expect(res.status()).toBe(400)
+    const body = await res.json() as { message?: string, statusMessage?: string }
+    expect(`${body.message ?? ''}${body.statusMessage ?? ''}`).toMatch(/Playbook/i)
   })
 
-  test('disabled context passes gating on every path', async () => {
-    const hooks = await authed.post('/api/ai-tools/social-media/generate-hooks', {
-      data: { topic: 'launch', platform: 'twitter' },
+  test('streaming chat hides foreign businesses', async () => {
+    const res = await authed.post('/api/v1/agent/chat', {
+      data: { businessId: 'no-such-business', message: 'Hello' },
     })
-    // Gating passed if we get past validation: only LLM/backend failures remain.
-    expect(hooks.status()).not.toBe(400)
-    const chat = await authed.post('/api/ai-tools/chat', {
-      data: { messages: [] },
-    })
-    expect(chat.status()).toBe(400)
-    const payload = await chat.json() as { message?: string, statusMessage?: string }
-    expect(`${payload.message ?? ''}${payload.statusMessage ?? ''}`).toMatch(/Messages are required/)
+    expect(res.status()).toBe(404)
   })
 })

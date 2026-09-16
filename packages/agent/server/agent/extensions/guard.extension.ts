@@ -1,5 +1,5 @@
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent'
-import { detectRegex } from '../../utils/pii'
+import { detectRegex } from '../plugins/pii/detect'
 
 export interface GuardAuditEntry {
   toolName: string

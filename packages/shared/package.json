@@ -8,5 +8,8 @@
     "./server/types": "./server/types/index.ts",
     "./server/types/errors": "./server/types/errors.ts",
     "./server/types/service.types": "./server/types/service.types.ts"
+  },
+  "dependencies": {
+    "evlog": "catalog:"
   }
 }

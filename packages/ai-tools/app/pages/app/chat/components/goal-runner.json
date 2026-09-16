@@ -1,0 +1,90 @@
+{
+  "en": {
+    "error": "Something went wrong",
+    "title": "Goals",
+    "description": "Describe a business goal. I plan the steps, run them with checks, and pause when you need to approve.",
+    "inputPlaceholder": "Help me get more customers...",
+    "start": "Run goal",
+    "approve": "Approve",
+    "reject": "Reject",
+    "cancel": "Cancel",
+    "refresh": "Refresh",
+    "newGoal": "New goal",
+    "waitingTitle": "Approval needed",
+    "stepsTitle": "Plan",
+    "summaryTitle": "Result",
+    "statuses": {
+      "pending": "Queued",
+      "running": "Running",
+      "completed": "Done",
+      "failed": "Failed",
+      "waiting_approval": "Waiting"
+    }
+  },
+  "fr": {
+    "error": "Quelque chose s'est mal passé",
+    "title": "Objectifs",
+    "description": "Décris un objectif. Je planifie les étapes, les exécute avec des vérifications, et je pause quand tu dois approuver.",
+    "inputPlaceholder": "Aide-moi à avoir plus de clients...",
+    "start": "Lancer l'objectif",
+    "approve": "Approuver",
+    "reject": "Refuser",
+    "cancel": "Annuler",
+    "refresh": "Actualiser",
+    "newGoal": "Nouvel objectif",
+    "waitingTitle": "Approbation requise",
+    "stepsTitle": "Plan",
+    "summaryTitle": "Résultat",
+    "statuses": {
+      "pending": "En attente",
+      "running": "En cours",
+      "completed": "Terminé",
+      "failed": "Échoué",
+      "waiting_approval": "En attente"
+    }
+  },
+  "es": {
+    "error": "Algo salió mal",
+    "title": "Objetivos",
+    "description": "Describe un objetivo. Planifico los pasos, los ejecuto con verificaciones, y pauso cuando debes aprobar.",
+    "inputPlaceholder": "Ayúdame a tener más clientes...",
+    "start": "Ejecutar objetivo",
+    "approve": "Aprobar",
+    "reject": "Rechazar",
+    "cancel": "Cancelar",
+    "refresh": "Actualizar",
+    "newGoal": "Nuevo objetivo",
+    "waitingTitle": "Aprobación necesaria",
+    "stepsTitle": "Plan",
+    "summaryTitle": "Resultado",
+    "statuses": {
+      "pending": "En cola",
+      "running": "En curso",
+      "completed": "Listo",
+      "failed": "Fallido",
+      "waiting_approval": "En espera"
+    }
+  },
+  "de": {
+    "error": "Etwas ist schief gelaufen",
+    "title": "Ziele",
+    "description": "Beschreibe ein Unternehmensziel. Ich plane die Schritte, führe sie mit Prüfungen aus und pausiere, wenn du approbieren musst.",
+    "inputPlaceholder": "Hilf mir, mehr Kunden zu bekommen...",
+    "start": "Ziel starten",
+    "approve": "Genehmigen",
+    "reject": "Ablehnen",
+    "cancel": "Abbrechen",
+    "refresh": "Aktualisieren",
+    "newGoal": "Neues Ziel",
+    "waitingTitle": "Genehmigung erforderlich",
+    "stepsTitle": "Plan",
+    "summaryTitle": "Ergebnis",
+    "statuses": {
+      "pending": "Wartend",
+      "running": "Läuft",
+      "completed": "Fertig",
+      "failed": "Fehlgeschlagen",
+      "waiting_approval": "Wartend"
+    }
+  }
+}

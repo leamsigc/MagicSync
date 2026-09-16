@@ -55,14 +55,14 @@ const props = withDefaults(defineProps<Props>(), {
   showHeroImage: true
 })
 
-const { badge, heroImage, showHeroImage } = toRefs(props)
-const mode = useColorMode()
+const { badge, heroImage, showHeroImage } = toRefs(props);
+const { value: themeMode } = useColorMode();
 </script>
 
 <template>
   <BaseTyndallEffect>
     <section class=" mx-auto">
-      <div class="grid place-items-center lg:max-w-screen-xl gap-8 mx-auto py-24 md:py-32">
+      <div class="grid place-items-center lg:max-w-7xl gap-8 mx-auto py-24 md:py-32">
         <div class="text-center space-y-8" v-motion-fade-visible>
           <UBadge class="text-sm py-2">
             <span class="mr-2">
@@ -108,8 +108,8 @@ const mode = useColorMode()
             class="absolute -top-6 right-12 w-[90%] h-12 lg:h-[80%] bg-primary dark:bg-primary/10 blur-3xl rounded-full img-shadow-animation" />
 
           <img
-            class="w-full lg:w-[1200px] mx-auto rounded-lg relative leading-none flex items-center border-0 shadow  img-border-animation"
-            :src="mode.value == 'light' ? heroImage.light : heroImage.dark" :alt="heroImage.alt" width="1300"
+            class="w-full lg:w-300 mx-auto rounded-lg relative leading-none flex items-center border-0 shadow  img-border-animation"
+            :src="themeMode === 'dark' ? heroImage.dark : heroImage.light" :alt="heroImage.alt" width="1300"
             height="900" loading="lazy" />
 
         </div>

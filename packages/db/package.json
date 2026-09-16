@@ -20,7 +20,8 @@
   "dependencies": {
     "@local-monorepo/shared": "workspace:*",
     "dayjs": "catalog:",
-    "drizzle-orm": "catalog:"
+    "drizzle-orm": "catalog:",
+    "evlog": "catalog:"
   },
   "devDependencies": {
     "@libsql/client": "catalog:",

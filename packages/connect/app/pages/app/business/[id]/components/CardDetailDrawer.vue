@@ -1,6 +1,7 @@
 <i18n src="../content.json"></i18n>
 <script setup lang="ts">
 import dayjs from 'dayjs'
+
 import { ACTION_ICONS, ACTION_I18N, BOARD_ACTIONS, PRIMARY_ACTION, stateColor, type BoardDetail, type BoardItem } from './board-types'
 
 const DRAFT_READY_STATES = ['drafting', 'changes_requested', 'review_required', 'approved', 'materializing', 'ready']
@@ -196,49 +197,38 @@ watch(() => props.detail?.artifact?.id, () => {
             <UBadge :color="stateColor(detail.item.state)" variant="subtle" size="sm">
               {{ t(`states.${detail.item.state}`) }}
             </UBadge>
-            <UBadge
-              v-for="platform in detail.item.platforms ?? []"
-              :key="platform"
-              color="neutral"
-              variant="outline"
-              size="sm"
-            >
+            <UBadge v-for="platform in detail.item.platforms ?? []" :key="platform" color="neutral" variant="outline"
+              size="sm">
               {{ platform }}
             </UBadge>
           </div>
           <h3 class="text-lg font-semibold">{{ detail.item.title }}</h3>
           <p class="text-xs text-muted">
-            {{ t('detail.createdAt') }} {{ formatDate(detail.item.createdAt) }} · {{ t('detail.updatedAt') }} {{ formatDate(detail.item.updatedAt) }}
+            {{ t('detail.createdAt') }} {{ formatDate(detail.item.createdAt) }} · {{ t('detail.updatedAt') }} {{
+              formatDate(detail.item.updatedAt) }}
           </p>
         </div>
 
         <!-- Next step: primary action + overflow menu + chat -->
-        <section v-if="primaryAction" class="rounded-xl border border-primary/20 bg-primary/5 p-4" v-motion-fade :duration="200">
+        <section v-if="primaryAction" class="rounded-xl border border-primary/20 bg-primary/5 p-4" v-motion-fade
+          :duration="200">
           <h4 class="mb-3 text-xs font-semibold uppercase tracking-wide text-primary/70">{{ t('detail.primary') }}</h4>
           <div class="flex flex-wrap items-center gap-2">
-            <UButton
-              size="lg"
-              :icon="ACTION_ICONS[primaryAction]"
-              color="primary"
-              variant="solid"
-              :loading="busyAction === primaryAction"
-              :data-testid="`board-action-${primaryAction}`"
-              @click="handleAction(primaryAction)"
-            >
+            <UButton size="lg" :icon="ACTION_ICONS[primaryAction]" color="primary" variant="solid"
+              :loading="busyAction === primaryAction" :data-testid="`board-action-${primaryAction}`"
+              @click="handleAction(primaryAction)">
               {{ actionLabel(primaryAction) }}
             </UButton>
-            <UDropdownMenu
-              v-if="secondaryActions.length > 0"
-              :items="secondaryActions.map(action => ({
-                label: actionLabel(action),
-                icon: ACTION_ICONS[action],
-                onSelect: () => handleAction(action),
-                disabled: busyAction !== null,
-              }))"
-            >
+            <UDropdownMenu v-if="secondaryActions.length > 0" :items="secondaryActions.map(action => ({
+              label: actionLabel(action),
+              icon: ACTION_ICONS[action],
+              onSelect: () => handleAction(action),
+              disabled: busyAction !== null,
+            }))">
               <UButton size="lg" color="neutral" variant="outline" icon="i-heroicons-ellipsis-horizontal" />
             </UDropdownMenu>
-            <UButton size="lg" color="neutral" variant="ghost" icon="i-heroicons-chat-bubble-left-right" :title="t('actions.openChat')" @click="emit('openChat', detail.item)" />
+            <UButton size="lg" color="neutral" variant="ghost" icon="i-heroicons-chat-bubble-left-right"
+              :title="t('actions.openChat')" @click="emit('openChat', detail.item)" />
           </div>
         </section>
 
@@ -247,32 +237,22 @@ watch(() => props.detail?.artifact?.id, () => {
           <template #header>
             <div class="flex items-center justify-between gap-2">
               <h4 class="text-sm font-semibold">{{ t('detail.brief') }}</h4>
-              <UButton
-                v-if="!editingBrief && detail.item.brief"
-                size="xs"
-                variant="ghost"
-                color="neutral"
-                icon="i-heroicons-pencil"
-                @click="handleStartEditBrief"
-              >
+              <UButton v-if="!editingBrief && detail.item.brief" size="xs" variant="ghost" color="neutral"
+                icon="i-heroicons-pencil" @click="handleStartEditBrief">
                 {{ t('detail.editBrief') }}
               </UButton>
             </div>
           </template>
           <div v-if="!editingBrief" class="space-y-2">
-            <UEditor
-              v-if="detail.item.brief"
-              :model-value="detail.item.brief"
-              :editable="false"
-              content-type="markdown"
-              class="w-full"
-            />
+            <UEditor v-if="detail.item.brief" :model-value="detail.item.brief" :editable="false" content-type="markdown"
+              class="w-full" />
             <p v-else class="text-xs text-muted">{{ t('detail.noDraft') }}</p>
           </div>
           <div v-else class="space-y-2">
             <UEditor v-model="draftBrief" content-type="markdown" class="w-full" data-testid="board-brief-editor" />
             <div class="flex gap-2">
-              <UButton size="xs" color="primary" :loading="savingBrief" data-testid="board-brief-save" @click="handleSaveBrief">
+              <UButton size="xs" color="primary" :loading="savingBrief" data-testid="board-brief-save"
+                @click="handleSaveBrief">
                 {{ t('detail.save') }}
               </UButton>
               <UButton size="xs" variant="ghost" color="neutral" @click="handleCancelEditBrief">
@@ -290,35 +270,20 @@ watch(() => props.detail?.artifact?.id, () => {
               <UBadge :color="stateColor(detail.artifact.status)" variant="subtle" size="xs">
                 v{{ detail.artifact.version }} · {{ detail.artifact.status }}
               </UBadge>
-              <UButton
-                size="xs"
-                variant="ghost"
-                color="neutral"
-                icon="i-heroicons-document-text"
-                class="ms-auto"
-                @click="emit('openChat', detail.item)"
-              >
+              <UButton size="xs" variant="ghost" color="neutral" icon="i-heroicons-document-text" class="ms-auto"
+                @click="emit('openChat', detail.item)">
                 {{ t('detail.viewArtifact') }}
               </UButton>
             </div>
           </template>
           <div v-if="draftVariantNames().length > 0" class="mb-3 flex flex-wrap gap-1">
-            <UButton
-              size="xs"
-              :variant="activePlatform === '' ? 'solid' : 'outline'"
-              color="neutral"
-              @click="handleSelectPlatform('')"
-            >
+            <UButton size="xs" :variant="activePlatform === '' ? 'solid' : 'outline'" color="neutral"
+              @click="handleSelectPlatform('')">
               {{ t('detail.mainPost') }}
             </UButton>
-            <UButton
-              v-for="platform in draftVariantNames()"
-              :key="platform"
-              size="xs"
-              :variant="activePlatform === platform ? 'solid' : 'outline'"
-              color="neutral"
-              @click="handleSelectPlatform(platform)"
-            >
+            <UButton v-for="platform in draftVariantNames()" :key="platform" size="xs"
+              :variant="activePlatform === platform ? 'solid' : 'outline'" color="neutral"
+              @click="handleSelectPlatform(platform)">
               {{ platform }}
             </UButton>
           </div>
@@ -332,15 +297,8 @@ watch(() => props.detail?.artifact?.id, () => {
           <template #header>
             <div class="flex flex-wrap items-center justify-between gap-2">
               <h4 class="text-sm font-semibold">{{ t('detail.checks') }}</h4>
-              <UButton
-                v-if="failingChecks.length > 0"
-                size="xs"
-                variant="outline"
-                color="neutral"
-                icon="i-heroicons-wrench-screwdriver"
-                :loading="fixing === 'all'"
-                @click="handleFixAll"
-              >
+              <UButton v-if="failingChecks.length > 0" size="xs" variant="outline" color="neutral"
+                icon="i-heroicons-wrench-screwdriver" :loading="fixing === 'all'" @click="handleFixAll">
                 {{ t('detail.fixAll') }}
               </UButton>
             </div>
@@ -348,23 +306,13 @@ watch(() => props.detail?.artifact?.id, () => {
           <p v-if="detail.checks.length === 0" class="text-xs text-muted">{{ t('detail.noChecks') }}</p>
           <ul v-else class="space-y-2">
             <li v-for="check in detail.checks" :key="check.id" class="flex items-center gap-2 text-xs">
-              <UBadge
-                :color="check.status === 'pass' ? 'success' : check.status === 'warn' ? 'warning' : 'error'"
-                variant="subtle"
-                size="xs"
-              >
+              <UBadge :color="check.status === 'pass' ? 'success' : check.status === 'warn' ? 'warning' : 'error'"
+                variant="subtle" size="xs">
                 {{ check.kind }}
               </UBadge>
               <span>{{ check.score ?? '—' }}</span>
-              <UButton
-                v-if="check.status !== 'pass'"
-                size="xs"
-                variant="ghost"
-                color="neutral"
-                class="ms-auto"
-                :loading="fixing === check.kind"
-                @click="handleFix(check.kind)"
-              >
+              <UButton v-if="check.status !== 'pass'" size="xs" variant="ghost" color="neutral" class="ms-auto"
+                :loading="fixing === check.kind" @click="handleFix(check.kind)">
                 {{ t('detail.fix') }}
               </UButton>
             </li>

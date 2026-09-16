@@ -7,7 +7,7 @@ import { eq } from 'drizzle-orm'
 import { initTestDb, insertUser, insertBusiness } from './setup.mjs'
 import { startStubProvider } from './stub-provider.mjs'
 import { writeStubModelsConfig } from './stub-models.mjs'
-import { applyRunApiKey, createAgentModelRuntime } from '../server/utils/pi-runtime.ts'
+import { applyRunApiKey, createAgentComplete, createAgentModelRuntime, resolveRunModel } from '../server/utils/pi-runtime.ts'
 
 const OWNER = 'workflow-owner'
 const BUSINESS = 'workflow-business'
@@ -15,14 +15,8 @@ const BUSINESS = 'workflow-business'
 let db
 let schema
 let cleanup
-let chatService
 let contentBoardService
 let agentWorkflowService
-let createAgentTools
-let createAgentToolContext
-let runtime
-let stub
-let dir
 
 before(async () => {
   const init = await initTestDb()
@@ -31,60 +25,184 @@ before(async () => {
   cleanup = init.cleanup
   await insertUser(db, { id: OWNER, email: 'workflow@test.local' })
   await insertBusiness(db, { id: BUSINESS, userId: OWNER, name: 'Workflow Co' })
-  ;({ chatService } = await import('#layers/BaseDB/server/services/chat.service.ts'))
   ;({ contentBoardService } = await import('#layers/BaseDB/server/services/content-board.service.ts'))
   ;({ agentWorkflowService } = await import('../server/services/agent-workflow.service.ts'))
-  ;({ createAgentTools } = await import('../server/agent/tools/index.ts'))
-  ;({ createAgentToolContext } = await import('../server/agent/tool-context.ts'))
-  stub = await startStubProvider({
-    toolScript: [
-      { name: 'scan_trends', args: {} },
-      { name: 'board_add_cards', args: { cards: [{ title: 'Trend idea one' }, { title: 'Trend idea two' }], sourceType: 'trend' } },
-    ],
-    finalText: 'Added trend cards.',
+})
+
+after(() => cleanup())
+
+describe('topic batch pipeline (research → trend scan → ideas)', () => {
+  let batchStub
+  let batchDir
+  let batchRuntime
+
+  before(async () => {
+    batchStub = await startStubProvider({
+      toolScript: [
+        { name: 'web_search', args: { query: 'March launch' } },
+        { name: 'scan_trends', args: {} },
+        { name: 'board_add_cards', args: { cards: [{ title: 'Launch hook', brief: 'Viral angle', platforms: ['twitter'] }, { title: 'Launch story', brief: 'Engagement angle', platforms: ['twitter'] }], sourceType: 'trend' } },
+      ],
+      finalText: '{"brief": "Test brief: March launch beats expectations with early-bird pricing.", "citations": [{"label": "Test Source", "url": "https://example.com/launch"}]}',
+    })
+    batchDir = mkdtempSync(join(tmpdir(), 'agent-batch-'))
+    batchRuntime = await createAgentModelRuntime({ modelsPath: writeStubModelsConfig(batchDir, batchStub.url) })
+    await applyRunApiKey(batchRuntime, 'stub', 'stub-key')
   })
-  dir = mkdtempSync(join(tmpdir(), 'agent-workflow-'))
-  const modelsPath = writeStubModelsConfig(dir, stub.url)
-  runtime = await createAgentModelRuntime({ modelsPath })
-  await applyRunApiKey(runtime, 'stub', 'stub-key')
-})
 
-after(async () => {
-  await stub.close()
-  rmSync(dir, { recursive: true, force: true })
-  await cleanup()
-})
+  after(async () => {
+    await batchStub.close()
+    rmSync(batchDir, { recursive: true, force: true })
+  })
 
-describe('trend scan workflow (T06)', () => {
-  it('runs scan_trends then board_add_cards and records content runs', async () => {
-    const thread = await chatService.createThread(OWNER, { title: 'Trend scan' })
-    const context = createAgentToolContext({ userId: OWNER, businessId: BUSINESS })
-    const events = []
-    const result = await agentWorkflowService.runTrendScan({
+  it('researches the topic, scans trends, and records platform-tailored cards', async () => {
+    const { agentRunService } = await import('../server/services/agent-run.service.ts')
+    const model = resolveRunModel(batchRuntime, 'stub', 'stub-model')
+    assert.ok(model, 'stub model resolves')
+    const started = await agentRunService.start(OWNER, { businessId: BUSINESS, agentName: 'topic-batch:days' })
+    assert.equal(started.success, true)
+
+    await agentWorkflowService.executeTopicBatch({
       userId: OWNER,
       businessId: BUSINESS,
-      threadId: thread.data.id,
-      text: 'ignored — workflow owns the prompt',
-      provider: 'stub',
-      model: 'stub-model',
-      modelRuntime: runtime,
-      customTools: createAgentTools(context),
-    }, event => { events.push(event) })
+      kind: 'days',
+      platforms: ['twitter'],
+      topic: 'March launch',
+      runId: started.data.id,
+      count: 2,
+      run: {
+        runtime: batchRuntime,
+        model,
+        provider: 'stub',
+        modelId: 'stub-model',
+        apiKey: 'stub-key',
+        apiBaseUrl: null,
+        systemContext: 'test context',
+        complete: createAgentComplete(batchRuntime, model),
+      },
+    })
 
-    assert.equal(result.success, true, result.error ?? '')
-    assert.equal(result.data.cards.length, 2)
-    assert.ok(result.data.cards.every(card => card.state === 'idea'))
-    assert.ok(result.data.cards.every(card => card.sourceType === 'trend'))
-
-    const toolNames = events.filter(event => event.type === 'tool.started').map(event => event.toolName)
-    assert.deepEqual(toolNames, ['scan_trends', 'board_add_cards'])
+    const finished = await db.select().from(schema.agentRuns).where(eq(schema.agentRuns.id, started.data.id))
+    assert.equal(finished[0].status, 'completed')
+    assert.match(finished[0].summary, /idea cards/)
+    assert.match(finished[0].summary, /March launch/)
+    assert.match(finished[0].summary, /research agent/)
 
     const board = await contentBoardService.list(OWNER, BUSINESS, { state: 'idea' })
-    assert.ok(board.data.some(card => card.title === 'Trend idea one'))
-    assert.ok(board.data.some(card => card.title === 'Trend idea two'))
+    assert.ok(board.data.some(card => card.title === 'Launch hook' && card.sourceType === 'trend'))
+    assert.ok(board.data.some(card => card.platforms?.includes('twitter')))
 
-    const runs = await db.select().from(schema.contentRuns).where(eq(schema.contentRuns.step, 'trend_scan'))
-    assert.equal(runs.length, 2)
-    assert.ok(runs.every(run => run.status === 'completed'))
+    const batchRuns = await db.select().from(schema.contentRuns).where(eq(schema.contentRuns.step, 'batch:days'))
+    assert.ok(batchRuns.length >= 2)
+    assert.ok(batchRuns.every(run => run.status === 'completed'))
+
+    const prompted = batchStub.requests.map(request => JSON.stringify(request)).join('\n')
+    assert.ok(prompted.includes('280 chars'), 'twitter virality rules reach the model')
+    assert.ok(prompted.includes('March launch'))
+  })
+
+  it('merges scout cards with plugin ideas without duplicating either', async () => {
+    const { agentRunService } = await import('../server/services/agent-run.service.ts')
+    const mixedBusiness = 'workflow-business-mixed'
+    await insertBusiness(db, { id: mixedBusiness, userId: OWNER, name: 'Mixed Co' })
+    const mixedStub = await startStubProvider({
+      toolScript: [
+        { name: 'web_search', args: { query: 'Mixed topic' } },
+        { name: 'scan_trends', args: {} },
+        { name: 'board_add_cards', args: { cards: [{ title: 'Mixed hook', brief: 'Scout angle', platforms: ['twitter'] }], sourceType: 'trend' } },
+      ],
+      finalText: '{"brief": "First verifiable sentence here yes. Second verifiable sentence here yes.", "citations": []}',
+    })
+    const mixedDir = mkdtempSync(join(tmpdir(), 'agent-batch-mixed-'))
+    try {
+      const mixedRuntime = await createAgentModelRuntime({ modelsPath: writeStubModelsConfig(mixedDir, mixedStub.url) })
+      await applyRunApiKey(mixedRuntime, 'stub', 'stub-key')
+      const model = resolveRunModel(mixedRuntime, 'stub', 'stub-model')
+      const started = await agentRunService.start(OWNER, { businessId: mixedBusiness, agentName: 'topic-batch:days' })
+
+      await agentWorkflowService.executeTopicBatch({
+        userId: OWNER,
+        businessId: mixedBusiness,
+        kind: 'days',
+        platforms: ['twitter'],
+        topic: 'Mixed topic',
+        runId: started.data.id,
+        count: 3,
+        run: {
+          runtime: mixedRuntime,
+          model,
+          provider: 'stub',
+          modelId: 'stub-model',
+          apiKey: 'stub-key',
+          apiBaseUrl: null,
+          systemContext: 'test context',
+          complete: createAgentComplete(mixedRuntime, model),
+        },
+      })
+
+      const finished = await db.select().from(schema.agentRuns).where(eq(schema.agentRuns.id, started.data.id))
+      assert.equal(finished[0].status, 'completed')
+      assert.match(finished[0].summary, /3 idea cards/)
+      assert.match(finished[0].summary, /trend-scout\+brief-derived/)
+
+      const board = await contentBoardService.list(OWNER, mixedBusiness, { state: 'idea' })
+      assert.equal(board.data.length, 3, 'scout cards recorded once, plugin cards inserted once')
+      assert.ok(board.data.some(card => card.title === 'Mixed hook' && card.sourceType === 'trend'))
+      assert.ok(board.data.some(card => card.brief.includes('Mixed topic')), 'plugin-derived card persisted')
+    } finally {
+      await mixedStub.close()
+      rmSync(mixedDir, { recursive: true, force: true })
+    }
+  })
+
+  it('falls back to brief-derived ideas when the scout yields nothing', async () => {
+    const { agentRunService } = await import('../server/services/agent-run.service.ts')
+    const emptyBusiness = 'workflow-business-empty'
+    await insertBusiness(db, { id: emptyBusiness, userId: OWNER, name: 'Empty Co' })
+    const emptyStub = await startStubProvider({
+      toolScript: [{ name: 'web_search', args: { query: 'Empty topic' } }],
+      finalText: '{"brief": "Thin brief with nothing actionable.", "citations": []}',
+    })
+    const emptyDir = mkdtempSync(join(tmpdir(), 'agent-batch-empty-'))
+    try {
+      const emptyRuntime = await createAgentModelRuntime({ modelsPath: writeStubModelsConfig(emptyDir, emptyStub.url) })
+      await applyRunApiKey(emptyRuntime, 'stub', 'stub-key')
+      const model = resolveRunModel(emptyRuntime, 'stub', 'stub-model')
+      assert.ok(model, 'stub model resolves')
+      const started = await agentRunService.start(OWNER, { businessId: emptyBusiness, agentName: 'topic-batch:days' })
+      assert.equal(started.success, true)
+
+      await agentWorkflowService.executeTopicBatch({
+        userId: OWNER,
+        businessId: emptyBusiness,
+        kind: 'days',
+        platforms: ['twitter'],
+        topic: 'Empty topic',
+        runId: started.data.id,
+        count: 2,
+        run: {
+          runtime: emptyRuntime,
+          model,
+          provider: 'stub',
+          modelId: 'stub-model',
+          apiKey: 'stub-key',
+          apiBaseUrl: null,
+          systemContext: 'test context',
+          complete: createAgentComplete(emptyRuntime, model),
+        },
+      })
+
+      const finished = await db.select().from(schema.agentRuns).where(eq(schema.agentRuns.id, started.data.id))
+      assert.equal(finished[0].status, 'completed')
+      assert.match(finished[0].summary, /brief-derived/)
+      assert.match(finished[0].summary, /1 idea cards/)
+
+      const board = await contentBoardService.list(OWNER, emptyBusiness, { state: 'idea' })
+      assert.equal(board.data.length, 1)
+      assert.ok(board.data[0].brief.includes('Empty topic'))
+    } finally {
+      await emptyStub.close()
+      rmSync(emptyDir, { recursive: true, force: true })
+    }
   })
 })

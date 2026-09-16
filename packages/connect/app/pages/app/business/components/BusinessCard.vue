@@ -25,39 +25,31 @@ const colors = [
 
 const thumbColor = colors[props.business.name.length % colors.length]
 
-const menuActions = [
-  {
-    label: t('actions.edit'),
-    icon: 'i-heroicons-pencil',
-    onSelect: () => emit('edit', props.business.id),
-  },
-  {
-    label: t('actions.playbook'),
-    icon: 'i-lucide-book-open',
-    onSelect: () => handleOpenPlaybook(props.business.id),
-  },
-  {
-    label: 'Google Business',
-    icon: 'i-logos-google',
-    onSelect: () => router.push(`/app/business/${props.business.id}/gmb`),
-  },
-  {
-    label: t('actions.delete'),
-    icon: 'i-heroicons-trash',
-    onSelect: () => emit('delete', props.business.id),
-  },
-];
-
 const { setActiveBusiness, activeBusinessId } = useBusinessManager();
 
-const HandleSetActive = async (id: string) => {
+const handleSetActive = async (id: string) => {
   await setActiveBusiness(id);
   emit('select', id);
 };
 
-const handleOpenPlaybook = (id: string) => {
-  router.push(`/app/business/${id}/playbook`);
-};
+const handleEdit = () => emit('edit', props.business.id);
+const handleDelete = () => emit('delete', props.business.id);
+const handleOpenPlaybook = () => router.push(`/app/business/${props.business.id}/playbook`);
+const handleOpenGmb = () => router.push(`/app/business/${props.business.id}/gmb`);
+
+interface CardAction {
+  icon: string
+  label: string
+  danger?: boolean
+  onClick: () => void
+}
+
+const cardActions: CardAction[] = [
+  { icon: 'i-heroicons-pencil', label: t('actions.edit'), onClick: handleEdit },
+  { icon: 'i-lucide-book-open', label: t('actions.playbook'), onClick: handleOpenPlaybook },
+  { icon: 'i-logos-google', label: t('actions.google_business'), onClick: handleOpenGmb },
+  { icon: 'i-heroicons-trash', label: t('actions.delete'), danger: true, onClick: handleDelete },
+]
 </script>
 
 <template>
@@ -69,7 +61,7 @@ const handleOpenPlaybook = (id: string) => {
     }"
   >
     <div class="relative aspect-video flex items-center justify-center" :class="thumbColor"
-    @click="HandleSetActive(business.id)">
+    @click="handleSetActive(business.id)">
       <span class="text-5xl font-bold text-white/20 select-none">
         {{ business.name.charAt(0).toUpperCase() }}
       </span>
@@ -84,9 +76,10 @@ const handleOpenPlaybook = (id: string) => {
       </div>
     </div>
 
-    <div class="p-3 flex items-start gap-2"">
-      <div class="min-w-0 flex-1"
-    @click="HandleSetActive(business.id)">
+    <div class="p-3">
+      <div
+        @click="handleSetActive(business.id)"
+      >
         <h3 class="text-sm font-semibold text-[--ui-text-highlighted] line-clamp-2 leading-snug">
           {{ business.name }}
         </h3>
@@ -111,15 +104,23 @@ const handleOpenPlaybook = (id: string) => {
         </div>
       </div>
 
-      <UDropdownMenu :items="menuActions">
-        <UButton
-          icon="pepicons-pop:dots-y"
-          color="neutral"
-          variant="ghost"
-          size="xs"
-          class="text-[--ui-text-muted] hover:text-[--ui-text-highlighted] shrink-0 -mr-1 -mt-1"
-        />
-      </UDropdownMenu>
+      <div class="mt-2 flex items-center justify-between gap-1">
+        <UTooltip
+          v-for="action in cardActions"
+          :key="action.label"
+          :text="action.label"
+        >
+          <UButton
+            :icon="action.icon"
+            color="neutral"
+            variant="ghost"
+            size="xs"
+            :class="action.danger ? 'text-[--ui-text-muted] hover:text-red-500' : 'text-[--ui-text-muted] hover:text-[--ui-text-highlighted]'"
+            :aria-label="action.label"
+            @click="action.onClick"
+          />
+        </UTooltip>
+      </div>
     </div>
   </UCard>
 </template>

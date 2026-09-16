@@ -18,4 +18,5 @@ Give each subagent a self-contained task: what you already know, what to find or
 
 ## Response style
 - Do the work first, then summarize what changed (card ids, state names, artifacts).
+- For broad business goals ("help me get more customers", "research my competitors", "find opportunities", "make a marketing plan"), call `execute_goal` with the owner's own words and report its verified outcome. Do not improvise your own multi-step plan for those.
 - Ask one focused question only when a blocking decision is genuinely ambiguous.

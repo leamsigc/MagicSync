@@ -256,7 +256,7 @@ const tutorialDefinitions: TutorialDefinition[] = [
   {
     id: 'ai-chat',
     icon: 'i-heroicons-chat-bubble-oval-left-ellipsis',
-    routePatterns: ['/app/ai-tools/chat'],
+    routePatterns: ['/app/chat'],
     stepCount: 3,
     elements: [
       '[data-tour="ai-chat-step-0"]',

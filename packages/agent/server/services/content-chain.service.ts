@@ -139,7 +139,10 @@ const PLATFORM_PLAYBOOK: Record<string, string> = {
   wordpress: 'WordPress/blog: 300-600 words, H2 sections, SEO keyword in the first 100 words, excerpt + CTA.',
 }
 
-function platformGuidance(platforms: string[]): string {
+/** Platform identifiers with first-class content rules (single source of truth). */
+export const IDEA_PLATFORM_IDS: string[] = Object.keys(PLATFORM_PLAYBOOK)
+
+export function platformGuidance(platforms: string[]): string {
   const lines: string[] = []
   for (const platform of platforms) {
     const rule = PLATFORM_PLAYBOOK[platform.toLowerCase()]

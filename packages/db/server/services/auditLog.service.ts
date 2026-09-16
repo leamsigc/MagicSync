@@ -1,7 +1,35 @@
 import { eq, inArray } from 'drizzle-orm'
+import type { RequestLogger } from 'evlog'
 import { auditLog } from '#layers/BaseDB/db/schema'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
+import { auditEvent } from '#layers/BaseShared/server/utils/evlog'
 import type { LogAuditServiceType } from './interfaces'
+
+interface DualAuditData {
+  userId?: string
+  action: string
+  targetType?: string
+  targetId?: string
+  status?: 'success' | 'failure' | 'pending'
+  details?: string
+}
+
+/**
+ * Dual-write: the DB row stays the system of record, the same fact is also
+ * emitted onto the request wide event for the log drains. Skipped when no
+ * request logger or no actor is available.
+ */
+function emitDualAudit(log: RequestLogger | undefined, data: DualAuditData): void {
+  if (!log || !data.userId) return
+  auditEvent(log, {
+    action: data.action,
+    actorId: data.userId,
+    targetType: data.targetType,
+    targetId: data.targetId,
+    outcome: data.status === 'failure' ? 'failure' : 'success',
+    reason: data.details,
+  })
+}
 
 export class LogAuditService implements LogAuditServiceType {
 
@@ -19,7 +47,7 @@ export class LogAuditService implements LogAuditServiceType {
     userAgent?: string
     status?: 'success' | 'failure' | 'pending'
     details?: string
-  }) {
+  }, opts?: { log?: RequestLogger }) {
     try {
       await this.db.insert(auditLog).values({
         userId: data.userId,
@@ -33,6 +61,7 @@ export class LogAuditService implements LogAuditServiceType {
         details: data.details,
         createdAt: dayjs.utc().toDate()
       })
+      emitDualAudit(opts?.log, data)
     } catch (error) {
       console.error('Failed to log audit event:', error)
     }

@@ -2,7 +2,7 @@ import { and, eq } from 'drizzle-orm'
 import type { ServiceResponse } from '#layers/BaseShared/server/types/service.types'
 import { piiMappings } from '#layers/BaseDB/db/schema'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
-import type { PiiMapping } from '../utils/pii'
+import type { PiiMapping } from '../agent/plugins/pii/detect'
 
 /** Per-conversation surrogate maps for private mode (PRD §6 pii_mappings). */
 export class PiiMappingService {

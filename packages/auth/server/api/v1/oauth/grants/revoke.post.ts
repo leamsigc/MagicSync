@@ -8,6 +8,7 @@ import { logAuditService } from '#layers/BaseDB/server/services/auditLog.service
  * their own; session-bound ones die with the session.
  */
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event)
   const user = await checkUserIsLogin(event)
   const body = await readBody<{ id?: string }>(event)
   if (!body?.id) {
@@ -26,6 +27,6 @@ export default defineEventHandler(async (event) => {
     targetType: 'oauth-grant',
     targetId: body.id,
     status: 'success',
-  })
+  }, { log })
   return { success: true }
 })
