@@ -531,7 +531,7 @@ export class ReviewService implements ReviewServiceType {
 
       return { success: true, data: syncedReviews }
     } catch (error) {
-      console.error('Error syncing GMB reviews:', error)
+      log.error({ message: 'Error syncing GMB reviews', error: String(error) })
       return { success: false, error: 'Failed to sync reviews from Google My Business' }
     }
   }
@@ -576,7 +576,7 @@ export class ReviewService implements ReviewServiceType {
 
       return { success: true, data: updated }
     } catch (error) {
-      console.error('Error replying to GMB review:', error)
+      log.error({ message: 'Error replying to GMB review', error: String(error) })
       return { success: false, error: 'Failed to reply to Google My Business review' }
     }
   }

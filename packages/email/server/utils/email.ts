@@ -50,9 +50,9 @@ export const useMailgun = (): EmailService => {
         },
         body: formData
       })
-      console.log('Email sent via Mailgun')
+      log.info({ message: 'Email sent via Mailgun' })
     } catch (error) {
-      console.error('Failed to send email with Mailgun:', error)
+      log.error({ message: 'Failed to send email with Mailgun', error: String(error) })
       throw new Error('Email sending failed with Mailgun')
     }
   }
@@ -70,9 +70,9 @@ export const sendUserVerificationEmail = async (user: User, url: string) => {
       subject: 'Email Verification',
       html: emailMJML.html
     })
-    console.log('Email sent successfully')
+    log.info({ message: 'Email sent successfully' })
   } catch (error) {
-    console.error('Failed to send email:', error)
+    log.error({ message: 'Failed to send email', error: String(error) })
   }
 }
 
@@ -85,9 +85,9 @@ export const sendUserPasswordResetEmail = async (url: string, user: User) => {
       subject: 'Password Reset',
       html: emailHTML.html
     })
-    console.log('Email sent successfully')
+    log.info({ message: 'Email sent successfully' })
   } catch (error) {
-    console.error('Failed to send email:', error)
+    log.error({ message: 'Failed to send email', error: String(error) })
   }
 }
 
@@ -100,9 +100,9 @@ export const sendOrganizationInvitationEmail = async (email: string, url: string
       subject: `You're invited to join ${organizationName}`,
       html: emailHTML.html
     })
-    console.log('Invitation email sent successfully')
+    log.info({ message: 'Invitation email sent successfully' })
   } catch (error) {
-    console.error('Failed to send invitation email:', error)
+    log.error({ message: 'Failed to send invitation email', error: String(error) })
   }
 }
 
@@ -115,9 +115,9 @@ export const sendNotificationEmail = async (email: string, title: string, messag
       subject: title,
       html: emailHTML.html
     })
-    console.log('Notification email sent successfully')
+    log.info({ message: 'Notification email sent successfully' })
   } catch (error) {
-    console.error('Failed to send notification email:', error)
+    log.error({ message: 'Failed to send notification email', error: String(error) })
     throw error
   }
 }
@@ -131,9 +131,9 @@ export const sendNotificationDigestEmail = async (email: string, userName: strin
       subject: `Your daily MagicSync digest (${items.length} unread)`,
       html: emailHTML.html
     })
-    console.log('Notification digest email sent successfully')
+    log.info({ message: 'Notification digest email sent successfully' })
   } catch (error) {
-    console.error('Failed to send notification digest email:', error)
+    log.error({ message: 'Failed to send notification digest email', error: String(error) })
     throw error
   }
 }

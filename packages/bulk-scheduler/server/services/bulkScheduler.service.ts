@@ -4,10 +4,10 @@ import { distributePostsAcrossDates, calculateTotalDays, type DateDistributionOp
 import { processTemplate, type SystemVariable } from '../../utils/templateProcessor'
 import { validateBulkPosts } from '../../utils/validators'
 import { notificationService } from '#layers/BaseAuth/server/services/notification.service'
-import { platformConfigurations } from '#layers/BaseScheduler/shared/platformConstants'
+import { platformConfigurations } from '#layers/BaseShared/shared/platformConstants'
 import type { PlatformContentOverride } from '#layers/BaseDB/db/posts/posts'
 import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service'
-import { createAssetFromBuffer } from '#layers/BaseAssets/server/utils/AssetsUtils'
+import { createAssetFromBuffer } from '#layers/BaseShared/server/utils/asset-utils'
 import { assetService } from '#layers/BaseShared/server/services/asset.service';
 
 export type BulkScheduleResult = {
@@ -85,7 +85,7 @@ export class BulkSchedulerService {
                     assetIds.push(asset.id)
                   }
                 } catch (error) {
-                  console.warn(`Failed to download image from ${mediaAsset}:`, error)
+                  log.warn({ message: `Failed to download image from ${mediaAsset}:`, error: String(error) })
                   // Skip this asset
                 }
               } else {
@@ -385,7 +385,7 @@ export class BulkSchedulerService {
         throw new Error(result.error || 'Failed to create asset')
       }
     } catch (error) {
-      console.error('Error downloading and creating asset:', error)
+      log.error({ message: 'Error downloading and creating asset', error: String(error) })
       return null
     }
   }
@@ -406,7 +406,7 @@ export class BulkSchedulerService {
         metadata
       })
     } catch (error) {
-      console.error('Failed to log bulk operation notification:', error)
+      log.error({ message: 'Failed to log bulk operation notification', error: String(error) })
     }
   }
 }

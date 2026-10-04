@@ -16,7 +16,7 @@ edges:
     condition: when setting up the development environment
   - target: patterns/add-service.md
     condition: when working with Drizzle ORM
-last_updated: 2026-03-30
+last_updated: 2026-09-13
 ---
 
 # Stack
@@ -40,6 +40,12 @@ last_updated: 2026-03-30
 - **Zod** — Data validation for API endpoints
 - **dayjs** — Date/time manipulation
 - **Nuxt Content** — Markdown-based documentation/blog system
+- **pi SDK** (`@earendil-works/pi-coding-agent`) — Agent runtime in `packages/agent`: sessions, tools (`typebox` schemas), model routing (`ModelRuntime`), in-process
+- **scrapegraph-js** — ScrapeGraphAI Node SDK; default scraper for `scrape_url` and the `scrapegraph_*` tools
+- **Vercel AI SDK** (`ai` + `@ai-sdk/openai|google`) — Embeddings (`embedMany`) for Turso-native RAG
+- **unpdf / mammoth** — PDF and DOCX text extraction for document ingestion
+- **yt-dlp + ffmpeg** — Pinned CLI binaries (Docker image) for `download_video`
+- **FastAPI** — Optional Python tools sidecar (`packages/python-tools`), user-run and user-configured
 
 ## What We Deliberately Do NOT Use
 
@@ -48,10 +54,13 @@ last_updated: 2026-03-30
 - No enums — use `const` objects instead
 - No Redux/Pinia for global state — prefer VueUse composables and local state
 - No raw SQL in route handlers — all database access through service layer
+- No separate backend for app logic — agent execution is in-process; the Python sidecar is optional and only for Python-only tools
+- No litellm / DSH bridge — provider routing goes through pi `ModelRuntime`
 
 ## Version Constraints
 
 - Nuxt 4 with `future.compatibilityVersion: 5` — targeting Nuxt 5 API
-- Drizzle ORM v1.x via catalog
-- Vue 3.4+ via catalog
-- Node.js 20+ required for native fetch and other modern APIs
+- Drizzle ORM v0.45 via catalog
+- Vue 3.5 via catalog
+- Node.js 22.19+ required by the pi SDK; the repo targets Node 26
+- pi packages pinned at `0.85.1`; `scrapegraph-js` at `2.2.1`

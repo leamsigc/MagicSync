@@ -1,13 +1,16 @@
 import { z } from 'zod'
 import { defineMcpTool } from '@nuxtjs/mcp-toolkit/server'
 import { PLATFORMS } from '../../utils/platforms'
-import { requireMcp, resolveUserId } from '../../utils/mcp-context'
+import { requireMcp } from '../../utils/mcp-context'
+import { resolveMcpAiContext } from '../../utils/mcp-ai-context'
 import { logMcpCall } from '../../utils/mcp-audit'
+import { buildCapabilityRunContext } from '#layers/BaseAgent/server/capabilities/run-context'
+import { runCapability } from '#layers/BaseAgent/server/capabilities'
+import '#layers/BaseAgent/server/capabilities/social'
 
-interface HooksResponse {
-  hooks?: Array<{ hook: string, hook_type: string }>
-  count?: number
-  error?: string
+interface Hook {
+  hook: string
+  hook_type: string
 }
 
 export default defineMcpTool({
@@ -21,21 +24,23 @@ export default defineMcpTool({
   annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: false },
   async handler(args) {
     const mcp = requireMcp()
-    const userId = await resolveUserId(mcp)
-    const config = useRuntimeConfig()
-    const backendUrl = config.pythonBackendUrl || 'http://localhost:8000'
+    const ai = await resolveMcpAiContext(mcp)
 
     try {
-      const result = await $fetch<HooksResponse>(`${backendUrl}/api/v1/social-media/generate-hooks`, {
-        method: 'POST',
-        body: { topic: args.topic, platform: args.platform, count: args.count },
-        headers: { 'X-User-Id': userId },
+      const ctx = await buildCapabilityRunContext(ai.ownerId, mcp.businessId, {
+        useBusinessContext: false,
+        capability: 'social.hooks',
       })
-      if (result.error || !result.hooks) {
-        throw new Error(result.error || 'Idea generation failed')
-      }
-      await logMcpCall(mcp, 'generate-ideas', undefined, 'success', `platform=${args.platform} count=${result.hooks.length}`)
-      return { hooks: result.hooks }
+      const outcome = await runCapability('social.hooks', {
+        topic: args.topic,
+        platform: args.platform,
+        count: args.count,
+        system: ai.businessContext,
+      }, ctx)
+      if (!outcome.ok) throw new Error(outcome.error)
+      const hooks = outcome.output.hooks as Hook[]
+      await logMcpCall(mcp, 'generate-ideas', undefined, 'success', `platform=${args.platform} count=${hooks.length}`)
+      return { hooks }
     }
     catch (error) {
       await logMcpCall(mcp, 'generate-ideas', undefined, 'failure', error instanceof Error ? error.message : String(error))

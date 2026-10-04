@@ -28,7 +28,7 @@ export default defineConfig({
             '#layers/BaseDB': fileURLToPath(new URL('../db', import.meta.url)),
             '#layers/BaseAuth': fileURLToPath(new URL('../auth', import.meta.url)),
             '#layers/BaseUI': fileURLToPath(new URL('../ui', import.meta.url)),
-            '#layers/BaseScheduler': fileURLToPath(new URL('../scheduler', import.meta.url)),
+            ,
             '~': fileURLToPath(new URL('./app', import.meta.url)),
             '@': fileURLToPath(new URL('./app', import.meta.url)),
         }

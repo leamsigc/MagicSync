@@ -1,5 +1,4 @@
 import { defineNuxtConfig } from 'nuxt/config'
-import type { NuxtPage } from 'nuxt/schema'
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
 
@@ -24,9 +23,20 @@ export default defineNuxtConfig({
   $meta: {
     name: 'BaseTools',
   },
-  extends: ['@local-monorepo/ui', '@local-monorepo/db', '@local-monorepo/auth', '@local-monorepo/assets'],
+  extends: ['@local-monorepo/ui', '@local-monorepo/db', '@local-monorepo/auth'],
   modules: ['@nuxtjs/i18n', '@nuxt/fonts', 'evlog/nuxt'],
   fonts: {
+    // Every declared family below lives on Google Fonts. Pin providers so
+    // builds never depend on bunny/fontshare uptime: @nuxt/fonts falls through
+    // to the next provider when a family lacks a weight/subset, and Bunny CDN
+    // fetches time out inside Docker builds (EAI/ETIMEDOUT on bunnyinfra.net),
+    // which previously failed `pnpm site` outright.
+    providers: {
+      bunny: false,
+      fontshare: false,
+      fontsource: false,
+      adobe: false,
+    },
     // Carousel + OG-image typefaces. `global: true` is required: the creator
     // applies fonts via inline styles in JS-generated HTML, which the module
     // cannot auto-detect in CSS. Browsers only download weights actually
@@ -123,24 +133,6 @@ export default defineNuxtConfig({
     ],
     defaultLocale: 'en',
     // bundle: ''
-  },
-  hooks: {
-    'pages:extend': function (pages) {
-      const pagesToRemove: NuxtPage[] = []
-      pages.forEach((page) => {
-        const pathsToExclude = ['types', 'components', '/api', 'composables', 'utils', '.json']
-        if (pathsToExclude.some(excludePath => page.path.includes(excludePath))) {
-          pagesToRemove.push(page)
-        }
-      })
-      pagesToRemove.forEach((page: NuxtPage) => {
-        pages.splice(pages.indexOf(page), 1)
-      })
-      /* Uncomment to show current Routes
-      console.log(`\nCurrent Routes:`)
-      console.log(pages)
-      console.log(`\n`) */
-    }
   },
   evlog: {
     env: {

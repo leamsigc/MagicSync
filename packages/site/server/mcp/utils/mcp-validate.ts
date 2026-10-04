@@ -1,4 +1,4 @@
-import { platformConfigurations } from '#layers/BaseScheduler/shared/platformConstants'
+import { platformConfigurations } from '#layers/BaseShared/shared/platformConstants'
 
 export interface PlatformValidation {
   isValid: boolean

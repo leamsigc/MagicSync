@@ -219,7 +219,7 @@ export const useRemoveSilence = () => {
 
       checkAudio()
     } catch (err) {
-      console.error('Failed to remove silence:', err)
+      log.error({ message: 'Failed to remove silence', error: String(err) })
       setProcessingId(null)
       const errorMessage = err instanceof Error ? err.message : String(err)
       // Cleanup on error

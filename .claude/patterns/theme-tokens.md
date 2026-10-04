@@ -12,7 +12,7 @@ edges:
     condition: "always — source of truth for tokens and the light/dark palettes"
   - target: "context/conventions.md"
     condition: "when writing or reviewing Vue component code"
-last_updated: 2026-08-24
+last_updated: 2026-09-15
 ---
 
 # Theme Tokens (Light/Dark Support)
@@ -49,6 +49,10 @@ All UI must render correctly in both light and dark mode (DESIGN.md: "All compon
 - Third-party canvas libs (WaveSurfer) take hex strings, not classes — hardcoded emerald/orange mid-tones survive both modes, but document the choice.
 - `BaseShinyCard` and `UCard` (via `packages/ui/app/app.config.ts`) already use tokens — violations are usually in the page or its local components, not the shared card wrappers.
 - Components shared across pages (e.g. `packages/tools/app/components/AudioPlayer.vue`) affect every page that imports them — fix once, verify all consumers.
+- Colors are not assets: a light/dark **image** pair cannot be collapsed into a token.
+  Render both `<img>` tags and toggle them with `dark:` (`hidden dark:flex` /
+  `dark:hidden`) — a `useColorMode()` branch in `:src` makes SSR and client disagree
+  and triggers `Hydration attribute mismatch`. See `patterns/color-mode-assets.md`.
 
 ## Verify
 

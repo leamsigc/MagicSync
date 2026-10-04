@@ -94,7 +94,6 @@ export default defineEventHandler(async (event) => {
       throw error
     }
 
-    console.error('Error serving asset:', error)
     log.error('Failed to serve asset', { error })
     throw createError({
       statusCode: 500,

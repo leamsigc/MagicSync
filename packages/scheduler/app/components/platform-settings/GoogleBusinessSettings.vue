@@ -10,7 +10,7 @@
  * @todo [ ] Integration test.
  * @todo [✔] Update the typescript.
  */
-import type { GoogleBusinessSettings } from '#layers/BaseScheduler/shared/platformSettings';
+import type { GoogleBusinessSettings } from '#layers/BaseShared/shared/platformSettings';
 
 const settings = defineModel<GoogleBusinessSettings>({ required: true });
 

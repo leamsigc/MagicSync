@@ -5,6 +5,9 @@
   "scripts": {
     "packages": "dotenv -- pnpm --filter",
     "install:all": "pnpm -r install",
+    "audit:layers": "node scripts/layer-import-audit.mjs",
+    "audit:layers:strict": "node scripts/layer-import-audit.mjs --strict",
+    "audit:layers:update": "node scripts/layer-import-audit.mjs --update-baseline",
     "site": "pnpm packages @local-monorepo/site build",
     "site:build": "dotenv -- pnpm --filter @local-monorepo/site build",
     "site:profile": "pnpm packages @local-monorepo/site --profile ",
@@ -54,12 +57,13 @@
     "doc": "pnpm packages magicsync-docs dev",
     "doc:build": "pnpm packages magicsync-docs build",
     "doc:start": "pnpm packages magicsync-docs preview",
+    "python-tools:dev": "cd packages/python-tools && uvicorn app.main:app --reload --port 8100",
     "tts:assets": "bash ./scripts/tts_assets_folder.sh",
     "tts:assets:force": "bash ./scripts/tts_assets_folder.sh --force"
   },
   "devDependencies": {
     "dotenv-cli": "^11.0.0",
-    "pnpm": "^12.3.4"
+    "pnpm": "^12.5.1"
   },
   "workspaces": [
     "packages/*"
@@ -67,7 +71,7 @@
   "keywords": [],
   "author": "Ismael Garcia <leamsigc@leamsigc.com>",
   "license": "MIT",
-  "packageManager": "pnpm@12.3.4",
+  "packageManager": "pnpm@12.5.1",
   "dependencies": {
     "jose": "^6.2.12"
   }

@@ -57,7 +57,7 @@ export function useAudioRecorder(options: AudioRecorderOptions = {}) {
       }, 1000)
     } catch (err: any) {
       error.value = err.message || 'Failed to access microphone'
-      console.error('Microphone access error:', err)
+      log.error({ message: 'Microphone access error', error: String(err) })
     }
   }
 

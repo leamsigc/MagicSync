@@ -35,26 +35,25 @@ last_updated: 2026-03-30
 
 ## Structure
 
-Each layer package follows this structure:
+`packages/site` is the composition root and owns product routes under `app/pages/`.
+Feature layers expose reusable components, composables, utilities, and server code
+from `app/components/`, `app/composables/`, `app/utils/`, and `server/`; they do not
+own product pages. The explicit exceptions are identity pages in `auth`, the
+`ui-preview` gallery in `ui`, and the CMS catch-all in `content`.
+
 ```
-app/
-  ├── components/      # Vue components (global, auto-imported)
-  ├── composables/     # useXxx.ts, useXxxManagement.ts
-  ├── layouts/         # Page layouts
-  ├── middleware/      # Route middleware (numbered for order)
-  └── pages/           # File-based routing
-server/
-  ├── api/v1/          # API endpoints (RESTful)
-  ├── services/        # Business logic
-  └── utils/           # Helpers
-db/
-  └── schema.ts        # Drizzle schema definitions
+packages/site/app/pages/       # All product routes
+packages/<layer>/app/          # Library code; no product pages
+  ├── components/              # Vue components (global, auto-imported)
+  ├── composables/             # useXxx.ts, useXxxManagement.ts
+  └── utils/                   # Layer-owned constants and helpers
+packages/<layer>/server/       # API endpoints, services, and server utilities
 ```
 
 - Business logic lives in services/, never in route handlers
 - Each service file exports a singleton instance (e.g., `export const postService = new PostService()`)
 - Components in `/app/components` are global — no need to import them
-
+- Promoted page-local components use the layer-prefixed naming convention, e.g. `ConnectBusinessBoardView`
 ## Patterns
 
 Service layer returns `ServiceResponse<T>` for all operations:
@@ -90,6 +89,39 @@ export default defineEventHandler(async (event) => {
 
 ## imports
 - Nuxt have autoimport enabled by default just and importing specific from layers
+
+## Logging
+
+`evlog/nuxt` is registered in **every** layer, so `log` is a global auto-import on
+both sides — no import statement anywhere in `app/` or `server/`:
+
+```ts
+log.debug({ message: 'carousel exported', deckId, slideCount })
+log.info({ message: 'plugin initialized', provider: 'bluesky' })
+log.warn({ message: 'rate limited', retryAfterMs })
+log.error({ message: 'import failed', error: String(error) })
+```
+
+Rules:
+- **Never `console.*`** in `app/` or `server/`. Structure the call as an event
+  object (`{ message, ...fields }`) so the drain can index fields, not a
+  pre-formatted string.
+- **`console.log` was `log.debug`**, unless the message reports an operational
+  event ("... initialized", "... sent successfully"), which is `log.info`.
+  `console.error`/`console.warn` map straight across.
+- **Don't put a trailing colon on `message`** — the field name already separates
+  message from detail.
+- **In a Nitro handler, `const log = useLogger(event)` shadows the global** and
+  gives you a request-scoped wide event. That is preferred over the global: use
+  `log.error('message', { ...fields })` (positional, not an event object), and
+  never name an unrelated variable `log`.
+- **`log` is NOT available in Web Workers.** `app/assets/workers/*` and anything
+  a worker imports (e.g. `text-to-speech/ttsEngine.ts`) are separate Vite entries
+  with no Nuxt auto-import context, so a bare `log` there is `undefined` at
+  runtime. Keep `console.*` in those files until a worker transport is wired.
+- **`console.*` is fine** in `scripts/`, `tests/`, `e2e/`, and in manual
+  verification harnesses whose console output is the deliverable
+  (`server/utils/test-scheduler.ts`).
 
 ## Do and Dont
 
@@ -175,3 +207,5 @@ Before presenting any code:
 - [ ] Middleware files numbered for execution order (e.g., `01.auth.global.ts`)
 - [ ] User interactions give feedback: async buttons show `:loading`, outcomes
   raise toasts, conditionally rendered UI animates on enter via `@vueuse/motion`
+- [ ] No `console.*` in `app/` or `server/` — structured `log.debug/info/warn/error`
+  instead (Web Workers exempt until a worker transport exists)

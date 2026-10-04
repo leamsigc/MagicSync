@@ -1,6 +1,6 @@
 # Carousel Deck Templates & Gallery
 
-Multi-page deck templates with per-deck palette, font and pattern, plus a bottom-of-page gallery that lays out every page of every deck. Lives in `packages/tools/app/pages/tools/carousel-creator/`.
+Multi-page deck templates with per-deck palette, font and pattern, plus a bottom-of-page gallery that lays out every page of every deck. Page lives in `packages/site/app/pages/tools/carousel-creator/`; its components live in `packages/tools/app/components/tools/carousel-creator/`. The shared template/pattern/frame data (`designAssets`, `patterns`, `layers/*`, `useCarouselDeck`) lives once in `packages/ui/app/utils/` — the carousel-creator copies that used to sit in the tool's page folder are gone.
 
 ## When to use
 Adding deck (multi-slide) template styles to the carousel creator, adding new slide layouts, or any "show all pages" preview surface.

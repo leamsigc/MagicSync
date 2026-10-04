@@ -41,7 +41,7 @@ export const useContentPipelineManagement = () => {
     isSaving.value = true
     try {
       await new Promise(resolve => setTimeout(resolve, 1000))
-      console.log('Saved draft:', data)
+      log.debug({ message: 'Saved draft', detail: data })
     } finally {
       isSaving.value = false
     }
@@ -52,7 +52,7 @@ export const useContentPipelineManagement = () => {
     isPublishing.value = true
     try {
       await new Promise(resolve => setTimeout(resolve, 1000))
-      console.log('Published:', url)
+      log.info({ message: 'Published', detail: url })
     } finally {
       isPublishing.value = false
     }

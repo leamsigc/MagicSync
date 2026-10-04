@@ -2,8 +2,8 @@
 <i18n src="./index.json"></i18n>
 
 <script lang="ts" setup>
-import ProfileForm from './components/ProfileForm.vue'
-import ProfileAvatar from './components/ProfileAvatar.vue'
+import ProfileForm from '../../../components/auth/profile/components/ProfileForm.vue'
+import ProfileAvatar from '../../../components/auth/profile/components/ProfileAvatar.vue'
 
 const { t } = useI18n()
 const { user, client } = UseUser()

@@ -9,7 +9,7 @@
  * @version 0.0.1
  */
 
-import NotificationList from './components/NotificationList.vue'
+import NotificationList from '../../../components/auth/notifications/components/NotificationList.vue'
 
 const { t } = useI18n()
 const {

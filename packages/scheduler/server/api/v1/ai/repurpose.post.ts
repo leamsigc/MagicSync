@@ -17,7 +17,7 @@ const requestSchema = z.object({
 export default defineLazyEventHandler(async () => {
   return defineEventHandler(async (event) => {
     const log = useLogger(event)
-    await checkUserIsLogin(event)
+    const user = await checkUserIsLogin(event)
     const body = await readBody(event);
 
     const validation = requestSchema.safeParse(body);
@@ -73,6 +73,11 @@ export default defineLazyEventHandler(async () => {
         prompt: userPrompt,
         schema: resultSchema,
         temperature: SCHEDULER_REPURPOSE_TEMPERATURE,
+        userId: user.id,
+        businessId: body.businessId ?? body.business_id ?? null,
+        useBusinessContext: body.useBusinessContext === true || body.use_business_context === true,
+        event,
+        log,
       });
 
       log.set({ success: true, platformCount: platforms.length })

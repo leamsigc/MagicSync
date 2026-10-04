@@ -8,13 +8,13 @@ export default defineTask({
   },
   async run() {
     if (!process.env.NUXT_MAILGUN_API_KEY || !process.env.NUXT_MAILGUN_DOMAIN) {
-      console.log('[notifications:digest] Skipped — Mailgun is not configured.')
+      log.debug({ message: '[notifications:digest] Skipped — Mailgun is not configured.' })
       return { result: 'Skipped', reason: 'Mailgun not configured' }
     }
     const since = new Date(Date.now() - 24 * 60 * 60 * 1000)
     const batch = await notificationService.getDigestBatch(since)
     if (batch.error || !batch.data) {
-      console.error(`[notifications:digest] ${batch.error || 'Failed to build digest batch'}`)
+      log.error({ message: `[notifications:digest] ${batch.error || 'Failed to build digest batch'}` })
       return { result: 'Failed', error: batch.error || 'Failed to build digest batch' }
     }
 
@@ -29,11 +29,11 @@ export default defineTask({
         sent++
       } catch (error) {
         failed++
-        console.error(`[notifications:digest] Failed for ${recipient.userId}:`, error)
+        log.error({ message: `[notifications:digest] Failed for ${recipient.userId}:`, error: String(error) })
       }
     }
 
-    console.log(`[notifications:digest] users ${batch.data.length} sent ${sent} failed ${failed}`)
+    log.debug({ message: `[notifications:digest] users ${batch.data.length} sent ${sent} failed ${failed}` })
     return { result: 'Digest sent', users: batch.data.length, sent, failed }
   },
 })

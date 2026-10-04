@@ -92,7 +92,7 @@ export class FeedbackService {
       }
       return { success: true, data: saved.data }
     } catch (error) {
-      console.error('feedbackService.create failed:', error)
+      log.error({ message: 'feedbackService.create failed', error: String(error) })
       return { success: false, error: 'Failed to save feedback' }
     }
   }
@@ -111,7 +111,7 @@ export class FeedbackService {
 
       return { success: true, data: feedbacks }
     } catch (error) {
-      console.error('feedbackService.listAll failed:', error)
+      log.error({ message: 'feedbackService.listAll failed', error: String(error) })
       return { success: false, error: 'Failed to list feedback' }
     }
   }
@@ -135,7 +135,7 @@ export class FeedbackService {
       }
       return { success: true, data: saved.data }
     } catch (error) {
-      console.error('feedbackService.setStatus failed:', error)
+      log.error({ message: 'feedbackService.setStatus failed', error: String(error) })
       return { success: false, error: 'Failed to update feedback' }
     }
   }
@@ -147,7 +147,7 @@ export class FeedbackService {
         .where(and(eq(entityDetails.entityType, FEEDBACK_TYPE), like(entityDetails.entityId, `%::${id}`)))
       return { success: true, data: true }
     } catch (error) {
-      console.error('feedbackService.remove failed:', error)
+      log.error({ message: 'feedbackService.remove failed', error: String(error) })
       return { success: false, error: 'Failed to delete feedback' }
     }
   }
@@ -160,7 +160,7 @@ export class FeedbackService {
       if (!parsed) return { success: false, error: 'Feedback data is corrupted' }
       return { success: true, data: parsed }
     } catch (error) {
-      console.error('feedbackService.getById failed:', error)
+      log.error({ message: 'feedbackService.getById failed', error: String(error) })
       return { success: false, error: 'Failed to load feedback' }
     }
   }

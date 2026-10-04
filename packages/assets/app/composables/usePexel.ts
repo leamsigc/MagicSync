@@ -70,7 +70,7 @@ export const usePexel = () => {
       totalResults.value = response.total_results
     } catch (e) {
       error.value = e
-      console.error('Pexels search error:', e)
+      log.error({ message: 'Pexels search error', error: String(e) })
     } finally {
       isLoading.value = false
     }

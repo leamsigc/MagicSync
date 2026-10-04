@@ -416,19 +416,21 @@ function getContextualErrorMessage(error: AppError): string {
  * Error logging function
  */
 export function logError(entry: ErrorLogEntry): void {
-  // In production, this would send to a logging service like Winston, Pino, or external service
-  const logMessage = {
-    ...entry,
-    stack: entry.error?.stack
+  // Emit a structured wide event rather than a formatted string, so the drain
+  // can index `message`, `requestId`, `endpoint` and `userId` as fields.
+  // `stack` rides along as its own field instead of being JSON-stringified.
+  const event = {
+    message: entry.message,
+    requestId: entry.requestId,
+    userId: entry.userId,
+    endpoint: entry.endpoint,
+    context: entry.context,
+    error: entry.error ? { name: entry.error.name, message: entry.error.message, stack: entry.error.stack } : undefined,
   }
 
-  if (entry.level === 'error') {
-    console.error('[ERROR]', JSON.stringify(logMessage, null, 2))
-  } else if (entry.level === 'warn') {
-    console.warn('[WARN]', JSON.stringify(logMessage, null, 2))
-  } else {
-    console.info('[INFO]', JSON.stringify(logMessage, null, 2))
-  }
+  if (entry.level === 'error') log.error(event)
+  else if (entry.level === 'warn') log.warn(event)
+  else log.info(event)
 }
 
 /**

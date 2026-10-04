@@ -185,6 +185,16 @@ export function useAutoReply() {
     }
   }
 
+  async function fetchCampaign(id: string): Promise<AutoReplyCampaign | null> {
+    try {
+      const res = await $fetch<{ success: boolean; data: AutoReplyCampaign }>(`/api/v1/auto-reply/campaigns/${id}`)
+      return res.data || null
+    } catch (err) {
+      error.value = toMessage(err, 'Failed to load campaign')
+      return null
+    }
+  }
+
   async function fetchRecentMedia(socialAccountId: string, limit = 10): Promise<AutoReplyMediaItem[]> {
     try {
       const res = await $fetch<{ success: boolean; data: AutoReplyMediaItem[] }>('/api/v1/auto-reply/media', {
@@ -226,6 +236,7 @@ export function useAutoReply() {
     loading,
     error,
     fetchCampaigns,
+    fetchCampaign: fetchCampaign,
     createCampaign,
     updateCampaign,
     deleteCampaign,

@@ -18,11 +18,17 @@
     "typescript": "catalog:",
     "vue": "catalog:",
     "@nuxtjs/i18n": "catalog:",
-    "evlog": "catalog:"
+    "evlog": "catalog:",
+    "dayjs": "catalog:"
   },
   "dependencies": {
+    "@comark/nuxt": "catalog:",
+    "@local-monorepo/agent": "workspace:*",
     "@local-monorepo/auth": "workspace:*",
     "@local-monorepo/db": "workspace:*",
-    "@local-monorepo/ui": "workspace:*"
+    "@local-monorepo/ui": "workspace:*",
+    "comark": "catalog:",
+    "comark-seo": "catalog:",
+    "vue-stream-markdown": "catalog:"
   }
 }

@@ -1,5 +1,6 @@
 import type { NavigationMenuItem } from '@nuxt/ui'
 import menu from '../layouts/dashboard/Menu.json'
+import { useBusinessManager } from '#layers/BaseShared/app/composables/useBusinessManager'
 
 /**
  * Composable for dashboard navigation links
@@ -17,6 +18,35 @@ export const useDashboardNavigation = () => {
   const menuItems = computed(() => menu[locale.value] || {})
 
   const isAdmin = computed(() => user.value?.role === 'admin')
+
+  // The active business is a single global `useState('business:id')` populated
+  // by `connect`'s 03.business-check.global.ts middleware and already consumed
+  // by BusinessSwitcher.vue — reuse it rather than resolving a second time.
+  const { activeBusinessId } = useBusinessManager()
+
+  // Business-scoped children. The content board link needs an id in the path,
+  // so it is omitted entirely when no business is active instead of rendering
+  // a broken `/app/business/undefined/content`.
+  const businessChildren = (m: typeof menu.en): NavigationMenuItem[] => {
+    const businessId = activeBusinessId.value
+    const contentLink: NavigationMenuItem[] = businessId
+      ? [{ label: m.menu.content, to: `/app/business/${businessId}/content`, icon: 'i-lucide-file-text' }]
+      : []
+
+    return [
+      {
+        label: m.menu.allBusinesses,
+        to: '/app/business',
+        icon: 'i-lucide-list'
+      },
+      ...contentLink,
+      {
+        label: m.menu.switchBusiness,
+        to: '/app/home',
+        icon: 'i-lucide-repeat'
+      }
+    ]
+  }
 
   const navigationLinks = computed<NavigationMenuItem[]>(() => {
     const m = menuItems.value
@@ -100,6 +130,12 @@ export const useDashboardNavigation = () => {
         to: '/app/auto-reply',
         active: route.path.startsWith('/app/auto-reply')
       },
+      {
+        label: m.menu.chat,
+        icon: 'i-lucide-message-square',
+        to: '/app/chat',
+        active: route.path.startsWith('/app/chat')
+      },
 
       // ── Content ────────────────────────────────────────────
       { type: 'label', label: m.menu.sectionContent },
@@ -159,11 +195,6 @@ export const useDashboardNavigation = () => {
             icon: 'i-lucide-trending-up'
           },
           {
-            label: m.menu.chat,
-            to: '/app/ai-tools/chat',
-            icon: 'i-lucide-bot'
-          },
-          {
             label: m.menu.aiToolsData,
             to: '/app/ai-tools/knowledge',
             icon: 'i-lucide-folder-open'
@@ -172,6 +203,16 @@ export const useDashboardNavigation = () => {
             label: m.menu.aiToolsSkills,
             to: '/app/ai-tools/skills',
             icon: 'i-lucide-blocks'
+          },
+          {
+            label: m.menu.agents,
+            to: '/app/ai-tools/agents',
+            icon: 'i-lucide-bot'
+          },
+          {
+            label: m.menu.aiToolsTools,
+            to: '/app/ai-tools/tools',
+            icon: 'i-lucide-hammer'
           }
         ]
       },
@@ -201,18 +242,7 @@ export const useDashboardNavigation = () => {
         icon: 'i-lucide-building-2',
         to: '/app/business',
         active: route.path.startsWith('/app/business') || route.path === '/app/home',
-        children: [
-          {
-            label: m.menu.allBusinesses,
-            to: '/app/business',
-            icon: 'i-lucide-list'
-          },
-          {
-            label: m.menu.switchBusiness,
-            to: '/app/home',
-            icon: 'i-lucide-repeat'
-          }
-        ]
+        children: businessChildren(m)
       },
 
       // ── Settings ───────────────────────────────────────────

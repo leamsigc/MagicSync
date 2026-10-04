@@ -1,5 +1,9 @@
 # Episode 2: Knowledge Base Explorer — Roadmap
 
+> Historical note: the Python backend referenced here was removed (T14). The
+> KB exploration tools now ship in the Nuxt agent layer (`packages/agent`).
+> Current architecture: `.claude/context/architecture.md`.
+
 ## Overview
 
 Delivers a Claude Code-inspired exploration layer for the existing RAG application. Starting with folder schema and APIs, then document-folder integration, followed by the ingestion UI, and finally building out the suite of KB exploration tools (ls, tree, grep, glob, read) culminating in an explorer sub-agent.

@@ -1,18 +1,19 @@
 import { z } from 'zod'
 import { defineMcpTool } from '@nuxtjs/mcp-toolkit/server'
 import { PLATFORMS } from '../../utils/platforms'
-import { requireMcp, resolveUserId } from '../../utils/mcp-context'
+import { requireMcp } from '../../utils/mcp-context'
+import { resolveMcpAiContext } from '../../utils/mcp-ai-context'
 import { logMcpCall } from '../../utils/mcp-audit'
+import { buildCapabilityRunContext } from '#layers/BaseAgent/server/capabilities/run-context'
+import { runCapability } from '#layers/BaseAgent/server/capabilities'
+import '#layers/BaseAgent/server/capabilities/social'
 
-interface GenerateResponse {
-  post?: {
-    text: string
-    hashtags: string[]
-    platform: string
-    character_count: number
-    warning?: string
-  }
-  error?: string
+interface GeneratePost {
+  text: string
+  hashtags: string[]
+  platform: string
+  character_count: number
+  warning?: string
 }
 
 export default defineMcpTool({
@@ -30,29 +31,33 @@ export default defineMcpTool({
   annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: false },
   async handler(args) {
     const mcp = requireMcp()
-    const userId = await resolveUserId(mcp)
-    const config = useRuntimeConfig()
-    const backendUrl = config.pythonBackendUrl || 'http://localhost:8000'
+    const ai = await resolveMcpAiContext(mcp)
 
     try {
-      const result = await $fetch<GenerateResponse>(`${backendUrl}/api/v1/social-media/generate`, {
-        method: 'POST',
-        body: {
-          topic: args.topic,
-          platform: args.platform,
-          tone: args.tone,
-          include_hashtags: args.includeHashtags,
-          include_cta: args.includeCta,
-          additional_context: args.additionalContext || '',
-          max_length: args.maxLength,
-        },
-        headers: { 'X-User-Id': userId },
+      const ctx = await buildCapabilityRunContext(ai.ownerId, mcp.businessId, {
+        useBusinessContext: false,
+        capability: 'social.caption',
       })
-      if (result.error || !result.post) {
-        throw new Error(result.error || 'AI generation failed')
+      const outcome = await runCapability('social.caption', {
+        topic: args.topic,
+        platform: args.platform,
+        tone: args.tone,
+        includeHashtags: args.includeHashtags,
+        includeCta: args.includeCta,
+        additionalContext: args.additionalContext,
+        maxLength: args.maxLength,
+        system: ai.businessContext,
+      }, ctx)
+      if (!outcome.ok) throw new Error(outcome.error)
+      const text = outcome.output.text
+      const post: GeneratePost = {
+        text,
+        hashtags: outcome.output.hashtags,
+        platform: args.platform,
+        character_count: text.length,
       }
       await logMcpCall(mcp, 'generate-caption', undefined, 'success', `platform=${args.platform}`)
-      return result.post
+      return post
     }
     catch (error) {
       await logMcpCall(mcp, 'generate-caption', undefined, 'failure', error instanceof Error ? error.message : String(error))

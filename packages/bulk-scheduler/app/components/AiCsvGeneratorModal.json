@@ -1,48 +1,94 @@
 {
-    "en": {
-        "aiCsvGenerator": {
-            "title": "Generate Posts with AI",
-            "description": "Describe what kind of posts you want to create. Use variable placeholders like {'{'}productName{'}'} for personalized content.",
-            "promptLabel": "What posts should we generate?",
-            "promptPlaceholder": "e.g., Generate 5 promotional posts for {'{'}productName{'}'}, each highlighting a different benefit...",
-            "insertVariable": "Insert",
-            "systemVariables": "System Variables",
-            "customVariables": "Custom Variables",
-            "addVariable": "Add",
-            "variableNamePlaceholder": "variable_name",
-            "noVariables": "Add custom variables like {'{'}productName{'}'} or {'{'}price{'}'} to personalize each post.",
-            "hint": "Tip: Mention the number of posts, topic, tone, and use variables for per-row personalization.",
-            "generate": "Generate CSV",
-            "generated": "{count} posts generated successfully",
-            "noPostsGenerated": "No posts were generated. Try being more specific.",
-            "error": "Failed to generate posts",
-            "errorDescription": "An error occurred while generating posts. Please try again."
-        },
-        "common": {
-            "cancel": "Cancel"
-        }
+  "en": {
+    "aiCsvGenerator": {
+      "title": "Generate Posts with AI",
+      "description": "Describe what kind of posts you want to create. Use variable placeholders like {'{'}productName{'}'} for personalized content.",
+      "promptLabel": "What posts should we generate?",
+      "promptPlaceholder": "e.g., Generate 5 promotional posts for {'{'}productName{'}'}, each highlighting a different benefit...",
+      "insertVariable": "Insert",
+      "systemVariables": "System Variables",
+      "customVariables": "Custom Variables",
+      "addVariable": "Add",
+      "variableNamePlaceholder": "variable_name",
+      "noVariables": "Add custom variables like {'{'}productName{'}'} or {'{'}price{'}'} to personalize each post.",
+      "hint": "Tip: Mention the number of posts, topic, tone, and use variables for per-row personalization.",
+      "generate": "Generate CSV",
+      "generated": "{count} posts generated successfully",
+      "noPostsGenerated": "No posts were generated. Try being more specific.",
+      "error": "Failed to generate posts",
+      "errorDescription": "An error occurred while generating posts. Please try again."
     },
-    "es": {
-        "aiCsvGenerator": {
-            "title": "Generar Publicaciones con IA",
-            "description": "Describa qué publicaciones crear. Use marcadores como {'{'}productName{'}'} para contenido personalizado.",
-            "promptLabel": "¿Qué publicaciones debemos generar?",
-            "promptPlaceholder": "ej., Genera 5 publicaciones promocionales para {'{'}productName{'}'}...",
-            "insertVariable": "Insertar",
-            "systemVariables": "Variables del Sistema",
-            "customVariables": "Variables Personalizadas",
-            "addVariable": "Agregar",
-            "variableNamePlaceholder": "nombre_variable",
-            "noVariables": "Agregue variables como {'{'}productName{'}'} o {'{'}price{'}'} para personalizar cada publicación.",
-            "hint": "Consejo: Mencione el número, tema, tono y use variables para personalización.",
-            "generate": "Generar CSV",
-            "generated": "{count} publicaciones generadas exitosamente",
-            "noPostsGenerated": "No se generaron publicaciones. Intente ser más específico.",
-            "error": "Error al generar publicaciones",
-            "errorDescription": "Ocurrió un error al generar las publicaciones. Intente de nuevo."
-        },
-        "common": {
-            "cancel": "Cancelar"
-        }
+    "common": {
+      "cancel": "Cancel"
     }
+  },
+  "es": {
+    "aiCsvGenerator": {
+      "title": "Generar Publicaciones con IA",
+      "description": "Describa qué publicaciones crear. Use marcadores como {'{'}productName{'}'} para contenido personalizado.",
+      "promptLabel": "¿Qué publicaciones debemos generar?",
+      "promptPlaceholder": "ej., Genera 5 publicaciones promocionales para {'{'}productName{'}'}...",
+      "insertVariable": "Insertar",
+      "systemVariables": "Variables del Sistema",
+      "customVariables": "Variables Personalizadas",
+      "addVariable": "Agregar",
+      "variableNamePlaceholder": "nombre_variable",
+      "noVariables": "Agregue variables como {'{'}productName{'}'} o {'{'}price{'}'} para personalizar cada publicación.",
+      "hint": "Consejo: Mencione el número, tema, tono y use variables para personalización.",
+      "generate": "Generar CSV",
+      "generated": "{count} publicaciones generadas exitosamente",
+      "noPostsGenerated": "No se generaron publicaciones. Intente ser más específico.",
+      "error": "Error al generar publicaciones",
+      "errorDescription": "Ocurrió un error al generar las publicaciones. Intente de nuevo."
+    },
+    "common": {
+      "cancel": "Cancelar"
+    }
+  },
+  "de": {
+    "aiCsvGenerator": {
+      "title": "Beiträge mit der KI generieren",
+      "description": "Beschreiben Sie, welche Art von Beiträgen Sie erstellen möchten. Verwenden Sie Variablen wie {'{'}{'{'}productName{'}'}{'}'} für personalisierte Inhalte.",
+      "promptLabel": "Welche Beiträge sollen generiert werden?",
+      "promptPlaceholder": "z. B. 5 Werbebeiträge für {'{'}{'{'}productName{'}'}{'}'} generieren, jeweils mit einem anderen Vorteil im Fokus...",
+      "insertVariable": "Einfügen",
+      "systemVariables": "Systemvariablen",
+      "customVariables": "Eigene Variablen",
+      "addVariable": "Hinzufügen",
+      "variableNamePlaceholder": "variablen_name",
+      "noVariables": "Fügen Sie eigene Variablen wie {'{'}{'{'}productName{'}'}{'}'} oder {'{'}{'{'}price{'}'}{'}'} hinzu, um jeden Beitrag zu personalisieren.",
+      "hint": "Tipp: Geben Sie die Anzahl der Beiträge, das Thema und den Ton an und verwenden Sie Variablen für die Zeilenanpassung.",
+      "generate": "CSV generieren",
+      "generated": "{count} Beitrag/Beiträge erfolgreich generiert",
+      "noPostsGenerated": "Es wurden keine Beiträge generiert. Versuchen Sie eine genauere Beschreibung.",
+      "error": "Beiträge konnten nicht generiert werden",
+      "errorDescription": "Bei der Generierung der Beiträge ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut."
+    },
+    "common": {
+      "cancel": "Abbrechen"
+    }
+  },
+  "fr": {
+    "aiCsvGenerator": {
+      "title": "Générer des publications avec l'IA",
+      "description": "Décrivez le type de publications que vous souhaitez créer. Utilisez des variables comme {'{'}{'{'}productName{'}'}{'}'} pour personnaliser le contenu.",
+      "promptLabel": "Quelles publications devons-nous générer ?",
+      "promptPlaceholder": "ex. Générer 5 publications promotionnelles pour {'{'}{'{'}productName{'}'}{'}'}, chacune mettant en avant un avantage différent...",
+      "insertVariable": "Insérer",
+      "systemVariables": "Variables système",
+      "customVariables": "Variables personnalisées",
+      "addVariable": "Ajouter",
+      "variableNamePlaceholder": "nom_de_la_variable",
+      "noVariables": "Ajoutez des variables personnalisées comme {'{'}{'{'}productName{'}'}{'}'} ou {'{'}{'{'}price{'}'}{'}'} pour personnaliser chaque publication.",
+      "hint": "Astuce : indiquez le nombre de publications, le sujet et le ton, et utilisez des variables pour personnaliser chaque ligne.",
+      "generate": "Générer le CSV",
+      "generated": "{count} publication(s) générée(s) avec succès",
+      "noPostsGenerated": "Aucune publication n'a été générée. Essayez d'être plus précis.",
+      "error": "Échec de la génération des publications",
+      "errorDescription": "Une erreur s'est produite lors de la génération des publications. Veuillez réessayer."
+    },
+    "common": {
+      "cancel": "Annuler"
+    }
+  }
 }

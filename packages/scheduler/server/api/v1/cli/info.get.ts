@@ -5,7 +5,7 @@
  * for the authenticated API key.
  */
 import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service'
-import { platformConfigurations } from '#layers/BaseScheduler/shared/platformConstants'
+import { platformConfigurations } from '#layers/BaseShared/shared/platformConstants'
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event)

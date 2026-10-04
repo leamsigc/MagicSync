@@ -18,6 +18,7 @@
   "dependencies": {
     "@ai-sdk/vue": "catalog:",
     "@comark/nuxt": "catalog:",
+    "@local-monorepo/agent": "workspace:*",
     "@local-monorepo/auth": "workspace:*",
     "@local-monorepo/db": "workspace:*",
     "@local-monorepo/tools": "workspace:*",
@@ -27,7 +28,8 @@
     "cheerio": "catalog:",
     "evlog": "catalog:",
     "mediabunny": "catalog:",
-    "onnxruntime-web": "catalog:"
+    "onnxruntime-web": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@nuxt/eslint": "catalog:",

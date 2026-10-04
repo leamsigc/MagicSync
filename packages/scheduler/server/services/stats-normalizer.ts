@@ -1,4 +1,4 @@
-import type { PostInsight } from '#layers/BaseScheduler/server/services/SchedulerPost.service'
+import type { PostInsight } from '#layers/BaseDB/server/services/SchedulerPost.service'
 
 export interface NormalizedPostMetrics {
   likes?: number

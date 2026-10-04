@@ -88,30 +88,31 @@ export const useNavigationLinks = () => {
           label: 'Text Behind Image',
           to: `/tools/text-behind-image-free`,
           icon: 'i-heroicons-document-text'
-        }
+        },
+        {
+          label: t('navigation.assistant'),
+          icon: 'i-lucide-message-square',
+          to: `/app/chat`,
+          active: route.path.startsWith(`/app/chat`)
+        },
+        {
+          label: t('navigation.playground'),
+          icon: 'i-heroicons-play',
+          to: `/playground`,
+          active: route.path.startsWith(`/playground`)
+        },
       ]
-    },
-    {
-      label: t('navigation.playground'),
-      icon: 'i-heroicons-play',
-      to: `/playground`,
-      active: route.path.startsWith(`/playground`)
     },
     {
       label: t('navigation.aiTools'),
       icon: 'i-lucide-sparkles',
-      to: `/app/ai-tools/chat`,
+      to: `/app/chat`,
       active: route.path.startsWith(`/app/ai-tools`),
       children: [
         {
           label: 'Chat',
-          to: `/app/ai-tools/chat`,
+          to: `/app/chat`,
           icon: 'i-lucide-message-square'
-        },
-        {
-          label: 'Assets',
-          to: `/app/ai-tools/chat/assets`,
-          icon: 'i-lucide-file-image'
         },
         {
           label: 'Knowledge',
@@ -124,20 +125,20 @@ export const useNavigationLinks = () => {
           icon: 'i-lucide-wrench'
         },
         {
+          label: 'Agents',
+          to: `/app/ai-tools/agents`,
+          icon: 'i-lucide-bot'
+        },
+        {
           label: 'Tools',
           to: `/app/ai-tools/tools`,
           icon: 'i-lucide-hammer'
         },
         {
           label: 'Growth Strategy',
-          to: `/app/ai-tools/growth-stratergy`,
+          to: `/app/tools/growth-stratergy`,
           icon: 'i-lucide-rocket'
         },
-        {
-          label: 'Settings',
-          to: `/app/ai-tools/settings`,
-          icon: 'i-lucide-settings'
-        }
       ]
     }
   ])
@@ -232,6 +233,7 @@ export const useNavigationLinks = () => {
   ])
 
   return {
+    t,
     links,
     footerLinks,
     features

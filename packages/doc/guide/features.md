@@ -60,6 +60,31 @@ MagicSync includes AI tools to help generate and refine content.
 
 ---
 
+## Agent Platform & Content Board
+
+Every business gets a grounded AI workspace built on its Brand Playbook:
+
+| Feature | Description |
+|---------|-------------|
+| Business chat | One ChatGPT-style surface per business, streaming with tools |
+| Content board | Kanban: ideas → research → drafting → review → approved → delivery → archive |
+| Content chain | Research → write → humanize → SEO/GEO/link checks → human review |
+| Trend scans | Best-post signals plus web research become idea cards |
+| Knowledge (RAG) | Upload documents; the agent retrieves relevant chunks |
+| Video ingestion | Download source video with the pinned yt-dlp + ffmpeg toolchain |
+| Tool backends | Bring your own ScrapeGraphAI key (default scraper) and optionally a Python tools service |
+
+**Approval gates:** agents can move cards up to *review required*; scheduling
+and publishing require a human-approved artifact version.
+
+**Example:** Ask the chat to run a trend scan for your business; idea cards land
+on the board. Approve one, and the chain produces a checked draft ready to
+schedule.
+
+Learn more: [Agent Platform](/guide/agent-platform) · [Content Board](/guide/content-board) · [Tool Backends](/guide/tool-backends)
+
+---
+
 ## Analytics
 
 Track the performance of your social media content:

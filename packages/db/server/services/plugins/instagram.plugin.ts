@@ -1,0 +1,1151 @@
+import { parseJsonObject, toJsonString } from '#layers/BaseShared/utils/json';
+import type { PostResponse, GetCommentsResponse, GetConversationsResponse, ReplyCommentResponse, PlatformComment, PlatformConversation, PluginPostDetails, PluginSocialMediaAccount, PostInsight, PlatformStats } from '#layers/BaseDB/server/services/SchedulerPost.service';
+import { BaseSchedulerPlugin, createPostInsightsFallback, extractExternalPostId } from '#layers/BaseDB/server/services/SchedulerPost.service';
+import type { Post, PostWithAllData, SocialMediaAccount, Asset, PlatformContentOverride } from '#layers/BaseDB/db/schema';
+import type { InstagramSettings } from '#layers/BaseShared/shared/platformSettings';
+import { platformConfigurations } from '#layers/BaseShared/shared/platformConstants';
+
+type InstagramPublishResponse = {
+  id: string;
+};
+
+type InstagramApiComment = {
+  id: string;
+  text?: string;
+  from?: { username?: string; id?: string; profile_picture_url?: string };
+  timestamp?: string;
+  created_time?: string;
+  like_count?: number;
+  replies?: { data?: unknown[] };
+  parent?: { id?: string };
+};
+
+export interface InstagramRecentMedia {
+  id: string;
+  caption?: string;
+  mediaType?: string;
+  /** Direct image URL (IMAGE/CAROUSEL) or thumbnail (VIDEO). For the picker UI. */
+  imageUrl?: string;
+  timestamp?: string;
+  likeCount?: number;
+  commentsCount?: number;
+}
+
+export class InstagramPlugin extends BaseSchedulerPlugin {
+  static readonly pluginName = 'instagram';
+  readonly pluginName = 'instagram';
+
+  private readonly API_VERSION = 'v25.0';
+  private readonly GRAPH_API_BASE_URL = 'https://graph.facebook.com';
+
+  private _getGraphApiUrl(path: string): string {
+    return `${this.GRAPH_API_BASE_URL}/${this.API_VERSION}/${path.replace(/^\//, '')}`;
+  }
+
+  private normalizeContent(content: string): string {
+    if (!content) return '';
+    return content
+      .replace(/\\n/g, '\n')
+      .replace(/\r\n/g, '\n')
+      .replace(/\r/g, '\n');
+  }
+
+  private getPlatformData(postDetails: PostWithAllData, platformPost?: Record<string, unknown>) {
+    const platformName = this.pluginName;
+    const platformContent = (postDetails.platformContent as Record<string, PlatformContentOverride | undefined>)?.[platformName];
+    const platformSettings = (postDetails.platformSettings as Record<string, unknown>)?.[platformName] as InstagramSettings | undefined;
+    const rawContent = platformContent?.content || postDetails.content;
+    const postFormat = postDetails.postFormat ?? 'post';
+    const comments = platformContent?.comments || [];
+    return {
+      content: this.normalizeContent(rawContent),
+      settings: platformSettings,
+      postFormat: postFormat,
+      comments
+    };
+  }
+
+  public override exposedMethods = [
+    'instagramMaxLength',
+    'getProfile',
+    'getMediaInsights',
+  ] as const;
+  override maxConcurrentJob = platformConfigurations.instagram.maxConcurrentJob;
+
+  instagramMaxLength() {
+    return platformConfigurations.instagram.maxPostLength;
+  }
+
+  protected init(options?: Record<string, unknown>): void {
+    log.info({ message: 'Instagram plugin initialized', detail: options });
+  }
+
+  override async validate(post: PostWithAllData): Promise<string[]> {
+    const errors: string[] = [];
+
+    if (!post.content || post.content.trim() === '') {
+      errors.push('Post caption cannot be empty.');
+    }
+
+    if (post.content && post.content.length > platformConfigurations.instagram.maxPostLength) {
+      errors.push(`Caption is too long (max ${platformConfigurations.instagram.maxPostLength} characters)`);
+    }
+
+    if (!post.assets || post.assets.length === 0) {
+      errors.push('At least one image or video is required for Instagram posts.');
+    }
+
+    return Promise.resolve(errors);
+  }
+
+  /**
+   * Get Instagram business account profile
+   */
+  async getProfile(accountId: string, accessToken: string): Promise<Record<string, unknown>> {
+    const url = this._getGraphApiUrl(`${accountId}?fields=id,username,name,profile_picture_url,followers_count,follows_count,media_count&access_token=${accessToken}`)
+    const response = await fetch(url)
+    const data = await response.json() as Record<string, unknown>
+    if (data.profile_picture_url) {
+      data.profile_picture_url = await fetchedImageBase64(data.profile_picture_url as string)
+    }
+    return data
+  }
+
+  /**
+   * Get media insights (engagement metrics)
+   * Updated to use current valid Instagram Graph API metrics
+   */
+  async getMediaInsights(mediaId: string, accessToken: string): Promise<{ data: Record<string, unknown>[] }> {
+    try {
+      const url = this._getGraphApiUrl(`${mediaId}/insights?metric=reach,views,saved,likes,comments,shares,engagement&access_token=${accessToken}`)
+      const response = await fetch(url)
+      if (!response.ok) {
+        const error = await response.json()
+        log.warn({ message: '[Instagram] Media insights error:', error })
+        return { data: [] }
+      }
+      return response.json() as Promise<{ data: Record<string, unknown>[] }>
+    } catch (error) {
+      log.warn({ content: 'Instagram Media insights fetch failed', plugin: 'instagram', error: (error as Error).message })
+      this.logPluginEvent('get-media-insights-error', 'failure', `Error: ${(error as Error).message}`)
+      return { data: [] }
+    }
+  }
+
+  /**
+   * Create media container (step 1 of posting)
+   */
+  private async createContainer(
+    igUserId: string,
+    mediaUrl: string,
+    caption: string,
+    mediaType: 'IMAGE' | 'VIDEO' | 'CAROUSEL' | 'STORIES' | 'REELS',
+    accessToken: string,
+    children?: string[],
+    settings?: Record<string, unknown>,
+    isCarouselItem?: boolean
+  ): Promise<string> {
+    const params = new URLSearchParams({
+      access_token: accessToken,
+    });
+
+    if (caption) {
+      params.append('caption', caption);
+    }
+
+    if (isCarouselItem) {
+      params.append('is_carousel_item', 'true');
+    }
+
+    if (mediaType === 'CAROUSEL' && children && children.length > 0) {
+      params.append('media_type', 'CAROUSEL');
+      params.append('children', children.join(','));
+    } else if (mediaType === 'VIDEO' || mediaType === 'REELS') {
+      params.append('media_type', mediaType);
+      params.append('video_url', getPublicUrlForAsset(mediaUrl));
+
+      if (mediaType === 'REELS' && (settings?.is_trial_reel as boolean | undefined)) {
+        params.append('trial_params', JSON.stringify({
+          graduation_strategy: (settings?.graduation_strategy as string | undefined) || 'MANUAL'
+        }));
+      }
+    } else if (mediaType === 'STORIES') {
+      params.append('media_type', 'STORIES');
+      if (mediaUrl.match(/\.(mp4|mov|wmv|flv|avi)$/i) || mediaUrl.includes('video')) {
+        params.append('video_url', getPublicUrlForAsset(mediaUrl));
+      } else {
+        params.append('image_url', getPublicUrlForAsset(mediaUrl));
+      }
+    } else {
+      params.append('image_url', getPublicUrlForAsset(mediaUrl));
+    }
+
+    const url = this._getGraphApiUrl(`${igUserId}/media?${params.toString()}`)
+    const response = await fetch(url, { method: 'POST' })
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Instagram container creation failed: ${error}`);
+    }
+
+    const data = await response.json();
+    log.info({ content: 'Instagram container created', plugin: 'instagram', containerData: data })
+    return data.id;
+  }
+
+  /**
+   * Publish media container (step 2 of posting)
+   */
+  private async publishContainer(
+    igUserId: string,
+    containerId: string,
+    accessToken: string,
+    retries: number = 5
+  ): Promise<InstagramPublishResponse> {
+    const params = new URLSearchParams({
+      access_token: accessToken,
+      creation_id: containerId,
+    });
+
+    for (let i = 0; i < retries; i++) {
+      const url = this._getGraphApiUrl(`${igUserId}/media_publish?${params.toString()}`)
+      const response = await fetch(url, { method: 'POST' });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch (e) { }
+
+        // Error 2207027: The media is not ready for publishing, please wait for a moment
+        if (errorData?.error?.error_subcode === 2207027 && i < retries - 1) {
+          await new Promise(resolve => setTimeout(resolve, 5000));
+          continue;
+        }
+
+        throw new Error(`Instagram publish failed: ${errorText}`);
+      }
+
+      return response.json();
+    }
+  }
+
+  /**
+   * Wait for media processing to complete
+   */
+  private async waitForMediaProcessing(
+    containerId: string,
+    accessToken: string,
+    maxAttempts: number = 30
+  ): Promise<void> {
+    for (let i = 0; i < maxAttempts; i++) {
+      let response;
+      try {
+        const url = this._getGraphApiUrl(`${containerId}?fields=status_code&access_token=${accessToken}`)
+        response = await fetch(url)
+      } catch (err) {
+        log.warn({ content: 'Instagram media processing check failed', plugin: 'instagram', error: (err as Error).message })
+      }
+
+      if (response && response.ok) {
+        const data = await response.json();
+
+        if (data.status_code === 'FINISHED') {
+          return;
+        } else if (data.status_code === 'ERROR') {
+          throw new Error('Media processing failed');
+        } else if (!data.status_code) {
+          // Status code might not be present for generic images or some types, so return and check publishing.
+          return;
+        }
+      }
+
+      // Wait 3 seconds before checking again
+      await new Promise(resolve => setTimeout(resolve, 3000));
+    }
+
+    throw new Error('Media processing timeout');
+  }
+
+  override async post(
+    postDetails: PostWithAllData,
+    comments: PostWithAllData[],
+    socialMediaAccount: SocialMediaAccount
+  ): Promise<PostResponse> {
+    log.info({ content: 'Instagram post started', plugin: 'instagram' })
+    try {
+      log.info({ content: 'Instagram post details', plugin: 'instagram', postDetails })
+      const igUserId = socialMediaAccount.accountId;
+
+      if (!igUserId) {
+        throw new Error('Instagram Business Account ID is required');
+      }
+
+      if (!postDetails.assets || postDetails.assets.length === 0) {
+        throw new Error('At least one media file is required');
+      }
+
+      const { content, settings, postFormat, comments: postComments } = this.getPlatformData(postDetails);
+      const caption = content || '';
+
+      const isStory = postFormat === 'story' || settings?.post_type === 'story';
+
+      log.info({ content: 'Instagram is story check', plugin: 'instagram', isStory })
+      let containerId: string;
+      let lastPublishedData: InstagramPublishResponse | null = null;
+
+      if (isStory) {
+        for (const asset of postDetails.assets) {
+          const cid = await this.createContainer(
+            igUserId,
+            asset.url,
+            asset.originalName, // stories caption doesn't map directly to media caption
+            'STORIES',
+            socialMediaAccount.accessToken,
+            undefined,
+            settings
+          );
+
+          await this.waitForMediaProcessing(cid, socialMediaAccount.accessToken);
+
+          lastPublishedData = await this.publishContainer(
+            igUserId,
+            cid,
+            socialMediaAccount.accessToken
+          );
+        }
+
+        const postResponse: PostResponse = {
+          id: postDetails.id,
+          postId: lastPublishedData.id,
+          releaseURL: `https://www.instagram.com/p/${lastPublishedData.id}/`,
+          status: 'published',
+        };
+        this.emit('instagram:post:published', { postId: postResponse.postId, response: lastPublishedData });
+        return postResponse;
+      } else if (postDetails.assets.length > 1) {
+        // Carousel post (multiple images or mixed)
+        const childContainers: string[] = [];
+
+        for (const asset of postDetails.assets.slice(0, 10)) {
+          const mediaType = asset.mimeType.includes('video') ? 'VIDEO' : 'IMAGE';
+          const childId = await this.createContainer(
+            igUserId,
+            asset.url,
+            '', // Provide empty string for children caption
+            mediaType,
+            socialMediaAccount.accessToken,
+            undefined,
+            settings,
+            true // isCarouselItem
+          );
+
+          await this.waitForMediaProcessing(childId, socialMediaAccount.accessToken);
+          childContainers.push(childId);
+        }
+
+        containerId = await this.createContainer(
+          igUserId,
+          '',
+          caption,
+          'CAROUSEL',
+          socialMediaAccount.accessToken,
+          childContainers,
+          settings
+        );
+      } else {
+        // Single image or video post
+        log.info({ content: 'Instagram regular post', plugin: 'instagram' })
+
+
+        const asset = postDetails.assets[0];
+        if (!asset) {
+          throw new Error('No asset found for post');
+        }
+
+
+        const isVid = asset.mimeType.includes('video');
+        const mediaType = isVid ? 'REELS' : 'IMAGE';
+
+        containerId = await this.createContainer(
+          igUserId,
+          asset.url,
+          caption,
+          mediaType,
+          socialMediaAccount.accessToken,
+          undefined,
+          settings
+        );
+      }
+      log.info({ content: 'Instagram container ID obtained', plugin: 'instagram', containerId })
+
+      if (!isStory) {
+        await this.waitForMediaProcessing(containerId, socialMediaAccount.accessToken);
+
+        const publishedData = await this.publishContainer(
+          igUserId,
+          containerId,
+          socialMediaAccount.accessToken
+        );
+
+        const postResponse: PostResponse = {
+          id: postDetails.id,
+          postId: publishedData.id,
+          releaseURL: `https://www.instagram.com/p/${publishedData.id}/`,
+          status: 'published',
+        };
+
+        this.emit('instagram:post:published', { postId: postResponse.postId, response: publishedData });
+        return postResponse;
+      }
+
+      throw new Error('Unknown posting error');
+    } catch (error: unknown) {
+      log.error({ content: 'Instagram post failed', plugin: 'instagram', error: (error as Error).message })
+      log.error({ content: 'Instagram post failed', plugin: 'instagram', error: (error as Error).message })
+
+      this.logPluginEvent('post-error', 'failure', `Error: ${(error as Error).message}`, postDetails.id, {
+        error: `${error}`,
+      });
+      const errorResponse: PostResponse = {
+        id: postDetails.id,
+        postId: '',
+        releaseURL: '',
+        status: 'failed',
+        error: (error as Error).message,
+      };
+      this.emit('instagram:post:failed', { error: (error as Error).message });
+      return errorResponse;
+    }
+  }
+
+  override async update(
+    postDetails: PostWithAllData,
+    comments: PostWithAllData[],
+    socialMediaAccount: SocialMediaAccount
+  ): Promise<PostResponse> {
+    const publishedPlatformDetails = postDetails.platformPosts.find((platform) => platform.socialAccountId === socialMediaAccount.id);
+    if (!publishedPlatformDetails) {
+      throw new Error('Published platform details not found');
+    }
+
+    const publishedDetails = publishedPlatformDetails.publishDetail ? parseJsonObject(toJsonString(publishedPlatformDetails.publishDetail)) as PostResponse : null;
+    if (!publishedDetails) {
+      throw new Error('Published details not found');
+    }
+    const publishedPostId = publishedDetails.postId;
+
+    // Update caption
+    const { content } = this.getPlatformData(postDetails);
+
+    // https://graph.facebook.com/{media-id}?caption={caption}
+    const params = new URLSearchParams({
+      access_token: socialMediaAccount.accessToken,
+      caption: content || '',
+    });
+
+    const url = this._getGraphApiUrl(`${publishedPostId}?${params.toString()}`)
+    const response = await fetch(url, { method: 'POST' })
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Instagram update failed: ${error}`);
+    }
+
+    const responseData = await response.json();
+
+    const postResponse: PostResponse = {
+      id: postDetails.id,
+      postId: publishedPostId,
+      releaseURL: publishedDetails.releaseURL,
+      status: 'published',
+    };
+
+    this.emit('instagram:post:updated', { postId: publishedPostId, response: responseData });
+    return postResponse;
+  }
+
+  async getStatistic(
+    postDetails: PostWithAllData,
+    socialMediaAccount: SocialMediaAccount
+  ): Promise<PlatformStats> {
+    const igUserId = socialMediaAccount.accountId
+
+    let profile: {
+      username?: string;
+      profile_picture_url?: string;
+      followers_count?: number;
+      follows_count?: number;
+      media_count?: number;
+      name?: string;
+    } = {}
+    try {
+      const profileUrl = this._getGraphApiUrl(`${igUserId}?fields=id,username,name,profile_picture_url,followers_count,follows_count,media_count&access_token=${socialMediaAccount.accessToken}`)
+      const profileResponse = await fetch(profileUrl)
+      if (!profileResponse.ok) {
+        const error = await profileResponse.json()
+        log.warn({ content: '[Instagram] Profile fetch error', error })
+      } else {
+        profile = await profileResponse.json()
+      }
+    } catch (error) {
+      log.warn({ content: 'Instagram Profile fetch failed', plugin: 'instagram', error: (error as Error).message })
+      this.logPluginEvent('get-stats-profile', 'failure', `Error: ${(error as Error).message}`)
+    }
+
+    let totalEngagement = 0
+    let totalViews = 0
+    let totalPosts = 0
+    let totalLikes = 0
+    let totalComments = 0
+    let totalShares = 0
+    let totalSaves = 0
+    let reelsCount = 0
+    let reelsEngagement = 0
+    let reelsViews = 0
+    let storiesCount = 0
+    let carouselCount = 0
+    let carouselEngagement = 0
+    let imageCount = 0
+    let imageEngagement = 0
+
+    try {
+      const mediaUrl = this._getGraphApiUrl(`${igUserId}/media?fields=id,caption,media_type,like_count,comments_count,reach,views,saved,share_count&limit=50&access_token=${socialMediaAccount.accessToken}`)
+      const mediaResponse = await fetch(mediaUrl)
+      if (!mediaResponse.ok) {
+        const error = await mediaResponse.json()
+        log.warn({ content: '[Instagram] Media fetch error', error })
+      } else {
+        const mediaData = await mediaResponse.json()
+        const mediaItems = mediaData.data || []
+
+        totalPosts = mediaItems.length
+
+        for (const media of mediaItems) {
+          const likes = media.like_count || 0
+          const comments = media.comments_count || 0
+          const shares = media.share_count || 0
+          const saves = media.saved || 0
+          const views = media.views || 0
+          const engagement = likes + comments + shares + saves
+
+          totalEngagement += engagement
+          totalViews += views
+          totalLikes += likes
+          totalComments += comments
+          totalShares += shares
+          totalSaves += saves
+
+          switch (media.media_type) {
+            case 'VIDEO':
+            case 'REELS':
+              reelsCount++
+              reelsEngagement += engagement
+              reelsViews += views
+              break
+            case 'STORIES':
+              storiesCount++
+              break
+            case 'CAROUSEL':
+              carouselCount++
+              carouselEngagement += engagement
+              break
+            default:
+              imageCount++
+              imageEngagement += engagement
+              break
+          }
+        }
+      }
+    } catch (error) {
+      log.warn({ content: 'Instagram Media fetch failed', plugin: 'instagram', error: (error as Error).message })
+      this.logPluginEvent('get-stats-media', 'failure', `Error: ${(error as Error).message}`)
+    }
+
+    let followerGrowth = undefined
+    let profileVisits = 0
+    let newFollows = 0
+    let followerTrend7d: number[] = []
+    let followerTrend14d: number[] = []
+    let followerTrend30d: number[] = []
+    let followerTrend90d: number[] = []
+    try {
+      const insightsUrl = this._getGraphApiUrl(`${igUserId}/insights?metric=follower_count,profile_visits&period=day&access_token=${socialMediaAccount.accessToken}`)
+      const insightsResponse = await fetch(insightsUrl)
+      if (!insightsResponse.ok) {
+        const error = await insightsResponse.json()
+        log.warn({ content: '[Instagram] Follower insights error', error })
+      } else {
+        const insightsData = await insightsResponse.json()
+        for (const metric of insightsData.data || []) {
+          const values = metric.values || []
+          const nums = values.map((v: { value: number }) => v.value)
+
+          if (metric.name === 'follower_count') {
+            followerTrend90d = nums
+            if (nums.length >= 2) {
+              const current = nums[nums.length - 1]
+              const previous = nums[0]
+              const absolute = current - previous
+              const percentage = previous > 0 ? Math.round((absolute / previous) * 10000) / 100 : 0
+              followerGrowth = { absolute, percentage }
+            }
+            followerTrend7d = nums.slice(-7)
+            followerTrend14d = nums.slice(-14)
+            followerTrend30d = nums.slice(-30)
+          }
+
+          if (metric.name === 'profile_visits') {
+            profileVisits = nums.reduce((a: number, b: number) => a + b, 0)
+          }
+        }
+      }
+    } catch (error) {
+      log.warn({ content: 'Instagram Insights fetch failed', plugin: 'instagram', error: (error as Error).message })
+      this.logPluginEvent('get-stats-insights', 'failure', `Error: ${(error as Error).message}`)
+    }
+
+    let newFollowsGrowth = undefined
+    try {
+      const reachUrl = this._getGraphApiUrl(`${igUserId}/insights?metric=new_follows&period=day&access_token=${socialMediaAccount.accessToken}`)
+      const reachResponse = await fetch(reachUrl)
+      if (reachResponse.ok) {
+        const reachData = await reachResponse.json()
+        const values = reachData.data?.[0]?.values || []
+        newFollows = values.reduce((a: number, v: { value: number }) => a + v.value, 0)
+        if (values.length >= 2) {
+          const current = values[values.length - 1]?.value || 0
+          const previous = values[0]?.value || 0
+          const absolute = current - previous
+          const percentage = previous > 0 ? Math.round((absolute / previous) * 10000) / 100 : 0
+          newFollowsGrowth = { absolute, percentage }
+        }
+      }
+    } catch (error: unknown) {
+      log.warn({ content: 'Instagram new follows fetch failed', plugin: 'instagram', error: (error as Error).message })
+    }
+
+    const base64Picture = profile.profile_picture_url
+      ? await fetchedImageBase64(profile.profile_picture_url)
+      : undefined
+
+    const engagementRate = profile.followers_count && profile.followers_count > 0
+      ? Math.round((totalEngagement / totalPosts / profile.followers_count) * 10000) / 100
+      : 0
+
+    return {
+      platform: 'instagram',
+      accountId: igUserId,
+      username: profile.username || socialMediaAccount.accountName || '',
+      picture: base64Picture,
+      fetchedAt: new Date().toISOString(),
+      followers: profile.followers_count,
+      following: profile.follows_count,
+      posts: profile.media_count || totalPosts,
+      engagement: {
+        total: totalEngagement,
+        likes: totalLikes,
+        comments: totalComments,
+        shares: totalShares,
+        views: totalViews,
+        impressions: totalViews + totalEngagement,
+      },
+      growth: {
+        followers: followerGrowth,
+        following: { absolute: 0, percentage: 0 },
+        posts: { absolute: 0, percentage: 0 },
+        engagement: { absolute: totalEngagement, percentage: engagementRate },
+      },
+      extra: {
+        name: profile.name,
+        profileVisits,
+        newFollows,
+        reelsCount,
+        reelsEngagement,
+        reelsViews,
+        storiesCount,
+        carouselCount,
+        carouselEngagement,
+        imageCount,
+        imageEngagement,
+        engagementRate,
+        followerTrend7d,
+        followerTrend14d,
+        followerTrend30d,
+        followerTrend90d,
+        saves: totalSaves,
+        likesReceived: totalLikes,
+      },
+    }
+  }
+
+  async getPostInsights(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount
+  ): Promise<PostInsight[]> {
+    const externalPostId = extractExternalPostId(postDetails, socialMediaAccount);
+    if (!externalPostId) {
+      return createPostInsightsFallback(this.pluginName);
+    }
+
+    const token = socialMediaAccount.accessToken
+    // Try Insights API first (reach/views require insights, not direct fields)
+    try {
+      // Instagram Graph API v19+ : insights metrics for media
+      const insightsUrl = this._getGraphApiUrl(
+        `${externalPostId}/insights?metric=reach,views,likes,comments,shares,saved,engagement,impressions&access_token=${token}`
+      )
+      const insightsRes = await fetch(insightsUrl)
+      if (insightsRes.ok) {
+        const insightsJson = await insightsRes.json() as { data?: Array<{ name: string; values: Array<{ value: number }> }> }
+        if (insightsJson.data?.length) {
+          const val = (name: string) => insightsJson.data!.find(d => d.name === name)?.values?.[0]?.value || 0
+          // Prefer insights, but will fallback to direct fields if insight metric missing (e.g. likes)
+          const likes = val('likes') || 0
+          const comments = val('comments') || 0
+          // If insights succeeded, still need direct fields for like_count fallback
+          const fields = 'like_count,comments_count'
+          const mediaUrl = this._getGraphApiUrl(`${externalPostId}?fields=${fields}&access_token=${token}`)
+          const mediaRes = await fetch(mediaUrl).then(r => r.json()).catch(() => ({} as any))
+          return [
+            { label: 'Likes', value: likes || mediaRes.like_count || 0 },
+            { label: 'Comments', value: comments || mediaRes.comments_count || 0 },
+            { label: 'Reach', value: val('reach') || 0 },
+            { label: 'Views', value: val('views') || val('impressions') || 0 },
+            { label: 'Saves', value: val('saved') || 0 },
+            { label: 'Shares', value: val('shares') || 0 },
+            { label: 'Engagement', value: val('engagement') || 0 },
+          ]
+        }
+      } else {
+        const errText = await insightsRes.text().catch(() => '')
+        log.warn({ content: '[Instagram] Insights API non-OK, falling back to direct fields', status: insightsRes.status, body: errText })
+      }
+    } catch (e) {
+      log.warn({ content: '[Instagram] Insights fetch failed, fallback', error: String(e) })
+    }
+
+    // Fallback: direct media fields (like_count, comments_count always available)
+    try {
+      const fields = 'id,caption,media_type,like_count,comments_count,timestamp,share_count';
+      const url = this._getGraphApiUrl(`${externalPostId}?fields=${fields}&access_token=${token}`);
+      const response = await fetch(url);
+      if (!response.ok) {
+        log.warn({ content: '[Instagram] Post insights fallback error', status: response.status, body: await response.text() });
+        return createPostInsightsFallback(this.pluginName);
+      }
+      const media = await response.json() as any;
+
+      return [
+        { label: 'Likes', value: media.like_count || 0 },
+        { label: 'Comments', value: media.comments_count || 0 },
+        { label: 'Reach', value: media.reach || 0 },
+        { label: 'Views', value: media.views || media.impressions || 0 },
+        { label: 'Saves', value: media.saved || 0 },
+        { label: 'Shares', value: media.share_count || 0 },
+      ];
+    } catch (error: unknown) {
+      log.warn({ content: 'Instagram post insights fetch failed', plugin: 'instagram', error: (error as Error).message });
+      return createPostInsightsFallback(this.pluginName);
+    }
+  }
+
+  override async addComment(
+    postDetails: PostWithAllData,
+    commentDetails: PostWithAllData,
+    socialMediaAccount: SocialMediaAccount
+  ): Promise<PostResponse> {
+    try {
+      // Get the post id from the publishDetails
+      const publishedPlatformDetails = postDetails.platformPosts.find((platform) => platform.socialAccountId === socialMediaAccount.id);
+
+      if (!publishedPlatformDetails) {
+        throw new Error('Published platform details not found');
+      }
+      const details = parseJsonObject(toJsonString(publishedPlatformDetails.publishDetail)) as PostResponse;
+      const postId = details.postId;
+      if (!postId) {
+        throw new Error('Post details not found');
+      }
+
+      const params = new URLSearchParams({
+        access_token: socialMediaAccount.accessToken,
+        message: commentDetails.content,
+      });
+
+      const url = this._getGraphApiUrl(`${postId}/comments?${params.toString()}`)
+      const response = await fetch(url, { method: 'POST' })
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`Instagram comment failed: ${error}`);
+      }
+
+      const data = await response.json();
+
+      const commentResponse: PostResponse = {
+        id: commentDetails.id,
+        postId: data.id,
+        releaseURL: `https://www.instagram.com/p/${postId}/`,
+        status: 'published',
+      };
+
+      this.emit('instagram:comment:added', { commentId: commentResponse.postId, postDetails, commentDetails });
+      return commentResponse;
+    } catch (error: unknown) {
+      log.error({ content: 'Instagram comment failed', plugin: 'instagram', error: (error as Error).message });
+      this.logPluginEvent('comment-error', 'failure', `Error: ${(error as Error).message}`, commentDetails.id);
+      const errorResponse: PostResponse = {
+        id: commentDetails.id,
+        postId: '',
+        releaseURL: '',
+        status: 'failed',
+        error: (error as Error).message,
+      };
+      this.emit('instagram:comment:failed', { error: (error as Error).message });
+      return errorResponse;
+    }
+  }
+
+  /**
+   * Transform Instagram Graph API comment to PlatformComment format
+   */
+  private async transformComment(comment: InstagramApiComment): Promise<PlatformComment> {
+    const authorPicture = comment.from?.profile_picture_url
+      ? await fetchedImageBase64(comment.from.profile_picture_url)
+      : undefined
+    return {
+      id: comment.id,
+      text: comment.text || '',
+      authorName: comment.from?.username || 'Unknown',
+      authorId: comment.from?.id,
+      authorPicture,
+      createdAt: comment.timestamp || comment.created_time || '',
+      likeCount: comment.like_count,
+      replyCount: comment.replies?.data?.length || 0,
+      parentId: comment.parent?.id,
+    };
+  }
+
+  /**
+   * Get comments for an Instagram media
+   */
+  async getComments(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount,
+    options?: { limit?: number; cursor?: string }
+  ): Promise<GetCommentsResponse> {
+    const platformPost = postDetails.platformPosts?.find((pp: { socialAccountId: string }) => pp.socialAccountId === socialMediaAccount.id);
+      const publishDetail = platformPost?.publishDetail ? parseJsonObject(toJsonString(platformPost.publishDetail)) : {};
+    const externalPostId = publishDetail[socialMediaAccount.id]?.publishedId || publishDetail.postId;
+
+    if (!externalPostId) {
+      return Promise.resolve({ platform: this.pluginName, postId: '', comments: [], hasMore: false });
+    }
+
+    try {
+      const params = new URLSearchParams({
+        access_token: socialMediaAccount.accessToken,
+        fields: 'id,text,created_at,timestamp,like_count,replies{id,text,created_at,from,like_count},from',
+        limit: String(options?.limit || 50),
+      });
+
+      if (options?.cursor) {
+        params.append('after', options.cursor);
+      }
+
+      const url = this._getGraphApiUrl(`${externalPostId}/comments?${params.toString()}`)
+      const response = await fetch(url)
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`Instagram get comments failed: ${error}`);
+      }
+
+      const data = await response.json() as { data?: InstagramApiComment[] };
+      const comments: PlatformComment[] = await Promise.all(
+        (data.data || []).map((c: InstagramApiComment) => this.transformComment(c))
+      );
+
+      return {
+        platform: this.pluginName,
+        postId: externalPostId,
+        comments,
+        hasMore: !!data.paging?.cursors?.after,
+        nextCursor: data.paging?.cursors?.after,
+      };
+    } catch (error) {
+      log.error({ content: 'Error fetching Instagram comments', plugin: 'instagram', error: (error as Error).message });
+      this.logPluginEvent('get-comments', 'failure', `Error: ${(error as Error).message}`);
+      return {
+        platform: this.pluginName,
+        postId: externalPostId,
+        comments: [],
+        hasMore: false,
+      };
+    }
+  }
+
+  /**
+   * Send a private reply (comment-to-DM) via Instagram Graph API.
+   * POST /{comment-id}/private_replies?message={text}
+   * Requires instagram_manage_messages scope + IG Business/Creator account.
+   * Text-only API — tracked links are rendered inline as short URLs by the caller.
+   * Never throws: returns { success:false } on Meta errors (24h window, self-comment, etc.).
+   */
+  async sendPrivateReply(
+    socialMediaAccount: PluginSocialMediaAccount | Pick<SocialMediaAccount, 'accessToken'>,
+    commentId: string,
+    message: string
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    try {
+      const token = (socialMediaAccount as { accessToken: string }).accessToken;
+      if (!token) {
+        return { success: false, error: 'Missing access token' };
+      }
+      if (!commentId || !message?.trim()) {
+        return { success: false, error: 'commentId and message are required' };
+      }
+      const params = new URLSearchParams({
+        access_token: token,
+        message: message.slice(0, 1000),
+      });
+      const url = this._getGraphApiUrl(`${commentId}/private_replies?${params.toString()}`);
+      const response = await fetch(url, { method: 'POST' });
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => '');
+        this.logPluginEvent('private-reply-error', 'failure', `Error: ${errorText}`, commentId);
+        return { success: false, error: errorText || `Meta API error ${response.status}` };
+      }
+      const data = (await response.json().catch(() => ({}))) as { id?: string };
+      this.emit('instagram:private-reply:sent', { commentId, messageId: data.id });
+      return { success: true, messageId: data.id };
+    } catch (error) {
+      const msg = (error as Error).message || 'Failed to send private reply';
+      this.logPluginEvent('private-reply-error', 'failure', `Error: ${msg}`, commentId);
+      return { success: false, error: msg };
+    }
+  }
+
+  /**
+   * Reply to a comment on Instagram
+   */
+  async replyToComment(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount,
+    commentId: string,
+    replyText: string
+  ): Promise<ReplyCommentResponse> {
+    try {
+      const params = new URLSearchParams({
+        access_token: socialMediaAccount.accessToken,
+        message: replyText,
+      });
+
+      const url = this._getGraphApiUrl(`${commentId}/replies?${params.toString()}`)
+      const response = await fetch(url, { method: 'POST' })
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`Instagram reply failed: ${error}`);
+      }
+
+      const data = await response.json();
+
+      return {
+        success: true,
+        comment: await this.transformComment(data),
+      };
+    } catch (error) {
+      log.error({ content: 'Error replying to Instagram comment', plugin: 'instagram', error: (error as Error).message });
+      this.logPluginEvent('reply-comment-error', 'failure', `Error: ${(error as Error).message}`, commentId);
+      return {
+        success: false,
+        error: (error as Error).message || 'Failed to reply to comment',
+      };
+    }
+  }
+
+  /**
+   * Send a 1:1 direct message via the Instagram Messaging API.
+   * Used by story-DM triggers (story replies arrive as inbound DMs, so there
+   * is no comment to private-reply to). Requires instagram_manage_messages.
+   * Never throws: returns { success:false } on Meta errors (24h window, etc.).
+   */
+  async sendDirectMessage(
+    socialMediaAccount: PluginSocialMediaAccount | Pick<SocialMediaAccount, 'accessToken' | 'accountId'>,
+    recipientIgsid: string,
+    message: string
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    try {
+      const token = (socialMediaAccount as { accessToken: string }).accessToken;
+      const igUserId = (socialMediaAccount as { accountId: string }).accountId;
+      if (!token || !igUserId) {
+        return { success: false, error: 'Missing access token or IG user id' };
+      }
+      if (!recipientIgsid || !message?.trim()) {
+        return { success: false, error: 'recipientIgsid and message are required' };
+      }
+      const params = new URLSearchParams({ access_token: token });
+      const url = this._getGraphApiUrl(`${igUserId}/messages?${params.toString()}`);
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          recipient: { id: recipientIgsid },
+          message: { text: message.slice(0, 1000) },
+        }),
+      });
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => '');
+        this.logPluginEvent('direct-message-error', 'failure', `Error: ${errorText}`, recipientIgsid);
+        return { success: false, error: errorText || `Meta API error ${response.status}` };
+      }
+      const data = (await response.json().catch(() => ({}))) as { message_id?: string };
+      this.emit('instagram:direct-message:sent', { recipientIgsid, messageId: data.message_id });
+      return { success: true, messageId: data.message_id };
+    } catch (error) {
+      const msg = (error as Error).message || 'Failed to send direct message';
+      this.logPluginEvent('direct-message-error', 'failure', `Error: ${msg}`, recipientIgsid);
+      return { success: false, error: msg };
+    }
+  }
+
+  /**
+   * List recent media for the account (match-all discovery + post picker UI).
+   * platformPosts only knows posts published THROUGH MagicSync — natively
+   * posted reels would otherwise be invisible to match-all campaigns.
+   * Never throws: returns [] on Meta errors (caller falls back).
+   */
+  async getRecentMedia(
+    socialMediaAccount: PluginSocialMediaAccount | Pick<SocialMediaAccount, 'accessToken' | 'accountId'>,
+    limit = 20
+  ): Promise<InstagramRecentMedia[]> {
+    try {
+      const token = (socialMediaAccount as { accessToken: string }).accessToken;
+      const igUserId = (socialMediaAccount as { accountId: string }).accountId;
+      if (!token || !igUserId) return [];
+      const params = new URLSearchParams({
+        access_token: token,
+        fields: 'id,caption,media_type,media_url,thumbnail_url,timestamp,like_count,comments_count',
+        limit: String(Math.min(Math.max(limit, 1), 50)),
+      });
+      const url = this._getGraphApiUrl(`${igUserId}/media?${params.toString()}`);
+      const response = await fetch(url);
+      if (!response.ok) {
+        this.logPluginEvent('recent-media-error', 'failure', `Status: ${response.status}`);
+        return [];
+      }
+      const data = (await response.json()) as { data?: Record<string, unknown>[] };
+      return (data.data || [])
+        .map((m) => ({
+          id: String(m['id'] || ''),
+          caption: typeof m['caption'] === 'string' ? m['caption'] : undefined,
+          mediaType: typeof m['media_type'] === 'string' ? m['media_type'] : undefined,
+          imageUrl: (typeof m['thumbnail_url'] === 'string' && m['thumbnail_url'])
+            || (typeof m['media_url'] === 'string' && !String(m['media_url']).match(/\.(mp4|mov)$/i) ? String(m['media_url']) : undefined),
+          timestamp: typeof m['timestamp'] === 'string' ? m['timestamp'] : undefined,
+          likeCount: typeof m['like_count'] === 'number' ? m['like_count'] : undefined,
+          commentsCount: typeof m['comments_count'] === 'number' ? m['comments_count'] : undefined,
+        }))
+        .filter((m) => !!m.id);
+    } catch (error) {
+      this.logPluginEvent('recent-media-error', 'failure', `Error: ${(error as Error).message}`);
+      return [];
+    }
+  }
+
+  /**
+   * List recent media IDs for the account (match-all discovery).
+   * Thin wrapper over getRecentMedia — same never-throws contract.
+   */
+  async getRecentMediaIds(
+    socialMediaAccount: PluginSocialMediaAccount | Pick<SocialMediaAccount, 'accessToken' | 'accountId'>,
+    limit = 20
+  ): Promise<string[]> {
+    return (await this.getRecentMedia(socialMediaAccount, limit)).map((m) => m.id);
+  }
+
+  private toConversation(raw: Record<string, unknown>, accountId: string): PlatformConversation {
+    const participants = raw['participants'] as { data?: { id?: string; username?: string }[] } | undefined;
+    return {
+      id: String(raw['id'] || ''),
+      platform: this.pluginName,
+      accountId,
+      participants: (participants?.data || []).map((p) => ({ id: p.id, name: p.username })),
+      messageCount: raw['message_count'] as number | undefined,
+      unreadCount: raw['unread_count'] as number | undefined,
+      updatedTime: raw['updated_time'] as string | undefined,
+      snippet: raw['snippet'] as string | undefined,
+    };
+  }
+
+  /**
+   * List IG conversations (DMs). Implements the base-class slot so the shared
+   * inbox conversations endpoints + useInbox work for Instagram, same as FB.
+   * Meta enforces a 24h customer-service window on replies — enforced below.
+   */
+  override async getConversations(
+    socialMediaAccount: PluginSocialMediaAccount,
+    options?: { limit?: number; cursor?: string }
+  ): Promise<GetConversationsResponse> {
+    try {
+      const params = new URLSearchParams({
+        access_token: socialMediaAccount.accessToken,
+        platform: 'instagram',
+        fields: 'id,participants,message_count,unread_count,updated_time,snippet',
+        limit: String(options?.limit || 25),
+      });
+      if (options?.cursor) params.append('after', options.cursor);
+      const url = this._getGraphApiUrl(`${socialMediaAccount.accountId}/conversations?${params.toString()}`);
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Instagram conversations failed: ${await response.text()}`);
+      }
+      const data = (await response.json()) as { data?: Record<string, unknown>[]; paging?: { cursors?: { after?: string } } };
+      return {
+        platform: this.pluginName,
+        accountId: socialMediaAccount.id,
+        conversations: (data.data || []).map((c) => this.toConversation(c, socialMediaAccount.id)),
+        hasMore: !!data.paging?.cursors?.after,
+        nextCursor: data.paging?.cursors?.after,
+      };
+    } catch (error) {
+      log.error({ content: 'Error fetching Instagram conversations', plugin: 'instagram', error: (error as Error).message });
+      this.logPluginEvent('get-conversations-error', 'failure', `Error: ${(error as Error).message}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Reply inside an IG conversation. Resolves the other participant, then
+   * sends via the Messaging API (same path as story-DM triggers).
+   */
+  override async replyToConversation(
+    socialMediaAccount: PluginSocialMediaAccount,
+    conversationId: string,
+    message: string
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    try {
+      const params = new URLSearchParams({
+        access_token: socialMediaAccount.accessToken,
+        fields: 'participants',
+      });
+      const convoUrl = this._getGraphApiUrl(`${conversationId}?${params.toString()}`);
+      const convoRes = await fetch(convoUrl);
+      if (!convoRes.ok) {
+        return { success: false, error: `Instagram conversation lookup failed: ${await convoRes.text()}` };
+      }
+      const convo = (await convoRes.json()) as { participants?: { data?: { id?: string }[] } };
+      const other = (convo.participants?.data || []).find((p) => p.id && p.id !== socialMediaAccount.accountId);
+      if (!other?.id) {
+        return { success: false, error: 'No other participant found in conversation' };
+      }
+      return this.sendDirectMessage(socialMediaAccount, other.id, message);
+    } catch (error) {
+      log.error({ content: 'Error replying to Instagram conversation', plugin: 'instagram', error: (error as Error).message });
+      return { success: false, error: (error as Error).message || 'Failed to reply to conversation' };
+    }
+  }
+}

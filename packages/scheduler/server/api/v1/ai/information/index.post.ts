@@ -158,6 +158,7 @@ export default defineLazyEventHandler(async () => {
             schema: informationSchemaBusinessCore,
             temperature: SCHEDULER_INFORMATION_TEMPERATURE,
             userId: user.id,
+            log,
           }).then((r) => {
             send({ type: 'step', step: 'core', status: 'done' });
             return r;
@@ -168,6 +169,7 @@ export default defineLazyEventHandler(async () => {
             schema: informationSchemaBusinessBrand,
             temperature: SCHEDULER_INFORMATION_TEMPERATURE,
             userId: user.id,
+            log,
           }).then((r) => {
             send({ type: 'step', step: 'brand', status: 'done' });
             return r;

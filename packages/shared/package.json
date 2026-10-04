@@ -8,5 +8,14 @@
     "./server/types": "./server/types/index.ts",
     "./server/types/errors": "./server/types/errors.ts",
     "./server/types/service.types": "./server/types/service.types.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1146.0",
+    "@pinia/nuxt": "^1.0.2",
+    "evlog": "catalog:",
+    "pinia": "^4.0.3"
+  },
+  "devDependencies": {
+    "nuxt": "catalog:"
   }
 }

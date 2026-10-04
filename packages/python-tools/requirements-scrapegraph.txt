@@ -1,0 +1,5 @@
+# Optional ScrapeGraphAI library for the scrapegraph_* tools.
+# Heavy: pulls an LLM stack. Install on top of requirements.txt:
+#   pip install -r requirements.txt -r requirements-scrapegraph.txt
+scrapegraphai>=1.0,<2
+langchain-openai>=0.2,<1

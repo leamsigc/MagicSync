@@ -21,7 +21,7 @@ last_updated: 2026-08-23
 
 ## Context
 
-Tools in `packages/tools` are public (no auth wall), but some tools let users save work. Pattern established by the Dynamic Menu Board (`packages/tools/app/pages/tools/menu-board/`):
+Tools in `packages/tools` are public (no auth wall), but some tools let users save work. Pattern established by the Dynamic Menu Board (`packages/site/app/pages/tools/menu-board/` + `packages/tools/app/components/tools/menu-board/`):
 
 - **Guest** → IndexedDB on their device
 - **Logged-in** → database via `/api/v1/<tool>` endpoints (service layer)

@@ -1,7 +1,18 @@
 packages:
   - packages/*
 
+# PRD-FLUE-AGENT-MIGRATION §5.3: @flue/runtime declares ^0.83.0 on the pi
+# packages; 0.x caret ranges reject 0.85.1 and pnpm would install a second
+# pi copy. Overrides force a single deduped pi resolution for the whole repo.
+# PRD-FLUE-RUNTIME-CONVERGENCE D6: 0.86.1 injects a `system` turn-context
+# message Flue 2.1.0 cannot map ("Unsupported message role in turn context:
+# system"); 0.85.1 is the verified alignment.
+overrides:
+  '@earendil-works/pi-agent-core': 0.85.1
+  '@earendil-works/pi-ai': 0.85.1
+
 allowBuilds:
+  '@google/genai': false
   '@parcel/watcher': true
   better-sqlite3: false
   canvas: true
@@ -15,8 +26,13 @@ allowBuilds:
   vue-demi: true
 
 catalog:
-  '@atproto/api': 0.20.42
+  '@atproto/api': 0.23.1
   '@better-auth/utils': 0.5.0
+  # FullCalendar must stay on one major: the plugin packages (daygrid/
+  # timegrid/interaction/list/multimonth/scrollgrid) only publish 6.x stable,
+  # and they import `@fullcalendar/core/internal.js` — an export that core 7
+  # dropped. A 6.x plugin against core 7 fails the Rolldown resolve with
+  # `"./internal.js" is not exported under the conditions [...]`.
   '@fullcalendar/core': 6.1.21
   '@fullcalendar/daygrid': 6.1.21
   '@fullcalendar/interaction': 6.1.21
@@ -25,89 +41,107 @@ catalog:
   '@fullcalendar/scrollgrid': 6.1.21
   '@fullcalendar/timegrid': 6.1.21
   '@fullcalendar/vue3': 6.1.21
-  '@huggingface/transformers': 4.2.0
+  '@huggingface/transformers': 4.3.0
   '@libsql/client': 0.18.0
-  '@nuxt/content': 3.16.0
+  '@nuxt/content': 3.16.1
   '@nuxt/eslint': latest
   '@nuxt/fonts': 0.14.0
   '@nuxt/hints': 1.1.4
   '@nuxt/image': 2.1.0
-  '@nuxt/scripts': 1.3.8
-  '@nuxt/test-utils': 4.2.0
-  '@nuxt/ui': 4.11.0
+  '@nuxt/scripts': 1.3.12
+  '@nuxt/test-utils': 4.3.3
+  '@nuxt/ui': 4.11.3
+  '@nuxt/vite-builder': 4.6.0
   '@nuxtjs/i18n': 10.6.0
-  '@nuxtjs/mcp-toolkit': 0.19.0
-  '@nuxtjs/seo': 5.3.14
+  '@nuxtjs/mcp-toolkit': 0.23.0
+  '@nuxtjs/robots': 6.2.4
+  '@nuxtjs/seo': 5.3.16
+  '@nuxtjs/sitemap': 8.6.1
   '@playwright/test': 1.63.0
   '@types/mjml': 5.0.0
   '@types/papaparse': 5.5.2
-  '@types/three': 0.185.4
-  '@unhead/vue': 3.4.0
-  '@vitejs/plugin-vue': 6.0.8
-  '@vitest/coverage-v8': 5.0.0
-  '@vueuse/core': 14.4.0
+  '@types/three': 0.186.0
+  '@unhead/vue': 3.4.2
+  '@vitejs/plugin-vue': 6.0.9
+  '@vitest/coverage-v8': 5.0.3
+  '@vueuse/core': 15.0.0
   '@vueuse/motion': 3.0.3
-  '@vueuse/nuxt': 14.4.0
-  ai: 7.0.93
-  "@ai-sdk/vue": "4.0.93"
-  "@browser-ai/core": 3.0.2
-  "@modelcontextprotocol/sdk": 1.30.0
-  "@ai-sdk/anthropic": 4.0.49
-  "@ai-sdk/google": 4.0.64
-  "@ai-sdk/openai": 4.0.60
-  "@browser-ai/transformers-js": 3.0.2
+  '@vueuse/nuxt': 15.0.0
+  ai: 7.0.128
+  "@ai-sdk/vue": 4.0.128
+  "@browser-ai/core": 3.0.4
+  "@modelcontextprotocol/sdk": 1.32.1
+  "@ai-sdk/anthropic": 4.0.72
+  "@ai-sdk/google": 4.0.88
+  "@ai-sdk/openai": 4.0.84
+  "@browser-ai/transformers-js": 3.0.4
   axios: 1.20.0
-  better-auth: 1.7.3
-  "@better-auth/api-key": 1.7.3
-  "@better-auth/cimd": 1.7.3
-  "@better-auth/mcp": 1.7.3
+  better-auth: 1.7.7
+  "@better-auth/api-key": 1.7.7
+  "@better-auth/cimd": 1.7.7
+  "@better-auth/mcp": 1.7.7
   better-sqlite3: 13.0.3
-  canvas: 3.2.1
+  canvas: 3.2.3
   cheerio: ^1.2.0
   consola: 3.4.2
   dayjs: 1.11.23
-  driver.js: 1.8.0
-  drizzle-kit: 0.31.10
-  drizzle-orm: 0.45.2
+  driver.js: 1.9.0
+  drizzle-kit: 0.31.11
+  drizzle-orm: 0.45.3
   echarts: 6.1.0
-  eslint: 10.10.0
-  evlog: 2.28.1
+  h3: 1.15.11
+  eslint: 10.12.0
+  evlog: 2.30.0
   fabric: 7.4.0
-  googleapis: 178.0.0
-  happy-dom: 20.14.0
-  mjml: 5.4.0
+  googleapis: 183.0.0
+  happy-dom: 20.14.5
+  mjml: 5.4.1
+  mammoth: 1.13.0
   modern-screenshot: 4.7.0
-  nuxt: 4.5.2
+  nuxt: 4.6.0
   nuxt-auth-utils: 0.5.30
   nuxt-file-storage: 0.3.3
+  nuxt-og-image: 6.10.3
+  nuxt-schema-org: 6.4.3
   nuxt-umami: 3.2.1
   papaparse: 5.7.0
-  sass: 1.104.0
-  sharp: 0.35.4
+  sass: 1.105.1
+  scrapegraph-js: 2.2.1
+  sharp: 0.35.5
   tailwindcss: 4.3.3
-  three: 0.185.1
-  tsx: 4.23.13
+  three: 0.186.1
+  tsx: 4.23.15
   twitter-api-v2: 1.29.1
+  typebox: 1.3.36
   typescript: 7.0.2
-  unhead: 3.4.0
-  vitest: 5.0.0
-  vue: 3.5.42
+  unhead: 3.4.2
+  unpdf: 1.8.1
+  vitest: 5.0.3
+  vue: 3.5.43
   vue-router: 5.3.1
-  zod: 4.5.4
-  '@comark/nuxt': 0.6.2
-  '@iconify/utils': 3.1.5
-  mediabunny: 1.55.7
-  idb: 8.0.3
-  "wavesurfer.js": 7.12.11
-  "@takumi-rs/core": "2.13.6"
-  onnxruntime-web: 1.29.0
-  "nuxtseo-layer-devtools": "5.3.14"
+  zod: 4.6.5
+  '@comark/nuxt': 0.7.0
+  comark: 0.7.0
+  'vue-stream-markdown': 2.0.0
+  'comark-seo': 0.2.0
+  '@earendil-works/pi-agent-core': 0.85.1
+  '@earendil-works/pi-ai': 0.85.1
+  '@earendil-works/pi-coding-agent': 0.85.1
+  '@flue/runtime': 2.1.1
+  valibot: ^1.5.0
+  '@iconify/utils': 3.1.7
+  mediabunny: 1.61.3
+  idb: 8.0.4
+  "wavesurfer.js": 8.0.1
+  "@takumi-rs/core": 2.14.0
+  onnxruntime-web: 1.30.0
+  "nuxtseo-layer-devtools": 5.3.16
 
 minimumReleaseAgeExclude:
-  - '@ai-sdk/gateway@4.0.75'
-  - '@ai-sdk/google@4.0.64'
-  - '@ai-sdk/openai@4.0.60'
-  - '@ai-sdk/vue@4.0.93'
+  - '@ai-sdk/gateway@4.0.75 || 4.0.104'
+  - '@ai-sdk/google@4.0.64 || 4.0.88'
+  - '@ai-sdk/openai@4.0.60 || 4.0.84'
+  - '@ai-sdk/vue@4.0.93 || 4.0.128'
   - '@playwright/test@1.63.0'
   - '@takumi-rs/core-darwin-arm64@2.13.6'
   - '@takumi-rs/core-darwin-x64@2.13.6'
@@ -119,7 +153,22 @@ minimumReleaseAgeExclude:
   - '@takumi-rs/core-win32-x64-msvc@2.13.6'
   - '@takumi-rs/core@2.13.6'
   - '@takumi-rs/helpers@2.13.6'
-  - ai@7.0.93
+  - ai@7.0.93 || 7.0.128
   - jose@6.2.12
   - playwright-core@1.63.0
   - playwright@1.63.0
+  - mammoth@1.12.3
+  - tsx@4.23.15
+  - '@nuxt/cli@4.0.0'
+  - '@nuxt/kit@4.6.0'
+  - '@nuxt/nitro-server@4.6.0'
+  - '@nuxt/schema@4.6.0'
+  - '@nuxt/vite-builder@4.6.0'
+  - '@nuxt/vite-server@4.6.0'
+  - nuxt@4.6.0
+  - '@ai-sdk/anthropic@4.0.72'
+  - '@ai-sdk/provider-utils@5.0.54'
+  - '@ai-sdk/provider@4.0.22'
+  - '@atproto/api@0.23.1'
+  - idb@8.0.4
+  - typebox@1.3.36

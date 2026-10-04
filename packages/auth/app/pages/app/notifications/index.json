@@ -30,7 +30,8 @@
                 "comment_reply": "Comment replies",
                 "bulk_done": "Bulk operations",
                 "invite": "Invitations",
-                "token_expiring": "Expiring connections"
+                "token_expiring": "Expiring connections",
+                "autoreply": "Auto-reply activity"
             }
         },
         "types": {
@@ -77,7 +78,8 @@
                 "comment_reply": "Respuestas a comentarios",
                 "bulk_done": "Operaciones masivas",
                 "invite": "Invitaciones",
-                "token_expiring": "Conexiones por expirar"
+                "token_expiring": "Conexiones por expirar",
+                "autoreply": "Actividad de respuestas automáticas"
             }
         },
         "types": {
@@ -124,7 +126,8 @@
                 "comment_reply": "Kommentarantworten",
                 "bulk_done": "Massenoperationen",
                 "invite": "Einladungen",
-                "token_expiring": "Ablaufende Verbindungen"
+                "token_expiring": "Ablaufende Verbindungen",
+                "autoreply": "Aktivität automatischer Antworten"
             }
         },
         "types": {
@@ -171,7 +174,8 @@
                 "comment_reply": "Réponses aux commentaires",
                 "bulk_done": "Opérations en masse",
                 "invite": "Invitations",
-                "token_expiring": "Connexions expirantes"
+                "token_expiring": "Connexions expirantes",
+                "autoreply": "Activité de réponse automatique"
             }
         },
         "types": {

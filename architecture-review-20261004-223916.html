@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MagicSync architecture review — deepening opportunities</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  body { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .shallow { background: #1f2937; }
+  .deep { background: #0f3d2e; }
+  .bar-shallow { background: linear-gradient(90deg, #ef4444 0%, #f59e0b 100%); }
+  .bar-deep { background: linear-gradient(90deg, #10b981 0%, #059669 100%); }
+  .cite { font-size: 11px; color: #6b7280; font-family: ui-monospace, monospace; }
+  .card { box-shadow: 0 1px 3px rgba(0,0,0,.08), 0 8px 24px rgba(0,0,0,.06); }
+  .callout-warn { border-left: 4px solid #f59e0b; }
+  .vocab { background: #eef2ff; border-left: 3px solid #6366f1; padding: .5rem .75rem; border-radius: .25rem; }
+  .mermaid { background: #f9fafb; padding: 1rem; border-radius: .5rem; }
+  details > summary { cursor: pointer; }
+  .kpi { font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body class="bg-gray-50 text-gray-900">
+
+<header class="bg-gray-900 text-white">
+  <div class="max-w-6xl mx-auto px-6 py-10">
+    <p class="text-xs tracking-widest uppercase text-gray-400 mb-2">Architecture review</p>
+    <h1 class="text-3xl font-bold mb-3">Deepening opportunities in MagicSync</h1>
+    <p class="text-gray-300 max-w-3xl leading-relaxed">
+      Six candidates where a <strong>module</strong> is shallow, where knowledge has escaped its
+      <strong>seam</strong>, or where an <strong>interface</strong> claims something the
+      <strong>implementation</strong> does not honour. Scoped by commit-history weight, not by taste.
+    </p>
+    <div class="flex flex-wrap gap-3 mt-6 text-xs">
+      <span class="px-3 py-1 rounded-full bg-gray-800">repo: production-example-nuxt-monorepo</span>
+      <span class="px-3 py-1 rounded-full bg-gray-800">revision: <span class="mono">ced55ba6</span></span>
+      <span class="px-3 py-1 rounded-full bg-gray-800">scope: 24 commits, 5 hot areas</span>
+      <span class="px-3 py-1 rounded-full bg-amber-900 text-amber-200">no ADR conflicts</span>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-6xl mx-auto px-6 py-10">
+
+  <!-- SCOPE -->
+  <section class="mb-12">
+    <h2 class="text-xl font-bold mb-2">Where the weight went</h2>
+    <p class="text-gray-600 mb-4 leading-relaxed">
+      Deepening pays off in proportion to how often a module changes, so the scan was scoped by
+      file-touch count over the last 24 commits before looking at anything.
+    </p>
+    <div class="grid md:grid-cols-3 gap-4">
+      <div class="card bg-white rounded-lg p-5">
+        <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Hottest single file</p>
+        <p class="mono text-sm font-semibold mb-1">AutoReply.service.ts</p>
+        <p class="text-2xl font-bold kpi text-indigo-600">8 <span class="text-sm font-normal text-gray-500">of 24 commits</span></p>
+      </div>
+      <div class="card bg-white rounded-lg p-5">
+        <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Hottest directory</p>
+        <p class="mono text-sm font-semibold mb-1">packages/scheduler/server</p>
+        <p class="text-2xl font-bold kpi text-indigo-600">174 <span class="text-sm font-normal text-gray-500">file-touches</span></p>
+      </div>
+      <div class="card bg-white rounded-lg p-5">
+        <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Next two</p>
+        <p class="mono text-sm font-semibold mb-1">site/app &middot; agent/server</p>
+        <p class="text-2xl font-bold kpi text-indigo-600">157 &middot; 149</p>
+      </div>
+    </div>
+    <div class="mt-4 text-sm text-gray-600">
+      <p><strong>No <span class="mono">CONTEXT.md</span> exists</strong> and there are <strong>no ADRs</strong> under <span class="mono">docs/adr/</span>. Domain nouns below are the repo's own (Post, Platform, Account, Asset, Folder, Campaign, Capability, Skill, Inbox, Business). Creating the glossary is deferred to the grilling step, per the command.</p>
+    </div>
+  </section>
+
+  <!-- VOCABULARY -->
+  <section class="mb-12">
+    <div class="vocab">
+      <p class="text-sm leading-relaxed">
+        <strong>Vocabulary in force.</strong> <strong>Module</strong> = anything with an
+        <strong>interface</strong> and an <strong>implementation</strong>. <strong>Depth</strong> =
+        <strong>leverage</strong> at the interface, measured as behaviour per unit of interface a caller
+        must learn. <strong>Seam</strong> = a place behaviour can be altered without editing in that place.
+        <strong>Adapter</strong> = a concrete thing satisfying an interface at a seam.
+        <strong>Locality</strong> = change and knowledge concentrating in one place. The
+        <strong>deletion test</strong>: if deleting a module makes complexity vanish it was a
+        pass-through; if complexity reappears across N callers it was earning its keep. One adapter
+        means a hypothetical seam, two means a real one.
+      </p>
+    </div>
+  </section>
+
+  <!-- CANDIDATE 1 -->
+  <section class="mb-14">
+    <div class="card bg-white rounded-lg overflow-hidden">
+      <div class="p-6 border-b border-gray-100 flex items-start justify-between gap-4">
+        <div>
+          <p class="text-xs uppercase tracking-widest text-gray-400 mb-1">Candidate 1</p>
+          <h2 class="text-2xl font-bold mb-2">Deepen the Platform Adapter seam</h2>
+          <p class="text-gray-600">18 adapters satisfy one 7-method interface that hides six undocumented landmines.</p>
+        </div>
+        <span class="px-3 py-1 rounded-full bg-red-100 text-red-800 text-xs font-bold whitespace-nowrap">Strong</span>
+      </div>
+
+      <div class="p-6 space-y-5">
+        <div>
+          <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Files</p>
+          <p class="mono text-xs text-gray-700 space-y-0.5">
+            packages/db/server/services/SchedulerPost.service.ts:180-359 (interface + abstract base)<br>
+            packages/db/server/services/plugins/*.plugin.ts (18 adapters, 13,147 lines)<br>
+            packages/scheduler/server/services/AutoPost.service.ts:29-47 (registry)<br>
+            packages/scheduler/server/services/plugins/{instagram,facebook}.plugin.ts (hottest adapters)
+          </p>
+        </div>
+
+        <div>
+          <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Problem</p>
+          <p class="text-sm leading-relaxed">
+            The seam is declared twice, as a TypeScript interface nobody consumes as a type and as an
+            abstract base class that is the real contract. The interface requires 7 methods and
+            <em>hides six preconditions that are not expressible in it</em>:
+          </p>
+          <ul class="mt-2 text-sm space-y-1.5 list-disc list-inside text-gray-700">
+            <li><code class="mono text-xs">exposedMethods</code> binds via <code class="mono text-xs">.bind(plugin, [...arguments])</code> at <span class="cite">:396</span>, shifting every argument. A guard comment at facebook.plugin.ts:77-84 documents a real production outage this already caused.</li>
+            <li>Tokens must be exchanged <em>before</em> publish for Meta page tokens (facebook.plugin.ts:163, TokenRefresh.service.ts:104-107).</li>
+            <li>Two <code class="mono text-xs">publishDetail</code> shapes are in circulation (:122-152).</li>
+            <li>Cursor pagination differs per adapter (facebook:599, reddit:618, threads:534).</li>
+            <li>Rate limits are per-adapter: reddit sleeps at 1 req/s (reddit:29), x allows 300 posts / 3h (x:18).</li>
+            <li>Error modes split: <code class="mono text-xs">executeOnPlugins</code> rethrows while callers test <code class="mono text-xs">response.status === 'failed'</code> (AutoPost:190).</li>
+          </ul>
+          <p class="text-sm mt-3 leading-relaxed">
+            Leverage per unit of interface learned is near zero, because the caller must learn the
+            7 near-trivial methods <em>plus</em> an undocumented convention set outside them.
+          </p>
+        </div>
+
+        <div>
+          <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Duplication that escaped the seam</p>
+          <div class="grid sm:grid-cols-3 gap-3 mt-2">
+            <div class="bg-gray-50 rounded p-3">
+              <p class="text-2xl font-bold kpi text-red-600">16&times;</p>
+              <p class="text-xs text-gray-600 mt-1"><code class="mono">getPlatformData</code> copy-pasted across adapters, though <code class="mono">PluginPostDetails</code> already carries it</p>
+            </div>
+            <div class="bg-gray-50 rounded p-3">
+              <p class="text-2xl font-bold kpi text-red-600">3&times;</p>
+              <p class="text-xs text-gray-600 mt-1">Meta page-token renewal knowledge triplicated outside <code class="mono">plugins/</code>: a route handler, the token-health task, and TokenRefresh</p>
+            </div>
+            <div class="bg-gray-50 rounded p-3">
+              <p class="text-2xl font-bold kpi text-red-600">9</p>
+              <p class="text-xs text-gray-600 mt-1">adapters reimplement <code class="mono">extractExternalPostId</code> inline with raw <code class="mono">JSON.parse</code> rather than calling the helper 11 others use</p>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <p class="text-xs uppercase tracking-wide text-gray-500 mb-2">Before / After</p>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="shallow rounded-lg p-4 text-white">
+              <p class="text-xs uppercase tracking-wide text-red-300 mb-3 font-semibold">Before &mdash; shallow</p>
+              <div class="space-y-1.5">
+                <div class="bg-red-500/20 border border-red-400/40 rounded px-2 py-1 text-xs">Interface: 7 required + 7 optional methods</div>
+                <div class="bg-red-500/20 border border-red-400/40 rounded px-2 py-1 text-xs">+ 6 preconditions living OUTSIDE the interface</div>
+                <div class="bg-red-500/20 border border-red-400/40 rounded px-2 py-1 text-xs">exposedMethods arg-shift (no type check)</div>
+                <div class="bg-red-500/20 border border-red-400/40 rounded px-2 py-1 text-xs">Token renewal re-derived in 3 places</div>
+                <div class="bg-red-500/20 border border-red-400/40 rounded px-2 py-1 text-xs">getPlatformData &times; 16 copies</div>
+                <div class="bg-red-500/20 border border-red-400/40 rounded px-2 py-1 text-xs">0 tests for the seam or any adapter</div>
+              </div>
+              <div class="mt-3 pt-3 border-t border-white/20">
+                <p class="text-[10px] uppercase tracking-wide text-gray-400">Interface width</p>
+                <div class="bar-shallow h-2 rounded-full mt-1"></div>
+              </div>
+            </div>
+            <div class="deep rounded-lg p-4 text-white">
+              <p class="text-xs uppercase tracking-wide text-emerald-300 mb-3 font-semibold">After &mdash; deep</p>
+              <div class="space-y-1.5">
+                <div class="bg-emerald-400/20 border border-emerald-300/40 rounded px-2 py-1 text-xs">Interface: publish / readMetrics / readComments / moderate &mdash; 4 verbs</div>
+                <div class="bg-emerald-400/20 border border-emerald-300/40 rounded px-2 py-1 text-xs">Token renewal, rate limiting, pagination INSIDE</div>
+                <div class="bg-emerald-400/20 border border-emerald-300/40 rounded px-2 py-1 text-xs">getPlatformData declared once on the base</div>
+                <div class="bg-emerald-400/20 border border-emerald-300/40 rounded px-2 py-1 text-xs">Uniform result shape; no throw/reject split</div>
+                <div class="bg-emerald-400/20 border border-emerald-300/40 rounded px-2 py-1 text-xs">Fake adapter enables interface-level tests</div>
+              </div>
+              <div class="mt-3 pt-3 border-t border-white/20">
+                <p class="text-[10px] uppercase tracking-wide text-gray-400">Interface width</p>
+                <div class="bar-deep h-2 rounded-full mt-1"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Benefits</p>
+          <ul class="text-sm space-y-1.5 list-disc list-inside text-gray-700">
+            <li><strong>Locality:</strong> the six preconditions move out of three unrelated files into the one module that owns them. A Meta token fix becomes one edit.</li>
+            <li><strong>Leverage:</strong> 18 adapters each shed roughly 60 duplicated lines; the shared vocabulary is written once.</li>
+            <li><strong>Tests:</strong> a fake adapter at this seam makes all 18 adapters testable through the interface for the first time. Today zero of them are.</li>
+          </ul>
+          <p class="mt-2 text-sm text-gray-600">
+            <strong>Deletion test note.</strong> <code class="mono text-xs">executeOnPlugins</code> (:422-450)
+            <em>fails</em> the deletion test: complexity vanishes, because 7 sibling delegators already
+            copy-paste its body. It is a pass-through earning nothing. By contrast
+            <code class="mono text-xs">extractExternalPostId</code> <em>passes</em>: 11 adapters call it.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CANDIDATE 2 -->
+  <section class="mb-14">
+    <div class="card bg-white rounded-lg overflow-hidden">
+      <div class="p-6 border-b border-gray-100 flex items-start justify-between gap-4">
+        <div>
+          <p class="text-xs uppercase tracking-widest text-gray-400 mb-1">Candidate 2</p>
+          <h2 class="text-2xl font-bold mb-2">Give the ownership invariant one home</h2>
+          <p class="text-gray-600">40% of database-touching modules re-derive tenancy instead of encoding it.</p>
+        </div>
+        <span class="px-3 py-1 rounded-full bg-red-100 text-red-800 text-xs font-bold whitespace-nowrap">Strong</span>
+      </div>
+
+      <div class="p-6 space-y-5">
+        <div>
+          <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Files</p>
+          <p class="mono text-xs text-gray-700">
+            packages/db/server/services/*.ts (173 methods take a userId or businessId)<br>
+            packages/db/server/services/bussines.service.ts:56 &nbsp;&middot;&nbsp; review.service.ts:121-135<br>
+            packages/db/server/services/goal-run.service.ts:43,57,70 vs :85 &nbsp;&middot;&nbsp; template.service.ts:41
+          </p>
+        </div>
+
+        <div>
+          <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Problem</p>
+          <p class="text-sm leading-relaxed">
+            173 modules touch a row with a <code class="mono text-xs">userId</code>. 103 (60%) fold
+            ownership into the same statement. <strong>70 (40%) do not.</strong> The invariant is not an
+            interface fact, so every method re-negotiates it:
+          </p>
+          <ul class="mt-2 text-sm space-y-1.5 list-disc list-inside text-gray-700">
+            <li><code class="mono text-xs">bussines.service.ts:56</code> &mdash; <code class="mono text-xs">findAll()</code> returns <strong>every business profile in the database</strong>. A cross-tenant read with no predicate at all.</li>
+            <li><code class="mono text-xs">review.service.ts:121-135</code> &mdash; selects by id, then makes a <em>second</em> round trip to <code class="mono text-xs">verifyBusinessOwnership</code>. Two queries and a race window where one <code class="mono text-xs">and(...)</code> would have decided it.</li>
+            <li><code class="mono text-xs">goal-run.service.ts</code> &mdash; the three writes (:43, :57, :70) key on <code class="mono text-xs">runId</code> alone while the read (:85) scopes by user. <strong>Reads and writes of one table disagree about the invariant.</strong></li>
+            <li><code class="mono text-xs">template.service.ts:41</code> &mdash; declares <code class="mono text-xs">userId</code> and never uses it, inserting <code class="mono text-xs">data.ownerId</code> instead. The interface documents the parameter but not the obligation.</li>
+          </ul>
+        </div>
+
+        <div>
+          <p class="text-xs uppercase tracking-wide text-gray-500 mb-2">Before / After</p>
+          <div class="mermaid">
+flowchart LR
+  subgraph B["Before: invariant re-derived per method"]
+    direction LR
+    C1["caller"] --> M1["findById"]
+    C1 --> M2["update"]
+    C1 --> M3["delete"]
+    M1 --> Q1["SELECT by id"]
+    M1 --> Q2["SELECT ownership, 2nd round trip"]
+    M2 --> Q3["UPDATE by id"]
+    M3 --> Q4["DELETE by id"]
+  end
+  subgraph A["After: invariant behind one seam"]
+    direction LR
+    C2["caller"] --> S["scoped repository"]
+    S --> Q5["WHERE id AND owner"]
+  end
+          </div>
+        </div>
+
+        <div>
+          <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Benefits</p>
+          <ul class="text-sm space-y-1.5 list-disc list-inside text-gray-700">
+            <li><strong>Locality:</strong> the invariant is written once instead of 173 times, so it cannot drift between a read and its neighbouring write.</li>
+            <li><strong>Leverage:</strong> every module gains tenancy safety without knowing the predicate shape.</li>
+            <li><strong>Tests:</strong> the strongest existing test surface already declares <code class="mono text-xs">OWNER</code> and <code class="mono text-xs">OUTSIDER</code> in <span class="cite">packages/db/tests/analytics-templates.test.mjs:11</span>. That idiom generalises to one place rather than being re-invented per module.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CANDIDATE 3 -->
+  <section class="mb-14">
+    <div class="card bg-white rounded-lg overflow-hidden">
+      <div class="p-6 border-b border-gray-100 flex items-start justify-between gap-4">
+        <div>
+          <p class="text-xs uppercase tracking-widest text-gray-400 mb-1">Candidate 3</p>
+          <h2 class="text-2xl font-bold mb-2">Move Platform capability rules out of route handlers</h2>
+          <p class="text-gray-600">A quarter of 334 handlers own their whole implementation, so their rules are unreachable without HTTP.</p>
+        </div>
+        <span class="px-3 py-1 rounded-full bg-red-100 text-red-800 text-xs font-bold whitespace-nowrap">Strong</span>
+      </div>
+
+      <div class="p-6 space-y-5">
+        <div>
+          <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Files</p>
+          <p class="mono text-xs text-gray-700">
+            packages/scheduler/server/api/v1/cli/post.post.ts (292 lines, 46 logic tokens)<br>
+            packages/scheduler/server/api/v1/ai/carousel-design.post.ts (198 lines, 0 module calls)<br>
+            packages/scheduler/server/api/v1/ai/carousel-template.post.ts (211 lines, 0 module calls)<br>
+            packages/bulk-scheduler/server/api/v1/bulk-scheduler/csv-import.post.ts (126 lines)
+          </p>
+        </div>
+
+        <div>
+          <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Problem</p>
+          <p class="text-sm leading-relaxed">
+            334 route handlers, median 33 lines and 6 logic tokens. 84 of them (25%) call no module at
+            all. The worst is <code class="mono text-xs">cli/post.post.ts</code>, which holds the
+            Platform capability rules inline &mdash; <code class="mono text-xs">maxPostLength</code> (:48),
+            <code class="mono text-xs">maxImages</code> (:52), <code class="mono text-xs">supportsVideo</code>
+            (:56), <code class="mono text-xs">supportsCarousel</code> (:60) &mdash; plus media download,
+            base64 encoding, filename generation, filesystem writes (:78-96) and asset creation (:111).
+            <strong>Those rules are domain knowledge with no seam.</strong> They cannot be exercised
+            without an HTTP request, and two more handlers duplicate 40 more logic tokens of AI
+            orchestration the same way.
+          </p>
+          <p class="text-sm mt-2">
+            The consequence is measurable: <code class="mono text-xs">packages/scheduler</code> has
+            <strong>92 route handlers and 1 test file</strong>. <code class="mono text-xs">packages/connect</code>
+            has 48 handlers and <strong>0 test files</strong>. Business rules placed in handlers are
+            untestable by construction.
+          </p>
+        </div>
+
+        <div>
+          <p class="text-xs uppercase tracking-wide text-gray-500 mb-2">Before / After</p>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="shallow rounded-lg p-4 text-white">
+              <p class="text-xs uppercase tracking-wide text-red-300 mb-3 font-semibold">Before</p>
+              <div class="bg-red-500/15 border border-red-400/30 rounded p-2 mb-2">
+                <p class="mono text-[10px] text-red-200 mb-1">cli/post.post.ts &mdash; 292 lines</p>
+                <div class="space-y-1 text-[10px] text-gray-200">
+                  <p>maxPostLength, maxImages</p>
+                  <p>supportsVideo, supportsCarousel</p>
+                  <p>download &middot; base64 &middot; fs.write</p>
+                  <p>asset creation</p>
+                </div>
+              </div>
+              <p class="text-[10px] text-red-200">Rules reachable only via HTTP. 0 tests.</p>
+            </div>
+            <div class="deep rounded-lg p-4 text-white">
+              <p class="text-xs uppercase tracking-wide text-emerald-300 mb-3 font-semibold">After</p>
+              <div class="bg-emerald-400/15 border border-emerald-300/30 rounded p-2 mb-2">
+                <p class="mono text-[10px] text-emerald-200 mb-1">Platform Rules module</p>
+                <div class="space-y-1 text-[10px] text-gray-200">
+                  <p>validate(post, platform) &rarr; verdict</p>
+                  <p>limits(platform) &rarr; shape</p>
+                </div>
+              </div>
+              <div class="bg-emerald-400/15 border border-emerald-300/30 rounded p-2">
+                <p class="mono text-[10px] text-emerald-200 mb-1">Media Ingest module</p>
+                <div class="space-y-1 text-[10px] text-gray-200">
+                  <p>ingest(buffer, name) &rarr; Asset</p>
+                </div>
+              </div>
+              <p class="text-[10px] text-emerald-200">Handler becomes dispatch. Rules testable directly.</p>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Benefits</p>
+          <ul class="text-sm space-y-1.5 list-disc list-inside text-gray-700">
+            <li><strong>Locality:</strong> one Platform Rules implementation serves the CLI route, the composer, the agent tools and MCP. Today four call sites would each hold their own copy.</li>
+            <li><strong>Leverage:</strong> capability limits stop drifting between the handler that writes and the handler that validates.</li>
+            <li><strong>Tests:</strong> turns scheduler's untestable rules into the repo's existing style &mdash; direct implementation tests against a real database, as <span class="cite">packages/db/tests/</span> already does for 19 modules.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CANDIDATE 4 -->
+  <section class="mb-14">
+    <div class="card bg-white rounded-lg overflow-hidden">
+      <div class="p-6 border-b border-gray-100 flex items-start justify-between gap-4">
+        <div>
+          <p class="text-xs uppercase tracking-widest text-gray-400 mb-1">Candidate 4</p>
+          <h2 class="text-2xl font-bold mb-2">Replace module-level registries with a seam that survives code-splitting</h2>
+          <p class="text-gray-600">The capability registry is deep, but its correctness depends on import order.</p>
+        </div>
+        <span class="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold whitespace-nowrap">Worth exploring</span>
+      </div>
+
+      <div class="p-6 space-y-5">
+        <div>
+          <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Files</p>
+          <p class="mono text-xs text-gray-700">
+            packages/agent/server/capabilities/registry.ts:75-98, 144-182<br>
+            packages/agent/server/utils/content-api-route.ts:5-22 (14-line compensation comment)<br>
+            packages/agent/server/flue/skills.ts:35-39, 139, 188, 202-217<br>
+            packages/agent/server/flue/runtime.ts:76-77, 257
+          </p>
+        </div>
+
+        <div>
+          <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Problem</p>
+          <p class="text-sm leading-relaxed">
+            <code class="mono text-xs">runCapability(capabilityId, rawInput, ctx)</code>
+            (<span class="cite">registry.ts:182</span>) is genuinely <strong>deep</strong>: schema
+            validation (:115), the approval gate (:126-140), execution and output validation (:198)
+            are all hidden behind one call, and 17 call sites use it. Adding a capability costs 2 files.
+            This is the healthiest seam found in the review.
+          </p>
+          <p class="text-sm mt-2 leading-relaxed">
+            But its <strong>correctness is import-order-dependent</strong>. The module doc at
+            <span class="cite">:144-156</span> admits Nitro code-splitting can hand a route its own copy
+            of the registry, leaving it empty and failing <code class="mono text-xs">422 CAPABILITY_UNKNOWN</code>.
+            The repair is a <code class="mono text-xs">registrationEnsured</code> flag (:157) plus a
+            lazy import, and <code class="mono text-xs">content-api-route.ts:19-22</code> compensates by
+            importing from a <em>different relative path</em> than <code class="mono text-xs">index.ts</code>
+            and calling registration explicitly, with a 14-line comment explaining why.
+          </p>
+          <p class="text-sm mt-2">
+            Two further seams leak: <code class="mono text-xs">CapabilityRender</code>
+            (<span class="cite">:17-26</span>) is declared and assigned on capabilities but has
+            <strong>zero consumers</strong>, and the discovery route at
+            <span class="cite">api/v1/agent/capabilities.get.ts:22-72</span> never calls
+            <code class="mono text-xs">capabilityRegistry.list()</code>, so the 22 declared capabilities
+            are invisible to every picker. The skills module compounds this with
+            <strong>three parallel lookup interfaces</strong> over one 15-entry data set, two of them
+            labelled "transitional facets" in its own comments (:35-39).
+          </p>
+        </div>
+
+        <div>
+          <p class="text-xs uppercase tracking-wide text-gray-500 mb-2">Before / After</p>
+          <div class="mermaid">
+sequenceDiagram
+  participant N as Nitro route chunk
+  participant R as capabilityRegistry
+  participant I as index.ts side-effect import
+  participant S as registry seam
+  Note over N,R: Before: import order decides correctness
+  N->>R: chunk-local copy, Map is EMPTY
+  I->>R: registers 22 capabilities in another chunk
+  N->>R: runCapability("x")
+  R-->>N: 422 CAPABILITY_UNKNOWN
+  Note over N,S: After: registration becomes an injected adapter
+  N->>S: buildRegistry(capabilityModule)
+  S-->>N: fully populated Map, guaranteed
+  N->>R: runCapability("x")
+  R-->>N: validated outcome
+          </div>
+        </div>
+
+        <div>
+          <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Benefits</p>
+          <ul class="text-sm space-y-1.5 list-disc list-inside text-gray-700">
+            <li><strong>Locality:</strong> the workaround comments at two files disappear, because the reason they existed is designed out rather than documented.</li>
+            <li><strong>Tests:</strong> <code class="mono text-xs">packages/agent</code> has <strong>0 unit test files</strong>. The behaviour that justified a 14-line comment and a 20-line comment is untested, and the comment at <span class="cite">content-api-route.ts:8</span> cites a test file that does not exist.</li>
+            <li><strong>Leverage:</strong> one registry-construction interface removes three skills lookup shapes and the dead <code class="mono text-xs">render</code> half.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CANDIDATE 5 -->
+  <section class="mb-14">
+    <div class="card bg-white rounded-lg overflow-hidden">
+      <div class="p-6 border-b border-gray-100 flex items-start justify-between gap-4">
+        <div>
+          <p class="text-xs uppercase tracking-widest text-gray-400 mb-1">Candidate 5</p>
+          <h2 class="text-2xl font-bold mb-2">Consolidate the Tools layer's duplicated browser capabilities</h2>
+          <p class="text-gray-600">Four IndexedDB openers, ten download routines, twenty blob-URL sites, and two that disagree.</p>
+        </div>
+        <span class="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold whitespace-nowrap">Worth exploring</span>
+      </div>
+
+      <div class="p-6 space-y-5">
+        <div>
+          <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Files</p>
+          <p class="mono text-xs text-gray-700">
+            packages/tools/app/utils/{carousel-db.ts:25, db.ts:36, menu-board-db.ts:12, podcast-db.ts:50}<br>
+            10 download sites incl. image-editor/editor/plugins/ExportPlugin.ts:71 and ToolsPlugin.ts:433<br>
+            packages/tools/app/composables/{useMenuBoard.ts:51, useCarouselSaveShare.ts:123, useTranscription.ts:112}
+          </p>
+        </div>
+
+        <div>
+          <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Problem</p>
+          <div class="grid sm:grid-cols-4 gap-3 mb-3">
+            <div class="bg-gray-50 rounded p-3 text-center">
+              <p class="text-2xl font-bold kpi text-red-600">4</p>
+              <p class="text-[11px] text-gray-600 mt-1">hand-rolled IndexedDB connection caches</p>
+            </div>
+            <div class="bg-gray-50 rounded p-3 text-center">
+              <p class="text-2xl font-bold kpi text-red-600">10</p>
+              <p class="text-[11px] text-gray-600 mt-1">independent download-to-disk routines</p>
+            </div>
+            <div class="bg-gray-50 rounded p-3 text-center">
+              <p class="text-2xl font-bold kpi text-red-600">20</p>
+              <p class="text-[11px] text-gray-600 mt-1">inline <code class="mono">URL.createObjectURL</code> sites</p>
+            </div>
+            <div class="bg-gray-50 rounded p-3 text-center">
+              <p class="text-2xl font-bold kpi text-amber-600">2</p>
+              <p class="text-[11px] text-gray-600 mt-1">download routines that contradict</p>
+            </div>
+          </div>
+          <p class="text-sm leading-relaxed">
+            The contradiction is concrete: <code class="mono text-xs">ExportPlugin.ts:71</code> writes
+            <code class="mono text-xs">magic_sync_design.{format}</code> while
+            <code class="mono text-xs">ToolsPlugin.ts:433</code> writes
+            <code class="mono text-xs">canvas_image.{format}</code> for the same user action.
+            Two of the four IndexedDB openers declare an uninitialised
+            <code class="mono text-xs">let dbPromise</code> without <code class="mono text-xs">| null</code>,
+            so the first read passes through <code class="mono text-xs">undefined</code> behind a type
+            that claims otherwise.
+          </p>
+          <p class="text-sm mt-2 leading-relaxed">
+            The composables are shallow in the depth-as-leverage sense:
+            <code class="mono text-xs">useMenuBoard()</code> returns <strong>25 keys</strong> and
+            <code class="mono text-xs">useCarouselSaveShare()</code> returns 25, including
+            <code class="mono text-xs">storageMode</code> and <code class="mono text-xs">loggedIn</code>,
+            which leak the persistence choice into callers that then branch on auth themselves.
+          </p>
+        </div>
+
+        <div>
+          <p class="text-xs uppercase tracking-wide text-gray-500 mb-2">Before / After</p>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="shallow rounded-lg p-4 text-white">
+              <p class="text-xs uppercase tracking-wide text-red-300 mb-3 font-semibold">Before &mdash; shallow, duplicated</p>
+              <div class="grid grid-cols-5 gap-1 mb-2">
+                <div class="bg-red-500/25 rounded p-1 text-center text-[9px]">db</div>
+                <div class="bg-red-500/25 rounded p-1 text-center text-[9px]">car</div>
+                <div class="bg-red-500/25 rounded p-1 text-center text-[9px]">menu</div>
+                <div class="bg-red-500/25 rounded p-1 text-center text-[9px]">pod</div>
+                <div class="bg-red-500/25 rounded p-1 text-center text-[9px]">+1</div>
+              </div>
+              <p class="text-[9px] text-red-200 mb-2">4 independent connection caches</p>
+              <div class="grid grid-cols-5 gap-1 mb-2">
+                <div class="bg-red-500/25 rounded p-1 text-center text-[9px]">dl</div>
+                <div class="bg-red-500/25 rounded p-1 text-center text-[9px]">dl</div>
+                <div class="bg-red-500/25 rounded p-1 text-center text-[9px]">dl</div>
+                <div class="bg-red-500/25 rounded p-1 text-center text-[9px]">dl</div>
+                <div class="bg-red-500/25 rounded p-1 text-center text-[9px]">+6</div>
+              </div>
+              <p class="text-[9px] text-red-200">10 download routines, 2 disagree on filename</p>
+              <p class="text-[9px] text-red-200 mt-1">25-key composable interfaces</p>
+            </div>
+            <div class="deep rounded-lg p-4 text-white">
+              <p class="text-xs uppercase tracking-wide text-emerald-300 mb-3 font-semibold">After &mdash; deep, one home each</p>
+              <div class="bg-emerald-400/25 rounded p-2 mb-2 text-center text-[10px]">Browser Storage module &mdash; open(name) &rarr; handle</div>
+              <div class="bg-emerald-400/25 rounded p-2 mb-2 text-center text-[10px]">Download module &mdash; save(blob, name)</div>
+              <div class="bg-emerald-400/25 rounded p-2 mb-2 text-center text-[10px]">Object URL module &mdash; withUrl(blob, fn)</div>
+              <div class="bg-emerald-400/25 rounded p-2 text-center text-[10px]">Composables narrow to 3-5 keys, hide storageMode</div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Benefits</p>
+          <ul class="text-sm space-y-1.5 list-disc list-inside text-gray-700">
+            <li><strong>Locality:</strong> the filename contradiction becomes impossible rather than being caught by review.</li>
+            <li><strong>Leverage:</strong> browser quirks (Safari download limits, IndexedDB upgrade races) are solved once for 11 tool modules.</li>
+            <li><strong>Tests:</strong> <strong>0 of the 3</strong> unit test files in <code class="mono text-xs">packages/tools</code> exercise <code class="mono text-xs">packages/tools/app</code>. The other 22 drive it only through the browser DOM.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CANDIDATE 6 -->
+  <section class="mb-14">
+    <div class="card bg-white rounded-lg overflow-hidden">
+      <div class="p-6 border-b border-gray-100 flex items-start justify-between gap-4">
+        <div>
+          <p class="text-xs uppercase tracking-widest text-gray-400 mb-1">Candidate 6</p>
+          <h2 class="text-2xl font-bold mb-2">Enforce the conventions or narrow them</h2>
+          <p class="text-gray-600">Four documented rules are honoured by a minority of modules and checked by nothing.</p>
+        </div>
+        <span class="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold whitespace-nowrap">Worth exploring</span>
+      </div>
+
+      <div class="p-6 space-y-5">
+        <div>
+          <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">The measurements</p>
+          <div class="overflow-x-auto">
+            <table class="min-w-full text-sm">
+              <thead>
+                <tr class="text-left text-xs uppercase tracking-wide text-gray-500 border-b">
+                  <th class="py-2 pr-4">Convention</th>
+                  <th class="py-2 pr-4">Honoured</th>
+                  <th class="py-2 pr-4">Enforced by</th>
+                  <th class="py-2">Evidence</th>
+                </tr>
+              </thead>
+              <tbody class="align-top">
+                <tr class="border-b">
+                  <td class="py-2 pr-4 font-medium">Return <code class="mono text-xs">ServiceResponse&lt;T&gt;</code>, never throw</td>
+                  <td class="py-2 pr-4"><span class="text-red-600 font-bold">23%</span> of 53 modules fully</td>
+                  <td class="py-2 pr-4 text-red-600">nothing</td>
+                  <td class="py-2 text-xs text-gray-600">37% of signatures violate. <code class="mono">SchedulerPost</code> alone has 38 and 14 throws. No eslint config exists in the repo.</td>
+                </tr>
+                <tr class="border-b">
+                  <td class="py-2 pr-4 font-medium">A feature layer never imports another feature layer</td>
+                  <td class="py-2 pr-4"><span class="text-amber-600 font-bold">14</span> violations today</td>
+                  <td class="py-2 pr-4 text-red-600">nothing</td>
+                  <td class="py-2 text-xs text-gray-600">10 edges <code class="mono">shared&rarr;db</code>, 4 <code class="mono">db&rarr;auth</code>. Audit script exists but is in no CI job and no git hook.</td>
+                </tr>
+                <tr class="border-b">
+                  <td class="py-2 pr-4 font-medium">Ownership check on every read and write</td>
+                  <td class="py-2 pr-4"><span class="text-amber-600 font-bold">60%</span> of 173 methods</td>
+                  <td class="py-2 pr-4 text-amber-600">partly, by convention</td>
+                  <td class="py-2 text-xs text-gray-600">See candidate 2.</td>
+                </tr>
+                <tr>
+                  <td class="py-2 pr-4 font-medium">Handlers are thin; logic lives in modules</td>
+                  <td class="py-2 pr-4"><span class="text-amber-600 font-bold">75%</span> roughly</td>
+                  <td class="py-2 pr-4 text-red-600">nothing</td>
+                  <td class="py-2 text-xs text-gray-600">84 of 334 handlers call no module at all. See candidate 3.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div>
+          <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Problem</p>
+          <p class="text-sm leading-relaxed">
+            A rule honoured by 23% of modules is not a convention, it is a suggestion, and a reader
+            cannot tell which. Worse, the two rules that <em>would</em> catch the most are not wired to
+            anything: <code class="mono text-xs">scripts/layer-import-audit.mjs</code> is a correct
+            read-only script that exits 1 today, and no workflow in
+            <code class="mono text-xs">.github/workflows/</code> runs it, a linter, or
+            <em>any</em> of the repo's 120 test files. <code class="mono text-xs">.git/hooks/</code> is empty.
+          </p>
+        </div>
+
+        <div>
+          <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">The live layer-graph failure</p>
+          <div class="mermaid">
+flowchart LR
+  S["shared"] -->|"10 edges"| D["db"]
+  D -->|"4 edges"| A["auth"]
+  S --> X["asset.service.ts holds the real Asset implementation"]
+  D --> X
+  X --> Y["no valid home in the declared graph"]
+          </div>
+          <p class="text-sm mt-2">
+            This is not academic. <code class="mono text-xs">packages/shared/server/services/asset.service.ts</code>
+            is the real Asset implementation, yet it sits in <code class="mono text-xs">shared</code> and
+            reaches into <code class="mono text-xs">db</code> for both the schema and the ownership gate.
+            <strong>The Asset module has no valid home in the declared graph.</strong>
+          </p>
+        </div>
+
+        <div>
+          <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Solution, two honest options</p>
+          <ul class="text-sm space-y-2 list-disc list-inside text-gray-700">
+            <li><strong>Enforce.</strong> Add the layer audit and a <code class="mono text-xs">ServiceResponse</code> lint to CI as non-blocking first, then fix the 14 edges and the 37% of signatures. Costly, and it front-loads a large diff.</li>
+            <li><strong>Narrow.</strong> Amend <span class="cite">AGENTS.md:16</span> to say the convention applies to <em>new</em> modules, wire the layer audit into CI because it is already written and correct, and let the existing 37% be grandfathered. Cheap, honest, and it stops the documentation from lying.</li>
+          </ul>
+          <p class="text-sm mt-2 text-gray-600">
+            This candidate also needs an ADR. Layer placement is exactly the kind of decision a future
+            explorer will otherwise re-litigate, and there is currently no ADR directory at all.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TOP RECOMMENDATION -->
+  <section class="mb-12">
+    <div class="bg-gray-900 text-white rounded-lg p-8">
+      <p class="text-xs uppercase tracking-widest text-gray-400 mb-2">Top recommendation</p>
+      <h2 class="text-2xl font-bold mb-4">Candidate 1, the Platform Adapter seam</h2>
+      <div class="grid md:grid-cols-3 gap-6">
+        <div>
+          <p class="text-sm text-gray-300 leading-relaxed">
+            <strong class="text-white">It is where the churn already is.</strong> Five of the last 24
+            commits touch an adapter. Commit <code class="mono text-xs">0514329c</code> added 27 lines of
+            Meta page-token branching directly into the publish path, and
+            <code class="mono text-xs">49a89c17</code> fixed an account-id trap in the same module.
+            That is the signature of missing depth: the same knowledge needed re-entering from a
+            different direction each time.
+          </p>
+        </div>
+        <div>
+          <p class="text-sm text-gray-300 leading-relaxed">
+            <strong class="text-white">It has 18 adapters, so the seam is already real.</strong> By the
+            two-adapter test this is not a speculative abstraction to invent, it is a genuine seam
+            carrying real duplication: 16 copies of one method, 3 places re-deriving Meta token
+            renewal, 9 adapters bypassing a helper the other 11 use.
+          </p>
+        </div>
+        <div>
+          <p class="text-sm text-gray-300 leading-relaxed">
+            <strong class="text-white">It is the only candidate with a concrete defect attached.</strong>
+            The <code class="mono text-xs">exposedMethods</code> argument shift has already caused one
+            production failure, documented in a scar-tissue comment at
+            <span class="cite">facebook.plugin.ts:77-84</span>. That is the seam failing, not an
+            implementation bug, and it will happen again.
+          </p>
+        </div>
+      </div>
+      <div class="mt-6 pt-5 border-t border-gray-700">
+        <p class="text-sm text-gray-300 leading-relaxed">
+          <strong class="text-white">Why not the others first.</strong> Candidate 2 is the largest
+          safety win and I would not argue against doing it, but 173 methods make it a multi-week change
+          with a large review surface, so it benefits from the enforcement in candidate 6 landing first.
+          Candidate 3 is well-scoped and could go in parallel. Candidate 4 is a live 422 risk that deserves
+          a ticket regardless of whether the refactor happens. Candidate 1 is the one that makes the
+          others cheaper, because the Platform rules in candidate 3 are the same vocabulary the adapters
+          currently own privately.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHAT I DID NOT FIND -->
+  <section class="mb-10">
+    <div class="bg-white rounded-lg border border-gray-200 p-6">
+      <p class="text-xs uppercase tracking-wide text-gray-500 mb-2">Negative results worth recording</p>
+      <ul class="text-sm space-y-1.5 list-disc list-inside text-gray-700">
+        <li><strong>No table is dead.</strong> A reference audit of all 63 tables found 4 with no app reference, and all 4 are better-auth framework tables that must stay. One genuinely dead module was found and removed earlier this session: <code class="mono text-xs">subscriptions</code> and its 441-line module.</li>
+        <li><strong>The persistence layer is not a seam, but the tests already work around it well.</strong> <code class="mono text-xs">useDrizzle</code> takes zero parameters across 71 call sites, yet <span class="cite">packages/db/tests/setup.mjs:33</span> substitutes a real adapter for all 19 test files through one <code class="mono text-xs">globalThis</code> swap. That is a working substitution point with genuine locality. It is just invisible in every implementation's signature, which is why it did not become a candidate on its own.</li>
+        <li><strong>The best test surface in the repo is the db package.</strong> 19 files stand up a migrated file-backed database and call implementations directly, and one already declares <code class="mono text-xs">OWNER</code> and <code class="mono text-xs">OUTSIDER</code> to assert tenancy. That idiom is the model the other candidates would follow.</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer class="text-center text-xs text-gray-500 py-8">
+    <p>Generated from a read-only pass. No product file was modified.</p>
+  </footer>
+</main>
+
+<script>
+  mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'loose' });
+</script>
+</body>
+</html>

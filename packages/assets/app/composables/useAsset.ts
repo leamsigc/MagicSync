@@ -184,7 +184,7 @@ export const useAsset = () => {
       link.click()
       document.body.removeChild(link)
     } catch (error) {
-      console.error('Download failed:', error)
+      log.error({ message: 'Download failed', error: String(error) })
       throw new Error('Failed to download asset')
     }
   }

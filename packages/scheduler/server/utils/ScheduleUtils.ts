@@ -2,9 +2,9 @@ import sharp from 'sharp';
 import { promises as fs } from 'node:fs'
 import { getAccessTokenHelper } from "#layers/BaseAuth/server/utils/AuthHelpers"
 import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service';
-import { usesPageToken, renewRowToken } from '#layers/BaseScheduler/server/services/TokenRefresh.service';
+import { usesPageToken, renewRowToken } from '#layers/BaseDB/server/services/TokenRefresh.service';
 import type { PostWithAllData } from '#layers/BaseDB/db/posts/posts';
-import { platformConfigurations, type PlatformConfig } from '#layers/BaseScheduler/shared/platformConstants';
+import { platformConfigurations, type PlatformConfig } from '#layers/BaseShared/shared/platformConstants';
 
 
 const baseUrl = process.env.NUXT_BASE_URL
@@ -75,7 +75,7 @@ export async function reduceImageBySize(url: string, maxSizeKB = 976) {
 
     return { width, height, buffer: currentBuffer };
   } catch (error) {
-    console.error('Error processing image:', error);
+    log.error({ message: 'Error processing image', error: String(error) });
     throw error;
   }
 }

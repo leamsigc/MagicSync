@@ -7,6 +7,9 @@ const currentDir = dirname(fileURLToPath(import.meta.url))
 
 export default defineNuxtConfig({
   compatibilityDate: '2026-09-07',
+  // `app/utils/composables/useCarouselDeck.ts` reads the shared JSON boundary
+  // helpers. Both layers are leaves, so this edge introduces no cycle.
+  extends: ['@local-monorepo/shared'],
   devtools: { enabled: true },
   experimental: {
     viteEnvironmentApi: true,
@@ -32,7 +35,8 @@ export default defineNuxtConfig({
     '@nuxtjs/i18n',
     '@vueuse/nuxt',
     '@vueuse/motion/nuxt',
-    'evlog/nuxt'
+    'evlog/nuxt',
+    '@pinia/nuxt'
   ],
   i18n: {
     vueI18n: join(currentDir, './translations/i18n.config.ts'),

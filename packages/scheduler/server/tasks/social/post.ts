@@ -11,7 +11,7 @@ export default defineTask({
     const listOfPostToProcess = await postBatchService.getPostsToProcessNow();
 
     if (listOfPostToProcess.length === 0) {
-      console.log("[social:post] No posts due for processing.");
+      log.debug({ message: "[social:post] No posts due for processing." });
       return { result: "No posts to process" };
     }
 
@@ -33,13 +33,11 @@ export default defineTask({
       .map(([platform, state]) => `${platform}: ${state.count}/${state.maxRequests}`);
 
     if (rateLimitedPlatforms.length > 0) {
-      console.warn("[social:post] Rate limit warnings:", rateLimitedPlatforms.join(", "));
+      log.warn({ message: "[social:post] Rate limit warnings", detail: rateLimitedPlatforms.join(", ") });
     }
 
-    console.log(
-      `[social:post] Processed ${listOfPostToProcess.length} posts. ` +
-      `Rate limiter windows active: ${Object.keys(rateLimiterState).length}`
-    );
+    log.debug({ message: `[social:post] Processed ${listOfPostToProcess.length} posts. ` +
+      `Rate limiter windows active: ${Object.keys(rateLimiterState).length}` });
 
     return { result: "Success", postsProcessed: listOfPostToProcess.length };
   },

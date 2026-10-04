@@ -14,20 +14,20 @@
 
 import type { Asset, PostCreateBase, PostWithAllData } from '#layers/BaseDB/db/schema';
 import { usePlatformIcons, type SocialMediaPlatform } from '#layers/BaseUI/app/composables/usePlatformIcons';
-import type { SocialMediaPlatformConfigurations } from '../pages/app/posts/composables/usePlatformConfiguration';
-const FacebookPreview = defineAsyncComponent(() => import('../pages/app/posts/components/FacebookPreview.vue'));
-const InstagramPreview = defineAsyncComponent(() => import('../pages/app/posts/components/InstagramPreview.vue'));
-const TwitterPreview = defineAsyncComponent(() => import('../pages/app/posts/components/TwitterPreview.vue'));
-const GooglePreview = defineAsyncComponent(() => import('../pages/app/posts/components/GooglePreview.vue'));
-const EmailPasswordPreview = defineAsyncComponent(() => import('../pages/app/posts/components/EmailPasswordPreview.vue'));
-const LinkedinPreview = defineAsyncComponent(() => import('../pages/app/posts/components/LinkedinPreview.vue'));
-const TiktokPreview = defineAsyncComponent(() => import('../pages/app/posts/components/TiktokPreview.vue'));
-const ThreadsPreview = defineAsyncComponent(() => import('../pages/app/posts/components/ThreadsPreview.vue'));
-const YoutubePreview = defineAsyncComponent(() => import('../pages/app/posts/components/YoutubePreview.vue'));
-const PinterestPreview = defineAsyncComponent(() => import('../pages/app/posts/components/PinterestPreview.vue'));
-const MastodonPreview = defineAsyncComponent(() => import('../pages/app/posts/components/MastodonPreview.vue'));
-const BlueskyPreview = defineAsyncComponent(() => import('../pages/app/posts/components/BlueskyPreview.vue'));
-const DefaultPreview = defineAsyncComponent(() => import('../pages/app/posts/components/DefaultPreview.vue'));
+import type { SocialMediaPlatformConfigurations } from '../composables/usePlatformConfiguration';
+const FacebookPreview = defineAsyncComponent(() => import('./scheduler/posts/components/FacebookPreview.vue'));
+const InstagramPreview = defineAsyncComponent(() => import('./scheduler/posts/components/InstagramPreview.vue'));
+const TwitterPreview = defineAsyncComponent(() => import('./scheduler/posts/components/TwitterPreview.vue'));
+const GooglePreview = defineAsyncComponent(() => import('./scheduler/posts/components/GooglePreview.vue'));
+const EmailPasswordPreview = defineAsyncComponent(() => import('./scheduler/posts/components/EmailPasswordPreview.vue'));
+const LinkedinPreview = defineAsyncComponent(() => import('./scheduler/posts/components/LinkedinPreview.vue'));
+const TiktokPreview = defineAsyncComponent(() => import('./scheduler/posts/components/TiktokPreview.vue'));
+const ThreadsPreview = defineAsyncComponent(() => import('./scheduler/posts/components/ThreadsPreview.vue'));
+const YoutubePreview = defineAsyncComponent(() => import('./scheduler/posts/components/YoutubePreview.vue'));
+const PinterestPreview = defineAsyncComponent(() => import('./scheduler/posts/components/PinterestPreview.vue'));
+const MastodonPreview = defineAsyncComponent(() => import('./scheduler/posts/components/MastodonPreview.vue'));
+const BlueskyPreview = defineAsyncComponent(() => import('./scheduler/posts/components/BlueskyPreview.vue'));
+const DefaultPreview = defineAsyncComponent(() => import('./scheduler/posts/components/DefaultPreview.vue'));
 
 interface Props {
   post: PostWithAllData
@@ -72,6 +72,15 @@ const postToCreate = ref<PostCreateBase & { comment: string[] }>({
   scheduledAt: props.post.scheduledAt,
   businessId: props.post.businessId,
   status: props.post.status,
+  platformContent: undefined,
+  platformSettings: undefined,
+  postFormat: 'post',
+  retryCount: 0,
+  nextRetryAt: null,
+  lastError: null,
+  autoRepost: undefined,
+  repostCount: 0,
+  repostParentId: null
 });
 
 </script>
@@ -90,7 +99,8 @@ const postToCreate = ref<PostCreateBase & { comment: string[] }>({
         <div class="mt-2 flex items-center justify-between">
           <div class="flex items-center space-x-1">
             <section v-for="platform in post.platformPosts">
-              <Icon :name="getPlatformIcon((platform.platformPostId ?? 'facebook') as SocialMediaPlatform)" :key="platform.id" />
+              <Icon :name="getPlatformIcon((platform.platformPostId ?? 'facebook') as SocialMediaPlatform)"
+                :key="platform.id" />
             </section>
           </div>
           <div class="flex items-center space-x-1 text-xs text-gray-500 dark:text-gray-400">

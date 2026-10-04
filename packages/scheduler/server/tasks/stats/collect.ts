@@ -9,10 +9,8 @@ export default defineTask({
     const force = Boolean((payload as { force?: boolean })?.force)
     const result = await statsCollectorService.collectAllDue({}, { force })
     const pruned = await statsCollectorService.pruneFailed()
-    console.log(
-      `[stats:collect] accounts ${result.accountsCollected}/${result.accountsDue} ` +
-        `posts ${result.postsCollected}/${result.postsDue} failed ${result.accountsFailed + result.postsFailed} pruned ${pruned.accountRows + pruned.postRows}`
-    )
+    log.debug({ message: `[stats:collect] accounts ${result.accountsCollected}/${result.accountsDue} ` +
+        `posts ${result.postsCollected}/${result.postsDue} failed ${result.accountsFailed + result.postsFailed} pruned ${pruned.accountRows + pruned.postRows}` })
     return { result: 'Stats collected', ...result, pruned }
   },
 })

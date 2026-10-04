@@ -124,13 +124,7 @@ export const useTranscription = () => {
 
   const handleWorkerMessage = (event: MessageEvent) => {
     const { type, status, progress, result, error } = event.data
-    console.log(`Event from worker:`, {
-      type,
-      status,
-      progress,
-      result,
-      error,
-    });
+    log.debug({ message: 'transcription worker event', type, status, progress, result, error })
 
     switch (type) {
       case 'status':
@@ -209,7 +203,7 @@ export const useTranscription = () => {
 
     workerRef.value.onmessage = handleWorkerMessage
     workerRef.value.onerror = (error) => {
-      console.error('Worker error:', error)
+      log.error({ message: 'Worker error', error: String(error) })
     }
   }
 
@@ -256,7 +250,7 @@ export const useTranscription = () => {
       })
 
       if (!isValidFormat) {
-        console.warn(`Skipping file ${file.name}: unsupported format ${file.type}`)
+        log.warn({ message: `Skipping file ${file.name}: unsupported format ${file.type}` })
         continue
       }
 
@@ -287,13 +281,13 @@ export const useTranscription = () => {
 
   const transcribeFile = async (fileId: string, language?: string) => {
     const file = files.value.find(f => f.id === fileId)
-    console.log("FILE:", file);
+    log.debug({ message: "FILE", detail: file });
 
     if (!file || !workerRef.value) {
       return
     }
 
-    console.log("MODEL-LOADED:", isModelLoaded.value);
+    log.info({ message: "MODEL-LOADED", detail: isModelLoaded.value });
 
     if (!isModelLoaded.value) {
       await loadModel(currentModel.value)
@@ -334,7 +328,7 @@ export const useTranscription = () => {
         }
       })
     } catch (err) {
-      console.error(err);
+      log.error({ error: String(err) });
 
       file.status = 'error'
       file.error = err instanceof Error ? err.message : 'Failed to process audio'

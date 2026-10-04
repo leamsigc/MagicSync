@@ -12,5 +12,8 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 500, statusMessage: result.error })
   }
 
-  return result.data
+  if (!result.data) {
+    throw createError({ statusCode: 404, statusMessage: 'No default LLM config' })
+  }
+  return aiToolsFacade.maskLlmConfig(result.data)
 })

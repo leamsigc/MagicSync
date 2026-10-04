@@ -1,8 +1,9 @@
 <i18n src="./Menu.json"></i18n>
 <script lang="ts" setup>
 import DashboardUserNav from './UserNav.vue';
+import BusinessSwitcher from './BusinessSwitcher.vue';
 
-const { currentPageTitle } = useDashboardNavigation()
+const { t, currentPageTitle } = useDashboardNavigation()
 
 const tokenHealthCount = ref(0)
 
@@ -29,9 +30,10 @@ if (import.meta.client) {
         <span class="text-sm font-semibold text-highlighted truncate">{{ currentPageTitle }}</span>
       </div>
       <div class="flex items-center space-x-2">
-        <UInput icon="i-heroicons-magnifying-glass" placeholder="Search..." size="sm" class="hidden md:block" />
+        <BusinessSwitcher />
+        <UInput icon="i-heroicons-magnifying-glass" :placeholder="t('menu.search')" size="sm" class="hidden md:block" />
         <UColorModeButton />
-        <NuxtLink to="/app/notifications" title="Notifications" class="relative">
+        <NuxtLink to="/app/notifications" :title="t('menu.notification')" class="relative">
           <UButton icon="i-heroicons-bell" variant="ghost" color="neutral" class="rounded-xl" />
           <span v-if="tokenHealthCount > 0"
             class="absolute -top-1 -right-1 flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-red-600 rounded-full animate-pulse">

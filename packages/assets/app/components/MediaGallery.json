@@ -55,7 +55,9 @@
     "buttons": {
       "load_more": "Load More Assets",
       "download": "Download",
-      "edit": "Edit"
+      "edit": "Edit",
+      "preview": "Preview",
+      "delete": "Delete"
     },
     "delete_dialog": {
       "title": "Delete Assets",
@@ -70,7 +72,20 @@
       "dimensions": "Dimensions:",
       "tags": "Tags:"
     },
-    "asset_quality": "Optimized"
+    "asset_quality": "Optimized",
+    "move_selected": "Move selected",
+    "unfiled": "Unfiled",
+    "asset_info": {
+      "tags": "Tags"
+    },
+    "common": {
+      "close": "Close"
+    },
+    "view_mode": {
+      "masonry": "Masonry view",
+      "grid": "Grid view",
+      "list": "List view"
+    }
   },
   "es": {
     "title": "Galería de Activos",
@@ -128,7 +143,9 @@
     "buttons": {
       "load_more": "Cargar Más Activos",
       "download": "Descargar",
-      "edit": "Editar"
+      "edit": "Editar",
+      "preview": "Vista previa",
+      "delete": "Eliminar"
     },
     "delete_dialog": {
       "title": "Eliminar Activos",
@@ -143,7 +160,20 @@
       "dimensions": "Dimensiones:",
       "tags": "Etiquetas:"
     },
-    "asset_quality": "Optimizado"
+    "asset_quality": "Optimizado",
+    "move_selected": "Mover seleccionados",
+    "unfiled": "Sin carpeta",
+    "asset_info": {
+      "tags": "Etiquetas"
+    },
+    "common": {
+      "close": "Cerrar"
+    },
+    "view_mode": {
+      "masonry": "Vista mosaico",
+      "grid": "Vista de cuadrícula",
+      "list": "Vista de lista"
+    }
   },
   "de": {
     "title": "Asset-Galerie",
@@ -201,7 +231,9 @@
     "buttons": {
       "load_more": "Weitere Assets Laden",
       "download": "Downloaden",
-      "edit": "Bearbeiten"
+      "edit": "Bearbeiten",
+      "preview": "Vorschau",
+      "delete": "Löschen"
     },
     "delete_dialog": {
       "title": "Assets Löschen",
@@ -216,7 +248,20 @@
       "dimensions": "Abmessungen:",
       "tags": "Tags:"
     },
-    "asset_quality": "Optimiert"
+    "asset_quality": "Optimiert",
+    "move_selected": "Auswahl verschieben",
+    "unfiled": "Nicht abgelegt",
+    "asset_info": {
+      "tags": "Tags"
+    },
+    "common": {
+      "close": "Schließen"
+    },
+    "view_mode": {
+      "masonry": "Mosaikansicht",
+      "grid": "Rasteransicht",
+      "list": "Listenansicht"
+    }
   },
   "fr": {
     "title": "Galerie d'Assets",
@@ -274,7 +319,9 @@
     "buttons": {
       "load_more": "Charger Plus de Ressources",
       "download": "Télécharger",
-      "edit": "Modifier"
+      "edit": "Modifier",
+      "preview": "Aperçu",
+      "delete": "Supprimer"
     },
     "delete_dialog": {
       "title": "Supprimer les Ressources",
@@ -290,6 +337,19 @@
       "dimensions": "Dimensions:",
       "tags": "Étiquettes:"
     },
-    "asset_quality": "Optimisé"
+    "asset_quality": "Optimisé",
+    "move_selected": "Déplacer la sélection",
+    "unfiled": "Non classé",
+    "asset_info": {
+      "tags": "Étiquettes"
+    },
+    "common": {
+      "close": "Fermer"
+    },
+    "view_mode": {
+      "masonry": "Vue mosaïque",
+      "grid": "Vue en grille",
+      "list": "Vue en liste"
+    }
   }
 }

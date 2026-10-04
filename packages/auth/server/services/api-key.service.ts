@@ -45,6 +45,15 @@ export interface ApiKeyListItem {
   enabled: boolean
 }
 
+import { parseJsonObject } from '#layers/BaseShared/utils/json'
+
+function parseConnectedPlatforms(raw?: string | null): string[] {
+  if (!raw) return []
+  const parsed = parseJsonObject(raw)
+  const list = parsed.connectedPlatforms
+  return Array.isArray(list) ? (list as string[]) : []
+}
+
 export const apiKeyService = {
   /**
    * Verify an API key string (used for incoming external requests).
@@ -84,25 +93,10 @@ export const apiKeyService = {
         }
       }
 
-      const isActive = await businessOrgService.isBusinessActive(businessId)
-      if (!isActive) {
-        return {
-          success: false,
-          error: { statusCode: 401, message: 'Business is inactive' }
-        }
-      }
-
-      // SAFE: wrap JSON.parse in try/catch to handle malformed metadata
-      let metadata = {}
-      if (keyData.metadata) {
-        try {
-          metadata = JSON.parse(keyData.metadata)
-        } catch {
-          // If metadata is malformed, use empty object
-          metadata = {}
-        }
-      }
-      const connectedPlatforms = metadata.connectedPlatforms || []
+      // Inactive businesses keep full CLI and MCP access. isActive tracks
+      // Google Business linkage only, never abuse, and rate limiting is
+      // enforced by the better-auth apiKey plugin.
+      const connectedPlatforms = parseConnectedPlatforms(keyData.metadata)
 
       // userId may be undefined for org-level keys
       const userId = (keyData as { userId?: string }).userId ?? ""

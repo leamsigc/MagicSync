@@ -1,14 +1,12 @@
 import { z } from 'zod'
 import { defineMcpTool } from '@nuxtjs/mcp-toolkit/server'
 import { PLATFORMS } from '../../utils/platforms'
-import { requireMcp, resolveUserId } from '../../utils/mcp-context'
+import { requireMcp } from '../../utils/mcp-context'
+import { resolveMcpAiContext } from '../../utils/mcp-ai-context'
 import { logMcpCall } from '../../utils/mcp-audit'
-
-interface HashtagsResponse {
-  hashtags?: string[]
-  count?: number
-  error?: string
-}
+import { buildCapabilityRunContext } from '#layers/BaseAgent/server/capabilities/run-context'
+import { runCapability } from '#layers/BaseAgent/server/capabilities'
+import '#layers/BaseAgent/server/capabilities/social'
 
 export default defineMcpTool({
   description: 'Suggest hashtags for a topic and platform, tuned for reach vs niche balance.',
@@ -22,21 +20,24 @@ export default defineMcpTool({
   annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: false },
   async handler(args) {
     const mcp = requireMcp()
-    const userId = await resolveUserId(mcp)
-    const config = useRuntimeConfig()
-    const backendUrl = config.pythonBackendUrl || 'http://localhost:8000'
+    const ai = await resolveMcpAiContext(mcp)
 
     try {
-      const result = await $fetch<HashtagsResponse>(`${backendUrl}/api/v1/social-media/generate-hashtags`, {
-        method: 'POST',
-        body: { topic: args.topic, platform: args.platform, count: args.count, style: args.style },
-        headers: { 'X-User-Id': userId },
+      const ctx = await buildCapabilityRunContext(ai.ownerId, mcp.businessId, {
+        useBusinessContext: false,
+        capability: 'social.hashtags',
       })
-      if (result.error || !result.hashtags) {
-        throw new Error(result.error || 'Hashtag generation failed')
-      }
-      await logMcpCall(mcp, 'suggest-hashtags', undefined, 'success', `platform=${args.platform} count=${result.hashtags.length}`)
-      return { hashtags: result.hashtags }
+      const outcome = await runCapability('social.hashtags', {
+        topic: args.topic,
+        platform: args.platform,
+        count: args.count,
+        style: args.style,
+        system: ai.businessContext,
+      }, ctx)
+      if (!outcome.ok) throw new Error(outcome.error)
+      const hashtags = outcome.output.hashtags
+      await logMcpCall(mcp, 'suggest-hashtags', undefined, 'success', `platform=${args.platform} count=${hashtags.length}`)
+      return { hashtags }
     }
     catch (error) {
       await logMcpCall(mcp, 'suggest-hashtags', undefined, 'failure', error instanceof Error ? error.message : String(error))

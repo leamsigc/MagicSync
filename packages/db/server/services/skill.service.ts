@@ -1,7 +1,7 @@
 import { eq, and, sql, desc } from 'drizzle-orm'
 import { type ServiceResponse, type QueryOptions } from './types'
-import type { SkillServiceType, SkillFileServiceType } from './interfaces'
-import { skills, skillFiles, type Skill, type SkillFile } from '#layers/BaseDB/db/schema'
+import type { SkillServiceType } from './interfaces'
+import { skills, type Skill } from '#layers/BaseDB/db/schema'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
 
 export interface CreateSkillData {
@@ -9,15 +9,6 @@ export interface CreateSkillData {
   description: string
   instructions: string
   isGlobal?: boolean
-}
-
-export interface CreateSkillFileData {
-  skillId: string
-  filename: string
-  mimeType: string
-  size: number
-  content: Buffer
-  storagePath: string
 }
 
 export class SkillService implements SkillServiceType {
@@ -126,45 +117,4 @@ export class SkillService implements SkillServiceType {
   }
 }
 
-export class SkillFileService implements SkillFileServiceType {
-  private db = useDrizzle()
-
-  async create(userId: string, data: CreateSkillFileData): Promise<ServiceResponse<SkillFile>> {
-    try {
-      const id = crypto.randomUUID()
-      const now = new Date()
-
-      const [file] = await this.db.insert(skillFiles).values({
-        id,
-        skillId: data.skillId,
-        userId,
-        filename: data.filename,
-        mimeType: data.mimeType,
-        size: data.size,
-        content: data.content,
-        storagePath: data.storagePath,
-        createdAt: now,
-      }).returning()
-
-      return { success: true, data: file }
-    } catch (error) {
-      return { success: false, error: 'Failed to create skill file' }
-    }
-  }
-
-  async findBySkill(skillId: string): Promise<ServiceResponse<SkillFile[]>> {
-    try {
-      const files = await this.db
-        .select()
-        .from(skillFiles)
-        .where(eq(skillFiles.skillId, skillId))
-
-      return { success: true, data: files }
-    } catch (error) {
-      return { success: false, error: 'Failed to fetch skill files' }
-    }
-  }
-}
-
 export const skillService = new SkillService()
-export const skillFileService = new SkillFileService()

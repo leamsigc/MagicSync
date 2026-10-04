@@ -33,7 +33,7 @@ export default defineNuxtConfig({
     name: 'BaseContent',
   },
   extends: ['@local-monorepo/ui'],
-  modules: ['@nuxtjs/i18n', "@nuxtjs/seo", '@nuxt/content'],
+  modules: ['@nuxtjs/i18n', "@nuxtjs/seo", '@nuxt/content', 'evlog/nuxt'],
   content: {
     build: {
       markdown: {

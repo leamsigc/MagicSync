@@ -12,13 +12,13 @@
 import {
   loadAllModels,
   synthesize,
-  AVAILABLE_VOICES,
-  AVAILABLE_LANGUAGES,
+  ENGINE_VOICES,
+  ENGINE_LANGUAGES,
   LANGUAGE_NAMES,
   detectLanguage,
   getVoiceStyles,
   setEngineVoice,
-} from '../../pages/app/tools/text-to-speech/composables/ttsEngine'
+} from '../../composables/ai-tools/tools/text-to-speech/ttsEngine'
 
 let isProcessing = false
 let currentController: AbortController | null = null
@@ -111,11 +111,11 @@ async function processNextMessage(): Promise<void> {
       }
 
       case 'getVoices':
-        self.postMessage({ type: 'voices', voices: AVAILABLE_VOICES, loadedVoiceIds: Object.keys(getVoiceStyles()) })
+        self.postMessage({ type: 'voices', voices: ENGINE_VOICES, loadedVoiceIds: Object.keys(getVoiceStyles()) })
         break
 
       case 'getLanguages':
-        self.postMessage({ type: 'languages', languages: AVAILABLE_LANGUAGES, languageNames: LANGUAGE_NAMES })
+        self.postMessage({ type: 'languages', languages: ENGINE_LANGUAGES, languageNames: LANGUAGE_NAMES })
         break
 
       case 'detectLanguage': {

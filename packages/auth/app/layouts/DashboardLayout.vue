@@ -35,7 +35,7 @@ if (import.meta.client) {
           <ImpersonationBanner />
           <DashboardHeader />
           <FeedbackFab />
-          <div class="p-4 md:p-6">
+          <div class="p-0 md:p-0">
             <slot />
           </div>
         </main>

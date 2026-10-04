@@ -99,7 +99,7 @@ export class FolderService implements FolderServiceType {
 
       return { success: true, data: folders }
     } catch (error) {
-      console.error('[FolderService.findByUser] Error:', error)
+      log.error({ message: '[FolderService.findByUser] Error', error: String(error) })
       return { success: false, error: 'Failed to fetch folders' }
     }
   }
@@ -127,7 +127,7 @@ export class FolderService implements FolderServiceType {
 
       return { success: true, data: folders }
     } catch (error) {
-      console.error('[FolderService.getRootFolders] Error:', error)
+      log.error({ message: '[FolderService.getRootFolders] Error', error: String(error) })
       return { success: false, error: 'Failed to fetch root folders' }
     }
   }

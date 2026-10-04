@@ -1,27 +1,27 @@
 import type { Post, PostWithAllData, SocialMediaAccount } from '#layers/BaseDB/db/schema';
 import { postBatchService } from '#layers/BaseDB/server/services/post.service';
 import { socialMediaAccountService, } from '#layers/BaseDB/server/services/social-media-account.service';
-import { SchedulerPos, SchedulerPost } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
-import type { PluginPostDetails, PluginSocialMediaAccount, SchedulerPluginConstructor } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
-import { FacebookPlugin } from '#layers/BaseScheduler/server/services/plugins/facebook.plugin';
-import { BlueskyPlugin } from '#layers/BaseScheduler/server/services/plugins/bluesky.plugin';
-import { DevToPlugin } from '#layers/BaseScheduler/server/services/plugins/devto.plugin';
-import { DiscordPlugin } from '#layers/BaseScheduler/server/services/plugins/discord.plugin';
-import { DribbblePlugin } from '#layers/BaseScheduler/server/services/plugins/dribbble.plugin';
-import { GoogleMyBusinessPlugin } from '#layers/BaseScheduler/server/services/plugins/googlemybusiness.plugin';
-import { InstagramPlugin } from '#layers/BaseScheduler/server/services/plugins/instagram.plugin';
-import { InstagramStandalonePlugin } from '#layers/BaseScheduler/server/services/plugins/instagram-standalone.plugin';
-import { LinkedInPlugin } from '#layers/BaseScheduler/server/services/plugins/linkedin.plugin';
-import { LinkedInPagePlugin } from '#layers/BaseScheduler/server/services/plugins/linkedin-page.plugin';
-import { RedditPlugin } from '#layers/BaseScheduler/server/services/plugins/reddit.plugin';
-import { ThreadsPlugin } from '#layers/BaseScheduler/server/services/plugins/threads.plugin';
-import { TikTokPlugin } from '#layers/BaseScheduler/server/services/plugins/tiktok.plugin';
-import { WordPressPlugin } from '#layers/BaseScheduler/server/services/plugins/wordpress.plugin';
-import { XPlugin } from '#layers/BaseScheduler/server/services/plugins/x.plugin';
-import { YouTubePlugin } from '#layers/BaseScheduler/server/services/plugins/youtube.plugin';
-import { PinterestPlugin } from '#layers/BaseScheduler/server/services/plugins/pinterest.plugin';
+import { SchedulerPos, SchedulerPost } from '#layers/BaseDB/server/services/SchedulerPost.service';
+import type { PluginPostDetails, PluginSocialMediaAccount, SchedulerPluginConstructor } from '#layers/BaseDB/server/services/SchedulerPost.service';
+import { FacebookPlugin } from '#layers/BaseDB/server/services/plugins/facebook.plugin';
+import { BlueskyPlugin } from '#layers/BaseDB/server/services/plugins/bluesky.plugin';
+import { DevToPlugin } from '#layers/BaseDB/server/services/plugins/devto.plugin';
+import { DiscordPlugin } from '#layers/BaseDB/server/services/plugins/discord.plugin';
+import { DribbblePlugin } from '#layers/BaseDB/server/services/plugins/dribbble.plugin';
+import { GoogleMyBusinessPlugin } from '#layers/BaseDB/server/services/plugins/googlemybusiness.plugin';
+import { InstagramPlugin } from '#layers/BaseDB/server/services/plugins/instagram.plugin';
+import { InstagramStandalonePlugin } from '#layers/BaseDB/server/services/plugins/instagram-standalone.plugin';
+import { LinkedInPlugin } from '#layers/BaseDB/server/services/plugins/linkedin.plugin';
+import { LinkedInPagePlugin } from '#layers/BaseDB/server/services/plugins/linkedin-page.plugin';
+import { RedditPlugin } from '#layers/BaseDB/server/services/plugins/reddit.plugin';
+import { ThreadsPlugin } from '#layers/BaseDB/server/services/plugins/threads.plugin';
+import { TikTokPlugin } from '#layers/BaseDB/server/services/plugins/tiktok.plugin';
+import { WordPressPlugin } from '#layers/BaseDB/server/services/plugins/wordpress.plugin';
+import { XPlugin } from '#layers/BaseDB/server/services/plugins/x.plugin';
+import { YouTubePlugin } from '#layers/BaseDB/server/services/plugins/youtube.plugin';
+import { PinterestPlugin } from '#layers/BaseDB/server/services/plugins/pinterest.plugin';
 import { platformRateLimiter } from './RateLimiter.service';
-import { usesPageToken, renewRowToken } from './TokenRefresh.service';
+import { usesPageToken, renewRowToken } from '#layers/BaseDB/server/services/TokenRefresh.service';
 import { auth } from '#layers/BaseAuth/lib/auth';
 import { notificationService } from '#layers/BaseAuth/server/services/notification.service';
 export class AutoPostService {
@@ -71,11 +71,9 @@ export class AutoPostService {
         // Check rate limit before attempting to publish
         const rateCheck = platformRateLimiter.canMakeRequest(platform)
         if (!rateCheck.allowed) {
-          console.warn(
-            `[RateLimit] Platform '${platform}' is rate-limited. ` +
+          log.warn({ message: `[RateLimit] Platform '${platform}' is rate-limited. ` +
             `Retry in ${Math.round((rateCheck.retryAfterMs ?? 0) / 1000)}s. ` +
-            `Post ID: ${post.id}`
-          )
+            `Post ID: ${post.id}` })
           const retryResult = await postBatchService.scheduleRetry(
             post.id,
             post.retryCount ?? 0,
@@ -99,7 +97,7 @@ export class AutoPostService {
         let socialMediaAccount = await socialMediaAccountService.getAccountById(platformPost.socialAccountId)
         if (!socialMediaAccount || !socialMediaAccount.accessToken) {
           const err = `No access token found for platform ${platform}`
-          console.error(`[AutoPost] ${err} | Post ID: ${post.id}`)
+          log.error({ message: `[AutoPost] ${err} | Post ID: ${post.id}` })
           const retryResult = await postBatchService.scheduleRetry(post.id, post.retryCount ?? 0, err)
           if (retryResult.code === 'RETRY_EXHAUSTED') {
             await this.notifyPostFailed(post, platform, err)
@@ -150,7 +148,7 @@ export class AutoPostService {
               const fresh = await socialMediaAccountService.getAccountById(socialMediaAccount.id)
               if (fresh?.accessToken) socialMediaAccount.accessToken = fresh.accessToken
             } else if (renewed.error) {
-              console.warn(`[AutoPost] Page-token renewal skipped for ${platform} | Post ID: ${post.id}`, renewed.error)
+              log.warn({ message: `[AutoPost] Page-token renewal skipped for ${platform} | Post ID: ${post.id}`, detail: renewed.error })
             }
             await socialMediaAccountService.updateAccount(socialMediaAccount.id, {
               lastSyncAt: new Date(),
@@ -172,7 +170,7 @@ export class AutoPostService {
             })
           }
         } catch (tokenRefreshError) {
-          console.warn(`[AutoPost] Token refresh via Better Auth failed for ${platform} | Post ID: ${post.id}`, tokenRefreshError)
+          log.warn({ message: `[AutoPost] Token refresh via Better Auth failed for ${platform} | Post ID: ${post.id}`, detail: tokenRefreshError })
         }
         // @ts-ignore - dynamic plugin resolution
         const plugin = this.matcher[platform];
@@ -193,7 +191,7 @@ export class AutoPostService {
             await this.notifyPostFailed(post, platform, response.error || 'Publish failed.')
           }
         } catch (e) {
-          console.error(e);
+          log.error({ error: String(e) });
           await postBatchService.updatePostBaseOnResponse(
             post,
             { status: 'failed', id: platformPost.id, releaseURL: '', error: 'Post failed to post ', postId: post.id },

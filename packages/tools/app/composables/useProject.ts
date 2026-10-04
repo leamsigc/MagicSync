@@ -23,7 +23,7 @@ const extractAudio = async (file: File): Promise<{ buffer: Float32Array; duratio
   try {
     duration = await input.computeDuration()
   } catch (e) {
-    console.warn('Mediabunny could not compute duration, falling back to AudioContext duration')
+    log.warn({ message: 'Mediabunny could not compute duration, falling back to AudioContext duration' })
   }
 
   return new Promise((resolve, reject) => {
@@ -147,7 +147,7 @@ export const useProject = () => {
       startTranscription(newProject.id, buffer, model, language, duration)
       return newProject;
     } catch (err) {
-      console.error(err)
+      log.error({ error: String(err) })
       isProcessing.value = false
       processingStatus.value = 'Error extracting audio'
       currentTranscriptionId.value = null
@@ -266,13 +266,13 @@ export const useProject = () => {
             processingStatus.value = ''
           }
         } catch (err) {
-          console.error('Error saving completed transcription:', err)
+          log.error({ message: 'Error saving completed transcription', error: String(err) })
           worker.removeEventListener('message', handleMessage)
           isProcessing.value = false
           processingStatus.value = 'Error saving transcription'
         }
       } else if (type === 'error') {
-        console.error('Transcription error:', error)
+        log.error({ message: 'Transcription error', error: String(error) })
         const project = await getProject(id)
         if (project) {
           project.status = 'error'
@@ -325,7 +325,7 @@ export const useProject = () => {
         }
         worker.terminate()
       } else if (type === 'error') {
-        console.error('Summary error:', error)
+        log.error({ message: 'Summary error', error: String(error) })
         useToast().add({
           title: 'Summary Error',
           description: error || 'An error occurred while generating the summary.',

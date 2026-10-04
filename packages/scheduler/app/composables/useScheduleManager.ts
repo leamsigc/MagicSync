@@ -13,7 +13,7 @@ export const useScheduleManager = () => {
         post.value = data;
       })
     } catch (error) {
-      console.error('Error fetching posts:', error);
+      log.error({ message: 'Error fetching posts', error: String(error) });
     }
   };
   return {

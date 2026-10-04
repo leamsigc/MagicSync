@@ -466,7 +466,9 @@ async function readZoomPercent(page: Page): Promise<number> {
 }
 
 function layerCountText(page: Page) {
-  return page.locator('span', { hasText: /^\d+ Layers?$/ }).first()
+  // The panel renders the i18n copy "1 layer" / "{count} layers" (lowercase)
+  // — match the count, not the capitalisation.
+  return page.locator('span', { hasText: /^\d+ [Ll]ayers?$/ }).first()
 }
 
 async function countLayers(page: Page): Promise<number> {
@@ -476,9 +478,9 @@ async function countLayers(page: Page): Promise<number> {
 }
 
 async function expectLayerCount(page: Page, expected: number): Promise<void> {
-  // The "N Layers" counter lives inside the Layers tab panel
+  // The "N layer(s)" counter lives inside the Layers tab panel
   await page.getByTestId('tab-layers').click()
-  await expect(layerCountText(page)).toHaveText(`${expected} Layers`, { timeout: 5000 })
+  await expect(layerCountText(page)).toHaveText(new RegExp(`^${expected} [Ll]ayers?$`), { timeout: 5000 })
 }
 
 async function expectLayerCountGreaterThanOrEqual(page: Page, min: number): Promise<void> {

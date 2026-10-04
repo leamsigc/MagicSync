@@ -71,6 +71,13 @@
       "when": 1788822686947,
       "tag": "0009_notifications-events-prefs",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1791144811949,
+      "tag": "0010_asset-folders-and-agent-content",
+      "breakpoints": true
     }
   ]
 }

@@ -10,7 +10,7 @@
  * @todo [ ] Integration test.
  * @todo [✔] Update the typescript.
  */
-import type { WordPressSettings } from '#layers/BaseScheduler/shared/platformSettings';
+import type { WordPressSettings } from '#layers/BaseShared/shared/platformSettings';
 
 const settings = defineModel<WordPressSettings>({ required: true });
 

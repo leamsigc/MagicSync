@@ -1,0 +1,322 @@
+{
+  "en": {
+    "title": "Asset Gallery",
+    "description": "Manage your media files and assets",
+    "tabs": {
+      "library": "Library",
+      "googleDrive": "Google Drive"
+    },
+    "buttons": {
+      "upload_assets": "Upload Assets",
+      "delete_selected": "Delete Selected ({count})",
+      "close": "Close",
+      "dismiss": "Dismiss",
+      "new_folder": "New Folder",
+      "delete_folder": "Delete folder {name}"
+    },
+    "sections": {
+      "stats": {
+        "total_files": "Total Files",
+        "images": "Images",
+        "videos": "Videos",
+        "documents": "Documents",
+        "storage": "Storage"
+      },
+      "filters": {
+        "filter": "Filter:",
+        "search": "Search:",
+        "view": "View:",
+        "search_placeholder": "Search assets...",
+        "folder": "Folder:"
+      },
+      "filter_options": {
+        "all_files": "All Files",
+        "images": "Images",
+        "videos": "Videos",
+        "documents": "Documents"
+      },
+      "folders": {
+        "all": "All assets",
+        "unfiled": "Unfiled",
+        "with_count": "{name} ({count})"
+      }
+    },
+    "alerts": {
+      "error": "Error",
+      "select_business": {
+        "title": "Select a Business",
+        "description": "Please select a business from the business management page to manage assets.",
+        "link_text": "Go to Business Management"
+      }
+    },
+    "dialogs": {
+      "upload_assets": {
+        "title": "Upload Assets",
+        "description": "Upload images, videos and documents"
+      },
+      "edit_asset": {
+        "title": "Edit Asset",
+        "description": "Edit and enhance your asset"
+      },
+      "create_folder": {
+        "title": "Create New Folder",
+        "description": "Folders are per business. New assets start unfiled.",
+        "placeholder": "Enter folder name",
+        "cancel": "Cancel",
+        "create": "Create Folder"
+      }
+    },
+    "messages": {
+      "upload_complete": "Successfully uploaded {count} file{plural}",
+      "upload_failed": "Upload failed: {message}",
+      "drive_imported": "{count} asset{plural} imported from Google Drive.",
+      "assets_deleted": "Successfully deleted {count} asset{plural}",
+      "delete_confirm": "Are you sure you want to delete {count} asset{plural}?",
+      "folder_created": "Folder \"{name}\" created.",
+      "folder_deleted": "Folder \"{name}\" deleted. {count} asset(s) moved to Unfiled.",
+      "assets_moved": "{count} asset(s) moved.",
+      "move_partial": "Moved {moved} of {total}; the rest belong to another account."
+    },
+    "upload": {
+      "title": "Upload Assets",
+      "description": "Upload images, videos and documents"
+    }
+  },
+  "es": {
+    "title": "Galería de Recursos",
+    "description": "Gestiona tus archivos multimedia y recursos",
+    "tabs": {
+      "library": "Biblioteca",
+      "googleDrive": "Google Drive"
+    },
+    "buttons": {
+      "upload_assets": "Subir Recursos",
+      "delete_selected": "Eliminar Seleccionados ({count})",
+      "close": "Cerrar",
+      "dismiss": "Descartar",
+      "new_folder": "Nueva Carpeta",
+      "delete_folder": "Eliminar carpeta {name}"
+    },
+    "sections": {
+      "stats": {
+        "total_files": "Total de Archivos",
+        "images": "Imágenes",
+        "videos": "Videos",
+        "documents": "Documentos",
+        "storage": "Almacenamiento"
+      },
+      "filters": {
+        "filter": "Filtrar:",
+        "search": "Buscar:",
+        "view": "Vista:",
+        "search_placeholder": "Buscar recursos...",
+        "folder": "Carpeta:"
+      },
+      "filter_options": {
+        "all_files": "Todos los Archivos",
+        "images": "Imágenes",
+        "videos": "Videos",
+        "documents": "Documentos"
+      },
+      "folders": {
+        "all": "Todos los recursos",
+        "unfiled": "Sin carpeta",
+        "with_count": "{name} ({count})"
+      }
+    },
+    "alerts": {
+      "error": "Error",
+      "select_business": {
+        "title": "Seleccionar un Negocio",
+        "description": "Por favor selecciona un negocio desde la página de gestión de negocios para gestionar recursos.",
+        "link_text": "Ir a Gestión de Negocios"
+      }
+    },
+    "dialogs": {
+      "upload_assets": {
+        "title": "Subir Recursos",
+        "description": "Subir imágenes, videos y documentos para {businessName}"
+      },
+      "edit_asset": {
+        "title": "Editar Recurso",
+        "description": "Editar y mejorar tu recurso"
+      },
+      "create_folder": {
+        "title": "Crear Nueva Carpeta",
+        "description": "Las carpetas son por negocio. Los recursos nuevos empiezan sin carpeta.",
+        "placeholder": "Ingresa el nombre de la carpeta",
+        "cancel": "Cancelar",
+        "create": "Crear Carpeta"
+      }
+    },
+    "messages": {
+      "upload_complete": "Subiste exitosamente {count} archivo{plural}",
+      "upload_failed": "Falló la subida: {message}",
+      "drive_imported": "{count} recurso{plural} importado{plural} desde Google Drive.",
+      "assets_deleted": "Eliminaste exitosamente {count} recurso{plural}",
+      "delete_confirm": "¿Estás seguro de que quieres eliminar {count} recurso{plural}?",
+      "folder_created": "Carpeta \"{name}\" creada.",
+      "folder_deleted": "Carpeta \"{name}\" eliminada. {count} recurso(s) movidos a Sin carpeta.",
+      "assets_moved": "{count} recurso(s) movidos.",
+      "move_partial": "Se movieron {moved} de {total}; el resto pertenece a otra cuenta."
+    }
+  },
+  "de": {
+    "title": "Asset-Galerie",
+    "description": "Verwalten Sie Ihre Mediendateien und Assets",
+    "tabs": {
+      "library": "Bibliothek",
+      "googleDrive": "Google Drive"
+    },
+    "buttons": {
+      "upload_assets": "Assets Hochladen",
+      "delete_selected": "Ausgewählte Löschen ({count})",
+      "close": "Schließen",
+      "dismiss": "Verwerfen",
+      "new_folder": "Neuer Ordner",
+      "delete_folder": "Ordner {name} löschen"
+    },
+    "sections": {
+      "stats": {
+        "total_files": "Gesamte Dateien",
+        "images": "Bilder",
+        "videos": "Videos",
+        "documents": "Dokumente",
+        "storage": "Speicher"
+      },
+      "filters": {
+        "filter": "Filter:",
+        "search": "Suchen:",
+        "view": "Ansicht:",
+        "search_placeholder": "Assets suchen...",
+        "folder": "Ordner:"
+      },
+      "filter_options": {
+        "all_files": "Alle Dateien",
+        "images": "Bilder",
+        "videos": "Videos",
+        "documents": "Dokumente"
+      },
+      "folders": {
+        "all": "Alle Assets",
+        "unfiled": "Nicht abgelegt",
+        "with_count": "{name} ({count})"
+      }
+    },
+    "alerts": {
+      "error": "Fehler",
+      "select_business": {
+        "title": "Unternehmen Auswählen",
+        "description": "Bitte wählen Sie ein Unternehmen von der Unternehmensverwaltungsseite aus, um Assets zu verwalten.",
+        "link_text": "Zur Unternehmensverwaltung"
+      }
+    },
+    "dialogs": {
+      "upload_assets": {
+        "title": "Assets Hochladen",
+        "description": "Bilder, Videos und Dokumente für {businessName} hochladen"
+      },
+      "edit_asset": {
+        "title": "Asset Bearbeiten",
+        "description": "Ihr Asset bearbeiten und verbessern"
+      },
+      "create_folder": {
+        "title": "Neuen Ordner Erstellen",
+        "description": "Ordner gehören zu einem Unternehmen. Neue Assets starten ohne Ordner.",
+        "placeholder": "Ordnernamen eingeben",
+        "cancel": "Abbrechen",
+        "create": "Ordner Erstellen"
+      }
+    },
+    "messages": {
+      "upload_complete": "{count} Datei{plural} erfolgreich hochgeladen",
+      "upload_failed": "Upload fehlgeschlagen: {message}",
+      "drive_imported": "{count} Asset{plural} aus Google Drive importiert.",
+      "assets_deleted": "{count} Asset{plural} erfolgreich gelöscht",
+      "delete_confirm": "Sind Sie sicher, dass Sie {count} Asset{plural} löschen möchten?",
+      "folder_created": "Ordner \"{name}\" erstellt.",
+      "folder_deleted": "Ordner \"{name}\" gelöscht. {count} Asset(s) nach \"Nicht abgelegt\" verschoben.",
+      "assets_moved": "{count} Asset(s) verschoben.",
+      "move_partial": "{moved} von {total} verschoben; der Rest gehört einem anderen Konto."
+    }
+  },
+  "fr": {
+    "title": "Galerie de Ressources",
+    "description": "Gérez vos fichiers multimédias et ressources",
+    "tabs": {
+      "library": "Bibliothèque",
+      "googleDrive": "Google Drive"
+    },
+    "buttons": {
+      "upload_assets": "Télécharger Ressources",
+      "delete_selected": "Supprimer Sélectionnés ({count})",
+      "close": "Fermer",
+      "dismiss": "Ignorer",
+      "new_folder": "Nouveau Dossier",
+      "delete_folder": "Supprimer le dossier {name}"
+    },
+    "sections": {
+      "stats": {
+        "total_files": "Total des Fichiers",
+        "images": "Images",
+        "videos": "Vidéos",
+        "documents": "Documents",
+        "storage": "Stockage"
+      },
+      "filters": {
+        "filter": "Filtrer:",
+        "search": "Rechercher:",
+        "view": "Vue:",
+        "search_placeholder": "Rechercher ressources...",
+        "folder": "Dossier :"
+      },
+      "filter_options": {
+        "all_files": "Tous les Fichiers",
+        "images": "Images",
+        "videos": "Vidéos",
+        "documents": "Documents"
+      },
+      "folders": {
+        "all": "Toutes les ressources",
+        "unfiled": "Non classé",
+        "with_count": "{name} ({count})"
+      }
+    },
+    "alerts": {
+      "error": "Erreur",
+      "select_business": {
+        "title": "Sélectionner une Entreprise",
+        "description": "Veuillez sélectionner une entreprise depuis la page de gestion d'entreprise pour gérer les ressources.",
+        "link_text": "Aller à la Gestion d'Entreprise"
+      }
+    },
+    "dialogs": {
+      "upload_assets": {
+        "title": "Télécharger Ressources",
+        "description": "Télécharger images, vidéos et documents pour {businessName}"
+      },
+      "edit_asset": {
+        "title": "Modifier Ressource",
+        "description": "Modifier et améliorer votre ressource"
+      },
+      "create_folder": {
+        "title": "Créer un Nouveau Dossier",
+        "description": "Les dossiers sont propres à l'entreprise. Les nouvelles ressources démarrent non classées.",
+        "placeholder": "Entrez le nom du dossier",
+        "cancel": "Annuler",
+        "create": "Créer un Dossier"
+      }
+    },
+    "messages": {
+      "upload_complete": "{count} fichier{plural} téléchargé avec succès",
+      "upload_failed": "Échec du téléchargement : {message}",
+      "drive_imported": "{count} ressource{plural} importée{plural} depuis Google Drive.",
+      "assets_deleted": "{count} ressource{plural} supprimée avec succès",
+      "delete_confirm": "Êtes-vous sûr de vouloir supprimer {count} ressource{plural}?",
+      "folder_created": "Dossier « {name} » créé.",
+      "folder_deleted": "Dossier « {name} » supprimé. {count} ressource(s) déplacée(s) vers Non classé.",
+      "assets_moved": "{count} ressource(s) déplacée(s).",
+      "move_partial": "{moved} sur {total} déplacée(s) ; le reste appartient à un autre compte."
+    }
+  }
+}

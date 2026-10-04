@@ -1,6 +1,6 @@
 import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service'
 import { auth } from '#layers/BaseAuth/lib/auth'
-import { refreshFacebookPageToken, refreshInstagramPageToken } from '#layers/BaseScheduler/server/services/TokenRefresh.service'
+import { refreshFacebookPageToken, refreshInstagramPageToken } from '#layers/BaseDB/server/services/TokenRefresh.service'
 
 // Short-lived OAuth (YouTube/Google 1h access tokens) renewed from a stored
 // refresh token. Renewed proactively inside this window so rows don't sit
@@ -59,7 +59,7 @@ export default defineTask({
           ? await refreshFacebookPageToken(a.userId, a.id, a.accountId)
           : await refreshInstagramPageToken(a.userId, a.id)
         if (renewed.error) {
-          console.error(`[token:health] Failed to refresh token for ${a.platform} account ${a.id}`, renewed.error)
+          log.error({ message: `[token:health] Failed to refresh token for ${a.platform} account ${a.id}`, detail: renewed.error })
           await socialMediaAccountService.updateAccount(a.id, { isActive: false })
         } else {
           refreshedCount++
@@ -115,7 +115,7 @@ export default defineTask({
           refreshedCount++
         }
       } catch (error) {
-        console.error(`[token:health] Failed to refresh token for ${a.platform} account ${a.id}`, error)
+        log.error({ message: `[token:health] Failed to refresh token for ${a.platform} account ${a.id}`, error: String(error) })
         // Never deactivate a still-valid token on a transient refresh
         // failure — it keeps working until its real expiry and the next tick
         // retries. Only expired rows get parked for reconnect.
@@ -126,10 +126,7 @@ export default defineTask({
       }
     }
 
-    console.warn(
-      `[token:health] ${needsAttention.length}/${accounts.length} accounts needed attention, ${refreshedCount} refreshed`,
-      Object.entries(byPlatform).map(([p, c]) => `${p}: ${c}`).join(', ')
-    )
+    log.warn({ message: `[token:health] ${needsAttention.length}/${accounts.length} accounts needed attention, ${refreshedCount} refreshed`, detail: Object.entries(byPlatform).map(([p, c]) => `${p}: ${c}`).join(', ') })
 
     return {
       result: refreshedCount > 0 ? 'Tokens refreshed' : 'Attention needed',

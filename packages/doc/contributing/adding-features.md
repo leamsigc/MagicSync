@@ -60,45 +60,57 @@ git checkout -b docs/update-description
 
 **Adding a New Social Media Platform:**
 
-1. Create a new plugin file in `packages/scheduler/server/services/plugins/`
-2. Follow the existing plugin pattern (see `facebook.plugin.ts` or `twitter.plugin.ts`)
-3. Implement required methods: `post()`, `getProfile()`, etc.
-4. Add platform configuration to the database schema
-5. Update the UI to include the new platform
+1. Add the connection flow to the owning layer (`packages/connect/server/`)
+2. Follow the existing provider patterns and OAuth callback conventions
+3. Add any new fields to the schema in `packages/db/db/socialMedia/`
+4. Update the integrations UI and platform icons in `packages/ui`
 
 **Adding API Endpoints:**
 
-Create new routes in `packages/scheduler/server/api/`:
+Routes live in the layer that owns the feature (`packages/<layer>/server/api/v1/...`). Keep handlers thin — auth, zod validation, access checks, then a service call:
 
 ```typescript
-// packages/scheduler/server/api/posts/schedule.post.ts
+// packages/<layer>/server/api/v1/things/index.post.ts
+import { z } from 'zod'
+import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
+import { thingService } from '#layers/BaseDB/server/services/thing.service'
+
+const CreateSchema = z.object({ name: z.string().min(1) })
+
 export default defineEventHandler(async (event) => {
-  const body = await readBody(event)
-  
-  // Your logic here
-  
-  return {
-    success: true,
-    data: result
-  }
+  const user = await checkUserIsLogin(event)
+  const body = CreateSchema.parse(await readBody(event))
+  const result = await thingService.create(user.id, body)
+  if (!result.success) throw createError({ statusCode: 400, statusMessage: result.error })
+  return { thing: result.data }
 })
 ```
 
 **Adding UI Components:**
 
-Add components to `packages/scheduler/app/components/` or `packages/ui/components/`:
+Add components to the owning layer's `app/components/` (global) or page-local `app/pages/**/components/`. Pages carry an adjacent locale JSON (`<i18n src="./page.json">` on line 1) and use `const { t } = useI18n()`. Link pages from the business flow or navigation where relevant.
 
-```vue
-<template>
-  <div class="your-component">
-    <!-- Your component template -->
-  </div>
-</template>
+**Adding Database Tables:**
 
-<script setup lang="ts">
-// Your component logic
-</script>
-```
+1. Add the table to `packages/db/db/<feature>/` and export it from `packages/db/db/schema.ts`
+2. Generate a migration: `pnpm --filter @local-monorepo/db db:generate`
+3. Add a service in `packages/db/server/services/` returning `ServiceResponse<T>`
+4. Add a schema/service test under `packages/db/tests/`
+
+**Adding Agent Tools and Workflows:**
+
+Agent tools are server-owned and tenant-scoped — model arguments never select a business or user:
+
+1. Create or extend a tool module in `packages/agent/server/agent/tools/`
+2. Use `defineTool` with a `typebox` parameter schema; read identity from the injected `AgentToolContext`
+3. Resolve data through services (`packages/db/server/services/` or `packages/agent/server/services/`), returning typed errors
+4. Register the tool in `packages/agent/server/agent/tools/index.ts`
+5. Add an optional built-in skill in `packages/db/server/services/agent-registry.service.ts`
+6. Test it in `packages/agent/tests/` with the stub provider/fake clients — no network or API keys
+
+If the tool talks to an external backend (scraper API, Python service), follow the settings pattern in [Tool Backends](/guide/tool-backends): store secrets encrypted, expose presence-only routes, and never trust client-supplied URLs for tenant identity.
+
+Workflows are orchestrated in `packages/agent/server/services/agent-workflow.service.ts`; each step should record a `content_runs` row.
 
 #### Code Style
 
@@ -147,16 +159,22 @@ Provide practical examples.
 
 ```bash
 # Run the development server
-pnpm dev
+pnpm site:dev
 
 # Test in the browser
 # Navigate to http://localhost:3000
 
-# Run type checking
-pnpm typecheck
+# Database service + schema tests (file SQLite, migrations applied)
+pnpm --filter @local-monorepo/db test:services
 
-# Run linter
-pnpm lint
+# Agent tests (stub model provider; no network or API keys)
+pnpm --filter @local-monorepo/agent test
+
+# Production build (also validates new routes/pages)
+pnpm site:build
+
+# Structural diagnostics — new code must not add findings
+pnpm dlx vite-doctor .
 ```
 
 ## Pull Request Process

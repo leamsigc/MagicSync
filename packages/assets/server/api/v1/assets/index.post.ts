@@ -1,14 +1,7 @@
 import { assetService } from '#layers/BaseShared/server/services/asset.service';
+import { assetBlobKey, useAssetBlobStore } from '#layers/BaseShared/server/services/asset-blob-store';
 import { readMultipartFormData, readBody } from 'h3'
-import { writeFile, mkdir } from 'fs/promises'
-import { join } from 'path'
 import dayjs from 'dayjs'
-
-const FILE_STORAGE_MOUNT = process.env.NUXT_FILE_STORAGE_MOUNT || './upload/files'
-
-const getUserUploadDir = (userId: string) => {
-  return join(process.cwd(), FILE_STORAGE_MOUNT, 'userFiles', userId)
-}
 
 const MIME_BY_EXTENSION: Record<string, string> = {
   'jpg': 'image/jpeg',
@@ -60,10 +53,6 @@ export default defineEventHandler(async (event) => {
       const businessIdField = formData?.find(part => part.name === 'businessId')
       const businessId = businessIdField?.data?.toString() || undefined
 
-      // Create user-specific folder (matches the serve routes)
-      const userDir = getUserUploadDir(user.id)
-      await mkdir(userDir, { recursive: true })
-
       for (const part of fileParts) {
         try {
           const originalName = part.filename || 'file'
@@ -71,17 +60,20 @@ export default defineEventHandler(async (event) => {
           const uniqueFilename = crypto.randomUUID()
           const fullFilename = `${uniqueFilename}.${fileExtension}`
           const fileSize = part.data.length
+          const mimeType = part.type || 'application/octet-stream'
 
-          // Write raw bytes directly to disk (no base64/JSON overhead)
-          await writeFile(join(userDir, fullFilename), part.data)
-
-          const fileUrl = `/api/v1/assets/serve/${fullFilename}`
+          // Streams raw bytes straight through the storage seam (no base64/JSON overhead)
+          const { url: fileUrl } = await useAssetBlobStore().put(
+            assetBlobKey(user.id, fullFilename),
+            Buffer.from(part.data),
+            mimeType,
+          )
 
           const assetData = {
             businessId,
             filename: uniqueFilename,
             originalName,
-            mimeType: part.type || 'application/octet-stream',
+            mimeType,
             size: fileSize,
             url: fileUrl,
             metadata: {
@@ -131,18 +123,19 @@ export default defineEventHandler(async (event) => {
 
         const remoteResponse = await $fetch<ArrayBuffer>(body.url)
         const buffer = Buffer.from(remoteResponse)
+        const mimeType = getMimeFromFilename(urlFilename)
 
-        const userDir = getUserUploadDir(user.id)
-        await mkdir(userDir, { recursive: true })
-        await writeFile(join(userDir, fullFilename), buffer)
-
-        const fileUrl = `/api/v1/assets/serve/${fullFilename}`
+        const { url: fileUrl } = await useAssetBlobStore().put(
+          assetBlobKey(user.id, fullFilename),
+          buffer,
+          mimeType,
+        )
 
         const assetData = {
           businessId: body.businessId,
           filename: uniqueFilename,
           originalName: urlFilename,
-          mimeType: getMimeFromFilename(urlFilename),
+          mimeType,
           size: buffer.length,
           url: fileUrl,
           metadata: {

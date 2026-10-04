@@ -13,4 +13,5 @@ export default defineNuxtConfig({
     name: 'BaseShared',
   },
   devtools: { enabled: true },
+  modules: ['@pinia/nuxt', 'evlog/nuxt'],
 })

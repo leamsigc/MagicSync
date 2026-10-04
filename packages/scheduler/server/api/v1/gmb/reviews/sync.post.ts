@@ -1,5 +1,5 @@
-import { SchedulerPost } from '#layers/BaseScheduler/server/services/SchedulerPost.service'
-import { GoogleMyBusinessPlugin } from '#layers/BaseScheduler/server/services/plugins/googlemybusiness.plugin'
+import { SchedulerPost } from '#layers/BaseDB/server/services/SchedulerPost.service'
+import { GoogleMyBusinessPlugin } from '#layers/BaseDB/server/services/plugins/googlemybusiness.plugin'
 import { reviewService } from '#layers/BaseDB/server/services/review.service'
 import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service'
 import { businessProfileService } from '#layers/BaseDB/server/services/business-profile.service'

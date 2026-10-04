@@ -8,7 +8,7 @@
  * @version 0.1.0
  */
 
-import type { PlatformStats } from '#layers/BaseScheduler/server/services/SchedulerPost.service'
+import type { PlatformStats } from '#layers/BaseDB/server/services/SchedulerPost.service'
 import type { SocialMediaAccount } from '#layers/BaseDB/db/schema'
 import { AutoPostService } from './AutoPost.service'
 
@@ -43,7 +43,7 @@ export class PlatformStatsService {
     } catch (error: unknown) {
       const err = error as { message?: string; response?: { data?: { error?: { message?: string } } } }
       const errorMessage = err.message || err.response?.data?.error?.message || String(error)
-      console.error(`[PlatformStats] Failed to fetch stats for ${account.platform}/${account.accountId}:`, errorMessage)
+      log.error({ message: `[PlatformStats] Failed to fetch stats for ${account.platform}/${account.accountId}:`, detail: errorMessage })
       return { stats: null, error: errorMessage }
     }
   }

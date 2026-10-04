@@ -16,13 +16,17 @@ export default defineNuxtRouteMiddleware(async (to) => {
     layout = 'blog-layout';
   } else if (isFeedView) {
     layout = 'auth-twitter-layout';
-  } else if (isAiTools) {
-    layout = 'ai-tools-layout';
-  } else if (isAppRoute && !isUserSettingUpFirstBusiness && (to.meta.layout === 'default' || to.meta.layout === undefined)) {
+  }
+  else if (isAiTools) {
+    layout = 'dashboard-layout';
+  }
+  else if (isAppRoute && !isUserSettingUpFirstBusiness && (to.meta.layout === 'default' || to.meta.layout === undefined)) {
     layout = userLayoutSetting.value as keyof NuxtLayouts || 'dashboard-layout';
-  } else if (isTools) {
+  }
+  else if (isTools) {
     layout = 'tools-layout';
-  } else if (isUserSettingUpFirstBusiness) {
+  }
+  else if (isUserSettingUpFirstBusiness) {
     layout = 'business-layout';
   } else if (to.meta.layout !== 'default' && to.meta.layout !== undefined) {
     layout = to.meta.layout as keyof NuxtLayouts || 'default';

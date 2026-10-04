@@ -7,7 +7,7 @@
 
 ## Problem
 
-`packages/ai-tools/app/pages/app/tools/text-to-speech/composables/useTextToSpeech.ts` is a **shallow facade over module-level singletons masquerading as a Vue composable**. The function is named `useTextToSpeech()` and the return value looks like idiomatic reactive state — but underneath, ~30 module-level refs and ~15 functions all share hidden globals (`audioContext`, `currentSource`, `worker`, `pendingSynthResolve`, `pendingSynthId`, `mainAbortController`).
+`packages/ai-tools/app/composables/ai-tools/tools/text-to-speech/useTextToSpeech.ts` is a **shallow facade over module-level singletons masquerading as a Vue composable**. The function is named `useTextToSpeech()` and the return value looks like idiomatic reactive state — but underneath, ~30 module-level refs and ~15 functions all share hidden globals (`audioContext`, `currentSource`, `worker`, `pendingSynthResolve`, `pendingSynthId`, `mainAbortController`).
 
 This causes real bugs we keep hitting:
 
@@ -178,8 +178,8 @@ Each step is independently mergeable and the system stays working at every commi
 ## References
 
 - A Philosophy of Software Design, John Ousterhout — "deep modules" principle.
-- Current implementation: `packages/ai-tools/app/pages/app/tools/text-to-speech/composables/useTextToSpeech.ts`
-- Caller: `packages/ai-tools/app/pages/app/tools/text-to-speech/index.vue`
-- History hook: `packages/ai-tools/app/pages/app/tools/text-to-speech/composables/useTtsHistory.ts`
-- Engine (unchanged): `packages/ai-tools/app/pages/app/tools/text-to-speech/composables/ttsEngine.ts`
+- Current implementation: `packages/ai-tools/app/composables/ai-tools/tools/text-to-speech/useTextToSpeech.ts`
+- Caller: `packages/site/app/pages/app/tools/text-to-speech/index.vue`
+- History hook: `packages/ai-tools/app/composables/ai-tools/tools/text-to-speech/useTtsHistory.ts`
+- Engine (unchanged): `packages/ai-tools/app/composables/ai-tools/tools/text-to-speech/ttsEngine.ts`
 - Worker (unchanged): `packages/ai-tools/app/assets/workers/ttsWorker.ts`

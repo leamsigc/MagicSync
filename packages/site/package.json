@@ -3,7 +3,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "build": "NODE_OPTIONS=--max-old-space-size=8192 nuxt build",
+    "build": "NODE_OPTIONS=--max-old-space-size=12288 nuxt build",
     "build:debug": "nuxt build --debug",
     "dev": "nuxt dev",
     "dev:debug": "nuxt dev --inspect",
@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "@iconify/utils": "catalog:",
+    "@local-monorepo/agent": "workspace:*",
     "@local-monorepo/ai-tools": "workspace:*",
     "@local-monorepo/assets": "workspace:*",
     "@local-monorepo/auth": "workspace:*",
@@ -54,6 +55,7 @@
   "devDependencies": {
     "@libsql/client": "catalog:",
     "@nuxt/hints": "catalog:",
+    "@nuxt/vite-builder": "catalog:",
     "@nuxtjs/seo": "catalog:",
     "@playwright/test": "catalog:",
     "nuxtseo-layer-devtools": "catalog:"

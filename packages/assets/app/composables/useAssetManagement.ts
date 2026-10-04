@@ -10,11 +10,15 @@
  */
 
 import type { Asset } from "#layers/BaseDB/db/schema"
+import { folderScopeToken, type AssetFolderSummary, type FolderScope } from '#layers/BaseShared/shared/utils/asset-folders'
 
+export type { AssetFolderSummary, FolderScope } from '#layers/BaseShared/shared/utils/asset-folders'
 
 export interface AssetFilters {
   mimeType?: string
   search?: string
+  /** Undefined means "no folder predicate" — every asset, filed or not. */
+  folderScope?: FolderScope
 }
 
 export interface AssetPagination {
@@ -53,9 +57,20 @@ function getErrorMessage(error: unknown, fallback: string): string {
   return fallback
 }
 
+function appendFolderScope(params: URLSearchParams, scope: FolderScope | undefined) {
+  const token = scope ? folderScopeToken(scope) : undefined
+  if (token) params.append('folderId', token)
+}
+
 const assets = ref<Asset[]>([])
+const assetFolders = ref<AssetFolderSummary[]>([])
+const folderScope = ref<FolderScope>({ kind: 'unfiled' })
+// Module-level on purpose, like `assets`. `MediaGallery` owns the selection UI but the
+// page component runs the move and delete, so a per-instance ref left the executor
+// reading an empty selection and posting `assetIds: []`.
+const selectedAssets = ref<Asset[]>([])
+
 export const useAssetManagement = () => {
-  const selectedAssets = ref<Asset[]>([])
   const isLoading = ref(false)
   const isLoadingMore = ref(false)
   const error = ref<string | null>(null)
@@ -100,6 +115,8 @@ export const useAssetManagement = () => {
       if (options?.filters?.mimeType) {
         params.append('mimeType', options.filters.mimeType)
       }
+
+      appendFolderScope(params, options?.filters?.folderScope)
 
       const response = await $fetch<{
         success: boolean
@@ -364,10 +381,93 @@ export const useAssetManagement = () => {
 
   const refreshAssets = async (businessId: string): Promise<void> => {
     await fetchAssets(businessId, {
-      page: pagination.value.page,
+      page: 1,
       limit: pagination.value.limit,
-      filters: filters.value
+      filters: { ...filters.value, folderScope: folderScope.value },
     })
+  }
+
+  const fetchFolders = async (businessId: string): Promise<void> => {
+    try {
+      const response = await $fetch<{ success: boolean; data: AssetFolderSummary[]; error?: string }>(
+        '/api/v1/assets/folders',
+        { query: { businessId } },
+      )
+      if (!response.success) throw new Error(response.error || 'Failed to fetch asset folders')
+      assetFolders.value = response.data
+    } catch (caught: unknown) {
+      error.value = getErrorMessage(caught, 'Failed to fetch asset folders')
+    }
+  }
+
+  const createFolder = async (businessId: string, name: string): Promise<AssetFolderSummary | null> => {
+    isLoading.value = true
+    error.value = null
+    try {
+      const response = await $fetch<{ success: boolean; data: AssetFolderSummary; error?: string }>(
+        '/api/v1/assets/folders',
+        { method: 'POST', body: { businessId, name } },
+      )
+      if (!response.success) throw new Error(response.error || 'Failed to create asset folder')
+      assetFolders.value = [response.data, ...assetFolders.value]
+      return response.data
+    } catch (caught: unknown) {
+      error.value = getErrorMessage(caught, 'Failed to create asset folder')
+      return null
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  const deleteFolder = async (folderId: string, businessId: string): Promise<number | null> => {
+    isLoading.value = true
+    error.value = null
+    try {
+      const response = await $fetch<{ success: boolean; data: { id: string; unfiledCount: number }; error?: string }>(
+        `/api/v1/assets/folders/${folderId}`,
+        { method: 'DELETE', query: { businessId } },
+      )
+      if (!response.success) throw new Error(response.error || 'Failed to delete asset folder')
+      assetFolders.value = assetFolders.value.filter(folder => folder.id !== folderId)
+      return response.data.unfiledCount
+    } catch (caught: unknown) {
+      error.value = getErrorMessage(caught, 'Failed to delete asset folder')
+      return null
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  /** `folderId: null` is a first-class move back to the unfiled bucket, not a delete. */
+  const moveAssets = async (
+    businessId: string,
+    assetIds: string[],
+    folderId: string | null,
+  ): Promise<{ moved: number; rejected: string[] } | null> => {
+    isLoading.value = true
+    error.value = null
+    try {
+      const response = await $fetch<{ success: boolean; data: { moved: number; rejected: string[] }; error?: string }>(
+        '/api/v1/assets/move',
+        { method: 'POST', body: { businessId, assetIds, folderId } },
+      )
+      if (!response.success) throw new Error(response.error || 'Failed to move assets')
+      const movedIds = new Set(response.data.moved ? assetIds.filter(id => !response.data.rejected.includes(id)) : [])
+      assets.value = assets.value.map(asset =>
+        movedIds.has(asset.id) ? { ...asset, folderId } : asset,
+      )
+      await fetchFolders(businessId)
+      return response.data
+    } catch (caught: unknown) {
+      error.value = getErrorMessage(caught, 'Failed to move assets')
+      return null
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  const setFolderScope = (scope: FolderScope) => {
+    folderScope.value = scope
   }
 
   const loadMoreAssets = async (businessId: string): Promise<void> => {
@@ -387,6 +487,8 @@ export const useAssetManagement = () => {
       if (filters.value.mimeType) {
         params.append('mimeType', filters.value.mimeType)
       }
+
+      appendFolderScope(params, folderScope.value)
 
       const response = await $fetch<{
         success: boolean
@@ -422,6 +524,8 @@ export const useAssetManagement = () => {
     pagination: readonly(pagination),
     filters: readonly(filters),
     uploadQueue: readonly(uploadQueue),
+    assetFolders: readonly(assetFolders),
+    folderScope: readonly(folderScope),
 
     // Actions
     fetchAssets,
@@ -431,6 +535,11 @@ export const useAssetManagement = () => {
     deleteAssets,
     refreshAssets,
     loadMoreAssets,
+    fetchFolders,
+    createFolder,
+    deleteFolder,
+    moveAssets,
+    setFolderScope,
 
     // Selection
     selectAsset,

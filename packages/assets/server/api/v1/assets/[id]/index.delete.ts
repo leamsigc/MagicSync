@@ -1,6 +1,6 @@
 import { assetService } from '#layers/BaseShared/server/services/asset.service';
 import { auth } from '#layers/BaseAuth/lib/auth';
-import { getFileFromAsset } from '#layers/BaseAssets/server/utils/AssetsUtils'
+import { getFileFromAsset } from '#layers/BaseShared/server/utils/asset-utils'
 import { unlink } from 'fs/promises'
 
 export default defineEventHandler(async (event) => {

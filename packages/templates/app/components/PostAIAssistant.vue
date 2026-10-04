@@ -20,7 +20,7 @@ const input = ref('')
 const chat = ref({ error: undefined as Error | undefined })
 
 const onSubmit = (): void => {
-  console.log("Value", input.value);
+  log.debug({ message: "Value", detail: input.value });
 
   emit('action', 'custom-prompt', input.value)
   isModalOpen.value = false

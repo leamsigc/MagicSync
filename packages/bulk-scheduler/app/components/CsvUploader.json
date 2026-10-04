@@ -1,22 +1,42 @@
 {
-    "en": {
-        "csvUploader": {
-            "title": "Drag and drop your CSV file here",
-            "subtitle": "or click to browse",
-            "browse": "Browse Files"
-        },
-        "errors": {
-            "csvOnly": "Please select a CSV file"
-        }
+  "en": {
+    "csvUploader": {
+      "title": "Drag and drop your CSV file here",
+      "subtitle": "or click to browse",
+      "browse": "Browse Files"
     },
-    "es": {
-        "csvUploader": {
-            "title": "Arrastra y suelta tu archivo CSV aquí",
-            "subtitle": "o haz clic para explorar",
-            "browse": "Explorar Archivos"
-        },
-        "errors": {
-            "csvOnly": "Por favor seleccione un archivo CSV"
-        }
+    "errors": {
+      "csvOnly": "Please select a CSV file"
     }
+  },
+  "es": {
+    "csvUploader": {
+      "title": "Arrastra y suelta tu archivo CSV aquí",
+      "subtitle": "o haz clic para explorar",
+      "browse": "Explorar Archivos"
+    },
+    "errors": {
+      "csvOnly": "Por favor seleccione un archivo CSV"
+    }
+  },
+  "de": {
+    "csvUploader": {
+      "title": "Ziehen Sie Ihre CSV-Datei hierher",
+      "subtitle": "oder klicken, um zu durchsuchen",
+      "browse": "Dateien durchsuchen"
+    },
+    "errors": {
+      "csvOnly": "Bitte wählen Sie eine CSV-Datei aus"
+    }
+  },
+  "fr": {
+    "csvUploader": {
+      "title": "Glissez-déposez votre fichier CSV ici",
+      "subtitle": "ou cliquez pour parcourir",
+      "browse": "Parcourir les fichiers"
+    },
+    "errors": {
+      "csvOnly": "Veuillez sélectionner un fichier CSV"
+    }
+  }
 }

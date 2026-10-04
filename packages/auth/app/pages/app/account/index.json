@@ -8,7 +8,8 @@
             "general": "General",
             "linked": "Linked Accounts",
             "security": "Security",
-            "danger": "Danger Zone"
+            "danger": "Danger Zone",
+            "ai": "AI Model"
         },
         "general": {
             "title": "General Settings",
@@ -61,7 +62,8 @@
             "general": "General",
             "linked": "Cuentas Vinculadas",
             "security": "Seguridad",
-            "danger": "Zona de Peligro"
+            "danger": "Zona de Peligro",
+            "ai": "Modelo IA"
         },
         "general": {
             "title": "Configuración General",
@@ -114,7 +116,8 @@
             "general": "Allgemein",
             "linked": "Verknüpfte Konten",
             "security": "Sicherheit",
-            "danger": "Gefahrenzone"
+            "danger": "Gefahrenzone",
+            "ai": "KI-Modell"
         },
         "general": {
             "title": "Allgemeine Einstellungen",
@@ -167,7 +170,8 @@
             "general": "Général",
             "linked": "Comptes Liés",
             "security": "Sécurité",
-            "danger": "Zone de Danger"
+            "danger": "Zone de Danger",
+            "ai": "Modèle IA"
         },
         "general": {
             "title": "Paramètres Généraux",

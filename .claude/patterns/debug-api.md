@@ -12,7 +12,7 @@ edges:
     condition: when checking error handling patterns
   - target: context/architecture.md
     condition: when understanding the request flow
-last_updated: 2026-03-30
+last_updated: 2026-09-23
 ---
 
 # Debug API Failures
@@ -61,8 +61,33 @@ API endpoints can fail at multiple points: route handler, service layer, databas
 - Log the full service response to see error message
 
 **Database connection error:**
-- Check `NUXT_TURSO_DATABASE_URL` in .env
+- Check `NUXT_TURSO_DATABASE_URL` in .env (dev points at the local sqld on `http://localhost:8080`)
 - Verify Turso database is accessible
+
+**Generic service failure with no detail (e.g. `Failed to submit artifact`):**
+- The service's `catch {}` swallowed the real error. Check the server console — a bare catch
+  logs nothing, so add `catch (error) { console.error('<service>.<method> failed:', error) }`
+  (the convention used across `packages/db/server/services/*`) and retry.
+- Very often the cause is a **pending migration** on the dev DB. Drizzle's `db:migrate`
+  compares timestamps: it re-applies only journal entries whose `when` is newer than the
+  last row in `__drizzle_migrations`, so a DB that is behind still reads/writes fine until a
+  query touches a new column.
+- Diagnose without guessing (local sqld, read-only):
+  ```bash
+  cd packages/db && node --env-file=../../.env --input-type=module -e "
+    const { createClient } = await import('@libsql/client')
+    const c = createClient({ url: process.env.NUXT_TURSO_DATABASE_URL, authToken: process.env.NUXT_TURSO_AUTH_TOKEN })
+    const cols = await c.execute('PRAGMA table_info(content_artifacts)')
+    console.log(cols.rows.map(r => r.name).join(', '))
+    const last = await c.execute('SELECT created_at FROM __drizzle_migrations ORDER BY created_at DESC LIMIT 1')
+    console.log('last applied:', new Date(Number(last.rows[0].created_at)).toISOString())
+  "
+  ```
+  Compare those columns / that timestamp against `db/migrations/meta/_journal.json`; apply the
+  missing entries with `pnpm db:migrate:local` (loads `../../.env`).
+- A missing column surfaces as a failure **only when the query references it** — e.g.
+  `.returning()` with no args selects every column, so an INSERT can fail on a column the
+  read paths never touch.
 
 **Hot reload not seeing changes:**
 - Rebuild: `pnpm build`

@@ -7,7 +7,7 @@ export const userLlmConfigs = sqliteTable('user_llm_configs', {
   id: text('id').primaryKey(),
   userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
   provider: text('provider', {
-    enum: ['google', 'ollama', 'openai', 'anthropic', 'openrouter', 'deepseek']
+    enum: ['google', 'ollama', 'llama', 'openai', 'anthropic', 'openrouter', 'deepseek']
   }).notNull().default('google'),
   model: text('model').notNull().default('gemini-3-flash-preview'),
   apiKey: text('api_key'), // nullable - null means use platform defaults

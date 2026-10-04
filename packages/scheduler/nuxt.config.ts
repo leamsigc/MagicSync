@@ -1,5 +1,4 @@
 import { defineNuxtConfig } from 'nuxt/config'
-import { type NuxtPage } from 'nuxt/schema'
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
 
@@ -28,6 +27,8 @@ export default defineNuxtConfig({
       '0 */6 * * *': ['token:health'],
       // Daily notification digest email (07:00 UTC)
       '0 7 * * *': ['notifications:digest'],
+      // Safe-mode morning workspace report (08:00 UTC)
+      '0 8 * * *': ['agent:morning-heartbeat'],
     }
   },
   $meta: {
@@ -37,7 +38,7 @@ export default defineNuxtConfig({
     APP_URL: process.env.NUXT_APP_URL,
     googleGenerativeAiApiKey: process.env.NUXT_GOOGLE_GENERATIVE_AI_API_KEY,
   },
-  extends: ['@local-monorepo/db', '@local-monorepo/ui', '@local-monorepo/auth', "@local-monorepo/connect", "@local-monorepo/assets", "@local-monorepo/templates", "@local-monorepo/ai-tools"],
+  extends: ['@local-monorepo/db', '@local-monorepo/ui', '@local-monorepo/auth'],
   modules: ['@nuxtjs/i18n', 'evlog/nuxt'],
   i18n: {
     vueI18n: join(currentDir, './translations/i18n.config.ts'),
@@ -50,24 +51,6 @@ export default defineNuxtConfig({
     ],
     defaultLocale: 'en',
     // bundle: ''
-  },
-  hooks: {
-    'pages:extend': function (pages) {
-      const pagesToRemove: NuxtPage[] = []
-      pages.forEach((page) => {
-        const pathsToExclude = ['types', 'components', '/api', 'composables', 'utils', '.json']
-        if (pathsToExclude.some(excludePath => page.path.includes(excludePath))) {
-          pagesToRemove.push(page)
-        }
-      })
-      pagesToRemove.forEach((page: NuxtPage) => {
-        pages.splice(pages.indexOf(page), 1)
-      })
-      /* Uncomment to show current Routes
-      console.log(`\nCurrent Routes:`)
-      console.log(pages)
-      console.log(`\n`) */
-    }
   },
   evlog: {
     env: {

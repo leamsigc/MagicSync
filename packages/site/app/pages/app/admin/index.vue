@@ -30,7 +30,7 @@ onMounted(async () => {
       { label: 'Active Sessions', value: String(data.sessions), icon: 'lucide:activity' }
     ]
   } catch {
-    console.error('Failed to load admin stats')
+    log.error({ message: 'Failed to load admin stats' })
   }
 })
 

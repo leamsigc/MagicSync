@@ -1,4 +1,4 @@
-<i18n src="../pages/tools/podcast/index.json"></i18n>
+<i18n src="#site/app/pages/tools/podcast/index.json"></i18n>
 <script lang="ts" setup>
 /**
  *

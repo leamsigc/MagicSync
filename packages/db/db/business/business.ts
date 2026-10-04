@@ -14,6 +14,7 @@ export const businessProfiles = sqliteTable('business_profiles', {
   website: text('website'),
   category: text('category'),
   isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true),
+  safeMode: integer('safe_mode', { mode: 'boolean' }).notNull().default(true),
   createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()).notNull()
 })
@@ -26,7 +27,8 @@ export const UpdateBusinessProfileSchema = z.object({
   address: z.string(),
   phone: z.string(),
   website: z.string(),
-  category: z.string()
+  category: z.string(),
+  safeMode: z.boolean().optional()
 }).partial()
 
 export const UpdateBusinessProfileWithIdSchema = z.object({

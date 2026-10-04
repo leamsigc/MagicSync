@@ -21,6 +21,16 @@ FROM node:26-alpine AS builder
 RUN apk add --no-cache bash curl python3 make g++ pkgconfig \
   cairo-dev pango-dev jpeg-dev giflib-dev librsvg-dev pixman-dev
 
+# Cap compiler parallelism. node-canvas (above) has no musl prebuild, so `pnpm i`
+# always runs a native cairo/pango build here. GNU make and node-gyp both default
+# to one job per CPU, so on a 16-core host this fans out to ~16 concurrent g++
+# processes. Each cc1plus on a cairo-binding translation unit peaks in the
+# hundreds of MB, which is enough to exhaust a 31 GB machine and trigger the
+# kernel OOM killer mid-build. -j2 keeps peak memory roughly an order of
+# magnitude lower and makes the build reproducible instead of host-dependent.
+# Raise it deliberately if you have the RAM, but never leave it unbounded.
+ENV MAKEFLAGS="-j2"
+
 WORKDIR /usr/app
 
 # Pin pnpm to the exact version from the "packageManager" field in package.json.
@@ -47,7 +57,18 @@ RUN pnpm dev:prepare
 # the site build. The asset directory is .gitignored to keep pushes small.
 RUN bash ./scripts/tts_assets_folder.sh
 
+# Pinned yt-dlp musllinux binary + sha256 verification (small). Copied into
+# the runtime image below. Consumed by two server routes: the `download_video`
+# agent tool (which persists the result) and GET /api/v1/media/video-download
+# (the video-cropper ingest endpoint, which streams it and never persists).
+RUN bash ./scripts/install-ytdlp.sh
+
 RUN pnpm site
+
+# Nitro traces the sharp bindings and versioned libvips packages but not the
+# sibling paths their RPATH searches — stage those links before the runtime
+# COPY so the container can dlopen libvips (see scripts/stage-sharp-libvips.sh).
+RUN bash ./scripts/stage-sharp-libvips.sh
 
 # The `libsql` package (native core behind `@libsql/client`) resolves its
 # platform binding at runtime via detect-libc, so on Alpine it needs
@@ -114,11 +135,24 @@ FROM node:26-alpine
 # (`fabric/node` → canvas.node) fails at startup with
 # "Error loading shared library libcairo.so.2". ttf-dejavu gives Pango a
 # real font to fall back to (bare Alpine ships zero fonts → tofu text).
-RUN apk add --no-cache cairo pango giflib libjpeg-turbo librsvg pixman freetype fontconfig ttf-dejavu
+#
+# ffmpeg + ca-certificates are required by yt-dlp video ingest
+# (GET /api/v1/media/video-download and the `download_video` agent tool):
+#   - ffmpeg: yt-dlp runs with --merge-output-format mp4, and YouTube serves
+#     video and audio as separate streams, so without ffmpeg those downloads
+#     cannot produce an .mp4 at all and the route returns YTDLP_NO_OUTPUT.
+#   - ca-certificates: TLS trust store for outbound HTTPS to the video host.
+#     node:26-alpine already ships it, but list it explicitly so a base-image
+#     change cannot silently break yt-dlp in production.
+RUN apk add --no-cache cairo pango giflib libjpeg-turbo librsvg pixman freetype fontconfig ttf-dejavu ffmpeg ca-certificates
 
 WORKDIR /usr/app
 
 COPY --from=builder /usr/app/packages/site/.output ./.output
+# Pinned yt-dlp binary for video ingest — the `download_video` agent tool and
+# the video-cropper's GET /api/v1/media/video-download endpoint. Standalone
+# pyinstaller build, so it needs no Python in this image (ffmpeg is above).
+COPY --from=builder /usr/app/.bin/yt-dlp /usr/local/bin/yt-dlp
 # Copy the musl native binding into the exact location where libsql resolves it.
 COPY --from=builder /tmp/musl/node_modules/@libsql/linux-x64-musl /usr/app/.output/server/node_modules/@libsql/linux-x64-musl
 
@@ -128,6 +162,29 @@ RUN node -e "require('/usr/app/.output/server/node_modules/@libsql/linux-x64-mus
 
 ENV NODE_ENV=production
 ENV NUXT_HOST=0.0.0.0
+# Consumed by packages/agent/server/utils/ytdlp.ts, which also honours the
+# NUXT_-prefixed form so a value in .env cannot be silently ignored.
+ENV YTDLP_PATH=/usr/local/bin/yt-dlp
 EXPOSE 3000
 
+# Operational notes for GET /api/v1/media/video-download (video-cropper ingest):
+#   * yt-dlp must write the merged file to disk before any byte can be
+#     streamed, so the request can stay open while sending nothing. Worst case
+#     is YTDLP_TIMEOUT_MS (120s) plus, for the few sources that publish no
+#     H.264 at all, a YTDLP_TRANSCODE_TIMEOUT_MS (300s) ffmpeg re-encode. Set
+#     your reverse proxy's read timeout above that total (Coolify's Traefik
+#     defaults to 60s, which would surface a proxy 504 instead of the route's
+#     own error), or lower both values.
+#   * Sources are requested as H.264 + AAC because some browsers (Firefox on
+#     Linux) cannot decode AV1 via WebCodecs and fail at export time with "The
+#     given encoding is not supported". AV1-only sources are re-encoded to
+#     H.264/AAC with ffmpeg, which is why this image also needs the libx264 and
+#     aac encoders; set YTDLP_BROWSER_SAFE=0 to skip that.
+#   * Scratch space is YTDLP_DOWNLOAD_DIR, defaulting to /tmp/magicsync-video.
+#     It is created on demand and each download's subfolder is unlinked as soon
+#     as the response settles, so nothing is retained. Peak use is
+#     YTDLP_MAX_MB (200MB default) per in-flight request — mount a real volume
+#     at that path rather than relying on the container's overlay /tmp.
+#   * Nothing is written to the asset library or the database; the browser's
+#     copy is the only durable one.
 CMD ["node", ".output/server/index.mjs"]

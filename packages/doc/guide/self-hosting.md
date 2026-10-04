@@ -109,14 +109,24 @@ BETTER_AUTH_URL=https://your-domain.com
 BETTER_AUTH_SECRET=<same-as-NUXT_BETTER_AUTH_SECRET>
 
 # ============================================================
-# PYTHON BACKEND
+# AGENT RUNTIME (in-process pi SDK)
 # ============================================================
-NUXT_PYTHON_API_URL=http://python-backend:8000
+# Secret for machine callbacks (GitHub Actions, internal analytics).
+MACHINE_BRIDGE_SECRET=<generate-openssl-rand-hex-32>
+# AES-256-GCM key for credential envelopes (LLM keys, publishing tokens,
+# user tool-backend secrets).
+NUXT_PUBLISH_SECRET=<generate-openssl-rand-hex-32>
 
 # ============================================================
-# LLM SERVICE (must match Python backend!)
+# TOOL BACKENDS (optional)
 # ============================================================
-NUXT_LLM_JWT_SECRET=<generate-openssl-rand-hex-32>
+# ScrapeGraphAI is the default scraper. Users can also set their own key in
+# Account -> AI settings -> Tool backends; this env is the deployment fallback.
+SGAI_API_KEY=<your-scrapegraphai-api-key>
+# Optional Python tools sidecar (packages/python-tools). Users can override the
+# URL/token in AI settings.
+PYTHON_TOOLS_URL=http://python-tools:8100
+PYTHON_TOOLS_TOKEN=<optional-bearer-token>
 
 # ============================================================
 # FILE STORAGE
@@ -134,10 +144,11 @@ openssl rand -hex 32  # SQLD_AUTH_JWT_KEY
 openssl rand -hex 32  # NUXT_SESSION_PASSWORD
 openssl rand -hex 32  # NUXT_BETTER_AUTH_SECRET
 openssl rand -hex 32  # BETTER_AUTH_SECRET
-openssl rand -hex 32  # NUXT_LLM_JWT_SECRET
+openssl rand -hex 32  # NUXT_PUBLISH_SECRET
+openssl rand -hex 32  # MACHINE_BRIDGE_SECRET
 ```
 
-**Important:** `NUXT_BETTER_AUTH_SECRET` and `BETTER_AUTH_SECRET` must be the same value. The Python backend uses `BETTER_AUTH_SECRET` to validate authentication tokens from the Nuxt app.
+**Important:** `NUXT_BETTER_AUTH_SECRET` and `BETTER_AUTH_SECRET` must be the same value. Agents, chat, and tools all run inside the Nuxt server, so no service-to-service JWT sharing is needed.
 
 ### Step 3: Start the Application
 
@@ -150,10 +161,9 @@ docker compose up -d
 > **Legacy Docker Compose:** If your system still uses the older `docker-compose` command, replace `docker compose` with `docker-compose` in the examples above.
 
 This will:
-1. Build the Nuxt site container
-2. Build the Python backend container
-3. Start the libSQL database container
-4. Connect all services on the same Docker network
+1. Build the Nuxt site container (agents, chat, board, RAG all run inside it)
+2. Start the libSQL database container
+3. Connect all services on the same Docker network
 
 ### Step 4: Access the Application
 
@@ -228,10 +238,8 @@ services:
     image: ghcr.io/leamsigc/magicsync:v1.0.0  # Replace with the latest release tag
     depends_on:
       - db
-      - python-backend
     environment:
       - NUXT_HOST=0.0.0.0
-      - NUXT_PYTHON_API_URL=http://python-backend:8000
 ```
 
 **Tip:** Replace `v1.0.0` with the actual tag you want to deploy. Check the [GitHub releases page](https://github.com/leamsigc/magicsync/releases) for available tags. Pinning to a specific tag makes deployments reproducible and avoids unexpected updates from `latest`.
@@ -304,7 +312,7 @@ docker compose restart site
 ### Cannot access localhost:3000
 
 1. Wait for the containers to finish building (this can take 5–10 minutes).
-2. Run `docker ps` and verify that `site`, `python-backend`, and `db` are running.
+2. Run `docker ps` and verify that `site` and `db` are running.
 3. Check the site logs: `docker compose logs site`
 
 ### Database connection failed
@@ -326,7 +334,7 @@ docker compose restart site
 
 ### Using Local AI with Ollama
 
-The Python backend can use Ollama for local AI. Add an Ollama service to your `docker-compose.yml`:
+The agent runtime talks to Ollama through pi `ModelRuntime`. Add an Ollama service to your `docker-compose.yml`:
 
 ```yaml
 ollama:
@@ -337,9 +345,24 @@ ollama:
     - "11434:11434"
 ```
 
-Then set `OLLAMA_BASE_URL=http://ollama:11434` for the Python backend.
+Then select the **Ollama** provider in Account → AI settings with base URL
+`http://ollama:11434/v1` (the deployment template in
+`packages/agent/server/agent/models.json` lists the default local models).
+Alternatively, set `NUXT_OPENAI_API_KEY` / `NUXT_GOOGLE_GENERATIVE_AI_API_KEY`
+in your `.env` for cloud providers.
 
-Alternatively, use a cloud LLM provider by setting `NUXT_OPENAI_API_KEY` in your `.env`.
+### Agents fail with `MODEL_NOT_CONFIGURED`
+
+Set a provider/model in Account → AI settings (global) or a per-business
+override. `AGENT_DEFAULT_PROVIDER` / `AGENT_DEFAULT_MODEL` act as deployment
+fallbacks.
+
+### Scraping or Python tools do not work
+
+- `SCRAPEGRAPH_NOT_CONFIGURED`: add a ScrapeGraphAI key in AI settings → Tool
+  backends (or set `SGAI_API_KEY`). `scrape_url` falls back to raw fetch.
+- `PYTHON_BACKEND_*`: run `packages/python-tools` (port 8100) and set its URL in
+  AI settings → Tool backends, then use the Test button.
 
 ---
 

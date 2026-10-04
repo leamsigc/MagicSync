@@ -3,7 +3,7 @@ import { AutoPostService } from '#layers/BaseScheduler/server/services/AutoPost.
 import { assetService } from '#layers/BaseShared/server/services/asset.service'
 import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service'
 import { postService } from '#layers/BaseDB/server/services/post.service'
-import { platformConfigurations } from '../../../../shared/platformConstants'
+import { platformConfigurations } from '#layers/BaseShared/shared/platformConstants'
 
 const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:3000/api/v1/ai/generate'
 

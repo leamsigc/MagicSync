@@ -1,0 +1,46 @@
+{
+  "en": {
+    "title": "AI Tools",
+    "description": "Query your data with natural language or search the web",
+    "tabSql": "Text-to-SQL",
+    "tabSearch": "Web Search",
+    "sqlPlaceholder": "e.g. How many posts did I schedule this week?",
+    "sqlGenerate": "Generate",
+    "sqlCopied": "SQL copied",
+    "searchPlaceholder": "Search the web...",
+    "searchSubmit": "Search"
+  },
+  "es": {
+    "title": "Herramientas de IA",
+    "description": "Consulta tus datos en lenguaje natural o busca en la web",
+    "tabSql": "Texto a SQL",
+    "tabSearch": "Búsqueda en la web",
+    "sqlPlaceholder": "p. ej. ¿Cuántas publicaciones programé esta semana?",
+    "sqlGenerate": "Generar",
+    "sqlCopied": "SQL copiado",
+    "searchPlaceholder": "Buscar en la web...",
+    "searchSubmit": "Buscar"
+  },
+  "de": {
+    "title": "KI-Tools",
+    "description": "Fragen Sie Ihre Daten in natürlicher Sprache ab oder suchen Sie im Web",
+    "tabSql": "Text zu SQL",
+    "tabSearch": "Websuche",
+    "sqlPlaceholder": "z. B. Wie viele Beiträge habe ich diese Woche geplant?",
+    "sqlGenerate": "Erzeugen",
+    "sqlCopied": "SQL kopiert",
+    "searchPlaceholder": "Im Web suchen...",
+    "searchSubmit": "Suchen"
+  },
+  "fr": {
+    "title": "Outils IA",
+    "description": "Interrogez vos données en langage naturel ou recherchez sur le web",
+    "tabSql": "Texte vers SQL",
+    "tabSearch": "Recherche web",
+    "sqlPlaceholder": "ex. Combien de publications ai-je programmées cette semaine ?",
+    "sqlGenerate": "Générer",
+    "sqlCopied": "SQL copié",
+    "searchPlaceholder": "Rechercher sur le web...",
+    "searchSubmit": "Rechercher"
+  }
+}

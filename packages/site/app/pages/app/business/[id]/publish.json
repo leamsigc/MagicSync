@@ -1,0 +1,310 @@
+{
+  "en": {
+    "seo_title": "Publish content — MagicSync",
+    "seo_description": "Publish approved content to GitHub or WordPress.",
+    "title": "Publish",
+    "description": "Choose a destination, preview the target, then publish through approval.",
+    "back": "Back",
+    "destination": {
+      "title": "Where do you want this?",
+      "github": "GitHub",
+      "wordpress": "WordPress"
+    },
+    "github": {
+      "repository": "Repository",
+      "language": "Language",
+      "slug": "Slug",
+      "titleLabel": "Title",
+      "brief": "Brief",
+      "target": "Target path",
+      "template": "Template",
+      "branch": "Branch",
+      "action": "Action",
+      "inspect": "Inspect repo",
+      "preview": "Preview",
+      "prepare": "Prepare",
+      "approve": "Approve & Create PR",
+      "edit": "Edit",
+      "cancel": "Cancel",
+      "publish": "Publish",
+      "verify": "Verify"
+    },
+    "wordpress": {
+      "titleLabel": "Title",
+      "content": "Content",
+      "slug": "Slug",
+      "excerpt": "Excerpt",
+      "category": "Category",
+      "tags": "Tags",
+      "status": "Status",
+      "prepare": "Prepare draft",
+      "publish": "Publish"
+    },
+    "preview": {
+      "repository": "Repository: {repo}",
+      "framework": "Framework: {framework}",
+      "content": "Content: {system}",
+      "language": "Language: {language}",
+      "target": "Target: {target}",
+      "template": "Template: {template}",
+      "branch": "Branch: {branch}",
+      "action": "Action: {action}"
+    },
+    "states": {
+      "inspecting": "Inspecting",
+      "previewing": "Previewing",
+      "preparing": "Preparing",
+      "publishing": "Publishing",
+      "verifying": "Verifying"
+    },
+    "feedback": {
+      "inspectFailed": "Inspect failed: {error}",
+      "previewFailed": "Preview failed: {error}",
+      "prepareFailed": "Prepare failed: {error}",
+      "fileExists": "File already exists. Choose Update, Create another, or Cancel.",
+      "piiBlocked": "PII detected: {error}",
+      "approveFailed": "Approval failed: {error}",
+      "publishFailed": "Publish failed: {error}",
+      "verifyFailed": "Verify failed: {error}",
+      "inspectDone": "Repository inspected",
+      "prepareDone": "Artifact prepared for approval",
+      "publishDone": "Published",
+      "verifyDone": "Verified"
+    },
+    "jobs": {
+      "pullRequest": "Open PR",
+      "remote": "Open remote"
+    }
+  },
+  "es": {
+    "seo_title": "Publicar — MagicSync",
+    "seo_description": "Publica contenido aprobado en GitHub o WordPress.",
+    "title": "Publicar",
+    "description": "Elige un destino, previsualiza y publica con aprobación.",
+    "back": "Volver",
+    "destination": {
+      "title": "¿Dónde quieres publicarlo?",
+      "github": "GitHub",
+      "wordpress": "WordPress"
+    },
+    "github": {
+      "repository": "Repositorio",
+      "language": "Idioma",
+      "slug": "Slug",
+      "titleLabel": "Título",
+      "brief": "Resumen",
+      "target": "Ruta de destino",
+      "template": "Plantilla",
+      "branch": "Rama",
+      "action": "Acción",
+      "inspect": "Inspeccionar repo",
+      "preview": "Vista previa",
+      "prepare": "Preparar",
+      "approve": "Aprobar y crear PR",
+      "edit": "Editar",
+      "cancel": "Cancelar",
+      "publish": "Publicar",
+      "verify": "Verificar"
+    },
+    "wordpress": {
+      "titleLabel": "Título",
+      "content": "Contenido",
+      "slug": "Slug",
+      "excerpt": "Extracto",
+      "category": "Categoría",
+      "tags": "Etiquetas",
+      "status": "Estado",
+      "prepare": "Preparar borrador",
+      "publish": "Publicar"
+    },
+    "preview": {
+      "repository": "Repositorio: {repo}",
+      "framework": "Marco: {framework}",
+      "content": "Contenido: {system}",
+      "language": "Idioma: {language}",
+      "target": "Destino: {target}",
+      "template": "Plantilla: {template}",
+      "branch": "Rama: {branch}",
+      "action": "Acción: {action}"
+    },
+    "states": {
+      "inspecting": "Inspeccionando",
+      "previewing": "Previsualizando",
+      "preparing": "Preparando",
+      "publishing": "Publicando",
+      "verifying": "Verificando"
+    },
+    "feedback": {
+      "inspectFailed": "Inspección fallida: {error}",
+      "previewFailed": "Vista previa fallida: {error}",
+      "prepareFailed": "Preparación fallida: {error}",
+      "fileExists": "El archivo ya existe. Elige Actualizar, Crear otro o Cancelar.",
+      "piiBlocked": "PII detectado: {error}",
+      "approveFailed": "Aprobación fallida: {error}",
+      "publishFailed": "Publicación fallida: {error}",
+      "verifyFailed": "Verificación fallida: {error}",
+      "inspectDone": "Repositorio inspeccionado",
+      "prepareDone": "Artefacto preparado",
+      "publishDone": "Publicado",
+      "verifyDone": "Verificado"
+    },
+    "jobs": {
+      "pullRequest": "Abrir PR",
+      "remote": "Abrir remoto"
+    }
+  },
+  "de": {
+    "seo_title": "Veröffentlichen — MagicSync",
+    "seo_description": "Freigegebene Inhalte in GitHub oder WordPress veröffentlichen.",
+    "title": "Veröffentlichen",
+    "description": "Ziel wählen, Vorschau prüfen, mit Freigabe veröffentlichen.",
+    "back": "Zurück",
+    "destination": {
+      "title": "Wohin soll das?",
+      "github": "GitHub",
+      "wordpress": "WordPress"
+    },
+    "github": {
+      "repository": "Repository",
+      "language": "Sprache",
+      "slug": "Slug",
+      "titleLabel": "Titel",
+      "brief": "Kurzfassung",
+      "target": "Zielpfad",
+      "template": "Vorlage",
+      "branch": "Branch",
+      "action": "Aktion",
+      "inspect": "Repo prüfen",
+      "preview": "Vorschau",
+      "prepare": "Vorbereiten",
+      "approve": "Freigeben & PR erstellen",
+      "edit": "Bearbeiten",
+      "cancel": "Abbrechen",
+      "publish": "Veröffentlichen",
+      "verify": "Prüfen"
+    },
+    "wordpress": {
+      "titleLabel": "Titel",
+      "content": "Inhalt",
+      "slug": "Slug",
+      "excerpt": "Auszug",
+      "category": "Kategorie",
+      "tags": "Schlagwörter",
+      "status": "Status",
+      "prepare": "Entwurf vorbereiten",
+      "publish": "Veröffentlichen"
+    },
+    "preview": {
+      "repository": "Repository: {repo}",
+      "framework": "Framework: {framework}",
+      "content": "Inhalt: {system}",
+      "language": "Sprache: {language}",
+      "target": "Ziel: {target}",
+      "template": "Vorlage: {template}",
+      "branch": "Branch: {branch}",
+      "action": "Aktion: {action}"
+    },
+    "states": {
+      "inspecting": "Prüfe",
+      "previewing": "Vorschau",
+      "preparing": "Vorbereitung",
+      "publishing": "Veröffentliche",
+      "verifying": "Prüfung"
+    },
+    "feedback": {
+      "inspectFailed": "Prüfung fehlgeschlagen: {error}",
+      "previewFailed": "Vorschau fehlgeschlagen: {error}",
+      "prepareFailed": "Vorbereitung fehlgeschlagen: {error}",
+      "fileExists": "Datei existiert bereits. Wähle Aktualisieren, Neu erstellen oder Abbrechen.",
+      "piiBlocked": "PII erkannt: {error}",
+      "approveFailed": "Freigabe fehlgeschlagen: {error}",
+      "publishFailed": "Veröffentlichung fehlgeschlagen: {error}",
+      "verifyFailed": "Prüfung fehlgeschlagen: {error}",
+      "inspectDone": "Repository geprüft",
+      "prepareDone": "Artefakt bereit",
+      "publishDone": "Veröffentlicht",
+      "verifyDone": "Verifiziert"
+    },
+    "jobs": {
+      "pullRequest": "PR öffnen",
+      "remote": "Remote öffnen"
+    }
+  },
+  "fr": {
+    "seo_title": "Publier — MagicSync",
+    "seo_description": "Publiez du contenu approuvé sur GitHub ou WordPress.",
+    "title": "Publier",
+    "description": "Choisissez une destination, prévisualisez, puis publiez.",
+    "back": "Retour",
+    "destination": {
+      "title": "Où publier?",
+      "github": "GitHub",
+      "wordpress": "WordPress"
+    },
+    "github": {
+      "repository": "Dépôt",
+      "language": "Langue",
+      "slug": "Slug",
+      "titleLabel": "Titre",
+      "brief": "Résumé",
+      "target": "Chemin cible",
+      "template": "Modèle",
+      "branch": "Branche",
+      "action": "Action",
+      "inspect": "Inspecter",
+      "preview": "Aperçu",
+      "prepare": "Préparer",
+      "approve": "Approuver & créer PR",
+      "edit": "Modifier",
+      "cancel": "Annuler",
+      "publish": "Publier",
+      "verify": "Vérifier"
+    },
+    "wordpress": {
+      "titleLabel": "Titre",
+      "content": "Contenu",
+      "slug": "Slug",
+      "excerpt": "Extrait",
+      "category": "Catégorie",
+      "tags": "Étiquettes",
+      "status": "Statut",
+      "prepare": "Préparer",
+      "publish": "Publier"
+    },
+    "preview": {
+      "repository": "Dépôt: {repo}",
+      "framework": "Cadre: {framework}",
+      "content": "Contenu: {system}",
+      "language": "Langue: {language}",
+      "target": "Cible: {target}",
+      "template": "Modèle: {template}",
+      "branch": "Branche: {branch}",
+      "action": "Action: {action}"
+    },
+    "states": {
+      "inspecting": "Inspection",
+      "previewing": "Aperçu",
+      "preparing": "Préparation",
+      "publishing": "Publication",
+      "verifying": "Vérification"
+    },
+    "feedback": {
+      "inspectFailed": "Inspection échouée: {error}",
+      "previewFailed": "Aperçu échoué: {error}",
+      "prepareFailed": "Préparation échouée: {error}",
+      "fileExists": "Le fichier existe déjà.",
+      "piiBlocked": "PII détecté: {error}",
+      "approveFailed": "Approbation échouée: {error}",
+      "publishFailed": "Publication échouée: {error}",
+      "verifyFailed": "Vérification échouée: {error}",
+      "inspectDone": "Dépôt inspecté",
+      "prepareDone": "Artefact prêt",
+      "publishDone": "Publié",
+      "verifyDone": "Vérifié"
+    },
+    "jobs": {
+      "pullRequest": "Ouvrir PR",
+      "remote": "Ouvrir distant"
+    }
+  }
+}

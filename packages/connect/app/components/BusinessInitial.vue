@@ -1,16 +1,15 @@
 <!--  Translation file -->
-<i18n src="../pages/app/business/business.json"></i18n>
+<i18n src="#site/app/pages/app/business/business.json"></i18n>
 <script lang="ts" setup>
-import { useBusinessManager } from '../pages/app/business/composables/useBusinessManager';
-import AddBusiness from '../pages/app/business/components/AddBusiness.vue';
-import BusinessCard from '../pages/app/business/components/BusinessCard.vue';
+import { useBusinessManager } from '#layers/BaseShared/app/composables/useBusinessManager';
+import AddBusiness from './connect/business/components/AddBusiness.vue';
+import BusinessCard from './connect/business/components/BusinessCard.vue';
+import DeleteBusinessModal from './connect/business/components/DeleteBusinessModal.vue';
 
 const { t } = useI18n()
 const router = useRouter();
-const toast = useToast();
 
-
-const { businesses, getAllBusinesses, updateBusiness, deleteBusiness } = useBusinessManager();
+const { businesses, getAllBusinesses } = useBusinessManager();
 
 await getAllBusinesses();
 
@@ -30,30 +29,13 @@ const confirmDelete = (id: string) => {
   showDeleteConfirm.value = true;
 }
 
-const handleDeleteBusiness = async () => {
-  if (!businessToDelete.value) return;
-
-  toast.add({
-    title: t('states.deleting'),
-    description: t('states.deleting_business'),
-    color: 'warning'
-  });
-
-  await deleteBusiness(businessToDelete.value);
-
-  showDeleteConfirm.value = false;
-  businessToDelete.value = null;
-
-  toast.add({
-    title: t('states.deleted'),
-    description: t('states.business_deleted'),
-    color: 'success'
-  });
+const handleDeleteModalUpdate = (value: boolean) => {
+  showDeleteConfirm.value = value;
+  if (!value) businessToDelete.value = null;
 }
 
-const cancelDelete = () => {
-  showDeleteConfirm.value = false;
-  businessToDelete.value = null;
+const handleBusinessDeleted = () => {
+  getAllBusinesses();
 }
 </script>
 
@@ -62,37 +44,15 @@ const cancelDelete = () => {
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 p-2 mt-6">
       <AddBusiness initial-setup />
       <BusinessCard v-for="business in businesses.data" :key="business.id" :business="business" @select="handleSelect"
-        @edit="(id: string) => router.push(`/app/business/${id}/edit`)" @delete="confirmDelete" />
+        @edit="handleEditBusiness" @delete="confirmDelete" />
       <div v-if="!businesses.data || businesses.data.length === 0"
         class=" text-center text-gray-500 grid place-content-center bg-accented rounded-2xl p-8 ">
         {{ t('states.no_businesses') }}
       </div>
     </div>
 
-    <UModal v-model:open="showDeleteConfirm" :close="false">
-      <template #content>
-        <UCard>
-          <template #header>
-            <h3 class="text-lg font-semibold">{{ t('states.confirm_delete') }}</h3>
-          </template>
-
-          <p class="text-gray-600 dark:text-gray-400">
-            {{ t('states.confirm_delete_desc') }}
-          </p>
-
-          <template #footer>
-            <div class="flex justify-end gap-3">
-              <UButton color="neutral" variant="ghost" @click="cancelDelete">
-                {{ t('form.cancel') }}
-              </UButton>
-              <UButton color="error" @click="handleDeleteBusiness">
-                {{ t('actions.delete') }}
-              </UButton>
-            </div>
-          </template>
-        </UCard>
-      </template>
-    </UModal>
+    <DeleteBusinessModal :model-value="showDeleteConfirm" :business-id="businessToDelete"
+      @update:model-value="handleDeleteModalUpdate" @deleted="handleBusinessDeleted" />
   </div>
 </template>
 <style scoped></style>

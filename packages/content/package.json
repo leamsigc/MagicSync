@@ -15,17 +15,22 @@
     "@local-monorepo/ui": "workspace:*",
     "@nuxt/content": "catalog:",
     "@nuxt/eslint": "catalog:",
+    "@nuxtjs/i18n": "catalog:",
+    "@nuxtjs/robots": "catalog:",
     "@nuxtjs/seo": "catalog:",
+    "@nuxtjs/sitemap": "catalog:",
+    "@takumi-rs/core": "catalog:",
     "eslint": "catalog:",
     "nuxt": "catalog:",
+    "nuxt-og-image": "catalog:",
+    "nuxt-schema-org": "catalog:",
     "typescript": "catalog:",
     "vue": "catalog:",
-    "zod": "catalog:",
-    "@nuxtjs/i18n": "catalog:",
-    "@takumi-rs/core": "catalog:"
+    "zod": "catalog:"
   },
   "dependencies": {
     "better-sqlite3": "catalog:",
+    "evlog": "catalog:",
     "sass": "catalog:"
   }
 }

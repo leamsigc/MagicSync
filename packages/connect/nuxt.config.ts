@@ -1,5 +1,4 @@
 import { defineNuxtConfig } from 'nuxt/config'
-import { type NuxtPage } from 'nuxt/schema'
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
 
@@ -28,8 +27,14 @@ export default defineNuxtConfig({
   $meta: {
     name: 'BaseConnect',
   },
-  extends: ['@local-monorepo/db', '@local-monorepo/ui', '@local-monorepo/auth'],
-  modules: ['@nuxtjs/i18n', 'evlog/nuxt'],
+  // `agent` is a foundation layer (§5.1 of PRD-LAYER-RESTRUCTURE), and
+  // `server/api/v1/business/[id]/playbook/refine.post.ts` calls
+  // `runCapability('playbook.refine')`. Without it in `extends` the
+  // `#layers/BaseAgent` specifiers resolve only under the site composition
+  // root, and every connect route 500s in this playground. `ai-tools` extends
+  // `agent` for the same reason.
+  extends: ['@local-monorepo/db', '@local-monorepo/ui', '@local-monorepo/auth', '@local-monorepo/agent'],
+  modules: ['@nuxtjs/i18n', 'evlog/nuxt', '@comark/nuxt'],
   i18n: {
     vueI18n: join(currentDir, './translations/i18n.config.ts'),
     baseUrl: process.env.NUXT_APP_URL,
@@ -41,24 +46,6 @@ export default defineNuxtConfig({
     ],
     defaultLocale: 'en',
     // bundle: ''
-  },
-  hooks: {
-    'pages:extend': function (pages) {
-      const pagesToRemove: NuxtPage[] = []
-      pages.forEach((page) => {
-        const pathsToExclude = ['types', 'components', '/api', 'composables', 'utils', '.json']
-        if (pathsToExclude.some(excludePath => page.path.includes(excludePath))) {
-          pagesToRemove.push(page)
-        }
-      })
-      pagesToRemove.forEach((page: NuxtPage) => {
-        pages.splice(pages.indexOf(page), 1)
-      })
-      /* Uncomment to show current Routes
-      console.log(`\nCurrent Routes:`)
-      console.log(pages)
-      console.log(`\n`) */
-    }
   },
   evlog: {
     env: {

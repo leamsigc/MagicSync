@@ -1,0 +1,266 @@
+{
+  "en": {
+    "back": "Back to playbook",
+    "title": "Publishing",
+    "description": "GitHub and WordPress destinations. Nothing publishes without an approved artifact.",
+    "policy": {
+      "title": "Approval required",
+      "description": "Jobs only run for approved artifact versions. Retries reuse the same idempotency key and never duplicate remote content."
+    },
+    "connections": {
+      "title": "Connections",
+      "empty": "No connections yet.",
+      "hasSecret": "Secret stored",
+      "noSecret": "No secret",
+      "test": "Test",
+      "delete": "Delete"
+    },
+    "jobs": {
+      "title": "Publishing history",
+      "empty": "No publishing jobs yet.",
+      "attempts": "{count} attempts",
+      "remote": "Open remote",
+      "retry": "Retry",
+      "statuses": {
+        "queued": "Queued",
+        "running": "Running",
+        "succeeded": "Succeeded",
+        "failed": "Failed",
+        "conflict": "Conflict",
+        "cancelled": "Cancelled"
+      }
+    },
+    "modes": {
+      "commit": "Direct commit",
+      "pr": "Pull request",
+      "draft": "Draft",
+      "live": "Live"
+    },
+    "form": {
+      "cta": "New connection",
+      "title": "Create connection",
+      "name": "Name",
+      "provider": "Provider",
+      "mode": "Delivery mode",
+      "repo": "Repository (owner/name)",
+      "branch": "Branch",
+      "dir": "Directory",
+      "siteUrl": "Site URL (https)",
+      "username": "Username",
+      "secret": "Token / application password",
+      "secretHint": "Stored encrypted. Leave empty to keep the current secret.",
+      "cancel": "Cancel",
+      "save": "Create connection",
+      "nameRequired": "A name is required"
+    },
+    "toast": {
+      "loadFailed": "Failed to load publishing",
+      "createDone": "Connection created",
+      "createFailed": "Failed to create connection",
+      "testOk": "Connection works",
+      "testFailed": "Connection test failed",
+      "deleteDone": "Connection deleted",
+      "deleteFailed": "Delete failed",
+      "retryDone": "Job retried",
+      "retryFailed": "Retry failed"
+    }
+  },
+  "es": {
+    "back": "Volver al playbook",
+    "title": "Publicación",
+    "description": "Destinos de GitHub y WordPress. Nada se publica sin un artefacto aprobado.",
+    "policy": {
+      "title": "Aprobación requerida",
+      "description": "Los trabajos solo se ejecutan para versiones aprobadas. Los reintentos reutilizan la misma clave y nunca duplican contenido."
+    },
+    "connections": {
+      "title": "Conexiones",
+      "empty": "Aún no hay conexiones.",
+      "hasSecret": "Secreto guardado",
+      "noSecret": "Sin secreto",
+      "test": "Probar",
+      "delete": "Eliminar"
+    },
+    "jobs": {
+      "title": "Historial",
+      "empty": "Aún no hay trabajos.",
+      "attempts": "{count} intentos",
+      "remote": "Abrir remoto",
+      "retry": "Reintentar",
+      "statuses": {
+        "queued": "En cola",
+        "running": "En curso",
+        "succeeded": "Completado",
+        "failed": "Fallido",
+        "conflict": "Conflicto",
+        "cancelled": "Cancelado"
+      }
+    },
+    "modes": {
+      "commit": "Commit directo",
+      "pr": "Pull request",
+      "draft": "Borrador",
+      "live": "En vivo"
+    },
+    "form": {
+      "cta": "Nueva conexión",
+      "title": "Crear conexión",
+      "name": "Nombre",
+      "provider": "Proveedor",
+      "mode": "Modo de entrega",
+      "repo": "Repositorio (propietario/nombre)",
+      "branch": "Rama",
+      "dir": "Directorio",
+      "siteUrl": "URL del sitio (https)",
+      "username": "Usuario",
+      "secret": "Token / contraseña de aplicación",
+      "secretHint": "Se guarda cifrado. Déjalo vacío para conservar el actual.",
+      "cancel": "Cancelar",
+      "save": "Crear conexión",
+      "nameRequired": "El nombre es obligatorio"
+    },
+    "toast": {
+      "loadFailed": "Error al cargar",
+      "createDone": "Conexión creada",
+      "createFailed": "Error al crear",
+      "testOk": "La conexión funciona",
+      "testFailed": "La prueba falló",
+      "deleteDone": "Conexión eliminada",
+      "deleteFailed": "Error al eliminar",
+      "retryDone": "Trabajo reintentado",
+      "retryFailed": "Error al reintentar"
+    }
+  },
+  "de": {
+    "back": "Zurück zum Playbook",
+    "title": "Veröffentlichung",
+    "description": "GitHub- und WordPress-Ziele. Nichts wird ohne freigegebenes Artefakt veröffentlicht.",
+    "policy": {
+      "title": "Freigabe erforderlich",
+      "description": "Jobs laufen nur für freigegebene Versionen. Wiederholungen nutzen denselben Schlüssel und duplizieren nichts."
+    },
+    "connections": {
+      "title": "Verbindungen",
+      "empty": "Noch keine Verbindungen.",
+      "hasSecret": "Secret gespeichert",
+      "noSecret": "Kein Secret",
+      "test": "Testen",
+      "delete": "Löschen"
+    },
+    "jobs": {
+      "title": "Verlauf",
+      "empty": "Noch keine Jobs.",
+      "attempts": "{count} Versuche",
+      "remote": "Remote öffnen",
+      "retry": "Wiederholen",
+      "statuses": {
+        "queued": "Warteschlange",
+        "running": "Läuft",
+        "succeeded": "Erfolgreich",
+        "failed": "Fehlgeschlagen",
+        "conflict": "Konflikt",
+        "cancelled": "Abgebrochen"
+      }
+    },
+    "modes": {
+      "commit": "Direkter Commit",
+      "pr": "Pull Request",
+      "draft": "Entwurf",
+      "live": "Live"
+    },
+    "form": {
+      "cta": "Neue Verbindung",
+      "title": "Verbindung erstellen",
+      "name": "Name",
+      "provider": "Anbieter",
+      "mode": "Zustellmodus",
+      "repo": "Repository (Eigentümer/Name)",
+      "branch": "Branch",
+      "dir": "Verzeichnis",
+      "siteUrl": "Site-URL (https)",
+      "username": "Benutzername",
+      "secret": "Token / App-Passwort",
+      "secretHint": "Wird verschlüsselt gespeichert. Leer lassen, um das aktuelle zu behalten.",
+      "cancel": "Abbrechen",
+      "save": "Verbindung erstellen",
+      "nameRequired": "Ein Name ist erforderlich"
+    },
+    "toast": {
+      "loadFailed": "Laden fehlgeschlagen",
+      "createDone": "Verbindung erstellt",
+      "createFailed": "Erstellen fehlgeschlagen",
+      "testOk": "Verbindung funktioniert",
+      "testFailed": "Test fehlgeschlagen",
+      "deleteDone": "Verbindung gelöscht",
+      "deleteFailed": "Löschen fehlgeschlagen",
+      "retryDone": "Job wiederholt",
+      "retryFailed": "Wiederholen fehlgeschlagen"
+    }
+  },
+  "fr": {
+    "back": "Retour au playbook",
+    "title": "Publication",
+    "description": "Destinations GitHub et WordPress. Rien n’est publié sans artefact approuvé.",
+    "policy": {
+      "title": "Approbation requise",
+      "description": "Les tâches ne s’exécutent que pour des versions approuvées. Les réessais réutilisent la même clé sans dupliquer."
+    },
+    "connections": {
+      "title": "Connexions",
+      "empty": "Aucune connexion.",
+      "hasSecret": "Secret enregistré",
+      "noSecret": "Aucun secret",
+      "test": "Tester",
+      "delete": "Supprimer"
+    },
+    "jobs": {
+      "title": "Historique",
+      "empty": "Aucune tâche.",
+      "attempts": "{count} tentatives",
+      "remote": "Ouvrir le distant",
+      "retry": "Réessayer",
+      "statuses": {
+        "queued": "En file",
+        "running": "En cours",
+        "succeeded": "Réussie",
+        "failed": "Échouée",
+        "conflict": "Conflit",
+        "cancelled": "Annulée"
+      }
+    },
+    "modes": {
+      "commit": "Commit direct",
+      "pr": "Pull request",
+      "draft": "Brouillon",
+      "live": "En direct"
+    },
+    "form": {
+      "cta": "Nouvelle connexion",
+      "title": "Créer une connexion",
+      "name": "Nom",
+      "provider": "Fournisseur",
+      "mode": "Mode de livraison",
+      "repo": "Dépôt (propriétaire/nom)",
+      "branch": "Branche",
+      "dir": "Répertoire",
+      "siteUrl": "URL du site (https)",
+      "username": "Nom d’utilisateur",
+      "secret": "Jeton / mot de passe d’application",
+      "secretHint": "Stocké chiffré. Laisse vide pour conserver l’actuel.",
+      "cancel": "Annuler",
+      "save": "Créer la connexion",
+      "nameRequired": "Un nom est requis"
+    },
+    "toast": {
+      "loadFailed": "Échec du chargement",
+      "createDone": "Connexion créée",
+      "createFailed": "Échec de la création",
+      "testOk": "La connexion fonctionne",
+      "testFailed": "Test échoué",
+      "deleteDone": "Connexion supprimée",
+      "deleteFailed": "Échec de la suppression",
+      "retryDone": "Tâche relancée",
+      "retryFailed": "Échec de la relance"
+    }
+  }
+}

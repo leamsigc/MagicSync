@@ -47,14 +47,15 @@ const { data: page } = await useAsyncData(`page-${slug.value}`, async () => {
 useHead(page.value?.meta || {})
 useSeoMeta(page.value?.seo || {})
 
-if (page.value?.ogImage) {
+if (page.value) {
   // BlogOgImage expects imageUrl/title/description/headline, but markdown
   // frontmatter historically passes `image` and omits text props (which would
   // render the component's literal 'title'/'description' placeholders and the
   // default fallback image). Normalize here: explicit props win, page fields
   // fill the gaps. The legacy `image` key is dropped so it isn't encoded
-  // into the OG URL as an unknown prop.
-  const ogProps = { ...((page.value.ogImage.props || {}) as Record<string, string | undefined>) }
+  // into the OG URL as an unknown prop. Pages without `ogImage` frontmatter
+  // still emit a tag from title/description so no page warns as missing.
+  const ogProps = { ...((page.value.ogImage?.props || {}) as Record<string, string | undefined>) }
   const legacyImage = ogProps.image
   delete ogProps.image
   const pageImage = (page.value as { image?: { src?: string } }).image?.src

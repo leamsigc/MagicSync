@@ -597,7 +597,7 @@ export class SocialMediaAccountService implements SocialMediaAccountServiceType 
 
       return true
     } catch (error) {
-      console.error('Error deleting social media account:', error)
+      log.error({ message: 'Error deleting social media account', error: String(error) })
       return false
     }
   }

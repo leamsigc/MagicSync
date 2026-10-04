@@ -1,5 +1,7 @@
 import { assetService } from '#layers/BaseShared/server/services/asset.service';
 import { auth } from '#layers/BaseAuth/lib/auth';
+import { getFileFromAsset } from '#layers/BaseShared/server/utils/asset-utils'
+import { unlink } from 'fs/promises'
 export default defineEventHandler(async (event) => {
   const log = useLogger(event)
   try {
@@ -40,11 +42,23 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    log.info('Assets deleted successfully', { count: result.data?.length || 0 })
+    const removed = result.data ?? []
+    let filesRemoved = 0
+    for (const asset of removed) {
+      if (!asset.url) continue
+      try {
+        await unlink(getFileFromAsset(asset))
+        filesRemoved += 1
+      } catch (fileError) {
+        log.warn('Failed to remove stored file', { assetId: asset.id, error: fileError })
+      }
+    }
+
+    log.info('Assets deleted successfully', { count: removed.length, filesRemoved })
     return {
       success: true,
       data: result.data,
-      message: `Successfully deleted ${result.data?.length || 0} asset(s)`
+      message: `Successfully deleted ${removed.length} asset(s)`
     }
   } catch (error) {
     if (error && typeof error === 'object' && 'statusCode' in error) {

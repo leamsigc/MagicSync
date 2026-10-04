@@ -27,4 +27,8 @@ jobs:
           file: Dockerfile
           platforms: linux/amd64
           push: true
+          # Fastest CI builds by default: reuse GH Actions cached layers so
+          # repeat builds skip straight to the changed stage.
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest

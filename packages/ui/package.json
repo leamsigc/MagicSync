@@ -32,6 +32,7 @@
     "driver.js": "catalog:"
   },
   "dependencies": {
+    "@local-monorepo/shared": "workspace:*",
     "@nuxt/fonts": "catalog:",
     "@types/three": "catalog:",
     "consola": "catalog:",

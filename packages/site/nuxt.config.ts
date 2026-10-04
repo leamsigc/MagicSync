@@ -1,5 +1,4 @@
 import { defineNuxtConfig } from 'nuxt/config'
-import type { NuxtPage } from 'nuxt/schema'
 import { readdirSync, statSync, existsSync } from 'fs'
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
@@ -38,7 +37,7 @@ export default defineNuxtConfig({
     "/": { swr: 1200 },
     "/blog": { swr: true },
     "/blog/**": { swr: 1200 },
-    "/app/**": { swr: false },
+    "/app/**": { swr: false, robots: false, prerender: false },
     '/api/v1/**': {
       cors: true
     },
@@ -75,6 +74,13 @@ export default defineNuxtConfig({
   },
   future: {
     compatibilityVersion: 5
+  },
+  // Sourcemaps off in committed config: every client, server and Nitro chunk
+  // otherwise emits a .map, which costs minutes per production build.
+  // Re-enable locally with NUXT_SOURCEMAP=1 when prod debugging needs stacks.
+  sourcemap: {
+    server: process.env.NUXT_SOURCEMAP === '1',
+    client: process.env.NUXT_SOURCEMAP === '1',
   },
   devtools: { enabled: process.env.NODE_ENV !== 'production' && !process.env.CI },
   colorMode: {
@@ -191,7 +197,20 @@ export default defineNuxtConfig({
     '@local-monorepo/templates',
     '@local-monorepo/bulk-scheduler',
     '@local-monorepo/ai-tools',
+    '@local-monorepo/agent',
   ],
+
+  // Self-alias for the composition root. A handful of library components render
+  // copy that belongs to the page that mounts them (PostModalContent speaks for
+  // posts.json, the video-cropper panels speak for the cropper page's index.json).
+  // The root project has no `#layers/*` name, so before this alias those reads
+  // were 6-to-8 level `../..` traversals back into packages/site — correct, but
+  // invisible and one move away from breaking. `#site/...` makes every such read
+  // greppable. The correct long-term fix is a locale JSON per component; see
+  // .claude/patterns/layer-restructure.md.
+  alias: {
+    '#site': currentDir,
+  },
 
   modules: ['@nuxtjs/seo', '@nuxtjs/i18n', '@nuxt/hints', 'nuxt-umami', 'evlog/nuxt', '@comark/nuxt', '@nuxtjs/mcp-toolkit'],
   mcp: {
@@ -240,6 +259,12 @@ export default defineNuxtConfig({
     // zeroRuntime: true causes issues with dynamic content pages that use
     // defineOgImage(page.value?.ogImage) — disable for stability
   },
+  seoUtils: {
+    // twitter:card is deprecated — Open Graph is the modern standard.
+    // Disable automatic twitter meta inference so unhead doesn't emit
+    // `[unhead] twitter:card is deprecated` on every page view.
+    automaticTwitterTags: false,
+  },
   umami: {
     id: '55b75e65-727f-44ae-9f58-c2d67c2f3b4b',
     host: 'https://umami.giessen.dev',
@@ -260,6 +285,13 @@ export default defineNuxtConfig({
   // (Consolidated into the single `routeRules` block above — a duplicate
   // key here used to silently overwrite the redirect/noindex rules.)
   vite: {
+    // i18n 10.6.0 imports the Nuxt-only `#components` alias from its own
+    // runtime. Vite 8 pre-bundle scan resolves `#` against the owning
+    // package, which maps no `#components`, so dev boot dies in dep-scan.
+    // Excluding it keeps it on the transform pipeline where the alias works.
+    optimizeDeps: {
+      exclude: ['@nuxtjs/i18n'],
+    },
     // papaparse must stay out of the SSR bundle: it builds a Web-Worker from
     // a stringified function and Vite's SSR transform rewrites `typeof window`
     // inside that string, emitting unparseable JS that kills the build at
@@ -288,18 +320,6 @@ export default defineNuxtConfig({
     }
   },
   hooks: {
-    'pages:extend': function (pages) {
-      const pagesToRemove: NuxtPage[] = []
-      pages.forEach((page) => {
-        const pathsToExclude = ['types', 'components', '/api', 'composables', 'utils', '.json']
-        if (pathsToExclude.some(excludePath => page.path.includes(excludePath))) {
-          pagesToRemove.push(page)
-        }
-      })
-      pagesToRemove.forEach((page: NuxtPage) => {
-        pages.splice(pages.indexOf(page), 1)
-      })
-    },
     'vite:config': (viteConfig) => {
       if (viteConfig.plugins) {
         for (const p of viteConfig.plugins) {

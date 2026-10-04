@@ -10,8 +10,8 @@
  * @todo [ ] Integration test.
  * @todo [✔] Update the typescript.
  */
-import type { PlatformSettings } from '#layers/BaseScheduler/shared/platformSettings';
-import { createDefaultSettings } from '#layers/BaseScheduler/shared/platformSettings';
+import type { PlatformSettings } from '#layers/BaseShared/shared/platformSettings';
+import { createDefaultSettings } from '#layers/BaseShared/shared/platformSettings';
 import type { Asset } from '#layers/BaseDB/db/schema';
 
 type Props = {

@@ -25,7 +25,7 @@ const getTokenForProvider = async (providerId: string, userId: string, headers: 
 
     return tokenResult.accessToken
   } catch (error) {
-    console.error(`Failed to get access token for provider ${providerId}:`, error)
+    log.error({ message: `Failed to get access token for provider ${providerId}:`, error: String(error) })
     return null
   }
 }
@@ -43,7 +43,7 @@ export const getGoogleDriveToken = async (userId: string, headers: Headers): Pro
     // Drive scopes were split out still carry drive.readonly.
     return await getTokenForProvider('google', userId, headers)
   } catch (error) {
-    console.error('Failed to get Google Drive token:', error)
+    log.error({ message: 'Failed to get Google Drive token', error: String(error) })
     return null
   }
 }

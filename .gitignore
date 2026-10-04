@@ -379,3 +379,9 @@ __marimo__/
 .agent
 .vite-doctor
 .clinerules
+# Local CLI binaries (yt-dlp from scripts/install-ytdlp.sh)
+.bin/
+.playwright-*
+# Verification proof artifacts (verify-magicsync skill). Screenshots are
+# per-run and deliberately untracked; the skill and feature map are tracked.
+.cursor/skills/verify-magicsync/evidence/

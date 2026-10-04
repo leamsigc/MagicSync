@@ -12,7 +12,8 @@
  */
 
 interface ReviewProps {
-  image: string;
+  image?: string;
+  avatar?: string;
   name: string;
   userName: string;
   comment: string;
@@ -108,9 +109,7 @@ const { list } = toRefs(props);
         </div>
 
         <div class="flex flex-row items-center gap-4 px-6 py-4">
-          <UAvatar size="lg" rounded>
-            <img :src="review.image" :alt="review.name" class="rounded-full" />
-          </UAvatar>
+          <UAvatar size="lg" :src="review.image || review.avatar" :alt="review.name" />
 
           <div class="flex flex-col">
             <p class="text-lg font-medium">{{ review.name }}</p>

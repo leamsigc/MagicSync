@@ -1,6 +1,12 @@
 import { test, expect } from '../fixtures'
 
 test.describe('Retrieval API', () => {
+  // `page.evaluate(fetch('/api/...'))` needs a real document base URL —
+  // on about:blank the relative path fails to parse before any request.
+  test.beforeEach(async ({ authPage: page }) => {
+    await page.goto('/')
+  })
+
   test('should return retrieval results with query embedding', async ({ authPage: page }) => {
     // Mock the retrieve endpoint
     await page.route('**/api/ai-tools/retrieve', async (route) => {
@@ -63,6 +69,10 @@ test.describe('Retrieval API', () => {
 })
 
 test.describe('Document CRUD API', () => {
+  test.beforeEach(async ({ authPage: page }) => {
+    await page.goto('/')
+  })
+
   test('should list documents', async ({ authPage: page }) => {
     await page.route('**/api/ai-tools/documents', async (route) => {
       await route.fulfill({
@@ -150,6 +160,10 @@ test.describe('Document CRUD API', () => {
 })
 
 test.describe('Chat Threads API', () => {
+  test.beforeEach(async ({ authPage: page }) => {
+    await page.goto('/')
+  })
+
   test('should list threads', async ({ authPage: page }) => {
     await page.route('**/api/ai-tools/chat/threads', async (route) => {
       await route.fulfill({

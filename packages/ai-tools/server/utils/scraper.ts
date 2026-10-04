@@ -149,7 +149,7 @@ export async function scrapeWebsite(url: string): Promise<ScrapedWebsiteData> {
       metaTags,
     };
   } catch (error) {
-    console.error('Scraping error:', error);
+    log.error({ message: 'Scraping error', error: String(error) });
     throw new Error(`Failed to scrape website: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
@@ -172,7 +172,7 @@ export async function downloadImage(imageUrl: string): Promise<Buffer> {
     const arrayBuffer = await response.arrayBuffer();
     return Buffer.from(arrayBuffer);
   } catch (error) {
-    console.error('Image download error:', error);
+    log.error({ message: 'Image download error', error: String(error) });
     throw new Error('Failed to download image');
   }
 }
@@ -198,7 +198,7 @@ export async function extractMainContent(url: string): Promise<ExtractedContent>
       url: scraped.url,
     };
   } catch (error) {
-    console.error('Content extraction error:', error);
+    log.error({ message: 'Content extraction error', error: String(error) });
     throw new Error(`Failed to extract content: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }

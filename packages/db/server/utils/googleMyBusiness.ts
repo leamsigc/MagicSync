@@ -172,11 +172,11 @@ export class GoogleMyBusinessAPI {
 
       if (!accountsResponse.ok) {
         const errorText = await accountsResponse.text()
-        console.error('Failed to fetch business accounts:', {
+        log.error({ message: 'Failed to fetch business accounts', detail: {
           status: accountsResponse.status,
           statusText: accountsResponse.statusText,
           error: errorText,
-        })
+        } })
         throw new Error(
           `Failed to fetch business accounts: ${accountsResponse.status} ${accountsResponse.statusText}`
         )
@@ -185,7 +185,7 @@ export class GoogleMyBusinessAPI {
       return accountsResponse.json()
 
     } catch (error) {
-      console.error('Error fetching GMB accounts:', error);
+      log.error({ message: 'Error fetching GMB accounts', error: String(error) });
       // Re-throw the error so the caller can handle it
       throw error;
     }
@@ -210,7 +210,7 @@ export class GoogleMyBusinessAPI {
       const data = await response.json()
       return data.locations || []
     } catch (error) {
-      console.error('Error fetching GMB locations:', error)
+      log.error({ message: 'Error fetching GMB locations', error: String(error) })
       throw error
     }
   }
@@ -233,7 +233,7 @@ export class GoogleMyBusinessAPI {
 
       return await response.json()
     } catch (error) {
-      console.error('Error fetching GMB location:', error)
+      log.error({ message: 'Error fetching GMB location', error: String(error) })
       throw error
     }
   }
@@ -257,7 +257,7 @@ export class GoogleMyBusinessAPI {
       const data = await response.json()
       return data.reviews || []
     } catch (error) {
-      console.error('Error fetching GMB reviews:', error)
+      log.error({ message: 'Error fetching GMB reviews', error: String(error) })
       throw error
     }
   }
@@ -282,7 +282,7 @@ export class GoogleMyBusinessAPI {
         throw new Error(`GMB API Error: ${response.status} ${response.statusText}`)
       }
     } catch (error) {
-      console.error('Error replying to GMB review:', error)
+      log.error({ message: 'Error replying to GMB review', error: String(error) })
       throw error
     }
   }
@@ -307,7 +307,7 @@ export class GoogleMyBusinessAPI {
 
       return await response.json()
     } catch (error) {
-      console.error('Error creating GMB post:', error)
+      log.error({ message: 'Error creating GMB post', error: String(error) })
       throw error
     }
   }
@@ -331,7 +331,7 @@ export class GoogleMyBusinessAPI {
       const data = await response.json()
       return data.questions || []
     } catch (error) {
-      console.error('Error fetching GMB questions:', error)
+      log.error({ message: 'Error fetching GMB questions', error: String(error) })
       throw error
     }
   }
@@ -358,7 +358,7 @@ export class GoogleMyBusinessAPI {
 
       return await response.json()
     } catch (error) {
-      console.error('Error answering GMB question:', error)
+      log.error({ message: 'Error answering GMB question', error: String(error) })
       throw error
     }
   }

@@ -9,7 +9,7 @@ import type {
 import type { BusinessProfileServiceType } from './interfaces'
 import { and, eq, inArray, not, sql } from 'drizzle-orm'
 import { parseJsonObject, toJsonString } from '#layers/BaseShared/utils/json'
-import { businessProfiles, entityDetails, member, organization } from '#layers/BaseDB/db/schema'
+import { businessProfiles, contentArtifacts, contentItems, entityDetails, member, organization, pipelines, posts, publishConnections, socialMediaAccounts } from '#layers/BaseDB/db/schema'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
 import {
   createGMBClient,
@@ -19,6 +19,7 @@ import {
 import {
   ValidationError
 } from './types'
+import { businessCorpusService } from './business-corpus.service'
 
 export interface CreateBusinessProfileData {
   name: string
@@ -32,6 +33,36 @@ export interface CreateBusinessProfileData {
 
 export interface UpdateBusinessProfileData extends Partial<CreateBusinessProfileData> {
   isActive?: boolean
+  safeMode?: boolean
+}
+
+export interface BusinessDeleteSocialAccount {
+  id: string
+  platform: string
+  accountName: string
+}
+
+export interface BusinessDeleteTarget {
+  id: string
+  name: string
+}
+
+export interface BusinessDeletePreview {
+  businessId: string
+  businessName: string
+  socialAccounts: BusinessDeleteSocialAccount[]
+  availableTargets: BusinessDeleteTarget[]
+  counts: {
+    posts: number
+    pipelines: number
+    contentItems: number
+    artifacts: number
+    publishConnections: number
+  }
+}
+
+export interface DeleteBusinessOptions {
+  reassignSocialAccountsTo?: string
 }
 
 export class BusinessProfileService implements BusinessProfileServiceType {
@@ -53,6 +84,12 @@ export class BusinessProfileService implements BusinessProfileServiceType {
         createdAt: now,
         updatedAt: now
       }).returning()
+
+      if (!profile) {
+        return { success: false, error: 'Failed to create business profile' }
+      }
+
+      await businessCorpusService.seedDefaults(id, userId)
 
       return { success: true, data: profile }
     } catch (error) {
@@ -114,8 +151,6 @@ export class BusinessProfileService implements BusinessProfileServiceType {
 
       // useAuthApi is auto-imported globally by Nuxt from
       // packages/auth/server/utils/useAuthApi — no static import needed.
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-expect-error Nuxt auto-imports composables from server/utils/
       // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-variables
       const authApi = (useAuthApi as (e: H3Event) => ReturnType<typeof useAuthApi>)(event)
       const org = await authApi.getFullOrganization({ query: { organizationId: orgId } }).catch(() => null)
@@ -210,6 +245,19 @@ export class BusinessProfileService implements BusinessProfileServiceType {
     }
   }
 
+  /** Internal scheduler read for the daily agent heartbeat. */
+  async findAllForHeartbeat(): Promise<ServiceResponse<BusinessProfile[]>> {
+    try {
+      const profiles = await this.db
+        .select()
+        .from(businessProfiles)
+        .where(eq(businessProfiles.isActive, true))
+      return { success: true, data: profiles }
+    } catch {
+      return { success: false, error: 'Failed to fetch heartbeat businesses' }
+    }
+  }
+
   /**
    * Find all businesses for a user including those where they are org members.
    * Used for listing businesses in the UI - invited members should see the business.
@@ -286,10 +334,10 @@ export class BusinessProfileService implements BusinessProfileServiceType {
 
   async update(id: string, userId: string, data: UpdateBusinessProfileData): Promise<ServiceResponse<BusinessProfile>> {
     try {
-      // Check if profile exists and belongs to user
+      // Check if profile exists and belongs to user (owner-only, no org fallback)
       const existingResult = await this.findById(id, userId)
-      if (!existingResult) {
-        return existingResult
+      if (!existingResult.success || !existingResult.data) {
+        return { success: false, error: 'Business profile not found', code: 'NOT_FOUND' }
       }
 
       const [updated] = await this.db
@@ -300,6 +348,10 @@ export class BusinessProfileService implements BusinessProfileServiceType {
         })
         .where(and(eq(businessProfiles.id, id), eq(businessProfiles.userId, userId)))
         .returning()
+
+      if (!updated) {
+        return { success: false, error: 'Business profile not found', code: 'NOT_FOUND' }
+      }
 
       return { success: true, data: updated }
     } catch (error) {
@@ -325,22 +377,182 @@ export class BusinessProfileService implements BusinessProfileServiceType {
     }
   }
 
-  async delete(id: string, userId: string): Promise<ServiceResponse<void>> {
+  private async countRows(businessId: string): Promise<BusinessDeletePreview['counts']> {
     try {
-      // Check if profile exists and belongs to user
-      const existingResult = await this.findById(id, userId)
-      if (!existingResult) {
-        return { success: false, error: "Business profile not found", code: "404" }
+      const [postRows, pipelineRows, contentRows, artifactRows, connectionRows] = await Promise.all([
+        this.db.select({ count: sql<number>`count(*)` }).from(posts).where(eq(posts.businessId, businessId)),
+        this.db.select({ count: sql<number>`count(*)` }).from(pipelines).where(eq(pipelines.businessId, businessId)),
+        this.db.select({ count: sql<number>`count(*)` }).from(contentItems).where(eq(contentItems.businessId, businessId)),
+        this.db.select({ count: sql<number>`count(*)` }).from(contentArtifacts).where(eq(contentArtifacts.businessId, businessId)),
+        this.db.select({ count: sql<number>`count(*)` }).from(publishConnections).where(eq(publishConnections.businessId, businessId))
+      ])
+      return {
+        posts: postRows[0]?.count ?? 0,
+        pipelines: pipelineRows[0]?.count ?? 0,
+        contentItems: contentRows[0]?.count ?? 0,
+        artifacts: artifactRows[0]?.count ?? 0,
+        publishConnections: connectionRows[0]?.count ?? 0
       }
+    } catch {
+      return { posts: 0, pipelines: 0, contentItems: 0, artifacts: 0, publishConnections: 0 }
+    }
+  }
 
-      await this.db
-        .delete(businessProfiles)
-        .where(and(eq(businessProfiles.id, id), eq(businessProfiles.userId, userId)))
+  private async listBusinessSocialAccounts(businessId: string, userId: string): Promise<BusinessDeleteSocialAccount[]> {
+    const rows = await this.db
+      .select({ id: socialMediaAccounts.id, platform: socialMediaAccounts.platform, accountName: socialMediaAccounts.accountName })
+      .from(socialMediaAccounts)
+      .where(and(eq(socialMediaAccounts.businessId, businessId), eq(socialMediaAccounts.userId, userId)))
+    return rows
+  }
 
-      return { success: true }
-    } catch (error) {
+  private async listOwnedTargets(userId: string, excludeId: string): Promise<BusinessDeleteTarget[]> {
+    const rows = await this.db
+      .select({ id: businessProfiles.id, name: businessProfiles.name })
+      .from(businessProfiles)
+      .where(eq(businessProfiles.userId, userId))
+    return rows.filter((row) => row.id !== excludeId)
+  }
+
+  private async applySocialReassignment(businessId: string, userId: string, target: string): Promise<void> {
+    await this.db
+      .update(socialMediaAccounts)
+      .set({ businessId: target, updatedAt: dayjs.utc().toDate() })
+      .where(and(eq(socialMediaAccounts.businessId, businessId), eq(socialMediaAccounts.userId, userId)))
+  }
+
+  private async cleanupBusinessLinks(businessId: string): Promise<void> {
+    await this.db
+      .delete(entityDetails)
+      .where(and(eq(entityDetails.entityId, businessId), eq(entityDetails.entityType, 'business_details')))
+  }
+
+  private async promoteFallbackActive(userId: string, deletedWasActive: boolean): Promise<void> {
+    if (!deletedWasActive) return
+    const [fallback] = await this.db
+      .select({ id: businessProfiles.id })
+      .from(businessProfiles)
+      .where(eq(businessProfiles.userId, userId))
+      .limit(1)
+    if (!fallback) return
+    await this.db
+      .update(businessProfiles)
+      .set({ isActive: true, updatedAt: dayjs.utc().toDate() })
+      .where(eq(businessProfiles.id, fallback.id))
+  }
+
+  private async validateReassignmentTarget(target: string, userId: string, excludeId: string): Promise<ServiceResponse<void>> {
+    if (target === excludeId) {
+      return { success: false, error: 'Target business not found', code: 'INVALID_TARGET' }
+    }
+    const targetOwned = await this.findById(target, userId)
+    if (!targetOwned.data) {
+      return { success: false, error: 'Target business not found', code: 'INVALID_TARGET' }
+    }
+    return { success: true, data: undefined as void }
+  }
+
+  private async resolveReassignment(
+    businessId: string,
+    userId: string,
+    options: DeleteBusinessOptions
+  ): Promise<ServiceResponse<{ accounts: BusinessDeleteSocialAccount[], target: string }>> {
+    const accounts = await this.listBusinessSocialAccounts(businessId, userId)
+    if (accounts.length === 0) {
+      return { success: true, data: { accounts, target: businessId } }
+    }
+    const target = options.reassignSocialAccountsTo
+    if (!target) {
+      return { success: false, error: 'Move connected social accounts to another business first', code: 'REASSIGNMENT_REQUIRED' }
+    }
+    const targetCheck = await this.validateReassignmentTarget(target, userId, businessId)
+    if (!targetCheck.success) return { success: false, error: targetCheck.error, code: targetCheck.code }
+    return { success: true, data: { accounts, target } }
+  }
+
+  /** Safe Mode: require a manual release before Scheduled -> Published. */
+  async getSafeMode(businessId: string, event?: H3Event): Promise<ServiceResponse<boolean>> {
+    const ownerId = businessId
+    // Safe Mode is a read for UI + publish gating; ownership is enforced by callers.
+    const [profile] = await this.db
+      .select({ safeMode: businessProfiles.safeMode })
+      .from(businessProfiles)
+      .where(eq(businessProfiles.id, ownerId))
+      .limit(1)
+    if (!profile) return { success: false, error: 'Business profile not found', code: 'NOT_FOUND' }
+    void event
+    return { success: true, data: profile.safeMode }
+  }
+
+  async setSafeMode(businessId: string, value: boolean, userId: string, event?: H3Event): Promise<ServiceResponse<boolean>> {
+    const updated = await this.update(businessId, userId, { safeMode: value })
+    if (!updated.success) return { success: false, error: updated.error, code: updated.code }
+    void event
+    return { success: true, data: value }
+  }
+
+  async getDeletePreview(id: string, userId: string): Promise<ServiceResponse<BusinessDeletePreview>> {
+    try {
+      const owned = await this.findById(id, userId)
+      if (!owned.data) {
+        return { success: false, error: 'Business profile not found', code: 'NOT_FOUND' }
+      }
+      const [socialAccounts, availableTargets, counts] = await Promise.all([
+        this.listBusinessSocialAccounts(id, userId),
+        this.listOwnedTargets(userId, id),
+        this.countRows(id)
+      ])
+      return {
+        success: true,
+        data: {
+          businessId: id,
+          businessName: owned.data.name,
+          socialAccounts,
+          availableTargets,
+          counts
+        }
+      }
+    } catch {
+      return { success: false, error: 'Failed to load delete preview' }
+    }
+  }
+
+  async delete(id: string, userId: string, options: DeleteBusinessOptions = {}): Promise<ServiceResponse<void>> {
+    try {
+      const owned = await this.findById(id, userId)
+      if (!owned.data) {
+        return { success: false, error: 'Business profile not found', code: 'NOT_FOUND' }
+      }
+      const reassignment = await this.resolveReassignment(id, userId, options)
+      if (!reassignment.success) {
+        return { success: false, error: reassignment.error, code: reassignment.code }
+      }
+      if (!reassignment.data) {
+        return { success: false, error: 'Failed to delete business profile' }
+      }
+      await this.runBusinessDelete(id, userId, owned.data, reassignment.data)
+      return { success: true, data: undefined as void }
+    } catch {
       return { success: false, error: 'Failed to delete business profile' }
     }
+  }
+
+  private async runBusinessDelete(
+    id: string,
+    userId: string,
+    owned: BusinessProfile,
+    reassignment: { accounts: BusinessDeleteSocialAccount[], target: string }
+  ): Promise<void> {
+    if (reassignment.accounts.length > 0) {
+      await this.applySocialReassignment(id, userId, reassignment.target)
+    }
+    await this.cleanupBusinessLinks(id)
+    const deleted = await this.db
+      .delete(businessProfiles)
+      .where(and(eq(businessProfiles.id, id), eq(businessProfiles.userId, userId)))
+      .returning({ id: businessProfiles.id })
+    if (!deleted.length) throw new Error('NOT_FOUND')
+    await this.promoteFallbackActive(userId, owned.isActive ?? false)
   }
 
   /**
@@ -358,7 +570,7 @@ export class BusinessProfileService implements BusinessProfileServiceType {
         return { success: false, error: "Business profile not found", code: "404" }
       }
 
-      return { success: true }
+      return { success: true, data: undefined as void }
     } catch (error) {
       return { success: false, error: 'Failed to delete business profile' }
     }
@@ -395,6 +607,10 @@ export class BusinessProfileService implements BusinessProfileServiceType {
           updatedAt: dayjs.utc().toDate()
         })
         .where(and(not(eq(businessProfiles.id, data.id)), eq(businessProfiles.userId, userId)))
+
+      if (!updated) {
+        return { success: false, error: 'Business profile not found', code: 'NOT_FOUND' }
+      }
 
       return { success: true, data: updated }
     } catch (error) {
@@ -462,7 +678,7 @@ export class BusinessProfileService implements BusinessProfileServiceType {
       const gmbClient = createGMBClient(accessToken)
 
       // Get all GMB accounts
-      const accounts = await gmbClient.getAccounts()
+      const { accounts } = await gmbClient.getAccounts()
       const syncedProfiles: BusinessProfile[] = []
 
       for (const account of accounts) {
@@ -500,7 +716,7 @@ export class BusinessProfileService implements BusinessProfileServiceType {
 
       return { success: true, data: syncedProfiles }
     } catch (error) {
-      console.error('Error syncing GMB profiles:', error)
+      log.error({ message: 'Error syncing GMB profiles', error: String(error) })
       return { success: false, error: 'Failed to sync business profiles from Google My Business' }
     }
   }
@@ -531,7 +747,7 @@ export class BusinessProfileService implements BusinessProfileServiceType {
 
       return { success: true, data: location }
     } catch (error) {
-      console.error('Error fetching GMB location details:', error)
+      log.error({ message: 'Error fetching GMB location details', error: String(error) })
       return { success: false, error: 'Failed to fetch Google My Business location details' }
     }
   }

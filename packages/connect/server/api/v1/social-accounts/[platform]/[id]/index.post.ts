@@ -1,10 +1,10 @@
 import { logAuditService } from '#layers/BaseDB/server/services/auditLog.service';
 import { socialMediaAccountService, type CreateSocialMediaAccountData, type SocialMediaPlatform } from '#layers/BaseDB/server/services/social-media-account.service';
-import { FacebookPlugin } from '#layers/BaseScheduler/server/services/plugins/facebook.plugin';
-import { LinkedInPagePlugin } from '#layers/BaseScheduler/server/services/plugins/linkedin-page.plugin';
-import { YouTubePlugin } from '#layers/BaseScheduler/server/services/plugins/youtube.plugin';
-import { GooglePlugin } from '#layers/BaseScheduler/server/services/plugins/google.plugin';
-import { SchedulerPost, type SchedulerPluginConstructor } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
+import { FacebookPlugin } from '#layers/BaseDB/server/services/plugins/facebook.plugin';
+import { LinkedInPagePlugin } from '#layers/BaseDB/server/services/plugins/linkedin-page.plugin';
+import { YouTubePlugin } from '#layers/BaseDB/server/services/plugins/youtube.plugin';
+import { GooglePlugin } from '#layers/BaseDB/server/services/plugins/google.plugin';
+import { SchedulerPost, type SchedulerPluginConstructor } from '#layers/BaseDB/server/services/SchedulerPost.service';
 import { checkUserIsLogin, getAccessTokenHelper } from '#layers/BaseAuth/server/utils/AuthHelpers';
 import { H3Error, readBody } from 'h3';
 
@@ -130,7 +130,7 @@ export default defineEventHandler(async (event) => {
       userAgent: event.node.req.headers['user-agent'],
       status: 'success',
       details: JSON.stringify({ id: pageDetails.id, name: pageDetails.name, picture: pageDetails.picture, username: pageDetails.username }),
-    })
+    }, { log })
 
     log.info({ message: 'Social media page connected', platform, pageId, pageName: pageDetails.name })
 

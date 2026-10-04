@@ -1,0 +1,254 @@
+{
+    "en": {
+        "csvImport": {
+            "title": "CSV Import",
+            "subtitle": "Bulk schedule posts from a CSV file",
+            "businessId": "Business",
+            "businessIdPlaceholder": "Select a business",
+            "distributeEvenly": "Distribute posts evenly across date range",
+            "import": "Import & Schedule",
+            "step1": {
+                "title": "Add Posts",
+                "description": "Upload a CSV file or use AI to generate posts.",
+                "uploadTitle": "Upload CSV File",
+                "aiTitle": "Generate with AI",
+                "aiDescription": "Describe the posts you want to create and let AI generate them for you.",
+                "generateWithAi": "Generate with AI",
+                "or": "or"
+            },
+            "step2": {
+                "title": "Preview & Edit",
+                "description": "Review your posts, edit content, and configure scheduling options.",
+                "rows": "posts",
+                "actions": "",
+                "contentPlaceholder": "Enter post content...",
+                "imageUrlPlaceholder": "Image URL...",
+                "commentsPlaceholder": "Comments (semicolon-separated)",
+                "browseAssets": "Browse Assets",
+                "selectAsset": "Select Image from Assets",
+                "row": "Row",
+                "settings": "Scheduling Settings"
+            },
+            "step3": {
+                "title": "Review",
+                "description": "Final review of your scheduled posts."
+            },
+            "columns": {
+                "title": "CSV Column Reference",
+                "required": "Required",
+                "optional": "Optional",
+                "content": "content",
+                "contentDesc": "The main text of the post. Maximum 10,000 characters.",
+                "imageUrl": "image_url",
+                "imageUrlDesc": "URL to an image to attach to the post. Optional.",
+                "scheduledTime": "scheduled_time",
+                "scheduledTimeDesc": "ISO 8601 date for when to publish (e.g., 2026-06-01T09:00:00Z). Optional.",
+                "comments": "comments",
+                "commentsDesc": "First comment on the post. Separate multiple with semicolons. Optional."
+            },
+            "selectAssets": "Select Media Assets (Optional)",
+            "selectAssetsDescription": "Choose images from your gallery to attach to all posts. Per-row asset selection is available in the table above."
+        },
+        "csvUploader": {},
+        "platformSelector": {},
+        "dateRange": {},
+        "common": {
+            "back": "Back",
+            "changeFile": "Change File"
+        },
+        "errors": {
+            "csvParseError": "Failed to parse CSV",
+            "csvParseUnknown": "Unknown error parsing CSV file"
+        },
+        "toast": {}
+    },
+    "fr": {
+        "csvImport": {
+            "title": "Import CSV",
+            "subtitle": "Planifiez plusieurs publications à partir d'un fichier CSV",
+            "businessId": "Entreprise",
+            "businessIdPlaceholder": "Sélectionnez une entreprise",
+            "distributeEvenly": "Répartir les publications uniformément sur la période",
+            "import": "Importer et planifier",
+            "step1": {
+                "title": "Ajouter des publications",
+                "description": "Téléversez un fichier CSV ou utilisez l'IA pour générer des publications.",
+                "uploadTitle": "Téléverser un fichier CSV",
+                "aiTitle": "Générer avec l'IA",
+                "aiDescription": "Décrivez les publications que vous souhaitez créer et laissez l'IA les générer.",
+                "generateWithAi": "Générer avec l'IA",
+                "or": "ou"
+            },
+            "step2": {
+                "title": "Aperçu et modification",
+                "description": "Examinez vos publications, modifiez le contenu et configurez les options de planification.",
+                "rows": "publications",
+                "actions": "",
+                "contentPlaceholder": "Saisissez le contenu de la publication...",
+                "imageUrlPlaceholder": "URL de l'image...",
+                "commentsPlaceholder": "Commentaires (séparés par des points-virgules)",
+                "browseAssets": "Parcourir les médias",
+                "selectAsset": "Sélectionner une image dans les médias",
+                "row": "Ligne",
+                "settings": "Paramètres de planification"
+            },
+            "step3": {
+                "title": "Vérification",
+                "description": "Vérification finale de vos publications planifiées."
+            },
+            "columns": {
+                "title": "Référence des colonnes CSV",
+                "required": "Obligatoire",
+                "optional": "Facultatif",
+                "content": "content",
+                "contentDesc": "Le texte principal de la publication. 10 000 caractères maximum.",
+                "imageUrl": "image_url",
+                "imageUrlDesc": "URL d'une image à joindre à la publication. Facultatif.",
+                "scheduledTime": "scheduled_time",
+                "scheduledTimeDesc": "Date ISO 8601 de publication (par ex. 2026-06-01T09:00:00Z). Facultatif.",
+                "comments": "comments",
+                "commentsDesc": "Premier commentaire de la publication. Séparez-en plusieurs par des points-virgules. Facultatif."
+            },
+            "selectAssets": "Sélectionner des médias (facultatif)",
+            "selectAssetsDescription": "Choisissez des images dans votre galerie pour les joindre à toutes les publications. La sélection par ligne est disponible dans le tableau ci-dessus."
+        },
+        "csvUploader": {},
+        "platformSelector": {},
+        "dateRange": {},
+        "common": {
+            "back": "Retour",
+            "changeFile": "Changer de fichier"
+        },
+        "errors": {
+            "csvParseError": "Échec de l'analyse du CSV",
+            "csvParseUnknown": "Erreur inconnue lors de l'analyse du fichier CSV"
+        },
+        "toast": {}
+    },
+    "es": {
+        "csvImport": {
+            "title": "Importar CSV",
+            "subtitle": "Programar publicaciones masivas desde archivo CSV",
+            "businessId": "Negocio",
+            "businessIdPlaceholder": "Seleccione un negocio",
+            "distributeEvenly": "Distribuir publicaciones uniformemente en el rango de fechas",
+            "import": "Importar y Programar",
+            "step1": {
+                "title": "Agregar Publicaciones",
+                "description": "Suba un archivo CSV o use IA para generar publicaciones.",
+                "uploadTitle": "Subir Archivo CSV",
+                "aiTitle": "Generar con IA",
+                "aiDescription": "Describa las publicaciones que desea crear y deje que la IA las genere.",
+                "generateWithAi": "Generar con IA",
+                "or": "o"
+            },
+            "step2": {
+                "title": "Vista Previa y Edición",
+                "description": "Revise sus publicaciones, edite el contenido y configure opciones de programación.",
+                "rows": "publicaciones",
+                "actions": "",
+                "contentPlaceholder": "Ingrese contenido de la publicación...",
+                "imageUrlPlaceholder": "URL de imagen...",
+                "commentsPlaceholder": "Comentarios (separados por punto y coma)",
+                "browseAssets": "Explorar Recursos",
+                "selectAsset": "Seleccionar Imagen de Recursos",
+                "settings": "Configuración de Programación",
+                "row": "Fila"
+            },
+            "step3": {
+                "title": "Revisión",
+                "description": "Revisión final de sus publicaciones programadas."
+            },
+            "columns": {
+                "title": "Referencia de Columnas CSV",
+                "required": "Requerido",
+                "optional": "Opcional",
+                "content": "content",
+                "contentDesc": "El texto principal de la publicación. Máximo 10,000 caracteres.",
+                "imageUrl": "image_url",
+                "imageUrlDesc": "URL de una imagen para adjuntar a la publicación. Opcional.",
+                "scheduledTime": "scheduled_time",
+                "scheduledTimeDesc": "Fecha ISO 8601 para programar la publicación. Opcional.",
+                "comments": "comments",
+                "commentsDesc": "Primer comentario de la publicación. Separe múltiples con punto y coma. Opcional."
+            },
+            "selectAssets": "Seleccionar Recursos Multimedia (Opcional)",
+            "selectAssetsDescription": "Elija imágenes de su galería para adjuntar a todas las publicaciones. La selección por fila está disponible en la tabla superior."
+        },
+        "csvUploader": {},
+        "platformSelector": {},
+        "dateRange": {},
+        "common": {
+            "back": "Atrás",
+            "changeFile": "Cambiar Archivo"
+        },
+        "errors": {
+            "csvParseError": "Error al analizar CSV",
+            "csvParseUnknown": "Error desconocido al analizar el archivo CSV"
+        },
+        "toast": {}
+    },
+    "de": {
+        "csvImport": {
+            "title": "CSV-Import",
+            "subtitle": "Massenweise Beiträge aus einer CSV-Datei planen",
+            "businessId": "Unternehmen",
+            "businessIdPlaceholder": "Unternehmen auswählen",
+            "distributeEvenly": "Beiträge gleichmäßig über den Zeitraum verteilen",
+            "import": "Importieren und planen",
+            "step1": {
+                "title": "Beiträge hinzufügen",
+                "description": "Laden Sie eine CSV-Datei hoch oder lassen Sie Beiträge mit der KI generieren.",
+                "uploadTitle": "CSV-Datei hochladen",
+                "aiTitle": "Mit KI generieren",
+                "aiDescription": "Beschreiben Sie die Beiträge, die Sie erstellen möchten, und lassen Sie sie von der KI generieren.",
+                "generateWithAi": "Mit KI generieren",
+                "or": "oder"
+            },
+            "step2": {
+                "title": "Vorschau und Bearbeitung",
+                "description": "Prüfen Sie Ihre Beiträge, bearbeiten Sie den Inhalt und konfigurieren Sie die Planungsoptionen.",
+                "rows": "Beiträge",
+                "actions": "",
+                "contentPlaceholder": "Beitragsinhalt eingeben...",
+                "imageUrlPlaceholder": "Bild-URL...",
+                "commentsPlaceholder": "Kommentare (durch Semikolons getrennt)",
+                "browseAssets": "Medien durchsuchen",
+                "selectAsset": "Bild aus Medien auswählen",
+                "row": "Zeile",
+                "settings": "Planungseinstellungen"
+            },
+            "step3": {
+                "title": "Prüfung",
+                "description": "Abschließende Prüfung Ihrer geplanten Beiträge."
+            },
+            "columns": {
+                "title": "CSV-Spaltenreferenz",
+                "required": "Erforderlich",
+                "optional": "Optional",
+                "content": "content",
+                "contentDesc": "Der Haupttext des Beitrags. Maximal 10.000 Zeichen.",
+                "imageUrl": "image_url",
+                "imageUrlDesc": "URL eines Bildes, das an den Beitrag angehängt wird. Optional.",
+                "scheduledTime": "scheduled_time",
+                "scheduledTimeDesc": "ISO-8601-Datum für die Veröffentlichung (z. B. 2026-06-01T09:00:00Z). Optional.",
+                "comments": "comments",
+                "commentsDesc": "Erster Kommentar zum Beitrag. Mehrere durch Semikolons trennen. Optional."
+            },
+            "selectAssets": "Medien auswählen (optional)",
+            "selectAssetsDescription": "Wählen Sie Bilder aus Ihrer Galerie, um sie an alle Beiträge anzuhängen. Die Auswahl pro Zeile ist in der Tabelle oben möglich."
+        },
+        "csvUploader": {},
+        "platformSelector": {},
+        "dateRange": {},
+        "common": {
+            "back": "Zurück",
+            "changeFile": "Datei wechseln"
+        },
+        "errors": {
+            "csvParseError": "CSV konnte nicht analysiert werden",
+            "csvParseUnknown": "Unbekannter Fehler beim Analysieren der CSV-Datei"
+        },
+        "toast": {}
+    }
+}

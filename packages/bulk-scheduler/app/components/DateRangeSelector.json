@@ -1,16 +1,30 @@
 {
-    "en": {
-        "dateRange": {
-            "title": "Date Range",
-            "startDate": "Start Date",
-            "endDate": "End Date"
-        }
-    },
-    "es": {
-        "dateRange": {
-            "title": "Rango de Fechas",
-            "startDate": "Fecha de Inicio",
-            "endDate": "Fecha de Finalización"
-        }
+  "en": {
+    "dateRange": {
+      "title": "Date Range",
+      "startDate": "Start Date",
+      "endDate": "End Date"
     }
+  },
+  "es": {
+    "dateRange": {
+      "title": "Rango de Fechas",
+      "startDate": "Fecha de Inicio",
+      "endDate": "Fecha de Finalización"
+    }
+  },
+  "de": {
+    "dateRange": {
+      "title": "Zeitraum",
+      "startDate": "Startdatum",
+      "endDate": "Enddatum"
+    }
+  },
+  "fr": {
+    "dateRange": {
+      "title": "Période",
+      "startDate": "Date de début",
+      "endDate": "Date de fin"
+    }
+  }
 }

@@ -11,7 +11,7 @@ A thread = per-platform override where `content` is the first chunk and `comment
 | File | Role |
 |------|------|
 | `packages/scheduler/shared/threadSplitter.ts` | Pure splitter: `splitTextIntoChunks(content, maxLength)` + `buildPlatformSplit(content, maxLength)` → `{ fits, content, comments }`. Paragraphs → sentences → words → hard slice. No AI needed. |
-| `packages/scheduler/app/pages/app/posts/components/assistant/PlatformAutoFormat.vue` | Composer panel: shows per-platform fit status vs `maxPostLength`, applies overrides via single `apply` emit. Platforms without `supportsComments` get truncated instead of threaded. |
+| `packages/scheduler/app/components/scheduler/posts/components/assistant/PlatformAutoFormat.vue` | Composer panel: shows per-platform fit status vs `maxPostLength`, applies overrides via single `apply` emit. Platforms without `supportsComments` get truncated instead of threaded. |
 | `packages/scheduler/shared/platformConstants.ts` | `maxCommentLength?: number` on `PlatformConfig`; falls back to `maxPostLength` when unset. |
 
 ## Wiring Rules

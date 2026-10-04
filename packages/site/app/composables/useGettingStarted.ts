@@ -1,6 +1,6 @@
 import type { BusinessProfile } from '#layers/BaseDB/db/schema'
 import type { PaginatedResponse } from '#layers/BaseDB/server/services/types'
-import { useBusinessManager } from '#layers/BaseConnect/app/pages/app/business/composables/useBusinessManager'
+import { useBusinessManager } from '#layers/BaseShared/app/composables/useBusinessManager'
 import type { GettingStartedStep } from '#layers/BaseUI/app/components/BaseGettingStarted.vue'
 
 interface SocialAccountSummary {

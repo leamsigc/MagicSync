@@ -4,8 +4,8 @@
  * Validates content against platform rules before posting.
  * Optionally pass platform-specific content overrides.
  */
-import { platformConfigurations } from '../../../../shared/platformConstants'
-import type { PlatformConfig } from '../../../../shared/platformConstants'
+import { platformConfigurations } from '#layers/BaseShared/shared/platformConstants'
+import type { PlatformConfig } from '#layers/BaseShared/shared/platformConstants'
 import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service'
 
 interface ValidationResult {

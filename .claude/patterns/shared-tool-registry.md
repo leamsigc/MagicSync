@@ -43,7 +43,7 @@ Why `packages/ui` and not `packages/shared`? BaseShared only ships server-side c
    ```ts
    import { toolRegistry } from '#layers/BaseUI/app/utils/toolRegistry'
    ```
-3. Known consumers (keep them registry-driven): `packages/tools/app/pages/tools/index.vue` (public `/tools`), `packages/site/app/pages/app/toolbox.vue`, sidebar Tools children in `packages/auth/app/composables/useDashboardNavigation.ts`.
+3. Known consumers (keep them registry-driven): `packages/site/app/pages/tools/index.vue` (public `/tools`), `packages/site/app/pages/app/toolbox.vue`, sidebar Tools children in `packages/auth/app/composables/useDashboardNavigation.ts`.
 4. If the tool needs UI strings beyond name/description (badges, categories), add keys to the page-level i18n JSON (`<page>.json`, en/es/de/fr).
 
 ## Gotchas

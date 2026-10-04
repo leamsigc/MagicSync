@@ -50,15 +50,10 @@ export function UseUser() {
     sessionFetching.value = true
 
     try {
-      // Use useFetch for better SSR support and hydration
-      const { data: sessionData } = await useFetch<{ session: Session, user: User }>('/api/auth/get-session', {
+      const data = await $fetch<{ session: Session, user: User } | null>('/api/auth/get-session', {
         headers: import.meta.server ? useRequestHeaders() : undefined,
-        key: 'auth-session',
-        retry: 0
-      })
-
-
-      const data = sessionData.value
+        retry: 0,
+      } as any)
       session.value = data?.session || null
       const userDefaults = {
         image: null,
@@ -73,6 +68,12 @@ export function UseUser() {
         : null
       // Session fetched successfully
       return data
+    }
+    catch {
+      // A transient session endpoint failure must not discard a valid hydrated
+      // session or abort pages that gate on it. The next signal/navigation can
+      // retry; a truly logged-out visitor still resolves with null state.
+      return { session: session.value, user: user.value }
     }
     finally {
       sessionFetching.value = false

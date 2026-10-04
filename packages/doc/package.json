@@ -18,21 +18,21 @@
   "license": "MIT",
   "packageManager": "pnpm@11.5.2",
   "dependencies": {
-    "dayjs": "^1.11.21",
+    "dayjs": "^1.11.23",
     "gray-matter": "^4.0.3",
     "gsap": "^3.15.0",
-    "shiki": "^4.2.0"
+    "shiki": "^4.4.3"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4.3.1",
-    "@types/node": "^25.9.2",
-    "autoprefixer": "^10.5.0",
-    "mermaid": "^11.15.0",
-    "postcss": "^8.5.15",
-    "tailwindcss": "^4.3.0",
-    "tsx": "^4.22.4",
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^26.6.2",
+    "autoprefixer": "^10.6.1",
+    "mermaid": "^12.0.0",
+    "postcss": "^8.5.28",
+    "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.13",
     "vitepress": "1.6.4",
-    "vitepress-plugin-llms": "^1.13.1",
+    "vitepress-plugin-llms": "^1.14.0",
     "vitepress-plugin-mermaid": "^2.0.17"
   }
 }

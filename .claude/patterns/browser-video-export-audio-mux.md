@@ -3,7 +3,7 @@
 How to export an MP4 entirely in the browser that (1) mixes background audio tracks
 with the source video's audio and (2) burns time-based subtitles into every frame.
 
-Location: `packages/ai-tools/app/pages/app/tools/video-cropper/composables/`
+Location: `packages/ai-tools/app/composables/ai-tools/tools/video-cropper/` (page: `packages/site/app/pages/app/tools/video-cropper/`)
 
 ## Architecture (mediabunny, two-pass)
 

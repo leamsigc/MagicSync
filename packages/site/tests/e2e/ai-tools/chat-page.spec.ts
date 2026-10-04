@@ -1,123 +1,167 @@
-import { test, expect } from '@playwright/test'
-import { mockAuthSession } from '../fixtures'
+import { test, expect, type Page } from '@playwright/test'
+import {
+  createTestUser,
+  createActiveBusiness,
+  loginWith,
+  blockHeavyAssets,
+  waitForHydration,
+  type TestUser,
+} from '../helpers/e2e-utils'
 
-test.describe('AI Chat Page', () => {
+/**
+ * The chat page is server-rendered through `01.auth.global.ts`, which resolves
+ * the session on the server. A browser-level `get-session` mock can never reach
+ * that path, so these tests authenticate for real (same seam as
+ * `chat-messaging.spec.ts`) and only stub the business-scoped payloads.
+ */
+
+async function mockSingleBusiness(page: Page) {
+  await page.route('**/api/v1/business', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ data: [{ id: 'biz-1', name: 'Test Bakery' }] }),
+    })
+  })
+  await page.route('**/api/ai-tools/chat/threads', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([]),
+    })
+  })
+  await page.route('**/api/v1/artifacts?*', async (route) => {
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: [] }) })
+  })
+  await page.route('**/api/v1/content-items?*', async (route) => {
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ items: [] }) })
+  })
+  await page.route('**/api/v1/social-accounts?*', async (route) => {
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) })
+  })
+}
+
+async function mockCapabilities(page: Page) {
+  await page.route('**/api/v1/agent/capabilities?*', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        agents: [
+          { name: 'orchestrator', description: 'Chat orchestrator.', tools: ['web_search', 'write_post'] },
+          { name: 'writer', description: 'Writes drafts.', tools: ['write_post'] },
+        ],
+        tools: [
+          { name: 'web_search', group: 'research', description: 'Search the web.' },
+          { name: 'write_post', group: 'content', description: 'Draft a post.' },
+        ],
+        skills: {
+          bundled: [{ slug: 'content-writer', name: 'content-writer', description: 'Write posts.', scope: 'global' }],
+          registered: [{ id: 'skill-1', slug: 'brand-voice', name: 'Brand voice', description: 'Our voice.', version: 1, status: 'active', scope: 'business' }],
+        },
+      }),
+    })
+  })
+}
+
+let user: TestUser
+
+test.beforeAll(async ({ request }) => {
+  test.setTimeout(120000)
+  user = await createTestUser(request)
+  await createActiveBusiness(request, user)
+})
+
+test.describe('Chat Page', () => {
   test.beforeEach(async ({ page }) => {
-    await mockAuthSession(page)
-    await page.goto('/app/ai-tools/chat')
+    await blockHeavyAssets(page)
+    await loginWith(page, user)
+    await mockSingleBusiness(page)
+    await page.goto('/app/chat')
+    await waitForHydration(page)
   })
 
-  test('should display the chat page with welcome message', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('MagicSync AI Assistant')
-    await expect(page.getByText('Welcome to MagicSync AI')).toBeVisible()
+  test('should display the operator home and safe mode', async ({ page }) => {
+    await expect(page.getByRole('heading', { name: 'Your marketing command center' })).toBeVisible()
+    await expect(page.getByText('Human approval required')).toBeVisible()
+    await expect(page.getByText('What should we work on?')).toBeVisible()
   })
 
-  test('should show suggestion buttons when chat is empty', async ({ page }) => {
-    await expect(page.getByRole('button', { name: 'Create a post for Twitter' })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Analyze my target audience' })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Research trending topics' })).toBeVisible()
+  test('should expose orchestration starters', async ({ page }) => {
+    await expect(page.getByRole('button', { name: 'Morning brief' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Find calendar gaps' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Create next ideas' })).toBeVisible()
   })
 
-  test('should show chat sidebar with new chat button', async ({ page }) => {
-    await expect(page.getByRole('button', { name: 'New Chat' })).toBeVisible()
+  test('should show the clean composer and keep advanced controls behind actions', async ({ page }) => {
+    await expect(page.getByRole('button', { name: 'Add file' })).toBeVisible()
+    await expect(page.getByTestId('chat-options-toggle')).toBeVisible()
+    await expect(page.getByPlaceholder('Tell me what you need...')).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Goals' })).not.toBeVisible()
+    await expect(page.getByRole('button', { name: 'Tools' })).not.toBeVisible()
   })
 
-  test('should show empty state for threads', async ({ page }) => {
-    await expect(page.getByText('No conversations yet')).toBeVisible()
+  test('should open activity in a slideover from the header', async ({ page }) => {
+    await page.getByRole('button', { name: 'Activity' }).click()
+    await expect(page.getByText('Live work and recent runs')).toBeVisible()
+    await expect(page.getByText('Recent agent runs')).toBeVisible()
   })
 
-  test('should allow typing in the chat input', async ({ page }) => {
-    const chatInput = page.getByPlaceholder('Ask me anything about your social media strategy...')
-    await chatInput.fill('Hello AI')
-    await expect(chatInput).toHaveValue('Hello AI')
-  })
-
-  test('should disable submit when input is empty', async ({ page }) => {
-    const submitButton = page.getByRole('button', { name: 'Send' })
-    await expect(submitButton).toBeDisabled()
-  })
-
-  test('should enable submit when input has text', async ({ page }) => {
-    const chatInput = page.getByPlaceholder('Ask me anything about your social media strategy...')
-    await chatInput.fill('Hello AI')
-    const submitButton = page.getByRole('button', { name: 'Send' })
-    await expect(submitButton).toBeEnabled()
-  })
-
-  test('should show loading state while AI is responding', async ({ page }) => {
-    // Mock the chat API to simulate slow response
-    await page.route('/api/ai-tools/chat', async (route) => {
-      await new Promise(resolve => setTimeout(resolve, 1000))
+  test('should prompt to add a business when none exists', async ({ page }) => {
+    await page.unroute('**/api/v1/business')
+    await page.route('**/api/v1/business', async (route) => {
       await route.fulfill({
         status: 200,
-        contentType: 'text/event-stream',
-        body: 'data: {"type":"text","content":"Hello","done":false}\n\ndata: {"type":"finish","finishReason":"stop"}\n\n',
-      })
-    })
-
-    const chatInput = page.getByPlaceholder('Ask me anything about your social media strategy...')
-    await chatInput.fill('Test message')
-
-    const submitButton = page.getByRole('button', { name: 'Send' })
-    await submitButton.click()
-
-    // Check loading indicator appears
-    await expect(page.locator('.animate-bounce')).toBeVisible()
-  })
-
-  test('should send message on Enter key', async ({ page }) => {
-    await page.route('/api/ai-tools/chat', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'text/event-stream',
-        body: 'data: {"type":"text","content":"Response","done":false}\n\ndata: {"type":"finish","finishReason":"stop"}\n\n',
-      })
-    })
-
-    const chatInput = page.getByPlaceholder('Ask me anything about your social media strategy...')
-    await chatInput.fill('Test')
-    await chatInput.press('Enter')
-
-    await expect(page.getByText('Test')).toBeVisible()
-    await expect(page.getByText('Response')).toBeVisible({ timeout: 10000 })
-  })
-
-  test('should show thinking indicator during reasoning', async ({ page }) => {
-    await page.route('/api/ai-tools/chat', async (route) => {
-      const chunks = [
-        { type: 'thinking', content: 'Analyzing...' },
-        { type: 'text', content: 'Answer here', done: false },
-        { type: 'finish', finishReason: 'stop' },
-      ]
-      const body = chunks.map(c => `data: ${JSON.stringify(c)}\n\n`).join('')
-      await route.fulfill({
-        status: 200,
-        contentType: 'text/event-stream',
-        body,
-      })
-    })
-
-    const chatInput = page.getByPlaceholder('Ask me anything about your social media strategy...')
-    await chatInput.fill('Complex question')
-    await chatInput.press('Enter')
-
-    await expect(page.getByText('Reasoning')).toBeVisible({ timeout: 10000 })
-  })
-
-  test('should handle API error gracefully', async ({ page }) => {
-    await page.route('/api/ai-tools/chat', async (route) => {
-      await route.fulfill({
-        status: 500,
         contentType: 'application/json',
-        body: JSON.stringify({ error: 'Internal Server Error' }),
+        body: JSON.stringify({ data: [] }),
       })
     })
+    await page.goto('/app/chat')
+    await waitForHydration(page)
+    await expect(page.getByRole('heading', { name: 'First, add your business' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Add my business' })).toBeVisible()
+  })
 
-    const chatInput = page.getByPlaceholder('Ask me anything about your social media strategy...')
-    await chatInput.fill('Test')
-    await chatInput.press('Enter')
+  test('should show the options button with the default selection summary', async ({ page }) => {
+    await expect(page.getByTestId('chat-options-toggle')).toBeVisible()
+    await expect(page.getByText('Auto (recommended) · All tools on · No extra skills')).toBeVisible()
+  })
 
-    // Should show error state without crashing
-    await expect(page.getByPlaceholder('Ask me anything about your social media strategy...')).toBeVisible()
+  test('should open the options panel with agent, tools and skills pickers', async ({ page }) => {
+    await mockCapabilities(page)
+    await page.goto('/app/chat')
+    await waitForHydration(page)
+    await page.getByTestId('chat-options-toggle').click()
+    await expect(page.getByText('Chat options')).toBeVisible()
+    await expect(page.getByText('Agent', { exact: true })).toBeVisible()
+    await expect(page.getByText('Tools', { exact: true })).toBeVisible()
+    await expect(page.getByText('Skills', { exact: true })).toBeVisible()
+    await expect(page.getByRole('checkbox', { name: 'web_search' })).toBeVisible()
+    await expect(page.getByRole('checkbox', { name: 'content-writer' })).toBeVisible()
+    await expect(page.getByRole('checkbox', { name: 'Brand voice' })).toBeVisible()
+  })
+
+  test('should narrow the tool list when an agent is selected', async ({ page }) => {
+    await mockCapabilities(page)
+    await page.goto('/app/chat')
+    await waitForHydration(page)
+    await page.getByTestId('chat-options-toggle').click()
+    await page.locator('footer').getByRole('button', { name: 'Show popup' }).click()
+    await page.getByRole('option', { name: 'Writer' }).click()
+    await expect(page.getByRole('checkbox', { name: 'write_post' })).toBeVisible()
+    await expect(page.getByRole('checkbox', { name: 'web_search' })).not.toBeVisible()
+    await expect(page.getByText('Writer · All tools on · No extra skills')).toBeVisible()
+  })
+
+  test('should persist the selection summary across reloads', async ({ page }) => {
+    await mockCapabilities(page)
+    await page.goto('/app/chat')
+    await waitForHydration(page)
+    await page.getByTestId('chat-options-toggle').click()
+    await page.locator('footer').getByRole('button', { name: 'Show popup' }).click()
+    await page.getByRole('option', { name: 'Writer' }).click()
+    await page.goto('/app/chat')
+    await waitForHydration(page)
+    await expect(page.getByText('Writer · All tools on · No extra skills')).toBeVisible()
   })
 })

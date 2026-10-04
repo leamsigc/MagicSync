@@ -1,29 +1,28 @@
-import { aiToolsFacade } from '#ai-tools/server/services/aiToolsFacade.service'
+import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
+import { buildCapabilityRunContext } from '#layers/BaseAgent/server/capabilities/run-context'
+import { runCapability } from '#layers/BaseAgent/server/capabilities'
+import '#layers/BaseAgent/server/capabilities/sql'
+import { generationErrorStatus } from '#ai-tools/server/utils/socialAi'
 
 export default defineEventHandler(async (event) => {
-  const log = useLogger(event)
-  const user = await aiToolsFacade.authenticate(event)
+  const user = await checkUserIsLogin(event)
   const body = await readBody(event)
 
-  log.set({ query: body.query?.substring(0, 100) })
+  if (!body?.query?.trim()) throw createError({ statusCode: 400, statusMessage: 'Query is required' })
 
-  if (!body?.query?.trim()) {
-    throw createError({ statusCode: 400, statusMessage: 'Query is required' })
+  const ctx = await buildCapabilityRunContext(user.id, null, {
+    event,
+    capability: 'content.sql',
+  })
+  const outcome = await runCapability('content.sql', { question: body.query }, ctx)
+  if (!outcome.ok) {
+    throw createError({ statusCode: generationErrorStatus(outcome.code), statusMessage: outcome.error, data: { code: outcome.code } })
   }
 
-  const config = useRuntimeConfig()
-  const backendUrl = config.pythonBackendUrl || 'http://localhost:8000'
-
-  const result = await $fetch<{
-    query: string
-    sql: string
-    explanation: string
-    tables_used: string[]
-  }>(`${backendUrl}/api/v1/tools/text-to-sql`, {
-    method: 'POST',
-    body: { query: body.query },
-    headers: { 'X-User-Id': user.id },
-  })
-
-  return result
+  return {
+    query: body.query,
+    sql: outcome.output.sql,
+    explanation: outcome.output.explanation,
+    tables_used: outcome.output.tables_used,
+  }
 })

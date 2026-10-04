@@ -22,7 +22,9 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'pnpm dev',
+    // The site dev script is launched from the repository root so Nuxt gets
+    // the shared .env used by the real auth/database stack.
+    command: 'pnpm --dir ../.. site:dev',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 120000,

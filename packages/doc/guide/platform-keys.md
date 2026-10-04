@@ -64,7 +64,7 @@ together`, and rejects parent+subset bundles (`youtube` together with
 (Google+ shutdown) and `docs` / full `drive` are not used — do not request them.
 
 Code references: `packages/auth/lib/auth.ts:120-144,327-391`,
-`packages/connect/app/pages/app/integrations/composables/useConnectionManager.ts:91`,
+`packages/connect/app/composables/connect/integrations/useConnectionManager.ts:91`,
 `packages/assets/app/composables/useGoogleDrive.ts:44`.
 
 ### Google Cloud setup (developer checklist)

@@ -1,5 +1,4 @@
 import type {
-  AgentSession,
   Asset,
   BusinessProfile,
   ChatMessage,
@@ -15,14 +14,12 @@ import type {
   PostWithAllData,
   Review,
   Skill,
-  SkillFile,
   SocialMediaAccount,
-  Subscription,
   Template,
   TemplateAsset,
   UserLlmConfig,
 } from '#layers/BaseDB/db/schema'
-import type { FacebookPage } from '#layers/BaseConnect/utils/FacebookPages'
+import type { FacebookPage } from '#layers/BaseShared/server/types/facebook-pages'
 import type { GMBLocation } from '#layers/BaseDB/server/utils/googleMyBusiness'
 import type { Account, User } from '#layers/BaseDB/db/auth/auth'
 import type { H3Event } from 'h3'
@@ -37,11 +34,9 @@ import type {
   UpdatePostData,
 } from './post.service'
 import type {
-  CreateAgentSessionData,
-  UpdateAgentSessionData,
-} from './agent.service'
-import type {
+  BusinessDeletePreview,
   CreateBusinessProfileData,
+  DeleteBusinessOptions,
   UpdateBusinessProfileData,
 } from './business-profile.service'
 import type {
@@ -70,7 +65,6 @@ import type {
 } from './search.service'
 import type {
   CreateSkillData,
-  CreateSkillFileData,
 } from './skill.service'
 import type {
   CreateSocialMediaAccountData,
@@ -79,11 +73,6 @@ import type {
   SocialMediaAccountFilters,
   SocialMediaPlatform,
 } from './social-media-account.service'
-import type {
-  CreateSubscriptionData,
-  UpdateSubscriptionData,
-  SubscriptionLimits,
-} from './subscription.service'
 import type {
   CreateTemplateData,
   UpdateTemplateData,
@@ -106,14 +95,6 @@ export type PostServiceType = {
   updatePlatformPost: (id: string, data: Partial<CreatePlatformPostData>) => Promise<ServiceResponse<PlatformPost>>
   getPlatformPostsByPost: (postId: string) => Promise<ServiceResponse<PlatformPost[]>>
   retryFailedPost: (id: string, userId: string) => Promise<ServiceResponse<PostWithAllData>>
-}
-
-export type AgentServiceType = {
-  create: (data: CreateAgentSessionData) => Promise<ServiceResponse<AgentSession>>
-  getById: (sessionId: string, userId: string) => Promise<ServiceResponse<AgentSession>>
-  listByUser: (userId: string, parentMessageId?: string) => Promise<ServiceResponse<AgentSession[]>>
-  update: (sessionId: string, userId: string, data: UpdateAgentSessionData) => Promise<ServiceResponse<AgentSession>>
-  delete: (sessionId: string, userId: string) => Promise<ServiceResponse<AgentSession>>
 }
 
 export type LogAuditServiceType = {
@@ -141,7 +122,8 @@ export type BusinessProfileServiceType = {
   findAll: (userId: string) => Promise<ServiceResponse<BusinessProfile[]>>
   update: (id: string, userId: string, data: UpdateBusinessProfileData) => Promise<ServiceResponse<BusinessProfile>>
   updateRaw: (id: string, data: UpdateBusinessProfileData) => Promise<ServiceResponse<BusinessProfile>>
-  delete: (id: string, userId: string) => Promise<ServiceResponse<void>>
+  delete: (id: string, userId: string, options?: DeleteBusinessOptions) => Promise<ServiceResponse<void>>
+  getDeletePreview: (id: string, userId: string) => Promise<ServiceResponse<BusinessDeletePreview>>
   deleteRaw: (id: string) => Promise<ServiceResponse<void>>
   setActive: (userId: string, data: { id: string, isActive: boolean }) => Promise<ServiceResponse<BusinessProfile>>
   getActive: (userId: string) => Promise<ServiceResponse<BusinessProfile>>
@@ -149,6 +131,12 @@ export type BusinessProfileServiceType = {
   getGMBLocationDetails: (businessId: string, userId: string, accessToken: string, business?: BusinessProfile) => Promise<ServiceResponse<GMBLocation>>
   isConnectedToGMB: (businessId: string, userId: string, business?: BusinessProfile) => Promise<ServiceResponse<boolean>>
   disconnectFromGMB: (businessId: string, userId: string, business?: BusinessProfile) => Promise<ServiceResponse<BusinessProfile>>
+  getSafeMode: (businessId: string, event?: H3Event) => Promise<ServiceResponse<boolean>>
+  setSafeMode: (businessId: string, value: boolean, userId: string, event?: H3Event) => Promise<ServiceResponse<boolean>>
+}
+
+export type ContentBoardServiceType = {
+  resetFailed: (userId: string, businessId: string, itemId: string, options: { actorKind: 'user' | 'agent', actorUserId?: string | null, payload?: Record<string, unknown> | null }, event?: H3Event) => Promise<ServiceResponse<{ item: import('#layers/BaseDB/db/schema').ContentItem, from: string, to: string }>>
 }
 
 export type BusinessServiceType = {
@@ -264,11 +252,6 @@ export type SkillServiceType = {
   delete: (id: string, userId: string) => Promise<ServiceResponse<Skill>>
 }
 
-export type SkillFileServiceType = {
-  create: (userId: string, data: CreateSkillFileData) => Promise<ServiceResponse<SkillFile>>
-  findBySkill: (skillId: string) => Promise<ServiceResponse<SkillFile[]>>
-}
-
 export type SocialMediaAccountServiceType = {
   getUserByAccountId: (id: string) => Promise<User | undefined>
   getActualAccountByAccountId: (id: string) => Promise<SocialMediaAccount | undefined>
@@ -313,21 +296,6 @@ export type SocialMediaAccountServiceType = {
   validateAccountConnection: (id: string, userId?: string) => Promise<{ isValid: boolean; needsRefresh: boolean }>
 }
 
-export type SubscriptionServiceType = {
-  create: (userId: string, data: CreateSubscriptionData) => Promise<ServiceResponse<Subscription>>
-  findById: (id: string, userId: string) => Promise<ServiceResponse<Subscription>>
-  findByUserId: (userId: string) => Promise<ServiceResponse<Subscription>>
-  findByStripeId: (stripeSubscriptionId: string) => Promise<ServiceResponse<Subscription>>
-  update: (id: string, userId: string, data: UpdateSubscriptionData) => Promise<ServiceResponse<Subscription>>
-  updateByUserId: (userId: string, data: UpdateSubscriptionData) => Promise<ServiceResponse<Subscription>>
-  cancel: (userId: string) => Promise<ServiceResponse<Subscription>>
-  reactivate: (userId: string) => Promise<ServiceResponse<Subscription>>
-  getExpiringSoon: (daysThreshold?: number) => Promise<ServiceResponse<Subscription[]>>
-  getTrialsEndingSoon: (daysThreshold?: number) => Promise<ServiceResponse<Subscription[]>>
-  getLimits: (tier: string) => SubscriptionLimits
-  checkLimit: (userId: string, limitType: keyof SubscriptionLimits) => Promise<ServiceResponse<{ allowed: boolean; current: number; limit: number }>>
-  delete: (id: string, userId: string) => Promise<ServiceResponse<void>>
-}
 
 export type TemplateServiceType = {
   create: (userId: string, data: CreateTemplateData) => Promise<ServiceResponse<TemplateWithAssets>>
@@ -379,4 +347,8 @@ export type UserLlmConfigServiceType = {
   updateConfig: (userId: string, configId: string, data: UpdateLlmConfigData) => Promise<ServiceResponse<UserLlmConfig>>
   deleteConfig: (userId: string, configId: string) => Promise<ServiceResponse<UserLlmConfig>>
   setDefault: (userId: string, configId: string) => Promise<ServiceResponse<UserLlmConfig>>
+  saveOverride: (userId: string, businessId: string, data: CreateLlmConfigData) => Promise<ServiceResponse<import('./user-llm-config.service').BusinessLlmOverride>>
+  getOverride: (userId: string, businessId: string) => Promise<ServiceResponse<import('./user-llm-config.service').BusinessLlmOverride | null>>
+  clearOverride: (userId: string, businessId: string) => Promise<ServiceResponse<boolean>>
+  getEffectiveConfig: (userId: string, businessId?: string | null) => Promise<ServiceResponse<UserLlmConfig>>
 }

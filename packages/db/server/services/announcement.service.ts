@@ -76,7 +76,7 @@ export class AnnouncementService {
 
       return { success: true, data: announcements }
     } catch (error) {
-      console.error('announcementService.listAll failed:', error)
+      log.error({ message: 'announcementService.listAll failed', error: String(error) })
       return { success: false, error: 'Failed to list announcements' }
     }
   }
@@ -96,7 +96,7 @@ export class AnnouncementService {
 
       return { success: true, data: active[0] ?? null }
     } catch (error) {
-      console.error('announcementService.getActive failed:', error)
+      log.error({ message: 'announcementService.getActive failed', error: String(error) })
       return { success: false, error: 'Failed to load announcement' }
     }
   }
@@ -141,7 +141,7 @@ export class AnnouncementService {
       }
       return { success: true, data: saved.data }
     } catch (error) {
-      console.error('announcementService.upsert failed:', error)
+      log.error({ message: 'announcementService.upsert failed', error: String(error) })
       return { success: false, error: 'Failed to save announcement' }
     }
   }
@@ -153,7 +153,7 @@ export class AnnouncementService {
         .where(and(eq(entityDetails.entityType, ANNOUNCEMENT_TYPE), eq(entityDetails.entityId, entityIdFor(id))))
       return { success: true, data: true }
     } catch (error) {
-      console.error('announcementService.remove failed:', error)
+      log.error({ message: 'announcementService.remove failed', error: String(error) })
       return { success: false, error: 'Failed to delete announcement' }
     }
   }
@@ -171,7 +171,7 @@ export class AnnouncementService {
       if (!announcement) return { success: false, error: 'Announcement data is corrupted' }
       return { success: true, data: announcement }
     } catch (error) {
-      console.error('announcementService.getById failed:', error)
+      log.error({ message: 'announcementService.getById failed', error: String(error) })
       return { success: false, error: 'Failed to load announcement' }
     }
   }

@@ -74,7 +74,7 @@ export class MenuBoardService {
 
       return { success: true, data: boards }
     } catch (error) {
-      console.error('menuBoardService.listForUser failed:', error)
+      log.error({ message: 'menuBoardService.listForUser failed', error: String(error) })
       return { success: false, error: 'Failed to list menu boards' }
     }
   }
@@ -105,7 +105,7 @@ export class MenuBoardService {
 
       return { success: true, data: { ...board, isPublic: !!publicRow, shareSlug: publicRow ? board.id : undefined } }
     } catch (error) {
-      console.error('menuBoardService.getForUser failed:', error)
+      log.error({ message: 'menuBoardService.getForUser failed', error: String(error) })
       return { success: false, error: 'Failed to load menu board' }
     }
   }
@@ -141,7 +141,7 @@ export class MenuBoardService {
       }
       return { success: true, data: result.data }
     } catch (error) {
-      console.error('menuBoardService.upsert failed:', error)
+      log.error({ message: 'menuBoardService.upsert failed', error: String(error) })
       return { success: false, error: 'Failed to save menu board' }
     }
   }
@@ -158,7 +158,7 @@ export class MenuBoardService {
         .where(and(eq(entityDetails.entityType, PUBLIC_TYPE), eq(entityDetails.entityId, boardId)))
       return { success: true, data: true }
     } catch (error) {
-      console.error('menuBoardService.remove failed:', error)
+      log.error({ message: 'menuBoardService.remove failed', error: String(error) })
       return { success: false, error: 'Failed to delete menu board' }
     }
   }
@@ -199,7 +199,7 @@ export class MenuBoardService {
 
       return { success: true, data: { slug: boardId } }
     } catch (error) {
-      console.error('menuBoardService.publish failed:', error)
+      log.error({ message: 'menuBoardService.publish failed', error: String(error) })
       return { success: false, error: 'Failed to publish menu board' }
     }
   }
@@ -215,7 +215,7 @@ export class MenuBoardService {
         .where(and(eq(entityDetails.entityType, PUBLIC_TYPE), eq(entityDetails.entityId, boardId)))
       return { success: true, data: true }
     } catch (error) {
-      console.error('menuBoardService.unpublish failed:', error)
+      log.error({ message: 'menuBoardService.unpublish failed', error: String(error) })
       return { success: false, error: 'Failed to unpublish menu board' }
     }
   }
@@ -250,7 +250,7 @@ export class MenuBoardService {
         },
       }
     } catch (error) {
-      console.error('menuBoardService.getPublic failed:', error)
+      log.error({ message: 'menuBoardService.getPublic failed', error: String(error) })
       return { success: false, error: 'Failed to load shared menu' }
     }
   }

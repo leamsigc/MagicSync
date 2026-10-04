@@ -27,7 +27,6 @@ export interface RerankRequest {
   query: string
   results: SearchResult[]
   topK?: number
-  pythonBackendUrl?: string
 }
 
 export class SearchService implements SearchServiceType {
@@ -258,48 +257,13 @@ export class SearchService implements SearchServiceType {
     request: RerankRequest
   ): Promise<ServiceResponse<SearchResult[]>> {
     try {
-      const { query, results, topK = 5, pythonBackendUrl } = request
+      const { query: _query, results, topK = 5 } = request
 
       if (results.length === 0) {
         return { success: true, data: [] }
       }
 
-      // If Python backend URL is provided, use LLM-based reranking
-      if (pythonBackendUrl) {
-        try {
-          const rerankResult = await $fetch<{
-            results: Array<{ content: string; document_id: string; score: number; rank: number; metadata: Record<string, any> }>
-          }>(`${pythonBackendUrl}/api/v1/rag/rerank`, {
-            method: 'POST',
-            body: {
-              query,
-              documents: results.map(r => ({
-                content: r.content,
-                document_id: r.documentId,
-                score: r.score,
-                metadata: r.metadata,
-              })),
-              top_k: topK,
-            },
-          })
-
-          return {
-            success: true,
-            data: rerankResult.results.map((r, index) => ({
-              content: r.content,
-              documentId: r.document_id,
-              score: r.score,
-              rank: index + 1,
-              metadata: r.metadata,
-              source: 'reranked' as const,
-            })),
-          }
-        } catch {
-          // Fall through to local reranking
-        }
-      }
-
-      // Local fallback: score-boost reranking
+      // Local score-boost reranking (no Python backend).
       const reranked = results
         .map((item) => ({
           ...item,

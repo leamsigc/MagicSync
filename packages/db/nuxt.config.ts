@@ -13,6 +13,7 @@ export default defineNuxtConfig({
   $meta: {
     name: 'BaseDB',
   },
+  modules: ['evlog/nuxt'],
   devtools: { enabled: true },
   nitro: {
     experimental: {

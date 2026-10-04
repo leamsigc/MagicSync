@@ -8,14 +8,12 @@ export default defineTask({
   async run() {
     const result = await autoRepostService.processDueReposts()
     if (result.error || !result.data) {
-      console.error(`[repost:process] failed: ${result.error}`)
+      log.error({ message: `[repost:process] failed: ${result.error}` })
       return { result: 'Reposts failed', processed: 0, errors: [result.error || 'Unknown error'] }
     }
-    console.log(
-      `[repost:process] processed ${result.data.processed}, errors ${result.data.errors.length}`
-    )
+    log.debug({ message: `[repost:process] processed ${result.data.processed}, errors ${result.data.errors.length}` })
     if (result.data.errors.length > 0) {
-      console.warn('[repost:process] errors:', result.data.errors.slice(0, 5))
+      log.warn({ message: '[repost:process] errors', detail: result.data.errors.slice(0, 5) })
     }
     return { result: 'Reposts processed', ...result.data }
   },

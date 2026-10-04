@@ -17,7 +17,8 @@
     "@local-monorepo/shared": "workspace:*",
     "@local-monorepo/ui": "workspace:*",
     "@nuxtjs/i18n": "catalog:",
-    "evlog": "catalog:"
+    "evlog": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@nuxt/eslint": "catalog:",

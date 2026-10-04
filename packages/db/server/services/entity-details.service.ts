@@ -2,7 +2,7 @@
 import { eq, and } from 'drizzle-orm'
 import { entityDetails, type EntityDetails, type NewEntityDetails } from '#layers/BaseDB/db/entityDetails/entityDetails'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
-import { FacebookPage } from '#layers/BaseConnect/utils/FacebookPages'
+import type { FacebookPage } from '#layers/BaseShared/server/types/facebook-pages'
 import type { EntityDetailsServiceType } from './interfaces'
 
 
@@ -54,7 +54,7 @@ export class EntityDetailsService implements EntityDetailsServiceType {
           }
         })
       } catch (error) {
-        console.error('Error creating entity details:', error)
+        log.error({ message: 'Error creating entity details', error: String(error) })
       }
     }
   }
@@ -112,7 +112,7 @@ export class EntityDetailsService implements EntityDetailsServiceType {
 
       return true
     } catch (error) {
-      console.error('Error deleting entity details:', error)
+      log.error({ message: 'Error deleting entity details', error: String(error) })
       return false
     }
   }

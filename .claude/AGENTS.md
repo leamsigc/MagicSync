@@ -1,7 +1,7 @@
 ---
 name: agents
 description: Always-loaded project anchor. Read this first. Contains project identity, non-negotiables, commands, and pointer to ROUTER.md for full context.
-last_updated: 2026-03-31
+last_updated: 2026-09-13
 ---
 
 # MagicSync
@@ -9,25 +9,21 @@ last_updated: 2026-03-31
 ## What This Is
 A social media scheduling platform built with Nuxt 4 monorepo — enables scheduling posts across multiple social platforms (Facebook, Twitter, Instagram, Bluesky, LinkedIn, etc.) with AI-powered content generation.
 
-## Current Focus: Episode 5 - Advanced Tool Use
+## Current Focus: Nuxt-Native Agent Layer + Content Board
 
-Episode 4 (Agent Skills & Sandbox) is complete with 193 Python tests passing.
+All remaining work is defined in the single implementation PRD:
+**`.aiContext/PRD.md`** (supersedes the Business Content Agent PRD set and the
+implementation tracker; both removed 2026-09-13). Work one task at a time;
+each task carries
+its own verification gate. The original Python service is decommissioned (removed 2026-09-13); an optional, user-run Python tools sidecar (`packages/python-tools`) can be configured from AI settings and is never a deploy dependency;
+agent execution moves to the pi SDK (`@earendil-works/pi-coding-agent`) inside
+a new `packages/agent` Nuxt layer, with a per-business content board and a
+single chat surface.
 
-Now implementing **Episode 5 - Advanced Tool Use** — enhanced tool capabilities for agents.
-
-See `.agent/plans/candidates/09-advanced-tool-use.md` for the plan.
-
-**Episode Roadmap:** [Claude Code Agentic RAG Series](https://github.com/theaiautomators/claude-code-agentic-rag-series)
-- Ep 1: Agentic RAG Layer (complete)
-- Ep 2: Knowledge Base Explorer (complete)
-- Ep 3: PII Redaction (complete)
-- Ep 4: Agent Skills & Sandbox (complete)
-- Ep 5: Advanced Tool Use (in_progress)
-- Ep 6: Agent Harness
+**Episode Roadmap (historical):** [Claude Code Agentic RAG Series](https://github.com/theaiautomators/claude-code-agentic-rag-series)
+- Ep 1–5 complete; Ep 6 (Agent Harness) is re-homed into `.aiContext/PRD.md`.
 
 **Database:** Using Turso (libSQL) with native vector support - no separate PostgreSQL needed
-
-**See [PROGRESS.md](./PROGRESS.md) for current module status.**
 
 ## Non-Negotiables
 
@@ -35,7 +31,9 @@ See `.agent/plans/candidates/09-advanced-tool-use.md` for the plan.
 - Service methods must return `ServiceResponse<T>`, never throw exceptions
 - All new Vue components must use Composition API (`<script setup>`)
 - Never commit secrets or API keys — use `.env` files only
-- Follow the layer package structure — pages go in layer packages, not in site
+- Follow the layer package structure — every product page goes in `packages/site/app/pages/`; feature layers are libraries, not route owners
+- Never create `components/`, `composables/` or `utils/` directories inside an `app/pages/` tree — Nuxt scans it for routes and a stray `.ts` file becomes a phantom route
+- A feature layer never imports from another feature layer; sink shared code into `shared`, `db` or `ui` instead (see `patterns/layer-restructure.md`)
 
 ## Commands
 
@@ -44,7 +42,9 @@ See `.agent/plans/candidates/09-advanced-tool-use.md` for the plan.
 - **Build site:** `pnpm site:build`
 - **Database:** `cd packages/db && pnpm db:generate` / `db:migrate`
 - **Lint UI:** `pnpm ui:lint`
-- **Python backend:** `cd python-backend && pnpm dev` — starts FastAPI on port 8000
+- **Agent tests:** `pnpm --filter @local-monorepo/agent test`
+- **Python tools (optional sidecar):** `pnpm python-tools:dev` — starts FastAPI on port 8100; configure its URL in AI settings
+- **DB service tests:** `pnpm --filter @local-monorepo/db test:services`
 
 ## Session Commands
 
@@ -76,7 +76,9 @@ Run these checks after every task, before presenting the result. All must pass:
 4. **Conventions checklist** — walk `context/conventions.md` Verify Checklist
    item by item and report each explicitly.
 5. **Patterns** — check `patterns/INDEX.md` for a matching pattern and follow
-   it; leave no `console.*` or dead code behind.
+   it; leave no dead code behind. No `console.*` in `app/` or `server/` either —
+   use the `log` auto-import (`log.error({ message, ...fields })`); Web Workers are
+   exempt until they get a transport. See `context/conventions.md` Logging.
 6. **Interaction feedback** — every user-triggered change shows feedback:
    async buttons carry `:loading`, outcomes raise toasts (failures never
    silent), conditionally rendered UI animates on enter via `@vueuse/motion`

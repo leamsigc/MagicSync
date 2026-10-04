@@ -24,5 +24,31 @@
       "readyToPost": "Listo para Publicar",
       "clickToEnable": "Haga clic para habilitar {name}"
     }
+  },
+  "de": {
+    "platformSelector": {
+      "title": "Plattformen auswählen",
+      "noAccounts": "Keine verbundenen Social-Media-Konten gefunden",
+      "connectAccounts": "Konten verbinden",
+      "selected": "{count} Plattform(en) ausgewählt",
+      "status": "Status",
+      "issuesFound": "Probleme gefunden",
+      "warnings": "Warnungen",
+      "readyToPost": "Bereit zum Veröffentlichen",
+      "clickToEnable": "Klicken, um {name} zu aktivieren"
+    }
+  },
+  "fr": {
+    "platformSelector": {
+      "title": "Sélectionner des plateformes",
+      "noAccounts": "Aucun compte de réseau social connecté trouvé",
+      "connectAccounts": "Connecter des comptes",
+      "selected": "{count} plateforme(s) sélectionnée(s)",
+      "status": "Statut",
+      "issuesFound": "Problèmes détectés",
+      "warnings": "Avertissements",
+      "readyToPost": "Prêt à publier",
+      "clickToEnable": "Cliquez pour activer {name}"
+    }
   }
 }

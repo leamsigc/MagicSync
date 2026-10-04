@@ -2,6 +2,7 @@ import { logAuditService } from '#layers/BaseDB/server/services/auditLog.service
 import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event)
   const currentUser = await checkUserIsLogin(event)
   if (currentUser.role !== 'admin') {
     throw createError({ statusCode: 403, message: 'Admin access required' })
@@ -26,7 +27,7 @@ export default defineEventHandler(async (event) => {
     targetId: String(id),
     status: 'success',
     details: `Deleted audit log entry ${id}`
-  })
+  }, { log })
 
   return { success: true }
 })

@@ -15,7 +15,12 @@ test.beforeAll(async ({ request }) => {
   await createActiveBusiness(request, user)
 })
 
-test.describe('AI Chat Page - Site Integration', () => {
+// The `/app/ai-tools/chat` route was removed in commit 3423d97 (before the
+// layer restructure): the chat surface consolidated onto `/app/chat`.
+// Kept (skipped) rather than deleted so the coverage intent stays visible —
+// the live coverage lives in `ai-tools/chat-page.spec.ts` and
+// `ai-tools/chat-messaging.spec.ts`.
+test.describe.skip('AI Chat Page - Site Integration (route removed in 3423d97)', () => {
   test.describe('Page Structure', () => {
     test('should render the chat page with AiToolsLayout (no dashboard sidebar)', async ({ page }) => {
       await blockHeavyAssets(page)

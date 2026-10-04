@@ -313,6 +313,6 @@ All 16 platforms have scheduler plugins implementing the `post()`, `update()`, `
 | `packages/connect/server/api/v1/social-accounts/[platform]/[id]/index.post.ts` | Connect account |
 | `packages/connect/server/api/v1/social-accounts/api-key/[platform].post.ts` | API key auth |
 | `packages/connect/server/utils/socialMedia.ts` | Social media utilities |
-| `packages/connect/app/composables/UseSocialMediaManager.ts` | Frontend manager |
-| `packages/connect/app/pages/app/integrations/composables/useConnectionManager.ts` | Connection manager UI |
+| `packages/shared/app/composables/UseSocialMediaManager.ts` | Frontend manager |
+| `packages/connect/app/composables/connect/integrations/useConnectionManager.ts` | Connection manager UI |
 | `packages/scheduler/server/services/plugins/*.plugin.ts` | All 15 platform plugins |

@@ -1,8 +1,8 @@
 import type { SocialMediaAccount } from '#layers/BaseDB/db/schema';
 import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service';
-import { SchedulerPost } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
-import type { PluginSocialMediaAccount } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
-import { BlueskyPlugin } from '#layers/BaseScheduler/server/services/plugins/bluesky.plugin';
+import { SchedulerPost } from '#layers/BaseDB/server/services/SchedulerPost.service';
+import type { PluginSocialMediaAccount } from '#layers/BaseDB/server/services/SchedulerPost.service';
+import { BlueskyPlugin } from '#layers/BaseDB/server/services/plugins/bluesky.plugin';
 
 export interface GrowRecommendation {
   did: string;

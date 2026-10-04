@@ -70,7 +70,7 @@ export default defineEventHandler(async (event) => {
       throw error
     }
 
-    console.error('Error serving asset:', error)
+    log.error({ message: 'Error serving asset', error: String(error) })
     throw createError({
       statusCode: 500,
       statusMessage: 'Internal server error'

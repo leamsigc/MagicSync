@@ -2,6 +2,9 @@
 <i18n src="./MediaGallery.json"></i18n>
 <script lang="ts" setup>
 import type { Asset } from '#layers/BaseDB/db/schema'
+import type { AssetFolderSummary, FolderScope } from '#layers/BaseShared/shared/utils/asset-folders'
+
+const UNFILED_TOKEN = 'unfiled'
 
 interface Props {
   businessId?: string
@@ -10,6 +13,9 @@ interface Props {
   selectedAssets?: Asset[]
   showUploader?: boolean
   filterType?: 'image' | 'video' | 'document' | 'all'
+  /** Which bucket to list. Passed down rather than fetched again. */
+  folderScope?: FolderScope
+  folders?: AssetFolderSummary[]
 }
 
 interface Emits {
@@ -19,6 +25,7 @@ interface Emits {
   (e: 'delete', assets: Asset[]): void
   (e: 'preview', asset: Asset): void
   (e: 'open-edit-modal', asset: Asset): void
+  (e: 'move-selected', folderId: string | null): void
   (e: 'update:showUploader', value: boolean): void
 }
 
@@ -27,7 +34,9 @@ const props = withDefaults(defineProps<Props>(), {
   multiSelect: false,
   selectedAssets: () => [],
   showUploader: true,
-  filterType: 'all'
+  filterType: 'all',
+  folderScope: () => ({ kind: 'unfiled' }),
+  folders: () => [],
 })
 
 const router = useRouter()
@@ -50,7 +59,8 @@ const {
   isAssetSelected,
   getAssetsByType,
   getStorageUsage,
-  loadMoreAssets
+  loadMoreAssets,
+  setFolderScope
 } = useAssetManagement()
 
 const { getAssetType, formatFileSize, getAssetPreviewUrl, getAssetDisplayName } = useAsset()
@@ -65,10 +75,6 @@ const sortBy = ref<'name' | 'date' | 'size' | 'type'>('date')
 const sortOrder = ref<'asc' | 'desc'>('desc')
 const showFilters = ref(false)
 const selectedTags = ref<string[]>([])
-const currentFolder = ref<string>('all')
-const showFolderDialog = ref(false)
-const newFolderName = ref('')
-const folders = ref<string[]>(['all', 'favorites', 'social', 'logos', 'banners'])
 const isOptimizing = ref(false)
 const optimizationProgress = ref(0)
 const isPreviewFullscreen = ref(false)
@@ -144,6 +150,12 @@ const parseAssetMetadata = (asset: Asset) => {
   }
 }
 
+const handlePreview = (asset: Asset) => {
+  previewAsset.value = asset
+  showPreviewModal.value = true
+  emit('preview', asset)
+}
+
 const handleAssetClick = (asset: Asset) => {
   if (props.selectable) {
     toggleAssetSelection(asset)
@@ -157,6 +169,14 @@ const handleAssetClick = (asset: Asset) => {
     showPreviewModal.value = true
     emit('preview', asset)
   }
+}
+
+const setViewMode = (mode: 'masonry' | 'grid' | 'list') => {
+  viewMode.value = mode
+}
+
+const toggleFullscreen = () => {
+  isPreviewFullscreen.value = !isPreviewFullscreen.value
 }
 
 const handleDeleteSelected = () => {
@@ -217,15 +237,36 @@ const clearFilters = () => {
   searchQuery.value = ''
 }
 
-onMounted(() => {
-  fetchAssets(props.businessId || '0')
-})
+// One watcher over business AND folder scope: the composable holds the scope so
+// infinite scroll pages the same bucket the first page came from.
+watch(
+  () => [props.businessId, props.folderScope] as const,
+  ([businessId, scope]) => {
+    if (!businessId) return
+    setFolderScope(scope)
+    fetchAssets(businessId, { filters: { folderScope: scope } })
+  },
+  { immediate: true },
+)
 
-watch(() => props.businessId, (newBusinessId) => {
-  if (newBusinessId) {
-    fetchAssets(newBusinessId)
-  }
-})
+const retryFetch = () => {
+  fetchAssets(props.businessId || '0', { filters: { folderScope: props.folderScope } })
+}
+
+const moveTargetToken = ref(UNFILED_TOKEN)
+
+const moveTargets = computed(() => [
+  { value: UNFILED_TOKEN, label: t('unfiled'), icon: 'i-lucide-inbox' },
+  ...props.folders.map(folder => ({
+    value: folder.id,
+    label: `${folder.name} (${folder.assetCount})`,
+    icon: 'i-lucide-folder',
+  })),
+])
+
+const handleMoveSelected = () => {
+  emit('move-selected', moveTargetToken.value === UNFILED_TOKEN ? null : moveTargetToken.value)
+}
 
 const handleOpedEditModal = (asset: Asset) => {
   router.push({
@@ -266,15 +307,6 @@ const handleOptimizeAssets = () => {
   }, 300)
 }
 
-const createNewFolder = () => {
-  if (newFolderName.value.trim()) {
-    folders.value.push(newFolderName.value.trim().toLowerCase())
-    currentFolder.value = newFolderName.value.trim().toLowerCase()
-    newFolderName.value = ''
-    showFolderDialog.value = false
-  }
-}
-
 const handleDeleteAsset = (asset: Asset) => {
   assetsToDelete.value = [asset]
   showDeleteDialog.value = true
@@ -293,23 +325,40 @@ const handleDeleteAsset = (asset: Asset) => {
             {{ t('toolbar.deselect_all') }}
           </UButton>
           <span class="text-sm text-muted-foreground">
-            {{ t('file_count_badge', { count: selectedAssets.length }) }}
+            {{ t('toolbar.selected_count', { count: selectedAssets.length }) }}
           </span>
-          <UButton v-if="hasSelectedAssets" variant="solid" color="error" size="sm" @click="handleDeleteSelected">
+          <UButton v-if="hasSelectedAssets" variant="solid" color="error" size="sm"
+            :aria-label="t('toolbar.delete_selected')" @click="handleDeleteSelected">
             <Icon name="lucide:trash-2" class="w-4 h-4" />
           </UButton>
+          <div
+            v-if="hasSelectedAssets"
+            class="flex items-center gap-2"
+            v-motion-slide-bottom
+            :duration="250"
+          >
+            <USelect v-model="moveTargetToken" :items="moveTargets" class="w-[180px]" size="sm"
+              :aria-label="t('folders')" />
+            <UButton size="sm" variant="outline" @click="handleMoveSelected">
+              <Icon name="lucide:folder-input" class="w-4 h-4" />
+              {{ t('move_selected') }}
+            </UButton>
+          </div>
         </div>
         <div class="flex rounded-lg  overflow-hidden">
-          <UButton variant="ghost" size="sm" :class="{ 'bg-accent text-accent-foreground': viewMode === 'masonry' }"
-            @click="viewMode = 'masonry'">
+          <UButton variant="ghost" size="sm" :aria-label="t('view_mode.masonry')"
+            :class="{ 'bg-accent text-accent-foreground': viewMode === 'masonry' }"
+            @click="setViewMode('masonry')">
             <Icon name="lucide:layout-grid" class="w-4 h-4" />
           </UButton>
-          <UButton variant="ghost" size="sm" :class="{ 'bg-accent text-accent-foreground': viewMode === 'grid' }"
-            @click="viewMode = 'grid'">
+          <UButton variant="ghost" size="sm" :aria-label="t('view_mode.grid')"
+            :class="{ 'bg-accent text-accent-foreground': viewMode === 'grid' }"
+            @click="setViewMode('grid')">
             <Icon name="lucide:grid-3x3" class="w-4 h-4" />
           </UButton>
-          <UButton variant="ghost" size="sm" :class="{ 'bg-accent text-accent-foreground': viewMode === 'list' }"
-            @click="viewMode = 'list'">
+          <UButton variant="ghost" size="sm" :aria-label="t('view_mode.list')"
+            :class="{ 'bg-accent text-accent-foreground': viewMode === 'list' }"
+            @click="setViewMode('list')">
             <Icon name="lucide:list" class="w-4 h-4" />
           </UButton>
         </div>
@@ -327,7 +376,7 @@ const handleDeleteAsset = (asset: Asset) => {
       <Icon name="lucide:alert-circle" class="w-12 h-12 text-destructive mx-auto mb-4" />
       <h3 class="text-lg font-semibold mb-2">{{ t('states.error_title') }}</h3>
       <p class="text-muted-foreground mb-4">{{ error }}</p>
-      <UButton @click="fetchAssets(props.businessId)" v-if="props.businessId">
+      <UButton @click="retryFetch" v-if="props.businessId">
         {{ t('states.try_again') }}
       </UButton>
     </div>
@@ -367,18 +416,17 @@ const handleDeleteAsset = (asset: Asset) => {
             <div
               class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center bg-black/90">
               <div class="flex items-center justify-center gap-2">
-                <UButton size="sm" variant="outline"
-                  @click.stop="() => { previewAsset = asset; showPreviewModal = true; }">
+                <UButton size="sm" variant="outline" :aria-label="t('buttons.preview')" @click.stop="handlePreview(asset)">
                   <Icon name="lucide:eye" class="w-4 h-4" />
                 </UButton>
-                <UButton size="sm" variant="outline" @click.stop="handleOpenInNewTab(asset)">
+                <UButton size="sm" variant="outline" :aria-label="t('buttons.download')" @click.stop="handleOpenInNewTab(asset)">
                   <Icon name="lucide:download" class="w-4 h-4" />
                 </UButton>
                 <UButton v-if="getAssetType(asset.mimeType) === 'image'" size="sm" variant="outline"
-                  @click.stop="handleOpedEditModal(asset)">
+                  :aria-label="t('buttons.edit')" @click.stop="handleOpedEditModal(asset)">
                   <Icon name="lucide:edit" class="w-4 h-4" />
                 </UButton>
-                <UButton size="sm" variant="outline" @click.stop="handleDeleteAsset(asset)">
+                <UButton size="sm" variant="outline" :aria-label="t('buttons.delete')" @click.stop="handleDeleteAsset(asset)">
                   <Icon name="lucide:trash-2" class="w-4 h-4" />
                 </UButton>
               </div>
@@ -527,7 +575,7 @@ const handleDeleteAsset = (asset: Asset) => {
               <Icon name="lucide:edit" class="w-4 h-4" />
               {{ t('buttons.edit') }}
             </UButton>
-            <UButton variant="ghost" size="sm" @click="isPreviewFullscreen = !isPreviewFullscreen">
+            <UButton variant="ghost" size="sm" @click="toggleFullscreen">
               <Icon name="lucide:fullscreen" class="w-4 h-4" />
             </UButton>
           </div>
@@ -605,30 +653,6 @@ const handleDeleteAsset = (asset: Asset) => {
           <UButton variant="solid" color="error" @click="confirmDelete">
             <Icon name="lucide:trash-2" class="w-4 h-4 mr-2" />
             {{ t('delete_dialog.delete') }}
-          </UButton>
-        </div>
-      </template>
-    </UModal>
-
-    <UModal v-model:open="showFolderDialog">
-      <template #header>
-        <div class="flex items-center gap-3">
-          <Icon name="lucide:folder-plus" class="w-6 h-6 text-primary" />
-          <h3 class="text-lg font-semibold">{{ t('folder_dialog.title') }}</h3>
-        </div>
-      </template>
-      <template #body>
-        <div class="space-y-4">
-          <p class="text-muted-foreground text-sm">{{ t('folder_dialog.description') }}</p>
-          <UInput v-model="newFolderName" :placeholder="t('folder_name_placeholder')" />
-        </div>
-      </template>
-      <template #footer="{ close }">
-        <div class="flex justify-end gap-2">
-          <UButton variant="outline" @click="close">{{ t('folder_dialog.cancel') }}</UButton>
-          <UButton :disabled="!newFolderName.trim()" @click="createNewFolder">
-            <Icon name="lucide:folder-plus" class="w-4 h-4 mr-2" />
-            {{ t('folder_dialog.create') }}
           </UButton>
         </div>
       </template>

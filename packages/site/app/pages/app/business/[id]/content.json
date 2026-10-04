@@ -1,0 +1,1018 @@
+{
+  "en": {
+    "back": "Back to board",
+    "title": "Content",
+    "seo_title": "Content",
+    "seo_description": "Plan, write and publish one article at a time.",
+    "scan": {
+      "title": "What should we write about?",
+      "hint": "Leave the topic empty to scan your business instead.",
+      "topicLabel": "Topic (optional)",
+      "topicPlaceholder": "e.g. roof maintenance before winter",
+      "platforms": "Platforms",
+      "platformsHint": "One article everywhere; each platform gets its own version.",
+      "platformsLoading": "Loading platforms…",
+      "platformsEmpty": "No platforms are available right now.",
+      "platformsNeedOne": "Pick at least one platform to continue.",
+      "platformsFailed": "Could not load the platform list",
+      "submit": "Find ideas",
+      "running": "Researching and writing ideas…",
+      "runningHint": "This takes up to a minute. You can keep this page open.",
+      "cancel": "Cancel",
+      "added": "New ideas in Planned: {count}",
+      "failed": "Could not scan for ideas"
+    },
+    "ideas": {
+      "none": "The agent found no ideas for this topic"
+    },
+    "card": {
+      "menu": "Card actions",
+      "menuEdit": "Edit title and brief",
+      "menuDelete": "Delete card",
+      "editTitleLabel": "Edit this idea",
+      "editHint": "The title and the brief are what the article gets written from.",
+      "titleField": "Title",
+      "briefField": "Brief",
+      "briefHint": "One or two sentences on what the article should cover.",
+      "briefPlaceholder": "What should this article cover?",
+      "cancel": "Cancel",
+      "save": "Save",
+      "saved": "Card updated",
+      "saveFailed": "Could not update the card",
+      "deleteTitle": "Delete this card?",
+      "deleteBody": "“{title}” and anything already written for it leave the board. This cannot be undone.",
+      "delete": "Delete",
+      "deleted": "Card deleted",
+      "deleteFailed": "Could not delete the card",
+      "open": "Open the card",
+      "create": "New card",
+      "created": "Card created",
+      "createFailed": "Could not create the card",
+      "createTitleLabel": "New card",
+      "createHint": "Write it down now; the agent takes it from here.",
+      "createTitlePlaceholder": "What is the idea?",
+      "createBriefPlaceholder": "Optional: the angle, the audience, what to say"
+    },
+    "board": {
+      "columns": {
+        "planned": "Planned",
+        "approved": "Approved",
+        "writing": "Writing",
+        "published": "Published"
+      },
+      "empty": "Empty",
+      "running": "Working…",
+      "writeNow": "Write now",
+      "edit": "Edit",
+      "view": "View →",
+      "moveLeft": "Move to the previous column",
+      "moveRight": "Move to the next column",
+      "needTarget": "Choose where to publish first",
+      "noArtifact": "This card has no article to publish yet",
+      "moved": "Card moved",
+      "moveFailed": "Could not move the card",
+      "written": "Article written",
+      "writeFailed": "Could not write the article",
+      "published": "Published",
+      "publishFailed": "Could not publish",
+      "failed": "Could not load the board",
+      "mode": {
+        "safe": "Safe mode",
+        "safeHint": "Nothing is approved or published without you.",
+        "autonomous": "Autonomous mode",
+        "autonomousHint": "The agent approves topics and publishes on its own.",
+        "switchToSafe": "Switch to Safe",
+        "switchToAutonomous": "Switch to Autonomous",
+        "safeOn": "Safe mode on",
+        "safeOff": "Safe mode off",
+        "switchFailed": "Could not change the mode"
+      },
+      "target": {
+        "label": "Publish to",
+        "empty": "No connected destination yet.",
+        "failed": "Could not load your publishing connections",
+        "unset": "No destination"
+      },
+      "illegalMove": "A card cannot go straight from {from} to {to}."
+    },
+    "idea": {
+      "meta": "Meta",
+      "edit": "Edit",
+      "save": "Save",
+      "preview": "Preview",
+      "words": "Words: {count}",
+      "version": "v{version}",
+      "unpublish": "Unpublish",
+      "viewSite": "View Site →",
+      "unpublished": "Moved back to Approved",
+      "unpublishFailed": "Could not unpublish",
+      "state": {
+        "idea": "Idea",
+        "drafting": "Writing",
+        "review_required": "Ready for review",
+        "scheduled": "Scheduled",
+        "published": "Published",
+        "failed": "Failed",
+        "archived": "Archived"
+      },
+      "metaFields": {
+        "platforms": "Platforms",
+        "priority": "Priority",
+        "updated": "Last change",
+        "post": "Post"
+      },
+      "checks": {
+        "title": "Checks",
+        "empty": "No checks yet.",
+        "score": "{score}/100",
+        "status": {
+          "pass": "Passing",
+          "warn": "Needs a look",
+          "fail": "Failing"
+        },
+        "findings": {
+          "length": "Length outside the ideal range",
+          "missingCta": "No call to action",
+          "tooManyHashtags": "Too many hashtags",
+          "topicMissing": "The topic never appears in the text",
+          "notQuestionLed": "Does not open with a question",
+          "noConcreteData": "No numbers or dates to anchor it",
+          "noCitations": "Nothing cited",
+          "urls": "Links found",
+          "probes": "Link checks"
+        }
+      },
+      "variant": {
+        "article": "Article",
+        "keyword": "“{keyword}”",
+        "intent": {
+          "search": "Search & AI answers",
+          "social": "Platform reaction",
+          "shared": "Shared version"
+        }
+      },
+      "social": {
+        "title": "Social posts",
+        "empty": "No per-platform copies yet."
+      },
+      "details": {
+        "save": "Save title and brief",
+        "hint": "The agent writes the article from this.",
+        "saved": "Title and brief saved",
+        "saveFailed": "Could not save the title and brief"
+      }
+    },
+    "rail": {
+      "label": "Item tools",
+      "collapse": "Collapse",
+      "expand": "Expand",
+      "actions": {
+        "title": "Actions",
+        "failing": "{count} checks to look at",
+        "note": "Nothing here runs on its own — you press it.",
+        "keyword": "Target keyword",
+        "keywordHint": "What the search version should be found for. It grounds the repair.",
+        "keywordPlaceholder": "roof maintenance",
+        "fix": "Fix based on checks",
+        "fixed": "Checks repaired",
+        "noChanges": "Every check already passes — nothing was changed",
+        "failed": "Could not repair the checks",
+        "regenerate": "Regenerate"
+      },
+      "social": {
+        "separate": "Posting a social post is a different action from publishing the article — that one is the Publish control under the article.",
+        "auto": "Auto-generate",
+        "choose": "Choose platforms",
+        "noConnected": "Connect an account for a platform to post here.",
+        "generate": "Generate posts",
+        "regenerate": "Regenerate",
+        "generated": "Posts ready",
+        "generateFailed": "Could not generate the posts",
+        "choicesFailed": "Could not load the platforms you can post to",
+        "articleMissing": "Write the article first",
+        "post": "Post now",
+        "postAll": "Post all now",
+        "schedule": "Schedule",
+        "scheduleAt": "Date and time",
+        "scheduleConfirm": "Schedule this post",
+        "posted": "Posted to {platform}",
+        "scheduled": "Scheduled for {platform}",
+        "sendFailed": "Could not post to {platform}",
+        "needsAccount": "No connected account for {platform}",
+        "needsDate": "Choose a date and time first",
+        "stored": "Stored captions, per platform"
+      },
+      "shortcuts": {
+        "title": "Shortcuts",
+        "article": "The article",
+        "details": "Title and brief",
+        "checks": "The checks",
+        "publish": "Publish the article"
+      }
+    },
+    "draft": {
+      "empty": "No article yet. Write one with Write now.",
+      "saved": "Draft saved",
+      "saveFailed": "Could not save the draft",
+      "regenerated": "Article written",
+      "regenerateFailed": "Could not write the article"
+    },
+    "publish": {
+      "cta": "Publish",
+      "confirm": "Publish now?",
+      "cancel": "Cancel",
+      "blocked": "Write a draft before publishing.",
+      "done": "Published.",
+      "job": "Job",
+      "published": "Published",
+      "variantSent": "Sent: {version}",
+      "variantRow": "Version sent",
+      "failed": "Could not publish"
+    },
+    "assets": {
+      "open": "Insert image",
+      "inserted": "Image inserted",
+      "title": "Insert an image",
+      "hint": "From your business assets.",
+      "loading": "Loading images…",
+      "empty": "No images in your assets yet.",
+      "failed": "Could not load your images"
+    },
+    "feedback": {
+      "detailFailed": "Could not load this draft",
+      "confirmRequired": "Publishing needs an explicit confirmation"
+    },
+    "platforms": {
+      "twitter": "X",
+      "instagram": "IG",
+      "facebook": "FB",
+      "linkedin": "LI",
+      "tiktok": "TT",
+      "bluesky": "BS",
+      "youtube": "YT",
+      "threads": "TH"
+    }
+  },
+  "es": {
+    "back": "Volver al tablero",
+    "title": "Contenido",
+    "seo_title": "Contenido",
+    "seo_description": "Planifica, escribe y publica un artículo cada vez.",
+    "scan": {
+      "title": "¿Sobre qué escribimos?",
+      "hint": "Déjalo vacío para analizar tu negocio en su lugar.",
+      "topicLabel": "Tema (opcional)",
+      "topicPlaceholder": "p. ej. mantenimiento de tejados antes del invierno",
+      "platforms": "Plataformas",
+      "platformsHint": "Un solo artículo en todas partes; cada plataforma recibe su propia versión.",
+      "platformsLoading": "Cargando plataformas…",
+      "platformsEmpty": "Ahora mismo no hay ninguna plataforma disponible.",
+      "platformsNeedOne": "Elige al menos una plataforma para continuar.",
+      "platformsFailed": "No se pudo cargar la lista de plataformas",
+      "submit": "Buscar ideas",
+      "running": "Investigando y redactando ideas…",
+      "runningHint": "Tarda hasta un minuto. Puedes dejar esta página abierta.",
+      "cancel": "Cancelar",
+      "added": "Nuevas ideas en Planificado: {count}",
+      "failed": "No se pudieron buscar ideas"
+    },
+    "ideas": {
+      "none": "El agente no encontró ideas para este tema"
+    },
+    "card": {
+      "menu": "Acciones de la tarjeta",
+      "menuEdit": "Editar título y resumen",
+      "menuDelete": "Eliminar tarjeta",
+      "editTitleLabel": "Editar esta idea",
+      "editHint": "El título y el resumen son la base del artículo.",
+      "titleField": "Título",
+      "briefField": "Resumen",
+      "briefHint": "Una o dos frases sobre lo que debe cubrir el artículo.",
+      "briefPlaceholder": "¿Qué debe cubrir este artículo?",
+      "cancel": "Cancelar",
+      "save": "Guardar",
+      "saved": "Tarjeta actualizada",
+      "saveFailed": "No se pudo actualizar la tarjeta",
+      "deleteTitle": "¿Eliminar esta tarjeta?",
+      "deleteBody": "«{title}» y todo lo ya escrito para ella salen del tablero. Esto no se puede deshacer.",
+      "delete": "Eliminar",
+      "deleted": "Tarjeta eliminada",
+      "deleteFailed": "No se pudo eliminar la tarjeta",
+      "open": "Abrir la tarjeta",
+      "create": "Nueva tarjeta",
+      "created": "Tarjeta creada",
+      "createFailed": "No se pudo crear la tarjeta",
+      "createTitleLabel": "Nueva tarjeta",
+      "createHint": "Anótala ahora; el agente continúa desde aquí.",
+      "createTitlePlaceholder": "¿Cuál es la idea?",
+      "createBriefPlaceholder": "Opcional: el ángulo, la audiencia, qué decir"
+    },
+    "board": {
+      "columns": {
+        "planned": "Planificado",
+        "approved": "Aprobado",
+        "writing": "Redactando",
+        "published": "Publicado"
+      },
+      "empty": "Vacío",
+      "running": "Trabajando…",
+      "writeNow": "Escribir ahora",
+      "edit": "Editar",
+      "view": "Ver →",
+      "moveLeft": "Mover a la columna anterior",
+      "moveRight": "Mover a la columna siguiente",
+      "needTarget": "Elige primero dónde publicar",
+      "noArtifact": "Esta tarjeta todavía no tiene artículo para publicar",
+      "moved": "Tarjeta movida",
+      "moveFailed": "No se pudo mover la tarjeta",
+      "written": "Artículo escrito",
+      "writeFailed": "No se pudo escribir el artículo",
+      "published": "Publicado",
+      "publishFailed": "No se pudo publicar",
+      "failed": "No se pudo cargar el tablero",
+      "mode": {
+        "safe": "Modo seguro",
+        "safeHint": "Nada se aprueba ni se publica sin tu consentimiento.",
+        "autonomous": "Modo autónomo",
+        "autonomousHint": "El agente aprueba temas y publica por su cuenta.",
+        "switchToSafe": "Cambiar a Seguro",
+        "switchToAutonomous": "Cambiar a Autónomo",
+        "safeOn": "Modo seguro activado",
+        "safeOff": "Modo seguro desactivado",
+        "switchFailed": "No se pudo cambiar el modo"
+      },
+      "target": {
+        "label": "Publicar en",
+        "empty": "Aún no hay ningún destino conectado.",
+        "failed": "No se pudieron cargar tus conexiones de publicación",
+        "unset": "Sin destino"
+      },
+      "illegalMove": "Una tarjeta no puede pasar directamente de {from} a {to}."
+    },
+    "idea": {
+      "meta": "Meta",
+      "edit": "Editar",
+      "save": "Guardar",
+      "preview": "Vista previa",
+      "words": "Palabras: {count}",
+      "version": "v{version}",
+      "unpublish": "Despublicar",
+      "viewSite": "Ver en el sitio →",
+      "unpublished": "Devuelto a Aprobado",
+      "unpublishFailed": "No se pudo despublicar",
+      "state": {
+        "idea": "Idea",
+        "drafting": "Redactando",
+        "review_required": "Listo para revisar",
+        "scheduled": "Programado",
+        "published": "Publicado",
+        "failed": "Falló",
+        "archived": "Archivado"
+      },
+      "metaFields": {
+        "platforms": "Plataformas",
+        "priority": "Prioridad",
+        "updated": "Último cambio",
+        "post": "Publicación"
+      },
+      "checks": {
+        "title": "Comprobaciones",
+        "empty": "Aún no hay comprobaciones.",
+        "score": "{score}/100",
+        "status": {
+          "pass": "Correcta",
+          "warn": "Requiere atención",
+          "fail": "Falla"
+        },
+        "findings": {
+          "length": "Longitud fuera del rango ideal",
+          "missingCta": "Sin llamada a la acción",
+          "tooManyHashtags": "Demasiados hashtags",
+          "topicMissing": "El tema nunca aparece en el texto",
+          "notQuestionLed": "No empieza con una pregunta",
+          "noConcreteData": "Sin cifras ni fechas que lo anclen",
+          "noCitations": "Sin citas",
+          "urls": "Enlaces encontrados",
+          "probes": "Comprobación de enlaces"
+        }
+      },
+      "variant": {
+        "article": "Artículo",
+        "keyword": "«{keyword}»",
+        "intent": {
+          "search": "Búsquedas y respuestas de IA",
+          "social": "Reacción de la plataforma",
+          "shared": "Versión compartida"
+        }
+      },
+      "social": {
+        "title": "Publicaciones sociales",
+        "empty": "Aún no hay versiones por plataforma."
+      },
+      "details": {
+        "save": "Guardar título y resumen",
+        "hint": "El agente escribe el artículo a partir de esto.",
+        "saved": "Título y resumen guardados",
+        "saveFailed": "No se pudo guardar el título y el resumen"
+      }
+    },
+    "rail": {
+      "label": "Herramientas del contenido",
+      "collapse": "Plegar",
+      "expand": "Desplegar",
+      "actions": {
+        "title": "Acciones",
+        "failing": "{count} comprobaciones por revisar",
+        "note": "Nada de esto se ejecuta solo: tú lo pulsas.",
+        "keyword": "Palabra clave objetivo",
+        "keywordHint": "Para qué debe encontrarse la versión de búsqueda. Da contexto a la reparación.",
+        "keywordPlaceholder": "mantenimiento de tejados",
+        "fix": "Corregir según las comprobaciones",
+        "fixed": "Comprobaciones corregidas",
+        "noChanges": "Todas las comprobaciones ya pasan: no se cambió nada",
+        "failed": "No se pudieron corregir las comprobaciones",
+        "regenerate": "Regenerar"
+      },
+      "social": {
+        "separate": "Publicar en redes es una acción distinta de publicar el artículo: esa es el control Publicar que está bajo el artículo.",
+        "auto": "Generar automáticamente",
+        "choose": "Elegir plataformas",
+        "noConnected": "Conecta una cuenta de una plataforma para poder publicar aquí.",
+        "generate": "Generar publicaciones",
+        "regenerate": "Regenerar",
+        "generated": "Publicaciones listas",
+        "generateFailed": "No se pudieron generar las publicaciones",
+        "choicesFailed": "No se pudieron cargar las plataformas en las que puedes publicar",
+        "articleMissing": "Escribe primero el artículo",
+        "post": "Publicar ahora",
+        "postAll": "Publicar todas ahora",
+        "schedule": "Programar",
+        "scheduleAt": "Fecha y hora",
+        "scheduleConfirm": "Programar esta publicación",
+        "posted": "Publicado en {platform}",
+        "scheduled": "Programado para {platform}",
+        "sendFailed": "No se pudo publicar en {platform}",
+        "needsAccount": "No hay ninguna cuenta conectada para {platform}",
+        "needsDate": "Elige primero una fecha y hora",
+        "stored": "Textos guardados, por plataforma"
+      },
+      "shortcuts": {
+        "title": "Atajos",
+        "article": "El artículo",
+        "details": "Título y resumen",
+        "checks": "Las comprobaciones",
+        "publish": "Publicar el artículo"
+      }
+    },
+    "draft": {
+      "empty": "Todavía no hay artículo. Escribe uno con Escribir ahora.",
+      "saved": "Borrador guardado",
+      "saveFailed": "No se pudo guardar el borrador",
+      "regenerated": "Artículo escrito",
+      "regenerateFailed": "No se pudo escribir el artículo"
+    },
+    "publish": {
+      "cta": "Publicar",
+      "confirm": "¿Publicar ahora?",
+      "cancel": "Cancelar",
+      "blocked": "Escribe un borrador antes de publicar.",
+      "done": "Publicado.",
+      "job": "Tarea",
+      "published": "Publicado",
+      "variantSent": "Enviado: {version}",
+      "variantRow": "Versión enviada",
+      "failed": "No se pudo publicar"
+    },
+    "assets": {
+      "open": "Insertar imagen",
+      "inserted": "Imagen insertada",
+      "title": "Insertar una imagen",
+      "hint": "De los recursos de tu negocio.",
+      "loading": "Cargando imágenes…",
+      "empty": "Todavía no hay imágenes en tus recursos.",
+      "failed": "No se pudieron cargar tus imágenes"
+    },
+    "feedback": {
+      "detailFailed": "No se pudo cargar este borrador",
+      "confirmRequired": "Publicar necesita una confirmación explícita"
+    },
+    "platforms": {
+      "twitter": "X",
+      "instagram": "IG",
+      "facebook": "FB",
+      "linkedin": "LI",
+      "tiktok": "TT",
+      "bluesky": "BS",
+      "youtube": "YT",
+      "threads": "TH"
+    }
+  },
+  "de": {
+    "back": "Zurück zum Board",
+    "title": "Inhalte",
+    "seo_title": "Inhalte",
+    "seo_description": "Plane, schreibe und veröffentliche jeweils einen Artikel.",
+    "scan": {
+      "title": "Worüber schreiben wir?",
+      "hint": "Leer lassen, um stattdessen dein Unternehmen zu analysieren.",
+      "topicLabel": "Thema (optional)",
+      "topicPlaceholder": "z. B. Dachwartung vor dem Winter",
+      "platforms": "Plattformen",
+      "platformsHint": "Ein Artikel überall; jede Plattform bekommt ihre eigene Fassung.",
+      "platformsLoading": "Plattformen werden geladen…",
+      "platformsEmpty": "Gerade ist keine Plattform verfügbar.",
+      "platformsNeedOne": "Wähle mindestens eine Plattform, um fortzufahren.",
+      "platformsFailed": "Die Plattformliste konnte nicht geladen werden",
+      "submit": "Ideen finden",
+      "running": "Recherchiere und schreibe Ideen…",
+      "runningHint": "Das dauert bis zu eine Minute. Du kannst diese Seite geöffnet lassen.",
+      "cancel": "Abbrechen",
+      "added": "Neue Ideen in Geplant: {count}",
+      "failed": "Ideen konnten nicht gesucht werden"
+    },
+    "ideas": {
+      "none": "Der Agent hat für dieses Thema keine Ideen gefunden"
+    },
+    "card": {
+      "menu": "Kartenaktionen",
+      "menuEdit": "Titel und Kurztext bearbeiten",
+      "menuDelete": "Karte löschen",
+      "editTitleLabel": "Diese Idee bearbeiten",
+      "editHint": "Titel und Kurztext sind die Grundlage des Artikels.",
+      "titleField": "Titel",
+      "briefField": "Kurztext",
+      "briefHint": "Ein oder zwei Sätze darüber, was der Artikel behandeln soll.",
+      "briefPlaceholder": "Worum soll es in diesem Artikel gehen?",
+      "cancel": "Abbrechen",
+      "save": "Speichern",
+      "saved": "Karte aktualisiert",
+      "saveFailed": "Die Karte konnte nicht aktualisiert werden",
+      "deleteTitle": "Diese Karte löschen?",
+      "deleteBody": "„{title}“ und alles, was schon dafür geschrieben wurde, verschwinden vom Board. Das lässt sich nicht rückgängig machen.",
+      "delete": "Löschen",
+      "deleted": "Karte gelöscht",
+      "deleteFailed": "Die Karte konnte nicht gelöscht werden",
+      "open": "Karte öffnen",
+      "create": "Neue Karte",
+      "created": "Karte erstellt",
+      "createFailed": "Karte konnte nicht erstellt werden",
+      "createTitleLabel": "Neue Karte",
+      "createHint": "Jetzt notieren; der Agent macht weiter.",
+      "createTitlePlaceholder": "Was ist die Idee?",
+      "createBriefPlaceholder": "Optional: Winkel, Zielgruppe, was zu sagen ist"
+    },
+    "board": {
+      "columns": {
+        "planned": "Geplant",
+        "approved": "Freigegeben",
+        "writing": "Wird geschrieben",
+        "published": "Veröffentlicht"
+      },
+      "empty": "Leer",
+      "running": "Läuft…",
+      "writeNow": "Jetzt schreiben",
+      "edit": "Bearbeiten",
+      "view": "Ansehen →",
+      "moveLeft": "In die vorherige Spalte verschieben",
+      "moveRight": "In die nächste Spalte verschieben",
+      "needTarget": "Wähle zuerst das Publikationsziel",
+      "noArtifact": "Diese Karte hat noch keinen Artikel zum Veröffentlichen",
+      "moved": "Karte verschoben",
+      "moveFailed": "Die Karte konnte nicht verschoben werden",
+      "written": "Artikel geschrieben",
+      "writeFailed": "Der Artikel konnte nicht geschrieben werden",
+      "published": "Veröffentlicht",
+      "publishFailed": "Konnte nicht veröffentlicht werden",
+      "failed": "Das Board konnte nicht geladen werden",
+      "mode": {
+        "safe": "Sicherer Modus",
+        "safeHint": "Nichts wird ohne dich freigegeben oder veröffentlicht.",
+        "autonomous": "Autonomer Modus",
+        "autonomousHint": "Der Agent gibt Themen frei und veröffentlicht selbstständig.",
+        "switchToSafe": "Auf Sicher umstellen",
+        "switchToAutonomous": "Auf Autonom umstellen",
+        "safeOn": "Sicherer Modus aktiv",
+        "safeOff": "Sicherer Modus aus",
+        "switchFailed": "Der Modus konnte nicht geändert werden"
+      },
+      "target": {
+        "label": "Veröffentlichen nach",
+        "empty": "Noch kein verbundenes Ziel.",
+        "failed": "Deine Publikationsverbindungen konnten nicht geladen werden",
+        "unset": "Kein Ziel"
+      },
+      "illegalMove": "Eine Karte kann nicht direkt von {from} nach {to} wechseln."
+    },
+    "idea": {
+      "meta": "Meta",
+      "edit": "Bearbeiten",
+      "save": "Speichern",
+      "preview": "Vorschau",
+      "words": "Wörter: {count}",
+      "version": "v{version}",
+      "unpublish": "Zurückziehen",
+      "viewSite": "Auf der Seite ansehen →",
+      "unpublished": "Zurück nach Freigegeben",
+      "unpublishFailed": "Konnte nicht zurückgezogen werden",
+      "state": {
+        "idea": "Idee",
+        "drafting": "Wird geschrieben",
+        "review_required": "Bereit zur Prüfung",
+        "scheduled": "Eingeplant",
+        "published": "Veröffentlicht",
+        "failed": "Fehlgeschlagen",
+        "archived": "Archiviert"
+      },
+      "metaFields": {
+        "platforms": "Plattformen",
+        "priority": "Priorität",
+        "updated": "Letzte Änderung",
+        "post": "Beitrag"
+      },
+      "checks": {
+        "title": "Prüfungen",
+        "empty": "Noch keine Prüfungen.",
+        "score": "{score}/100",
+        "status": {
+          "pass": "Bestanden",
+          "warn": "Schaut einmal hin",
+          "fail": "Fehlgeschlagen"
+        },
+        "findings": {
+          "length": "Länge außerhalb des idealen Bereichs",
+          "missingCta": "Kein Handlungsaufruf",
+          "tooManyHashtags": "Zu viele Hashtags",
+          "topicMissing": "Das Thema kommt im Text nicht vor",
+          "notQuestionLed": "Beginnt nicht mit einer Frage",
+          "noConcreteData": "Keine Zahlen oder Daten zum Ankern",
+          "noCitations": "Nichts belegt",
+          "urls": "Gefundene Links",
+          "probes": "Linkprüfung"
+        }
+      },
+      "variant": {
+        "article": "Artikel",
+        "keyword": "„{keyword}“",
+        "intent": {
+          "search": "Suche & KI-Antworten",
+          "social": "Reaktion der Plattform",
+          "shared": "Gemeinsame Fassung"
+        }
+      },
+      "social": {
+        "title": "Social-Media-Beiträge",
+        "empty": "Noch keine Fassungen pro Plattform."
+      },
+      "details": {
+        "save": "Titel und Kurztext speichern",
+        "hint": "Der Agent schreibt den Artikel daraus.",
+        "saved": "Titel und Kurztext gespeichert",
+        "saveFailed": "Titel und Kurztext konnten nicht gespeichert werden"
+      }
+    },
+    "rail": {
+      "label": "Inhaltswerkzeuge",
+      "collapse": "Einklappen",
+      "expand": "Ausklappen",
+      "actions": {
+        "title": "Aktionen",
+        "failing": "{count} Prüfungen anzusehen",
+        "note": "Nichts davon läuft von selbst — du drückst es.",
+        "keyword": "Ziel-Keyword",
+        "keywordHint": "Worüber die Suchfassung gefunden werden soll. Es verankert die Reparatur.",
+        "keywordPlaceholder": "Dachwartung",
+        "fix": "Anhand der Prüfungen korrigieren",
+        "fixed": "Prüfungen korrigiert",
+        "noChanges": "Alle Prüfungen bestehen bereits — nichts wurde geändert",
+        "failed": "Die Prüfungen konnten nicht korrigiert werden",
+        "regenerate": "Neu schreiben"
+      },
+      "social": {
+        "separate": "Einen Social-Post zu veröffentlichen ist eine andere Aktion als den Artikel zu veröffentlichen — dafür ist die Schaltfläche Veröffentlichen unter dem Artikel.",
+        "auto": "Automatisch erzeugen",
+        "choose": "Plattformen wählen",
+        "noConnected": "Verbinde ein Konto einer Plattform, um hier posten zu können.",
+        "generate": "Beiträge erzeugen",
+        "regenerate": "Neu erzeugen",
+        "generated": "Beiträge fertig",
+        "generateFailed": "Die Beiträge konnten nicht erzeugt werden",
+        "choicesFailed": "Die Plattformen, auf denen du posten kannst, konnten nicht geladen werden",
+        "articleMissing": "Schreibe zuerst den Artikel",
+        "post": "Jetzt posten",
+        "postAll": "Alle jetzt posten",
+        "schedule": "Planen",
+        "scheduleAt": "Datum und Uhrzeit",
+        "scheduleConfirm": "Diesen Beitrag planen",
+        "posted": "Auf {platform} gepostet",
+        "scheduled": "Für {platform} geplant",
+        "sendFailed": "Auf {platform} konnte nicht gepostet werden",
+        "needsAccount": "Kein verbundenes Konto für {platform}",
+        "needsDate": "Wähle zuerst ein Datum und eine Uhrzeit",
+        "stored": "Gespeicherte Texte, pro Plattform"
+      },
+      "shortcuts": {
+        "title": "Sprünge",
+        "article": "Der Artikel",
+        "details": "Titel und Kurztext",
+        "checks": "Die Prüfungen",
+        "publish": "Artikel veröffentlichen"
+      }
+    },
+    "draft": {
+      "empty": "Noch kein Artikel. Schreibe einen mit „Jetzt schreiben“.",
+      "saved": "Entwurf gespeichert",
+      "saveFailed": "Der Entwurf konnte nicht gespeichert werden",
+      "regenerated": "Artikel geschrieben",
+      "regenerateFailed": "Der Artikel konnte nicht geschrieben werden"
+    },
+    "publish": {
+      "cta": "Veröffentlichen",
+      "confirm": "Jetzt veröffentlichen?",
+      "cancel": "Abbrechen",
+      "blocked": "Schreibe einen Entwurf, bevor du veröffentlichst.",
+      "done": "Veröffentlicht.",
+      "job": "Auftrag",
+      "published": "Veröffentlicht",
+      "variantSent": "Gesendet: {version}",
+      "variantRow": "Gesendete Fassung",
+      "failed": "Konnte nicht veröffentlicht werden"
+    },
+    "assets": {
+      "open": "Bild einfügen",
+      "inserted": "Bild eingefügt",
+      "title": "Ein Bild einfügen",
+      "hint": "Aus den Assets deines Unternehmens.",
+      "loading": "Bilder werden geladen…",
+      "empty": "Noch keine Bilder in deinen Assets.",
+      "failed": "Deine Bilder konnten nicht geladen werden"
+    },
+    "feedback": {
+      "detailFailed": "Dieser Entwurf konnte nicht geladen werden",
+      "confirmRequired": "Zum Veröffentlichen ist eine ausdrückliche Bestätigung nötig"
+    },
+    "platforms": {
+      "twitter": "X",
+      "instagram": "IG",
+      "facebook": "FB",
+      "linkedin": "LI",
+      "tiktok": "TT",
+      "bluesky": "BS",
+      "youtube": "YT",
+      "threads": "TH"
+    }
+  },
+  "fr": {
+    "back": "Retour au tableau",
+    "title": "Contenu",
+    "seo_title": "Contenu",
+    "seo_description": "Planifiez, rédigez et publiez un article à la fois.",
+    "scan": {
+      "title": "De quoi écrire ?",
+      "hint": "Laissez vide pour analyser votre entreprise à la place.",
+      "topicLabel": "Sujet (facultatif)",
+      "topicPlaceholder": "p. ex. entretien de toiture avant l'hiver",
+      "platforms": "Plateformes",
+      "platformsHint": "Un seul article partout ; chaque plateforme reçoit sa propre version.",
+      "platformsLoading": "Chargement des plateformes…",
+      "platformsEmpty": "Aucune plateforme n'est disponible pour le moment.",
+      "platformsNeedOne": "Choisissez au moins une plateforme pour continuer.",
+      "platformsFailed": "Impossible de charger la liste des plateformes",
+      "submit": "Trouver des idées",
+      "running": "Recherche et rédaction des idées…",
+      "runningHint": "Cela prend jusqu'à une minute. Vous pouvez laisser cette page ouverte.",
+      "cancel": "Annuler",
+      "added": "Nouvelles idées dans Planifié : {count}",
+      "failed": "Impossible de trouver des idées"
+    },
+    "ideas": {
+      "none": "L'agent n'a trouvé aucune idée pour ce sujet"
+    },
+    "card": {
+      "menu": "Actions de la carte",
+      "menuEdit": "Modifier le titre et le résumé",
+      "menuDelete": "Supprimer la carte",
+      "editTitleLabel": "Modifier cette idée",
+      "editHint": "Le titre et le résumé sont la base de l'article.",
+      "titleField": "Titre",
+      "briefField": "Résumé",
+      "briefHint": "Une ou deux phrases sur ce que l'article doit couvrir.",
+      "briefPlaceholder": "De quoi doit traiter cet article ?",
+      "cancel": "Annuler",
+      "save": "Enregistrer",
+      "saved": "Carte mise à jour",
+      "saveFailed": "Impossible de mettre à jour la carte",
+      "deleteTitle": "Supprimer cette carte ?",
+      "deleteBody": "« {title} » et tout ce qui a déjà été écrit pour elle quittent le tableau. Cette action est irréversible.",
+      "delete": "Supprimer",
+      "deleted": "Carte supprimée",
+      "deleteFailed": "Impossible de supprimer la carte",
+      "open": "Ouvrir la carte",
+      "create": "Nouvelle carte",
+      "created": "Carte créée",
+      "createFailed": "Impossible de créer la carte",
+      "createTitleLabel": "Nouvelle carte",
+      "createHint": "Notez-la maintenant ; l’agent prend le relais.",
+      "createTitlePlaceholder": "Quelle est l’idée ?",
+      "createBriefPlaceholder": "Option : angle, audience, quoi dire"
+    },
+    "board": {
+      "columns": {
+        "planned": "Planifié",
+        "approved": "Approuvé",
+        "writing": "Rédaction",
+        "published": "Publié"
+      },
+      "empty": "Vide",
+      "running": "En cours…",
+      "writeNow": "Rédiger",
+      "edit": "Modifier",
+      "view": "Voir →",
+      "moveLeft": "Déplacer vers la colonne précédente",
+      "moveRight": "Déplacer vers la colonne suivante",
+      "needTarget": "Choisissez d'abord la destination de publication",
+      "noArtifact": "Cette carte n'a pas encore d'article à publier",
+      "moved": "Carte déplacée",
+      "moveFailed": "Impossible de déplacer la carte",
+      "written": "Article rédigé",
+      "writeFailed": "Impossible de rédiger l'article",
+      "published": "Publié",
+      "publishFailed": "Impossible de publier",
+      "failed": "Impossible de charger le tableau",
+      "mode": {
+        "safe": "Mode sécurisé",
+        "safeHint": "Rien n'est approuvé ni publié sans vous.",
+        "autonomous": "Mode autonome",
+        "autonomousHint": "L'agent approuve les sujets et publie de lui-même.",
+        "switchToSafe": "Passer en Sécurisé",
+        "switchToAutonomous": "Passer en Autonome",
+        "safeOn": "Mode sécurisé activé",
+        "safeOff": "Mode sécurisé désactivé",
+        "switchFailed": "Impossible de changer de mode"
+      },
+      "target": {
+        "label": "Publier vers",
+        "empty": "Aucune destination connectée pour l'instant.",
+        "failed": "Impossible de charger vos connexions de publication",
+        "unset": "Aucune destination"
+      },
+      "illegalMove": "Une carte ne peut pas passer directement de {from} à {to}."
+    },
+    "idea": {
+      "meta": "Meta",
+      "edit": "Modifier",
+      "save": "Enregistrer",
+      "preview": "Aperçu",
+      "words": "Mots : {count}",
+      "version": "v{version}",
+      "unpublish": "Dépublier",
+      "viewSite": "Voir sur le site →",
+      "unpublished": "Remis dans Approuvé",
+      "unpublishFailed": "Impossible de dépublier",
+      "state": {
+        "idea": "Idée",
+        "drafting": "Rédaction",
+        "review_required": "Prêt à relire",
+        "scheduled": "Planifié",
+        "published": "Publié",
+        "failed": "Échec",
+        "archived": "Archivé"
+      },
+      "metaFields": {
+        "platforms": "Plateformes",
+        "priority": "Priorité",
+        "updated": "Dernière modification",
+        "post": "Publication"
+      },
+      "checks": {
+        "title": "Contrôles",
+        "empty": "Aucun contrôle pour l'instant.",
+        "score": "{score}/100",
+        "status": {
+          "pass": "Bon",
+          "warn": "À regarder",
+          "fail": "Échec"
+        },
+        "findings": {
+          "length": "Longueur hors de la plage idéale",
+          "missingCta": "Aucun appel à l'action",
+          "tooManyHashtags": "Trop de hashtags",
+          "topicMissing": "Le sujet n'apparaît jamais dans le texte",
+          "notQuestionLed": "Ne commence pas par une question",
+          "noConcreteData": "Aucun chiffre ni date pour l'ancrer",
+          "noCitations": "Aucune source citée",
+          "urls": "Liens trouvés",
+          "probes": "Vérification des liens"
+        }
+      },
+      "variant": {
+        "article": "Article",
+        "keyword": "« {keyword} »",
+        "intent": {
+          "search": "Recherche & réponses IA",
+          "social": "Réaction de la plateforme",
+          "shared": "Version partagée"
+        }
+      },
+      "social": {
+        "title": "Publications sociales",
+        "empty": "Pas encore de version par plateforme."
+      },
+      "details": {
+        "save": "Enregistrer le titre et le résumé",
+        "hint": "L’agent rédige l’article à partir de cela.",
+        "saved": "Titre et résumé enregistrés",
+        "saveFailed": "Impossible d’enregistrer le titre et le résumé"
+      }
+    },
+    "rail": {
+      "label": "Outils du contenu",
+      "collapse": "Replier",
+      "expand": "Déplier",
+      "actions": {
+        "title": "Actions",
+        "failing": "{count} contrôles à regarder",
+        "note": "Rien ici ne se lance tout seul — c’est vous qui cliquez.",
+        "keyword": "Mot-clé cible",
+        "keywordHint": "Pour quoi la version recherche doit être trouvée. C’est lui qui ancre la réparation.",
+        "keywordPlaceholder": "entretien de toiture",
+        "fix": "Corriger selon les contrôles",
+        "fixed": "Contrôles corrigés",
+        "noChanges": "Tous les contrôles passent déjà — rien n’a changé",
+        "failed": "Impossible de corriger les contrôles",
+        "regenerate": "Régénérer"
+      },
+      "social": {
+        "separate": "Publier sur les réseaux est une action distincte de la publication de l’article — celle-ci est le bouton Publier sous l’article.",
+        "auto": "Générer automatiquement",
+        "choose": "Choisir des plateformes",
+        "noConnected": "Connectez un compte de plateforme pour publier ici.",
+        "generate": "Générer les publications",
+        "regenerate": "Régénérer",
+        "generated": "Publications prêtes",
+        "generateFailed": "Impossible de générer les publications",
+        "choicesFailed": "Impossible de charger les plateformes auxquelles vous pouvez publier",
+        "articleMissing": "Rédigez d’abord l’article",
+        "post": "Publier maintenant",
+        "postAll": "Tout publier maintenant",
+        "schedule": "Planifier",
+        "scheduleAt": "Date et heure",
+        "scheduleConfirm": "Planifier cette publication",
+        "posted": "Publié sur {platform}",
+        "scheduled": "Planifié pour {platform}",
+        "sendFailed": "Impossible de publier sur {platform}",
+        "needsAccount": "Aucun compte connecté pour {platform}",
+        "needsDate": "Choisissez d’abord une date et une heure",
+        "stored": "Textes enregistrés, par plateforme"
+      },
+      "shortcuts": {
+        "title": "Raccourcis",
+        "article": "L’article",
+        "details": "Titre et résumé",
+        "checks": "Les contrôles",
+        "publish": "Publier l’article"
+      }
+    },
+    "draft": {
+      "empty": "Pas encore d'article. Rédigez-en un avec « Rédiger ».",
+      "saved": "Brouillon enregistré",
+      "saveFailed": "Impossible d'enregistrer le brouillon",
+      "regenerated": "Article rédigé",
+      "regenerateFailed": "Impossible de rédiger l'article"
+    },
+    "publish": {
+      "cta": "Publier",
+      "confirm": "Publier maintenant ?",
+      "cancel": "Annuler",
+      "blocked": "Rédigez un brouillon avant de publier.",
+      "done": "Publié.",
+      "job": "Tâche",
+      "published": "Publié",
+      "variantSent": "Envoyé : {version}",
+      "variantRow": "Version envoyée",
+      "failed": "Impossible de publier"
+    },
+    "assets": {
+      "open": "Insérer une image",
+      "inserted": "Image insérée",
+      "title": "Insérer une image",
+      "hint": "Depuis les ressources de votre entreprise.",
+      "loading": "Chargement des images…",
+      "empty": "Pas encore d’images dans vos ressources.",
+      "failed": "Impossible de charger vos images"
+    },
+    "feedback": {
+      "detailFailed": "Impossible de charger ce brouillon",
+      "confirmRequired": "La publication exige une confirmation explicite"
+    },
+    "platforms": {
+      "twitter": "X",
+      "instagram": "IG",
+      "facebook": "FB",
+      "linkedin": "LI",
+      "tiktok": "TT",
+      "bluesky": "BS",
+      "youtube": "YT",
+      "threads": "TH"
+    }
+  }
+}

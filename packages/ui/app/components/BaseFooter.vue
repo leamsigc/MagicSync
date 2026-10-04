@@ -10,9 +10,8 @@
  * @todo [ ] Integration test.
  * @todo [✔] Update the typescript.
  */
-const { t } = useI18n()
 const appConfig = useAppConfig()
-const { footerLinks } = useNavigationLinks()
+const { t, footerLinks } = useNavigationLinks()
 
 const socials = appConfig.BaseUiLayer.footer.socialLinks
 const companyName = appConfig.BaseUiLayer.footer.companyName

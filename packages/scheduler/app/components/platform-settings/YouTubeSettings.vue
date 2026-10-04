@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type { YouTubeSettings } from '#layers/BaseScheduler/shared/platformSettings';
+import type { YouTubeSettings } from '#layers/BaseShared/shared/platformSettings';
 import type { Asset } from '#layers/BaseDB/db/schema';
 
 const settings = defineModel<YouTubeSettings>({ required: true });

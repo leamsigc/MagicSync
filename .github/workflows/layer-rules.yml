@@ -1,0 +1,27 @@
+name: Layer Rules
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+jobs:
+  layer-imports:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # The audit reads the alias table from the generated tsconfig, so the site
+      # layer must be prepared before the check can resolve #layers/Base* names.
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Prepare site layer
+        run: pnpm --filter @local-monorepo/site exec nuxt prepare
+      - name: Audit cross-layer imports
+        run: node scripts/layer-import-audit.mjs
+      - name: Report remaining layer debt
+        if: always()
+        run: node scripts/layer-import-audit.mjs --strict || true

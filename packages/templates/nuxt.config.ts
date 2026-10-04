@@ -1,5 +1,4 @@
 import { defineNuxtConfig } from 'nuxt/config'
-import type { NuxtPage } from 'nuxt/schema'
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
 
@@ -37,24 +36,6 @@ export default defineNuxtConfig({
     ],
     defaultLocale: 'en',
     // bundle: ''
-  },
-  hooks: {
-    'pages:extend': function (pages) {
-      const pagesToRemove: NuxtPage[] = []
-      pages.forEach((page) => {
-        const pathsToExclude = ['types', 'components', '/api', 'composables', 'utils', '.json']
-        if (pathsToExclude.some(excludePath => page.path.includes(excludePath))) {
-          pagesToRemove.push(page)
-        }
-      })
-      pagesToRemove.forEach((page: NuxtPage) => {
-        pages.splice(pages.indexOf(page), 1)
-      })
-      /* Uncomment to show current Routes
-      console.log(`\nCurrent Routes:`)
-      console.log(pages)
-      console.log(`\n`) */
-    }
   },
   evlog: {
     env: {

@@ -143,7 +143,7 @@ class NotificationService {
                         await sendNotificationEmail(email, data.title, data.message, data.actionUrl)
                     }
                 } catch (emailError) {
-                    console.error('Failed to send immediate notification email:', emailError)
+                    log.error({ message: 'Failed to send immediate notification email', detail: emailError })
                 }
             }
 

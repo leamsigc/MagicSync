@@ -72,7 +72,6 @@ export default defineEventHandler(async (event) => {
       throw error
     }
 
-    console.error('File serving error:', error)
     log.error('Failed to serve file', { error })
     throw createError({
       statusCode: 500,

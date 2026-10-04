@@ -1,10 +1,9 @@
 <script lang="ts" setup>
-const { t } = useI18n()
 const appConfig = useAppConfig()
 const companyName = appConfig.BaseUiLayer.footer.companyName
 const companyLogo = appConfig.BaseUiLayer.main.logo
 
-const { links: items } = useNavigationLinks()
+const { t, links: items } = useNavigationLinks()
 </script>
 
 <template>
@@ -47,7 +46,7 @@ const { links: items } = useNavigationLinks()
           <UButton color="primary" variant="ghost" to="/login" icon="i-lucide-user"
             :aria-label="t('navigation.login')" />
         </UTooltip>
-        <!-- <UNavigationMenu :items="items" orientation="vertical" class="-mx-2.5" :ui="{ viewport: 'ring-0' }" /> -->
+        <UNavigationMenu :items="items" orientation="vertical" class="-mx-2.5" :ui="{ viewport: 'ring-0' }" />
       </section>
     </template>
   </UHeader>

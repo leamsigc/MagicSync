@@ -16,7 +16,7 @@ export const getCanvaToken = async (userId: string): Promise<string | null> => {
 
     return tokenResult.accessToken
   } catch (error) {
-    console.error('Failed to get Canva token:', error)
+    log.error({ message: 'Failed to get Canva token', error: String(error) })
     return null
   }
 }

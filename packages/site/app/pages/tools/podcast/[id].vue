@@ -1,0 +1,176 @@
+<i18n src="./index.json"></i18n>
+<script lang="ts" setup>
+/**
+ *
+ * Podcast Detail Page — shows latest episodes from RSS feed
+ *
+ * @author Ismael Garcia <leamsigc@leamsigc.com>
+ * @version 0.0.1
+ */
+
+
+const { t } = useI18n()
+const route = useRoute()
+const { getPodcastFeed } = usePodcastService()
+const { currentEpisode, playEpisode } = usePodcastPlayer()
+
+const feedUrl = computed(() => String(route.query.feed || ''))
+const podcastTitle = computed(() => String(route.query.title || 'Podcast'))
+const podcastAuthor = computed(() => String(route.query.author || ''))
+const podcastArtwork = computed(() => String(route.query.artwork || ''))
+const podcastId = computed(() => String(route.params.id))
+
+const episodes = ref<Episode[]>([])
+const isLoading = ref(false)
+const isFavoriteState = ref(false)
+const downloadedIds = ref<Set<string>>(new Set())
+const playedIds = ref<Set<string>>(new Set())
+
+const last24Hours = 24 * 60 * 60 * 1000
+
+const isPodcastSavedInLast24Hours = (savedAt: number) => {
+  const now = Date.now()
+  return now - savedAt < last24Hours
+}
+
+onMounted(async () => {
+  if (feedUrl.value) {
+    isLoading.value = true
+    const savedPodcast = await getPodcastsById(podcastId.value)
+
+    if (savedPodcast?.episodes?.length && isPodcastSavedInLast24Hours(savedPodcast.savedAt)) {
+      episodes.value = savedPodcast.episodes
+      isLoading.value = false
+    } else {
+      const episodesList = await getPodcastFeed(feedUrl.value)
+      episodes.value = episodesList
+      await savePodcast({
+        id: podcastId.value,
+        title: podcastTitle.value,
+        author: podcastAuthor.value,
+        artwork: podcastArtwork.value,
+        feedUrl: feedUrl.value,
+        savedAt: Date.now(),
+        episodes: episodesList,
+      })
+      isLoading.value = false
+    }
+  }
+  isFavoriteState.value = await isFavorite(podcastId.value)
+
+  for (const ep of episodes.value) {
+    if (await isEpisodeDownloaded(ep.id)) {
+      downloadedIds.value.add(ep.id)
+    }
+    if (await isEpisodePlayed(ep.id)) {
+      playedIds.value.add(ep.id)
+    }
+  }
+})
+
+const handlePlay = async (episode: Episode) => {
+  await markPlayed(episode.id, podcastId.value)
+  playedIds.value.add(episode.id)
+  playEpisode(
+    episode,
+    { title: podcastTitle.value, artwork: podcastArtwork.value, id: podcastId.value },
+    episodes.value,
+  )
+}
+
+const handleToggleFavorite = async () => {
+  if (isFavoriteState.value) {
+    await removeFavorite(podcastId.value)
+    isFavoriteState.value = false
+  } else {
+    await saveFavorite({
+      id: podcastId.value,
+      title: podcastTitle.value,
+      author: podcastAuthor.value,
+      artwork: podcastArtwork.value,
+      feedUrl: feedUrl.value,
+      savedAt: Date.now(),
+    })
+    isFavoriteState.value = true
+  }
+}
+
+const handleDownload = async (episode: Episode) => {
+  const proxyUrl = `/api/v1/podcast/audio?url=${encodeURIComponent(episode.audioUrl)}`
+  const success = await downloadEpisode(episode, podcastId.value, proxyUrl)
+  if (success) {
+    downloadedIds.value.add(episode.id)
+  }
+}
+
+const handleRemoveDownload = async (episode: Episode) => {
+  await removeDownload(episode.id)
+  downloadedIds.value.delete(episode.id)
+}
+
+const isCurrentlyPlaying = (episode: Episode) => currentEpisode.value?.id === episode.id
+
+useHead({
+  title: `${podcastTitle.value} - ${t('podcast.title')}`,
+  meta: [{ name: 'description', content: `Listen to the latest episodes from ${podcastTitle.value}` }],
+})
+
+defineOgImage('BlogOgImage', {
+  title: `${podcastTitle.value} - ${t('podcast.title')}`,
+  description: `Listen to the latest episodes from ${podcastTitle.value}`,
+  headline: 'Free Tools',
+  imageUrl: '/img/podcast-player.png',
+})
+</script>
+
+<template>
+  <div class="min-h-screen bg-background-foreground">
+    <BaseHeader />
+    <div class="max-w-3xl mx-auto p-6">
+      <UButton variant="ghost" size="sm" icon="i-lucide-arrow-left" class="mb-6" data-testid="podcast-back"
+        to="/tools/podcast">
+        {{ t('podcast.back') }}
+      </UButton>
+
+      <div class="flex items-start gap-6 mb-8">
+        <img v-if="podcastArtwork" :src="podcastArtwork" :alt="podcastTitle"
+          class="w-32 h-32 rounded-xl object-cover shrink-0" loading="lazy">
+        <div v-else class="w-32 h-32 rounded-xl bg-gray-800 flex items-center justify-center shrink-0">
+          <UIcon name="i-lucide-microphone" class="w-12 h-12 text-gray-600" />
+        </div>
+        <div class="flex-1 min-w-0">
+          <h1 class="text-2xl font-bold leading-tight line-clamp-2" data-testid="podcast-title">
+            {{ podcastTitle }}
+          </h1>
+          <p class="text-gray-400 mt-1">{{ podcastAuthor }}</p>
+          <div class="flex items-center gap-3 mt-4">
+            <UButton :icon="isFavoriteState ? 'i-lucide-bookmark-check' : 'i-lucide-bookmark'"
+              :variant="isFavoriteState ? 'solid' : 'outline'" :color="isFavoriteState ? 'primary' : 'neutral'"
+              size="sm" data-testid="podcast-favorite-toggle" @click="handleToggleFavorite">
+              {{ isFavoriteState ? t('podcast.favorite.saved') : t('podcast.favorite.save') }}
+            </UButton>
+          </div>
+        </div>
+      </div>
+
+      <h2 class="text-lg font-semibold mb-4">{{ t('podcast.episode.title') }}</h2>
+
+      <div v-if="isLoading" class="flex items-center justify-center py-16" data-testid="podcast-episodes-loading">
+        <UIcon name="i-lucide-loader-2" class="w-8 h-8 text-orange-400 animate-spin" />
+      </div>
+
+      <div v-else-if="episodes.length > 0" class="space-y-3" data-testid="podcast-episodes">
+        <EpisodeCard v-for="episode in episodes" :key="episode.id" :id="episode.id" :title="episode.title"
+          :date="episode.date" :duration="episode.duration" :description="episode.description"
+          :is-playing="isCurrentlyPlaying(episode)" :is-downloaded="downloadedIds.has(episode.id)"
+          :is-played="playedIds.has(episode.id)" @play="handlePlay(episode)" @download="handleDownload(episode)"
+          @remove-download="handleRemoveDownload(episode)" />
+      </div>
+
+      <div v-else class="text-center py-16">
+        <UIcon name="i-lucide-music-off" class="w-12 h-12 text-gray-600 mx-auto mb-4" />
+        <p class="text-gray-500">{{ t('podcast.episode.noEpisodes') }}</p>
+      </div>
+    </div>
+  </div>
+</template>

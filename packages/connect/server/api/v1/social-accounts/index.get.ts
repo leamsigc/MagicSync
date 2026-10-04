@@ -1,12 +1,12 @@
-import { socialMediaAccountService, sanitizeSocialMediaAccount } from '#layers/BaseDB/server/services/social-media-account.service';
-import { SchedulerPost, type SchedulerPluginConstructor } from '#layers/BaseScheduler/server/services/SchedulerPost.service';
-import { FacebookPlugin } from '#layers/BaseScheduler/server/services/plugins/facebook.plugin';
+import { socialMediaAccountService, sanitizeSocialMediaAccount, type SocialMediaPlatform } from '#layers/BaseDB/server/services/social-media-account.service';
+import { SchedulerPost, type SchedulerPluginConstructor } from '#layers/BaseDB/server/services/SchedulerPost.service';
+import { FacebookPlugin } from '#layers/BaseDB/server/services/plugins/facebook.plugin';
 import { checkUserIsLogin, getAccessTokenHelper } from '#layers/BaseAuth/server/utils/AuthHelpers';
 import { H3Error, getQuery, getHeaders } from 'h3';
 import { entityDetailsService } from '#layers/BaseDB/server/services/entity-details.service';
-import { LinkedInPagePlugin } from '#layers/BaseScheduler/server/services/plugins/linkedin-page.plugin';
-import { YouTubePlugin } from '#layers/BaseScheduler/server/services/plugins/youtube.plugin';
-import { GooglePlugin } from '#layers/BaseScheduler/server/services/plugins/google.plugin';
+import { LinkedInPagePlugin } from '#layers/BaseDB/server/services/plugins/linkedin-page.plugin';
+import { YouTubePlugin } from '#layers/BaseDB/server/services/plugins/youtube.plugin';
+import { GooglePlugin } from '#layers/BaseDB/server/services/plugins/google.plugin';
 import type { FacebookPage } from '#layers/BaseConnect/utils/FacebookPages';
 
 defineRouteMeta({
@@ -106,21 +106,40 @@ export default defineEventHandler(async (event) => {
     }).catch(() => null)
 
     if (tokenData?.accessToken) {
-      await socialMediaAccountService.updateAccount(account.id, {
-        accessToken: tokenData.accessToken
+      const mirroredAccounts = await socialMediaAccountService.getAccounts({
+        userId: user.id,
+        platform: effectivePlatform as SocialMediaPlatform,
+        isActive: true,
       })
+      for (const mirroredAccount of mirroredAccounts) {
+        await socialMediaAccountService.updateAccount(mirroredAccount.id, {
+          accessToken: tokenData.accessToken,
+          refreshToken: tokenData.refreshToken ?? undefined,
+          tokenExpiresAt: tokenData.accessTokenExpiresAt
+            ? new Date(tokenData.accessTokenExpiresAt)
+            : undefined,
+        })
+      }
     }
 
     const accessToken = tokenData?.accessToken || account.accessToken;
-
-    const facebookPlugin = scheduler.getPlugin('facebook')
-    if (!facebookPlugin || !(facebookPlugin instanceof FacebookPlugin)) {
+    const platformPlugin = scheduler.getPlugin(effectivePlatform)
+    if (!platformPlugin) {
       throw createError({
         statusCode: 400,
-        statusMessage: 'Facebook plugin not available'
+        statusMessage: `${effectivePlatform} plugin not available`
       })
     }
-    const pagesBaseOnTheAccount = await facebookPlugin.pages(accessToken);
+
+    const pagesBaseOnTheAccount = effectivePlatform === 'youtube'
+      ? await (platformPlugin as YouTubePlugin).pages(
+        null,
+        accessToken,
+        (await socialMediaAccountService.getAccounts({ userId: user.id, platform: 'youtube', isActive: true }))[0],
+      )
+      : effectivePlatform === 'facebook'
+        ? await (platformPlugin as FacebookPlugin).pages(null, accessToken)
+        : await (platformPlugin as LinkedInPagePlugin).pages(null, accessToken)
 
     entityDetailsService.createOrUpdateDetails({
       entityId: account.id,

@@ -180,7 +180,7 @@ export const useVideoRecorder = () => {
 
       return mediaStream
     } catch (err) {
-      console.error('Failed to start camera:', err)
+      log.error({ message: 'Failed to start camera', error: String(err) })
       error.value = 'Failed to access camera. Please ensure camera permissions are granted.'
       throw err
     }
@@ -484,7 +484,7 @@ export const useVideoRecorder = () => {
       await canvasSourceRef.value.add(timestamp, 1 / frameRate)
       readyForMoreFramesRef.value = true
     } catch (err) {
-      console.error('Error adding frame:', err)
+      log.error({ message: 'Error adding frame', error: String(err) })
       readyForMoreFramesRef.value = true
     }
   }
@@ -532,7 +532,7 @@ export const useVideoRecorder = () => {
       recordingState.value = 'recording'
 
     } catch (err) {
-      console.error('Failed to start recording:', err)
+      log.error({ message: 'Failed to start recording', error: String(err) })
       error.value = 'Failed to start recording. Please try again.'
       recordingState.value = 'error'
       isProcessing.value = false
@@ -587,7 +587,7 @@ export const useVideoRecorder = () => {
 
       recordingState.value = 'completed'
     } catch (err) {
-      console.error('Failed to finalize recording:', err)
+      log.error({ message: 'Failed to finalize recording', error: String(err) })
       error.value = 'Failed to process recording. Please try again.'
       recordingState.value = 'error'
     } finally {

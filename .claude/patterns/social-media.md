@@ -89,6 +89,26 @@ Social accounts are stored with these key fields:
 - [ ] Error responses from platform are logged and user notified
 - [ ] Impacted Facebook insight metric names checked against the current Graph API version before use
 
+## Facebook post insights (v25+)
+
+Graph rejects an entire `/insights` batch with
+`(#100) The value must be a valid insights metric` when **any** metric in the
+comma-separated list is invalid for that post type or API version — one bad
+metric kills all the good ones.
+
+- `post_impressions*` metrics were deprecated (June 2026) and are not reliable
+  on v25+; media-view metrics only exist for some post types.
+- `post_total_media_view_unique` is a **total-value** metric: it only validates
+  with `metric_type=total_value`, not as a time-series metric.
+- Never call `/insights` through the plugin's `fetch()` helper for optional
+  batches — a 400 logs a plugin failure. Use the raw-fetch fallback ladder in
+  `packages/scheduler/server/services/plugins/facebook-insights.ts`
+  (modern + total-value → legacy impressions → individual probes), and fall
+  back to post-object totals (reactions/comments/shares) when everything fails.
+- Keep the ladder covered by
+  `facebook-insights.test.ts` (`node --test <file>`); it asserts a rejected
+  batch never fails the whole call.
+
 ## Debug
 
 **OAuth fails:**

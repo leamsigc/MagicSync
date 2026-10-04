@@ -2,7 +2,7 @@ import { socialMediaAccountService, type SocialMediaPlatform } from "#layers/Bas
 import { auth } from '#layers/BaseAuth/lib/auth'
 import { useAuthApi } from '#layers/BaseAuth/server/utils/useAuthApi'
 import { checkUserIsLogin } from "#layers/BaseAuth/server/utils/AuthHelpers"
-import { refreshFacebookPageToken, refreshInstagramPageToken } from '#layers/BaseScheduler/server/services/TokenRefresh.service'
+import { refreshFacebookPageToken, refreshInstagramPageToken } from '#layers/BaseDB/server/services/TokenRefresh.service'
 
 // NOTE: lives under /refresh/[id] and NOT /[id]/refresh — Nitro routes the
 // latter to [platform]/[id]/index.post.ts (fully-dynamic 2-segment route
@@ -152,6 +152,7 @@ export default defineEventHandler(async (event) => {
       const mirroredAt = new Date()
       const mirror = {
         accessToken: tokenResp.accessToken,
+        refreshToken: tokenResp.refreshToken ?? undefined,
         tokenExpiresAt: tokenResp.accessTokenExpiresAt
           ? new Date(tokenResp.accessTokenExpiresAt)
           : undefined,
@@ -207,7 +208,7 @@ export default defineEventHandler(async (event) => {
 
       // Mark account as inactive if refresh fails
       if (smAccount) {
-        await socialMediaAccountService.updateAccount(accountId, { isActive: false })
+        await socialMediaAccountService.updateAccount(smAccount.id, { isActive: false })
       }
 
       throw createError({

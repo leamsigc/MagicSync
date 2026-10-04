@@ -1,0 +1,634 @@
+import type { PostResponse, Integration, PluginPostDetails, PluginSocialMediaAccount, GetCommentsResponse, ReplyCommentResponse, PlatformComment, PlatformStats, PostInsight } from '../SchedulerPost.service';
+import { BaseSchedulerPlugin, type MediaContent, createPostInsightsFallback, extractExternalPostId } from '../SchedulerPost.service';
+import type { Post, PostWithAllData, SocialMediaAccount, Asset, PlatformContentOverride } from '#layers/BaseDB/db/schema';
+import type { ThreadsSettings } from '#layers/BaseShared/shared/platformSettings';
+
+import { platformConfigurations } from '#layers/BaseShared/shared/platformConstants';
+
+type ThreadsApiComment = {
+  id: string;
+  text?: string;
+  from?: { username?: string; id?: string; profile_picture_url?: string };
+  timestamp?: string;
+  created_time?: string;
+  like_count?: number;
+  replies?: { data?: unknown[] };
+  parent_id?: string;
+};
+
+export class ThreadsPlugin extends BaseSchedulerPlugin {
+  override async getStatistic(postDetails: PluginPostDetails, socialMediaAccount: PluginSocialMediaAccount): Promise<PlatformStats> {
+    try {
+      const accessToken = socialMediaAccount.accessToken;
+      const userId = socialMediaAccount.accountId;
+
+      const response = await fetch(
+        `https://graph.threads.net/v1.0/me?fields=id,username,name,profile_picture_url,followers_count,following_count,biography`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.text();
+        log.error(`[Threads] Failed to fetch stats: ${error}`);
+        return this.createZeroStats(socialMediaAccount);
+      }
+
+      const profile = await response.json();
+
+      let totalEngagement = 0
+      let totalLikes = 0
+      let totalReplies = 0
+      let totalReposts = 0
+      let totalQuotes = 0
+      let totalThreadsCount = 0
+      let threadPerformances: Array<{ id: string; text: string; likes: number; replies: number; reposts: number }> = []
+
+      if (userId) {
+        try {
+          const mediaResponse = await fetch(
+            `https://graph.threads.net/${userId}/threads?fields=id,text,like_count,reply_count,repost_count,quote_count,timestamp&limit=50&access_token=${accessToken}`,
+            {
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+              },
+            }
+          )
+
+          if (mediaResponse.ok) {
+            const mediaData = await mediaResponse.json()
+            const threads = mediaData.data || []
+            totalThreadsCount = threads.length
+
+            for (const thread of threads) {
+              const likes = thread.like_count || 0
+              const replies = thread.reply_count || 0
+              const reposts = thread.repost_count || 0
+              const quotes = thread.quote_count || 0
+              const engagement = likes + replies + reposts + quotes
+
+              totalLikes += likes
+              totalReplies += replies
+              totalReposts += reposts
+              totalQuotes += quotes
+              totalEngagement += engagement
+
+              threadPerformances.push({
+                id: thread.id,
+                text: (thread.text || '').substring(0, 100),
+                likes,
+                replies,
+                reposts,
+              })
+            }
+
+            threadPerformances.sort((a, b) => (b.likes + b.replies + b.reposts) - (a.likes + a.replies + a.reposts))
+            threadPerformances = threadPerformances.slice(0, 10)
+          }
+        } catch (error: unknown) {
+          log.error({ content: 'Threads media fetch failed', plugin: 'threads', error: (error as Error).message });
+        }
+      }
+
+      const followersCount = profile.followers_count || 0
+      const engagementRate = followersCount > 0 && totalThreadsCount > 0
+        ? Math.round((totalEngagement / totalThreadsCount / followersCount) * 10000) / 100
+        : 0
+
+      const base64Picture = profile.profile_picture_url ? await fetchedImageBase64(profile.profile_picture_url) : undefined;
+
+      return {
+        platform: 'threads',
+        accountId: profile.id || socialMediaAccount.accountId || '',
+        username: profile.username || socialMediaAccount.username || socialMediaAccount.accountName || '',
+        picture: base64Picture,
+        fetchedAt: new Date().toISOString(),
+        followers: followersCount,
+        following: profile.following_count || 0,
+        posts: totalThreadsCount,
+        engagement: {
+          total: totalEngagement,
+          likes: totalLikes,
+          comments: totalReplies,
+          shares: totalReposts + totalQuotes,
+        },
+        growth: {
+          followers: { absolute: 0, percentage: 0 },
+          engagement: { absolute: totalEngagement, percentage: engagementRate },
+        },
+        extra: {
+          name: profile.name,
+          biography: profile.biography,
+          totalReplies,
+          totalReposts,
+          totalQuotes,
+          engagementRate,
+          topThreads: threadPerformances,
+          threadsAnalyzed: totalThreadsCount,
+        },
+      };
+    } catch (error) {
+      log.error({ content: 'Threads Error fetching stats', plugin: 'threads', error: (error as Error).message });
+      this.logPluginEvent('get-stats', 'failure', `Error: ${(error as Error).message}`);
+      return this.createZeroStats(socialMediaAccount);
+    }
+  }
+
+  private createZeroStats(socialMediaAccount: PluginSocialMediaAccount): PlatformStats {
+    return {
+      platform: 'threads',
+      accountId: socialMediaAccount.accountId || '',
+      username: socialMediaAccount.username || socialMediaAccount.accountName || '',
+      fetchedAt: new Date().toISOString(),
+      followers: 0,
+      following: 0,
+    };
+  }
+
+  async getPostInsights(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount
+  ): Promise<PostInsight[]> {
+    const externalPostId = extractExternalPostId(postDetails, socialMediaAccount);
+    if (!externalPostId) {
+      return createPostInsightsFallback(this.pluginName);
+    }
+
+    try {
+      const accessToken = socialMediaAccount.accessToken;
+      const response = await fetch(
+        `https://graph.threads.net/${externalPostId}?fields=like_count,reply_count,repost_count,quote_count,timestamp&access_token=${accessToken}`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        log.warn({ content: '[Threads] Post insights error', status: response.status, body: await response.text() });
+        return createPostInsightsFallback(this.pluginName);
+      }
+
+      const thread = await response.json();
+      return [
+        { label: 'Likes', value: thread.like_count || 0 },
+        { label: 'Replies', value: thread.reply_count || 0 },
+        { label: 'Reposts', value: thread.repost_count || 0 },
+        { label: 'Quotes', value: thread.quote_count || 0 },
+      ];
+    } catch (error: unknown) {
+      log.error({ content: 'Threads post insights fetch failed', plugin: 'threads', error: (error as Error).message });
+      return createPostInsightsFallback(this.pluginName);
+    }
+  }
+
+  static readonly pluginName = 'threads';
+  readonly pluginName = 'threads';
+
+  private getPlatformData(postDetails: PluginPostDetails) {
+    const platformName = this.pluginName;
+    const platformContent = (postDetails.platformContent as Record<string, PlatformContentOverride | undefined>)?.[platformName];
+    const platformSettings = (postDetails.platformSettings as Record<string, unknown>)?.[platformName] as ThreadsSettings | undefined;
+    return {
+      content: platformContent?.content || postDetails.content,
+      settings: platformSettings,
+      postFormat: postDetails.postFormat ?? 'post'
+    };
+  }
+
+  public override exposedMethods = [
+    'threadsMaxLength',
+    'getProfile',
+    'getPublishingLimit',
+  ] as const;
+  override maxConcurrentJob = platformConfigurations.threads.maxConcurrentJob;
+
+  threadsMaxLength() {
+    return platformConfigurations.threads.maxPostLength;
+  }
+
+  protected init(options?: Record<string, unknown>): void {
+    log.info({ message: 'Threads plugin initialized', detail: options });
+  }
+
+  override async validate(post: Post): Promise<string[]> {
+    const errors: string[] = [];
+    if (!post.content || post.content.trim() === '') {
+      errors.push('Thread content cannot be empty.');
+    }
+    if (post.content && post.content.length > platformConfigurations.threads.maxPostLength) {
+      errors.push(`Post content is too long (max ${platformConfigurations.threads.maxPostLength} characters)`);
+    }
+    return Promise.resolve(errors);
+  }
+
+  /**
+   * Get Threads user profile
+   */
+  async getProfile(userId: string, accessToken: string): Promise<Record<string, unknown>> {
+    const response = await fetch(
+      `https://graph.threads.net/${userId}?fields=id,username,threads_profile_picture_url,threads_biography&access_token=${accessToken}`
+    );
+    const data = await response.json() as Record<string, unknown>;
+    if (data.threads_profile_picture_url) {
+      data.threads_profile_picture_url = await fetchedImageBase64(data.threads_profile_picture_url as string);
+    }
+    return data;
+  }
+
+  /**
+   * Create thread container (step 1)
+   */
+  private async createThreadContainer(
+    userId: string,
+    mediaType: 'TEXT' | 'IMAGE' | 'VIDEO' | 'CAROUSEL',
+    text: string,
+    accessToken: string,
+    mediaUrl?: string,
+    children?: string[]
+  ): Promise<string> {
+    const params: Record<string, string> = {
+      media_type: mediaType,
+      text: text,
+      access_token: accessToken,
+    };
+
+    if (mediaType === 'CAROUSEL' && children) {
+      params.children = children.join(',');
+    } else if (mediaType === 'IMAGE' && mediaUrl) {
+      params.image_url = getPublicUrlForAsset(mediaUrl);
+    } else if (mediaType === 'VIDEO' && mediaUrl) {
+      params.video_url = getPublicUrlForAsset(mediaUrl);
+    }
+
+    const queryString = new URLSearchParams(params).toString();
+    const response = await fetch(
+      `https://graph.threads.net/${userId}/threads?${queryString}`,
+      { method: 'POST' }
+    );
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Threads container creation failed: ${error}`);
+    }
+
+    const data = await response.json();
+    return data.id;
+  }
+
+  /**
+   * Publish thread container (step 2)
+   */
+  private async publishThreadContainer(
+    userId: string,
+    creationId: string,
+    accessToken: string
+  ): Promise<Record<string, unknown>> {
+    const params = new URLSearchParams({
+      creation_id: creationId,
+      access_token: accessToken,
+    });
+
+    // Wait 30 seconds for processing as recommended
+    await new Promise(resolve => setTimeout(resolve, 30000));
+
+    const response = await fetch(
+      `https://graph.threads.net/${userId}/threads_publish?${params.toString()}`,
+      { method: 'POST' }
+    );
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Threads publish failed: ${error}`);
+    }
+
+    return response.json();
+  }
+
+  override async post(
+    postDetails: PluginPostDetails,
+    comments: PluginPostDetails[],
+    socialMediaAccount: PluginSocialMediaAccount
+  ): Promise<PostResponse> {
+    try {
+      const { content, settings } = this.getPlatformData(postDetails);
+      const accessToken = socialMediaAccount.accessToken;
+      const userId = socialMediaAccount.accountId; // Assuming accountId is userId for Threads
+
+      // Determine Media Type
+      let mediaType: 'TEXT' | 'IMAGE' | 'VIDEO' | 'CAROUSEL' = 'TEXT';
+      let mediaUrl = undefined;
+      const children: string[] = [];
+
+      if (!userId) {
+        throw new Error('Threads user ID is required');
+      }
+
+      const text = postDetails.content;
+      let containerId: string;
+
+      if (postDetails.assets && postDetails.assets.length > 1) {
+        // Carousel post
+        const childContainers: string[] = [];
+
+        for (const asset of postDetails.assets.slice(0, 10)) {
+          let mediaType: 'IMAGE' | 'VIDEO' = 'IMAGE';
+          if (asset.mimeType.includes('video')) {
+            mediaType = 'VIDEO';
+          }
+
+          const childId = await this.createThreadContainer(
+            userId,
+            mediaType,
+            '',
+            socialMediaAccount.accessToken,
+            asset.url
+          );
+          childContainers.push(childId);
+        }
+
+        containerId = await this.createThreadContainer(
+          userId,
+          'CAROUSEL',
+          text,
+          socialMediaAccount.accessToken,
+          undefined,
+          childContainers
+        );
+      } else if (postDetails.assets && postDetails.assets.length === 1) {
+        // Single media post
+        const asset = postDetails.assets[0];
+        let mediaType: 'IMAGE' | 'VIDEO' = 'IMAGE';
+        if (asset && asset.mimeType && asset.mimeType.includes('video')) {
+          mediaType = 'VIDEO';
+        }
+
+        containerId = await this.createThreadContainer(
+          userId,
+          mediaType,
+          text,
+          socialMediaAccount.accessToken,
+          asset ? asset.url : undefined
+        );
+      } else {
+        // Text-only post
+        containerId = await this.createThreadContainer(
+          userId,
+          'TEXT',
+          text,
+          socialMediaAccount.accessToken
+        );
+      }
+
+      // Publish the container
+      const publishedData = await this.publishThreadContainer(
+        userId,
+        containerId,
+        socialMediaAccount.accessToken
+      );
+
+      const postResponse: PostResponse = {
+        id: postDetails.id,
+        postId: publishedData.id,
+        releaseURL: `https://www.threads.net/@${socialMediaAccount.username}/post/${publishedData.id}`,
+        status: 'published',
+      };
+
+      this.emit('threads:post:published', { postId: postResponse.postId, response: publishedData });
+      return postResponse;
+    } catch (error: unknown) {
+      log.error({ content: 'Threads post failed', plugin: 'threads', error: (error as Error).message });
+      this.logPluginEvent('post-error', 'failure', `Error: ${(error as Error).message}`, postDetails.id);
+      const errorResponse: PostResponse = {
+        id: postDetails.id,
+        postId: '',
+        releaseURL: '',
+        status: 'failed',
+        error: (error as Error).message,
+      };
+      this.emit('threads:post:failed', { error: (error as Error).message });
+      return errorResponse;
+    }
+  }
+
+  override async update(
+    postDetails: PluginPostDetails,
+    comments: PluginPostDetails[],
+    socialMediaAccount: PluginSocialMediaAccount
+  ): Promise<PostResponse> {
+    throw new Error('Update not supported for Threads');
+  }
+
+  override async addComment(
+    postDetails: PluginPostDetails,
+    commentDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount
+  ): Promise<PostResponse> {
+    try {
+      if (!postDetails.postId) {
+        throw new Error('Post ID is required for commenting');
+      }
+
+      const userId = socialMediaAccount.metadata?.threadsUserId || socialMediaAccount.accountId;
+
+      // Create reply container
+      const params = new URLSearchParams({
+        media_type: 'TEXT',
+        text: commentDetails.content, // Changed from message to content for PluginPostDetails
+        reply_to_id: postDetails.postId,
+        access_token: socialMediaAccount.accessToken,
+      });
+
+      const createResponse = await fetch(
+        `https://graph.threads.net/${userId}/threads?${params.toString()}`,
+        { method: 'POST' }
+      );
+
+      if (!createResponse.ok) {
+        const error = await createResponse.text();
+        throw new Error(`Threads reply creation failed: ${error}`);
+      }
+
+      const createData = await createResponse.json();
+
+      // Publish reply
+      const publishData = await this.publishThreadContainer(
+        userId,
+        createData.id,
+        socialMediaAccount.accessToken
+      );
+
+      const commentResponse: PostResponse = {
+        id: commentDetails.id,
+        postId: publishData.id,
+        releaseURL: `https://www.threads.net/@${socialMediaAccount.username}/post/${publishData.id}`,
+        status: 'published',
+      };
+
+      this.emit('threads:comment:added', { commentId: commentResponse.postId, postDetails, commentDetails });
+      return commentResponse;
+    } catch (error: unknown) {
+      log.error({ content: 'Threads comment failed', plugin: 'threads', error: (error as Error).message });
+      this.logPluginEvent('comment-error', 'failure', `Error: ${(error as Error).message}`, commentDetails.id);
+      const errorResponse: PostResponse = {
+        id: commentDetails.id,
+        postId: '',
+        releaseURL: '',
+        status: 'failed',
+        error: (error as Error).message,
+      };
+      this.emit('threads:comment:failed', { error: (error as Error).message });
+      return errorResponse;
+    }
+  }
+
+  /**
+   * Transform Threads API comment to PlatformComment format
+   */
+  private async transformComment(comment: ThreadsApiComment): Promise<PlatformComment> {
+    const authorPicture = comment.from?.profile_picture_url
+      ? await fetchedImageBase64(comment.from.profile_picture_url)
+      : undefined;
+    return {
+      id: comment.id,
+      text: comment.text || '',
+      authorName: comment.from?.username || 'Unknown',
+      authorId: comment.from?.id,
+      authorPicture,
+      createdAt: comment.timestamp || comment.created_time || '',
+      likeCount: comment.like_count,
+      replyCount: comment.replies?.data?.length || 0,
+      parentId: comment.parent_id,
+    };
+  }
+
+  /**
+   * Get comments for a Threads post
+   * Note: Threads API has limited public access for fetching comments
+   */
+  async getComments(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount,
+    options?: { limit?: number; cursor?: string }
+  ): Promise<GetCommentsResponse> {
+    const platformPost = postDetails.platformPosts?.find((pp: { socialAccountId: string }) => pp.socialAccountId === socialMediaAccount.id);
+    const publishDetail = platformPost?.publishDetail ? JSON.parse(platformPost.publishDetail as string) : {};
+    const externalPostId = publishDetail[socialMediaAccount.id]?.publishedId || publishDetail.postId;
+
+    if (!externalPostId) {
+      return Promise.resolve({ platform: this.pluginName, postId: '', comments: [], hasMore: false });
+    }
+
+    try {
+      const userId = socialMediaAccount.metadata?.threadsUserId || socialMediaAccount.accountId;
+      const params = new URLSearchParams({
+        access_token: socialMediaAccount.accessToken,
+        fields: 'id,text,timestamp,like_count,replies{id,text,timestamp,from,like_count},from',
+        limit: String(options?.limit || 50),
+      });
+
+      if (options?.cursor) {
+        params.append('after', options.cursor);
+      }
+
+      const response = await fetch(
+        `https://graph.threads.net/${userId}/threads?${params.toString()}`,
+        {
+          headers: {
+            Authorization: `Bearer ${socialMediaAccount.accessToken}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`Threads get comments failed: ${error}`);
+      }
+
+      const data = await response.json();
+      // Threads API may not return comments directly; return empty if not available
+      const comments: PlatformComment[] = await Promise.all(
+        (data.data || []).map((c: ThreadsApiComment) => this.transformComment(c))
+      );
+
+      return {
+        platform: this.pluginName,
+        postId: externalPostId,
+        comments,
+        hasMore: !!data.paging?.cursors?.after,
+        nextCursor: data.paging?.cursors?.after,
+      };
+    } catch (error) {
+      log.error({ content: 'Error fetching Threads comments', plugin: 'threads', error: (error as Error).message });
+      this.logPluginEvent('get-comments', 'failure', `Error: ${(error as Error).message}`);
+      return {
+        platform: this.pluginName,
+        postId: externalPostId,
+        comments: [],
+        hasMore: false,
+      };
+    }
+  }
+
+  /**
+   * Reply to a comment on Threads
+   */
+  async replyToComment(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount,
+    commentId: string,
+    replyText: string
+  ): Promise<ReplyCommentResponse> {
+    try {
+      const userId = socialMediaAccount.metadata?.threadsUserId || socialMediaAccount.accountId;
+
+      // Create reply container
+      const params = new URLSearchParams({
+        media_type: 'TEXT',
+        text: replyText,
+        reply_to_id: commentId, // Reply to the parent comment
+        access_token: socialMediaAccount.accessToken,
+      });
+
+      const createResponse = await fetch(
+        `https://graph.threads.net/${userId}/threads?${params.toString()}`,
+        { method: 'POST' }
+      );
+
+      if (!createResponse.ok) {
+        const error = await createResponse.text();
+        throw new Error(`Threads reply creation failed: ${error}`);
+      }
+
+      const createData = await createResponse.json();
+
+      // Publish reply
+      const publishData = await this.publishThreadContainer(
+        userId,
+        createData.id,
+        socialMediaAccount.accessToken
+      );
+
+      return {
+        success: true,
+        comment: {
+          id: publishData.id,
+          text: replyText,
+          authorName: socialMediaAccount.username || socialMediaAccount.accountName || 'Unknown',
+          createdAt: new Date().toISOString(),
+        },
+      };
+    } catch (error) {
+      log.error({ content: 'Error replying to Threads comment', plugin: 'threads', error: (error as Error).message });
+      this.logPluginEvent('reply-comment-error', 'failure', `Error: ${(error as Error).message}`, commentId);
+      return {
+        success: false,
+        error: (error as Error).message || 'Failed to reply to comment',
+      };
+    }
+  }
+}

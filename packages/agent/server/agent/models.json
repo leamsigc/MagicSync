@@ -1,0 +1,118 @@
+{
+  "providers": {
+    "ollama": {
+      "baseUrl": "http://127.0.0.1:11434/v1",
+      "api": "openai-completions",
+      "apiKey": "ollama",
+      "compat": {
+        "supportsDeveloperRole": false,
+        "supportsReasoningEffort": false
+      },
+      "models": [
+        {
+          "id": "llama3.1:8b",
+          "name": "Llama 3.1 8B (Ollama)"
+        },
+        {
+          "id": "qwen2.5:7b",
+          "name": "Qwen 2.5 7B (Ollama)"
+        }
+      ]
+    },
+    "llama": {
+      "baseUrl": "http://127.0.0.1:8888/v1",
+      "api": "openai-completions",
+      "apiKey": "llama",
+      "compat": {
+        "supportsDeveloperRole": false,
+        "supportsReasoningEffort": false
+      },
+      "models": [
+        {
+          "id": "prism-ml/Ternary-Bonsai-2-27B-gguf:Q2_0",
+          "name": "prism-ml/Ternary-Bonsai-2-27B-gguf:Q2_0"
+        }
+      ]
+    },
+    "deepseek": {
+      "baseUrl": "https://api.deepseek.com/v1",
+      "api": "openai-completions",
+      "apiKey": "$DEEPSEEK_API_KEY",
+      "models": [
+        {
+          "id": "deepseek-chat",
+          "name": "DeepSeek Chat"
+        },
+        {
+          "id": "deepseek-reasoner",
+          "name": "DeepSeek Reasoner",
+          "reasoning": true
+        }
+      ]
+    },
+    "google": {
+   "baseUrl": "https://generativelanguage.googleapis.com/v1beta/openai",
+   "api": "openai-completions",
+   "apiKey": "$NUXT_GOOGLE_GENERATIVE_AI_API_KEY",
+   "compat": {
+    "supportsStore": false
+   },
+   "models": [
+    {
+     "id": "gemini-3.8-flash",
+     "name": "Gemini 3.8 Flash"
+    },
+    {
+     "id": "gemini-3.6-flash",
+     "name": "Gemini 3.6 Flash"
+    },
+    {
+     "id": "gemini-3.5-flash",
+     "name": "Gemini 3.5 Flash"
+    },
+    {
+     "id": "gemini-3.1-flash-lite",
+     "name": "Gemini 3.1 Flash Lite"
+    },
+    {
+     "id": "gemini-3.1-pro-preview-customtools",
+     "name": "Gemini 3.1 Pro Preview"
+    }
+   ]
+  },
+  "openai": {
+   "baseUrl": "https://api.openai.com/v1",
+   "api": "openai-completions",
+   "apiKey": "$NUXT_OPENAI_API_KEY",
+   "models": [
+    {
+     "id": "gpt-4o-mini",
+     "name": "GPT-4o mini (OpenAI)"
+    },
+    {
+     "id": "gpt-4.1-mini",
+     "name": "GPT-4.1 mini (OpenAI)"
+    }
+   ]
+  },
+  "openrouter": {
+      "baseUrl": "https://openrouter.ai/api/v1",
+      "api": "openai-completions",
+      "apiKey": "$OPENROUTER_API_KEY",
+      "compat": {
+        "supportsDeveloperRole": false,
+        "supportsReasoningEffort": false
+      },
+      "models": [
+        {
+          "id": "openai/gpt-4o-mini",
+          "name": "GPT-4o mini (OpenRouter)"
+        },
+        {
+          "id": "anthropic/claude-sonnet-4",
+          "name": "Claude Sonnet 4 (OpenRouter)"
+        }
+      ]
+    }
+  }
+}

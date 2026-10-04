@@ -10,7 +10,7 @@
  * @todo [ ] Integration test.
  * @todo [✔] Update the typescript.
  */
-import type { FacebookSettings } from '#layers/BaseScheduler/shared/platformSettings';
+import type { FacebookSettings } from '#layers/BaseShared/shared/platformSettings';
 
 const settings = defineModel<FacebookSettings>({ required: true });
 </script>

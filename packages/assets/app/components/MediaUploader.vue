@@ -36,7 +36,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<Emits>()
 
-const { uploadFiles, uploadQueue } = useAssetManagement()
+const { uploadFiles, uploadQueue, error: uploadError } = useAssetManagement()
 const { formatFileSize } = useAsset()
 
 // Local state for UFileUpload v-model
@@ -74,6 +74,19 @@ const validateFile = (file: File): string | null => {
   return null
 }
 
+const uploadAndReport = async (validFiles: File[]) => {
+  log.debug({ message: "Upload files" });
+
+  const uploaded = await uploadFiles(validFiles, props.businessId)
+
+  if (!uploaded.length) {
+    emit('error', uploadError.value || 'Upload failed')
+    return
+  }
+
+  emit('upload', validFiles)
+}
+
 const handleFilesUpload = async (files: File | File[] | null | undefined) => {
   const fileArray = Array.isArray(files) ? files : (files ? [files] : [])
   if (!fileArray.length) return
@@ -105,11 +118,7 @@ const handleFilesUpload = async (files: File | File[] | null | undefined) => {
   // Upload valid files
   if (validFiles.length > 0) {
     try {
-      // Upload files
-      console.log("Upload files");
-
-      await uploadFiles(validFiles, props.businessId)
-      emit('upload', validFiles)
+      await uploadAndReport(validFiles)
       // Clear after successful upload
       uploadValue.value = null
     } catch (error: any) {
@@ -124,7 +133,7 @@ const handleFilesUpload = async (files: File | File[] | null | undefined) => {
 const removeFromQueue = (itemId: string) => {
   // Since uploadQueue is readonly, we need to emit an event to the parent component
   // to handle the removal instead of modifying it directly
-  console.log(`Request to remove item ${itemId} from queue`)
+  log.debug({ message: `Request to remove item ${itemId} from queue` })
   // In a real implementation, we would emit an event to the parent component
   // emit('removeFromQueue', itemId)
 }

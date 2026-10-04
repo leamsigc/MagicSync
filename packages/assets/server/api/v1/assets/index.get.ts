@@ -1,44 +1,74 @@
-import { assetService } from '#layers/BaseShared/server/services/asset.service';
-import { auth } from "#layers/BaseAuth/lib/auth"
+import { z } from 'zod'
+import { assetService } from '#layers/BaseShared/server/services/asset.service'
 
+const DEFAULT_LIMIT = 200
+
+const querySchema = z.object({
+  businessId: z.string().optional(),
+  page: z.coerce.number().optional(),
+  limit: z.coerce.number().optional(),
+  mimeType: z.string().optional(),
+  own: z.string().optional(),
+  folderId: z.string().optional(),
+})
+
+type AssetListQuery = {
+  businessId: string
+  page: number
+  limit: number
+  mimeType?: string
+  own?: string
+  folderId?: string
+}
+
+function parseAssetListQuery(raw: unknown): AssetListQuery {
+  const parsed = querySchema.safeParse(raw)
+  if (!parsed.success) {
+    throw createError({ statusCode: 400, statusMessage: 'Invalid asset list query' })
+  }
+  const { businessId, page, limit, mimeType, own, folderId } = parsed.data
+  // A folder belongs to a business. Without one there is nothing to scope it to, so
+  // this is a 400 — never a silent fall-through to the `own` branch.
+  if (folderId !== undefined && !businessId) {
+    throw createError({ statusCode: 400, statusMessage: 'folderId requires businessId' })
+  }
+  return {
+    businessId: businessId as string,
+    page: page ?? 1,
+    limit: limit ?? DEFAULT_LIMIT,
+    mimeType,
+    own,
+    folderId,
+  }
+}
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event)
   try {
-    // Get user from session
     const user = await checkUserIsLogin(event)
     log.set({ userId: user.id })
 
-    // Get query parameters
-    const query = getQuery(event)
-    const businessId = query.businessId as string
-    const page = parseInt(query.page as string) || 1
-    const limit = parseInt(query.limit as string) || 200
-    const mimeType = query.mimeType as string
-    const own = query.own as string
-
-    log.set({ businessId, pagination: { page, limit } })
+    const { businessId, page, limit, mimeType, own, folderId } = parseAssetListQuery(getQuery(event))
+    log.set({ businessId, pagination: { page, limit }, folderId })
 
     if (own === 'true') {
       log.info('Listing user assets', { userId: user.id, page, limit })
-      return await assetService.findByUserId(user.id, { pagination: { page, limit }, filters: mimeType ? { mimeType } : {} })
+      const ownFilters = mimeType ? { mimeType } : {}
+      return await assetService.findByUserId(user.id, { pagination: { page, limit }, filters: ownFilters })
     }
 
-    // Build query options
-    const options = {
+    const filters: Record<string, unknown> = {}
+    if (mimeType) filters.mimeType = mimeType
+    if (folderId !== undefined) filters.folderId = folderId
+
+    const result = await assetService.findByBusinessId(businessId, user.id, {
       pagination: { page, limit },
-      filters: mimeType ? { mimeType } : {}
-    }
-
-    // Fetch assets for the business
-    const result = await assetService.findByBusinessId(businessId, user.id, options)
+      filters,
+    })
 
     if (!result.success) {
       log.error('Failed to fetch assets', { error: result.error })
-      throw createError({
-        statusCode: 500,
-        statusMessage: result.error
-      })
+      throw createError({ statusCode: 500, statusMessage: result.error })
     }
 
     log.info('Assets listed successfully', { businessId, count: result.data?.length || 0 })
@@ -53,9 +83,6 @@ export default defineEventHandler(async (event) => {
     }
 
     log.error('Internal server error', { error })
-    throw createError({
-      statusCode: 500,
-      statusMessage: 'Internal server error'
-    })
+    throw createError({ statusCode: 500, statusMessage: 'Internal server error' })
   }
 })

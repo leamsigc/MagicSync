@@ -1,4 +1,4 @@
-import type { FacebookPage } from '#layers/BaseConnect/utils/FacebookPages';
+import type { FacebookPage } from '#layers/BaseShared/server/types/facebook-pages';
 import type { InferSelectModel } from 'drizzle-orm'
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 

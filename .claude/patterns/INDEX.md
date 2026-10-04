@@ -4,6 +4,7 @@ Lookup table for all pattern files in this directory. Check here before starting
 
 | Pattern | Use when |
 |---------|----------|
+| [agentic-goal-layer.md](agentic-goal-layer.md) | Legacy goal-layer reference; use `flue-agent-layer.md` and `agent-capability-extensibility.md` for new capability work |
 | [add-endpoint.md](add-endpoint.md) | Adding a new API endpoint to a layer package |
 | [add-service.md](add-service.md) | Adding a new service class in the db package |
 | [add-page.md](add-page.md) | Adding a new page in a layer package |
@@ -23,6 +24,8 @@ Lookup table for all pattern files in this directory. Check here before starting
 | [platform-thread-formatting.md](platform-thread-formatting.md) | Splitting long posts into per-platform threads (threadSplitter, platform overrides, comment length validation) |
 | [ai-extraction-streaming.md](ai-extraction-streaming.md) | Long-running AI extraction endpoints — NDJSON progress streaming, parallel generateObject calls, backend-driven loaders |
 | [theme-tokens.md](theme-tokens.md) | Fixing UI that breaks in light/dark mode — hardcoded colors → Nuxt UI semantic tokens |
+| [color-mode-assets.md](color-mode-assets.md) | Hydration attribute mismatch from color-mode-driven `src`/attributes — render both light/dark variants and let CSS choose |
+| [dev-hints-triage.md](dev-hints-triage.md) | `@nuxt/hints` console noise (`hints:hydration`, `htmlValidate`, `lazyLoad`) — real hydration/markup bugs vs. dev-only diagnostics |
 | [tool-control-bar.md](tool-control-bar.md) | Camera-style bottom control bar for tools (`/tools/*`) — segmented mode, scrubbable dials, icon cluster popovers, yellow primary pill |
 | [figma-editor-refresh.md](figma-editor-refresh.md) | Figma-style refresh of a `/tools/*` canvas editor — top bar, icon rail, stage, properties panel with tokens, i18n, AI worker UX |
 | [carousel-deck-templates.md](carousel-deck-templates.md) | Carousel deck templates (palette/font/pattern per deck), multi-image slide layouts, and the all-pages template gallery |
@@ -35,3 +38,21 @@ Lookup table for all pattern files in this directory. Check here before starting
 | [ssr-safe-state.md](ssr-safe-state.md) | SSR-safe state — no module-scope ref/reactive for request-varying data, useState only |
 | [client-only-node-builtins.md](client-only-node-builtins.md) | Client-bundle 500s from Node builtins (`events`, `buffer`, `path`) imported in `app/` code |
 | [playwright-golden-oracles.md](playwright-golden-oracles.md) | Deterministic screenshot goldens — dev-overlay suppression, motion settle, dark-mode forcing |
+| [modal-picker.md](modal-picker.md) | UModal select-list + options + confirm POST with loading/toast/i18n feedback |
+| [write-prd.md](write-prd.md) | Writing implementation-ready master and feature PRDs with dependency tracking |
+| [credential-envelope.md](credential-envelope.md) | Removing plaintext/base64 credential assumptions — AES-256-GCM envelopes, fail-closed reads, Node/Python parity |
+| [pi-agent-layer.md](pi-agent-layer.md) | Scaffolding a Nuxt layer package (`packages/agent`) and integrating the pi SDK in-process with a hermetic SSE stub test seam |
+| [flue-agent-layer.md](flue-agent-layer.md) | Flue runtime in the agent layer — boot singleton, per-run provider injection, Valibot agent tools, per-agent tool mounts + allowlist guard, observe() telemetry, pi version pinning (authored from the T04 spike, tools/mounts from T28) |
+| [agent-capability-extensibility.md](agent-capability-extensibility.md) | Extending the Flue capability registry, pipeline dispatch table, and AI-call telemetry without creating a second orchestration path |
+| [tool-backend-settings.md](tool-backend-settings.md) | User-configurable external tool backends (ScrapeGraphAI, Python tools service) with encrypted secrets, test routes, and agent proxy tools |
+| [web-grounded-research.md](web-grounded-research.md) | Grounding a board action in live web evidence — LLM brief, SSRF-safe scrape, synthesis, persist to brief |
+| [board-stage-agents.md](board-stage-agents.md) | Wiring content-board column drops to agent runs (research on drop, generate on drop) |
+| [port-not-ported.md](port-not-ported.md) | Replacing a NOT_PORTED 501 stub with a native Nuxt implementation |
+| [nuxt-ui-chat.md](nuxt-ui-chat.md) | Migrating a bespoke chat UI onto the Nuxt UI chat kit while keeping a custom streaming backend |
+| [chat-history-replay.md](chat-history-replay.md) | Persisting and replaying complete user, assistant, reasoning, tool, and run lifecycle history |
+| [harness-intent-routing.md](harness-intent-routing.md) | Server-side intent gates that narrow tools and bound single-workflow agent runs |
+| [output-action-cards.md](output-action-cards.md) | Quiet operator result cards with canonical visual outputs and output-specific actions |
+| [evlog-observability.md](evlog-observability.md) | Wiring evlog request logging, AI SDK telemetry, Better Auth identity, and dual-write audits |
+| [layer-restructure.md](layer-restructure.md) | Moving pages to the site composition root, promoting layer components, and keeping feature layers library-only |
+| [llm-json-robustness.md](llm-json-robustness.md) | Parsing small-model JSON output — fence stripping, balanced-brace scan, trailing-comma repair, key aliases, one repair retry |
+| [operator-console-surface.md](operator-console-surface.md) | Building the operator console — chat as the control surface, approvals queue + activity feed, plain-language rules for agent_runs and approval routes |

@@ -21,6 +21,7 @@
     "@local-monorepo/db": "workspace:*",
     "@local-monorepo/scheduler": "workspace:*",
     "@local-monorepo/ui": "workspace:*",
+    "dayjs": "catalog:",
     "papaparse": "catalog:",
     "evlog": "catalog:"
   },

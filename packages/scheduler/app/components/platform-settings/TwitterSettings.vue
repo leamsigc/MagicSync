@@ -10,7 +10,7 @@
  * @todo [ ] Integration test.
  * @todo [✔] Update the typescript.
  */
-import type { TwitterSettings } from '#layers/BaseScheduler/shared/platformSettings';
+import type { TwitterSettings } from '#layers/BaseShared/shared/platformSettings';
 
 const settings = defineModel<TwitterSettings>({ required: true });
 

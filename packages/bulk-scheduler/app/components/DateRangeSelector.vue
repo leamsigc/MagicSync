@@ -19,8 +19,7 @@ const emit = defineEmits<{
   update: [value: { startDate: Date; endDate: Date }]
 }>()
 
-const { t } = useI18n()
-const locale = useI18n().locale
+const { t, locale } = useI18n()
 
 const currentLocalDay = today(getLocalTimeZone())
 const range = ref<DateRange>({

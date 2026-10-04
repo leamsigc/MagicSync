@@ -79,6 +79,7 @@
       "tools": "Tools",
       "playground": "Playground",
       "aiTools": "AI Tools",
+      "assistant": "Chat",
       "home": "Home",
       "login": "Login",
       "openOnGitHub": "Open on GitHub"
@@ -245,6 +246,7 @@
       "tools": "Herramientas",
       "playground": "Playground",
       "aiTools": "IA",
+      "assistant": "Chat",
       "home": "Inicio",
       "login": "Iniciar sesión",
       "openOnGitHub": "Abrir en GitHub"
@@ -411,6 +413,7 @@
       "tools": "Tools",
       "playground": "Spielplatz",
       "aiTools": "KI",
+      "assistant": "Chat",
       "home": "Startseite",
       "login": "Anmelden",
       "openOnGitHub": "Auf GitHub öffnen"
@@ -577,6 +580,7 @@
       "tools": "Outils",
       "playground": "Terrain de jeu",
       "aiTools": "Outils IA",
+      "assistant": "Discussion",
       "home": "Accueil",
       "login": "Connexion",
       "openOnGitHub": "Ouvrir sur GitHub"

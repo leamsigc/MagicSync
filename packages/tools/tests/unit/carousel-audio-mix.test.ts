@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { mixTracksToStereo, resampleLinear } from '../../app/pages/tools/carousel-creator/composables/audioMix'
+import { mixTracksToStereo, resampleLinear } from '../../app/composables/tools/carousel-creator/audioMix'
 
 const track = (samples: number[], volume = 1, loop = true) => ({
   channels: [new Float32Array(samples)],

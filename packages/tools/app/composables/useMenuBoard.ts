@@ -20,9 +20,9 @@ import {
   sortActivePages,
   type MenuBoard,
   type MenuPage,
-} from '../pages/tools/menu-board/types'
-import { MENU_TEMPLATES } from '../pages/tools/menu-board/templates'
-import { requestFullscreen, exitImmersive, isFullscreenActive } from '../pages/tools/menu-board/utils/fullscreen'
+} from '../utils/tools/menu-board/types'
+import { MENU_TEMPLATES } from '../utils/tools/menu-board/templates'
+import { requestFullscreen, exitImmersive, isFullscreenActive } from '../utils/tools/menu-board/fullscreen'
 
 export type MenuBoardStorageMode = 'database' | 'local'
 

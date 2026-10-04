@@ -127,7 +127,7 @@ export class CarouselService {
 
       return { success: true, data: carousels }
     } catch (error) {
-      console.error('carouselService.listForUser failed:', error)
+      log.error({ message: 'carouselService.listForUser failed', error: String(error) })
       return { success: false, error: 'Failed to list carousels' }
     }
   }
@@ -154,7 +154,7 @@ export class CarouselService {
 
       return { success: true, data: { ...carousel, isPublic: !!publicRow, shareSlug: publicRow ? carousel.id : undefined } }
     } catch (error) {
-      console.error('carouselService.getForUser failed:', error)
+      log.error({ message: 'carouselService.getForUser failed', error: String(error) })
       return { success: false, error: 'Failed to load carousel' }
     }
   }
@@ -177,7 +177,7 @@ export class CarouselService {
       }
       return { success: true, data: result.data }
     } catch (error) {
-      console.error('carouselService.upsert failed:', error)
+      log.error({ message: 'carouselService.upsert failed', error: String(error) })
       return { success: false, error: 'Failed to save carousel' }
     }
   }
@@ -189,7 +189,7 @@ export class CarouselService {
       await this.deleteByTypeAndId(PUBLIC_TYPE, carouselId)
       return { success: true, data: true }
     } catch (error) {
-      console.error('carouselService.remove failed:', error)
+      log.error({ message: 'carouselService.remove failed', error: String(error) })
       return { success: false, error: 'Failed to delete carousel' }
     }
   }
@@ -211,7 +211,7 @@ export class CarouselService {
       await this.saveEntity(existing, carouselId, PUBLIC_TYPE, details)
       return { success: true, data: { slug: carouselId } }
     } catch (error) {
-      console.error('carouselService.publish failed:', error)
+      log.error({ message: 'carouselService.publish failed', error: String(error) })
       return { success: false, error: 'Failed to publish carousel' }
     }
   }
@@ -225,7 +225,7 @@ export class CarouselService {
       await this.deleteByTypeAndId(PUBLIC_TYPE, carouselId)
       return { success: true, data: true }
     } catch (error) {
-      console.error('carouselService.unpublish failed:', error)
+      log.error({ message: 'carouselService.unpublish failed', error: String(error) })
       return { success: false, error: 'Failed to unpublish carousel' }
     }
   }
@@ -256,7 +256,7 @@ export class CarouselService {
         },
       }
     } catch (error) {
-      console.error('carouselService.getPublic failed:', error)
+      log.error({ message: 'carouselService.getPublic failed', error: String(error) })
       return { success: false, error: 'Failed to load shared carousel' }
     }
   }

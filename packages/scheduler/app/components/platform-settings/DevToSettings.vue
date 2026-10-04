@@ -10,7 +10,7 @@
  * @todo [ ] Integration test.
  * @todo [✔] Update the typescript.
  */
-import type { DevToSettings } from '#layers/BaseScheduler/shared/platformSettings';
+import type { DevToSettings } from '#layers/BaseShared/shared/platformSettings';
 
 const settings = defineModel<DevToSettings>({ required: true });
 

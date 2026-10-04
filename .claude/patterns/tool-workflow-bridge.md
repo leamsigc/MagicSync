@@ -25,7 +25,7 @@ Do not modify `video-cropper/components/SaveAsAssetModal.vue` — it is a legacy
 
 ## Hand Off to Composer
 
-Composer consumer: `packages/scheduler/app/pages/app/posts/new.vue` `onMounted` reads then **removes** both keys:
+Composer consumer: `packages/site/app/pages/app/posts/new.vue` `onMounted` reads then **removes** both keys:
 
 | Key | Shape | Effect |
 |-----|-------|--------|

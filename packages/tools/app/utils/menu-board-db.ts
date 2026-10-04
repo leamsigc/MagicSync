@@ -1,5 +1,5 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb'
-import type { MenuBoard } from '../pages/tools/menu-board/types'
+import type { MenuBoard } from './tools/menu-board/types'
 
 interface MenuBoardDB extends DBSchema {
   boards: {

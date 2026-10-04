@@ -4,7 +4,9 @@ FROM node:26-alpine AS serve
 # publishes NO musl prebuilds, so `pnpm i` falls back to `node-gyp rebuild`,
 # which needs these system headers (see root Dockerfile for details).
 # NOTE: do NOT add vips-dev — it forces sharp into a failing source build.
-RUN apk add --no-cache python3 make g++ pkgconfig \
+# bash/curl/ffmpeg are needed by scripts/install-ytdlp.sh and the
+# download_video agent tool.
+RUN apk add --no-cache bash curl ffmpeg python3 make g++ pkgconfig \
   cairo-dev pango-dev jpeg-dev giflib-dev librsvg-dev pixman-dev
 
 WORKDIR /usr/app/frontend
@@ -17,5 +19,10 @@ RUN npm install -g pnpm@$(node -p "require('./package.json').packageManager.spli
 
 COPY . .
 RUN pnpm i
+
+# Pinned yt-dlp binary so download_video works in the dev container too.
+RUN bash ./scripts/install-ytdlp.sh
+ENV YTDLP_PATH=/usr/app/frontend/.bin/yt-dlp
+
 EXPOSE 3000
 

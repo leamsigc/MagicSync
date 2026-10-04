@@ -10,6 +10,7 @@ import { useAutoReply, type AutoReplyCampaign, type AutoReplyLog, type AutoReply
 
 const { t } = useI18n()
 const toast = useToast()
+const router = useRouter()
 const { campaigns, loading, error, fetchCampaigns, createCampaign, updateCampaign, deleteCampaign, fetchLogs, fetchStats, fetchWebhookStatus, subscribeWebhooks, fetchRecentMedia, testMatch } = useAutoReply()
 
 const showForm = ref(false)
@@ -174,6 +175,10 @@ async function handleOpenLogs(c: AutoReplyCampaign) {
   logsOpen.value = true
 }
 
+function handleOpenDetail(id: string) {
+  router.push(`/app/auto-reply/${id}`)
+}
+
 function captionExcerpt(item: AutoReplyMediaItem) {
   const caption = (item.caption || '').trim()
   if (!caption) return item.id
@@ -323,7 +328,7 @@ onMounted(async () => {
       <UCard v-for="c in campaigns" :key="c.id">
         <template #header>
           <div class="flex items-center justify-between gap-2">
-            <p class="font-semibold truncate">{{ c.name }}</p>
+            <UButton variant="link" class="p-0 h-auto font-semibold truncate text-left" @click="() => handleOpenDetail(c.id)">{{ c.name }}</UButton>
             <USwitch :model-value="c.enabled" @update:model-value="() => handleToggle(c)" />
           </div>
         </template>
@@ -342,6 +347,7 @@ onMounted(async () => {
         </div>
         <template #footer>
           <div class="flex flex-wrap gap-2">
+            <UButton size="sm" color="primary" icon="i-heroicons-eye" @click="() => handleOpenDetail(c.id)">{{ t('view_details') }}</UButton>
             <UButton size="sm" variant="soft" @click="() => handleEdit(c)">{{ t('save') }}</UButton>
             <UButton size="sm" variant="ghost" @click="() => handleOpenLogs(c)">{{ t('logs') }}</UButton>
             <UButton size="sm" variant="ghost" color="error" @click="() => handleDelete(c.id)">{{ t('delete') }}</UButton>

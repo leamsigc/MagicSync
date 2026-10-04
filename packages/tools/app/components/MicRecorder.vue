@@ -97,7 +97,7 @@ const handleReRecord = () => {
 }
 
 const handleUseTranscript = () => {
-  console.log({ activeProject: activeProject.value });
+  log.debug({ activeProject: activeProject.value });
 
   if (transcriptText.value) {
     emit('transcript', transcriptText.value)

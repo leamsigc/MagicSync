@@ -25,21 +25,24 @@
  */
 
 import { generateText, generateObject, type LanguageModelV1 } from 'ai';
+import type { RequestLogger } from 'evlog';
 import { google } from '@ai-sdk/google';
 import { anthropic } from '@ai-sdk/anthropic';
 import { openai } from '@ai-sdk/openai';
 import { z } from 'zod';
-import { userLlmConfigService } from '#layers/BaseDB/server/services/user-llm-config.service';
+import type { H3Event } from 'h3';
+import { userLlmConfigService, SYSTEM_DEFAULT_PROVIDER, SYSTEM_DEFAULT_MODEL } from '#layers/BaseDB/server/services/user-llm-config.service';
+import { businessContextResolver, contextErrorStatus } from '#layers/BaseDB/server/services/business-context-resolver.service';
+import { wrapAiModel } from '#layers/BaseShared/server/utils/evlog';
 
 // System default configuration
-const SYSTEM_DEFAULT_PROVIDER = 'google';
-const SYSTEM_DEFAULT_MODEL = 'gemini-3.5-flash';
 const DEFAULT_TEMPERATURE = 0.7;
 
-type ProviderName = 'google' | 'ollama' | 'openai' | 'anthropic' | 'openrouter' | 'deepseek';
+type ProviderName = 'google' | 'ollama' | 'llama' | 'openai' | 'anthropic' | 'openrouter' | 'deepseek';
 
 const PROVIDER_BASE_URLS: Record<string, string> = {
   ollama: 'http://localhost:11434/v1',
+  llama: 'http://localhost:8888/v1',
   openrouter: 'https://openrouter.ai/api/v1',
   deepseek: 'https://api.deepseek.com/v1',
 };
@@ -76,6 +79,11 @@ function createModel(provider: ProviderName, modelName: string, userApiKey?: str
       return openai.chat(modelName, { baseURL });
     }
 
+    case 'llama': {
+      const baseURL = apiBaseUrl || PROVIDER_BASE_URLS.llama;
+      return openai.chat(modelName, { baseURL });
+    }
+
     case 'openrouter': {
       const baseURL = apiBaseUrl || PROVIDER_BASE_URLS.openrouter;
       const apiKey = resolveApiKey(userApiKey, 'NUXT_OPENROUTER_API_KEY', 'OPENROUTER_API_KEY');
@@ -100,16 +108,26 @@ interface ResolvedConfig {
   apiBaseUrl?: string | null;
 }
 
+/**
+ * Translate one stored LLM config into a provider the SDKs can construct.
+ *
+ * `system` is an account-UI sentinel meaning "use the operator's configured
+ * AI" — it is not a provider. A row carrying it (written before the account UI
+ * refused to store it) used to reach createModel()'s switch and throw
+ * "Unsupported AI provider: system", breaking every AI route at once.
+ */
+function resolveStoredConfig(config: { provider: string, model: string, apiKey?: string | null, apiBaseUrl?: string | null }): ResolvedConfig {
+  if (config.provider === 'system') {
+    return { provider: SYSTEM_DEFAULT_PROVIDER as ProviderName, model: SYSTEM_DEFAULT_MODEL }
+  }
+  return { provider: config.provider as ProviderName, model: config.model, apiKey: config.apiKey, apiBaseUrl: config.apiBaseUrl }
+}
+
 async function resolveConfig(userId?: string): Promise<ResolvedConfig> {
   if (userId) {
     const result = await userLlmConfigService.getDefaultConfig(userId);
     if (result.success && result.data && result.data.id !== 'default') {
-      return {
-        provider: result.data.provider as ProviderName,
-        model: result.data.model,
-        apiKey: result.data.apiKey,
-        apiBaseUrl: result.data.apiBaseUrl,
-      };
+      return resolveStoredConfig(result.data);
     }
   }
 
@@ -119,10 +137,20 @@ async function resolveConfig(userId?: string): Promise<ResolvedConfig> {
   };
 }
 
+/** Opt-in branded grounding (T20). Resolved to the current playbook edition only. */
+export interface SchedulerBrandGrounding {
+  /** Business to ground in. Required with useBusinessContext. */
+  businessId?: string | null;
+  /** Explicit opt-in; without it no brand prompt is attached. */
+  useBusinessContext?: boolean;
+  /** Request event for member access checks. */
+  event?: H3Event;
+}
+
 /**
  * Options for generateText calls
  */
-export interface SchedulerGenerateTextOptions {
+export interface SchedulerGenerateTextOptions extends SchedulerBrandGrounding {
   /** System prompt - can be a custom string */
   systemPrompt?: string;
   /** The user prompt */
@@ -135,12 +163,14 @@ export interface SchedulerGenerateTextOptions {
   provider?: string;
   /** User ID to look up their configured AI provider */
   userId?: string;
+  /** Request logger — when provided, token/tool metrics are captured onto the wide event via evlog. */
+  log?: RequestLogger;
 }
 
 /**
  * Options for generateObject calls
  */
-export interface SchedulerGenerateObjectOptions<T extends z.ZodSchema> {
+export interface SchedulerGenerateObjectOptions<T extends z.ZodSchema> extends SchedulerBrandGrounding {
   /** System prompt - can be a custom string */
   systemPrompt?: string;
   /** The user prompt */
@@ -155,6 +185,8 @@ export interface SchedulerGenerateObjectOptions<T extends z.ZodSchema> {
   provider?: string;
   /** User ID to look up their configured AI provider */
   userId?: string;
+  /** Request logger — when provided, token/tool metrics are captured onto the wide event via evlog. */
+  log?: RequestLogger;
 }
 
 /**
@@ -162,6 +194,37 @@ export interface SchedulerGenerateObjectOptions<T extends z.ZodSchema> {
  */
 export interface SchedulerGenerateTextResult {
   text: string;
+  /** Resolved playbook edition when branded grounding was applied. */
+  contextEditionId?: string | null;
+}
+
+function hasGroundingRequest(userId?: string, grounding?: SchedulerBrandGrounding): boolean {
+  return !!userId
+    && !!grounding
+    && grounding.useBusinessContext === true
+    && typeof grounding.businessId === 'string'
+    && grounding.businessId.length > 0;
+}
+
+async function resolveBrandPrompt(
+  userId: string | undefined,
+  grounding: SchedulerBrandGrounding | undefined,
+): Promise<{ prefix: string, editionId: string | null }> {
+  if (!hasGroundingRequest(userId, grounding)) return { prefix: '', editionId: null };
+  const result = await businessContextResolver.resolve(userId as string, {
+    businessId: grounding?.businessId,
+    useBusinessContext: true,
+  }, grounding?.event);
+  if (!result.success) {
+    throw createError({ statusCode: contextErrorStatus(result.code), message: result.error });
+  }
+  if (!result.data.enabled || !result.data.prompt) return { prefix: '', editionId: null };
+  return { prefix: `${result.data.prompt}\n\n---\n\n`, editionId: result.data.editionId };
+}
+
+function withBrandPrefix(systemPrompt: string | undefined, prefix: string): string | undefined {
+  if (!prefix) return systemPrompt;
+  return `${prefix}${systemPrompt ?? ''}`;
 }
 
 /**
@@ -179,6 +242,7 @@ export const schedulerUnifiedAI = {
       model: modelOverride,
       provider: providerOverride,
       userId,
+      log,
     } = options;
 
     const config = await resolveConfig(userId);
@@ -186,15 +250,16 @@ export const schedulerUnifiedAI = {
     const modelName = modelOverride || config.model;
 
     const aiModel = createModel(provider, modelName, config.apiKey, config.apiBaseUrl);
+    const brand = await resolveBrandPrompt(userId, options);
 
     const { text } = await generateText({
-      model: aiModel,
-      system: systemPrompt,
+      model: wrapAiModel(log, aiModel),
+      system: withBrandPrefix(systemPrompt, brand.prefix),
       prompt,
       temperature,
     });
 
-    return { text };
+    return { text, contextEditionId: brand.editionId };
   },
 
   /**
@@ -202,7 +267,7 @@ export const schedulerUnifiedAI = {
    */
   async generateObject<T extends z.ZodSchema>(
     options: SchedulerGenerateObjectOptions<T>
-  ): Promise<{ object: z.infer<T> }> {
+  ): Promise<{ object: z.infer<T>, contextEditionId?: string | null }> {
     const {
       systemPrompt,
       prompt,
@@ -211,6 +276,7 @@ export const schedulerUnifiedAI = {
       model: modelOverride,
       provider: providerOverride,
       userId,
+      log,
     } = options;
 
     const config = await resolveConfig(userId);
@@ -218,16 +284,17 @@ export const schedulerUnifiedAI = {
     const modelName = modelOverride || config.model;
 
     const aiModel = createModel(provider, modelName, config.apiKey, config.apiBaseUrl);
+    const brand = await resolveBrandPrompt(userId, options);
 
     const { object } = await generateObject({
-      model: aiModel,
-      system: systemPrompt,
+      model: wrapAiModel(log, aiModel),
+      system: withBrandPrefix(systemPrompt, brand.prefix),
       schema,
       prompt,
       temperature,
     });
 
-    return { object };
+    return { object, contextEditionId: brand.editionId };
   },
 };
 

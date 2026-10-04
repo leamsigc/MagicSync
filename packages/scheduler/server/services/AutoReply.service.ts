@@ -5,10 +5,11 @@ import { socialMediaAccounts } from '#layers/BaseDB/db/socialMedia/socialMedia'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
 import type { ServiceResponse } from '#layers/BaseDB/server/services/types'
 import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service'
-import { SchedulerPost, type PlatformComment, type PluginSocialMediaAccount } from '#layers/BaseScheduler/server/services/SchedulerPost.service'
-import { InstagramPlugin } from '#layers/BaseScheduler/server/services/plugins/instagram.plugin'
+import { SchedulerPost, type PlatformComment, type PluginSocialMediaAccount } from '#layers/BaseDB/server/services/SchedulerPost.service'
+import { InstagramPlugin } from '#layers/BaseDB/server/services/plugins/instagram.plugin'
 import { platformRateLimiter } from '#layers/BaseScheduler/server/services/RateLimiter.service'
-import { renewRowToken } from '#layers/BaseScheduler/server/services/TokenRefresh.service'
+import { inboxService } from '#layers/BaseScheduler/server/services/Inbox.service'
+import { renewRowToken } from '#layers/BaseDB/server/services/TokenRefresh.service'
 import { hourBucketUtc as hourBucketUtcPure, isHttpsUrl as isHttpsUrlPure, matchKeywords as matchKeywordsPure, renderTemplate as renderTemplatePure, trackedUrl as trackedUrlPure, trimContacted as trimContactedPure, type WebhookCommentEvent, type WebhookMessageEvent } from '#layers/BaseScheduler/server/services/auto-reply-pure'
 
 export const AUTOREPLY_CAMPAIGN = 'autoreply_campaign'
@@ -438,10 +439,10 @@ export class AutoReplyService {
       let skipped = 0
       let failed = 0
       for (const r of rows) {
-        const log = parseDetails<AutoReplyLogEntry>(r.details)
-        if (log?.action === 'sent') sent++
-        else if (log?.action === 'skipped') skipped++
-        else if (log?.action === 'failed') failed++
+        const logEntry = parseDetails<AutoReplyLogEntry>(r.details)
+        if (logEntry?.action === 'sent') sent++
+        else if (logEntry?.action === 'skipped') skipped++
+        else if (logEntry?.action === 'failed') failed++
       }
       const clicksPerLink = (campaign.data.links || []).map((l) => ({ linkId: l.id, label: l.label, target: l.target, clicks: l.clicks }))
       return { success: true, data: { sent, skipped, failed, clicksPerLink } }
@@ -661,6 +662,58 @@ export class AutoReplyService {
     return { outcome: 'sent', reason: resolved.usedAi ? 'ai' : 'keyword' }
   }
 
+  /**
+   * Map a platform's own post id back to the internal post row, so inbox items
+   * can carry the postId foreign key and cascade when the post is deleted.
+   */
+  private async resolveInternalPostId(socialAccountId: string, externalPostId: string): Promise<string | null> {
+    try {
+      const db = useDrizzle()
+      const [row] = await db
+        .select({ postId: platformPosts.postId })
+        .from(platformPosts)
+        .where(and(
+          eq(platformPosts.socialAccountId, socialAccountId),
+          eq(platformPosts.platformPostId, externalPostId),
+        ))
+        .limit(1)
+      return row?.postId ?? null
+    } catch (error) {
+      log.warn({ message: `[autoreply] resolveInternalPostId failed: ${(error as Error).message}` })
+      return null
+    }
+  }
+
+  /**
+   * Mirror a polled comment into the unified inbox. Without this the inbox has
+   * no writer at all and /app/inbox can only ever render its empty state.
+   */
+  private async recordInboxComment(params: {
+    userId: string
+    socialAccountId: string
+    platform: string
+    postId: string | null
+    externalPostId: string
+    comment: PlatformComment
+  }): Promise<void> {
+    const { userId, socialAccountId, platform, postId, externalPostId, comment } = params
+    try {
+      await inboxService.createItem({
+        userId,
+        type: 'comment',
+        platform,
+        socialAccountId,
+        postId,
+        externalPostId,
+        authorId: comment.authorId ? String(comment.authorId) : null,
+        authorName: comment.authorName ?? null,
+        content: comment.text ?? '',
+      })
+    } catch (error) {
+      log.warn({ message: `[autoreply] inbox write failed for comment ${comment.id}: ${(error as Error).message}` })
+    }
+  }
+
   private async processCampaignPosts(
     campaign: AutoReplyCampaign,
     account: PluginSocialMediaAccount,
@@ -683,14 +736,23 @@ export class AutoReplyService {
       } catch (error) {
         // One bad post (deleted media, dead token) must not abort the run —
         // and must be visible: failed++ surfaces in the task summary line.
-        console.warn(`[autoreply] getComments failed for post ${externalPostId.slice(0, 12)}…: ${(error as Error).message}`)
+        log.warn({ message: `[autoreply] getComments failed for post ${externalPostId.slice(0, 12)}…: ${(error as Error).message}` })
         failed++
         continue
       }
       checked += comments.length
       let newestId = state.lastSeenCommentId
+      const internalPostId = await this.resolveInternalPostId(account.id, externalPostId)
       for (const comment of comments) {
         if (state.lastSeenCommentId && comment.id === state.lastSeenCommentId) break
+        await this.recordInboxComment({
+          userId: campaign.userId,
+          socialAccountId: account.id,
+          platform: 'instagram',
+          postId: internalPostId,
+          externalPostId,
+          comment,
+        })
         const result = await this.processComment(campaign, account, comment, state)
         if (result.outcome === 'sent') sent++
         else if (result.outcome === 'skipped' && result.reason !== 'no-match') {
@@ -781,7 +843,7 @@ export class AutoReplyService {
     if (!account || account.platform !== 'instagram') {
       // Visible in server logs: entry.id must equal the IG row's accountId
       // (professional user_id, not the app-scoped id — see auth.ts note).
-      console.warn(`[autoreply] webhook comment for unknown account entry=${ev.entryId.slice(0, 8)}… comment=${ev.commentId}`)
+      log.warn({ message: `[autoreply] webhook comment for unknown account entry=${ev.entryId.slice(0, 8)}… comment=${ev.commentId}` })
       return { sent, skipped: 1, failed }
     }
     const pluginAccount = account as PluginSocialMediaAccount
@@ -845,7 +907,7 @@ export class AutoReplyService {
     let failed = 0
     const account = await this.findAccountByProviderId(ev.entryId)
     if (!account || account.platform !== 'instagram') {
-      console.warn(`[autoreply] webhook DM for unknown account entry=${ev.entryId.slice(0, 8)}… sender=${ev.senderId.slice(0, 8)}…`)
+      log.warn({ message: `[autoreply] webhook DM for unknown account entry=${ev.entryId.slice(0, 8)}… sender=${ev.senderId.slice(0, 8)}…` })
       return { sent, skipped: 1, failed }
     }
     const pluginAccount = account as PluginSocialMediaAccount
