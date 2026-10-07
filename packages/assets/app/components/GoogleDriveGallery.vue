@@ -7,15 +7,18 @@ const {
   files,
   isLoading,
   isDownloading,
+  isDisconnecting,
   query,
   selectedFiles,
   hasNextPage,
   needsConnection,
+  needsReconnect,
   listFiles,
   loadNextPage,
   toggleSelectFile,
   downloadSelectedFiles,
   connectDrive,
+  disconnectDrive,
 } = useGoogleDrive()
 
 const { t } = useI18n({ useScope: 'local' })
@@ -69,6 +72,28 @@ const handleConnectDrive = async () => {
   await connectDrive()
 }
 
+const handleReconnectDrive = async () => {
+  await connectDrive()
+}
+
+const handleDisconnectDrive = async () => {
+  const done = await disconnectDrive()
+  if (done) {
+    toast.add({
+      description: t('driveDisconnected'),
+      icon: 'i-heroicons-check-circle',
+      color: 'success',
+    })
+    await handleListFiles()
+  } else {
+    toast.add({
+      description: t('driveDisconnectFailed'),
+      icon: 'i-heroicons-x-circle',
+      color: 'error',
+    })
+  }
+}
+
 onMounted(async () => {
   await handleListFiles()
 })
@@ -90,6 +115,10 @@ const fileIcon = (mimeType: string) => {
       <UButton @click="handleListFiles" :loading="isLoading" icon="lucide:search" color="primary">
         {{ t('search') }}
       </UButton>
+      <UButton v-if="hasAttemptedLoad && !needsConnection && !needsReconnect" variant="ghost" color="neutral"
+        icon="lucide:unplug" :loading="isDisconnecting" @click="handleDisconnectDrive">
+        {{ t('disconnectDrive') }}
+      </UButton>
     </div>
 
     <div v-if="isLoading && files.length === 0" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
@@ -99,9 +128,30 @@ const fileIcon = (mimeType: string) => {
     <div v-else-if="needsConnection" class="flex flex-col items-center justify-center py-16 text-muted-foreground">
       <Icon name="logos:google-drive" class="w-16 h-16 mb-4 opacity-50" />
       <p class="text-lg mb-4">{{ t('googleDriveNotConnected') }}</p>
-      <UButton icon="logos:google" color="primary" @click="handleConnectDrive">
-        {{ t('connectDrive') }}
-      </UButton>
+      <div class="flex items-center gap-3">
+        <UButton icon="logos:google" color="primary" @click="handleConnectDrive">
+          {{ t('connectDrive') }}
+        </UButton>
+        <UButton variant="ghost" color="neutral" icon="lucide:unplug" :loading="isDisconnecting"
+          @click="handleDisconnectDrive">
+          {{ t('disconnectDrive') }}
+        </UButton>
+      </div>
+    </div>
+
+    <div v-else-if="needsReconnect" v-motion-fade :duration="250"
+      class="flex flex-col items-center justify-center py-16 text-muted-foreground">
+      <Icon name="logos:google-drive" class="w-16 h-16 mb-4 opacity-50" />
+      <p class="text-lg mb-4">{{ t('googleDriveScopeMissing') }}</p>
+      <div class="flex items-center gap-3">
+        <UButton icon="logos:google" color="primary" @click="handleReconnectDrive">
+          {{ t('reconnectDrive') }}
+        </UButton>
+        <UButton variant="ghost" color="neutral" icon="lucide:unplug" :loading="isDisconnecting"
+          @click="handleDisconnectDrive">
+          {{ t('disconnectDrive') }}
+        </UButton>
+      </div>
     </div>
 
     <div v-else-if="!hasAttemptedLoad || (files.length === 0 && !isLoading)"

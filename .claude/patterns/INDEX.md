@@ -56,3 +56,4 @@ Lookup table for all pattern files in this directory. Check here before starting
 | [layer-restructure.md](layer-restructure.md) | Moving pages to the site composition root, promoting layer components, and keeping feature layers library-only |
 | [llm-json-robustness.md](llm-json-robustness.md) | Parsing small-model JSON output — fence stripping, balanced-brace scan, trailing-comma repair, key aliases, one repair retry |
 | [operator-console-surface.md](operator-console-surface.md) | Building the operator console — chat as the control surface, approvals queue + activity feed, plain-language rules for agent_runs and approval routes |
+| [business-scoped-data-refresh.md](business-scoped-data-refresh.md) | Reloading business-scoped view data on BusinessSwitcher change — watch `business:id`, reuse the view loader, reset pagination/selections, guard in-flight responses |

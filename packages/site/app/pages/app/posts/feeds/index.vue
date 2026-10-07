@@ -42,13 +42,18 @@ const fetchPosts = async (page: number, append = false) => {
   isLoading.value = true
 
   try {
+    const businessId = activeBusinessId.value
     const query = new URLSearchParams({
-      businessId: activeBusinessId.value,
+      businessId,
       page: page.toString(),
       limit: '10'
     })
 
     const response = await $fetch<PaginatedResponse<PostWithAllData>>(`/api/v1/posts?${query}`)
+
+    // The request was built for a previous business: a switch happened while
+    // it was in flight, so discard it instead of showing stale rows.
+    if (businessId !== activeBusinessId.value) return
 
     if (response?.data) {
       if (append) {
@@ -108,8 +113,16 @@ onMounted(async () => {
 
 const HandleRefresh = async () => {
   posts.value = []
+  currentPage.value = 1
+  totalPages.value = 1
   await fetchPosts(1)
 }
+
+// Business-scoped feed: restart pagination on switch; in-flight responses for
+// the previous business are discarded inside fetchPosts.
+watch(activeBusinessId, () => {
+  HandleRefresh()
+})
 </script>
 
 <template>

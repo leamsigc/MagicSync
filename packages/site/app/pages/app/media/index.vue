@@ -71,8 +71,15 @@ watch(activeBusinessId, (id) => {
 })
 
 // Folders belong to a business, so they are refetched whenever it changes.
-watch(selectedBusinessId, (id) => {
-  if (id) fetchFolders(id)
+// The folder scope is reset first: it may point at a folder of the previous
+// business, which would wrongly filter the new business's assets. (The asset
+// grid itself watches its business-id/folder-scope props and refetches, so no
+// refreshAssets call is needed here.)
+watch(selectedBusinessId, async (id) => {
+  if (!id) return
+  activeScope.value = { kind: 'unfiled' }
+  setFolderScope(activeScope.value)
+  await fetchFolders(id)
 }, { immediate: true })
 
 const handleFolderScopeChange = (scope: FolderScope) => {

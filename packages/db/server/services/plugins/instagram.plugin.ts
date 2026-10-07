@@ -684,6 +684,50 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
     }
   }
 
+  /**
+   * Media insights with a fallback ladder: metric support varies by media
+   * product type (reels reject `impressions`, `engagement` is gone entirely),
+   * and one bad metric fails the whole call with (#100). Drops the offending
+   * metric (named or by `metric[N]` position) and retries so surviving metrics
+   * still come back instead of a blanket fallback. Returns null when nothing
+   * is usable.
+   */
+  private async fetchMediaInsightsRows(
+    externalPostId: string,
+    token: string,
+  ): Promise<Array<{ name: string; values: Array<{ value: number }> }> | null> {
+    const remaining = ['reach', 'views', 'likes', 'comments', 'shares', 'saved', 'impressions']
+    while (remaining.length > 0) {
+      let res: Response
+      try {
+        res = await fetch(this._getGraphApiUrl(
+          `${externalPostId}/insights?metric=${remaining.join(',')}&access_token=${token}`
+        ))
+      } catch {
+        return null
+      }
+      if (res.ok) {
+        const json = await res.json() as { data?: Array<{ name: string; values: Array<{ value: number }> }> }
+        return json.data?.length ? json.data : null
+      }
+      const errText = await res.text().catch(() => '')
+      const culprit = /does not support the (\w+) metric/.exec(errText)?.[1]
+        ?? /metric\[(\d+)\]/.exec(errText)?.[1]
+      const idx = this.insightMetricIndex(remaining, culprit)
+      if (remaining[idx] === undefined) return null
+      log.warn({ content: '[Instagram] Insights metric unsupported, retrying without it', metric: remaining[idx] })
+      remaining.splice(idx, 1)
+    }
+    return null
+  }
+
+  /** Position of the offending metric in the current request: by name, or by `metric[N]` position. */
+  private insightMetricIndex(remaining: string[], culprit: string | undefined): number {
+    if (culprit === undefined) return -1
+    if (/^\d+$/.test(culprit)) return Number(culprit)
+    return remaining.indexOf(culprit)
+  }
+
   async getPostInsights(
     postDetails: PluginPostDetails,
     socialMediaAccount: PluginSocialMediaAccount
@@ -695,42 +739,27 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
 
     const token = socialMediaAccount.accessToken
     // Try Insights API first (reach/views require insights, not direct fields)
-    try {
-      // Instagram Graph API v19+: insights metrics for media. `engagement`
-      // is not a valid metric (Graph #100) — engagement is computed below
-      // as likes + comments + shares + saves instead.
-      const insightsUrl = this._getGraphApiUrl(
-        `${externalPostId}/insights?metric=reach,views,likes,comments,shares,saved,impressions&access_token=${token}`
-      )
-      const insightsRes = await fetch(insightsUrl)
-      if (insightsRes.ok) {
-        const insightsJson = await insightsRes.json() as { data?: Array<{ name: string; values: Array<{ value: number }> }> }
-        if (insightsJson.data?.length) {
-          const val = (name: string) => insightsJson.data!.find(d => d.name === name)?.values?.[0]?.value || 0
-          // Prefer insights, but will fallback to direct fields if insight metric missing (e.g. likes)
-          const likes = val('likes') || 0
-          const comments = val('comments') || 0
-          // If insights succeeded, still need direct fields for like_count fallback
-          const fields = 'like_count,comments_count'
-          const mediaUrl = this._getGraphApiUrl(`${externalPostId}?fields=${fields}&access_token=${token}`)
-          const mediaRes = await fetch(mediaUrl).then(r => r.json()).catch(() => ({} as any))
-          return [
-            { label: 'Likes', value: likes || mediaRes.like_count || 0 },
-            { label: 'Comments', value: comments || mediaRes.comments_count || 0 },
-            { label: 'Reach', value: val('reach') || 0 },
-            { label: 'Views', value: val('views') || val('impressions') || 0 },
-            { label: 'Saves', value: val('saved') || 0 },
-            { label: 'Shares', value: val('shares') || 0 },
-            { label: 'Engagement', value: likes + comments + val('saved') + val('shares') },
-          ]
-        }
-      } else {
-        const errText = await insightsRes.text().catch(() => '')
-        log.warn({ content: '[Instagram] Insights API non-OK, falling back to direct fields', status: insightsRes.status, body: errText })
-      }
-    } catch (e) {
-      log.warn({ content: '[Instagram] Insights fetch failed, fallback', error: String(e) })
+    const insightsRows = await this.fetchMediaInsightsRows(externalPostId, token)
+    if (insightsRows) {
+      const val = (name: string) => insightsRows.find(d => d.name === name)?.values?.[0]?.value || 0
+      // Prefer insights, but will fallback to direct fields if insight metric missing (e.g. likes)
+      const likes = val('likes') || 0
+      const comments = val('comments') || 0
+      // If insights succeeded, still need direct fields for like_count fallback
+      const fields = 'like_count,comments_count'
+      const mediaUrl = this._getGraphApiUrl(`${externalPostId}?fields=${fields}&access_token=${token}`)
+      const mediaRes = await fetch(mediaUrl).then(r => r.json()).catch(() => ({} as any))
+      return [
+        { label: 'Likes', value: likes || mediaRes.like_count || 0 },
+        { label: 'Comments', value: comments || mediaRes.comments_count || 0 },
+        { label: 'Reach', value: val('reach') || 0 },
+        { label: 'Views', value: val('views') || val('impressions') || 0 },
+        { label: 'Saves', value: val('saved') || 0 },
+        { label: 'Shares', value: val('shares') || 0 },
+        { label: 'Engagement', value: likes + comments + val('saved') + val('shares') },
+      ]
     }
+    log.warn({ content: '[Instagram] Insights unavailable for this media, falling back to direct fields' })
 
     // Fallback: direct media fields (like_count, comments_count always available).
     // NOTE: `share_count` is not a media field (Graph #100 nonexisting field),

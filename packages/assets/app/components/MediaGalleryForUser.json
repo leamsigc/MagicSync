@@ -32,7 +32,12 @@
     "image": "Image",
     "fileTypeBadge": "File type badge",
     "googleDriveNotConnected": "Google Drive is not connected yet.",
-    "connectDrive": "Connect Google Drive"
+    "connectDrive": "Connect Google Drive",
+    "googleDriveScopeMissing": "Google Drive access expired or is missing permissions. Reconnect to grant access again.",
+    "reconnectDrive": "Reconnect Google Drive",
+    "disconnectDrive": "Disconnect Drive",
+    "driveDisconnected": "Google Drive disconnected.",
+    "driveDisconnectFailed": "Could not disconnect Google Drive. Please try again."
   },
   "es": {
     "local": "Local",
@@ -67,7 +72,12 @@
     "image": "Imagen",
     "fileTypeBadge": "Indicador de tipo de archivo",
     "googleDriveNotConnected": "Google Drive aún no está conectado.",
-    "connectDrive": "Conectar Google Drive"
+    "connectDrive": "Conectar Google Drive",
+    "googleDriveScopeMissing": "El acceso a Google Drive ha caducado o no tiene permisos. Vuelve a conectar para conceder acceso.",
+    "reconnectDrive": "Reconectar Google Drive",
+    "disconnectDrive": "Desconectar Drive",
+    "driveDisconnected": "Google Drive desconectado.",
+    "driveDisconnectFailed": "No se pudo desconectar Google Drive. Inténtalo de nuevo."
   },
   "de": {
     "local": "Lokal",
@@ -102,7 +112,12 @@
     "image": "Bild",
     "fileTypeBadge": "Dateityp-Abzeichen",
     "googleDriveNotConnected": "Google Drive ist noch nicht verbunden.",
-    "connectDrive": "Google Drive verbinden"
+    "connectDrive": "Google Drive verbinden",
+    "googleDriveScopeMissing": "Der Google-Drive-Zugriff ist abgelaufen oder hat keine Berechtigung. Erneut verbinden, um Zugriff zu gewähren.",
+    "reconnectDrive": "Google Drive erneut verbinden",
+    "disconnectDrive": "Drive trennen",
+    "driveDisconnected": "Google Drive getrennt.",
+    "driveDisconnectFailed": "Google Drive konnte nicht getrennt werden. Bitte erneut versuchen."
   },
   "fr": {
     "local": "Local",
@@ -137,6 +152,11 @@
     "image": "Image",
     "fileTypeBadge": "Badge de type de fichier",
     "googleDriveNotConnected": "Google Drive n'est pas encore connecté.",
-    "connectDrive": "Connecter Google Drive"
+    "connectDrive": "Connecter Google Drive",
+    "googleDriveScopeMissing": "L'accès à Google Drive a expiré ou manque d'autorisations. Reconnectez-vous pour accorder l'accès.",
+    "reconnectDrive": "Reconnecter Google Drive",
+    "disconnectDrive": "Déconnecter Drive",
+    "driveDisconnected": "Google Drive déconnecté.",
+    "driveDisconnectFailed": "Impossible de déconnecter Google Drive. Veuillez réessayer."
   }
 }

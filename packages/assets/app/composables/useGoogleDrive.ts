@@ -38,8 +38,18 @@ export const useGoogleDrive = () => {
   // True when the Drive API answers 401 → user hasn't granted Drive access yet.
   const needsConnection = ref(false)
 
+  // True when Drive answers 403 (ACCESS_TOKEN_SCOPE_INSUFFICIENT) → a token
+  // exists but its scopes don't cover Drive (e.g. login-only grant). The fix
+  // is the same connect flow, which re-consents with drive.readonly.
+  const needsReconnect = ref(false)
+
+  const isDisconnecting = ref(false)
+
   const isUnauthorized = (err: any) =>
     err?.statusCode === 401 || err?.response?.status === 401 || err?.data?.statusCode === 401
+
+  const isForbidden = (err: any) =>
+    err?.statusCode === 403 || err?.response?.status === 403 || err?.data?.statusCode === 403
 
   const connectDrive = async () => {
     const { linkSocial } = await import('#layers/BaseAuth/lib/auth-client')
@@ -47,6 +57,30 @@ export const useGoogleDrive = () => {
       provider: 'google-drive',
       callbackURL: '/app/media',
     })
+  }
+
+  const resetDriveState = () => {
+    files.value = []
+    selectedFiles.value = []
+    nextPageToken.value = undefined
+    needsConnection.value = false
+    needsReconnect.value = false
+    error.value = null
+  }
+
+  const disconnectDrive = async (): Promise<boolean> => {
+    isDisconnecting.value = true
+    try {
+      await $fetch<{ success: boolean }>('/api/v1/assets/google-drive/connection', {
+        method: 'DELETE',
+      })
+      resetDriveState()
+      return true
+    } catch {
+      return false
+    } finally {
+      isDisconnecting.value = false
+    }
   }
 
   const clearError = () => {
@@ -74,10 +108,10 @@ export const useGoogleDrive = () => {
       }
       nextPageToken.value = response.nextPageToken
       needsConnection.value = false
+      needsReconnect.value = false
     } catch (err: any) {
-      if (isUnauthorized(err)) {
-        needsConnection.value = true
-      }
+      needsConnection.value = isUnauthorized(err)
+      needsReconnect.value = isForbidden(err)
       error.value = err.data?.message || err.message || 'Failed to list Google Drive files'
       toast.add({
         title: 'Error',
@@ -142,9 +176,8 @@ export const useGoogleDrive = () => {
       clearSelectedFiles()
       return response.data
     } catch (err: any) {
-      if (isUnauthorized(err)) {
-        needsConnection.value = true
-      }
+      needsConnection.value = isUnauthorized(err)
+      needsReconnect.value = isForbidden(err)
       error.value = err.data?.message || err.message || 'Failed to download files'
       toast.add({
         title: 'Error',
@@ -163,8 +196,10 @@ export const useGoogleDrive = () => {
     selectedFiles,
     isLoading,
     isDownloading,
+    isDisconnecting,
     error,
     needsConnection,
+    needsReconnect,
     query,
     nextPageToken,
     totalFiles,
@@ -173,6 +208,7 @@ export const useGoogleDrive = () => {
     listFiles,
     searchFiles,
     connectDrive,
+    disconnectDrive,
     loadNextPage,
     loadPrevPage,
     toggleSelectFile,

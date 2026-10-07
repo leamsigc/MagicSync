@@ -72,6 +72,11 @@ const HandleRefresh = async () => {
     }
   );
 }
+
+// Same as the calendar: the list is business-scoped, so reload it on switch.
+watch(activeBusinessId, () => {
+  HandleRefresh()
+})
 </script>
 
 <template>

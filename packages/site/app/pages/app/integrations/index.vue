@@ -15,6 +15,7 @@
 import ConnectIntegrationCard from '#layers/BaseConnect/app/components/connect/integrations/ConnectIntegrationCard.vue';
 import ConnectAddAccount from '#layers/BaseConnect/app/components/connect/integrations/ConnectAddAccount.vue';
 import { useConnectionManager } from '#layers/BaseConnect/app/composables/connect/integrations/useConnectionManager';
+import { useBusinessManager } from '#layers/BaseShared/app/composables/useBusinessManager';
 import { usePlatformIcons, type SocialMediaPlatform } from '#layers/BaseUI/app/composables/usePlatformIcons';
 import dayjs from '#layers/BaseDB/server/utils/dayjs';
 
@@ -31,6 +32,7 @@ const accountHealth = ref<Map<string, TokenHealth>>(new Map())
 const socialHealth = ref<Map<string, TokenHealth>>(new Map())
 
 const { t, getAllSocialMediaAccounts, pagesList, getAllAccountDetails, accountsList } = useConnectionManager();
+const { activeBusinessId } = useBusinessManager();
 const { getPlatformIcon } = usePlatformIcons();
 
 async function fetchTokenHealth() {
@@ -53,6 +55,14 @@ onMounted(async () => {
     getAllSocialMediaAccounts(),
     fetchTokenHealth()
   ])
+})
+
+// Connections are business-scoped: reload them on switch, mirroring active.vue.
+watch(activeBusinessId, async (newId) => {
+  if (!newId) return
+  await getAllSocialMediaAccounts(newId)
+  await getAllAccountDetails()
+  await fetchTokenHealth()
 })
 
 

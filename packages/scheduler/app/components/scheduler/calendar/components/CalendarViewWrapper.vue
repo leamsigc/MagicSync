@@ -72,6 +72,12 @@ const HandleRefresh = async () => {
 }
 HandleRefresh();
 
+// The post list is business-scoped: refetch the visible range whenever the
+// active business changes, otherwise the previous business's posts stay on screen.
+watch(activeBusinessId, () => {
+  HandleRefresh()
+})
+
 const events = computed(() => postList.value.map((post: PostWithAllData) => {
   return {
     post,

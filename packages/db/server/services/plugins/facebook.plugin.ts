@@ -46,6 +46,14 @@ type FacebookDto = {
   url?: string;
 };
 
+/** Post-object engagement totals (`/{post}?fields=...`). */
+type FacebookPostTotals = {
+  reactions?: { summary?: { total_count?: number } };
+  comments?: { summary?: { total_count?: number } };
+  shares?: { count?: number };
+  error?: Record<string, unknown>;
+};
+
 export class FacebookPlugin extends BaseSchedulerPlugin {
   static readonly pluginName = 'facebook';
   readonly pluginName = 'facebook';
@@ -205,6 +213,45 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
       await this.logPluginEvent('fetch-error', 'failure', `Error: ${(error as Error).message}, Context: ${context}`, safeUrl);
       throw error;
     }
+  }
+
+  /**
+   * Post-object totals with the same ladder philosophy as facebook-insights.ts:
+   * field validity varies by object type (a Page id has no `reactions`, some
+   * objects reject edge modifiers), and one bad field fails the whole call
+   * with (#100). Drops the offending field and retries so surviving totals
+   * still come back instead of a blanket error.
+   */
+  private async fetchPostTotals(
+    externalPostId: string,
+    accessToken: string,
+  ): Promise<FacebookPostTotals> {
+    // NOTE: no inline insights.* fragment here — edge modifiers like
+    // insights.metric(...).period(...) are not valid post-object fields
+    // (Graph #2500 syntax error). Insights come from the /insights calls.
+    // `shares` is likewise a plain field returning `{count}` — requesting
+    // `shares.count` fails with `Syntax error "Expected \"(\""` (#2500).
+    const remaining = ['reactions.summary(total_count)', 'comments.summary(total_count)', 'shares']
+    let lastError: Record<string, unknown> = { message: 'Post totals unavailable' }
+    while (remaining.length > 0) {
+      let body: FacebookPostTotals
+      try {
+        const res = await fetch(this._getGraphApiUrl(
+          `/${externalPostId}?fields=${remaining.join(',')}&access_token=${accessToken}`
+        ))
+        body = await res.json() as FacebookPostTotals
+      } catch {
+        return { error: { message: 'Network error fetching post totals' } }
+      }
+      if (!body.error) return body
+      lastError = body.error
+      const missing = /nonexisting field \((\w+)\)/.exec(JSON.stringify(body.error))?.[1]
+      const idx = missing ? remaining.findIndex(field => field === missing || field.startsWith(`${missing}.`)) : -1
+      if (idx === -1) return { error: lastError }
+      log.warn({ content: '[Facebook] Post totals field unsupported, retrying without it', field: missing })
+      remaining.splice(idx, 1)
+    }
+    return { error: lastError }
   }
 
   /**
@@ -393,33 +440,13 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
 
     const accessToken = socialMediaAccount.accessToken;
 
-    // Insights and post totals are fetched in parallel; insights walk a
-    // fallback ladder (see facebook-insights.ts) because one invalid metric
-    // fails the whole Graph batch with (#100) and metric validity varies by
-    // post type and API version.
+    // Insights and post totals are fetched in parallel; both walk a fallback
+    // ladder (insights: facebook-insights.ts, totals: fetchPostTotals) because
+    // one invalid metric/field fails the whole Graph batch with (#100) and
+    // validity varies by post type and API version.
     const [insightsData, postRes] = await Promise.all([
       collectFacebookPostInsights(query => this.tryPostInsights(externalPostId, accessToken, query)),
-      this.fetch(
-        // NOTE: no inline insights.* fragment here — edge modifiers like
-        // insights.metric(...).period(...) are not valid post-object fields
-        // (Graph #2500 syntax error). Insights come from the /insights calls.
-        // `shares` is likewise a plain field returning `{count}` — requesting
-        // `shares.count` fails with `Syntax error "Expected \"(\""` (#2500).
-        this._getGraphApiUrl(
-          `/${externalPostId}?fields=reactions.summary(total_count),comments.summary(total_count),shares&access_token=${accessToken}`
-        ),
-        undefined,
-        'fetch post engagement totals'
-      )
-        .then((r) =>
-          r.json() as Promise<{
-            reactions?: { summary?: { total_count?: number } };
-            comments?: { summary?: { total_count?: number } };
-            shares?: { count?: number };
-            error?: Record<string, unknown>;
-          }>
-        )
-        .catch((e) => ({ error: { message: String(e) } as Record<string, unknown> })),
+      this.fetchPostTotals(externalPostId, accessToken),
     ])
 
     // Only fall back when there is nothing at all to show.
