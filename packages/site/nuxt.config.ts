@@ -100,6 +100,15 @@ export default defineNuxtConfig({
     // require instead (used by bulk-scheduler csv-import.post.ts).
     externals: {
       external: ['papaparse'],
+      // unhead must be bundled, never external: Nitro's node_modules trace
+      // prunes .output/server/node_modules/unhead/dist down to minify.mjs
+      // only, so the runtime `unhead/server|utils|plugins` imports in
+      // nitro.mjs/entry.mjs/renderer/og-image crash boot with
+      // ERR_MODULE_NOT_FOUND unhead/dist/server.mjs — and the vite SSR pass
+      // rewrites other app-chunk imports to dangling pnpm-store relative
+      // paths (`../../../../unhead@3.4.2.../node_modules/unhead/dist/minify.mjs`).
+      // Inlining removes every runtime unhead resolution at once.
+      inline: ['unhead'],
     },
     experimental: {
       openAPI: true,

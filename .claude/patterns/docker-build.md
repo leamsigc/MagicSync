@@ -155,3 +155,42 @@ that emits the `punycode` DEP0040 warning):
   uses: docker/setup-buildx-action@v3
 - name: Build image and push to registry
   uses: docker/build-push-action@v6
+```
+
+## Gotcha 7 — Nitro prunes `unhead` out of the server output (Coolify boot crash)
+
+Symptom at container boot (local `node .output/server/index.mjs` reproduces it identically):
+
+```
+Error [ERR_MODULE_NOT_FOUND]: Cannot find module
+'/usr/app/.output/server/node_modules/unhead/dist/server.mjs'
+imported from /usr/app/.output/server/chunks/nitro/nitro.mjs
+```
+
+Root cause, verified against a local site build: Nitro externalises `unhead`
+but its node_modules trace copies only `package.json` + `dist/minify.mjs` into
+`.output/server/node_modules/unhead/`, while bundled `nitro.mjs`/`entry.mjs`/
+renderer/og-image chunks keep static `unhead/server|utils|plugins` imports.
+Separately, the SSR pass rewrites other app-chunk imports to dangling
+pnpm-store relative paths (`../../../../../../unhead@3.4.2.../node_modules/unhead/dist/minify.mjs`
+side-effect imports in `chunks/build/*.mjs`), which crash SSR on those routes
+once boot is fixed.
+
+Fix — bundle it instead of tracing it (`packages/site/nuxt.config.ts`, next to
+the `papaparse` precedent which documents the opposite direction):
+
+```ts
+externals: {
+  external: ['papaparse'],
+  inline: ['unhead'],
+},
+```
+
+Verify without redeploying: rebuild, then scan the output — zero bare
+`unhead/*` specifiers and zero store-relative `unhead@*` imports under
+`.output/server/`, and the server must get past module load (any remaining
+boot failure should be environmental, e.g. host-missing system libs like
+libvips that the Alpine runtime provides — see Gotchas 2–4 — never
+`ERR_MODULE_NOT_FOUND`). Only inline what is proven broken: `@unhead/vue` was
+checked and has no bare runtime imports (only `//#region` bundler comments),
+so it stays external.
