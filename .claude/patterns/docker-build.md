@@ -110,8 +110,48 @@ Notes:
   `@local-monorepo/tools`, this failure signature is real: check
   `grep '"canvas"' packages/*/package.json` and step ordering first.
 
-1. Reproduce the failing step locally with the exact container:
-    `docker run --rm -v <build-dir>:/usr/app --workdir /usr/app node:26-alpine sh -c "<apt/deps>; npm i -g pnpm@<pinned>; pnpm i"`
-2. If `@pnpm/exe` verification fails → apply Gotcha 1.
-3. Rebuild through the failing step to confirm, then clean up
-   (`docker rmi`, delete temp build dir — build artifacts are root-owned).
+ 1. Reproduce the failing step locally with the exact container:
+     `docker run --rm -v <build-dir>:/usr/app --workdir /usr/app node:26-alpine sh -c "<apt/deps>; npm i -g pnpm@<pinned>; pnpm i"`
+ 2. If `@pnpm/exe` verification fails → apply Gotcha 1.
+ 3. Rebuild through the failing step to confirm, then clean up
+    (`docker rmi`, delete temp build dir — build artifacts are root-owned).
+
+## Gotcha 5 — `actions/setup-node` does NOT install pnpm
+
+`setup-node@v4` only installs Node. A workflow step like
+`run: pnpm install --frozen-lockfile` then fails with
+`pnpm: command not found (exit code 127)`. This is what broke
+`/.github/workflows/layer-rules.yml` — the sister workflow
+(`doc-deploy.yml`) already had the fix.
+
+Fix — add `pnpm/action-setup@v4` before `setup-node` (it reads the
+pinned version from `package.json`'s `packageManager` field, so no
+`with: version:` is needed) and enable the pnpm cache on `setup-node`:
+
+```yaml
+- uses: pnpm/action-setup@v4
+- uses: actions/setup-node@v4
+  with:
+    node-version: 22
+    cache: pnpm
+```
+
+## Gotcha 6 — `type=gha` cache needs the container buildx driver
+
+`docker/build-push-action` with `cache-from/to: type=gha` fails on the
+default `docker` driver with:
+
+```
+ERROR: failed to build: Cache export is not supported for the docker driver.
+```
+
+Fix — create a `docker-container` builder with `setup-buildx-action`
+before the build step (also bumped `login-action@v2` → `v3` and
+`build-push-action@v4` → `v6` to drop the deprecated Node 16 runtime
+that emits the `punycode` DEP0040 warning):
+
+```yaml
+- name: Set up Docker Buildx
+  uses: docker/setup-buildx-action@v3
+- name: Build image and push to registry
+  uses: docker/build-push-action@v6

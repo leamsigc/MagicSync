@@ -11,9 +11,11 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: pnpm
       # The audit reads the alias table from the generated tsconfig, so the site
       # layer must be prepared before the check can resolve #layers/Base* names.
       - name: Install
