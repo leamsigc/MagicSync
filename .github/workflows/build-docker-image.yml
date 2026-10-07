@@ -2,6 +2,9 @@ name: Build Docker Image
 on:
   push:
     branches: ["main"]
+    # Also build when a release tag is pushed from the CLI, e.g.
+    #   git tag v0.0.3 && git push origin v0.0.3
+    tags: ["v*"]
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: "leamsigc/magicsync"
@@ -25,6 +28,16 @@ jobs:
       # with "Cache export is not supported for the docker driver".
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+      # Resolves the image tags per event: `:latest` for pushes to main,
+      # the tag name (e.g. `:v0.0.3`) for tag pushes — never `:latest` for tags.
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=ref,event=tag
       - name: Build image and push to registry
         uses: docker/build-push-action@v6
         with:
@@ -36,4 +49,5 @@ jobs:
           # repeat builds skip straight to the changed stage.
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
