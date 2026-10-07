@@ -403,8 +403,10 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
         // NOTE: no inline insights.* fragment here — edge modifiers like
         // insights.metric(...).period(...) are not valid post-object fields
         // (Graph #2500 syntax error). Insights come from the /insights calls.
+        // `shares` is likewise a plain field returning `{count}` — requesting
+        // `shares.count` fails with `Syntax error "Expected \"(\""` (#2500).
         this._getGraphApiUrl(
-          `/${externalPostId}?fields=reactions.summary(total_count),comments.summary(total_count),shares.count&access_token=${accessToken}`
+          `/${externalPostId}?fields=reactions.summary(total_count),comments.summary(total_count),shares&access_token=${accessToken}`
         ),
         undefined,
         'fetch post engagement totals'

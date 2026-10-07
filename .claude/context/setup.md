@@ -94,6 +94,8 @@ Agent limits (all optional, safe defaults):
 
 **Migration fails:** Check `NUXT_TURSO_DATABASE_URL` is correct and the database is accessible
 
+**Migrate hit the wrong database:** `turso.config.ts` falls back to `file:../../local.db` when `NUXT_TURSO_DATABASE_URL` is unset, so a bare `pnpm db:migrate` migrates a local file and reports success while production is untouched (seen 2026-10-07: prod missing the whole 0010 object set after exactly this). Always export `NUXT_TURSO_DATABASE_URL` + `NUXT_TURSO_AUTH_TOKEN` for the target DB in the same shell, and confirm with the startup log's `Connected to LibSQL <url>` that the app reads the same database you migrated. The `:local` script variants (`db:migrate:local`) load `../../.env` via dotenv — plain `db:migrate` does not.
+
 **Missing layer packages:** Ensure all packages in `extends` array are built. Run `pnpm build` first.
 
 **Hot reload not working:** Some packages may need `nuxi prepare`. Try running `pnpm --filter @local-monorepo/ui dev` first to build individual packages.

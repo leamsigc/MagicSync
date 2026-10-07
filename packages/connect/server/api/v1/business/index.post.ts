@@ -42,7 +42,11 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  log.info({ message: 'Business profile created', businessId: newBusiness.data?.id })
+  if (newBusiness.success) {
+    log.info({ message: 'Business profile created', businessId: newBusiness.data?.id })
+  } else {
+    log.warn({ message: 'Business profile creation failed', error: newBusiness.error })
+  }
 
   return newBusiness;
 });

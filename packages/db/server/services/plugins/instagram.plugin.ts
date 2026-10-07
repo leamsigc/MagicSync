@@ -113,11 +113,14 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
 
   /**
    * Get media insights (engagement metrics)
-   * Updated to use current valid Instagram Graph API metrics
+   * Updated to use current valid Instagram Graph API metrics.
+   * NOTE: `engagement` is not a valid media-insights metric (Graph #100
+   * lists impressions, reach, likes, comments, shares, saved, ... but no
+   * engagement) — requesting it fails the whole call.
    */
   async getMediaInsights(mediaId: string, accessToken: string): Promise<{ data: Record<string, unknown>[] }> {
     try {
-      const url = this._getGraphApiUrl(`${mediaId}/insights?metric=reach,views,saved,likes,comments,shares,engagement&access_token=${accessToken}`)
+      const url = this._getGraphApiUrl(`${mediaId}/insights?metric=reach,views,saved,likes,comments,shares&access_token=${accessToken}`)
       const response = await fetch(url)
       if (!response.ok) {
         const error = await response.json()
@@ -511,7 +514,7 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
     let imageEngagement = 0
 
     try {
-      const mediaUrl = this._getGraphApiUrl(`${igUserId}/media?fields=id,caption,media_type,like_count,comments_count,reach,views,saved,share_count&limit=50&access_token=${socialMediaAccount.accessToken}`)
+      const mediaUrl = this._getGraphApiUrl(`${igUserId}/media?fields=id,caption,media_type,like_count,comments_count,reach,views,saved&limit=50&access_token=${socialMediaAccount.accessToken}`)
       const mediaResponse = await fetch(mediaUrl)
       if (!mediaResponse.ok) {
         const error = await mediaResponse.json()
@@ -525,10 +528,11 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
         for (const media of mediaItems) {
           const likes = media.like_count || 0
           const comments = media.comments_count || 0
-          const shares = media.share_count || 0
+          // No per-media share count field exists (only the insights `shares`
+          // metric) — engagement here is likes + comments + saves.
           const saves = media.saved || 0
           const views = media.views || 0
-          const engagement = likes + comments + shares + saves
+          const engagement = likes + comments + saves
 
           totalEngagement += engagement
           totalViews += views
@@ -692,9 +696,11 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
     const token = socialMediaAccount.accessToken
     // Try Insights API first (reach/views require insights, not direct fields)
     try {
-      // Instagram Graph API v19+ : insights metrics for media
+      // Instagram Graph API v19+: insights metrics for media. `engagement`
+      // is not a valid metric (Graph #100) — engagement is computed below
+      // as likes + comments + shares + saves instead.
       const insightsUrl = this._getGraphApiUrl(
-        `${externalPostId}/insights?metric=reach,views,likes,comments,shares,saved,engagement,impressions&access_token=${token}`
+        `${externalPostId}/insights?metric=reach,views,likes,comments,shares,saved,impressions&access_token=${token}`
       )
       const insightsRes = await fetch(insightsUrl)
       if (insightsRes.ok) {
@@ -715,7 +721,7 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
             { label: 'Views', value: val('views') || val('impressions') || 0 },
             { label: 'Saves', value: val('saved') || 0 },
             { label: 'Shares', value: val('shares') || 0 },
-            { label: 'Engagement', value: val('engagement') || 0 },
+            { label: 'Engagement', value: likes + comments + val('saved') + val('shares') },
           ]
         }
       } else {
@@ -726,9 +732,11 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
       log.warn({ content: '[Instagram] Insights fetch failed, fallback', error: String(e) })
     }
 
-    // Fallback: direct media fields (like_count, comments_count always available)
+    // Fallback: direct media fields (like_count, comments_count always available).
+    // NOTE: `share_count` is not a media field (Graph #100 nonexisting field),
+    // so shares are unavailable in fallback and reported as 0.
     try {
-      const fields = 'id,caption,media_type,like_count,comments_count,timestamp,share_count';
+      const fields = 'id,caption,media_type,like_count,comments_count,timestamp';
       const url = this._getGraphApiUrl(`${externalPostId}?fields=${fields}&access_token=${token}`);
       const response = await fetch(url);
       if (!response.ok) {
@@ -743,7 +751,7 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
         { label: 'Reach', value: media.reach || 0 },
         { label: 'Views', value: media.views || media.impressions || 0 },
         { label: 'Saves', value: media.saved || 0 },
-        { label: 'Shares', value: media.share_count || 0 },
+        { label: 'Shares', value: 0 },
       ];
     } catch (error: unknown) {
       log.warn({ content: 'Instagram post insights fetch failed', plugin: 'instagram', error: (error as Error).message });
