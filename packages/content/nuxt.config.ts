@@ -34,6 +34,9 @@ export default defineNuxtConfig({
   },
   extends: ['@local-monorepo/ui'],
   modules: ['@nuxtjs/i18n', "@nuxtjs/seo", '@nuxt/content', 'evlog/nuxt'],
+  // @nuxtjs/seo v6 bundles nuxt-skew-protection (v2, on by default). Layers are
+  // built into a single self-hosted image here, so opt out.
+  skewProtection: false,
   content: {
     build: {
       markdown: {

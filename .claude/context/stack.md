@@ -62,5 +62,5 @@ last_updated: 2026-09-13
 - Nuxt 4 with `future.compatibilityVersion: 5` — targeting Nuxt 5 API
 - Drizzle ORM v0.45 via catalog
 - Vue 3.5 via catalog
-- Node.js 22.19+ required by the pi SDK; the repo targets Node 26
+- Node.js `^22.22.3 || ^24.15.0 || >=26.0.0` (root `package.json` `engines`, `.nvmrc` = 26) — floor imposed by `@nuxtjs/seo` v6; the pi SDK needs 22.19+
 - pi packages pinned at `0.85.1`; `scrapegraph-js` at `2.2.1`

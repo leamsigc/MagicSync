@@ -24,7 +24,7 @@ last_updated: 2026-09-13
 
 ## Prerequisites
 
-- **Node.js 22.19+** — Required by the pi SDK (`@earendil-works/pi-coding-agent`); the repo runs Node 26
+- **Node.js `^22.22.3 || ^24.15.0 || >=26.0.0`** (`.nvmrc` pins `26`) — Floor imposed by `@nuxtjs/seo` v6; the pi SDK needs 22.19+
 - **pnpm** — Package manager (install with `npm install -g pnpm`)
 - **Turso CLI** — For local database development (optional, can use cloud)
 - **Docker** — For running local infrastructure (optional)

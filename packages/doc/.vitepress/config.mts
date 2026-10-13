@@ -119,6 +119,7 @@ export default withMermaid(defineConfig({
             { text: 'Calendar Drag Commit', link: '/guide/calendar-drag-commit' },
             { text: 'Platform Preview System', link: '/guide/platform-preview-system' },
             { text: 'Graph API v26 Migration', link: '/guide/graph-api-v26-migration' },
+            { text: 'Nuxt SEO v5 → v6 Migration', link: '/guide/nuxtjs-seo-v6-migration' },
           ],
         },
         {

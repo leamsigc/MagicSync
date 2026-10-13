@@ -58,6 +58,8 @@
     "@nuxt/vite-builder": "catalog:",
     "@nuxtjs/seo": "catalog:",
     "@playwright/test": "catalog:",
-    "nuxtseo-layer-devtools": "catalog:"
+    "nuxt-site-config": "catalog:",
+    "nuxtseo-devtools-host": "catalog:",
+    "sharp": "catalog:"
   }
 }

@@ -33,6 +33,7 @@ Lookup table for all pattern files in this directory. Check here before starting
 | [fullcalendar-nuxt.md](fullcalendar-nuxt.md) | DEPRECATED — FullCalendar is being purged; kept as crash-workaround history only |
 | [calendar-nuxt-ui-port.md](calendar-nuxt-ui-port.md) | The Apple-style Nuxt UI post calendar — grid in `ui`, post wiring in `scheduler`, and the hooks that bite |
 | [purge-dependency.md](purge-dependency.md) | Removing a dependency monorepo-wide — prove unused, delete package + catalog + sidecar CSS, sync the lockfile |
+| [dependency-upgrade.md](dependency-upgrade.md) | Major-version upgrade of a framework/module — manifest as spec, catalog family bump, override duplicate-version guards, boot to verify |
 | [seo-og.md](seo-og.md) | Fixing Open Graph / link previews on Nuxt Content + nuxt-og-image pages |
 | [entitydetails-kv.md](entitydetails-kv.md) | Storing a feature in `entity_details` KV rows with zero migrations |
 | [safe-build.md](safe-build.md) | Building the site without freezing the machine — heap caps, concurrency limits |

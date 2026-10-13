@@ -71,6 +71,9 @@
   "keywords": [],
   "author": "Ismael Garcia <leamsigc@leamsigc.com>",
   "license": "MIT",
+  "engines": {
+    "node": "^22.22.3 || ^24.15.0 || >=26.0.0"
+  },
   "packageManager": "pnpm@12.5.1",
   "dependencies": {
     "jose": "^6.2.12"

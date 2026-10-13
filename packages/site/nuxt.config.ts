@@ -34,9 +34,12 @@ const blogRootRedirects = Object.fromEntries(
 export default defineNuxtConfig({
   compatibilityDate: '2026-09-07',
   routeRules: {
-    "/": { swr: 1200 },
-    "/blog": { swr: true },
-    "/blog/**": { swr: 1200 },
+    // nuxt-ai-ready v3 (bundled by @nuxtjs/seo v6) negotiates Markdown on the
+    // `Accept` header. A cached SWR response keyed without `accept` skips that
+    // negotiation (the module warns). Existing swr options are preserved.
+    "/": { swr: 1200, cache: { varies: ['accept'] } },
+    "/blog": { swr: true, cache: { varies: ['accept'] } },
+    "/blog/**": { swr: 1200, cache: { varies: ['accept'] } },
     "/app/**": { swr: false, robots: false, prerender: false },
     '/api/v1/**': {
       cors: true
@@ -271,6 +274,21 @@ export default defineNuxtConfig({
     // zeroRuntime: true causes issues with dynamic content pages that use
     // defineOgImage(page.value?.ogImage) — disable for stability
   },
+  // @nuxtjs/seo v6 bundles nuxt-ai-ready v3 (on by default): /llms.txt and bot
+  // negotiation come for free, no module entry needed. NOTE: a hand-written
+  // packages/site/public/llms.txt already exists — see the migration wiki.
+  aiReady: {
+    // v3's optional DB-backed MCP "site tools" need drizzle-orm ^1.0.0-rc.4;
+    // this repo pins drizzle-orm 0.45.x (packages/db) and serves MCP tools via
+    // @nuxtjs/mcp-toolkit, so disable only the database sub-feature. llms.txt +
+    // bot negotiation stay on.
+    database: false,
+  },
+  //
+  // v6 also bundles nuxt-skew-protection v2 (on by default). This app ships a
+  // single Docker image with no rolling/push channel, so opt out — otherwise
+  // assets are persisted under node_modules/.cache/nuxt-seo/skew-protection.
+  skewProtection: false,
   seoUtils: {
     // twitter:card is deprecated — Open Graph is the modern standard.
     // Disable automatic twitter meta inference so unhead doesn't emit
