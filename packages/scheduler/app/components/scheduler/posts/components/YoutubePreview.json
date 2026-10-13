@@ -1,0 +1,22 @@
+{
+  "en": {
+    "commentsHeading": "{count} Comments",
+    "shortBadge": "Short",
+    "addComment": "Add a comment…"
+  },
+  "es": {
+    "commentsHeading": "{count} comentarios",
+    "shortBadge": "Short",
+    "addComment": "Añade un comentario…"
+  },
+  "de": {
+    "commentsHeading": "{count} Kommentare",
+    "shortBadge": "Short",
+    "addComment": "Kommentar hinzufügen…"
+  },
+  "fr": {
+    "commentsHeading": "{count} commentaires",
+    "shortBadge": "Short",
+    "addComment": "Ajouter un commentaire…"
+  }
+}

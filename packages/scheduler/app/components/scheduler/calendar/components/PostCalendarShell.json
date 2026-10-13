@@ -1,0 +1,38 @@
+{
+  "en": {
+    "newPost": "New post",
+    "saving": "Saving…",
+    "emptyTitle": "Nothing scheduled in this range",
+    "emptyBody": "Posts you schedule appear here, one per business colour. Start with the first one.",
+    "emptyAction": "Schedule a post",
+    "pastTitle": "Date {date} disabled",
+    "pastBody": "Please select a date in the future"
+  },
+  "es": {
+    "newPost": "Nueva publicación",
+    "saving": "Guardando…",
+    "emptyTitle": "Nada programado en este período",
+    "emptyBody": "Las publicaciones que programes aparecen aquí, una por color de negocio. Empieza con la primera.",
+    "emptyAction": "Programar una publicación",
+    "pastTitle": "Fecha {date} deshabilitada",
+    "pastBody": "Selecciona una fecha futura"
+  },
+  "de": {
+    "newPost": "Neuer Beitrag",
+    "saving": "Wird gespeichert…",
+    "emptyTitle": "In diesem Zeitraum nichts geplant",
+    "emptyBody": "Geplante Beiträge erscheinen hier, einer pro Unternehmensfarbe. Beginne mit dem ersten.",
+    "emptyAction": "Beitrag planen",
+    "pastTitle": "Datum {date} deaktiviert",
+    "pastBody": "Bitte wähle ein Datum in der Zukunft"
+  },
+  "fr": {
+    "newPost": "Nouvelle publication",
+    "saving": "Enregistrement…",
+    "emptyTitle": "Rien de programmé sur cette période",
+    "emptyBody": "Les publications que tu programmes apparaissent ici, une par couleur d'entreprise. Commence par la première.",
+    "emptyAction": "Programmer une publication",
+    "pastTitle": "Date {date} désactivée",
+    "pastBody": "Sélectionne une date future"
+  }
+}

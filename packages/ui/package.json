@@ -32,10 +32,12 @@
     "driver.js": "catalog:"
   },
   "dependencies": {
+    "@internationalized/date": "3.12.4",
     "@local-monorepo/shared": "workspace:*",
     "@nuxt/fonts": "catalog:",
     "@types/three": "catalog:",
     "consola": "catalog:",
+    "dayjs": "catalog:",
     "sortablejs": "^1.15.7",
     "three": "catalog:"
   }

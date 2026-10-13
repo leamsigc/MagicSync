@@ -1,0 +1,22 @@
+{
+  "en": {
+    "commentCount": "{count} comments",
+    "commentsHeading": "Most relevant",
+    "addComment": "Write a comment…"
+  },
+  "es": {
+    "commentCount": "{count} comentarios",
+    "commentsHeading": "Más relevantes",
+    "addComment": "Escribe un comentario…"
+  },
+  "de": {
+    "commentCount": "{count} Kommentare",
+    "commentsHeading": "Relevanteste",
+    "addComment": "Kommentar schreiben…"
+  },
+  "fr": {
+    "commentCount": "{count} commentaires",
+    "commentsHeading": "Les plus pertinents",
+    "addComment": "Écrire un commentaire…"
+  }
+}

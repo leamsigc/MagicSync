@@ -30,7 +30,10 @@ body {
 }
 
 :root, .light, [data-theme] {
-  --ui-radius: 1rem;
+  /* Every `rounded-*` utility resolves to `calc(var(--ui-radius) * n)`, so this
+     one value rounds every surface at once: `rounded-md` lands at 8px, `rounded-lg`
+     at 12px. Declared unlayered so it beats Nuxt UI's theme-layer default. */
+  --ui-radius: 0.5rem;
   --ui-bg: #F6F4F3;
   --ui-bg-muted: #f0eeed;
   --ui-bg-elevated: #ffffff;
@@ -351,11 +354,6 @@ body {
 
 .asset-overlay-button:nth-child(3) {
   transition-delay: 0.3s;
-}
-
-.fc-daygrid-day-bg{
-  position: absolute;
-  inset: 0;
 }
 
 /* Prose */
@@ -823,4 +821,156 @@ body {
 
 .prose :where(.prose > :last-child):not(:where([class~="not-prose"],[class~="not-prose"] *)){
   margin-bottom: 0
+}
+
+/* Unlayered, which is what lets these tokens land: Nuxt UI declares its theme
+   variables in the theme layer, and a layered override only wins from a later
+   layer, which `base` is not from inside a component's own stylesheet.
+   Unlayered beats every layer, so the variables below are the ones that apply.
+   `--ui-radius` itself is declared in the token block at the top of this file
+   for the same reason and is deliberately not repeated here */
+
+/* The glass anything floating is cut from. Blurred and pushed in saturation so
+   colour survives the blur, over a fill light enough to keep whatever it
+   covers legible. Dark glass brightens what is behind it rather than dimming
+   it, the way a lit pane over a dark room does */
+:root {
+  --glass-bg: rgb(255 255 255 / 0.42);
+  --glass-blur: 24px;
+  --glass-saturate: 180%;
+  --glass-brightness: 105%;
+  --glass-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate)) brightness(var(--glass-brightness));
+
+  /* The scrim hazes where the surfaces over it frost. A variable rather than
+     `backdrop-blur-sm` so it clears with the rest of the material below */
+  --overlay-blur: 8px;
+
+  /* A control standing on glass. The `bg-elevated` its variants would
+     otherwise resolve to is opaque, and covers the pane it sits on */
+  --control-bg: rgb(0 0 0 / 0.05);
+  --control-bg-hover: rgb(0 0 0 / 0.09);
+
+  /* A well cut into the glass, for a track the controls in it read as raised
+     out of. Black in both modes, where `--control-bg` turns white on dark
+     glass and matches this on light */
+  --well-bg: rgb(0 0 0 / 0.05);
+}
+
+.dark {
+  --glass-bg: rgb(28 28 30 / 0.55);
+  --glass-blur: 28px;
+  --glass-saturate: 150%;
+  --glass-brightness: 110%;
+
+  --control-bg: rgb(255 255 255 / 0.06);
+  --control-bg-hover: rgb(255 255 255 / 0.10);
+
+  /* Deeper than the light one: the pane behind it is already dark, so the
+     same alpha would not read as a well at all */
+  --well-bg: rgb(0 0 0 / 0.22);
+}
+
+/* Frosted over to fully solid */
+@media (prefers-reduced-transparency: reduce) {
+  :root,
+  .dark {
+    --glass-bg: var(--ui-bg);
+    --glass-blur: 0px;
+    --overlay-blur: 0px;
+  }
+}
+
+/* Only the material, no fill or shadow of its own, so it drops on top of a
+   Nuxt UI component without colliding with the ring and shadow it ships */
+@utility glass-material {
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
+}
+
+/* Slide the calendar grid on prev/next navigation, driven by the
+   `data-nav-direction` attribute set in `useCalendar` */
+::view-transition-old(calendar),
+::view-transition-new(calendar) {
+  animation-duration: 200ms;
+  animation-timing-function: ease;
+}
+
+html[data-nav-direction='right']::view-transition-old(calendar) {
+  animation-name: calendar-out-start;
+}
+
+html[data-nav-direction='right']::view-transition-new(calendar) {
+  animation-name: calendar-in-end;
+}
+
+html[data-nav-direction='left']::view-transition-old(calendar) {
+  animation-name: calendar-out-end;
+}
+
+html[data-nav-direction='left']::view-transition-new(calendar) {
+  animation-name: calendar-in-start;
+}
+
+/* The blurred chrome rides along in the transition overlay so it keeps
+   blurring the sliding grid instead of being painted over by it, and swaps
+   outright the way it does outside a transition */
+::view-transition-old(header),
+::view-transition-old(weekdays) {
+  animation: none;
+  opacity: 0;
+}
+
+::view-transition-new(header),
+::view-transition-new(weekdays) {
+  animation: none;
+  opacity: 1;
+}
+
+@keyframes calendar-out-start {
+  to {
+    opacity: 0;
+    transform: translateX(-2rem);
+  }
+}
+
+@keyframes calendar-in-end {
+  from {
+    opacity: 0;
+    transform: translateX(2rem);
+  }
+}
+
+@keyframes calendar-out-end {
+  to {
+    opacity: 0;
+    transform: translateX(2rem);
+  }
+}
+
+@keyframes calendar-in-start {
+  from {
+    opacity: 0;
+    transform: translateX(-2rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  /* Selected text carries the accent instead of the browser's own blue, light
+     enough that the text keeps its colour through it */
+  ::selection {
+    background-color: color-mix(in oklab, var(--ui-primary) 20%, transparent);
+  }
 }

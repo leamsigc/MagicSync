@@ -109,8 +109,8 @@ const { value: themeMode } = useColorMode();
 
           <img
             class="w-full lg:w-300 mx-auto rounded-lg relative leading-none flex items-center border-0 shadow  img-border-animation"
-            :src="themeMode === 'dark' ? heroImage.dark : heroImage.light" :alt="heroImage.alt" width="1300"
-            height="900" loading="lazy" />
+            :src="themeMode === 'dark' ? heroImage.dark : heroImage.light" :alt="heroImage.alt" width="1920"
+            height="963" loading="lazy" />
 
         </div>
       </div>

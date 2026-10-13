@@ -28,19 +28,6 @@ allowBuilds:
 catalog:
   '@atproto/api': 0.23.1
   '@better-auth/utils': 0.5.0
-  # FullCalendar must stay on one major: the plugin packages (daygrid/
-  # timegrid/interaction/list/multimonth/scrollgrid) only publish 6.x stable,
-  # and they import `@fullcalendar/core/internal.js` — an export that core 7
-  # dropped. A 6.x plugin against core 7 fails the Rolldown resolve with
-  # `"./internal.js" is not exported under the conditions [...]`.
-  '@fullcalendar/core': 6.1.21
-  '@fullcalendar/daygrid': 6.1.21
-  '@fullcalendar/interaction': 6.1.21
-  '@fullcalendar/list': 6.1.21
-  '@fullcalendar/multimonth': 6.1.21
-  '@fullcalendar/scrollgrid': 6.1.21
-  '@fullcalendar/timegrid': 6.1.21
-  '@fullcalendar/vue3': 6.1.21
   '@huggingface/transformers': 4.3.0
   '@libsql/client': 0.18.0
   '@nuxt/content': 3.16.1

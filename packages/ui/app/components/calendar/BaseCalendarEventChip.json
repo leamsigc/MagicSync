@@ -1,0 +1,18 @@
+{
+  "en": {
+    "eventAria": "{title}, {time}",
+    "allDayAria": "All day, {title}"
+  },
+  "es": {
+    "eventAria": "{title}, {time}",
+    "allDayAria": "Todo el día, {title}"
+  },
+  "de": {
+    "eventAria": "{title}, {time}",
+    "allDayAria": "Ganztägig, {title}"
+  },
+  "fr": {
+    "eventAria": "{title}, {time}",
+    "allDayAria": "Toute la journée, {title}"
+  }
+}

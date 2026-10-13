@@ -48,6 +48,36 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
     return auth;
   }
 
+  /**
+   * Views over a date range come from the YouTube **Analytics** API — the Data
+   * API's `channels.statistics.viewCount` is lifetime-only and has no range.
+   * Requires the `yt-analytics.readonly` scope; returns null when that scope is
+   * not granted yet (or quota/API is off) so callers can fall back instead of
+   * failing the whole stats read.
+   */
+  private async fetchViewsLast30d(oauth2Client: google.auth.OAuth2, days = 30): Promise<number | null> {
+    try {
+      const analytics = google.youtubeAnalytics({ version: 'v2', auth: oauth2Client })
+      const endDate = new Date().toISOString().slice(0, 10)
+      const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+      const resp = await analytics.reports.query({
+        ids: 'channel==MINE',
+        startDate,
+        endDate,
+        metrics: 'views',
+      })
+      const value = resp.data.rows?.[0]?.[0]
+      return typeof value === 'number' ? value : Number(value ?? 0)
+    } catch (error) {
+      log.warn({
+        content: '[YouTube] 30-day views unavailable — reconnect YouTube to grant yt-analytics.readonly',
+        plugin: 'youtube',
+        error: (error as Error).message,
+      })
+      return null
+    }
+  }
+
   private getPlatformData(postDetails: PluginPostDetails) {
     const platformName = this.pluginName;
     const platformContent = (postDetails.platformContent as Record<string, { content: string; comments?: string[] } | undefined>)?.[platformName];
@@ -408,6 +438,9 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
         }
       }
 
+      const viewsLast30d = await this.fetchViewsLast30d(oauth2Client)
+      await this.persistTokens(socialMediaAccount, oauth2Client)
+
       const subscriberCount = parseInt(stats.subscriberCount || '0', 10)
       const engagementRate = subscriberCount > 0
         ? Math.round((totalLikes + totalComments) / subscriberCount * 10000) / 100
@@ -425,7 +458,9 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
         posts: parseInt(stats.videoCount || '0', 10),
         engagement: {
           total: totalEngagement,
-          views: totalViews,
+          // Prefer real 30-day views from the Analytics API; fall back to the
+          // sum of the last-50 uploads' lifetime views until the scope is granted.
+          views: viewsLast30d ?? totalViews,
           likes: totalLikes,
           comments: totalComments,
         },
@@ -436,6 +471,8 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
         },
         extra: {
           viewCount: parseInt(stats.viewCount || '0', 10),
+          viewsLast30d,
+          recentUploadViews: totalViews,
           hiddenSubscriberCount: stats.hiddenSubscriberCount || false,
           uploadsPlaylistId: relatedPlaylists.uploads || undefined,
           shortsCount,

@@ -18,6 +18,42 @@ interface ConnectSocialMediaAccountBody {
   businessId: string;
 }
 
+interface PageDetails {
+  id: string;
+  name: string;
+  access_token: string;
+  picture: string;
+  username: string;
+}
+
+/**
+ * Page details come from the plugin matching the route platform. Only one
+ * plugin is registered on the scheduler (`matcher[platform]`), so reaching for
+ * any other name always misses — the old code hardcoded `'facebook'` here,
+ * which is why every LinkedIn Page connect died with a 400.
+ */
+async function fetchPageDetails(
+  scheduler: SchedulerPost,
+  platform: SocialMediaPlatform,
+  pageId: string,
+  accessToken: string,
+  instagramId?: string,
+): Promise<PageDetails> {
+  if (platform === 'linkedin-page') {
+    const linkedInPlugin = scheduler.getPlugin('linkedin-page');
+    if (!linkedInPlugin || !(linkedInPlugin instanceof LinkedInPagePlugin)) {
+      throw createError({ statusCode: 400, statusMessage: 'LinkedIn Page plugin not available' });
+    }
+    return linkedInPlugin.fetchPageInformation(linkedInPlugin, pageId, accessToken, { page: pageId });
+  }
+
+  const facebookPlugin = scheduler.getPlugin('facebook');
+  if (!facebookPlugin || !(facebookPlugin instanceof FacebookPlugin)) {
+    throw createError({ statusCode: 400, statusMessage: 'Facebook plugin not available' });
+  }
+  return facebookPlugin.fetchPageInformation(pageId, accessToken, { instagramId });
+}
+
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event)
@@ -114,11 +150,7 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    const facebookPlugin = scheduler.getPlugin('facebook')
-    if (!facebookPlugin || !(facebookPlugin instanceof FacebookPlugin)) {
-      throw createError({ statusCode: 400, statusMessage: 'Facebook plugin not available' })
-    }
-    const pageDetails = await facebookPlugin.fetchPageInformation(pageId, accessToken, { instagramId: body.instagram_business_account?.id });
+    const pageDetails = await fetchPageDetails(scheduler, platform, pageId, accessToken, body.instagram_business_account?.id);
 
     await logAuditService.logAuditEvent({
       userId: user.id,

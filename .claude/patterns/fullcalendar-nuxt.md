@@ -1,19 +1,32 @@
 ---
 name: fullcalendar-nuxt
-description: Embedding FullCalendar 6 in Nuxt 4 without customRenderingMap crashes
+description: DEPRECATED — FullCalendar is being purged (see below). Kept as history for the crash workarounds only; do not build on it
 triggers:
   - "fullcalendar"
   - "customRenderingMap"
   - "calendar crash"
 edges:
   - target: context/stack.md
-    condition: when checking FullCalendar / Vue versions
+    condition: when checking which library versions the repo is pinned to
+  - target: patterns/purge-dependency.md
+    condition: when removing the remaining FullCalendar packages or components
   - target: patterns/add-page.md
-    condition: when adding a calendar page
-last_updated: 2026-09-07
+    condition: when adding a calendar page (build it on Nuxt UI, not FullCalendar)
+  - target: ../.aiContext/PRD-CALENDAR-NUXT-UI.md
+    condition: when working any wave of the Nuxt UI calendar port
+last_updated: 2026-10-09
 ---
 
 # FullCalendar in Nuxt
+
+> **Deprecated — do not add FullCalendar to new work.**
+> `.aiContext/PRD-CALENDAR-NUXT-UI.md` W0 purged the dependency: the CSS bridge
+> (`packages/ui/app/assets/css/full-calendar.css`, the `--fc-*` overrides) is
+> deleted, the four unused packages and their `catalog:` entries are gone, and
+> W7 deletes the last importer (`ScheduleCalendar.vue`) together with the
+> remaining four catalog entries. The calendar is a Nuxt UI implementation.
+> This file survives only because the `customRenderingMap` lessons below are
+> real Vue-wrapper history, not because FullCalendar is still supported.
 
 ## Context
 

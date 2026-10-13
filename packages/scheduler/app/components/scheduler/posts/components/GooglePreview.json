@@ -1,0 +1,42 @@
+{
+  "en": {
+    "topicEvent": "Event",
+    "topicOffer": "Offer",
+    "ctaBook": "Book",
+    "ctaOrder": "Order",
+    "ctaShop": "Shop",
+    "ctaLearnMore": "Learn more",
+    "ctaSignUp": "Sign up",
+    "ctaCall": "Call"
+  },
+  "es": {
+    "topicEvent": "Evento",
+    "topicOffer": "Oferta",
+    "ctaBook": "Reservar",
+    "ctaOrder": "Ordenar",
+    "ctaShop": "Comprar",
+    "ctaLearnMore": "Más información",
+    "ctaSignUp": "Registrarse",
+    "ctaCall": "Llamar"
+  },
+  "de": {
+    "topicEvent": "Veranstaltung",
+    "topicOffer": "Angebot",
+    "ctaBook": "Buchen",
+    "ctaOrder": "Bestellen",
+    "ctaShop": "Einkaufen",
+    "ctaLearnMore": "Mehr erfahren",
+    "ctaSignUp": "Registrieren",
+    "ctaCall": "Anrufen"
+  },
+  "fr": {
+    "topicEvent": "Événement",
+    "topicOffer": "Offre",
+    "ctaBook": "Réserver",
+    "ctaOrder": "Commander",
+    "ctaShop": "Acheter",
+    "ctaLearnMore": "En savoir plus",
+    "ctaSignUp": "S'inscrire",
+    "ctaCall": "Appeler"
+  }
+}

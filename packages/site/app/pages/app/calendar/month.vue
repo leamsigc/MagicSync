@@ -1,15 +1,15 @@
 <!--  Translation file -->
 <i18n src="./calendar.json"></i18n>
 <script lang="ts" setup>
-import CalendarViewWrapper from '#layers/BaseScheduler/app/components/scheduler/calendar/components/CalendarViewWrapper.vue';
-import dayjs from 'dayjs';
-import MicRecorder from '#layers/BaseTools/app/components/MicRecorder.vue'
-import PostAIAssistant from '#layers/BaseTemplate/app/components/PostAIAssistant.vue'
-import TemplateVariablePopUp from '#layers/BaseTemplate/app/components/TemplateVariablePopUp.vue'
+import dayjs from 'dayjs'
 
 /**
  *
- * Component Description: Month view calendar page.
+ * Component Description: legacy month calendar page.
+ *
+ * Redirects to `/app/calendar/month/<today>`, the seeded route that now owns the
+ * month grid. Kept so every link and bookmark that predates the new route still
+ * lands on a working calendar.
  *
  * @author Ismael Garcia <leamsigc@leamsigc.com>
  * @version 0.0.1
@@ -19,27 +19,11 @@ import TemplateVariablePopUp from '#layers/BaseTemplate/app/components/TemplateV
  * @todo [✔] Update the typescript.
  */
 
-const startDate = dayjs().startOf('month').format('YYYY-MM-DD');
-const endDate = dayjs().endOf('month').format('YYYY-MM-DD');
+navigateTo(`/app/calendar/month/${dayjs().format('YYYY-MM-DD')}`)
 </script>
+
 <template>
-  <CalendarViewWrapper
-    active-view="dayGridMonth"
-    :start-date="startDate"
-    :end-date="endDate"
-    seo-end-label="month"
-    show-platform-filter
-    show-post-format-filter>
-    <template #mic-recorder="{ onTranscript }">
-      <MicRecorder @transcript="onTranscript" />
-    </template>
-    <template #template-variable="{ onAction }">
-      <TemplateVariablePopUp @action="onAction" />
-    </template>
-    <template #ai-assistant="{ loading, onAction, onTemplateAction }">
-      <PostAIAssistant :loading="loading" @action="onAction" @template-action="onTemplateAction" />
-    </template>
-  </CalendarViewWrapper>
+  <div />
 </template>
 
 <style></style>

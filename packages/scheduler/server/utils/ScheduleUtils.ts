@@ -170,6 +170,19 @@ const platformProviderMap: Record<string, string> = {
 }
 
 /**
+ * True when a `social_media_accounts.tokenExpiresAt` is in the past (or within
+ * 5 minutes). Mirrors `socialMediaAccountService.isTokenExpired`, which reads
+ * the Better Auth row's `accessTokenExpiresAt` — a different column.
+ */
+function isRowTokenExpired(expiresAt?: Date | number | null): boolean {
+  if (!expiresAt) return false
+  const ms = typeof expiresAt === 'number'
+    ? (expiresAt < 1e12 ? expiresAt * 1000 : expiresAt)
+    : new Date(expiresAt).getTime()
+  return ms <= Date.now() + 5 * 60 * 1000
+}
+
+/**
  * Refreshes social media tokens for the platforms that have expiring tokens,
  * using Better Auth's internal token refresh. Attempts refresh for all platforms
  * that have an associated Better Auth provider mapping.
@@ -203,7 +216,13 @@ export const ScheduleRefreshSocialMediaTokens = async (fullPost: PostWithAllData
     if (!account) return
 
 
+    // Refresh when EITHER the Better Auth row OR our social row looks expired.
+    // The row's accessToken is what actually publishes; the Better Auth row can
+    // report "not expired" — or have no expiry stored at all — while the row's
+    // token is already dead. That mismatch surfaced as "token not valid" with no
+    // refresh attempt, forcing a manual reconnect.
     const expired = socialMediaAccountService.isTokenExpired(account)
+      || isRowTokenExpired(socialMediaAccount?.tokenExpiresAt)
     // SAFE: never log token material — ids + expiry only (account holds accessToken).
     log.info({ message: 'Token expired', accountId: account.id, providerId, expired })
     if (!expired) return

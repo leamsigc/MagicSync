@@ -1,0 +1,18 @@
+{
+  "en": {
+    "brand": "Calendar",
+    "closeMenu": "Close menu"
+  },
+  "es": {
+    "brand": "Calendario",
+    "closeMenu": "Cerrar menú"
+  },
+  "de": {
+    "brand": "Kalender",
+    "closeMenu": "Menü schließen"
+  },
+  "fr": {
+    "brand": "Calendrier",
+    "closeMenu": "Fermer le menu"
+  }
+}

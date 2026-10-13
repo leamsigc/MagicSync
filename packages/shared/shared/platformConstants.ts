@@ -5,6 +5,17 @@
  */
 export type PostFormat = 'post' | 'reel' | 'story' | 'short';
 
+/**
+ * Single source of truth for the Meta Graph API version used by every
+ * Facebook/Instagram plugin. Bump here only — the plugins import it so the
+ * version can never drift between files again.
+ *
+ * v26.0 (2026-07-29): removed legacy protocol behaviors (`pretty`, `debug`,
+ * `date_format`, root `GET /?ids=…`, legacy `If-None-Match`) and the
+ * `page_impressions*`/`post_impressions*`/`page_fans` insight metrics.
+ */
+export const GRAPH_API_VERSION = 'v26.0';
+
 export interface MediaConstraints {
   imageFileTypes: string[]; // Supported image formats (e.g., ['JPEG', 'PNG', 'GIF', 'WebP'])
   videoFileTypes: string[]; // Supported video formats (e.g., ['MP4', 'MOV', 'AVI'])

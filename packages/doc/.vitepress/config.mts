@@ -111,6 +111,17 @@ export default withMermaid(defineConfig({
           ],
         },
         {
+          text: 'Wiki',
+          collapsed: false,
+          items: [
+            { text: 'Generic Calendar Grid', link: '/guide/calendar-grid' },
+            { text: 'Calendar Data Contract', link: '/guide/calendar-data-contract' },
+            { text: 'Calendar Drag Commit', link: '/guide/calendar-drag-commit' },
+            { text: 'Platform Preview System', link: '/guide/platform-preview-system' },
+            { text: 'Graph API v26 Migration', link: '/guide/graph-api-v26-migration' },
+          ],
+        },
+        {
           text: 'Agent Platform',
           collapsed: false,
           items: [

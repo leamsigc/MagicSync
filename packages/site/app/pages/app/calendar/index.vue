@@ -1,15 +1,14 @@
 <!--  Translation file -->
 <i18n src="./calendar.json"></i18n>
 <script lang="ts" setup>
-import dayjs from 'dayjs';
-import CalendarViewWrapper from '#layers/BaseScheduler/app/components/scheduler/calendar/components/CalendarViewWrapper.vue';
-import MicRecorder from '#layers/BaseTools/app/components/MicRecorder.vue'
-import PostAIAssistant from '#layers/BaseTemplate/app/components/PostAIAssistant.vue'
-import TemplateVariablePopUp from '#layers/BaseTemplate/app/components/TemplateVariablePopUp.vue'
+import dayjs from 'dayjs'
 
 /**
  *
- * Component Description: Main calendar page, defaults to month view showing all posts.
+ * Component Description: legacy calendar entry point.
+ *
+ * `/app/calendar` predates the seeded route, so it redirects to the month view of
+ * today and the page that owns the grid takes over from there.
  *
  * @author Ismael Garcia <leamsigc@leamsigc.com>
  * @version 0.0.1
@@ -18,26 +17,12 @@ import TemplateVariablePopUp from '#layers/BaseTemplate/app/components/TemplateV
  * @todo [ ] Integration test.
  * @todo [✔] Update the typescript.
  */
-const startDate = dayjs().startOf('month').format('YYYY-MM-DD');
-const endDate = dayjs().endOf('month').format('YYYY-MM-DD');
+
+navigateTo(`/app/calendar/month/${dayjs().format('YYYY-MM-DD')}`)
 </script>
+
 <template>
-  <CalendarViewWrapper
-    seo-end-label="month"
-    :start-date="startDate"
-    :end-date="endDate"
-    show-platform-filter
-    show-post-format-filter>
-    <template #mic-recorder="{ onTranscript }">
-      <MicRecorder @transcript="onTranscript" />
-    </template>
-    <template #template-variable="{ onAction }">
-      <TemplateVariablePopUp @action="onAction" />
-    </template>
-    <template #ai-assistant="{ loading, onAction, onTemplateAction }">
-      <PostAIAssistant :loading="loading" @action="onAction" @template-action="onTemplateAction" />
-    </template>
-  </CalendarViewWrapper>
+  <div />
 </template>
 
 <style></style>

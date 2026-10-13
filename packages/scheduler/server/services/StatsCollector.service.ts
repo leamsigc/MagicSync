@@ -7,8 +7,9 @@ import { postService } from '#layers/BaseDB/server/services/post.service'
 import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service'
 import { AutoPostService } from './AutoPost.service'
 import { platformStatsService } from './PlatformStats.service'
-import type { PostInsight } from '#layers/BaseDB/server/services/SchedulerPost.service'
+import type { PostInsight, PlatformStats } from '#layers/BaseDB/server/services/SchedulerPost.service'
 import { extractExternalPostId } from '#layers/BaseDB/server/services/SchedulerPost.service'
+import { renewRowToken } from '#layers/BaseDB/server/services/TokenRefresh.service'
 import { normalizePostInsights } from './stats-normalizer'
 import type { PlatformStatsFilters, CollectStatsResult } from './PlatformStats.service'
 
@@ -70,12 +71,14 @@ export class StatsCollectorService {
   }
 
   async getDueAccounts(filters: PlatformStatsFilters = {}, opts: { force?: boolean } = {}): Promise<SocialMediaAccount[]> {
-    const accounts = await socialMediaAccountService.getAccounts({
+    const fetched = await socialMediaAccountService.getAccounts({
       userId: filters.userId,
       businessId: filters.businessId,
       platform: filters.platform,
       isActive: true,
     })
+    // Per-account refresh (dashboard card button) scopes to one row.
+    const accounts = filters.accountId ? fetched.filter(a => a.id === filters.accountId) : fetched
     if (opts.force) return accounts
     const due: SocialMediaAccount[] = []
     for (const account of accounts) {
@@ -87,11 +90,26 @@ export class StatsCollectorService {
     return due
   }
 
+  /**
+   * Fetch account stats, healing a user-token-in-a-page-row exactly once.
+   * The FB/IG plugins set `extra.needsPageToken` when Meta answers
+   * #190/2069032 — we then force a Page-token re-mint and retry once.
+   */
+  private async fetchStatsWithHeal(account: SocialMediaAccount): Promise<{ stats: PlatformStats | null; error?: string }> {
+    const first = await platformStatsService.fetchAccountStats(account)
+    if (!first.stats?.extra?.needsPageToken) return first
+    const heal = await renewRowToken(account, { force: true })
+    if (!heal.success || !heal.data?.renewed) return first
+    const fresh = await socialMediaAccountService.getAccountById(account.id)
+    if (fresh?.accessToken) account.accessToken = fresh.accessToken
+    return platformStatsService.fetchAccountStats(account)
+  }
+
   async collectAccount(account: SocialMediaAccount, source: 'auto' | 'manual' = 'auto'): Promise<CollectStatsResult> {
     await this.ensureSyncState(account.id)
     const now = dayjs().toDate()
     await this.updateSyncState(account.id, { lastAttemptAt: now, status: 'running' })
-    const { stats, error } = await platformStatsService.fetchAccountStats(account)
+    const { stats, error } = await this.fetchStatsWithHeal(account)
     if (stats) {
       await this.db.insert(accountMetrics).values({
         id: crypto.randomUUID(),
@@ -201,7 +219,11 @@ export class StatsCollectorService {
         platform: item.account.platform,
       })
       const normalized = normalizePostInsights(insights as PostInsight[])
-      const unavailable = Array.isArray(insights) && insights.some(i => String(i.label).toLowerCase().includes('unavailable'))
+      // Only a bare fallback counts as failure — a partial set (some metrics
+      // resolved) is a success and must stay visible in Top Posts.
+      const unavailable = Array.isArray(insights)
+        && insights.length === 1
+        && String(insights[0]?.label).toLowerCase().includes('unavailable')
       const publishDetail = item.platformPost.publishDetail as Record<string, { publishedId?: string }> | undefined
       const externalPostId = publishDetail?.[item.platformPost.socialAccountId]?.publishedId || extractExternalPostId(item.postFull, item.account)
       await this.db.insert(postMetrics).values({
@@ -250,7 +272,9 @@ export class StatsCollectorService {
         accountsFailed++
       }
     }
-    const poolAccounts = accounts.length > 0 ? accounts : await socialMediaAccountService.getAccounts({ userId: filters.userId, businessId: filters.businessId, platform: filters.platform, isActive: true })
+    const poolAccounts = accounts.length > 0 || filters.accountId
+      ? accounts
+      : await socialMediaAccountService.getAccounts({ userId: filters.userId, businessId: filters.businessId, platform: filters.platform, isActive: true })
     const duePosts = await this.getDuePosts(poolAccounts, opts)
     let postsCollected = 0
     let postsFailed = 0

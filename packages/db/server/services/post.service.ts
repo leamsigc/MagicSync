@@ -1,11 +1,11 @@
-import type { PlatformPost, Post, PostCreateBase, PostWithAllData, Asset } from '#layers/BaseDB/db/schema'
+import type { PlatformPost, Post, PostCreateBase, PostWithAllData, PostWithBusinessData, Asset } from '#layers/BaseDB/db/schema'
 import type {
   PaginatedResponse,
   QueryOptions,
   ServiceResponse,
 } from './types'
 import type { PostServiceType } from './interfaces'
-import { and, eq, gte, inArray, lte, or, sql } from 'drizzle-orm'
+import { and, eq, gte, inArray, lt, lte, or, sql } from 'drizzle-orm'
 import { assets, businessProfiles, member, organization, platformPosts, posts, socialMediaAccounts } from '#layers/BaseDB/db/schema'
 import { parseJsonObject, toJsonString } from '#layers/BaseShared/utils/json'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
@@ -13,6 +13,28 @@ import { ValidationError } from './types'
 
 
 export interface UpdatePostData extends Partial<Omit<PostCreateBase, 'businessId' | 'userId'>> { }
+
+/**
+ * Asset ids off a post's `mediaAssets` JSON string.
+ *
+ * A malformed or non-array value is treated as "no assets" rather than an
+ * error: one bad row must not fail a whole calendar range.
+ */
+function parseAssetIds(mediaAssets: string | null): string[] {
+  if (!mediaAssets) {
+    return []
+  }
+
+  try {
+    const parsed: unknown = JSON.parse(mediaAssets)
+
+    return Array.isArray(parsed)
+      ? parsed.filter((id): id is string => typeof id === 'string')
+      : []
+  } catch {
+    return []
+  }
+}
 
 export interface CreatePlatformPostData {
   postId: string
@@ -224,6 +246,89 @@ export class PostService implements PostServiceType {
     } catch (error) {
       return { success: false, error: 'Failed to fetch posts' }
     }
+  }
+
+  /**
+   * Every post the caller may see inside a half-open `[start, end)` range,
+   * across all of the caller's businesses.
+   *
+   * Drives the calendar, which needs one cross-business range read rather than
+   * a per-business page. Ownership is folded into the predicate: the requested
+   * `businessIds` are intersected with `getAccessibleBusinessIds(userId)`
+   * before they reach the query, so an id the caller cannot read simply drops
+   * out of the scope instead of leaking another user's posts.
+   *
+   * Posts with a null `scheduledAt` never enter the range: the calendar cannot
+   * place them. They stay reachable through `findByBusinessId`, which is what
+   * `/app/posts` renders.
+   */
+  async findByBusinessIdsForRange(
+    userId: string,
+    options: { start: Date; end: Date; businessIds?: string[] }
+  ): Promise<ServiceResponse<PostWithBusinessData[]>> {
+    try {
+      const scopedBusinessIds = await this.resolveCalendarScope(userId, options.businessIds)
+      if (scopedBusinessIds.length === 0) {
+        return { success: true, data: [] }
+      }
+
+      const rows = await this.db.query.posts.findMany({
+        where: and(
+          inArray(posts.businessId, scopedBusinessIds),
+          gte(posts.scheduledAt, options.start),
+          lt(posts.scheduledAt, options.end)
+        ),
+        with: {
+          platformPosts: true,
+          user: true,
+          businessProfile: true,
+        },
+        orderBy: sql`${posts.scheduledAt} ASC`,
+      })
+
+      const assetsById = await this.findAssetsByIds(rows)
+
+      const data = rows.map(row => ({
+        ...row,
+        assets: parseAssetIds(row.mediaAssets)
+          .map(id => assetsById.get(id))
+          .filter((asset): asset is Asset => !!asset),
+        business: { id: row.businessProfile.id, name: row.businessProfile.name },
+      })) as PostWithBusinessData[]
+
+      return { success: true, data }
+    } catch {
+      return { success: false, error: 'Failed to fetch posts for range' }
+    }
+  }
+
+  /**
+   * Businesses the caller asked for, narrowed to the ones they may read.
+   * An empty request means "every business I can access".
+   */
+  private async resolveCalendarScope(userId: string, requestedIds?: string[]): Promise<string[]> {
+    const accessibleBusinessIds = await this.getAccessibleBusinessIds(userId)
+    if (!requestedIds || requestedIds.length === 0) {
+      return accessibleBusinessIds
+    }
+
+    const requested = new Set(requestedIds)
+
+    return accessibleBusinessIds.filter(id => requested.has(id))
+  }
+
+  /** One batched asset lookup for a whole range, never one query per post. */
+  private async findAssetsByIds(rows: { mediaAssets: string | null }[]): Promise<Map<string, Asset>> {
+    const allAssetIds = rows.flatMap(row => parseAssetIds(row.mediaAssets))
+    if (allAssetIds.length === 0) {
+      return new Map()
+    }
+
+    const allAssets = await this.db.query.assets.findMany({
+      where: inArray(assets.id, allAssetIds),
+    })
+
+    return new Map(allAssets.map(asset => [asset.id, asset]))
   }
 
   async findScheduledPosts(userId: string, beforeDate?: Date): Promise<ServiceResponse<Post[]>> {

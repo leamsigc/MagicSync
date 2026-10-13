@@ -75,6 +75,20 @@ const props = withDefaults(defineProps<Props>(), {
   ],
 });
 const { list } = toRefs(props);
+
+/**
+ * Initials shown by UAvatar when a review has no image (avoids hotlinking
+ * external avatar services that can CORB-block and leak referrers).
+ */
+function initials(name: string): string {
+  return name
+    .split(/\s+/)
+    .map(part => part[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join('')
+    .toUpperCase()
+}
 </script>
 
 <template>
@@ -109,7 +123,7 @@ const { list } = toRefs(props);
         </div>
 
         <div class="flex flex-row items-center gap-4 px-6 py-4">
-          <UAvatar size="lg" :src="review.image || review.avatar" :alt="review.name" />
+          <UAvatar size="lg" :src="review.image || review.avatar" :alt="review.name" :text="initials(review.name)" />
 
           <div class="flex flex-col">
             <p class="text-lg font-medium">{{ review.name }}</p>

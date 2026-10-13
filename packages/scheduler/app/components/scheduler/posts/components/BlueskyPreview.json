@@ -1,0 +1,18 @@
+{
+  "en": {
+    "contentWarning": "Content warning: {text}",
+    "addComment": "Post your reply"
+  },
+  "es": {
+    "contentWarning": "Advertencia de contenido: {text}",
+    "addComment": "Publica tu respuesta"
+  },
+  "de": {
+    "contentWarning": "Inhaltswarnung: {text}",
+    "addComment": "Poste deine Antwort"
+  },
+  "fr": {
+    "contentWarning": "Avertissement sur le contenu : {text}",
+    "addComment": "Publiez votre réponse"
+  }
+}

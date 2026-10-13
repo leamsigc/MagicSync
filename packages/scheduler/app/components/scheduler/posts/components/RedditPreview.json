@@ -1,0 +1,22 @@
+{
+  "en": {
+    "subreddit": "r/{name}",
+    "commentCount": "{count} comments",
+    "addComment": "Add a comment"
+  },
+  "es": {
+    "subreddit": "r/{name}",
+    "commentCount": "{count} comentarios",
+    "addComment": "Añade un comentario"
+  },
+  "de": {
+    "subreddit": "r/{name}",
+    "commentCount": "{count} Kommentare",
+    "addComment": "Kommentar hinzufügen"
+  },
+  "fr": {
+    "subreddit": "r/{name}",
+    "commentCount": "{count} commentaires",
+    "addComment": "Ajouter un commentaire"
+  }
+}

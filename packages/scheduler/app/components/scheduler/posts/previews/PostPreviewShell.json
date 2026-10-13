@@ -1,0 +1,14 @@
+{
+  "en": {
+    "cardAria": "{platform} post preview for {business}"
+  },
+  "es": {
+    "cardAria": "Vista previa de la publicación de {platform} para {business}"
+  },
+  "de": {
+    "cardAria": "{platform}-Beitragsvorschau für {business}"
+  },
+  "fr": {
+    "cardAria": "Aperçu de la publication {platform} pour {business}"
+  }
+}

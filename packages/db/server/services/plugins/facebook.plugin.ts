@@ -2,6 +2,7 @@ import { parseJsonObject, toJsonString } from '#layers/BaseShared/utils/json';
 import type { Asset, PostWithAllData, SocialMediaAccount, PlatformContentOverride } from '#layers/BaseDB/db/schema';
 import type { PostResponse, GetCommentsResponse, ReplyCommentResponse, PlatformComment, PluginPostDetails, PluginSocialMediaAccount, PostInsight, PlatformStats, PlatformConversation, GetConversationsResponse } from '#layers/BaseDB/server/services/SchedulerPost.service';
 import type { FacebookSettings } from '#layers/BaseShared/shared/platformSettings';
+import { GRAPH_API_VERSION } from '#layers/BaseShared/shared/platformConstants';
 import dayjs from 'dayjs';
 import { BaseSchedulerPlugin, createPostInsightsFallback, extractExternalPostId } from '#layers/BaseDB/server/services/SchedulerPost.service';
 import type { FacebookPage } from '#layers/BaseShared/server/types/facebook-pages';
@@ -45,6 +46,22 @@ type AnalyticsData = {
 type FacebookDto = {
   url?: string;
 };
+
+/**
+ * Meta returns these when a *user* token is sent to a Page-scoped endpoint on
+ * the new Pages experience. Surfacing them distinctly lets callers/ops act
+ * (reconnect the Page) instead of staring at a bare `#190`.
+ */
+export const PAGE_TOKEN_HINT =
+  'This call requires a Page Access Token — the stored token is a user token; reconnect the Facebook Page.';
+
+export function isPageAccessTokenError(body: string): boolean {
+  return body.includes('must be called with a Page Access Token')
+    || body.includes('User Access Token Is Not Supported')
+    || body.includes('A Page access token is required')
+    || body.includes('"code":190')
+    || body.includes('2069032');
+}
 
 /** Post-object engagement totals (`/{post}?fields=...`). */
 type FacebookPostTotals = {
@@ -114,9 +131,9 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     'getReelInsights',
   ] as const;
 
-  private readonly API_VERSION = 'v25.0';
+  private readonly API_VERSION = GRAPH_API_VERSION;
   private readonly GRAPH_API_BASE_URL = 'https://graph.facebook.com';
-  private readonly OAUTH_DIALOG_URL = 'https://www.facebook.com/v20.0/dialog/oauth';
+  private readonly OAUTH_DIALOG_URL = 'https://www.facebook.com/v26.0/dialog/oauth';
   private readonly baseUrl = process.env.NUXT_BASE_URL || 'http://localhost:3000'
 
   protected init(_options?: Record<string, unknown>): void {
@@ -203,9 +220,10 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
       const response = await fetch(url, options);
       if (!response.ok) {
         const errorBody = await response.text();
-        log.error({ content: `Facebook API Error (${context})`, status: response.status, errorBody });
+        const pageTokenHint = isPageAccessTokenError(errorBody) ? ` — ${PAGE_TOKEN_HINT}` : '';
+        log.error({ content: `Facebook API Error (${context})`, status: response.status, errorBody, pageTokenError: pageTokenHint !== '' });
         await this.logPluginEvent('fetch-error:response', 'failure', `Error: ${errorBody}, Context: ${context}`, safeUrl);
-        throw new Error(`Facebook API Error (${context}): ${errorBody}`);
+        throw new Error(`Facebook API Error (${context}): ${errorBody}${pageTokenHint}`);
       }
       return response;
     } catch (error) {
@@ -400,11 +418,12 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     accessToken: string,
     days: number = 30
   ): Promise<Array<{ label: string; data: Array<{ total: number; date: string }> }>> {
+    log.info({ content: '[Facebook] Fetching page insights', pageId, plugin: 'facebook' });
     const until = dayjs().endOf('day').unix();
     const since = dayjs().subtract(days, 'day').unix();
 
     const url = this._getGraphApiUrl(
-      `/${pageId}/insights?metric=page_views_total,page_post_engagements,page_follows&period=day&since=${since}&until=${until}&access_token=${accessToken}`
+      `/${pageId}/insights?metric=page_media_view,page_total_media_view_unique,page_views_total,page_post_engagements,page_follows&period=day&since=${since}&until=${until}&access_token=${accessToken}`
     );
     const response = await this.fetch(url, undefined, 'fetch page insights')
     const { data, error } = await response.json() as { data?: FacebookApiInsight[]; error?: Record<string, unknown> };
@@ -415,7 +434,12 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     }
 
     const labelMap: Record<string, string> = {
-      page_views_total: 'Reach',
+      // `page_media_view` is the Professional Dashboard "Views" (content played
+      // or displayed). `page_views_total` is the Page's PROFILE views — a
+      // different number, so it must not be labelled "Views"/"Reach".
+      page_media_view: 'Views',
+      page_total_media_view_unique: 'Unique Viewers',
+      page_views_total: 'Page Views',
       page_post_engagements: 'Post Engagements',
       page_follows: 'Followers',
     }
@@ -463,6 +487,10 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
 
     const metricValue = (name: string): number => {
       const metric = insightsData.find((d) => d.name === name);
+      // total_value metrics (e.g. post_total_media_view_unique) return
+      // `total_value.value`; time-series metrics return `values[0].value`.
+      const total = metric?.total_value?.value;
+      if (typeof total === 'number') return total;
       const value = metric?.values?.[0]?.value;
       return typeof value === 'number' ? value : 0;
     };
@@ -478,19 +506,17 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     const totalShares: number = postRes.shares?.count ?? 0;
     const totalEngagement: number = totalReactions + totalComments + totalShares;
 
-    const viewsValue = metricValue('post_total_media_view_unique') || metricValue('post_media_view') || 0
-    const impressionsValue = metricValue('post_media_view') || 0
+    const mediaViews = metricValue('post_media_view')
+    const uniqueViewers = metricValue('post_total_media_view_unique')
 
     const insights: PostInsight[] = [
-      { label: 'Views', value: viewsValue },
-      { label: 'Impressions', value: impressionsValue },
+      { label: 'Views', value: mediaViews },
+      { label: 'Unique Views', value: uniqueViewers },
       { label: 'Engagement', value: totalEngagement },
       { label: 'Reactions', value: totalReactions },
       { label: 'Comments', value: totalComments },
       { label: 'Shares', value: totalShares },
       { label: 'Link Clicks', value: metricValue('post_clicks') },
-      { label: 'Engaged Users', value: metricValue('post_engaged_users') },
-      { label: 'Video Views', value: metricValue('post_media_view') || 0 },
     ];
 
     const reactionLabelMap: Record<string, string> = {
@@ -975,13 +1001,14 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     return pages;
   }
 
-  async fetchPageInformation(_: FacebookPlugin, pageId: string, accessToken: string, options?: { instagramId?: string }): Promise<{
+  async fetchPageInformation(pageId: string, accessToken: string, options?: { instagramId?: string }): Promise<{
     id: string;
     name: string;
     access_token: string;
     picture: string;
     username: string;
   }> {
+    log.info({ message: 'Fetching page information', pageId });
 
     const url = this._getGraphApiUrl(`/${pageId}?fields=username,access_token,name,picture.type(large)&access_token=${accessToken}`);
     const {
@@ -1037,14 +1064,19 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     const since = dayjs().subtract(date, 'day').unix();
 
     const url = this._getGraphApiUrl(
-      `/${id}/insights?metric=page_views_total,page_post_engagements,page_follows&period=day&since=${since}&until=${until}&access_token=${accessToken}`
+      `/${id}/insights?metric=page_media_view,page_total_media_view_unique,page_views_total,page_post_engagements,page_follows&period=day&since=${since}&until=${until}&access_token=${accessToken}`
     );
     const { data } = await (
       await this.fetch(url, undefined, 'fetch analytics')
     ).json();
 
     const labelMap: Record<string, string> = {
-      page_views_total: 'Reach',
+      // `page_media_view` is the Professional Dashboard "Views" (content played
+      // or displayed). `page_views_total` is the Page's PROFILE views — a
+      // different number, so it must not be labelled "Views"/"Reach".
+      page_media_view: 'Views',
+      page_total_media_view_unique: 'Unique Viewers',
+      page_views_total: 'Page Views',
       page_post_engagements: 'Post Engagements',
       page_follows: 'Followers',
     }
@@ -1377,6 +1409,13 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
     const pageId = socialMediaAccount.accountId
     const token = socialMediaAccount.accessToken
 
+    // Track whether Meta rejected the token as a user token (#190/2069032) so
+    // the collector can re-mint a real Page token and retry.
+    let needsPageToken = false
+    const notePageTokenError = (error: unknown) => {
+      if (isPageAccessTokenError(String((error as Error)?.message ?? error))) needsPageToken = true
+    }
+
     // Fetch profile with modern fields (fan_count deprecated -> followers_count is source of truth)
     // and insights with fallback for pages below 100 likes (insights empty)
     const [profileData, insightsData, feedData] = await Promise.all([
@@ -1386,16 +1425,16 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
         'fetch page profile'
       )
         .then(r => r.json())
-        .catch(() => ({ id: pageId, name: socialMediaAccount.accountName })),
-      this.getPageInsights(pageId, token, 30).catch(() => []),
+        .catch((error) => { notePageTokenError(error); return { id: pageId, name: socialMediaAccount.accountName } as Record<string, any> }),
+      this.getPageInsights(pageId, token, 30).catch((error) => { notePageTokenError(error); return [] }),
       this.fetch(
-        this._getGraphApiUrl(`/${pageId}/feed?fields=id&limit=1&summary=false&access_token=${token}`),
+        this._getGraphApiUrl(`/${pageId}/feed?fields=id&limit=1&summary=true&access_token=${token}`),
         undefined,
         'fetch page feed'
       )
         .then(r => r.json())
         .then((j: any) => j.summary?.total_count ?? j.data?.length ?? undefined)
-        .catch(() => undefined),
+        .catch((error) => { notePageTokenError(error); return undefined }),
     ])
 
     const followersCount = profileData.followers_count ?? profileData.fan_count ?? 0
@@ -1403,6 +1442,8 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
 
     let totalEngagement = 0
     let totalViews = 0
+    let pageProfileViews = 0
+    let uniqueViewers = 0
     let insightsFollowersCurrent = 0
     let insightsFollowersPrevious = 0
     let hasInsights = false
@@ -1413,10 +1454,20 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
         // @ts-ignore
         totalEngagement += metric.data?.reduce((sum: number, d: any) => sum + (d.total || 0), 0) || 0
       }
-      if (metric.label === 'Reach' || metric.label === 'Views') {
+      // Content views (Professional Dashboard "Views") — `page_media_view`.
+      if (metric.label === 'Views') {
         hasInsights = true
         // @ts-ignore
         totalViews += metric.data?.reduce((sum: number, d: any) => sum + (d.total || 0), 0) || 0
+      }
+      // Profile views (`page_views_total`) and unique media viewers are tracked
+      // separately so "Views" is never confused with either.
+      if (metric.label === 'Page Views' || metric.label === 'Unique Viewers') {
+        hasInsights = true
+        // @ts-ignore
+        const sum = metric.data?.reduce((acc: number, d: any) => acc + (d.total || 0), 0) || 0
+        if (metric.label === 'Page Views') pageProfileViews = sum
+        else uniqueViewers = sum
       }
       if (metric.label === 'Followers' && metric.data?.length) {
         hasInsights = true
@@ -1438,8 +1489,9 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
       ? Math.round((followerAbsolute / previousFollowers) * 10000) / 100
       : 0
 
-    // Views fallback: if insights empty, views = 0 (will be populated once page passes threshold)
-    const totalReach = totalViews
+    // Reach = unique media viewers (`page_total_media_view_unique`), NOT total
+    // content views — falling back to views only when the unique metric is absent.
+    const totalReach = uniqueViewers || totalViews
 
     const base64Picture = profileData.picture?.data?.url
       ? await fetchedImageBase64(profileData.picture.data.url)
@@ -1474,6 +1526,11 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
         followers_count: followersCount,
         hasInsights,
         insightsMetrics: insightsData.map(m => m.label),
+        // Content views (dashboard "Views") vs profile views vs unique viewers.
+        mediaViews: totalViews,
+        pageProfileViews,
+        uniqueViewers,
+        needsPageToken,
       },
     }
   }
@@ -2074,7 +2131,9 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
       'blue_reels_play_count',
       'fb_reels_replay_count',
       'fb_reels_total_plays',
-      'post_impressions_unique',
+      // v26: `post_impressions_unique` was removed for all versions; the
+      // replacement for impressions is `post_media_view`.
+      'post_media_view',
       'post_video_avg_time_watched',
       'post_video_view_time',
       'post_video_followers',
@@ -2096,7 +2155,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
 
     const playCount = result.fb_reels_total_plays || result.blue_reels_play_count || 0;
     const replayCount = result.fb_reels_replay_count || 0;
-    const impressions = result.post_impressions_unique || 0;
+    const impressions = result.post_media_view || 0;
     const followers = result.post_video_followers || 0;
 
     let viralityScore: 'low' | 'medium' | 'high' | 'viral' = 'low';
@@ -2115,7 +2174,7 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
       blue_reels_play_count: result.blue_reels_play_count || 0,
       fb_reels_replay_count: result.fb_reels_replay_count || 0,
       fb_reels_total_plays: result.fb_reels_total_plays || 0,
-      post_impressions_unique: result.post_impressions_unique || 0,
+      post_impressions_unique: result.post_media_view || 0,
       post_video_avg_time_watched: result.post_video_avg_time_watched || 0,
       post_video_view_time: result.post_video_view_time || 0,
       post_video_followers: result.post_video_followers || 0,

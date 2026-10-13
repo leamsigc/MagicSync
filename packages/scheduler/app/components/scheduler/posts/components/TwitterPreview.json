@@ -1,0 +1,34 @@
+{
+  "en": {
+    "audienceEveryone": "Everyone can reply",
+    "audienceFollowing": "Accounts you follow can reply",
+    "audienceMentionedUsers": "Only accounts you mention can reply",
+    "audienceSubscribers": "Subscribers can reply",
+    "audienceVerified": "Verified accounts can reply",
+    "addComment": "Post your reply"
+  },
+  "es": {
+    "audienceEveryone": "Todos pueden responder",
+    "audienceFollowing": "Las cuentas que sigues pueden responder",
+    "audienceMentionedUsers": "Solo las cuentas que mencionas pueden responder",
+    "audienceSubscribers": "Los suscriptores pueden responder",
+    "audienceVerified": "Las cuentas verificadas pueden responder",
+    "addComment": "Publica tu respuesta"
+  },
+  "de": {
+    "audienceEveryone": "Jeder kann antworten",
+    "audienceFollowing": "Konten, denen du folgst, können antworten",
+    "audienceMentionedUsers": "Nur erwähnte Konten können antworten",
+    "audienceSubscribers": "Abonnenten können antworten",
+    "audienceVerified": "Verifizierte Konten können antworten",
+    "addComment": "Poste deine Antwort"
+  },
+  "fr": {
+    "audienceEveryone": "Tout le monde peut répondre",
+    "audienceFollowing": "Les comptes que vous suivez peuvent répondre",
+    "audienceMentionedUsers": "Seuls les comptes mentionnés peuvent répondre",
+    "audienceSubscribers": "Les abonnés peuvent répondre",
+    "audienceVerified": "Les comptes certifiés peuvent répondre",
+    "addComment": "Publiez votre réponse"
+  }
+}

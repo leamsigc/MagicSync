@@ -8,6 +8,14 @@ import { refreshFacebookPageToken, refreshInstagramPageToken } from '#layers/Bas
 const SHORT_LIVED_PLATFORMS: ReadonlySet<string> = new Set(['google', 'googlemybusiness', 'youtube'])
 const PROACTIVE_RENEW_BEFORE_MS = 7 * 60 * 60 * 1000
 
+// Long-lived platforms that STILL rotate via a stored refresh token: LinkedIn
+// access tokens last ~60 days, refresh tokens ~365. Refreshing only when the
+// row is within 7 days of expiry left no margin — a token that died early (or
+// whose expiry was never stored) simply failed publishing with "token not
+// valid", forcing a manual reconnect. Refresh well before expiry instead.
+const REFRESHABLE_LONG_LIVED_PLATFORMS: ReadonlySet<string> = new Set(['linkedin', 'linkedin-page'])
+const PROACTIVE_RENEW_BEFORE_MS_LONG = 10 * 24 * 60 * 60 * 1000
+
 function msUntilExpiry(expiresAt: unknown): number | null {
   if (!expiresAt) return null
   // social_media_accounts stores seconds-epoch (drizzle timestamp mode);
@@ -35,6 +43,12 @@ export default defineTask({
       if (SHORT_LIVED_PLATFORMS.has(a.platform)) {
         const left = msUntilExpiry(a.tokenExpiresAt)
         if (left !== null && left < PROACTIVE_RENEW_BEFORE_MS) return true
+      }
+      // LinkedIn (+ Pages): refresh ahead of expiry, and also when no expiry was
+      // stored (we can't prove it's valid, and refreshing is cheap/safe).
+      if (REFRESHABLE_LONG_LIVED_PLATFORMS.has(a.platform)) {
+        const left = msUntilExpiry(a.tokenExpiresAt)
+        if (left === null || left < PROACTIVE_RENEW_BEFORE_MS_LONG) return true
       }
       return false
     })

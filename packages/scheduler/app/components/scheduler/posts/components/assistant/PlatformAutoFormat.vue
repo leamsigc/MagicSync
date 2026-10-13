@@ -1,3 +1,4 @@
+<!--  Translation file -->
 <i18n src="#site/app/pages/app/posts/posts.json"></i18n>
 
 <script lang="ts" setup>

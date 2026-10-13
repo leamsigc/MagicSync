@@ -1,7 +1,12 @@
 ---
 layout: default
 title: Automate Your Social Media. Grow Your Business.
-description: Save 10+ hours weekly managing social media. Schedule posts, engage customers, and track results across all platforms with MagicSync—the all-in-one platform built for small businesses.
+description: Save 10+ hours weekly with MagicSync. Schedule posts, engage customers and track results — the all-in-one social media platform for small business.
+
+seo:
+  twitterCard: summary_large_image
+  twitterTitle: Automate Your Social Media. Grow Your Business. | MagicSync
+  twitterDescription: Save 10+ hours weekly with MagicSync. Schedule posts, engage customers and track results — the all-in-one social media platform for small business.
 
 ogImage:
   component: BlogOgImage
@@ -109,17 +114,14 @@ Got questions? We've got answers. Check out our complete FAQ or contact our team
 list:
   - name: Sarah Martinez
     userName: Owner, Bella's Bistro
-    avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b7e6?w=150&h=150&fit=crop&crop=face"
     comment: "MagicSync saved me 10 hours a week! I can now focus on running my restaurant while my social media runs on autopilot. Customer engagement is up 300%."
     rating: 5.0
   - name: Michael Chen
     userName: Marketing Director, TechStart Agency
-    avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b7e6?w=150&h=150&fit=crop&crop=face"
     comment: "We manage 25 client accounts with MagicSync. The team collaboration features and bulk scheduling are game-changers. Highly recommend!"
     rating: 5
   - name: Jessica Thompson
     userName: Real Estate Agent
-    avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b7e6?w=150&h=150&fit=crop&crop=face"
     comment: "Posting new listings across all platforms used to take hours. Now it takes minutes. I've closed 2 extra deals this month thanks to increased visibility."
     rating: 5
 ---

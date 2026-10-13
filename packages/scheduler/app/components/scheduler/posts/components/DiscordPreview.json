@@ -1,0 +1,18 @@
+{
+  "en": {
+    "embedLabel": "Link preview",
+    "addComment": "Send a message"
+  },
+  "es": {
+    "embedLabel": "Vista previa del enlace",
+    "addComment": "Envía un mensaje"
+  },
+  "de": {
+    "embedLabel": "Link-Vorschau",
+    "addComment": "Nachricht senden"
+  },
+  "fr": {
+    "embedLabel": "Aperçu du lien",
+    "addComment": "Envoyer un message"
+  }
+}

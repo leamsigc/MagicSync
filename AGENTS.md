@@ -1,7 +1,7 @@
 ---
 name: agents
 description: Always-loaded project anchor. Read this first. Contains project identity, non-negotiables, commands, and pointer to ROUTER.md for full context.
-last_updated: 2026-03-30
+last_updated: 2026-10-09
 ---
 
 # MagicSync
@@ -27,6 +27,12 @@ Read `CONTEXT.md` before naming anything. Architecture words (module, interface,
 ## BEFORE STARTING THE MAIN task:
 
 restate in your own words what you think my goals are and what the problem i'm trying to solve is
+
+## Every Task Also Requires (from 2026-10-09 on)
+
+1. **No unit tests** — do not write, generate, or update unit tests as part of a task. Verify by running the app / doctor checks instead (see the verification gate below).
+2. **Write a wiki** — after completing the task, write a short wiki page explaining what was done, why, and how it works, so I learn from it. The documentation lives in the VitePress site at `packages/doc/`: add the page as `packages/doc/guide/<task-name>.md` and register it in the sidebar in `packages/doc/.vitepress/config.mts` (pick the closest existing group or add a "Wiki" group).
+3. **Save it as a skill** — capture the task type as a reusable skill so future agents can repeat it: create it at `packages/doc/skills/<skill-name>/SKILL.md` (frontmatter with `name` + `description` that states when to trigger, then step-by-step instructions). If a skill for that task type already exists there, update it instead of creating a duplicate.
 
 ## Commands
 

@@ -1,0 +1,14 @@
+{
+  "en": {
+    "moreComments": "View {count} more comments"
+  },
+  "es": {
+    "moreComments": "Ver {count} comentarios más"
+  },
+  "de": {
+    "moreComments": "{count} weitere Kommentare ansehen"
+  },
+  "fr": {
+    "moreComments": "Voir {count} commentaires de plus"
+  }
+}

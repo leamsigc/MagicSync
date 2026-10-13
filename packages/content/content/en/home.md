@@ -1,7 +1,12 @@
 ---
 layout: twitter-layout
 title: Automate Your Social Media. Grow Your Business.
-description: Save 10+ hours weekly managing social media. Schedule posts, engage customers, and track results across all platforms with MagicSync—the all-in-one platform built for small businesses.
+description: Save 10+ hours weekly with MagicSync. Schedule posts, engage customers and track results — the all-in-one social media platform for small business.
+
+seo:
+  twitterCard: summary_large_image
+  twitterTitle: Automate Your Social Media. Grow Your Business. | MagicSync
+  twitterDescription: Save 10+ hours weekly with MagicSync. Schedule posts, engage customers and track results — the all-in-one social media platform for small business.
 
 ogImage:
   component: BlogOgImage

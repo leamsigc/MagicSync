@@ -118,9 +118,28 @@ useHead({
   title: t('title'),
   meta: [
     { name: 'description', content: t('description') },
-    { name: 'keywords', content: 'free video silence remover, remove silence from video, video editor online, silence detection, audio processing' }
+    { name: 'keywords', content: 'remove silence from video, video silence remover, cut dead air from video, remove pauses from video, podcast silence remover, free online, no watermark, no signup' }
   ]
 })
+
+// Structured data via the Nuxt SEO module so nodes join the identity graph
+// (single script tag, deduped) instead of standalone JSON-LD blocks.
+useSchemaOrg([
+  defineHowTo({
+    name: t('title'),
+    description: t('description'),
+    step: [
+      { name: t('sec_step1_t'), text: t('sec_step1_d') },
+      { name: t('sec_step2_t'), text: t('sec_step2_d') },
+      { name: t('sec_step3_t'), text: t('sec_step3_d') }
+    ]
+  }),
+  defineWebPage({ '@type': 'FAQPage' }),
+  ...[1, 2, 3, 4, 5].map(n => defineQuestion({
+    name: t(`sec_faq_q${n}`),
+    acceptedAnswer: t(`sec_faq_a${n}`)
+  }))
+])
 
 
 const onFileDrop = async (f: File | File[] | null | undefined) => {
@@ -537,6 +556,80 @@ defineOgImage("BlogOgImage", {
           </UCard>
         </BaseShinyCard>
       </div>
+
+      <!-- How it works -->
+      <section class="max-w-4xl mx-auto mt-16">
+        <div class="text-center mb-8">
+          <h2 class="text-3xl font-bold text-highlighted">{{ t('sec_how_title') }}</h2>
+          <p class="text-toned mt-2">{{ t('sec_how_sub') }}</p>
+        </div>
+        <ol class="grid gap-4 md:grid-cols-3 list-none p-0">
+          <li>
+            <UCard class="h-full">
+              <h3 class="font-semibold text-highlighted mb-2">{{ t('sec_step1_t') }}</h3>
+              <p class="text-sm text-muted">{{ t('sec_step1_d') }}</p>
+            </UCard>
+          </li>
+          <li>
+            <UCard class="h-full">
+              <h3 class="font-semibold text-highlighted mb-2">{{ t('sec_step2_t') }}</h3>
+              <p class="text-sm text-muted">{{ t('sec_step2_d') }}</p>
+            </UCard>
+          </li>
+          <li>
+            <UCard class="h-full">
+              <h3 class="font-semibold text-highlighted mb-2">{{ t('sec_step3_t') }}</h3>
+              <p class="text-sm text-muted">{{ t('sec_step3_d') }}</p>
+            </UCard>
+          </li>
+        </ol>
+      </section>
+
+      <!-- Use cases -->
+      <section class="max-w-4xl mx-auto mt-12">
+        <h2 class="text-3xl font-bold text-highlighted text-center mb-8">{{ t('sec_use_title') }}</h2>
+        <div class="grid gap-4 md:grid-cols-3">
+          <UCard class="h-full">
+            <h3 class="font-semibold text-highlighted mb-2">{{ t('sec_use1_t') }}</h3>
+            <p class="text-sm text-muted">{{ t('sec_use1_d') }}</p>
+          </UCard>
+          <UCard class="h-full">
+            <h3 class="font-semibold text-highlighted mb-2">{{ t('sec_use2_t') }}</h3>
+            <p class="text-sm text-muted">{{ t('sec_use2_d') }}</p>
+          </UCard>
+          <UCard class="h-full">
+            <h3 class="font-semibold text-highlighted mb-2">{{ t('sec_use3_t') }}</h3>
+            <p class="text-sm text-muted">{{ t('sec_use3_d') }}</p>
+          </UCard>
+        </div>
+      </section>
+
+      <!-- FAQ -->
+      <section class="max-w-3xl mx-auto mt-12 mb-8">
+        <h2 class="text-3xl font-bold text-highlighted text-center mb-8">{{ t('sec_faq_title') }}</h2>
+        <div class="space-y-3">
+          <details class="rounded-lg border border-default bg-default px-5 py-4">
+            <summary class="cursor-pointer font-medium text-highlighted">{{ t('sec_faq_q1') }}</summary>
+            <p class="text-sm text-muted mt-2">{{ t('sec_faq_a1') }}</p>
+          </details>
+          <details class="rounded-lg border border-default bg-default px-5 py-4">
+            <summary class="cursor-pointer font-medium text-highlighted">{{ t('sec_faq_q2') }}</summary>
+            <p class="text-sm text-muted mt-2">{{ t('sec_faq_a2') }}</p>
+          </details>
+          <details class="rounded-lg border border-default bg-default px-5 py-4">
+            <summary class="cursor-pointer font-medium text-highlighted">{{ t('sec_faq_q3') }}</summary>
+            <p class="text-sm text-muted mt-2">{{ t('sec_faq_a3') }}</p>
+          </details>
+          <details class="rounded-lg border border-default bg-default px-5 py-4">
+            <summary class="cursor-pointer font-medium text-highlighted">{{ t('sec_faq_q4') }}</summary>
+            <p class="text-sm text-muted mt-2">{{ t('sec_faq_a4') }}</p>
+          </details>
+          <details class="rounded-lg border border-default bg-default px-5 py-4">
+            <summary class="cursor-pointer font-medium text-highlighted">{{ t('sec_faq_q5') }}</summary>
+            <p class="text-sm text-muted mt-2">{{ t('sec_faq_a5') }}</p>
+          </details>
+        </div>
+      </section>
     </div>
 
     <!-- Video Recording Modal -->

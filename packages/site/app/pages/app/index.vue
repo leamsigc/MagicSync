@@ -58,6 +58,49 @@ async function handleRangeChange(newRange: 7 | 30 | 90) {
   await fetchBestTimes({ days: newRange })
 }
 
+// --- Per-account refresh (one card = one connected account) ---
+const refreshingAccounts = ref<Set<string>>(new Set())
+
+function accountKey(graph: { platform: string; accountId?: string }): string {
+  return `${graph.platform}:${graph.accountId || ''}`
+}
+
+function isRefreshingAccount(graph: { platform: string; accountId?: string }): boolean {
+  return refreshingAccounts.value.has(accountKey(graph))
+}
+
+function toastAccountResult(
+  graph: { platform: string; accountName?: string },
+  result: { results?: CollectStatsResult[] } | null
+): void {
+  const account = graph.accountName || graph.platform
+  if (!result) {
+    toast.add({ title: t('accountStatsFailed', { account }), description: t('unknownError'), color: 'error', icon: 'i-heroicons-exclamation-triangle' })
+    return
+  }
+  const failed = result.results?.find(r => !r.success)
+  if (failed) {
+    toast.add({ title: t('accountStatsFailed', { account }), description: failed.error || t('unknownError'), color: 'error', icon: 'i-heroicons-exclamation-triangle' })
+    return
+  }
+  toast.add({ title: t('accountStatsRefreshed', { account }), color: 'success' })
+}
+
+async function handleRefreshAccount(graph: PlatformGraph) {
+  const key = accountKey(graph)
+  if (refreshingAccounts.value.has(key)) return
+  refreshingAccounts.value = new Set(refreshingAccounts.value).add(key)
+  try {
+    const result = await collectStats({ platform: graph.platform, accountId: graph.accountId })
+    toastAccountResult(graph, result)
+    await Promise.all([fetchDashboard({}), fetchTopPosts({ days: range.value })])
+  } finally {
+    const next = new Set(refreshingAccounts.value)
+    next.delete(key)
+    refreshingAccounts.value = next
+  }
+}
+
 const bestTimeDayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 function formatBestTimeSlot(slot: { dayOfWeek: number; hour: number }) {
@@ -351,27 +394,22 @@ onMounted(async () => {
             class="col-span-1">
             <UCard class="h-full" :ui="{ title: 'p-0 sm:px-2', }">
               <template #header>
-                <div class=" flex items-center gap-3">
-                  <!-- <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-secondary">
-                  <Icon :name="getPlatformIcon(platformGraph.platform as SocialMediaPlatform)"
-                    class="w-4 h-4 text-secondary-foreground" />
-                </div>
-                <div class="flex-1 min-w-0">
-                  <h3 class="font-medium text-foreground capitalize truncate">
-                    {{ platformGraph.platform }}
-                  </h3>
-                  <p v-if="platformGraph.accountName" class="text-xs text-muted-foreground truncate">
-                    {{ platformGraph.accountName }}
-                  </p>
-                </div>
-                <div class="text-right">
-                  <p class="text-sm font-medium text-foreground">
-                    {{ formatNumber(platformGraph.current.followers) }}
-                  </p>
-                  <p class="text-xs text-muted-foreground">
-                    {{ t('followers') }}
-                  </p>
-                </div> -->
+                <div class="flex items-center justify-between gap-3 w-full">
+                  <div class="flex items-center gap-2 min-w-0">
+                    <Icon :name="getPlatformIcon(platformGraph.platform as SocialMediaPlatform)"
+                      class="w-4 h-4 shrink-0" />
+                    <div class="min-w-0">
+                      <h3 class="font-medium text-foreground capitalize truncate">
+                        {{ platformGraph.platform }}
+                      </h3>
+                      <p v-if="platformGraph.accountName" class="text-xs text-muted-foreground truncate">
+                        {{ platformGraph.accountName }}
+                      </p>
+                    </div>
+                  </div>
+                  <UButton size="xs" variant="ghost" color="neutral" icon="i-heroicons-arrow-path"
+                    :loading="isRefreshingAccount(platformGraph)" :title="t('refreshThisAccount')"
+                    :aria-label="t('refreshThisAccount')" @click="handleRefreshAccount(platformGraph)" />
                 </div>
               </template>
 

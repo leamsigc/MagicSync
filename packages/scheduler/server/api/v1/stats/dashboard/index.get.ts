@@ -121,6 +121,7 @@ function buildConnectedPlatforms(
 function buildPlatformSnapshots(
   history: Array<{
     date: string
+    collectedAt?: string
     followers: number
     following: number
     posts: number
@@ -149,7 +150,17 @@ function buildPlatformSnapshots(
 
   const cutoff = dayjs().subtract(daysNum, 'day').format('YYYY-MM-DD')
 
-  for (const point of history) {
+  // `history` arrives newest-first (getStatsHistory orders by collectedAt DESC).
+  // Charts must read oldest → newest, and `current` must be the LATEST snapshot —
+  // iterating newest-first also left `lastSnapshot` holding the OLDEST row.
+  const ordered = [...history].sort((a, b) => {
+    const at = a.collectedAt ?? a.date
+    const bt = b.collectedAt ?? b.date
+    if (at === bt) return 0
+    return at < bt ? -1 : 1
+  })
+
+  for (const point of ordered) {
     if (!point.platform) continue
     if (point.date < cutoff) continue
 
@@ -169,10 +180,21 @@ function buildPlatformSnapshots(
     }
 
     const entry = platformMap.get(key)!
-    entry.labels.push(dayjs(point.date).format('MMM D'))
-    entry.followers.push(point.followers ?? 0)
-    entry.posts.push(point.posts ?? 0)
-    entry.engagement.push(point.totalEngagement ?? 0)
+    const label = dayjs(point.date).format('MMM D')
+    const lastIdx = entry.labels.length - 1
+    // Several collections per day share a day-formatted label, which produced
+    // duplicate x-axis ticks. Keep one point per day (the newest snapshot wins,
+    // since `ordered` is oldest → newest).
+    if (lastIdx >= 0 && entry.labels[lastIdx] === label) {
+      entry.followers[lastIdx] = point.followers ?? 0
+      entry.posts[lastIdx] = point.posts ?? 0
+      entry.engagement[lastIdx] = point.totalEngagement ?? 0
+    } else {
+      entry.labels.push(label)
+      entry.followers.push(point.followers ?? 0)
+      entry.posts.push(point.posts ?? 0)
+      entry.engagement.push(point.totalEngagement ?? 0)
+    }
     entry.lastSnapshot = {
       followers: point.followers ?? 0,
       following: point.following ?? 0,

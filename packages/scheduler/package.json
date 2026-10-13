@@ -16,12 +16,6 @@
     "@ai-sdk/google": "catalog:",
     "@ai-sdk/openai": "catalog:",
     "@atproto/api": "catalog:",
-    "@fullcalendar/daygrid": "catalog:",
-    "@fullcalendar/interaction": "catalog:",
-    "@fullcalendar/list": "catalog:",
-    "@fullcalendar/multimonth": "catalog:",
-    "@fullcalendar/scrollgrid": "catalog:",
-    "@fullcalendar/timegrid": "catalog:",
     "@local-monorepo/ai-tools": "workspace:*",
     "@local-monorepo/assets": "workspace:*",
     "@local-monorepo/auth": "workspace:*",
@@ -38,8 +32,6 @@
     "twitter-api-v2": "catalog:"
   },
   "devDependencies": {
-    "@fullcalendar/core": "catalog:",
-    "@fullcalendar/vue3": "catalog:",
     "@nuxt/eslint": "catalog:",
     "@nuxtjs/i18n": "catalog:",
     "eslint": "catalog:",

@@ -59,7 +59,7 @@ Our online de-silencing algorithm analyzes the audio track of your uploaded vide
 
 Preparing your videos for social publication is fast and straightforward:
 
-- **Step 1:** Navigate to the MagicSync Free Tools suite and launch the **Video Silence Remover**.
+- **Step 1:** Navigate to the MagicSync Free Tools suite and launch the **[Video Silence Remover](https://magicsync.dev/tools/video-silence-remover)**.
 - **Step 2:** Drag and drop your MP4 or MOV video file into the designated upload area.
 - **Step 3:** Choose your sensitivity threshold (e.g., sound levels lower than -30dB) and set the minimum silence duration to cut.
 - **Step 4:** Click "Process Video" and preview the snappier, processed result.
@@ -71,4 +71,4 @@ Preparing your videos for social publication is fast and straightforward:
 
 Don't let tedious video editing slow down your posting consistency. By automating the raw cutting process, you can save hours of editing time every week. 
 
-Combine the **Video Silence Remover** with MagicSync's scheduler to run a highly efficient, high-output video strategy that keeps your audience engaged and clicking. Try it today for free!
+Combine the **[Video Silence Remover](https://magicsync.dev/tools/video-silence-remover)** with MagicSync's scheduler to run a highly efficient, high-output video strategy that keeps your audience engaged and clicking. Try it today for free!

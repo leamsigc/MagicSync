@@ -65,6 +65,17 @@ export type PlatformPostInsert = typeof platformPosts.$inferInsert
 export type PostWithPlatformPosts = Post & { platformPosts: PlatformPost[], socialMediaAccount: SocialMediaAccountType }
 export type PostWithAllData = Post & { platformPosts: PlatformPost[], user: User, assets: Asset[] }
 
+/**
+ * A post joined with the business it belongs to.
+ *
+ * `PostWithAllData` carries no business, so a cross-business calendar cannot
+ * label its events from it alone. Only the two fields the calendar renders are
+ * taken — pulling in the whole profile would widen every post payload.
+ */
+export type PostWithBusinessData = PostWithAllData & {
+  business: Pick<InferSelectModel<typeof businessProfiles>, 'id' | 'name'>
+}
+
 export type PostCreate = Omit<Post, 'id' | 'createdAt' | 'updatedAt' | 'userId' | 'targetPlatforms' | 'mediaAssets' | 'publishedAt'>
 
 export type PostCreateBase = PostCreate & {

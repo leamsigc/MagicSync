@@ -1,0 +1,26 @@
+{
+  "en": {
+    "empty": "No media attached",
+    "more": "+{count}",
+    "galleryLabel": "Post media",
+    "mediaAlt": "Attached media"
+  },
+  "es": {
+    "empty": "Sin contenido multimedia adjunto",
+    "more": "+{count}",
+    "galleryLabel": "Multimedia de la publicación",
+    "mediaAlt": "Multimedia adjunta"
+  },
+  "de": {
+    "empty": "Keine Medien angehängt",
+    "more": "+{count}",
+    "galleryLabel": "Beitragsmedien",
+    "mediaAlt": "Angehängte Medien"
+  },
+  "fr": {
+    "empty": "Aucun média joint",
+    "more": "+{count}",
+    "galleryLabel": "Médias de la publication",
+    "mediaAlt": "Médias joints"
+  }
+}

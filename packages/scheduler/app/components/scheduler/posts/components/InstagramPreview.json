@@ -1,0 +1,18 @@
+{
+  "en": {
+    "viewComments": "View all {count} comments",
+    "addComment": "Add a comment…"
+  },
+  "es": {
+    "viewComments": "Ver los {count} comentarios",
+    "addComment": "Añade un comentario…"
+  },
+  "de": {
+    "viewComments": "Alle {count} Kommentare ansehen",
+    "addComment": "Kommentar hinzufügen…"
+  },
+  "fr": {
+    "viewComments": "Voir les {count} commentaires",
+    "addComment": "Ajouter un commentaire…"
+  }
+}

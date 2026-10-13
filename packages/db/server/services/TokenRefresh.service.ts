@@ -92,13 +92,16 @@ export async function refreshInstagramPageToken(
  * anything else returns not-applicable so callers keep their user-token path.
  */
 export async function renewRowToken(
-  row: { id: string; userId: string; platform: string; accountId: string; accessToken?: string | null; tokenExpiresAt?: Date | null }
+  row: { id: string; userId: string; platform: string; accountId: string; accessToken?: string | null; tokenExpiresAt?: Date | null },
+  opts: { force?: boolean } = {}
 ): Promise<ServiceResponse<{ renewed: boolean }>> {
   try {
     if (!usesPageToken(row.platform)) {
       return { success: false, error: 'Not a page-token platform', code: 'NOT_APPLICABLE' }
     }
-    if (!needsPageTokenRenewal(row)) {
+    // `force` re-mints even when the stored token looks unexpired — used when
+    // Meta reports a page-token error (the row holds a user token, e.g. #190).
+    if (!opts.force && !needsPageTokenRenewal(row)) {
       return { success: true, data: { renewed: false } }
     }
     if (row.platform === 'facebook') {

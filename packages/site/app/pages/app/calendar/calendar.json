@@ -10,6 +10,8 @@
     "seo_description_month": "View and manage your scheduled posts by month",
     "seo_title_all": "All Posts Calendar",
     "seo_description_all": "View and manage all your scheduled posts",
+    "notFound": "The page you are looking for could not be found.",
+    "backToCalendar": "Back to the calendar",
     "buttons": {
       "dashboard": "Dashboard",
       "schedule_post": "Schedule Post",
@@ -67,6 +69,8 @@
     "seo_description_month": "Ver y gestionar tus publicaciones programadas por mes",
     "seo_title_all": "Calendario de Todas las Publicaciones",
     "seo_description_all": "Ver y gestionar todas tus publicaciones programadas",
+    "notFound": "La página que buscas no existe.",
+    "backToCalendar": "Volver al calendario",
     "buttons": {
       "dashboard": "Panel de Control",
       "schedule_post": "Programar Publicación",
@@ -133,6 +137,8 @@
     "seo_description_month": "Geplante Beiträge nach Monat anzeigen und verwalten",
     "seo_title_all": "Alle Beiträge Kalender",
     "seo_description_all": "Alle geplanten Beiträge anzeigen und verwalten",
+    "notFound": "Die gesuchte Seite wurde nicht gefunden.",
+    "backToCalendar": "Zurück zum Kalender",
     "buttons": {
       "dashboard": "Dashboard",
       "schedule_post": "Beitrag Planen",
@@ -199,6 +205,8 @@
     "seo_description_month": "Afficher et gérer vos publications programmées par mois",
     "seo_title_all": "Calendrier de Toutes les Publications",
     "seo_description_all": "Afficher et gérer toutes vos publications programmées",
+    "notFound": "La page que tu cherches est introuvable.",
+    "backToCalendar": "Retour au calendrier",
     "buttons": {
       "dashboard": "Tableau de Bord",
       "schedule_post": "Programmer Publication",

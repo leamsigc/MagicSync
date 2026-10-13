@@ -1,0 +1,38 @@
+{
+  "en": {
+    "day": "Day",
+    "week": "Week",
+    "month": "Month",
+    "today": "Today",
+    "previous": "Previous",
+    "next": "Next",
+    "openMenu": "Open menu"
+  },
+  "es": {
+    "day": "Día",
+    "week": "Semana",
+    "month": "Mes",
+    "today": "Hoy",
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "openMenu": "Abrir menú"
+  },
+  "de": {
+    "day": "Tag",
+    "week": "Woche",
+    "month": "Monat",
+    "today": "Heute",
+    "previous": "Zurück",
+    "next": "Weiter",
+    "openMenu": "Menü öffnen"
+  },
+  "fr": {
+    "day": "Jour",
+    "week": "Semaine",
+    "month": "Mois",
+    "today": "Aujourd'hui",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "openMenu": "Ouvrir le menu"
+  }
+}

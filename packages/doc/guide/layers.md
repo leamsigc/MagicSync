@@ -142,7 +142,7 @@ Welcome to the architecture behind MagicSync! Our project is organized as a mono
 - Decides WHEN to send your posts
 - Manages a queue
 - Talks to social media platforms
-- Uses **FullCalendar** for the visual calendar
+- Uses a calendar built on **Nuxt UI** for the visual calendar
 
 ### Connected Platforms
 - Facebook, Instagram
@@ -311,7 +311,7 @@ If you're a developer wanting to contribute:
 | AI | pi SDK (in-process), AI SDK embeddings |
 | Scraper | ScrapeGraphAI (`scrapegraph-js`) + raw-fetch fallback |
 | Python tools | FastAPI sidecar (optional, user-run, port 8100) |
-| Scheduler | FullCalendar, Platform APIs |
+| Scheduler | Nuxt UI calendar, Platform APIs |
 | Email | MJML |
 | Content | Nuxt Content |
 | Site | Nuxt 4 (extends all layers) |

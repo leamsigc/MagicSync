@@ -1,0 +1,14 @@
+{
+  "en": {
+    "allDay": "all-day"
+  },
+  "es": {
+    "allDay": "todo el día"
+  },
+  "de": {
+    "allDay": "Ganztägig"
+  },
+  "fr": {
+    "allDay": "Toute la journée"
+  }
+}

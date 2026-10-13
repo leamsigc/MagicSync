@@ -1,0 +1,18 @@
+{
+  "en": {
+    "readingTime": "{count} min read",
+    "addComment": "Add a comment"
+  },
+  "es": {
+    "readingTime": "{count} min de lectura",
+    "addComment": "Añade un comentario"
+  },
+  "de": {
+    "readingTime": "{count} Min. Lesezeit",
+    "addComment": "Kommentar hinzufügen"
+  },
+  "fr": {
+    "readingTime": "{count} min de lecture",
+    "addComment": "Ajouter un commentaire"
+  }
+}

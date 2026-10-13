@@ -1,0 +1,14 @@
+{
+  "en": {
+    "statusLabel": "Status: {status}"
+  },
+  "es": {
+    "statusLabel": "Estado: {status}"
+  },
+  "de": {
+    "statusLabel": "Status: {status}"
+  },
+  "fr": {
+    "statusLabel": "Statut : {status}"
+  }
+}

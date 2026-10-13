@@ -1,0 +1,18 @@
+{
+  "en": {
+    "bodyLabel": "Post text",
+    "externalLink": "Opens in a new tab"
+  },
+  "es": {
+    "bodyLabel": "Texto de la publicación",
+    "externalLink": "Se abre en una pestaña nueva"
+  },
+  "de": {
+    "bodyLabel": "Beitragstext",
+    "externalLink": "Öffnet in einem neuen Tab"
+  },
+  "fr": {
+    "bodyLabel": "Texte de la publication",
+    "externalLink": "S'ouvre dans un nouvel onglet"
+  }
+}

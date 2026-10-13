@@ -17,6 +17,14 @@ export interface NormalizedPostMetrics {
 
 export type MetricKey = keyof Omit<NormalizedPostMetrics, 'total'>
 
+/**
+ * Keys that count as *engagement* for the `total` used by Top Posts / Best
+ * Times ranking. Reach metrics (views, impressions, reach) are deliberately
+ * excluded: summing them made view-heavy platforms (YouTube `viewCount`)
+ * dominate every ranking and pushed real engagement to the bottom.
+ */
+export const ENGAGEMENT_KEYS: MetricKey[] = ['likes', 'comments', 'shares', 'saves', 'quotes', 'bookmarks', 'retweets', 'reposts']
+
 const LABEL_ALIASES: Record<string, MetricKey> = {
   likes: 'likes', like: 'likes', like_count: 'likes', likecount: 'likes',
   comments: 'comments', comment: 'comments', comment_count: 'comments', commentcount: 'comments',
@@ -45,15 +53,10 @@ export function normalizePostInsights(insights: PostInsight[] | undefined): Norm
     metrics[key] = (metrics[key] ?? 0) + value
   }
 
-  metrics.total = Object.entries(metrics).reduce((sum, [, v]) => sum + (typeof v === 'number' ? v : 0), 0)
+  metrics.total = ENGAGEMENT_KEYS.reduce((sum, key) => sum + (metrics[key] ?? 0), 0)
   return metrics
 }
 
 export function sumEngagement(metrics: NormalizedPostMetrics): number {
-  let total = 0
-  for (const [key, value] of Object.entries(metrics)) {
-    if (key === 'total') continue
-    if (typeof value === 'number') total += value
-  }
-  return total
+  return ENGAGEMENT_KEYS.reduce((sum, key) => sum + (metrics[key] ?? 0), 0)
 }

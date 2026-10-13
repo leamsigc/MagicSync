@@ -1,0 +1,18 @@
+{
+  "en": {
+    "commentCount": "{count} comments",
+    "addComment": "Add a comment"
+  },
+  "es": {
+    "commentCount": "{count} comentarios",
+    "addComment": "Añade un comentario"
+  },
+  "de": {
+    "commentCount": "{count} Kommentare",
+    "addComment": "Kommentar hinzufügen"
+  },
+  "fr": {
+    "commentCount": "{count} commentaires",
+    "addComment": "Ajouter un commentaire"
+  }
+}

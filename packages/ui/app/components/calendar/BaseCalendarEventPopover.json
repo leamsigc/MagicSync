@@ -1,0 +1,18 @@
+{
+  "en": {
+    "edit": "Edit",
+    "remove": "Delete"
+  },
+  "es": {
+    "edit": "Editar",
+    "remove": "Eliminar"
+  },
+  "de": {
+    "edit": "Bearbeiten",
+    "remove": "Löschen"
+  },
+  "fr": {
+    "edit": "Modifier",
+    "remove": "Supprimer"
+  }
+}

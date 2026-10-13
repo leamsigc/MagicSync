@@ -87,12 +87,21 @@
       "postScheduled": "Post scheduled successfully",
       "postCreatedFailed": "Post creation failed",
       "postUpdatedFailed": "Post update failed",
+      "postRescheduleFailed": "Could not move the post",
       "postCreatedPending": "Post created and scheduled",
       "postUpdatedPending": "Post updated and scheduled",
       "platformSuccess": "Posted successfully",
       "platformFailed": "Failed to post",
       "platformPending": "Scheduled",
-      "platformError": "An error occurred while posting"
+      "platformError": "An error occurred while posting",
+      "postRescheduled": "Post moved to {time}",
+      "postNotReschedulable": "A {status} post cannot be moved",
+      "rescheduleTooSoon": "Pick a time at least 5 minutes from now",
+      "calendarRangeLoadFailed": "Could not load the calendar",
+      "postRemoveConfirmTitle": "Delete this post?",
+      "postRemoveConfirmBody": "\"{title}\" will be deleted. This cannot be undone.",
+      "postRemoved": "Post deleted",
+      "postRemoveFailed": "Could not delete the post"
     }
   },
   "es": {
@@ -183,12 +192,21 @@
       "postScheduled": "Publicación programada correctamente",
       "postCreatedFailed": "La creación de la publicación falló",
       "postUpdatedFailed": "La actualización de la publicación falló",
+      "postRescheduleFailed": "No se pudo mover la publicación",
       "postCreatedPending": "Publicación creada y programada",
       "postUpdatedPending": "Publicación actualizada y programada",
       "platformSuccess": "Publicado correctamente",
       "platformFailed": "Error al publicar",
       "platformPending": "Programado",
-      "platformError": "Ocurrió un error al publicar"
+      "platformError": "Ocurrió un error al publicar",
+      "postRescheduled": "Publicación movida a {time}",
+      "postNotReschedulable": "Una publicación en estado {status} no se puede mover",
+      "rescheduleTooSoon": "Elige una hora al menos 5 minutos en el futuro",
+      "calendarRangeLoadFailed": "No se pudo cargar el calendario",
+      "postRemoveConfirmTitle": "¿Eliminar esta publicación?",
+      "postRemoveConfirmBody": "«{title}» se eliminará. Esta acción no se puede deshacer.",
+      "postRemoved": "Publicación eliminada",
+      "postRemoveFailed": "No se pudo eliminar la publicación"
     }
   },
   "de": {
@@ -279,12 +297,21 @@
       "postScheduled": "Beitrag erfolgreich geplant",
       "postCreatedFailed": "Beitragserstellung fehlgeschlagen",
       "postUpdatedFailed": "Beitragsaktualisierung fehlgeschlagen",
+      "postRescheduleFailed": "Der Beitrag konnte nicht verschoben werden",
       "postCreatedPending": "Beitrag erstellt und geplant",
       "postUpdatedPending": "Beitrag aktualisiert und geplant",
       "platformSuccess": "Erfolgreich gepostet",
       "platformFailed": "Posting fehlgeschlagen",
       "platformPending": "Geplant",
-      "platformError": "Beim Posten ist ein Fehler aufgetreten"
+      "platformError": "Beim Posten ist ein Fehler aufgetreten",
+      "postRescheduled": "Beitrag verschoben auf {time}",
+      "postNotReschedulable": "Ein Beitrag im Status {status} kann nicht verschoben werden",
+      "rescheduleTooSoon": "Wähle einen Zeitpunkt mindestens 5 Minuten in der Zukunft",
+      "calendarRangeLoadFailed": "Der Kalender konnte nicht geladen werden",
+      "postRemoveConfirmTitle": "Diesen Beitrag löschen?",
+      "postRemoveConfirmBody": "„{title}“ wird gelöscht. Das kann nicht rückgängig gemacht werden.",
+      "postRemoved": "Beitrag gelöscht",
+      "postRemoveFailed": "Der Beitrag konnte nicht gelöscht werden"
     }
   },
   "fr": {
@@ -375,12 +402,21 @@
       "postScheduled": "Publication planifiée avec successe",
       "postCreatedFailed": "Échec de la création de la publication",
       "postUpdatedFailed": "Échec de la mise à jour de la publication",
+      "postRescheduleFailed": "Impossible de déplacer la publication",
       "postCreatedPending": "Publication créée et planifiée",
       "postUpdatedPending": "Publication mise à jour et planifiée",
       "platformSuccess": "Publié avec succès",
       "platformFailed": "Échec de la publication",
       "platformPending": "Planifié",
-      "platformError": "Une erreur s'est produite lors de la publication"
+      "platformError": "Une erreur s'est produite lors de la publication",
+      "postRescheduled": "Publication déplacée à {time}",
+      "postNotReschedulable": "Une publication au statut {status} ne peut pas être déplacée",
+      "rescheduleTooSoon": "Choisis une heure au moins 5 minutes dans le futur",
+      "calendarRangeLoadFailed": "Impossible de charger le calendrier",
+      "postRemoveConfirmTitle": "Supprimer cette publication ?",
+      "postRemoveConfirmBody": "« {title} » sera supprimée. Cette action est irréversible.",
+      "postRemoved": "Publication supprimée",
+      "postRemoveFailed": "Impossible de supprimer la publication"
     }
   }
 }

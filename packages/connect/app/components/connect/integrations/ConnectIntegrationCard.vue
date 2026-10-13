@@ -45,26 +45,26 @@ const items = computed(() => [
   [
     ...(props.showPages
       ? [
-          {
-            label: $t('menu.pages'),
-            icon: 'i-heroicons-viewfinder-circle',
-            onSelect: async () => {
-              await getPagesForIntegration(props.name);
-              toggleModal();
-            },
+        {
+          label: $t('menu.pages'),
+          icon: 'i-heroicons-viewfinder-circle',
+          onSelect: async () => {
+            await getPagesForIntegration(props.name);
+            toggleModal();
           },
-        ]
+        },
+      ]
       : []),
     ...(canReconnect.value
       ? [
-          {
-            label: $t('menu.reconnect'),
-            icon: 'i-heroicons-arrow-path',
-            onSelect: () => {
-              HandleReconnect(reconnectAccountId.value, reconnectPlatform.value);
-            },
+        {
+          label: $t('menu.reconnect'),
+          icon: 'i-heroicons-arrow-path',
+          onSelect: () => {
+            HandleReconnect(reconnectAccountId.value, reconnectPlatform.value);
           },
-        ]
+        },
+      ]
       : []),
     {
       label: $t('menu.disconnect'),
@@ -128,13 +128,10 @@ const showReconnectBanner = computed(() => hasExpiredToken.value || isExpiringSo
   <UPageCard :ui="{ body: 'flex-col p-0', root: 'md:min-h-60 p-0', wrapper: 'p-2', container: 'p-0 sm:p-2' }">
     <section class="relative flex flex-col items-center justify-center p-4">
       <div class="relative mb-3">
-        <UAvatar :src="props.image" class="size-14 border-2" :class="{ 'border-primary': connected, 'border-red-500 animate-pulse': showReconnectBanner }" />
-        <span
-          v-if="props.icon"
-          class="absolute -bottom-1.5 -right-1.5 rounded-full ring-2 ring-background inline-flex">
-          <UAvatar
-            :icon="props.icon" size="sm"
-            class="bg-white dark:bg-gray-900" />
+        <UAvatar :src="props.image" class="size-14 border-2"
+          :class="{ 'border-primary': connected, 'border-red-500 animate-pulse': showReconnectBanner }" />
+        <span v-if="props.icon" class="absolute -bottom-1.5 -right-1.5 rounded-full ring-2 ring-background inline-flex">
+          <UAvatar :icon="props.icon" size="sm" class="bg-white dark:bg-gray-900" />
         </span>
       </div>
       <section class="text-center">
@@ -151,8 +148,7 @@ const showReconnectBanner = computed(() => hasExpiredToken.value || isExpiringSo
                 <span class="w-2 h-2 rounded-full bg-green-600 dark:bg-green-400" />
               </span>
             </UTooltip>
-            <UTooltip
-              v-else-if="props.health.status === 'expiring_soon'"
+            <UTooltip v-else-if="props.health.status === 'expiring_soon'"
               :text="`Expires in ${props.health.daysRemaining} day${props.health.daysRemaining === 1 ? '' : 's'}`">
               <span class="inline-flex items-center gap-1 text-xs text-yellow-600 dark:text-yellow-400">
                 <span class="w-2 h-2 rounded-full bg-yellow-600 dark:bg-yellow-400" />
@@ -175,9 +171,9 @@ const showReconnectBanner = computed(() => hasExpiredToken.value || isExpiringSo
         <UButton v-if="showReconnectBanner && canReconnect" color="primary" variant="soft" size="sm" class="mt-3"
           :label="props.health?.status === 'expired' ? 'Token Expired — Reconnect' : 'Token Expiring Soon — Reconnect'"
           icon="i-heroicons-arrow-path" @click="HandleReconnect(reconnectAccountId.value, reconnectPlatform.value)" />
-        <UButton v-if="showReconnectBanner && !props.connected && canReconnect" color="red" variant="solid" size="sm" class="mt-2"
-          label="Account Inactive — Reconnect"
-          icon="i-heroicons-link-slash" @click="HandleReconnect(reconnectAccountId.value, reconnectPlatform.value)" />
+        <UButton v-if="showReconnectBanner && !props.connected && canReconnect" color="red" variant="solid" size="sm"
+          class="mt-2" label="Account Inactive — Reconnect" icon="i-heroicons-link-slash"
+          @click="HandleReconnect(reconnectAccountId.value, reconnectPlatform.value)" />
       </section>
       <div v-if="props.showMenu" class="absolute top-1 right-1">
         <UDropdownMenu :items="items" :popper="{ placement: 'bottom-start' }">
@@ -186,22 +182,21 @@ const showReconnectBanner = computed(() => hasExpiredToken.value || isExpiringSo
       </div>
     </section>
   </UPageCard>
-  <UModal
-    v-model:open="modalStatus" :title="t('modal.select_page_title')"
+  <UModal v-model:open="modalStatus" :title="t('modal.select_page_title')"
     :description="t('modal.select_page_description')" class="md:min-w-4xl">
 
     <template #body>
       <section class="grid md:grid-cols-3 gap-2">
-        <UPageCard
-          v-for="page in facebookPages"
-          :key="page.id" :ui="{ body: 'sm:p-0 p-0', root: 'sm:p-0 p-0 cursor-pointer', wrapper: 'p-0', container: 'p-0 sm:p-0' }" @click="HandleConnectTo(page)">
+        <UPageCard v-for="page in facebookPages" :key="page.id"
+          :ui="{ body: 'sm:p-0 p-0', root: 'sm:p-0 p-0 cursor-pointer', wrapper: 'p-0', container: 'p-0 sm:p-0' }"
+          @click="HandleConnectTo(page)">
           <section class="relative flex flex-col items-center justify-center p-4">
             <UAvatar :src="page.imageBase64 || page.picture.data.url" class="size-20 border border-primary relative" />
             <section class="text-center">
               <h3 class="text-lg font-semibold">{{ page.name }}</h3>
               <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('modal.id_label') }}{{ page.id }}</p>
               <Icon v-if="page.instagram_business_account?.id" name="logos:instagram" />
-              <Icon v-else-if="props.icon === 'logos:linkedin-page'" name="logos:linkedin" class="mr-4" />
+              <Icon v-else-if="page.platformType === 'linkedin-page'" name="logos:linkedin" class="mr-4" />
               <Icon v-else-if="page.platformType === 'youtube'" name="logos:youtube" class="mr-4" />
               <Icon v-else-if="page.platformType === 'googlemybusiness'" name="logos:google" class="mr-4" />
               <Icon v-else name="logos:facebook" class="mr-4" />
@@ -212,8 +207,7 @@ const showReconnectBanner = computed(() => hasExpiredToken.value || isExpiringSo
     </template>
   </UModal>
   <!-- eslint-disable-next-line vue/no-multiple-template-root -- intentional Vue 3 fragment -->
-  <EditConnectionModal
-    v-model="editModalStatus" :connection-id="props.id" :connection-name="props.name"
+  <EditConnectionModal v-model="editModalStatus" :connection-id="props.id" :connection-name="props.name"
     @saved="handleEditSaved" />
 </template>
 <style scoped></style>

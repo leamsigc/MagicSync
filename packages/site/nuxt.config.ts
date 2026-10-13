@@ -70,7 +70,10 @@ export default defineNuxtConfig({
   experimental: {
     viteEnvironmentApi: true,
     typescriptPlugin: true,
-    nitroAutoImports: true
+    nitroAutoImports: true,
+    // The Apple-style calendar slides its grid with the View Transitions API;
+    // `::view-transition-*` rules for it live in packages/ui/app/assets/css/main.css
+    viewTransition: true
   },
   future: {
     compatibilityVersion: 5

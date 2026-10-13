@@ -1,4 +1,3 @@
-import { getPublicUrlForAsset } from '../../../../scheduler/server/utils/ScheduleUtils';
 import type { Post, PostWithAllData, SocialMediaAccount, Asset, PlatformContentOverride } from '#layers/BaseDB/db/schema';
 import sharp from 'sharp';
 import type { LinkedInSettings } from '#layers/BaseShared/shared/platformSettings';

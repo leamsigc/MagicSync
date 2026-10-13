@@ -71,7 +71,7 @@ AI-powered auto-hashtags and generated hashtags, AI trend discovery, AI post sug
 **Competitors with it:** Later (core feature), Buffer (calendar view), Hootsuite, Sprout Social, Publer
 **MagicSync gap:** Bulk scheduler exists (CSV + templates) but no visual calendar UI for scheduling. Users cannot see all scheduled posts in a calendar view and drag to reschedule.
 **User value:** CRITICAL. Fundamental UX expectation for any scheduling tool. "If I can't see my month at a glance, I don't trust my schedule."
-**Implementation path:** Use a calendar library (e.g., @fullcalendar/vue3 or custom). Wire to existing `post.service.ts` endpoints. Add drag-and-drop using HTML5 DnD API or Vue draggable. Existing scheduling logic is already there.
+**Implementation path:** Build it on Nuxt UI rather than a calendar library — the decision is locked in `.aiContext/PRD-CALENDAR-NUXT-UI.md` §3 (W0 purges `@fullcalendar/vue3`, later waves ship `/app/calendar/*`). Wire to existing `post.service.ts` endpoints and add drag-and-drop with the View Transitions nav the ported theme already animates.
 **Priority:** P0
 
 ### #3 — AI-Powered Best-Time-to-Post Suggestions

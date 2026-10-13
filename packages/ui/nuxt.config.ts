@@ -49,12 +49,25 @@ export default defineNuxtConfig({
     ],
     defaultLocale: 'en',
   },
+  components: [
+    {
+      // The grid keeps living in its own folder but must keep the plain
+      // `BaseCalendar*` global names the rest of the repo refers to it by, so its
+      // directory is scanned without the path prefix Nuxt adds to nested ones.
+      path: join(currentDir, './app/components/calendar'),
+      pathPrefix: false
+    },
+    {
+      path: join(currentDir, './app/components'),
+      pathPrefix: true,
+      ignore: ['**/calendar/**']
+    }
+  ],
   /*
     Nuxt UI RELATED CONFIGS
    */
   css: [
     join(currentDir, './app/assets/css/main.css'),
-    join(currentDir, './app/assets/css/full-calendar.css'),
   ],
   ui: {
     fonts: true,

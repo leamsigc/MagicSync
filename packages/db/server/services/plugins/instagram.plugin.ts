@@ -3,7 +3,7 @@ import type { PostResponse, GetCommentsResponse, GetConversationsResponse, Reply
 import { BaseSchedulerPlugin, createPostInsightsFallback, extractExternalPostId } from '#layers/BaseDB/server/services/SchedulerPost.service';
 import type { Post, PostWithAllData, SocialMediaAccount, Asset, PlatformContentOverride } from '#layers/BaseDB/db/schema';
 import type { InstagramSettings } from '#layers/BaseShared/shared/platformSettings';
-import { platformConfigurations } from '#layers/BaseShared/shared/platformConstants';
+import { platformConfigurations, GRAPH_API_VERSION } from '#layers/BaseShared/shared/platformConstants';
 
 type InstagramPublishResponse = {
   id: string;
@@ -35,11 +35,21 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
   static readonly pluginName = 'instagram';
   readonly pluginName = 'instagram';
 
-  private readonly API_VERSION = 'v25.0';
+  private readonly API_VERSION = GRAPH_API_VERSION;
   private readonly GRAPH_API_BASE_URL = 'https://graph.facebook.com';
+  /**
+   * Instagram-Login accounts use graph.instagram.com; Facebook-Login accounts
+   * (an Instagram professional account reached through a Facebook Page) use
+   * graph.facebook.com. Instagram-Login tokens are prefixed `IG`, Facebook
+   * tokens `EAA`, so the host is resolved from the token already present in
+   * the URL path — no schema column required.
+   */
+  private readonly INSTAGRAM_API_BASE_URL = 'https://graph.instagram.com';
 
   private _getGraphApiUrl(path: string): string {
-    return `${this.GRAPH_API_BASE_URL}/${this.API_VERSION}/${path.replace(/^\//, '')}`;
+    const igLogin = path.includes('access_token=IG');
+    const host = igLogin ? this.INSTAGRAM_API_BASE_URL : this.GRAPH_API_BASE_URL;
+    return `${host}/${this.API_VERSION}/${path.replace(/^\//, '')}`;
   }
 
   private normalizeContent(content: string): string {
@@ -497,30 +507,28 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
       this.logPluginEvent('get-stats-profile', 'failure', `Error: ${(error as Error).message}`)
     }
 
-    let totalEngagement = 0
-    let totalViews = 0
     let totalPosts = 0
-    let totalLikes = 0
-    let totalComments = 0
-    let totalShares = 0
-    let totalSaves = 0
+    let mediaLikes = 0
+    let mediaComments = 0
     let reelsCount = 0
     let reelsEngagement = 0
-    let reelsViews = 0
     let storiesCount = 0
     let carouselCount = 0
     let carouselEngagement = 0
     let imageCount = 0
     let imageEngagement = 0
 
+    // Media list — the ONLY per-media call. `reach`/`views`/`saved`/`shares` are
+    // insight metrics, not node fields; the account-level totals below are far
+    // cheaper than one insights request per media (which also spammed the
+    // fallback ladder on every deprecated metric).
     try {
-      const mediaUrl = this._getGraphApiUrl(`${igUserId}/media?fields=id,caption,media_type,like_count,comments_count,reach,views,saved&limit=50&access_token=${socialMediaAccount.accessToken}`)
+      const mediaUrl = this._getGraphApiUrl(`${igUserId}/media?fields=id,caption,media_type,like_count,comments_count,timestamp&limit=50&access_token=${socialMediaAccount.accessToken}`)
       const mediaResponse = await fetch(mediaUrl)
       if (!mediaResponse.ok) {
-        const error = await mediaResponse.json()
-        log.warn({ content: '[Instagram] Media fetch error', error })
+        log.warn({ content: '[Instagram] Media fetch error', status: mediaResponse.status })
       } else {
-        const mediaData = await mediaResponse.json()
+        const mediaData = await mediaResponse.json() as { data?: Array<Record<string, any>> }
         const mediaItems = mediaData.data || []
 
         totalPosts = mediaItems.length
@@ -528,25 +536,16 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
         for (const media of mediaItems) {
           const likes = media.like_count || 0
           const comments = media.comments_count || 0
-          // No per-media share count field exists (only the insights `shares`
-          // metric) — engagement here is likes + comments + saves.
-          const saves = media.saved || 0
-          const views = media.views || 0
-          const engagement = likes + comments + saves
+          const engagement = likes + comments
 
-          totalEngagement += engagement
-          totalViews += views
-          totalLikes += likes
-          totalComments += comments
-          totalShares += shares
-          totalSaves += saves
+          mediaLikes += likes
+          mediaComments += comments
 
           switch (media.media_type) {
             case 'VIDEO':
             case 'REELS':
               reelsCount++
               reelsEngagement += engagement
-              reelsViews += views
               break
             case 'STORIES':
               storiesCount++
@@ -567,75 +566,45 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
       this.logPluginEvent('get-stats-media', 'failure', `Error: ${(error as Error).message}`)
     }
 
-    let followerGrowth = undefined
-    let profileVisits = 0
-    let newFollows = 0
-    let followerTrend7d: number[] = []
-    let followerTrend14d: number[] = []
-    let followerTrend30d: number[] = []
-    let followerTrend90d: number[] = []
+    // Account-level insights — one aggregated read. Documented v26 metrics only:
+    // `profile_visits` / `new_follows` are NOT valid account metrics, and
+    // `follower_count` / `online_followers` are withheld for accounts with fewer
+    // than 100 followers, so requesting them only produced "Follower insights error".
+    let accountInsights: Array<{ name: string; total_value?: { value: number } }> = []
     try {
-      const insightsUrl = this._getGraphApiUrl(`${igUserId}/insights?metric=follower_count,profile_visits&period=day&access_token=${socialMediaAccount.accessToken}`)
+      const metrics = 'reach,views,likes,comments,saves,shares,accounts_engaged,total_interactions'
+      // Without since/until the endpoint only looks back 24h (usually empty),
+      // so scope it to the last 30 days to match the dashboard range.
+      const until = Math.floor(Date.now() / 1000)
+      const since = until - 30 * 24 * 60 * 60
+      const insightsUrl = this._getGraphApiUrl(`${igUserId}/insights?metric=${metrics}&period=day&metric_type=total_value&since=${since}&until=${until}&access_token=${socialMediaAccount.accessToken}`)
       const insightsResponse = await fetch(insightsUrl)
-      if (!insightsResponse.ok) {
-        const error = await insightsResponse.json()
-        log.warn({ content: '[Instagram] Follower insights error', error })
+      if (insightsResponse.ok) {
+        const json = await insightsResponse.json() as { data?: Array<{ name: string; total_value?: { value: number } }> }
+        accountInsights = json.data || []
       } else {
-        const insightsData = await insightsResponse.json()
-        for (const metric of insightsData.data || []) {
-          const values = metric.values || []
-          const nums = values.map((v: { value: number }) => v.value)
-
-          if (metric.name === 'follower_count') {
-            followerTrend90d = nums
-            if (nums.length >= 2) {
-              const current = nums[nums.length - 1]
-              const previous = nums[0]
-              const absolute = current - previous
-              const percentage = previous > 0 ? Math.round((absolute / previous) * 10000) / 100 : 0
-              followerGrowth = { absolute, percentage }
-            }
-            followerTrend7d = nums.slice(-7)
-            followerTrend14d = nums.slice(-14)
-            followerTrend30d = nums.slice(-30)
-          }
-
-          if (metric.name === 'profile_visits') {
-            profileVisits = nums.reduce((a: number, b: number) => a + b, 0)
-          }
-        }
+        log.warn({ content: '[Instagram] Account insights unavailable', status: insightsResponse.status })
       }
     } catch (error) {
-      log.warn({ content: 'Instagram Insights fetch failed', plugin: 'instagram', error: (error as Error).message })
+      log.warn({ content: '[Instagram] Account insights fetch failed', plugin: 'instagram', error: (error as Error).message })
       this.logPluginEvent('get-stats-insights', 'failure', `Error: ${(error as Error).message}`)
     }
 
-    let newFollowsGrowth = undefined
-    try {
-      const reachUrl = this._getGraphApiUrl(`${igUserId}/insights?metric=new_follows&period=day&access_token=${socialMediaAccount.accessToken}`)
-      const reachResponse = await fetch(reachUrl)
-      if (reachResponse.ok) {
-        const reachData = await reachResponse.json()
-        const values = reachData.data?.[0]?.values || []
-        newFollows = values.reduce((a: number, v: { value: number }) => a + v.value, 0)
-        if (values.length >= 2) {
-          const current = values[values.length - 1]?.value || 0
-          const previous = values[0]?.value || 0
-          const absolute = current - previous
-          const percentage = previous > 0 ? Math.round((absolute / previous) * 10000) / 100 : 0
-          newFollowsGrowth = { absolute, percentage }
-        }
-      }
-    } catch (error: unknown) {
-      log.warn({ content: 'Instagram new follows fetch failed', plugin: 'instagram', error: (error as Error).message })
-    }
+    const insight = (name: string) => this.accountInsightValue(accountInsights, name)
+    const totalLikes = insight('likes') || mediaLikes
+    const totalComments = insight('comments') || mediaComments
+    const totalSaves = insight('saves')
+    const totalShares = insight('shares')
+    const totalViews = insight('views')
+    const totalReach = insight('reach')
+    const totalEngagement = insight('total_interactions') || (totalLikes + totalComments + totalSaves + totalShares)
 
     const base64Picture = profile.profile_picture_url
       ? await fetchedImageBase64(profile.profile_picture_url)
       : undefined
 
     const engagementRate = profile.followers_count && profile.followers_count > 0
-      ? Math.round((totalEngagement / totalPosts / profile.followers_count) * 10000) / 100
+      ? Math.round((totalEngagement / Math.max(totalPosts, 1) / profile.followers_count) * 10000) / 100
       : 0
 
     return {
@@ -653,31 +622,25 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
         comments: totalComments,
         shares: totalShares,
         views: totalViews,
-        impressions: totalViews + totalEngagement,
+        reach: totalReach,
+        impressions: totalViews,
       },
       growth: {
-        followers: followerGrowth,
         following: { absolute: 0, percentage: 0 },
         posts: { absolute: 0, percentage: 0 },
         engagement: { absolute: totalEngagement, percentage: engagementRate },
       },
       extra: {
         name: profile.name,
-        profileVisits,
-        newFollows,
+        accountsEngaged: insight('accounts_engaged'),
         reelsCount,
         reelsEngagement,
-        reelsViews,
         storiesCount,
         carouselCount,
         carouselEngagement,
         imageCount,
         imageEngagement,
         engagementRate,
-        followerTrend7d,
-        followerTrend14d,
-        followerTrend30d,
-        followerTrend90d,
         saves: totalSaves,
         likesReceived: totalLikes,
       },
@@ -686,17 +649,20 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
 
   /**
    * Media insights with a fallback ladder: metric support varies by media
-   * product type (reels reject `impressions`, `engagement` is gone entirely),
-   * and one bad metric fails the whole call with (#100). Drops the offending
-   * metric (named or by `metric[N]` position) and retries so surviving metrics
-   * still come back instead of a blanket fallback. Returns null when nothing
-   * is usable.
+   * product type (e.g. `saved` is not valid on stories), and one bad metric
+   * fails the whole call with (#100). Drops the offending metric (named or by
+   * `metric[N]` position) and retries so surviving metrics still come back
+   * instead of a blanket fallback. Returns null when nothing is usable.
+   *
+   * NOTE: `impressions` is intentionally absent — it is deprecated for media
+   * created after 2024-07-02, so including it guaranteed one wasted retry (and
+   * a warning log) on every single media. `views` is the replacement.
    */
   private async fetchMediaInsightsRows(
     externalPostId: string,
     token: string,
   ): Promise<Array<{ name: string; values: Array<{ value: number }> }> | null> {
-    const remaining = ['reach', 'views', 'likes', 'comments', 'shares', 'saved', 'impressions']
+    const remaining = ['reach', 'views', 'likes', 'comments', 'shares', 'saved']
     while (remaining.length > 0) {
       let res: Response
       try {
@@ -726,6 +692,15 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
     if (culprit === undefined) return -1
     if (/^\d+$/.test(culprit)) return Number(culprit)
     return remaining.indexOf(culprit)
+  }
+
+  /** Read `total_value.value` for a metric from an account-insights payload. */
+  private accountInsightValue(
+    data: Array<{ name: string; total_value?: { value: number } }>,
+    name: string,
+  ): number {
+    if (!data) return 0
+    return data.find(d => d.name === name)?.total_value?.value ?? 0
   }
 
   async getPostInsights(

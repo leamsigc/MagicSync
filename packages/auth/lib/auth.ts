@@ -1,6 +1,6 @@
 import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service';
 import { sendOrganizationInvitationEmail } from '#layers/BaseEmail/server/utils/email';
-import { APIError, betterAuth } from 'better-auth'
+import { APIError, betterAuth, type BetterAuthPlugin } from 'better-auth'
 import { createLogger } from 'evlog'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { apiKey } from "@better-auth/api-key"
@@ -40,9 +40,10 @@ function serializeAuthArgs(args: unknown[]): string[] {
 }
 
 function forwardAuthLog(level: string, message: string, args: unknown[]): void {
-  const payload = { component: 'better-auth', level, message, args: serializeAuthArgs(args) };
-  if (level === 'error') authLog.error(payload)
-  else authLog.info(payload)
+  // evlog's logger accepts `string | Error` — pass a serialized line, not an object.
+  const line = JSON.stringify({ component: 'better-auth', level, message, args: serializeAuthArgs(args) });
+  if (level === 'error') authLog.error(line)
+  else authLog.info(line)
 }
 
 export const auth = betterAuth({
@@ -80,7 +81,6 @@ export const auth = betterAuth({
     fields: {
       userId: 'userId',
     },
-    partitioned: true,
     expiresIn: 604_800, // 7 days
     updateAge: 86_400, // 1 day
     // cookieCache: {
@@ -194,12 +194,19 @@ export const auth = betterAuth({
         'read_insights',
         'pages_manage_posts',
         'pages_read_engagement',
+        // Tagged posts + @mentions (getTaggedPosts/getMentions →
+        // GET /{page}/tagged) require pages_read_user_content.
+        'pages_read_user_content',
         'pages_manage_engagement',
         // Webhook subscriptions: POST /{page-id}/subscribed_apps needs this.
         'pages_manage_metadata',
         // FB inbox DMs (Gap 2b) + required alongside instagram_manage_messages
         // for IG private replies.
         'pages_messaging',
+        // IG insights for accounts where the user holds a Page role via
+        // Business Manager additionally require ads_management + ads_read.
+        'ads_management',
+        'ads_read',
         'instagram_basic',
         'instagram_content_publish',
         'instagram_manage_insights',
@@ -286,8 +293,8 @@ export const auth = betterAuth({
       if (returned && returned instanceof APIError) {
         const userId = ctx.context.newSession?.user.id
         if (ctx.path == '/callback/:id' && returned.status == 'FOUND' && userId) {
-          const provider = ctx.params.id
-          await await logAuditService.logAuditEvent({
+          const provider = ctx.params?.id ?? ''
+          await logAuditService.logAuditEvent({
             userId,
             category: 'auth',
             action: ctx.path.replace(':id', provider),
@@ -318,7 +325,7 @@ export const auth = betterAuth({
           } else {
             userId = ctx.context.session?.user.id
           }
-          await await logAuditService.logAuditEvent({
+          await logAuditService.logAuditEvent({
             userId,
             category: 'auth',
             action: ctx.path,
@@ -386,10 +393,13 @@ export const auth = betterAuth({
         },
 
         // YouTube (uses Google OAuth with YouTube scopes) - not natively supported.
-        // Request ONLY youtube.force-ssl: it supersedes `youtube`,
-        // `youtube.upload` and `youtube.readonly`. Requesting a scope together
-        // with its own subset makes Google reject the request with
-        // "scopes that cannot be requested together".
+        // `youtube.force-ssl` supersedes `youtube`, `youtube.upload` and
+        // `youtube.readonly`; never request a scope together with its own subset
+        // or Google rejects the request with "scopes that cannot be requested
+        // together". `yt-analytics.readonly` is a DIFFERENT Google API (YouTube
+        // Analytics) — force-ssl does not cover it — and is required for windowed
+        // views (last 30 days). Adding it means every YouTube account must
+        // reconnect for consent.
         {
           providerId: 'youtube',
           clientId: process.env.NUXT_GOOGLE_CLIENT_ID as string,
@@ -400,6 +410,7 @@ export const auth = betterAuth({
             'email',
             'profile',
             'https://www.googleapis.com/auth/youtube.force-ssl',
+            'https://www.googleapis.com/auth/yt-analytics.readonly',
           ],
           accessType: 'offline',
           prompt: 'consent',
@@ -561,6 +572,11 @@ export const auth = betterAuth({
         )
       }
     }),
+    // `as unknown as BetterAuthPlugin`: @better-auth/api-key, mcp and cimd ship
+    // types built against a second copy of @better-auth/core (pulled in with
+    // @better-auth/utils@0.5.0, while better-auth itself resolves 0.4.2), so
+    // their `BetterAuthPlugin` is a structurally distinct declaration. Runtime
+    // is unaffected; the cast is removed once upstream aligns the dependency.
     apiKey([
       {
         configId: "org-keys",
@@ -572,7 +588,7 @@ export const auth = betterAuth({
           maxRequests: 50, // 50 requests per day
         },
       },
-    ]),
+    ]) as unknown as BetterAuthPlugin,
     // OAuth 2.1 authorization server + MCP protected resource (Wave 2a-B).
     // jwt() provides the signing key + /jwks. mcp() IS the OAuth provider —
     // never register a separate oauthProvider() alongside it. cimd() serves
@@ -591,15 +607,16 @@ export const auth = betterAuth({
       allowUnauthenticatedClientRegistration: true,
       // Business binding: every OAuth grant carries exactly one businessId,
       // picked on the consent screen. Column lives on oauthConsent in
-      // packages/db/db/oauth/oauth.ts.
+      // packages/db/db/oauth/oauth.ts. The plugin types `schema` as a closed
+      // union of its own models, so the custom column is cast.
       schema: {
         oauthConsent: {
           fields: {
             businessId: { type: 'string', required: false },
           },
         },
-      },
-    }),
+      } as any,
+    }) as unknown as BetterAuthPlugin,
     cimd({
       fetchClientMetadataResource,
       metadataProfile: 'mcp-2026-07-28',
@@ -762,8 +779,8 @@ export const auth = betterAuth({
                 }
               );
 
-              if (response.items?.length) {
-                const channel = response.items[0];
+              const channel = response.items?.[0];
+              if (channel) {
                 await socialMediaAccountService.createOrUpdateAccountFromAuth({
                   id: channel.id,
                   name: channel.snippet.title,

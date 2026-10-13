@@ -42,6 +42,18 @@ const props = withDefaults(defineProps<Props>(), {
   ],
 });
 const { list } = toRefs(props);
+
+// FAQPage structured data for rich results. Driven by the same `list` prop
+// the accordion renders, so every page using this component stays eligible
+// without extra per-page work. Uses the Nuxt SEO module (useSchemaOrg) so
+// nodes join the module's identity graph instead of a standalone script tag.
+useSchemaOrg(computed(() => ([
+  defineWebPage({ '@type': 'FAQPage' }),
+  ...list.value.map(item => defineQuestion({
+    name: item.label,
+    acceptedAnswer: item.content,
+  })),
+])))
 </script>
 
 <template>

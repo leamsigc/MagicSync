@@ -1,7 +1,16 @@
-<script lang="ts" setup>
+<!--  Translation file -->
+<i18n src="./TwitterPreview.json"></i18n>
+<script setup lang="ts">
 /**
+ * Component Description: Twitter/X post preview.
  *
- * Twitter Preview Component
+ * The header, timestamp and action rail are the shell's and the spec's; the
+ * only Twitter-specific chrome is the audience chip, which reads the row's
+ * `who_can_reply` setting instead of the hardcoded
+ * "Accounts @mehdirhasan follows or mentioned can reply" line this card used
+ * to print. The GitHub avatar, the `300.2K` reposts and the `1000.6K` views
+ * are gone — the row carries an avatar, a handle and a comment count, and the
+ * card shows exactly that.
  *
  * @author Ismael Garcia <leamsigc@leamsigc.com>
  * @version 0.0.1
@@ -10,108 +19,83 @@
  * @todo [ ] Integration test.
  * @todo [✔] Update the typescript.
  */
-import type { PostCreateBase, Asset, User } from '#layers/BaseDB/db/schema';
-import type { SocialMediaPlatformConfigurations } from '../../../../composables/usePlatformConfiguration';
-import dayjs from 'dayjs';
-
-const user = useState<User | null>('auth:user')
+import type { Asset, PostCreateBase } from '#layers/BaseDB/db/schema'
+import type { SocialMediaPlatformConfigurations } from '../../../../composables/usePlatformConfiguration'
+import type { TwitterSettings } from '#layers/BaseShared/shared/platformSettings'
+import { usePreviewPost } from '#layers/BaseScheduler/app/composables/usePlatformPreview'
+import PostPreviewShell from '../previews/PostPreviewShell.vue'
+import PostPreviewMedia from '../previews/PostPreviewMedia.vue'
+import PostPreviewActions from '../previews/PostPreviewActions.vue'
+import PostPreviewContent from '../previews/PostPreviewContent.vue'
+import PostPreviewComments from '../previews/PostPreviewComments.vue'
 
 const props = defineProps<{
-  postContent: string;
-  mediaAssets: Asset[];
-  platform: keyof SocialMediaPlatformConfigurations | 'default';
+  postContent: string
+  mediaAssets: Asset[]
+  platform: keyof SocialMediaPlatformConfigurations | 'default'
   post: PostCreateBase
-}>();
+}>()
 
-const date = dayjs(Date.now()).format('hh:mm A · MMM D, YYYY');// 3:47 PM · Nov 14, 2025 ·
+const { t } = useI18n()
+
+const preview = usePreviewPost(props)
+
+const postFormat = computed(() => props.post.postFormat ?? 'post')
+
+const settings = computed(() => props.post.platformSettings?.[props.platform] as TwitterSettings | undefined)
+
+/** `who_can_reply` value to locale key — a table, so no branch tree. */
+const AUDIENCE_KEYS: Record<string, string> = {
+  everyone: 'audienceEveryone',
+  following: 'audienceFollowing',
+  mentionedUsers: 'audienceMentionedUsers',
+  subscribers: 'audienceSubscribers',
+  verified: 'audienceVerified',
+}
+
+const audienceLabel = computed(() => {
+  const audience = settings.value?.who_can_reply
+  const key = audience ? AUDIENCE_KEYS[audience] : undefined
+
+  return key ? t(key) : ''
+})
 </script>
 
 <template>
-  <div class=" text-white p-4 max-w-md mx-auto font-twitter">
-    <!-- Header -->
-    <div class="flex items-center justify-between mb-2">
-      <div class="flex items-center">
-        <UAvatar src="https://avatars.githubusercontent.com/u/23272293?s=96&v=4" alt="User" size="md" class="mr-3" />
-        <div>
-          <div class="flex items-center">
-            <p class="font-bold text-white">{{ user?.name }}</p>
-            <UIcon name="i-heroicons-check-badge-solid" class="text-blue-500 ml-1" />
-          </div>
-          <p class="text-gray-500 text-sm">@{{ user?.name.replace(' ', '_') }}</p>
-        </div>
-      </div>
-      <UIcon name="i-heroicons-arrow-path" class="text-gray-500 text-xl" />
-    </div>
+  <PostPreviewShell :platform :post="preview.post" :spec="preview.spec">
+    <PostPreviewContent :content="preview.content" :platform />
 
-    <!-- Post Content -->
-    <p class="text-white mb-3 leading-relaxed">{{ props.postContent }}</p>
+    <template #media>
+      <PostPreviewMedia
+        :assets="preview.assets"
+        :platform
+        :spec="preview.spec"
+        :format="postFormat"
+      />
+    </template>
 
-    <!-- Embedded Post/Card -->
-    <div v-if="props.mediaAssets && props.mediaAssets.length > 0" class="grid grid-cols-1 gap-2 mb-2">
-      <img v-for="asset in props.mediaAssets" :key="asset.id" :src="asset.url" alt="Post media"
-        class="w-full rounded-lg" />
-    </div>
+    <template #extra>
+      <div
+        v-if="audienceLabel"
+        v-motion-fade-visible-once
+        :duration="200"
+        class="mt-3 flex items-center gap-1.5 text-xs text-dimmed"
+      >
+        <Icon name="i-heroicons-globe-alt" class="size-3.5 shrink-0" aria-hidden="true" />
+        <span>{{ audienceLabel }}</span>
+      </div>
+    </template>
 
-    <!-- Post Footer (Date and Views) -->
-    <p class="text-gray-500 text-xs mb-3">{{ date }} ·
-      <span class="font-bold text-white">1000.6K</span> Views
-    </p>
+    <template #actions>
+      <PostPreviewActions :spec="preview.spec" :platform />
+    </template>
 
-    <!-- Actions -->
-    <div class="flex justify-around text-gray-500 text-sm border-t border-gray-700 pt-3 mb-3">
-      <div class="flex items-center">
-        <UIcon name="i-heroicons-chat-bubble-oval-left-ellipsis" class="mr-1" />
-        <span>{{ post.comment.length }}</span>
-      </div>
-      <div class="flex items-center">
-        <UIcon name="i-heroicons-arrow-path" class="mr-1" />
-        <span>300.2K</span>
-      </div>
-      <div class="flex items-center">
-        <UIcon name="i-heroicons-heart" class="mr-1" />
-        <span>30K</span>
-      </div>
-      <div class="flex items-center">
-        <UIcon name="i-heroicons-bookmark" class="mr-1" />
-        <span>758</span>
-      </div>
-      <UIcon name="i-heroicons-arrow-up-tray" />
-    </div>
-
-    <!-- Who can reply section -->
-    <div class="bg-gray-900 rounded-lg p-3 flex items-center text-blue-500 text-sm mb-4">
-      <UIcon name="i-heroicons-user-circle" class="mr-2 text-xl" />
-      <span>Who can reply? <span class="text-gray-500">Accounts @mehdirhasan follows or mentioned can
-          reply</span></span>
-    </div>
-
-    <!-- Comments Section -->
-    <div v-if="props.post.comment && props.post.comment.length > 0" class="">
-      <div v-for="(comment, index) in props.post.comment" :key="index"
-        class="flex items-start mb-3 border-t border-gray-700 pt-3">
-        <UAvatar src="https://avatars.githubusercontent.com/u/23272293?s=96&v=4" alt="Commenter" size="sm"
-          class="mr-3" />
-        <div>
-          <div class="flex items-center">
-            <p class="font-bold text-white text-sm">{{ user?.name }}</p>
-            <p class="text-gray-500 text-xs ml-1">{{ user?.name.replace(' ', '_') }}· 1m</p>
-          </div>
-          <p class="text-gray-200 text-sm">{{ comment }}</p>
-          <div class="flex items-center text-gray-500 text-xs mt-1">
-            <UIcon name="i-heroicons-chat-bubble-oval-left-ellipsis" class="mr-1" />
-            <span>30</span>
-            <UIcon name="i-heroicons-arrow-path" class="ml-3 mr-1" />
-            <span>100K</span>
-            <UIcon name="i-heroicons-heart" class="ml-3 mr-1" />
-            <span>150K</span>
-            <UIcon name="i-heroicons-chart-bar" class="ml-3 mr-1" />
-            <UIcon name="i-heroicons-bookmark" class="ml-3 mr-1" />
-            <UIcon name="i-heroicons-arrow-up-tray" class="ml-3" />
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+    <template #comments="{ maxComments }">
+      <PostPreviewComments
+        :comments="preview.comments"
+        :max-comments
+        :placeholder="t('addComment')"
+      />
+    </template>
+  </PostPreviewShell>
 </template>
-
-<style scoped></style>

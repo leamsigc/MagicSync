@@ -1,0 +1,158 @@
+{
+  "en": {
+    "openFilters": "Open filters",
+    "clear": "Clear",
+    "apply": "Apply",
+    "dateType": "Date",
+    "status": "Status",
+    "format": "Format",
+    "platforms": "Platforms",
+    "dateTypeOptions": {
+      "scheduledAt": "Scheduled",
+      "createdAt": "Created",
+      "publishedAt": "Published"
+    },
+    "statusOptions": {
+      "all": "All statuses",
+      "pending": "Pending",
+      "published": "Published",
+      "failed": "Failed"
+    },
+    "formatOptions": {
+      "all": "All formats",
+      "post": "Post",
+      "reel": "Reel",
+      "story": "Story",
+      "short": "Short"
+    },
+    "platformOptions": {
+      "facebook": "Facebook",
+      "twitter": "Twitter",
+      "instagram": "Instagram",
+      "linkedin": "LinkedIn",
+      "bluesky": "Bluesky",
+      "youtube": "YouTube",
+      "tiktok": "TikTok",
+      "threads": "Threads",
+      "reddit": "Reddit"
+    },
+    "selectedCount": "{count} selected"
+  },
+  "es": {
+    "openFilters": "Abrir filtros",
+    "clear": "Limpiar",
+    "apply": "Aplicar",
+    "dateType": "Fecha",
+    "status": "Estado",
+    "format": "Formato",
+    "platforms": "Plataformas",
+    "dateTypeOptions": {
+      "scheduledAt": "Programada",
+      "createdAt": "Creada",
+      "publishedAt": "Publicada"
+    },
+    "statusOptions": {
+      "all": "Todos los estados",
+      "pending": "Pendiente",
+      "published": "Publicado",
+      "failed": "Fallido"
+    },
+    "formatOptions": {
+      "all": "Todos los formatos",
+      "post": "Publicación",
+      "reel": "Reel",
+      "story": "Historia",
+      "short": "Short"
+    },
+    "platformOptions": {
+      "facebook": "Facebook",
+      "twitter": "Twitter",
+      "instagram": "Instagram",
+      "linkedin": "LinkedIn",
+      "bluesky": "Bluesky",
+      "youtube": "YouTube",
+      "tiktok": "TikTok",
+      "threads": "Threads",
+      "reddit": "Reddit"
+    },
+    "selectedCount": "{count} seleccionadas"
+  },
+  "de": {
+    "openFilters": "Filter öffnen",
+    "clear": "Zurücksetzen",
+    "apply": "Anwenden",
+    "dateType": "Datum",
+    "status": "Status",
+    "format": "Format",
+    "platforms": "Plattformen",
+    "dateTypeOptions": {
+      "scheduledAt": "Geplant",
+      "createdAt": "Erstellt",
+      "publishedAt": "Veröffentlicht"
+    },
+    "statusOptions": {
+      "all": "Alle Status",
+      "pending": "Ausstehend",
+      "published": "Veröffentlicht",
+      "failed": "Fehlgeschlagen"
+    },
+    "formatOptions": {
+      "all": "Alle Formate",
+      "post": "Beitrag",
+      "reel": "Reel",
+      "story": "Story",
+      "short": "Short"
+    },
+    "platformOptions": {
+      "facebook": "Facebook",
+      "twitter": "Twitter",
+      "instagram": "Instagram",
+      "linkedin": "LinkedIn",
+      "bluesky": "Bluesky",
+      "youtube": "YouTube",
+      "tiktok": "TikTok",
+      "threads": "Threads",
+      "reddit": "Reddit"
+    },
+    "selectedCount": "{count} ausgewählt"
+  },
+  "fr": {
+    "openFilters": "Ouvrir les filtres",
+    "clear": "Effacer",
+    "apply": "Appliquer",
+    "dateType": "Date",
+    "status": "Statut",
+    "format": "Format",
+    "platforms": "Plateformes",
+    "dateTypeOptions": {
+      "scheduledAt": "Programmée",
+      "createdAt": "Créée",
+      "publishedAt": "Publiée"
+    },
+    "statusOptions": {
+      "all": "Tous les statuts",
+      "pending": "En attente",
+      "published": "Publié",
+      "failed": "Échoué"
+    },
+    "formatOptions": {
+      "all": "Tous les formats",
+      "post": "Publication",
+      "reel": "Reel",
+      "story": "Story",
+      "short": "Short"
+    },
+    "platformOptions": {
+      "facebook": "Facebook",
+      "twitter": "Twitter",
+      "instagram": "Instagram",
+      "linkedin": "LinkedIn",
+      "bluesky": "Bluesky",
+      "youtube": "YouTube",
+      "tiktok": "TikTok",
+      "threads": "Threads",
+      "reddit": "Reddit"
+    },
+    "selectedCount": "{count} sélectionnées"
+  }
+}

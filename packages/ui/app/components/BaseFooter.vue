@@ -37,6 +37,7 @@ const logoUrl = appConfig.BaseUiLayer.main.logo
             <p class="mb-3 text-sm font-semibold">{{ t('footer.followUs') }}</p>
             <div class="flex gap-3">
               <NuxtLink v-for="social in socials" :key="social.icon" :to="social.url" target="_blank"
+                :aria-label="social.name" :title="social.name"
                 class="flex h-10 w-10 items-center justify-center rounded-full border transition-all hover:scale-110 hover:border-primary hover:bg-primary/5">
                 <Icon :name="social.icon" class="h-5 w-5" />
               </NuxtLink>

@@ -1,0 +1,22 @@
+{
+  "en": {
+    "more": "+{count} more",
+    "moreCount": "+{count}",
+    "moreAria": "{count} more events"
+  },
+  "es": {
+    "more": "+{count} más",
+    "moreCount": "+{count}",
+    "moreAria": "{count} eventos más"
+  },
+  "de": {
+    "more": "+{count} weitere",
+    "moreCount": "+{count}",
+    "moreAria": "{count} weitere Termine"
+  },
+  "fr": {
+    "more": "+{count} de plus",
+    "moreCount": "+{count}",
+    "moreAria": "{count} événements de plus"
+  }
+}

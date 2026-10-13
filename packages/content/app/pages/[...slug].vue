@@ -78,6 +78,38 @@ if (collectionType === 'blog' && page.value) {
     ...(publishedAt ? { articlePublishedTime: publishedAt } : {}),
   })
 }
+
+if (slug.value === '/' && page.value) {
+  // The homepage describes the product itself (pricing/features are visible
+  // in the FAQ and feature sections above), so emit SoftwareApplication —
+  // the Organization/WebSite graph from @nuxtjs/seo doesn't cover it.
+  // Prices mirror the FAQ content: free self-hosted, Pro $29/month.
+  // Module-idiomatic: joins the identity graph, relative URLs resolve
+  // against the site URL automatically.
+  useSchemaOrg([
+    defineSoftwareApp({
+      name: 'MagicSync',
+      url: '/',
+      applicationCategory: 'BusinessApplication',
+      operatingSystem: 'Web',
+      description: page.value.description,
+      offers: [
+        {
+          '@type': 'Offer',
+          name: 'Self-hosted',
+          price: '0',
+          priceCurrency: 'USD',
+        },
+        {
+          '@type': 'Offer',
+          name: 'Pro',
+          price: '29',
+          priceCurrency: 'USD',
+        },
+      ],
+    }),
+  ])
+}
 </script>
 
 <template>
