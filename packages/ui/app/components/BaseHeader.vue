@@ -23,9 +23,11 @@ const { t, links: items } = useNavigationLinks()
       highlight-color="primary"
       :ui="{ viewport: 'ring-0 shadow rounded-lg', viewportWrapper: 'ring-0 ', content: 'p-4' }" />
     <template #right>
-      <BaseThemeSelector />
-      <BaseTranslationMenu />
-      <UColorModeButton />
+      <!-- The drawer in `#body` carries these on a phone; six controls do not
+           fit on a 390px header. -->
+      <BaseThemeSelector class="hidden lg:inline-flex" />
+      <BaseTranslationMenu class="hidden sm:block" />
+      <UColorModeButton class="hidden sm:inline-flex" />
       <UTooltip :text="t('navigation.login')" :kbds="['meta', 'L']">
         <UButton color="primary" variant="ghost" to="/login" icon="i-lucide-user" :aria-label="t('navigation.login')" />
       </UTooltip>
@@ -36,7 +38,7 @@ const { t, links: items } = useNavigationLinks()
     </template>
 
     <template #body>
-      <section class="grid p-2  rounded-xl ">
+      <section class="grid gap-2 rounded-xl p-2">
         <UTooltip :text="t('navigation.home')" :kbds="['meta', 'H']">
           <UButton color="neutral" variant="ghost" to="/" icon="fxemoji:flaginhole" :aria-label="t('navigation.home')">
             {{ companyName }}
@@ -47,6 +49,12 @@ const { t, links: items } = useNavigationLinks()
             :aria-label="t('navigation.login')" />
         </UTooltip>
         <UNavigationMenu :items="items" orientation="vertical" class="-mx-2.5" :ui="{ viewport: 'ring-0' }" />
+        <!-- Theme + language live here on a phone. -->
+        <div class="flex items-center gap-2 pt-2 sm:hidden">
+          <BaseThemeSelector />
+          <BaseTranslationMenu />
+          <UColorModeButton />
+        </div>
       </section>
     </template>
   </UHeader>

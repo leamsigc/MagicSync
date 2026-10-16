@@ -18,7 +18,7 @@ const toggle = () => {
 
 <template>
   <div
-    class="bg-muted dark:bg-slate-100 p-5 max-w-sm w-full fixed bottom-5 left-5 rounded-lg shadow-lg z-10 dark:text-slate-950  corner-ribbon"
+    class="bg-muted dark:bg-slate-100 p-5 max-w-sm w-auto fixed bottom-5 left-4 right-4 rounded-lg shadow-lg z-10 dark:text-slate-950 corner-ribbon sm:left-5 sm:right-auto sm:w-full"
     v-if="visible">
     <!-- The container -->
     <div class="corner-ribbon__inner">

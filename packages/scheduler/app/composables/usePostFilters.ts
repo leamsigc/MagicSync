@@ -39,6 +39,7 @@ export const PLATFORM_OPTIONS = [
   { label: 'YouTube', value: 'youtube' },
   { label: 'TikTok', value: 'tiktok' },
   { label: 'Threads', value: 'threads' },
+  { label: 'Snapchat', value: 'snapchat' },
   { label: 'Reddit', value: 'reddit' }
 ]
 

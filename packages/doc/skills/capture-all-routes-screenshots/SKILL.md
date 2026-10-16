@@ -89,6 +89,30 @@ excludes the 23 parameterised routes (`/app/business/:id()`, `/app/posts/feeds/:
 which cannot be visited without a concrete id. For those, use
 `route-action-screenshots` with a real id.
 
+## Mobile
+
+Set `SCREENSHOT_VIEWPORT=mobile` to sweep at 390x844 instead of 1440x900:
+
+```bash
+SCREENSHOT_VIEWPORT=mobile pnpm screenshots:mobile
+SCREENSHOT_VIEWPORT=mobile SCREENSHOT_ROUTE_PREFIX=/app pnpm screenshots:mobile
+```
+
+The viewport switches to an iPhone-class device (`isMobile`, `hasTouch`,
+`deviceScaleFactor: 2`) **and** redirects output to
+`packages/doc/public/img/screenshots-mobile/`, so a mobile pass can never
+overwrite a desktop image. `SCREENSHOT_ROOT` still wins if you set it yourself.
+
+For **interaction** coverage on mobile the same variable applies:
+
+```bash
+SCREENSHOT_VIEWPORT=mobile pnpm screenshots:interactions
+```
+
+Desktop landing states prove nothing about a modal, so any flow you fix needs a
+journey (`tests/screenshots/journeys/`). See the `audit-mobile-layout` skill for
+finding the breakage in the first place.
+
 ## Gotchas
 
 - **Auth is real.** The sweep signs up a throwaway `e2e-*@test.magicsync.dev`

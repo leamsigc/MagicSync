@@ -1,5 +1,5 @@
 <!-- Translation file -->
-<i18n src="../../../../pages/app/account/index.json"></i18n>
+<i18n src="./account.json"></i18n>
 
 <script lang="ts" setup>
 /**

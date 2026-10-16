@@ -22,8 +22,10 @@
     "@better-auth/api-key": "catalog:",
     "@better-auth/cimd": "catalog:",
     "@better-auth/mcp": "catalog:",
+    "@better-auth/stripe": "catalog:",
     "better-sqlite3": "catalog:",
-    "evlog": "catalog:"
+    "evlog": "catalog:",
+    "stripe": "catalog:"
   },
   "devDependencies": {
     "@nuxt/eslint": "catalog:",

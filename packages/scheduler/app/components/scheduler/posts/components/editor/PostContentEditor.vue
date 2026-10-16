@@ -47,8 +47,8 @@ const progressColor = computed(() => {
         <slot name="assetsList" />
       </div>
     </div>
-    <div class="flex items-center justify-between px-4 py-3 border-t border-zinc-800/50">
-      <div class="flex items-center gap-2">
+    <div class="flex flex-wrap items-center justify-between gap-2 border-t border-zinc-800/50 px-4 py-3">
+      <div class="flex flex-wrap items-center gap-2">
         <slot></slot>
         <div class="w-px h-6 bg-zinc-800 mx-1"></div>
 

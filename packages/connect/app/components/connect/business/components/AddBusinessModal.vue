@@ -182,7 +182,7 @@ const handleCancel = () => {
 
 <template>
   <UModal v-model:open="modalOpen" @close="handleCancel" :dismissible="false"
-    :ui="{ content: 'min-w-5xl overflow-y-auto' }">
+    :ui="{ content: 'w-full max-w-4xl' }">
     <!-- Trigger Button -->
     <UButton variant="ghost"
       data-test="add-business-button"
@@ -198,7 +198,9 @@ const handleCancel = () => {
     </UButton>
 
     <template #content>
-      <UCard class="w-full h-full min-w-5xl overflow-auto">
+      <!-- Scrolls inside the modal: a 1024px min-width here made the whole
+           wizard unreachable on a phone. -->
+      <UCard class="max-h-[90dvh] w-full overflow-auto">
         <div class="flex items-center justify-end  sticky top-0 z-10">
           <div class="flex items-center gap-2">
             <UButton icon="lucide:x" color="neutral" variant="ghost" @click="handleCancel" :title="t('actions.close')" />

@@ -30,7 +30,8 @@ export function isBetterAuthPlatform(platform: SocialMediaPlatform): boolean {
     'tiktok',
     'linkedin-page',
     'youtube',
-    'dribbble'
+    'dribbble',
+    'snapchat'
   ]
   return betterAuthPlatforms.includes(platform)
 }

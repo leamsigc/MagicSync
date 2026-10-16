@@ -154,9 +154,9 @@ const handleAIAction = () => { /* AI Action placeholder */ };
     </div>
 
     <!-- Bottom Actions -->
-    <div class="p-4 border-t border-gray-200 dark:border-zinc-800 flex justify-end gap-3 bg-gray-50 dark:bg-default/50">
+    <div class="flex flex-wrap justify-end gap-3 border-t border-gray-200 bg-gray-50 p-4 dark:border-zinc-800 dark:bg-default/50">
       <UButton label="Discard" variant="ghost" color="neutral" />
-      <div class="flex-1" to="/login" />
+      <div class="hidden flex-1 sm:block" to="/login" />
       <UButton label="Save Draft" variant="outline" color="neutral" to="/login" />
       <UButton label="Schedule Post" color="primary" class="rounded-full px-8 font-bold" to="/login" />
     </div>

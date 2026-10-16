@@ -288,10 +288,10 @@ export const useDashboardNavigation = () => {
         active: route.path.startsWith('/app/profile')
       },
       {
-        label: m.userNav.account,
-        icon: 'i-lucide-user-cog',
-        to: '/app/account',
-        active: route.path.startsWith('/app/account')
+        label: m.userNav.billing,
+        icon: 'i-lucide-credit-card',
+        to: '/app/billing',
+        active: route.path.startsWith('/app/billing')
       },
       {
         label: m.menu.notification,
@@ -444,9 +444,9 @@ export const useDashboardNavigation = () => {
           to: '/app/profile'
         },
         {
-          label: menuData.userNav.account,
-          icon: 'i-heroicons-user-circle',
-          to: '/app/account'
+          label: menuData.userNav.billing,
+          icon: 'i-heroicons-credit-card',
+          to: '/app/billing'
         },
         {
           label: menuData.menu.apiKeys,

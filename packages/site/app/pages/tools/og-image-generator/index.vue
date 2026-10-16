@@ -106,9 +106,10 @@ defineOgImage('BlogOgImage', {
       <OgLayeredEditor v-else :platform="platform" />
     </div>
 
-    <!-- Floating bottom-center action pill -->
-    <div class="fixed bottom-4 left-1/2 -translate-x-1/2 z-40">
-      <div class="flex items-center gap-1.5 rounded-2xl border border-default bg-elevated/90 backdrop-blur-md p-1.5 shadow-2xl">
+    <!-- Floating bottom-center action pill. Capped to the viewport on a phone
+         and scrollable inside, so no action is unreachable. -->
+    <div class="fixed bottom-4 left-1/2 z-40 w-[calc(100%-2rem)] max-w-fit -translate-x-1/2">
+      <div class="flex items-center gap-1.5 overflow-x-auto rounded-2xl border border-default bg-elevated/90 p-1.5 shadow-2xl backdrop-blur-md">
         <UButton
           v-if="mode === 'template'"
           variant="ghost"

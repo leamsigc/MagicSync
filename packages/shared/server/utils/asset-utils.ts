@@ -55,8 +55,18 @@ export const createAssetFromBuffer = async (
   }
 }
 
+/**
+ * A stored asset reference is data, not a path. Constrain both halves to a bare
+ * filename / bare id so a crafted `url` or `userId` can never read outside the
+ * asset folder (`../../etc/passwd`).
+ */
+const SAFE_PATH_SEGMENT = /^[A-Za-z0-9._-]+$/
+
 export const getFileFromAsset = (asset: Asset) => {
   const filename = asset.url.replaceAll('/api/v1/assets/serve/', '')
+  if (!SAFE_PATH_SEGMENT.test(filename) || !SAFE_PATH_SEGMENT.test(asset.userId)) {
+    throw new Error('Refusing to resolve an asset path outside the asset folder')
+  }
   const fileStorageMount = process.env.NUXT_FILE_STORAGE_MOUNT || './upload/files'
   const userFolder = join(process.cwd(), fileStorageMount, 'userFiles', asset.userId)
   const filePath = join(userFolder, filename)

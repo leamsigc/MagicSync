@@ -27,13 +27,15 @@ if (import.meta.client) {
     <div class="rounded flex items-center justify-between px-5 py-2.5  max-w-7xl mx-auto">
       <div class="flex items-center space-x-3">
         <UDashboardSidebarToggle class="rounded-xl" />
-        <UDashboardSidebarCollapse />
-        <span class="text-sm font-semibold text-highlighted truncate">{{ currentPageTitle }}</span>
+        <UDashboardSidebarCollapse class="hidden lg:flex" />
+        <span class="truncate text-sm font-semibold text-highlighted">{{ currentPageTitle }}</span>
       </div>
-      <div class="flex items-center space-x-2">
-        <BusinessSwitcher />
+      <div class="flex min-w-0 items-center space-x-2">
+        <BusinessSwitcher class="max-w-[8rem] truncate sm:max-w-none" />
         <UInput icon="i-heroicons-magnifying-glass" :placeholder="t('menu.search')" size="sm" class="hidden md:block" />
-        <UColorModeButton />
+        <!-- Color mode and language move to the drawer footer on a phone; the
+             header only has room for the business, alerts and the account. -->
+        <UColorModeButton class="hidden sm:inline-flex" />
         <NuxtLink to="/app/notifications" :title="t('menu.notification')" class="relative">
           <UButton icon="i-heroicons-bell" variant="ghost" color="neutral" class="rounded-xl" />
           <span v-if="tokenHealthCount > 0"
@@ -41,7 +43,7 @@ if (import.meta.client) {
             {{ tokenHealthCount > 9 ? '9+' : tokenHealthCount }}
           </span>
         </NuxtLink>
-        <BaseTranslationMenu />
+        <BaseTranslationMenu class="hidden sm:block" />
         <DashboardUserNav collapsed class="max-w-12" />
       </div>
     </div>

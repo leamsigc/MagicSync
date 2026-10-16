@@ -797,7 +797,7 @@ const handleAutoFormatApply = (overrides: Record<string, PlatformContentOverride
               :mediaAssets="postMediaAssets" :platform="currentPreviewPlatform" :post="postForm"
               :currentPlatformConfig="currentPlatformConfig" v-model:format="selectedPostFormat" />
             <template #fallback>
-              <div class="flex items-center justify-center h-[882px] w-[433px]">
+              <div class="flex w-full max-w-[433px] items-center justify-center aspect-[433/882]">
                 <UIcon name="lucide:loader-circle" class="w-8 h-8 animate-spin text-gray-400" />
               </div>
             </template>

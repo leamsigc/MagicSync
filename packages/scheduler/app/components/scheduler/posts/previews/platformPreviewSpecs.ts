@@ -103,6 +103,7 @@ const PLATFORM_KEYS = [
   'dribbble',
   'devto',
   'wordpress',
+  'snapchat',
 ] as const
 
 export type PlatformPreviewKey = (typeof PLATFORM_KEYS)[number]
@@ -270,6 +271,15 @@ const SEEDS: Record<PlatformPreviewKey, SpecSeed> = {
     actions: [ACTIONS.like, ACTIONS.comment, ACTIONS.share, ACTIONS.save],
     verifiedBadge: true,
     maxComments: 3,
+  },
+  // Snapchat is a full-screen 9:16 player with no comment surface.
+  snapchat: {
+    nameSource: 'user',
+    timestamp: 'relative',
+    mediaLayouts: VIDEO_LAYOUTS,
+    actions: [ACTIONS.share],
+    verifiedBadge: false,
+    maxComments: 0,
   },
   // A Pin is one tall image; the card is the save button.
   pinterest: {

@@ -59,8 +59,16 @@ const { t } = useI18n()
 const toast = useToast()
 const route = useRoute()
 const router = useRouter()
+const { user } = UseUser()
 
 const businessId = route.params.id as string
+
+/** The avatar on a card the owner made; agent cards show `AI` instead. */
+const viewerInitials = computed(() => {
+  const name = (user.value?.name ?? '').trim()
+  if (name) return name.split(/\s+/).slice(0, 2).map(part => part[0]).join('').toUpperCase()
+  return (user.value?.email ?? '').slice(0, 2).toUpperCase() || 'ME'
+})
 
 const {
   busyId,
@@ -156,6 +164,11 @@ async function handleScan(request: ScanRequest) {
 
 function handleOpenCreate() {
   createOpen.value = true
+}
+
+/** The column menu's Refresh asks the page to reload the board. */
+function handleReload() {
+  void load()
 }
 
 /** A card made by hand is a Planned row, exactly like one a scan returns. */
@@ -365,6 +378,7 @@ onMounted(() => {
           :dragging-item="draggingItem"
           :busy-id="busyId"
           :target-url="targetUrl"
+          :viewer-initials="viewerInitials"
           @open="handleOpen"
           @edit="handleEdit"
           @edit-meta="handleEditMeta"
@@ -375,6 +389,8 @@ onMounted(() => {
           @refuse="handleRefuse(column.key, $event)"
           @pickup="handlePickup"
           @release="handleRelease"
+          @create="handleOpenCreate"
+          @reload="handleReload"
         />
       </div>
     </main>

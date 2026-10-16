@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-10-16T12:01:09.453Z",
+  "generatedAt": "2026-10-16T19:17:40.744Z",
   "baseUrl": "http://localhost:3000",
-  "total": 1,
-  "passed": 1,
+  "total": 2,
+  "passed": 2,
   "journeys": [
     {
       "key": "content-board",
@@ -29,6 +29,29 @@
         "app-business-id-content/07-board-card-updated.png",
         "app-business-id-content/08-board-delete-dialog.png",
         "app-business-id-content/09-board-card-deleted.png"
+      ],
+      "missing": []
+    },
+    {
+      "key": "business-create",
+      "title": "Business create — the Add Business wizard, step by step",
+      "route": "/app/business",
+      "expected": 6,
+      "preconditions": [
+        "A signed-in user with an active business (the wizard is opened from the directory)."
+      ],
+      "notCovered": [
+        "AI profile extraction — needs provider keys; the manual form is the same component tree.",
+        "Step-zero follow/star prompts — that panel only renders on the gated /app/business/initial route."
+      ],
+      "ok": true,
+      "captured": [
+        "app-business/01-onboard-open.png",
+        "app-business/02-onboard-step1-skip.png",
+        "app-business/03-onboard-form.png",
+        "app-business/04-onboard-form-company.png",
+        "app-business/05-onboard-form-brand.png",
+        "app-business/06-onboard-save.png"
       ],
       "missing": []
     }

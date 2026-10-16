@@ -1,0 +1,486 @@
+{
+    "en": {
+        "seo": {
+            "title": "Billing",
+            "description": "Manage your subscription, payment method and invoices."
+        },
+        "heading": "Billing",
+        "subheading": "Your plan, payment method and invoices.",
+        "tabs": {
+            "plan": "Plan",
+            "payment": "Payment",
+            "invoices": "Invoices"
+        },
+        "access": {
+            "admin": "Admin account — billing is not required.",
+            "active": "Your subscription is active.",
+            "trialing": "Your trial subscription is active.",
+            "trial": "Free trial — {days} days left.",
+            "trialHint": "Every new account starts with a free trial. Choose a plan before it ends to keep going.",
+            "expired": "Your free trial has ended.",
+            "expiredHint": "Choose a plan to keep using the app.",
+            "choosePlan": "Choose a plan"
+        },
+        "plan": {
+            "title": "Plan",
+            "subtitle": "Your subscription and usage.",
+            "current": "Current plan",
+            "currentBadge": "Current",
+            "perMember": "${price} per member / month",
+            "perMemberShort": "/member/mo",
+            "renews": "Renews {date} · Billed {interval}",
+            "noActive": "No active subscription.",
+            "notConfigured": "Billing is not configured on this deployment.",
+            "viewInvoices": "View invoices",
+            "manage": "Manage billing",
+            "interval": {
+                "day": "daily",
+                "week": "weekly",
+                "month": "monthly",
+                "year": "yearly"
+            },
+            "cta": {
+                "upgrade": "Upgrade",
+                "downgrade": "Downgrade",
+                "current": "Current plan",
+                "notRequired": "Not required",
+                "unavailable": "Unavailable"
+            }
+        },
+        "usage": {
+            "members": "Members",
+            "projects": "Projects",
+            "storage": "Storage",
+            "of": "{used} of {limit}",
+            "unlimited": "{used}"
+        },
+        "plans": {
+            "free": {
+                "name": "Free",
+                "features": {
+                    "members": "Up to 3 members",
+                    "unlimitedTasks": "Unlimited tasks",
+                    "storage": "5 GB storage"
+                }
+            },
+            "team": {
+                "name": "Team",
+                "features": {
+                    "members": "Up to 50 members",
+                    "views": "Timelines & custom views",
+                    "storage": "100 GB storage",
+                    "guest": "Guest access"
+                }
+            },
+            "business": {
+                "name": "Business",
+                "features": {
+                    "members": "Unlimited members",
+                    "permissions": "Advanced permissions",
+                    "saml": "SAML SSO",
+                    "storage": "1 TB storage"
+                }
+            }
+        },
+        "payment": {
+            "title": "Payment",
+            "subtitle": "Payment method and billing details.",
+            "cardEnding": "{brand} ending in {last4}",
+            "noCard": "No payment method on file",
+            "expires": "Expires {month}/{year}",
+            "update": "Update",
+            "edit": "Edit",
+            "billingEmail": "Billing email",
+            "billingEmailHint": "Invoices and receipts are sent here.",
+            "billingAddress": "Billing address",
+            "taxId": "Tax ID",
+            "taxIdHint": "Shown on invoices",
+            "notSet": "Not set"
+        },
+        "invoices": {
+            "title": "Invoices",
+            "subtitle": "Past invoices for this workspace.",
+            "empty": "No invoices yet.",
+            "columns": {
+                "invoice": "Invoice",
+                "date": "Date",
+                "amount": "Amount",
+                "status": "Status"
+            },
+            "status": {
+                "draft": "Draft",
+                "open": "Open",
+                "paid": "Paid",
+                "void": "Void",
+                "uncollectible": "Uncollectible"
+            }
+        },
+        "messages": {
+            "actionFailed": "Could not reach Stripe",
+            "redirecting": "Taking you to Stripe…"
+        }
+    },
+    "es": {
+        "seo": {
+            "title": "Facturación",
+            "description": "Administra tu suscripción, método de pago y facturas."
+        },
+        "heading": "Facturación",
+        "subheading": "Tu plan, método de pago y facturas.",
+        "tabs": {
+            "plan": "Plan",
+            "payment": "Pago",
+            "invoices": "Facturas"
+        },
+        "access": {
+            "admin": "Cuenta de administrador: no se requiere facturación.",
+            "active": "Tu suscripción está activa.",
+            "trialing": "Tu suscripción de prueba está activa.",
+            "trial": "Prueba gratuita: quedan {days} días.",
+            "trialHint": "Cada cuenta nueva comienza con una prueba gratuita. Elige un plan antes de que termine para seguir usándola.",
+            "expired": "Tu prueba gratuita ha terminado.",
+            "expiredHint": "Elige un plan para seguir usando la aplicación.",
+            "choosePlan": "Elegir un plan"
+        },
+        "plan": {
+            "title": "Plan",
+            "subtitle": "Tu suscripción y uso.",
+            "current": "Plan actual",
+            "currentBadge": "Actual",
+            "perMember": "${price} por miembro / mes",
+            "perMemberShort": "/miembro/mes",
+            "renews": "Se renueva el {date} · Facturado {interval}",
+            "noActive": "Sin suscripción activa.",
+            "notConfigured": "La facturación no está configurada en este despliegue.",
+            "viewInvoices": "Ver facturas",
+            "manage": "Gestionar facturación",
+            "interval": {
+                "day": "diariamente",
+                "week": "semanalmente",
+                "month": "mensualmente",
+                "year": "anualmente"
+            },
+            "cta": {
+                "upgrade": "Mejorar",
+                "downgrade": "Bajar de plan",
+                "current": "Plan actual",
+                "notRequired": "No requerido",
+                "unavailable": "No disponible"
+            }
+        },
+        "usage": {
+            "members": "Miembros",
+            "projects": "Proyectos",
+            "storage": "Almacenamiento",
+            "of": "{used} de {limit}",
+            "unlimited": "{used}"
+        },
+        "plans": {
+            "free": {
+                "name": "Gratis",
+                "features": {
+                    "members": "Hasta 3 miembros",
+                    "unlimitedTasks": "Tareas ilimitadas",
+                    "storage": "5 GB de almacenamiento"
+                }
+            },
+            "team": {
+                "name": "Equipo",
+                "features": {
+                    "members": "Hasta 50 miembros",
+                    "views": "Cronologías y vistas personalizadas",
+                    "storage": "100 GB de almacenamiento",
+                    "guest": "Acceso de invitados"
+                }
+            },
+            "business": {
+                "name": "Empresa",
+                "features": {
+                    "members": "Miembros ilimitados",
+                    "permissions": "Permisos avanzados",
+                    "saml": "SAML SSO",
+                    "storage": "1 TB de almacenamiento"
+                }
+            }
+        },
+        "payment": {
+            "title": "Pago",
+            "subtitle": "Método de pago y datos de facturación.",
+            "cardEnding": "{brand} terminada en {last4}",
+            "noCard": "No hay método de pago guardado",
+            "expires": "Caduca {month}/{year}",
+            "update": "Actualizar",
+            "edit": "Editar",
+            "billingEmail": "Correo de facturación",
+            "billingEmailHint": "Aquí se envían las facturas y los recibos.",
+            "billingAddress": "Dirección de facturación",
+            "taxId": "ID fiscal",
+            "taxIdHint": "Se muestra en las facturas",
+            "notSet": "Sin definir"
+        },
+        "invoices": {
+            "title": "Facturas",
+            "subtitle": "Facturas anteriores de este espacio.",
+            "empty": "Todavía no hay facturas.",
+            "columns": {
+                "invoice": "Factura",
+                "date": "Fecha",
+                "amount": "Importe",
+                "status": "Estado"
+            },
+            "status": {
+                "draft": "Borrador",
+                "open": "Pendiente",
+                "paid": "Pagada",
+                "void": "Anulada",
+                "uncollectible": "Incobrable"
+            }
+        },
+        "messages": {
+            "actionFailed": "No se pudo contactar con Stripe",
+            "redirecting": "Te llevamos a Stripe…"
+        }
+    },
+    "de": {
+        "seo": {
+            "title": "Abrechnung",
+            "description": "Verwalten Sie Ihr Abonnement, Ihre Zahlungsmethode und Ihre Rechnungen."
+        },
+        "heading": "Abrechnung",
+        "subheading": "Ihr Tarif, Ihre Zahlungsmethode und Ihre Rechnungen.",
+        "tabs": {
+            "plan": "Tarif",
+            "payment": "Zahlung",
+            "invoices": "Rechnungen"
+        },
+        "access": {
+            "admin": "Administratorkonto — Abrechnung nicht erforderlich.",
+            "active": "Ihr Abonnement ist aktiv.",
+            "trialing": "Ihr Probeabonnement ist aktiv.",
+            "trial": "Kostenlose Testphase — noch {days} Tage.",
+            "trialHint": "Jedes neue Konto startet mit einer kostenlosen Testphase. Wählen Sie vor deren Ende einen Tarif, um weiterzumachen.",
+            "expired": "Ihre kostenlose Testphase ist beendet.",
+            "expiredHint": "Wählen Sie einen Tarif, um die App weiter zu nutzen.",
+            "choosePlan": "Tarif wählen"
+        },
+        "plan": {
+            "title": "Tarif",
+            "subtitle": "Ihr Abonnement und Ihre Nutzung.",
+            "current": "Aktueller Tarif",
+            "currentBadge": "Aktuell",
+            "perMember": "${price} pro Mitglied / Monat",
+            "perMemberShort": "/Mitglied/Monat",
+            "renews": "Verlängert am {date} · {interval} abgerechnet",
+            "noActive": "Kein aktives Abonnement.",
+            "notConfigured": "Die Abrechnung ist in dieser Bereitstellung nicht konfiguriert.",
+            "viewInvoices": "Rechnungen ansehen",
+            "manage": "Abrechnung verwalten",
+            "interval": {
+                "day": "täglich",
+                "week": "wöchentlich",
+                "month": "monatlich",
+                "year": "jährlich"
+            },
+            "cta": {
+                "upgrade": "Upgrade",
+                "downgrade": "Downgrade",
+                "current": "Aktueller Tarif",
+                "notRequired": "Nicht erforderlich",
+                "unavailable": "Nicht verfügbar"
+            }
+        },
+        "usage": {
+            "members": "Mitglieder",
+            "projects": "Projekte",
+            "storage": "Speicher",
+            "of": "{used} von {limit}",
+            "unlimited": "{used}"
+        },
+        "plans": {
+            "free": {
+                "name": "Kostenlos",
+                "features": {
+                    "members": "Bis zu 3 Mitglieder",
+                    "unlimitedTasks": "Unbegrenzte Aufgaben",
+                    "storage": "5 GB Speicher"
+                }
+            },
+            "team": {
+                "name": "Team",
+                "features": {
+                    "members": "Bis zu 50 Mitglieder",
+                    "views": "Zeitachsen & eigene Ansichten",
+                    "storage": "100 GB Speicher",
+                    "guest": "Gastzugang"
+                }
+            },
+            "business": {
+                "name": "Business",
+                "features": {
+                    "members": "Unbegrenzte Mitglieder",
+                    "permissions": "Erweiterte Berechtigungen",
+                    "saml": "SAML SSO",
+                    "storage": "1 TB Speicher"
+                }
+            }
+        },
+        "payment": {
+            "title": "Zahlung",
+            "subtitle": "Zahlungsmethode und Rechnungsdaten.",
+            "cardEnding": "{brand} endet auf {last4}",
+            "noCard": "Keine Zahlungsmethode hinterlegt",
+            "expires": "Läuft ab {month}/{year}",
+            "update": "Aktualisieren",
+            "edit": "Bearbeiten",
+            "billingEmail": "Rechnungs-E-Mail",
+            "billingEmailHint": "Hierhin gehen Rechnungen und Belege.",
+            "billingAddress": "Rechnungsadresse",
+            "taxId": "Steuer-ID",
+            "taxIdHint": "Steht auf den Rechnungen",
+            "notSet": "Nicht festgelegt"
+        },
+        "invoices": {
+            "title": "Rechnungen",
+            "subtitle": "Frühere Rechnungen für diesen Arbeitsbereich.",
+            "empty": "Noch keine Rechnungen.",
+            "columns": {
+                "invoice": "Rechnung",
+                "date": "Datum",
+                "amount": "Betrag",
+                "status": "Status"
+            },
+            "status": {
+                "draft": "Entwurf",
+                "open": "Offen",
+                "paid": "Bezahlt",
+                "void": "Storniert",
+                "uncollectible": "Uneinbringlich"
+            }
+        },
+        "messages": {
+            "actionFailed": "Stripe konnte nicht erreicht werden",
+            "redirecting": "Sie werden zu Stripe weitergeleitet…"
+        }
+    },
+    "fr": {
+        "seo": {
+            "title": "Facturation",
+            "description": "Gérez votre abonnement, votre moyen de paiement et vos factures."
+        },
+        "heading": "Facturation",
+        "subheading": "Votre forfait, votre moyen de paiement et vos factures.",
+        "tabs": {
+            "plan": "Forfait",
+            "payment": "Paiement",
+            "invoices": "Factures"
+        },
+        "access": {
+            "admin": "Compte administrateur — aucune facturation requise.",
+            "active": "Votre abonnement est actif.",
+            "trialing": "Votre abonnement d’essai est actif.",
+            "trial": "Essai gratuit — {days} jours restants.",
+            "trialHint": "Chaque nouveau compte commence par un essai gratuit. Choisissez un forfait avant la fin pour continuer.",
+            "expired": "Votre essai gratuit est terminé.",
+            "expiredHint": "Choisissez un forfait pour continuer à utiliser l’application.",
+            "choosePlan": "Choisir un forfait"
+        },
+        "plan": {
+            "title": "Forfait",
+            "subtitle": "Votre abonnement et votre utilisation.",
+            "current": "Forfait actuel",
+            "currentBadge": "Actuel",
+            "perMember": "${price} par membre / mois",
+            "perMemberShort": "/membre/mois",
+            "renews": "Renouvellement le {date} · Facturé {interval}",
+            "noActive": "Aucun abonnement actif.",
+            "notConfigured": "La facturation n’est pas configurée sur ce déploiement.",
+            "viewInvoices": "Voir les factures",
+            "manage": "Gérer la facturation",
+            "interval": {
+                "day": "quotidiennement",
+                "week": "hebdomadairement",
+                "month": "mensuellement",
+                "year": "annuellement"
+            },
+            "cta": {
+                "upgrade": "Améliorer",
+                "downgrade": "Rétrograder",
+                "current": "Forfait actuel",
+                "notRequired": "Non requis",
+                "unavailable": "Non disponible"
+            }
+        },
+        "usage": {
+            "members": "Membres",
+            "projects": "Projets",
+            "storage": "Stockage",
+            "of": "{used} sur {limit}",
+            "unlimited": "{used}"
+        },
+        "plans": {
+            "free": {
+                "name": "Gratuit",
+                "features": {
+                    "members": "Jusqu’à 3 membres",
+                    "unlimitedTasks": "Tâches illimitées",
+                    "storage": "5 Go de stockage"
+                }
+            },
+            "team": {
+                "name": "Équipe",
+                "features": {
+                    "members": "Jusqu’à 50 membres",
+                    "views": "Chronologies et vues personnalisées",
+                    "storage": "100 Go de stockage",
+                    "guest": "Accès invité"
+                }
+            },
+            "business": {
+                "name": "Entreprise",
+                "features": {
+                    "members": "Membres illimités",
+                    "permissions": "Autorisations avancées",
+                    "saml": "SAML SSO",
+                    "storage": "1 To de stockage"
+                }
+            }
+        },
+        "payment": {
+            "title": "Paiement",
+            "subtitle": "Moyen de paiement et coordonnées de facturation.",
+            "cardEnding": "{brand} se terminant par {last4}",
+            "noCard": "Aucun moyen de paiement enregistré",
+            "expires": "Expire {month}/{year}",
+            "update": "Mettre à jour",
+            "edit": "Modifier",
+            "billingEmail": "Email de facturation",
+            "billingEmailHint": "Les factures et reçus y sont envoyés.",
+            "billingAddress": "Adresse de facturation",
+            "taxId": "Numéro fiscal",
+            "taxIdHint": "Affiché sur les factures",
+            "notSet": "Non défini"
+        },
+        "invoices": {
+            "title": "Factures",
+            "subtitle": "Factures passées pour cet espace.",
+            "empty": "Aucune facture pour l’instant.",
+            "columns": {
+                "invoice": "Facture",
+                "date": "Date",
+                "amount": "Montant",
+                "status": "Statut"
+            },
+            "status": {
+                "draft": "Brouillon",
+                "open": "En attente",
+                "paid": "Payée",
+                "void": "Annulée",
+                "uncollectible": "Irrécouvrable"
+            }
+        },
+        "messages": {
+            "actionFailed": "Impossible de joindre Stripe",
+            "redirecting": "Redirection vers Stripe…"
+        }
+    }
+}

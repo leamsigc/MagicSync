@@ -23,6 +23,7 @@ export const PLATFORMS = z.enum([
   'devto',
   'dribbble',
   'reddit',
+  'snapchat',
   'wordpress',
 ] as const)
 

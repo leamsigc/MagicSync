@@ -27,7 +27,7 @@ is a web UI; you drive it with a browser.
 
 Routes are owned by **five** page directories, not just `packages/site`:
 `packages/site` (`/app/*`, `/tools/*`), `packages/content` (marketing),
-`packages/auth` (`/login`, `/register`, `/app/account`…), `packages/connect`,
+`packages/auth` (`/login`, `/register`, `/app/profile`…), `packages/connect`,
 and `packages/ui`. When a route is "missing", check the layers before concluding
 it does not exist.
 

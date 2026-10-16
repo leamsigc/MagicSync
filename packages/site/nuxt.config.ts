@@ -213,6 +213,7 @@ export default defineNuxtConfig({
     '@local-monorepo/bulk-scheduler',
     '@local-monorepo/ai-tools',
     '@local-monorepo/agent',
+    '@local-monorepo/billing',
   ],
 
   // Self-alias for the composition root. A handful of library components render

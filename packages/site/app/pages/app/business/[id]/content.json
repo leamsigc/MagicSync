@@ -51,7 +51,14 @@
       "createTitleLabel": "New card",
       "createHint": "Write it down now; the agent takes it from here.",
       "createTitlePlaceholder": "What is the idea?",
-      "createBriefPlaceholder": "Optional: the angle, the audience, what to say"
+      "createBriefPlaceholder": "Optional: the angle, the audience, what to say",
+      "menuOpen": "Open",
+      "menuStatus": "Status…",
+      "menuCopyLink": "Copy link",
+      "linkCopied": "Link copied",
+      "linkCopyFailed": "Could not copy the link",
+      "creatorAgent": "Made by the agent",
+      "creatorYou": "Made by you"
     },
     "board": {
       "columns": {
@@ -59,6 +66,36 @@
         "approved": "Approved",
         "writing": "Writing",
         "published": "Published"
+      },
+      "addTask": "Add task",
+      "refresh": "Refresh",
+      "columnMenu": "Column options",
+      "format": {
+        "article": "Article",
+        "social_post": "Post",
+        "carousel": "Carousel",
+        "reel": "Reel"
+      },
+      "priority": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High",
+        "urgent": "Urgent"
+      },
+      "day": {
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "weekday": "{day}",
+        "date": "{date}"
+      },
+      "weekday": {
+        "sun": "Sun",
+        "mon": "Mon",
+        "tue": "Tue",
+        "wed": "Wed",
+        "thu": "Thu",
+        "fri": "Fri",
+        "sat": "Sat"
       },
       "empty": "Empty",
       "running": "Working…",
@@ -305,7 +342,14 @@
       "createTitleLabel": "Nueva tarjeta",
       "createHint": "Anótala ahora; el agente continúa desde aquí.",
       "createTitlePlaceholder": "¿Cuál es la idea?",
-      "createBriefPlaceholder": "Opcional: el ángulo, la audiencia, qué decir"
+      "createBriefPlaceholder": "Opcional: el ángulo, la audiencia, qué decir",
+      "menuOpen": "Abrir",
+      "menuStatus": "Estado…",
+      "menuCopyLink": "Copiar enlace",
+      "linkCopied": "Enlace copiado",
+      "linkCopyFailed": "No se pudo copiar el enlace",
+      "creatorAgent": "Creada por el agente",
+      "creatorYou": "Creada por ti"
     },
     "board": {
       "columns": {
@@ -313,6 +357,36 @@
         "approved": "Aprobado",
         "writing": "Redactando",
         "published": "Publicado"
+      },
+      "addTask": "Añadir tarea",
+      "refresh": "Actualizar",
+      "columnMenu": "Opciones de columna",
+      "format": {
+        "article": "Artículo",
+        "social_post": "Publicación",
+        "carousel": "Carrusel",
+        "reel": "Reel"
+      },
+      "priority": {
+        "low": "Baja",
+        "medium": "Media",
+        "high": "Alta",
+        "urgent": "Urgente"
+      },
+      "day": {
+        "today": "Hoy",
+        "yesterday": "Ayer",
+        "weekday": "{day}",
+        "date": "{date}"
+      },
+      "weekday": {
+        "sun": "Dom",
+        "mon": "Lun",
+        "tue": "Mar",
+        "wed": "Mié",
+        "thu": "Jue",
+        "fri": "Vie",
+        "sat": "Sáb"
       },
       "empty": "Vacío",
       "running": "Trabajando…",
@@ -559,7 +633,14 @@
       "createTitleLabel": "Neue Karte",
       "createHint": "Jetzt notieren; der Agent macht weiter.",
       "createTitlePlaceholder": "Was ist die Idee?",
-      "createBriefPlaceholder": "Optional: Winkel, Zielgruppe, was zu sagen ist"
+      "createBriefPlaceholder": "Optional: Winkel, Zielgruppe, was zu sagen ist",
+      "menuOpen": "Öffnen",
+      "menuStatus": "Status…",
+      "menuCopyLink": "Link kopieren",
+      "linkCopied": "Link kopiert",
+      "linkCopyFailed": "Der Link konnte nicht kopiert werden",
+      "creatorAgent": "Vom Agenten erstellt",
+      "creatorYou": "Von dir erstellt"
     },
     "board": {
       "columns": {
@@ -567,6 +648,36 @@
         "approved": "Freigegeben",
         "writing": "Wird geschrieben",
         "published": "Veröffentlicht"
+      },
+      "addTask": "Aufgabe hinzufügen",
+      "refresh": "Aktualisieren",
+      "columnMenu": "Spaltenoptionen",
+      "format": {
+        "article": "Artikel",
+        "social_post": "Beitrag",
+        "carousel": "Karussell",
+        "reel": "Reel"
+      },
+      "priority": {
+        "low": "Niedrig",
+        "medium": "Mittel",
+        "high": "Hoch",
+        "urgent": "Dringend"
+      },
+      "day": {
+        "today": "Heute",
+        "yesterday": "Gestern",
+        "weekday": "{day}",
+        "date": "{date}"
+      },
+      "weekday": {
+        "sun": "So",
+        "mon": "Mo",
+        "tue": "Di",
+        "wed": "Mi",
+        "thu": "Do",
+        "fri": "Fr",
+        "sat": "Sa"
       },
       "empty": "Leer",
       "running": "Läuft…",
@@ -813,7 +924,14 @@
       "createTitleLabel": "Nouvelle carte",
       "createHint": "Notez-la maintenant ; l’agent prend le relais.",
       "createTitlePlaceholder": "Quelle est l’idée ?",
-      "createBriefPlaceholder": "Option : angle, audience, quoi dire"
+      "createBriefPlaceholder": "Option : angle, audience, quoi dire",
+      "menuOpen": "Ouvrir",
+      "menuStatus": "Statut…",
+      "menuCopyLink": "Copier le lien",
+      "linkCopied": "Lien copié",
+      "linkCopyFailed": "Impossible de copier le lien",
+      "creatorAgent": "Créée par l’agent",
+      "creatorYou": "Créée par vous"
     },
     "board": {
       "columns": {
@@ -821,6 +939,36 @@
         "approved": "Approuvé",
         "writing": "Rédaction",
         "published": "Publié"
+      },
+      "addTask": "Ajouter une tâche",
+      "refresh": "Actualiser",
+      "columnMenu": "Options de colonne",
+      "format": {
+        "article": "Article",
+        "social_post": "Publication",
+        "carousel": "Carrousel",
+        "reel": "Reel"
+      },
+      "priority": {
+        "low": "Faible",
+        "medium": "Moyenne",
+        "high": "Élevée",
+        "urgent": "Urgente"
+      },
+      "day": {
+        "today": "Aujourd’hui",
+        "yesterday": "Hier",
+        "weekday": "{day}",
+        "date": "{date}"
+      },
+      "weekday": {
+        "sun": "Dim",
+        "mon": "Lun",
+        "tue": "Mar",
+        "wed": "Mer",
+        "thu": "Jeu",
+        "fri": "Ven",
+        "sat": "Sam"
       },
       "empty": "Vide",
       "running": "En cours…",

@@ -8,9 +8,10 @@ const { size = 'md' } = defineProps<Props>();
 
 <template>
   <div class="min-h-screen">
-    <div class="container mx-auto max-w-7xl flex gap-4 px-4 py-4">
-      <!-- Left Sidebar (Navigation) - dark glass floating -->
-      <header class="w-20 xl:w-72 shrink-0">
+    <div class="container mx-auto flex max-w-7xl gap-2 px-4 py-4 sm:gap-4">
+      <!-- Left Sidebar (Navigation) - dark glass floating.
+           Narrower on a phone so the main column still fits. -->
+      <header class="w-16 shrink-0 sm:w-20 xl:w-72">
         <slot name="left-sidebar">
           <div class=" rounded-2xl  sticky top-4 border border-white/10">
             <BaseSidebarNavigation />
@@ -19,7 +20,7 @@ const { size = 'md' } = defineProps<Props>();
       </header>
 
       <!-- Center (Main Content) -->
-      <main class="flex-1 w-full" :class="{
+      <main class="w-full min-w-0 flex-1" :class="{
         'max-w-7xl': size === 'lg',
         'max-w-2xl': size === 'md',
         'max-w-xl': size === 'sm'

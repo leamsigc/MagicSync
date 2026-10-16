@@ -18,7 +18,10 @@ const updateBusinessDetails = (field: string, value: any) => {
   <div class="space-y-6">
     <!-- Basic Information -->
     <div class="grid grid-cols-1  md:grid-cols-2 gap-6">
-      <UFormField :label="t('form.description') || 'Description'" name="description" class="col-span-2">
+      <!-- `col-span-full`, not `col-span-2`: with `grid-cols-1` on mobile a
+           two-track span forces an *implicit* second column, which shrinks every
+           other field to a sliver. -->
+      <UFormField :label="t('form.description') || 'Description'" name="description" class="col-span-full">
         <UTextarea v-model="state.businessDetails.description"
           :placeholder="t('placeholders.description') || 'Brief description of the business'" :rows="10" autoresize
           size="lg" class="w-full" />

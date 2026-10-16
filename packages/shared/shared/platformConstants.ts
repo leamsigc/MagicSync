@@ -77,6 +77,7 @@ export interface SocialMediaPlatformConfigurations {
   dribbble: PlatformConfig;
   devto: PlatformConfig; // dev.to
   wordpress: PlatformConfig;
+  snapchat: PlatformConfig;
   default: PlatformConfig;
   'instagram-standalone': PlatformConfig; // Legacy Basic Display
 }
@@ -673,6 +674,37 @@ export const platformConfigurations: SocialMediaPlatformConfigurations = {
         min: 0.5,
         max: 2.0,
         recommended: ['16:9', '4:3', '1:1'],
+      },
+      supportsDocuments: false,
+    },
+  },
+  snapchat: {
+    icon: 'i-simple-icons-snapchat',
+    color: '#FFFC00',
+    // A Snap caption, matching the Marketing API creative headline cap (34)
+    // plus room for the body text the creative renders.
+    maxPostLength: 250,
+    maxImages: 1,
+    supportsComments: false,
+    supportsImagesInComments: false,
+    supportsCarousel: false,
+    supportsVideo: true,
+    maxVideoLengthSeconds: 60,
+    supportsLinkPreviews: false,
+    supportsSounds: true,
+    supportsStories: true,
+    maxConcurrentJob: 2,
+    supportedFormats: ['post', 'story'],
+    mediaConstraints: {
+      imageFileTypes: ['JPEG', 'PNG'],
+      videoFileTypes: ['MP4', 'MOV'],
+      maxImageSizeMB: 10,
+      maxVideoSizeMB: 512,
+      maxVideoLengthSeconds: 60,
+      aspectRatios: {
+        min: 0.5,
+        max: 2.0,
+        recommended: ['9:16'],
       },
       supportsDocuments: false,
     },

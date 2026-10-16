@@ -364,17 +364,6 @@ const tutorialDefinitions: TutorialDefinition[] = [
     ],
   },
   {
-    id: 'account',
-    icon: 'i-heroicons-user-circle',
-    routePatterns: ['/app/account'],
-    stepCount: 3,
-    elements: [
-      '[data-tour="account-step-0"]',
-      '[data-tour="account-step-1"]',
-      '[data-tour="account-step-2"]',
-    ],
-  },
-  {
     id: 'notifications',
     icon: 'i-heroicons-bell',
     routePatterns: ['/app/notifications'],

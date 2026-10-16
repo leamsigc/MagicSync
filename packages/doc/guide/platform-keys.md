@@ -36,6 +36,12 @@ To use the social media scheduling features, you need to obtain API keys for eac
 ### TikTok
 - **Client Key & Secret**: Register in TikTok for Developers.
 
+### Snapchat (Snap Kit — Login Kit + Marketing API)
+- **Client ID & Secret**: Create a project in the [Snap Kit Developer Portal](https://kit.snapchat.com/portal) and enable **Login Kit**.
+- **Redirect URI** (paste exactly): `https://<your-domain>/api/auth/oauth2/callback/snapchat`
+- **Env vars**: `NUXT_SNAPCHAT_CLIENT_ID`, `NUXT_SNAPCHAT_CLIENT_SECRET`.
+- **Posting**: requires the **Marketing API** (an organization ad account id on the connection). See [Snapchat Integration](/guide/snapchat-integration).
+
 ### WordPress
 - **Application Password**: Generate in User Profile > Application Passwords.
 

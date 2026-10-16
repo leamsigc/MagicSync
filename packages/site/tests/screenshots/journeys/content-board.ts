@@ -73,12 +73,12 @@ export const contentBoardJourney: JourneyDefinition = {
     await journey.step('board-card-persisted', async () => {
       await page.getByTestId('card-create-save').click()
       await expect(page.getByTestId('card-create-modal')).toBeHidden()
-      await expect(page.getByRole('heading', { name: 'Planned (1)', exact: true })).toBeVisible()
+      await expect(page.getByRole('heading', { name: 'Planned 1', exact: true })).toBeVisible()
       // Second view: the card must survive a reload, or it was never server-side.
       await page.reload()
       await waitForHydration(page)
       await board.waitFor()
-      await expect(page.getByRole('heading', { name: 'Planned (1)', exact: true })).toBeVisible()
+      await expect(page.getByRole('heading', { name: 'Planned 1', exact: true })).toBeVisible()
     })
 
     await journey.step('board-card-row', async () => {
@@ -111,7 +111,7 @@ export const contentBoardJourney: JourneyDefinition = {
       // Delete before the run ends so the fixture business is left clean.
       await page.getByTestId('card-delete-confirm').click()
       await expect(page.getByTestId('card-delete-modal')).toBeHidden()
-      await expect(page.getByRole('heading', { name: 'Planned (0)', exact: true })).toBeVisible()
+      await expect(page.getByRole('heading', { name: 'Planned 0', exact: true })).toBeVisible()
     })
   },
 }

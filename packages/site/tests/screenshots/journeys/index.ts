@@ -13,9 +13,13 @@
  * nothing here is auto-discovered, because only an authored drive knows what a
  * click is *supposed* to produce.
  */
+import type {
+  TestBusiness,
+  TestUser,
+} from '../../e2e/helpers/e2e-utils'
 import type { APIRequestContext, Page } from '@playwright/test'
 import type { Journey } from '../../e2e/helpers/route-screenshots'
-import type { TestBusiness, TestUser } from '../../e2e/helpers/e2e-utils'
+import { businessCreateJourney } from './business-create'
 import { contentBoardJourney } from './content-board'
 
 export interface JourneyContext {
@@ -53,4 +57,4 @@ export interface JourneyDefinition {
   run(ctx: JourneyContext): Promise<void>
 }
 
-export const journeys: JourneyDefinition[] = [contentBoardJourney]
+export const journeys: JourneyDefinition[] = [contentBoardJourney, businessCreateJourney]

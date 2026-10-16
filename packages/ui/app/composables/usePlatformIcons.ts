@@ -15,6 +15,7 @@ export type SocialMediaPlatform = 'default'
   | 'devto'
   | 'dribbble'
   | 'reddit'
+  | 'snapchat'
   | 'wordpress'
 
 /**
@@ -40,6 +41,7 @@ export const usePlatformIcons = () => {
     dribbble: 'logos:dribbble-icon',
     devto: 'simple-icons:devdotto',
     wordpress: 'logos:wordpress-icon',
+    snapchat: 'logos:snapchat-icon',
     'instagram-standalone': 'logos:instagram-icon',
     default: "i-lucide-globe",
     "linkedin-page": "logos:linkedin-icon",

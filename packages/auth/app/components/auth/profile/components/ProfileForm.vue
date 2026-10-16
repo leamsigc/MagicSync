@@ -94,7 +94,7 @@ const handleSubmit = async (event: FormSubmitEvent<Schema>) => {
       <UFormField :label="t('form.email')" name="email">
         <UInput :model-value="user?.email" disabled class="bg-muted" />
         <template #help>
-          <span class="text-xs text-muted-foreground">Email cannot be changed here. Use Account settings.</span>
+          <span class="text-xs text-muted-foreground">{{ t('form.emailHelp') }}</span>
         </template>
       </UFormField>
 

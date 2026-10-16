@@ -6,6 +6,8 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { apiKey } from "@better-auth/api-key"
 import { createAuthMiddleware } from "better-auth/api"
 import { admin, genericOAuth, jwt, organization } from 'better-auth/plugins'
+import { stripe } from '@better-auth/stripe'
+import Stripe from 'stripe'
 import { mcp } from "@better-auth/mcp"
 import { cimd } from "@better-auth/cimd"
 import { fetchClientMetadataResource } from "@better-auth/cimd/node"
@@ -30,6 +32,73 @@ const mapGoogleProfileToName = (profile: any) => {
 
 
 const authLog = createLogger()
+
+/**
+ * The Snapchat Login Kit profile. Snapchat exposes it through the Kit GraphQL
+ * `me` query, not a REST userinfo endpoint, so genericOAuth's `userInfoUrl`
+ * cannot be used. Shared by the provider's `getUserInfo` and the account-create
+ * hook below so both read the account the same way.
+ */
+export interface SnapchatProfile {
+  externalId: string
+  displayName?: string
+  bitmoji?: { avatarUrl?: string }
+}
+
+export async function fetchSnapchatProfile(accessToken: string): Promise<SnapchatProfile | null> {
+  const response = await $fetch<{ data?: { me?: SnapchatProfile } }>('https://kit.snapchat.com/v1/me', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+    body: { query: '{me{externalId,displayName,bitmoji{avatarUrl}}}' },
+    ignoreResponseError: true,
+  })
+  return response?.data?.me ?? null
+}
+
+/**
+ * Stripe is optional. Without `STRIPE_SECRET_KEY` the client is never created
+ * and the plugin is never registered, so local and self-hosted deployments run
+ * with no Stripe at all and `/api/auth/stripe/*` simply is not there. Price ids
+ * come from the environment — never hardcoded — so each deployment points at
+ * its own Stripe catalog.
+ */
+const stripeClient = process.env.STRIPE_SECRET_KEY
+  ? new Stripe(process.env.STRIPE_SECRET_KEY)
+  : null
+
+/**
+ * The Stripe plugin's types are built against a second copy of
+ * `@better-auth/core` (the same mismatch `apiKey` / `mcp` carry below), so the
+ * instance is widened exactly once, here. `unknown` in, one assertion out — no
+ * chained cast.
+ */
+function asAuthPlugin(value: unknown): BetterAuthPlugin {
+  return value as BetterAuthPlugin
+}
+
+function buildStripePlugins(): BetterAuthPlugin[] {
+  if (!stripeClient || !process.env.STRIPE_WEBHOOK_SECRET) return []
+  return [asAuthPlugin(stripe({
+    stripeClient,
+    stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
+    createCustomerOnSignUp: true,
+    subscription: {
+      enabled: true,
+      plans: [
+        {
+          name: 'team',
+          priceId: process.env.STRIPE_PRICE_TEAM as string,
+          limits: { members: 10, storageGb: 100, projects: 50 },
+        },
+        {
+          name: 'business',
+          priceId: process.env.STRIPE_PRICE_BUSINESS as string,
+          limits: { members: -1, storageGb: 1024, projects: -1 },
+        },
+      ],
+    },
+  }))]
+}
 
 function serializeAuthArgs(args: unknown[]): string[] {
   return args.map((arg) => {
@@ -150,7 +219,7 @@ export const auth = betterAuth({
       allowDifferentEmails: true,
       updateUserInfoOnLink: true,
       allowUnlinkingAll: false,
-      trustedProviders: ['google', 'google-drive', 'googlemybusiness', 'facebook', 'email-password', 'linkedin', 'linkedin-page', 'twitter', 'tiktok', 'threads', 'youtube', 'reddit', 'discord', 'dribbble', 'instagram', 'x', 'canva'],
+      trustedProviders: ['google', 'google-drive', 'googlemybusiness', 'facebook', 'email-password', 'linkedin', 'linkedin-page', 'twitter', 'tiktok', 'threads', 'youtube', 'reddit', 'discord', 'dribbble', 'instagram', 'x', 'canva', 'snapchat'],
     },
   },
   socialProviders: {
@@ -340,6 +409,7 @@ export const auth = betterAuth({
     })
   },
   plugins: [
+    ...buildStripePlugins(),
     admin({
       defaultRole: 'user',
       defaultBanExpiresIn: 7 * 24 * 60 * 60,
@@ -572,6 +642,40 @@ export const auth = betterAuth({
             'threads_profile_discovery',
           ],
           pkce: true,
+        },
+        // Snapchat (Snap Kit Login Kit) — not natively supported. This is the
+        // inline equivalent of `better-auth-snapchat`: a genericOAuth provider
+        // that talks to Snapchat's OAuth2 endpoints and reads the profile from
+        // the Kit GraphQL `me` query. Snapchat never returns an email, so one is
+        // synthesised from the external id (login-by-Snapchat is link-only —
+        // `accountLinking` below keeps it a trusted provider).
+        //
+        // Callback: {NUXT_BETTER_AUTH_URL}/api/auth/oauth2/callback/snapchat
+        // Dev keys: https://kit.snapchat.com/portal (see packages/doc guide).
+        {
+          providerId: 'snapchat',
+          clientId: process.env.NUXT_SNAPCHAT_CLIENT_ID as string,
+          clientSecret: process.env.NUXT_SNAPCHAT_CLIENT_SECRET as string,
+          authorizationUrl: 'https://accounts.snapchat.com/login/oauth2/authorize',
+          tokenUrl: 'https://accounts.snapchat.com/login/oauth2/access_token',
+          scopes: ['snapchat-marketing-api', 'user.display_name', 'user.bitmoji.avatar'],
+          pkce: true,
+          getUserInfo: async (tokens) => {
+            const me = await fetchSnapchatProfile(tokens.accessToken)
+            if (!me?.externalId) return null
+            return {
+              id: me.externalId,
+              name: me.displayName || 'Snapchat user',
+              email: `${me.externalId}@snapchat.com`,
+              emailVerified: true,
+              image: me.bitmoji?.avatarUrl,
+            }
+          },
+          mapProfileToUser: (profile: any) => ({
+            ...profile,
+            email: profile.email || `${profile.id}@snapchat.com`,
+            emailVerified: true,
+          }),
         },
       ]
     }),
@@ -934,6 +1038,44 @@ export const auth = betterAuth({
                 userAgent: "",
                 status: 'success',
                 details: `tiktok_user_id=${tiktokUser.id} username=${tiktokUser.username} from TIKTOK`,
+              })
+
+              return;
+            }
+
+            // Snapchat (genericOAuth via Snap Kit)
+            if (account.providerId === "snapchat") {
+              const me = await fetchSnapchatProfile(account.accessToken as string)
+
+              if (me?.externalId) {
+                await socialMediaAccountService.createOrUpdateAccountFromAuth({
+                  id: me.externalId,
+                  name: me.displayName || 'Snapchat user',
+                  access_token: account.accessToken as string,
+                  // Snapchat rotates the access token; keep the refresh token so
+                  // the scheduler can renew without a re-connect.
+                  refresh_token: account.refreshToken ?? undefined,
+                  tokenExpiresAt: account.accessTokenExpiresAt
+                    ? new Date(account.accessTokenExpiresAt)
+                    : undefined,
+                  picture: me.bitmoji?.avatarUrl,
+                  username: me.displayName || me.externalId,
+                  platformId: 'snapchat',
+                  user: user as schema.User
+                });
+              }
+
+              await logAuditService.logAuditEvent({
+                userId: ctx?.context.session?.user.id,
+                category: 'after:create',
+                action: 'AUTH_CREATE_SOCIAL_MEDIA',
+                targetType: 'snapchat',
+                targetId: account.id,
+                ipAddress: "",
+                userAgent: "",
+                status: 'success',
+                // SAFE: never log tokens; external id only.
+                details: `snapchat_external_id=${me?.externalId ?? 'unknown'} from SNAPCHAT`,
               })
 
               return;

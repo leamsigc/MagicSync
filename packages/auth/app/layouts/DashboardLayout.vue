@@ -31,7 +31,15 @@ if (import.meta.client) {
           <DashboardSidebar :collapsed="collapsed" />
         </template>
         <template #footer="{ collapsed }">
-          <UserNav :collapsed="collapsed" class="mb-5" />
+          <div class="mb-5 flex flex-col gap-2">
+            <!-- Phone only: the header drops color mode and language to fit, so
+                 both stay reachable here. -->
+            <div class="flex items-center gap-2 px-2 sm:hidden">
+              <UColorModeButton />
+              <BaseTranslationMenu />
+            </div>
+            <UserNav :collapsed="collapsed" />
+          </div>
         </template>
       </UDashboardSidebar>
 

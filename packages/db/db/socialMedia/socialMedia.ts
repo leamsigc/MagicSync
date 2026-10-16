@@ -28,6 +28,7 @@ export const socialMediaAccounts = sqliteTable('social_media_accounts', {
       'devto',
       'dribbble',
       'reddit',
+      'snapchat',
       'wordpress'
     ]
   }).notNull(),

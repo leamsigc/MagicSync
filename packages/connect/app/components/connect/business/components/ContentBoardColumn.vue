@@ -4,13 +4,16 @@ import ContentBoardCard from './ContentBoardCard.vue'
 import { canMoveTo, columnForState, type ContentColumnKey, type ContentItemView } from '../../../../composables/useContentEditor'
 
 /**
- * One board column: its name, its count, and the drop surface for the cards that
- * belong to it.
+ * One board column: a header with its mark, name and count, the cards that
+ * belong to it, and the surface a dragged card lands on.
  *
- * A column only accepts a card the state machine will actually accept. While a
- * card is being dragged the columns that cannot take it stay visibly inert, so
- * the owner learns the rule by seeing it rather than by being told afterwards
- * that the drop was invalid.
+ * A column that cannot take the card in the air stays visibly inert while a
+ * drag is running, so the owner learns the rule by seeing it rather than by
+ * being told the drop was invalid.
+ *
+ * A new card always lands in Planned — that is where the state machine starts —
+ * so only that column offers "Add task"; the others keep the same control
+ * available from the board header instead of pretending to file elsewhere.
  */
 
 const props = defineProps<{
@@ -29,6 +32,8 @@ const props = defineProps<{
   busyId: string | null
   /** Where a published card's `View →` goes. */
   targetUrl: string
+  /** Initials of the signed-in owner, forwarded to every card. */
+  viewerInitials?: string
 }>()
 
 const emit = defineEmits<{
@@ -43,11 +48,32 @@ const emit = defineEmits<{
   refuse: [item: ContentItemView]
   pickup: [item: ContentItemView]
   release: []
+  /** A new card; the modal owns capture and always files into Planned. */
+  create: []
+  /** Ask the page to reload the board. */
+  reload: []
 }>()
 
 const { t } = useI18n()
 
 const over = ref(false)
+
+const MARK: Record<ContentColumnKey, string> = {
+  planned: 'i-heroicons-light-bulb',
+  approved: 'i-heroicons-eye',
+  writing: 'i-heroicons-pencil-square',
+  published: 'i-heroicons-check-badge',
+}
+
+const MARK_TONE: Record<ContentColumnKey, string> = {
+  planned: 'bg-muted text-muted',
+  approved: 'bg-info/15 text-info',
+  writing: 'bg-warning/15 text-warning',
+  published: 'bg-success/15 text-success',
+}
+
+/** New cards start in Planned, so that column is the only one that files. */
+const canCreate = computed(() => props.column === 'planned')
 
 const dragging = computed(() => props.draggingItem)
 
@@ -66,6 +92,11 @@ const isOwnColumn = computed(() => {
 })
 
 const showTarget = computed(() => over.value && accepts.value)
+
+const menuItems = computed(() => [
+  { label: t('board.addTask'), icon: 'i-heroicons-plus', onSelect: handleCreate },
+  { label: t('board.refresh'), icon: 'i-heroicons-arrow-path', onSelect: handleReload },
+])
 
 function handleDragEnter() {
   if (accepts.value) over.value = true
@@ -92,6 +123,14 @@ function handleDrop(event: DragEvent) {
   event.preventDefault()
   over.value = false
   emit('drop', dragging.value)
+}
+
+function handleCreate() {
+  emit('create')
+}
+
+function handleReload() {
+  emit('reload')
 }
 
 function handleOpen(item: ContentItemView) {
@@ -136,19 +175,44 @@ watch(() => props.draggingItem, () => {
   <section
     v-motion-fade-visible
     :duration="200"
-    class="flex min-w-0 flex-1 basis-0 flex-col"
+    class="flex w-[17rem] shrink-0 flex-col rounded-2xl border border-default bg-elevated/40 sm:w-auto sm:min-w-0 sm:flex-1 sm:shrink sm:basis-0"
     :data-testid="`board-column-${column}`"
   >
-    <header class="flex items-center gap-2 px-3 py-2.5 text-highlighted">
-      <h2 class="truncate text-sm font-medium text-highlighted">
+    <header class="flex items-center gap-2 px-3 py-2.5">
+      <span class="grid size-5 shrink-0 place-items-center rounded-md" :class="MARK_TONE[column]">
+        <UIcon :name="MARK[column]" class="size-3.5" aria-hidden="true" />
+      </span>
+      <h2 class="truncate text-sm font-semibold text-highlighted">
         {{ t(`board.columns.${column}`) }}
-        <span class="text-muted">({{ items.length }})</span>
+        <span class="font-normal text-muted">{{ items.length }}</span>
       </h2>
+
+      <div class="ml-auto flex shrink-0 items-center gap-0.5">
+        <UButton
+          size="2xs"
+          variant="ghost"
+          color="neutral"
+          icon="i-heroicons-plus"
+          :aria-label="t('board.addTask')"
+          :data-testid="`board-column-add-${column}`"
+          @click="handleCreate"
+        />
+        <UDropdownMenu :items="menuItems" :content="{ class: 'min-w-40' }">
+          <UButton
+            size="2xs"
+            variant="ghost"
+            color="neutral"
+            icon="i-heroicons-ellipsis-horizontal"
+            :aria-label="t('board.columnMenu')"
+            :data-testid="`board-column-menu-${column}`"
+          />
+        </UDropdownMenu>
+      </div>
     </header>
 
     <div
-      class="mx-2 mb-2 flex min-h-24 flex-1 flex-col overflow-y-auto rounded-lg border border-default transition-colors"
-      :class="showTarget ? 'border-primary bg-primary/5' : (refuses ? 'opacity-40' : '')"
+      class="mx-2 mb-2 flex min-h-24 flex-1 flex-col gap-2 overflow-y-auto rounded-xl p-1 transition-colors"
+      :class="showTarget ? 'bg-primary/5 ring-1 ring-primary' : (refuses ? 'opacity-40' : '')"
       :data-testid="`board-dropzone-${column}`"
       @dragenter="handleDragEnter"
       @dragover="handleDragOver"
@@ -156,13 +220,13 @@ watch(() => props.draggingItem, () => {
       @drop="handleDrop"
     >
       <ContentBoardCard
-        v-for="(item, index) in items"
+        v-for="item in items"
         :key="item.id"
         :item="item"
         :column="column"
         :busy="busyId === item.id"
         :target-url="targetUrl"
-        :class="index > 0 ? 'border-t border-default' : ''"
+        :viewer-initials="viewerInitials"
         @open="handleOpen"
         @edit="handleEdit"
         @edit-meta="handleEditMeta"
@@ -173,10 +237,21 @@ watch(() => props.draggingItem, () => {
         @release="handleRelease"
       />
 
-      <p v-if="items.length === 0" v-motion-fade :duration="200" class="flex items-center gap-2 px-3 py-2.5 text-xs text-muted" :data-testid="`board-empty-${column}`">
+      <p v-if="items.length === 0" v-motion-fade :duration="200" class="flex items-center gap-2 px-2 py-2.5 text-xs text-muted" :data-testid="`board-empty-${column}`">
         <UIcon name="i-heroicons-circle" class="size-3.5" />
         {{ t('board.empty') }}
       </p>
     </div>
+
+    <UButton
+      v-if="canCreate"
+      variant="ghost"
+      color="neutral"
+      icon="i-heroicons-plus"
+      :label="t('board.addTask')"
+      class="mx-2 mb-2 justify-start text-xs text-muted"
+      :data-testid="`board-column-add-task-${column}`"
+      @click="handleCreate"
+    />
   </section>
 </template>

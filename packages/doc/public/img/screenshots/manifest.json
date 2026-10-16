@@ -1,52 +1,16 @@
 {
-  "generatedAt": "2026-10-16T12:00:11.584Z",
+  "generatedAt": "2026-10-16T17:59:21.713Z",
   "baseUrl": "http://localhost:3000",
   "action": "page",
-  "total": 5,
-  "captured": 5,
+  "total": 1,
+  "captured": 1,
   "entries": [
     {
-      "route": "/app/templates",
-      "slug": "app-templates",
+      "route": "/app/billing",
+      "slug": "app-billing",
       "action": "page",
-      "file": "app-templates/page.png",
-      "finalUrl": "http://localhost:3000/app/templates",
-      "status": 200,
-      "ok": true
-    },
-    {
-      "route": "/app/templates/chat",
-      "slug": "app-templates-chat",
-      "action": "page",
-      "file": "app-templates-chat/page.png",
-      "finalUrl": "http://localhost:3000/app/templates/chat",
-      "status": 200,
-      "ok": true
-    },
-    {
-      "route": "/app/templates/email",
-      "slug": "app-templates-email",
-      "action": "page",
-      "file": "app-templates-email/page.png",
-      "finalUrl": "http://localhost:3000/app/templates/email",
-      "status": 200,
-      "ok": true
-    },
-    {
-      "route": "/app/templates/images",
-      "slug": "app-templates-images",
-      "action": "page",
-      "file": "app-templates-images/page.png",
-      "finalUrl": "http://localhost:3000/app/templates/images",
-      "status": 200,
-      "ok": true
-    },
-    {
-      "route": "/app/templates/variables",
-      "slug": "app-templates-variables",
-      "action": "page",
-      "file": "app-templates-variables/page.png",
-      "finalUrl": "http://localhost:3000/app/templates/variables",
+      "file": "app-billing/page.png",
+      "finalUrl": "http://localhost:3000/app/billing",
       "status": 200,
       "ok": true
     }

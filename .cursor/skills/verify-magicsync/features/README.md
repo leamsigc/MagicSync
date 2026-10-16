@@ -261,7 +261,7 @@ shipped PRD:
 - `/app/ai-tools/agents`, `/knowledge`, `/settings`, `/skills`, `/tools`
 - `/app/bulk-scheduler` plus `csv-import` and `generate`
 - `/app/keys` — the API key surface behind the MCP toolkit
-- `/app/account`, `/app/profile`
+- `/app/profile` — the single profile + account view (the old `/app/account` route is gone)
 - `/app/toolbox`, `/app/home`, `/app/post/video`
 - `/app/admin` and its seven children. Admin-only, so it needs an admin fixture
 - `/app/tools/*` (content-split, growth-stratergy with create and data,

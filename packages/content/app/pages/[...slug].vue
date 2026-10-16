@@ -113,9 +113,19 @@ if (slug.value === '/' && page.value) {
 </script>
 
 <template>
-  <article>
+  <article class="content-body">
     <ContentRenderer v-if="page" :value="page" :dir="localeProperties?.dir ?? 'ltr'" />
     <BaseNotFoundView v-else />
   </article>
 </template>
-<style scoped></style>
+<style scoped>
+/* Long inline code and code blocks are the main way a Content page gets wider
+   than a phone. Wrap the words; let a block scroll on its own. */
+.content-body :deep(code) {
+  overflow-wrap: anywhere;
+}
+.content-body :deep(pre) {
+  max-width: 100%;
+  overflow-x: auto;
+}
+</style>

@@ -58,6 +58,9 @@ export default defineNuxtConfig({
     // Dribbble
     DRIBBBLE_CLIENT_ID: process.env.NUXT_DRIBBBLE_CLIENT_ID,
     DRIBBBLE_CLIENT_SECRET: process.env.NUXT_DRIBBBLE_CLIENT_SECRET,
+    // Snapchat (Snap Kit Login Kit — https://kit.snapchat.com/portal)
+    SNAPCHAT_CLIENT_ID: process.env.NUXT_SNAPCHAT_CLIENT_ID,
+    SNAPCHAT_CLIENT_SECRET: process.env.NUXT_SNAPCHAT_CLIENT_SECRET,
     // YouTube
     YOUTUBE_CLIENT_ID: process.env.NUXT_YOUTUBE_CLIENT_ID,
     YOUTUBE_CLIENT_SECRET: process.env.NUXT_YOUTUBE_CLIENT_SECRET,

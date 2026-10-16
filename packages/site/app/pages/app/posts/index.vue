@@ -98,25 +98,25 @@ watch(activeBusinessId, () => {
         </div>
       </template>
     </BasePageHeader>
-    <div class=" p-2 flex justify-between items-center ">
-      <section class="flex gap-1" data-tour="posts-step-0">
+    <div class="flex flex-wrap items-center justify-between gap-2 p-2">
+      <section class="flex flex-wrap items-center gap-1" data-tour="posts-step-0">
         <PostFiltersBar @filter-change="handleFilterChange" @refresh="HandleRefresh" />
         <section data-tour="posts-step-1" class="flex gap-1">
           <UButton icon="i-lucide-grid-2x2" :variant="currentView === 'Grid' ? 'solid' : 'ghost'" size="sm"
             class="rounded-xl" @click="() => { currentView = 'Grid' }">
-            Grid
+            <span class="hidden sm:inline">Grid</span>
           </UButton>
           <UButton icon="i-heroicons-bars-3-bottom-left" :variant="currentView === 'Feed' ? 'solid' : 'ghost'" size="sm"
             class="rounded-xl" @click="() => { currentView = 'Feed' }">
-            Feed
+            <span class="hidden sm:inline">Feed</span>
           </UButton>
           <UButton icon="i-heroicons-squares-2x2" :variant="currentView === 'Board' ? 'solid' : 'ghost'" size="sm"
             class="rounded-xl" @click="() => { currentView = 'Board' }">
-            Board
+            <span class="hidden sm:inline">Board</span>
           </UButton>
           <UButton icon="i-heroicons-table-cells" :variant="currentView === 'Table' ? 'solid' : 'ghost'" size="sm"
             class="rounded-xl" @click="() => { currentView = 'Table' }">
-            Table
+            <span class="hidden sm:inline">Table</span>
           </UButton>
         </section>
       </section>

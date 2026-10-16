@@ -139,6 +139,19 @@ export interface PinterestSettings extends BasePlatformSettings {
     tags?: string[];
 }
 
+export interface SnapchatSettings extends BasePlatformSettings {
+    __type: 'snapchat';
+    /**
+     * Snapchat organization ad account id. Snapchat's public content API is the
+     * Marketing API, so a publish targets an ad account's media/creative.
+     */
+    adAccountId?: string;
+    /** Creative headline (Snapchat caps the headline field at 34 characters). */
+    headline?: string;
+    /** Brand name rendered on the creative. */
+    brandName?: string;
+}
+
 export type PlatformSettings =
     | TwitterSettings
     | FacebookSettings
@@ -154,7 +167,8 @@ export type PlatformSettings =
     | YouTubeSettings
     | DiscordSettings
     | DribbbleSettings
-    | PinterestSettings;
+    | PinterestSettings
+    | SnapchatSettings;
 
 export type PlatformSettingsMap = {
     twitter: TwitterSettings;
@@ -176,6 +190,7 @@ export type PlatformSettingsMap = {
     discord: DiscordSettings;
     dribbble: DribbbleSettings;
     pinterest: PinterestSettings;
+    snapchat: SnapchatSettings;
 };
 
 export function createDefaultSettings(platform: string): PlatformSettings | null {
@@ -220,6 +235,8 @@ export function createDefaultSettings(platform: string): PlatformSettings | null
             return { __type: 'dribbble', title: '' };
         case 'pinterest':
             return { __type: 'pinterest', title: '' };
+        case 'snapchat':
+            return { __type: 'snapchat', headline: '', brandName: '' };
         default:
             return null;
     }

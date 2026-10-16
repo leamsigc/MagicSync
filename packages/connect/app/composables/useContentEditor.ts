@@ -38,6 +38,14 @@ export interface ContentItemView {
   createdAt?: string | null
   updatedAt?: string | null
   publishedAt?: string | null
+  /** Added by the board card: the deliverable the card produces. */
+  format?: string | null
+  /** Added by the board card: how the idea entered the board. */
+  sourceType?: string | null
+  /** Added by the board card: when a scheduled card goes out. */
+  scheduledAt?: string | null
+  /** Added by the board card: whether a person or the agent made the card. */
+  createdBy?: 'user' | 'agent' | null
 }
 
 export interface ContentCheckView {

@@ -71,6 +71,8 @@ catalog:
   "@better-auth/api-key": 1.7.7
   "@better-auth/cimd": 1.7.7
   "@better-auth/mcp": 1.7.7
+  "@better-auth/stripe": 1.7.7
+  stripe: 22.6.2
   better-sqlite3: 13.0.3
   canvas: 3.2.3
   cheerio: ^1.2.0

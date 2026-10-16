@@ -92,7 +92,9 @@ const handleCancel = () => {
       </BusinessTabs>
 
       <!-- Form Actions -->
-      <div class="flex flex-col sm:flex-row justify-end gap-3 pt-6 mt-8   -mx-6 -mb-6 px-6 py-4 backdrop-blur-sm">
+      <!-- Margin matches the card body padding at each size (p-4 sm:p-6), so the
+           action bar never bleeds past the card on a phone. -->
+      <div class="flex flex-col justify-end gap-3 pt-6 mt-8 -mx-4 -mb-4 px-4 py-4 backdrop-blur-sm sm:flex-row sm:-mx-6 sm:-mb-6 sm:px-6">
         <UButton color="neutral" variant="soft" class="w-full sm:w-auto justify-center" @click="handleCancel">
           {{ t('form.cancel') }}
         </UButton>

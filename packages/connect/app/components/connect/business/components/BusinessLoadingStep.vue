@@ -35,7 +35,7 @@ const handleClose = () => {
 
 <template>
   <UModal v-model:open="isVisible" :overlay="true" class="items-start min-h-[500px] grid grid-cols-1 content-center"
-    :ui="{ content: 'min-w-5xl min-h-[90vh] grid grid-cols-1 content-center' }">
+    :ui="{ content: 'w-full max-w-2xl max-h-[90dvh] overflow-y-auto' }">
     <div class="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-lg mx-auto w-full">
       <div class="mb-8">
         <h2 class="text-2xl font-bold text-gray-900 dark:text-white tracking-tight mb-2">

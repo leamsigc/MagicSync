@@ -1,5 +1,5 @@
 <!-- Translation file -->
-<i18n src="../../../../pages/app/account/index.json"></i18n>
+<i18n src="./account.json"></i18n>
 <script lang="ts" setup>
 /**
  * Component Description: Account settings form
@@ -39,7 +39,7 @@ const handleSubmit = async (event: FormSubmitEvent<Schema>) => {
   try {
     await client.changeEmail({
       newEmail: event.data.email,
-      callbackURL: '/app/account' // Redirect back to account page after verification
+      callbackURL: '/app/profile' // Redirect back to the profile page after verification
     })
 
     toast.add({

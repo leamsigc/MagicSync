@@ -142,6 +142,11 @@ export default withMermaid(defineConfig({
             { text: 'Posts Feed Master-Detail', link: '/guide/posts-feed-master-detail' },
             { text: 'AI Model Precedence', link: '/guide/ai-model-precedence' },
             { text: 'Route Action Screenshots', link: '/guide/route-screenshots' },
+            { text: 'Content Board, Profile & Billing', link: '/guide/content-board-profile-billing' },
+            { text: 'Snapchat Integration', link: '/guide/snapchat-integration' },
+            { text: 'Connecting Stripe', link: '/guide/stripe-setup' },
+            { text: 'Billing & Snapchat Security Review', link: '/guide/billing-security-review' },
+            { text: 'Mobile Layout Fixes', link: '/guide/mobile-layout-fixes' },
           ],
         },
         {

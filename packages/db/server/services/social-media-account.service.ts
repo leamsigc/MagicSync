@@ -28,6 +28,7 @@ export type SocialMediaPlatform =
   | 'devto'
   | 'dribbble'
   | 'reddit'
+  | 'snapchat'
   | 'wordpress'
 
 export interface CreateSocialMediaAccountData {

@@ -1,4 +1,4 @@
-<i18n src="../../../../pages/app/account/components/AiModelSettings.json"></i18n>
+<i18n src="./AiModelSettings.json"></i18n>
 <script lang="ts" setup>
 interface Props {
   mode: 'global' | 'override'

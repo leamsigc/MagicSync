@@ -23,7 +23,10 @@ export const user = sqliteTable('user', {
   updatedAt: integer('updated_at', {
     mode: 'timestamp'
   }).$defaultFn(() => /* @__PURE__ */ new Date()).notNull(),
-  theme: text('theme').default('orange')
+  theme: text('theme').default('orange'),
+  // Set by the better-auth Stripe plugin (present only when Stripe is
+  // configured); kept nullable so the column is inert without keys.
+  stripeCustomerId: text('stripe_customer_id')
 })
 
 export const session = sqliteTable('session', {
@@ -77,6 +80,8 @@ export const organization = sqliteTable('organization', {
   slug: text('slug').notNull().unique(),
   logo: text('logo'),
   metadata: text('metadata'),
+  // Set by the better-auth Stripe plugin when organization billing is enabled.
+  stripeCustomerId: text('stripe_customer_id'),
   createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => /* @__PURE__ */ new Date()).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => /* @__PURE__ */ new Date()).notNull()
 })

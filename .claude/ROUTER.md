@@ -26,13 +26,13 @@ Then read this file fully before doing anything else in this session.
 ## Current Project State
 
 **Working:**
-- User authentication with Better Auth
-- Social media platform connections (Facebook, Twitter/X, Instagram, Bluesky, LinkedIn, TikTok, YouTube, Threads, Reddit, Dribbble, WordPress)
+- User authentication with Better Auth- Social media platform connections (Facebook, Twitter/X, Instagram, Bluesky, LinkedIn, TikTok, YouTube, Threads, Reddit, Dribbble, WordPress)
 - Post creation with multi-platform targeting
 - Post scheduling with time-time triggers
 - Asset/media management
 - Basic dashboard with metrics
 - **Business-owner-first UI** — grouped sidebar (Daily/Content/Setup), Getting Started onboarding checklist, dashboard quick actions. See `.aiContext/UI-SIMPLIFICATION.md` and `patterns/business-onboarding-ux.md`
+- **Content board restyle, merged profile, billing layer, Snapchat (2026-10-16)** — content cards are task cards (chips, board code, priority, relative date, avatar, context menu); `/app/account` is gone and `/app/profile` is the single profile+account view; `packages/billing` (`BaseBilling`) plus `/app/billing` (Plan/Payment/Invoices) backed by the better-auth Stripe plugin (env-gated: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_TEAM`, `STRIPE_PRICE_BUSINESS`; migration `0012` adds `subscription` + `stripe_customer_id`); Snapchat is an inline `genericOAuth` provider with a `SnapchatPlugin` (Marketing API) and a dev-key guide. See `guide/content-board-profile-billing.md` and `guide/snapchat-integration.md` in `packages/doc`.
 - Nuxt Content for blog pages
 - **Agentic RAG Layer** — Chat, document ingestion, hybrid search, tools, sub-Agents
 - **Goal skills are file-based** — `packages/agent/server/flue/skills.ts` is the single Flue skill registry backed by Agent Skills `SKILL.md` files; legacy goal persistence/context helpers remain under `server/agentic/`, while new orchestration enters through `runCapability`. The chat page has a goal runner (start/progress/approve-cancel via `/api/v1/agent/goals/*`), a pi session picker (`/api/v1/agent/sessions`), and `capabilities` is the single discovery endpoint.

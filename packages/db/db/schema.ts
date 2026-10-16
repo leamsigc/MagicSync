@@ -53,6 +53,7 @@ export * from './content/board'
 export * from './publishing/publishing'
 export * from './stats/stats'
 export * from './inbox/inbox'
+export * from './billing/subscription'
 
 /***
 * Cross-feature relationships

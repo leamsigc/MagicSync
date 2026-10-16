@@ -126,7 +126,11 @@ export async function captureRouteAction(
   page: Page,
   options: CaptureRouteActionOptions,
 ): Promise<CaptureResult> {
-  const { route, action, order, fullPage = true, settleMs = 250 } = options
+  // Desktop captures the whole page. Mobile captures the viewport: what fits on
+  // a phone *is* the mobile layout, and a full-page 1x phone shot is several
+  // hundred KB against ~150 files.
+  const mobile = process.env.SCREENSHOT_VIEWPORT === 'mobile'
+  const { route, action, order, fullPage = !mobile, settleMs = 250 } = options
   const dir = routeScreenshotDir(route)
   mkdirSync(dir, { recursive: true })
   const replaced = removeActionScreenshots(route, action)

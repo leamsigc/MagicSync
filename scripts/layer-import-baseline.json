@@ -1,10 +1,11 @@
 {
   "note": "Known layer violations tolerated by scripts/layer-import-audit.mjs. Shrinks as they are fixed; regenerate with --update-baseline.",
-  "count": 14,
+  "count": 15,
   "violations": [
     "db|packages/db/server/services/TokenRefresh.service.ts|#layers/BaseAuth/lib/auth",
     "db|packages/db/server/services/business-profile.service.ts|#layers/BaseAuth/server/utils/useAuthApi`",
     "db|packages/db/server/services/plugins/bluesky.plugin.ts|#layers/BaseAuth/server/utils/AuthHelpers",
+    "db|packages/db/server/services/plugins/snapchat.plugin.ts|#layers/BaseAuth/server/utils/AuthHelpers",
     "db|packages/db/server/services/social-media-account.service.ts|#layers/BaseAuth/server/utils/AuthHelpers",
     "shared|packages/shared/app/composables/UseSocialMediaManager.ts|#layers/BaseDB/db/schema",
     "shared|packages/shared/app/composables/useBusinessManager.ts|#layers/BaseDB/db/schema",

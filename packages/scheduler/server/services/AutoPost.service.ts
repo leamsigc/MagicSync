@@ -20,6 +20,7 @@ import { WordPressPlugin } from '#layers/BaseDB/server/services/plugins/wordpres
 import { XPlugin } from '#layers/BaseDB/server/services/plugins/x.plugin';
 import { YouTubePlugin } from '#layers/BaseDB/server/services/plugins/youtube.plugin';
 import { PinterestPlugin } from '#layers/BaseDB/server/services/plugins/pinterest.plugin';
+import { SnapchatPlugin } from '#layers/BaseDB/server/services/plugins/snapchat.plugin';
 import { platformRateLimiter } from './RateLimiter.service';
 import { usesPageToken, renewRowToken } from '#layers/BaseDB/server/services/TokenRefresh.service';
 import { auth } from '#layers/BaseAuth/lib/auth';
@@ -44,6 +45,7 @@ export class AutoPostService {
     twitter: XPlugin as SchedulerPluginConstructor,
     pinterest: PinterestPlugin as SchedulerPluginConstructor,
     youtube: YouTubePlugin as SchedulerPluginConstructor,
+    snapchat: SnapchatPlugin as SchedulerPluginConstructor,
   }
 
   private async notifyPostFailed(post: PostWithAllData, platform: string, error: string) {

@@ -1,15 +1,39 @@
 {
     "en": {
         "title": "Profile",
-        "description": "Manage your profile information",
-        "heading": "Your Profile",
-        "subheading": "Update your personal information and profile picture",
+        "description": "Manage your profile and account settings",
+        "header": {
+            "copyEmail": "Copy email",
+            "copied": "Email copied",
+            "copyFailed": "Could not copy the email",
+            "verified": "Email verified",
+            "unverified": "Email not verified",
+            "memberSince": "Member since {date}",
+            "roles": {
+                "user": "Member",
+                "admin": "Admin"
+            }
+        },
+        "stats": {
+            "businesses": "Businesses",
+            "accounts": "Linked accounts",
+            "role": "Role",
+            "email": "Email"
+        },
+        "tabs": {
+            "profile": "Profile",
+            "general": "Account",
+            "linked": "Linked accounts",
+            "ai": "AI model",
+            "danger": "Danger zone"
+        },
         "form": {
             "name": "Full Name",
             "firstName": "First Name",
             "lastName": "Last Name",
             "email": "Email",
             "image": "Profile Picture",
+            "emailHelp": "Email cannot be changed here. Use the Account tab.",
             "save": "Save Changes",
             "cancel": "Cancel"
         },
@@ -19,6 +43,7 @@
             "lastName": "Enter your last name"
         },
         "messages": {
+            "required": "This field is required",
             "success": "Profile updated successfully",
             "error": "Failed to update profile",
             "loading": "Updating profile..."
@@ -28,13 +53,8 @@
             "change": "Change Photo",
             "remove": "Remove Photo"
         },
-        "theme": {
-            "title": "Color Theme",
-            "description": "Choose your preferred color palette"
-        },
         "shortcuts": {
             "title": "Quick links",
-            "account": "Account settings",
             "apiKeys": "API keys",
             "notifications": "Notifications",
             "business": "My business"
@@ -42,15 +62,39 @@
     },
     "es": {
         "title": "Perfil",
-        "description": "Administra tu información de perfil",
-        "heading": "Tu Perfil",
-        "subheading": "Actualiza tu información personal y foto de perfil",
+        "description": "Administra tu perfil y la configuración de tu cuenta",
+        "header": {
+            "copyEmail": "Copiar correo",
+            "copied": "Correo copiado",
+            "copyFailed": "No se pudo copiar el correo",
+            "verified": "Correo verificado",
+            "unverified": "Correo sin verificar",
+            "memberSince": "Miembro desde {date}",
+            "roles": {
+                "user": "Miembro",
+                "admin": "Administrador"
+            }
+        },
+        "stats": {
+            "businesses": "Negocios",
+            "accounts": "Cuentas vinculadas",
+            "role": "Rol",
+            "email": "Correo"
+        },
+        "tabs": {
+            "profile": "Perfil",
+            "general": "Cuenta",
+            "linked": "Cuentas vinculadas",
+            "ai": "Modelo IA",
+            "danger": "Zona de peligro"
+        },
         "form": {
             "name": "Nombre Completo",
             "firstName": "Nombre",
             "lastName": "Apellido",
             "email": "Correo Electrónico",
             "image": "Foto de Perfil",
+            "emailHelp": "El correo no se puede cambiar aquí. Usa la pestaña Cuenta.",
             "save": "Guardar Cambios",
             "cancel": "Cancelar"
         },
@@ -60,6 +104,7 @@
             "lastName": "Ingresa tu apellido"
         },
         "messages": {
+            "required": "Este campo es obligatorio",
             "success": "Perfil actualizado exitosamente",
             "error": "Error al actualizar perfil",
             "loading": "Actualizando perfil..."
@@ -69,13 +114,8 @@
             "change": "Cambiar Foto",
             "remove": "Eliminar Foto"
         },
-        "theme": {
-            "title": "Tema de Color",
-            "description": "Elige tu paleta de colores preferida"
-        },
         "shortcuts": {
             "title": "Enlaces rápidos",
-            "account": "Configuración de la cuenta",
             "apiKeys": "Claves API",
             "notifications": "Notificaciones",
             "business": "Mi negocio"
@@ -83,15 +123,39 @@
     },
     "de": {
         "title": "Profil",
-        "description": "Verwalten Sie Ihre Profilinformationen",
-        "heading": "Ihr Profil",
-        "subheading": "Aktualisieren Sie Ihre persönlichen Informationen und Ihr Profilbild",
+        "description": "Verwalten Sie Ihr Profil und Ihre Kontoeinstellungen",
+        "header": {
+            "copyEmail": "E-Mail kopieren",
+            "copied": "E-Mail kopiert",
+            "copyFailed": "Die E-Mail konnte nicht kopiert werden",
+            "verified": "E-Mail verifiziert",
+            "unverified": "E-Mail nicht verifiziert",
+            "memberSince": "Mitglied seit {date}",
+            "roles": {
+                "user": "Mitglied",
+                "admin": "Administrator"
+            }
+        },
+        "stats": {
+            "businesses": "Unternehmen",
+            "accounts": "Verknüpfte Konten",
+            "role": "Rolle",
+            "email": "E-Mail"
+        },
+        "tabs": {
+            "profile": "Profil",
+            "general": "Konto",
+            "linked": "Verknüpfte Konten",
+            "ai": "KI-Modell",
+            "danger": "Gefahrenzone"
+        },
         "form": {
             "name": "Vollständiger Name",
             "firstName": "Vorname",
             "lastName": "Nachname",
             "email": "E-Mail",
             "image": "Profilbild",
+            "emailHelp": "Die E-Mail kann hier nicht geändert werden. Nutzen Sie den Tab Konto.",
             "save": "Änderungen Speichern",
             "cancel": "Abbrechen"
         },
@@ -101,6 +165,7 @@
             "lastName": "Geben Sie Ihren Nachnamen ein"
         },
         "messages": {
+            "required": "Dieses Feld ist erforderlich",
             "success": "Profil erfolgreich aktualisiert",
             "error": "Fehler beim Aktualisieren des Profils",
             "loading": "Profil wird aktualisiert..."
@@ -110,13 +175,8 @@
             "change": "Foto Ändern",
             "remove": "Foto Entfernen"
         },
-        "theme": {
-            "title": "Farbthema",
-            "description": "Wählen Sie Ihre bevorzugte Farbpalette"
-        },
         "shortcuts": {
             "title": "Schnellzugriffe",
-            "account": "Kontoeinstellungen",
             "apiKeys": "API-Schlüssel",
             "notifications": "Benachrichtigungen",
             "business": "Mein Unternehmen"
@@ -124,15 +184,39 @@
     },
     "fr": {
         "title": "Profil",
-        "description": "Gérez vos informations de profil",
-        "heading": "Votre Profil",
-        "subheading": "Mettez à jour vos informations personnelles et votre photo de profil",
+        "description": "Gérez votre profil et les paramètres de votre compte",
+        "header": {
+            "copyEmail": "Copier l’email",
+            "copied": "Email copié",
+            "copyFailed": "Impossible de copier l’email",
+            "verified": "Email vérifié",
+            "unverified": "Email non vérifié",
+            "memberSince": "Membre depuis {date}",
+            "roles": {
+                "user": "Membre",
+                "admin": "Administrateur"
+            }
+        },
+        "stats": {
+            "businesses": "Entreprises",
+            "accounts": "Comptes liés",
+            "role": "Rôle",
+            "email": "Email"
+        },
+        "tabs": {
+            "profile": "Profil",
+            "general": "Compte",
+            "linked": "Comptes liés",
+            "ai": "Modèle IA",
+            "danger": "Zone de danger"
+        },
         "form": {
             "name": "Nom Complet",
             "firstName": "Prénom",
             "lastName": "Nom de Famille",
             "email": "Email",
             "image": "Photo de Profil",
+            "emailHelp": "L’email ne peut pas être modifié ici. Utilisez l’onglet Compte.",
             "save": "Enregistrer les Modifications",
             "cancel": "Annuler"
         },
@@ -142,6 +226,7 @@
             "lastName": "Entrez votre nom de famille"
         },
         "messages": {
+            "required": "Ce champ est obligatoire",
             "success": "Profil mis à jour avec succès",
             "error": "Échec de la mise à jour du profil",
             "loading": "Mise à jour du profil..."
@@ -151,13 +236,8 @@
             "change": "Changer la Photo",
             "remove": "Supprimer la Photo"
         },
-        "theme": {
-            "title": "Thème de Couleur",
-            "description": "Choisissez votre palette de couleurs préférée"
-        },
         "shortcuts": {
             "title": "Liens rapides",
-            "account": "Paramètres du compte",
             "apiKeys": "Clés API",
             "notifications": "Notifications",
             "business": "Mon entreprise"
