@@ -1,0 +1,130 @@
+{
+  "en": {
+    "title": "Admin Dashboard",
+    "metaDescription": "Administration dashboard",
+    "subtitle": "System overview and administration",
+    "stats": {
+      "users": "Total Users",
+      "businesses": "Total Businesses",
+      "posts": "Total Posts",
+      "sessions": "Active Sessions"
+    },
+    "links": {
+      "users": "Users",
+      "usersDescription": "Manage user accounts and roles",
+      "businesses": "Businesses",
+      "businessesDescription": "View and manage all businesses",
+      "integrations": "Integrations",
+      "integrationsDescription": "Monitor platform connections",
+      "announcements": "Announcements",
+      "announcementsDescription": "Broadcast banners to all users",
+      "feedback": "Feedback",
+      "feedbackDescription": "Review user feedback",
+      "audit": "Audit Log",
+      "auditDescription": "Review system activity logs",
+      "posts": "All Posts",
+      "postsDescription": "Browse every post across all businesses",
+      "data": "Data Browser",
+      "dataDescription": "View, edit and delete any database table"
+    },
+    "toasts": {
+      "loadFailed": "Failed to load admin stats"
+    }
+  },
+  "es": {
+    "title": "Panel de Administración",
+    "metaDescription": "Panel de administración",
+    "subtitle": "Resumen del sistema y administración",
+    "stats": {
+      "users": "Usuarios Totales",
+      "businesses": "Negocios Totales",
+      "posts": "Publicaciones Totales",
+      "sessions": "Sesiones Activas"
+    },
+    "links": {
+      "users": "Usuarios",
+      "usersDescription": "Gestionar cuentas de usuario y roles",
+      "businesses": "Negocios",
+      "businessesDescription": "Ver y gestionar todos los negocios",
+      "integrations": "Integraciones",
+      "integrationsDescription": "Monitorear conexiones de plataformas",
+      "announcements": "Anuncios",
+      "announcementsDescription": "Enviar banners a todos los usuarios",
+      "feedback": "Comentarios",
+      "feedbackDescription": "Revisar los comentarios de usuarios",
+      "audit": "Registro de Auditoría",
+      "auditDescription": "Revisar registros de actividad del sistema",
+      "posts": "Todas las Publicaciones",
+      "postsDescription": "Explorar cada publicación de todos los negocios",
+      "data": "Explorador de Datos",
+      "dataDescription": "Ver, editar y eliminar cualquier tabla de la base de datos"
+    },
+    "toasts": {
+      "loadFailed": "No se pudieron cargar las estadísticas de administración"
+    }
+  },
+  "de": {
+    "title": "Admin-Dashboard",
+    "metaDescription": "Verwaltungs-Dashboard",
+    "subtitle": "Systemübersicht und Verwaltung",
+    "stats": {
+      "users": "Benutzer insgesamt",
+      "businesses": "Unternehmen insgesamt",
+      "posts": "Beiträge insgesamt",
+      "sessions": "Aktive Sitzungen"
+    },
+    "links": {
+      "users": "Benutzer",
+      "usersDescription": "Benutzerkonten und Rollen verwalten",
+      "businesses": "Unternehmen",
+      "businessesDescription": "Alle Unternehmen anzeigen und verwalten",
+      "integrations": "Integrationen",
+      "integrationsDescription": "Plattformverbindungen überwachen",
+      "announcements": "Ankündigungen",
+      "announcementsDescription": "Banner an alle Benutzer senden",
+      "feedback": "Feedback",
+      "feedbackDescription": "Benutzerfeedback prüfen",
+      "audit": "Audit-Protokoll",
+      "auditDescription": "Systemaktivitätsprotokolle prüfen",
+      "posts": "Alle Beiträge",
+      "postsDescription": "Jeden Beitrag aus allen Unternehmen durchsuchen",
+      "data": "Datenbrowser",
+      "dataDescription": "Jede Datenbanktabelle anzeigen, bearbeiten und löschen"
+    },
+    "toasts": {
+      "loadFailed": "Admin-Statistiken konnten nicht geladen werden"
+    }
+  },
+  "fr": {
+    "title": "Tableau de Bord Admin",
+    "metaDescription": "Tableau de bord d'administration",
+    "subtitle": "Aperçu du système et administration",
+    "stats": {
+      "users": "Utilisateurs Totaux",
+      "businesses": "Entreprises Totales",
+      "posts": "Publications Totales",
+      "sessions": "Sessions Actives"
+    },
+    "links": {
+      "users": "Utilisateurs",
+      "usersDescription": "Gérer les comptes utilisateurs et les rôles",
+      "businesses": "Entreprises",
+      "businessesDescription": "Voir et gérer toutes les entreprises",
+      "integrations": "Intégrations",
+      "integrationsDescription": "Surveiller les connexions aux plateformes",
+      "announcements": "Annonces",
+      "announcementsDescription": "Diffuser des bannières à tous les utilisateurs",
+      "feedback": "Commentaires",
+      "feedbackDescription": "Examiner les commentaires des utilisateurs",
+      "audit": "Journal d'Audit",
+      "auditDescription": "Consulter les journaux d'activité du système",
+      "posts": "Toutes les Publications",
+      "postsDescription": "Parcourir chaque publication de toutes les entreprises",
+      "data": "Explorateur de données",
+      "dataDescription": "Consulter, modifier et supprimer n'importe quelle table de la base de données"
+    },
+    "toasts": {
+      "loadFailed": "Impossible de charger les statistiques d'administration"
+    }
+  }
+}

@@ -153,6 +153,12 @@ vite.config.ts.timestamp-*
 .vite/
 .data
 data/
+# ...but NOT the admin data-browser routes (Nuxt file-based routing requires
+# directories literally named `data/` here).
+!packages/site/server/api/v1/admin/data/
+!packages/site/server/api/v1/admin/data/**
+!packages/site/app/pages/app/admin/data/
+!packages/site/app/pages/app/admin/data/**
 *.db
 
 upload/

@@ -17,6 +17,7 @@ interface Props {
   selectedAssetsCount: number
   showUploader?: boolean
   showCreateFolder?: boolean
+  isDeletingAssets?: boolean
 }
 
 interface Emits {
@@ -29,6 +30,7 @@ const props = withDefaults(defineProps<Props>(), {
   selectedAssetsCount: 0,
   showUploader: true,
   showCreateFolder: true,
+  isDeletingAssets: false,
 })
 const emit = defineEmits<Emits>()
 const { t } = useI18n()
@@ -39,7 +41,8 @@ const { t } = useI18n()
 
     <template #actions>
       <div class="flex items-center gap-2">
-        <UButton v-if="selectedAssetsCount > 0" color="error" variant="solid" @click="emit('deleteSelected')">
+        <UButton v-if="selectedAssetsCount > 0" color="error" variant="solid" :disabled="isDeletingAssets"
+          @click="emit('deleteSelected')">
           <Icon name="lucide:trash-2" class="mr-2 h-4 w-4" />
           {{ t('buttons.delete_selected', { count: selectedAssetsCount }) }}
         </UButton>

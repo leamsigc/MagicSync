@@ -33,6 +33,9 @@ export const socialMediaAccounts = sqliteTable('social_media_accounts', {
   }).notNull(),
   accountId: text('account_id').notNull(),
   accountName: text('account_name').notNull(),
+  // Optional per-account service endpoint (Bluesky/AT Protocol custom PDS).
+  // Null means the platform default (e.g. https://bsky.social).
+  baseUrl: text('base_url'),
   accessToken: text('access_token').notNull(),
   refreshToken: text('refresh_token'),
   // Encrypted token columns (for storing tokens encrypted at rest)

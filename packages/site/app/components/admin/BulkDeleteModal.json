@@ -1,0 +1,30 @@
+{
+  "en": {
+    "title": "Delete rows",
+    "question": "Delete {count} row(s) from {table}?",
+    "warning": "This cannot be undone.",
+    "cancel": "Cancel",
+    "confirm": "Delete"
+  },
+  "es": {
+    "title": "Eliminar filas",
+    "question": "¿Eliminar {count} fila(s) de {table}?",
+    "warning": "Esta acción no se puede deshacer.",
+    "cancel": "Cancelar",
+    "confirm": "Eliminar"
+  },
+  "de": {
+    "title": "Zeilen löschen",
+    "question": "{count} Zeile(n) aus {table} löschen?",
+    "warning": "Dies kann nicht rückgängig gemacht werden.",
+    "cancel": "Abbrechen",
+    "confirm": "Löschen"
+  },
+  "fr": {
+    "title": "Supprimer les lignes",
+    "question": "Supprimer {count} ligne(s) de {table} ?",
+    "warning": "Cette action est irréversible.",
+    "cancel": "Annuler",
+    "confirm": "Supprimer"
+  }
+}

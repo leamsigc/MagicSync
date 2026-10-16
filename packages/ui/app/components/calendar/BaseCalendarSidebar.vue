@@ -42,9 +42,11 @@ const route = useRoute()
 const isMobile = useMediaQuery('(max-width: 1023px)')
 
 // Everything the menu offers takes over the screen on a phone, so it steps out
-// of the way once one of them is on its way in
-watch(() => route.fullPath, () => {
-  if (isMobile.value) {
+// of the way once one of them is on its way in. Only a *view* switch closes
+// it: prev/next and mini-calendar picks navigate within the same view, and
+// closing there is what swallowed the sidebar on every month step.
+watch(() => route.params.view, (next, prev) => {
+  if (isMobile.value && next !== prev) {
     isSidebarOpen.value = false
   }
 })

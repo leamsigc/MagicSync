@@ -1,0 +1,174 @@
+{
+  "en": {
+    "title": "All Posts",
+    "tableLabel": "Post",
+    "description": "{total} post{plural} across every business. Filter by status or search the content.",
+    "rawTable": "Raw table",
+    "refresh": "Refresh",
+    "searchPlaceholder": "Search posts...",
+    "empty": "No posts found",
+    "loadFailed": "Failed to load posts",
+    "retry": "Retry",
+    "status": {
+      "all": "All",
+      "draft": "Draft",
+      "pending": "Pending",
+      "published": "Published",
+      "failed": "Failed"
+    },
+    "actions": {
+      "label": "Actions",
+      "view": "View details",
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "a11y": {
+      "selectAll": "Select all",
+      "selectRow": "Select row",
+      "actions": "Actions dropdown"
+    },
+    "footer": {
+      "selected": "{selected} of {total} post(s) selected."
+    },
+    "bulk": {
+      "selected": "{count} selected",
+      "delete": "Delete selected",
+      "clear": "Clear"
+    },
+    "toasts": {
+      "updated": "Post updated",
+      "updateFailed": "Failed to update post",
+      "deleted": "{count} post(s) deleted",
+      "deleteFailed": "Failed to delete posts"
+    }
+  },
+  "es": {
+    "title": "Todas las Publicaciones",
+    "tableLabel": "Publicación",
+    "description": "{total} publicación{plural} de todos los negocios. Filtra por estado o busca en el contenido.",
+    "rawTable": "Tabla sin procesar",
+    "refresh": "Actualizar",
+    "searchPlaceholder": "Buscar publicaciones...",
+    "empty": "No se encontraron publicaciones",
+    "loadFailed": "No se pudieron cargar las publicaciones",
+    "retry": "Reintentar",
+    "status": {
+      "all": "Todas",
+      "draft": "Borrador",
+      "pending": "Pendiente",
+      "published": "Publicada",
+      "failed": "Fallida"
+    },
+    "actions": {
+      "label": "Acciones",
+      "view": "Ver detalles",
+      "edit": "Editar",
+      "delete": "Eliminar"
+    },
+    "a11y": {
+      "selectAll": "Seleccionar todo",
+      "selectRow": "Seleccionar fila",
+      "actions": "Menú de acciones"
+    },
+    "footer": {
+      "selected": "{selected} de {total} publicación(es) seleccionadas."
+    },
+    "bulk": {
+      "selected": "{count} seleccionadas",
+      "delete": "Eliminar seleccionadas",
+      "clear": "Limpiar"
+    },
+    "toasts": {
+      "updated": "Publicación actualizada",
+      "updateFailed": "No se pudo actualizar la publicación",
+      "deleted": "{count} publicación(es) eliminadas",
+      "deleteFailed": "No se pudieron eliminar las publicaciones"
+    }
+  },
+  "de": {
+    "title": "Alle Beiträge",
+    "tableLabel": "Beitrag",
+    "description": "{total} Beitrag{plural} aus allen Unternehmen. Nach Status filtern oder Inhalte durchsuchen.",
+    "rawTable": "Rohtabelle",
+    "refresh": "Aktualisieren",
+    "searchPlaceholder": "Beiträge suchen...",
+    "empty": "Keine Beiträge gefunden",
+    "loadFailed": "Beiträge konnten nicht geladen werden",
+    "retry": "Erneut versuchen",
+    "status": {
+      "all": "Alle",
+      "draft": "Entwurf",
+      "pending": "Ausstehend",
+      "published": "Veröffentlicht",
+      "failed": "Fehlgeschlagen"
+    },
+    "actions": {
+      "label": "Aktionen",
+      "view": "Details anzeigen",
+      "edit": "Bearbeiten",
+      "delete": "Löschen"
+    },
+    "a11y": {
+      "selectAll": "Alle auswählen",
+      "selectRow": "Zeile auswählen",
+      "actions": "Aktionsmenü"
+    },
+    "footer": {
+      "selected": "{selected} von {total} Beitrag/Beiträgen ausgewählt."
+    },
+    "bulk": {
+      "selected": "{count} ausgewählt",
+      "delete": "Ausgewählte löschen",
+      "clear": "Zurücksetzen"
+    },
+    "toasts": {
+      "updated": "Beitrag aktualisiert",
+      "updateFailed": "Beitrag konnte nicht aktualisiert werden",
+      "deleted": "{count} Beitrag/Beiträge gelöscht",
+      "deleteFailed": "Beiträge konnten nicht gelöscht werden"
+    }
+  },
+  "fr": {
+    "title": "Toutes les Publications",
+    "tableLabel": "Publication",
+    "description": "{total} publication{plural} de toutes les entreprises. Filtrez par statut ou recherchez le contenu.",
+    "rawTable": "Table brute",
+    "refresh": "Actualiser",
+    "searchPlaceholder": "Rechercher des publications...",
+    "empty": "Aucune publication trouvée",
+    "loadFailed": "Impossible de charger les publications",
+    "retry": "Réessayer",
+    "status": {
+      "all": "Toutes",
+      "draft": "Brouillon",
+      "pending": "En attente",
+      "published": "Publiée",
+      "failed": "Échouée"
+    },
+    "actions": {
+      "label": "Actions",
+      "view": "Voir les détails",
+      "edit": "Modifier",
+      "delete": "Supprimer"
+    },
+    "a11y": {
+      "selectAll": "Tout sélectionner",
+      "selectRow": "Sélectionner la ligne",
+      "actions": "Menu des actions"
+    },
+    "footer": {
+      "selected": "{selected} sur {total} publication(s) sélectionnée(s)."
+    },
+    "bulk": {
+      "selected": "{count} sélectionnée(s)",
+      "delete": "Supprimer la sélection",
+      "clear": "Effacer"
+    },
+    "toasts": {
+      "updated": "Publication mise à jour",
+      "updateFailed": "Impossible de mettre à jour la publication",
+      "deleted": "{count} publication(s) supprimée(s)",
+      "deleteFailed": "Impossible de supprimer les publications"
+    }
+  }
+}

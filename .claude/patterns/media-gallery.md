@@ -7,6 +7,8 @@ triggers:
   - "upload video"
   - "large file upload"
   - "media gallery"
+  - "deletion progress"
+  - "background delete"
 edges:
   - target: context/architecture.md
     condition: when understanding layer structure
@@ -14,7 +16,7 @@ edges:
     condition: when checking service/component patterns
   - target: patterns/add-endpoint.md
     condition: when adding new asset API endpoints
-last_updated: 2026-03-30
+last_updated: 2026-10-16
 ---
 
 # Media Gallery (Infinite Scroll + Large Uploads)
@@ -70,6 +72,15 @@ app-wide `useState<string>('business:id')`, populated by the connect global
 
 4. **Delete cleanup**: remove the stored file best-effort after the DB delete:
    `getFileFromAsset(asset)` rebuilds the path from `asset.url`.
+
+5. **Batch deletion progress**: multi-delete runs through a module-level
+   queue in `useAssetManagement` (`deletionItems`, `isDeletingAssets`,
+   `deleteAssets(ids)` — module-level so header, gallery and modal share one
+   queue) with one `DELETE /api/v1/assets/[id]` per item settling
+   independently. `AssetDeletionProgressModal` (mounted once on `/app/media`,
+   **explicitly imported** — bare auto-import silently fails to resolve at
+   this depth, check the console for the Vue warning) shows per-file status,
+   minimizes to a floating pill, and toasts success/partial counts.
 
 ## Gotchas
 

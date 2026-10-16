@@ -276,6 +276,7 @@ export type SocialMediaAccountServiceType = {
     user: User
     businessId: string
     platformId: SocialMediaPlatform
+    baseUrl?: string | null
   }) => Promise<SocialMediaAccount | null>
   createOrUpdateAccountFromAuth: (params: {
     id: string
@@ -351,4 +352,23 @@ export type UserLlmConfigServiceType = {
   getOverride: (userId: string, businessId: string) => Promise<ServiceResponse<import('./user-llm-config.service').BusinessLlmOverride | null>>
   clearOverride: (userId: string, businessId: string) => Promise<ServiceResponse<boolean>>
   getEffectiveConfig: (userId: string, businessId?: string | null) => Promise<ServiceResponse<UserLlmConfig>>
+}
+
+export type AdminDataServiceType = {
+  listTables: () => Promise<ServiceResponse<Array<{ key: string; label: string; group: string; rowCount: number | null }>>>
+  listRows: (key: string, query?: {
+    page?: number
+    limit?: number
+    search?: string
+    sort?: string
+    direction?: 'asc' | 'desc'
+    filters?: Record<string, string>
+  }) => Promise<ServiceResponse<{
+    table: { key: string; label: string; group: string }
+    columns: Array<{ key: string; label: string; editable: boolean; pk: boolean }>
+    rows: Array<Record<string, unknown>>
+    pagination: { page: number; limit: number; total: number; totalPages: number }
+  }>>
+  updateRow: (key: string, rowKey: string, values: Record<string, unknown>) => Promise<ServiceResponse<Record<string, unknown>>>
+  deleteRows: (key: string, rowKeys: string[]) => Promise<ServiceResponse<{ deleted: number }>>
 }

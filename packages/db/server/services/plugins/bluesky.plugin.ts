@@ -124,7 +124,7 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
 
 
 
-  protected init(options?: { serviceUrl: string }): void {
+  protected init(options?: { serviceUrl?: string }): void {
     this.serviceUrl = options?.serviceUrl || 'https://bsky.social';
     this.agent = new AtpAgent({ service: this.serviceUrl || 'https://bsky.social' })
     log.info({ message: 'Bluesky plugin initialized', detail: this.serviceUrl });
@@ -294,7 +294,9 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
    */
   private async freshAuthedAgent(socialMediaAccount: PluginSocialMediaAccount): Promise<AtpAgent> {
     const pwd = await decryptKey(socialMediaAccount.accessToken);
-    const agent = new AtpAgent({ service: this.serviceUrl || 'https://bsky.social' });
+    // Honour the account's custom PDS (Bluesky base URL) when set.
+    const service = socialMediaAccount.baseUrl || this.serviceUrl || 'https://bsky.social';
+    const agent = new AtpAgent({ service });
     await agent.login({ identifier: socialMediaAccount.accountName, password: pwd });
     return agent;
   }
@@ -424,7 +426,9 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
     };
   }
   async login(socialMediaAccount: SocialMediaAccount) {
-    await this.init();
+    // Re-init against the account's PDS: init() defaults to bsky.social, which
+    // would 401 every call for an account on a custom base URL.
+    await this.init({ serviceUrl: socialMediaAccount.baseUrl || undefined });
     const pwd = await decryptKey(socialMediaAccount.accessToken);
 
 

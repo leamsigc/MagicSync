@@ -1,0 +1,26 @@
+{
+  "en": {
+    "title": "Row details",
+    "description": "All visible columns for this row.",
+    "edit": "Edit",
+    "delete": "Delete"
+  },
+  "es": {
+    "title": "Detalles de la fila",
+    "description": "Todas las columnas visibles de esta fila.",
+    "edit": "Editar",
+    "delete": "Eliminar"
+  },
+  "de": {
+    "title": "Zeilendetails",
+    "description": "Alle sichtbaren Spalten dieser Zeile.",
+    "edit": "Bearbeiten",
+    "delete": "Löschen"
+  },
+  "fr": {
+    "title": "Détails de la ligne",
+    "description": "Toutes les colonnes visibles de cette ligne.",
+    "edit": "Modifier",
+    "delete": "Supprimer"
+  }
+}

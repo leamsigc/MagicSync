@@ -14,6 +14,20 @@
       "connected": "Connected",
       "coming_soon": "More coming soon"
     },
+    "bluesky": {
+      "title": "Bluesky",
+      "description": "Enter your Bluesky credentials",
+      "base_url_label": "Base URL (optional)",
+      "base_url_placeholder": "yourdomain.com",
+      "base_url_help": "Leave empty to sign in via bsky.social using your domain as the username (e.g. leamsigc.com). Set it only for a self-hosted server — the username is resolved from this URL.",
+      "username_label": "Username",
+      "username_placeholder": "yourdomain.com",
+      "username_help": "Your Bluesky handle or email.",
+      "username_error": "Username is required",
+      "password_label": "Password",
+      "password_placeholder": "Enter your app password",
+      "password_error": "Password is required"
+    },
     "menu": {
       "pages": "Pages",
       "reconnect": "Reconnect",
@@ -68,6 +82,20 @@
       "not_connected": "Non connecté",
       "connected": "Connecté",
       "coming_soon": "Prochainement"
+    },
+    "bluesky": {
+      "title": "Bluesky",
+      "description": "Saisissez vos identifiants Bluesky",
+      "base_url_label": "URL de base (facultatif)",
+      "base_url_placeholder": "votredomain.com",
+      "base_url_help": "Laissez vide pour vous connecter via bsky.social en utilisant votre domaine comme nom d'utilisateur (ex. leamsigc.com). À renseigner uniquement pour un serveur auto-hébergé — le nom d'utilisateur est alors résolu depuis cette URL.",
+      "username_label": "Nom d'utilisateur",
+      "username_placeholder": "votredomain.com",
+      "username_help": "Votre identifiant Bluesky ou votre e-mail.",
+      "username_error": "Le nom d'utilisateur est requis",
+      "password_label": "Mot de passe",
+      "password_placeholder": "Saisissez votre mot de passe d'application",
+      "password_error": "Le mot de passe est requis"
     },
     "menu": {
       "pages": "Pages",
@@ -124,6 +152,20 @@
       "connected": "Conectado",
       "coming_soon": "Pronto"
     },
+    "bluesky": {
+      "title": "Bluesky",
+      "description": "Introduce tus credenciales de Bluesky",
+      "base_url_label": "URL base (opcional)",
+      "base_url_placeholder": "tudominio.com",
+      "base_url_help": "Déjalo vacío para iniciar sesión vía bsky.social usando tu dominio como nombre de usuario (ej. leamsigc.com). Rellénalo solo para un servidor autoalojado — el nombre de usuario se resuelve desde esta URL.",
+      "username_label": "Nombre de usuario",
+      "username_placeholder": "tudominio.com",
+      "username_help": "Tu identificador de Bluesky o correo electrónico.",
+      "username_error": "El nombre de usuario es obligatorio",
+      "password_label": "Contraseña",
+      "password_placeholder": "Introduce tu contraseña de aplicación",
+      "password_error": "La contraseña es obligatoria"
+    },
     "menu": {
       "pages": "Páginas",
       "reconnect": "Reconectar",
@@ -178,6 +220,20 @@
       "not_connected": "Nicht verbunden",
       "connected": "Verbunden",
       "coming_soon": "Bald"
+    },
+    "bluesky": {
+      "title": "Bluesky",
+      "description": "Geben Sie Ihre Bluesky-Zugangsdaten ein",
+      "base_url_label": "Basis-URL (optional)",
+      "base_url_placeholder": "ihredomain.com",
+      "base_url_help": "Leer lassen, um sich über bsky.social mit Ihrer Domain als Benutzername anzumelden (z. B. leamsigc.com). Nur für einen selbst gehosteten Server angeben — der Benutzername wird dann aus dieser URL ermittelt.",
+      "username_label": "Benutzername",
+      "username_placeholder": "ihredomain.com",
+      "username_help": "Ihr Bluesky-Handle oder Ihre E-Mail.",
+      "username_error": "Benutzername ist erforderlich",
+      "password_label": "Passwort",
+      "password_placeholder": "Geben Sie Ihr App-Passwort ein",
+      "password_error": "Passwort ist erforderlich"
     },
     "menu": {
       "pages": "Seiten",

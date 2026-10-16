@@ -349,6 +349,16 @@ export const useDashboardNavigation = () => {
               label: m.menu.feedback,
               to: '/app/admin/feedbacks',
               icon: 'i-lucide-message-square-heart'
+            },
+            {
+              label: m.menu.posts,
+              to: '/app/admin/posts',
+              icon: 'i-lucide-clipboard-list'
+            },
+            {
+              label: m.menu.dataBrowser,
+              to: '/app/admin/data',
+              icon: 'i-lucide-database'
             }
           ]
         }

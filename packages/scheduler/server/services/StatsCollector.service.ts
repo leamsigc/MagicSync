@@ -111,23 +111,35 @@ export class StatsCollectorService {
     await this.updateSyncState(account.id, { lastAttemptAt: now, status: 'running' })
     const { stats, error } = await this.fetchStatsWithHeal(account)
     if (stats) {
-      await this.db.insert(accountMetrics).values({
-        id: crypto.randomUUID(),
-        socialAccountId: account.id,
-        platform: stats.platform || account.platform,
+      const snapshotDate = dayjs(now).format('YYYY-MM-DD')
+      const platform = stats.platform || account.platform
+      const metricFields = {
+        platform,
         followers: stats.followers ?? null,
         following: stats.following ?? null,
         posts: stats.posts ?? null,
         engagement: (stats.engagement as Record<string, unknown> | undefined) ?? null,
         rawPayload: stats,
         source,
-        status: 'success',
+        status: 'success' as const,
+        error: null,
         collectedAt: now,
-      })
+      }
+      await this.db.insert(accountMetrics)
+        .values({
+          id: crypto.randomUUID(),
+          socialAccountId: account.id,
+          snapshotDate,
+          ...metricFields,
+        })
+        .onConflictDoUpdate({
+          target: [accountMetrics.socialAccountId, accountMetrics.snapshotDate],
+          set: metricFields,
+        })
       await this.markSuccess(account.id, now)
       return {
         accountId: account.id,
-        platform: stats.platform || account.platform,
+        platform,
         username: stats.username || account.accountName,
         success: true,
         stats,

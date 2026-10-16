@@ -1,0 +1,30 @@
+{
+  "en": {
+    "title": "Edit {table} row",
+    "description": "Only editable columns are shown. Hidden columns (secrets, tokens) are never rendered.",
+    "readOnly": "This table has no editable columns.",
+    "cancel": "Cancel",
+    "save": "Save Changes"
+  },
+  "es": {
+    "title": "Editar fila de {table}",
+    "description": "Solo se muestran las columnas editables. Las columnas ocultas (secretos, tokens) nunca se muestran.",
+    "readOnly": "Esta tabla no tiene columnas editables.",
+    "cancel": "Cancelar",
+    "save": "Guardar Cambios"
+  },
+  "de": {
+    "title": "Zeile in {table} bearbeiten",
+    "description": "Nur bearbeitbare Spalten werden angezeigt. Versteckte Spalten (Secrets, Tokens) werden nie angezeigt.",
+    "readOnly": "Diese Tabelle hat keine bearbeitbaren Spalten.",
+    "cancel": "Abbrechen",
+    "save": "Änderungen speichern"
+  },
+  "fr": {
+    "title": "Modifier la ligne de {table}",
+    "description": "Seules les colonnes modifiables sont affichées. Les colonnes masquées (secrets, jetons) ne sont jamais affichées.",
+    "readOnly": "Cette table n'a aucune colonne modifiable.",
+    "cancel": "Annuler",
+    "save": "Enregistrer les modifications"
+  }
+}

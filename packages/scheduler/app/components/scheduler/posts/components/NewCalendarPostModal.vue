@@ -27,9 +27,15 @@ const isOpen = ref(false);
 const postModalContentRef = ref<InstanceType<typeof PostModalContent> | null>(null);
 
 const handleSave = async (postData: PostCreateBase) => {
-  await createPost(postData);
-  isOpen.value = false;
-  $emit('refresh');
+  try {
+    await createPost(postData);
+    isOpen.value = false;
+    $emit('refresh');
+  } catch {
+    // The service already toasted the failure; unstick the footer spinner
+    // so the user can fix and retry with the modal still open.
+    postModalContentRef.value?.clearSaving();
+  }
 };
 
 const handleClose = () => {

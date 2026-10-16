@@ -12,7 +12,9 @@
       "close": "Close",
       "dismiss": "Dismiss",
       "new_folder": "New Folder",
-      "delete_folder": "Delete folder {name}"
+      "delete_folder": "Delete folder {name}",
+      "cancel": "Cancel",
+      "delete": "Delete"
     },
     "sections": {
       "stats": {
@@ -64,6 +66,9 @@
         "placeholder": "Enter folder name",
         "cancel": "Cancel",
         "create": "Create Folder"
+      },
+      "delete_confirm": {
+        "title": "Delete Assets"
       }
     },
     "messages": {
@@ -95,7 +100,9 @@
       "close": "Cerrar",
       "dismiss": "Descartar",
       "new_folder": "Nueva Carpeta",
-      "delete_folder": "Eliminar carpeta {name}"
+      "delete_folder": "Eliminar carpeta {name}",
+      "cancel": "Cancelar",
+      "delete": "Eliminar"
     },
     "sections": {
       "stats": {
@@ -147,6 +154,9 @@
         "placeholder": "Ingresa el nombre de la carpeta",
         "cancel": "Cancelar",
         "create": "Crear Carpeta"
+      },
+      "delete_confirm": {
+        "title": "Eliminar Recursos"
       }
     },
     "messages": {
@@ -174,7 +184,9 @@
       "close": "Schließen",
       "dismiss": "Verwerfen",
       "new_folder": "Neuer Ordner",
-      "delete_folder": "Ordner {name} löschen"
+      "delete_folder": "Ordner {name} löschen",
+      "cancel": "Abbrechen",
+      "delete": "Löschen"
     },
     "sections": {
       "stats": {
@@ -226,6 +238,9 @@
         "placeholder": "Ordnernamen eingeben",
         "cancel": "Abbrechen",
         "create": "Ordner Erstellen"
+      },
+      "delete_confirm": {
+        "title": "Assets Löschen"
       }
     },
     "messages": {
@@ -253,7 +268,9 @@
       "close": "Fermer",
       "dismiss": "Ignorer",
       "new_folder": "Nouveau Dossier",
-      "delete_folder": "Supprimer le dossier {name}"
+      "delete_folder": "Supprimer le dossier {name}",
+      "cancel": "Annuler",
+      "delete": "Supprimer"
     },
     "sections": {
       "stats": {
@@ -305,6 +322,9 @@
         "placeholder": "Entrez le nom du dossier",
         "cancel": "Annuler",
         "create": "Créer un Dossier"
+      },
+      "delete_confirm": {
+        "title": "Supprimer les Ressources"
       }
     },
     "messages": {

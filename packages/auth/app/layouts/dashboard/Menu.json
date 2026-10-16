@@ -85,6 +85,7 @@
       "autoReply": "Auto-Reply",
       "announcements": "Announcements",
       "feedback": "Feedback",
+      "dataBrowser": "Data Browser",
       "switched": "Business switched",
       "switchFailed": "Could not switch business",
       "search": "Search..."
@@ -205,6 +206,7 @@
       "autoReply": "Respuesta automática",
       "announcements": "Anuncios",
       "feedback": "Comentarios",
+      "dataBrowser": "Explorador de Datos",
       "switched": "Negocio cambiado",
       "switchFailed": "No se pudo cambiar de negocio",
       "search": "Buscar..."
@@ -325,6 +327,7 @@
       "autoReply": "Auto-Antwort",
       "announcements": "Ankündigungen",
       "feedback": "Feedback",
+      "dataBrowser": "Datenbrowser",
       "switched": "Unternehmen gewechselt",
       "switchFailed": "Unternehmen konnte nicht gewechselt werden",
       "search": "Suchen..."
@@ -445,6 +448,7 @@
       "autoReply": "Réponse auto",
       "announcements": "Annonces",
       "feedback": "Commentaires",
+      "dataBrowser": "Explorateur de données",
       "switched": "Entreprise changée",
       "switchFailed": "Impossible de changer d’entreprise",
       "search": "Rechercher..."

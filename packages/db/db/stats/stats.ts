@@ -1,5 +1,5 @@
 import type { InferSelectModel } from 'drizzle-orm'
-import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
+import { index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core'
 import { platformPosts, posts } from '../posts/posts'
 import { socialMediaAccounts } from '../socialMedia/socialMedia'
 
@@ -7,6 +7,7 @@ export const accountMetrics = sqliteTable('account_metrics', {
   id: text('id').primaryKey(),
   socialAccountId: text('social_account_id').notNull().references(() => socialMediaAccounts.id, { onDelete: 'cascade' }),
   platform: text('platform').notNull(),
+  snapshotDate: text('snapshot_date', { length: 10 }),
   followers: integer('followers'),
   following: integer('following'),
   posts: integer('posts'),
@@ -19,6 +20,7 @@ export const accountMetrics = sqliteTable('account_metrics', {
 }, (table) => [
   index('account_metrics_account_collected_idx').on(table.socialAccountId, table.collectedAt),
   index('account_metrics_platform_idx').on(table.platform),
+  uniqueIndex('account_metrics_account_day_unique').on(table.socialAccountId, table.snapshotDate),
 ])
 
 export const postMetrics = sqliteTable('post_metrics', {

@@ -7,19 +7,31 @@ triggers:
   - "admin crud"
   - "admin dashboard"
   - "audit log"
+  - "admin data browser"
+  - "register a table"
 edges:
   - target: "context/conventions.md"
     condition: when writing any new code
   - target: "patterns/add-endpoint.md"
     condition: when adding admin API endpoints
-last_updated: 2026-08-16
+last_updated: 2026-10-16
 ---
 
 # Admin Data Views
 
 ## Context
 
-Admin pages live flat in `packages/site/app/pages/app/admin/*.vue` (not directories). All admin pages use `definePageMeta({ layout: 'dashboard-layout' })`. Server endpoints live under `packages/site/server/api/v1/admin/` and admin-check every request via `checkUserIsLogin(event)` plus `if (currentUser.role !== 'admin') throw createError(403)`.
+Admin pages live in `packages/site/app/pages/app/admin/`. Single-entity pages
+(users, businesses, integrations, audit log) sit flat as `*.vue`; **every DB
+table additionally gets a generic page for free** via the data browser:
+catalog `data/index.vue` + dynamic `data/[table].vue`, driven by the registry
+in `packages/db/server/utils/admin-tables.ts` and `AdminDataService`
+(`packages/db/server/services/admin-data.service.ts`, type in
+`services/interfaces.ts`). Prefer registering the table over writing a new
+page — a registry entry is enough to get view/edit/delete + bulk delete.
+All admin pages use `definePageMeta({ layout: 'dashboard-layout' })`. Server
+endpoints live under `packages/site/server/api/v1/admin/` and admin-check
+every request via `checkUserIsLogin(event)` plus `if (currentUser.role !== 'admin') throw createError(403)`.
 
 ## Steps
 
@@ -30,12 +42,19 @@ Admin pages live flat in `packages/site/app/pages/app/admin/*.vue` (not director
    - Row actions: `UDropdownMenu` with `content: { align: 'end' }` + `items` array (label/separator entries with `onSelect`).
 3. **User CRUD** — use `authClient.admin.*` (`createUser`, `setRole`, `banUser`, `unbanUser`, `removeUser`) from `#layers/BaseAuth/lib/auth-client`. No `updateUser` exists in better-auth 1.6 — edit = setRole + ban/unban.
 4. **Business/audit endpoints** — business logic must live in the service layer (`packages/db/server/services/`). Add admin helpers there (e.g. `deleteRaw(id)` on `business-profile.service.ts`, `deleteById/deleteMany/deleteAll` on `auditLog.service.ts`) and extend the type in `services/interfaces.ts`. Route handlers only validate + delegate.
-5. **Recipes** — list endpoint `GET /api/v1/admin/<x>`; detail update `PUT /api/v1/admin/businesses/[id]`; deletes use `DELETE`; audit deletion `logAuditService.logAuditEvent(...)` the action itself.
+5. **Recipes** — list endpoint `GET /api/v1/admin/<x>`; detail update `PUT /api/v1/admin/businesses/[id]`; deletes use `DELETE`; audit deletion `logAuditService.logAuditEvent(...)` the action itself. The generic data browser deviates on purpose: row keys travel in PUT/bulk-delete **bodies** (`{key, values}` / `{keys}`, max 500), never in the URL — composite PKs are joined with `\u001f` and text keys may contain `/`, neither of which survives a path segment (`getRouterParam` doesn't decode here). Clients hand back the server-computed `_key` verbatim.
 6. **Mutations must be optimistic** — patch/splice the local row in place (`patchUser`/`removeUsersLocal`), roll back on failure. Never `fetchUsers()` after ban/unban/delete/role change: full refetch rebuilds every row, loses selection and scroll.
 7. **Bulk user actions** — single endpoint `POST /api/v1/admin/users/bulk` with zod `{ action: 'ban'|'unban'|'delete', userIds: [1..100], banReason? }`; loop `authApi.*` server-side, return per-item `{ userId, ok, error? }`; reject the caller's own ID. Client MUST pass `:get-row-id="(row) => row.id"` (stable identity — without it TanStack keys selection by row index, which desyncs on filter/mutate and resolves to wrong/empty rows) and resolve selection from `rowSelection` keys against the data array; clear `rowSelection` after applying results. Never resolve selection through `tableApi` refs. Row Ban/Delete disabled for self.
 8. **Motion** — `@vueuse/motion` ships via the BaseUI layer (`v-motion-fade-visible-once`, `v-motion-slide-bottom`, `v-motion-fade` all usable in site pages). UTable v4 rows share one global `tr` class with no per-row hooks — animate chrome (bulk bar, header, modals, count ticks), not rows.
 9. **Modals bound to object state** — when the modal's subject is an object ref (`pendingDelete`, `selectedFeedback`), do NOT `v-model:open` it (open expects boolean). Use `:open="x !== null" @update:open="handleOpenChange"` with a named handler that clears on `false`.
 10. **Layer placement for shell UI** — `DashboardLayout` lives in the auth layer, so anything mounted there (banners, FABs) must live in `auth` or `ui` components, never `site`. Auth-layer components may use `UseUser`; ui-layer ones must take props instead.
+
+## Gotchas (from the generic-browser build, 2026-10-16)
+
+- **`.gitignore` hides `data/` route dirs.** The root `data/` pattern matches any directory named `data`, including Nuxt file-based routes (`server/api/v1/admin/data/`, `app/pages/app/admin/data/`). They work on disk but stay invisible to git — keep the `!...` negations in `.gitignore` next to the `data/` line.
+- **`USelect` rejects empty-string values.** A "show all" option with `{ value: '' }` throws a dev error overlay; use a sentinel (e.g. `__all__`) and map it back to `''` on change.
+- **New services implement an `*ServiceType`.** Add the type to `services/interfaces.ts` (structural/inline shapes avoid import cycles) and declare `implements` on the class, like every other db service.
+- **Deeply nested layer components may not auto-import.** If a component renders nothing with no build error, check the browser console for `Failed to resolve component` and import it explicitly via `#layers/...` (this bit the deletion progress modal).
 
 ## Verify Checklist
 

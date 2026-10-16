@@ -88,6 +88,7 @@ const handleSave = async (postData: PostCreateBase) => {
     });
     router.push('/app/posts');
   } catch (error: any) {
+    postModalRef.value?.clearSaving();
     toast.add({
       title: t('toast.postCreatedFailed'),
       description: error?.message || '',
@@ -107,6 +108,7 @@ const handleUpdate = async (postData: PostCreateBase & { id: string }) => {
     });
     router.push('/app/posts');
   } catch (error: any) {
+    postModalRef.value?.clearSaving();
     toast.add({
       title: t('toast.postCreatedFailed'),
       description: error?.message || '',

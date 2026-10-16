@@ -155,6 +155,8 @@ COPY --from=builder /usr/app/packages/site/.output ./.output
 COPY --from=builder /usr/app/.bin/yt-dlp /usr/local/bin/yt-dlp
 # Copy the musl native binding into the exact location where libsql resolves it.
 COPY --from=builder /tmp/musl/node_modules/@libsql/linux-x64-musl /usr/app/.output/server/node_modules/@libsql/linux-x64-musl
+# Nitro does not trace these — they are plain SQL read from disk at runtime.
+COPY --from=builder /usr/app/packages/db/db/migrations /usr/app/.output/migrations
 
 # Verify the musl binding is present and can be loaded by Node before shipping.
 RUN node -e "require('/usr/app/.output/server/node_modules/@libsql/linux-x64-musl')" && \
@@ -162,6 +164,7 @@ RUN node -e "require('/usr/app/.output/server/node_modules/@libsql/linux-x64-mus
 
 ENV NODE_ENV=production
 ENV NUXT_HOST=0.0.0.0
+ENV DRIZZLE_MIGRATIONS_DIR=/usr/app/.output/migrations
 # Consumed by packages/agent/server/utils/ytdlp.ts, which also honours the
 # NUXT_-prefixed form so a value in .env cannot be silently ignored.
 ENV YTDLP_PATH=/usr/local/bin/yt-dlp

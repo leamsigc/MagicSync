@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gte, inArray, lt } from 'drizzle-orm'
+import { and, asc, desc, eq, gte, inArray, lt, lte } from 'drizzle-orm'
 import dayjs from 'dayjs'
 import type { SocialMediaAccount } from '#layers/BaseDB/db/schema'
 import { accountMetrics, postMetrics, statsSyncState } from '#layers/BaseDB/db/schema'
@@ -166,12 +166,12 @@ export class AnalyticsService {
     if (accounts.length === 0) return []
     const accountIds = accounts.map(a => a.id)
     const conditions = [inArray(accountMetrics.socialAccountId, accountIds)]
-    if (options.startDate) conditions.push(gte(accountMetrics.collectedAt, dayjs(options.startDate).toDate()))
-    if (options.endDate) conditions.push(lt(accountMetrics.collectedAt, dayjs(options.endDate).add(1, 'day').toDate()))
+    if (options.startDate) conditions.push(gte(accountMetrics.snapshotDate, dayjs(options.startDate).format('YYYY-MM-DD')))
+    if (options.endDate) conditions.push(lte(accountMetrics.snapshotDate, dayjs(options.endDate).format('YYYY-MM-DD')))
     if (filters.accountId) conditions.push(eq(accountMetrics.socialAccountId, filters.accountId))
     const rows = await this.db.query.accountMetrics.findMany({
       where: and(...conditions),
-      orderBy: desc(accountMetrics.collectedAt),
+      orderBy: desc(accountMetrics.snapshotDate),
       limit: options.limit || 500,
       offset: options.offset || 0,
     })
@@ -247,15 +247,17 @@ export class AnalyticsService {
     const start = dayjs().startOf('day')
     const windowStart = start.subtract(days, 'day')
     const previousStart = windowStart.subtract(days, 'day')
+    const windowStartDay = windowStart.format('YYYY-MM-DD')
+    const previousStartDay = previousStart.format('YYYY-MM-DD')
     const entries: ComparisonEntry[] = []
     for (const account of accounts) {
       const current = await this.db.query.accountMetrics.findFirst({
-        where: and(eq(accountMetrics.socialAccountId, account.id), eq(accountMetrics.status, 'success'), gte(accountMetrics.collectedAt, windowStart.toDate())),
-        orderBy: desc(accountMetrics.collectedAt),
+        where: and(eq(accountMetrics.socialAccountId, account.id), eq(accountMetrics.status, 'success'), gte(accountMetrics.snapshotDate, windowStartDay)),
+        orderBy: desc(accountMetrics.snapshotDate),
       })
       const previous = await this.db.query.accountMetrics.findFirst({
-        where: and(eq(accountMetrics.socialAccountId, account.id), eq(accountMetrics.status, 'success'), gte(accountMetrics.collectedAt, previousStart.toDate()), lt(accountMetrics.collectedAt, windowStart.toDate())),
-        orderBy: desc(accountMetrics.collectedAt),
+        where: and(eq(accountMetrics.socialAccountId, account.id), eq(accountMetrics.status, 'success'), gte(accountMetrics.snapshotDate, previousStartDay), lt(accountMetrics.snapshotDate, windowStartDay)),
+        orderBy: desc(accountMetrics.snapshotDate),
       })
       const cEng = current ? toEngagementRecord(current) : {}
       const pEng = previous ? toEngagementRecord(previous) : {}

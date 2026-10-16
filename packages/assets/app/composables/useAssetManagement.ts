@@ -48,6 +48,16 @@ export interface FileUploadItem {
   asset?: Asset
 }
 
+export type AssetDeletionStatus = 'pending' | 'deleting' | 'deleted' | 'error'
+
+export interface AssetDeletionItem {
+  id: string
+  name: string
+  size: number
+  status: AssetDeletionStatus
+  error?: string
+}
+
 function getErrorMessage(error: unknown, fallback: string): string {
   if (error instanceof Error) return error.message
   if (error && typeof error === 'object' && 'data' in error) {
@@ -62,6 +72,27 @@ function appendFolderScope(params: URLSearchParams, scope: FolderScope | undefin
   if (token) params.append('folderId', token)
 }
 
+function resolveDeletionItem(id: string): AssetDeletionItem {
+  const asset = assets.value.find(item => item.id === id) ?? selectedAssets.value.find(item => item.id === id)
+  return {
+    id,
+    name: asset?.originalName || asset?.filename || id,
+    size: asset?.size ?? 0,
+    status: 'pending',
+  }
+}
+
+async function requestAssetDeletion(item: AssetDeletionItem): Promise<void> {
+  item.status = 'deleting'
+  try {
+    await $fetch(`/api/v1/assets/${item.id}`, { method: 'DELETE' })
+    item.status = 'deleted'
+  } catch (caught: unknown) {
+    item.status = 'error'
+    item.error = getErrorMessage(caught, 'Failed to delete asset')
+  }
+}
+
 const assets = ref<Asset[]>([])
 const assetFolders = ref<AssetFolderSummary[]>([])
 const folderScope = ref<FolderScope>({ kind: 'unfiled' })
@@ -69,6 +100,8 @@ const folderScope = ref<FolderScope>({ kind: 'unfiled' })
 // page component runs the move and delete, so a per-instance ref left the executor
 // reading an empty selection and posting `assetIds: []`.
 const selectedAssets = ref<Asset[]>([])
+const deletionItems = ref<AssetDeletionItem[]>([])
+const isDeletingAssets = ref(false)
 
 export const useAssetManagement = () => {
   const isLoading = ref(false)
@@ -292,29 +325,26 @@ export const useAssetManagement = () => {
   }
 
   const deleteAssets = async (assetIds: string[]): Promise<boolean> => {
-    isLoading.value = true
+    if (isDeletingAssets.value || assetIds.length === 0) return false
+
+    isDeletingAssets.value = true
     error.value = null
+    deletionItems.value = assetIds.map(resolveDeletionItem)
 
-    try {
-      await Promise.all(
-        assetIds.map(id =>
-          $fetch(`/api/v1/assets/${id}`, { method: 'DELETE' })
-        )
-      )
+    await Promise.all(deletionItems.value.map(requestAssetDeletion))
 
-      // Remove deleted assets from the list
-      assets.value = assets.value.filter(asset => !assetIds.includes(asset.id))
+    const deletedIds = new Set(
+      deletionItems.value.filter(item => item.status === 'deleted').map(item => item.id),
+    )
+    assets.value = assets.value.filter(asset => !deletedIds.has(asset.id))
+    selectedAssets.value = selectedAssets.value.filter(asset => !deletedIds.has(asset.id))
 
-      // Remove from selected assets
-      selectedAssets.value = selectedAssets.value.filter(asset => !assetIds.includes(asset.id))
+    isDeletingAssets.value = false
+    return deletedIds.size === assetIds.length
+  }
 
-      return true
-    } catch (err: any) {
-      error.value = err.data?.message || err.message || 'Failed to delete assets'
-      return false
-    } finally {
-      isLoading.value = false
-    }
+  const clearDeletionHistory = (): void => {
+    deletionItems.value = []
   }
 
   const selectAsset = (asset: Asset): void => {
@@ -526,6 +556,8 @@ export const useAssetManagement = () => {
     uploadQueue: readonly(uploadQueue),
     assetFolders: readonly(assetFolders),
     folderScope: readonly(folderScope),
+    deletionItems: readonly(deletionItems),
+    isDeletingAssets: readonly(isDeletingAssets),
 
     // Actions
     fetchAssets,
@@ -533,6 +565,7 @@ export const useAssetManagement = () => {
     uploadFiles,
     uploadFromUrl,
     deleteAssets,
+    clearDeletionHistory,
     refreshAssets,
     loadMoreAssets,
     fetchFolders,

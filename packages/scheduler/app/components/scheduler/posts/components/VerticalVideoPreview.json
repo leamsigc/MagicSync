@@ -1,0 +1,42 @@
+{
+  "en": {
+    "defaultHandle": "yourbrand",
+    "defaultBrand": "Your Brand",
+    "mediaAlt": "Reel media",
+    "emptyTitle": "No media yet",
+    "emptyBody": "Add a video or photo to preview how this reel will look.",
+    "unplayableTitle": "Video preview unavailable",
+    "unplayableBody": "This browser cannot play this video file. The upload itself is unaffected.",
+    "originalSound": "Original Sound - {name}"
+  },
+  "es": {
+    "defaultHandle": "tumarca",
+    "defaultBrand": "Tu marca",
+    "mediaAlt": "Contenido del reel",
+    "emptyTitle": "Sin contenido aún",
+    "emptyBody": "Añade un video o una foto para ver cómo quedará este reel.",
+    "unplayableTitle": "Vista previa no disponible",
+    "unplayableBody": "Este navegador no puede reproducir este video. La subida no se ve afectada.",
+    "originalSound": "Sonido original - {name}"
+  },
+  "de": {
+    "defaultHandle": "deinemarke",
+    "defaultBrand": "Deine Marke",
+    "mediaAlt": "Reel-Medien",
+    "emptyTitle": "Noch keine Medien",
+    "emptyBody": "Füge ein Video oder Foto hinzu, um zu sehen, wie dieses Reel aussehen wird.",
+    "unplayableTitle": "Videovorschau nicht verfügbar",
+    "unplayableBody": "Dieser Browser kann diese Videodatei nicht abspielen. Der Upload ist davon nicht betroffen.",
+    "originalSound": "Originalton - {name}"
+  },
+  "fr": {
+    "defaultHandle": "votremarque",
+    "defaultBrand": "Votre marque",
+    "mediaAlt": "Média du reel",
+    "emptyTitle": "Aucun média pour le moment",
+    "emptyBody": "Ajoute une vidéo ou une photo pour voir à quoi ressemblera ce reel.",
+    "unplayableTitle": "Aperçu vidéo indisponible",
+    "unplayableBody": "Ce navigateur ne peut pas lire ce fichier vidéo. L'envoi n'est pas affecté.",
+    "originalSound": "Son original - {name}"
+  }
+}

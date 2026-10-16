@@ -1,0 +1,74 @@
+{
+  "en": {
+    "title": "Deleting files",
+    "title_done": "Deletion complete",
+    "subtitle": "Files are deleted in the background — you can keep working.",
+    "progress": "{done} of {total} finished",
+    "run_in_background": "Run in background",
+    "close": "Close",
+    "pill": {
+      "label": "Deleting {done}/{total}",
+      "open": "Show deletion progress"
+    },
+    "toasts": {
+      "success_title": "Deletion complete",
+      "success": "{count} file{plural} deleted",
+      "partial_title": "Some files could not be deleted",
+      "partial": "Deleted {deleted}, failed {failed}."
+    }
+  },
+  "es": {
+    "title": "Eliminando archivos",
+    "title_done": "Eliminación completada",
+    "subtitle": "Los archivos se eliminan en segundo plano — puedes seguir trabajando.",
+    "progress": "{done} de {total} finalizados",
+    "run_in_background": "Ejecutar en segundo plano",
+    "close": "Cerrar",
+    "pill": {
+      "label": "Eliminando {done}/{total}",
+      "open": "Ver progreso de eliminación"
+    },
+    "toasts": {
+      "success_title": "Eliminación completada",
+      "success": "{count} archivo{plural} eliminado",
+      "partial_title": "Algunos archivos no se pudieron eliminar",
+      "partial": "Eliminados {deleted}, fallaron {failed}."
+    }
+  },
+  "de": {
+    "title": "Dateien werden gelöscht",
+    "title_done": "Löschen abgeschlossen",
+    "subtitle": "Dateien werden im Hintergrund gelöscht — Sie können weiterarbeiten.",
+    "progress": "{done} von {total} abgeschlossen",
+    "run_in_background": "Im Hintergrund ausführen",
+    "close": "Schließen",
+    "pill": {
+      "label": "Lösche {done}/{total}",
+      "open": "Löschfortschritt anzeigen"
+    },
+    "toasts": {
+      "success_title": "Löschen abgeschlossen",
+      "success": "{count} Datei{plural} gelöscht",
+      "partial_title": "Einige Dateien konnten nicht gelöscht werden",
+      "partial": "{deleted} gelöscht, {failed} fehlgeschlagen."
+    }
+  },
+  "fr": {
+    "title": "Suppression des fichiers",
+    "title_done": "Suppression terminée",
+    "subtitle": "Les fichiers sont supprimés en arrière-plan — vous pouvez continuer à travailler.",
+    "progress": "{done} sur {total} terminés",
+    "run_in_background": "Exécuter en arrière-plan",
+    "close": "Fermer",
+    "pill": {
+      "label": "Suppression {done}/{total}",
+      "open": "Afficher la progression de la suppression"
+    },
+    "toasts": {
+      "success_title": "Suppression terminée",
+      "success": "{count} fichier{plural} supprimé(s)",
+      "partial_title": "Certains fichiers n'ont pas pu être supprimés",
+      "partial": "{deleted} supprimé(s), {failed} échoué(s)."
+    }
+  }
+}

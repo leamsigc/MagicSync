@@ -17,6 +17,7 @@
 
 import type { Asset } from '#layers/BaseDB/db/schema'
 import type { FolderScope } from '#layers/BaseShared/shared/utils/asset-folders'
+import AssetDeletionProgressModal from '#layers/BaseAssets/app/components/assets/media/components/AssetDeletionProgressModal.vue'
 import MediaFilters from '#layers/BaseAssets/app/components/assets/media/components/MediaFilters.vue'
 import MediaPageHeader from '#layers/BaseAssets/app/components/assets/media/components/MediaPageHeader.vue'
 import MediaStats from '#layers/BaseAssets/app/components/assets/media/components/MediaStats.vue'
@@ -36,6 +37,7 @@ const {
   assetFolders,
   folderScope,
   deleteAssets,
+  isDeletingAssets,
   getStorageUsage,
   clearError,
   refreshAssets,
@@ -183,45 +185,40 @@ const handleFileUpload = async (files: File[]) => {
   // showUploader.value = false
 }
 
-const handleDeleteSelected = async () => {
-  if (selectedAssets.value.length === 0) return
+const showDeleteConfirm = ref(false)
 
-  const confirmed = confirm(t('messages.delete_confirm', {
-    count: selectedAssets.value.length,
-    plural: selectedAssets.value.length !== 1 ? 's' : ''
-  }))
-  if (!confirmed) return
-
-  const assetIds = selectedAssets.value.map(asset => asset.id)
-  const success = await deleteAssets(assetIds)
-
-  if (success) {
-    useToast().add({
-      title: t('messages.assets_deleted', {
-        count: selectedAssets.value.length,
-        plural: selectedAssets.value.length !== 1 ? 's' : ''
-      }),
-      color: 'success'
-    })
-  }
+const openUploader = () => {
+  showUploader.value = true
 }
+
+const closeUploader = () => {
+  showUploader.value = false
+}
+
+const openDeleteConfirm = () => {
+  if (selectedAssets.value.length === 0) return
+  showDeleteConfirm.value = true
+}
+
+const closeDeleteConfirm = () => {
+  showDeleteConfirm.value = false
+}
+
+const confirmDeleteSelected = async () => {
+  const assetIds = selectedAssets.value.map(asset => asset.id)
+  closeDeleteConfirm()
+  await deleteAssets(assetIds)
+}
+
+const deleteSelection = computed(() => ({
+  count: selectedAssets.value.length,
+  plural: selectedAssets.value.length === 1 ? '' : 's',
+}))
 
 
 const handleOpenEditModal = (asset: Asset) => {
   selectedAssetForEdit.value = asset
   showEditor.value = true
-}
-const handleDeleteAsset = (asset: Asset[]) => {
-  // Show toast
-  const count = asset.length
-  toast.add({
-    title: 'Success',
-    description: t('messages.assets_deleted', {
-      count,
-      plural: count !== 1 ? 's' : ''
-    }),
-    color: 'success'
-  })
 }
 
 const handleUploadError = (message: string) => {
@@ -262,8 +259,9 @@ const handleDriveImport = async (imported: Asset[]) => {
 <template>
   <UContainer class="py-6 space-y-6 ">
     <!-- Header -->
-    <MediaPageHeader :selected-assets-count="selectedAssets.length" @delete-selected="handleDeleteSelected"
-      @upload-assets="showUploader = true" @create-folder="handleCreateFolder" data-tour="add-assets-step-0" />
+    <MediaPageHeader :selected-assets-count="selectedAssets.length" :is-deleting-assets="isDeletingAssets"
+      @delete-selected="openDeleteConfirm" @upload-assets="openUploader" @create-folder="handleCreateFolder"
+      data-tour="add-assets-step-0" />
 
     <!-- Business Selection Warning -->
     <UAlert v-if="!hasSelectedBusiness" color="neutral" variant="soft" icon="lucide:info" class="mb-4">
@@ -333,7 +331,7 @@ const handleDriveImport = async (imported: Asset[]) => {
             <UCard class="p-6" variant="soft" data-tour="add-assets-step-2">
               <MediaGallery :business-id="selectedBusinessId" :selectable="true" :multi-select="true" :show-uploader="false"
                 :filter-type="filterType" :folder-scope="activeScope" :folders="assetFolders" @select="handleAssetSelected"
-                @deselect="handleAssetDeselected" @upload="handleFileUpload" @delete="handleDeleteAsset"
+                @deselect="handleAssetDeselected" @upload="handleFileUpload"
                 @open-edit-modal="handleOpenEditModal" @move-selected="handleMoveSelected" />
             </UCard>
           </div>
@@ -362,7 +360,7 @@ const handleDriveImport = async (imported: Asset[]) => {
       </template>
 
       <template #footer>
-        <UButton variant="outline" @click="showUploader = false">
+        <UButton variant="outline" @click="closeUploader">
           {{ t('buttons.close') }}
         </UButton>
       </template>
@@ -398,6 +396,31 @@ const handleDriveImport = async (imported: Asset[]) => {
         </div>
       </template>
     </UModal>
+
+    <UModal v-model:open="showDeleteConfirm">
+      <template #header>
+        <div class="flex items-center gap-3">
+          <Icon name="lucide:trash-2" class="h-6 w-6 text-destructive" />
+          <h3 class="font-semibold">{{ t('dialogs.delete_confirm.title') }}</h3>
+        </div>
+      </template>
+      <template #body>
+        <p class="text-sm text-muted-foreground">
+          {{ t('messages.delete_confirm', deleteSelection) }}
+        </p>
+      </template>
+      <template #footer>
+        <div class="flex justify-end gap-2">
+          <UButton variant="outline" @click="closeDeleteConfirm">{{ t('buttons.cancel') }}</UButton>
+          <UButton color="error" @click="confirmDeleteSelected">
+            <Icon name="lucide:trash-2" class="mr-2 h-4 w-4" />
+            {{ t('buttons.delete') }}
+          </UButton>
+        </div>
+      </template>
+    </UModal>
+
+    <AssetDeletionProgressModal />
 
     <!-- Asset Editor Dialog -->
     <!-- <AssetEditor v-if="selectedAssetForEdit" v-model:open="showEditor" :asset="selectedAssetForEdit"

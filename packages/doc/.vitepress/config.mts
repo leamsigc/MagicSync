@@ -118,8 +118,13 @@ export default withMermaid(defineConfig({
             { text: 'Calendar Data Contract', link: '/guide/calendar-data-contract' },
             { text: 'Calendar Drag Commit', link: '/guide/calendar-drag-commit' },
             { text: 'Platform Preview System', link: '/guide/platform-preview-system' },
+            { text: 'Admin Data Browser', link: '/guide/admin-data-browser' },
+            { text: 'Media Deletion Progress', link: '/guide/media-deletion-progress' },
             { text: 'Graph API v26 Migration', link: '/guide/graph-api-v26-migration' },
             { text: 'Nuxt SEO v5 → v6 Migration', link: '/guide/nuxtjs-seo-v6-migration' },
+            { text: 'Account Metrics Daily Rollup', link: '/guide/account-metrics-daily-rollup' },
+            { text: 'Migrations on Docker Boot', link: '/guide/docker-boot-migrations' },
+            { text: 'Social Account Business Placement', link: '/guide/social-account-business-placement' },
           ],
         },
         {

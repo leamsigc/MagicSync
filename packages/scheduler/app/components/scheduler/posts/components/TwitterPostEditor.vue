@@ -59,6 +59,7 @@ const handleSave = async (postData: PostCreateBase) => {
     postModalRef.value?.ResetToBase();
     $emit('refresh');
   } catch (error: any) {
+    postModalRef.value?.clearSaving();
     toast.add({
       title: t('toast.postCreatedFailed'),
       description: error?.message || '',

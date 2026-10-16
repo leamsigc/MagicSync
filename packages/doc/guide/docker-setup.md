@@ -32,6 +32,8 @@ The fastest way to run MagicSync on your own server.
          - .env
        environment:
          - NUXT_HOST=0.0.0.0
+         # Apply pending migrations on first boot (image ships them; see Dockerfile).
+         - DB_MIGRATE_ON_BOOT=1
        ports:
          - "3000:3000"
 
@@ -166,6 +168,7 @@ The dev image includes bash, curl, ffmpeg, and the pinned yt-dlp binary. For the
 | `SGAI_API_KEY` | No | Deployment fallback ScrapeGraphAI key |
 | `PYTHON_TOOLS_URL` / `PYTHON_TOOLS_TOKEN` | No | Python tools sidecar (only with the `tools` profile) |
 | `AGENT_DEFAULT_PROVIDER` / `AGENT_DEFAULT_MODEL` | No | Fallback model when a user has no effective config |
+| `DB_MIGRATE_ON_BOOT` | No | `1` applies pending migrations on container boot (fail-fast). Set by `docker-compose.yml`; `DRIZZLE_MIGRATIONS_DIR` is baked into the image |
 
 See [Self-Hosting](/guide/self-hosting) for the full variable reference, including `AGENT_*` limits.
 

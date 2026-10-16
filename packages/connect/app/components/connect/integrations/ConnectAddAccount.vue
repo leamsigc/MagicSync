@@ -30,29 +30,31 @@ const HandleConnectBaseOnThePlatform = (connection: Connection) => {
 }
 const schema = z.object({
   baseUrl: z.string().optional(),
-  username: z.string('Username is required'),
-  password: z.string('Password is required')
+  username: z.string(t('bluesky.username_error')),
+  password: z.string(t('bluesky.password_error'))
 })
 type Schema = z.output<typeof schema>
 const fields = ref<AuthFormField[]>([
   {
     name: 'baseUrl',
     type: 'text',
-    label: 'Base URL',
-    placeholder: 'Enter your base url',
+    label: t('bluesky.base_url_label'),
+    placeholder: t('bluesky.base_url_placeholder'),
+    help: t('bluesky.base_url_help'),
   },
   {
     name: 'username',
     type: 'text',
-    label: 'Username',
-    placeholder: 'Enter your username',
+    label: t('bluesky.username_label'),
+    placeholder: t('bluesky.username_placeholder'),
+    help: t('bluesky.username_help'),
     required: true
   },
   {
     name: 'password',
     type: 'password',
-    label: 'Password',
-    placeholder: 'Enter your password',
+    label: t('bluesky.password_label'),
+    placeholder: t('bluesky.password_placeholder'),
     required: true
   },
 ])
@@ -91,11 +93,11 @@ v-for="connection in connectionList" :key="connection.name" color="neutral" vari
           @click="HandleConnectBaseOnThePlatform(connection)">
           <template v-if="connection.platform == 'bluesky'">
             <UModal
-v-model:open="blueskyModal" title="Bluesky" :ui="{ footer: 'justify-end' }" size="small"
+v-model:open="blueskyModal" :title="t('bluesky.title')" :ui="{ footer: 'justify-end' }" size="small"
               class="max-w-sm">
               <template #body>
                 <UAuthForm
-:schema="schema" title="Bluesky" description="Enter bluesky credentials" icon="i-lucide-user"
+:schema="schema" :title="t('bluesky.title')" :description="t('bluesky.description')" icon="i-lucide-user"
                   :fields="fields" class="max-w-md" @submit="HandleConnectToBluesky" />
               </template>
             </UModal>

@@ -1,5 +1,17 @@
 import { socialMediaAccountService, type SocialMediaPlatform } from "#layers/BaseDB/server/services/social-media-account.service"
 import { checkUserIsLogin, encryptKey } from "#layers/BaseAuth/server/utils/AuthHelpers"
+
+/**
+ * Accept a bare host (`pds.example.com`) or a full URL and return a normalized
+ * service URL. `AtpAgent` does `new URL(service)`, so a scheme-less host throws
+ * (`Invalid URL`) — which used to be masked as a bogus 401 on connect.
+ */
+function normalizeServiceUrl(input?: string): string {
+  const raw = (input || '').trim()
+  if (!raw) return 'https://bsky.social'
+  const withScheme = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`
+  return withScheme.replace(/\/+$/, '')
+}
 /**
  * API Key / Credential-based authentication endpoint
  * Handles: bluesky, devto, wordpress
@@ -50,9 +62,10 @@ export default defineEventHandler(async (event) => {
         }
 
         // Validate credentials by attempting login
+        const service = normalizeServiceUrl(baseUrl)
         try {
           const { AtpAgent } = await import('@atproto/api')
-          const agent = new AtpAgent({ service: baseUrl || 'https://bsky.social' })
+          const agent = new AtpAgent({ service })
           await agent.login({ identifier: username, password })
 
           const toke = await encryptKey(password);
@@ -66,14 +79,15 @@ export default defineEventHandler(async (event) => {
             name: username,
             username,
             accessToken: toke,
-            baseUrl: baseUrl || 'https://bsky.social',
+            baseUrl: service,
             picture
           }
         } catch (error) {
           log.error({ message: 'Bluesky authentication failed', platform, error })
           throw createError({
             statusCode: 401,
-            statusMessage: 'Invalid Bluesky credentials'
+            // Surface the real reason instead of a generic "invalid credentials".
+            statusMessage: `Bluesky authentication failed: ${error instanceof Error ? error.message : String(error)}`
           })
         }
         break
@@ -178,8 +192,9 @@ export default defineEventHandler(async (event) => {
       id: accountInfo.id,
       picture: accountInfo.picture,
       name: accountInfo.username,
-      username: accountInfo.baseUrl,
+      username: accountInfo.username,
       access_token: accountInfo.accessToken,
+      baseUrl: accountInfo.baseUrl,
       user,
       businessId,
       platformId: platform

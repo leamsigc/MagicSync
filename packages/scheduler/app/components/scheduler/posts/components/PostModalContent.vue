@@ -64,10 +64,11 @@ interface PostForm extends Omit<PostCreateBase, 'targetPlatforms' | 'mediaAssets
   platformSettings?: Record<string, PlatformSettings>;
 }
 
-const { initialPost, preview = true } = defineProps<{
+const props = defineProps<{
   initialPost?: PostWithAllData;
   preview?: boolean;
 }>();
+const preview = computed(() => props.preview ?? true);
 const { getPlatformIcon } = usePlatformIcons();
 const emit = defineEmits(['save', 'update', 'close']);
 
@@ -108,7 +109,7 @@ const postForm = ref<PostForm>({
   lastError: null
 });
 const now = new Date();
-const selectedDate = shallowRef(
+const selectedDate = shallowRef<CalendarDate | null>(
   new CalendarDate(
     now.getFullYear(),
     now.getMonth() + 1,
@@ -121,6 +122,7 @@ const isDateUnavailable = (date: DateValue) => {
 const selectedTime = ref(dayjs(postForm.value.scheduledAt).format('HH:mm'));
 
 watch([selectedDate, selectedTime], () => {
+  if (!selectedDate.value) return;
   postForm.value.scheduledAt = dayjs(`${selectedDate.value}T${selectedTime.value}`).toDate();
 });
 
@@ -131,6 +133,8 @@ const activeBusinessId = useState<string>('business:id');
 const postMediaAssets = ref<Asset[]>([]);
 const postHasError = ref(false);
 const validationErrors = ref<{ platform: string; message: string }[]>([]);
+/** Which server action is in flight — drives the footer buttons' loading state. Set only after validation passes, so a rejected form never spins. */
+const savingStatus = ref<'draft' | 'pending' | 'published' | 'failed' | null>(null);
 const selectedPostFormat = ref<PostFormat>('post');
 
 const _previewsMap = {
@@ -153,9 +157,9 @@ type PreviewPlatform = keyof typeof _previewsMap;
 
 const explicitPreviewPlatform = ref<PreviewPlatform | 'default'>('default');
 
-async function loadInitialPost(post: typeof initialPost): Promise<void> {
+async function loadInitialPost(post: PostWithAllData | undefined): Promise<void> {
   if (!post) return;
-  log.debug({ value: post });
+  log.debug({ message: 'Loading initial post for editing', value: post });
 
   const platformPosts = (post as { platformPosts?: Array<{ platformPostId: string; socialAccountId: string }> }).platformPosts;
 
@@ -209,10 +213,10 @@ async function loadInitialPost(post: typeof initialPost): Promise<void> {
 
 onMounted(async () => {
   await getAllSocialMediaAccounts();
-  await loadInitialPost(initialPost);
+  await loadInitialPost(props.initialPost);
 });
 
-watch(() => initialPost, async (newPost) => {
+watch(() => props.initialPost, async (newPost) => {
   if (newPost) await loadInitialPost(newPost);
 });
 
@@ -316,6 +320,8 @@ const handleSavePost = async (status: 'draft' | 'pending' | 'published' | 'faile
     return;
   }
 
+  savingStatus.value = status;
+
   const postData = {
     ...postForm.value,
     status: status,
@@ -331,20 +337,20 @@ const handleSavePost = async (status: 'draft' | 'pending' | 'published' | 'faile
 }
 
 const ResetToBase = () => {
-    postForm.value = {
-      content: '',
-      businessId: '',
-      scheduledAt: new Date(),
-      mediaAssets: [],
-      targetPlatforms: [],
-      status: 'pending',
-      comment: [],
-      postFormat: 'post',
-      platformSettings: {},
-      retryCount: 0,
-      nextRetryAt: null,
-      lastError: null
-    }
+  postForm.value = {
+    content: '',
+    businessId: '',
+    scheduledAt: new Date(),
+    mediaAssets: [],
+    targetPlatforms: [],
+    status: 'pending',
+    comment: [],
+    postFormat: 'post',
+    platformSettings: {},
+    retryCount: 0,
+    nextRetryAt: null,
+    lastError: null
+  }
   selectedDate.value = new CalendarDate(
     now.getFullYear(),
     now.getMonth() + 1,
@@ -354,6 +360,7 @@ const ResetToBase = () => {
   postMediaAssets.value = [];
   postHasError.value = false;
   validationErrors.value = [];
+  savingStatus.value = null;
   explicitPreviewPlatform.value = 'default';
 }
 
@@ -371,9 +378,15 @@ const setScheduleDateAt = (date: Date) => {
   selectedTime.value = dayjs(postForm.value.scheduledAt).format('HH:mm');
 }
 
+/** Clears a stuck saving state — the parents call this when the server call fails and the modal stays open. */
+const clearSaving = () => {
+  savingStatus.value = null;
+};
+
 defineExpose({
   ResetToBase,
-  setScheduleDateAt
+  setScheduleDateAt,
+  clearSaving
 });
 
 
@@ -423,8 +436,7 @@ watch(platformSettingsState.platformContent, (val) => {
 }, { deep: true });
 
 watch(platformSettingsState.platformSettings, (val) => {
-  log.debug({ message: "Platform settings changed" });
-  log.debug({ value: val });
+  log.debug({ message: 'Platform settings changed', value: val });
 
   postForm.value.platformSettings = val;
 }, { deep: true });
@@ -564,7 +576,7 @@ const handleAIAction = async (action: string, prompt?: string) => {
       case 'smart-split': {
         const thread = await smartSplit(content, postForm.value.targetPlatforms.map(platform => platform.platformType));
         if (thread && thread.length > 0) {
-          postForm.value.content = thread[0];
+          postForm.value.content = thread[0] ?? postForm.value.content;
           postForm.value.comment = thread.slice(1);
         }
         break;
@@ -607,7 +619,7 @@ const handleTemplateAction = async (templateContent: string) => {
       return;
     }
     const activeBusiness = businesses.value.data.find(b => b.isActive);
-    log.debug({ value: activeBusiness });
+    log.debug({ message: 'Active business for template', value: activeBusiness });
     const finalContent = templateContent.replaceAll('{POSTCONTENT}', content).replaceAll('{BUSSINESID}', activeBusiness?.name || 'MagicSync');
     const result = await customPrompt(finalContent);
     postForm.value.content = result;
@@ -678,7 +690,8 @@ const handleAutoFormatApply = (overrides: Record<string, PlatformContentOverride
                     :currentPlatformConfig="currentPlatformConfig" />
                   <div class="flex items-center gap-1 shrink-0 pl-2">
                     <UButton variant="ghost" color="neutral" size="xs" icon="i-heroicons-scissors"
-                      :class="{ 'text-indigo-400': showAutoFormat }" @click="() => { showAutoFormat = !showAutoFormat }">
+                      :class="{ 'text-indigo-400': showAutoFormat }"
+                      @click="() => { showAutoFormat = !showAutoFormat }">
                       {{ t('autoFormat.toggle') }}
                     </UButton>
                     <UButton v-if="explicitPreviewPlatform !== 'default'" @click="revertToMaster" variant="ghost"
@@ -714,8 +727,9 @@ const handleAutoFormatApply = (overrides: Record<string, PlatformContentOverride
                     <template #assetsList>
                       <section v-for="asset in postMediaAssets" :key="asset.id">
 
-                        <img v-if="asset.mimeType === 'image'" :src="asset.url" :alt="asset.filename" class="size-20 rounded-2xl">
-                        <video v-else :src="asset.url" :alt="asset.filename" class="size-20 rounded-2xl"/>
+                        <img v-if="asset.mimeType === 'image'" :src="asset.url" :alt="asset.filename"
+                          class="size-20 rounded-2xl">
+                        <video v-else :src="asset.url" :alt="asset.filename" class="size-20 rounded-2xl" />
 
                       </section>
                     </template>
@@ -738,10 +752,9 @@ const handleAutoFormatApply = (overrides: Record<string, PlatformContentOverride
                 <div class="mt-4">
                   <h4 class="text-sm font-semibold mb-2">{{ t('newPostModal.commentsTitle') }}</h4>
                   <div v-for="(comment, index) in currentComments" :key="index" class="mb-2">
-                    <UTextarea :model-value="currentComments[index]"
+                    <UTextarea :model-value="currentComments[index] ?? ''"
                       :placeholder="t('newPostModal.commentPlaceholder', { index: index + 1 })" :rows="8"
-                      :maxlength="currentMaxCommentLength"
-                      color="neutral" variant="none"
+                      :maxlength="currentMaxCommentLength" color="neutral" variant="none"
                       class="w-full flex-1 bg-transparent resize-none focus:ring-0 p-4 text-lg text-zinc-100 border border-muted rounded-2xl placeholder-zinc-600 scrollbar-hide"
                       :class="{ 'text-red-400': comment.length > currentMaxCommentLength }"
                       @update:model-value="updateComment(index, $event)" />
@@ -772,9 +785,8 @@ const handleAutoFormatApply = (overrides: Record<string, PlatformContentOverride
         <div class=" p-4" v-if="preview">
           <ClientOnly>
             <PhonePreview :postContent="formatPostContent(postForm.content, currentPreviewPlatform)"
-              :mediaAssets="postMediaAssets" :platform="currentPreviewPlatform"
-              :post="postForm" :currentPlatformConfig="currentPlatformConfig"
-              v-model:format="selectedPostFormat" />
+              :mediaAssets="postMediaAssets" :platform="currentPreviewPlatform" :post="postForm"
+              :currentPlatformConfig="currentPlatformConfig" v-model:format="selectedPostFormat" />
             <template #fallback>
               <div class="flex items-center justify-center h-[882px] w-[433px]">
                 <UIcon name="lucide:loader-circle" class="w-8 h-8 animate-spin text-gray-400" />
@@ -802,16 +814,16 @@ const handleAutoFormatApply = (overrides: Record<string, PlatformContentOverride
 
       <template #footer>
         <div class="flex justify-end gap-2">
-          <UButton :disabled="haveAtLeastOneAccountSelected" color="secondary" variant="outline"
-            @click="handleSavePost('draft')">
+          <UButton :disabled="haveAtLeastOneAccountSelected" :loading="savingStatus === 'draft'"
+            color="secondary" variant="outline" @click="handleSavePost('draft')">
             {{ t('newPostModal.saveDraft') }}
           </UButton>
           <UButton color="primary" variant="outline" @click="handleSavePost('published')"
-            :disabled="haveAtLeastOneAccountSelected">
+            :disabled="haveAtLeastOneAccountSelected" :loading="savingStatus === 'published'">
             {{ t('newPostModal.postNow') }}
           </UButton>
           <UButton color="warning" variant="ghost" @click="handleSavePost('pending')"
-            :disabled="haveAtLeastOneAccountSelected">
+            :disabled="haveAtLeastOneAccountSelected" :loading="savingStatus === 'pending'">
             {{ t('newPostModal.schedule') }}
           </UButton>
         </div>

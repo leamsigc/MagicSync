@@ -541,8 +541,29 @@ export const auth = betterAuth({
           clientSecret: process.env.NUXT_THREADS_CLIENT_SECRET as string,
           authorizationUrl: 'https://threads.net/oauth/authorize',
           tokenUrl: 'https://api.threads.net/oauth/access_token',
-          // userInfoUrl: 'https://api.threads.net/me',
-          // redirectURI: `${process?.env.NUXT_APP_URL?.indexOf('https') == -1 ? 'https://redirectmeto.com/' + process?.env.NUXT_APP_URL : process?.env.NUXT_APP_URL}/integrations/social/threads`,
+          // Threads is plain OAuth2 (no OIDC id_token), so Better Auth cannot
+          // build a profile from the token alone. Without getUserInfo /
+          // userInfoUrl the callback fails with UNABLE_TO_GET_USER_INFO and NO
+          // `account` row is created — which also means the account.create hook
+          // below never runs, so the social media account is never created.
+          getUserInfo: async (tokens) => {
+            const profile = await $fetch<{ id: string, username: string, threads_profile_picture_url?: string }>(
+              'https://graph.threads.net/v1.0/me?fields=id,username,threads_profile_picture_url',
+              {
+                headers: { Authorization: `Bearer ${tokens.accessToken}` },
+                ignoreResponseError: true
+              }
+            );
+            if (!profile?.id) return null;
+            return {
+              ...profile,
+              id: profile.id,
+              name: profile.username,
+              email: `${profile.id}@threads.net`,
+              emailVerified: true,
+              image: profile.threads_profile_picture_url
+            };
+          },
           scopes: [
             'threads_basic',
             'threads_content_publish',
@@ -551,13 +572,6 @@ export const auth = betterAuth({
             'threads_profile_discovery',
           ],
           pkce: true,
-          mapProfileToUser: (profile: any) => {
-            return {
-              ...profile,
-              image: profile.profile_picture_url,
-              email: `${profile.id}@threads.net`,
-            };
-          },
         },
       ]
     }),

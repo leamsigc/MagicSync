@@ -238,12 +238,31 @@ function handleDelete() {
       </UButton>
     </div>
 
+    <!-- The renderer arrives as an async chunk: the skeleton holds the
+      popover's shape while it loads so a click never answers with emptiness -->
     <div :key="selectedPlatform" v-motion-fade-visible-once :duration="200">
-      <component
-        :is="previewComponent"
-        v-bind="previewInput"
-        :aria-label="previewLabel"
-      />
+      <Suspense>
+        <component
+          :is="previewComponent"
+          v-bind="previewInput"
+          :aria-label="previewLabel"
+        />
+
+        <template #fallback>
+          <div class="flex w-full flex-col gap-3 rounded-xl border border-default bg-elevated p-4 shadow-sm" aria-hidden="true">
+            <div class="flex items-center gap-3">
+              <USkeleton class="size-10 shrink-0 rounded-full" />
+              <div class="flex min-w-0 flex-1 flex-col gap-1.5">
+                <USkeleton class="h-3 w-2/5 rounded" />
+                <USkeleton class="h-2.5 w-3/5 rounded" />
+              </div>
+            </div>
+            <USkeleton class="h-3 w-full rounded" />
+            <USkeleton class="h-3 w-4/5 rounded" />
+            <USkeleton class="h-40 w-full rounded-xl" />
+          </div>
+        </template>
+      </Suspense>
     </div>
 
     <!-- Honesty: what the row actually carries, or an explicit "nothing yet". -->

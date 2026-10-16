@@ -1,0 +1,46 @@
+{
+  "en": {
+    "title": "Data Browser",
+    "description": "Every database table, grouped by area. Open a table to view, edit and delete rows.",
+    "searchPlaceholder": "Search tables...",
+    "refresh": "Refresh",
+    "retry": "Retry",
+    "empty": "No tables match your search",
+    "loadFailed": "Failed to load the table catalog",
+    "rowCount": "{count} row{plural}",
+    "rowCountUnknown": "Row count unavailable"
+  },
+  "es": {
+    "title": "Explorador de Datos",
+    "description": "Todas las tablas de la base de datos, agrupadas por área. Abre una tabla para ver, editar y eliminar filas.",
+    "searchPlaceholder": "Buscar tablas...",
+    "refresh": "Actualizar",
+    "retry": "Reintentar",
+    "empty": "Ninguna tabla coincide con tu búsqueda",
+    "loadFailed": "No se pudo cargar el catálogo de tablas",
+    "rowCount": "{count} fila{plural}",
+    "rowCountUnknown": "Recuento de filas no disponible"
+  },
+  "de": {
+    "title": "Datenbrowser",
+    "description": "Alle Datenbanktabellen, gruppiert nach Bereich. Öffne eine Tabelle, um Zeilen anzusehen, zu bearbeiten und zu löschen.",
+    "searchPlaceholder": "Tabellen suchen...",
+    "refresh": "Aktualisieren",
+    "retry": "Erneut versuchen",
+    "empty": "Keine Tabellen entsprechen deiner Suche",
+    "loadFailed": "Tabellenkatalog konnte nicht geladen werden",
+    "rowCount": "{count} Zeile{plural}",
+    "rowCountUnknown": "Zeilenanzahl nicht verfügbar"
+  },
+  "fr": {
+    "title": "Explorateur de données",
+    "description": "Toutes les tables de la base de données, groupées par domaine. Ouvrez une table pour consulter, modifier et supprimer des lignes.",
+    "searchPlaceholder": "Rechercher des tables...",
+    "refresh": "Actualiser",
+    "retry": "Réessayer",
+    "empty": "Aucune table ne correspond à votre recherche",
+    "loadFailed": "Impossible de charger le catalogue des tables",
+    "rowCount": "{count} ligne{plural}",
+    "rowCountUnknown": "Nombre de lignes indisponible"
+  }
+}

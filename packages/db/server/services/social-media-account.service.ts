@@ -1,6 +1,6 @@
 import { entityDetails } from '#layers/BaseDB/db/entityDetails/entityDetails';
 
-import { eq, and, desc, inArray } from 'drizzle-orm'
+import { eq, and, asc, desc, inArray } from 'drizzle-orm'
 import { encryptKey, decryptKey } from '#layers/BaseAuth/server/utils/AuthHelpers'
 import type { SocialMediaAccount, SocialMediaAccountManager } from '#layers/BaseDB/db/socialMedia/socialMedia'
 import { socialMediaAccounts, socialMediaAccountManagers } from '#layers/BaseDB/db/socialMedia/socialMedia'
@@ -40,6 +40,7 @@ export interface CreateSocialMediaAccountData {
   refreshToken?: string
   tokenExpiresAt?: Date
   entityDetailId?: string
+  baseUrl?: string | null
 }
 
 export interface UpdateSocialMediaAccountData {
@@ -51,6 +52,7 @@ export interface UpdateSocialMediaAccountData {
   isActive?: boolean
   lastSyncAt?: Date
   entityDetailId?: string
+  baseUrl?: string | null
 }
 
 export interface TokenRefreshData {
@@ -227,6 +229,7 @@ export class SocialMediaAccountService implements SocialMediaAccountServiceType 
       platform: data.platform,
       accountId: data.accountId,
       accountName: data.accountName,
+      baseUrl: data.baseUrl ?? null,
       accessToken: data.accessToken,
       accessTokenEncrypted: accessTokenEncrypted,
       refreshTokenEncrypted: refreshTokenEncrypted,
@@ -425,6 +428,7 @@ export class SocialMediaAccountService implements SocialMediaAccountServiceType 
     if (data.isActive !== undefined) encryptedData.isActive = data.isActive
     if (data.lastSyncAt !== undefined) encryptedData.lastSyncAt = data.lastSyncAt
     if (data.entityDetailId !== undefined) encryptedData.entityDetailId = data.entityDetailId
+    if (data.baseUrl !== undefined) encryptedData.baseUrl = data.baseUrl
 
     const [account] = await this.db
       .update(socialMediaAccounts)
@@ -443,7 +447,7 @@ export class SocialMediaAccountService implements SocialMediaAccountServiceType 
    * Create or update social media account
    * Handles platform-specific token expiry (Facebook 60d vs Google 1h)
    */
-  async createOrUpdateAccount({ id, name, access_token, refresh_token, picture, username, user, businessId, platformId, tokenExpiresAt }: {
+  async createOrUpdateAccount({ id, name, access_token, refresh_token, picture, username, user, businessId, platformId, tokenExpiresAt, baseUrl }: {
     id: string;
     name: string;
     access_token: string;
@@ -454,10 +458,17 @@ export class SocialMediaAccountService implements SocialMediaAccountServiceType 
     businessId: string
     platformId: SocialMediaPlatform
     tokenExpiresAt?: Date
+    baseUrl?: string | null
   }) {
-    const account = await this.getAccountByAccountId(id);
+    const account = await this.db.query.socialMediaAccounts.findFirst({
+      where: and(
+        eq(socialMediaAccounts.userId, user.id),
+        eq(socialMediaAccounts.platform, platformId),
+        eq(socialMediaAccounts.accountId, id),
+      ),
+      with: { entityDetail: true },
+    })
 
-    // If we have a account just update the account
     let socialMediaAccount;
     let entityDetails;
 
@@ -497,7 +508,9 @@ export class SocialMediaAccountService implements SocialMediaAccountServiceType 
           tokenExpiresAt: computedExpiry,
           lastSyncAt: new Date(),
           isActive: true,
-          entityDetailId: entityDetails?.id
+          entityDetailId: entityDetails?.id,
+          // undefined preserves any stored value (non-Bluesky platforms).
+          baseUrl: baseUrl ?? undefined
         }
       );
     } else {
@@ -511,7 +524,8 @@ export class SocialMediaAccountService implements SocialMediaAccountServiceType 
         accessToken: access_token,
         refreshToken: refresh_token,
         tokenExpiresAt: computedExpiry,
-        entityDetailId: entityDetails?.id
+        entityDetailId: entityDetails?.id,
+        baseUrl: baseUrl ?? null
       });
     }
 
@@ -529,15 +543,24 @@ export class SocialMediaAccountService implements SocialMediaAccountServiceType 
     user: User;
     tokenExpiresAt?: Date;
   }) {
-    // get business if from current user
+    const businessId = await this.resolveBusinessForUser(user.id);
 
-    const businessFromUser = await this.db.query.businessProfiles.findFirst({
-      where: eq(businessProfiles.userId, user.id),
-    });
+    return this.createOrUpdateAccount({ id, name, access_token, refresh_token, picture, username, user, businessId, platformId, tokenExpiresAt });
 
+  }
 
-    return this.createOrUpdateAccount({ id, name, access_token, refresh_token, picture, username, user, businessId: businessFromUser?.id as string || '', platformId, tokenExpiresAt });
+  private async resolveBusinessForUser(userId: string): Promise<string> {
+    const active = await this.db.query.businessProfiles.findFirst({
+      where: and(eq(businessProfiles.userId, userId), eq(businessProfiles.isActive, true)),
+      orderBy: [desc(businessProfiles.updatedAt)],
+    })
+    if (active) return active.id
 
+    const first = await this.db.query.businessProfiles.findFirst({
+      where: eq(businessProfiles.userId, userId),
+      orderBy: [asc(businessProfiles.createdAt)],
+    })
+    return first?.id ?? ''
   }
   async getAccountByAccountId(id: string, userId?: string) {
     const account = await this.db.query.socialMediaAccounts.findFirst({

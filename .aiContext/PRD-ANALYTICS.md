@@ -47,15 +47,17 @@ Nitro scheduled task (every 6 hour) ──▶ tasks/stats/collect.ts
    Dashboard page ─── range selector · freshness chips · export · top-posts→Repurpose
 ```
 
-**Retention policy:** indefinite (no 30-day cap). `stats:collect` runs a prune
-for failed rows only (optional env `STATS_RETENTION_DAYS=365`) to avoid garbage
-growth — successful time-series rows are kept forever (matches OpenPost).
+**Retention policy:** indefinite (no 30-day cap). `account_metrics` is upserted
+to **one row per account per day** (`snapshotDate`), so it is bounded by design
+rather than by pruning. `stats:collect` runs a prune for failed rows only
+(optional env `STATS_RETENTION_DAYS=365`) to avoid garbage growth — successful
+rows are kept forever (matches OpenPost).
 
 ## Data model (db layer — `packages/db/db/stats/stats.ts`)
 
 | table | purpose | key columns |
 |---|---|---|
-| `account_metrics` | snapshot row per collection | `socialAccountId, platform, followers, following, posts, engagement JSON, rawPayload, source(auto/manual), status, error, collectedAt` + idx `(socialAccountId, collectedAt)` |
+| `account_metrics` | one row per account per **day**, upserted in place | `socialAccountId, platform, snapshotDate YYYY-MM-DD, followers, following, posts, engagement JSON, rawPayload, source(auto/manual), status, error, collectedAt` + unique `(socialAccountId, snapshotDate)` + idx `(socialAccountId, collectedAt)` |
 | `post_metrics` | snapshot row per collection | `postId, platformPostId, socialAccountId, platform, externalPostId, metrics JSON, rawPayload, status, error, collectedAt` + idx `(postId, collectedAt)` |
 | `stats_sync_state` | collector heartbeat | `socialAccountId UNIQUE, lastAttemptAt, lastSuccessAt, nextDueAt, status (idle/running/error/rate_limited), consecutiveFailures, lastError, backoffUntil` |
 

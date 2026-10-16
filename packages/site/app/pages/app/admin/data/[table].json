@@ -1,0 +1,142 @@
+{
+  "en": {
+    "back": "Back to catalog",
+    "description": "{total} row{plural} across every tenant. Use search to narrow the list.",
+    "refresh": "Refresh",
+    "searchPlaceholder": "Search...",
+    "all": "All",
+    "empty": "No rows found",
+    "loadFailed": "Failed to load rows",
+    "retry": "Retry",
+    "actions": {
+      "label": "Actions",
+      "view": "View details",
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "a11y": {
+      "selectAll": "Select all",
+      "selectRow": "Select row",
+      "actions": "Actions dropdown"
+    },
+    "footer": {
+      "selected": "{selected} of {total} row(s) selected."
+    },
+    "bulk": {
+      "selected": "{count} selected",
+      "delete": "Delete selected",
+      "clear": "Clear"
+    },
+    "toasts": {
+      "updated": "Row updated",
+      "updateFailed": "Failed to update row",
+      "deleted": "{count} row(s) deleted",
+      "deleteFailed": "Failed to delete rows"
+    }
+  },
+  "es": {
+    "back": "Volver al catálogo",
+    "description": "{total} fila{plural} en todos los inquilinos. Usa la búsqueda para acotar la lista.",
+    "refresh": "Actualizar",
+    "searchPlaceholder": "Buscar...",
+    "all": "Todas",
+    "empty": "No se encontraron filas",
+    "loadFailed": "No se pudieron cargar las filas",
+    "retry": "Reintentar",
+    "actions": {
+      "label": "Acciones",
+      "view": "Ver detalles",
+      "edit": "Editar",
+      "delete": "Eliminar"
+    },
+    "a11y": {
+      "selectAll": "Seleccionar todo",
+      "selectRow": "Seleccionar fila",
+      "actions": "Menú de acciones"
+    },
+    "footer": {
+      "selected": "{selected} de {total} fila(s) seleccionadas."
+    },
+    "bulk": {
+      "selected": "{count} seleccionadas",
+      "delete": "Eliminar seleccionadas",
+      "clear": "Limpiar"
+    },
+    "toasts": {
+      "updated": "Fila actualizada",
+      "updateFailed": "No se pudo actualizar la fila",
+      "deleted": "{count} fila(s) eliminadas",
+      "deleteFailed": "No se pudieron eliminar las filas"
+    }
+  },
+  "de": {
+    "back": "Zurück zum Katalog",
+    "description": "{total} Zeile{plural} über alle Mandanten. Nutze die Suche, um die Liste einzugrenzen.",
+    "refresh": "Aktualisieren",
+    "searchPlaceholder": "Suchen...",
+    "all": "Alle",
+    "empty": "Keine Zeilen gefunden",
+    "loadFailed": "Zeilen konnten nicht geladen werden",
+    "retry": "Erneut versuchen",
+    "actions": {
+      "label": "Aktionen",
+      "view": "Details anzeigen",
+      "edit": "Bearbeiten",
+      "delete": "Löschen"
+    },
+    "a11y": {
+      "selectAll": "Alle auswählen",
+      "selectRow": "Zeile auswählen",
+      "actions": "Aktionsmenü"
+    },
+    "footer": {
+      "selected": "{selected} von {total} Zeile(n) ausgewählt."
+    },
+    "bulk": {
+      "selected": "{count} ausgewählt",
+      "delete": "Ausgewählte löschen",
+      "clear": "Zurücksetzen"
+    },
+    "toasts": {
+      "updated": "Zeile aktualisiert",
+      "updateFailed": "Zeile konnte nicht aktualisiert werden",
+      "deleted": "{count} Zeile(n) gelöscht",
+      "deleteFailed": "Zeilen konnten nicht gelöscht werden"
+    }
+  },
+  "fr": {
+    "back": "Retour au catalogue",
+    "description": "{total} ligne{plural} sur tous les locataires. Utilisez la recherche pour affiner la liste.",
+    "refresh": "Actualiser",
+    "searchPlaceholder": "Rechercher...",
+    "all": "Toutes",
+    "empty": "Aucune ligne trouvée",
+    "loadFailed": "Impossible de charger les lignes",
+    "retry": "Réessayer",
+    "actions": {
+      "label": "Actions",
+      "view": "Voir les détails",
+      "edit": "Modifier",
+      "delete": "Supprimer"
+    },
+    "a11y": {
+      "selectAll": "Tout sélectionner",
+      "selectRow": "Sélectionner la ligne",
+      "actions": "Menu des actions"
+    },
+    "footer": {
+      "selected": "{selected} sur {total} ligne(s) sélectionnée(s)."
+    },
+    "bulk": {
+      "selected": "{count} sélectionnée(s)",
+      "delete": "Supprimer la sélection",
+      "clear": "Effacer"
+    },
+    "toasts": {
+      "updated": "Ligne mise à jour",
+      "updateFailed": "Impossible de mettre à jour la ligne",
+      "deleted": "{count} ligne(s) supprimée(s)",
+      "deleteFailed": "Impossible de supprimer les lignes"
+    }
+  }
+}

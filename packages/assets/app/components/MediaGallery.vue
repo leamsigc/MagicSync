@@ -22,7 +22,6 @@ interface Emits {
   (e: 'select', asset: Asset): void
   (e: 'deselect', asset: Asset): void
   (e: 'upload', files: File[]): void
-  (e: 'delete', assets: Asset[]): void
   (e: 'preview', asset: Asset): void
   (e: 'open-edit-modal', asset: Asset): void
   (e: 'move-selected', folderId: string | null): void
@@ -53,6 +52,7 @@ const {
   fetchAssets,
   uploadFiles,
   deleteAssets,
+  isDeletingAssets,
   toggleAssetSelection,
   selectAllAssets,
   deselectAllAssets,
@@ -184,14 +184,15 @@ const handleDeleteSelected = () => {
   showDeleteDialog.value = true
 }
 
-const confirmDelete = async () => {
-  const assetIds = assetsToDelete.value.map(asset => asset.id)
-  const success = await deleteAssets(assetIds)
-  if (success) {
-    emit('delete', assetsToDelete.value)
-  }
+const closeDeleteDialog = () => {
   showDeleteDialog.value = false
   assetsToDelete.value = []
+}
+
+const confirmDelete = async () => {
+  const assetIds = assetsToDelete.value.map(asset => asset.id)
+  closeDeleteDialog()
+  await deleteAssets(assetIds)
 }
 
 const loadMore = () => {
@@ -328,7 +329,7 @@ const handleDeleteAsset = (asset: Asset) => {
             {{ t('toolbar.selected_count', { count: selectedAssets.length }) }}
           </span>
           <UButton v-if="hasSelectedAssets" variant="solid" color="error" size="sm"
-            :aria-label="t('toolbar.delete_selected')" @click="handleDeleteSelected">
+            :aria-label="t('toolbar.delete_selected')" :disabled="isDeletingAssets" @click="handleDeleteSelected">
             <Icon name="lucide:trash-2" class="w-4 h-4" />
           </UButton>
           <div
@@ -426,7 +427,8 @@ const handleDeleteAsset = (asset: Asset) => {
                   :aria-label="t('buttons.edit')" @click.stop="handleOpedEditModal(asset)">
                   <Icon name="lucide:edit" class="w-4 h-4" />
                 </UButton>
-                <UButton size="sm" variant="outline" :aria-label="t('buttons.delete')" @click.stop="handleDeleteAsset(asset)">
+                <UButton size="sm" variant="outline" :aria-label="t('buttons.delete')" :disabled="isDeletingAssets"
+                  @click.stop="handleDeleteAsset(asset)">
                   <Icon name="lucide:trash-2" class="w-4 h-4" />
                 </UButton>
               </div>
