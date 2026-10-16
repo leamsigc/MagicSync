@@ -27,8 +27,13 @@ export const TOOL_NOT_ALLOWED = 'TOOL_NOT_ALLOWED'
  * Small-model budget: how many tools one model turn may offer, framework tools
  * included (T11). `task` is always offered; `activate_skill` whenever the agent
  * mounts skills — every specialist does.
+ *
+ * Raised 7 → 8 so the chat orchestrator can own `bulk_schedule_posts` alongside
+ * the four original tools: chat is the operator surface, and a bulk schedule is a
+ * chat-first action. Still a small mount — a representative turn never sees the
+ * 46-tool catalog.
  */
-export const MAX_TOOLS_PER_TURN = 7
+export const MAX_TOOLS_PER_TURN = 8
 
 /** Flue's own tools, offered on top of our mount. Never ours to gate. */
 export const FRAMEWORK_TOOL_NAMES = ['task', 'activate_skill'] as const
@@ -54,7 +59,7 @@ export interface ToolGuardOptions {
 }
 
 /**
- * The chat orchestrator's mount: four of our tools plus Flue's `task` and
+ * The chat orchestrator's mount: five of our tools plus Flue's `task` and
  * `activate_skill` is the whole turn. Everything else in the catalog is reached
  * through a specialist delegate or the `/api/v1/content/*` capabilities.
  */
@@ -64,6 +69,7 @@ export const CHAT_AGENT_MOUNT: readonly string[] = [
   'generate_carousel',
   'schedule_post',
   'schedule_direct_posts',
+  'bulk_schedule_posts',
 ]
 
 /** Tools offered to the model for a mount of `ourTools` (framework included). */

@@ -10,6 +10,8 @@ import { createResearchTools } from './research.tools'
 import { createScrapegraphTools } from './scrapegraph.tools'
 import { createSkillsTools } from './skills.tools'
 import { createPublishingTools } from './publishing.tools'
+import { createWorkspaceTools } from './workspace.tools'
+import { createTemplateTools } from './templates.tools'
 
 /**
  * T28 — the whole Flue tool set for one run, tenant closed over by `ctx`.
@@ -26,6 +28,8 @@ export function createAgentTools(ctx: AgentToolContext): ToolDefinition[] {
     ...createContentTools(ctx),
     ...createMediaTools(ctx),
     ...createDeliveryTools(ctx),
+    ...createWorkspaceTools(ctx),
+    ...createTemplateTools(ctx),
     ...createPythonTools(ctx),
     ...createSkillsTools(ctx),
     ...createGoalTools(ctx),

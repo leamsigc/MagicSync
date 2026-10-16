@@ -86,6 +86,16 @@ const artifactId = computed(() => typeof payload.value.artifactId === 'string' ?
 const platform = computed(() => typeof payload.value.platform === 'string' ? payload.value.platform : 'instagram')
 const caption = computed(() => typeof payload.value.caption === 'string' ? payload.value.caption : '')
 
+/** Research ran but produced no citations — the deck is LLM-only, say so. */
+const researchDegraded = computed(() => {
+  const research = payload.value.research
+  if (!research || typeof research !== 'object') return false
+  const record = research as Record<string, unknown>
+  const citations = Array.isArray(record.citations) ? record.citations.length : 0
+  const sourcesUsed = typeof record.sourcesUsed === 'number' ? record.sourcesUsed : 0
+  return citations === 0 && sourcesUsed === 0
+})
+
 const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 function platformLabel(name: string): string {
@@ -107,9 +117,20 @@ function handleApprove() {
   void approveAndCreate()
 }
 
+/** '' targets the whole deck; a slide id targets exactly that page. */
+const revisionSlideId = ref('')
+
+const revisionSlideOptions = computed(() => [
+  { label: t('workflow.wholeDeck'), value: '' },
+  ...slides.value.map((slide, index) => ({
+    label: t('workflow.slideOption', { index: index + 1, headline: (slide.headline || '').slice(0, 40) }),
+    value: slide.id || `slide-${index + 1}`,
+  })),
+])
+
 function handleRequestChanges() {
   if (!artifactId.value || props.isStreaming) return
-  emit('revise', { artifactId: artifactId.value, slideId: '', version: version.value })
+  emit('revise', { artifactId: artifactId.value, slideId: revisionSlideId.value, version: version.value })
 }
 
 function handleKeepDraft(): void {
@@ -393,12 +414,24 @@ async function scheduleFor(when: Date) {
           :labels="carouselLabels"
           @expand="handleExpand"
         />
-        <p class="mt-3 text-xs text-muted">{{ t('workflow.previewHint') }}</p>
+        <p v-if="researchDegraded" v-motion-fade :duration="200" class="mt-3 rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-warning">
+          {{ t('carousel.noSources') }}
+        </p>
+        <p class="mt-3 text-xs text-muted">{{ t('carousel.previewHint') }}</p>
         <p v-if="!savedCarouselId" v-motion-fade :duration="200" class="mt-1 text-xs text-muted">{{ t('workflow.editUnlockHint') }}</p>
       </div>
       <div class="flex flex-wrap items-center justify-between gap-2 border-t border-default px-5 py-3.5">
         <p class="text-xs text-muted">{{ stage === 'scheduled' ? t('workflow.afterScheduleNote') : t('workflow.reviewNote') }}</p>
         <div class="flex flex-wrap items-center gap-2">
+          <USelect
+            v-if="stage === 'review' && slides.length"
+            v-model="revisionSlideId"
+            :items="revisionSlideOptions"
+            value-key="value"
+            size="sm"
+            class="w-56"
+            :aria-label="t('workflow.reviseSlideLabel')"
+          />
           <UButton
             v-if="stage === 'review'"
             size="sm"

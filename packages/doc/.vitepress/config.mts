@@ -19,6 +19,11 @@ export default withMermaid(defineConfig({
   cleanUrls: true,
   lastUpdated: true,
   ignoreDeadLinks: true,
+  // `skills/**` holds agent instructions, not published pages (they are in no
+  // sidebar). Their SKILL.md frontmatter descriptions are written for agents —
+  // they contain rows like `props.x ?? true`, and the `?` makes VitePress's
+  // YAML frontmatter parser fail the whole build. Exclude them from the site.
+  srcExclude: ['skills/**'],
   base: '/MagicSync/',
 
   vite: {
@@ -125,6 +130,11 @@ export default withMermaid(defineConfig({
             { text: 'Account Metrics Daily Rollup', link: '/guide/account-metrics-daily-rollup' },
             { text: 'Migrations on Docker Boot', link: '/guide/docker-boot-migrations' },
             { text: 'Social Account Business Placement', link: '/guide/social-account-business-placement' },
+            { text: 'entity_details JSON Integrity', link: '/guide/entitydetails-json-integrity' },
+            { text: 'Vue Boolean Prop Defaults', link: '/guide/vue-boolean-prop-defaults' },
+            { text: 'Business Workspace Hub', link: '/guide/business-workspace-hub' },
+            { text: 'AI Model Precedence', link: '/guide/ai-model-precedence' },
+            { text: 'Route Action Screenshots', link: '/guide/route-screenshots' },
           ],
         },
         {
@@ -134,6 +144,8 @@ export default withMermaid(defineConfig({
             { text: 'Overview & Chat', link: '/guide/agent-platform' },
             { text: 'Content Board', link: '/guide/content-board' },
             { text: 'Tool Backends', link: '/guide/tool-backends' },
+            { text: 'Carousel Revision Routing', link: '/guide/chat-carousel-revision-routing' },
+            { text: 'Chat Operator Toolkit', link: '/guide/chat-operator-toolkit' },
           ],
         },
       ],

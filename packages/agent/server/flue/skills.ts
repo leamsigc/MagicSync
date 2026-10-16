@@ -108,12 +108,12 @@ const SKILL_SPECS: SkillSpec[] = [
   { id: 'create-content-ideas', kind: 'goal', body: createContentIdeasBody, tools: [], executable: createContentIdeasSkill },
   { id: 'langsearch', kind: 'chat', body: langsearchBody, tools: ['web_search'] },
   { id: 'social-research', kind: 'chat', body: socialResearchBody, tools: ['web_search', 'scrape_url', 'retrieve'] },
-  { id: 'content-writer', kind: 'chat', body: contentWriterBody, tools: ['write_post', 'apply_template', 'retrieve'] },
+  { id: 'content-writer', kind: 'chat', body: contentWriterBody, tools: ['write_post', 'apply_content_template', 'retrieve', 'list_media'] },
   { id: 'humanizer', kind: 'chat', body: humanizerBody, tools: ['humanize'] },
-  { id: 'trend-scout', kind: 'chat', body: trendScoutBody, tools: ['scan_trends', 'web_search', 'board_add_cards'] },
-  { id: 'content-ops', kind: 'chat', body: contentOpsBody, tools: ['subagent', 'board_list', 'board_move', 'board_add_cards'] },
+  { id: 'trend-scout', kind: 'chat', body: trendScoutBody, tools: ['scan_trends', 'web_search', 'board_add_cards', 'get_performance_stats', 'list_calendar_posts'] },
+  { id: 'content-ops', kind: 'chat', body: contentOpsBody, tools: ['subagent', 'board_list', 'board_move', 'list_media', 'delete_media'] },
   { id: 'carousel', kind: 'chat', body: carouselBody, tools: ['retrieve', 'generate_carousel', 'revise_carousel'] },
-  { id: 'content-score', kind: 'chat', body: contentScoreBody, tools: [] },
+  { id: 'content-score', kind: 'chat', body: contentScoreBody, tools: ['get_business_profile', 'update_business_profile', 'list_templates', 'list_content_templates'] },
 ]
 
 function buildEntry(spec: SkillSpec): FlueSkillEntry {

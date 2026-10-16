@@ -1,0 +1,36 @@
+{
+  "generatedAt": "2026-10-16T12:01:09.453Z",
+  "baseUrl": "http://localhost:3000",
+  "total": 1,
+  "passed": 1,
+  "journeys": [
+    {
+      "key": "content-board",
+      "title": "Content board — create, edit and delete a card by hand",
+      "route": "/app/business/:id/content",
+      "expected": 9,
+      "preconditions": [
+        "An active business owned by the fixture user.",
+        "A published Brand Playbook — without it, update/delete return 500 BRAND_CONTEXT_REQUIRED."
+      ],
+      "notCovered": [
+        "Find ideas (scan) — needs AI provider keys.",
+        "Move to Writing (write now) — needs AI provider keys.",
+        "Drag/drop refuse — drag-and-drop is flaky under Playwright and already covered by the component spec."
+      ],
+      "ok": true,
+      "captured": [
+        "app-business-id-content/01-board-open.png",
+        "app-business-id-content/02-board-empty-column.png",
+        "app-business-id-content/03-board-new-card.png",
+        "app-business-id-content/04-board-card-persisted.png",
+        "app-business-id-content/05-board-card-row.png",
+        "app-business-id-content/06-board-card-menu.png",
+        "app-business-id-content/07-board-card-updated.png",
+        "app-business-id-content/08-board-delete-dialog.png",
+        "app-business-id-content/09-board-card-deleted.png"
+      ],
+      "missing": []
+    }
+  ]
+}

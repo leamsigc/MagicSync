@@ -68,6 +68,18 @@ function captionOf(output: Record<string, unknown>): string {
   return typeof output.caption === 'string' ? output.caption : ''
 }
 
+/** Asset ids an artifact carries; empty when it has none. */
+function mediaAssetsOf(output: Record<string, unknown>): string[] {
+  const raw = output.mediaAssets
+  if (!Array.isArray(raw)) return []
+  return raw.filter((id): id is string => typeof id === 'string' && id.length > 0)
+}
+
+function stringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return []
+  return value.filter((item): item is string => typeof item === 'string')
+}
+
 interface StoryboardOutput {
   caption?: string
   scenes?: Array<{ assetRef?: string, assetRefs?: string[], narration?: string, voiceover?: string, sceneText?: string }>
@@ -516,6 +528,7 @@ export class ContentArtifactService {
       }
       const created = await postService.create(userId, {
         ...newDraftPostInput(businessId, caption, targetAccountIds),
+        mediaAssets: mediaAssetsOf(output),
       })
       if (!created.success || !created.data) {
         return { success: false, error: created.error ?? 'Failed to create draft post' }
@@ -714,13 +727,16 @@ export class ContentArtifactService {
     const output = parsed && typeof parsed === 'object' && !Array.isArray(parsed)
       ? parsed as Record<string, unknown>
       : {}
+    // Re-scheduling must not wipe media/comment the user attached to the post.
+    const existing = await postService.findById(materialized.postId, userId)
+    const existingPost = existing.success ? existing.data as { mediaAssets?: unknown, comment?: unknown } : {}
     const rescheduled = await postService.update(materialized.postId, userId, {
       content: captionOf(output),
       status: 'pending',
       scheduledAt,
       targetPlatforms: targetAccountIds,
-      mediaAssets: [],
-      comment: [],
+      mediaAssets: stringArray(existingPost.mediaAssets),
+      comment: stringArray(existingPost.comment),
     })
     if (!rescheduled.success || !rescheduled.data) {
       return { success: false, error: rescheduled.error ?? 'Failed to schedule post' }

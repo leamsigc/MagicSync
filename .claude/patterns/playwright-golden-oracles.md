@@ -14,6 +14,22 @@ await page.addStyleTag({
 });
 ```
 
+**CSS alone does not remove the timing pill** — it lives in a shadow root, so a
+page stylesheet cannot reach inside it. Remove the host element instead (its
+shadow content goes with it). `packages/site/tests/e2e/helpers/route-screenshots.ts`
+`suppressDevOverlays()` does both and is the shared implementation:
+
+```ts
+await page.evaluate(() => {
+  for (const el of document.querySelectorAll('*')) {
+    const tag = el.tagName.toLowerCase();
+    if (tag.includes('devtools') || tag === 'vue-tracer-overlay') el.remove();
+  }
+});
+```
+
+Do not rely on guessing the host tag name — it has changed between versions.
+
 Fixed/sticky app chrome (navbar, sticky bars) also bleeds into element clips —
 prefer screenshotting the painted element itself (e.g. `canvas.lower-canvas`)
 over the wrapper, and additionally hide chrome for purity goldens:

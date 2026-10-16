@@ -73,7 +73,7 @@ export interface AgentRunInput {
   /** Request logger for run-level observability (start/finish with usage). */
   log?: RequestLogger
   /** Server-owned tenant context; tools are built inside the runner. */
-  toolContext?: { userId: string, businessId: string, sessionId?: string, event?: H3Event, carouselRequest?: string }
+  toolContext?: { userId: string, businessId: string, sessionId?: string, event?: H3Event, carouselRequest?: string, carouselTarget?: { artifactId: string, slideIds: string[] } }
   /** Optional per-request ceiling used by harness-routed single-tool workflows. */
   maxToolCalls?: number
   /** Prevent the model from invoking the same harness-owned workflow repeatedly. */

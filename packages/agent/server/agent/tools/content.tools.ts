@@ -198,14 +198,18 @@ export function createContentTools(ctx: AgentToolContext): ToolDefinition[] {
       }),
       run: async (toolCtx) => {
         const { artifactId, instructions, slideIds } = toolCtx.data
+        // The harness carries the clicked slide structurally; fall back to the
+        // model's own ids only when the harness supplied none.
+        const structural = ctx.carouselTarget?.artifactId === artifactId ? ctx.carouselTarget.slideIds : []
+        const targetSlideIds = slideIds?.length ? slideIds : structural
         const result = await carouselGenerationService.revise(chainContext(ctx), {
           artifactId,
           instructions,
-          slideIds: slideIds ?? [],
+          slideIds: targetSlideIds,
         })
         if (!result.success) toolError(result.code, result.error)
         const revised = result.success ? result.data : null
-        return toolResult(revised ? { workflow: 'carousel', state: 'revision', ...revised, research: null, platform: 'instagram', slideCount: revised.slides.length } : null)
+        return toolResult(revised ? { workflow: 'carousel', state: 'revision', ...revised, research: null, platform: revised.platform, slideCount: revised.slides.length } : null)
       },
     }),
   ]

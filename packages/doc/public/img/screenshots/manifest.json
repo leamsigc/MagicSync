@@ -1,0 +1,54 @@
+{
+  "generatedAt": "2026-10-16T12:00:11.584Z",
+  "baseUrl": "http://localhost:3000",
+  "action": "page",
+  "total": 5,
+  "captured": 5,
+  "entries": [
+    {
+      "route": "/app/templates",
+      "slug": "app-templates",
+      "action": "page",
+      "file": "app-templates/page.png",
+      "finalUrl": "http://localhost:3000/app/templates",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/templates/chat",
+      "slug": "app-templates-chat",
+      "action": "page",
+      "file": "app-templates-chat/page.png",
+      "finalUrl": "http://localhost:3000/app/templates/chat",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/templates/email",
+      "slug": "app-templates-email",
+      "action": "page",
+      "file": "app-templates-email/page.png",
+      "finalUrl": "http://localhost:3000/app/templates/email",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/templates/images",
+      "slug": "app-templates-images",
+      "action": "page",
+      "file": "app-templates-images/page.png",
+      "finalUrl": "http://localhost:3000/app/templates/images",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/templates/variables",
+      "slug": "app-templates-variables",
+      "action": "page",
+      "file": "app-templates-variables/page.png",
+      "finalUrl": "http://localhost:3000/app/templates/variables",
+      "status": 200,
+      "ok": true
+    }
+  ]
+}

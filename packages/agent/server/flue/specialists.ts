@@ -318,7 +318,7 @@ export interface SpecialistSessionProfile {
  *
  * T28 sizing: `tools` is now also the delegate's **Flue mount**, and a turn may
  * offer at most `MAX_TOOLS_PER_TURN` tools. Flue adds `task` and `activate_skill`
- * on top, so each delegate mounts at most four of ours — plus its goal skill
+ * on top, so each delegate mounts at most five of ours — plus its goal skill
  * tools, which are counted in `tests/small-model.test.mjs`.
  */
 export const SPECIALIST_SESSION_PROFILES: SpecialistSessionProfile[] = [

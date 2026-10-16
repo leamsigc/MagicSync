@@ -26,6 +26,43 @@ async function storeDownload(ctx: AgentToolContext, download: { filePath: string
   }
 }
 
+async function loadAssets() {
+  const { assetService } = await import('#layers/BaseShared/server/services/asset.service')
+  return assetService
+}
+
+/** List the business asset library, optionally filtered by mime prefix. */
+async function listBusinessAssets(ctx: AgentToolContext, limit: number, prefix: string | undefined) {
+  const assetService = await loadAssets()
+  const result = await assetService.findByBusinessId(ctx.businessId, ctx.userId, {
+    pagination: { page: 1, limit },
+  })
+  if (!result.success) toolError(result.error, 'Failed to list assets')
+  const normalized = prefix?.toLowerCase()
+  return (result.data ?? [])
+    .filter(asset => !normalized || asset.mimeType.toLowerCase().startsWith(normalized))
+    .map(asset => ({
+      id: asset.id,
+      name: asset.originalName || asset.filename,
+      mimeType: asset.mimeType,
+      size: asset.size,
+      url: asset.url,
+    }))
+}
+
+/** Delete one asset, refusing anything outside the active business. */
+async function deleteBusinessAsset(ctx: AgentToolContext, assetId: string) {
+  const assetService = await loadAssets()
+  const found = await assetService.findById(assetId, ctx.userId)
+  if (!found.success || !found.data) toolError(found.code, found.error ?? 'Asset not found')
+  if (found.data.businessId !== ctx.businessId) {
+    toolError('FORBIDDEN', 'Asset does not belong to this business')
+  }
+  const deleted = await assetService.delete(assetId, ctx.userId)
+  if (!deleted.success) toolError(deleted.code, deleted.error)
+  return { deleted: true, assetId }
+}
+
 /**
  * `download_video` for one run. The pi `onUpdate` progress callback becomes
  * Flue's `toolCtx.log` — progress lines are streamed into the conversation as
@@ -61,6 +98,27 @@ export function createMediaTools(ctx: AgentToolContext): ToolDefinition[] {
           await download?.cleanup()
         }
       },
+    }),
+    defineTool({
+      name: 'list_media',
+      description: 'List the business asset library (images, videos, documents).',
+      input: v.object({
+        mimeType: v.optional(v.pipe(v.string(), v.description('Filter by mime prefix, e.g. image or video'))),
+        limit: v.optional(v.pipe(v.number(), v.description('Max assets (default 20, max 50)'))),
+      }),
+      run: async (toolCtx) => {
+        const limit = Math.min(Math.max(toolCtx.data.limit ?? 20, 1), 50)
+        const assets = await listBusinessAssets(ctx, limit, toolCtx.data.mimeType)
+        return toolResult({ assets })
+      },
+    }),
+    defineTool({
+      name: 'delete_media',
+      description: 'Delete one asset from the business library by id. This cannot be undone.',
+      input: v.object({
+        assetId: v.pipe(v.string(), v.description('Asset id to delete')),
+      }),
+      run: async toolCtx => toolResult(await deleteBusinessAsset(ctx, toolCtx.data.assetId)),
     }),
   ]
 }

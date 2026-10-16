@@ -33,6 +33,8 @@ export interface CarouselOutput {
   fullRegeneration: boolean
   targetedSlideIds: string[]
   versionNote: string
+  /** Platform the deck was generated for; preserved across revisions. */
+  platform?: string
 }
 
 export interface CarouselChainContext {
@@ -248,6 +250,12 @@ function slideIdsFromInstructions(instructions: string, slides: Array<{ id: stri
     .filter((id): id is string => Boolean(id))
 }
 
+/** A revision request that names a slide but resolves none is ambiguous, not a full rewrite. */
+function unresolvedSlideError(requested: string[], instructions: string): string | null {
+  if (requested.length > 0) return null
+  return /\b(?:slide|page)s?\b/i.test(instructions) ? 'Say which slide to change, for example "slide 2"' : null
+}
+
 function prepareRevision(
   artifact: ContentArtifact,
   slideIds: string[],
@@ -263,6 +271,10 @@ function prepareRevision(
   const allSlides = storedSlidesOf(stored)
   // Explicit ids win; otherwise the instructions decide which slide is meant.
   const requested = slideIds.length > 0 ? slideIds : slideIdsFromInstructions(instructions, allSlides)
+  const unresolved = unresolvedSlideError(requested, instructions)
+  if (unresolved) {
+    return { success: false, error: unresolved, code: 'VALIDATION_ERROR' }
+  }
   const targeted = requested.length > 0
     ? allSlides.filter(slide => requested.includes(slide.id))
     : []
@@ -345,7 +357,7 @@ export class CarouselGenerationService {
   async revise(
     ctx: CarouselChainContext,
     input: { artifactId: string, instructions: string, slideIds: string[] },
-  ): Promise<ServiceResponse<{ artifactId: string, version: number, slides: CarouselSlideOutput[], caption: string }>> {
+  ): Promise<ServiceResponse<{ artifactId: string, version: number, slides: CarouselSlideOutput[], caption: string, platform: string }>> {
     try {
       const current = await contentArtifactService.getArtifact(ctx.userId, input.artifactId, ctx.businessId, ctx.event)
       if (!current.success) return current
@@ -358,7 +370,8 @@ export class CarouselGenerationService {
         output: output.data,
       }, ctx.event)
       if (!edited.success) return edited
-      return { success: true, data: { artifactId: edited.data.id, version: edited.data.version, slides: output.data.slides, caption: output.data.caption } }
+      const platform = asString(output.data.platform, 'instagram') || 'instagram'
+      return { success: true, data: { artifactId: edited.data.id, version: edited.data.version, slides: output.data.slides as CarouselSlideOutput[], caption: asString(output.data.caption), platform } }
     }
     catch {
       return { success: false, error: 'Carousel revision failed', code: 'REVISE_FAILED' }

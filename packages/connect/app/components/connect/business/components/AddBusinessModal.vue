@@ -3,7 +3,6 @@
 import type { FormSubmitEvent } from '@nuxt/ui'
 import z from 'zod'
 import { useBusinessManager } from '#layers/BaseShared/app/composables/useBusinessManager'
-import StepZero from './StepZero.vue'
 import BusinessExtractionStep from './BusinessExtractionStep.vue'
 import BusinessFormStep from './BusinessFormStep.vue'
 import BusinessLoadingStep from './BusinessLoadingStep.vue'
@@ -18,7 +17,7 @@ const { addBusiness, extractBusinessInfoWithProgress, setActiveBusiness } = useB
 const toast = useToast()
 const router = useRouter()
 
-const step = ref<0 | 1 | 2 | 3>(0)
+const step = ref<1 | 2 | 3>(1)
 
 // Step 1 State
 const extractionSchema = z.object({
@@ -109,7 +108,16 @@ const handleExtractionSubmit = async (payload: FormSubmitEvent<ExtractionForm>) 
 
 const submitFinalForm = async (payload: BodySchemaCreateBusinessType) => {
   try {
-    const response = await addBusiness(payload);
+    // The channels and competitors the user picked in step 1 live on this modal,
+    // not on the extracted result — merge them in or they are silently dropped.
+    const selections = {
+      channels: extractionState.value.channels ?? [],
+      competitors: (extractionState.value.competitors ?? []).filter(entry => entry && entry.trim() !== ''),
+    };
+    const response = await addBusiness({
+      ...payload,
+      entityDetails: { ...(payload.entityDetails ?? {}), ...selections },
+    });
 
     if (!response) {
       throw new Error('No response from server');
@@ -135,7 +143,7 @@ const submitFinalForm = async (payload: BodySchemaCreateBusinessType) => {
     if (initialSetup.value) {
       router.push('/app/integrations');
     } else {
-      router.push(`/app/business/${response.id}/playbook`);
+      router.push(`/app/business/${response.id}/content/playbook`);
     }
 
   } catch (error: any) {
@@ -166,17 +174,9 @@ const skipExtraction = () => {
   step.value = 3;
 };
 
-const handleStepZeroContinue = () => {
-  step.value = 1;
-};
-
-const handleStepZeroSkip = () => {
-  step.value = 1;
-};
-
 const handleCancel = () => {
   modalOpen.value = false;
-  step.value = 0;
+  step.value = 1;
 };
 </script>
 
@@ -205,12 +205,9 @@ const handleCancel = () => {
           </div>
         </div>
 
-        <div :class="step === 0 ? '' : ' flex-1'">
-          <!-- Step 0: Initial Setup -->
-          <StepZero v-if="step === 0" @continue="handleStepZeroContinue" @skip="handleStepZeroSkip" />
-
+        <div class="flex-1">
           <!-- Step 1: Business Extraction -->
-          <BusinessExtractionStep v-else-if="step === 1" @submit="handleExtractionSubmit" @skip="skipExtraction" />
+          <BusinessExtractionStep v-if="step === 1" @submit="handleExtractionSubmit" @skip="skipExtraction" />
 
           <!-- Step 2: Loading/Processing — steps driven by backend progress events -->
           <BusinessLoadingStep v-else-if="step === 2" :steps="loaderSteps" :loading="isExtracting" :visible="true"

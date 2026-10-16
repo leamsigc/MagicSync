@@ -31,8 +31,10 @@
     "cleared": "Override cleared",
     "clearError": "Failed to clear override",
     "systemNotice": "This account uses the AI already configured for this workspace. You don't need your own API key — the workspace settings choose the model, temperature and token limit.",
+    "inheritNotice": "This workspace uses your account's AI. If your account has no AI of its own, the system AI is used.",
     "providers": {
       "system": "Workspace AI",
+      "accountDefault": "My account AI (default)",
       "google": "Google",
       "ollama": "Ollama (Local)",
       "llama": "llama cpp (Local)",
@@ -102,8 +104,10 @@
     "cleared": "Excepción borrada",
     "clearError": "Error al borrar la excepción",
     "systemNotice": "Esta cuenta usa la IA ya configurada para este espacio de trabajo. No necesitas tu propia clave API: la configuración del espacio de trabajo elige el modelo, la temperatura y el límite de tokens.",
+    "inheritNotice": "Este espacio de trabajo usa la IA de tu cuenta. Si tu cuenta no tiene IA propia, se usa la IA del sistema.",
     "providers": {
       "system": "IA del espacio de trabajo",
+      "accountDefault": "IA de mi cuenta (predeterminada)",
       "google": "Google",
       "ollama": "Ollama (Local)",
       "llama": "llama cpp (Local)",
@@ -173,8 +177,10 @@
     "cleared": "Überschreibung gelöscht",
     "clearError": "Fehler beim Löschen der Überschreibung",
     "systemNotice": "Dieses Konto nutzt die bereits für diesen Arbeitsbereich konfigurierte KI. Du brauchst keinen eigenen API-Schlüssel — die Einstellungen des Arbeitsbereichs bestimmen Modell, Temperatur und Token-Limit.",
+    "inheritNotice": "Dieser Arbeitsbereich nutzt die KI deines Kontos. Hat dein Konto keine eigene KI, wird die System-KI verwendet.",
     "providers": {
       "system": "Arbeitsbereich-KI",
+      "accountDefault": "KI meines Kontos (Standard)",
       "google": "Google",
       "ollama": "Ollama (Lokal)",
       "llama": "llama cpp (Local)",
@@ -244,8 +250,10 @@
     "cleared": "Dérogation effacée",
     "clearError": "Échec de l'effacement de la dérogation",
     "systemNotice": "Ce compte utilise l'IA déjà configurée pour cet espace de travail. Vous n'avez pas besoin de votre propre clé API : les paramètres de l'espace de travail choisissent le modèle, la température et la limite de tokens.",
+    "inheritNotice": "Cet espace de travail utilise l’IA de votre compte. Si votre compte n’en a pas, l’IA du système est utilisée.",
     "providers": {
       "system": "IA de l'espace de travail",
+      "accountDefault": "IA de mon compte (par défaut)",
       "google": "Google",
       "ollama": "Ollama (Local)",
       "llama": "llama cpp (Local)",

@@ -38,6 +38,7 @@
     },
     "form": {
       "cta": "New connection",
+      "newPublication": "New publication",
       "title": "Create connection",
       "name": "Name",
       "provider": "Provider",
@@ -104,6 +105,7 @@
     },
     "form": {
       "cta": "Nueva conexión",
+      "newPublication": "Nueva publicación",
       "title": "Crear conexión",
       "name": "Nombre",
       "provider": "Proveedor",
@@ -170,6 +172,7 @@
     },
     "form": {
       "cta": "Neue Verbindung",
+      "newPublication": "Neue Veröffentlichung",
       "title": "Verbindung erstellen",
       "name": "Name",
       "provider": "Anbieter",
@@ -236,6 +239,7 @@
     },
     "form": {
       "cta": "Nouvelle connexion",
+      "newPublication": "Nouvelle publication",
       "title": "Créer une connexion",
       "name": "Nom",
       "provider": "Fournisseur",

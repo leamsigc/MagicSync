@@ -39,3 +39,54 @@ export function parseJsonArray<T>(raw: string, fallback: T[] = []): T[] {
     return fallback
   }
 }
+
+/** A run of `{ "0": "{", "1": "\"", ... }` needs at least two characters to be JSON. */
+const CHAR_INDEXED_MIN_KEYS = 2
+
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+/**
+ * A string spread into an object produces digit keys holding one character each
+ * (`{ ...someString }`). Detect that exact shape so it can be rebuilt.
+ */
+function isCharIndexed(record: Record<string, unknown>): boolean {
+  const keys = Object.keys(record)
+  if (keys.length < CHAR_INDEXED_MIN_KEYS) return false
+  return keys.every((key, index) => key === String(index) && typeof record[key] === 'string')
+}
+
+function decodeCharIndexed(record: Record<string, unknown>): Record<string, unknown> | null {
+  if (!isCharIndexed(record)) return null
+  const joined = Object.keys(record)
+    .sort((a, b) => Number(a) - Number(b))
+    .map(key => record[key] as string)
+    .join('')
+  try {
+    const parsed: unknown = JSON.parse(joined)
+    return isPlainRecord(parsed) ? parsed : null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Coerce any DB JSON boundary value into a plain object.
+ *
+ * Handles the four shapes `entity_details.details` accumulated in the wild:
+ * a parsed object, a single-encoded string, a double-encoded string, and the
+ * character-indexed object left by `{ ...someString }`. Recurses until it lands
+ * on a plain object or the fallback, so reads never surface a corrupt shape.
+ */
+export function coerceJsonObject(value: unknown, fallback: Record<string, unknown> = {}): Record<string, unknown> {
+  if (isPlainRecord(value)) {
+    return decodeCharIndexed(value) ?? value
+  }
+  if (typeof value !== 'string' || value.length === 0) return fallback
+  try {
+    return coerceJsonObject(JSON.parse(value), fallback)
+  } catch {
+    return fallback
+  }
+}

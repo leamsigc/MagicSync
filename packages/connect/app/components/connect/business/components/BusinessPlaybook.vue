@@ -1,4 +1,4 @@
-<i18n src="#site/app/pages/app/business/[id]/playbook.json"></i18n>
+<i18n src="#site/app/pages/app/business/[id]/content/playbook.json"></i18n>
 <script lang="ts" setup>
 import dayjs from 'dayjs'
 
@@ -92,18 +92,18 @@ const publishTargetId = computed(() => editingEditionId.value ?? currentEdition.
 const flowSteps = computed(() => [
   { label: t('flow.business'), hint: t('flow.businessHint'), to: '/app/business', icon: 'i-lucide-building-2' },
   {
-    label: t('flow.playbook'), hint: t('flow.playbookHint'), to: `/app/business/${businessId}/playbook`, icon: 'i-lucide-book-open'
+    label: t('flow.playbook'), hint: t('flow.playbookHint'), to: `/app/business/${businessId}/content/playbook`, icon: 'i-lucide-book-open'
   },
-  { label: t('flow.brandBase'), hint: t('flow.brandBaseHint'), to: `/app/business/${businessId}/corpus`, icon: 'i-lucide-database' },
+  { label: t('flow.brandBase'), hint: t('flow.brandBaseHint'), to: `/app/business/${businessId}/content/corpus`, icon: 'i-lucide-database' },
   {
     label: t('flow.board'), hint: t('flow.boardHint'), to: `/app/business/${businessId}/content`, icon: 'i - lucide - kanban'
   },
   {
-    label: t('flow.publishing'), hint: t('flow.publishingHint'), to: `/app/business/${businessId}/publishing`, icon: 'i - lucide - send'
+    label: t('flow.publishing'), hint: t('flow.publishingHint'), to: `/app/business/${businessId}/content/publishing`, icon: 'i - lucide - send'
   },
 ])
 
-const activeFlowIndex = computed(() => flowSteps.value.findIndex(s => s.to === `/app/business/${businessId}/playbook`))
+const activeFlowIndex = computed(() => flowSteps.value.findIndex(s => s.to === `/app/business/${businessId}/content/playbook`))
 
 const statusColor = (status: string) => {
   if (status === 'current') return 'success'

@@ -122,7 +122,7 @@ export function createDeliveryTools(ctx: AgentToolContext): ToolDefinition[] {
     }),
     defineTool({
       name: 'schedule_direct_posts',
-      description: 'Schedule a chat brief directly to connected social accounts.',
+      description: 'Schedule a chat brief to the business\'s connected social accounts. Only call this after the user has asked to schedule or approved a preview.',
       input: v.object({
         brief: v.pipe(v.string(), v.description('Post brief')),
         platforms: v.pipe(v.array(v.string()), v.description('Platform names')),
@@ -134,6 +134,33 @@ export function createDeliveryTools(ctx: AgentToolContext): ToolDefinition[] {
         const result = await directScheduleService.scheduleDirect(ctx.userId, ctx.businessId, toolCtx.data, ctx.event)
         if (!result.success) toolError(result.code, result.error)
         return toolResult(result.data)
+      },
+    }),
+    defineTool({
+      name: 'bulk_schedule_posts',
+      description: 'Schedule several posts at once, one per item, each to its own platforms and time.',
+      input: v.object({
+        items: v.pipe(v.array(v.object({
+          brief: v.pipe(v.string(), v.description('Post brief')),
+          platforms: v.pipe(v.array(v.string()), v.description('Platform names for this item')),
+          timeframe: v.optional(v.pipe(v.string(), v.description('When to post, e.g. now or next week'))),
+          scheduledAt: v.optional(v.pipe(v.string(), v.description('ISO datetime for this item'))),
+        })), v.description('Posts to schedule')),
+      }),
+      run: async (toolCtx) => {
+        const results: unknown[] = []
+        for (const item of toolCtx.data.items) {
+          const scheduled = await directScheduleService.scheduleDirect(ctx.userId, ctx.businessId, {
+            brief: item.brief,
+            platforms: item.platforms,
+            timeframe: item.timeframe ?? 'now',
+            scheduledAt: item.scheduledAt,
+          }, ctx.event)
+          results.push(scheduled.success
+            ? { brief: item.brief, items: scheduled.data.items, rejected: scheduled.data.rejected }
+            : { brief: item.brief, error: scheduled.error, code: scheduled.code })
+        }
+        return toolResult({ count: results.length, results })
       },
     }),
   ]

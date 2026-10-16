@@ -7,10 +7,11 @@ import { useBusinessManager } from '#layers/BaseShared/app/composables/useBusine
 const props = defineProps<{
   business: BusinessProfile;
 }>();
-const { t } = useI18n();
 
 const emit = defineEmits(['edit', 'delete', 'select']);
+const { t } = useI18n();
 const router = useRouter();
+const { setActiveBusiness, activeBusinessId } = useBusinessManager();
 
 const colors = [
   'bg-violet-700',
@@ -23,103 +24,89 @@ const colors = [
   'bg-lime-700',
 ]
 
-const thumbColor = colors[props.business.name.length % colors.length]
+const initial = computed(() => props.business.name.charAt(0).toUpperCase() || '?')
+const thumbColor = computed(() => colors[props.business.name.length % colors.length])
+const isActive = computed(() => activeBusinessId.value === props.business.id)
 
-const { setActiveBusiness, activeBusinessId } = useBusinessManager();
+/** One quiet line: website, else category, else a short description. */
+const subtitle = computed(() => {
+  const { website, category, description } = props.business
+  if (website) return website
+  if (category) return category
+  return description ? description.slice(0, 80) : ''
+})
 
 const handleSetActive = async (id: string) => {
   await setActiveBusiness(id);
   emit('select', id);
 };
 
-const handleEdit = () => emit('edit', props.business.id);
-const handleDelete = () => emit('delete', props.business.id);
-const handleOpenPlaybook = () => router.push(`/app/business/${props.business.id}/playbook`);
-const handleOpenGmb = () => router.push(`/app/business/${props.business.id}/gmb`);
-
-interface CardAction {
-  icon: string
-  label: string
-  danger?: boolean
-  onClick: () => void
+function handleEdit() {
+  emit('edit', props.business.id)
 }
 
-const cardActions: CardAction[] = [
-  { icon: 'i-heroicons-pencil', label: t('actions.edit'), onClick: handleEdit },
-  { icon: 'i-lucide-book-open', label: t('actions.playbook'), onClick: handleOpenPlaybook },
-  { icon: 'i-logos-google', label: t('actions.google_business'), onClick: handleOpenGmb },
-  { icon: 'i-heroicons-trash', label: t('actions.delete'), danger: true, onClick: handleDelete },
-]
+function handleDelete() {
+  emit('delete', props.business.id)
+}
+
+function handleOpenPlaybook() {
+  router.push(`/app/business/${props.business.id}/content/playbook`)
+}
+
+function handleOpenGmb() {
+  router.push(`/app/business/${props.business.id}/gmb`)
+}
+
+/** Actions collapse into one menu — the card stays a card, not a toolbar. */
+const menuItems = computed(() => [[
+  { label: t('actions.edit'), icon: 'i-heroicons-pencil', onSelect: handleEdit },
+  { label: t('actions.playbook'), icon: 'i-lucide-book-open', onSelect: handleOpenPlaybook },
+  { label: t('actions.google_business'), icon: 'i-logos-google', onSelect: handleOpenGmb },
+], [
+  { label: t('actions.delete'), icon: 'i-heroicons-trash', color: 'error' as const, onSelect: handleDelete },
+]])
 </script>
 
 <template>
   <UCard
     variant="soft"
-    :ui="{
-      root: 'cursor-pointer overflow-hidden rounded-xl',
-      body: 'p-0 sm:p-0',
-    }"
+    :ui="{ root: 'rounded-xl', body: 'p-3' }"
   >
-    <div class="relative aspect-video flex items-center justify-center" :class="thumbColor"
-    @click="handleSetActive(business.id)">
-      <span class="text-5xl font-bold text-white/20 select-none">
-        {{ business.name.charAt(0).toUpperCase() }}
-      </span>
-      <div class="absolute top-2 right-2">
-        <UBadge
-          :color="activeBusinessId === business.id ? 'primary' : 'neutral'"
-          variant="subtle"
-          size="sm"
-        >
-          {{ activeBusinessId === business.id ? t('states.active') : t('states.inactive') }}
-        </UBadge>
-      </div>
-    </div>
-
-    <div class="p-3">
-      <div
+    <div class="flex items-center gap-3">
+      <button
+        type="button"
+        class="flex size-11 shrink-0 items-center justify-center rounded-lg text-base font-bold text-white/80 transition-transform hover:scale-105"
+        :class="thumbColor"
+        :aria-label="business.name"
         @click="handleSetActive(business.id)"
       >
-        <h3 class="text-sm font-semibold text-[--ui-text-highlighted] line-clamp-2 leading-snug">
-          {{ business.name }}
-        </h3>
+        {{ initial }}
+      </button>
 
-        <p v-if="business.description" class="mt-1 text-xs text-[--ui-text-muted] line-clamp-2 leading-relaxed">
-          {{ business.description.length > 100 ? business.description.slice(0, 100) + '...' : business.description }}
-        </p>
-
-        <div class="mt-1.5 flex flex-col gap-0.5 text-xs text-[--ui-text-muted]">
-          <section v-if="business.address" class="truncate flex items-center gap-1">
-            <Icon name="i-heroicons-map-pin-16-solid" class=" size-3" />
-            {{ business.address }}
-          </section>
-          <section v-if="business.website" class="truncate flex items-center gap-1">
-            <Icon name="i-heroicons-globe-alt-16-solid" class=" size-3 shrink-0" />
-            {{ business.website }}
-          </section>
-          <section v-if="business.phone" class="truncate flex items-center gap-1">
-            <Icon name="i-heroicons-phone-16-solid" class=" size-3 shrink-0" />
-            {{ business.phone }}
-          </section>
+      <button
+        type="button"
+        class="min-w-0 flex-1 text-left"
+        @click="handleSetActive(business.id)"
+      >
+        <div class="flex items-center gap-2">
+          <h3 class="truncate text-sm font-semibold text-highlighted">{{ business.name }}</h3>
+          <UBadge v-if="isActive" color="primary" variant="subtle" size="xs">
+            {{ t('states.active') }}
+          </UBadge>
         </div>
-      </div>
+        <p class="truncate text-xs text-muted">{{ subtitle || t('states.no_details') }}</p>
+      </button>
 
-      <div class="mt-2 flex items-center justify-between gap-1">
-        <UTooltip
-          v-for="action in cardActions"
-          :key="action.label"
-          :text="action.label"
-        >
+      <div @click.stop>
+        <UDropdownMenu :items="menuItems">
           <UButton
-            :icon="action.icon"
+            icon="i-heroicons-ellipsis-horizontal"
             color="neutral"
             variant="ghost"
             size="xs"
-            :class="action.danger ? 'text-[--ui-text-muted] hover:text-red-500' : 'text-[--ui-text-muted] hover:text-[--ui-text-highlighted]'"
-            :aria-label="action.label"
-            @click="action.onClick"
+            :aria-label="t('actions.more')"
           />
-        </UTooltip>
+        </UDropdownMenu>
       </div>
     </div>
   </UCard>

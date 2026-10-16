@@ -7,6 +7,7 @@ import ContentCardCreateModal from '#layers/BaseConnect/app/components/connect/b
 import ContentCardEditModal from '#layers/BaseConnect/app/components/connect/business/components/ContentCardEditModal.vue'
 import ContentPublishTargets from '#layers/BaseConnect/app/components/connect/business/components/ContentPublishTargets.vue'
 import ContentScanModal from '#layers/BaseConnect/app/components/connect/business/components/ContentScanModal.vue'
+import BusinessWorkspaceTabs from '#layers/BaseConnect/app/components/connect/business/components/BusinessWorkspaceTabs.vue'
 import { displayAngle } from '#layers/BaseConnect/app/utils/content-brief'
 import { contentApiError } from '#layers/BaseConnect/app/utils/content-api-error'
 import {
@@ -345,6 +346,7 @@ onMounted(() => {
     </header>
 
     <main class="mx-auto flex w-full max-w-[100rem] flex-1 flex-col gap-3 px-4 py-4 lg:px-8">
+      <BusinessWorkspaceTabs :business-id="businessId" active="content" />
       <div v-if="loading" v-motion-fade :duration="200" class="flex justify-center py-20" data-testid="board-loading">
         <UIcon name="i-heroicons-arrow-path" class="size-6 animate-spin text-muted" />
       </div>

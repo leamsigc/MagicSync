@@ -128,10 +128,10 @@ export const useBusinessManager = () => {
     return completed;
   };
 
-  const updateBusiness = async (id: string, updatedFields: Partial<BusinessProfile>) => {
+  const updateBusiness = async (id: string, updatedFields: Partial<BusinessProfile>, entityDetails?: Record<string, unknown>) => {
     await $fetch<BusinessProfile>(`/api/v1/business/${id}`, {
       method: 'PUT',
-      body: updatedFields,
+      body: entityDetails ? { ...updatedFields, entityDetails } : updatedFields,
     });
     await getAllBusinesses();
   };

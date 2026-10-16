@@ -17,6 +17,7 @@
       "no_businesses": "No businesses found",
       "active": "Active",
       "inactive": "Inactive",
+      "no_details": "No details yet",
       "business_added": "Business Added",
       "business_added_successfully": "Business has been added successfully.",
       "business_updated": "Business Updated",
@@ -68,7 +69,8 @@
       "playbook": "Playbook",
       "google_business": "Google Business",
       "close": "Close",
-      "delete": "Delete"
+      "delete": "Delete",
+      "more": "More actions"
     },
     "delete_modal": {
       "title": "Delete business",
@@ -174,6 +176,13 @@
       "label": "Require manual approval before publishing",
       "description": "When enabled, content must be manually released from the Scheduled column before publishing.",
       "saved": "Safe Mode updated"
+    },
+    "workspace_tabs": {
+      "edit": "Edit",
+      "playbook": "Playbook",
+      "content": "Content",
+      "corpus": "Brand Base",
+      "publishing": "Publishing"
     }
   },
   "fr": {
@@ -190,6 +199,7 @@
       "no_businesses": "Aucune entreprise trouvée",
       "active": "Actif",
       "inactive": "Inactif",
+      "no_details": "Aucun détail",
       "business_added": "Entreprise ajoutée",
       "business_added_successfully": "L'entreprise a été ajoutée avec succès.",
       "error": "Erreur",
@@ -241,7 +251,8 @@
       "playbook": "Playbook",
       "google_business": "Google Business",
       "close": "Fermer",
-      "delete": "Supprimer"
+      "delete": "Supprimer",
+      "more": "Plus d’actions"
     },
     "delete_modal": {
       "title": "Supprimer l'entreprise",
@@ -351,6 +362,13 @@
       "label": "Exiger une approbation manuelle avant la publication",
       "description": "Lorsqu'il est activé, le contenu doit être validé manuellement depuis la colonne Programmé avant publication.",
       "saved": "Mode sûr mis à jour"
+    },
+    "workspace_tabs": {
+      "edit": "Modifier",
+      "playbook": "Playbook",
+      "content": "Contenu",
+      "corpus": "Base de marque",
+      "publishing": "Publication"
     }
   },
   "es": {
@@ -367,6 +385,7 @@
       "no_businesses": "No se encontraron negocios",
       "active": "Activo",
       "inactive": "Inactivo",
+      "no_details": "Sin detalles",
       "business_added": "Negocio agregado",
       "business_added_successfully": "El negocio ha sido agregado exitosamente.",
       "error": "Error",
@@ -418,7 +437,8 @@
       "playbook": "Playbook",
       "google_business": "Google Business",
       "close": "Cerrar",
-      "delete": "Eliminar"
+      "delete": "Eliminar",
+      "more": "Más acciones"
     },
     "delete_modal": {
       "title": "Eliminar negocio",
@@ -528,6 +548,13 @@
       "label": "Requerir aprobación manual antes de publicar",
       "description": "Cuando está activado, el contenido debe liberarse manualmente desde la columna Programado antes de publicar.",
       "saved": "Modo seguro actualizado"
+    },
+    "workspace_tabs": {
+      "edit": "Editar",
+      "playbook": "Playbook",
+      "content": "Contenido",
+      "corpus": "Base de marca",
+      "publishing": "Publicación"
     }
   },
   "de": {
@@ -544,6 +571,7 @@
       "no_businesses": "Keine Unternehmen gefunden",
       "active": "Aktiv",
       "inactive": "Inaktiv",
+      "no_details": "Noch keine Details",
       "business_added": "Unternehmen hinzugefügt",
       "business_added_successfully": "Das Unternehmen wurde erfolgreich hinzugefügt.",
       "error": "Fehler",
@@ -595,7 +623,8 @@
       "playbook": "Playbook",
       "google_business": "Google Business",
       "close": "Schließen",
-      "delete": "Löschen"
+      "delete": "Löschen",
+      "more": "Weitere Aktionen"
     },
     "delete_modal": {
       "title": "Unternehmen löschen",
@@ -705,6 +734,13 @@
       "label": "Manuelle Freigabe vor der Veröffentlichung erforderlich",
       "description": "Wenn aktiviert, müssen Inhalte manuell aus der Spalte „Geplant“ freigegeben werden, bevor sie veröffentlicht werden.",
       "saved": "Sicherer Modus aktualisiert"
+    },
+    "workspace_tabs": {
+      "edit": "Bearbeiten",
+      "playbook": "Playbook",
+      "content": "Inhalt",
+      "corpus": "Markenbasis",
+      "publishing": "Veröffentlichung"
     }
   }
 }

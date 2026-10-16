@@ -401,13 +401,14 @@ export class UserLlmConfigService implements UserLlmConfigServiceType {
     try {
       if (businessId) {
         const override = await this.getOverride(userId, businessId)
-        // `system` means "use the operator's model, not mine". It must bypass
-        // the user's OWN default row too, otherwise a user who once configured
-        // a key can never hand control back — which is the whole point of the
-        // option.
+        // Precedence is business → user → system. A real provider on the
+        // business wins. The `system` sentinel means "inherit": fall through to
+        // the user's own AI and only then the operator default. It used to jump
+        // straight to the system model, which silently skipped an account the
+        // user had already configured.
         if (override.success && override.data) {
           if (override.data.provider === 'system') {
-            return { success: true, data: systemDefaultConfig(userId) }
+            return this.loadUserDefault(userId)
           }
           return { success: true, data: toEffectiveConfig(userId, businessId, override.data) }
         }

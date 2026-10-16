@@ -1,7 +1,7 @@
-import { eq, and, desc, asc, sql } from 'drizzle-orm'
+import { eq, and, desc, asc, inArray, isNotNull } from 'drizzle-orm'
 import { type ServiceResponse } from './types'
 import type { ChatServiceType } from './interfaces'
-import { chatThreads, chatMessages, type ChatThread, type ChatMessage } from '#layers/BaseDB/db/schema'
+import { chatThreads, chatMessages, agentChatSessions, type ChatThread, type ChatMessage } from '#layers/BaseDB/db/schema'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
 
 export interface CreateThreadData {
@@ -57,6 +57,39 @@ export class ChatService implements ChatServiceType {
       return { success: true, data: threads }
     } catch (error) {
       return { success: false, error: 'Failed to fetch threads' }
+    }
+  }
+
+  /**
+   * Threads for one business. `chat_threads` has no business column, so the
+   * business link is read from `agent_chat_sessions` (which owns threadId →
+   * businessId) — the same link the agent runtime writes on every run. No
+   * migration needed; a brand-new thread appears once its first run is recorded.
+   */
+  async getThreadsByBusiness(userId: string, businessId: string): Promise<ServiceResponse<ChatThread[]>> {
+    try {
+      const links = await this.db
+        .select({ threadId: agentChatSessions.threadId })
+        .from(agentChatSessions)
+        .where(and(
+          eq(agentChatSessions.ownerUserId, userId),
+          eq(agentChatSessions.businessId, businessId),
+          isNotNull(agentChatSessions.threadId),
+        ))
+      const threadIds = links
+        .map(link => link.threadId)
+        .filter((id): id is string => Boolean(id))
+      if (threadIds.length === 0) return { success: true, data: [] }
+
+      const threads = await this.db
+        .select()
+        .from(chatThreads)
+        .where(and(eq(chatThreads.userId, userId), inArray(chatThreads.id, threadIds)))
+        .orderBy(desc(chatThreads.lastMessageAt))
+
+      return { success: true, data: threads }
+    } catch (error) {
+      return { success: false, error: 'Failed to fetch threads for business' }
     }
   }
 

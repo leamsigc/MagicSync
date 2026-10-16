@@ -35,10 +35,12 @@ export default defineEventHandler(async (event) => {
   });
 
   if (body.entityDetails && newBusiness.data) {
-    const entityDetails = entityDetailsService.createDetails({
+    // Pass the object through — the `details` column is `text({ mode: 'json' })`
+    // and stringifies internally. Stringifying here double-encoded every row.
+    await entityDetailsService.createDetails({
       entityType: 'business_details',
       entityId: newBusiness.data.id,
-      details: JSON.stringify(body.entityDetails) as any,
+      details: body.entityDetails,
     })
   }
 

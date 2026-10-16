@@ -8,6 +8,10 @@ const props = defineProps<{
   businessId?: string | null
 }>()
 
+const emit = defineEmits<{
+  compose: [payload: { content: string, accounts: Array<{ id: string, platform: string }> }]
+}>()
+
 const { t } = useI18n()
 const toast = useToast()
 const accounts = ref<SocialAccount[]>([])
@@ -153,6 +157,16 @@ function handleSelectAccount(): void {
   showAccounts.value = !showAccounts.value
 }
 
+/** Hand the draft to the full composer so it can be finished with real parity. */
+function handleCompose(): void {
+  const tab = activeTab.value
+  if (!tab) return
+  emit('compose', {
+    content: tab.caption,
+    accounts: platformAccounts.value.map(account => ({ id: account.id, platform: account.platform ?? '' })),
+  })
+}
+
 async function reloadAccountsForSelect(): Promise<void> {
   busyKey.value = 'select-account'
   try {
@@ -221,7 +235,18 @@ watch(() => props.businessId, () => {
             <p class="text-xs font-semibold uppercase tracking-wide text-primary">{{ platformLabel(activeTab.platform) }}</p>
             <p v-if="activeTab.account" class="mt-1 text-xs text-muted">{{ activeTab.account }}</p>
           </div>
-          <UBadge color="neutral" variant="subtle" size="xs">{{ t('workflow.draftStatus') }}</UBadge>
+          <div class="flex items-center gap-2">
+            <UBadge color="neutral" variant="subtle" size="xs">{{ t('workflow.draftStatus') }}</UBadge>
+            <UButton
+              size="xs"
+              variant="outline"
+              color="neutral"
+              icon="i-heroicons-pencil-square"
+              @click="handleCompose"
+            >
+              {{ t('workflow.draft.openEditor') }}
+            </UButton>
+          </div>
         </div>
         <DraftPreviewCard
           :tab="activeTab"

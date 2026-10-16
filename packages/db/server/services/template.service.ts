@@ -7,6 +7,7 @@ import {
 } from './types';
 import type { TemplateServiceType } from './interfaces';
 import { templates, templateAssets, type Template, type TemplateAsset, TemplateType } from '#layers/BaseDB/db/schema';
+import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle';
 
 export interface CreateTemplateData {
   ownerId: string;

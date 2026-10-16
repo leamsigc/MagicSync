@@ -60,7 +60,7 @@ useHead({
 })
 
 function handleBack() {
-  router.push(`/app/business/${businessId}/publishing`)
+  router.push(`/app/business/${businessId}/content/publishing`)
 }
 
 function errorMessage(error: unknown): string {
@@ -243,7 +243,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="mx-auto max-w-5xl space-y-6">
+  <div class="mx-auto w-full max-w-[100rem] space-y-6 px-4 py-4 lg:px-8">
     <div class="flex items-center gap-3">
       <UButton variant="ghost" color="neutral" icon="i-heroicons-arrow-left" @click="handleBack">{{ t('back') }}</UButton>
       <div>

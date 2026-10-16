@@ -104,6 +104,11 @@
     },
     "operator": {
       "badge": "Operator",
+      "aiSource": {
+        "override": "Using this business's own AI settings",
+        "user-default": "Using your account default AI",
+        "system-default": "Using the system AI"
+      },
       "emptyTitle": "Talk to your operator",
       "emptyLine": "It reads your leads, your funnel and your content calendar. Ask it a question, or tell it to draft something.",
       "morningReview": "Run morning review",
@@ -146,13 +151,12 @@
       "reviewFailed": "Could not save the review",
       "filmstripLabel": "Slides",
       "previewHint": "Text preview only — not a rendered scene or delivery confirmation.",
+      "noSources": "Generated without live sources — the copy may be generic. Add research or edit a slide.",
       "revisionReady": "Describe your changes in the chat input.",
       "revisionCancelled": "Revision target removed",
       "revisionTarget": "Revise artifact {artifactId} · slide {slideId} · v{version}",
       "revisionPlaceholder": "What should change on this slide?",
       "cancelRevision": "Cancel revision",
-      "revisionMessage": "Use revise_carousel to revise artifact {artifactId}, version {version}, targeting only slide ID {slideId}. Requested changes: {feedback}",
-      "revisionMessageOpen": "Use revise_carousel on artifact {artifactId}, version {version}, whole deck. Requested changes: {feedback}",
       "prev": "Previous slide",
       "next": "Next slide",
       "goTo": "Go to slide",
@@ -288,6 +292,9 @@
       "statusDone": "Done",
       "statusIdle": "Ready",
       "requestChanges": "Request changes",
+      "reviseSlideLabel": "Which page to change",
+      "wholeDeck": "Whole deck",
+      "slideOption": "Page {index}: {headline}",
       "inputs": "Inputs",
       "technicalDetails": "Technical details",
       "actionTitle": "{group} work",
@@ -304,7 +311,8 @@
         "connectPrompt": "Connect a {platform} account to preview and publish this draft.",
         "connectCta": "Connect accounts",
         "scheduled": "Post saved",
-        "scheduleFailed": "Could not save the post"
+        "scheduleFailed": "Could not save the post",
+        "openEditor": "Edit & schedule"
       }
     },
     "toolNames": {
@@ -431,6 +439,11 @@
     },
     "operator": {
       "badge": "Opérateur",
+      "aiSource": {
+        "override": "IA propre à cette entreprise",
+        "user-default": "IA par défaut de votre compte",
+        "system-default": "IA du système"
+      },
       "emptyTitle": "Parlez à votre opérateur",
       "emptyLine": "Il lit vos prospects, votre entonnoir et votre calendrier de contenu. Posez-lui une question ou demandez-lui de rédiger quelque chose.",
       "morningReview": "Lancer le point du matin",
@@ -473,13 +486,12 @@
       "reviewFailed": "Impossible d'enregistrer la révision",
       "filmstripLabel": "Diapositives",
       "previewHint": "Aperçu textuel uniquement — ni rendu de scène ni confirmation de livraison.",
+      "noSources": "Généré sans sources en direct — le texte peut être générique.",
       "revisionReady": "Décris les modifications dans le champ de discussion.",
       "revisionCancelled": "Cible de révision retirée",
       "revisionTarget": "Réviser l’artefact {artifactId} · diapositive {slideId} · v{version}",
       "revisionPlaceholder": "Que faut-il modifier sur cette diapositive ?",
       "cancelRevision": "Annuler la révision",
-      "revisionMessage": "Utilise revise_carousel pour réviser l’artefact {artifactId}, version {version}, en ciblant uniquement la diapositive ID {slideId}. Modifications demandées : {feedback}",
-      "revisionMessageOpen": "Utilise revise_carousel sur l’artefact {artifactId}, version {version}, deck complet. Modifications demandées : {feedback}",
       "prev": "Diapositive précédente",
       "next": "Diapositive suivante",
       "goTo": "Aller à la diapositive",
@@ -615,6 +627,9 @@
       "statusDone": "Terminé",
       "statusIdle": "Prêt",
       "requestChanges": "Demander des modifications",
+      "reviseSlideLabel": "Quelle page modifier",
+      "wholeDeck": "Tout le deck",
+      "slideOption": "Page {index} : {headline}",
       "inputs": "Entrées",
       "technicalDetails": "Détails techniques",
       "actionTitle": "Action de {group}",
@@ -631,7 +646,8 @@
         "connectPrompt": "Connectez un compte {platform} pour prévisualiser et publier ce brouillon.",
         "connectCta": "Connecter des comptes",
         "scheduled": "Publication enregistrée",
-        "scheduleFailed": "Impossible d’enregistrer la publication"
+        "scheduleFailed": "Impossible d’enregistrer la publication",
+        "openEditor": "Modifier et planifier"
       }
     },
     "toolNames": {
@@ -758,6 +774,11 @@
     },
     "operator": {
       "badge": "Operador",
+      "aiSource": {
+        "override": "IA propia de esta empresa",
+        "user-default": "IA predeterminada de tu cuenta",
+        "system-default": "IA del sistema"
+      },
       "emptyTitle": "Habla con tu operador",
       "emptyLine": "Lee tus contactos, tu embudo y tu calendario de contenido. Hazle una pregunta o pídele que redacte algo.",
       "morningReview": "Ejecutar revisión matutina",
@@ -800,13 +821,12 @@
       "reviewFailed": "No se pudo guardar la revisión",
       "filmstripLabel": "Diapositivas",
       "previewHint": "Solo vista previa de texto: no es una escena renderizada ni una confirmación de entrega.",
+      "noSources": "Generado sin fuentes en vivo — el texto puede ser genérico.",
       "revisionReady": "Describe los cambios en el campo del chat.",
       "revisionCancelled": "Destino de revisión eliminado",
       "revisionTarget": "Revisar artefacto {artifactId} · diapositiva {slideId} · v{version}",
       "revisionPlaceholder": "¿Qué debe cambiar en esta diapositiva?",
       "cancelRevision": "Cancelar revisión",
-      "revisionMessage": "Usa revise_carousel para revisar el artefacto {artifactId}, versión {version}, solo la diapositiva con ID {slideId}. Cambios solicitados: {feedback}",
-      "revisionMessageOpen": "Usa revise_carousel en el artefacto {artifactId}, versión {version}, mazo completo. Cambios solicitados: {feedback}",
       "prev": "Diapositiva anterior",
       "next": "Diapositiva siguiente",
       "goTo": "Ir a la diapositiva",
@@ -942,6 +962,9 @@
       "statusDone": "Listo",
       "statusIdle": "Lista",
       "requestChanges": "Solicitar cambios",
+      "reviseSlideLabel": "Qué página cambiar",
+      "wholeDeck": "Todo el mazo",
+      "slideOption": "Página {index}: {headline}",
       "inputs": "Entradas",
       "technicalDetails": "Detalles técnicos",
       "actionTitle": "Acción de {group}",
@@ -958,7 +981,8 @@
         "connectPrompt": "Conecta una cuenta de {platform} para previsualizar y publicar este borrador.",
         "connectCta": "Conectar cuentas",
         "scheduled": "Publicación guardada",
-        "scheduleFailed": "No se pudo guardar la publicación"
+        "scheduleFailed": "No se pudo guardar la publicación",
+        "openEditor": "Editar y programar"
       }
     },
     "toolNames": {
@@ -1085,6 +1109,11 @@
     },
     "operator": {
       "badge": "Operator",
+      "aiSource": {
+        "override": "KI-Einstellungen dieses Unternehmens",
+        "user-default": "Standard-KI deines Kontos",
+        "system-default": "KI des Systems"
+      },
       "emptyTitle": "Sprich mit deinem Operator",
       "emptyLine": "Er liest deine Leads, deinen Funnel und deinen Content-Kalender. Stell ihm eine Frage oder bitte ihn, etwas zu entwerfen.",
       "morningReview": "Morgenbesprechung starten",
@@ -1123,17 +1152,16 @@
       "slideCounter": "{index} von {count}",
       "filmstripLabel": "Folien",
       "previewHint": "Nur Textvorschau — keine gerenderte Szene und keine Lieferbestätigung.",
+      "noSources": "Ohne Live-Quellen erzeugt — der Text kann generisch sein.",
       "revisionReady": "Beschreibe die Änderungen im Chat-Eingabefeld.",
       "revisionCancelled": "Überarbeitungsziel entfernt",
       "revisionTarget": "Artefakt {artifactId} überarbeiten · Folie {slideId} · v{version}",
       "revisionPlaceholder": "Was soll sich an dieser Folie ändern?",
       "cancelRevision": "Überarbeitung abbrechen",
-      "revisionMessage": "Nutze revise_carousel, um Artefakt {artifactId}, Version {version}, nur für die Folie mit ID {slideId} zu überarbeiten. Gewünschte Änderungen: {feedback}",
       "approve": "Genehmigen",
       "revise": "Änderungen anfordern",
       "approved": "Karussell genehmigt",
       "reviewFailed": "Die Überprüfung konnte nicht gespeichert werden",
-      "revisionMessageOpen": "Nutze revise_carousel für Artefakt {artifactId}, Version {version}, ganzes Deck. Gewünschte Änderungen: {feedback}",
       "prev": "Vorherige Folie",
       "next": "Nächste Folie",
       "goTo": "Gehe zu Folie",
@@ -1269,6 +1297,9 @@
       "statusDone": "Fertig",
       "statusIdle": "Bereit",
       "requestChanges": "Änderungen anfordern",
+      "reviseSlideLabel": "Welche Seite ändern",
+      "wholeDeck": "Ganzes Deck",
+      "slideOption": "Seite {index}: {headline}",
       "inputs": "Eingaben",
       "technicalDetails": "Technische Details",
       "actionTitle": "{group}-Aufgabe",
@@ -1285,7 +1316,8 @@
         "connectPrompt": "Verbinde ein {platform}-Konto, um diesen Entwurf anzusehen und zu veröffentlichen.",
         "connectCta": "Konten verbinden",
         "scheduled": "Beitrag gespeichert",
-        "scheduleFailed": "Beitrag konnte nicht gespeichert werden"
+        "scheduleFailed": "Beitrag konnte nicht gespeichert werden",
+        "openEditor": "Bearbeiten und planen"
       }
     },
     "toolNames": {

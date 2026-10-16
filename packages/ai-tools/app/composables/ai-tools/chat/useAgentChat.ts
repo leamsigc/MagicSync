@@ -97,6 +97,8 @@ export interface BusinessContextOptions {
   skillSlugs?: string[]
   /** Registered skill ids (latest version) loaded into the system prompt. */
   registeredSkillIds?: string[]
+  /** Structural carousel revision target — ids travel here, not in the message. */
+  carouselRevision?: { artifactId: string, slideIds: string[] }
 }
 
 function generateId(): string {
@@ -279,7 +281,7 @@ export function useAgentChat() {
   let abortController: AbortController | null = null
   let loadSeq = 0
 
-  let loadThreads: () => Promise<void>
+  let loadThreads: (businessId?: string) => Promise<void>
   let loadThreadMessages: (id: string) => Promise<void>
 
   function handleStreamError(chunk: StreamChunk) {
@@ -350,6 +352,7 @@ body: JSON.stringify({
            allowedTools: opts.allowedTools ?? null,
            skillSlugs: opts.skillSlugs ?? null,
            registeredSkillIds: opts.registeredSkillIds ?? null,
+           carouselRevision: opts.carouselRevision ?? null,
          }),
         signal: abortController.signal,
       })
@@ -407,7 +410,7 @@ body: JSON.stringify({
       isStreaming.value = false
       abortController = null
       activeRunId.value = null
-      void loadThreads()
+      void loadThreads(opts.businessId)
     }
   }
 
@@ -548,10 +551,11 @@ body: JSON.stringify({
     })
   }
 
-  loadThreads = async function () {
+  loadThreads = async function (businessId?: string) {
     isLoadingThreads.value = true
     try {
-      const data = await $fetch<Thread[]>('/api/ai-tools/chat/threads')
+      const query = businessId ? `?businessId=${encodeURIComponent(businessId)}` : ''
+      const data = await $fetch<Thread[]>(`/api/ai-tools/chat/threads${query}`)
       threads.value = data || []
     } catch (error) {
       toast.add({

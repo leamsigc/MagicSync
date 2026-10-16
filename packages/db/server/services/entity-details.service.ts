@@ -2,6 +2,7 @@
 import { eq, and } from 'drizzle-orm'
 import { entityDetails, type EntityDetails, type NewEntityDetails } from '#layers/BaseDB/db/entityDetails/entityDetails'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
+import { coerceJsonObject } from '#layers/BaseShared/utils/json'
 import type { FacebookPage } from '#layers/BaseShared/server/types/facebook-pages'
 import type { EntityDetailsServiceType } from './interfaces'
 
@@ -10,8 +11,27 @@ export interface UpdateEntityDetailsData {
   details?: Record<string, unknown>
 }
 
+/**
+ * `entity_details.details` accumulated corrupt shapes (double-encoded strings,
+ * and objects left by `{ ...someString }`). Every read normalizes back to a
+ * plain object so no consumer has to defend against the legacy shapes.
+ */
+function withNormalizedDetails(row: EntityDetails): EntityDetails {
+  return { ...row, details: coerceJsonObject(row.details) as EntityDetails['details'] }
+}
+
 export class EntityDetailsService implements EntityDetailsServiceType {
   private db = useDrizzle()
+
+  /** Update the single `business_details`-style row for an entity, merging a patch. */
+  async updateByEntity(entityId: string, entityType: string, patch: Record<string, unknown>): Promise<EntityDetails> {
+    const existing = await this.getDetailsByEntity(entityId, entityType)
+    if (!existing) {
+      return this.createDetails({ entityId, entityType, details: patch })
+    }
+    const merged = { ...coerceJsonObject(existing.details), ...patch }
+    return this.updateDetails(existing.id, { details: merged })
+  }
 
   /**
    * Create new entity details
@@ -35,7 +55,7 @@ export class EntityDetailsService implements EntityDetailsServiceType {
       throw new Error('Failed to create entity details')
     }
 
-    return newDetails as EntityDetails
+    return withNormalizedDetails(newDetails)
   }
   async createOrUpdateDetails({ entityId, entityType, pages }: { entityId: string; entityType: string; pages: FacebookPage[] }) {
     // Check if the entity details already exist
@@ -61,18 +81,19 @@ export class EntityDetailsService implements EntityDetailsServiceType {
   /**
    * Get entity details by ID
    */
-  async getDetailsById(id: string): Promise<EntityDetails> {
+  async getDetailsById(id: string): Promise<EntityDetails | undefined> {
     const details = await this.db.query.entityDetails.findFirst({
       where: eq(entityDetails.id, id),
     });
 
-    return details as EntityDetails
+    if (!details) return undefined
+    return withNormalizedDetails(details)
   }
 
   /**
    * Get entity details by entityId and entityType
    */
-  async getDetailsByEntity(entityId: string, entityType: string): Promise<EntityDetails> {
+  async getDetailsByEntity(entityId: string, entityType: string): Promise<EntityDetails | undefined> {
     const details = await this.db.query.entityDetails.findFirst({
       where: and(
         eq(entityDetails.entityId, entityId),
@@ -80,7 +101,8 @@ export class EntityDetailsService implements EntityDetailsServiceType {
       )
     })
 
-    return details as EntityDetails
+    if (!details) return undefined
+    return withNormalizedDetails(details)
   }
 
   /**
@@ -98,7 +120,7 @@ export class EntityDetailsService implements EntityDetailsServiceType {
       .where(eq(entityDetails.id, id))
       .returning()
 
-    return updatedDetails as EntityDetails
+    return withNormalizedDetails(updatedDetails)
   }
 
   /**

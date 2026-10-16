@@ -21,6 +21,11 @@ const ChatRequestSchema = z.object({
   allowedTools: z.array(z.string().min(1).max(80)).max(40).nullish(),
   skillSlugs: z.array(z.string().min(1).max(80)).max(12).nullish(),
   registeredSkillIds: z.array(z.string().min(1).max(80)).max(12).nullish(),
+  /** Structural revision target — ids travel here, never as prose in `message`. */
+  carouselRevision: z.object({
+    artifactId: z.string().min(1).max(120),
+    slideIds: z.array(z.string().min(1).max(120)).max(10).nullish(),
+  }).nullish(),
 })
 
 type ChatRequest = z.infer<typeof ChatRequestSchema>
@@ -41,7 +46,7 @@ function safeParseOutput(raw: string): unknown {
 }
 
 function isCarouselIntent(message: string): boolean {
-  return /\b(create|make|generate|build|design|write|revise|update)\b[\s\S]{0,80}\bcarousels?\b|\bcarousels?\b[\s\S]{0,80}\b(create|make|generate|build|design|write|revise|update)\b/i.test(message)
+  return /\b(create|make|generate|build|design|write)\b[\s\S]{0,80}\bcarousels?\b|\bcarousels?\b[\s\S]{0,80}\b(create|make|generate|build|design|write)\b/i.test(message)
 }
 
 function carouselHarnessContext(message: string): string {
@@ -52,6 +57,56 @@ function carouselHarnessContext(message: string): string {
     'The carousel workflow owns research and generation internally and returns the preview artifact for chat review. The default deck is 10 slides so the preview matches the 5-column reference layout.',
     `Original user request: ${message.slice(0, 12000)}`,
   ].join('\n')
+}
+
+function carouselRevisionContext(
+  revision: { artifactId: string, slideIds?: string[] | null },
+  message: string,
+): string {
+  const scope = revision.slideIds?.length
+    ? `Revise ONLY these slide ids: ${revision.slideIds.join(', ')}. Every other slide must be returned unchanged.`
+    : 'Revise only the slide(s) the request names. If it names none, ask which slide — never rewrite the whole deck.'
+  return [
+    'Harness mode: carousel revision detected.',
+    `Call revise_carousel exactly once with artifactId ${revision.artifactId}.`,
+    'Pass the target slide ids in slideIds so only those slides change.',
+    scope,
+    'Do not call generate_carousel, do not create a new carousel, do not touch board cards, and do not schedule or publish.',
+    `Requested changes: ${message.slice(0, 4000)}`,
+  ].join('\n')
+}
+
+interface CarouselResolution {
+  intent: boolean
+  allowedTools: string[] | undefined
+  systemContext: string | null
+  carouselRequest?: string
+  carouselTarget?: { artifactId: string, slideIds: string[] }
+}
+
+/**
+ * Route a carousel turn to exactly one tool. Generation and revision are
+ * different intents: revision needs the artifact id, which arrives structurally
+ * (`carouselRevision`) so the ids never have to be parsed out of prose.
+ */
+function resolveCarousel(body: ChatRequest, requestedTools: string[] | undefined): CarouselResolution {
+  if (body.carouselRevision) {
+    return {
+      intent: true,
+      allowedTools: ['revise_carousel'],
+      systemContext: carouselRevisionContext(body.carouselRevision, body.message),
+      carouselTarget: { artifactId: body.carouselRevision.artifactId, slideIds: body.carouselRevision.slideIds ?? [] },
+    }
+  }
+  if (isCarouselIntent(body.message)) {
+    return {
+      intent: true,
+      allowedTools: ['generate_carousel'],
+      systemContext: carouselHarnessContext(body.message),
+      carouselRequest: body.message,
+    }
+  }
+  return { intent: false, allowedTools: requestedTools, systemContext: null }
 }
 
 /**
@@ -106,20 +161,19 @@ export default defineEventHandler(async (event) => {
   setResponseHeader(event, 'X-Accel-Buffering', 'no')
 
   const supplement = body.cardId ? await cardSupplement(user.id, body.businessId, body.cardId, event) : null
-  const carouselIntent = isCarouselIntent(body.message)
+  const toolNames = new Set(AGENT_TOOL_NAMES)
+  const requestedTools = body.allowedTools?.filter(tool => toolNames.has(tool))
+  const carousel = resolveCarousel(body, requestedTools)
   const systemContext = [
     runConfig.data.systemContext,
     supplement,
-    carouselIntent ? carouselHarnessContext(body.message) : null,
+    carousel.systemContext,
   ].filter(Boolean).join('\n\n')
 
-  const agentName = !carouselIntent && body.agentName && isSpecialistProfileName(body.agentName)
+  const agentName = !carousel.intent && body.agentName && isSpecialistProfileName(body.agentName)
     ? body.agentName
     : undefined
-  const toolNames = new Set(AGENT_TOOL_NAMES)
-  const allowedTools = carouselIntent
-    ? ['generate_carousel']
-    : body.allowedTools?.filter(tool => toolNames.has(tool))
+  const allowedTools = carousel.allowedTools
   const skillSlugs = new Set(BUNDLED_SKILLS.map(skill => skill.slug))
   const extraSkillSlugs = body.skillSlugs?.filter(slug => skillSlugs.has(slug))
   const extraRegisteredSkillIds = body.registeredSkillIds?.length ? body.registeredSkillIds : undefined
@@ -151,10 +205,11 @@ export default defineEventHandler(async (event) => {
           businessId: body.businessId,
           event,
           log,
-          carouselRequest: carouselIntent ? body.message : undefined,
+          carouselRequest: carousel.carouselRequest,
+          carouselTarget: carousel.carouselTarget,
         },
-        maxToolCalls: carouselIntent ? 40 : undefined,
-        singleToolCall: carouselIntent,
+        maxToolCalls: carousel.intent ? 40 : undefined,
+        singleToolCall: carousel.intent,
       }, send)
       controller.close()
     },

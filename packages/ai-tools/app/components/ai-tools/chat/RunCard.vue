@@ -25,6 +25,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (event: 'revise', intent: { artifactId: string, slideId: string, version: number }): void
   (event: 'cancel'): void
+  (event: 'compose', payload: { content: string, accounts: Array<{ id: string, platform: string }> }): void
 }>()
 
 const { t } = useI18n()
@@ -32,11 +33,9 @@ const toast = useToast()
 const open = ref(false)
 const approvalLoading = ref(false)
 
-const sections = computed(() => {
-  const grouped = groupSections(props.calls)
-  if (!grouped.some(section => section.kind === 'carousel')) return grouped
-  return grouped.filter(section => section.kind === 'carousel')
-})
+// The carousel section renders the full deck UI; other sections (draft, board,
+// research) stay visible so a mixed turn never hides its own results.
+const sections = computed(() => groupSections(props.calls))
 const hasCarousel = computed(() => sections.value.some(section => section.kind === 'carousel'))
 const visibleCalls = computed(() => sections.value.flatMap(section => section.calls))
 const rail = computed(() => hasCarousel.value ? [] : railSteps(props.run as MessageRunLike | undefined, visibleCalls.value))
@@ -101,6 +100,10 @@ function toggleOpen(): void {
 
 function handleRevise(intent: { artifactId: string, slideId: string, version: number }): void {
   emit('revise', intent)
+}
+
+function handleCompose(payload: { content: string, accounts: Array<{ id: string, platform: string }> }): void {
+  emit('compose', payload)
 }
 
 function handleCancel(): void {
@@ -190,7 +193,12 @@ async function handleApprovalAction(actionId: string, actionLabel: string): Prom
           :is-streaming="isStreaming"
           @revise="handleRevise"
         />
-        <DraftSection v-else-if="section.kind === 'draft'" :calls="section.calls" :business-id="businessId" />
+        <DraftSection
+          v-else-if="section.kind === 'draft'"
+          :calls="section.calls"
+          :business-id="businessId"
+          @compose="handleCompose"
+        />
         <BoardSection v-else-if="section.kind === 'board'" :calls="section.calls" />
         <DeliverySection v-else :calls="section.calls" />
       </template>

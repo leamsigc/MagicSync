@@ -38,6 +38,8 @@ export interface AgentToolContext {
   validateUrl?: (url: string) => Promise<string | null>
   /** Original request supplied by the carousel harness; prevents source-card drift. */
   carouselRequest?: string
+  /** Structural revision target from the harness — ids, never parsed from prose. */
+  carouselTarget?: { artifactId: string, slideIds: string[] }
 }
 
 export function createAgentToolContext(input: {
@@ -54,6 +56,7 @@ export function createAgentToolContext(input: {
   langsearchKey?: string | null
   validateUrl?: (url: string) => Promise<string | null>
   carouselRequest?: string
+  carouselTarget?: { artifactId: string, slideIds: string[] }
 }): AgentToolContext {
   return {
     userId: input.userId,
@@ -69,5 +72,6 @@ export function createAgentToolContext(input: {
     langsearchKey: input.langsearchKey,
     validateUrl: input.validateUrl,
     carouselRequest: input.carouselRequest,
+    carouselTarget: input.carouselTarget,
   }
 }

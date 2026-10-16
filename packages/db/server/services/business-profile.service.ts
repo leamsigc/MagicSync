@@ -8,7 +8,7 @@ import type {
 } from './types'
 import type { BusinessProfileServiceType } from './interfaces'
 import { and, eq, inArray, not, sql } from 'drizzle-orm'
-import { parseJsonObject, toJsonString } from '#layers/BaseShared/utils/json'
+import { parseJsonObject, toJsonString, coerceJsonObject } from '#layers/BaseShared/utils/json'
 import { businessProfiles, contentArtifacts, contentItems, entityDetails, member, organization, pipelines, posts, publishConnections, socialMediaAccounts } from '#layers/BaseDB/db/schema'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
 import {
@@ -143,7 +143,7 @@ export class BusinessProfileService implements BusinessProfileServiceType {
         return { success: false, error: 'Business profile not found', code: 'NOT_FOUND' }
       }
 
-      const orgMetadata = (entity.details ?? {}) as Record<string, unknown>
+      const orgMetadata = coerceJsonObject(entity.details)
       const orgId = orgMetadata.organizationId as string | undefined
       if (!orgId) {
         return { success: false, error: 'Business profile not found', code: 'NOT_FOUND' }

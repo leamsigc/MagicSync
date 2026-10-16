@@ -100,6 +100,7 @@ export class CarouselWorkflowService {
           sourceType: 'chat_workflow',
           sourceId: '',
           sourceRef: topic.slice(0, 200),
+          platform: input.platform ?? 'instagram',
         },
       }, ctx.event)
       if (!submitted.success) return { success: false, error: submitted.error, code: submitted.code }

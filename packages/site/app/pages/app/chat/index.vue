@@ -13,6 +13,7 @@ import OperatorApprovalsRail from '#layers/BaseAITools/app/components/ai-tools/c
 import OperatorActivityFeed from '#layers/BaseAITools/app/components/ai-tools/chat/OperatorActivityFeed.vue'
 import OperatorSafeModeBadge from '#layers/BaseAITools/app/components/ai-tools/chat/OperatorSafeModeBadge.vue'
 import MorningReportCard from '#layers/BaseAITools/app/components/ai-tools/chat/MorningReportCard.vue'
+import ChatPostComposer from '../../../components/chat/ChatPostComposer.vue'
 
 const { t, te } = useI18n()
 const toast = useToast()
@@ -21,6 +22,25 @@ const router = useRouter()
 const input = ref('')
 const fileInput = ref<HTMLInputElement | null>(null)
 const revisionTarget = ref<{ artifactId: string, slideId: string, version: number } | null>(null)
+const composerOpen = ref(false)
+const composerDraft = ref<{ content: string, accounts: Array<{ id: string, platform: string }> } | null>(null)
+const effectiveAi = ref<{ provider: string, model: string, source: string } | null>(null)
+
+/** Show which provider/model the chat will actually use, so a wrong pick is visible. */
+async function loadEffectiveAi() {
+  const businessId = activeBusinessId.value
+  if (!businessId) {
+    effectiveAi.value = null
+    return
+  }
+  try {
+    effectiveAi.value = await $fetch<{ provider: string, model: string, source: string }>('/api/v1/llm/effective', {
+      query: { businessId },
+    })
+  } catch {
+    effectiveAi.value = null
+  }
+}
 
 /** The one resolution of "which business am I working on" — see useBusinessManager. */
 const { activeBusinessId } = useBusinessManager()
@@ -64,20 +84,27 @@ function handleCancelRevision() {
   toast.add({ title: t('carousel.revisionCancelled'), color: 'info' })
 }
 
+/** Open the full post composer with this chat draft pre-filled. */
+function handleCompose(payload: { content: string, accounts: Array<{ id: string, platform: string }> }) {
+  if (!activeBusinessId.value) {
+    toast.add({ title: t('needBusinessTitle'), icon: 'i-heroicons-x-circle', color: 'error' })
+    return
+  }
+  composerDraft.value = payload
+  composerOpen.value = true
+}
+
 function handleCancelRun(): void {
   void cancelActiveRun()
 }
 
-function messageContent(): string {
-  if (!revisionTarget.value) return input.value
-  if (!revisionTarget.value.slideId) {
-    return t('carousel.revisionMessageOpen', {
-      artifactId: revisionTarget.value.artifactId,
-      version: revisionTarget.value.version,
-      feedback: input.value.trim(),
-    })
+/** The revision ids travel structurally; the message is the user's feedback only. */
+function carouselRevision(): { artifactId: string, slideIds: string[] } | undefined {
+  if (!revisionTarget.value) return undefined
+  return {
+    artifactId: revisionTarget.value.artifactId,
+    slideIds: revisionTarget.value.slideId ? [revisionTarget.value.slideId] : [],
   }
-  return t('carousel.revisionMessage', { ...revisionTarget.value, feedback: input.value.trim() })
 }
 
 function selectedSkills(values: string[]): string[] | undefined {
@@ -91,13 +118,14 @@ function onSubmit() {
     toast.add({ title: t('needBusinessTitle'), icon: 'i-heroicons-x-circle', color: 'error' })
     return
   }
-  void sendMessage(messageContent(), {
+  void sendMessage(input.value.trim(), {
     businessId: activeBusinessId.value,
     cardId: cardId.value ?? undefined,
     agentName: selection.value.agentName ?? undefined,
     allowedTools: selection.value.tools ?? undefined,
     skillSlugs: selectedSkills(selection.value.skillSlugs),
     registeredSkillIds: selectedSkills(selection.value.registeredSkillIds),
+    carouselRevision: carouselRevision(),
   })
   revisionTarget.value = null
   input.value = ''
@@ -516,6 +544,8 @@ watch(activeBusinessId, () => {
   showGoals.value = false
   void fetchCapabilities()
   void fetchSessions()
+  void loadThreads(activeBusinessId.value ?? undefined)
+  void loadEffectiveAi()
 })
 
 const IMAGE_EXTS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg']
@@ -666,13 +696,15 @@ const consoleOpen = ref(false)
 const { items: pendingApprovalItems, load: loadApprovals } = useOperatorApprovals(() => activeBusinessId.value ?? undefined)
 const pendingApprovals = computed(() => pendingApprovalItems.value.length)
 
-onMounted(() => {
+onMounted(async () => {
+  // Resolve the business (from the URL) before loading its threads.
+  await initFromRoute()
   loadAdvancedMode()
   void loadApprovals()
-  void loadThreads()
-  void initFromRoute()
+  void loadThreads(activeBusinessId.value ?? undefined)
   void fetchCapabilities()
   void fetchSessions()
+  void loadEffectiveAi()
 })
 </script>
 
@@ -689,10 +721,13 @@ onMounted(() => {
     <div class="flex flex-1 flex-col min-w-0 bg-default">
       <header class="flex items-center justify-between gap-3 border-b border-default px-4 py-2 shrink-0">
         <div class="flex min-w-0 items-center gap-3">
-          <UButton icon="i-heroicons-bars-3" variant="ghost" color="neutral" :aria-label="t('history.search')"
+          <UButton icon="i-heroicons-bars-3" variant="ghost" color="neutral" class="shrink-0" :aria-label="t('history.search')"
             @click="handleToggleSidebar" />
-          <span class="truncate text-sm font-semibold text-highlighted">{{ t('operator.badge') }}</span>
-          <OperatorSafeModeBadge :business-id="activeBusinessId" />
+          <span class="hidden truncate text-sm font-semibold text-highlighted xl:inline">{{ t('operator.badge') }}</span>
+          <div class="shrink-0"><OperatorSafeModeBadge :business-id="activeBusinessId" /></div>
+          <UBadge v-if="effectiveAi" color="neutral" variant="subtle" size="xs" class="hidden max-w-[12rem] shrink-0 truncate whitespace-nowrap sm:inline-flex" :title="`${effectiveAi.provider}/${effectiveAi.model} — ${t(`operator.aiSource.${effectiveAi.source}`)}`">
+            {{ effectiveAi.provider }}/{{ effectiveAi.model }}
+          </UBadge>
         </div>
         <div class="flex shrink-0 items-center gap-2">
           <UButton icon="i-heroicons-plus" variant="ghost" color="neutral" :label="t('newChat')" class="hidden sm:flex"
@@ -768,6 +803,7 @@ onMounted(() => {
             <div v-if="message.role === 'assistant' && (message.toolCalls?.length ?? 0) > 0"
               class="mt-1 w-full max-w-[85%]">
               <RunCard :calls="message.toolCalls ?? []" :run="message.run" :business-id="activeBusinessId"
+                @compose="handleCompose"
                 :is-streaming="isStreaming && index === messages.length - 1" :cancel-loading="isCancelling"
                 @revise="handleCarouselRevision" @cancel="handleCancelRun" />
             </div>
@@ -838,6 +874,13 @@ onMounted(() => {
         <OperatorActivityFeed :business-id="activeBusinessId" :is-streaming="isStreaming" />
       </template>
     </USlideover>
+
+    <ChatPostComposer
+      v-model:open="composerOpen"
+      :business-id="activeBusinessId ?? ''"
+      :draft="composerDraft"
+    />
+
     <UModal
       v-model:open="showOptions"
       :title="t('optionsTitle')"

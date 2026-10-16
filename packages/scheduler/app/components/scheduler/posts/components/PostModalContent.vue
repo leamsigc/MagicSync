@@ -64,11 +64,14 @@ interface PostForm extends Omit<PostCreateBase, 'targetPlatforms' | 'mediaAssets
   platformSettings?: Record<string, PlatformSettings>;
 }
 
-const props = defineProps<{
+// `preview` must carry a real default: Vue casts an absent Boolean prop to
+// `false`, so `props.preview ?? true` never sees `undefined` and the preview
+// silently disappeared from every caller that omitted the prop.
+const props = withDefaults(defineProps<{
   initialPost?: PostWithAllData;
   preview?: boolean;
-}>();
-const preview = computed(() => props.preview ?? true);
+}>(), { preview: true });
+const preview = computed(() => props.preview);
 const { getPlatformIcon } = usePlatformIcons();
 const emit = defineEmits(['save', 'update', 'close']);
 
@@ -212,8 +215,14 @@ async function loadInitialPost(post: PostWithAllData | undefined): Promise<void>
 }
 
 onMounted(async () => {
-  await getAllSocialMediaAccounts();
+  // Accounts are scoped to the active business — a user-wide list would offer
+  // accounts that belong to another business.
+  await getAllSocialMediaAccounts(activeBusinessId.value);
   await loadInitialPost(props.initialPost);
+});
+
+watch(activeBusinessId, async () => {
+  await getAllSocialMediaAccounts(activeBusinessId.value);
 });
 
 watch(() => props.initialPost, async (newPost) => {

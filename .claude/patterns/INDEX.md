@@ -38,6 +38,7 @@ Lookup table for all pattern files in this directory. Check here before starting
 | [entitydetails-kv.md](entitydetails-kv.md) | Storing a feature in `entity_details` KV rows with zero migrations |
 | [safe-build.md](safe-build.md) | Building the site without freezing the machine — heap caps, concurrency limits |
 | [auth-session-lifecycle.md](auth-session-lifecycle.md) | better-auth session lifecycle — $sessionSignal listeners, fetchSession, logout without get-session floods |
+| [route-screenshots.md](route-screenshots.md) | Capturing route/action screenshots as visual evidence — folder per route, file per action, replace on re-run, full-route sweep |
 | [ssr-safe-state.md](ssr-safe-state.md) | SSR-safe state — no module-scope ref/reactive for request-varying data, useState only |
 | [client-only-node-builtins.md](client-only-node-builtins.md) | Client-bundle 500s from Node builtins (`events`, `buffer`, `path`) imported in `app/` code |
 | [playwright-golden-oracles.md](playwright-golden-oracles.md) | Deterministic screenshot goldens — dev-overlay suppression, motion settle, dark-mode forcing |

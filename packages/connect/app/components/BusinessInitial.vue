@@ -21,7 +21,7 @@ const handleSelect = (id: string) => {
 }
 
 const handleEditBusiness = (id: string) => {
-  router.push(`/app/business/${id}/edit`);
+  router.push(`/app/business/${id}/content/edit`);
 }
 
 const confirmDelete = (id: string) => {

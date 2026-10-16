@@ -123,9 +123,18 @@ function resolveStoredConfig(config: { provider: string, model: string, apiKey?:
   return { provider: config.provider as ProviderName, model: config.model, apiKey: config.apiKey, apiBaseUrl: config.apiBaseUrl }
 }
 
-async function resolveConfig(userId?: string): Promise<ResolvedConfig> {
+/**
+ * Resolve the provider/model this call should use.
+ *
+ * The business override wins when a business is in play (that is what the
+ * business AI settings page writes); otherwise the user's own default, then the
+ * system default. `getEffectiveConfig` already collapses `system` to the
+ * operator model, so the `id !== 'default'` guard only preserves the fallback
+ * shape callers already relied on.
+ */
+async function resolveConfig(userId?: string, businessId?: string | null): Promise<ResolvedConfig> {
   if (userId) {
-    const result = await userLlmConfigService.getDefaultConfig(userId);
+    const result = await userLlmConfigService.getEffectiveConfig(userId, businessId ?? null);
     if (result.success && result.data && result.data.id !== 'default') {
       return resolveStoredConfig(result.data);
     }
@@ -245,7 +254,7 @@ export const schedulerUnifiedAI = {
       log,
     } = options;
 
-    const config = await resolveConfig(userId);
+    const config = await resolveConfig(userId, options.businessId);
     const provider = (providerOverride || config.provider) as ProviderName;
     const modelName = modelOverride || config.model;
 
@@ -279,7 +288,7 @@ export const schedulerUnifiedAI = {
       log,
     } = options;
 
-    const config = await resolveConfig(userId);
+    const config = await resolveConfig(userId, options.businessId);
     const provider = (providerOverride || config.provider) as ProviderName;
     const modelName = modelOverride || config.model;
 

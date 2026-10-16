@@ -51,7 +51,12 @@ const testLatency = ref<number | null>(null)
 // store — the honest action is to delete the user's own row so the server
 // falls back to the operator's configured provider/model/key. Hiding it here
 // (it was gated to `override`) is what left /app/account with no way out.
-const providerItems = computed(() => PROVIDERS.map(provider => ({ label: t(`providers.${provider}`), value: provider })))
+const providerItems = computed(() => PROVIDERS.map(provider => ({
+  label: props.mode === 'override' && provider === 'system'
+    ? t('providers.accountDefault')
+    : t(`providers.${provider}`),
+  value: provider,
+})))
 const availableModels = computed(() => MODELS[selectedProvider.value] ?? [])
 const isSystemProvider = computed(() => selectedProvider.value === 'system')
 const isLocalProvider = computed(() => isLocalProviderName(selectedProvider.value))
@@ -439,7 +444,7 @@ onMounted(() => {
       </UFormField>
 
       <div v-if="isSystemProvider" v-motion-fade :duration="250" data-testid="system-ai-notice">
-        <p class="text-sm text-muted-foreground">{{ t('systemNotice') }}</p>
+        <p class="text-sm text-muted-foreground">{{ mode === 'override' ? t('inheritNotice') : t('systemNotice') }}</p>
       </div>
 
       <div v-if="isLocalProvider" v-motion-fade :duration="250">

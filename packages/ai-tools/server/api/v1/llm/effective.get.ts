@@ -17,8 +17,11 @@ export default defineEventHandler(async (event) => {
   }
 
   const override = businessId ? await userLlmConfigService.getOverride(user.id, businessId) : null
+  // A `system` override means "inherit" (user → system), so it must not report
+  // itself as a business override.
+  const hasRealOverride = Boolean(override?.data) && override?.data?.provider !== 'system'
   return {
     ...maskConfig(effective.data),
-    source: override?.data ? 'override' : effective.data.id === 'default' ? 'system-default' : 'user-default',
+    source: hasRealOverride ? 'override' : effective.data.id === 'default' ? 'system-default' : 'user-default',
   }
 })

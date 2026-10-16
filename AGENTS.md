@@ -1,7 +1,7 @@
 ---
 name: agents
 description: Always-loaded project anchor. Read this first. Contains project identity, non-negotiables, commands, and pointer to ROUTER.md for full context.
-last_updated: 2026-10-09
+last_updated: 2026-10-16
 ---
 
 # MagicSync
@@ -33,6 +33,7 @@ restate in your own words what you think my goals are and what the problem i'm t
 1. **No unit tests** — do not write, generate, or update unit tests as part of a task. Verify by running the app / doctor checks instead (see the verification gate below).
 2. **Write a wiki** — after completing the task, write a short wiki page explaining what was done, why, and how it works, so I learn from it. The documentation lives in the VitePress site at `packages/doc/`: add the page as `packages/doc/guide/<task-name>.md` and register it in the sidebar in `packages/doc/.vitepress/config.mts` (pick the closest existing group or add a "Wiki" group).
 3. **Save it as a skill** — capture the task type as a reusable skill so future agents can repeat it: create it at `packages/doc/skills/<skill-name>/SKILL.md` (frontmatter with `name` + `description` that states when to trigger, then step-by-step instructions). If a skill for that task type already exists there, update it instead of creating a duplicate.
+4. **Screenshot the routes and actions you touched** — if the task changed a user-facing route or interaction, capture it with Playwright via the `route-action-screenshots` skill (`packages/doc/skills/route-action-screenshots/SKILL.md`). Images land at `packages/doc/public/img/screenshots/<route-slug>/<action>.png` — one folder per route, one file per action — and re-capturing an action **replaces** its previous image. Sweep every route at once with the `capture-all-routes-screenshots` skill (`pnpm screenshots:routes`). When asked for **all the interactions** or the step-by-step of a feature, author a numbered journey per feature with the `capture-feature-interactions` skill (`pnpm screenshots:interactions`); step IDs come from the sub-feature list in `.cursor/skills/verify-magicsync/features/`. Skip only when the task has no rendered surface (API-only, migration, docs) and say so explicitly.
 
 ## Commands
 
@@ -43,6 +44,8 @@ restate in your own words what you think my goals are and what the problem i'm t
 - **TTS assets (HF):** `pnpm tts:assets` — downloads ONNX models + voice styles from HuggingFace into `packages/site/public/assets/` (also runs automatically inside the Docker build)
 - **Lint UI:** No lint script configured (available scripts: dev, build, start, clean)
 - **Layer audit:** `pnpm audit:layers` — fails on any new cross-layer import (runs in CI). Add `--:strict` to report all known debt, `--:update` after a fix
+- **Route screenshots:** `pnpm screenshots:routes` — Playwright sweep of every static route into `packages/doc/public/img/screenshots/<route-slug>/page.png` + `manifest.json` (adopts a running dev server). Scope it with `SCREENSHOT_ROUTE_PREFIX=/tools`. For per-route/action capture see `packages/doc/skills/route-action-screenshots/SKILL.md`
+- **Feature interactions:** `pnpm screenshots:interactions` — runs every registered journey, capturing a feature's interactions step by step into `NN-<step>.png` + `interactions.json`. Scope one journey with `SCREENSHOT_FEATURE=content-board`. See `packages/doc/skills/capture-feature-interactions/SKILL.md`
 
 ## Scaffold Growth
 After every task: if no pattern exists for the task type you just completed, create one. If a pattern or context file is now out of date, update it. The scaffold grows from real work, not just setup. See the GROW step in `ROUTER.md` for details.
@@ -86,6 +89,15 @@ Run these checks after every task, before presenting the result. All must pass:
    async buttons carry `:loading`, outcomes raise toasts (failures never
    silent), conditionally rendered UI animates on enter via `@vueuse/motion`
    (see `context/conventions.md` Motion section).
+8. **Screenshots** — every route/action you changed has a current image at
+   `packages/doc/public/img/screenshots/<route-slug>/<action>.png` (one folder
+   per route, one file per action; captures replace the old shot — no stale or
+   duplicate files). Run `pnpm screenshots:routes` to refresh whole routes, or
+   follow `packages/doc/skills/route-action-screenshots/SKILL.md` for the
+   actions you worked on. If a feature's flows were in scope, its journey must
+   pass: `SCREENSHOT_FEATURE=<key> pnpm screenshots:interactions` and
+   `interactions.json` reports it `ok: true` with every declared step captured.
+   Report "not applicable" when the task changed no rendered surface.
 
 
 

@@ -270,7 +270,7 @@ const handleDriveImport = async (imported: Asset[]) => {
       </template>
       <template #description>
         {{ t('alerts.select_business.description') }}
-        <NuxtLink to="/app/businesses" class="underline ml-2">{{ t('alerts.select_business.link_text') }}</NuxtLink>
+        <NuxtLink to="/app/business" class="underline ml-2">{{ t('alerts.select_business.link_text') }}</NuxtLink>
       </template>
     </UAlert>
     <!-- Error Alert -->

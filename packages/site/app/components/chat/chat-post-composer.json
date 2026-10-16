@@ -1,0 +1,22 @@
+{
+  "en": {
+    "title": "Edit and schedule post",
+    "saved": "Post scheduled",
+    "saveFailed": "Could not save the post"
+  },
+  "fr": {
+    "title": "Modifier et planifier la publication",
+    "saved": "Publication planifiée",
+    "saveFailed": "Impossible d’enregistrer la publication"
+  },
+  "es": {
+    "title": "Editar y programar publicación",
+    "saved": "Publicación programada",
+    "saveFailed": "No se pudo guardar la publicación"
+  },
+  "de": {
+    "title": "Beitrag bearbeiten und planen",
+    "saved": "Beitrag geplant",
+    "saveFailed": "Beitrag konnte nicht gespeichert werden"
+  }
+}

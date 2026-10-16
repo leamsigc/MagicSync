@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm'
 import type { H3Event } from 'h3'
-import { parseJsonObject, toJsonString } from '#layers/BaseShared/utils/json'
+import { coerceJsonObject, parseJsonObject, toJsonString } from '#layers/BaseShared/utils/json'
 import { businessProfiles, organization as organizationTable } from '#layers/BaseDB/db/schema'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
 import { auth } from '#layers/BaseAuth/lib/auth'
@@ -49,7 +49,7 @@ export const businessOrgService = {
       })
     }
 
-    const orgMetadata = (business.details ?? {}) as Record<string, unknown>
+    const orgMetadata = coerceJsonObject(business.details)
     const orgId = orgMetadata.organizationId as string | undefined
 
     if (orgId) {
@@ -145,7 +145,7 @@ export const businessOrgService = {
     const entity = await entityDetailsService.getDetailsByEntity(businessId, 'business_details')
     if (!entity) return null
 
-    const orgMetadata = (entity.details ?? {}) as Record<string, unknown>
+    const orgMetadata = coerceJsonObject(entity.details)
     const orgId = orgMetadata.organizationId as string | undefined
     if (!orgId) return null
 

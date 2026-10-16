@@ -11,6 +11,7 @@ import {
   type CorpusSection,
 } from '#layers/BaseDB/db/schema'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
+import { coerceJsonObject } from '#layers/BaseShared/utils/json'
 import { businessCorpusService } from './business-corpus.service'
 import { businessProfileService } from './business-profile.service'
 
@@ -895,7 +896,10 @@ class PlaybookStore {
       .limit(1)
     if (rows.length === 0) return null
     const details = rows[0].details as unknown
-    return typeof details === 'string' ? details : JSON.stringify(details ?? {})
+    // A raw string may be legacy markdown (not JSON) — pass it through as-is so
+    // `parseBusinessDetailsPayload` can fall back to treating it as company info.
+    if (typeof details === 'string') return details
+    return JSON.stringify(coerceJsonObject(details))
   }
 
   async list(userId: string, businessId: string): Promise<EditionDetails[]> {

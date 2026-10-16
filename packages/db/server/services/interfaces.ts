@@ -153,6 +153,7 @@ export type BusinessServiceType = {
 export type ChatServiceType = {
   createThread: (userId: string, data: CreateThreadData) => Promise<ServiceResponse<ChatThread>>
   getThreads: (userId: string) => Promise<ServiceResponse<ChatThread[]>>
+  getThreadsByBusiness: (userId: string, businessId: string) => Promise<ServiceResponse<ChatThread[]>>
   getThread: (threadId: string, userId: string) => Promise<ServiceResponse<ChatThread>>
   deleteThread: (threadId: string, userId: string) => Promise<ServiceResponse<ChatThread>>
   updateThreadTitle: (threadId: string, userId: string, title: string) => Promise<ServiceResponse<ChatThread>>
@@ -191,9 +192,10 @@ export type ChunkServiceType = {
 export type EntityDetailsServiceType = {
   createDetails: (data: NewEntityDetails) => Promise<EntityDetails>
   createOrUpdateDetails: (params: { entityId: string; entityType: string; pages: FacebookPage[] }) => Promise<void>
-  getDetailsById: (id: string) => Promise<EntityDetails>
-  getDetailsByEntity: (entityId: string, entityType: string) => Promise<EntityDetails>
+  getDetailsById: (id: string) => Promise<EntityDetails | undefined>
+  getDetailsByEntity: (entityId: string, entityType: string) => Promise<EntityDetails | undefined>
   updateDetails: (id: string, data: UpdateEntityDetailsData) => Promise<EntityDetails>
+  updateByEntity: (entityId: string, entityType: string, patch: Record<string, unknown>) => Promise<EntityDetails>
   deleteDetails: (id: string) => Promise<boolean>
 }
 

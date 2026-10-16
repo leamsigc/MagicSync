@@ -17,6 +17,8 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:report": "playwright show-report",
+    "screenshots:routes": "playwright test --config playwright.screenshots.config.ts capture-all-routes",
+    "screenshots:interactions": "playwright test --config playwright.screenshots.config.ts capture-feature-interactions",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
   },

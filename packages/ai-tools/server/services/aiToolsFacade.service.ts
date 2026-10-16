@@ -82,8 +82,10 @@ export class AiToolsFacadeService {
     return chatService.createThread(userId, input)
   }
 
-  async getThreads(userId: string): Promise<ServiceResponse<ChatThread[]>> {
-    return chatService.getThreads(userId)
+  async getThreads(userId: string, businessId?: string | null): Promise<ServiceResponse<ChatThread[]>> {
+    return businessId
+      ? chatService.getThreadsByBusiness(userId, businessId)
+      : chatService.getThreads(userId)
   }
 
   async getThread(threadId: string, userId: string): Promise<ServiceResponse<ChatThread>> {
