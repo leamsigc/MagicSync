@@ -4,7 +4,7 @@ import { useBusinessManager } from '#layers/BaseShared/app/composables/useBusine
 import { coerceJsonObject } from '#layers/BaseShared/utils/json';
 import BusinessFormStep from '#layers/BaseConnect/app/components/connect/business/components/BusinessFormStep.vue';
 import BusinessWorkspaceTabs from '#layers/BaseConnect/app/components/connect/business/components/BusinessWorkspaceTabs.vue';
-import InviteTeamMember from '#layers/BaseConnect/app/components/connect/business/components/InviteTeamMember.vue';
+import TeamMembers from '#layers/BaseConnect/app/components/connect/business/components/TeamMembers.vue';
 import AiModelSettings from '#layers/BaseAuth/app/components/auth/account/components/AiModelSettings';
 import type { BusinessProfile, EntityDetails } from '#layers/BaseDB/db/schema';
 import type { InformationSchemaBusinessResponse } from '#layers/BaseShared/server/types/information-schema';
@@ -179,7 +179,7 @@ useHead({
     <div v-else-if="responseResult" class="space-y-6">
       <BusinessFormStep :result="responseResult" @submit="handleSubmit" @cancel="handleCancel" />
       <USeparator class="my-8" />
-      <InviteTeamMember :business-id="businessId" />
+      <TeamMembers :business-id="businessId" :business-name="responseResult.businessProfile.name" />
       <UCard class="border border-default">
         <template #header>
           <h2 class="font-semibold text-highlighted">{{ t('safe_mode.section') }}</h2>

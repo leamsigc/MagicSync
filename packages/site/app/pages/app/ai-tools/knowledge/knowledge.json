@@ -34,9 +34,14 @@
     "folderDeleted": "Carpeta eliminada exitosamente",
     "fileMoved": "Archivo movido exitosamente",
     "move": "Mover",
+    "selectFolder": "Seleccionar carpeta...",
     "cancel": "Cancelar",
     "create": "Crear",
-    "delete": "Eliminar"
+    "delete": "Eliminar",
+    "upload": "Subir",
+    "uploadSuccess": "Archivo subido correctamente",
+    "uploadError": "Error al subir el archivo",
+    "dropHere": "Suelta los archivos aquí para subirlos"
   },
   "de": {
     "title": "Wissensdatenbank",
@@ -51,9 +56,14 @@
     "folderDeleted": "Ordner erfolgreich gelöscht",
     "fileMoved": "Datei erfolgreich verschoben",
     "move": "Verschieben",
+    "selectFolder": "Ordner auswählen...",
     "cancel": "Abbrechen",
     "create": "Erstellen",
-    "delete": "Löschen"
+    "delete": "Löschen",
+    "upload": "Hochladen",
+    "uploadSuccess": "Datei erfolgreich hochgeladen",
+    "uploadError": "Fehler beim Hochladen der Datei",
+    "dropHere": "Dateien hierher ziehen zum Hochladen"
   },
   "fr": {
     "title": "Base de Connaissances",
@@ -68,8 +78,13 @@
     "folderDeleted": "Dossier supprimé avec succès",
     "fileMoved": "Fichier déplacé avec succès",
     "move": "Déplacer",
+    "selectFolder": "Sélectionner un dossier...",
     "cancel": "Annuler",
     "create": "Créer",
-    "delete": "Supprimer"
+    "delete": "Supprimer",
+    "upload": "Téléverser",
+    "uploadSuccess": "Fichier téléversé avec succès",
+    "uploadError": "Échec du téléversement du fichier",
+    "dropHere": "Déposez les fichiers ici pour les téléverser"
   }
 }

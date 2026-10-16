@@ -53,7 +53,7 @@ export interface UseCalendarShell {
 }
 
 /** The only query keys the calendar honours. A date range is the grid's job, not the popover's. */
-const FILTER_KEYS = ['status', 'postFormat', 'dateType', 'platforms'] as const
+const FILTER_KEYS = ['status', 'postFormat', 'dateType', 'platforms', 'windowStart', 'windowEnd'] as const
 
 /**
  * The filters as a query string.

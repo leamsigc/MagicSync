@@ -976,6 +976,11 @@
     "tooltip": "Tutoriels",
     "currentPage": "Page actuelle",
     "allTutorials": "Tous les tutoriels",
+    "noTutorialForPage": "Aucun tutoriel disponible pour cette page. Parcourez tous les tutoriels ci-dessous ou accédez à une page avec un tutoriel.",
+    "routeWarning": {
+      "title": "Mauvaise page",
+      "description": "Ce tutoriel concerne la page {route}. Cliquez sur la flèche pour y accéder d'abord."
+    },
     "firstTime": {
       "label": "Première fois",
       "description": "Familiarisez-vous avec la plateforme MagicSync et ses fonctionnalités principales.",

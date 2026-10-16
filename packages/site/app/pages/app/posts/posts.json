@@ -64,8 +64,20 @@
     },
     "feeds": {
       "noMorePosts": "No more posts to load",
-      "openFullFeed": "Open full feed",
-      "noPostsFound": "No posts found"
+      "noPostsFound": "No posts found",
+      "emptyNone": "No posts yet",
+      "unknownUser": "User",
+      "emptyHint": "Create a post and it will show up here.",
+      "emptyFiltered": "No posts match this filter",
+      "emptyFilteredHint": "Try another status to see more posts.",
+      "selectTitle": "Select a post",
+      "selectHint": "Pick a post from the list to read its content, details, comments and stats.",
+      "filter": {
+        "all": "All",
+        "pending": "Pending",
+        "published": "Published",
+        "failed": "Failed"
+      }
     },
     "autoFormat": {
       "toggle": "Smart Format",
@@ -87,6 +99,8 @@
   "es": {
     "title": "Posts",
     "description": "Posts",
+    "seo_title_all": "Todas las publicaciones",
+    "seo_description_all": "Todas las publicaciones en redes sociales para las próximas semanas están aquí",
     "create_post": {
       "title": "Crear publicación",
       "description": "Diseña, refina y programa tu presencia social.",
@@ -147,8 +161,20 @@
     },
     "feeds": {
       "noMorePosts": "No hay más publicaciones para cargar",
-      "openFullFeed": "Abrir el feed completo",
-      "noPostsFound": "No se encontraron publicaciones"
+      "noPostsFound": "No se encontraron publicaciones",
+      "emptyNone": "Aún no hay publicaciones",
+      "unknownUser": "Usuario",
+      "emptyHint": "Crea una publicación y aparecerá aquí.",
+      "emptyFiltered": "Ninguna publicación coincide con este filtro",
+      "emptyFilteredHint": "Prueba con otro estado para ver más publicaciones.",
+      "selectTitle": "Selecciona una publicación",
+      "selectHint": "Elige una publicación de la lista para ver su contenido, detalles, comentarios y estadísticas.",
+      "filter": {
+        "all": "Todas",
+        "pending": "Pendientes",
+        "published": "Publicadas",
+        "failed": "Fallidas"
+      }
     },
     "autoFormat": {
       "toggle": "Formato inteligente",
@@ -170,6 +196,8 @@
   "fr": {
     "title": "Posts",
     "description": "Posts",
+    "seo_title_all": "Toutes les publications",
+    "seo_description_all": "Toutes les publications sur les réseaux sociaux pour les prochaines semaines sont ici",
     "create_post": {
       "title": "Créer une publication",
       "description": "Concevez, affinez et planifiez votre présence sociale.",
@@ -230,8 +258,20 @@
     },
     "feeds": {
       "noMorePosts": "Plus de publications à charger",
-      "openFullFeed": "Ouvrir le fil complet",
-      "noPostsFound": "Aucune publication trouvée"
+      "noPostsFound": "Aucune publication trouvée",
+      "emptyNone": "Aucune publication pour l'instant",
+      "unknownUser": "Utilisateur",
+      "emptyHint": "Créez une publication et elle apparaîtra ici.",
+      "emptyFiltered": "Aucune publication ne correspond à ce filtre",
+      "emptyFilteredHint": "Essayez un autre statut pour voir plus de publications.",
+      "selectTitle": "Sélectionnez une publication",
+      "selectHint": "Choisissez une publication dans la liste pour voir son contenu, ses détails, ses commentaires et ses statistiques.",
+      "filter": {
+        "all": "Toutes",
+        "pending": "En attente",
+        "published": "Publiées",
+        "failed": "Échouées"
+      }
     },
     "autoFormat": {
       "toggle": "Formatage intelligent",
@@ -253,6 +293,8 @@
   "de": {
     "title": "Posts",
     "description": "Posts",
+    "seo_title_all": "Alle Beiträge",
+    "seo_description_all": "Alle Social-Media-Beiträge für die nächsten Wochen sind hier",
     "create_post": {
       "title": "Beitrag erstellen",
       "description": "Entwerfen, verfeinern und planen Sie Ihre soziale Präsenz.",
@@ -313,8 +355,20 @@
     },
     "feeds": {
       "noMorePosts": "Keine weiteren Beiträge zum Laden",
-      "openFullFeed": "Vollständigen Feed öffnen",
-      "noPostsFound": "Keine Beiträge gefunden"
+      "noPostsFound": "Keine Beiträge gefunden",
+      "emptyNone": "Noch keine Beiträge",
+      "unknownUser": "Benutzer",
+      "emptyHint": "Erstelle einen Beitrag und er erscheint hier.",
+      "emptyFiltered": "Keine Beiträge passen zu diesem Filter",
+      "emptyFilteredHint": "Wähle einen anderen Status, um mehr Beiträge zu sehen.",
+      "selectTitle": "Beitrag auswählen",
+      "selectHint": "Wähle einen Beitrag aus der Liste, um Inhalt, Details, Kommentare und Statistiken zu sehen.",
+      "filter": {
+        "all": "Alle",
+        "pending": "Ausstehend",
+        "published": "Veröffentlicht",
+        "failed": "Fehlgeschlagen"
+      }
     },
     "autoFormat": {
       "toggle": "Smart-Format",

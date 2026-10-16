@@ -19,14 +19,19 @@ if (import.meta.client) {
         class=" rounded-2xl m-3 h-[calc(100vh-1.5rem)] border border-white/10" :max-size="15" :min-size="5"
         :ui="{ footer: 'p-0' }">
         <template #header="{ collapsed }">
-          <NuxtLink v-if="!collapsed" to="/" class="text-xl font-bold dark:text-white px-2">MagicSync</NuxtLink>
-          <UIcon v-else name="i-simple-icons-nuxtdotjs" class="size-5 text-primary mx-auto" />
+          <NuxtLink to="/" class="text-xl font-bold dark:text-white flex items-center  w-full"
+            :class="{ 'px-2': !collapsed, 'justify-center': collapsed }">
+            <img src="/img/logo.png" alt="MagicSync" title="MagicSync" class="size-[40px] max-w-max">
+            <span v-if="!collapsed">
+              MagicSync
+            </span>
+          </NuxtLink>
         </template>
         <template #default="{ collapsed }">
           <DashboardSidebar :collapsed="collapsed" />
         </template>
         <template #footer="{ collapsed }">
-          <UserNav :collapsed="collapsed" />
+          <UserNav :collapsed="collapsed" class="mb-5" />
         </template>
       </UDashboardSidebar>
 

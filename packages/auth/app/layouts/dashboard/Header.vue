@@ -27,6 +27,7 @@ if (import.meta.client) {
     <div class="rounded flex items-center justify-between px-5 py-2.5  max-w-7xl mx-auto">
       <div class="flex items-center space-x-3">
         <UDashboardSidebarToggle class="rounded-xl" />
+        <UDashboardSidebarCollapse />
         <span class="text-sm font-semibold text-highlighted truncate">{{ currentPageTitle }}</span>
       </div>
       <div class="flex items-center space-x-2">

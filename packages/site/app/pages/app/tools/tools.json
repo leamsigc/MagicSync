@@ -4,12 +4,15 @@
     "description": "The best free tools for your business"
   },
   "fr": {
-    "tools": "Outils"
+    "title": "Meilleurs outils gratuits",
+    "description": "Les meilleurs outils gratuits pour votre entreprise"
   },
   "es": {
-    "tools": "Herramientas"
+    "title": "Las mejores herramientas gratuitas",
+    "description": "Las mejores herramientas gratuitas para tu negocio"
   },
   "de": {
-    "tools": "Werkzeuge"
+    "title": "Beste kostenlose Tools",
+    "description": "Die besten kostenlosen Tools für dein Geschäft"
   }
 }

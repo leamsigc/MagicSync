@@ -169,6 +169,10 @@
       "folder_deleted": "Carpeta \"{name}\" eliminada. {count} recurso(s) movidos a Sin carpeta.",
       "assets_moved": "{count} recurso(s) movidos.",
       "move_partial": "Se movieron {moved} de {total}; el resto pertenece a otra cuenta."
+    },
+    "upload": {
+      "title": "Subir Recursos",
+      "description": "Sube imágenes, videos y documentos"
     }
   },
   "de": {
@@ -253,6 +257,10 @@
       "folder_deleted": "Ordner \"{name}\" gelöscht. {count} Asset(s) nach \"Nicht abgelegt\" verschoben.",
       "assets_moved": "{count} Asset(s) verschoben.",
       "move_partial": "{moved} von {total} verschoben; der Rest gehört einem anderen Konto."
+    },
+    "upload": {
+      "title": "Assets Hochladen",
+      "description": "Bilder, Videos und Dokumente hochladen"
     }
   },
   "fr": {
@@ -337,6 +345,10 @@
       "folder_deleted": "Dossier « {name} » supprimé. {count} ressource(s) déplacée(s) vers Non classé.",
       "assets_moved": "{count} ressource(s) déplacée(s).",
       "move_partial": "{moved} sur {total} déplacée(s) ; le reste appartient à un autre compte."
+    },
+    "upload": {
+      "title": "Téléverser Ressources",
+      "description": "Téléversez images, vidéos et documents"
     }
   }
 }

@@ -77,15 +77,6 @@
       "month": "Mes",
       "week": "Semana"
     },
-    "navigation": {
-      "previous_month": "Mes Anterior",
-      "next_month": "Mes Siguiente"
-    },
-    "view_modes": {
-      "month": "Mes",
-      "week": "Semana",
-      "day": "Día"
-    },
     "filters": {
       "title": "Filtros",
       "business": "Negocio",
@@ -145,15 +136,6 @@
       "month": "Monat",
       "week": "Woche"
     },
-    "navigation": {
-      "previous_month": "Vorheriger Monat",
-      "next_month": "Nächster Monat"
-    },
-    "view_modes": {
-      "month": "Monat",
-      "week": "Woche",
-      "day": "Tag"
-    },
     "filters": {
       "title": "Filter",
       "business": "Unternehmen",
@@ -212,15 +194,6 @@
       "schedule_post": "Programmer Publication",
       "month": "Mois",
       "week": "Semaine"
-    },
-    "navigation": {
-      "previous_month": "Mois Précédent",
-      "next_month": "Mois Suivant"
-    },
-    "view_modes": {
-      "month": "Mois",
-      "week": "Semaine",
-      "day": "Jour"
     },
     "filters": {
       "title": "Filtres",

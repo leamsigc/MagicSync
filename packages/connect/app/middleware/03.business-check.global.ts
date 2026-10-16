@@ -1,5 +1,6 @@
 import type { BusinessProfile } from "#layers/BaseDB/db/schema";
 import type { PaginatedResponse, ServiceResponse } from "#layers/BaseDB/server/services/types";
+import { stripLocalePrefix } from "#layers/BaseShared/utils/locale";
 
 /**
  * Route middleware runs on server (SSR) and client. Plain $fetch from Node
@@ -35,14 +36,14 @@ function pickFallbackActive(fetchedActiveId: string | undefined, list: BusinessP
 }
 
 function shouldRedirectToSetup(path: string, listLoaded: boolean, hasBusinesses: boolean): boolean {
-  if (path.startsWith('/app/business/initial')) return false;
+  if (stripLocalePrefix(path).startsWith('/app/business/initial')) return false;
   if (!listLoaded) return false;
   return !hasBusinesses;
 }
 
 export default defineNuxtRouteMiddleware(async (to) => {
 
-  if (!to.path.startsWith('/app')) return
+  if (!stripLocalePrefix(to.path).startsWith('/app')) return
 
   const businesses = useState<PaginatedResponse<BusinessProfile>>('business:list', () => ({
     data: [] as BusinessProfile[],
@@ -65,7 +66,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   const hasBusinesses = (businesses.value.data?.length ?? 0) > 0
   if (shouldRedirectToSetup(to.path, !!listResponse, hasBusinesses)) {
-    return navigateTo('/app/business/initial');
+    return navigateTo(useLocalePath()('/app/business/initial'));
   }
 
 })

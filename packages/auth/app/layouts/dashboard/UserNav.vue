@@ -27,7 +27,7 @@ const { userMenuItems } = useDashboardNavigation();
 
 <template>
   <UDropdownMenu :items="userMenuItems" :ui="{ content: 'bg-elevated rounded-xl ' }">
-    <UButton color="neutral" variant="ghost" class="w-full justify-start">
+    <UButton color="neutral" variant="ghost" class="w-full justify-center">
       <div v-if="props.collapsed">
         <UAvatar :src="user?.image || ''" :alt="user?.name" />
       </div>

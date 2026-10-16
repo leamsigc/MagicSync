@@ -116,6 +116,7 @@
       },
       "model": "Modelo",
       "language": "Idioma",
+      "stop": "Detener",
       "loadingModels": "Cargando modelos...",
       "loadingModel": "Cargando modelo... {progress}%",
       "recentProjects": {
@@ -220,6 +221,7 @@
       },
       "model": "Modell",
       "language": "Sprache",
+      "stop": "Stopp",
       "loadingModels": "Modelle werden geladen...",
       "loadingModel": "Modell wird geladen... {progress}%",
       "recentProjects": {
@@ -324,6 +326,7 @@
       },
       "model": "Modèle",
       "language": "Langue",
+      "stop": "Arrêter",
       "loadingModels": "Chargement des modèles...",
       "loadingModel": "Chargement du modèle... {progress}%",
       "recentProjects": {

@@ -1,17 +1,25 @@
-import { businessOrgService } from '#layers/BaseAuth/server/services/business-org.service'
+import { businessTeamService } from '#layers/BaseAuth/server/services/business-team.service'
 import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
-import { useAuthApi } from '#layers/BaseAuth/server/utils/useAuthApi'
 import { z } from 'zod'
 
 const InviteSchema = z.object({
-  email: z.string().email(),
-  role: z.string().default('member')
+  email: z.string().email().optional(),
+  emails: z.array(z.string().email()).optional(),
+  // `admin` is intentionally not assignable — admins come from /app/admin/users.
+  role: z.enum(['owner', 'member']).default('member'),
+}).refine(data => Boolean(data.email) || (data.emails?.length ?? 0) > 0, {
+  message: 'At least one email is required',
+  path: ['email'],
 })
 
+/**
+ * POST /api/v1/business/[id]/invite
+ * Invite one email (`email`) or a batch (`emails`) to the business.
+ * Returns the created invitations with their accept links.
+ */
 export default defineEventHandler(async (event) => {
   const log = useLogger(event)
   const user = await checkUserIsLogin(event)
-  log.set({ userId: user.id })
 
   const businessId = getRouterParam(event, 'id')
   if (!businessId) {
@@ -19,32 +27,20 @@ export default defineEventHandler(async (event) => {
   }
 
   const body = await readValidatedBody(event, InviteSchema.parse)
-  log.set({ businessId, invitedEmail: body.email })
+  const emails = body.emails?.length ? body.emails : [body.email as string]
+  log.set({ userId: user.id, businessId, inviteCount: emails.length, role: body.role })
 
-  const org = await businessOrgService.getOrCreateOrgForBusiness(event, businessId)
-  const authApi = useAuthApi(event)
-
-  if (!org) {
-    throw createError({ statusCode: 404, statusMessage: 'Business not found' })
+  const result = await businessTeamService.invite(event, businessId, emails, body.role)
+  if (!result.success) {
+    log.error({ message: 'Failed to invite team members', error: result.error })
+    throw createError({ statusCode: 400, message: result.error })
   }
 
-  try {
-    const invitation = await authApi.inviteMember({
-      body: {
-        email: body.email,
-        role: "member",
-        organizationId: org.id,
-        resend: true,
-      }
-    })
-
-    log.info({ message: 'Team member invited', email: body.email, organizationId: org.id })
-    return { success: true, invitation }
-  } catch (error) {
-    log.error({ message: 'Failed to invite team member', error })
-    throw createError({
-      statusCode: 400,
-      message: error instanceof Error ? error.message : 'Failed to send invitation'
-    })
-  }
+  log.info({
+    message: 'Team invitations sent',
+    businessId,
+    sent: result.data.invitations.length,
+    failed: result.data.failed.length,
+  })
+  return { success: true, ...result.data }
 })

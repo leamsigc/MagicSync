@@ -13,6 +13,7 @@ import { useBusinessManager } from '#layers/BaseShared/app/composables/useBusine
 export const useDashboardNavigation = () => {
   const { locale, t } = useI18n()
   const route = useRoute()
+  const localePath = useLocalePath()
   const { user } = UseUser()
 
   const menuItems = computed(() => menu[locale.value] || {})
@@ -63,7 +64,7 @@ export const useDashboardNavigation = () => {
         label: m.menu.calendar,
         icon: 'i-lucide-calendar',
         to: '/app/calendar',
-        active: route.path.startsWith('/app/calendar'),
+        active: route.path.includes('/app/calendar'),
         children: [
           {
             label: m.menu.month,
@@ -365,8 +366,24 @@ export const useDashboardNavigation = () => {
       )
     }
 
-    return links
+    return localize(links)
   })
+
+  /**
+   * Prefixes every dashboard target with the active locale. With
+   * `prefix_except_default`, a bare `/app/...` resolves to the default locale,
+   * so clicking through the sidebar silently reset German/French/Spanish
+   * sessions to English. Already-prefixed targets pass through untouched, and
+   * non-string targets are left alone. Generic so both menu shapes keep their
+   * exact item types.
+   */
+  function localize<T extends { to?: unknown; children?: T[] }>(items: T[]): T[] {
+    return items.map(item => ({
+      ...item,
+      ...(typeof item.to === 'string' && item.to.startsWith('/app') ? { to: localePath(item.to) } : {}),
+      ...(item.children ? { children: localize(item.children) } : {}),
+    }))
+  }
 
   const currentPageTitle = computed<string>(() => {
     const findLabel = (items: NavigationMenuItem[]): string | null => {
@@ -495,7 +512,7 @@ export const useDashboardNavigation = () => {
           onSelect: handleSignOut
         }
       ]
-    ]
+    ].map(group => localize(group))
   })
 
   return {

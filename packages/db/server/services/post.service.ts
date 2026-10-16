@@ -5,7 +5,8 @@ import type {
   ServiceResponse,
 } from './types'
 import type { PostServiceType } from './interfaces'
-import { and, eq, gte, inArray, lt, lte, or, sql } from 'drizzle-orm'
+import { and, eq, exists, gte, inArray, lt, lte, or, sql } from 'drizzle-orm'
+import type { SQL } from 'drizzle-orm'
 import { assets, businessProfiles, member, organization, platformPosts, posts, socialMediaAccounts } from '#layers/BaseDB/db/schema'
 import { parseJsonObject, toJsonString } from '#layers/BaseShared/utils/json'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
@@ -13,6 +14,38 @@ import { ValidationError } from './types'
 
 
 export interface UpdatePostData extends Partial<Omit<PostCreateBase, 'businessId' | 'userId'>> { }
+
+/** Platform names as the accounts table knows them. */
+type AccountPlatform = typeof socialMediaAccounts.$inferSelect['platform']
+
+/**
+ * Everything the calendar range read can narrow by. The client already sends
+ * all four (see `usePostFilters` + `PostCalendarFilters`); they arrive here
+ * validated by the route, never trusted raw.
+ */
+export interface CalendarRangeOptions {
+  start: Date
+  end: Date
+  businessIds?: string[]
+  status?: 'pending' | 'published' | 'failed'
+  postFormat?: 'post' | 'reel' | 'story' | 'short'
+  dateType?: 'scheduledAt' | 'createdAt' | 'publishedAt'
+  /** Platform names (`facebook`, `twitter`, …), not account ids. */
+  platforms?: string[]
+  /** Relative-window bounds: intersected with `start`/`end` before reading. */
+  windowStart?: Date
+  windowEnd?: Date
+}
+
+/** Later of the range start and the window floor. */
+function maxDate(base: Date, bound?: Date): Date {
+  return bound && bound.getTime() > base.getTime() ? bound : base
+}
+
+/** Earlier of the range end and the window ceiling. */
+function minDate(base: Date, bound?: Date): Date {
+  return bound && bound.getTime() < base.getTime() ? bound : base
+}
 
 /**
  * Asset ids off a post's `mediaAssets` JSON string.
@@ -261,10 +294,15 @@ export class PostService implements PostServiceType {
    * Posts with a null `scheduledAt` never enter the range: the calendar cannot
    * place them. They stay reachable through `findByBusinessId`, which is what
    * `/app/posts` renders.
+   *
+   * A `status` matches the post row *or* any of its platform rows: a post that
+   * failed on one platform reads as failed even when the row itself says
+   * otherwise. `platforms` matches a post with at least one publish row hung
+   * off an account on a named platform.
    */
   async findByBusinessIdsForRange(
     userId: string,
-    options: { start: Date; end: Date; businessIds?: string[] }
+    options: CalendarRangeOptions
   ): Promise<ServiceResponse<PostWithBusinessData[]>> {
     try {
       const scopedBusinessIds = await this.resolveCalendarScope(userId, options.businessIds)
@@ -272,11 +310,18 @@ export class PostService implements PostServiceType {
         return { success: true, data: [] }
       }
 
+      // A relative window narrows the visible range from either side. An
+      // inverted window matches nothing by construction, not by accident.
+      const start = maxDate(options.start, options.windowStart)
+      const end = minDate(options.end, options.windowEnd)
+      if (start.getTime() >= end.getTime()) {
+        return { success: true, data: [] }
+      }
+
       const rows = await this.db.query.posts.findMany({
         where: and(
           inArray(posts.businessId, scopedBusinessIds),
-          gte(posts.scheduledAt, options.start),
-          lt(posts.scheduledAt, options.end)
+          ...this.calendarRangeConditions({ ...options, start, end })
         ),
         with: {
           platformPosts: true,
@@ -300,6 +345,71 @@ export class PostService implements PostServiceType {
     } catch {
       return { success: false, error: 'Failed to fetch posts for range' }
     }
+  }
+
+  /**
+   * The range bounds plus one predicate per active filter. A missing filter
+   * contributes nothing, so the unfiltered read is exactly the old query.
+   */
+  private calendarRangeConditions(options: CalendarRangeOptions): SQL[] {
+    const dateField = options.dateType === 'createdAt' ? posts.createdAt
+      : options.dateType === 'publishedAt' ? posts.publishedAt
+        : posts.scheduledAt
+
+    const conditions: SQL[] = [
+      gte(dateField, options.start),
+      lt(dateField, options.end),
+    ]
+
+    if (options.status) {
+      conditions.push(this.calendarStatusCondition(options.status))
+    }
+    if (options.postFormat) {
+      conditions.push(eq(posts.postFormat, options.postFormat))
+    }
+
+    const platformCondition = this.calendarPlatformCondition(options.platforms)
+    if (platformCondition) {
+      conditions.push(platformCondition)
+    }
+
+    return conditions
+  }
+
+  /**
+   * A status matches the post row or any of its platform rows. Publish rows
+   * only ever carry pending/published/failed, and the filter UI offers exactly
+   * those three, so the subquery needs no further narrowing.
+   */
+  private calendarStatusCondition(status: 'pending' | 'published' | 'failed'): SQL {
+    return or(
+      eq(posts.status, status),
+      exists(
+        this.db.select({ one: sql`1` }).from(platformPosts).where(
+          and(eq(platformPosts.postId, posts.id), eq(platformPosts.status, status))
+        )
+      )
+    )
+  }
+
+  /**
+   * A post targets a platform when one of its publish rows hangs off an
+   * account on that platform. Unknown names match nothing rather than
+   * everything — the same empty result the old LIKE filter gave a typo.
+   */
+  private calendarPlatformCondition(platforms?: string[]): SQL | undefined {
+    if (!platforms || platforms.length === 0) {
+      return undefined
+    }
+
+    return exists(
+      this.db.select({ one: sql`1` }).from(platformPosts)
+        .innerJoin(socialMediaAccounts, eq(platformPosts.socialAccountId, socialMediaAccounts.id))
+        .where(and(
+          eq(platformPosts.postId, posts.id),
+          inArray(socialMediaAccounts.platform, platforms as AccountPlatform[])
+        ))
+    )
   }
 
   /**

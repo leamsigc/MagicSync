@@ -4,25 +4,23 @@
 /**
  *
  * BusinessProfile Management Page
+ * Directory of businesses with Grid / List / Table views.
  *
  * @author Reflect-Media <reflect.media GmbH>
- * @version 0.0.1
- *
- * @todo [ ] Test the component
- * @todo [ ] Integration test.
- * @todo [✔] Update the typescript.
+ * @version 0.0.2
  */
-import BusinessCard from '#layers/BaseConnect/app/components/connect/business/components/BusinessCard.vue';
 import AddBusiness from '#layers/BaseConnect/app/components/connect/business/components/AddBusiness.vue';
 import DeleteBusinessModal from '#layers/BaseConnect/app/components/connect/business/components/DeleteBusinessModal.vue';
+import BusinessDirectory from '#layers/BaseConnect/app/components/connect/business/components/BusinessDirectory.vue';
 import { useBusinessManager } from '#layers/BaseShared/app/composables/useBusinessManager';
 import type { BusinessProfile } from '#layers/BaseDB/db/schema';
 
-const { businesses, getAllBusinesses } = useBusinessManager();
-const editingBusiness = ref<BusinessProfile | null>(null);
+const { businesses, getAllBusinesses, activeBusinessId, setActiveBusiness } = useBusinessManager();
 const businessToDelete = ref<string | null>(null);
 const deleteModalOpen = ref(false);
+const addModalOpen = ref(false);
 const router = useRouter();
+const { t } = useI18n();
 
 const { data } = await useFetch<PaginatedResponse<BusinessProfile>>('/api/v1/business');
 
@@ -38,9 +36,22 @@ watch(businesses, (newData) => {
   }
 });
 
+const businessList = computed(() => businesses.value.data ?? []);
+const activeCount = computed(() => businessList.value.filter(business => business.isActive).length);
+const subtitle = computed(() =>
+  t('directory.subtitle', { active: activeCount.value, total: businessList.value.length })
+);
+
+const openAddModal = () => {
+  addModalOpen.value = true;
+};
+
 const handleEditBusiness = (id: string) => {
-  editingBusiness.value = businesses.value.data?.find(b => b.id === id) || null;
   router.push(`/app/business/${id}/content/edit`)
+};
+
+const handleSelectBusiness = async (id: string) => {
+  await setActiveBusiness(id);
 };
 
 const handleDeleteBusiness = (id: string) => {
@@ -58,8 +69,6 @@ const handleBusinessDeleted = () => {
   getAllBusinesses();
 };
 
-const { t } = useI18n();
-
 useHead({
   title: t('seo_title_all'),
   meta: [
@@ -69,19 +78,23 @@ useHead({
 </script>
 
 <template>
-  <div class=" p-4 lg:mx-auto lg:p-6">
-    <BasePageHeader :title="t('title')" :description="t('description')" />
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
-      <div data-tour="create-business-step-0">
-        <AddBusiness />
-      </div>
-      <div v-for="(business, index) in businesses.data" :key="business.id"
-        :data-tour="index === 0 ? 'create-business-step-1' : undefined">
-        <BusinessCard :business="business" @edit="handleEditBusiness" @delete="handleDeleteBusiness" />
-      </div>
-      <div v-if="!businesses.data" class="text-center text-gray-500 grid place-content-center bg-accented rounded">
-        {{ t('states.no_businesses') }}
-      </div>
+  <div class="p-4 lg:mx-auto lg:p-6">
+    <BasePageHeader :title="t('title')" :description="subtitle">
+      <template #actions>
+        <div data-tour="create-business-step-0 ">
+          <UButton icon="i-lucide-plus" color="primary" :label="t('actions.new_business')" @click="openAddModal" />
+        </div>
+      </template>
+    </BasePageHeader>
+
+    <div class="mt-4" data-tour="create-business-step-1">
+      <BusinessDirectory :businesses="businessList" :active-business-id="activeBusinessId" @edit="handleEditBusiness"
+        @delete="handleDeleteBusiness" @select="handleSelectBusiness" />
+    </div>
+
+    <!-- The create wizard keeps its own modal; the header button triggers it. -->
+    <div class="hidden">
+      <AddBusiness v-model:open="addModalOpen" />
     </div>
 
     <DeleteBusinessModal :model-value="deleteModalOpen" :business-id="businessToDelete"

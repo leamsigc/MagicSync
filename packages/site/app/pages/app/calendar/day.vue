@@ -19,7 +19,9 @@ import dayjs from 'dayjs'
  * @todo [✔] Update the typescript.
  */
 
-navigateTo(`/app/calendar/day/${dayjs().format('YYYY-MM-DD')}`)
+const localePath = useLocalePath()
+
+navigateTo(localePath(`/app/calendar/day/${dayjs().format('YYYY-MM-DD')}`))
 </script>
 
 <template>

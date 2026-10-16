@@ -1,9 +1,8 @@
-<!--  Translation file -->
+<!-- Translation file -->
 <i18n src="#site/app/pages/app/integrations/connect.json"></i18n>
 <script lang="ts" setup>
-import type { FacebookPage } from '../../../../utils/FacebookPages';
-import type { LinkedInPage } from '../../../../utils/LinkedInPages';
 import { useConnectionManager } from '../../../composables/connect/integrations/useConnectionManager';
+import ConnectPagesModal from './ConnectPagesModal.vue';
 import EditConnectionModal from './EditConnectionModal.vue';
 
 interface HealthStatus {
@@ -21,21 +20,20 @@ interface Props {
   tags: string[];
   showPages?: boolean;
   showMenu?: boolean;
+  /** Show the "Edit" action in the menu. */
+  showEdit?: boolean;
   health?: HealthStatus;
   platform?: string;
   accountId?: string;
 }
 
-const { t, getPagesForIntegration, HandleConnectToFacebook, facebookPages, handleDisconnect, HandleConnectToLinkedIn, HandleConnectToYoutube, HandleConnectToGMB, HandleReconnect } = useConnectionManager();
+const { t, handleDisconnect, HandleReconnect } = useConnectionManager();
 
 const modalStatus = ref(false);
-const toggleModal = () => {
-  modalStatus.value = !modalStatus.value;
-};
 
 const editModalStatus = ref(false);
 
-const props = withDefaults(defineProps<Props>(), { showPages: true, showMenu: true, platform: '', accountId: '' });
+const props = withDefaults(defineProps<Props>(), { showPages: true, showMenu: true, showEdit: true, platform: '', accountId: '' });
 
 const reconnectPlatform = computed(() => props.platform || props.name);
 const reconnectAccountId = computed(() => props.accountId || props.id || '');
@@ -48,9 +46,8 @@ const items = computed(() => [
         {
           label: $t('menu.pages'),
           icon: 'i-heroicons-viewfinder-circle',
-          onSelect: async () => {
-            await getPagesForIntegration(props.name);
-            toggleModal();
+          onSelect: () => {
+            modalStatus.value = true;
           },
         },
       ]
@@ -73,46 +70,19 @@ const items = computed(() => [
         handleDisconnect(props.id);
       },
     },
-    {
-      label: $t('menu.edit'),
-      icon: 'i-heroicons-pencil',
-      onSelect: () => {
-        editModalStatus.value = true;
-      },
-    },
+    ...(props.showEdit
+      ? [
+        {
+          label: $t('menu.edit'),
+          icon: 'i-heroicons-pencil',
+          onSelect: () => {
+            editModalStatus.value = true;
+          },
+        },
+      ]
+      : []),
   ],
 ]);
-
-const HandleConnectTo = async (page: unknown) => {
-  const pageWithType = page as FacebookPage & { platformType?: string };
-  // Fall back to the card's own provider: some pages payloads omit
-  // platformType, and a silent no-op here used to just close the modal
-  // with no account created.
-  const platformType = pageWithType.platformType || props.platform || '';
-
-  try {
-    if (platformType === 'youtube') {
-      await HandleConnectToYoutube(pageWithType);
-    } else if (platformType === 'googlemybusiness') {
-      await HandleConnectToGMB(pageWithType);
-    } else if (props.name === 'facebook') {
-      await HandleConnectToFacebook(page as FacebookPage);
-    } else if (props.name === 'linkedin-page' || platformType === 'linkedin-page') {
-      await HandleConnectToLinkedIn(page as LinkedInPage);
-    } else {
-      useToast().add({
-        title: 'Connection Failed',
-        description: `Unsupported page type for provider '${props.name}'`,
-        icon: 'i-heroicons-x-circle',
-        color: 'error',
-      });
-    }
-  } catch {
-    // Error toast already handled by the respective handler
-  } finally {
-    toggleModal();
-  }
-};
 
 const handleEditSaved = async () => {
   // handled by parent
@@ -124,7 +94,6 @@ const showReconnectBanner = computed(() => hasExpiredToken.value || isExpiringSo
 </script>
 
 <template>
-  <!-- eslint-disable-next-line vue/no-multiple-template-root -- card + modals are an intentional Vue 3 fragment -->
   <UPageCard :ui="{ body: 'flex-col p-0', root: 'md:min-h-60 p-0', wrapper: 'p-2', container: 'p-0 sm:p-2' }">
     <section class="relative flex flex-col items-center justify-center p-4">
       <div class="relative mb-3">
@@ -182,31 +151,7 @@ const showReconnectBanner = computed(() => hasExpiredToken.value || isExpiringSo
       </div>
     </section>
   </UPageCard>
-  <UModal v-model:open="modalStatus" :title="t('modal.select_page_title')"
-    :description="t('modal.select_page_description')" class="md:min-w-4xl">
-
-    <template #body>
-      <section class="grid md:grid-cols-3 gap-2">
-        <UPageCard v-for="page in facebookPages" :key="page.id"
-          :ui="{ body: 'sm:p-0 p-0', root: 'sm:p-0 p-0 cursor-pointer', wrapper: 'p-0', container: 'p-0 sm:p-0' }"
-          @click="HandleConnectTo(page)">
-          <section class="relative flex flex-col items-center justify-center p-4">
-            <UAvatar :src="page.imageBase64 || page.picture.data.url" class="size-20 border border-primary relative" />
-            <section class="text-center">
-              <h3 class="text-lg font-semibold">{{ page.name }}</h3>
-              <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('modal.id_label') }}{{ page.id }}</p>
-              <Icon v-if="page.instagram_business_account?.id" name="logos:instagram" />
-              <Icon v-else-if="page.platformType === 'linkedin-page'" name="logos:linkedin" class="mr-4" />
-              <Icon v-else-if="page.platformType === 'youtube'" name="logos:youtube" class="mr-4" />
-              <Icon v-else-if="page.platformType === 'googlemybusiness'" name="logos:google" class="mr-4" />
-              <Icon v-else name="logos:facebook" class="mr-4" />
-            </section>
-          </section>
-        </UPageCard>
-      </section>
-    </template>
-  </UModal>
-  <!-- eslint-disable-next-line vue/no-multiple-template-root -- intentional Vue 3 fragment -->
+  <ConnectPagesModal v-model:open="modalStatus" :platform="reconnectPlatform" :name="props.name" />
   <EditConnectionModal v-model="editModalStatus" :connection-id="props.id" :connection-name="props.name"
     @saved="handleEditSaved" />
 </template>

@@ -2,6 +2,8 @@
 export type DateFilterType = 'scheduledAt' | 'createdAt' | 'publishedAt'
 export type PostStatusFilter = 'pending' | 'published' | 'failed'
 export type PostFormatFilter = 'post' | 'reel' | 'story' | 'short'
+/** Relative window inside the visible range. `null` means the whole range. */
+export type DateWindowFilter = 'overdue' | 'today' | 'next7' | 'later'
 
 export interface PostFilters {
   status?: PostStatusFilter
@@ -10,6 +12,10 @@ export interface PostFilters {
   dateType?: DateFilterType
   postFormat?: PostFormatFilter
   platforms?: string[]
+  window?: DateWindowFilter | null
+  /** Floating local ISO bounds derived from `window` at apply time. */
+  windowStart?: string
+  windowEnd?: string
 }
 
 export interface PlatformPostStatus {

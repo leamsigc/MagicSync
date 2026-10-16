@@ -18,6 +18,7 @@ import type { CollectStatsResult, PlatformStats, PlatformGraph } from '~~/app/co
 import { useTimeAgo } from '@vueuse/core'
 
 const { t } = useI18n()
+const localePath = useLocalePath()
 const { getPlatformIcon } = usePlatformIcons()
 const { dashboard, fetchDashboard, collectStats, collecting, topPosts, fetchTopPosts, bestTimes, fetchBestTimes, setRange, range, exportCsv, exporting } = usePlatformStats()
 const { user } = UseUser()
@@ -339,7 +340,7 @@ onMounted(async () => {
       <UButton to="/app/integrations" icon="i-lucide-plug" variant="outline" color="neutral" size="lg">
         {{ t('quickConnect') }}
       </UButton>
-      <UButton to="/app/calendar" icon="i-lucide-calendar" variant="ghost" color="neutral" size="lg">
+      <UButton :to="localePath('/app/calendar')" icon="i-lucide-calendar" variant="ghost" color="neutral" size="lg">
         {{ t('quickCalendar') }}
       </UButton>
       <UButton to="/app/inbox" icon="i-lucide-inbox" variant="outline" color="neutral" size="lg">

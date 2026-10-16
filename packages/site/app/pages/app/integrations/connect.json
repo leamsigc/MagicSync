@@ -6,6 +6,36 @@
       "providers": "Providers",
       "pages": "Pages"
     },
+    "directory": {
+      "subtitle": "{connected} connected · {attention} need attention",
+      "search": "Search providers",
+      "all_statuses": "All statuses",
+      "status_healthy": "Healthy",
+      "status_expiring": "Expiring soon",
+      "status_expired": "Expired",
+      "sort_recent": "Sort: Recently added",
+      "sort_name": "Sort: Name",
+      "sort_platform": "Sort: Platform",
+      "view_grid": "Grid",
+      "view_list": "List",
+      "view_table": "Table",
+      "health_healthy": "Healthy",
+      "health_expiring_soon": "Expiring soon",
+      "health_expiring_days": "Expires in {days}d",
+      "health_expired": "Expired",
+      "health_unknown": "Unknown",
+      "empty": "No providers match your filters",
+      "actions": "Actions",
+      "attention": "Some connections need attention —",
+      "reconnect_link": "reconnect expired tokens",
+      "columns": {
+        "provider": "Provider",
+        "status": "Status",
+        "platform": "Platform",
+        "connected": "Connected",
+        "activity": "Last activity"
+      }
+    },
     "seo_title_all": "Connect your social media accounts",
     "seo_description_all": "Connect your social media accounts to start using it",
     "states": {
@@ -65,6 +95,10 @@
       "error": {
         "title": "Error",
         "description": "An error occurred while trying to connect/disconnect {error} {id}"
+      },
+      "unsupported_page": {
+        "title": "Connection Failed",
+        "description": "Unsupported page type for provider {provider}"
       }
     }
   },
@@ -74,6 +108,36 @@
     "sections": {
       "providers": "Fournisseurs",
       "pages": "Pages"
+    },
+    "directory": {
+      "subtitle": "{connected} connectés · {attention} à surveiller",
+      "search": "Rechercher des fournisseurs",
+      "all_statuses": "Tous les statuts",
+      "status_healthy": "Sain",
+      "status_expiring": "Bientôt expiré",
+      "status_expired": "Expiré",
+      "sort_recent": "Tri : Ajoutés récemment",
+      "sort_name": "Tri : Nom",
+      "sort_platform": "Tri : Plateforme",
+      "view_grid": "Grille",
+      "view_list": "Liste",
+      "view_table": "Tableau",
+      "health_healthy": "Sain",
+      "health_expiring_soon": "Bientôt expiré",
+      "health_expiring_days": "Expire dans {days} j",
+      "health_expired": "Expiré",
+      "health_unknown": "Inconnu",
+      "empty": "Aucun fournisseur ne correspond à vos filtres",
+      "actions": "Actions",
+      "attention": "Certaines connexions nécessitent votre attention —",
+      "reconnect_link": "reconnectez les jetons expirés",
+      "columns": {
+        "provider": "Fournisseur",
+        "status": "Statut",
+        "platform": "Plateforme",
+        "connected": "Connecté",
+        "activity": "Dernière activité"
+      }
     },
     "seo_title_all": "Connectez vos comptes de réseaux sociaux",
     "seo_description_all": "Connectez vos comptes de réseaux sociaux pour commencer à les utiliser",
@@ -134,6 +198,10 @@
       "error": {
         "title": "Erreur",
         "description": "Une erreur s'est produite lors de la tentative de connexion/déconnexion {error} {id}"
+      },
+      "unsupported_page": {
+        "title": "Échec de la connexion",
+        "description": "Type de page non pris en charge pour le fournisseur {provider}"
       }
     }
   },
@@ -143,6 +211,36 @@
     "sections": {
       "providers": "Proveedores",
       "pages": "Páginas"
+    },
+    "directory": {
+      "subtitle": "{connected} conectados · {attention} requieren atención",
+      "search": "Buscar proveedores",
+      "all_statuses": "Todos los estados",
+      "status_healthy": "Saludable",
+      "status_expiring": "Por vencer",
+      "status_expired": "Vencido",
+      "sort_recent": "Orden: Añadidos recientemente",
+      "sort_name": "Orden: Nombre",
+      "sort_platform": "Orden: Plataforma",
+      "view_grid": "Cuadrícula",
+      "view_list": "Lista",
+      "view_table": "Tabla",
+      "health_healthy": "Saludable",
+      "health_expiring_soon": "Por vencer",
+      "health_expiring_days": "Vence en {days}d",
+      "health_expired": "Vencido",
+      "health_unknown": "Desconocido",
+      "empty": "Ningún proveedor coincide con tus filtros",
+      "actions": "Acciones",
+      "attention": "Algunas conexiones requieren atención —",
+      "reconnect_link": "vuelve a conectar los tokens vencidos",
+      "columns": {
+        "provider": "Proveedor",
+        "status": "Estado",
+        "platform": "Plataforma",
+        "connected": "Conectado",
+        "activity": "Última actividad"
+      }
     },
     "seo_title_all": "Conecta tus cuentas de redes sociales",
     "seo_description_all": "Conecta tus cuentas de redes sociales para comenzar a usarlas",
@@ -203,6 +301,10 @@
       "error": {
         "title": "Error",
         "description": "Se produjo un error al intentar conectar/desconectar {error} {id}"
+      },
+      "unsupported_page": {
+        "title": "Conexión fallida",
+        "description": "Tipo de página no compatible para el proveedor {provider}"
       }
     }
   },
@@ -212,6 +314,36 @@
     "sections": {
       "providers": "Anbieter",
       "pages": "Seiten"
+    },
+    "directory": {
+      "subtitle": "{connected} verbunden · {attention} benötigen Aufmerksamkeit",
+      "search": "Anbieter suchen",
+      "all_statuses": "Alle Status",
+      "status_healthy": "Intakt",
+      "status_expiring": "Läuft bald ab",
+      "status_expired": "Abgelaufen",
+      "sort_recent": "Sortierung: Zuletzt hinzugefügt",
+      "sort_name": "Sortierung: Name",
+      "sort_platform": "Sortierung: Plattform",
+      "view_grid": "Raster",
+      "view_list": "Liste",
+      "view_table": "Tabelle",
+      "health_healthy": "Intakt",
+      "health_expiring_soon": "Läuft bald ab",
+      "health_expiring_days": "Läuft in {days} T ab",
+      "health_expired": "Abgelaufen",
+      "health_unknown": "Unbekannt",
+      "empty": "Keine Anbieter entsprechen deinen Filtern",
+      "actions": "Aktionen",
+      "attention": "Einige Verbindungen benötigen Aufmerksamkeit —",
+      "reconnect_link": "abgelaufene Tokens neu verbinden",
+      "columns": {
+        "provider": "Anbieter",
+        "status": "Status",
+        "platform": "Plattform",
+        "connected": "Verbunden",
+        "activity": "Letzte Aktivität"
+      }
     },
     "seo_title_all": "Verbinden Sie Ihre Social-Media-Konten",
     "seo_description_all": "Verbinden Sie Ihre Social-Media-Konten, um sie zu nutzen",
@@ -272,6 +404,10 @@
       "error": {
         "title": "Fehler",
         "description": "Beim Versuch, eine Verbindung herzustellen/zu trennen, ist ein Fehler aufgetreten {error} {id}"
+      },
+      "unsupported_page": {
+        "title": "Verbindung fehlgeschlagen",
+        "description": "Nicht unterstützter Seitentyp für Anbieter {provider}"
       }
     }
   }

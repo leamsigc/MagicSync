@@ -38,7 +38,7 @@ useHead({
   ]
 });
 
-const currentView = ref<'Board' | 'Table' | 'Grid' | 'Feed'>('Grid');
+const currentView = ref<'Board' | 'Table' | 'Grid' | 'Feed'>('Feed');
 
 // get filters from route
 
@@ -83,7 +83,7 @@ watch(activeBusinessId, () => {
   <div class="mx-auto space-y-6">
     <BasePageHeader :title="t('title')" :description="t('description')">
       <template #actions>
-        <div data-tour="create-new-post-step-0">
+        <div data-tour="create-new-post-step-0" class="lg:pr-4">
           <NewPostModal>
             <template #mic-recorder="{ onTranscript }">
               <MicRecorder @transcript="onTranscript" />
@@ -125,17 +125,19 @@ watch(activeBusinessId, () => {
     </div>
 
     <!-- List of all posts -->
-    <PostsGridView v-if="currentView === 'Grid'" :posts="postList" />
+    <section class="lg:pr-4">
+      <PostsGridView v-if="currentView === 'Grid'" :posts="postList" />
 
-    <PostsFeedView v-if="currentView === 'Feed'" :posts="postList" />
+      <PostsFeedView v-if="currentView === 'Feed'" :posts="postList" />
 
-    <PostsBoardView v-if="currentView === 'Board'" :posts="postList" />
+      <PostsBoardView v-if="currentView === 'Board'" :posts="postList" />
 
-    <PostsTableView v-if="currentView === 'Table'" :posts="postList">
-      <template #mic-recorder="{ onTranscript }">
-        <MicRecorder @transcript="onTranscript" />
-      </template>
-    </PostsTableView>
+      <PostsTableView v-if="currentView === 'Table'" :posts="postList">
+        <template #mic-recorder="{ onTranscript }">
+          <MicRecorder @transcript="onTranscript" />
+        </template>
+      </PostsTableView>
+    </section>
   </div>
 </template>
 <style scoped></style>

@@ -124,6 +124,35 @@ export function useAuthApi(event: H3Event) {
       })
     },
 
+    listInvitations(params: { query?: { organizationId: string } }) {
+      return auth.api.listInvitations({
+        ...params,
+        headers: headers()
+      })
+    },
+
+    cancelInvitation(params: { body: { invitationId: string } }) {
+      return auth.api.cancelInvitation({
+        ...params,
+        headers: headers()
+      })
+    },
+
+    // --- Organization Members ---
+    removeMember(params: { body: { memberIdOrEmail: string; organizationId: string } }) {
+      return auth.api.removeMember({
+        ...params,
+        headers: headers()
+      })
+    },
+
+    updateMemberRole(params: { body: { memberId: string; role: string; organizationId: string } }) {
+      return auth.api.updateMemberRole({
+        ...params,
+        headers: headers()
+      })
+    },
+
     // --- Admin ---
     banUser(params: { body: { userId: string; banReason?: string; banExpiresIn?: number } }) {
       return auth.api.banUser({

@@ -29,12 +29,18 @@ const calendarQuerySchema = z.object({
   start: localDatetime,
   end: localDatetime,
   businessIds: z.string().optional(),
+  status: z.enum(['pending', 'published', 'failed']).optional(),
+  postFormat: z.enum(['post', 'reel', 'story', 'short']).optional(),
+  dateType: z.enum(['scheduledAt', 'createdAt', 'publishedAt']).optional(),
+  platforms: z.string().optional(),
+  windowStart: localDatetime.optional(),
+  windowEnd: localDatetime.optional(),
 }).refine(query => new Date(query.end).getTime() > new Date(query.start).getTime(), {
   message: 'Range end must be after start',
   path: ['end'],
 })
 
-function parseBusinessIds(raw?: string): string[] | undefined {
+function parseList(raw?: string): string[] | undefined {
   if (!raw) {
     return undefined
   }
@@ -42,6 +48,11 @@ function parseBusinessIds(raw?: string): string[] | undefined {
   const ids = raw.split(',').map(id => id.trim()).filter(id => id.length > 0)
 
   return ids.length > 0 ? ids : undefined
+}
+
+/** An absent bound leaves the range side untouched. */
+function optionalDate(raw?: string): Date | undefined {
+  return raw ? new Date(raw) : undefined
 }
 
 /** The field-level reason behind a failed parse, as copy a user can read. */
@@ -86,7 +97,13 @@ export default defineEventHandler(async (event): Promise<ServiceResponse<PostWit
     return await postService.findByBusinessIdsForRange(user.id, {
       start: startDate,
       end: endDate,
-      businessIds: parseBusinessIds(parsed.data.businessIds),
+      businessIds: parseList(parsed.data.businessIds),
+      status: parsed.data.status,
+      postFormat: parsed.data.postFormat,
+      dateType: parsed.data.dateType,
+      platforms: parseList(parsed.data.platforms),
+      windowStart: optionalDate(parsed.data.windowStart),
+      windowEnd: optionalDate(parsed.data.windowEnd),
     })
   } catch (error: any) {
     if (error?.statusCode) {

@@ -1,4 +1,5 @@
-import type { PostFilters, DateFilterType, PostStatusFilter, PostFormatFilter } from '#layers/BaseScheduler/server/utils/SchedulerTypes'
+import type { PostFilters, DateFilterType, PostStatusFilter, PostFormatFilter, DateWindowFilter } from '#layers/BaseScheduler/server/utils/SchedulerTypes'
+import dayjs from 'dayjs'
 
 export const DATE_FILTER_OPTIONS: { label: string; value: DateFilterType }[] = [
   { label: 'Scheduled Date', value: 'scheduledAt' },
@@ -41,6 +42,35 @@ export const PLATFORM_OPTIONS = [
   { label: 'Reddit', value: 'reddit' }
 ]
 
+export const DATE_WINDOW_OPTIONS: { label: string; value: DateWindowFilter }[] = [
+  { label: 'Overdue', value: 'overdue' },
+  { label: 'Today', value: 'today' },
+  { label: 'Next 7 days', value: 'next7' },
+  { label: 'Later', value: 'later' }
+]
+
+const WINDOW_ISO_FORMAT = 'YYYY-MM-DDTHH:mm:ss'
+
+/**
+ * A relative window as concrete local-ISO bounds, computed at apply time so a
+ * shared URL re-anchors to whoever opens it. Bounds outside the visible range
+ * are the server's problem: it intersects them with the range it reads.
+ */
+export function windowBounds(window: DateWindowFilter): { start?: string; end?: string } {
+  const today = dayjs().startOf('day')
+
+  switch (window) {
+    case 'overdue':
+      return { end: today.format(WINDOW_ISO_FORMAT) }
+    case 'today':
+      return { start: today.format(WINDOW_ISO_FORMAT), end: today.add(1, 'day').format(WINDOW_ISO_FORMAT) }
+    case 'next7':
+      return { start: today.format(WINDOW_ISO_FORMAT), end: today.add(7, 'day').format(WINDOW_ISO_FORMAT) }
+    case 'later':
+      return { start: today.add(7, 'day').format(WINDOW_ISO_FORMAT) }
+  }
+}
+
 interface UsePostFiltersOptions {
   initialDateType?: DateFilterType
   initialLimit?: number
@@ -56,6 +86,7 @@ export const usePostFilters = (options: UsePostFiltersOptions = {}) => {
   const endDate = ref<string>('')
   const postFormat = ref<PostFormatFilter | null>(null)
   const platforms = ref<string[]>([])
+  const dateWindow = ref<DateWindowFilter | null>(null)
   const limit = ref(options.initialLimit || 25)
 
   const initFromQuery = () => {
@@ -66,6 +97,7 @@ export const usePostFilters = (options: UsePostFiltersOptions = {}) => {
     if (query.endDate) endDate.value = query.endDate as string
     if (query.postFormat) postFormat.value = query.postFormat as PostFormatFilter
     if (query.platforms) platforms.value = (query.platforms as string).split(',')
+    if (query.window) dateWindow.value = query.window as DateWindowFilter
     if (query.limit) limit.value = parseInt(query.limit as string)
   }
 
@@ -78,7 +110,13 @@ export const usePostFilters = (options: UsePostFiltersOptions = {}) => {
     if (dateType.value) filters.dateType = dateType.value
     if (postFormat.value) filters.postFormat = postFormat.value
     if (platforms.value.length > 0) filters.platforms = platforms.value
-    
+    if (dateWindow.value) {
+      const bounds = windowBounds(dateWindow.value)
+      filters.window = dateWindow.value
+      if (bounds.start) filters.windowStart = bounds.start
+      if (bounds.end) filters.windowEnd = bounds.end
+    }
+
     return filters
   }
 
@@ -87,8 +125,11 @@ export const usePostFilters = (options: UsePostFiltersOptions = {}) => {
     limit: limit.value
   })
 
+  const windowQuery = (window: DateWindowFilter | null): Record<string, string> =>
+    window ? { window } : {}
+
   const updateQueryParams = () => {
-    const q: Record<string, string> = {}
+    const q: Record<string, string> = { ...windowQuery(dateWindow.value) }
     
     if (status.value) q.status = status.value
     if (startDate.value) q.startDate = startDate.value
@@ -99,7 +140,7 @@ export const usePostFilters = (options: UsePostFiltersOptions = {}) => {
     if (limit.value && limit.value !== 25) q.limit = limit.value.toString()
 
     const newQuery = { ...route.query }
-    const keysToRemove = ['status', 'startDate', 'endDate', 'dateType', 'postFormat', 'platforms', 'limit']
+    const keysToRemove = ['status', 'startDate', 'endDate', 'dateType', 'postFormat', 'platforms', 'window', 'limit']
     keysToRemove.forEach(key => {
       if (!q[key]) {
         delete newQuery[key]
@@ -116,6 +157,7 @@ export const usePostFilters = (options: UsePostFiltersOptions = {}) => {
     dateType.value = 'scheduledAt'
     postFormat.value = null
     platforms.value = []
+    dateWindow.value = null
     limit.value = options.initialLimit || 25
     updateQueryParams()
   }
@@ -143,6 +185,7 @@ export const usePostFilters = (options: UsePostFiltersOptions = {}) => {
     endDate,
     postFormat,
     platforms,
+    dateWindow,
     limit,
     getFilters,
     getPagination,

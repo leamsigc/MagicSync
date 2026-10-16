@@ -4,9 +4,20 @@
       "title": "Post Details",
       "back": "Back",
       "post": "Post",
+      "openPost": "Open post",
       "platformStatus": "Platform Status",
       "details": "Post Details",
       "comments": "Comments",
+      "conversation": "Conversation",
+      "noContent": "This post has no text content.",
+      "loadError": "We couldn't load this post.",
+      "retry": "Retry",
+      "statuses": {
+        "draft": "Draft",
+        "pending": "Scheduled",
+        "published": "Published",
+        "failed": "Failed"
+      },
       "stats": {
         "comments": "Comments",
         "platforms": "Platforms",
@@ -17,7 +28,8 @@
         "format": "Format",
         "status": "Status",
         "published": "Published",
-        "scheduled": "Scheduled"
+        "scheduled": "Scheduled",
+        "error": "Last error"
       },
       "empty": "No additional details available",
       "loading": "Loading post...",
@@ -56,13 +68,55 @@
     }
   },
   "es": {
+    "feeds": {
+      "tabs": {
+        "post": "Publicación",
+        "details": "Detalles",
+        "comments": "Comentarios",
+        "stats": "Estadísticas"
+      }
+    },
+    "postComments": {
+      "noPublishedPlatforms": "Aún no hay plataformas publicadas. Los comentarios aparecerán cuando se publiquen las publicaciones.",
+      "noComments": "Aún no hay comentarios",
+      "comments": "Comentarios",
+      "reply": "Responder",
+      "replyPlaceholder": "Escribe una respuesta...",
+      "send": "Enviar",
+      "cancel": "Cancelar",
+      "loadMore": "Cargar más",
+      "retry": "Reintentar",
+      "replySent": "¡Respuesta enviada!"
+    },
+    "postStats": {
+      "noPublishedPlatforms": "Aún no hay plataformas publicadas. Las estadísticas aparecerán cuando se publiquen las publicaciones.",
+      "noStats": "No hay estadísticas disponibles para esta plataforma",
+      "metrics": "métricas",
+      "lastUpdated": "Última actualización",
+      "cached": "En caché",
+      "freshData": "Datos recientes de la plataforma",
+      "loadedFromCache": "Cargado desde la caché",
+      "retry": "Reintentar",
+      "refresh": "Actualizar estadísticas"
+    },
     "postDetail": {
       "title": "Detalles de la publicación",
       "back": "Atrás",
       "post": "Publicación",
+      "openPost": "Abrir publicación",
       "platformStatus": "Estado de la plataforma",
       "details": "Detalles de la publicación",
       "comments": "Comentarios",
+      "conversation": "Conversación",
+      "noContent": "Esta publicación no tiene texto.",
+      "loadError": "No pudimos cargar esta publicación.",
+      "retry": "Reintentar",
+      "statuses": {
+        "draft": "Borrador",
+        "pending": "Programada",
+        "published": "Publicada",
+        "failed": "Fallida"
+      },
       "stats": {
         "comments": "Comentarios",
         "platforms": "Plataformas",
@@ -73,7 +127,8 @@
         "format": "Formato",
         "status": "Estado",
         "published": "Publicado",
-        "scheduled": "Programado"
+        "scheduled": "Programado",
+        "error": "Último error"
       },
       "empty": "No hay detalles adicionales disponibles",
       "loading": "Cargando publicación...",
@@ -81,13 +136,55 @@
     }
   },
   "fr": {
+    "feeds": {
+      "tabs": {
+        "post": "Publication",
+        "details": "Détails",
+        "comments": "Commentaires",
+        "stats": "Statistiques"
+      }
+    },
+    "postComments": {
+      "noPublishedPlatforms": "Aucune plateforme publiée pour le moment. Les commentaires apparaîtront une fois les publications publiées.",
+      "noComments": "Pas encore de commentaires",
+      "comments": "Commentaires",
+      "reply": "Répondre",
+      "replyPlaceholder": "Écrivez une réponse...",
+      "send": "Envoyer",
+      "cancel": "Annuler",
+      "loadMore": "Charger plus",
+      "retry": "Réessayer",
+      "replySent": "Réponse envoyée !"
+    },
+    "postStats": {
+      "noPublishedPlatforms": "Aucune plateforme publiée pour le moment. Les statistiques apparaîtront une fois les publications publiées.",
+      "noStats": "Aucune statistique disponible pour cette plateforme",
+      "metrics": "mesures",
+      "lastUpdated": "Dernière mise à jour",
+      "cached": "En cache",
+      "freshData": "Données récentes de la plateforme",
+      "loadedFromCache": "Chargé depuis le cache",
+      "retry": "Réessayer",
+      "refresh": "Actualiser les statistiques"
+    },
     "postDetail": {
       "title": "Détails de la publication",
       "back": "Retour",
       "post": "Publication",
+      "openPost": "Ouvrir la publication",
       "platformStatus": "Statut de la plateforme",
       "details": "Détails de la publication",
       "comments": "Commentaires",
+      "conversation": "Conversation",
+      "noContent": "Cette publication n'a pas de texte.",
+      "loadError": "Nous n'avons pas pu charger cette publication.",
+      "retry": "Réessayer",
+      "statuses": {
+        "draft": "Brouillon",
+        "pending": "Planifiée",
+        "published": "Publiée",
+        "failed": "Échouée"
+      },
       "stats": {
         "comments": "Commentaires",
         "platforms": "Plateformes",
@@ -98,7 +195,8 @@
         "format": "Format",
         "status": "Statut",
         "published": "Publié",
-        "scheduled": "Planifié"
+        "scheduled": "Planifié",
+        "error": "Dernière erreur"
       },
       "empty": "Aucun détail supplémentaire disponible",
       "loading": "Chargement de la publication...",
@@ -106,13 +204,55 @@
     }
   },
   "de": {
+    "feeds": {
+      "tabs": {
+        "post": "Beitrag",
+        "details": "Details",
+        "comments": "Kommentare",
+        "stats": "Statistiken"
+      }
+    },
+    "postComments": {
+      "noPublishedPlatforms": "Noch keine Plattformen veröffentlicht. Kommentare erscheinen, sobald Beiträge veröffentlicht wurden.",
+      "noComments": "Noch keine Kommentare",
+      "comments": "Kommentare",
+      "reply": "Antworten",
+      "replyPlaceholder": "Antwort schreiben...",
+      "send": "Senden",
+      "cancel": "Abbrechen",
+      "loadMore": "Mehr laden",
+      "retry": "Erneut versuchen",
+      "replySent": "Antwort gesendet!"
+    },
+    "postStats": {
+      "noPublishedPlatforms": "Noch keine Plattformen veröffentlicht. Statistiken erscheinen, sobald Beiträge veröffentlicht wurden.",
+      "noStats": "Keine Statistiken für diese Plattform verfügbar",
+      "metrics": "Messwerte",
+      "lastUpdated": "Zuletzt aktualisiert",
+      "cached": "Zwischengespeichert",
+      "freshData": "Aktuelle Daten von der Plattform",
+      "loadedFromCache": "Aus Cache geladen",
+      "retry": "Erneut versuchen",
+      "refresh": "Statistiken aktualisieren"
+    },
     "postDetail": {
       "title": "Beitragsdetails",
       "back": "Zurück",
       "post": "Beitrag",
+      "openPost": "Beitrag öffnen",
       "platformStatus": "Plattformstatus",
       "details": "Beitragsdetails",
       "comments": "Kommentare",
+      "conversation": "Unterhaltung",
+      "noContent": "Dieser Beitrag hat keinen Text.",
+      "loadError": "Dieser Beitrag konnte nicht geladen werden.",
+      "retry": "Erneut versuchen",
+      "statuses": {
+        "draft": "Entwurf",
+        "pending": "Geplant",
+        "published": "Veröffentlicht",
+        "failed": "Fehlgeschlagen"
+      },
       "stats": {
         "comments": "Kommentare",
         "platforms": "Plattformen",
@@ -123,7 +263,8 @@
         "format": "Format",
         "status": "Status",
         "published": "Veröffentlicht",
-        "scheduled": "Geplant"
+        "scheduled": "Geplant",
+        "error": "Letzter Fehler"
       },
       "empty": "Keine weiteren Details verfügbar",
       "loading": "Beitrag wird geladen...",

@@ -8,6 +8,7 @@
     "audit:layers": "node scripts/layer-import-audit.mjs",
     "audit:layers:strict": "node scripts/layer-import-audit.mjs --strict",
     "audit:layers:update": "node scripts/layer-import-audit.mjs --update-baseline",
+    "audit:i18n": "node scripts/i18n-audit.mjs",
     "screenshots:routes": "pnpm packages @local-monorepo/site screenshots:routes",
     "screenshots:interactions": "pnpm packages @local-monorepo/site screenshots:interactions",
     "site": "pnpm packages @local-monorepo/site build",

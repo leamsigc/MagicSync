@@ -1,6 +1,20 @@
 {
   "en": {
     "openFilters": "Open filters",
+    "filterBy": "Filter by",
+    "clearAll": "Clear all",
+    "where": "Where",
+    "and": "And",
+    "isOperator": "is",
+    "addFilter": "Add filter:",
+    "selectPlaceholder": "Select...",
+    "removeFilter": "Remove {field} filter",
+    "fields": {
+      "status": "Status",
+      "platform": "Platform",
+      "format": "Format",
+      "date": "Date"
+    },
     "clear": "Clear",
     "apply": "Apply",
     "dateType": "Date",
@@ -36,10 +50,30 @@
       "threads": "Threads",
       "reddit": "Reddit"
     },
-    "selectedCount": "{count} selected"
+    "selectedCount": "{count} selected",
+    "dateWindows": {
+      "overdue": "Overdue",
+      "today": "Today",
+      "next7": "Next 7 days",
+      "later": "Later"
+    }
   },
   "es": {
     "openFilters": "Abrir filtros",
+    "filterBy": "Filtrar por",
+    "clearAll": "Borrar todo",
+    "where": "Donde",
+    "and": "Y",
+    "isOperator": "es",
+    "addFilter": "Añadir filtro:",
+    "selectPlaceholder": "Seleccionar...",
+    "removeFilter": "Quitar filtro de {field}",
+    "fields": {
+      "status": "Estado",
+      "platform": "Plataforma",
+      "format": "Formato",
+      "date": "Fecha"
+    },
     "clear": "Limpiar",
     "apply": "Aplicar",
     "dateType": "Fecha",
@@ -75,10 +109,30 @@
       "threads": "Threads",
       "reddit": "Reddit"
     },
-    "selectedCount": "{count} seleccionadas"
+    "selectedCount": "{count} seleccionadas",
+    "dateWindows": {
+      "overdue": "Vencidas",
+      "today": "Hoy",
+      "next7": "Próximos 7 días",
+      "later": "Más tarde"
+    }
   },
   "de": {
     "openFilters": "Filter öffnen",
+    "filterBy": "Filtern nach",
+    "clearAll": "Alle löschen",
+    "where": "Wo",
+    "and": "Und",
+    "isOperator": "ist",
+    "addFilter": "Filter hinzufügen:",
+    "selectPlaceholder": "Auswählen...",
+    "removeFilter": "{field}-Filter entfernen",
+    "fields": {
+      "status": "Status",
+      "platform": "Plattform",
+      "format": "Format",
+      "date": "Datum"
+    },
     "clear": "Zurücksetzen",
     "apply": "Anwenden",
     "dateType": "Datum",
@@ -114,10 +168,30 @@
       "threads": "Threads",
       "reddit": "Reddit"
     },
-    "selectedCount": "{count} ausgewählt"
+    "selectedCount": "{count} ausgewählt",
+    "dateWindows": {
+      "overdue": "Überfällig",
+      "today": "Heute",
+      "next7": "Nächste 7 Tage",
+      "later": "Später"
+    }
   },
   "fr": {
     "openFilters": "Ouvrir les filtres",
+    "filterBy": "Filtrer par",
+    "clearAll": "Tout effacer",
+    "where": "Où",
+    "and": "Et",
+    "isOperator": "est",
+    "addFilter": "Ajouter un filtre :",
+    "selectPlaceholder": "Sélectionner...",
+    "removeFilter": "Retirer le filtre {field}",
+    "fields": {
+      "status": "Statut",
+      "platform": "Plateforme",
+      "format": "Format",
+      "date": "Date"
+    },
     "clear": "Effacer",
     "apply": "Appliquer",
     "dateType": "Date",
@@ -153,6 +227,12 @@
       "threads": "Threads",
       "reddit": "Reddit"
     },
-    "selectedCount": "{count} sélectionnées"
+    "selectedCount": "{count} sélectionnées",
+    "dateWindows": {
+      "overdue": "En retard",
+      "today": "Aujourd'hui",
+      "next7": "7 prochains jours",
+      "later": "Plus tard"
+    }
   }
 }
