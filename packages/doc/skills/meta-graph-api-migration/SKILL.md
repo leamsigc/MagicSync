@@ -29,7 +29,11 @@ Any change to `packages/db/server/services/plugins/facebook.plugin.ts`,
    invalid metric fails the whole batch with `(#100)`, so keep the drop-on-error ladder.
    Read `total_value` metrics from `total_value.value`, not `values[0].value`.
 3. **Token class.** Detect `#190` / `2069032` / "must be called with a Page Access Token"
-   and surface a reconnect hint. Do not auto-heal tokens without staging verification.
+   and surface a reconnect hint. Healing IS live now (2026-10-17): `StatsCollector`
+   force-renews on `extra.needsPageToken`, `AutoPost` retries once on a token-auth
+   failure, and `TokenRefresh.renewRowToken` is the only correct renewal for Page rows.
+   Never auto-heal by mirroring the Better Auth user token onto a Page row — that is
+   the corruption this path exists to undo.
 4. **Instagram host routing + metrics.** Resolve the host from the token prefix (`IG` → graph.instagram.com,
    `EAA` → graph.facebook.com). Never request `reach/views/saved/shares` as IG media *fields* — they are
    insight metrics. For **account** insights use only documented metrics and **always pass `since`/`until`**

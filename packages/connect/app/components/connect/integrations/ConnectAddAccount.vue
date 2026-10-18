@@ -22,10 +22,13 @@ const props = withDefaults(defineProps<{ variant?: 'tile' | 'button' }>(), { var
 
 setConnectionList();
 const blueskyModal = ref(false)
+const devnullModal = ref(false)
 const mainModal = ref(false)
 const HandleConnectBaseOnThePlatform = (connection: Connection) => {
   if (connection.platform == 'bluesky') {
     blueskyModal.value = true
+  } else if (connection.platform == 'devnull') {
+    devnullModal.value = true
   } else {
     HandleConnectTo(connection)
   }
@@ -119,5 +122,6 @@ color="neutral" variant="soft" class="p-4 rounded-xl grid place-items-center gap
       </section>
     </template>
   </UModal>
+  <ConnectIntegrationsDevNullSetup v-model:open="devnullModal" />
 </template>
 <style scoped></style>

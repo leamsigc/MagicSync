@@ -4,51 +4,24 @@ A single-page view of every captured route screenshot, for both desktop and mobi
 viewports. Images are served from `/img/screenshots/`.
 
 <script setup>
-import { ref, onMounted } from 'vue'
-
-const desktop = ref(null)
-const mobile = ref(null)
-const loading = ref(true)
-
-const fetchManifest = async (name) => {
-  try {
-    const res = await fetch(`/img/screenshots/${name}`)
-    if (!res.ok) return null
-    return await res.json()
-  } catch (e) {
-    return null
-  }
-}
-
-onMounted(async () => {
-  desktop.value = await fetchManifest('manifest.json')
-  mobile.value = await fetchManifest('manifest-mobile.json')
-  loading.value = false
-})
-
-const desktopBySlug = (slug) => desktop.value?.entries?.find((e) => e.slug === slug) ?? null
-const mobileBySlug = (slug) => mobile.value?.entries?.find((e) => e.slug === slug) ?? null
-const allSlugs = () => {
-  const set = new Set()
-  for (const e of desktop.value?.entries ?? []) set.add(e.slug)
-  for (const e of mobile.value?.entries ?? []) set.add(e.slug)
-  return [...set].sort()
-}
+import { data as shots } from './screenshots-gallery.data'
+import { withBase } from 'vitepress'
 </script>
 
-<div v-if="loading">Loading screenshots…</div>
+<div v-if="!shots || shots.length === 0">
+  <p>No screenshots captured yet. Run <code>pnpm screenshots:routes</code> and <code>pnpm screenshots:mobile</code>.</p>
+</div>
 <div v-else>
-  <p v-if="!desktop && !mobile">No screenshots captured yet. Run <code>pnpm screenshots:routes</code> and <code>pnpm screenshots:mobile</code>.</p>
-  <div v-for="slug in allSlugs()" :key="slug" class="screenshot-route">
-    <h3>{{ slug }}</h3>
+  <div v-for="shot in shots" :key="shot.slug" class="screenshot-route">
+    <h3>{{ shot.slug }}</h3>
     <div class="screenshot-grid">
-      <figure v-if="desktopBySlug(slug)?.file">
+      <figure v-if="shot.desktop">
         <figcaption>Desktop</figcaption>
-        <img :src="`/img/screenshots/${desktopBySlug(slug).file}`" :alt="slug + ' desktop'" loading="lazy" />
+        <img :src="withBase('/' + shot.desktop)" :alt="shot.slug + ' desktop'" loading="lazy" />
       </figure>
-      <figure v-if="mobileBySlug(slug)?.file">
+      <figure v-if="shot.mobile">
         <figcaption>Mobile</figcaption>
-        <img :src="`/img/screenshots/${mobileBySlug(slug).file}`" :alt="slug + ' mobile'" loading="lazy" />
+        <img :src="withBase('/' + shot.mobile)" :alt="shot.slug + ' mobile'" loading="lazy" />
       </figure>
     </div>
   </div>

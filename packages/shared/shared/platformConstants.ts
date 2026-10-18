@@ -78,6 +78,7 @@ export interface SocialMediaPlatformConfigurations {
   devto: PlatformConfig; // dev.to
   wordpress: PlatformConfig;
   snapchat: PlatformConfig;
+  devnull: PlatformConfig;
   default: PlatformConfig;
   'instagram-standalone': PlatformConfig; // Legacy Basic Display
 }
@@ -681,8 +682,6 @@ export const platformConfigurations: SocialMediaPlatformConfigurations = {
   snapchat: {
     icon: 'i-simple-icons-snapchat',
     color: '#FFFC00',
-    // A Snap caption, matching the Marketing API creative headline cap (34)
-    // plus room for the body text the creative renders.
     maxPostLength: 250,
     maxImages: 1,
     supportsComments: false,
@@ -705,6 +704,33 @@ export const platformConfigurations: SocialMediaPlatformConfigurations = {
         min: 0.5,
         max: 2.0,
         recommended: ['9:16'],
+      },
+      supportsDocuments: false,
+    },
+  },
+  devnull: {
+    icon: 'simple-icons:devdotto',
+    color: '#000000',
+    maxPostLength: 4000,
+    maxImages: 3,
+    maxCommentLength: 4000,
+    supportsComments: true,
+    supportsImagesInComments: false,
+    supportsCarousel: false,
+    supportsVideo: false,
+    supportsLinkPreviews: true,
+    maxConcurrentJob: 2,
+    supportedFormats: ['post'],
+    mediaConstraints: {
+      imageFileTypes: ['JPEG', 'PNG', 'WebP'],
+      videoFileTypes: [],
+      maxImageSizeMB: 10,
+      maxVideoSizeMB: 0,
+      maxVideoLengthSeconds: 0,
+      aspectRatios: {
+        min: 0,
+        max: 99,
+        recommended: [],
       },
       supportsDocuments: false,
     },

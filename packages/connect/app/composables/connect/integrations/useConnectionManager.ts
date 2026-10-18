@@ -8,7 +8,7 @@ export interface Connection {
   name: string;
   icon: string;
   url: string;
-  platform: 'facebook' | 'instagram' | 'instagram-standalone' | 'twitter' | 'tiktok' | 'google' | 'googlemybusiness' | 'discord' | 'linkedin' | 'linkedin-page' | 'threads' | 'youtube' | 'bluesky' | 'devto' | 'dribbble' | 'reddit' | 'snapchat' | 'wordpress';
+  platform: 'facebook' | 'instagram' | 'instagram-standalone' | 'twitter' | 'tiktok' | 'google' | 'googlemybusiness' | 'discord' | 'linkedin' | 'linkedin-page' | 'threads' | 'youtube' | 'bluesky' | 'devto' | 'dribbble' | 'reddit' | 'snapchat' | 'wordpress' | 'github' | 'devnull';
   authType?: 'better-auth' | 'manual-oauth' | 'api-key';
   active?: boolean
 }
@@ -51,6 +51,8 @@ export const useConnectionManager = () => {
       { name: 'Bluesky', icon: 'fa6-brands:bluesky', url: '#', platform: "bluesky", authType: 'api-key', active: true },
       { name: 'Dev.to', icon: 'simple-icons:devdotto', url: '#', platform: "devto", authType: 'api-key', active: false },
       { name: 'WordPress', icon: 'logos:wordpress-icon', url: '#', platform: "wordpress", authType: 'api-key', active: false },
+      { name: 'GitHub', icon: 'logos:github-icon', url: '#', platform: "github", authType: 'better-auth', active: true },
+      { name: 'dev-null.sh', icon: 'simple-icons:devdotto', url: '#', platform: "devnull", authType: 'devnull-setup', active: true },
     ]
   }
   const getAllConnections = async (connections: SocialMediaAccount[]) => {

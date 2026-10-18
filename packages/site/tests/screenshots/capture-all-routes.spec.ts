@@ -74,7 +74,9 @@ function writeManifest(entries: RouteEntry[]): string {
     captured: entries.filter((entry) => entry.ok).length,
     entries,
   }
-  const file = join(SCREENSHOT_ROOT, 'manifest.json')
+  const mobile = process.env.SCREENSHOT_VIEWPORT === 'mobile'
+  const fileName = mobile ? 'manifest-mobile.json' : 'manifest.json'
+  const file = join(SCREENSHOT_ROOT, fileName)
   writeFileSync(file, `${JSON.stringify(manifest, null, 2)}\n`)
   return file
 }

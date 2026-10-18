@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@local-monorepo/shared": "workspace:*",
+    "better-auth": "catalog:",
     "dayjs": "catalog:",
     "drizzle-orm": "catalog:",
     "evlog": "catalog:"

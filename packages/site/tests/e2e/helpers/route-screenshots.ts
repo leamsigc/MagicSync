@@ -141,7 +141,8 @@ export async function captureRouteAction(
 
   const base = slugifyAction(action)
   const name = order === undefined ? base : `${String(order).padStart(2, '0')}-${base}`
-  const file = join(dir, `${name}.png`)
+  const suffix = mobile ? '-mobile' : ''
+  const file = join(dir, `${name}${suffix}.png`)
   await page.screenshot({ path: file, fullPage, animations: 'disabled' })
   return { file, relativePath: relative(SCREENSHOT_ROOT, file), replaced }
 }

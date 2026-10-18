@@ -1,0 +1,1346 @@
+{
+  "generatedAt": "2026-10-18T23:25:26.432Z",
+  "baseUrl": "http://localhost:3000",
+  "action": "page",
+  "total": 136,
+  "captured": 23,
+  "entries": [
+    {
+      "route": "/accept-invitation",
+      "slug": "accept-invitation",
+      "action": "page",
+      "file": "accept-invitation/page-mobile.png",
+      "finalUrl": "http://localhost:3000/accept-invitation",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/ai-audio-transcription-free-online-tool",
+      "slug": "ai-audio-transcription-free-online-tool",
+      "action": "page",
+      "file": "ai-audio-transcription-free-online-tool/page-mobile.png",
+      "finalUrl": "http://localhost:3000/blogs/ai-audio-transcription-free-online-tool",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/ai-content-repurposing-multi-platform",
+      "slug": "ai-content-repurposing-multi-platform",
+      "action": "page",
+      "file": "ai-content-repurposing-multi-platform/page-mobile.png",
+      "finalUrl": "http://localhost:3000/blogs/ai-content-repurposing-multi-platform",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app",
+      "slug": "app",
+      "action": "page",
+      "file": "app/page-mobile.png",
+      "finalUrl": "http://localhost:3000/app",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/admin",
+      "slug": "app-admin",
+      "action": "page",
+      "file": "app-admin/page-mobile.png",
+      "finalUrl": "http://localhost:3000/app",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/admin/announcements",
+      "slug": "app-admin-announcements",
+      "action": "page",
+      "file": "app-admin-announcements/page-mobile.png",
+      "finalUrl": "http://localhost:3000/app",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/admin/audit",
+      "slug": "app-admin-audit",
+      "action": "page",
+      "file": "app-admin-audit/page-mobile.png",
+      "finalUrl": "http://localhost:3000/app",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/admin/businesses",
+      "slug": "app-admin-businesses",
+      "action": "page",
+      "file": "app-admin-businesses/page-mobile.png",
+      "finalUrl": "http://localhost:3000/app",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/admin/data",
+      "slug": "app-admin-data",
+      "action": "page",
+      "file": "app-admin-data/page-mobile.png",
+      "finalUrl": "http://localhost:3000/app",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/admin/feedbacks",
+      "slug": "app-admin-feedbacks",
+      "action": "page",
+      "file": "app-admin-feedbacks/page-mobile.png",
+      "finalUrl": "http://localhost:3000/app",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/admin/integrations",
+      "slug": "app-admin-integrations",
+      "action": "page",
+      "file": "app-admin-integrations/page-mobile.png",
+      "finalUrl": "http://localhost:3000/app",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/admin/posts",
+      "slug": "app-admin-posts",
+      "action": "page",
+      "file": "app-admin-posts/page-mobile.png",
+      "finalUrl": "http://localhost:3000/app",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/admin/users",
+      "slug": "app-admin-users",
+      "action": "page",
+      "file": "app-admin-users/page-mobile.png",
+      "finalUrl": "http://localhost:3000/app",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/ai-tools/agents",
+      "slug": "app-ai-tools-agents",
+      "action": "page",
+      "file": "app-ai-tools-agents/page-mobile.png",
+      "finalUrl": "http://localhost:3000/app/ai-tools/agents",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/ai-tools/knowledge",
+      "slug": "app-ai-tools-knowledge",
+      "action": "page",
+      "file": "app-ai-tools-knowledge/page-mobile.png",
+      "finalUrl": "http://localhost:3000/app/ai-tools/knowledge",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/ai-tools/settings",
+      "slug": "app-ai-tools-settings",
+      "action": "page",
+      "file": "app-ai-tools-settings/page-mobile.png",
+      "finalUrl": "http://localhost:3000/app/ai-tools/settings",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/ai-tools/skills",
+      "slug": "app-ai-tools-skills",
+      "action": "page",
+      "file": "app-ai-tools-skills/page-mobile.png",
+      "finalUrl": "http://localhost:3000/app/ai-tools/skills",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/ai-tools/tools",
+      "slug": "app-ai-tools-tools",
+      "action": "page",
+      "file": "app-ai-tools-tools/page-mobile.png",
+      "finalUrl": "http://localhost:3000/app/ai-tools/tools",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/auto-reply",
+      "slug": "app-auto-reply",
+      "action": "page",
+      "file": "app-auto-reply/page-mobile.png",
+      "finalUrl": "http://localhost:3000/app/auto-reply",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/billing",
+      "slug": "app-billing",
+      "action": "page",
+      "file": "app-billing/page-mobile.png",
+      "finalUrl": "http://localhost:3000/app/billing",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/bulk-scheduler",
+      "slug": "app-bulk-scheduler",
+      "action": "page",
+      "file": "app-bulk-scheduler/page-mobile.png",
+      "finalUrl": "http://localhost:3000/app/bulk-scheduler",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/bulk-scheduler/csv-import",
+      "slug": "app-bulk-scheduler-csv-import",
+      "action": "page",
+      "file": "app-bulk-scheduler-csv-import/page-mobile.png",
+      "finalUrl": "http://localhost:3000/app/bulk-scheduler/csv-import",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/bulk-scheduler/generate",
+      "slug": "app-bulk-scheduler-generate",
+      "action": "page",
+      "file": "app-bulk-scheduler-generate/page-mobile.png",
+      "finalUrl": "http://localhost:3000/app/bulk-scheduler/generate",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/business",
+      "slug": "app-business",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.waitForTimeout: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/app/business/initial",
+      "slug": "app-business-initial",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/app/calendar",
+      "slug": "app-calendar",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/app/calendar/day",
+      "slug": "app-calendar-day",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/app/calendar/month",
+      "slug": "app-calendar-month",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/app/calendar/weeks",
+      "slug": "app-calendar-weeks",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/app/chat",
+      "slug": "app-chat",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/app/grow",
+      "slug": "app-grow",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/app/home",
+      "slug": "app-home",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/app/inbox",
+      "slug": "app-inbox",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/app/integrations",
+      "slug": "app-integrations",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/app/integrations/active",
+      "slug": "app-integrations-active",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/app/keys",
+      "slug": "app-keys",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/app/media",
+      "slug": "app-media",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/app/media/upload",
+      "slug": "app-media-upload",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/app/notifications",
+      "slug": "app-notifications",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/app/post/video",
+      "slug": "app-post-video",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/app/posts",
+      "slug": "app-posts",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/app/posts/auto-repost",
+      "slug": "app-posts-auto-repost",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/app/posts/feeds",
+      "slug": "app-posts-feeds",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/app/posts/new",
+      "slug": "app-posts-new",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/app/profile",
+      "slug": "app-profile",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/app/templates",
+      "slug": "app-templates",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/app/templates/chat",
+      "slug": "app-templates-chat",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/app/templates/email",
+      "slug": "app-templates-email",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/app/templates/images",
+      "slug": "app-templates-images",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/app/templates/variables",
+      "slug": "app-templates-variables",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/app/toolbox",
+      "slug": "app-toolbox",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/app/tools",
+      "slug": "app-tools",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/app/tools/content-split",
+      "slug": "app-tools-content-split",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/app/tools/growth-stratergy",
+      "slug": "app-tools-growth-stratergy",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/app/tools/growth-stratergy/create",
+      "slug": "app-tools-growth-stratergy-create",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/app/tools/growth-stratergy/data",
+      "slug": "app-tools-growth-stratergy-data",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/app/tools/text-to-speech",
+      "slug": "app-tools-text-to-speech",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/app/tools/video-cropper",
+      "slug": "app-tools-video-cropper",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/audio-player-bunny-cdn-waveform",
+      "slug": "audio-player-bunny-cdn-waveform",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/automate-social-media-posts",
+      "slug": "automate-social-media-posts",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/automated-social-media-content-pipeline",
+      "slug": "automated-social-media-content-pipeline",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/bulk-import-social-media-creation",
+      "slug": "bulk-import-social-media-creation",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/comparisons/ayrshare-vs-magicsync",
+      "slug": "comparisons-ayrshare-vs-magicsync",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/comparisons/buffer-vs-magicsync",
+      "slug": "comparisons-buffer-vs-magicsync",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/comparisons/chirrapp-vs-magicsync",
+      "slug": "comparisons-chirrapp-vs-magicsync",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/comparisons/feedhive-vs-magicsync",
+      "slug": "comparisons-feedhive-vs-magicsync",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/comparisons/hypefury-vs-magicsync",
+      "slug": "comparisons-hypefury-vs-magicsync",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/comparisons/later-vs-magicsync",
+      "slug": "comparisons-later-vs-magicsync",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/comparisons/loomly-vs-magicsync",
+      "slug": "comparisons-loomly-vs-magicsync",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/comparisons/metricool-vs-magicsync",
+      "slug": "comparisons-metricool-vs-magicsync",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/comparisons/nuelink-vs-magicsync",
+      "slug": "comparisons-nuelink-vs-magicsync",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/comparisons/pallyy-vs-magicsync",
+      "slug": "comparisons-pallyy-vs-magicsync",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/comparisons/planable-vs-magicsync",
+      "slug": "comparisons-planable-vs-magicsync",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/comparisons/postiz-vs-magicsync",
+      "slug": "comparisons-postiz-vs-magicsync",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/comparisons/postplanify-vs-magicsync",
+      "slug": "comparisons-postplanify-vs-magicsync",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/comparisons/postsyncer-vs-magicsync",
+      "slug": "comparisons-postsyncer-vs-magicsync",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/comparisons/publer-vs-magicsync",
+      "slug": "comparisons-publer-vs-magicsync",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/comparisons/socialbu-vs-magicsync",
+      "slug": "comparisons-socialbu-vs-magicsync",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/comparisons/suppalette-vs-magicsync",
+      "slug": "comparisons-suppalette-vs-magicsync",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/comparisons/tweethunter-vs-magicsync",
+      "slug": "comparisons-tweethunter-vs-magicsync",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/comparisons/typefully-vs-magicsync",
+      "slug": "comparisons-typefully-vs-magicsync",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/comparisons/vistasocial-vs-magicsync",
+      "slug": "comparisons-vistasocial-vs-magicsync",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/consent",
+      "slug": "consent",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/flutter-clipper-path-generator-tool",
+      "slug": "flutter-clipper-path-generator-tool",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/free-social-media-image-editor-tool",
+      "slug": "free-social-media-image-editor-tool",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/free-tech-podcast-player",
+      "slug": "free-tech-podcast-player",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/free-text-behind-image-editor",
+      "slug": "free-text-behind-image-editor",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/grouped-social-media-accounts-for-agencies",
+      "slug": "grouped-social-media-accounts-for-agencies",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/home",
+      "slug": "home",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/how-to-remove-silence-from-video",
+      "slug": "how-to-remove-silence-from-video",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/how-to-schedule-social-media-posts-free",
+      "slug": "how-to-schedule-social-media-posts-free",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/how-to-use-web-workers-in-nuxt",
+      "slug": "how-to-use-web-workers-in-nuxt",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/login",
+      "slug": "login",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/magicsync-api-keys-programmable-social-media",
+      "slug": "magicsync-api-keys-programmable-social-media",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/magicsync-cli-social-media-automation",
+      "slug": "magicsync-cli-social-media-automation",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/magicsync-vs-buffer-vs-hootsuite",
+      "slug": "magicsync-vs-buffer-vs-hootsuite",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/metricool-vs-later-vs-magicsync",
+      "slug": "metricool-vs-later-vs-magicsync",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/nuxt-better-auth-how-to-implement-user-verification",
+      "slug": "nuxt-better-auth-how-to-implement-user-verification",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/register",
+      "slug": "register",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/sitemap.xml",
+      "slug": "sitemap-xml",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/social-media-ai-agents-automation",
+      "slug": "social-media-ai-agents-automation",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/social-media-variables-scalability",
+      "slug": "social-media-variables-scalability",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/tools",
+      "slug": "tools",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/tools/audio-player",
+      "slug": "tools-audio-player",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/tools/audio-transcription",
+      "slug": "tools-audio-transcription",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/tools/carousel-creator",
+      "slug": "tools-carousel-creator",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/tools/flutter-clipper",
+      "slug": "tools-flutter-clipper",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/tools/image-editor",
+      "slug": "tools-image-editor",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/tools/menu-board",
+      "slug": "tools-menu-board",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/tools/og-image-generator",
+      "slug": "tools-og-image-generator",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/tools/podcast",
+      "slug": "tools-podcast",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/tools/text-behind-image-free",
+      "slug": "tools-text-behind-image-free",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/tools/video-silence-remover",
+      "slug": "tools-video-silence-remover",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/twitter-mock",
+      "slug": "twitter-mock",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/ui-preview",
+      "slug": "ui-preview",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/ui-preview/BaseBannerPromo",
+      "slug": "ui-preview-basebannerpromo",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/ui-preview/BaseBeams",
+      "slug": "ui-preview-basebeams",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/ui-preview/BaseBenefits",
+      "slug": "ui-preview-basebenefits",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/ui-preview/BaseBlueSkyComments",
+      "slug": "ui-preview-baseblueskycomments",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/ui-preview/BaseButton",
+      "slug": "ui-preview-basebutton",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/ui-preview/BaseChart",
+      "slug": "ui-preview-basechart",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/ui-preview/BaseComments",
+      "slug": "ui-preview-basecomments",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/ui-preview/BaseCommunity",
+      "slug": "ui-preview-basecommunity",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/ui-preview/BaseContact",
+      "slug": "ui-preview-basecontact",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/ui-preview/BaseDashboardOverviewCards",
+      "slug": "ui-preview-basedashboardoverviewcards",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/ui-preview/BaseFaq",
+      "slug": "ui-preview-basefaq",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/ui-preview/BaseFeatures",
+      "slug": "ui-preview-basefeatures",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/ui-preview/BaseHeader",
+      "slug": "ui-preview-baseheader",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/ui-preview/BaseHero",
+      "slug": "ui-preview-basehero",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/ui-preview/BaseHeroB",
+      "slug": "ui-preview-baseherob",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/ui-preview/BaseHowItWorks",
+      "slug": "ui-preview-basehowitworks",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/ui-preview/BaseNotFoundView",
+      "slug": "ui-preview-basenotfoundview",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/ui-preview/BasePricing",
+      "slug": "ui-preview-basepricing",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/ui-preview/BaseReviewCard",
+      "slug": "ui-preview-basereviewcard",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/video-cropper-split-screen-keyframe",
+      "slug": "video-cropper-split-screen-keyframe",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "route": "/video-silence-remover-free-online-tool",
+      "slug": "video-silence-remover-free-online-tool",
+      "action": "page",
+      "file": null,
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": null,
+      "ok": false,
+      "error": "page.goto: Target page, context or browser has been closed"
+    }
+  ]
+}

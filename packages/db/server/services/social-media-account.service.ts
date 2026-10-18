@@ -30,6 +30,7 @@ export type SocialMediaPlatform =
   | 'reddit'
   | 'snapchat'
   | 'wordpress'
+  | 'devnull'
 
 export interface CreateSocialMediaAccountData {
   userId: string

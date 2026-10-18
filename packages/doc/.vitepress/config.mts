@@ -149,6 +149,7 @@ export default withMermaid(defineConfig({
             { text: 'Mobile Layout Fixes', link: '/guide/mobile-layout-fixes' },
             { text: 'Provider Token Error Triage', link: '/guide/provider-token-error-triage' },
             { text: 'Content Pipeline & Chat Fixes', link: '/guide/content-pipeline-chat-fixes' },
+            { text: 'dev-null.sh Integration', link: '/guide/devnull-integration' },
             { text: 'Screenshots Gallery', link: '/guide/screenshots-gallery' },
           ],
         },

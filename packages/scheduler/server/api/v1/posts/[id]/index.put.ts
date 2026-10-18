@@ -11,10 +11,10 @@ import dayjs from 'dayjs';
 
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event)
   try {
     // Get user from session
     const user = await checkUserIsLogin(event)
-    const log = useLogger(event)
 
     // Get post ID from route params
     const postId = getRouterParam(event, 'id')
@@ -118,13 +118,14 @@ export default defineEventHandler(async (event) => {
       platformStatuses
     }
   } catch (error: any) {
+    log.error({ message: 'Post update failed', error: error?.message || String(error), stack: error?.stack })
     if (error.statusCode) {
       throw error
     }
 
     throw createError({
       statusCode: 500,
-      statusMessage: 'Internal server error'
+      statusMessage: error?.message || 'Internal server error'
     })
   }
 })

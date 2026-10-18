@@ -156,10 +156,8 @@ const initialPost = computed(() => {
         <p class="text-muted mt-2">{{ t('page.description') }}</p>
       </header>
 
-      <PostModalContent
-        ref="postModalRef" :initial-post="initialPost" @save="handleSave" @update="handleUpdate"
-        platforms-position="left"
-        @close="handleClose">
+      <PostModalContent ref="postModalRef" :initial-post="initialPost" @save="handleSave" @update="handleUpdate"
+        platforms-position="top" @close="handleClose">
         <template #mic-recorder="{ onTranscript }">
           <MicRecorder @transcript="onTranscript" />
         </template>

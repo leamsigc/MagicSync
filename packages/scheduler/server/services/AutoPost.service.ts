@@ -21,6 +21,7 @@ import { XPlugin } from '#layers/BaseDB/server/services/plugins/x.plugin';
 import { YouTubePlugin } from '#layers/BaseDB/server/services/plugins/youtube.plugin';
 import { PinterestPlugin } from '#layers/BaseDB/server/services/plugins/pinterest.plugin';
 import { SnapchatPlugin } from '#layers/BaseDB/server/services/plugins/snapchat.plugin';
+import { DevNullPlugin } from '#layers/BaseDB/server/services/plugins/devnull.plugin';
 import { platformRateLimiter } from './RateLimiter.service';
 import { usesPageToken, renewRowToken } from '#layers/BaseDB/server/services/TokenRefresh.service';
 import { auth } from '#layers/BaseAuth/lib/auth';
@@ -67,7 +68,7 @@ export class AutoPostService {
     pinterest: PinterestPlugin as SchedulerPluginConstructor,
     youtube: YouTubePlugin as SchedulerPluginConstructor,
     snapchat: SnapchatPlugin as SchedulerPluginConstructor,
-  }
+    devnull: DevNullPlugin as SchedulerPluginConstructor,  }
 
   private async notifyPostFailed(post: PostWithAllData, platform: string, error: string) {
     try {
@@ -190,11 +191,15 @@ export class AutoPostService {
           }
           return
         }
+        // dev-null.sh is not an OAuth provider — its credential is an
+        // encrypted SSH private key, not a Better Auth token. Skip refresh.
+        const skipRefresh = platform === 'devnull';
         // Refresh the access token via Better Auth before posting.
         // Better Auth resolves strictly by its own account row id — passing
         // our social_media_accounts id (or the provider account id) yields
         // ACCOUNT_NOT_FOUND, so resolve the row first.
-        try {
+        if (!skipRefresh) {
+          try {
           const resolved = await socialMediaAccountService.findBetterAuthAccountForRefresh(
             socialMediaAccount.userId,
             platform
@@ -257,6 +262,7 @@ export class AutoPostService {
           }
         } catch (tokenRefreshError) {
           log.warn({ message: `[AutoPost] Token refresh via Better Auth failed for ${platform} | Post ID: ${post.id}`, detail: tokenRefreshError })
+        }
         }
         const plugin = this.matcher[platform];
         if (!plugin) {

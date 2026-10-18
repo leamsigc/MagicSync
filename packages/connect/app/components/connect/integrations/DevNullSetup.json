@@ -1,0 +1,182 @@
+{
+  "en": {
+    "title": "Connect dev-null.sh",
+    "subtitle": "Post commits to /dev/null — a social network for developers.",
+    "prereq": {
+      "heading": "Before you start",
+      "github": "Connect your GitHub account first. dev-null.sh verifies your identity through GitHub.",
+      "devnullAccount": "Sign in to dev-null.sh at least once with GitHub so your account exists there.",
+      "ctaGithub": "Connect GitHub"
+    },
+    "tabs": {
+      "guided": "Guided setup (recommended)",
+      "stored": "Stored key (advanced)"
+    },
+    "guided": {
+      "intro": "MagicSync will not store any private key. You manage your own SSH key and post manually or via GitHub Actions.",
+      "step1Title": "1. Generate a CI key",
+      "step1Body": "Run this in your terminal:\nssh-keygen -t ed25519 -N '' -C devnull-ci -f devnull-ci",
+      "step2Title": "2. Add the public key to GitHub",
+      "step2Body": "Add devnull-ci.pub to your GitHub account as a signing key (Settings → SSH and GPG keys → New SSH key, type \"Signing key\").",
+      "step3Title": "3. Store the private key as a secret",
+      "step3Body": "Save devnull-ci (the private key) as a repository secret named DEVNULL_SSH_KEY, then delete both files.",
+      "step4Title": "4. Add the workflow",
+      "step4Body": "Create .github/workflows/devnull.yml in your repo (see template below).",
+      "terminalTitle": "Or commit from your terminal",
+      "terminalBody": "No login, no token: the script signs your commit with an SSH key on your GitHub account, and /dev/null checks it against the keys GitHub publishes for you.\ncurl -fsSL https://dev-null.sh/commit | bash -s -- 'Hello world!'",
+      "githubTokenNote": "A GitHub auth token alone cannot post to dev-null.sh — writes require an SSH signature. The token only helps register a key automatically (advanced option)."
+    },
+    "stored": {
+      "warningTitle": "Security warning",
+      "warningBody": "MagicSync will generate a dedicated Ed25519 key, store it encrypted in your account, and register its public half on your GitHub account. If your MagicSync account or database is compromised, an attacker could post to dev-null.sh as you. You can revoke this at any time.",
+      "confirmLabel": "I understand the risks and want to enable stored-key posting",
+      "confirmButton": "Generate and register key",
+      "revoking": "Revoking…",
+      "revokeButton": "Revoke stored key",
+      "success": "Key generated and registered. You can now schedule posts to dev-null.sh.",
+      "error": "Setup failed: {reason}",
+      "revokeSuccess": "Stored key revoked and removed from GitHub."
+    },
+    "status": {
+      "notConnectedGithub": "Connect GitHub first to enable dev-null.sh.",
+      "notSignedInDevnull": "Sign in to dev-null.sh at least once before posting.",
+      "pending": "Your commit is pending review.",
+      "rateLimited": "Too many submissions. Try again in a minute."
+    }
+  },
+  "es": {
+    "title": "Connect dev-null.sh",
+    "subtitle": "Post commits to /dev/null — a social network for developers.",
+    "prereq": {
+      "heading": "Before you start",
+      "github": "Connect your GitHub account first. dev-null.sh verifies your identity through GitHub.",
+      "devnullAccount": "Sign in to dev-null.sh at least once with GitHub so your account exists there.",
+      "ctaGithub": "Connect GitHub"
+    },
+    "tabs": {
+      "guided": "Guided setup (recommended)",
+      "stored": "Stored key (advanced)"
+    },
+    "guided": {
+      "intro": "MagicSync will not store any private key. You manage your own SSH key and post manually or via GitHub Actions.",
+      "step1Title": "1. Generate a CI key",
+      "step1Body": "Run this in your terminal:\nssh-keygen -t ed25519 -N '' -C devnull-ci -f devnull-ci",
+      "step2Title": "2. Add the public key to GitHub",
+      "step2Body": "Add devnull-ci.pub to your GitHub account as a signing key (Settings → SSH and GPG keys → New SSH key, type \"Signing key\").",
+      "step3Title": "3. Store the private key as a secret",
+      "step3Body": "Save devnull-ci (the private key) as a repository secret named DEVNULL_SSH_KEY, then delete both files.",
+      "step4Title": "4. Add the workflow",
+      "step4Body": "Create .github/workflows/devnull.yml in your repo (see template below).",
+      "terminalTitle": "Or commit from your terminal",
+      "terminalBody": "No login, no token: the script signs your commit with an SSH key on your GitHub account, and /dev/null checks it against the keys GitHub publishes for you.\ncurl -fsSL https://dev-null.sh/commit | bash -s -- 'Hello world!'",
+      "githubTokenNote": "A GitHub auth token alone cannot post to dev-null.sh — writes require an SSH signature. The token only helps register a key automatically (advanced option)."
+    },
+    "stored": {
+      "warningTitle": "Security warning",
+      "warningBody": "MagicSync will generate a dedicated Ed25519 key, store it encrypted in your account, and register its public half on your GitHub account. If your MagicSync account or database is compromised, an attacker could post to dev-null.sh as you. You can revoke this at any time.",
+      "confirmLabel": "I understand the risks and want to enable stored-key posting",
+      "confirmButton": "Generate and register key",
+      "revoking": "Revoking…",
+      "revokeButton": "Revoke stored key",
+      "success": "Key generated and registered. You can now schedule posts to dev-null.sh.",
+      "error": "Setup failed: {reason}",
+      "revokeSuccess": "Stored key revoked and removed from GitHub."
+    },
+    "status": {
+      "notConnectedGithub": "Connect GitHub first to enable dev-null.sh.",
+      "notSignedInDevnull": "Sign in to dev-null.sh at least once before posting.",
+      "pending": "Your commit is pending review.",
+      "rateLimited": "Too many submissions. Try again in a minute."
+    }
+  },
+  "de": {
+    "title": "Connect dev-null.sh",
+    "subtitle": "Post commits to /dev/null — a social network for developers.",
+    "prereq": {
+      "heading": "Before you start",
+      "github": "Connect your GitHub account first. dev-null.sh verifies your identity through GitHub.",
+      "devnullAccount": "Sign in to dev-null.sh at least once with GitHub so your account exists there.",
+      "ctaGithub": "Connect GitHub"
+    },
+    "tabs": {
+      "guided": "Guided setup (recommended)",
+      "stored": "Stored key (advanced)"
+    },
+    "guided": {
+      "intro": "MagicSync will not store any private key. You manage your own SSH key and post manually or via GitHub Actions.",
+      "step1Title": "1. Generate a CI key",
+      "step1Body": "Run this in your terminal:\nssh-keygen -t ed25519 -N '' -C devnull-ci -f devnull-ci",
+      "step2Title": "2. Add the public key to GitHub",
+      "step2Body": "Add devnull-ci.pub to your GitHub account as a signing key (Settings → SSH and GPG keys → New SSH key, type \"Signing key\").",
+      "step3Title": "3. Store the private key as a secret",
+      "step3Body": "Save devnull-ci (the private key) as a repository secret named DEVNULL_SSH_KEY, then delete both files.",
+      "step4Title": "4. Add the workflow",
+      "step4Body": "Create .github/workflows/devnull.yml in your repo (see template below).",
+      "terminalTitle": "Or commit from your terminal",
+      "terminalBody": "No login, no token: the script signs your commit with an SSH key on your GitHub account, and /dev/null checks it against the keys GitHub publishes for you.\ncurl -fsSL https://dev-null.sh/commit | bash -s -- 'Hello world!'",
+      "githubTokenNote": "A GitHub auth token alone cannot post to dev-null.sh — writes require an SSH signature. The token only helps register a key automatically (advanced option)."
+    },
+    "stored": {
+      "warningTitle": "Security warning",
+      "warningBody": "MagicSync will generate a dedicated Ed25519 key, store it encrypted in your account, and register its public half on your GitHub account. If your MagicSync account or database is compromised, an attacker could post to dev-null.sh as you. You can revoke this at any time.",
+      "confirmLabel": "I understand the risks and want to enable stored-key posting",
+      "confirmButton": "Generate and register key",
+      "revoking": "Revoking…",
+      "revokeButton": "Revoke stored key",
+      "success": "Key generated and registered. You can now schedule posts to dev-null.sh.",
+      "error": "Setup failed: {reason}",
+      "revokeSuccess": "Stored key revoked and removed from GitHub."
+    },
+    "status": {
+      "notConnectedGithub": "Connect GitHub first to enable dev-null.sh.",
+      "notSignedInDevnull": "Sign in to dev-null.sh at least once before posting.",
+      "pending": "Your commit is pending review.",
+      "rateLimited": "Too many submissions. Try again in a minute."
+    }
+  },
+  "fr": {
+    "title": "Connect dev-null.sh",
+    "subtitle": "Post commits to /dev/null — a social network for developers.",
+    "prereq": {
+      "heading": "Before you start",
+      "github": "Connect your GitHub account first. dev-null.sh verifies your identity through GitHub.",
+      "devnullAccount": "Sign in to dev-null.sh at least once with GitHub so your account exists there.",
+      "ctaGithub": "Connect GitHub"
+    },
+    "tabs": {
+      "guided": "Guided setup (recommended)",
+      "stored": "Stored key (advanced)"
+    },
+    "guided": {
+      "intro": "MagicSync will not store any private key. You manage your own SSH key and post manually or via GitHub Actions.",
+      "step1Title": "1. Generate a CI key",
+      "step1Body": "Run this in your terminal:\nssh-keygen -t ed25519 -N '' -C devnull-ci -f devnull-ci",
+      "step2Title": "2. Add the public key to GitHub",
+      "step2Body": "Add devnull-ci.pub to your GitHub account as a signing key (Settings → SSH and GPG keys → New SSH key, type \"Signing key\").",
+      "step3Title": "3. Store the private key as a secret",
+      "step3Body": "Save devnull-ci (the private key) as a repository secret named DEVNULL_SSH_KEY, then delete both files.",
+      "step4Title": "4. Add the workflow",
+      "step4Body": "Create .github/workflows/devnull.yml in your repo (see template below).",
+      "terminalTitle": "Or commit from your terminal",
+      "terminalBody": "No login, no token: the script signs your commit with an SSH key on your GitHub account, and /dev/null checks it against the keys GitHub publishes for you.\ncurl -fsSL https://dev-null.sh/commit | bash -s -- 'Hello world!'",
+      "githubTokenNote": "A GitHub auth token alone cannot post to dev-null.sh — writes require an SSH signature. The token only helps register a key automatically (advanced option)."
+    },
+    "stored": {
+      "warningTitle": "Security warning",
+      "warningBody": "MagicSync will generate a dedicated Ed25519 key, store it encrypted in your account, and register its public half on your GitHub account. If your MagicSync account or database is compromised, an attacker could post to dev-null.sh as you. You can revoke this at any time.",
+      "confirmLabel": "I understand the risks and want to enable stored-key posting",
+      "confirmButton": "Generate and register key",
+      "revoking": "Revoking…",
+      "revokeButton": "Revoke stored key",
+      "success": "Key generated and registered. You can now schedule posts to dev-null.sh.",
+      "error": "Setup failed: {reason}",
+      "revokeSuccess": "Stored key revoked and removed from GitHub."
+    },
+    "status": {
+      "notConnectedGithub": "Connect GitHub first to enable dev-null.sh.",
+      "notSignedInDevnull": "Sign in to dev-null.sh at least once before posting.",
+      "pending": "Your commit is pending review.",
+      "rateLimited": "Too many submissions. Try again in a minute."
+    }
+  }
+}
