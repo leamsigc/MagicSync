@@ -119,11 +119,20 @@ export class LinkedInPlugin extends BaseSchedulerPlugin {
       }
     );
 
-    const registerData = await registerResponse.json();
-    const uploadUrl = registerData.value.uploadMechanism[
-      'com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest'
-    ].uploadUrl;
-    const asset = registerData.value.asset;
+    const registerData = await registerResponse.json().catch(() => ({} as any));
+
+    if (!registerResponse.ok) {
+      const detail = typeof registerData === 'string' ? registerData : JSON.stringify(registerData);
+      throw new Error(`LinkedIn registerUpload failed (HTTP ${registerResponse.status}): ${detail}`);
+    }
+
+    const uploadMechanism = registerData?.value?.uploadMechanism?.['com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest'];
+    const uploadUrl = uploadMechanism?.uploadUrl;
+    const asset = registerData?.value?.asset;
+
+    if (!uploadUrl || !asset) {
+      throw new Error(`LinkedIn registerUpload returned no upload URL/asset: ${JSON.stringify(registerData)}`);
+    }
 
     // Step 2: Upload the image
     await fetch(uploadUrl, {

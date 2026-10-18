@@ -219,7 +219,7 @@ export const auth = betterAuth({
       allowDifferentEmails: true,
       updateUserInfoOnLink: true,
       allowUnlinkingAll: false,
-      trustedProviders: ['google', 'google-drive', 'googlemybusiness', 'facebook', 'email-password', 'linkedin', 'linkedin-page', 'twitter', 'tiktok', 'threads', 'youtube', 'reddit', 'discord', 'dribbble', 'instagram', 'x', 'canva', 'snapchat'],
+      trustedProviders: ['google', 'google-drive', 'googlemybusiness', 'facebook', 'email-password', 'linkedin', 'linkedin-page', 'twitter', 'tiktok', 'threads', 'youtube', 'reddit', 'discord', 'dribbble', 'instagram', 'x', 'canva', 'snapchat', 'github'],
     },
   },
   socialProviders: {
@@ -296,6 +296,11 @@ export const auth = betterAuth({
       clientId: process.env.NUXT_REDDIT_CLIENT_ID as string,
       clientSecret: process.env.NUXT_REDDIT_CLIENT_SECRET as string,
       scope: ['identity', 'submit', 'edit', 'read', 'mysubreddits', 'vote', 'history'],
+    },
+    github: {
+      clientId: process.env.NUXT_GITHUB_CLIENT_ID as string,
+      clientSecret: process.env.NUXT_GITHUB_CLIENT_SECRET as string,
+      scope: ['read:user', 'user:email', 'admin:public_key'],
     },
     linkedin: {
       clientId: process.env.NUXT_LINKEDIN_CLIENT_ID as string,
@@ -695,7 +700,7 @@ export const auth = betterAuth({
     // @better-auth/utils@0.5.0, while better-auth itself resolves 0.4.2), so
     // their `BetterAuthPlugin` is a structurally distinct declaration. Runtime
     // is unaffected; the cast is removed once upstream aligns the dependency.
-    apiKey([
+    asAuthPlugin(apiKey([
       {
         configId: "org-keys",
         defaultPrefix: "org_",
@@ -706,27 +711,20 @@ export const auth = betterAuth({
           maxRequests: 50, // 50 requests per day
         },
       },
-    ]) as unknown as BetterAuthPlugin,
+    ])),
     // OAuth 2.1 authorization server + MCP protected resource (Wave 2a-B).
     // jwt() provides the signing key + /jwks. mcp() IS the OAuth provider —
     // never register a separate oauthProvider() alongside it. cimd() serves
     // the MCP 2026-07-28 client-identity profile; DCR fallback stays ON until
     // Claude/ChatGPT speak CIMD (see PRD decision #5).
     jwt(),
-    mcp({
+    asAuthPlugin(mcp({
       loginPage: '/login',
       consentPage: '/consent',
-      // Per-deployment public identifier, never hardcoded: prod =
-      // https://magicsync.dev/mcp, self-hosters = their own domain + /mcp.
-      // HTTP accepted by the plugin on loopback hosts only (dev).
       resource: `${process.env.NUXT_APP_URL || 'http://localhost:3000'}/mcp`,
       scopes: ['openid', 'profile', 'email', 'offline_access', 'mcp:read', 'mcp:full'],
       allowDynamicClientRegistration: true,
       allowUnauthenticatedClientRegistration: true,
-      // Business binding: every OAuth grant carries exactly one businessId,
-      // picked on the consent screen. Column lives on oauthConsent in
-      // packages/db/db/oauth/oauth.ts. The plugin types `schema` as a closed
-      // union of its own models, so the custom column is cast.
       schema: {
         oauthConsent: {
           fields: {
@@ -734,7 +732,7 @@ export const auth = betterAuth({
           },
         },
       } as any,
-    }) as unknown as BetterAuthPlugin,
+    })),
     cimd({
       fetchClientMetadataResource,
       metadataProfile: 'mcp-2026-07-28',

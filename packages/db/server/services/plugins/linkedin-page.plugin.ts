@@ -359,11 +359,20 @@ export class LinkedInPagePlugin extends BaseSchedulerPlugin {
       }
     );
 
-    const registerData = await registerResponse.json();
-    const uploadUrl = registerData.value.uploadMechanism[
-      'com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest'
-    ].uploadUrl;
-    const asset = registerData.value.asset;
+    const registerData = await registerResponse.json().catch(() => ({} as any));
+
+    if (!registerResponse.ok) {
+      const detail = typeof registerData === 'string' ? registerData : JSON.stringify(registerData);
+      throw new Error(`LinkedIn registerUpload failed (HTTP ${registerResponse.status}): ${detail}`);
+    }
+
+    const uploadMechanism = registerData?.value?.uploadMechanism?.['com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest'];
+    const uploadUrl = uploadMechanism?.uploadUrl;
+    const asset = registerData?.value?.asset;
+
+    if (!uploadUrl || !asset) {
+      throw new Error(`LinkedIn registerUpload returned no upload URL/asset: ${JSON.stringify(registerData)}`);
+    }
 
     // Step 2: Upload the image
     await fetch(uploadUrl, {
@@ -385,8 +394,8 @@ export class LinkedInPagePlugin extends BaseSchedulerPlugin {
     try {
       const { content } = this.getPlatformData(postDetails);
 
-      const author = socialMediaAccount.metadata?.organizationUrn ||
-        `urn:li:organization:${socialMediaAccount.accountId.replace('.0', '')}`;
+      const rawId = socialMediaAccount.metadata?.organizationUrn || socialMediaAccount.accountId || '';
+      const author = rawId.startsWith('urn:li:organization:') ? rawId : `urn:li:organization:${String(rawId).replace(/^urn:li:organization:/, '').replace('.0', '')}`;
 
       // Check for media
       const imageAsset = postDetails.assets?.find(
