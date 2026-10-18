@@ -70,7 +70,8 @@ interface PostForm extends Omit<PostCreateBase, 'targetPlatforms' | 'mediaAssets
 const props = withDefaults(defineProps<{
   initialPost?: PostWithAllData;
   preview?: boolean;
-}>(), { preview: true });
+  platformsPosition?: 'top' | 'left';
+}>(), { preview: true, platformsPosition: 'top' });
 const preview = computed(() => props.preview);
 const { getPlatformIcon } = usePlatformIcons();
 const emit = defineEmits(['save', 'update', 'close']);
@@ -679,13 +680,16 @@ const handleAutoFormatApply = (overrides: Record<string, PlatformContentOverride
 <template>
   <section class="" :class="{ 'min-w-full': !preview, 'md:min-w-4xl': preview }">
     <UCard>
-      <div class="flex items-center justify-between">
+      <div :class="platformsPosition === 'left' ? 'flex flex-col gap-4 md:flex-row' : ''">
+      <div :class="platformsPosition === 'left' ? 'flex flex-col gap-2 md:w-52 md:shrink-0 md:border-r md:border-gray-200 md:dark:border-gray-800 md:pr-4' : 'flex items-center justify-between'">
         <PostPlatformSelector :accounts="connectedSocialAccountsList" :selectedAccounts="selectedSocialMediaAccounts"
           @toggle="togglePlatform" :validationStatus="validationStatus" :businesses="businesses.data"
+          :layout="platformsPosition === 'left' ? 'vertical' : 'horizontal'"
           v-model="activeBusinessId" />
         <UButton v-if="preview" color="neutral" variant="ghost" icon="i-heroicons-x-mark-20-solid" class="-my-1"
           @click="emit('close')" />
       </div>
+      <div :class="platformsPosition === 'left' ? 'flex-1 min-w-0' : ''">
 
       <div class="grid grid-cols-1 gap-4 h-full" :class="{ 'md:grid-cols-2': preview }">
         <!-- Left Side: Editor and Comments -->
@@ -803,6 +807,8 @@ const handleAutoFormatApply = (overrides: Record<string, PlatformContentOverride
             </template>
           </ClientOnly>
         </div>
+      </div>
+      </div>
       </div>
       <!-- Bottom -->
       <div class="border-t border-gray-200 dark:border-gray-800 pt-4 flex justify-center">

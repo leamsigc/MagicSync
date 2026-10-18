@@ -314,6 +314,12 @@ async function buildVariants(
   return contentChainService.writeVariants(chainContext, input)
 }
 
+function draftHasContent(draft: { caption?: string, article?: string, variants?: Record<string, unknown> }): boolean {
+  if (draft.caption?.trim()) return true
+  if (draft.article?.trim()) return true
+  return Object.keys(draft.variants ?? {}).length > 0
+}
+
 /** caption → long-form article → per-target bodies → humanize; the caption path is unchanged by the article steps. */
 async function buildDraft(
   chainContext: ChainContext,
@@ -421,6 +427,9 @@ async function completeWrite(input: WriteInput, item: ContentItem, ctx: Capabili
     keyword: input.keyword,
   })
   if (!draft.success) return draft
+  if (!draftHasContent(draft.data)) {
+    return { success: false as const, error: 'The model returned no content for this card', code: 'EMPTY_OUTPUT' }
+  }
   const reviewed = await reviewDraft(chainContext, ctx, item.id, draft.data, title, input.stopAt)
   if (!reviewed.success) return reviewed
   return {

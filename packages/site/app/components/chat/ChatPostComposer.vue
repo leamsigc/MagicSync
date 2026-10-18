@@ -24,6 +24,7 @@ const props = defineProps<{
   open: boolean
   businessId: string
   draft: ComposerDraft | null
+  variant?: 'modal' | 'inline'
 }>()
 
 const emit = defineEmits<{
@@ -74,7 +75,7 @@ function handleOpenChange(value: boolean) {
 </script>
 
 <template>
-  <UModal :open="open" :title="t('title')" :ui="{ content: 'max-w-6xl' }" @update:open="handleOpenChange">
+  <UModal v-if="variant !== 'inline'" :open="open" :title="t('title')" :ui="{ content: 'max-w-6xl' }" @update:open="handleOpenChange">
     <template #body>
       <PostModalContent
         ref="postModalRef"
@@ -94,4 +95,29 @@ function handleOpenChange(value: boolean) {
       </PostModalContent>
     </template>
   </UModal>
+
+  <div v-else class="rounded-xl border border-gray-200 dark:border-gray-800 bg-default overflow-hidden" data-testid="chat-post-composer">
+    <div class="flex items-center justify-between px-4 pt-4">
+      <h3 class="text-sm font-semibold">{{ t('title') }}</h3>
+      <UButton color="neutral" variant="ghost" icon="i-heroicons-x-mark-20-solid"
+        @click="handleOpenChange(false)" />
+    </div>
+    <PostModalContent
+      ref="postModalRef"
+      :initial-post="initialPost"
+      platforms-position="left"
+      @save="handleSave"
+      @close="handleOpenChange(false)"
+    >
+      <template #mic-recorder="{ onTranscript }">
+        <MicRecorder @transcript="onTranscript" />
+      </template>
+      <template #template-variable="{ onAction }">
+        <TemplateVariablePopUp @action="onAction" />
+      </template>
+      <template #ai-assistant="{ loading, onAction, onTemplateAction }">
+        <PostAIAssistant :loading="loading" @action="onAction" @template-action="onTemplateAction" />
+      </template>
+    </PostModalContent>
+  </div>
 </template>

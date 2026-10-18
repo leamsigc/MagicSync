@@ -242,6 +242,7 @@ watch(() => props.businessId, () => {
               variant="outline"
               color="neutral"
               icon="i-heroicons-pencil-square"
+              data-testid="draft-open-editor"
               @click="handleCompose"
             >
               {{ t('workflow.draft.openEditor') }}

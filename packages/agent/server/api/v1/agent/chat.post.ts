@@ -49,6 +49,16 @@ function isCarouselIntent(message: string): boolean {
   return /\b(create|make|generate|build|design|write)\b[\s\S]{0,80}\bcarousels?\b|\bcarousels?\b[\s\S]{0,80}\b(create|make|generate|build|design|write)\b/i.test(message)
 }
 
+function isCarouselRevisionIntent(message: string): boolean {
+  if (isCarouselIntent(message)) return false
+  return /\b(revise|edit|change|update|tweak|swap|rewrite|regenerate|redo|fix)\b/i.test(message)
+    && /\b(carousel|slide|slides|deck|page|pages|cover)\b/i.test(message)
+}
+
+function isSlideCountIntent(message: string): boolean {
+  return /\b(slide count|number of slides|more slides|fewer slides|less slides|add (a )?slides?|remove (a )?slides?|drop (a )?slides?)\b/i.test(message)
+}
+
 function carouselHarnessContext(message: string): string {
   return [
     'Harness mode: carousel request detected.',
@@ -62,10 +72,13 @@ function carouselHarnessContext(message: string): string {
 function carouselRevisionContext(
   revision: { artifactId: string, slideIds?: string[] | null },
   message: string,
+  structural = false,
 ): string {
   const scope = revision.slideIds?.length
     ? `Revise ONLY these slide ids: ${revision.slideIds.join(', ')}. Every other slide must be returned unchanged.`
-    : 'Revise only the slide(s) the request names. If it names none, ask which slide — never rewrite the whole deck.'
+    : structural
+      ? 'The request is about the deck structure (slide count/order): add or remove slides as needed and return the full updated deck.'
+      : 'Revise only the slide(s) the request names. If it names none, ask which slide — never rewrite the whole deck.'
   return [
     'Harness mode: carousel revision detected.',
     `Call revise_carousel exactly once with artifactId ${revision.artifactId}.`,
@@ -76,23 +89,19 @@ function carouselRevisionContext(
   ].join('\n')
 }
 
-interface CarouselResolution {
-  intent: boolean
-  allowedTools: string[] | undefined
-  systemContext: string | null
-  carouselRequest?: string
-  carouselTarget?: { artifactId: string, slideIds: string[] }
-}
+type CarouselResolution =
+  | { kind: 'none', allowedTools: string[] | undefined }
+  | { kind: 'generate', allowedTools: string[], systemContext: string, carouselRequest: string }
+  | { kind: 'revise', allowedTools: string[], systemContext: string, carouselTarget: { artifactId: string, slideIds: string[] } }
 
-/**
- * Route a carousel turn to exactly one tool. Generation and revision are
- * different intents: revision needs the artifact id, which arrives structurally
- * (`carouselRevision`) so the ids never have to be parsed out of prose.
- */
-function resolveCarousel(body: ChatRequest, requestedTools: string[] | undefined): CarouselResolution {
+function resolveCarousel(
+  body: ChatRequest,
+  requestedTools: string[] | undefined,
+  latestCarouselId: string | null,
+): CarouselResolution {
   if (body.carouselRevision) {
     return {
-      intent: true,
+      kind: 'revise',
       allowedTools: ['revise_carousel'],
       systemContext: carouselRevisionContext(body.carouselRevision, body.message),
       carouselTarget: { artifactId: body.carouselRevision.artifactId, slideIds: body.carouselRevision.slideIds ?? [] },
@@ -100,13 +109,27 @@ function resolveCarousel(body: ChatRequest, requestedTools: string[] | undefined
   }
   if (isCarouselIntent(body.message)) {
     return {
-      intent: true,
+      kind: 'generate',
       allowedTools: ['generate_carousel'],
       systemContext: carouselHarnessContext(body.message),
       carouselRequest: body.message,
     }
   }
-  return { intent: false, allowedTools: requestedTools, systemContext: null }
+  if (latestCarouselId && isCarouselRevisionIntent(body.message)) {
+    return {
+      kind: 'revise',
+      allowedTools: ['revise_carousel'],
+      systemContext: carouselRevisionContext({ artifactId: latestCarouselId, slideIds: [] }, body.message, isSlideCountIntent(body.message)),
+      carouselTarget: { artifactId: latestCarouselId, slideIds: [] },
+    }
+  }
+  return { kind: 'none', allowedTools: requestedTools }
+}
+
+async function latestCarouselArtifact(userId: string, businessId: string, event: H3Event): Promise<string | null> {
+  const listed = await contentArtifactService.listArtifacts(userId, { businessId }, event)
+  if (!listed.success) return null
+  return listed.data.find(item => item.outputKind === 'carousel')?.id ?? null
 }
 
 /**
@@ -163,14 +186,18 @@ export default defineEventHandler(async (event) => {
   const supplement = body.cardId ? await cardSupplement(user.id, body.businessId, body.cardId, event) : null
   const toolNames = new Set(AGENT_TOOL_NAMES)
   const requestedTools = body.allowedTools?.filter(tool => toolNames.has(tool))
-  const carousel = resolveCarousel(body, requestedTools)
+  const latestCarouselId = !body.carouselRevision && isCarouselRevisionIntent(body.message)
+    ? await latestCarouselArtifact(user.id, body.businessId, event)
+    : null
+  const carousel = resolveCarousel(body, requestedTools, latestCarouselId)
+  const isCarouselTurn = carousel.kind !== 'none'
   const systemContext = [
     runConfig.data.systemContext,
     supplement,
-    carousel.systemContext,
+    carousel.kind === 'none' ? null : carousel.systemContext,
   ].filter(Boolean).join('\n\n')
 
-  const agentName = !carousel.intent && body.agentName && isSpecialistProfileName(body.agentName)
+  const agentName = !isCarouselTurn && body.agentName && isSpecialistProfileName(body.agentName)
     ? body.agentName
     : undefined
   const allowedTools = carousel.allowedTools
@@ -205,11 +232,11 @@ export default defineEventHandler(async (event) => {
           businessId: body.businessId,
           event,
           log,
-          carouselRequest: carousel.carouselRequest,
-          carouselTarget: carousel.carouselTarget,
+          carouselRequest: carousel.kind === 'generate' ? carousel.carouselRequest : undefined,
+          carouselTarget: carousel.kind === 'revise' ? carousel.carouselTarget : undefined,
         },
-        maxToolCalls: carousel.intent ? 40 : undefined,
-        singleToolCall: carousel.intent,
+        maxToolCalls: isCarouselTurn ? 40 : undefined,
+        singleToolCall: isCarouselTurn,
       }, send)
       controller.close()
     },

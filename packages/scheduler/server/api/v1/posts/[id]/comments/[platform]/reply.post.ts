@@ -10,6 +10,7 @@ import { postService } from '#layers/BaseDB/server/services/post.service';
 import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service';
 import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers';
 import { AutoPostService } from '#layers/BaseScheduler/server/services/AutoPost.service';
+import { accountIdFromQuery, resolvePlatformPost } from '#layers/BaseScheduler/server/utils/platform-post';
 
 
 export default defineEventHandler(async (event) => {
@@ -38,9 +39,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // Find the platform post for this platform
-    const platformPost = post.platformPosts?.find(
-      (pp) => pp.platformPostId === platform || pp.platform === platform
-    );
+    const platformPost = await resolvePlatformPost(post, { platform, accountId: accountIdFromQuery(getQuery(event)) });
 
     if (!platformPost) {
       throw createError({ statusCode: 404, statusMessage: `No published post found for platform: ${platform}` });

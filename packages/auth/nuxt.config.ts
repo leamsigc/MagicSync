@@ -2,6 +2,7 @@ import { defineNuxtConfig } from 'nuxt/config'
 import type { NuxtPage } from 'nuxt/schema'
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
+import { evlogRedact } from "../shared/config/evlog-redact"
 
 const currentDir = dirname(fileURLToPath(import.meta.url))
 
@@ -107,6 +108,7 @@ export default defineNuxtConfig({
     }
   },
   evlog: {
+    redact: evlogRedact,
     env: {
       service: 'layer-auth',
     },

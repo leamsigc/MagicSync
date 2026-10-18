@@ -94,6 +94,14 @@ function handleCompose(payload: { content: string, accounts: Array<{ id: string,
   composerOpen.value = true
 }
 
+function handleComposerOpen(value: boolean) {
+  composerOpen.value = value
+}
+
+function handleComposerSaved() {
+  composerOpen.value = false
+}
+
 function handleCancelRun(): void {
   void cancelActiveRun()
 }
@@ -812,6 +820,17 @@ onMounted(async () => {
               {{ t('working') }}
             </div>
           </div>
+
+          <div v-if="composerOpen" v-motion-slide-visible-bottom :duration="200" class="pt-2">
+            <ChatPostComposer
+              variant="inline"
+              :open="composerOpen"
+              :business-id="activeBusinessId ?? ''"
+              :draft="composerDraft"
+              @update:open="handleComposerOpen"
+              @saved="handleComposerSaved"
+            />
+          </div>
         </div>
       </div>
 
@@ -836,6 +855,7 @@ onMounted(async () => {
               <UTextarea v-model="input"
                 :placeholder="revisionTarget ? t('carousel.revisionPlaceholder') : t('inputPlaceholder')"
                 :disabled="isStreaming" autoresize :rows="1" variant="none" class="w-full" data-tour="ai-chat-step-2"
+                data-testid="chat-input"
                 @keydown="handleInputKeydown" />
               <div class="mt-1.5 flex items-center justify-between gap-2">
                 <div class="flex items-center gap-1">
@@ -855,7 +875,7 @@ onMounted(async () => {
                   <UButton v-if="isStreaming" icon="i-heroicons-stop" color="neutral" variant="soft" :label="t('stop')"
                     :loading="isCancelling" @click="handleCancelRun" />
                   <UButton v-else icon="i-heroicons-arrow-up" color="primary" :label="t('send')"
-                    :disabled="!input.trim() || needsBusiness" :loading="isStreaming" @click="onSubmit" />
+                    :disabled="!input.trim() || needsBusiness" :loading="isStreaming" data-testid="chat-send" @click="onSubmit" />
                 </div>
               </div>
             </UCard>
@@ -874,12 +894,6 @@ onMounted(async () => {
         <OperatorActivityFeed :business-id="activeBusinessId" :is-streaming="isStreaming" />
       </template>
     </USlideover>
-
-    <ChatPostComposer
-      v-model:open="composerOpen"
-      :business-id="activeBusinessId ?? ''"
-      :draft="composerDraft"
-    />
 
     <UModal
       v-model:open="showOptions"

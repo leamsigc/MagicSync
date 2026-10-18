@@ -1,6 +1,7 @@
 import { defineNuxtConfig } from 'nuxt/config'
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
+import { evlogRedact } from "../shared/config/evlog-redact"
 
 const currentDir = dirname(fileURLToPath(import.meta.url))
 
@@ -135,6 +136,7 @@ export default defineNuxtConfig({
     // bundle: ''
   },
   evlog: {
+    redact: evlogRedact,
     env: {
       service: 'layer-tools',
     },

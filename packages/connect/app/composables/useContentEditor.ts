@@ -752,6 +752,10 @@ export function useContentEditor(options: { businessId: string, itemId: string }
         },
       })
       await load()
+      if (!article.value.trim()) {
+        toast.add({ title: t('draft.regenerateFailed'), description: t('draft.emptyOutput'), icon: 'i-heroicons-x-circle', color: 'error' })
+        return
+      }
       toast.add({ title: t('draft.regenerated'), icon: 'i-heroicons-check-circle', color: 'success' })
     }
     catch (error) {

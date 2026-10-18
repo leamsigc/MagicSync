@@ -278,6 +278,15 @@ export class SocialMediaAccountService implements SocialMediaAccountServiceType 
     return account;
   }
 
+  async getAccountsByIds(ids: string[], userId?: string): Promise<SocialMediaAccount[]> {
+    if (ids.length === 0) return []
+    const conditions = [inArray(socialMediaAccounts.id, ids)]
+    if (userId) conditions.push(eq(socialMediaAccounts.userId, userId))
+    return this.db.query.socialMediaAccounts.findMany({
+      where: and(...conditions),
+    })
+  }
+
   /**
    * Get social media accounts with filters
    */

@@ -12,12 +12,14 @@ interface Props {
   validationStatus: Record<string, { isValid: boolean; errors: string[]; warnings: string[]; }>;
   businesses?: BusinessProfile[];
   modelValue?: string | null;
+  layout?: 'horizontal' | 'vertical';
 }
 
 const { getPlatformIcon } = usePlatformIcons();
 const props = withDefaults(defineProps<Props>(), {
   businesses: () => [],
   modelValue: null,
+  layout: 'horizontal',
 });
 const emit = defineEmits(['toggle', 'update:modelValue']);
 
@@ -56,8 +58,8 @@ const selectedIds = computed(() => props.selectedAccounts.map(acc => acc.id));
 </script>
 
 <template>
-  <div class="flex gap-2 py-2 overflow-x-auto overflow-y-visible w-full">
-    <div class="flex gap-2 w-full">
+  <div data-testid="post-platform-selector" :class="layout === 'vertical' ? 'flex flex-col gap-2 py-2 w-full' : 'flex gap-2 py-2 overflow-x-auto overflow-y-visible w-full'">
+    <div :class="layout === 'vertical' ? 'flex flex-col gap-2 w-full' : 'flex gap-2 w-full'">
       <UPopover v-for="account in filteredAccounts" :key="account.id" mode="hover">
         <UChip
           :color="isSelected(account) ? getStatus(account).errors.length > 0 ? 'error' : getStatus(account).warnings.length > 0 ? 'warning' : 'primary' : 'neutral'"

@@ -15,7 +15,7 @@ edges:
     condition: when checking available technologies
   - target: context/conventions.md
     condition: when implementing platform-specific code
-last_updated: 2026-03-30
+last_updated: 2026-10-17
 ---
 
 # Social Media Integrations
@@ -76,6 +76,16 @@ Social accounts are stored with these key fields:
 
 - Each platform has different rate limits — handle 429 errors gracefully
 - Tokens expire — implement refresh token flow
+- **Page-token rows (Facebook, Instagram) must never receive the Better Auth
+  user token.** They store Page tokens minted by `fetchPageInformation`; any
+  route that mirrors a user token onto them triggers Meta `(#190) …Page Access
+  Token` / `2069032`. Guard every mirror with `!usesPageToken(platform)` and
+  renew only through `TokenRefresh.renewRowToken` (see
+  `guide/provider-token-error-triage.md`).
+- **Overrides must match the base signature.** `BaseSchedulerPlugin` methods are
+  called positionally; an `override` with an extra leading parameter shifts every
+  argument (this produced `/undefined/conversations`). Only `exposedMethods`
+  names get a prepended args array.
 - Platform content limits vary (Twitter: 280 chars, Instagram: 2200, etc.)
 - Media requirements differ by platform (aspect ratios, file sizes, formats)
 - Some platforms require business accounts for certain features

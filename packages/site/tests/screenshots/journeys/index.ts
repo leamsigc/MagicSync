@@ -21,6 +21,7 @@ import type { APIRequestContext, Page } from '@playwright/test'
 import type { Journey } from '../../e2e/helpers/route-screenshots'
 import { businessCreateJourney } from './business-create'
 import { contentBoardJourney } from './content-board'
+import { chatJourney } from './chat'
 
 export interface JourneyContext {
   page: Page
@@ -57,4 +58,4 @@ export interface JourneyDefinition {
   run(ctx: JourneyContext): Promise<void>
 }
 
-export const journeys: JourneyDefinition[] = [contentBoardJourney, businessCreateJourney]
+export const journeys: JourneyDefinition[] = [contentBoardJourney, businessCreateJourney, chatJourney]

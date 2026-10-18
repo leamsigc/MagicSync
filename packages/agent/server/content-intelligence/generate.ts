@@ -87,6 +87,8 @@ export interface ContentIntelligence {
       research: { sourcesUsed: number, usedAgent: boolean, reused: boolean }
       businessGrounded: boolean
       durationMs: number
+      /** Present when research or the model degraded and grounded angles were used. */
+      warning?: string
     }
   }>>
 }
@@ -158,6 +160,55 @@ export function deriveIdeasFromBrief(input: {
     platforms: input.platforms,
     ...(input.sourceUrl ? { sourceRef: input.sourceUrl } : {}),
   }))
+}
+
+/** A content scan must never hand back an empty board — this is the floor. */
+export const MIN_IDEAS = 5
+
+function angleTemplates(business: IdeaBusinessContext | null, topic: string): string[] {
+  const name = business?.name?.trim() || 'your business'
+  const industry = business?.industry?.trim() || 'your industry'
+  const where = business?.location?.trim() ? ` in ${business.location.trim()}` : ''
+  return [
+    `Behind the scenes: how ${name} approaches ${topic}`,
+    `${topic}: three mistakes ${industry} customers make (and how to avoid them)`,
+    `A quick checklist for choosing ${topic}${where}`,
+    `Myth vs fact: what ${industry} gets wrong about ${topic}`,
+    `Before and after: a real ${topic} result for ${name}`,
+    `Why ${name} does ${topic} differently${where}`,
+    `${topic} explained in plain language`,
+    `The one question to ask before buying anything related to ${topic}`,
+  ]
+}
+
+/**
+ * Guarantee a non-empty batch. Research-derived angles come first (they are
+ * grounded in real sources); brand-grounded templates top it up to at least
+ * `MIN_IDEAS`, so a degraded scan still yields pickable cards.
+ */
+export function deriveGroundedIdeas(input: {
+  topic: string
+  business: IdeaBusinessContext | null
+  platforms: string[]
+  count: number
+  brief?: string
+  sourceUrl?: string
+}): Array<{ title: string, brief: string, platforms: string[], sourceRef?: string }> {
+  const derived = input.brief
+    ? deriveIdeasFromBrief({ brief: input.brief, topic: input.topic, platforms: input.platforms, count: input.count, sourceUrl: input.sourceUrl })
+    : []
+  if (derived.length > 0) return derived
+  const target = Math.max(input.count, MIN_IDEAS)
+  const seen = new Set<string>()
+  const brand = input.business?.name ?? 'the brand'
+  const out: Array<{ title: string, brief: string, platforms: string[], sourceRef?: string }> = []
+  for (const title of angleTemplates(input.business, input.topic)) {
+    if (out.length >= target) break
+    if (seen.has(title.toLowerCase())) continue
+    seen.add(title.toLowerCase())
+    out.push({ title, brief: `A content angle for ${brand} on ${input.topic}.`, platforms: input.platforms })
+  }
+  return out
 }
 
 export function createContentIntelligence(deps: ContentIntelligenceDeps): ContentIntelligence {
@@ -289,6 +340,38 @@ export function createContentIntelligence(deps: ContentIntelligenceDeps): Conten
     return parseIdeas(retry, platforms)
   }
 
+  async function resolveResearchOrFallback(
+    input: GenerateIdeasRequest,
+    topic: string,
+    business: IdeaBusinessContext | null,
+  ): Promise<{ research: ResearchResult, sourcesUsed: number, usedAgent: boolean, reused: boolean, degraded: string | null }> {
+    try {
+      const resolved = await resolveResearch(input, topic)
+      return { ...resolved, degraded: null }
+    } catch {
+      emitLog(input.log, { message: 'content-intelligence.research_degraded', topic })
+      const subject = business?.name ? `${business.name} (${business.industry || 'business'})` : 'this business'
+      return {
+        research: {
+          summary: `Topic-only brief for ${subject}: ${topic}.`,
+          keyInsights: [], audienceInsights: [], businessInsights: [], trends: [], contentAngles: [], sources: [],
+        },
+        sourcesUsed: 0, usedAgent: false, reused: false, degraded: 'research-unavailable',
+      }
+    }
+  }
+
+  async function generateIdeasOrFallback(
+    prompt: string,
+    maxTokens: number,
+    platforms: string[],
+    fallback: ContentIdea[],
+  ): Promise<{ cards: ContentIdea[], tier: 'llm' | 'brief-derived' }> {
+    const ideas = await generateWithRepair(prompt, maxTokens, platforms)
+    if (ideas.length > 0) return { cards: ideas, tier: 'llm' }
+    return { cards: fallback, tier: 'brief-derived' }
+  }
+
   async function generateContentIdeas(input: GenerateIdeasRequest) {
     const startedAt = Date.now()
     const parsed = GenerateContentIdeasInputSchema.safeParse({
@@ -306,44 +389,43 @@ export function createContentIntelligence(deps: ContentIntelligenceDeps): Conten
     const depth = valid.options.researchDepth
     try {
       const business = await resolveBusiness(input, valid.options.includeBusinessResearch)
-      const { research, sourcesUsed, usedAgent, reused } = await resolveResearch(input, valid.topic)
-      const ideas = await generateWithRepair(
+      const { research, sourcesUsed, usedAgent, reused, degraded } = await resolveResearchOrFallback(input, valid.topic, business)
+      const fallbackCards: ContentIdea[] = deriveGroundedIdeas({
+        brief: research.summary,
+        topic: valid.topic,
+        business,
+        platforms: valid.platforms,
+        count: valid.quantity,
+        sourceUrl: research.sources[0]?.url,
+      }).map(idea => ({ ...idea, platformDetails: {} }))
+      const generated = await generateIdeasOrFallback(
         generationPrompt(valid.topic, valid.quantity, valid.platforms, businessBlock(business), research, valid.options.includeTrends, valid.options.formatHint),
         DEPTH_TOKENS[depth],
         valid.platforms,
+        fallbackCards,
       )
-      const final = ideas.length > 0
-        ? { cards: ideas, tier: 'llm' as const }
-        : {
-            cards: deriveIdeasFromBrief({
-              brief: research.summary,
-              topic: valid.topic,
-              platforms: valid.platforms,
-              count: valid.quantity,
-              sourceUrl: research.sources[0]?.url,
-            }),
-            tier: 'brief-derived' as const,
-          }
+      const warning = degraded ?? undefined
       emitLog(input.log, {
         message: 'content-intelligence.completed',
-        tier: final.tier,
+        tier: generated.tier,
         requested: valid.quantity,
-        generated: final.cards.length,
+        generated: generated.cards.length,
         durationMs: Date.now() - startedAt,
       })
       return {
         success: true as const,
         data: {
           research,
-          ideas: final.cards,
+          ideas: generated.cards,
           metadata: {
             requestedQuantity: valid.quantity,
-            generatedQuantity: final.cards.length,
+            generatedQuantity: generated.cards.length,
             platforms: valid.platforms,
-            tier: final.tier,
+            tier: generated.tier,
             research: { sourcesUsed, usedAgent, reused },
             businessGrounded: business !== null,
             durationMs: Date.now() - startedAt,
+            ...(warning ? { warning } : {}),
           },
         },
       }

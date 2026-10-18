@@ -124,12 +124,12 @@ export default defineEventHandler(async (event) => {
       accountId: platformAccount.id,
     }).catch(() => null)
 
-    if (tokenData?.accessToken) {
-      await socialMediaAccountService.updateAccount(platformAccount.id, {
-        accessToken: tokenData.accessToken
-      })
-    }
-
+    // NOTE: deliberately do NOT persist `tokenData.accessToken` here. It is a
+    // Better Auth USER token; this route's social_media_accounts rows hold PAGE
+    // tokens (createOrUpdateAccount below stores the one from
+    // fetchPageInformation). Writing the user token onto page rows is what Meta
+    // answers with "(#190) …Page Access Token" / "User Access Token Is Not
+    // Supported". The user token is used only to mint the page token.
     let accessToken = tokenData?.accessToken || platformAccount.accessToken;
 
     // Facebook: exchange the fresh short-lived user token for a 60-day one

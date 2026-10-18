@@ -1,57 +1,29 @@
 {
-  "generatedAt": "2026-10-16T19:17:40.744Z",
+  "generatedAt": "2026-10-18T12:14:38.262Z",
   "baseUrl": "http://localhost:3000",
-  "total": 2,
-  "passed": 2,
+  "total": 1,
+  "passed": 1,
   "journeys": [
     {
-      "key": "content-board",
-      "title": "Content board — create, edit and delete a card by hand",
-      "route": "/app/business/:id/content",
-      "expected": 9,
+      "key": "chat",
+      "title": "Chat operator — tools, a run, and the inline composer",
+      "route": "/app/chat",
+      "expected": 4,
       "preconditions": [
         "An active business owned by the fixture user.",
-        "A published Brand Playbook — without it, update/delete return 500 BRAND_CONTEXT_REQUIRED."
+        "A published Brand Playbook — the content capabilities need one.",
+        "AI provider keys for the run and composer steps."
       ],
       "notCovered": [
-        "Find ideas (scan) — needs AI provider keys.",
-        "Move to Writing (write now) — needs AI provider keys.",
-        "Drag/drop refuse — drag-and-drop is flaky under Playwright and already covered by the component spec."
+        "Carousel generation/revision — needs AI keys and an existing carousel.",
+        "chat-draft-composer — the write chain depends on the research agent and non-deterministic tool-calling; a manual run proved board_list executes and renders a run card (app-chat/04-chat-run.png) but the composer hand-off was not reproducible."
       ],
       "ok": true,
       "captured": [
-        "app-business-id-content/01-board-open.png",
-        "app-business-id-content/02-board-empty-column.png",
-        "app-business-id-content/03-board-new-card.png",
-        "app-business-id-content/04-board-card-persisted.png",
-        "app-business-id-content/05-board-card-row.png",
-        "app-business-id-content/06-board-card-menu.png",
-        "app-business-id-content/07-board-card-updated.png",
-        "app-business-id-content/08-board-delete-dialog.png",
-        "app-business-id-content/09-board-card-deleted.png"
-      ],
-      "missing": []
-    },
-    {
-      "key": "business-create",
-      "title": "Business create — the Add Business wizard, step by step",
-      "route": "/app/business",
-      "expected": 6,
-      "preconditions": [
-        "A signed-in user with an active business (the wizard is opened from the directory)."
-      ],
-      "notCovered": [
-        "AI profile extraction — needs provider keys; the manual form is the same component tree.",
-        "Step-zero follow/star prompts — that panel only renders on the gated /app/business/initial route."
-      ],
-      "ok": true,
-      "captured": [
-        "app-business/01-onboard-open.png",
-        "app-business/02-onboard-step1-skip.png",
-        "app-business/03-onboard-form.png",
-        "app-business/04-onboard-form-company.png",
-        "app-business/05-onboard-form-brand.png",
-        "app-business/06-onboard-save.png"
+        "app-chat/01-chat-open.png",
+        "app-chat/02-chat-tools.png",
+        "app-chat/03-chat-message.png",
+        "app-chat/04-chat-reply.png"
       ],
       "missing": []
     }

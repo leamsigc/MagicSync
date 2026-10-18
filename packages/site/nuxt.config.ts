@@ -2,6 +2,7 @@ import { defineNuxtConfig } from 'nuxt/config'
 import { readdirSync, statSync, existsSync } from 'fs'
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
+import { evlogRedact } from "../shared/config/evlog-redact"
 
 const currentDir = dirname(fileURLToPath(import.meta.url))
 
@@ -303,6 +304,7 @@ export default defineNuxtConfig({
     ignoreLocalhost: true
   },
   evlog: {
+    redact: evlogRedact,
     env: {
       service: 'layer-site',
     },

@@ -70,7 +70,7 @@ posts match this filter", and a "select a post" placeholder in the right pane.
 Feed copy lives in `packages/site/app/pages/app/posts/posts.json` (`feeds.*`:
 filter labels, empty states, selection hint). Detail copy lives in
 `packages/site/app/pages/app/posts/feeds/feeds.json` (`postDetail.*`), which the
-pane, the comments view and the stats view all resolve via `<i18n src>`.
+pane, the comments view and the stats view all resolve via their `i18n` block.
 
 ## Files touched
 
@@ -85,7 +85,7 @@ The first cut of `[id].vue` used
 `useAsyncData(() => \`post-detail-${postId.value}\`, handler, { watch: [postId] })`
 with a top-level `await`. In dev the route rendered a **perpetual spinner** —
 the fetch resolved but `data` stayed null. A direct `$fetch` against
-`/api/v1/posts/<id>` returned 200 with the full payload, so the API was fine; the
+`/api/v1/posts/:id` returned 200 with the full payload, so the API was fine; the
 getter-key + `watch` combination was the problem.
 
 The route now uses an explicit `ref` + `loadPost()` awaited at setup with a

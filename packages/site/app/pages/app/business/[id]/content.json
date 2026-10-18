@@ -252,7 +252,8 @@
       "saved": "Draft saved",
       "saveFailed": "Could not save the draft",
       "regenerated": "Article written",
-      "regenerateFailed": "Could not write the article"
+      "regenerateFailed": "Could not write the article",
+      "emptyOutput": "The model returned nothing. Try again, or check your AI provider settings."
     },
     "publish": {
       "cta": "Publish",
@@ -543,7 +544,8 @@
       "saved": "Borrador guardado",
       "saveFailed": "No se pudo guardar el borrador",
       "regenerated": "Artículo escrito",
-      "regenerateFailed": "No se pudo escribir el artículo"
+      "regenerateFailed": "No se pudo escribir el artículo",
+      "emptyOutput": "El modelo no devolvió nada. Inténtalo de nuevo o revisa la configuración de tu proveedor de IA."
     },
     "publish": {
       "cta": "Publicar",
@@ -834,7 +836,8 @@
       "saved": "Entwurf gespeichert",
       "saveFailed": "Der Entwurf konnte nicht gespeichert werden",
       "regenerated": "Artikel geschrieben",
-      "regenerateFailed": "Der Artikel konnte nicht geschrieben werden"
+      "regenerateFailed": "Der Artikel konnte nicht geschrieben werden",
+      "emptyOutput": "Das Modell hat nichts zurückgegeben. Versuche es erneut oder prüfe die Einstellungen deines KI-Anbieters."
     },
     "publish": {
       "cta": "Veröffentlichen",
@@ -1125,7 +1128,8 @@
       "saved": "Brouillon enregistré",
       "saveFailed": "Impossible d'enregistrer le brouillon",
       "regenerated": "Article rédigé",
-      "regenerateFailed": "Impossible de rédiger l'article"
+      "regenerateFailed": "Impossible de rédiger l'article",
+      "emptyOutput": "Le modèle n'a rien renvoyé. Réessayez ou vérifiez les réglages de votre fournisseur d'IA."
     },
     "publish": {
       "cta": "Publier",

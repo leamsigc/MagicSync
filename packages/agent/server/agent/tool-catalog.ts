@@ -31,6 +31,7 @@ export const AGENT_TOOL_CATALOG: AgentToolInfo[] = [
   { name: 'create_carousel', group: 'media', description: 'Materialize an approved carousel artifact (2-10 Instagram slides).' },
   { name: 'create_reel_storyboard', group: 'media', description: 'Materialize a reel storyboard with ordered assets.' },
   { name: 'schedule_post', group: 'delivery', description: 'Schedule an approved artifact through the scheduler.' },
+  { name: 'schedule_direct_posts', group: 'delivery', description: 'Schedule a chat brief straight to the connected accounts (after the user approves a preview).' },
   { name: 'publish', group: 'delivery', description: 'Publish an approved artifact through the publishing service.' },
   { name: 'create_post', group: 'delivery', description: 'Create a post row from an approved artifact.' },
   { name: 'bulk_schedule_posts', group: 'delivery', description: 'Schedule several posts at once, one per item, each to its own time.' },

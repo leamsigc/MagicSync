@@ -1,6 +1,7 @@
 // Asset creation utility — sinks from packages/assets/server/utils/AssetsUtils.ts
 // Used by bulk-scheduler (which doesn't extend assets)
 // Depends on assetService (shared) and Nitro's storeFileLocally (server-side)
+import { join } from 'node:path';
 import { type Asset } from '#layers/BaseDB/db/schema';
 import { assetService } from '#layers/BaseShared/server/services/asset.service';
 import dayjs from 'dayjs';

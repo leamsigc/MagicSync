@@ -2,7 +2,7 @@
 name: content-ops
 description: Route a request to the right specialist agent (research, content, business, strategy) or content workflow. Use when deciding whether to delegate or answer directly.
 version: 1.0.0
-tools: subagent, board_list, board_move, board_add_cards
+tools: board_list, board_move, board_add_cards, list_media, delete_media
 ---
 
 # Content Ops Router
@@ -23,7 +23,7 @@ the tighter scope.
 
 ## Delegation contract
 
-Every `subagent` task states: what you already know, what to find or produce,
+Every `task` delegation states: what you already know, what to find or produce,
 and the exact output shape you need. A task that says "research this" is
 under-specified; say which questions the brief must answer.
 

@@ -21,16 +21,16 @@
     "dayjs": "^1.11.23",
     "gray-matter": "^4.0.3",
     "gsap": "^3.15.0",
-    "shiki": "^4.4.3"
+    "shiki": "^4.5.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",
-    "@types/node": "^26.6.2",
+    "@types/node": "^26.6.5",
     "autoprefixer": "^10.6.1",
-    "mermaid": "^12.0.0",
-    "postcss": "^8.5.28",
+    "mermaid": "^12.2.0",
+    "postcss": "^8.5.30",
     "tailwindcss": "^4.3.3",
-    "tsx": "^4.23.13",
+    "tsx": "^4.23.15",
     "vitepress": "1.6.4",
     "vitepress-plugin-llms": "^1.14.0",
     "vitepress-plugin-mermaid": "^2.0.17"

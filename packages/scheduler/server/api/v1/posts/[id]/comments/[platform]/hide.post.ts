@@ -4,6 +4,7 @@ import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers';
 import { AutoPostService } from '#layers/BaseScheduler/server/services/AutoPost.service';
 import { readValidatedBody } from 'h3';
 import { z } from 'zod';
+import { accountIdFromQuery, resolvePlatformPost } from '#layers/BaseScheduler/server/utils/platform-post';
 
 const BodySchema = z.object({
   commentId: z.string().min(1),
@@ -25,9 +26,7 @@ export default defineEventHandler(async (event) => {
     const post = await postService.findByIdFull({ postId, userId: user.id });
     if (!post) throw createError({ statusCode: 404, statusMessage: 'Post not found' });
 
-    const platformPost = post.platformPosts?.find(
-      (pp) => pp.platformPostId === platform || pp.platform === platform
-    );
+    const platformPost = await resolvePlatformPost(post, { platform, accountId: accountIdFromQuery(getQuery(event)) });
     if (!platformPost) throw createError({ statusCode: 404, statusMessage: `No published post found for platform: ${platform}` });
 
     const socialAccount = await socialMediaAccountService.getAccountById(platformPost.socialAccountId);

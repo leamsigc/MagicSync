@@ -8,6 +8,7 @@ import { LinkedInPagePlugin } from '#layers/BaseDB/server/services/plugins/linke
 import { YouTubePlugin } from '#layers/BaseDB/server/services/plugins/youtube.plugin';
 import { GooglePlugin } from '#layers/BaseDB/server/services/plugins/google.plugin';
 import type { FacebookPage } from '#layers/BaseConnect/utils/FacebookPages';
+import { usesPageToken } from '#layers/BaseDB/server/services/TokenRefresh.service';
 
 defineRouteMeta({
   openAPI: {
@@ -105,7 +106,12 @@ export default defineEventHandler(async (event) => {
       accountId: account.id,
     }).catch(() => null)
 
-    if (tokenData?.accessToken) {
+    // Facebook/Instagram rows hold PAGE tokens minted via fetchPageInformation,
+    // not Better Auth user tokens. Mirroring the user token onto them is what
+    // Meta rejects with "(#190) This method must be called with a Page Access
+    // Token" (insights/feed) and "User Access Token Is Not Supported"
+    // (conversations). Those platforms renew through TokenRefresh only.
+    if (tokenData?.accessToken && !usesPageToken(effectivePlatform)) {
       const mirroredAccounts = await socialMediaAccountService.getAccounts({
         userId: user.id,
         platform: effectivePlatform as SocialMediaPlatform,

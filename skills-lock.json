@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "skills": {
+    "nuxt": {
+      "source": "nuxt-skill.onmax.me",
+      "sourceUrl": "https://nuxt-skill.onmax.me/",
+      "sourceType": "well-known",
+      "computedHash": "adabd36edfefb47015a972052dbfb533b6589f1ffee9df65b996277076ecc16a",
+      "wellKnownDigest": "sha256:c7dba39f62efa99d4f4bbf535be50328f4fe201f59b0420c561264adfddeadc1"
+    }
+  }
+}

@@ -57,7 +57,7 @@
     },
     "postStats": {
       "noPublishedPlatforms": "No published platforms yet. Stats will appear after posts are published.",
-      "noStats": "No stats available for this platform",
+      "noStats": "No post stats yet — this platform may not provide them, or none have been collected. Tap refresh to try again.",
       "metrics": "metrics",
       "lastUpdated": "Last updated",
       "cached": "Cached",
@@ -90,7 +90,7 @@
     },
     "postStats": {
       "noPublishedPlatforms": "Aún no hay plataformas publicadas. Las estadísticas aparecerán cuando se publiquen las publicaciones.",
-      "noStats": "No hay estadísticas disponibles para esta plataforma",
+      "noStats": "Aún no hay estadísticas — puede que esta plataforma no las ofrezca o no se hayan recopilado. Pulsa actualizar para reintentar.",
       "metrics": "métricas",
       "lastUpdated": "Última actualización",
       "cached": "En caché",
@@ -158,7 +158,7 @@
     },
     "postStats": {
       "noPublishedPlatforms": "Aucune plateforme publiée pour le moment. Les statistiques apparaîtront une fois les publications publiées.",
-      "noStats": "Aucune statistique disponible pour cette plateforme",
+      "noStats": "Pas encore de statistiques — cette plateforme ne les fournit peut-être pas, ou aucune n'a été collectée. Actualisez pour réessayer.",
       "metrics": "mesures",
       "lastUpdated": "Dernière mise à jour",
       "cached": "En cache",
@@ -226,7 +226,7 @@
     },
     "postStats": {
       "noPublishedPlatforms": "Noch keine Plattformen veröffentlicht. Statistiken erscheinen, sobald Beiträge veröffentlicht wurden.",
-      "noStats": "Keine Statistiken für diese Plattform verfügbar",
+      "noStats": "Noch keine Statistiken — diese Plattform bietet sie eventuell nicht an, oder es wurden keine erfasst. Zum Wiederholen aktualisieren.",
       "metrics": "Messwerte",
       "lastUpdated": "Zuletzt aktualisiert",
       "cached": "Zwischengespeichert",

@@ -713,7 +713,6 @@ export class FacebookPlugin extends BaseSchedulerPlugin {
    * rejects messages outside it; the error is surfaced, never swallowed.
    */
   override async getConversations(
-    extra,
     socialMediaAccount: PluginSocialMediaAccount,
     options?: { limit?: number; cursor?: string }
   ): Promise<GetConversationsResponse> {

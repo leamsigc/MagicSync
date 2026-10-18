@@ -35,7 +35,7 @@ export const BUSINESS_LLM_OVERRIDE_TYPE = 'business_llm_override'
  * resolve breaks the entire agent layer for every new user.
  */
 export const SYSTEM_DEFAULT_PROVIDER: SupportedProvider = 'google'
-export const SYSTEM_DEFAULT_MODEL = 'gemini-2.5-flash'
+export const SYSTEM_DEFAULT_MODEL = 'gemini-3.5-flash'
 
 export interface BusinessLlmOverride {
   provider: SupportedProvider

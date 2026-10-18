@@ -14,6 +14,7 @@ import { statsCollectorService } from '#layers/BaseScheduler/server/services/Sta
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle';
 import { postMetrics } from '#layers/BaseDB/db/schema';
 import type { SocialMediaAccount } from '#layers/BaseDB/db/schema';
+import { accountIdFromQuery, resolvePlatformPost } from '#layers/BaseScheduler/server/utils/platform-post';
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event);
@@ -32,16 +33,13 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 404, statusMessage: 'Post not found' });
     }
 
-    const platformPost = post.platformPosts?.find(
-      (pp) => pp.platform === platform && pp.status === 'published'
-    );
+    const query = getQuery(event);
+    const forceRefresh = query.refresh === '1' || query.refresh === 'true';
+    const platformPost = await resolvePlatformPost(post, { platform, accountId: accountIdFromQuery(query) });
 
     if (!platformPost) {
       throw createError({ statusCode: 404, statusMessage: `No published post found for platform: ${platform}` });
     }
-
-    const query = getQuery(event);
-    const forceRefresh = query.refresh === '1' || query.refresh === 'true';
 
     if (forceRefresh) {
       const socialAccount = await socialMediaAccountService.getAccountById(platformPost.socialAccountId);

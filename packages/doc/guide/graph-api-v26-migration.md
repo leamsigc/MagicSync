@@ -41,8 +41,11 @@ fails a whole `/insights` batch with `(#100)`, they silently zeroed post insight
 ### 3. Page Access Token
 Page Insights/feed need a **Page** token from a user holding the Page's `ANALYZE` task.
 `isPageAccessTokenError()` now classifies `#190` / `2069032` and logs an actionable
-"reconnect the Page" hint instead of a bare error. (Automatic token healing is deliberately
-deferred — it mutates stored tokens and needs staging.)
+"reconnect the Page" hint instead of a bare error. Automatic healing landed later
+(2026-10-17) — see [Provider Token Error Triage](/guide/provider-token-error-triage):
+`StatsCollector` force-renews on `extra.needsPageToken`, `AutoPost` retries once on a
+token-auth failure, and every user-token mirror onto a Page row is gated by
+`usesPageToken`. That is what turned the recurring `#190` batch off.
 
 ### 4. Instagram host routing + valid metrics
 The plugin hardcoded `graph.facebook.com`, but the app also supports Instagram **Login**

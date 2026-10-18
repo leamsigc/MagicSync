@@ -158,6 +158,7 @@ const initialPost = computed(() => {
 
       <PostModalContent
         ref="postModalRef" :initial-post="initialPost" @save="handleSave" @update="handleUpdate"
+        platforms-position="left"
         @close="handleClose">
         <template #mic-recorder="{ onTranscript }">
           <MicRecorder @transcript="onTranscript" />

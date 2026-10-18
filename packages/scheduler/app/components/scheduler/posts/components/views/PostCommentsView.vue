@@ -111,7 +111,7 @@ async function loadComments(section: PlatformSection) {
     const data = await $fetch<{ data: GetCommentsResponse }>(
       `/api/v1/posts/${props.post.id}/comments/${section.platform}`,
       {
-        query: { limit: 25 },
+        query: { limit: 25, accountId: section.socialAccountId },
       }
     );
     log.debug({ value: data });
@@ -136,7 +136,7 @@ async function loadMore(section: PlatformSection) {
     const data = await $fetch<{ data: GetCommentsResponse }>(
       `/api/v1/posts/${props.post.id}/comments/${section.platform}`,
       {
-        query: { limit: 25, cursor: section.nextCursor },
+        query: { limit: 25, cursor: section.nextCursor, accountId: section.socialAccountId },
       }
     );
 
@@ -177,6 +177,7 @@ async function sendReply(section: PlatformSection, parentComment: PlatformCommen
   try {
     await $fetch(`/api/v1/posts/${props.post.id}/comments/${section.platform}/reply`, {
       method: 'POST',
+      query: { accountId: section.socialAccountId },
       body: {
         commentId: parentComment.id,
         replyText: section.replyText.trim(),

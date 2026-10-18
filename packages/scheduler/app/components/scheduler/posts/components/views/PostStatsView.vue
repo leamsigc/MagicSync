@@ -64,7 +64,7 @@ async function loadStats(section: PlatformSection, forceRefresh = false) {
   try {
     const data = await $fetch<{ data: any; cached?: boolean; updatedAt?: string }>(
       `/api/v1/posts/${props.post.id}/stats/${section.platform}`,
-      { query: forceRefresh ? { refresh: 1 } : undefined }
+      { query: { accountId: section.socialAccountId, ...(forceRefresh ? { refresh: 1 } : {}) } }
     );
 
     section.stats = data?.data || [];

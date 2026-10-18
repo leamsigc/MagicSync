@@ -25,6 +25,27 @@ import { platformRateLimiter } from './RateLimiter.service';
 import { usesPageToken, renewRowToken } from '#layers/BaseDB/server/services/TokenRefresh.service';
 import { auth } from '#layers/BaseAuth/lib/auth';
 import { notificationService } from '#layers/BaseAuth/server/services/notification.service';
+import { platformConfigurations } from '#layers/BaseShared/shared/platformConstants';
+
+function isPageTokenAuthError(message: string | undefined): boolean {
+  if (!message) return false
+  return /validating access token|session has expired|has expired|revoked|invalid oauth|must be called with a Page Access Token|User Access Token Is Not Supported/i.test(message)
+}
+
+function clipAssetsForPlatform(post: PostWithAllData, platform: string): { post: PostWithAllData, clipped: number } {
+  const config = platformConfigurations[platform] ?? platformConfigurations[platform === 'googlemybusiness' ? 'google' : platform]
+  const max = config?.maxImages ?? 0
+  const assets = post.assets ?? []
+  if (max <= 0) return { post, clipped: 0 }
+  const images = assets.filter(asset => asset.mimeType.startsWith('image/'))
+  if (images.length <= max) return { post, clipped: 0 }
+  const keep = new Set(images.slice(0, max).map(asset => asset.id))
+  return {
+    post: { ...post, assets: assets.filter(asset => !asset.mimeType.startsWith('image/') || keep.has(asset.id)) },
+    clipped: images.length - max,
+  }
+}
+
 export class AutoPostService {
 
   private matcher: Record<string, SchedulerPluginConstructor> = {
@@ -61,6 +82,69 @@ export class AutoPostService {
       })
     } catch {
       // Notifications must never break publishing
+    }
+  }
+
+  private async notifyMediaClipped(post: PostWithAllData, platform: string, dropped: number): Promise<void> {
+    try {
+      const noun = dropped === 1 ? 'image' : 'images'
+      await notificationService.notify({
+        userId: post.user.id,
+        event: 'general',
+        type: 'warning',
+        title: 'Some images were skipped',
+        message: `${platform} supports a limited number of images, so ${dropped} ${noun} were not published there. The post was published with the images ${platform} allows.`.slice(0, 500),
+        actionUrl: '/app/posts',
+        metadata: { postId: post.id, platform, dropped },
+      })
+    } catch (error) {
+      log.warn({ message: `[AutoPost] Failed to notify media clipping for ${platform}`, detail: error })
+    }
+  }
+
+  private async forceRenewPageToken(platform: string, socialMediaAccount: SocialMediaAccount): Promise<SocialMediaAccount> {
+    const renewed = await renewRowToken({
+      id: socialMediaAccount.id,
+      userId: socialMediaAccount.userId,
+      platform,
+      accountId: socialMediaAccount.accountId,
+      accessToken: socialMediaAccount.accessToken,
+      tokenExpiresAt: socialMediaAccount.tokenExpiresAt,
+    }, { force: true })
+    if (!renewed.success || !renewed.data?.renewed) return socialMediaAccount
+    const fresh = await socialMediaAccountService.getAccountById(socialMediaAccount.id)
+    if (fresh?.accessToken) socialMediaAccount.accessToken = fresh.accessToken
+    return socialMediaAccount
+  }
+
+  private async publishPlatformPost(
+    scheduler: SchedulerPost,
+    post: PostWithAllData,
+    platform: string,
+    account: SocialMediaAccount,
+    platformPost: PostWithAllData['platformPosts'][number],
+  ): Promise<void> {
+    let socialMediaAccount = account
+    const { post: publishPost, clipped } = clipAssetsForPlatform(post, platform)
+    try {
+      let response = await scheduler.publish(publishPost, [], socialMediaAccount);
+      if (usesPageToken(platform) && response.status === 'failed' && isPageTokenAuthError(response.error)) {
+        socialMediaAccount = await this.forceRenewPageToken(platform, socialMediaAccount)
+        response = await scheduler.publish(publishPost, [], socialMediaAccount)
+      }
+      await postBatchService.updatePostBaseOnResponse(post, response, platformPost);
+      if (clipped > 0) await this.notifyMediaClipped(post, platform, clipped)
+      if (response.status === 'failed') {
+        await this.notifyPostFailed(post, platform, response.error || 'Publish failed.')
+      }
+    } catch (e) {
+      log.error({ error: String(e) });
+      await postBatchService.updatePostBaseOnResponse(
+        post,
+        { status: 'failed', id: platformPost.id, releaseURL: '', error: 'Post failed to post ', postId: post.id },
+        platformPost
+      );
+      await this.notifyPostFailed(post, platform, e instanceof Error ? e.message : 'Publish threw an error.')
     }
   }
 
@@ -174,33 +258,13 @@ export class AutoPostService {
         } catch (tokenRefreshError) {
           log.warn({ message: `[AutoPost] Token refresh via Better Auth failed for ${platform} | Post ID: ${post.id}`, detail: tokenRefreshError })
         }
-        // @ts-ignore - dynamic plugin resolution
         const plugin = this.matcher[platform];
         if (!plugin) {
           throw new Error(`Unsupported platform: ${platform}`);
         }
         scheduler.use(plugin);
 
-        try {
-          const response = await scheduler.publish(
-            post,
-            [],
-            socialMediaAccount
-          );
-
-          await postBatchService.updatePostBaseOnResponse(post, response, platformPost);
-          if (response.status === 'failed') {
-            await this.notifyPostFailed(post, platform, response.error || 'Publish failed.')
-          }
-        } catch (e) {
-          log.error({ error: String(e) });
-          await postBatchService.updatePostBaseOnResponse(
-            post,
-            { status: 'failed', id: platformPost.id, releaseURL: '', error: 'Post failed to post ', postId: post.id },
-            platformPost
-          );
-          await this.notifyPostFailed(post, platform, e instanceof Error ? e.message : 'Publish threw an error.')
-        }
+        await this.publishPlatformPost(scheduler, post, platform, socialMediaAccount, platformPost);
       }))
   }
 

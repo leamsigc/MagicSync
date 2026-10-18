@@ -1,16 +1,16 @@
 {
-  "generatedAt": "2026-10-16T17:59:21.713Z",
+  "generatedAt": "2026-10-18T12:10:45.142Z",
   "baseUrl": "http://localhost:3000",
   "action": "page",
   "total": 1,
   "captured": 1,
   "entries": [
     {
-      "route": "/app/billing",
-      "slug": "app-billing",
+      "route": "/app/posts/new",
+      "slug": "app-posts-new",
       "action": "page",
-      "file": "app-billing/page.png",
-      "finalUrl": "http://localhost:3000/app/billing",
+      "file": "app-posts-new/page.png",
+      "finalUrl": "http://localhost:3000/app/posts/new",
       "status": 200,
       "ok": true
     }
