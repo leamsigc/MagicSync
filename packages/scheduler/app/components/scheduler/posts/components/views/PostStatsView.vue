@@ -27,6 +27,7 @@ interface PlatformStatsData {
   cached?: boolean;
   updatedAt?: string;
   error?: string;
+  history?: any[];
 }
 
 interface PlatformSection {
@@ -40,6 +41,7 @@ interface PlatformSection {
   cached?: boolean;
   updatedAt?: string;
   error?: string;
+  history?: any[];
 }
 
 const props = defineProps<{
@@ -67,9 +69,18 @@ async function loadStats(section: PlatformSection, forceRefresh = false) {
       { query: { accountId: section.socialAccountId, ...(forceRefresh ? { refresh: 1 } : {}) } }
     );
 
-    section.stats = data?.data || [];
+    const raw = data?.raw;
+    const metrics = data?.data;
+    let statsArr: any[] = [];
+    if (Array.isArray(raw) && raw.length > 0) {
+      statsArr = raw.map((r: any) => ({ label: r.label ?? r.key, value: r.value ?? r.count ?? 0 }));
+    } else if (metrics && typeof metrics === 'object') {
+      statsArr = Object.entries(metrics).map(([k, v]) => ({ label: k, value: v }));
+    }
+    section.stats = statsArr;
     section.cached = data?.cached || false;
     section.updatedAt = data?.updatedAt;
+    section.history = data?.history || [];
 
     if (section.cached) {
       toast.add({ title: t('postStats.loadedFromCache'), color: 'success', icon: 'i-heroicons-clock' });
@@ -129,6 +140,34 @@ const updatePlatformSection = (section: PlatformSection) => {
 function formatTime(isoString: string): string {
   if (!isoString) return '';
   return dayjs(isoString).fromNow();
+}
+
+function sectionChartData(section: PlatformSection): any[] {
+  if (!section.history || section.history.length === 0) return [];
+  return section.history
+    .filter((h: any) => h.status === 'success')
+    .map((h: any) => ({
+      date: h.collectedAt ? new Date(h.collectedAt).toLocaleDateString() : '',
+      total: h.metrics?.total ?? 0,
+      comments: h.metrics?.comments ?? 0,
+      likes: h.metrics?.likes ?? 0,
+    }))
+    .reverse();
+}
+
+function sectionChartOptions(section: PlatformSection): any {
+  const data = sectionChartData(section);
+  return {
+    tooltip: { trigger: 'axis' },
+    legend: { data: ['total', 'comments', 'likes'] },
+    xAxis: { type: 'category', data: data.map((d: any) => d.date) },
+    yAxis: { type: 'value' },
+    series: [
+      { name: 'total', type: 'line', data: data.map((d: any) => d.total) },
+      { name: 'comments', type: 'line', data: data.map((d: any) => d.comments) },
+      { name: 'likes', type: 'line', data: data.map((d: any) => d.likes) },
+    ],
+  };
 }
 
 function formatNumber(value: number | string | undefined): string {
@@ -212,6 +251,15 @@ function formatNumber(value: number | string | undefined): string {
           <div v-if="!section.cached" class="flex items-center justify-between text-xs text-zinc-600 mt-2">
             <UIcon name="i-heroicons-arrow-path" class="w-3 h-3" />
             <span>{{ t('postStats.freshData') }}</span>
+          </div>
+
+          <div v-if="sectionChartData(section).length > 1" class="mt-4">
+            <BaseChart
+              title="History"
+              description="Metric history"
+              icon="i-lucide-line-chart"
+              :chart-options="sectionChartOptions(section)"
+            />
           </div>
         </div>
 

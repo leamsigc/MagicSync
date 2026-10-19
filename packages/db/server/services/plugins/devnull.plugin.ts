@@ -1,5 +1,5 @@
 import type { PostResponse, PluginPostDetails, PluginSocialMediaAccount, PlatformStats, GetCommentsResponse, ReplyCommentResponse } from '#layers/BaseDB/server/services/SchedulerPost.service';
-import { BaseSchedulerPlugin } from '#layers/BaseDB/server/services/SchedulerPost.service';
+import { BaseSchedulerPlugin, extractExternalPostId } from '#layers/BaseDB/server/services/SchedulerPost.service';
 import type { Post, SocialMediaAccount, Asset } from '#layers/BaseDB/db/schema';
 import type { DevNullSettings } from '#layers/BaseShared/shared/platformSettings';
 import { platformConfigurations } from '#layers/BaseShared/shared/platformConstants';
@@ -144,12 +144,16 @@ export class DevNullPlugin extends BaseSchedulerPlugin {
 
       // Extract link from response text if present
       const linkMatch = text.match(/https?:\/\/\S+/);
-      const releaseURL = linkMatch ? linkMatch[0] : '';
+      const releaseURL = linkMatch ? linkMatch[0].replace(/[).,]+$/, '') : '';
+      // Extract the commit UUID from the release URL so stats/insights can
+      // look it up through the public read API.
+      const uuidMatch = releaseURL.match(/\/commits\/([0-9a-f-]{36})/i);
+      const commitId = uuidMatch ? uuidMatch[1] : (releaseURL || nonce);
       const postResponse: PostResponse = {
         id: postDetails.id,
-        postId: releaseURL || nonce,
+        postId: commitId,
         releaseURL,
-        status: text.includes('pending review') ? 'published' : 'published',
+        status: 'published',
       };
       this.emit('devnull:post:published', { postId: postResponse.postId, response: text });
       return postResponse;
@@ -194,6 +198,25 @@ export class DevNullPlugin extends BaseSchedulerPlugin {
     postDetails: PluginPostDetails,
     socialMediaAccount: PluginSocialMediaAccount
   ): Promise<PlatformStats> {
+    const rawId = extractExternalPostId(postDetails, socialMediaAccount);
+    const uuidMatch = (rawId || '').match(/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i);
+    const commitId = uuidMatch ? uuidMatch[1] : rawId;
+    let stars = 0;
+    let replies = 0;
+    let body = '';
+    if (commitId) {
+      try {
+        const res = await fetch(`https://dev-null.sh/api/v1/commits/${commitId}`);
+        if (res.ok) {
+          const json = await res.json() as { data?: { stars_count?: number; replies_count?: number; body?: string } };
+          stars = json?.data?.stars_count ?? 0;
+          replies = json?.data?.replies_count ?? 0;
+          body = json?.data?.body ?? '';
+        }
+      } catch (e) {
+        log.warn({ content: 'dev-null.sh stats fetch failed', error: (e as Error)?.message });
+      }
+    }
     return {
       platform: this.pluginName,
       accountId: socialMediaAccount.accountId,
@@ -201,9 +224,37 @@ export class DevNullPlugin extends BaseSchedulerPlugin {
       fetchedAt: new Date().toISOString(),
       followers: 0,
       following: 0,
-      posts: 0,
-      engagement: { total: 0, likes: 0, comments: 0 },
+      posts: 1,
+      engagement: { total: stars + replies, likes: stars, comments: replies },
+      extra: { body, stars, replies },
     };
+  }
+
+  override async getPostInsights(
+    postDetails: PluginPostDetails,
+    socialMediaAccount: PluginSocialMediaAccount
+  ): Promise<PostInsight[]> {
+    const rawId = extractExternalPostId(postDetails, socialMediaAccount);
+    const uuidMatch = (rawId || '').match(/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i);
+    const commitId = uuidMatch ? uuidMatch[1] : rawId;
+    let stars = 0;
+    let replies = 0;
+    if (commitId) {
+      try {
+        const res = await fetch(`https://dev-null.sh/api/v1/commits/${commitId}`);
+        if (res.ok) {
+          const json = await res.json() as { data?: { stars_count?: number; replies_count?: number } };
+          stars = json?.data?.stars_count ?? 0;
+          replies = json?.data?.replies_count ?? 0;
+        }
+      } catch (e) {
+        log.warn({ content: 'dev-null.sh insights fetch failed', error: (e as Error)?.message });
+      }
+    }
+    return [
+      { label: 'Stars', value: stars },
+      { label: 'Replies', value: replies },
+    ];
   }
 
   override async getComments(

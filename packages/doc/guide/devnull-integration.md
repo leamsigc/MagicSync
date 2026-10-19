@@ -34,6 +34,20 @@ account, so the integration is gated on a GitHub connection.
 - User must connect GitHub first.
 - User must sign in to dev-null.sh at least once (so a `/dev/null` account exists).
 
+## Limitations (dev-null.sh public API)
+
+dev-null.sh's terminal/SSH interface only supports: body, `--reply`, and up to 3 images.
+The following dev-null.sh features are **not** reachable from MagicSync today:
+
+- **Polls and voting** — composer-only on dev-null.sh.
+- **Quoting a commit** — separate action, not exposed via the terminal interface.
+- **Remotes (direct messages) / Orgs** — no public write or read API for DMs.
+- **Comments listing** — the public read API exposes `replies_count` but no replies
+  endpoint; MagicSync shows the count as an insight instead.
+
+Stats (stars, replies) and image/link-preview metadata are fetched via
+`GET /api/v1/commits/{id}` and surfaced as post insights.
+
 ## Files touched
 
 - `packages/auth/lib/auth.ts` — github social provider + trustedProviders

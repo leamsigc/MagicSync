@@ -26,7 +26,7 @@ export type MetricKey = keyof Omit<NormalizedPostMetrics, 'total'>
 export const ENGAGEMENT_KEYS: MetricKey[] = ['likes', 'comments', 'shares', 'saves', 'quotes', 'bookmarks', 'retweets', 'reposts']
 
 const LABEL_ALIASES: Record<string, MetricKey> = {
-  likes: 'likes', like: 'likes', like_count: 'likes', likecount: 'likes',
+  likes: 'likes', like: 'likes', like_count: 'likes', likecount: 'likes', stars: 'likes', star: 'likes', star_count: 'likes', starcount: 'likes',
   comments: 'comments', comment: 'comments', comment_count: 'comments', commentcount: 'comments',
   replies: 'comments', reply: 'comments', reply_count: 'comments', replycount: 'comments',
   shares: 'shares', share: 'shares', share_count: 'shares', sharecount: 'shares',

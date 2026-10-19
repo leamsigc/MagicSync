@@ -144,7 +144,7 @@ FROM node:26-alpine
 #   - ca-certificates: TLS trust store for outbound HTTPS to the video host.
 #     node:26-alpine already ships it, but list it explicitly so a base-image
 #     change cannot silently break yt-dlp in production.
-RUN apk add --no-cache cairo pango giflib libjpeg-turbo librsvg pixman freetype fontconfig ttf-dejavu ffmpeg ca-certificates
+RUN apk add --no-cache cairo pango giflib libjpeg-turbo librsvg pixman freetype fontconfig ttf-dejavu ffmpeg ca-certificates openssh-client
 
 WORKDIR /usr/app
 

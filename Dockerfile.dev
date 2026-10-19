@@ -6,7 +6,7 @@ FROM node:26-alpine AS serve
 # NOTE: do NOT add vips-dev — it forces sharp into a failing source build.
 # bash/curl/ffmpeg are needed by scripts/install-ytdlp.sh and the
 # download_video agent tool.
-RUN apk add --no-cache bash curl ffmpeg python3 make g++ pkgconfig \
+RUN apk add --no-cache bash curl ffmpeg python3 make g++ pkgconfig openssh-client \
   cairo-dev pango-dev jpeg-dev giflib-dev librsvg-dev pixman-dev
 
 WORKDIR /usr/app/frontend
