@@ -79,7 +79,7 @@ export class DevNullPlugin extends BaseSchedulerPlugin {
       const imagePaths: string[] = [];
       for (let i = 0; i < imageAssets.length; i++) {
         const asset = imageAssets[i];
-        const url = asset.url;
+        const url = getPublicUrlForAsset(asset.url);
         if (!url) continue;
         const res = await fetch(url);
         if (!res.ok) throw new Error(`Could not fetch image: ${res.statusText}`);

@@ -23,7 +23,7 @@ export default {
       const dir = join(SCREENSHOTS_DIR, slug)
       const files = readdirSync(dir)
       const desktop = files.find((f) => f === 'page.png') ? `img/screenshots/${slug}/page.png` : null
-      const mobile = files.find((f) => f === 'page-mobile.png') ? `img/screenshots/${slug}/page-mobile.png` : null
+      const mobile = files.find((f) => f === 'page-mobile.png') ? `img/screenshots-mobile/${slug}/page-mobile.png` : null
       return { slug, desktop, mobile }
     }).filter((r) => r.desktop || r.mobile)
   },

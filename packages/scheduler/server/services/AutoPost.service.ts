@@ -118,6 +118,43 @@ export class AutoPostService {
     return socialMediaAccount
   }
 
+  private async forceRenewToken(platform: string, socialMediaAccount: SocialMediaAccount): Promise<SocialMediaAccount> {
+    if (usesPageToken(platform)) {
+      return this.forceRenewPageToken(platform, socialMediaAccount)
+    }
+    try {
+      const resolved = await socialMediaAccountService.findBetterAuthAccountForRefresh(
+        socialMediaAccount.userId,
+        platform
+      )
+      const providerAccount = resolved.success ? resolved.data : null
+      if (!providerAccount) return socialMediaAccount
+      const tokenResp = await auth.api.refreshToken({
+        body: {
+          accountId: providerAccount.id,
+          userId: socialMediaAccount.userId,
+        },
+      })
+      const freshToken = (tokenResp as any)?.accessToken
+      const expiresAt = (tokenResp as any)?.accessTokenExpiresAt
+      const freshRefreshToken = (tokenResp as any)?.refreshToken
+      if (freshToken) {
+        await socialMediaAccountService.updateAccount(socialMediaAccount.id, {
+          accessToken: freshToken,
+          ...(freshRefreshToken ? { refreshToken: freshRefreshToken } : {}),
+          isActive: true,
+          lastSyncAt: new Date(),
+          ...(expiresAt ? { tokenExpiresAt: new Date(expiresAt) } : {}),
+        })
+        socialMediaAccount.accessToken = freshToken
+        if (expiresAt) socialMediaAccount.tokenExpiresAt = new Date(expiresAt)
+      }
+    } catch (error) {
+      log.warn({ message: `[AutoPost] Force refresh failed for ${platform}`, detail: error })
+    }
+    return socialMediaAccount
+  }
+
   private async publishPlatformPost(
     scheduler: SchedulerPost,
     post: PostWithAllData,
@@ -129,8 +166,8 @@ export class AutoPostService {
     const { post: publishPost, clipped } = clipAssetsForPlatform(post, platform)
     try {
       let response = await scheduler.publish(publishPost, [], socialMediaAccount);
-      if (usesPageToken(platform) && response.status === 'failed' && isPageTokenAuthError(response.error)) {
-        socialMediaAccount = await this.forceRenewPageToken(platform, socialMediaAccount)
+      if (response.status === 'failed' && isPageTokenAuthError(response.error)) {
+        socialMediaAccount = await this.forceRenewToken(platform, socialMediaAccount)
         response = await scheduler.publish(publishPost, [], socialMediaAccount)
       }
       await postBatchService.updatePostBaseOnResponse(post, response, platformPost);
