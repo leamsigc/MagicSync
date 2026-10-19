@@ -177,7 +177,6 @@ export const useAssetManagement = () => {
   }
 
   const uploadFiles = async (files: File[], businessId?: string): Promise<Asset[]> => {
-    // Add files to upload queue
     const uploadItems: FileUploadItem[] = files.map(file => ({
       file,
       id: crypto.randomUUID(),
@@ -187,97 +186,119 @@ export const useAssetManagement = () => {
 
     uploadQueue.value.push(...uploadItems)
 
-    // Build multipart form data so large files stream without base64 overhead
-    const formData = new FormData()
-    files.forEach(file => formData.append('files', file))
-    if (businessId) {
-      formData.append('businessId', businessId)
+    const uploadedAssets: Asset[] = []
+    const CHUNK_THRESHOLD = 20 * 1024 * 1024
+    const CHUNK_SIZE = 8 * 1024 * 1024
+
+    const setQueue = (item: FileUploadItem, mutator: (q: FileUploadItem) => void) => {
+      const q = uploadQueue.value.find(qq => qq.id === item.id)
+      if (q) mutator(q)
     }
 
-    uploadItems.forEach(item => {
-      item.status = 'uploading'
-    })
+    for (const file of files) {
+      const item = uploadItems.find(i => i.file === file)!
+      const queueItem = uploadQueue.value.find(q => q.id === item.id)!
+      queueItem.status = 'uploading'
+      queueItem.progress.total = file.size
 
-    try {
-      // Use XMLHttpRequest to get real upload progress for large files
-      // (ofetch does not expose onUploadProgress for the same-origin path)
-      const response = await new Promise<{
-        success: boolean
-        data: Asset[]
-        message?: string
-        error?: string
-      }>((resolve, reject) => {
-        const xhr = new XMLHttpRequest()
-        xhr.open('POST', '/api/v1/assets')
-        xhr.setRequestHeader('Accept', 'application/json')
+      try {
+        let asset: Asset | null = null
 
-        xhr.upload.onprogress = (event) => {
-          if (!event.lengthComputable) return
-          uploadItems.forEach(item => {
-            item.progress.loaded = event.loaded
-            item.progress.total = event.total
-            item.progress.percentage = Math.round((event.loaded / event.total) * 100)
-          })
-        }
+        if (file.size > CHUNK_THRESHOLD) {
+          // Chunked upload to bypass per-request size limits (e.g. Cloudflare 100MB)
+          const uploadId = crypto.randomUUID()
+          const totalChunks = Math.ceil(file.size / CHUNK_SIZE) || 1
+          for (let i = 0; i < totalChunks; i++) {
+            const chunk = file.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE)
+            const fd = new FormData()
+            fd.append('uploadId', uploadId)
+            fd.append('chunkIndex', String(i))
+            fd.append('totalChunks', String(totalChunks))
+            fd.append('fileName', file.name)
+            fd.append('mimeType', file.type || 'application/octet-stream')
+            fd.append('fileSize', String(file.size))
+            if (businessId) fd.append('businessId', businessId)
+            fd.append('chunk', chunk, `chunk-${i}`)
 
-        xhr.onload = () => {
-          try {
-            const parsed = JSON.parse(xhr.responseText)
-            if (xhr.status >= 200 && xhr.status < 300) {
-              resolve(parsed)
-            } else {
-              reject(new Error(parsed?.error || parsed?.message || `Upload failed (${xhr.status})`))
+            const response = await $fetch<{ success: boolean; data: Asset[] | null; error?: string }>(
+              '/api/v1/assets/chunk',
+              { method: 'POST', body: fd }
+            )
+            if (!response.success) throw new Error(response.error || 'Chunk upload failed')
+
+            queueItem.progress.loaded = Math.min(file.size, (i + 1) * CHUNK_SIZE)
+            queueItem.progress.percentage = Math.round(((i + 1) / totalChunks) * 100)
+
+            if (response.data) {
+              asset = Array.isArray(response.data) ? response.data[0] : response.data
             }
-          } catch {
-            reject(new Error('Invalid server response'))
           }
+        } else {
+          // Single multipart upload with real XHR progress
+          const fd = new FormData()
+          fd.append('files', file)
+          if (businessId) fd.append('businessId', businessId)
+
+          const response = await new Promise<{ success: boolean; data: Asset[]; error?: string }>((resolve, reject) => {
+            const xhr = new XMLHttpRequest()
+            xhr.open('POST', '/api/v1/assets')
+            xhr.setRequestHeader('Accept', 'application/json')
+
+            xhr.upload.onprogress = (event) => {
+              if (!event.lengthComputable) return
+              queueItem.progress.loaded = event.loaded
+              queueItem.progress.total = event.total
+              queueItem.progress.percentage = Math.round((event.loaded / event.total) * 100)
+            }
+
+            xhr.onload = () => {
+              try {
+                const parsed = JSON.parse(xhr.responseText)
+                if (xhr.status >= 200 && xhr.status < 300) resolve(parsed)
+                else reject(new Error(parsed?.error || parsed?.message || `Upload failed (${xhr.status})`))
+              } catch {
+                if (xhr.status === 413) reject(new Error('File is too large for the upload limit.'))
+                else reject(new Error(`Upload failed (${xhr.status || 'unknown'})`))
+              }
+            }
+            xhr.onerror = () => reject(new Error('Network error during upload'))
+            xhr.onabort = () => reject(new Error('Upload aborted'))
+            xhr.send(fd)
+          })
+
+          if (!response.success) throw new Error(response.error || 'Upload failed')
+          asset = (Array.isArray(response.data) ? response.data[0] : response.data) as Asset
         }
 
-        xhr.onerror = () => reject(new Error('Network error during upload'))
-        xhr.onabort = () => reject(new Error('Upload aborted'))
+        if (asset) {
+          queueItem.status = 'completed'
+          queueItem.progress.percentage = 100
+          queueItem.asset = asset
+          uploadedAssets.push(asset)
 
-        xhr.send(formData)
-      })
-
-      if (!response.success) {
-        throw new Error(response.error || 'Failed to upload files')
+          const existingIds = new Set(assets.value.map(a => a.id))
+          if (!existingIds.has(asset.id)) {
+            assets.value.unshift(asset)
+            existingIds.add(asset.id)
+          }
+        } else {
+          throw new Error('Upload failed')
+        }
+      } catch (err: any) {
+        queueItem.status = 'error'
+        queueItem.error = err?.data?.message || err?.message || 'Upload failed'
+        error.value = queueItem.error || null
       }
-
-      // Update upload items with results
-      response.data.forEach((asset, index) => {
-        if (uploadItems[index]) {
-          uploadItems[index].status = 'completed'
-          uploadItems[index].progress.percentage = 100
-          uploadItems[index].asset = asset
-        }
-      })
-
-      // Add new assets to the list (avoid duplicates with loaded pages)
-      const existingIds = new Set(assets.value.map(a => a.id))
-      response.data.forEach(asset => {
-        if (!existingIds.has(asset.id)) {
-          assets.value.unshift(asset)
-          existingIds.add(asset.id)
-        }
-      })
-
-      // Remove completed uploads from queue after a delay
-      setTimeout(() => {
-        uploadQueue.value = uploadQueue.value.filter(item =>
-          !uploadItems.some(uploadItem => uploadItem.id === item.id)
-        )
-      }, 3000)
-      return response.data
-    } catch (err: any) {
-      // Mark all uploads as failed
-      uploadItems.forEach(item => {
-        item.status = 'error'
-        item.error = err?.data?.message || err?.message || 'Upload failed'
-      })
-
-      error.value = err?.data?.message || err?.message || 'Failed to upload files'
-      return []
     }
+
+    // Remove completed uploads from queue after a delay
+    setTimeout(() => {
+      uploadQueue.value = uploadQueue.value.filter(item =>
+        !uploadItems.some(uploadItem => uploadItem.id === item.id)
+      )
+    }, 3000)
+
+    return uploadedAssets
   }
 
   const uploadFromUrl = async (url: string, businessId: string, filename?: string): Promise<Asset | null> => {
