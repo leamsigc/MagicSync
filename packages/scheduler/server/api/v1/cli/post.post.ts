@@ -28,6 +28,12 @@ interface ExternalPostBody {
     video?: string
     commentPrompt?: string
   }>
+  /**
+   * Per-platform settings overrides. YouTube accepts
+   * `{ title, tags, privacyStatus, madeForKids, categoryId, thumbnailUrl }`;
+   * when title/tags are omitted they are derived from the post content.
+   */
+  platformSettings?: Record<string, Record<string, unknown>>
 }
 
 function getPlatformConfig(platform: string) {
@@ -250,6 +256,7 @@ export default defineEventHandler(async (event) => {
     status: isImmediate ? 'published' : 'scheduled',
     comment: comments,
     platformContent,
+    platformSettings: body.platformSettings || {},
   }
 
   const result = await postService.create(userId, postData)
@@ -272,7 +279,8 @@ export default defineEventHandler(async (event) => {
 
   const fullPost = await postService.findByIdFull({ postId: result.data.id, userId })
   const platformStatuses = fullPost?.platformPosts?.map((pp: any) => ({
-    platform: pp.platform,
+    // `platformPostId` holds the platform name on a platform_posts row.
+    platform: pp.platformPostId || pp.socialAccountId,
     accountId: pp.socialAccountId,
     status: pp.status,
     errorMessage: pp.errorMessage || undefined,

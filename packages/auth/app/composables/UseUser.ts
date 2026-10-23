@@ -2,9 +2,19 @@ import { authClient } from '#layers/BaseAuth/lib/auth-client'
 import type { User } from '#layers/BaseDB/db/schema'
 import type { Session } from 'better-auth'
 
-
-
 const client = authClient
+
+/**
+ * A stalled session request must never freeze navigation. On timeout the
+ * cached state wins (see the catch branch) and the next signal/navigation
+ * retries.
+ */
+const SESSION_FETCH_TIMEOUT_MS = 5_000
+
+type SessionPayload = { session: Session | null, user: User | null } | null
+
+/** Per-nuxt-app, so SSR keeps one promise per request and the client one per tab. */
+type SessionAwareNuxtApp = { _authSessionPromise?: Promise<SessionPayload> }
 
 // Register the $sessionSignal listener exactly once per client session.
 // UseUser() runs on every navigation (route middleware) and from many
@@ -15,58 +25,48 @@ const client = authClient
 let sessionSignalListening = false
 
 export function UseUser() {
-
   // Todo: Move to store and pinia
   const user = useState<User | null>('auth:user')
   const session = useState<Session | null>('auth:session')
-  const sessionFetching = import.meta.server ? ref(false) : useState('auth:sessionFetching', () => false)
-
+  // Whether a session lookup has ever completed (success or handled failure).
+  // Lets route middleware trust the SSR-hydrated payload instead of paying a
+  // network round trip on every client-side navigation.
+  const sessionLoaded = useState<boolean>('auth:sessionLoaded', () => false)
+  const sessionCheckedAt = useState<number>('auth:sessionCheckedAt', () => 0)
   const listAccounts = useState('auth:listAccounts')
+  const nuxtApp = useNuxtApp() as ReturnType<typeof useNuxtApp> & SessionAwareNuxtApp
 
   const clearLocalSession = () => {
     session.value = null
     user.value = null
+    sessionLoaded.value = false
+    sessionCheckedAt.value = 0
     clearNuxtData('auth-session')
   }
 
-  const waitForInflightFetch = () => new Promise<void>((resolve) => {
-    const stop = watch(sessionFetching, (fetching) => {
-      if (!fetching) {
-        stop()
-        resolve()
-      }
-    })
-    setTimeout(() => {
-      stop()
-      resolve()
-    }, 15000)
-  })
-
-  const fetchSession = async () => {
-    if (sessionFetching.value) {
-      await waitForInflightFetch()
-      return { session: session.value, user: user.value }
+  const applySession = (data: SessionPayload) => {
+    session.value = data?.session || null
+    const userDefaults = {
+      image: null,
+      role: null,
+      banReason: null,
+      banned: null,
+      banExpires: null,
+      stripeCustomerId: null
     }
-    sessionFetching.value = true
+    user.value = data?.user
+      ? Object.assign({}, userDefaults, data.user)
+      : null
+  }
 
+  const requestSession = async (): Promise<SessionPayload> => {
     try {
-      const data = await $fetch<{ session: Session, user: User } | null>('/api/auth/get-session', {
+      const data = await $fetch<SessionPayload>('/api/auth/get-session', {
         headers: import.meta.server ? useRequestHeaders() : undefined,
         retry: 0,
+        signal: import.meta.client ? AbortSignal.timeout(SESSION_FETCH_TIMEOUT_MS) : undefined,
       } as any)
-      session.value = data?.session || null
-      const userDefaults = {
-        image: null,
-        role: null,
-        banReason: null,
-        banned: null,
-        banExpires: null,
-        stripeCustomerId: null
-      }
-      user.value = data?.user
-        ? Object.assign({}, userDefaults, data.user)
-        : null
-      // Session fetched successfully
+      applySession(data)
       return data
     }
     catch {
@@ -76,9 +76,21 @@ export function UseUser() {
       return { session: session.value, user: user.value }
     }
     finally {
-      sessionFetching.value = false
+      sessionLoaded.value = true
+      sessionCheckedAt.value = Date.now()
     }
   }
+
+  // Single-flight: every caller in the same app/request shares one promise, so
+  // the middleware, the $sessionSignal listener and page code can never fan out
+  // into duplicate get-session requests.
+  const fetchSession = (): Promise<SessionPayload> => {
+    nuxtApp._authSessionPromise ??= requestSession().finally(() => {
+      nuxtApp._authSessionPromise = undefined
+    })
+    return nuxtApp._authSessionPromise
+  }
+
   if (import.meta.client && !sessionSignalListening) {
     sessionSignalListening = true
     client.$store.listen('$sessionSignal', async (signal) => {
@@ -96,6 +108,8 @@ export function UseUser() {
   return {
     session,
     user,
+    sessionLoaded,
+    sessionCheckedAt,
     loggedIn: computed(() => !!session.value),
     signIn: client.signIn,
     signUp: client.signUp,

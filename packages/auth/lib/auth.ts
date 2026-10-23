@@ -120,7 +120,9 @@ export const auth = betterAuth({
   logger: {
     disabled: false,
     disableColors: false,
-    level: 'debug',
+    // Debug logging on every session lookup is pure overhead in production
+    // and floods the evlog pipeline; warnings/errors still come through.
+    level: process.env.NODE_ENV === 'production' ? 'warn' : 'debug',
     log: (level, message, ...args) => {
       // Into the evlog pipeline (same console sink, structured wide events)
       forwardAuthLog(level, message, args);
@@ -152,10 +154,16 @@ export const auth = betterAuth({
     },
     expiresIn: 604_800, // 7 days
     updateAge: 86_400, // 1 day
-    // cookieCache: {
-    //   enabled: true,
-    //   maxAge: 5 * 60,
-    // },
+    // Session reads are the hottest authentication path in the app: every
+    // in-app API call validates the session, and route navigation validates it
+    // again. Caching the signed session payload in a cookie removes the
+    // database round trip from those reads. 60s is deliberately short so a
+    // ban / role change / revocation still takes effect quickly; the cookie is
+    // rewritten by Better Auth on every session mutation.
+    cookieCache: {
+      enabled: true,
+      maxAge: 60,
+    },
   },
   user: {
     additionalFields: {

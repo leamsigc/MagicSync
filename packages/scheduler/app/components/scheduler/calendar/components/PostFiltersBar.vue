@@ -11,7 +11,6 @@ import type { PostFilters } from '#layers/BaseScheduler/server/utils/SchedulerTy
 
 interface Emits {
   filterChange: [filters: PostFilters & { page: number, limit: number }]
-  refresh: []
 }
 
 defineProps<{
@@ -85,11 +84,12 @@ const isLoading = ref(false)
 const applyFilters = () => {
   isLoading.value = true
   updateQueryParams()
+  // One event per change: `filterChange` already carries the pagination, so a
+  // separate `refresh` emit made every consumer fetch the same list twice.
   emit('filterChange', {
     ...getFilters(),
     ...getPagination()
   })
-  emit('refresh')
   setTimeout(() => {
     isLoading.value = false
   }, 300)
@@ -98,7 +98,6 @@ const applyFilters = () => {
 const clearFilters = () => {
   resetFilters()
   emit('filterChange', { ...getFilters(), ...getPagination() })
-  emit('refresh')
 }
 
 watch([dateType, status, startDate, endDate, postFormat, platforms, limit], () => {

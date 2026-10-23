@@ -29,7 +29,14 @@ import TemplateVariablePopUp from '#layers/BaseTemplate/app/components/TemplateV
 
 const activeBusinessId = useState<string>('business:id');
 const { getPosts, postList, t } = usePostManager();
-getPosts(activeBusinessId.value);
+// Same request the filter bar issues on mount (current month, default
+// `scheduledAt`, 25 rows), so the two collapse into one in-flight request on
+// client-side navigation instead of racing.
+getPosts(activeBusinessId.value, { page: 1, limit: 25 }, {
+  startDate: dayjs().startOf('month').format('YYYY-MM-DD'),
+  endDate: dayjs().endOf('month').format('YYYY-MM-DD'),
+  dateType: 'scheduledAt'
+});
 
 useHead({
   title: t('seo_title_all'),
@@ -61,21 +68,12 @@ const handleFilterChange = async (filters: PostFilters & { page: number, limit: 
   )
 }
 
-const HandleRefresh = async () => {
-  await getPosts(activeBusinessId.value, {
-    page: 1,
-    limit: 100
-  },
-    {
-      startDate: startDate.value,
-      endDate: endDate.value
-    }
-  );
-}
-
 // Same as the calendar: the list is business-scoped, so reload it on switch.
 watch(activeBusinessId, () => {
-  HandleRefresh()
+  getPosts(activeBusinessId.value, { page: 1, limit: 100 }, {
+    startDate: startDate.value,
+    endDate: endDate.value
+  })
 })
 </script>
 
@@ -100,7 +98,7 @@ watch(activeBusinessId, () => {
     </BasePageHeader>
     <div class="flex flex-wrap items-center justify-between gap-2 p-2">
       <section class="flex flex-wrap items-center gap-1" data-tour="posts-step-0">
-        <PostFiltersBar @filter-change="handleFilterChange" @refresh="HandleRefresh" />
+        <PostFiltersBar @filter-change="handleFilterChange" />
         <section data-tour="posts-step-1" class="flex gap-1">
           <UButton icon="i-lucide-grid-2x2" :variant="currentView === 'Grid' ? 'solid' : 'ghost'" size="sm"
             class="rounded-xl" @click="() => { currentView = 'Grid' }">

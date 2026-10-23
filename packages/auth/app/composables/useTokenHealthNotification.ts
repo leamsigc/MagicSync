@@ -2,13 +2,18 @@ export function useTokenHealthNotification() {
   const toast = useToast()
   const router = useRouter()
   const notifiedTokenIds = useState<string[]>('notifiedTokenIds', () => [])
+  // Shared so the header badge and the layout never need two independent
+  // requests for the same summary.
+  const needsAttention = useState<number>('token-health:needsAttention', () => 0)
 
   async function checkAndNotify(): Promise<{ needsAttention: number; expired: number; expiringSoon: number } | null> {
     try {
       const data = await $fetch<{
         accounts: Array<{ id: string; platform: string; accountName: string; health: { status: string; daysRemaining: number | null } }>
         summary: { needsAttention: number; expired: number; expiringSoon: number }
-      }>('/api/v1/social-accounts/health')
+      }>('/api/v1/social-accounts/health?summary=1')
+
+      needsAttention.value = data.summary.needsAttention
 
       const expired = data.accounts.filter(
         a => a.health.status === 'expired' && !notifiedTokenIds.value.includes(a.id)
@@ -56,5 +61,5 @@ export function useTokenHealthNotification() {
     }
   }
 
-  return { checkAndNotify }
+  return { checkAndNotify, needsAttention }
 }

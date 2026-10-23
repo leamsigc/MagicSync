@@ -1,5 +1,5 @@
 import type { Post, PostWithAllData, SocialMediaAccount } from '#layers/BaseDB/db/schema';
-import { postBatchService } from '#layers/BaseDB/server/services/post.service';
+import { postBatchService, postService } from '#layers/BaseDB/server/services/post.service';
 import { socialMediaAccountService, } from '#layers/BaseDB/server/services/social-media-account.service';
 import { SchedulerPos, SchedulerPost } from '#layers/BaseDB/server/services/SchedulerPost.service';
 import type { PluginPostDetails, PluginSocialMediaAccount, SchedulerPluginConstructor } from '#layers/BaseDB/server/services/SchedulerPost.service';
@@ -192,6 +192,11 @@ export class AutoPostService {
         const platform = platformPost.platformPostId
         if (!platform) return
 
+        // Only pending rows are publishable. A published row is already live,
+        // so an edit-then-post retry must not send it again; failed rows are
+        // reset to pending by the retry paths before this runs.
+        if (platformPost.status !== 'pending') return
+
         // Check rate limit before attempting to publish
         const rateCheck = platformRateLimiter.canMakeRequest(platform)
         if (!rateCheck.allowed) {
@@ -309,6 +314,10 @@ export class AutoPostService {
 
         await this.publishPlatformPost(scheduler, post, platform, socialMediaAccount, platformPost);
       }))
+
+    // Final word after every platform settled: corrects any interleaving where
+    // a success recomputed the post status before a sibling's failure landed.
+    await postService.recomputeStatusFromPlatforms(post.id, post.user.id)
   }
 
   async getCommentsFromPost({

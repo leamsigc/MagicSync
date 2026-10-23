@@ -19,40 +19,27 @@
  *   - Session (browser/app): cookies auto-read from event.headers
  *   - API key (external): x-api-key header auto-read from event.headers
  */
-import { type H3Event, getHeaders } from 'h3'
+import { type H3Event } from 'h3'
 import { auth } from '#layers/BaseAuth/lib/auth'
+import { getRequestAuthHeaders, resolveRequestSession } from './request-session'
 
 export function useAuthApi(event: H3Event) {
   // Extract ALL headers from the incoming request once.
-  // Use H3's getHeaders() to reliably read all headers — handles both
-  // plain-object and special-proxy event.headers representations.
   // This includes:
   //   - cookie (session auth)
   //   - x-api-key (API key auth)
   //   - authorization, content-type, etc.
-  // Headers are lazily cached per-event to avoid repeated extraction.
-  let _headers: Headers | null = null
-
-  const headers = (): Headers => {
-    if (!_headers) {
-      // getHeaders() returns Record<string, string | string[] | undefined>
-      // Wrap it in a proper Headers instance so auth.api methods accept it.
-      const raw = getHeaders(event)
-      _headers = new Headers(
-        Object.fromEntries(
-          Object.entries(raw).map(([k, v]) => [k, Array.isArray(v) ? v.join(', ') : v ?? ''])
-        )
-      )
-    }
-    return _headers
-  }
+  // Shared with the session cache so one request extracts headers once.
+  const headers = (): Headers => getRequestAuthHeaders(event)
 
   return {
     headers,
 
     // --- Session ---
+    // Memoized per request: the auth middleware and evlog identity middleware
+    // already resolved it, so a handler never pays a second DB round trip.
     getSession: async () => {
-      return await auth.api.getSession({ headers: headers() })
+      return await resolveRequestSession(event)
     },
 
     // --- Organization ---

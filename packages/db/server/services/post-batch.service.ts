@@ -109,7 +109,6 @@ export class PostBatchService implements PostBatchServiceType {
     publishDetails.set(socialPlatformId, platformSpecificDetails)
     const detailsString = JSON.stringify(Object.fromEntries(publishDetails))
 
-    await postService.updateStatus(post.id, post.user.id, response.status)
     await postService.updatePlatformPost(socialPlatform.id, {
       publishDetail: detailsString,
       status: response.status,
@@ -117,6 +116,10 @@ export class PostBatchService implements PostBatchServiceType {
       // platform post showed `errorMessage: null` and was undiagnosable.
       errorMessage: response.status === 'failed' ? (response.error || 'Publish failed') : null,
     })
+    // Platforms publish in parallel, so the post status must be derived from
+    // the whole row set: a failure can no longer be overwritten by another
+    // platform finishing successfully (last-writer-wins).
+    await postService.recomputeStatusFromPlatforms(post.id, post.user.id)
   }
 
   async getDueReposts(now: Date): Promise<ServiceResponse<Post[]>> {

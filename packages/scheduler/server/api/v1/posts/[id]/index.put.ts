@@ -107,6 +107,7 @@ export default defineEventHandler(async (event) => {
     const fullPost = await postService.findByIdFull({ postId: result.data.id, userId: user.id })
     const platformStatuses = fullPost.platformPosts?.map((pp: any) => ({
       platform: pp.platformPostId || pp.socialAccountId,
+      accountId: pp.socialAccountId,
       status: pp.status,
       errorMessage: pp.errorMessage || undefined,
       publishedAt: pp.publishedAt?.toISOString?.() || pp.publishedAt

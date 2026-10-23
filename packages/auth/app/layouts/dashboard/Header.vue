@@ -5,21 +5,10 @@ import BusinessSwitcher from './BusinessSwitcher.vue';
 
 const { t, currentPageTitle } = useDashboardNavigation()
 
-const tokenHealthCount = ref(0)
-
-const { checkAndNotify } = useTokenHealthNotification()
-// Client-only: same SSR-cookie reason as DashboardLayout — the dashboard
-// layout already ran this check after hydration.
-// Own callOnce key: the dashboard layout runs the same check under a
-// different key, and sharing it would leave this badge permanently at 0.
-if (import.meta.client) {
-  callOnce('token-health-notification-header', async () => {
-    const summary = await checkAndNotify()
-    if (summary) {
-      tokenHealthCount.value = summary.needsAttention
-    }
-  })
-}
+// The dashboard layout owns the single health check; this badge only reads the
+// shared summary state it writes (`token-health:needsAttention`). Running a
+// second callOnce here duplicated a ~400 KB request on every page load.
+const { needsAttention } = useTokenHealthNotification()
 </script>
 
 <template>
@@ -38,9 +27,9 @@ if (import.meta.client) {
         <UColorModeButton class="hidden sm:inline-flex" />
         <NuxtLink to="/app/notifications" :title="t('menu.notification')" class="relative">
           <UButton icon="i-heroicons-bell" variant="ghost" color="neutral" class="rounded-xl" />
-          <span v-if="tokenHealthCount > 0"
+          <span v-if="needsAttention > 0"
             class="absolute -top-1 -right-1 flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-red-600 rounded-full animate-pulse">
-            {{ tokenHealthCount > 9 ? '9+' : tokenHealthCount }}
+            {{ needsAttention > 9 ? '9+' : needsAttention }}
           </span>
         </NuxtLink>
         <BaseTranslationMenu class="hidden sm:block" />

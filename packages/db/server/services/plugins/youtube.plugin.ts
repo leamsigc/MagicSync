@@ -8,6 +8,7 @@ import { getPublicUrlForAsset, fetchedImageBase64 } from '../../../../scheduler/
 import type { FacebookPage } from '#layers/BaseShared/server/types/facebook-pages';
 import { Readable } from 'stream';
 import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service';
+import { resolveDescription, resolveTags, resolveTitle } from '#layers/BaseDB/server/utils/youtube-metadata';
 
 export class YouTubePlugin extends BaseSchedulerPlugin {
   static readonly pluginName = 'youtube';
@@ -249,11 +250,14 @@ export class YouTubePlugin extends BaseSchedulerPlugin {
 
       const youtube = google.youtube({ version: 'v3', auth });
 
+      const title = resolveTitle(settings?.title, postDetails.title, content)
+      const description = resolveDescription(content)
+
       const videoMetadata: youtube_v3.Schema$Video = {
         snippet: {
-          title: settings?.title || postDetails.title || 'Untitled Video',
-          description: content || '',
-          tags: settings?.tags || [],
+          title,
+          description,
+          tags: resolveTags(settings?.tags, content, title),
           categoryId: settings?.categoryId || '22',
         },
         status: {

@@ -88,6 +88,12 @@ export const usePostManager = () => {
 
   /**
    * Get posts with pagination and filtering
+   *
+   * Identical concurrent requests are collapsed: the page setup loader and
+   * `PostFiltersBar`'s mount handler both ask for the same list on a
+   * navigation, and three identical `/api/v1/posts` calls used to leave the
+   * browser at once. The map lives on the Nuxt app, so SSR keeps it
+   * per-request and the client shares one per tab.
    */
   const getPosts = async (
     businessId: string,
@@ -108,8 +114,19 @@ export const usePostManager = () => {
         }
       })
 
-      const response = await $fetch<PaginatedResponse<PostWithAllData>>(`/api/v1/posts?${query}`)
+      const key = query.toString()
+      const nuxtApp = useNuxtApp() as ReturnType<typeof useNuxtApp> & { _postsInflight?: Map<string, Promise<PaginatedResponse<PostWithAllData>>> }
+      const inflight = (nuxtApp._postsInflight ??= new Map<string, Promise<PaginatedResponse<PostWithAllData>>>())
 
+      const pending = inflight.get(key)
+      const request = pending ?? $fetch<PaginatedResponse<PostWithAllData>>(`/api/v1/posts?${query}`)
+
+      if (!pending) {
+        inflight.set(key, request)
+        void request.finally(() => inflight.delete(key)).catch(() => {})
+      }
+
+      const response = await request
       postList.value = response?.data ?? []
     } catch (err: unknown) {
       const fetchError = err as { data?: { message?: string }; message?: string }

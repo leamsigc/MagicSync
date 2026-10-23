@@ -79,6 +79,91 @@ export interface CreatePlatformPostData {
   platformSettings?: string
 }
 
+/**
+ * Reconcile a post's `platform_posts` rows with the account list being saved.
+ *
+ * Rows that already published are preserved: they are proof the platform
+ * accepted the post, and recreating them as `pending` made the next trigger
+ * re-publish to every platform that had already succeeded (duplicate posts).
+ * Removed accounts and every non-published row are dropped; only accounts
+ * without a surviving row are inserted as `pending`, which is what makes an
+ * edit-then-post retry the failed platform alone.
+ */
+async function syncPlatformPostsAfterUpdate(
+  tx: any,
+  postId: string,
+  data: UpdatePostData,
+  updatedAt: Date,
+): Promise<void> {
+  const targetAccountIds = data.targetPlatforms ?? []
+  const existingRows = await tx.query.platformPosts.findMany({
+    where: eq(platformPosts.postId, postId),
+  })
+
+  if (targetAccountIds.length === 0) {
+    if (existingRows.length > 0) {
+      await tx.delete(platformPosts).where(eq(platformPosts.postId, postId))
+    }
+    return
+  }
+
+  const keptAccountIds = new Set<string>(
+    existingRows
+      .filter((row: PlatformPost) => row.status === 'published' && targetAccountIds.includes(row.socialAccountId))
+      .map((row: PlatformPost) => row.socialAccountId),
+  )
+  const dropIds = existingRows
+    .filter((row: PlatformPost) => !keptAccountIds.has(row.socialAccountId))
+    .map((row: PlatformPost) => row.id)
+
+  if (dropIds.length > 0) {
+    await tx.delete(platformPosts).where(inArray(platformPosts.id, dropIds))
+  }
+
+  const accountRows = await tx.query.socialMediaAccounts.findMany({
+    where: inArray(socialMediaAccounts.id, targetAccountIds),
+  })
+  const accountMap = new Map<string, AccountPlatform>(accountRows.map((account: any) => [account.id, account.platform]))
+
+  const entries = targetAccountIds
+    .filter((accountId: string) => !keptAccountIds.has(accountId))
+    .map((accountId: string) => {
+      const platformName = accountMap.get(accountId) ?? accountId
+      const platformSpecificSettings = data.platformSettings?.[platformName] || data.platformSettings?.[accountId] || null
+      const platformSpecificContent = data.platformContent?.[platformName] || data.platformContent?.[accountId] || null
+
+      return {
+        id: crypto.randomUUID(),
+        postId,
+        socialAccountId: accountId,
+        status: 'pending' as const,
+        createdAt: updatedAt,
+        platformPostId: accountMap.get(accountId) ?? null,
+        platformSettings: platformSpecificSettings ? {
+          ...platformSpecificSettings,
+          platformContent: platformSpecificContent
+        } : null
+      }
+    })
+
+  if (entries.length > 0) {
+    await tx.insert(platformPosts).values(entries)
+  }
+}
+
+/**
+ * Post-level status from its platform rows. Failure wins so a partial failure
+ * is never reported as a success; any success marks the post published (which
+ * also stops the scheduler from re-processing it); otherwise pending.
+ */
+function aggregatePlatformStatus(
+  statuses: Array<'pending' | 'published' | 'failed'>,
+): 'pending' | 'published' | 'failed' {
+  if (statuses.some(status => status === 'failed')) return 'failed'
+  if (statuses.some(status => status === 'published')) return 'published'
+  return 'pending'
+}
+
 export class PostService implements PostServiceType {
   private db = useDrizzle()
 
@@ -593,40 +678,10 @@ export class PostService implements PostServiceType {
             .set({ isPublic: true })
             .where(inArray(assets.id, data.mediaAssets))
         }
-        // Update platform posts if target platforms changed
+        // Reconcile platform rows: keep what already published, retry only the
+        // rows that did not, and add rows for newly targeted accounts.
         if (data.targetPlatforms) {
-          // Remove existing platform posts
-          await tx
-            .delete(platformPosts)
-            .where(eq(platformPosts.postId, id))
-
-          // Batch-fetch all accounts in a single query instead of N individual calls
-          const accountRows = await tx.query.socialMediaAccounts.findMany({
-            where: inArray(socialMediaAccounts.id, data.targetPlatforms)
-          })
-          const accountMap = new Map(accountRows.map(a => [a.id, a.platform]))
-
-          // Create new platform posts
-          const platformPostEntries = data.targetPlatforms.map((accountId: string) => {
-            const platformName = accountMap.get(accountId) ?? accountId
-            const platformSpecificSettings = data.platformSettings?.[platformName] || data.platformSettings?.[accountId] || null
-            const platformSpecificContent = data.platformContent?.[platformName] || data.platformContent?.[accountId] || null
-
-            return {
-              id: crypto.randomUUID(),
-              postId: id,
-              socialAccountId: accountId,
-              status: 'pending' as const,
-              createdAt: updateData.updatedAt,
-              platformPostId: accountMap.get(accountId) ?? null,
-              platformSettings: platformSpecificSettings ? {
-                ...platformSpecificSettings,
-                platformContent: platformSpecificContent
-              } : null
-            }
-          })
-
-          await tx.insert(platformPosts).values(platformPostEntries)
+          await syncPlatformPostsAfterUpdate(tx, id, data, updateData.updatedAt as Date)
         }
         return { success: true, data: updated }
       })
@@ -660,6 +715,36 @@ export class PostService implements PostServiceType {
       return { success: true, data: updated }
     } catch {
       return { success: false, error: 'Failed to update post status' }
+    }
+  }
+
+  /**
+   * Derive the post-level status from its platform rows instead of trusting the
+   * last platform that finished. Only writes when the value changes, so
+   * `publishedAt` is not rewritten by every later platform completion.
+   */
+  async recomputeStatusFromPlatforms(id: string, userId: string): Promise<ServiceResponse<Post>> {
+    try {
+      const rows = await this.db
+        .select({ status: platformPosts.status })
+        .from(platformPosts)
+        .where(eq(platformPosts.postId, id))
+
+      const current = await this.db.query.posts.findFirst({
+        where: and(eq(posts.id, id), eq(posts.userId, userId)),
+      })
+      if (!current) {
+        return { success: false, error: 'Post not found', code: 'NOT_FOUND' }
+      }
+
+      const status = aggregatePlatformStatus(rows.map(row => row.status))
+      if (status === current.status) {
+        return { success: true, data: current }
+      }
+
+      return this.updateStatus(id, userId, status)
+    } catch {
+      return { success: false, error: 'Failed to recompute post status' }
     }
   }
 
