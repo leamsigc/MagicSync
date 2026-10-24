@@ -39,12 +39,13 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
-          node-version: 24
+          # Single source of truth: the same runtime the app and Docker image use.
+          node-version-file: .nvmrc
           cache: pnpm # or pnpm / yarn
       - name: Setup Pages
         uses: actions/configure-pages@v4    
       - name: Install dependencies
-        run: pnpm i # or pnpm install / yarn install / bun install
+        run: pnpm install --frozen-lockfile
       - name: Build with VitePress
         run: pnpm doc:build # or pnpm docs:build / yarn docs:build / bun run docs:build
       - name: Upload artifact

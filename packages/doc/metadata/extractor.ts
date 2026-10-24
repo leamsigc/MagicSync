@@ -74,7 +74,11 @@ export function scanMarkdownFiles(dir: string): string[] {
     }
   }
   catch (error) {
-    console.warn(`Failed to scan directory ${dir}:`, error)
+    // Optional docs folders (api/, ecosystem/, troubleshooting/) may not exist
+    // in every checkout. Missing directories are not a build problem.
+    if ((error as NodeJS.ErrnoException)?.code !== 'ENOENT') {
+      console.warn(`Failed to scan directory ${dir}:`, error)
+    }
   }
 
   return files

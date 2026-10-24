@@ -125,4 +125,8 @@ Current focus: [module/feature]
 
 #### MUST PASS ON THE GENERATED CODE ### 
 
-pass cyclomatic complexity lint.
+**Cyclomatic complexity** — every new/changed function ≤ 5 branches
+   (`if`/`else if`/`case`/`catch`/loops/`&&`/`||`/ternary each count 1;
+   `??`/`?.` null-defaults don't count). Extract helpers instead of adding
+   branches. No `complexity` eslint rule is configured repo-wide yet, so
+   count manually and state the max you found.

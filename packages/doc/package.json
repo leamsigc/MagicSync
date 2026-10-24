@@ -16,7 +16,7 @@
   "keywords": [],
   "author": "Ismael Garcia <leamsigc@leamsigc.com>",
   "license": "MIT",
-  "packageManager": "pnpm@11.5.2",
+  "packageManager": "pnpm@12.5.1",
   "dependencies": {
     "dayjs": "^1.11.23",
     "gray-matter": "^4.0.3",
@@ -28,7 +28,7 @@
     "@types/node": "^26.6.5",
     "autoprefixer": "^10.6.1",
     "mermaid": "^12.2.0",
-    "postcss": "^8.5.30",
+    "postcss": "^8.5.31",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.23.15",
     "vitepress": "1.6.4",

@@ -25,9 +25,11 @@ last_updated: 2026-09-09
 
 1. Subscribe to `$sessionSignal` **exactly once** (module-level guard). Never subscribe in a composable body — `UseUser()` runs on every navigation via `01.auth.global.ts` middleware.
 2. Never call composables inside `computed()` — hoist `UseUser()` / `useColorMode()` to setup scope and read the refs inside the computed.
-3. `fetchSession()` must be single-flight with `try/finally` around the `sessionFetching` flag so one failure never bricks future fetches.
-4. `signOut()` must **always redirect** (`try/finally` + `reloadNuxtApp({ path })` on client): a failed sign-out request must never strand the user on a dead page.
-5. Clear local state **and** `clearNuxtData('auth-session')` on logout — the cached `useFetch` payload otherwise resurrects the old session on the next fetch.
+3. `fetchSession()` must be single-flight: keep the in-flight promise on the Nuxt app (per-request on SSR, per-tab on client) and clear it in `finally`. Never use a `watch` + wall-clock timeout as the waiter — a value that settled before the watcher attached stalls for the full timeout.
+4. Route middleware must trust the SSR-hydrated session. Fetch only when `sessionLoaded` is false or `sessionCheckedAt` is older than the revalidation window (~5 min); awaiting `/api/auth/get-session` on every navigation blocked each click for 170–370 ms. Bound the client fetch with `AbortSignal.timeout(5000)`.
+5. Server code resolves the session through `resolveRequestSession(event)` (`packages/auth/server/utils/request-session.ts`), which memoizes one promise on `event.context`. Never call `auth.api.getSession()` directly in a second place — that was 3 lookups per API request.
+6. `signOut()` must **always redirect** (`try/finally` + `reloadNuxtApp({ path })` on client): a failed sign-out request must never strand the user on a dead page.
+7. Clear local state **and** `clearNuxtData('auth-session')` on logout — the cached `useFetch` payload otherwise resurrects the old session on the next fetch. Also reset `sessionLoaded`/`sessionCheckedAt`.
 
 ## Gotchas
 

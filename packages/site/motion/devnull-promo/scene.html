@@ -1,0 +1,887 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>MagicSync × dev-null.sh</title>
+<style>
+  @font-face{font-family:'Inter';src:url('fonts/inter-var.woff2') format('woff2');font-weight:100 900;font-style:normal;font-display:block}
+  @font-face{font-family:'JetBrains Mono';src:url('fonts/jetbrains-mono-var.woff2') format('woff2');font-weight:100 800;font-style:normal;font-display:block}
+
+  :root{
+    --bg:#0A0A0A;
+    --panel:#101010;
+    --line:#262626;
+    --line-soft:#1C1C1C;
+    --fg:#FAFAFA;
+    --muted:#A3A3A3;
+    --dim:#6B6B6B;
+    --orange:#F97316;
+    --orange-l:#FF9A4D;
+    --orange-d:#EA6C0A;
+    --green:#22C55E;
+    --green-l:#4ADE80;
+    --cyan:#00F2FF;
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:1920px;height:1080px;overflow:hidden;background:var(--bg)}
+  body{
+    font-family:'Inter',system-ui,sans-serif;
+    color:var(--fg);
+    -webkit-font-smoothing:antialiased;
+    text-rendering:geometricPrecision;
+  }
+  canvas{position:absolute;inset:0;width:1920px;height:1080px;display:block}
+  #stage{position:absolute;inset:0}
+  .scene{position:absolute;inset:0;opacity:0}
+
+  .mono{font-family:'JetBrains Mono',monospace}
+  .kicker{
+    font-family:'JetBrains Mono',monospace;font-size:20px;letter-spacing:.32em;
+    text-transform:uppercase;color:var(--orange);
+  }
+  .h1{font-size:66px;font-weight:800;letter-spacing:-.025em;line-height:1.06}
+  .h2{font-size:54px;font-weight:800;letter-spacing:-.02em;line-height:1.1}
+  .muted{color:var(--muted)}
+
+  /* ---------- persistent chrome ---------- */
+  #chrome{position:absolute;inset:0;opacity:0;pointer-events:none}
+  #chromeTop{position:absolute;left:76px;top:56px;display:flex;align-items:center;gap:14px}
+  #chromeTop .mark{width:40px;height:40px;display:block}
+  #chromeMark .octo{width:40px;height:40px;margin:0}
+  #chromeTop .name{font-size:22px;font-weight:700;letter-spacing:-.01em}
+  #chromeDomain{position:absolute;right:76px;top:62px;font-family:'JetBrains Mono',monospace;font-size:20px;color:var(--dim);letter-spacing:.04em}
+  #progress{position:absolute;left:0;bottom:0;height:3px;width:100%;background:rgba(249,115,22,.13)}
+  #progressFill{position:absolute;left:0;top:0;height:100%;width:0;background:linear-gradient(90deg,var(--orange-d),var(--orange))}
+
+  /* ---------- S0 terminal ---------- */
+  #s0{opacity:1}
+  #term{
+    position:absolute;left:300px;top:336px;width:1320px;height:344px;
+    background:var(--panel);border:1px solid var(--line);border-radius:20px;overflow:hidden;
+    box-shadow:0 60px 140px rgba(0,0,0,.75);
+  }
+  #termBar{height:54px;display:flex;align-items:center;gap:9px;padding:0 22px;background:#0D0D0D;border-bottom:1px solid var(--line-soft)}
+  #termBar .dot{width:12px;height:12px;border-radius:50%}
+  #termBar .ttl{margin-left:14px;font-family:'JetBrains Mono',monospace;font-size:16px;color:var(--dim);letter-spacing:.03em}
+  #termBody{padding:44px 48px;font-family:'JetBrains Mono',monospace;font-size:30px;line-height:1.85}
+  .tline{display:flex;align-items:baseline;gap:16px;min-height:56px}
+  .tline .ico{width:22px;height:22px;flex:0 0 22px;transform:translateY(4px)}
+  #cmdText{color:var(--fg);white-space:pre}
+  #out1{color:var(--green-l)}
+  #out2{color:var(--muted)}
+  #caret{display:inline-block;width:15px;height:31px;background:var(--orange);vertical-align:-5px;margin-left:6px}
+  #caret2{display:inline-block;width:15px;height:31px;background:var(--green);vertical-align:-5px;margin-left:8px}
+
+  /* ---------- S1 connection ---------- */
+  #s1Kicker{position:absolute;left:0;right:0;top:214px;text-align:center}
+  #s1Blocks{position:absolute;left:0;right:0;top:360px}
+  .block{position:absolute;width:420px;text-align:center}
+  #msBlock{left:236px}
+  #dnBlock{left:1264px}
+  .blockIn{will-change:transform,opacity}
+  .octo{width:300px;height:300px;margin:0 auto;display:block}
+  .blockName{font-size:52px;font-weight:800;letter-spacing:-.025em;margin-top:22px}
+  .blockSub{font-family:'JetBrains Mono',monospace;font-size:19px;color:var(--dim);margin-top:12px;letter-spacing:.02em}
+  #dnCard{
+    width:300px;height:300px;margin:0 auto;border-radius:44px;
+    background:radial-gradient(circle at 50% 38%,#161616,#0B0B0B 70%);border:1px solid var(--line);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;
+    box-shadow:0 40px 90px rgba(0,0,0,.6);
+  }
+  #dnGlyph{width:112px;height:112px}
+  #dnPath{font-family:'JetBrains Mono',monospace;font-size:21px;color:var(--dim)}
+  #tether{position:absolute;left:596px;top:62px;width:730px;height:130px;overflow:visible}
+  #chips{position:absolute;left:0;right:0;top:846px;display:flex;justify-content:center;gap:22px}
+  .chip{
+    font-family:'JetBrains Mono',monospace;font-size:20px;color:var(--fg);
+    border:1px solid var(--line);background:var(--panel);border-radius:999px;
+    padding:15px 30px;letter-spacing:.01em;
+  }
+
+  /* ---------- S2 steps ---------- */
+  #s2Head{position:absolute;left:0;right:0;top:214px;text-align:center}
+  #s2Foot{position:absolute;left:0;right:0;top:892px;text-align:center;
+    font-family:'JetBrains Mono',monospace;font-size:21px;color:var(--dim);letter-spacing:.14em;opacity:0}
+  #stepRail{position:absolute;left:0;right:0;top:511px}
+  .cards{position:absolute;left:0;right:0;top:440px;display:flex;justify-content:center;gap:90px}
+  .card{
+    width:420px;height:344px;border-radius:28px;border:1px solid var(--line);
+    background:linear-gradient(170deg,#121212,#0D0D0D);padding:34px;position:relative;
+  }
+  .card .ic{width:74px;height:74px;border-radius:20px;background:#1A1A1A;border:1px solid var(--line-soft);display:flex;align-items:center;justify-content:center}
+  .card .ic svg{width:38px;height:38px}
+  .card .stepno{position:absolute;right:34px;top:46px;font-family:'JetBrains Mono',monospace;font-size:17px;color:var(--dim);letter-spacing:.18em}
+  .card h3{font-size:33px;font-weight:700;letter-spacing:-.015em;margin-top:26px}
+  .card p{font-size:20px;line-height:1.55;color:var(--muted);margin-top:13px}
+  .card .sig{position:absolute;left:34px;right:34px;bottom:26px;height:34px}
+  .card .sig path{stroke-dasharray:340;stroke-dashoffset:340}
+  #railSvg{position:absolute;left:0;right:0;top:451px;width:1920px;height:120px;overflow:visible}
+  #fxSvg{position:absolute;left:0;right:0;top:0;width:1920px;height:1080px;overflow:visible;pointer-events:none}
+
+  /* ---------- S3 publish ---------- */
+  #s3Head{position:absolute;left:0;right:0;top:158px;text-align:center}
+  #composer{position:absolute;left:110px;top:318px;width:600px;height:430px;border-radius:28px;border:1px solid var(--line);background:linear-gradient(170deg,#121212,#0D0D0D);padding:34px}
+  #composer .lab{font-family:'JetBrains Mono',monospace;font-size:17px;letter-spacing:.22em;color:var(--orange);text-transform:uppercase}
+  #composer .txt{font-size:27px;line-height:1.5;margin-top:22px;min-height:120px;color:var(--fg)}
+  #composerDone{position:absolute;left:34px;right:34px;top:126px;opacity:0}
+  #composerDone .ok{display:flex;align-items:center;gap:10px;font-family:'JetBrains Mono',monospace;font-size:18px;color:var(--green)}
+  #composerDone .ok svg{width:19px;height:19px}
+  #composerDone .title{margin-top:16px;font-size:24px;line-height:1.5;color:#6E6E6E}
+  #composerFoot{position:absolute;left:34px;right:34px;bottom:30px;display:flex;align-items:center;justify-content:space-between}
+  .orbRow{display:flex;gap:10px}
+  .orb{width:38px;height:38px;border-radius:50%;background:#1A1A1A;border:1px solid var(--line-soft);display:flex;align-items:center;justify-content:center}
+  .orb svg{width:19px;height:19px}
+  .timeBadge{font-family:'JetBrains Mono',monospace;font-size:17px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:9px 16px}
+  #orbitLayer{position:absolute;left:0;top:0;width:1920px;height:1080px}
+  #s3Octo{position:absolute;left:810px;top:336px;width:300px;height:300px}
+  #feed{position:absolute;left:1350px;top:318px;width:460px;height:430px;border-radius:28px;border:1px solid var(--line);background:linear-gradient(170deg,#111,#0C0C0C);padding:30px 32px}
+  #feed .fhead{display:flex;align-items:center;gap:12px;font-family:'JetBrains Mono',monospace;font-size:19px;color:var(--fg)}
+  #feed .live{width:9px;height:9px;border-radius:50%;background:var(--green);box-shadow:0 0 14px var(--green)}
+  #feed .fhead .path{color:var(--dim)}
+  #feedGhost{position:absolute;left:32px;right:32px;top:100px}
+  #feedGhost .gh{height:15px;border-radius:8px;background:#1E1E1E;margin-bottom:14px}
+  #feedGhost .gh.w2{width:62%}
+  #feedGhost .gh.w1{width:88%}
+  #commit{position:absolute;left:32px;right:32px;top:96px;opacity:0}
+  #commit .row{display:flex;align-items:center;gap:11px}
+  #commit .av{width:38px;height:38px;border-radius:50%;background:linear-gradient(140deg,var(--orange-l),var(--orange-d));display:flex;align-items:center;justify-content:center;font-weight:800;font-size:17px;color:#1A0A00}
+  #commit .who{font-family:'JetBrains Mono',monospace;font-size:18px;color:var(--fg)}
+  #commit .when{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:16px;color:var(--dim)}
+  #commit .body{font-size:22px;line-height:1.5;color:#E6E6E6;margin-top:16px}
+  #commit .sig{display:flex;align-items:center;gap:9px;margin-top:18px;font-family:'JetBrains Mono',monospace;font-size:16px;color:var(--green)}
+  #commit .sig svg{width:17px;height:17px}
+  #flyer{position:absolute;left:0;top:0;opacity:0;z-index:40}
+  .flycard{width:430px;padding:18px 22px;border-radius:18px;border:1px solid #2E2E2E;
+    background:linear-gradient(170deg,#171717,#101010);box-shadow:0 24px 60px rgba(0,0,0,.6)}
+  .flyhead{display:flex;align-items:center;gap:9px;font-family:'JetBrains Mono',monospace;font-size:15px;color:var(--green);letter-spacing:.08em}
+  .flyhead .dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green)}
+  .flybody{margin-top:12px;font-size:21px;line-height:1.45;color:#EDEDED}
+
+  /* ---------- S4 CTA ---------- */
+  #s4{text-align:center}
+  #ctaGlow{position:absolute;left:50%;top:400px;width:900px;height:900px;margin-left:-450px;margin-top:-450px;border-radius:50%;
+    background:radial-gradient(circle,rgba(249,115,22,.20),rgba(249,115,22,.05) 42%,transparent 68%)}
+  #ctaMark{position:absolute;left:50%;top:206px;width:220px;height:220px;margin-left:-110px}
+  #ctaLock{position:absolute;left:0;right:0;top:500px;display:flex;align-items:center;justify-content:center;gap:20px}
+  #ctaLock .a{font-size:46px;font-weight:800;letter-spacing:-.02em}
+  #ctaLock .x{font-size:40px;color:var(--orange);font-weight:400}
+  #ctaLock .b{font-size:46px;font-weight:800;letter-spacing:-.02em;color:var(--green-l)}
+  #ctaHead{position:absolute;left:0;right:0;top:594px}
+  #ctaUrl{position:absolute;left:0;right:0;top:712px;font-family:'JetBrains Mono',monospace;font-size:30px;color:var(--orange-l);letter-spacing:.04em}
+  #ctaUrl .u{position:relative;display:inline-block;padding-bottom:10px}
+  #ctaUrl .bar{position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--orange);transform-origin:left center;transform:scaleX(0)}
+  #ctaBtn{position:absolute;left:50%;top:808px;margin-left:-186px;width:372px;height:70px;border-radius:999px;
+    background:linear-gradient(180deg,var(--orange-l),var(--orange));color:#160800;font-size:26px;font-weight:700;
+    display:flex;align-items:center;justify-content:center;gap:12px;letter-spacing:-.01em;
+    box-shadow:0 18px 44px rgba(249,115,22,.28)}
+  #ctaBtn svg{width:24px;height:24px}
+  #ctaNote{position:absolute;left:0;right:0;top:906px;font-family:'JetBrains Mono',monospace;font-size:19px;color:var(--dim);letter-spacing:.04em}
+
+  #streak{position:absolute;left:-30%;top:516px;width:160%;height:10px;opacity:0;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.95),rgba(249,115,22,.9),transparent);filter:blur(3px)}
+  #flash{position:absolute;inset:0;opacity:0;mix-blend-mode:screen;
+    background:radial-gradient(circle at 50% 50%,rgba(255,255,255,.85),rgba(249,115,22,.22) 46%,transparent 74%)}
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+<canvas id="fx"></canvas>
+
+<div id="stage">
+  <div id="chrome">
+    <div id="chromeTop">
+      <span class="mark" id="chromeMark"></span>
+      <span class="name">MagicSync</span>
+    </div>
+    <div id="chromeDomain">magicsync.dev</div>
+    <div id="progress"><div id="progressFill"></div></div>
+  </div>
+
+  <!-- ================= S0 : the command ================= -->
+  <section class="scene" id="s0">
+    <div id="term">
+      <div id="termBar">
+        <span class="dot" style="background:#F97316"></span>
+        <span class="dot" style="background:#3A3A3A"></span>
+        <span class="dot" style="background:#22C55E"></span>
+        <span class="ttl">dev-null.sh — session</span>
+      </div>
+      <div id="termBody">
+        <div class="tline">
+          <span class="ico" id="promptIco"></span>
+          <span id="cmdText"></span><span id="caret"></span>
+        </div>
+        <div class="tline" id="out1">
+          <span class="ico" id="checkIco1"></span>
+          <span>signed with ed25519 · verified via GitHub</span><span id="caret2"></span>
+        </div>
+        <div class="tline" id="out2">
+          <span class="ico" id="arrowIco"></span>
+          <span>commit published to /dev/null</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= S1 : the connection ================= -->
+  <section class="scene" id="s1">
+    <div id="s1Kicker"><span class="kicker">New connection</span></div>
+    <div id="s1Blocks">
+      <svg id="tether" viewBox="0 0 730 130">
+        <defs>
+          <linearGradient id="tetherGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#F97316"/><stop offset="55%" stop-color="#F97316"/><stop offset="100%" stop-color="#22C55E"/>
+          </linearGradient>
+        </defs>
+        <path id="tetherPath" d="M0 88 C 182 20, 548 20, 730 88" fill="none" stroke="url(#tetherGrad)" stroke-width="3" stroke-linecap="round"/>
+        <circle id="pulse" r="9" fill="#fff" opacity="0"/>
+      </svg>
+      <div class="block" id="msBlock">
+        <div class="blockIn" id="msIn">
+          <div id="msOcto"></div>
+          <div class="blockName">MagicSync</div>
+          <div class="blockSub">social scheduler</div>
+        </div>
+      </div>
+      <div class="block" id="dnBlock">
+        <div class="blockIn" id="dnIn">
+          <div id="dnCard"><div id="dnGlyph"></div><div id="dnPath">/dev/null</div></div>
+          <div class="blockName">dev-null.sh</div>
+          <div class="blockSub">social network for developers</div>
+        </div>
+      </div>
+    </div>
+    <div id="chips">
+      <div class="chip" id="chip1">SSH-signed</div>
+      <div class="chip" id="chip2">GitHub-verified</div>
+      <div class="chip" id="chip3">no token stored</div>
+    </div>
+  </section>
+
+  <!-- ================= S2 : three steps ================= -->
+  <section class="scene" id="s2">
+    <div id="s2Head"><div class="h1">Three steps.<br><span class="muted">No OAuth maze.</span></div></div>
+    <svg id="railSvg" viewBox="0 0 1920 120">
+      <path id="railPath" d="M311 60 L 1331 60" fill="none" stroke="#3A3A3A" stroke-width="2" stroke-dasharray="7 9"/>
+    </svg>
+    <div class="cards">
+      <div class="card" id="card1">
+        <div class="ic" id="ic1"></div>
+        <div class="stepno">STEP 01</div>
+        <h3>Connect GitHub</h3>
+        <p>dev-null.sh trusts the signing keys GitHub already publishes for you.</p>
+      </div>
+      <div class="card" id="card2">
+        <div class="ic" id="ic2"></div>
+        <div class="stepno">STEP 02</div>
+        <h3>MagicSync signs</h3>
+        <p>Every post gets an ed25519 signature. No token, no password.</p>
+        <div class="sig"><svg viewBox="0 0 340 34" preserveAspectRatio="none"><path id="sigPath" d="M0 24 L 52 5 L 104 30 L 150 7 L 198 27 L 244 13 L 288 22 L 340 15" fill="none" stroke="#22C55E" stroke-width="3" stroke-linecap="round"/></svg></div>
+      </div>
+      <div class="card" id="card3">
+        <div class="ic" id="ic3"></div>
+        <div class="stepno">STEP 03</div>
+        <h3>Commit lands</h3>
+        <p>Your commit posts straight to /dev/null and shows up in the feed.</p>
+      </div>
+    </div>
+    <svg id="fxSvg" viewBox="0 0 1920 1080">
+      <defs>
+        <radialGradient id="packetGlow"><stop offset="0%" stop-color="rgba(249,115,22,.95)"/><stop offset="100%" stop-color="rgba(249,115,22,0)"/></radialGradient>
+      </defs>
+      <circle id="packetGlowC" cx="0" cy="0" r="42" fill="url(#packetGlow)" opacity="0"/>
+      <circle id="packet" cx="0" cy="0" r="7" fill="#fff" opacity="0"/>
+    </svg>
+    <div id="s2Foot">no OAuth app · no token · no password · revoke any time</div>
+  </section>
+
+  <!-- ================= S3 : one post, everywhere ================= -->
+  <section class="scene" id="s3">
+    <div id="s3Head"><div class="h2">One post. Every platform.<br><span class="muted">Scheduled once.</span></div></div>
+    <div id="orbitLayer"></div>
+    <div id="s3Octo"></div>
+    <div id="composer">
+      <div class="lab">New post</div>
+      <div class="txt" id="postText"></div>
+      <div id="composerDone">
+        <div class="ok"><span id="doneIco"></span><span>scheduled · 5 platforms</span></div>
+        <div class="title" id="composerDoneTitle"></div>
+      </div>
+      <div id="composerFoot">
+        <div class="orbRow" id="composerOrbs"></div>
+        <div class="timeBadge">09:00 · tomorrow</div>
+      </div>
+    </div>
+    <div id="feed">
+      <div class="fhead"><span class="live"></span><span>dev-null.sh</span><span class="path">/feed</span></div>
+      <div id="feedGhost"><div class="gh w1"></div><div class="gh w2"></div></div>
+      <div id="commit">
+        <div class="row">
+          <div class="av">M</div>
+          <div class="who">@you</div>
+          <div class="when">now</div>
+        </div>
+        <div class="body" id="commitBody"></div>
+        <div class="sig"><span id="sigIco"></span><span>signed · ed25519 · verified via GitHub</span></div>
+      </div>
+    </div>
+    <div id="flyer"></div>
+  </section>
+
+  <!-- ================= S4 : call to action ================= -->
+  <section class="scene" id="s4">
+    <div id="ctaGlow"></div>
+    <div id="ctaMark"></div>
+    <div id="ctaLock">
+      <span class="a">MagicSync</span><span class="x">×</span><span class="b">dev-null.sh</span>
+    </div>
+    <div id="ctaHead"><div class="h1">Your commits deserve a feed.</div></div>
+    <div id="ctaUrl"><span class="u">magicsync.dev<span class="bar"></span></span></div>
+    <div id="ctaBtn"><span>Connect dev-null.sh</span><span id="btnArrow"></span></div>
+    <div id="ctaNote">integrations → dev-null.sh</div>
+  </section>
+
+  <div id="streak"></div>
+  <div id="flash"></div>
+</div>
+
+<script>
+/* ============================================================
+   MagicSync × dev-null.sh — promo scene
+   Deterministic: every animation is a paused Web Animation whose
+   currentTime is set from the capture script. JS-driven values
+   (typing, orbiting, travel paths) are pure functions of t.
+   ============================================================ */
+
+const W = 1920, H = 1080;
+const DUR = 47;
+
+const $ = (s) => document.querySelector(s);
+
+const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+const clamp01 = (v) => clamp(v, 0, 1);
+/** normalised progress of t (seconds) inside [a,b] */
+const seg = (t, a, b) => clamp01((t - a) / (b - a));
+const lerp = (a, b, k) => a + (b - a) * k;
+
+const E = {
+  outCubic: (t) => 1 - Math.pow(1 - t, 3),
+  outQuint: (t) => 1 - Math.pow(1 - t, 5),
+  inOutCubic: (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2),
+};
+
+/* ---------- animation registry ---------- */
+const REG = [];
+function A(el, kf, opts) {
+  const a = el.animate(kf, Object.assign({ fill: 'both' }, opts));
+  a.pause();
+  REG.push(a);
+  return a;
+}
+/** opacity window: fade in, hold, fade out */
+function windowFade(el, start, end, fi = 0.5, fo = 0.5) {
+  const dur = end - start;
+  A(el, [
+    { opacity: 0, offset: 0, easing: 'cubic-bezier(.4,0,.2,1)' },
+    { opacity: 1, offset: fi / dur, easing: 'linear' },
+    { opacity: 1, offset: 1 - fo / dur, easing: 'cubic-bezier(.4,0,.2,1)' },
+    { opacity: 0, offset: 1 },
+  ], { duration: dur * 1000, delay: start * 1000, easing: 'linear' });
+}
+
+/* ---------- brand assets ---------- */
+const ICONS = {
+  github: 'M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.52-1.33-1.28-1.68-1.28-1.68-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.7 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 5.8 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.12 3.05.74.8 1.18 1.83 1.18 3.09 0 4.43-2.69 5.4-5.25 5.69.41.36.78 1.06.78 2.14 0 1.55-.01 2.8-.01 3.18 0 .31.21.67.8.56A11.51 11.51 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5Z',
+  x: 'M18.24 2.25h3.31l-7.23 8.26 8.5 11.24h-6.65l-5.21-6.82-5.97 6.82H1.68l7.73-8.84L1.25 2.25h6.82l4.71 6.23 5.46-6.23Zm-1.16 17.52h1.83L7.08 4.13H5.11l11.97 15.64Z',
+  instagram: 'M12 2.16c3.2 0 3.58.01 4.85.07 1.17.05 1.8.25 2.23.41.56.22.96.48 1.38.9.42.42.68.82.9 1.38.16.42.36 1.06.41 2.23.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.05 1.17-.25 1.8-.41 2.23-.22.56-.48.96-.9 1.38-.42.42-.82.68-1.38.9-.42.16-1.06.36-2.23.41-1.27.06-1.65.07-4.85.07s-3.58-.01-4.85-.07c-1.17-.05-1.8-.25-2.23-.41-.56-.22-.96-.48-1.38-.9-.42-.42-.68-.82-.9-1.38-.16-.42-.36-1.06-.41-2.23C2.17 15.58 2.16 15.2 2.16 12s.01-3.58.07-4.85c.05-1.17.25-1.8.41-2.23.22-.56.48-.96.9-1.38.42-.42.82-.68 1.38-.9.42-.16 1.06-.36 2.23-.41C8.42 2.17 8.8 2.16 12 2.16Zm0 3.18a6.66 6.66 0 1 0 0 13.32 6.66 6.66 0 0 0 0-13.32Zm0 10.98a4.32 4.32 0 1 1 0-8.64 4.32 4.32 0 0 1 0 8.64Zm8.48-11.24a1.56 1.56 0 1 1-3.11 0 1.56 1.56 0 0 1 3.11 0Z',
+  linkedin: 'M20.45 20.45h-3.56v-5.57c0-1.33-.03-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.47-.9 1.63-1.85 3.36-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29ZM5.34 7.43a2.07 2.07 0 1 1 0-4.13 2.07 2.07 0 0 1 0 4.13ZM7.12 20.45H3.55V9h3.57v11.45ZM22.22 0H1.77C.79 0 0 .77 0 1.72v20.56C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.72V1.72C24 .77 23.2 0 22.22 0Z',
+  bluesky: 'M6.335 5.672C8.886 7.645 11.35 11.33 12 13.5c.65-2.17 3.114-5.855 5.665-7.828C19.748 3.87 22.5 2.48 22.5 6.437c0 .717-.43 5.53-.68 6.33-.875 2.83-4.07 3.55-6.92 3.11 4.98.77 6.26 3.34 3.52 5.9-5.2 4.83-7.47-1.21-8.06-2.76-.2-.52-.28-.77-.28-.31 0-.46-.08-.79-.28-1.31-.61-1.55-2.86-3.68-5.01-5.62C.64 3.1.19 1.05.55.01.92-.99 3.02-.5 4.03.63c1.28 1.46 3.36 3.66 4.36 4.9-2.36-2.86-4.98-6.61-3.1-5.62Z',
+};
+
+function brandIcon(path, color) {
+  return `<svg viewBox="0 0 24 24" fill="${color}"><path d="${path}"/></svg>`;
+}
+
+/** MagicSync octopus mark — brand asset from packages/doc/public/logo.svg */
+function octopusSvg(id, withOrbs) {
+  const orbs = withOrbs ? `
+    <circle cx="70" cy="340" r="15" fill="#1877F2"/>
+    <circle cx="155" cy="445" r="15" fill="#E4405F"/>
+    <circle cx="357" cy="445" r="15" fill="#0A66C2"/>
+    <circle cx="442" cy="340" r="15" fill="#1DA1F2"/>` : '';
+  return `<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" class="octo">
+  <defs>
+    <linearGradient id="bg-${id}" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:hsl(24.6, 95%, 58.1%)"/>
+      <stop offset="100%" style="stop-color:hsl(24.6, 95%, 48.1%)"/>
+    </linearGradient>
+    <linearGradient id="vg-${id}" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00F2FF"/><stop offset="50%" stop-color="#fff"/><stop offset="100%" stop-color="#00F2FF"/>
+    </linearGradient>
+  </defs>
+  <g>
+    <path fill="#fff" stroke="#fff" stroke-width="15" stroke-linejoin="round" d="M256 40 C180 40 120 90 120 160 C120 190 135 220 160 240 L160 280 C120 320 80 300 60 340 C50 360 60 380 80 390 C100 400 130 380 150 350 L180 380 C160 420 140 440 160 460 C180 480 210 460 220 420 L256 440 L292 420 C302 460 332 480 352 460 C372 440 352 420 332 380 L362 350 C382 380 412 400 432 390 C452 380 462 360 452 340 C432 300 392 320 352 280 L352 240 C377 220 392 190 392 160 C392 90 332 40 256 40 Z"/>
+    <path fill="url(#bg-${id})" d="M256 48 C185 48 128 95 128 160 C128 190 142 215 165 235 V280 C125 315 90 300 70 340 C65 350 70 360 80 365 C90 370 110 360 130 330 L170 370 C150 410 140 430 155 445 C170 460 190 440 200 410 L256 430 L312 410 C322 440 342 460 357 445 C372 430 362 410 342 370 L382 330 C402 360 422 370 432 365 C442 360 447 350 442 340 C422 300 387 315 347 280 V235 C370 215 384 190 384 160 C384 95 327 48 256 48 Z"/>
+    <path fill="#333" d="M128 140 H384 V180 H128 Z"/>
+    <path fill="#333" d="M380 150 L420 130 L410 160 L440 170 L384 170 Z"/>
+    <path fill="url(#vg-${id})" d="M160 150 H352 V170 H160 Z" opacity="0.9"/>
+    <path fill="none" stroke="#fff" stroke-width="3" stroke-opacity="0.5" d="M256 48 V80"/>
+    <path fill="none" stroke="#fff" stroke-width="3" stroke-opacity="0.5" d="M200 60 L220 90"/>
+    <path fill="none" stroke="#fff" stroke-width="3" stroke-opacity="0.5" d="M312 60 L292 90"/>
+    ${orbs}
+  </g>
+</svg>`;
+}
+
+const GLYPHS = {
+  prompt: `<svg viewBox="0 0 24 24" fill="none" stroke="#F97316" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7l6 6-6 6"/></svg>`,
+  check: `<svg viewBox="0 0 24 24" fill="none" stroke="#4ADE80" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5.2 5.2L20 6.5"/></svg>`,
+  arrow: `<svg viewBox="0 0 24 24" fill="none" stroke="#A3A3A3" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h14M13 6l6 6-6 6"/></svg>`,
+  key: `<svg viewBox="0 0 24 24" fill="none" stroke="#F97316" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="16" r="4.5"/><path d="M11.2 12.8L20 4M16.5 7.5l2.6 2.6M14 10l2.4 2.4"/></svg>`,
+  terminal: `<svg viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="19" height="16" rx="3"/><path d="M6.5 10l2.6 2.4-2.6 2.4M12.5 15.5h5"/></svg>`,
+  chev: `<svg viewBox="0 0 24 24" fill="none" stroke="#160800" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M12 6l6 6-6 6"/></svg>`,
+};
+
+/* ---------- mount static SVG ---------- */
+$('#chromeMark').innerHTML = octopusSvg('chrome', false);
+$('#msOcto').innerHTML = octopusSvg('ms', false);
+$('#s3Octo').innerHTML = octopusSvg('s3', true);
+$('#ctaMark').innerHTML = octopusSvg('cta', false);
+$('#dnGlyph').innerHTML = GLYPHS.terminal;
+$('#promptIco').innerHTML = GLYPHS.prompt;
+$('#checkIco1').innerHTML = GLYPHS.check;
+$('#arrowIco').innerHTML = GLYPHS.arrow;
+$('#ic1').innerHTML = brandIcon(ICONS.github, '#FAFAFA');
+$('#ic2').innerHTML = GLYPHS.key;
+$('#ic3').innerHTML = GLYPHS.terminal;
+$('#sigIco').innerHTML = GLYPHS.check;
+$('#doneIco').innerHTML = GLYPHS.check;
+$('#btnArrow').innerHTML = GLYPHS.chev;
+
+/* ---------- orbit layer (S3) ---------- */
+const ORB_DEFS = [
+  { key: 'x', color: '#FAFAFA' },
+  { key: 'instagram', color: '#E4405F' },
+  { key: 'linkedin', color: '#0A66C2' },
+  { key: 'bluesky', color: '#0085FF' },
+  { key: 'devnull', color: '#22C55E' },
+];
+const orbitEls = [];
+ORB_DEFS.forEach((o) => {
+  const el = document.createElement('div');
+  el.className = 'orb';
+  el.style.cssText = 'width:54px;height:54px;position:absolute;background:#141414;border:1px solid #262626;border-radius:50%;display:flex;align-items:center;justify-content:center';
+  el.innerHTML = o.key === 'devnull' ? GLYPHS.terminal : brandIcon(ICONS[o.key], o.color);
+  el.querySelector('svg').style.width = '26px';
+  el.querySelector('svg').style.height = '26px';
+  $('#orbitLayer').appendChild(el);
+  orbitEls.push(el);
+});
+const composerOrbs = [];
+ORB_DEFS.forEach((o) => {
+  const el = document.createElement('div');
+  el.className = 'orb';
+  el.innerHTML = o.key === 'devnull' ? GLYPHS.terminal : brandIcon(ICONS[o.key], o.color);
+  $('#composerOrbs').appendChild(el);
+  composerOrbs.push(el);
+});
+
+/* ---------- constants ---------- */
+const CMD = 'magicsync publish --to /dev/null';
+const POST = 'Shipped v2 of the scheduler — now with dev-null.sh support.';
+const TYPE_CMD_START = 1.55, TYPE_CMD_RATE = 0.06;
+const TYPE_POST_START = 25.0, TYPE_POST_RATE = 0.032;
+
+/* ============================================================
+   TIMELINE (seconds)
+   ============================================================ */
+const S = { s0: [0, 6.4], s1: [6.0, 12.9], s2: [12.7, 24.2], s3: [24.0, 34.3], s4: [34.1, DUR] };
+
+/* ---- chrome ---- */
+windowFade($('#chrome'), S.s1[0] - 0.4, DUR - 0.2, 0.8, 1.0);
+
+/* ---- S0 : one entrance+exit animation on the terminal ---- */
+windowFade($('#s0'), S.s0[0], S.s0[1], 0.01, 0.02);
+A($('#term'), [
+  { opacity: 0, transform: 'translateY(26px) scale(.965)', filter: 'blur(10px)', offset: 0, easing: 'cubic-bezier(.16,1,.3,1)' },
+  { opacity: 1, transform: 'translateY(0) scale(1)', filter: 'blur(0px)', offset: 0.14, easing: 'linear' },
+  { opacity: 1, transform: 'translateY(0) scale(1)', filter: 'blur(0px)', offset: 0.87, easing: 'cubic-bezier(.7,0,.84,0)' },
+  { opacity: 0, transform: 'scale(1.07)', filter: 'blur(16px)', offset: 1 },
+], { duration: 6250, delay: 150, easing: 'linear' });
+A($('#out1'), [{ opacity: 0, transform: 'translateX(-14px)' }, { opacity: 1, transform: 'translateX(0)' }],
+  { duration: 460, delay: 4000, easing: 'cubic-bezier(.16,1,.3,1)' });
+A($('#out2'), [{ opacity: 0, transform: 'translateX(-14px)' }, { opacity: 1, transform: 'translateX(0)' }],
+  { duration: 460, delay: 4600, easing: 'cubic-bezier(.16,1,.3,1)' });
+A($('#streak'), [
+  { opacity: 0, transform: 'translateX(-120%) scaleX(.2)' },
+  { opacity: 1, transform: 'translateX(0%) scaleX(1)' },
+  { opacity: 0, transform: 'translateX(120%) scaleX(.2)' },
+], { duration: 1100, delay: 5150, easing: 'cubic-bezier(.5,0,.2,1)' });
+/* the cut itself — a bloom that washes the frame so the hand-off never reads as a dropout */
+A($('#flash'), [
+  { opacity: 0, offset: 0 },
+  { opacity: 0.5, offset: 0.45, easing: 'cubic-bezier(.4,0,.2,1)' },
+  { opacity: 0, offset: 1 },
+], { duration: 900, delay: 5150, easing: 'linear' });
+
+/* ---- S1 : the connection ---- */
+windowFade($('#s1'), S.s1[0], S.s1[1], 0.5, 0.6);
+A($('#msIn'), [{ opacity: 0, transform: 'translateX(-70px)' }, { opacity: 1, transform: 'translateX(0)' }],
+  { duration: 750, delay: 6150, easing: 'cubic-bezier(.16,1,.3,1)' });
+A($('#dnIn'), [{ opacity: 0, transform: 'translateX(70px)' }, { opacity: 1, transform: 'translateX(0)' }],
+  { duration: 750, delay: 6550, easing: 'cubic-bezier(.16,1,.3,1)' });
+A($('#s1Kicker'), [{ opacity: 0, transform: 'translateY(-16px)' }, { opacity: 1, transform: 'translateY(0)' }],
+  { duration: 600, delay: 6050, easing: 'cubic-bezier(.16,1,.3,1)' });
+['#chip1', '#chip2', '#chip3'].forEach((sel, i) => {
+  A($(sel), [{ opacity: 0, transform: 'translateY(22px) scale(.94)' }, { opacity: 1, transform: 'translateY(0) scale(1)' }],
+    { duration: 560, delay: 8900 + i * 190, easing: 'cubic-bezier(.16,1,.3,1)' });
+});
+/* gentle float on the outer blocks (kept separate from the entrance transform) */
+A($('#msBlock'), [{ transform: 'translateY(0px)' }, { transform: 'translateY(-10px)' }],
+  { duration: 3200, delay: 0, iterations: Infinity, direction: 'alternate', easing: 'ease-in-out' });
+A($('#dnBlock'), [{ transform: 'translateY(0px)' }, { transform: 'translateY(-10px)' }],
+  { duration: 3200, delay: 400, iterations: Infinity, direction: 'alternate', easing: 'ease-in-out' });
+/* the dev-null card lights up when the pulse lands */
+A($('#dnCard'), [
+  { boxShadow: '0 40px 90px rgba(0,0,0,.6)', offset: 0 },
+  { boxShadow: '0 40px 90px rgba(0,0,0,.6),0 0 70px rgba(34,197,94,.55)', offset: 0.5 },
+  { boxShadow: '0 40px 90px rgba(0,0,0,.6),0 0 70px rgba(34,197,94,.55)', offset: 1 },
+], { duration: 9000, delay: 8750, easing: 'ease-out' });
+
+/* ---- S2 : three steps ---- */
+windowFade($('#s2'), S.s2[0], S.s2[1], 0.5, 0.6);
+A($('#s2Head'), [{ opacity: 0, transform: 'translateY(24px)' }, { opacity: 1, transform: 'translateY(0)' }],
+  { duration: 700, delay: 12900, easing: 'cubic-bezier(.16,1,.3,1)' });
+['#card1', '#card2', '#card3'].forEach((sel, i) => {
+  A($(sel), [
+    { opacity: 0, transform: 'translateY(46px) scale(.96)' },
+    { opacity: 1, transform: 'translateY(0) scale(1)' },
+  ], { duration: 780, delay: 13500 + i * 900, easing: 'cubic-bezier(.16,1,.3,1)' });
+});
+A($('#sigPath'), [{ strokeDashoffset: 340 }, { strokeDashoffset: 0 }],
+  { duration: 1300, delay: 17200, easing: 'cubic-bezier(.4,0,.2,1)' });
+A($('#s2Foot'), [{ opacity: 0 }, { opacity: 1 }], { duration: 900, delay: 18600, easing: 'linear' });
+
+/* ---- S3 : one post, everywhere ---- */
+windowFade($('#s3'), S.s3[0], S.s3[1], 0.5, 0.6);
+A($('#s3Head'), [{ opacity: 0, transform: 'translateY(24px)' }, { opacity: 1, transform: 'translateY(0)' }],
+  { duration: 700, delay: 24350, easing: 'cubic-bezier(.16,1,.3,1)' });
+A($('#composer'), [{ opacity: 0, transform: 'translateY(40px)' }, { opacity: 1, transform: 'translateY(0)' }],
+  { duration: 750, delay: 24500, easing: 'cubic-bezier(.16,1,.3,1)' });
+A($('#feed'), [{ opacity: 0, transform: 'translateY(40px)' }, { opacity: 1, transform: 'translateY(0)' }],
+  { duration: 750, delay: 25200, easing: 'cubic-bezier(.16,1,.3,1)' });
+A($('#s3Octo'), [{ opacity: 0, transform: 'scale(.85)' }, { opacity: 1, transform: 'scale(1)' }],
+  { duration: 800, delay: 25000, easing: 'cubic-bezier(.16,1,.3,1)' });
+composerOrbs.forEach((el, i) => {
+  A(el, [{ opacity: 0, transform: 'scale(.5)' }, { opacity: 1, transform: 'scale(1)' }],
+    { duration: 480, delay: 27300 + i * 110, easing: 'cubic-bezier(.34,1.56,.64,1)' });
+});
+A($('#feedGhost'), [{ opacity: 1 }, { opacity: 0 }], { duration: 500, delay: 30800, easing: 'linear' });
+/* the post lifts out of the composer — the confirmation waits until the card has cleared it */
+A($('#postText'), [{ opacity: 1 }, { opacity: 0 }], { duration: 500, delay: 28300, easing: 'cubic-bezier(.4,0,.2,1)' });
+A($('#composerDone'), [{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'translateY(0)' }],
+  { duration: 600, delay: 29900, easing: 'cubic-bezier(.16,1,.3,1)' });
+A($('#commit'), [{ opacity: 0, transform: 'translateY(16px)' }, { opacity: 1, transform: 'translateY(0)' }],
+  { duration: 600, delay: 31300, easing: 'cubic-bezier(.16,1,.3,1)' });
+A($('#feed'), [
+  { borderColor: '#262626', offset: 0 },
+  { borderColor: '#22C55E', offset: 0.5 },
+  { borderColor: '#262626', offset: 1 },
+], { duration: 900, delay: 31300, easing: 'ease-out' });
+
+/* ---- S4 : call to action ---- */
+windowFade($('#s4'), S.s4[0], DUR, 0.55, 0);
+A($('#ctaGlow'), [{ opacity: 0, transform: 'scale(.7)' }, { opacity: 1, transform: 'scale(1)' }],
+  { duration: 1100, delay: 34400, easing: 'cubic-bezier(.16,1,.3,1)' });
+A($('#ctaMark'), [{ opacity: 0, transform: 'scale(.6) rotate(-8deg)' }, { opacity: 1, transform: 'scale(1) rotate(0deg)' }],
+  { duration: 900, delay: 34550, easing: 'cubic-bezier(.34,1.56,.64,1)' });
+A($('#ctaLock'), [{ opacity: 0, transform: 'translateY(20px)' }, { opacity: 1, transform: 'translateY(0)' }],
+  { duration: 700, delay: 35350, easing: 'cubic-bezier(.16,1,.3,1)' });
+A($('#ctaHead'), [{ opacity: 0, transform: 'translateY(24px)' }, { opacity: 1, transform: 'translateY(0)' }],
+  { duration: 700, delay: 35900, easing: 'cubic-bezier(.16,1,.3,1)' });
+A($('#ctaUrl'), [{ opacity: 0, transform: 'translateY(16px)' }, { opacity: 1, transform: 'translateY(0)' }],
+  { duration: 700, delay: 36650, easing: 'cubic-bezier(.16,1,.3,1)' });
+A($('#ctaBtn'), [{ opacity: 0, transform: 'translateY(22px) scale(.94)' }, { opacity: 1, transform: 'translateY(0) scale(1)' }],
+  { duration: 700, delay: 37350, easing: 'cubic-bezier(.16,1,.3,1)' });
+A($('#ctaNote'), [{ opacity: 0 }, { opacity: 1 }], { duration: 700, delay: 38000, easing: 'linear' });
+/* glow breathes via brightness — opacity belongs to the entrance above */
+A($('#ctaGlow'), [{ filter: 'brightness(1)' }, { filter: 'brightness(1.45)' }, { filter: 'brightness(1)' }],
+  { duration: 4200, delay: 35600, iterations: Infinity, easing: 'ease-in-out' });
+
+/* ============================================================
+   CANVAS + JS-driven motion
+   ============================================================ */
+const bg = $('#bg'), bctx = bg.getContext('2d');
+const fx = $('#fx'), fctx = fx.getContext('2d');
+bg.width = W; bg.height = H;
+fx.width = W; fx.height = H;
+
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const rnd = mulberry32(20261020);
+
+/* noise tile */
+const noise = document.createElement('canvas');
+noise.width = 256; noise.height = 256;
+{
+  const nc = noise.getContext('2d');
+  const img = nc.createImageData(256, 256);
+  for (let i = 0; i < img.data.length; i += 4) {
+    const v = 118 + (rnd() - 0.5) * 90;
+    img.data[i] = img.data[i + 1] = img.data[i + 2] = v;
+    img.data[i + 3] = 255;
+  }
+  nc.putImageData(img, 0, 0);
+}
+
+/* particles */
+const N = 130;
+const parts = [];
+for (let i = 0; i < N; i++) {
+  parts.push({
+    x: rnd() * W, y: rnd() * H,
+    r: 0.6 + rnd() * 2.1,
+    sp: 0.05 + rnd() * 0.22,
+    ph: rnd() * Math.PI * 2,
+    amp: 8 + rnd() * 34,
+    hue: rnd(),
+  });
+}
+
+/* tether path sampling for the travelling pulse */
+const tetherPath = $('#tetherPath');
+const tLen = tetherPath.getTotalLength();
+const tetherAt = (k) => tetherPath.getPointAtLength(k * tLen);
+
+/* composer → octopus → feed waypoints for the flying post */
+const FLY_A = { x: 430, y: 470 };
+const FLY_B = { x: 960, y: 470 };
+const FLY_C = { x: 1580, y: 470 };
+/** quadratic bezier point */
+const qbez = (p0, c, p1, t) => ({
+  x: (1 - t) * (1 - t) * p0.x + 2 * (1 - t) * t * c.x + t * t * p1.x,
+  y: (1 - t) * (1 - t) * p0.y + 2 * (1 - t) * t * c.y + t * t * p1.y,
+});
+const flyEl = $('#flyer');
+flyEl.innerHTML = `<div class="flycard">
+  <div class="flyhead"><span class="dot"></span>commit · signing</div>
+  <div class="flybody">${POST}</div>
+</div>`;
+
+/* ---------- draw ---------- */
+function drawBackground(t) {
+  bctx.fillStyle = '#060606';
+  bctx.fillRect(0, 0, W, H);
+  const g = bctx.createRadialGradient(W / 2, H * 0.46, 60, W / 2, H * 0.46, 1180);
+  const s0 = E.outCubic(seg(t, 5.6, 7.4));
+  const s4 = E.outCubic(seg(t, 33.8, 36.4));
+  const glow = Math.max(s0, s4 * 0.85);
+  g.addColorStop(0, `rgba(${Math.round(28 + 22 * glow)},${Math.round(18 + 12 * glow)},${Math.round(12 + 5 * glow)},1)`);
+  g.addColorStop(0.42, 'rgba(12,10,9,1)');
+  g.addColorStop(1, '#060606');
+  bctx.fillStyle = g;
+  bctx.fillRect(0, 0, W, H);
+
+  /* orange bloom behind the octopus moments */
+  const bloom = Math.max(
+    E.outCubic(seg(t, 6.2, 8.0)) * (1 - E.inOutCubic(seg(t, 12.3, 13.4))),
+    E.outCubic(seg(t, 34.1, 36.6)),
+  );
+  if (bloom > 0.001) {
+    const bx = W / 2, by = t < 20 ? 500 : 380;
+    const g2 = bctx.createRadialGradient(bx, by, 20, bx, by, 720);
+    g2.addColorStop(0, `rgba(249,115,22,${0.13 * bloom})`);
+    g2.addColorStop(1, 'rgba(249,115,22,0)');
+    bctx.fillStyle = g2;
+    bctx.fillRect(0, 0, W, H);
+  }
+  /* green bloom at the dev-null side */
+  const gb = E.outCubic(seg(t, 7.8, 9.2)) * (1 - E.inOutCubic(seg(t, 12.4, 13.5)));
+  if (gb > 0.001) {
+    const g3 = bctx.createRadialGradient(1420, 470, 20, 1420, 470, 560);
+    g3.addColorStop(0, `rgba(34,197,94,${0.11 * gb})`);
+    g3.addColorStop(1, 'rgba(34,197,94,0)');
+    bctx.fillStyle = g3;
+    bctx.fillRect(0, 0, W, H);
+  }
+
+  /* vignette */
+  const v = bctx.createRadialGradient(W / 2, H / 2, 380, W / 2, H / 2, 1150);
+  v.addColorStop(0, 'rgba(0,0,0,0)');
+  v.addColorStop(1, 'rgba(0,0,0,0.72)');
+  bctx.fillStyle = v;
+  bctx.fillRect(0, 0, W, H);
+
+  /* grain */
+  bctx.save();
+  bctx.globalAlpha = 0.035;
+  bctx.globalCompositeOperation = 'overlay';
+  bctx.translate(-((t * 137) % 256), -((t * 211) % 256));
+  bctx.fillStyle = bctx.createPattern(noise, 'repeat');
+  bctx.fillRect(0, 0, W + 256, H + 256);
+  bctx.restore();
+}
+
+function drawFx(t) {
+  fctx.clearRect(0, 0, W, H);
+  drawAmbientParticles(t);
+  drawTetherPulse(t);
+  drawStepPacket(t);
+  drawFlyingPost(t);
+}
+
+/** drifting dust that converges on the CTA mark */
+function drawAmbientParticles(t) {
+  const converge = E.outCubic(seg(t, 34.0, 40.0));
+  const cx = W / 2, cy = 320;
+  for (const p of parts) {
+    let x = p.x + Math.sin(t * p.sp + p.ph) * p.amp;
+    let y = p.y - ((t * p.sp * 26) % (H + 200)) + 100;
+    y = ((y % (H + 200)) + H + 200) % (H + 200) - 100;
+    if (converge > 0.001) {
+      const k = converge * (0.35 + 0.65 * p.hue);
+      x = lerp(x, cx + (x - cx) * 0.16, k);
+      y = lerp(y, cy + (y - cy) * 0.16, k);
+    }
+    const a = 0.16 + 0.5 * (0.5 + 0.5 * Math.sin(t * 0.9 + p.ph));
+    fctx.globalAlpha = a * (0.35 + 0.65 * converge);
+    fctx.fillStyle = p.hue > 0.72 ? '#4ADE80' : p.hue > 0.4 ? '#F97316' : '#9A9A9A';
+    fctx.beginPath();
+    fctx.arc(x, y, p.r, 0, Math.PI * 2);
+    fctx.fill();
+  }
+  fctx.globalAlpha = 1;
+}
+
+/** the energy pulse that travels the S1 tether, orange → green */
+function drawTetherPulse(t) {
+  const pk = seg(t, 7.45, 8.75);
+  const pulse = $('#pulse');
+  if (pk <= 0 || pk >= 1) {
+    pulse.setAttribute('opacity', '0');
+    return;
+  }
+  const pt = tetherAt(pk);
+  pulse.setAttribute('cx', pt.x);
+  pulse.setAttribute('cy', pt.y);
+  pulse.setAttribute('opacity', String(Math.sin(pk * Math.PI)));
+  pulse.setAttribute('fill', pk > 0.5 ? '#4ADE80' : '#FFFFFF');
+  const hx = pt.x + 596, hy = pt.y + 422;
+  const halo = fctx.createRadialGradient(hx, hy, 0, hx, hy, 46);
+  halo.addColorStop(0, pk > 0.5 ? 'rgba(74,222,128,.85)' : 'rgba(249,115,22,.85)');
+  halo.addColorStop(1, 'rgba(0,0,0,0)');
+  fctx.fillStyle = halo;
+  fctx.beginPath();
+  fctx.arc(hx, hy, 46, 0, Math.PI * 2);
+  fctx.fill();
+}
+
+/** the ember that hops the S2 rail from step to step */
+function drawStepPacket(t) {
+  const rp = seg(t, 18.9, 20.7);
+  const dot = $('#packet'), glow = $('#packetGlowC');
+  if (rp <= 0 || rp >= 1) {
+    dot.setAttribute('opacity', '0');
+    glow.setAttribute('opacity', '0');
+    return;
+  }
+  const x = lerp(311, 1331, E.inOutCubic(rp));
+  dot.setAttribute('cx', x); dot.setAttribute('cy', 511);
+  dot.setAttribute('opacity', String(Math.sin(rp * Math.PI)));
+  glow.setAttribute('cx', x); glow.setAttribute('cy', 511);
+  glow.setAttribute('opacity', String(Math.sin(rp * Math.PI) * 0.9));
+}
+
+/** where the post card is at flight progress fp — two bezier legs through the hub */
+function flyPathAt(fp) {
+  const first = fp < 0.46;
+  const k = E.inOutCubic(first ? fp / 0.46 : (fp - 0.46) / 0.54);
+  const p = first
+    ? qbez(FLY_A, { x: 700, y: 130 }, FLY_B, k)
+    : qbez(FLY_B, { x: 1260, y: 300 }, FLY_C, k);
+  return { x: p.x, y: p.y, rot: -6 * Math.sin(Math.PI * fp), sc: 1 - 0.38 * fp };
+}
+
+/** the post card lifting out of the composer and landing in the feed */
+function drawFlyingPost(t) {
+  const fp = seg(t, 28.6, 31.4);
+  if (fp <= 0 || fp >= 1) {
+    flyEl.style.opacity = '0';
+    return;
+  }
+  const p = flyPathAt(fp);
+  const fadeIn = E.outCubic(clamp01(fp / 0.08));
+  const fadeOut = E.outCubic(clamp01((1 - fp) / 0.12));
+  flyEl.style.opacity = String(fadeIn * fadeOut);
+  flyEl.style.transform = `translate(${p.x - 215}px, ${p.y - 70}px) rotate(${p.rot}deg) scale(${p.sc})`;
+}
+
+/* orbiting orbs (S3) */
+const ORBIT_CX = 960, ORBIT_CY = 500, ORBIT_RX = 245, ORBIT_RY = 172;
+function drawOrbits(t) {
+  const appear = E.outCubic(seg(t, 25.6, 27.0));
+  const rot = t * 0.10;
+  orbitEls.forEach((el, i) => {
+    const a = rot + (i / ORB_DEFS.length) * Math.PI * 2;
+    const x = ORBIT_CX + Math.cos(a) * ORBIT_RX - 27;
+    const y = ORBIT_CY + Math.sin(a) * ORBIT_RY - 27;
+    const depth = (Math.sin(a) + 1) / 2;
+    const sc = 0.78 + 0.34 * depth;
+    el.style.transform = `translate(${x}px, ${y}px) scale(${sc})`;
+    el.style.opacity = String(appear * (0.55 + 0.45 * depth));
+    el.style.zIndex = String(Math.round(depth * 10));
+  });
+}
+
+/* typed text */
+function drawTyped(t) {
+  const n = Math.floor(seg(t, TYPE_CMD_START, TYPE_CMD_START + CMD.length * TYPE_CMD_RATE) * CMD.length);
+  $('#cmdText').textContent = CMD.slice(0, n);
+  const blink = (t * 6) % 1 < 0.58 ? 1 : 0;
+  $('#caret').style.opacity = String(blink);
+  $('#caret2').style.opacity = String(t > 4.0 ? blink : 0);
+
+  const m = Math.floor(seg(t, TYPE_POST_START, TYPE_POST_START + POST.length * TYPE_POST_RATE) * POST.length);
+  $('#postText').textContent = POST.slice(0, m);
+  $('#commitBody').textContent = POST;
+  $('#composerDoneTitle').textContent = POST;
+}
+
+/* progress bar */
+function drawProgress(t) {
+  $('#progressFill').style.width = (clamp01(t / DUR) * 100).toFixed(3) + '%';
+}
+
+/* CTA underline */
+const ctaBar = document.querySelector('#ctaUrl .bar');
+function drawCta(t) {
+  ctaBar.style.transform = `scaleX(${E.outCubic(seg(t, 37.4, 38.2))})`;
+}
+
+/* ---------- the seek entry point (t in milliseconds) ---------- */
+window.__seek = function (ms) {
+  const t = ms / 1000;
+  for (const a of REG) {
+    try { a.currentTime = ms; } catch (e) { /* animation already finished */ }
+  }
+  drawTyped(t);
+  drawOrbits(t);
+  drawCta(t);
+  drawProgress(t);
+  drawBackground(t);
+  drawFx(t);
+};
+
+window.__seek(0);
+window.__DUR = DUR;
+window.__FPS = 30;
+</script>
+</body>
+</html>

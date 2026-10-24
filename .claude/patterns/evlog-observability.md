@@ -158,8 +158,13 @@ log.error('Failed to serve file', { error })
 
 - Middleware order matters: `001.auth` (session enforcement) runs first; `002`
   only enriches. Anonymous/401 requests stay anonymous.
-- `identify()` resolves the session once per request; timing lands on the event
-  as `auth.resolvedIn` — chart it before "optimizing" it away.
+- `002` must not resolve the session itself. It reuses `resolveRequestSession`
+  from `#layers/BaseAuth/server/utils/request-session`; otherwise every API call
+  paid a second (and handlers a third) session lookup. `identifyUser()` sets the
+  same whitelisted fields `createAuthMiddleware` did; `auth.resolvedIn` is still
+  recorded.
+- `session.cookieCache` makes most reads cookie-only. If `auth.resolvedIn` looks
+  suspiciously fast, that is expected (no DB query); it is not a missing lookup.
 
 ### Verify
 

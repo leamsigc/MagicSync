@@ -18,6 +18,7 @@ Lookup table for all pattern files in this directory. Check here before starting
 | [admin-data-views.md](admin-data-views.md) | Admin CRUD views (users, businesses, integrations, audit log) — borderless cards, Nuxt UI tables, service-backed endpoints |
 | [docker-build.md](docker-build.md) | Docker/CI image build failures — pnpm @pnpm/exe verification, musl native deps, pnpm version pinning |
 | [security-audit.md](security-audit.md) | Full-stack security audit — SQLi, path traversal, SSRF, IDOR, secrets, infra; produces SECURITY_REPORT.html |
+| [ssrf-safe-outbound-fetch.md](ssrf-safe-outbound-fetch.md) | Server-side fetches of request-derived URLs — pinned-IP `safeFetch`, manual redirect validation, byte caps, local-LLM allowlist |
 | [public-tool-dual-storage.md](public-tool-dual-storage.md) | Public tools where guests save locally (IndexedDB) and users save to db, plus public share-slug viewer pages |
 | [shared-tool-registry.md](shared-tool-registry.md) | Adding/registering tools in the unified registry (`packages/ui/app/utils/toolRegistry.ts`) and rendering them in `/tools` + `/app/toolbox` |
 | [tool-workflow-bridge.md](tool-workflow-bridge.md) | Saving tool output as an asset (BaseSaveAssetModal) and handing it to the post composer via sessionStorage keys |
@@ -38,6 +39,8 @@ Lookup table for all pattern files in this directory. Check here before starting
 | [entitydetails-kv.md](entitydetails-kv.md) | Storing a feature in `entity_details` KV rows with zero migrations |
 | [safe-build.md](safe-build.md) | Building the site without freezing the machine — heap caps, concurrency limits |
 | [auth-session-lifecycle.md](auth-session-lifecycle.md) | better-auth session lifecycle — $sessionSignal listeners, fetchSession, logout without get-session floods |
+| [request-scoped-auth-cache.md](request-scoped-auth-cache.md) | Slow authenticated APIs / navigation hangs — one session lookup per request, cookie cache, non-blocking client middleware |
+| [partial-publish-retry.md](partial-publish-retry.md) | Partial multi-platform failure — retry only failed rows, preserve published rows, derive platform metadata |
 | [route-screenshots.md](route-screenshots.md) | Capturing route/action screenshots as visual evidence — folder per route, file per action, replace on re-run, full-route sweep |
 | [ssr-safe-state.md](ssr-safe-state.md) | SSR-safe state — no module-scope ref/reactive for request-varying data, useState only |
 | [client-only-node-builtins.md](client-only-node-builtins.md) | Client-bundle 500s from Node builtins (`events`, `buffer`, `path`) imported in `app/` code |
@@ -65,3 +68,4 @@ Lookup table for all pattern files in this directory. Check here before starting
 | [directory-views.md](directory-views.md) | Collection pages with Grid / List / Table views, one shared toolbar and one derived-metrics helper |
 | [dashboard-sidebar-collapse.md](dashboard-sidebar-collapse.md) | Nuxt UI dashboard sidebar collapse/expand control — mobile drawer toggle vs desktop collapse toggle |
 | [business-team-members.md](business-team-members.md) | Business team members + invitations on the better-auth organization plugin, with the owner/member-only role policy |
+| [motion-design-video.md](motion-design-video.md) | Producing a deterministic motion-design MP4 — HTML/WAAPI scene, Playwright frame capture piped to ffmpeg, synthesised audio bed |

@@ -395,3 +395,6 @@ __marimo__/
 # Locally installed agent skills (nuxt-skill-hub via `npx skills add`).
 # Regenerated per-machine; not part of the project source.
 .agents/
+
+# Motion-design render intermediates (frames, previews) — regenerate with the skill
+packages/site/motion/**/.preview/
