@@ -9,7 +9,7 @@ const currentDir = dirname(fileURLToPath(import.meta.url))
 export default defineNuxtConfig({
   compatibilityDate: '2026-09-07',
   // debug: true,
-  devtools: { enabled: true },
+  devtools: { enabled: process.env.NODE_ENV !== 'production' && !process.env.CI },
   experimental: {
     viteEnvironmentApi: true,
     typescriptPlugin: true

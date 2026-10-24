@@ -1,4 +1,4 @@
-import { isSafeExternalUrl } from './ssrf'
+import { safeFetch } from './ssrf'
 
 export interface FetchedPage {
   url: string
@@ -18,17 +18,19 @@ export function stripHtmlText(html: string): string {
  * SSRF-safe public page fetch for research flows. Never throws: unsafe,
  * unreachable, or empty pages resolve to null so callers can degrade to
  * LLM-only output instead of failing the whole run.
+ *
+ * `safeFetch` pins the resolved IP and re-validates every redirect hop, so a
+ * public URL that 302s to an internal address is rejected.
  */
 export async function scrapePublicPage(url: string, maxChars = 8000): Promise<FetchedPage | null> {
-  const safety = await isSafeExternalUrl(url)
-  if (!safety.safe) return null
   try {
-    const response = await fetch(url, {
-      signal: AbortSignal.timeout(10_000),
+    const response = await safeFetch(url, {
+      maxBytes: 2 * 1024 * 1024,
+      timeoutMs: 10_000,
       headers: { 'user-agent': 'MagicSyncBot/1.0 (+https://magicsync.dev)' },
     })
-    if (!response.ok) return null
-    const content = stripHtmlText((await response.text()).slice(0, 20_000)).slice(0, maxChars)
+    if (response.status < 200 || response.status >= 300) return null
+    const content = stripHtmlText(response.body.toString('utf8').slice(0, 20_000)).slice(0, maxChars)
     return content ? { url, content } : null
   }
   catch {

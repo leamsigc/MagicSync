@@ -1,5 +1,6 @@
 import { assetService } from '#layers/BaseShared/server/services/asset.service';
 import { assetBlobKey, useAssetBlobStore } from '#layers/BaseShared/server/services/asset-blob-store';
+import { safeFetch } from '#layers/BaseShared/server/utils/ssrf';
 import { readMultipartFormData, readBody } from 'h3'
 import dayjs from 'dayjs'
 
@@ -22,6 +23,24 @@ const MIME_BY_EXTENSION: Record<string, string> = {
 const getMimeFromFilename = (filename: string): string => {
   const ext = filename.split('.').pop()?.toLowerCase() || ''
   return MIME_BY_EXTENSION[ext] || 'application/octet-stream'
+}
+
+/** Uploads are content-typed by extension only — never by the client's `Content-Type`. */
+const ALLOWED_EXTENSIONS = new Set(Object.keys(MIME_BY_EXTENSION))
+const MAX_IMAGE_BYTES = 25 * 1024 * 1024
+const MAX_VIDEO_BYTES = 250 * 1024 * 1024
+const MAX_FILES_PER_REQUEST = 20
+const SAFE_STORED_FILENAME = /^[A-Za-z0-9._-]{1,128}$/
+
+const VIDEO_EXTENSIONS = new Set(['mp4', 'webm', 'mov', 'avi', 'mkv'])
+
+function maxBytesFor(extension: string): number {
+  return VIDEO_EXTENSIONS.has(extension) ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES
+}
+
+function safeExtension(originalName: string): string | null {
+  const extension = originalName.split('.').pop()?.toLowerCase() || ''
+  return ALLOWED_EXTENSIONS.has(extension) ? extension : null
 }
 
 export default defineEventHandler(async (event) => {
@@ -50,17 +69,32 @@ export default defineEventHandler(async (event) => {
         })
       }
 
+      if (fileParts.length > MAX_FILES_PER_REQUEST) {
+        throw createError({ statusCode: 413, statusMessage: `At most ${MAX_FILES_PER_REQUEST} files per request` })
+      }
+
       const businessIdField = formData?.find(part => part.name === 'businessId')
       const businessId = businessIdField?.data?.toString() || undefined
 
       for (const part of fileParts) {
         try {
           const originalName = part.filename || 'file'
-          const fileExtension = originalName.split('.').pop()?.toLowerCase() || 'bin'
+          const fileExtension = safeExtension(originalName)
+          if (!fileExtension) {
+            log.error('Rejected upload with a disallowed extension', { fileName: originalName })
+            continue
+          }
+          if (part.data.length > maxBytesFor(fileExtension)) {
+            log.error('Rejected oversized upload', { fileName: originalName, bytes: part.data.length })
+            continue
+          }
+
           const uniqueFilename = crypto.randomUUID()
           const fullFilename = `${uniqueFilename}.${fileExtension}`
           const fileSize = part.data.length
-          const mimeType = part.type || 'application/octet-stream'
+          // Never trust part.type: a .html uploaded as image/png would otherwise
+          // be served back as HTML on the app origin.
+          const mimeType = getMimeFromFilename(fullFilename)
 
           // Streams raw bytes straight through the storage seam (no base64/JSON overhead)
           const { url: fileUrl } = await useAssetBlobStore().put(
@@ -117,13 +151,24 @@ export default defineEventHandler(async (event) => {
       // Remote URL import: fetch the file server-side and store it
       if (body.url && /^https?:\/\//i.test(body.url)) {
         const urlFilename = body.filename || body.originalName || body.url.split('/').pop() || 'downloaded-asset'
-        const fileExtension = urlFilename.split('.').pop()?.toLowerCase() || 'bin'
+        const fileExtension = safeExtension(urlFilename)
+        if (!fileExtension) {
+          throw createError({ statusCode: 415, statusMessage: 'Unsupported file extension' })
+        }
         const uniqueFilename = crypto.randomUUID()
         const fullFilename = `${uniqueFilename}.${fileExtension}`
 
-        const remoteResponse = await $fetch<ArrayBuffer>(body.url)
-        const buffer = Buffer.from(remoteResponse)
-        const mimeType = getMimeFromFilename(urlFilename)
+        // Pinned-IP fetch, redirect hops re-validated, body capped. A public URL
+        // that redirects to 169.254.169.254 or db:8080 is rejected.
+        const remoteResponse = await safeFetch(body.url, {
+          maxBytes: maxBytesFor(fileExtension),
+          timeoutMs: 20_000,
+        })
+        if (remoteResponse.status < 200 || remoteResponse.status >= 300) {
+          throw createError({ statusCode: 502, statusMessage: 'Failed to fetch remote file' })
+        }
+        const buffer = remoteResponse.body
+        const mimeType = getMimeFromFilename(fullFilename)
 
         const { url: fileUrl } = await useAssetBlobStore().put(
           assetBlobKey(user.id, fullFilename),
@@ -153,11 +198,17 @@ export default defineEventHandler(async (event) => {
         }
       } else if (body.filename && body.originalName && body.mimeType && body.url) {
         // Direct metadata create — the file is expected to already be stored
+        if (!SAFE_STORED_FILENAME.test(body.filename)) {
+          throw createError({ statusCode: 400, statusMessage: 'Invalid filename' })
+        }
+        if (!/^https?:\/\//i.test(body.url)) {
+          throw createError({ statusCode: 400, statusMessage: 'Invalid asset URL' })
+        }
         const result = await assetService.create(user.id, {
           businessId: body.businessId,
           filename: body.filename,
           originalName: body.originalName,
-          mimeType: body.mimeType,
+          mimeType: MIME_BY_EXTENSION[body.filename.split('.').pop()?.toLowerCase() ?? ''] ?? 'application/octet-stream',
           size: body.size ?? 0,
           url: body.url,
           metadata: {

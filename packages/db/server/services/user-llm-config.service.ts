@@ -4,6 +4,7 @@ import type { UserLlmConfigServiceType } from './interfaces'
 import { userLlmConfigs, entityDetails, type UserLlmConfig } from '#layers/BaseDB/db/schema'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
 import { encryptSecret, isEncryptedSecret, revealSecret } from '#layers/BaseDB/server/utils/publish-crypto'
+import { validateLlmBaseUrl } from '#layers/BaseDB/server/utils/llm-base-url'
 
 /**
  * A real provider, or the `system` sentinel meaning "inherit the operator's
@@ -203,6 +204,11 @@ export class UserLlmConfigService implements UserLlmConfigServiceType {
     data: CreateLlmConfigData
   ): Promise<ServiceResponse<UserLlmConfig>> {
     try {
+      const baseUrlError = await validateLlmBaseUrl(data.provider, data.apiBaseUrl)
+      if (baseUrlError) {
+        return { success: false, error: baseUrlError, code: 'VALIDATION_ERROR' }
+      }
+
       const id = crypto.randomUUID()
       const now = new Date()
 
@@ -243,6 +249,20 @@ export class UserLlmConfigService implements UserLlmConfigServiceType {
     data: UpdateLlmConfigData
   ): Promise<ServiceResponse<UserLlmConfig>> {
     try {
+      const [existing] = await this.db
+        .select()
+        .from(userLlmConfigs)
+        .where(and(eq(userLlmConfigs.id, configId), eq(userLlmConfigs.userId, userId)))
+        .limit(1)
+      if (!existing) {
+        return { success: false, error: 'Config not found', code: 'NOT_FOUND' }
+      }
+
+      const baseUrlError = await validateLlmBaseUrl(data.provider ?? existing.provider, data.apiBaseUrl)
+      if (baseUrlError) {
+        return { success: false, error: baseUrlError, code: 'VALIDATION_ERROR' }
+      }
+
       const now = new Date()
 
       // If setting as default, unset other defaults
@@ -318,6 +338,11 @@ export class UserLlmConfigService implements UserLlmConfigServiceType {
     data: CreateLlmConfigData
   ): Promise<ServiceResponse<BusinessLlmOverride>> {
     try {
+      const baseUrlError = await validateLlmBaseUrl(data.provider, data.apiBaseUrl)
+      if (baseUrlError) {
+        return { success: false, error: baseUrlError, code: 'VALIDATION_ERROR' }
+      }
+
       const entityId = overrideEntityId(userId, businessId)
       const [existing] = await this.db
         .select()

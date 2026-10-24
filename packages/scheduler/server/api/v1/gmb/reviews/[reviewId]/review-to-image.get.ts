@@ -31,6 +31,13 @@ export default defineEventHandler(async (event) => {
     businessName: business.name,
   })
 
-  setHeader(event, 'Content-Type', 'text/html')
+  // Defence in depth: the generator escapes untrusted review text, and this
+  // CSP makes sure nothing that slips through can execute or phone home.
+  setHeaders(event, {
+    'Content-Type': 'text/html; charset=utf-8',
+    'Content-Security-Policy': "default-src 'none'; img-src https://*.googleusercontent.com data:; style-src 'unsafe-inline'; sandbox",
+    'X-Content-Type-Options': 'nosniff',
+    'Cache-Control': 'private, no-store',
+  })
   return html
 })

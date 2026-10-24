@@ -232,7 +232,10 @@ export class SocialMediaAccountService implements SocialMediaAccountServiceType 
       accountId: data.accountId,
       accountName: data.accountName,
       baseUrl: data.baseUrl ?? null,
-      accessToken: data.accessToken,
+      // Only the ciphertext is persisted. `accessToken` stays non-null (schema)
+      // but never holds the plaintext credential; readers hydrate through
+      // `withPlaintextTokens()` / `getDecryptedTokens()`.
+      accessToken: accessTokenEncrypted ?? '',
       accessTokenEncrypted: accessTokenEncrypted,
       refreshTokenEncrypted: refreshTokenEncrypted,
       tokenExpiresAt: defaultExpiry,
@@ -240,7 +243,7 @@ export class SocialMediaAccountService implements SocialMediaAccountServiceType 
       createdAt: new Date(),
       updatedAt: new Date(),
       isActive: true,
-      refreshToken: data.refreshToken || null,
+      refreshToken: refreshTokenEncrypted,
       lastSyncAt: null
     }
 
@@ -276,16 +279,17 @@ export class SocialMediaAccountService implements SocialMediaAccountServiceType 
       return null;
     }
 
-    return account;
+    return account ? this.withPlaintextTokens(account) : null;
   }
 
   async getAccountsByIds(ids: string[], userId?: string): Promise<SocialMediaAccount[]> {
     if (ids.length === 0) return []
     const conditions = [inArray(socialMediaAccounts.id, ids)]
     if (userId) conditions.push(eq(socialMediaAccounts.userId, userId))
-    return this.db.query.socialMediaAccounts.findMany({
+    const accounts = await this.db.query.socialMediaAccounts.findMany({
       where: and(...conditions),
     })
+    return this.withPlaintextTokensAll(accounts)
   }
 
   /**
@@ -313,19 +317,21 @@ export class SocialMediaAccountService implements SocialMediaAccountServiceType 
     const baseQuery = this.db.query.socialMediaAccounts
 
     if (conditions.length > 0) {
-      return await baseQuery.findMany({
+      const accounts = await baseQuery.findMany({
         where: and(...conditions),
         with: {
           entityDetail: true
         },
       })
+      return this.withPlaintextTokensAll(accounts)
     }
 
-    return await baseQuery.findMany({
+    const all = await baseQuery.findMany({
       with: {
         entityDetail: true
       },
     });
+    return this.withPlaintextTokensAll(all)
   }
 
   /**
@@ -415,23 +421,22 @@ export class SocialMediaAccountService implements SocialMediaAccountServiceType 
       }
     }
 
-    // Encrypt tokens before storage
+    // Encrypt tokens before storage — the plaintext never touches a column.
     const encryptedData: Record<string, unknown> = { updatedAt: new Date() }
 
-    encryptedData.accessToken = data.accessToken
     if (data.accessToken !== undefined) {
-
-      encryptedData.access_token_encrypted = data.accessToken
-        ? await encryptKey(data.accessToken)
-        : null
+      const encryptedAccessToken = data.accessToken ? await encryptKey(data.accessToken) : ''
+      encryptedData.accessToken = encryptedAccessToken
+      encryptedData.accessTokenEncrypted = encryptedAccessToken || null
     }
 
     // Never wipe a stored refresh token with null/undefined. Providers omit
     // refresh_token on re-grants (Google only sends it with a consent grant),
     // and Better Auth preserves the previous one — the mirror must do the same.
     if (data.refreshToken) {
-      encryptedData.refreshToken = data.refreshToken
-      encryptedData.refresh_token_encrypted = await encryptKey(data.refreshToken)
+      const encryptedRefreshToken = await encryptKey(data.refreshToken)
+      encryptedData.refreshToken = encryptedRefreshToken
+      encryptedData.refreshTokenEncrypted = encryptedRefreshToken
     }
 
     if (data.accountName !== undefined) encryptedData.accountName = data.accountName
@@ -714,10 +719,42 @@ export class SocialMediaAccountService implements SocialMediaAccountServiceType 
    */
   async getDecryptedTokens(account: SocialMediaAccount): Promise<{ accessToken: string | null; refreshToken: string | null }> {
     const [accessToken, refreshToken] = await Promise.all([
-      account.accessToken ? decryptKey(account.accessToken) : null,
-      account.refreshToken ? decryptKey(account.refreshToken) : null,
+      this.revealToken(account.accessToken),
+      this.revealToken(account.refreshToken),
     ])
     return { accessToken, refreshToken }
+  }
+
+  /**
+   * Decrypt one stored token. Legacy rows written before the encryption
+   * migration held plaintext; those are returned as-is until the backfill task
+   * re-encrypts them, so publishing never breaks mid-rollout.
+   */
+  private async revealToken(stored: string | null | undefined): Promise<string | null> {
+    if (!stored) return null
+    try {
+      return (await decryptKey(stored)) ?? stored
+    }
+    catch {
+      return stored
+    }
+  }
+
+  /**
+   * Hydrate plaintext tokens into an account object at the read boundary.
+   * The database only ever holds ciphertext; every caller (plugins, schedulers,
+   * stats collectors) expects a usable bearer token in memory.
+   */
+  private async withPlaintextTokens<T extends SocialMediaAccount>(account: T): Promise<T> {
+    const [accessToken, refreshToken] = await Promise.all([
+      this.revealToken(account.accessToken),
+      this.revealToken(account.refreshToken),
+    ])
+    return { ...account, accessToken: accessToken ?? '', refreshToken: refreshToken ?? null }
+  }
+
+  private withPlaintextTokensAll<T extends SocialMediaAccount>(accounts: T[]): Promise<T[]> {
+    return Promise.all(accounts.map(account => this.withPlaintextTokens(account)))
   }
 
   /**

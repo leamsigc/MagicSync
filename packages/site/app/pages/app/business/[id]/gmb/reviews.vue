@@ -24,6 +24,7 @@ const replyText = ref('')
 const showReplyModal = ref(false)
 const showImagePreview = ref(false)
 const imagePreviewHtml = ref('')
+const previewUrl = ref('')
 const aiResponseLoading = ref(false)
 const templates = ref<string[]>([])
 
@@ -117,9 +118,19 @@ const handlePreviewImage = async (review: any) => {
   try {
     const html = await $fetch<string>(url)
     imagePreviewHtml.value = html
+    previewUrl.value = url
     showImagePreview.value = true
   } catch (e: any) {
     toast.add({ title: 'Error', description: 'Failed to generate image preview', color: 'error' })
+  }
+}
+
+// Open the server-rendered preview directly. The endpoint sends
+// `Content-Security-Policy: … sandbox`, so even a compromised payload cannot
+// script the app origin. Never document.write untrusted HTML here.
+const openPreviewInNewTab = () => {
+  if (previewUrl.value) {
+    window.open(previewUrl.value, '_blank', 'noopener,noreferrer')
   }
 }
 
@@ -286,16 +297,19 @@ useHead({
         <template #header>
           <div class="flex items-center justify-between">
             <h3 class="text-lg font-semibold">Review Image Preview</h3>
-            <UButton color="primary" size="xs" variant="outline" @click="() => {
-              const w = window.open('', '_blank')
-              if (w) { w.document.write(imagePreviewHtml); w.document.close() }
-            }">
+            <UButton color="primary" size="xs" variant="outline" @click="openPreviewInNewTab">
               Open in Browser
             </UButton>
           </div>
         </template>
         <div v-if="imagePreviewHtml" class="flex justify-center bg-gray-100 rounded p-4">
-          <div v-html="imagePreviewHtml"></div>
+          <!-- sandbox with no allow-* tokens: scripts are disabled entirely -->
+          <iframe
+            :srcdoc="imagePreviewHtml"
+            sandbox=""
+            referrerpolicy="no-referrer"
+            class="w-full min-h-[420px] border-0 bg-white"
+          />
         </div>
       </UCard>
     </UModal>

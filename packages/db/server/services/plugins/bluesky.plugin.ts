@@ -1,4 +1,3 @@
-import { decryptKey } from '#layers/BaseAuth/server/utils/AuthHelpers';
 import { parseJsonObject, toJsonString } from '#layers/BaseShared/utils/json';
 import { BaseSchedulerPlugin, createPostInsightsFallback, extractExternalPostId } from '#layers/BaseDB/server/services/SchedulerPost.service';
 import type { PluginPostDetails, PluginSocialMediaAccount, PostResponse, GetCommentsResponse, ReplyCommentResponse, PlatformComment, PostInsight, SchedulerPost } from '#layers/BaseDB/server/services/SchedulerPost.service';
@@ -293,7 +292,9 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
    * when two logins race on the same instance.
    */
   private async freshAuthedAgent(socialMediaAccount: PluginSocialMediaAccount): Promise<AtpAgent> {
-    const pwd = await decryptKey(socialMediaAccount.accessToken);
+    // The service layer hydrates a plaintext token before handing the account
+    // to a plugin; decrypting again here would return null.
+    const pwd = socialMediaAccount.accessToken;
     // Honour the account's custom PDS (Bluesky base URL) when set.
     const service = socialMediaAccount.baseUrl || this.serviceUrl || 'https://bsky.social';
     const agent = new AtpAgent({ service });
@@ -429,7 +430,8 @@ export class BlueskyPlugin extends BaseSchedulerPlugin {
     // Re-init against the account's PDS: init() defaults to bsky.social, which
     // would 401 every call for an account on a custom base URL.
     await this.init({ serviceUrl: socialMediaAccount.baseUrl || undefined });
-    const pwd = await decryptKey(socialMediaAccount.accessToken);
+    // Already decrypted by socialMediaAccountService.
+    const pwd = socialMediaAccount.accessToken;
 
 
     await this.agent.login({

@@ -12,6 +12,6 @@ export default defineNuxtConfig({
   $meta: {
     name: 'BaseShared',
   },
-  devtools: { enabled: true },
+  devtools: { enabled: process.env.NODE_ENV !== 'production' && !process.env.CI },
   modules: ['@pinia/nuxt', 'evlog/nuxt'],
 })

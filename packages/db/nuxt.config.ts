@@ -14,7 +14,7 @@ export default defineNuxtConfig({
     name: 'BaseDB',
   },
   modules: ['evlog/nuxt'],
-  devtools: { enabled: true },
+  devtools: { enabled: process.env.NODE_ENV !== 'production' && !process.env.CI },
   nitro: {
     experimental: {
       openAPI: true,

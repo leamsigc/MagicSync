@@ -1,57 +1,19 @@
 import { lookup } from 'node:dns/promises'
 import { isIP } from 'node:net'
+import { isBlockedIp, normalizeIpLiteral } from '#layers/BaseShared/server/utils/ssrf'
 
-function inCidr(ip: string, base: string, bits: number, version: 4 | 6): boolean {
-  if (isIP(ip) !== version || isIP(base) !== version) return false
-  const toBytes = (value: string): number[] => {
-    if (version === 4) return value.split('.').map(part => Number(part))
-    const expanded: number[] = []
-    const halves = value.split('::')
-    const head = halves[0] ? halves[0].split(':') : []
-    const tail = halves[1] ? halves[1].split(':') : []
-    const missing = 8 - head.length - tail.length
-    for (const part of [...head, ...Array<string>(missing).fill('0'), ...tail]) {
-      const num = parseInt(part, 16)
-      expanded.push((num >> 8) & 255, num & 255)
-    }
-    return expanded
-  }
-  const a = toBytes(ip)
-  const b = toBytes(base)
-  const fullBytes = Math.floor(bits / 8)
-  const restBits = bits % 8
-  for (let index = 0; index < fullBytes; index += 1) {
-    if (a[index] !== b[index]) return false
-  }
-  if (restBits > 0) {
-    const mask = (0xff << (8 - restBits)) & 0xff
-    if ((a[fullBytes] & mask) !== (b[fullBytes] & mask)) return false
-  }
-  return true
-}
-
-function isBlockedIp(ip: string): boolean {
-  if (isIP(ip) === 4) {
-    return inCidr(ip, '127.0.0.0', 8, 4)
-      || inCidr(ip, '10.0.0.0', 8, 4)
-      || inCidr(ip, '172.16.0.0', 12, 4)
-      || inCidr(ip, '192.168.0.0', 16, 4)
-      || inCidr(ip, '169.254.0.0', 16, 4)
-      || inCidr(ip, '0.0.0.0', 8, 4)
-  }
-  if (isIP(ip) === 6) {
-    const lower = ip.toLowerCase()
-    if (lower === '::1' || lower === '::') return true
-    return inCidr(ip, 'fc00::', 7, 6)
-      || inCidr(ip, 'fe80::', 10, 6)
-  }
-  return true
-}
-
+/**
+ * Validate an outbound site URL (WordPress connections, LLM base URLs).
+ *
+ * Delegates the address classification to the single shared SSRF guard —
+ * duplicating the range table here is how the IPv4-mapped IPv6 bypass shipped
+ * twice. Allows https only, rejects credentials/ports/blocked hosts, and
+ * revalidates every resolved address.
+ */
 function hostnameBlocked(hostname: string): boolean {
-  const host = hostname.toLowerCase().replace(/\.$/, '')
+  const host = normalizeIpLiteral(hostname).replace(/\.$/, '')
   if (host === 'localhost' || host.endsWith('.localhost')) return true
-  if (host === 'metadata.google.internal') return true
+  if (host === 'metadata.google.internal' || host === 'metadata' || host === 'kubernetes.default') return true
   if (isIP(host)) return isBlockedIp(host)
   return false
 }
@@ -66,26 +28,25 @@ function checkParsedUrl(parsed: URL): string | null {
 
 async function checkResolvedHost(hostname: string): Promise<string | null> {
   try {
-    const records = await lookup(hostname, { all: true })
+    const records = await lookup(normalizeIpLiteral(hostname), { all: true })
+    if (records.length === 0) return 'Site URL could not be resolved'
     for (const record of records) {
       if (isBlockedIp(record.address)) return 'Site URL resolves to a blocked address'
     }
-  } catch {
+  }
+  catch {
     return 'Site URL could not be resolved'
   }
   return null
 }
 
-/**
- * Validate an outbound site URL (WordPress connections, T120).
- * Allows https only, rejects credentials/ports/blocked hosts, and
- * revalidates every resolved address. Returns an error string or null.
- */
+/** Returns an error string, or null when the URL is safe to fetch. */
 export async function validatePublicSiteUrl(raw: string): Promise<string | null> {
   let parsed: URL
   try {
     parsed = new URL(raw.trim())
-  } catch {
+  }
+  catch {
     return 'Site URL is not a valid URL'
   }
   const parsedError = checkParsedUrl(parsed)

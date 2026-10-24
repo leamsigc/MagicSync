@@ -1,5 +1,5 @@
 import { logAuditService } from '#layers/BaseDB/server/services/auditLog.service';
-import { socialMediaAccountService, type CreateSocialMediaAccountData, type SocialMediaPlatform } from '#layers/BaseDB/server/services/social-media-account.service';
+import { socialMediaAccountService, sanitizeSocialMediaAccount, type CreateSocialMediaAccountData, type SocialMediaPlatform } from '#layers/BaseDB/server/services/social-media-account.service';
 import { FacebookPlugin } from '#layers/BaseDB/server/services/plugins/facebook.plugin';
 import { LinkedInPagePlugin } from '#layers/BaseDB/server/services/plugins/linkedin-page.plugin';
 import { YouTubePlugin } from '#layers/BaseDB/server/services/plugins/youtube.plugin';
@@ -176,7 +176,8 @@ export default defineEventHandler(async (event) => {
 
 
 
-    return socialMediaAccount;
+    // Never return the encrypted token columns to the browser.
+    return sanitizeSocialMediaAccount(socialMediaAccount);
 
   } catch (error) {
     log.error({ message: 'Failed to connect social media account', error })

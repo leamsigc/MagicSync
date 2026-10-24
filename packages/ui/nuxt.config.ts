@@ -11,7 +11,7 @@ export default defineNuxtConfig({
   // `app/utils/composables/useCarouselDeck.ts` reads the shared JSON boundary
   // helpers. Both layers are leaves, so this edge introduces no cycle.
   extends: ['@local-monorepo/shared'],
-  devtools: { enabled: true },
+  devtools: { enabled: process.env.NODE_ENV !== 'production' && !process.env.CI },
   experimental: {
     viteEnvironmentApi: true,
     typescriptPlugin: true

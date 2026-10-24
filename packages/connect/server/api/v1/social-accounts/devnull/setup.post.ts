@@ -1,5 +1,5 @@
-import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service';
-import { checkUserIsLogin, encryptKey, getAccessTokenHelper } from '#layers/BaseAuth/server/utils/AuthHelpers';
+import { socialMediaAccountService, sanitizeSocialMediaAccount } from '#layers/BaseDB/server/services/social-media-account.service';
+import { checkUserIsLogin, getAccessTokenHelper } from '#layers/BaseAuth/server/utils/AuthHelpers';
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle';
 import { account } from '#layers/BaseDB/db/auth/auth';
 import { eq, and } from 'drizzle-orm';
@@ -80,12 +80,12 @@ export default defineEventHandler(async (event) => {
     }
     const regData = (await regRes.json()) as { id: number; key: string };
 
-    // Encrypt and store private key
-    const encrypted = await encryptKey(privateKey);
+    // Store the plaintext here; the service encrypts exactly once. Doing it
+    // here as well produced enc(enc(key)) and broke the dev-null login.
     const socialAccount = await socialMediaAccountService.createOrUpdateAccount({
       id: `devnull-${ghUser.login}`,
       name: ghUser.name || ghUser.login,
-      access_token: encrypted,
+      access_token: privateKey,
       picture: ghUser.avatar_url || '',
       username: ghUser.login,
       user,
@@ -96,7 +96,7 @@ export default defineEventHandler(async (event) => {
 
     log.info({ message: 'dev-null.sh key generated and registered', githubUser: ghUser.login, keyId: regData.id });
 
-    return { success: true, account: socialAccount };
+    return { success: true, account: sanitizeSocialMediaAccount(socialAccount) };
   } catch (error) {
     const msg = (error as Error)?.message || String(error);
     log.error({ message: 'dev-null.sh setup failed', error: msg, stack: (error as Error)?.stack });

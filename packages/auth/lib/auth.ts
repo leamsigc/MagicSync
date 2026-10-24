@@ -147,6 +147,16 @@ export const auth = betterAuth({
       ...schema
     }
   }),
+  advanced: {
+    // `x-forwarded-for` is client-writable unless a proxy overwrites it. Only
+    // trust it when the deployment says it sits behind one.
+    ipAddress: {
+      ipAddressHeaders: (process.env.NUXT_TRUST_PROXY === '1'
+        ? ['x-forwarded-for', 'x-real-ip']
+        : ['x-real-ip']),
+      disableIpTracking: false,
+    },
+  },
   session: {
     modelName: 'session',
     fields: {
@@ -224,7 +234,10 @@ export const auth = betterAuth({
   account: {
     accountLinking: {
       enabled: true,
-      allowDifferentEmails: true,
+      // Never link a provider identity whose email differs from the account's.
+      // With `true`, an attacker-controlled provider account could be attached
+      // to a victim's existing user row without an explicit link action.
+      allowDifferentEmails: false,
       updateUserInfoOnLink: true,
       allowUnlinkingAll: false,
       trustedProviders: ['google', 'google-drive', 'googlemybusiness', 'facebook', 'email-password', 'linkedin', 'linkedin-page', 'twitter', 'tiktok', 'threads', 'youtube', 'reddit', 'discord', 'dribbble', 'instagram', 'x', 'canva', 'snapchat', 'github'],
@@ -358,8 +371,14 @@ export const auth = betterAuth({
   },
   hooks: {
     after: createAuthMiddleware(async (ctx) => {
-      const ipAddress = ctx.getHeader('x-forwarded-for')
-        || ctx.getHeader('remoteAddress') || undefined
+      const trustProxy = process.env.NUXT_TRUST_PROXY === '1'
+      const forwardedFor = ctx.getHeader('x-forwarded-for')
+      const realIp = ctx.getHeader('x-real-ip')
+      // Untrusted deployments: 000.ip-headers stripped the header, so this is
+      // undefined by design rather than a client-chosen value.
+      const ipAddress = trustProxy
+        ? (forwardedFor?.split(',')[0]?.trim() || realIp || undefined)
+        : undefined
       const userAgent = ctx.getHeader('user-agent') || undefined
 
       let targetType
@@ -472,7 +491,7 @@ export const auth = betterAuth({
               emailVerified: true
             };
           },
-          pkce: false,
+          pkce: true,
         },
 
         // YouTube (uses Google OAuth with YouTube scopes) - not natively supported.
@@ -497,7 +516,7 @@ export const auth = betterAuth({
           ],
           accessType: 'offline',
           prompt: 'consent',
-          pkce: false,
+          pkce: true,
           mapProfileToUser: mapGoogleProfileToName,
           // Each provider stores its own token row, so each request carries
           // ONLY its own scopes. 'false' is critical: accounts that granted
@@ -529,7 +548,7 @@ export const auth = betterAuth({
           ],
           accessType: 'offline',
           prompt: 'consent',
-          pkce: false,
+          pkce: true,
           mapProfileToUser: mapGoogleProfileToName,
           // Same as youtube above: 'false' so stale grants can never poison
           // new requests with a 400.
@@ -553,7 +572,7 @@ export const auth = betterAuth({
           ],
           accessType: 'offline',
           prompt: 'consent',
-          pkce: false,
+          pkce: true,
           mapProfileToUser: mapGoogleProfileToName,
           // Same as youtube above: 'false' so stale grants can never poison
           // new requests with a 400.
@@ -608,7 +627,7 @@ export const auth = betterAuth({
           tokenUrl: 'https://api.instagram.com/oauth/access_token',
           userInfoUrl: 'https://graph.instagram.com/me?fields=id,name,username,profile_picture_url',
           scopes: ['instagram_business_basic', "instagram_business_manage_messages", "instagram_business_content_publish", "instagram_business_manage_insights", "instagram_business_manage_comments"],
-          pkce: false,
+          pkce: true,
           mapProfileToUser: (profile: any) => {
             return {
               ...profile,
@@ -732,7 +751,10 @@ export const auth = betterAuth({
       resource: `${process.env.NUXT_APP_URL || 'http://localhost:3000'}/mcp`,
       scopes: ['openid', 'profile', 'email', 'offline_access', 'mcp:read', 'mcp:full'],
       allowDynamicClientRegistration: true,
-      allowUnauthenticatedClientRegistration: true,
+      // Anonymous client registration lets anyone mint consent prompts against
+      // real users. Enable per-deployment only if a client (e.g. an MCP desktop
+      // app) genuinely cannot authenticate before registering.
+      allowUnauthenticatedClientRegistration: process.env.NUXT_MCP_ALLOW_ANON_DCR === '1',
       schema: {
         oauthConsent: {
           fields: {
@@ -754,7 +776,12 @@ export const auth = betterAuth({
             const user = await socialMediaAccountService.getUserByAccountId(account.userId);
             if (account.providerId === "threads") {
               //Get user information then create SocialMedia from the user details
-              const { id, username, threads_profile_picture_url } = await $fetch<{ id: string, username: string, threads_profile_picture_url: string }>(`https://graph.threads.net/v1.0/me?fields=id,username,threads_profile_picture_url&access_token=${account.accessToken}`);
+              // Token in the Authorization header, not the query string — query
+              // strings end up in access logs, proxies, and error reports.
+              const { id, username, threads_profile_picture_url } = await $fetch<{ id: string, username: string, threads_profile_picture_url: string }>(
+                'https://graph.threads.net/v1.0/me?fields=id,username,threads_profile_picture_url',
+                { headers: { Authorization: `Bearer ${account.accessToken}` } },
+              );
 
 
               await socialMediaAccountService.createOrUpdateAccountFromAuth({

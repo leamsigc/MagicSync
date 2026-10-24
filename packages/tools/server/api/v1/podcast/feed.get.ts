@@ -1,5 +1,7 @@
 import * as cheerio from 'cheerio'
-import { isSafeExternalUrl } from '#layers/BaseShared/server/utils/ssrf'
+import { safeFetch } from '#layers/BaseShared/server/utils/ssrf'
+
+const MAX_FEED_BYTES = 2 * 1024 * 1024
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event)
@@ -12,22 +14,18 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'feedUrl is required' })
   }
 
-  // SAFE: block SSRF — reject internal/private/loopback/metadata hosts
-  const { safe, reason } = await isSafeExternalUrl(feedUrl)
-  if (!safe) {
-    log.error('Blocked unsafe podcast feed URL', { feedUrl, reason })
-    throw createError({ statusCode: 400, message: reason })
-  }
-
   log.info('Fetching podcast feed', { feedUrl })
 
   let xml: string
   try {
-    xml = await $fetch<string>(feedUrl, {
-      responseType: 'text',
-    })
-  } catch {
-    log.error('Failed to fetch podcast feed', { feedUrl })
+    const response = await safeFetch(feedUrl, { maxBytes: MAX_FEED_BYTES, timeoutMs: 15_000 })
+    if (response.status < 200 || response.status >= 300) {
+      throw new Error(`Upstream returned ${response.status}`)
+    }
+    xml = response.body.toString('utf8')
+  }
+  catch (error) {
+    log.error('Failed to fetch podcast feed', { feedUrl, reason: error instanceof Error ? error.message : String(error) })
     throw createError({ statusCode: 502, message: 'Failed to fetch podcast feed' })
   }
 

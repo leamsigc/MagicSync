@@ -8,6 +8,30 @@ import { randomUUID } from 'node:crypto';
 
 const CHUNKS_ROOT = join(process.cwd(), 'upload', 'chunks');
 const SAFE_SEGMENT = /^[A-Za-z0-9_-]+$/;
+const MAX_TOTAL_CHUNKS = 2000;
+const MAX_CHUNK_BYTES = 10 * 1024 * 1024;
+const MAX_UPLOAD_BYTES = 250 * 1024 * 1024;
+const MIME_BY_EXTENSION: Record<string, string> = {
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  gif: 'image/gif',
+  webp: 'image/webp',
+  svg: 'image/svg+xml',
+  mp4: 'video/mp4',
+  webm: 'video/webm',
+  mov: 'video/quicktime',
+  avi: 'video/x-msvideo',
+  mkv: 'video/x-matroska',
+  pdf: 'application/pdf',
+  txt: 'text/plain',
+}
+
+/** Extension is derived server-side; a client filename can never choose the path. */
+function safeExtension(fileName: string): string | null {
+  const extension = fileName.split('.').pop()?.toLowerCase() ?? ''
+  return MIME_BY_EXTENSION[extension] ? extension : null
+}
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event);
@@ -23,7 +47,6 @@ export default defineEventHandler(async (event) => {
     const chunkIndex = Number(get('chunkIndex'));
     const totalChunks = Number(get('totalChunks'));
     const fileName = get('fileName') || 'file';
-    const mimeType = get('mimeType') || 'application/octet-stream';
     const fileSize = Number(get('fileSize') || 0);
     const businessId = get('businessId') || undefined;
 
@@ -31,9 +54,12 @@ export default defineEventHandler(async (event) => {
     if (Number.isNaN(chunkIndex) || Number.isNaN(totalChunks) || chunkIndex < 0 || totalChunks < 1 || chunkIndex >= totalChunks) {
       throw createError({ statusCode: 400, statusMessage: 'Invalid chunk indices' });
     }
+    if (totalChunks > MAX_TOTAL_CHUNKS) throw createError({ statusCode: 413, statusMessage: 'Too many chunks' });
+    if (fileSize > MAX_UPLOAD_BYTES) throw createError({ statusCode: 413, statusMessage: 'File too large' });
 
     const chunkPart = formData.find((p) => p.name === 'chunk' && p.data);
     if (!chunkPart) throw createError({ statusCode: 400, statusMessage: 'No chunk data' });
+    if (chunkPart.data.length > MAX_CHUNK_BYTES) throw createError({ statusCode: 413, statusMessage: 'Chunk too large' });
 
     const dir = join(CHUNKS_ROOT, uploadId);
     await mkdir(dir, { recursive: true });
@@ -55,11 +81,19 @@ export default defineEventHandler(async (event) => {
       buffers.push(buf);
     }
     const buffer = Buffer.concat(buffers);
+    if (buffer.length > MAX_UPLOAD_BYTES) {
+      await rm(dir, { recursive: true, force: true }).catch(() => {});
+      throw createError({ statusCode: 413, statusMessage: 'File too large' });
+    }
 
-    const fileExtension = fileName.split('.').pop()?.toLowerCase() || 'bin';
+    const fileExtension = safeExtension(fileName);
+    if (!fileExtension) {
+      await rm(dir, { recursive: true, force: true }).catch(() => {});
+      throw createError({ statusCode: 415, statusMessage: 'Unsupported file extension' });
+    }
     const uniqueFilename = randomUUID();
     const fullFilename = `${uniqueFilename}.${fileExtension}`;
-    const resolvedMime = mimeType || 'application/octet-stream';
+    const resolvedMime = MIME_BY_EXTENSION[fileExtension] ?? 'application/octet-stream';
 
     const { url: fileUrl } = await useAssetBlobStore().put(
       assetBlobKey(user.id, fullFilename),

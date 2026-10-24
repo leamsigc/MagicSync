@@ -1,5 +1,6 @@
 import { socialMediaAccountService, type SocialMediaPlatform } from "#layers/BaseDB/server/services/social-media-account.service"
-import { checkUserIsLogin, encryptKey } from "#layers/BaseAuth/server/utils/AuthHelpers"
+import { checkUserIsLogin } from "#layers/BaseAuth/server/utils/AuthHelpers"
+import { sanitizeSocialMediaAccount } from "#layers/BaseDB/server/services/social-media-account.service"
 
 /**
  * Accept a bare host (`pds.example.com`) or a full URL and return a normalized
@@ -68,7 +69,8 @@ export default defineEventHandler(async (event) => {
           const agent = new AtpAgent({ service })
           await agent.login({ identifier: username, password })
 
-          const toke = await encryptKey(password);
+          // Pass the plaintext credential: socialMediaAccountService is the
+          // single encryption boundary. Encrypting here double-encrypts.
           // get user profile picture
           const profile = await agent.getProfile({ actor: username });
           const picture = profile.data.avatar || '';
@@ -78,7 +80,7 @@ export default defineEventHandler(async (event) => {
             id: agent.session!.did,
             name: username,
             username,
-            accessToken: toke,
+            accessToken: password,
             baseUrl: service,
             picture
           }
@@ -204,7 +206,7 @@ export default defineEventHandler(async (event) => {
 
     return {
       success: true,
-      account
+      account: account ? sanitizeSocialMediaAccount(account) : account
     }
 
   } catch (error) {

@@ -15,5 +15,11 @@ export default defineEventHandler(async (event) => {
   if (result.error || !result.data) {
     throw createError({ statusCode: 404, statusMessage: 'Not found' })
   }
-  return sendRedirect(event, result.data.target, 302)
+  // Only ever redirect to an https target. A campaign owner must not be able
+  // to turn this public endpoint into a javascript:/data:/file: redirector.
+  const target = result.data.target
+  if (!/^https:\/\//i.test(target)) {
+    throw createError({ statusCode: 404, statusMessage: 'Not found' })
+  }
+  return sendRedirect(event, target, 302)
 })

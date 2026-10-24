@@ -13,6 +13,8 @@
     "generate": "nuxt generate",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
+    "motion:preview": "node motion/devnull-promo/preview.mjs",
+    "motion:build": "node motion/devnull-promo/build.mjs",
     "postinstall": "nuxt prepare",
     "preview": "nuxt preview --dotenv ../../.env ",
     "screenshots:audit": "SCREENSHOT_VIEWPORT=mobile playwright test --config playwright.screenshots.config.ts audit-mobile",

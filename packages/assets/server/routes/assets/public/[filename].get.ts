@@ -1,67 +1,65 @@
 import { promises as fs } from 'node:fs'
-import { join } from 'node:path'
+import { basename, resolve, sep } from 'node:path'
 import { assetService } from '#layers/BaseShared/server/services/asset.service'
+
+/**
+ * Public asset delivery.
+ *
+ * Everything here is reachable without a session, so the path handling is
+ * deliberately paranoid: basename only, resolved inside the owner's folder,
+ * and served with `nosniff` + `attachment` for anything that a browser could
+ * interpret as executable markup.
+ */
+const INLINE_SAFE_EXTENSIONS = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp', 'mp4', 'webm', 'pdf'])
+
+function safeContentType(filename: string, mimeType?: string | null): string {
+  const extension = filename.split('.').pop()?.toLowerCase() ?? ''
+  if (extension === 'png') return 'image/png'
+  if (extension === 'jpg' || extension === 'jpeg') return 'image/jpeg'
+  if (extension === 'gif') return 'image/gif'
+  if (extension === 'webp') return 'image/webp'
+  if (extension === 'pdf') return 'application/pdf'
+  if (extension === 'mp4') return 'video/mp4'
+  if (extension === 'webm') return 'video/webm'
+  // Never echo a client-declared MIME type for anything else.
+  return mimeType === 'application/octet-stream' ? mimeType : 'application/octet-stream'
+}
 
 export default defineEventHandler(async (event) => {
   try {
-    const filename = getRouterParam(event, 'filename')
-    const FILE_STORAGE_MOUNT = process.env.NUXT_FILE_STORAGE_MOUNT
-    const filenameId = filename?.split('.')[0]
+    const filenameParam = getRouterParam(event, 'filename')
+    const filename = basename(filenameParam ?? '').replace(/["\r\n]/g, '')
+    const filenameId = filename.split('.')[0]
 
-    if (!filenameId) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: 'Filename is required'
-      })
+    if (!filename || !filenameId || filename === '.' || filename === '..') {
+      throw createError({ statusCode: 400, statusMessage: 'Filename is required' })
     }
 
-    // Look up the asset by filename to check if it's public
     const asset = await assetService.getAssetByFilename(filenameId)
-
     if (!asset) {
-      throw createError({
-        statusCode: 404,
-        statusMessage: 'Asset not found'
-      })
+      throw createError({ statusCode: 404, statusMessage: 'Asset not found' })
     }
-
-    // Check if asset is public
     if (!asset.isPublic) {
-      throw createError({
-        statusCode: 403,
-        statusMessage: 'Access denied - Asset is not public'
-      })
+      throw createError({ statusCode: 403, statusMessage: 'Access denied - Asset is not public' })
     }
 
-    // Construct the user-specific folder path using asset's userId
-    const fileStorageMount = FILE_STORAGE_MOUNT || './upload/files'
-    const userFolder = join(process.cwd(), fileStorageMount, 'userFiles', asset.userId)
-    const filePath = join(userFolder, filename)
+    const fileStorageMount = process.env.NUXT_FILE_STORAGE_MOUNT || './upload/files'
+    const ownerFolder = resolve(process.cwd(), fileStorageMount, 'userFiles', asset.userId)
+    const filePath = resolve(ownerFolder, filename)
+    if (!filePath.startsWith(`${ownerFolder}${sep}`)) {
+      throw createError({ statusCode: 400, statusMessage: 'Invalid file path' })
+    }
 
-    // Retrieve the file from local storage
     const fileContent = await fs.readFile(filePath)
-
-    if (!fileContent) {
-      throw createError({
-        statusCode: 404,
-        statusMessage: 'File not found'
-      })
-    }
-
-    // Use mimeType from asset record, fallback to inference
-    let contentType = asset.mimeType || 'application/octet-stream'
-    if (contentType === 'application/octet-stream') {
-      // Fallback to extension-based inference
-      if (filename.endsWith('.png')) contentType = 'image/png'
-      else if (filename.endsWith('.jpg') || filename.endsWith('.jpeg')) contentType = 'image/jpeg'
-      else if (filename.endsWith('.gif')) contentType = 'image/gif'
-      else if (filename.endsWith('.pdf')) contentType = 'application/pdf'
-      else if (filename.endsWith('.mp4')) contentType = 'video/mp4'
-    }
+    const extension = filename.split('.').pop()?.toLowerCase() ?? ''
+    const inline = INLINE_SAFE_EXTENSIONS.has(extension)
 
     setHeaders(event, {
-      'Content-Type': contentType,
-      'Content-Disposition': `inline; filename="${filename}"` // 'inline' to display in browser, 'attachment' to download
+      'Content-Type': safeContentType(filename, asset.mimeType),
+      'Content-Disposition': `${inline ? 'inline' : 'attachment'}; filename="${filename}"`,
+      'X-Content-Type-Options': 'nosniff',
+      'Content-Security-Policy': "default-src 'none'; img-src 'self'; media-src 'self'; style-src 'unsafe-inline'; sandbox",
+      'Cache-Control': 'public, max-age=3600',
     })
 
     return fileContent
@@ -71,9 +69,6 @@ export default defineEventHandler(async (event) => {
     }
 
     log.error({ message: 'Error serving asset', error: String(error) })
-    throw createError({
-      statusCode: 500,
-      statusMessage: 'Internal server error'
-    })
+    throw createError({ statusCode: 500, statusMessage: 'Internal server error' })
   }
 })

@@ -8,7 +8,7 @@ const currentDir = dirname(fileURLToPath(import.meta.url))
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: '2026-09-07',
-  devtools: { enabled: true },
+  devtools: { enabled: process.env.NODE_ENV !== 'production' && !process.env.CI },
   experimental: {
     viteEnvironmentApi: true,
     typescriptPlugin: true
@@ -26,6 +26,8 @@ export default defineNuxtConfig({
       '*/15 * * * *': ['social:post', 'stats:collect', 'repost:process', 'autoreply:process'],
       // Run `token:health` every 6 hours to log expiring/expired tokens
       '0 */6 * * *': ['token:health'],
+      // Once daily: encrypt any legacy plaintext social tokens left in the DB
+      '30 3 * * *': ['tokens:encrypt'],
       // Daily notification digest email (07:00 UTC)
       '0 7 * * *': ['notifications:digest'],
       // Safe-mode morning workspace report (08:00 UTC)

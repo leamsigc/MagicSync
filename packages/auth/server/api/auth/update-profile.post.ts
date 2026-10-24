@@ -1,13 +1,21 @@
 import { z } from 'zod'
 import { auth } from '#layers/BaseAuth/lib/auth'
-import { authClient } from '#layers/BaseAuth/lib/auth-client';
 
 const updateProfileSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  firstName: z.string().optional(),
-  lastName: z.string().optional(),
-  email: z.string().email('Invalid email address'),
-  image: z.string().url().optional().or(z.literal(''))
+  name: z.string().min(1, 'Name is required').max(120),
+  firstName: z.string().max(80).optional(),
+  lastName: z.string().max(80).optional(),
+  // Accepted for payload compatibility but never applied here — changing an
+  // email requires re-verification and is a separate flow. Previously this was
+  // validated and silently ignored, so users believed it had changed.
+  email: z.string().email().optional(),
+  image: z.string()
+    .max(2048)
+    .refine(
+      value => value === '' || value.startsWith('https://') || value.startsWith('/'),
+      'Image must be an https URL or a local path',
+    )
+    .optional(),
 })
 
 export default defineEventHandler(async (event) => {
@@ -23,12 +31,16 @@ export default defineEventHandler(async (event) => {
 
     log.set({ action: 'update_profile', email: validatedData.email })
 
-    // Update user profile using Better Auth
-    await authClient.updateUser({
-      name: validatedData.name,
-      firstName: validatedData.firstName,
-      lastName: validatedData.lastName,
-      image: validatedData.image
+    // Update through the server API with the caller's headers — a client SDK
+    // call from the server has no session and would act anonymously.
+    await auth.api.updateUser({
+      body: {
+        name: validatedData.name,
+        firstName: validatedData.firstName,
+        lastName: validatedData.lastName,
+        image: validatedData.image || undefined,
+      },
+      headers: getRequestHeaders(event),
     })
 
     log.info({ content: 'Profile updated successfully', success: true })
@@ -51,7 +63,7 @@ export default defineEventHandler(async (event) => {
 
     throw createError({
       statusCode: 500,
-      statusMessage: error instanceof Error ? error.message : 'Failed to update profile'
+      statusMessage: 'Failed to update profile'
     })
   }
 })

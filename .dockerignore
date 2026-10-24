@@ -57,6 +57,7 @@ scripts/*
 !scripts/pii_assets.sh
 !scripts/install-ytdlp.sh
 !scripts/stage-sharp-libvips.sh
+!scripts/docker-entrypoint.sh
 *.md
 CODE_OF_CONDUCT.md
 CONTRIBUTING.md

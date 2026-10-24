@@ -420,7 +420,9 @@ export class AnalyticsService {
     const startDate = dayjs().subtract(days, 'day').toISOString()
     const history = await this.getStatsHistory(filters, { startDate, limit: 1000 })
     const escape = (value: unknown): string => {
-      const text = value === null || value === undefined ? '' : String(value)
+      const raw = value === null || value === undefined ? '' : String(value)
+      // Neutralise spreadsheet formulas (DDE) before RFC-4180 quoting.
+      const text = /^[=+\-@\t\r]/.test(raw) ? `'${raw}` : raw
       return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text
     }
     const header = ['date', 'platform', 'accountId', 'username', 'followers', 'following', 'posts', 'engagement']

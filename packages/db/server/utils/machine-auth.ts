@@ -5,12 +5,8 @@ import { businessProfileService } from '../services/business-profile.service'
 
 const MACHINE_SKEW_SECONDS = 300
 
-function machineSecret(): string {
-  const secret = process.env.MACHINE_BRIDGE_SECRET
-  if (!secret) {
-    throw new Error('[machine-auth] MACHINE_BRIDGE_SECRET is required for machine callbacks')
-  }
-  return secret
+function machineSecret(): string | null {
+  return process.env.MACHINE_BRIDGE_SECRET?.trim() || null
 }
 
 function timestampFresh(timestamp: string | undefined): boolean {
@@ -24,10 +20,12 @@ function timestampFresh(timestamp: string | undefined): boolean {
  * Returns an error message, or null when the request is authentic.
  */
 export function verifyMachineRequest(event: H3Event, rawBody: string): string | null {
+  const secret = machineSecret()
+  if (!secret) return 'Machine callbacks are not configured'
   const timestamp = getHeader(event, 'x-machine-timestamp')
   const signature = getHeader(event, 'x-machine-signature')
   if (!timestampFresh(timestamp) || !signature) return 'Missing or stale machine signature'
-  const expected = createHmac('sha256', machineSecret()).update(`${timestamp}.${rawBody}`).digest('hex')
+  const expected = createHmac('sha256', secret).update(`${timestamp}.${rawBody}`).digest('hex')
   const actual = Buffer.from(signature)
   const wanted = Buffer.from(expected)
   if (actual.length !== wanted.length || !timingSafeEqual(actual, wanted)) {

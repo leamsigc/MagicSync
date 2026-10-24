@@ -53,11 +53,14 @@ services:
         # "true" bakes ScrapeGraphAI's Python library into the image (heavy).
         WITH_SCRAPEGRAPH: "false"
     environment:
+      # Required: the service refuses to start without a token, so the sidecar
+      # can never run unauthenticated on the compose network.
       - PYTHON_TOOLS_TOKEN=${PYTHON_TOOLS_TOKEN:-}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - SCRAPEGRAPH_MODEL=${SCRAPEGRAPH_MODEL:-openai/gpt-4o-mini}
-    ports:
-      - "8100:8100"
+    # No host port: reachable only from the compose network (site -> python-tools).
+    expose:
+      - "8100"
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8100/health')"]
       interval: 30s
@@ -72,8 +75,8 @@ services:
       - .env
     platform: linux/amd64
     ports:
-      - "8080:8080"
-      - "5001:5001"
+      # Loopback only — the app reaches the DB over the compose network.
+      - "127.0.0.1:8080:8080"
     volumes:
       - ./sqld:/var/lib/sqld
     environment:

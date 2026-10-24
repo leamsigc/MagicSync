@@ -16,7 +16,7 @@ export default defineNuxtConfig({
       cors: true
     }
   },
-  devtools: { enabled: true },
+  devtools: { enabled: process.env.NODE_ENV !== 'production' && !process.env.CI },
   experimental: {
     viteEnvironmentApi: true,
     typescriptPlugin: true

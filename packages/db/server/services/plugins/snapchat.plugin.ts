@@ -1,4 +1,3 @@
-import { decryptKey } from '#layers/BaseAuth/server/utils/AuthHelpers';
 import { platformConfigurations } from '#layers/BaseShared/shared/platformConstants';
 import {
   BaseSchedulerPlugin,
@@ -84,7 +83,8 @@ export class SnapchatPlugin extends BaseSchedulerPlugin {
   }
 
   private async accessToken(socialMediaAccount: PluginSocialMediaAccount): Promise<string> {
-    return decryptKey(socialMediaAccount.accessToken);
+    // Already decrypted by socialMediaAccountService at the read boundary.
+    return socialMediaAccount.accessToken;
   }
 
   override async validate(post: Post): Promise<string[]> {

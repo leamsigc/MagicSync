@@ -1,19 +1,16 @@
 packages:
   - packages/*
 
-# PRD-FLUE-AGENT-MIGRATION §5.3: @flue/runtime declares ^0.83.0 on the pi
-# packages; 0.x caret ranges reject 0.85.1 and pnpm would install a second
-# pi copy. Overrides force a single deduped pi resolution for the whole repo.
-# PRD-FLUE-RUNTIME-CONVERGENCE D6: 0.86.1 injects a `system` turn-context
-# message Flue 2.1.0 cannot map ("Unsupported message role in turn context:
-# system"); 0.85.1 is the verified alignment.
 overrides:
   '@earendil-works/pi-agent-core': 0.85.1
   '@earendil-works/pi-ai': 0.85.1
-  # @nuxtjs/seo v6 rejects any loaded nuxt-site-config below 5.0.1. The bundled
-  # sub-modules declare ^5.0.0, which otherwise keeps a 5.0.0 instance in
-  # peer-scoped sub-graphs. Pin one deduped copy for the whole repo.
   nuxt-site-config: 5.0.3
+  'undici@<8.12.2': ^8.12.2
+  'body-parser@<2.4.0': ^2.4.0
+  'fast-uri@<3.1.9': ^3.1.9
+  'serialize-javascript@<7.1.3': ^7.1.3
+  'happy-dom@<21.0.4': 21.0.4
+  '@modelcontextprotocol/client@<2.3.0': ^2.3.0
 
 allowBuilds:
   '@google/genai': false
@@ -87,7 +84,7 @@ catalog:
   evlog: 2.33.0
   fabric: 7.4.0
   googleapis: 186.0.0
-  happy-dom: 21.0.3
+  happy-dom: 21.0.4
   mjml: 5.4.1
   mammoth: 1.13.0
   modern-screenshot: 4.7.0

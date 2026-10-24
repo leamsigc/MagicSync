@@ -144,7 +144,7 @@ FROM node:26-alpine
 #   - ca-certificates: TLS trust store for outbound HTTPS to the video host.
 #     node:26-alpine already ships it, but list it explicitly so a base-image
 #     change cannot silently break yt-dlp in production.
-RUN apk add --no-cache cairo pango giflib libjpeg-turbo librsvg pixman freetype fontconfig ttf-dejavu ffmpeg ca-certificates openssh-client
+RUN apk add --no-cache cairo pango giflib libjpeg-turbo librsvg pixman freetype fontconfig ttf-dejavu ffmpeg ca-certificates openssh-client su-exec
 
 WORKDIR /usr/app
 
@@ -168,6 +168,19 @@ ENV DRIZZLE_MIGRATIONS_DIR=/usr/app/.output/migrations
 # Consumed by packages/agent/server/utils/ytdlp.ts, which also honours the
 # NUXT_-prefixed form so a value in .env cannot be silently ignored.
 ENV YTDLP_PATH=/usr/local/bin/yt-dlp
+
+# Drop privileges. The runtime only needs to read /usr/app and write its
+# scratch volume (/app/video-tmp), so an RCE in yt-dlp/ffmpeg is confined to an
+# unprivileged uid instead of container root. The entrypoint chowns the Docker
+# named volume (created root-owned) and then `exec su-exec app`, so the server
+# process itself never runs as root.
+RUN addgroup -S app && adduser -S -G app -h /usr/app app && \
+    mkdir -p /app/video-tmp && \
+    chown -R app:app /usr/app /app/video-tmp
+COPY scripts/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod 755 /usr/local/bin/docker-entrypoint.sh
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+
 EXPOSE 3000
 
 # Operational notes for GET /api/v1/media/video-download (video-cropper ingest):

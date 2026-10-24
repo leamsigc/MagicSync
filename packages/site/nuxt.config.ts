@@ -42,8 +42,38 @@ export default defineNuxtConfig({
     "/blog": { swr: true, cache: { varies: ['accept'] } },
     "/blog/**": { swr: 1200, cache: { varies: ['accept'] } },
     "/app/**": { swr: false, robots: false, prerender: false },
+    // Baseline security headers for every response. The CSP is intentionally
+    // conservative-but-practical: Nuxt hydrates with inline scripts, so
+    // 'unsafe-inline' stays until a nonce strategy lands — object-src,
+    // base-uri, frame-ancestors and form-action still do real work.
+    '/**': {
+      headers: {
+        'X-Content-Type-Options': 'nosniff',
+        'X-Frame-Options': 'DENY',
+        'Referrer-Policy': 'strict-origin-when-cross-origin',
+        'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=()',
+        'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+        'Content-Security-Policy': [
+          "default-src 'self'",
+          "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'",
+          "style-src 'self' 'unsafe-inline' https:",
+          "img-src 'self' data: blob: https:",
+          "media-src 'self' blob: https:",
+          "font-src 'self' data: https:",
+          `connect-src 'self' https: wss:${process.env.NODE_ENV === 'production' ? '' : ' ws:'}`,
+          "frame-src 'self' https:",
+          "worker-src 'self' blob:",
+          "object-src 'none'",
+          "base-uri 'self'",
+          "form-action 'self'",
+          "frame-ancestors 'none'",
+        ].join('; '),
+      },
+    },
+    // No CORS on the authenticated API: the app is same-origin. The CLI and
+    // MCP clients send credentials as headers and are not browser callers.
     '/api/v1/**': {
-      cors: true
+      cors: false
     },
     // Cross-origin isolation for on-device WASM tools (TTS, etc.)
     // — copied here so Vite dev-server middleware also picks them up.

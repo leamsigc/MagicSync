@@ -12,6 +12,10 @@ import { assets, assetFolders, type Asset, type AssetFolder } from '#layers/Base
 import { businessProfileService } from '#layers/BaseDB/server/services/business-profile.service';
 import { parseFolderScope, type AssetFolderSummary, type FolderScope, type MoveAssetsInput } from '#layers/BaseShared/shared/utils/asset-folders';
 import { assetBlobKey, useAssetBlobStore } from './asset-blob-store';
+import { safeFetch } from '../utils/ssrf';
+
+/** Hard cap for URL imports — keeps a hostile 10 GB response out of memory. */
+const MAX_IMPORT_BYTES = 25 * 1024 * 1024;
 
 export type CreateAssetData = {
   businessId?: string;
@@ -451,9 +455,13 @@ export class AssetService {
       }
       const originalName = input.originalName || input.url.split('/').pop() || 'downloaded-asset';
       const ext = originalName.split('.').pop()?.toLowerCase() || 'bin';
-      const downloaded: unknown = await $fetch(input.url);
-      const arrayBuffer = downloaded instanceof Blob ? await downloaded.arrayBuffer() : downloaded as ArrayBuffer;
-      const buffer = Buffer.from(arrayBuffer);
+      // Pinned-IP fetch with manual, re-validated redirects — a public URL that
+      // redirects to 169.254.169.254 or an internal service cannot walk through.
+      const response = await safeFetch(input.url, { maxBytes: MAX_IMPORT_BYTES, timeoutMs: 20_000 });
+      if (response.status < 200 || response.status >= 300) {
+        return { success: false, error: 'Failed to import asset from URL' };
+      }
+      const buffer = response.body;
       if (buffer.length === 0) {
         return { success: false, error: 'Downloaded file is empty' };
       }

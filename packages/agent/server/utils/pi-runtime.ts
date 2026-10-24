@@ -6,6 +6,7 @@ import { ModelRuntime, type CreateModelRuntimeOptions } from '@earendil-works/pi
 import { InMemoryCredentialStore, InMemoryModelsStore, type Model } from '@earendil-works/pi-ai'
 import type { RequestLogger } from 'evlog'
 import { emitLog } from '#layers/BaseShared/server/utils/evlog'
+import { validateLlmBaseUrl } from '#layers/BaseDB/server/utils/llm-base-url'
 import type { ServiceResponse } from '#layers/BaseShared/server/types/service.types'
 import deploymentModelsRaw from '../agent/models.json?raw'
 
@@ -174,8 +175,12 @@ export const DYNAMIC_MODEL_PROVIDERS = new Set(['llama', 'ollama'])
  * Fetch live model ids from a local server's OpenAI-compatible /models endpoint
  * (llama.cpp, Ollama). Returns [] on any failure — never throws.
  */
-export async function fetchServerModelIds(baseUrl: string, apiKey?: string | null, timeoutMs = 4000): Promise<string[]> {
+export async function fetchServerModelIds(baseUrl: string, apiKey?: string | null, timeoutMs = 4000, provider = 'ollama'): Promise<string[]> {
   try {
+    // Dynamic providers point at local runners; the host allowlist keeps the
+    // request from being retargeted at cloud metadata or an internal service.
+    const baseUrlError = await validateLlmBaseUrl(provider, baseUrl)
+    if (baseUrlError) return []
     const url = `${baseUrl.replace(/\/+$/, '')}/models`
     const headers: Record<string, string> = {}
     if (apiKey) headers.Authorization = `Bearer ${apiKey}`
@@ -198,14 +203,18 @@ export async function testModelConnection(
   runtime: ModelRuntime,
   input: TestConnectionInput,
 ): Promise<ServiceResponse<{ latencyMs: number }>> {
-  if (input.apiBaseUrl) applyRunBaseUrl(runtime, input.provider, input.apiBaseUrl)
+  if (input.apiBaseUrl) {
+    const baseUrlError = await validateLlmBaseUrl(input.provider, input.apiBaseUrl)
+    if (baseUrlError) return { success: false, error: baseUrlError, code: 'VALIDATION_ERROR' }
+    applyRunBaseUrl(runtime, input.provider, input.apiBaseUrl)
+  }
   if (input.apiKey) await applyRunApiKey(runtime, input.provider, input.apiKey)
   let model = resolveRunModel(runtime, input.provider, input.model)
   if (!model && DYNAMIC_MODEL_PROVIDERS.has(input.provider) && input.apiBaseUrl) {
     // Local servers list their real model ids at /models. If the user-entered id
     // matches one (exact, or base name without a :quant suffix), use THAT id —
     // the request then always matches what the server serves.
-    const serverIds = await fetchServerModelIds(input.apiBaseUrl, input.apiKey)
+    const serverIds = await fetchServerModelIds(input.apiBaseUrl, input.apiKey, 4000, input.provider)
     const wanted = input.model.toLowerCase()
     const match = serverIds.find(id => id === input.model)
       ?? serverIds.find(id => id.toLowerCase() === wanted)

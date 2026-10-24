@@ -1,5 +1,16 @@
 import { assetService } from '#layers/BaseAssets/server/services/asset.service'
+import { safeFetch } from '#layers/BaseShared/server/utils/ssrf'
 import { type ServerFile } from 'nuxt-file-storage'
+
+const MAX_IMAGE_BYTES = 25 * 1024 * 1024
+const IMAGE_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp'])
+
+/** Pexels URLs come from the client — never let them choose the stored extension. */
+const safeImageExtension = (originalUrl: string): string | null => {
+  const extension = originalUrl.split('?')[0]?.split('.').pop()?.toLowerCase() ?? ''
+  return IMAGE_EXTENSIONS.has(extension) ? extension : 'jpeg'
+}
+
 interface PexelsPhoto {
   id: number
   width: number
@@ -44,10 +55,13 @@ export default defineEventHandler(async (event) => {
 
     for (const photo of photos) {
       try {
-        const response = await $fetch(photo.src.large, { responseType: 'arrayBuffer' })
-        const buffer = Buffer.from(response)
+        // `photo` comes straight from the request body, so the URL is
+        // attacker-controlled: pinned-IP fetch + redirect re-validation.
+        const response = await safeFetch(photo.src.large, { maxBytes: MAX_IMAGE_BYTES, timeoutMs: 15_000 })
+        if (response.status < 200 || response.status >= 300) continue
+        const buffer = response.body
 
-        const fileExtension = photo.src.original.split('.').pop() || 'jpeg'
+        const fileExtension = safeImageExtension(photo.src.original)
         const uniqueFilename = crypto.randomUUID()
         const fullFilename = `${uniqueFilename}.${fileExtension}`
 

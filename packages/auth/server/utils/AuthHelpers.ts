@@ -47,7 +47,8 @@ export const getAccessTokenHelper = async (
   }
 ) => {
 
-  log.info({ message: '### Token Helper####', providerId: options.providerId, accountId: options.accountId, userId: options.userId })
+  // SAFE: no token, id, or account identifier is logged at info level.
+  log.debug?.({ message: 'Requesting access token', providerId: options.providerId })
   try {
     // NOTE: Better Auth's /get-access-token schema accepts ONLY { accountId }
     // and/or { userId } (strictObject) and resolves strictly by its own row
@@ -93,14 +94,21 @@ export const encryptKey = async (data: string) => {
 }
 
 /**
- * Decrypt a string using better-auth's symmetric encryption.
+ * Decrypt a stored token.
+ *
+ * Returns null instead of throwing: a legacy plaintext row (pre-encryption) or
+ * a rotated secret must not 500 a publish request. Callers treat null as
+ * "credential unavailable / needs reconnect".
  */
-export const decryptKey = async (data: string) => {
-  if (!process.env.BETTER_AUTH_SECRET) {
-    throw new Error('[auth] BETTER_AUTH_SECRET env var is required — decryption unavailable')
+export const decryptKey = async (data: string): Promise<string | null> => {
+  if (!process.env.BETTER_AUTH_SECRET) return null
+  try {
+    return await symmetricDecrypt({
+      key: process.env.BETTER_AUTH_SECRET,
+      data
+    })
   }
-  return symmetricDecrypt({
-    key: process.env.BETTER_AUTH_SECRET,
-    data
-  })
+  catch {
+    return null
+  }
 }

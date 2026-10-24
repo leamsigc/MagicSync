@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { defineMcpTool } from '@nuxtjs/mcp-toolkit/server'
-import { requireMcp } from '../../utils/mcp-context'
+import { requireMcp, requireScope } from '../../utils/mcp-context'
 import { resolveMcpAiContext } from '../../utils/mcp-ai-context'
 import { logMcpCall } from '../../utils/mcp-audit'
 import { buildCapabilityRunContext, runCapability } from '#layers/BaseAgent/server/capabilities'
@@ -12,9 +12,11 @@ export default defineMcpTool({
     goal: z.string().min(1).max(2000).describe('Business goal in the owner\'s own words, e.g. "Help me get more customers"'),
   },
   enabled: event => !!event.context.mcp?.valid,
-  annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: false },
+  // Executes a capability that can create drafts and spend model budget.
+  annotations: { readOnlyHint: false, idempotentHint: false, openWorldHint: false },
   async handler(args) {
     const mcp = requireMcp()
+    requireScope(mcp, 'full')
     const ai = await resolveMcpAiContext(mcp)
     try {
       const runContext = await buildCapabilityRunContext(ai.ownerId, mcp.businessId, {

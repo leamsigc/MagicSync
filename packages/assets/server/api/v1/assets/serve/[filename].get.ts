@@ -24,7 +24,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // SAFE: only use the basename so `..` / absolute paths cannot escape the user folder
-    const safeName = basename(filename)
+    const safeName = basename(filename).replace(/["\r\n]/g, '')
     if (!safeName || safeName === '.' || safeName === '..') {
       throw createError({ statusCode: 400, statusMessage: 'Invalid filename' })
     }
@@ -85,7 +85,9 @@ export default defineEventHandler(async (event) => {
 
     setHeaders(event, {
       'Content-Type': contentType,
-      'Content-Disposition': `inline; filename="${safeName}"` // 'inline' to display in browser, 'attachment' to download
+      'Content-Disposition': `inline; filename="${safeName}"`, // 'inline' to display in browser, 'attachment' to download
+      'Cache-Control': 'private, max-age=31536000, immutable',
+      'X-Content-Type-Options': 'nosniff',
     })
 
     return fileContent

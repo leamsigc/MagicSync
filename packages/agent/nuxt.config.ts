@@ -42,5 +42,5 @@ export default defineNuxtConfig({
     name: 'BaseAgent',
   },
   modules: ['evlog/nuxt'],
-  devtools: { enabled: true },
+  devtools: { enabled: process.env.NODE_ENV !== 'production' && !process.env.CI },
 })

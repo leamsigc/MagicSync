@@ -1,4 +1,5 @@
 import { and, eq } from 'drizzle-orm'
+import { timingSafeEqual } from 'node:crypto'
 import { entityDetails } from '#layers/BaseDB/db/entityDetails/entityDetails'
 import { socialMediaAccounts } from '#layers/BaseDB/db/socialMedia/socialMedia'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
@@ -12,6 +13,13 @@ import {
 } from '#layers/BaseScheduler/server/services/auto-reply-pure'
 
 export const META_WEBHOOK_FIELDS = ['comments', 'messages', 'story_mentions'] as const
+
+function constantTimeEquals(a: string, b: string): boolean {
+  const left = Buffer.from(a)
+  const right = Buffer.from(b)
+  if (left.length !== right.length) return false
+  return timingSafeEqual(left, right)
+}
 
 function verifyToken(): string {
   return process.env.NUXT_META_WEBHOOK_VERIFY_TOKEN || process.env.META_WEBHOOK_VERIFY_TOKEN || ''
@@ -50,7 +58,7 @@ export class AutoReplyWebhookService {
       if (!expected) {
         return { success: false, error: 'Webhook verify token is not configured', code: 'NOT_CONFIGURED' }
       }
-      if (mode === 'subscribe' && token === expected && challenge) {
+      if (mode === 'subscribe' && challenge && constantTimeEquals(token, expected)) {
         return { success: true, data: challenge }
       }
       return { success: false, error: 'Verification failed', code: 'FORBIDDEN' }

@@ -5,6 +5,8 @@
  * for managing business profiles, reviews, posts, and Q&A.
  */
 
+import { escapeHtml, safeImageUrl } from '#layers/BaseShared/server/utils/html'
+
 export interface GMBLocation {
   name: string
   locationName: string
@@ -514,7 +516,17 @@ export function generateReviewScreenshotHTML(review: {
   reviewDate: Date
   businessName: string
 }): string {
-  const stars = '★'.repeat(review.rating) + '☆'.repeat(5 - review.rating)
+  // Every field below is attacker-controlled: review content and author name
+  // come from anyone who can review the business on Google. Escape before
+  // interpolation — this HTML is served as `text/html` and also injected into
+  // an iframe, so unescaped markup executes on the app origin.
+  const rating = Math.max(0, Math.min(5, Math.round(Number(review.rating) || 0)))
+  const stars = '★'.repeat(rating) + '☆'.repeat(5 - rating)
+  const authorName = escapeHtml(review.authorName)
+  const businessName = escapeHtml(review.businessName)
+  const content = escapeHtml(review.content)
+  const authorImage = safeImageUrl(review.authorImage, ['googleusercontent.com'])
+  const initial = escapeHtml((review.authorName || '?').charAt(0).toUpperCase())
   const formattedDate = review.reviewDate.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
@@ -532,9 +544,9 @@ export function generateReviewScreenshotHTML(review: {
       border: 1px solid #e1e5e9;
     ">
       <div style="display: flex; align-items: center; margin-bottom: 16px;">
-        ${review.authorImage
+        ${authorImage
       ? `
-          <img src="${review.authorImage}" alt="${review.authorName}" style="
+          <img src="${escapeHtml(authorImage)}" alt="${authorName}" style="
             width: 48px;
             height: 48px;
             border-radius: 50%;
@@ -556,12 +568,12 @@ export function generateReviewScreenshotHTML(review: {
             font-size: 18px;
             margin-right: 12px;
           ">
-            ${review.authorName.charAt(0).toUpperCase()}
+            ${initial}
           </div>
         `}
         <div>
           <div style="font-weight: 600; color: #202124; font-size: 16px;">
-            ${review.authorName}
+            ${authorName}
           </div>
           <div style="color: #5f6368; font-size: 14px;">
             ${formattedDate}
@@ -576,7 +588,7 @@ export function generateReviewScreenshotHTML(review: {
       </div>
 
       <div style="color: #202124; font-size: 16px; line-height: 1.5; margin-bottom: 16px;">
-        "${review.content}"
+        "${content}"
       </div>
 
       <div style="
@@ -590,7 +602,7 @@ export function generateReviewScreenshotHTML(review: {
         <svg width="16" height="16" viewBox="0 0 24 24" fill="#4285f4" style="margin-right: 8px;">
           <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
         </svg>
-        Review on Google for ${review.businessName}
+        Review on Google for ${businessName}
       </div>
     </div>
   `

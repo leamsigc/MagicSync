@@ -1,6 +1,6 @@
 import { auth } from '#layers/BaseAuth/lib/auth'
 import { readFile } from 'fs/promises'
-import { join } from 'path'
+import { relative, resolve, sep } from 'path'
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event)
@@ -23,13 +23,15 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // Security: Ensure the path is within the user's folder
-    const userFolder = `userFiles/${user.id}`
-    const safePath = path.replace(/\.\./g, '') // Remove any path traversal attempts
-
-    // Build the full file path
-    const fileStorageMount = FILE_STORAGE_MOUNT || './upload/files'
-    const fullPath = join(fileStorageMount, userFolder, safePath)
+    // Security: resolve the path and prove it stays inside the user's folder.
+    // A string `replace('..','')` filter is bypassable (`....//`, encoded
+    // separators); resolve + prefix comparison is not.
+    const userFolder = resolve(process.cwd(), FILE_STORAGE_MOUNT || './upload/files', 'userFiles', user.id)
+    const fullPath = resolve(userFolder, path)
+    if (fullPath !== userFolder && !fullPath.startsWith(`${userFolder}${sep}`)) {
+      throw createError({ statusCode: 400, statusMessage: 'Invalid file path' })
+    }
+    const safePath = relative(userFolder, fullPath)
 
     try {
       // Read the file
@@ -56,9 +58,11 @@ export default defineEventHandler(async (event) => {
         contentType = mimeTypes[ext] || contentType
       }
 
-      // Set appropriate headers
+      // Private user content: never let a shared cache store it for another
+      // user, and never let the browser sniff it into executable HTML.
       setHeader(event, 'Content-Type', contentType)
-      setHeader(event, 'Cache-Control', 'public, max-age=31536000') // Cache for 1 year
+      setHeader(event, 'Cache-Control', 'private, max-age=31536000, immutable')
+      setHeader(event, 'X-Content-Type-Options', 'nosniff')
 
       return fileBuffer
     } catch (fileError) {
