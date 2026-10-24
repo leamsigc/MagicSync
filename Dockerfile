@@ -193,6 +193,9 @@ ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 
 EXPOSE 3000
 
+HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
+  CMD wget --no-verbose --spider http://127.0.0.1:3000/ || exit 1
+
 # Operational notes for GET /api/v1/media/video-download (video-cropper ingest):
 #   * yt-dlp must write the merged file to disk before any byte can be
 #     streamed, so the request can stay open while sending nothing. Worst case

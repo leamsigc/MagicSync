@@ -1,18 +1,4 @@
 #!/usr/bin/env node
-/**
- * Post-build smoke check for Nitro's traced node_modules.
- *
- * Nft copies only the files it sees. When two versions of a dependency are in
- * the graph (or an export subpath is resolved late), `.output/server` can end
- * up with a package whose `package.json` points at files that were never
- * copied — the server then dies at import time with ERR_MODULE_NOT_FOUND, in
- * production, on the first request. That is exactly how `@better-auth/core`
- * broke a deploy: 1.7.10 and 1.7.12 were both present, one was flattened, and
- * `dist/utils/string.mjs` was missing.
- *
- * Booting the entry for a few seconds links the whole ESM graph, so a missing
- * external surfaces here instead of after the image has shipped.
- */
 import { spawn } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { dirname, join } from 'node:path'
@@ -53,12 +39,9 @@ function finish(code, message) {
   process.exit(code)
 }
 
-const timer = setTimeout(() => {
-  // Still running after the window without a module error: the graph linked.
-  finish(0)
-}, BOOT_WINDOW_MS)
+const timer = setTimeout(() => finish(0), BOOT_WINDOW_MS)
 
-child.on('exit', (code) => {
+child.on('exit', () => {
   if (/ERR_MODULE_NOT_FOUND|Cannot find module/.test(stderr)) {
     const missing = stderr.match(/Cannot find (?:module|package) '([^']+)'/)?.[1] ?? 'unknown specifier'
     finish(1, [
@@ -71,7 +54,5 @@ child.on('exit', (code) => {
     ].join('\n'))
     return
   }
-  // A different crash still proves the import graph linked; boot failures are
-  // covered by the container healthcheck, not this check.
   finish(0)
 })

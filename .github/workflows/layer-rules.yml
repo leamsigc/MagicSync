@@ -14,7 +14,6 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          # Single source of truth: the same runtime the app and Docker image use.
           node-version-file: .nvmrc
           cache: pnpm
       # The audit reads the alias table from the generated tsconfig, so the site

@@ -146,7 +146,6 @@ export default withMermaid(defineConfig({
             { text: 'Snapchat Integration', link: '/guide/snapchat-integration' },
             { text: 'Connecting Stripe', link: '/guide/stripe-setup' },
             { text: 'Billing & Snapchat Security Review', link: '/guide/billing-security-review' },
-            { text: 'Security Hardening (2026-10-24)', link: '/guide/security-hardening-2026-10-24' },
             { text: 'Mobile Layout Fixes', link: '/guide/mobile-layout-fixes' },
             { text: 'Provider Token Error Triage', link: '/guide/provider-token-error-triage' },
             { text: 'Content Pipeline & Chat Fixes', link: '/guide/content-pipeline-chat-fixes' },

@@ -39,7 +39,6 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
-          # Single source of truth: the same runtime the app and Docker image use.
           node-version-file: .nvmrc
           cache: pnpm # or pnpm / yarn
       - name: Setup Pages

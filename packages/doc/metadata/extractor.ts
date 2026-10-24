@@ -3,7 +3,7 @@
  */
 
 import type { ApiFunction, CategoryInfo, MetadataIndex } from './types'
-import { readdirSync, readFileSync, statSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import matter from 'gray-matter'
 
@@ -51,6 +51,10 @@ export function extractFunctionMetadata(
   }
 }
 
+function isMissingDirectory(error: unknown): boolean {
+  return typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT'
+}
+
 /**
  * Scan directory recursively for markdown files
  */
@@ -74,15 +78,14 @@ export function scanMarkdownFiles(dir: string): string[] {
     }
   }
   catch (error) {
-    // Optional docs folders (api/, ecosystem/, troubleshooting/) may not exist
-    // in every checkout. Missing directories are not a build problem.
-    if ((error as NodeJS.ErrnoException)?.code !== 'ENOENT') {
-      console.warn(`Failed to scan directory ${dir}:`, error)
-    }
+    if (!isMissingDirectory(error)) throw error
   }
 
   return files
 }
+
+/** Documentation sections that may carry metadata. Not every checkout has all of them. */
+export const DOCS_DIRS = ['api', 'guide', 'ecosystem', 'troubleshooting', 'contributing'] as const
 
 /**
  * Build complete metadata index
@@ -91,11 +94,9 @@ export function buildMetadataIndex(docsDir: string): MetadataIndex {
   const functionsMap: Record<string, ApiFunction> = {}
   const categoriesMap: Record<string, CategoryInfo> = {}
 
-  // Scan all documentation directories
-  const directories = ['api', 'guide', 'ecosystem', 'troubleshooting', 'contributing']
-
-  for (const dir of directories) {
+  for (const dir of DOCS_DIRS) {
     const dirPath = join(docsDir, dir)
+    if (!existsSync(dirPath)) continue
     const files = scanMarkdownFiles(dirPath)
 
     for (const file of files) {
