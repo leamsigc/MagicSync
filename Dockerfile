@@ -193,8 +193,11 @@ ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 
 EXPOSE 3000
 
+# The server binds $PORT (platform-injected, e.g. 8888 on Coolify) and falls
+# back to 3000. A hardcoded port here marks a healthy app unhealthy and the
+# proxy answers 503.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
-  CMD wget --no-verbose --spider http://127.0.0.1:3000/ || exit 1
+  CMD wget --no-verbose --spider "http://127.0.0.1:${PORT:-3000}/" || exit 1
 
 # Operational notes for GET /api/v1/media/video-download (video-cropper ingest):
 #   * yt-dlp must write the merged file to disk before any byte can be
