@@ -64,7 +64,8 @@
     "tts:assets:force": "bash ./scripts/tts_assets_folder.sh --force",
     "ui": "pnpm packages @local-monorepo/ui build",
     "ui:dev": "pnpm packages @local-monorepo/ui dev",
-    "ui:start": "pnpm packages @local-monorepo/ui start"
+    "ui:start": "pnpm packages @local-monorepo/ui start",
+    "check:output": "node scripts/check-output-modules.mjs"
   },
   "devDependencies": {
     "dotenv-cli": "^11.0.0",

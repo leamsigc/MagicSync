@@ -5,6 +5,13 @@ overrides:
   '@earendil-works/pi-agent-core': 0.85.1
   '@earendil-works/pi-ai': 0.85.1
   nuxt-site-config: 5.0.3
+  # 2026-10-24 prod incident: better-auth 1.7.10 pulled @better-auth/core 1.7.10
+  # while @better-auth/mcp -> oauth-provider ^1.7.10 resolved 1.7.12. Nitro
+  # flattens both into .output/server/node_modules/@better-auth/core and the
+  # traced file set came from the wrong instance, so `core/utils/string` was
+  # missing at runtime. One version, one traced copy.
+  '@better-auth/core': 1.7.12
+  '@better-auth/oauth-provider': 1.7.12
   'undici@<8.12.2': ^8.12.2
   'body-parser@<2.4.0': ^2.4.0
   'fast-uri@<3.1.9': ^3.1.9
@@ -64,11 +71,11 @@ catalog:
   "@ai-sdk/openai": 4.0.96
   "@browser-ai/transformers-js": 3.0.4
   axios: 1.20.0
-  better-auth: 1.7.10
-  "@better-auth/api-key": 1.7.10
-  "@better-auth/cimd": 1.7.10
-  "@better-auth/mcp": 1.7.10
-  "@better-auth/stripe": 1.7.10
+  better-auth: 1.7.12
+  "@better-auth/api-key": 1.7.12
+  "@better-auth/cimd": 1.7.12
+  "@better-auth/mcp": 1.7.12
+  "@better-auth/stripe": 1.7.12
   stripe: 23.0.0
   better-sqlite3: 13.0.3
   canvas: 3.2.3

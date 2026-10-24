@@ -167,6 +167,34 @@ second pass found and fixed:
 ::ffff:808:808           → allowed   (8.8.8.8, public)
 ```
 
+## Production incident: `ERR_MODULE_NOT_FOUND` for `@better-auth/core`
+
+After the dependency update, production crashed on every request:
+
+```
+Cannot find module '/usr/app/.output/server/node_modules/@better-auth/core/dist/utils/string.mjs'
+imported from .output/server/chunks/virtual/entry.mjs
+```
+
+**Cause:** two versions of `@better-auth/core` were in the graph. `better-auth@1.7.10`
+and its plugins pulled `@better-auth/core@1.7.10`, while `@better-auth/mcp` →
+`@better-auth/oauth-provider ^1.7.10` resolved **1.7.12**. Nitro flattens
+external packages into a single `.output/server/node_modules/@better-auth/core`
+and traces only the files it saw at build time, so the runtime copy (1.7.12) was
+missing `dist/utils/string.mjs` even though the source package had it.
+
+**Fix:** one version everywhere — catalog bumped to `1.7.12` for `better-auth`
+and every `@better-auth/*` plugin, plus explicit overrides for
+`@better-auth/core` and `@better-auth/oauth-provider`.
+
+**Guard:** `scripts/check-output-modules.mjs` (`pnpm check:output`) boots the
+built entry for 10 s and fails the build if stderr contains
+`ERR_MODULE_NOT_FOUND` / `Cannot find module`. It runs in the Docker builder
+right after `pnpm site`, so a missing traced file fails the image build instead
+of the first production request. The check is deliberately narrow: any other
+boot failure still proves the ESM graph linked and is left to the container
+healthcheck.
+
 ## Verification
 
 ```bash

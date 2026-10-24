@@ -58,6 +58,7 @@ scripts/*
 !scripts/install-ytdlp.sh
 !scripts/stage-sharp-libvips.sh
 !scripts/docker-entrypoint.sh
+!scripts/check-output-modules.mjs
 *.md
 CODE_OF_CONDUCT.md
 CONTRIBUTING.md

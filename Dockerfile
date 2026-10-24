@@ -65,6 +65,11 @@ RUN bash ./scripts/install-ytdlp.sh
 
 RUN pnpm site
 
+# The traced .output/server/node_modules is what ships. Link the whole ESM graph
+# once so a missing external (or a duplicated package version) fails the image
+# build instead of the first production request.
+RUN node scripts/check-output-modules.mjs
+
 # Nitro traces the sharp bindings and versioned libvips packages but not the
 # sibling paths their RPATH searches — stage those links before the runtime
 # COPY so the container can dlopen libvips (see scripts/stage-sharp-libvips.sh).
