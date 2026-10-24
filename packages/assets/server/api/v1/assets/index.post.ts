@@ -34,6 +34,15 @@ const SAFE_STORED_FILENAME = /^[A-Za-z0-9._-]{1,128}$/
 
 const VIDEO_EXTENSIONS = new Set(['mp4', 'webm', 'mov', 'avi', 'mkv'])
 
+/** Write failures that mean the storage root is not usable, not that the input is bad. */
+const STORAGE_ERROR_CODES = new Set(['EACCES', 'EPERM', 'ENOSPC', 'EROFS', 'EDQUOT'])
+
+interface UploadFailure {
+  fileName: string
+  code?: string
+  message: string
+}
+
 function maxBytesFor(extension: string): number {
   return VIDEO_EXTENSIONS.has(extension) ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES
 }
@@ -54,6 +63,7 @@ export default defineEventHandler(async (event) => {
     const isMultipart = contentType.startsWith('multipart/form-data')
 
     const uploadedAssets = []
+    const failures: UploadFailure[] = []
 
     if (isMultipart) {
       // Primary path: multipart/form-data — streams raw bytes, safe for large videos
@@ -82,10 +92,12 @@ export default defineEventHandler(async (event) => {
           const fileExtension = safeExtension(originalName)
           if (!fileExtension) {
             log.error('Rejected upload with a disallowed extension', { fileName: originalName })
+            failures.push({ fileName: originalName, code: 'UNSUPPORTED_EXTENSION', message: 'Unsupported file extension' })
             continue
           }
           if (part.data.length > maxBytesFor(fileExtension)) {
             log.error('Rejected oversized upload', { fileName: originalName, bytes: part.data.length })
+            failures.push({ fileName: originalName, code: 'FILE_TOO_LARGE', message: 'File exceeds the size limit' })
             continue
           }
 
@@ -123,7 +135,13 @@ export default defineEventHandler(async (event) => {
             uploadedAssets.push(result.data)
           }
         } catch (fileError) {
-          log.error('Error processing file', { fileName: part.filename, error: fileError })
+          const code = (fileError as { code?: string } | null)?.code
+          failures.push({
+            fileName: part.filename ?? 'file',
+            code,
+            message: fileError instanceof Error ? fileError.message : String(fileError),
+          })
+          log.error('Error processing file', { fileName: part.filename, code, error: fileError })
           // Continue processing other files
         }
       }
@@ -229,7 +247,15 @@ export default defineEventHandler(async (event) => {
     }
 
     if (uploadedAssets.length === 0) {
-      log.error('No files were successfully uploaded', {})
+      const storageFailure = failures.find(f => f.code && STORAGE_ERROR_CODES.has(f.code))
+      if (storageFailure) {
+        log.error('Asset storage write failed', { code: storageFailure.code, fileName: storageFailure.fileName })
+        throw createError({
+          statusCode: 500,
+          statusMessage: 'Asset storage is not writable',
+        })
+      }
+      log.error('No files were successfully uploaded', { failures })
       throw createError({
         statusCode: 400,
         statusMessage: 'No files were successfully uploaded'

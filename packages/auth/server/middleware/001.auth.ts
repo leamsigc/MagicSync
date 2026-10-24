@@ -13,6 +13,10 @@ import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
 /** Public by product design (shareable pages, podcast proxy, auth endpoints). */
 const PUBLIC_API_PATHS = [
   '/api/auth',
+  // nuxt-auth-utils' own session probe (`GET`/`DELETE /api/_auth/session`).
+  // It returns `{}`/204 for anonymous callers; gating it turned every logged-out
+  // page load into a 401 logged at error level with a stack.
+  '/api/_auth',
   '/api/v1/assets/public',
   '/api/v1/podcast/search',
   '/api/v1/podcast/feed',
