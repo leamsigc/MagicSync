@@ -65,10 +65,6 @@ RUN bash ./scripts/install-ytdlp.sh
 
 RUN pnpm site
 
-# The traced .output/server/node_modules is what ships. Link the whole ESM graph
-# once so a missing external (or a duplicated package version) fails the image
-# build instead of the first production request.
-RUN node scripts/check-output-modules.mjs
 
 # Nitro traces the sharp bindings and versioned libvips packages but not the
 # sibling paths their RPATH searches — stage those links before the runtime
@@ -131,6 +127,15 @@ cp -r "$STAGE/." "$DEST/"
 ls -la "$STAGE/"
 EOF
 RUN sh /tmp/install-musl-binding.sh
+
+# Validate the artifact that actually ships. This MUST run after the sharp
+# libvips staging and the libsql musl binding copy above — those files are
+# required at import time and are not traced by Nitro, so an earlier check
+# fails with a false "Cannot find module '@libsql/linux-x64-musl'".
+# Link the whole ESM graph once so a genuinely missing external (the
+# better-auth/@better-auth/core incident) fails the image build instead of the
+# first production request.
+RUN node scripts/check-output-modules.mjs
 
 # ============ RUNTIME ============
 FROM node:26-alpine

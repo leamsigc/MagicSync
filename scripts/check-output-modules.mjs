@@ -60,7 +60,15 @@ const timer = setTimeout(() => {
 
 child.on('exit', (code) => {
   if (/ERR_MODULE_NOT_FOUND|Cannot find module/.test(stderr)) {
-    finish(1, `[check-output] external module missing from .output/server:\n${stderr.trim()}`)
+    const missing = stderr.match(/Cannot find (?:module|package) '([^']+)'/)?.[1] ?? 'unknown specifier'
+    finish(1, [
+      `[check-output] missing external module: ${missing}`,
+      '[check-output] Nitro traced a package that does not contain the file the',
+      '[check-output] runtime entry imports (usually two versions of the same',
+      '[check-output] package in the graph, or a native binding staged later).',
+      '',
+      stderr.trim(),
+    ].join('\n'))
     return
   }
   // A different crash still proves the import graph linked; boot failures are
