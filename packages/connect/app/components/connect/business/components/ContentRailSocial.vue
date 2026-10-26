@@ -70,6 +70,14 @@ const props = defineProps<{
   disabled?: boolean
 }>()
 
+const emit = defineEmits<{
+  compose: [payload: {
+    content: string
+    platformVariants: Record<string, string>
+    accounts: Array<{ id: string, platform: string }>
+  }]
+}>()
+
 const { t } = useI18n()
 const toast = useToast()
 
@@ -250,6 +258,17 @@ function handlePost(platform: string) {
   return send(platform, 'now')
 }
 
+/** Open the full post editor with this generation prefilled (same UI as /app/posts/new). */
+function handleCompose(post?: GeneratedPost) {
+  const platformVariants = Object.fromEntries(posts.value.map(entry => [entry.platform, entry.text]))
+  if (post) platformVariants[post.platform] = post.text
+  emit('compose', {
+    content: post?.text ?? props.article,
+    platformVariants,
+    accounts: available.value.map(entry => ({ id: entry.accountId, platform: entry.name })),
+  })
+}
+
 function handleSchedule(platform: string) {
   return send(platform, 'schedule')
 }
@@ -365,6 +384,15 @@ onMounted(() => {
           </li>
         </ul>
         <div class="flex flex-wrap items-center gap-1.5">
+          <UButton
+            size="xs"
+            variant="soft"
+            color="primary"
+            icon="i-heroicons-pencil-square"
+            :label="t('rail.social.edit')"
+            data-testid="social-edit"
+            @click="handleCompose(post)"
+          />
           <UButton
             size="xs"
             icon="i-heroicons-paper-airplane"

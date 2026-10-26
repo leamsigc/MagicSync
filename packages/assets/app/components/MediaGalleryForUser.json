@@ -37,7 +37,15 @@
     "reconnectDrive": "Reconnect Google Drive",
     "disconnectDrive": "Disconnect Drive",
     "driveDisconnected": "Google Drive disconnected.",
-    "driveDisconnectFailed": "Could not disconnect Google Drive. Please try again."
+    "driveDisconnectFailed": "Could not disconnect Google Drive. Please try again.",
+    "businessLibrary": "Business library",
+    "allMyMedia": "All my media",
+    "allAssets": "All assets",
+    "unfiled": "Unfiled",
+    "folders": "Folders",
+    "emptyLibrary": "No media found for this selection.",
+    "assetsAdded": "Assets added",
+    "assetsAddedDescription": "{count} asset(s) added to the selection."
   },
   "es": {
     "local": "Local",
@@ -77,7 +85,15 @@
     "reconnectDrive": "Reconectar Google Drive",
     "disconnectDrive": "Desconectar Drive",
     "driveDisconnected": "Google Drive desconectado.",
-    "driveDisconnectFailed": "No se pudo desconectar Google Drive. Inténtalo de nuevo."
+    "driveDisconnectFailed": "No se pudo desconectar Google Drive. Inténtalo de nuevo.",
+    "businessLibrary": "Biblioteca del negocio",
+    "allMyMedia": "Todos mis medios",
+    "allAssets": "Todos los archivos",
+    "unfiled": "Sin carpeta",
+    "folders": "Carpetas",
+    "emptyLibrary": "No se encontraron medios para esta selección.",
+    "assetsAdded": "Activos añadidos",
+    "assetsAddedDescription": "{count} activo(s) añadido(s) a la selección."
   },
   "de": {
     "local": "Lokal",
@@ -117,7 +133,15 @@
     "reconnectDrive": "Google Drive erneut verbinden",
     "disconnectDrive": "Drive trennen",
     "driveDisconnected": "Google Drive getrennt.",
-    "driveDisconnectFailed": "Google Drive konnte nicht getrennt werden. Bitte erneut versuchen."
+    "driveDisconnectFailed": "Google Drive konnte nicht getrennt werden. Bitte erneut versuchen.",
+    "businessLibrary": "Business-Mediathek",
+    "allMyMedia": "Alle meine Medien",
+    "allAssets": "Alle Dateien",
+    "unfiled": "Ohne Ordner",
+    "folders": "Ordner",
+    "emptyLibrary": "Keine Medien für diese Auswahl gefunden.",
+    "assetsAdded": "Assets hinzugefügt",
+    "assetsAddedDescription": "{count} Asset(s) zur Auswahl hinzugefügt."
   },
   "fr": {
     "local": "Local",
@@ -157,6 +181,14 @@
     "reconnectDrive": "Reconnecter Google Drive",
     "disconnectDrive": "Déconnecter Drive",
     "driveDisconnected": "Google Drive déconnecté.",
-    "driveDisconnectFailed": "Impossible de déconnecter Google Drive. Veuillez réessayer."
+    "driveDisconnectFailed": "Impossible de déconnecter Google Drive. Veuillez réessayer.",
+    "businessLibrary": "Bibliothèque de l'entreprise",
+    "allMyMedia": "Tous mes médias",
+    "allAssets": "Tous les fichiers",
+    "unfiled": "Sans dossier",
+    "folders": "Dossiers",
+    "emptyLibrary": "Aucun média trouvé pour cette sélection.",
+    "assetsAdded": "Ressources ajoutées",
+    "assetsAddedDescription": "{count} ressource(s) ajoutée(s) à la sélection."
   }
 }

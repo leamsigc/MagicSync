@@ -18,6 +18,7 @@ interface ComposerDraft {
   content: string
   mediaAssets?: string[]
   accounts?: Array<{ id: string, platform: string }>
+  platformVariants?: Record<string, string>
 }
 
 const props = defineProps<{
@@ -49,6 +50,9 @@ const initialPost = computed(() => {
       platformPostId: account.platform,
       socialAccountId: account.id,
     })),
+    platformContent: Object.fromEntries(
+      Object.entries(draft.platformVariants ?? {}).map(([platform, content]) => [platform, { content }]),
+    ),
   } as never
 })
 

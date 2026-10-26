@@ -23,7 +23,7 @@ const input = ref('')
 const fileInput = ref<HTMLInputElement | null>(null)
 const revisionTarget = ref<{ artifactId: string, slideId: string, version: number } | null>(null)
 const composerOpen = ref(false)
-const composerDraft = ref<{ content: string, accounts: Array<{ id: string, platform: string }> } | null>(null)
+const composerDraft = ref<{ content: string, accounts: Array<{ id: string, platform: string }>, platformVariants?: Record<string, string> } | null>(null)
 const effectiveAi = ref<{ provider: string, model: string, source: string } | null>(null)
 
 /** Show which provider/model the chat will actually use, so a wrong pick is visible. */
@@ -85,7 +85,7 @@ function handleCancelRevision() {
 }
 
 /** Open the full post composer with this chat draft pre-filled. */
-function handleCompose(payload: { content: string, accounts: Array<{ id: string, platform: string }> }) {
+function handleCompose(payload: { content: string, accounts: Array<{ id: string, platform: string }>, platformVariants?: Record<string, string> }) {
   if (!activeBusinessId.value) {
     toast.add({ title: t('needBusinessTitle'), icon: 'i-heroicons-x-circle', color: 'error' })
     return

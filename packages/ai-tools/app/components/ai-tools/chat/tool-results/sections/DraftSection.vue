@@ -8,8 +8,14 @@ const props = defineProps<{
   businessId?: string | null
 }>()
 
+interface ComposePayload {
+  content: string
+  accounts: Array<{ id: string, platform: string }>
+  platformVariants?: Record<string, string>
+}
+
 const emit = defineEmits<{
-  compose: [payload: { content: string, accounts: Array<{ id: string, platform: string }> }]
+  compose: [payload: ComposePayload]
 }>()
 
 const { t } = useI18n()
@@ -157,12 +163,23 @@ function handleSelectAccount(): void {
   showAccounts.value = !showAccounts.value
 }
 
+/** Every string platform variant on the tool call the active tab belongs to. */
+function variantsFor(tab: PostTab): Record<string, string> {
+  const call = props.calls.find(entry => tab.id.startsWith(entry.id))
+  if (!call) return {}
+  const variants = recordOf(draftOf(call).platformVariants) ?? {}
+  return Object.fromEntries(
+    Object.entries(variants).filter((entry): entry is [string, string] => typeof entry[1] === 'string'),
+  )
+}
+
 /** Hand the draft to the full composer so it can be finished with real parity. */
 function handleCompose(): void {
   const tab = activeTab.value
   if (!tab) return
   emit('compose', {
     content: tab.caption,
+    platformVariants: variantsFor(tab),
     accounts: platformAccounts.value.map(account => ({ id: account.id, platform: account.platform ?? '' })),
   })
 }

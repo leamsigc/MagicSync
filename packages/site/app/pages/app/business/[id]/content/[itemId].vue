@@ -6,6 +6,7 @@ import ContentIdeaRail from '#layers/BaseConnect/app/components/connect/business
 import ContentPublishTargets from '#layers/BaseConnect/app/components/connect/business/components/ContentPublishTargets.vue'
 import ContentImagePickerModal from '#layers/BaseConnect/app/components/connect/business/components/ContentImagePickerModal.vue'
 import ContentVariantSwitcher from '#layers/BaseConnect/app/components/connect/business/components/ContentVariantSwitcher.vue'
+import ChatPostComposer from '../../../../../components/chat/ChatPostComposer.vue'
 import { displayAngle } from '#layers/BaseConnect/app/utils/content-brief'
 import { contentApiError } from '#layers/BaseConnect/app/utils/content-api-error'
 import {
@@ -68,6 +69,28 @@ const {
   loadSafeMode,
   loadTargets,
 } = useContentEditor({ businessId, itemId })
+
+type ComposeDraft = {
+  content: string
+  accounts: Array<{ id: string, platform: string }>
+  platformVariants?: Record<string, string>
+}
+
+const composerOpen = ref(false)
+const composerDraft = ref<ComposeDraft | null>(null)
+
+function handleCompose(payload: ComposeDraft) {
+  composerDraft.value = payload
+  composerOpen.value = true
+}
+
+function handleComposerOpen(value: boolean) {
+  composerOpen.value = value
+}
+
+function handleComposerSaved() {
+  composerOpen.value = false
+}
 
 const saving = ref(false)
 const savingDetails = ref(false)
@@ -541,6 +564,7 @@ onMounted(() => {
           :disabled="!body.trim()"
           @regenerate="handleWrite"
           @changed="handleReload"
+          @compose="handleCompose"
         />
       </div>
     </main>
@@ -566,6 +590,14 @@ onMounted(() => {
         </span>
       </div>
     </footer>
+
+    <ChatPostComposer
+      :open="composerOpen"
+      :business-id="businessId"
+      :draft="composerDraft"
+      @update:open="handleComposerOpen"
+      @saved="handleComposerSaved"
+    />
 
     <ContentImagePickerModal v-model:open="pickerOpen" :business-id="businessId" @select="handleInsertImage" />
   </div>

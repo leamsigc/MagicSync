@@ -25,7 +25,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (event: 'revise', intent: { artifactId: string, slideId: string, version: number }): void
   (event: 'cancel'): void
-  (event: 'compose', payload: { content: string, accounts: Array<{ id: string, platform: string }> }): void
+  (event: 'compose', payload: { content: string, accounts: Array<{ id: string, platform: string }>, platformVariants?: Record<string, string> }): void
 }>()
 
 const { t } = useI18n()
@@ -102,7 +102,7 @@ function handleRevise(intent: { artifactId: string, slideId: string, version: nu
   emit('revise', intent)
 }
 
-function handleCompose(payload: { content: string, accounts: Array<{ id: string, platform: string }> }): void {
+function handleCompose(payload: { content: string, accounts: Array<{ id: string, platform: string }>, platformVariants?: Record<string, string> }): void {
   emit('compose', payload)
 }
 

@@ -1,6 +1,7 @@
 <i18n src="./publishing.json"></i18n>
 <script setup lang="ts">
 import BusinessWorkspaceTabs from '#layers/BaseConnect/app/components/connect/business/components/BusinessWorkspaceTabs.vue'
+import { linkSocial } from '#layers/BaseAuth/lib/auth-client'
 
 interface PublishConnection {
   id: string
@@ -41,6 +42,10 @@ const busyId = ref<string | null>(null)
 const saving = ref(false)
 const testing = ref(false)
 const showCreateModal = ref(false)
+const githubState = ref<'idle' | 'loading' | 'connected' | 'disconnected'>('idle')
+const githubRepos = ref<Array<{ fullName: string, defaultBranch: string, private: boolean }>>([])
+const githubReason = ref<string | null>(null)
+const autoPush = ref(true)
 const connections = ref<PublishConnection[]>([])
 const jobs = ref<PublishingJob[]>([])
 
@@ -116,9 +121,53 @@ function resetForm() {
   }
 }
 
+const githubConnected = computed(() => githubState.value === 'connected')
+const repoItems = computed(() => githubRepos.value.map(repo => ({
+  label: repo.private ? `${repo.fullName} · private` : repo.fullName,
+  value: repo.fullName,
+})))
+
+async function loadGithubRepos() {
+  if (githubState.value === 'loading') return
+  githubState.value = 'loading'
+  try {
+    const res = await $fetch<{ connected: boolean, repos: Array<{ fullName: string, defaultBranch: string, private: boolean }>, reason?: string }>('/api/v1/publishing/github/repos')
+    githubRepos.value = res.repos
+    githubReason.value = res.reason ?? null
+    githubState.value = res.connected ? 'connected' : 'disconnected'
+    if (res.connected && !form.value.repo && res.repos[0]) selectRepo(res.repos[0].fullName)
+  }
+  catch (err: unknown) {
+    githubState.value = 'disconnected'
+    githubReason.value = 'ERROR'
+    toast.add({ title: t('github.loadFailed'), description: readErrorMessage(err), icon: 'i-heroicons-x-circle', color: 'error' })
+  }
+}
+
+function selectRepo(fullName: string) {
+  form.value.repo = fullName
+  const repo = githubRepos.value.find(entry => entry.fullName === fullName)
+  if (repo) form.value.branch = repo.defaultBranch
+  if (!form.value.name.trim()) form.value.name = fullName.split('/')[1] ?? fullName
+}
+
+function handleRepoChange(value: string) {
+  if (value) selectRepo(value)
+}
+
+async function connectGithub() {
+  try {
+    await linkSocial({ provider: 'github', callbackURL: `${window.location.pathname}?github=connected` })
+  }
+  catch (err: unknown) {
+    toast.add({ title: t('github.connectFailed'), description: readErrorMessage(err), icon: 'i-heroicons-x-circle', color: 'error' })
+  }
+}
+
 function handleOpenCreate() {
   resetForm()
   showCreateModal.value = true
+  if (form.value.provider === 'github') void loadGithubRepos()
 }
 
 function handleCloseCreate() {
@@ -127,11 +176,16 @@ function handleCloseCreate() {
 
 function handleProviderChange() {
   form.value.deliveryMode = form.value.provider === 'github' ? 'commit' : 'draft'
+  if (form.value.provider === 'github' && githubState.value === 'idle') void loadGithubRepos()
 }
 
 async function handleCreateConnection() {
   if (!form.value.name.trim()) {
     toast.add({ title: t('form.nameRequired'), icon: 'i-heroicons-x-circle', color: 'error' })
+    return
+  }
+  if (form.value.provider === 'github' && !form.value.repo.trim()) {
+    toast.add({ title: t('github.repoRequired'), icon: 'i-heroicons-x-circle', color: 'error' })
     return
   }
   saving.value = true
@@ -150,6 +204,23 @@ async function handleCreateConnection() {
     showCreateModal.value = false
     await loadAll()
     toast.add({ title: t('toast.createDone'), icon: 'i-heroicons-check-circle', color: 'success' })
+
+    if (form.value.provider === 'github' && autoPush.value) {
+      try {
+        const pushed = await $fetch<{ pushed: number, skipped: number, failed: number }>('/api/v1/publishing/push-published', {
+          method: 'POST',
+          body: { businessId, provider: 'github' },
+        })
+        toast.add({
+          title: t('github.pushed', { pushed: pushed.pushed, skipped: pushed.skipped, failed: pushed.failed }),
+          icon: pushed.failed ? 'i-heroicons-exclamation-triangle' : 'i-heroicons-check-circle',
+          color: pushed.failed ? 'warning' : 'success',
+        })
+      }
+      catch (err: unknown) {
+        toast.add({ title: t('github.pushFailed'), description: readErrorMessage(err), icon: 'i-heroicons-x-circle', color: 'error' })
+      }
+    }
   }
   catch (err: unknown) {
     toast.add({ title: t('toast.createFailed'), description: readErrorMessage(err), icon: 'i-heroicons-x-circle', color: 'error' })
@@ -158,6 +229,10 @@ async function handleCreateConnection() {
     saving.value = false
   }
 }
+
+onMounted(() => {
+  if (route.query.github === 'connected') handleOpenCreate()
+})
 
 async function handleTestConnection(id: string) {
   busyId.value = id
@@ -324,9 +399,37 @@ onMounted(loadAll)
             </UFormField>
           </div>
           <template v-if="form.provider === 'github'">
-            <UFormField :label="t('form.repo')" name="publishing-repo">
-              <UInput v-model="form.repo" placeholder="owner/repository" class="w-full font-mono text-xs" />
-            </UFormField>
+            <UAlert
+              v-if="githubState === 'disconnected'"
+              color="warning"
+              variant="soft"
+              icon="lucide:github"
+            >
+              <template #title>{{ t('github.connectTitle') }}</template>
+              <template #description>
+                {{ githubReason === 'REAUTH_REQUIRED' ? t('github.reauthBody') : t('github.connectBody') }}
+              </template>
+              <template #actions>
+                <UButton size="sm" :label="t('github.connectCta')" @click="connectGithub" />
+              </template>
+            </UAlert>
+
+            <template v-else>
+              <UFormField :label="t('form.repo')" name="publishing-repo">
+                <USelectMenu
+                  v-model="form.repo"
+                  :items="repoItems"
+                  value-key="value"
+                  searchable
+                  :loading="githubState === 'loading'"
+                  :placeholder="t('github.repoPlaceholder')"
+                  class="w-full"
+                  @update:model-value="handleRepoChange"
+                />
+              </UFormField>
+              <p v-if="githubConnected" class="text-xs text-muted">{{ t('github.oauthNote') }}</p>
+            </template>
+
             <div class="grid gap-3 sm:grid-cols-2">
               <UFormField :label="t('form.branch')" name="publishing-branch">
                 <UInput v-model="form.branch" class="w-full font-mono text-xs" />
@@ -335,6 +438,9 @@ onMounted(loadAll)
                 <UInput v-model="form.dir" class="w-full font-mono text-xs" />
               </UFormField>
             </div>
+
+            <UCheckbox v-model="autoPush" :label="t('github.autoPush')" />
+            <p class="text-xs text-muted">{{ t('github.autoPushHint') }}</p>
           </template>
           <template v-else>
             <UFormField :label="t('form.siteUrl')" name="publishing-site">
@@ -344,7 +450,12 @@ onMounted(loadAll)
               <UInput v-model="form.username" class="w-full font-mono text-xs" />
             </UFormField>
           </template>
-          <UFormField :label="t('form.secret')" name="publishing-secret" :hint="t('form.secretHint')">
+          <UFormField
+            v-if="form.provider !== 'github' || githubState !== 'connected'"
+            :label="t('form.secret')"
+            name="publishing-secret"
+            :hint="t('form.secretHint')"
+          >
             <UInput v-model="form.secret" type="password" class="w-full font-mono text-xs" />
           </UFormField>
         </div>

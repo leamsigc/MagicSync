@@ -64,6 +64,21 @@
       "deleteFailed": "Delete failed",
       "retryDone": "Job retried",
       "retryFailed": "Retry failed"
+    },
+    "github": {
+      "connectTitle": "Connect GitHub to pick a repository",
+      "connectBody": "MagicSync uses the GitHub account you already linked. Sign in once and your repositories appear here.",
+      "reauthBody": "GitHub access expired or was revoked. Reconnect to continue.",
+      "connectCta": "Connect GitHub",
+      "connectFailed": "Could not start the GitHub connection",
+      "loadFailed": "Could not load your GitHub repositories",
+      "repoRequired": "Choose a repository first",
+      "repoPlaceholder": "Search your repositories",
+      "oauthNote": "Pushes use your connected GitHub account.",
+      "autoPush": "Push published articles now",
+      "autoPushHint": "Sends the business's published articles into the folder above.",
+      "pushed": "Pushed {pushed}, skipped {skipped}, failed {failed}",
+      "pushFailed": "Connection saved, but pushing existing articles failed"
     }
   },
   "es": {
@@ -131,6 +146,21 @@
       "deleteFailed": "Error al eliminar",
       "retryDone": "Trabajo reintentado",
       "retryFailed": "Error al reintentar"
+    },
+    "github": {
+      "connectTitle": "Conecta GitHub para elegir un repositorio",
+      "connectBody": "MagicSync usa la cuenta de GitHub que ya vinculaste. Inicia sesión una vez y tus repositorios aparecerán aquí.",
+      "reauthBody": "El acceso a GitHub caducó o fue revocado. Vuelve a conectar para continuar.",
+      "connectCta": "Conectar GitHub",
+      "connectFailed": "No se pudo iniciar la conexión con GitHub",
+      "loadFailed": "No se pudieron cargar tus repositorios de GitHub",
+      "repoRequired": "Elige un repositorio primero",
+      "repoPlaceholder": "Busca tus repositorios",
+      "oauthNote": "Los envíos usan tu cuenta de GitHub conectada.",
+      "autoPush": "Publicar artículos publicados ahora",
+      "autoPushHint": "Envía los artículos publicados del negocio a la carpeta indicada.",
+      "pushed": "Enviados {pushed}, omitidos {skipped}, fallidos {failed}",
+      "pushFailed": "La conexión se guardó, pero falló el envío de artículos"
     }
   },
   "de": {
@@ -198,6 +228,21 @@
       "deleteFailed": "Löschen fehlgeschlagen",
       "retryDone": "Job wiederholt",
       "retryFailed": "Wiederholen fehlgeschlagen"
+    },
+    "github": {
+      "connectTitle": "GitHub verbinden, um ein Repository zu wählen",
+      "connectBody": "MagicSync nutzt dein bereits verknüpftes GitHub-Konto. Einmal anmelden, dann erscheinen deine Repositories hier.",
+      "reauthBody": "Der GitHub-Zugriff ist abgelaufen oder wurde widerrufen. Erneut verbinden.",
+      "connectCta": "GitHub verbinden",
+      "connectFailed": "GitHub-Verbindung konnte nicht gestartet werden",
+      "loadFailed": "GitHub-Repositories konnten nicht geladen werden",
+      "repoRequired": "Wähle zuerst ein Repository",
+      "repoPlaceholder": "Repositories durchsuchen",
+      "oauthNote": "Pushes nutzen dein verbundenes GitHub-Konto.",
+      "autoPush": "Veröffentlichte Artikel jetzt pushen",
+      "autoPushHint": "Sendet die veröffentlichten Artikel des Businesses in den Ordner oben.",
+      "pushed": "Gepusht {pushed}, übersprungen {skipped}, fehlgeschlagen {failed}",
+      "pushFailed": "Verbindung gespeichert, aber Push bestehender Artikel fehlgeschlagen"
     }
   },
   "fr": {
@@ -265,6 +310,21 @@
       "deleteFailed": "Échec de la suppression",
       "retryDone": "Tâche relancée",
       "retryFailed": "Échec de la relance"
+    },
+    "github": {
+      "connectTitle": "Connectez GitHub pour choisir un dépôt",
+      "connectBody": "MagicSync utilise le compte GitHub déjà lié. Connectez-vous une fois et vos dépôts apparaîtront ici.",
+      "reauthBody": "L'accès GitHub a expiré ou a été révoqué. Reconnectez-vous pour continuer.",
+      "connectCta": "Connecter GitHub",
+      "connectFailed": "Impossible de démarrer la connexion GitHub",
+      "loadFailed": "Impossible de charger vos dépôts GitHub",
+      "repoRequired": "Choisissez d'abord un dépôt",
+      "repoPlaceholder": "Rechercher vos dépôts",
+      "oauthNote": "Les envois utilisent votre compte GitHub connecté.",
+      "autoPush": "Envoyer les articles publiés maintenant",
+      "autoPushHint": "Envoie les articles publiés de l'entreprise dans le dossier ci-dessus.",
+      "pushed": "Envoyés {pushed}, ignorés {skipped}, échoués {failed}",
+      "pushFailed": "Connexion enregistrée, mais l'envoi des articles a échoué"
     }
   }
 }

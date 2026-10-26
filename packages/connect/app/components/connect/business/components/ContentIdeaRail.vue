@@ -36,6 +36,12 @@ const emit = defineEmits<{
   regenerate: []
   /** The article or its checks moved server-side, so the page reloads. */
   changed: []
+  /** Open the full post editor with a generated social post prefilled. */
+  compose: [payload: {
+    content: string
+    platformVariants: Record<string, string>
+    accounts: Array<{ id: string, platform: string }>
+  }]
 }>()
 
 const { t } = useI18n()
@@ -61,6 +67,10 @@ function handleRegenerate() {
 
 function handleChanged() {
   emit('changed')
+}
+
+function handleCompose(payload: { content: string, platformVariants: Record<string, string>, accounts: Array<{ id: string, platform: string }> }) {
+  emit('compose', payload)
 }
 </script>
 
@@ -107,6 +117,7 @@ function handleChanged() {
         :article="article"
         :stored="stored"
         :disabled="disabled"
+        @compose="handleCompose"
       />
     </ContentRailSection>
 

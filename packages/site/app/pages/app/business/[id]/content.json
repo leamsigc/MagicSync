@@ -237,7 +237,8 @@
         "sendFailed": "Could not post to {platform}",
         "needsAccount": "No connected account for {platform}",
         "needsDate": "Choose a date and time first",
-        "stored": "Stored captions, per platform"
+        "stored": "Stored captions, per platform",
+        "edit": "Edit & preview"
       },
       "shortcuts": {
         "title": "Shortcuts",
@@ -529,7 +530,8 @@
         "sendFailed": "No se pudo publicar en {platform}",
         "needsAccount": "No hay ninguna cuenta conectada para {platform}",
         "needsDate": "Elige primero una fecha y hora",
-        "stored": "Textos guardados, por plataforma"
+        "stored": "Textos guardados, por plataforma",
+        "edit": "Editar y previsualizar"
       },
       "shortcuts": {
         "title": "Atajos",
@@ -821,7 +823,8 @@
         "sendFailed": "Auf {platform} konnte nicht gepostet werden",
         "needsAccount": "Kein verbundenes Konto für {platform}",
         "needsDate": "Wähle zuerst ein Datum und eine Uhrzeit",
-        "stored": "Gespeicherte Texte, pro Plattform"
+        "stored": "Gespeicherte Texte, pro Plattform",
+        "edit": "Bearbeiten & Vorschau"
       },
       "shortcuts": {
         "title": "Sprünge",
@@ -1113,7 +1116,8 @@
         "sendFailed": "Impossible de publier sur {platform}",
         "needsAccount": "Aucun compte connecté pour {platform}",
         "needsDate": "Choisissez d’abord une date et une heure",
-        "stored": "Textes enregistrés, par plateforme"
+        "stored": "Textes enregistrés, par plateforme",
+        "edit": "Modifier et prévisualiser"
       },
       "shortcuts": {
         "title": "Raccourcis",
