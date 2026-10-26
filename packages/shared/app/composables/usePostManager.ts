@@ -13,6 +13,11 @@ import type { ApiResponse, PostFilters, PostStats, ValidationResult, PlatformPos
 
 
 export const usePostManager = () => {
+  // `$fetch` in SSR runs as an internal request without the caller's cookies,
+  // so the auth gate answered 401 on every server-rendered posts page.
+  // `useRequestFetch` forwards headers on the server and is `$fetch` on client.
+  const requestFetch = useRequestFetch()
+
   const { t } = useI18n()
   const toast = useToast()
   const isLoading = ref(false)
@@ -119,7 +124,7 @@ export const usePostManager = () => {
       const inflight = (nuxtApp._postsInflight ??= new Map<string, Promise<PaginatedResponse<PostWithAllData>>>())
 
       const pending = inflight.get(key)
-      const request = pending ?? $fetch<PaginatedResponse<PostWithAllData>>(`/api/v1/posts?${query}`)
+      const request = pending ?? requestFetch<PaginatedResponse<PostWithAllData>>(`/api/v1/posts?${query}`)
 
       if (!pending) {
         inflight.set(key, request)

@@ -3,7 +3,6 @@ import { BaseSchedulerPlugin, extractExternalPostId } from '#layers/BaseDB/serve
 import type { Post, SocialMediaAccount, Asset } from '#layers/BaseDB/db/schema';
 import type { DevNullSettings } from '#layers/BaseShared/shared/platformSettings';
 import { platformConfigurations } from '#layers/BaseShared/shared/platformConstants';
-import { symmetricDecrypt } from 'better-auth/crypto';
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, writeFileSync, readFileSync, rmSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -66,10 +65,9 @@ export class DevNullPlugin extends BaseSchedulerPlugin {
   ): Promise<PostResponse> {
     const tmpDir = mkdtempSync(join(tmpdir(), 'devnull-'));
     try {
-      const privateKey = await symmetricDecrypt({
-        key: process.env.BETTER_AUTH_SECRET as string,
-        data: socialMediaAccount.accessToken,
-      });
+      // socialMediaAccountService hydrates the plaintext token before handing
+      // the account to a plugin. Decrypting here parsed a PEM key as hex.
+      const privateKey = socialMediaAccount.accessToken;
       const { content, replyTo } = this.getPlatformData(postDetails);
 
       // Collect image assets (up to 3)

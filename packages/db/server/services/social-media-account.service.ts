@@ -732,12 +732,16 @@ export class SocialMediaAccountService implements SocialMediaAccountServiceType 
    */
   private async revealToken(stored: string | null | undefined): Promise<string | null> {
     if (!stored) return null
-    try {
-      return (await decryptKey(stored)) ?? stored
+    // Peel up to two layers: rows written while the connect route also
+    // encrypted ended up as enc(enc(secret)). The tokens:encrypt task
+    // normalises them, but reads must not depend on the task having run.
+    let value = stored
+    for (let layer = 0; layer < 2; layer += 1) {
+      const decrypted = await decryptKey(value)
+      if (!decrypted) break
+      value = decrypted
     }
-    catch {
-      return stored
-    }
+    return value
   }
 
   /**
