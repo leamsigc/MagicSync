@@ -530,7 +530,7 @@ export const auth = betterAuth({
               emailVerified: true
             };
           },
-          pkce: true,
+          pkce: false,
         },
 
         // YouTube (uses Google OAuth with YouTube scopes) - not natively supported.
