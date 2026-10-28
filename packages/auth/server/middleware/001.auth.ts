@@ -23,6 +23,11 @@ const PUBLIC_API_PATHS = [
   '/api/v1/podcast/audio',
   '/api/v1/menu-board/public',
   '/api/v1/carousel/public',
+  // OAuth failure landing (see packages/connect/server/api/v1/social-accounts/
+  // oauth-error.get.ts). Better Auth redirects here with `?error=<code>`; it
+  // reads only that code and redirects onward, so anonymous sign-in failures
+  // must reach it too.
+  '/api/v1/social-accounts/oauth-error',
 ]
 
 /** Uses its own `x-api-key` verification middleware. */

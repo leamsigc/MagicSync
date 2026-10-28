@@ -301,8 +301,12 @@ export class LinkedInPagePlugin extends BaseSchedulerPlugin {
     username: string;
   }> {
 
-    const data = await (
-      await fetch(
+    // An unchecked response used to be parsed as JSON and stored anyway, so a
+    // 401 (wrong provider token / revoked access) created a row with
+    // `id: undefined` instead of telling the user to reconnect.
+    let response: Response
+    try {
+      response = await fetch(
         `https://api.linkedin.com/v2/organizations/${pageId}?projection=(id,localizedName,vanityName,logoV2(original~:playableStreams))`,
         {
           headers: {
@@ -310,11 +314,23 @@ export class LinkedInPagePlugin extends BaseSchedulerPlugin {
           },
         }
       )
-    ).json();
+    } catch (error) {
+      throw new Error(`LinkedIn API unreachable: ${(error as Error).message}`)
+    }
 
+    if (!response.ok) {
+      const errorBody = await response.text().catch(() => '')
+      throw new Error(`LinkedIn API Error (organization ${response.status}): ${errorBody}`)
+    }
 
+    const data = await response.json() as {
+      id?: string
+      localizedName?: string
+      vanityName?: string
+      logoV2?: { 'original~'?: { elements?: Array<{ identifiers?: Array<{ identifier?: string }> }> } }
+    }
 
-    if (!data) {
+    if (!data?.id) {
       throw new Error('Page not found');
     }
     const imageUrl = data?.logoV2?.['original~']?.elements?.[0]?.identifiers?.[0].identifier;
@@ -323,9 +339,9 @@ export class LinkedInPagePlugin extends BaseSchedulerPlugin {
 
     return {
       id: data.id,
-      name: data.localizedName,
+      name: data.localizedName ?? '',
       picture: imageBase64,
-      username: data.vanityName,
+      username: data.vanityName ?? '',
       access_token: accessToken,
     };
   }

@@ -183,6 +183,67 @@ function isRowTokenExpired(expiresAt?: Date | number | null): boolean {
 }
 
 /**
+ * Providers that authorize a page/channel's API calls but are not the provider
+ * id stored on the platform post. YouTube channels and Google Business
+ * locations refresh through `google`; a LinkedIn Page shares the LinkedIn
+ * member token of the `linkedin` connection.
+ */
+const providerRefreshFallbacks: Record<string, string> = {
+  youtube: 'google',
+  'linkedin-page': 'linkedin',
+}
+
+/**
+ * Persist a freshly minted token onto the social_media_accounts row.
+ *
+ * Facebook/Instagram rows hold PAGE tokens — mirroring the user token onto them
+ * corrupts publishing (Meta "(#200) Unpublished posts…"), so those renew through
+ * their own page-token exchange. Every other platform mirrors the user token.
+ */
+async function persistRefreshedToken(token: string, row: {
+  rowId: string
+  platform: string
+  userId: string
+  accountId: string
+  accessToken?: string | null
+  tokenExpiresAt?: Date | null
+}): Promise<void> {
+  if (!usesPageToken(row.platform)) {
+    await socialMediaAccountService.updateAccount(row.rowId, { accessToken: token })
+    return
+  }
+  if (!row.accountId) return
+  const renewed = await renewRowToken({
+    id: row.rowId,
+    userId: row.userId,
+    platform: row.platform,
+    accountId: row.accountId,
+    accessToken: row.accessToken,
+    tokenExpiresAt: row.tokenExpiresAt,
+  })
+  if (renewed.error) {
+    log.warn({ message: 'Page-token renewal skipped', platform: row.platform, error: renewed.error })
+  }
+}
+
+/**
+ * Resolve the Better Auth row that can mint a fresh token for a platform post:
+ * the provider's own row first, then the fallback provider's row (see
+ * providerRefreshFallbacks). `providerId` follows the row that was found, so
+ * the request is attributed to the provider that actually issued the token.
+ */
+async function resolveRefreshProvider(userId: string, platform: string, providerId: string) {
+  const own = await socialMediaAccountService.findBetterAuthAccountForRefresh(userId, providerId)
+  if (own.success && own.data) return { account: own.data, providerId }
+
+  const fallbackProvider = providerRefreshFallbacks[platform]
+  if (!fallbackProvider) return { account: null, providerId }
+
+  const fallback = await socialMediaAccountService.findBetterAuthAccountForRefresh(userId, fallbackProvider)
+  return { account: fallback.success ? fallback.data : null, providerId: fallbackProvider }
+}
+
+/**
  * Refreshes social media tokens for the platforms that have expiring tokens,
  * using Better Auth's internal token refresh. Attempts refresh for all platforms
  * that have an associated Better Auth provider mapping.
@@ -196,23 +257,15 @@ export const ScheduleRefreshSocialMediaTokens = async (fullPost: PostWithAllData
   if (needsRefresh.length === 0) return
 
   await Promise.allSettled(needsRefresh.map(async (platformPost) => {
-    let providerId: string | undefined = platformPost.platformPostId || ''
-    providerId = platformProviderMap[providerId]
-    let socialMediaAccount = await socialMediaAccountService.getActualAccountByAccountId(platformPost.socialAccountId);
+    const platform = platformPost.platformPostId || ''
+    const providerId = platformProviderMap[platform]
+    const socialMediaAccount = await socialMediaAccountService.getActualAccountByAccountId(platformPost.socialAccountId);
     if (!providerId) return
     // Resolve the Better Auth row: its row id is the only identifier
     // /get-access-token accepts (provider account id / channel id never match).
-    let resolved = await socialMediaAccountService.findBetterAuthAccountForRefresh(userId, providerId)
-    let account = resolved.success ? resolved.data : null
-    // Fallback: YouTube channels authorized via the `google` provider (which
-    // carries youtube.force-ssl) refresh through the google account.
-    if (platformPost.platformPostId === 'youtube' && !account) {
-      const googleFallback = await socialMediaAccountService.findBetterAuthAccountForRefresh(userId, 'google');
-      account = googleFallback.success ? googleFallback.data : null;
-      providerId = 'google';
-    }
+    const { account, providerId: refreshProviderId } = await resolveRefreshProvider(userId, platform, providerId)
 
-    log.info({ message: 'Single account found', providerId })
+    log.info({ message: 'Single account found', providerId: refreshProviderId })
     if (!account) return
 
 
@@ -224,11 +277,11 @@ export const ScheduleRefreshSocialMediaTokens = async (fullPost: PostWithAllData
     const expired = socialMediaAccountService.isTokenExpired(account)
       || isRowTokenExpired(socialMediaAccount?.tokenExpiresAt)
     // SAFE: never log token material — ids + expiry only (account holds accessToken).
-    log.info({ message: 'Token expired', accountId: account.id, providerId, expired })
+    log.info({ message: 'Token expired', accountId: account.id, providerId: refreshProviderId, expired })
     if (!expired) return
 
     const tokenData = await getAccessTokenHelper(headers, {
-      providerId,
+      providerId: refreshProviderId,
       userId,
       accountId: account.id,
     });
@@ -237,26 +290,14 @@ export const ScheduleRefreshSocialMediaTokens = async (fullPost: PostWithAllData
     log.info({ message: 'Token data refreshed', hasAccessToken: !!tokenData?.accessToken })
 
     if (tokenData?.accessToken) {
-      const platformKey = platformPost.platformPostId || ''
-      if (usesPageToken(platformKey) && socialMediaAccount) {
-        // Facebook/Instagram rows hold PAGE tokens — mirroring the user token
-        // corrupts them (Meta "(#200) Unpublished posts…" on publish).
-        const renewed = await renewRowToken({
-          id: platformPost.socialAccountId,
-          userId,
-          platform: platformKey,
-          accountId: socialMediaAccount.accountId,
-          accessToken: socialMediaAccount.accessToken,
-          tokenExpiresAt: socialMediaAccount.tokenExpiresAt,
-        })
-        if (renewed.error) {
-          log.warn({ message: 'Page-token renewal skipped', platform: platformKey, error: renewed.error })
-        }
-      } else if (!usesPageToken(platformKey)) {
-        await socialMediaAccountService.updateAccount(platformPost.socialAccountId, {
-          accessToken: tokenData.accessToken
-        })
-      }
+      await persistRefreshedToken(tokenData.accessToken, {
+        rowId: platformPost.socialAccountId,
+        platform: platformPost.platformPostId || '',
+        userId,
+        accountId: socialMediaAccount?.accountId ?? '',
+        accessToken: socialMediaAccount?.accessToken,
+        tokenExpiresAt: socialMediaAccount?.tokenExpiresAt,
+      })
     }
   }))
 }

@@ -54,6 +54,28 @@ async function fetchPageDetails(
   return facebookPlugin.fetchPageInformation(pageId, accessToken, { instagramId });
 }
 
+/**
+ * Provider fallbacks for page-level connects. A YouTube channel or a Google
+ * Business location is authorized through the `google` provider, while a
+ * LinkedIn Page shares the member token of the personal `linkedin` connection
+ * (the org picker in index.get.ts already offers it that way). Falling back to
+ * `google` for a LinkedIn page handed a Google bearer token to
+ * api.linkedin.com.
+ */
+const PROVIDER_FALLBACKS: Partial<Record<SocialMediaPlatform, SocialMediaPlatform>> = {
+  youtube: 'google',
+  googlemybusiness: 'google',
+  'linkedin-page': 'linkedin',
+}
+
+async function resolveProviderAccounts(platform: SocialMediaPlatform, userId: string) {
+  const accounts = await socialMediaAccountService.getAccountsForPlatform(platform, userId)
+  if (accounts.length > 0) return accounts
+  const fallback = PROVIDER_FALLBACKS[platform]
+  if (!fallback) return accounts
+  return await socialMediaAccountService.getAccountsForPlatform(fallback, userId)
+}
+
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event)
@@ -79,16 +101,12 @@ export default defineEventHandler(async (event) => {
     log.set({ businessId: body.businessId })
 
     // Use the social media manager to get the page details
-    let account = await socialMediaAccountService.getAccountsForPlatform(
-      platform,
-      user.id
-    )
-    // For youtube, also check google provider (native OAuth) if no direct youtube account
-    if (!account || account.length === 0) {
-      const googleAccounts = await socialMediaAccountService.getAccountsForPlatform('google', user.id);
-      if (googleAccounts?.length) {
-        account = googleAccounts;
-      }
+    const account = await resolveProviderAccounts(platform, user.id)
+    if (account.length === 0) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Invalid platform'
+      })
     }
     const matcher: Record<string, SchedulerPluginConstructor> = {
       facebook: FacebookPlugin,
@@ -96,7 +114,7 @@ export default defineEventHandler(async (event) => {
       youtube: YouTubePlugin,
       googlemybusiness: GooglePlugin,
     }
-    if (!matcher[platform] || !account || account.length === 0) {
+    if (!matcher[platform]) {
       throw createError({
         statusCode: 400,
         statusMessage: 'Invalid platform'

@@ -115,6 +115,34 @@ function forwardAuthLog(level: string, message: string, args: unknown[]): void {
   else authLog.info(line)
 }
 
+/**
+ * The ONE LinkedIn scope set, shared by the native `linkedin` provider and the
+ * generic `linkedin-page` provider (both run on the same LinkedIn app).
+ *
+ * LinkedIn invalidates every previously issued access token for a member+app
+ * when a NEW request asks for a DIFFERENT scope set:
+ * "If you request a different scope than the previously granted scope, all the
+ * previous access tokens are invalidated." (3-legged OAuth docs)
+ *
+ * The two providers used to request different sets (`email` missing from
+ * `linkedin-page`), so connecting a Page silently revoked the personal profile
+ * token — and vice versa. Keep them identical. `email` must stay in the list:
+ * the native provider's userinfo mapping needs it.
+ *
+ * Changing this list invalidates all existing LinkedIn tokens once — every
+ * connection must be re-authorized after a scope change.
+ */
+const LINKEDIN_SCOPES = [
+  'openid',
+  'profile',
+  'email',
+  'w_member_social',
+  'r_basicprofile',
+  'rw_organization_admin',
+  'w_organization_social',
+  'r_organization_social',
+]
+
 export const auth = betterAuth({
   baseURL: process.env.NUXT_BETTER_AUTH_URL || 'http://localhost:3000',
   logger: {
@@ -234,10 +262,18 @@ export const auth = betterAuth({
   account: {
     accountLinking: {
       enabled: true,
-      // Never link a provider identity whose email differs from the account's.
-      // With `true`, an attacker-controlled provider account could be attached
-      // to a victim's existing user row without an explicit link action.
-      allowDifferentEmails: false,
+      // Explicit `linkSocial()` and implicit sign-in linking are different trust
+      // boundaries:
+      //  - implicit linking (sign-in) never links a DIFFERENT email. It resolves
+      //    the local row by the provider's verified email, so `allowDifferentEmails`
+      //    is not consulted on that path at all.
+      //  - explicit linking only ever attaches the identity to `session.user.id`
+      //    (Better Auth signs the OAuth state with the caller's userId), so a
+      //    different provider email cannot rebind someone else's account.
+      // Requiring the emails to be equal broke "connect LinkedIn" for everyone
+      // whose LinkedIn primary address differs from their MagicSync address
+      // (very common when signing up with Google): `error=email_does_not_match`.
+      allowDifferentEmails: true,
       updateUserInfoOnLink: true,
       allowUnlinkingAll: false,
       trustedProviders: ['google', 'google-drive', 'googlemybusiness', 'facebook', 'email-password', 'linkedin', 'linkedin-page', 'twitter', 'tiktok', 'threads', 'youtube', 'reddit', 'discord', 'dribbble', 'instagram', 'x', 'canva', 'snapchat', 'github'],
@@ -326,12 +362,12 @@ export const auth = betterAuth({
     linkedin: {
       clientId: process.env.NUXT_LINKEDIN_CLIENT_ID as string,
       clientSecret: process.env.NUXT_LINKEDIN_CLIENT_SECRET as string,
-      scope: ['openid', 'profile',
-        'w_member_social',
-        'r_basicprofile',
-        'rw_organization_admin',
-        'w_organization_social',
-        'r_organization_social',],
+      // `disableDefaultScope` drops Better Auth's implicit `profile email
+      // openid` prefix so the request carries EXACTLY `LINKEDIN_SCOPES` (the
+      // implicit prefix also produced duplicate values). Must stay in lockstep
+      // with the `linkedin-page` generic provider below.
+      disableDefaultScope: true,
+      scope: LINKEDIN_SCOPES,
     },
     tiktok: {
       clientKey: process.env.NUXT_TIKTOK_CLIENT_ID as string,
@@ -459,13 +495,9 @@ export const auth = betterAuth({
           authorizationUrl: 'https://www.linkedin.com/oauth/v2/authorization',
           tokenUrl: 'https://www.linkedin.com/oauth/v2/accessToken',
           userInfoUrl: 'https://api.linkedin.com/v2/userinfo',
-          scopes: ['openid',
-            'profile',
-            'w_member_social',
-            'r_basicprofile',
-            'rw_organization_admin',
-            'w_organization_social',
-            'r_organization_social',],
+          // Same list as the native provider: a different scope set makes
+          // LinkedIn revoke the other connection's token. See LINKEDIN_SCOPES.
+          scopes: LINKEDIN_SCOPES,
           getUserInfo: async (tokens) => {
             const response: any = await $fetch('https://api.linkedin.com/v2/userinfo', {
               method: 'GET',
@@ -478,7 +510,11 @@ export const auth = betterAuth({
               ...response,
               id: response.sub,
               name: response.name || [response.given_name, response.family_name].filter(Boolean).join(' '),
-              email: response.email || `${response.sub}@linkedin.com`,
+              // No fake `<sub>@linkedin.com` fallback: it invented identities,
+              // and with account linking enabled it collided with the real
+              // email comparison. A missing email now fails loudly instead of
+              // creating a user nobody can reach.
+              email: response.email,
               emailVerified: true,
               image: response.picture || response.profile_picture_url
             };
@@ -487,7 +523,7 @@ export const auth = betterAuth({
             return {
               ...profile,
               image: profile.picture || profile.profile_picture_url,
-              email: profile.email || `${profile.sub || profile.id}@linkedin.com`,
+              email: profile.email,
               emailVerified: true
             };
           },

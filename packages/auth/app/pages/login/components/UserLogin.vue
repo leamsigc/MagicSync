@@ -26,6 +26,32 @@ const props = withDefaults(defineProps<Props>(), {
 
 const { t } = useI18n()
 const { add } = useToast()
+const route = useRoute()
+const router = useRouter()
+
+/**
+ * Better Auth sends OAuth callback failures here with `?error=<code>` when the
+ * visitor has no session (see oauth-error.get.ts). Surface it once, then strip
+ * the parameter so a refresh does not repeat the toast.
+ */
+function reportOAuthError() {
+  const code = route.query.error
+  if (typeof code !== 'string' || !code) return
+  add({
+    title: t('messages.login_error'),
+    description: t('messages.oauth_error', { code }),
+    color: 'error',
+    // An OAuth failure needs the visitor's attention (they just came back from
+    // a broken consent screen) — keep it until dismissed instead of letting it
+    // vanish while they read the page.
+    duration: 0,
+  })
+  const rest = { ...route.query }
+  delete rest.error
+  void router.replace({ query: rest })
+}
+
+onMounted(reportOAuthError)
 
 const fields = computed<AuthFormField[]>(() => [{
   name: 'email',
@@ -65,6 +91,13 @@ const schema = z.object({
   password: z.string('Password is required').min(5, 'Must be at least 5 characters')
 })
 
+/**
+ * Where Better Auth sends a failed OAuth callback — the same landing used by the
+ * connect flow. For anonymous callers it logs the code and bounces to
+ * `/login?error=<code>`, which `reportOAuthError` turns into a toast.
+ */
+const OAUTH_ERROR_CALLBACK = '/api/v1/social-accounts/oauth-error'
+
 type Schema = z.output<typeof schema>
 
 async function onSubmit(payload: FormSubmitEvent<Schema>) {
@@ -99,6 +132,7 @@ async function signInWithGoogle() {
   await signIn.social({
     provider: 'google',
     callbackURL: props.redirectUrl,
+    errorCallbackURL: OAUTH_ERROR_CALLBACK,
     fetchOptions: {
       onError: (context: any) => {
         add({
@@ -115,6 +149,7 @@ async function signInWithFacebook() {
   await signIn.social({
     provider: 'facebook',
     callbackURL: props.redirectUrl,
+    errorCallbackURL: OAUTH_ERROR_CALLBACK,
     fetchOptions: {
       onError: (context: any) => {
         add({
@@ -131,6 +166,7 @@ async function signInWithLinkedIn() {
   await signIn.social({
     provider: 'linkedin',
     callbackURL: props.redirectUrl,
+    errorCallbackURL: OAUTH_ERROR_CALLBACK,
     fetchOptions: {
       onError: (context: any) => {
         add({

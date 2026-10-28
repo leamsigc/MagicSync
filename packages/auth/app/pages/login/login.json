@@ -27,7 +27,8 @@
     },
     "messages": {
       "login_error": "Please try again",
-      "check_credentials": "Please check your email and password"
+      "check_credentials": "Please check your email and password",
+      "oauth_error": "Sign-in with the provider failed ({code}). Try again, or use email and password."
     },
     "coming_soon": {
       "title": "Coming Soon",
@@ -62,7 +63,8 @@
     },
     "messages": {
       "login_error": "Por favor, inténtalo de nuevo",
-      "check_credentials": "Por favor, verifica tu correo y contraseña"
+      "check_credentials": "Por favor, verifica tu correo y contraseña",
+      "oauth_error": "El inicio de sesión con el proveedor falló ({code}). Inténtalo de nuevo o usa correo y contraseña."
     },
     "coming_soon": {
       "title": "Próximamente",
@@ -97,7 +99,8 @@
     },
     "messages": {
       "login_error": "Bitte versuchen Sie es erneut",
-      "check_credentials": "Bitte überprüfen Sie Ihre E-Mail und Ihr Passwort"
+      "check_credentials": "Bitte überprüfen Sie Ihre E-Mail und Ihr Passwort",
+      "oauth_error": "Die Anmeldung beim Anbieter ist fehlgeschlagen ({code}). Versuche es erneut oder nutze E-Mail und Passwort."
     },
     "coming_soon": {
       "title": "Bald verfügbar",
@@ -132,7 +135,8 @@
     },
     "messages": {
       "login_error": "Veuillez réessayer",
-      "check_credentials": "Veuillez vérifier votre email et mot de passe"
+      "check_credentials": "Veuillez vérifier votre email et mot de passe",
+      "oauth_error": "La connexion au fournisseur a échoué ({code}). Réessayez ou utilisez e-mail et mot de passe."
     },
     "coming_soon": {
       "title": "Bientôt disponible",

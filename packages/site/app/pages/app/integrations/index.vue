@@ -26,6 +26,10 @@ interface TokenHealth {
 const connectedAccounts = ref<string[]>([]);
 const accountPages = ref<string[]>([]);
 
+const route = useRoute();
+const router = useRouter();
+const toast = useToast();
+
 const healthSummary = ref({ total: 0, healthy: 0, expiringSoon: 0, expired: 0, unknown: 0, needsAttention: 0 })
 const socialHealth = ref<Map<string, TokenHealth>>(new Map())
 
@@ -33,6 +37,43 @@ const { t, getAllSocialMediaAccounts, pagesList, getAllAccountDetails, accountsL
 const { activeBusinessId } = useBusinessManager();
 const { getPlatformIcon } = usePlatformIcons();
 const { worstHealth } = useIntegrationDirectory();
+const { user } = UseUser();
+
+/**
+ * Better Auth redirects OAuth failures here with `?error=<code>`
+ * (see packages/connect/server/api/v1/social-accounts/oauth-error.get.ts).
+ * Without this the user landed back on a clean page with no explanation.
+ */
+const OAUTH_ERROR_KEYS: Record<string, string> = {
+  email_does_not_match: 'directory.oauth_errors.email_does_not_match',
+  account_already_linked_to_different_user: 'directory.oauth_errors.account_already_linked',
+  unable_to_link_account: 'directory.oauth_errors.unable_to_link_account',
+  oauth_provider_not_found: 'directory.oauth_errors.provider_not_found',
+  email_not_verified: 'directory.oauth_errors.email_not_verified',
+  email_not_found: 'directory.oauth_errors.email_not_found',
+}
+
+function oauthErrorMessage(code: string): string {
+  const key = OAUTH_ERROR_KEYS[code] ?? 'directory.oauth_errors.unknown'
+  return t(key, { email: user.value?.email ?? '', code })
+}
+
+function reportOauthError() {
+  const code = route.query.error
+  if (typeof code !== 'string' || !code) return
+  toast.add({
+    title: t('directory.oauth_errors.title'),
+    description: oauthErrorMessage(code),
+    icon: 'i-heroicons-x-circle',
+    color: 'error',
+    // Keep it until dismissed: the user just came back from a failed consent
+    // screen and needs the reason, not a 5-second flash.
+    duration: 0,
+  })
+  const rest = { ...route.query }
+  delete rest.error
+  void router.replace({ query: rest })
+}
 
 async function fetchTokenHealth() {
   try {
@@ -54,6 +95,7 @@ onMounted(async () => {
     getAllSocialMediaAccounts(),
     fetchTokenHealth()
   ])
+  reportOauthError()
 })
 
 // Connections are business-scoped: reload them on switch, mirroring active.vue.
@@ -64,13 +106,9 @@ watch(activeBusinessId, async (newId) => {
   await fetchTokenHealth()
 })
 
-const { user } = UseUser();
-
-useHead({
+useSeoMeta({
   title: t('seo_title_all'),
-  meta: [
-    { name: 'description', content: t('seo_description_all') }
-  ]
+  description: t('seo_description_all'),
 })
 
 watch(pagesList, () => {

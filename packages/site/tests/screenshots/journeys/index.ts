@@ -22,6 +22,7 @@ import type { Journey } from '../../e2e/helpers/route-screenshots'
 import { businessCreateJourney } from './business-create'
 import { contentBoardJourney } from './content-board'
 import { chatJourney } from './chat'
+import { socialConnectionsJourney } from './social-connections'
 
 export interface JourneyContext {
   page: Page
@@ -58,4 +59,4 @@ export interface JourneyDefinition {
   run(ctx: JourneyContext): Promise<void>
 }
 
-export const journeys: JourneyDefinition[] = [contentBoardJourney, businessCreateJourney, chatJourney]
+export const journeys: JourneyDefinition[] = [contentBoardJourney, businessCreateJourney, chatJourney, socialConnectionsJourney]

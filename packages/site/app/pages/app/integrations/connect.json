@@ -28,6 +28,16 @@
       "actions": "Actions",
       "attention": "Some connections need attention —",
       "reconnect_link": "reconnect expired tokens",
+      "oauth_errors": {
+        "title": "Couldn't finish the connection",
+        "email_does_not_match": "LinkedIn returned a different email than {email}. Sign in with that LinkedIn email, then connect again.",
+        "account_already_linked": "That account is already linked to a different MagicSync user. Disconnect it there first.",
+        "unable_to_link_account": "The provider rejected the link. Try again, or disconnect and reconnect the account.",
+        "provider_not_found": "This provider is not configured on this deployment.",
+        "email_not_verified": "The provider did not report a verified email, so the account can't be linked.",
+        "email_not_found": "The provider did not share an email address. Add the email scope or connect with a different method.",
+        "unknown": "The connection failed ({code}). Try again or check the server logs."
+      },
       "columns": {
         "provider": "Provider",
         "status": "Status",
@@ -131,6 +141,16 @@
       "actions": "Actions",
       "attention": "Certaines connexions nécessitent votre attention —",
       "reconnect_link": "reconnectez les jetons expirés",
+      "oauth_errors": {
+        "title": "Connexion impossible",
+        "email_does_not_match": "LinkedIn a renvoyé une adresse e-mail différente de {email}. Connectez-vous avec cette adresse LinkedIn, puis réessayez.",
+        "account_already_linked": "Ce compte est déjà lié à un autre utilisateur MagicSync. Déconnectez-le d'abord.",
+        "unable_to_link_account": "Le fournisseur a refusé la liaison. Réessayez, ou déconnectez puis reconnectez le compte.",
+        "provider_not_found": "Ce fournisseur n'est pas configuré sur ce déploiement.",
+        "email_not_verified": "Le fournisseur n'a pas signalé d'adresse e-mail vérifiée : la liaison est impossible.",
+        "email_not_found": "Le fournisseur n'a pas partagé d'adresse e-mail. Ajoutez le scope e-mail ou utilisez une autre méthode.",
+        "unknown": "La connexion a échoué ({code}). Réessayez ou consultez les logs du serveur."
+      },
       "columns": {
         "provider": "Fournisseur",
         "status": "Statut",
@@ -234,6 +254,16 @@
       "actions": "Acciones",
       "attention": "Algunas conexiones requieren atención —",
       "reconnect_link": "vuelve a conectar los tokens vencidos",
+      "oauth_errors": {
+        "title": "No se pudo completar la conexión",
+        "email_does_not_match": "LinkedIn devolvió un correo distinto de {email}. Inicia sesión con ese correo de LinkedIn y vuelve a conectar.",
+        "account_already_linked": "Esa cuenta ya está vinculada a otro usuario de MagicSync. Desvincúlala primero.",
+        "unable_to_link_account": "El proveedor rechazó la vinculación. Inténtalo de nuevo o desconecta y vuelve a conectar la cuenta.",
+        "provider_not_found": "Este proveedor no está configurado en esta instalación.",
+        "email_not_verified": "El proveedor no informó de un correo verificado, así que la cuenta no se puede vincular.",
+        "email_not_found": "El proveedor no compartió un correo. Añade el scope de correo o usa otro método.",
+        "unknown": "La conexión falló ({code}). Inténtalo de nuevo o revisa los logs del servidor."
+      },
       "columns": {
         "provider": "Proveedor",
         "status": "Estado",
@@ -337,6 +367,16 @@
       "actions": "Aktionen",
       "attention": "Einige Verbindungen benötigen Aufmerksamkeit —",
       "reconnect_link": "abgelaufene Tokens neu verbinden",
+      "oauth_errors": {
+        "title": "Verbindung fehlgeschlagen",
+        "email_does_not_match": "LinkedIn hat eine andere E-Mail-Adresse als {email} zurückgegeben. Melde dich mit dieser LinkedIn-Adresse an und verbinde erneut.",
+        "account_already_linked": "Dieses Konto ist bereits mit einem anderen MagicSync-Benutzer verknüpft. Trenne es dort zuerst.",
+        "unable_to_link_account": "Der Anbieter hat die Verknüpfung abgelehnt. Versuche es erneut oder trenne das Konto und verbinde es neu.",
+        "provider_not_found": "Dieser Anbieter ist in dieser Installation nicht konfiguriert.",
+        "email_not_verified": "Der Anbieter hat keine bestätigte E-Mail-Adresse gemeldet, daher kann das Konto nicht verknüpft werden.",
+        "email_not_found": "Der Anbieter hat keine E-Mail-Adresse übermittelt. Füge den E-Mail-Scope hinzu oder nutze eine andere Methode.",
+        "unknown": "Die Verbindung ist fehlgeschlagen ({code}). Versuche es erneut oder prüfe die Server-Logs."
+      },
       "columns": {
         "provider": "Anbieter",
         "status": "Status",

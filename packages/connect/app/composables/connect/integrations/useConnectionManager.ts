@@ -16,6 +16,13 @@ export interface Connection {
 
 const connectionList = ref<Connection[]>([]);
 
+/**
+ * Where Better Auth sends a failed OAuth callback. It logs the code and forwards
+ * to the integrations screen (or /login) with `?error=<code>`; without it the
+ * production error page bounces to `/` with a code nobody renders.
+ */
+const OAUTH_ERROR_CALLBACK = '/api/v1/social-accounts/oauth-error'
+
 export const useConnectionManager = () => {
 
   const { t } = useI18n();
@@ -66,6 +73,7 @@ export const useConnectionManager = () => {
         linkSocial({
           provider: connection.platform,
           callbackURL: `/api/v1/social-accounts/callback/${connection.platform}?businessId=${activeBusinessId.value}`,
+          errorCallbackURL: OAUTH_ERROR_CALLBACK,
         });
       } else if (connection.authType === 'api-key') {
         if (connection.platform == 'bluesky') {
@@ -94,6 +102,7 @@ export const useConnectionManager = () => {
         linkSocial({
           provider: connection.platform,
           callbackURL: `/api/v1/social-accounts/callback/${connection.platform}?businessId=${activeBusinessId.value}`,
+          errorCallbackURL: OAUTH_ERROR_CALLBACK,
         })
       }
 
