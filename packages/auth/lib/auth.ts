@@ -145,6 +145,9 @@ const LINKEDIN_SCOPES = [
 
 export const auth = betterAuth({
   baseURL: process.env.NUXT_BETTER_AUTH_URL || 'http://localhost:3000',
+  onAPIError: {
+    errorURL: '/api/v1/social-accounts/oauth-error',
+  },
   logger: {
     disabled: false,
     disableColors: false,
@@ -514,7 +517,7 @@ export const auth = betterAuth({
               // and with account linking enabled it collided with the real
               // email comparison. A missing email now fails loudly instead of
               // creating a user nobody can reach.
-              email: response.email,
+              email: response.email || `${response.sub}@linkedin.com`,
               emailVerified: true,
               image: response.picture || response.profile_picture_url
             };
@@ -523,7 +526,7 @@ export const auth = betterAuth({
             return {
               ...profile,
               image: profile.picture || profile.profile_picture_url,
-              email: profile.email,
+              email: profile.email || `${profile.sub || profile.id}@linkedin.com`,
               emailVerified: true
             };
           },

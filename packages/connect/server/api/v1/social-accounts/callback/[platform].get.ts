@@ -6,7 +6,6 @@ const STATE_COOKIE_MAX_AGE = 60 * 10 // 10 minutes
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event)
-  const BASE_URL = process.env.NUXT_BASE_URL
 
   try {
     const platform = getRouterParam(event, 'platform') as SocialMediaPlatform
@@ -60,13 +59,7 @@ export default defineEventHandler(async (event) => {
       businessId = statePayload.businessId
     }
 
-    if (!businessId || typeof businessId !== 'string') {
-      log.error({ message: 'OAuth callback missing businessId' })
-      throw createError({
-        statusCode: 400,
-        statusMessage: 'Invalid OAuth callback: missing businessId'
-      })
-    }
+    log.set({ businessId: businessId || null })
 
     // Handle OAuth errors
     if (error) {
@@ -108,13 +101,10 @@ export default defineEventHandler(async (event) => {
   } catch (error) {
     log.error({ message: 'Error handling OAuth callback', error })
 
-    // Redirect to error page
-    const baseUrl = BASE_URL || 'http://localhost:3000'
     const errorMessage = error instanceof Error
       ? error.message
       : (error as { statusMessage?: string })?.statusMessage || 'Connection failed'
-    const errorUrl = `${baseUrl}/app/integrations?error=${encodeURIComponent(errorMessage)}`
 
-    return sendRedirect(event, errorUrl)
+    return sendRedirect(event, `/app/integrations?error=${encodeURIComponent(errorMessage)}`)
   }
 })
