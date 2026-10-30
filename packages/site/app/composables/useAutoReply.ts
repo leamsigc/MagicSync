@@ -56,6 +56,16 @@ export interface AutoReplyMediaItem {
   commentsCount?: number
 }
 
+export interface AutoReplyTemplateRequest {
+  keywords: string[]
+  dmTemplate?: string
+  publicReplyTemplate?: string
+  links: Array<{ label: string, target: string }>
+  tone?: 'friendly' | 'professional' | 'casual'
+  businessId?: string
+  useBusinessContext?: boolean
+}
+
 export function useAutoReply() {
   const campaigns = useState<AutoReplyCampaign[]>('auto-reply-campaigns', () => [])
   const loading = useState<boolean>('auto-reply-loading', () => false)
@@ -195,15 +205,30 @@ export function useAutoReply() {
     }
   }
 
-  async function fetchRecentMedia(socialAccountId: string, limit = 10): Promise<AutoReplyMediaItem[]> {
+  /** Posts MagicSync published on this account — the only rows the picker offers. */
+  async function fetchPublishedPosts(socialAccountId: string, limit = 10): Promise<AutoReplyMediaItem[]> {
     try {
       const res = await $fetch<{ success: boolean; data: AutoReplyMediaItem[] }>('/api/v1/auto-reply/media', {
         query: { socialAccountId, limit },
       })
       return res.data || []
     } catch (err) {
-      error.value = toMessage(err, 'Failed to load recent posts')
+      error.value = toMessage(err, 'Failed to load published posts')
       return []
+    }
+  }
+
+  async function generateTemplate(input: AutoReplyTemplateRequest): Promise<string | null> {
+    try {
+      const res = await $fetch<{ success: boolean, data: { text: string } }>('/api/v1/auto-reply/ai-template', {
+        method: 'POST',
+        body: input,
+        timeout: 45000,
+      })
+      return res.data?.text || null
+    } catch (err) {
+      error.value = toMessage(err, 'Failed to generate a DM template')
+      return null
     }
   }
 
@@ -245,7 +270,8 @@ export function useAutoReply() {
     fetchStats,
     fetchWebhookStatus,
     subscribeWebhooks,
-    fetchRecentMedia,
+    fetchPublishedPosts,
+    generateTemplate,
     testMatch,
   }
 }

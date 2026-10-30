@@ -28,6 +28,10 @@ function matchesQuery(item: AdminTableSummary, query: string): boolean {
   )
 }
 
+function handleSearch(value: string) {
+  searchQuery.value = value
+}
+
 const groups = computed<AdminTableGroup[]>(() => {
   const query = searchQuery.value.trim().toLowerCase()
   const grouped = new Map<string, AdminTableSummary[]>()
@@ -62,12 +66,8 @@ onMounted(fetchCatalog)
 </script>
 
 <template>
-  <UContainer class="space-y-6 py-6">
-    <div class="flex flex-wrap items-start justify-between gap-4">
-      <div>
-        <h1 class="text-2xl font-bold tracking-tight">{{ t('title') }}</h1>
-        <p class="text-muted-foreground">{{ t('description') }}</p>
-      </div>
+  <BaseCollectionPage :title="t('title')" :description="t('description')" back-to="/app/admin">
+    <template #actions>
       <UButton
         variant="outline"
         icon="lucide:refresh-cw"
@@ -76,14 +76,16 @@ onMounted(fetchCatalog)
       >
         {{ t('refresh') }}
       </UButton>
-    </div>
+    </template>
 
-    <UInput
-      v-model="searchQuery"
-      icon="lucide:search"
-      :placeholder="t('searchPlaceholder')"
-      class="max-w-md"
-    />
+    <template #toolbar>
+      <BaseCollectionToolbar
+        :search="searchQuery"
+        :search-placeholder="t('searchPlaceholder')"
+        :busy="loading"
+        @update:search="handleSearch"
+      />
+    </template>
 
     <UAlert
       v-if="loadError"
@@ -142,5 +144,5 @@ onMounted(fetchCatalog)
         :title="t('empty')"
       />
     </template>
-  </UContainer>
+  </BaseCollectionPage>
 </template>

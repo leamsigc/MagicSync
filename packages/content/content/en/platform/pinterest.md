@@ -55,6 +55,8 @@ list:
 ---
 #title
 Explode Your Website Traffic
+#subtitle
+What you can do with MagicSync
 #description
 Pinterest is a search engine, not just a social network. Treat it like one.
 ::

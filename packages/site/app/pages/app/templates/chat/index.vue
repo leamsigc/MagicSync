@@ -6,8 +6,12 @@
  *
  * Component Description: Chat Templates Page - List and manage chat templates
  *
+ * Uses the shared collection shell: `BaseCollectionPage` for the page rhythm,
+ * `BaseCollectionToolbar` for search/visibility, and the shared grid/list with
+ * the existing `TemplateCard` / `CreateTemplateCard` for the rows.
+ *
  * @author Ismael Garcia <leamsigc@leamsigc.com>
- * @version 0.0.1
+ * @version 0.0.2
  *
  * @todo [ ] Test the component
  * @todo [ ] Integration test.
@@ -21,6 +25,9 @@ import DeleteTemplateModal from '#layers/BaseTemplate/app/components/templates/c
 import ViewTemplateModal from '#layers/BaseTemplate/app/components/templates/components/ViewTemplateModal.vue'
 
 const TEMPLATE_TYPE = 'CHAT' as const
+const EMPTY_ICON = 'lucide:message-circle'
+/** Sentinel row so the "create" tile rides inside the shared grid. */
+const CREATE_TILE_ID = '__create__'
 
 const { t } = useI18n()
 
@@ -37,6 +44,48 @@ const { getTemplatesByType, templateList, isLoading, createTemplate, updateTempl
 onMounted(() => {
     getTemplatesByType(TEMPLATE_TYPE)
 })
+
+// Collection state: grid + list, search, visibility filter
+const rows = computed(() => templateList[TEMPLATE_TYPE] ?? [])
+
+const { view, setView, search, setSearch, filters, setFilter, filtered } = useCollectionView<Template>({
+    key: 'app-templates-chat',
+    modes: ['grid', 'list'],
+    defaultView: 'grid',
+    rows,
+    searchFields: row => [row.title, row.content],
+    filterFns: {
+        visibility: (row, value) => value === 'public' ? row.isPublic : !row.isPublic,
+    },
+})
+
+interface TemplateTile {
+    id: string
+    template?: Template
+}
+
+const isCreateTile = (item: { id?: string }) => item.id === CREATE_TILE_ID
+
+/** Empty collection → let the shared empty state own the CTA. */
+const gridItems = computed<TemplateTile[]>(() => {
+    if (filtered.value.length === 0) return []
+    return [{ id: CREATE_TILE_ID }, ...filtered.value.map(row => ({ id: row.id, template: row }))]
+})
+
+const visibilityOptions = computed(() => [
+    { value: 'all', label: t('visibility_all') },
+    { value: 'public', label: t('visibility_public') },
+    { value: 'private', label: t('visibility_private') },
+])
+
+const toolbarFilters = computed(() => [
+    { key: 'visibility', label: t('visibility_label'), value: filters.value.visibility || 'all', options: visibilityOptions.value, width: 'w-full sm:w-44' },
+])
+
+const viewOptions = computed(() => [
+    { value: 'grid', label: t('view_grid'), icon: 'i-lucide-layout-grid' },
+    { value: 'list', label: t('view_list'), icon: 'i-lucide-list' },
+])
 
 // Modal states
 const isFormModalOpen = ref(false)
@@ -97,55 +146,110 @@ const handleEditFromView = (template: Template) => {
     selectedTemplate.value = template
     isFormModalOpen.value = true
 }
+
+const closeFormModal = () => {
+    isFormModalOpen.value = false
+}
+
+const closeDeleteModal = () => {
+    isDeleteModalOpen.value = false
+}
+
+const closeViewModal = () => {
+    isViewModalOpen.value = false
+}
+
+// Row helpers
+const visibilityLabel = (template: Template) =>
+    template.isPublic ? t('visibility_public') : t('visibility_private')
+
+const visibilityColor = (template: Template): 'success' | 'neutral' =>
+    template.isPublic ? 'success' : 'neutral'
+
+const formatDate = (template: Template) => new Date(template.updatedAt).toLocaleDateString()
+
+const menuItems = (template: Template) => [[
+    { label: t('action_view'), icon: 'lucide:eye', onSelect: () => handleView(template) },
+    { label: t('action_edit'), icon: 'lucide:edit', onSelect: () => handleEdit(template) },
+    { label: t('action_delete'), icon: 'lucide:trash', color: 'error' as const, onSelect: () => handleDeleteClick(template) },
+]]
 </script>
 
 <template>
-    <div class=" p-4 lg:mx-auto lg:p-6">
-        <BasePageHeader :title="t('title')" :description="t('description')">
-            <template #actions>
-                <UButton icon="lucide:plus" color="primary" @click="handleCreate">
+    <BaseCollectionPage :title="t('title')" :description="t('description')" back-to="">
+        <template #actions>
+            <UButton icon="lucide:plus" color="primary" @click="handleCreate">
+                {{ t('create_template') }}
+            </UButton>
+        </template>
+
+        <template #toolbar>
+            <BaseCollectionToolbar :search="search" :search-placeholder="t('search_placeholder')"
+                :filters="toolbarFilters" :view="view" :views="viewOptions" :busy="isLoading"
+                @update:search="setSearch" @update:filter="(key: string, value: string) => setFilter(key, value)"
+                @update:view="setView" />
+        </template>
+
+        <!-- Templates Grid -->
+        <BaseCollectionGrid v-if="view === 'grid'" :items="gridItems" row-key="id" :columns="4" :loading="isLoading"
+            :empty-icon="EMPTY_ICON" :empty-title="t('no_templates')" :empty-hint="t('create_first')">
+            <template #item="{ item }">
+                <CreateTemplateCard v-if="isCreateTile(item)" :type="TEMPLATE_TYPE" @create="handleCreate" />
+                <TemplateCard v-else :template="item.template" @view="handleView" @edit="handleEdit"
+                    @delete="handleDeleteClick" />
+            </template>
+
+            <template #empty>
+                <UButton icon="lucide:plus" color="primary" size="lg" @click="handleCreate">
                     {{ t('create_template') }}
                 </UButton>
             </template>
-        </BasePageHeader>
+        </BaseCollectionGrid>
 
-        <!-- Loading state -->
-        <div v-if="isLoading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            <USkeleton v-for="i in 8" :key="i" class="h-48 rounded-lg" />
-        </div>
+        <!-- Templates List -->
+        <BaseCollectionList v-else :items="filtered" row-key="id" :loading="isLoading" :empty-icon="EMPTY_ICON"
+            :empty-title="t('no_templates')" :empty-hint="t('create_first')">
+            <template #item="{ item }">
+                <span class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-elevated">
+                    <UIcon :name="EMPTY_ICON" class="size-5 text-primary" />
+                </span>
 
-        <!-- Templates Grid -->
-        <div v-else-if="templateList[TEMPLATE_TYPE] && templateList[TEMPLATE_TYPE].length > 0"
-            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            <CreateTemplateCard :type="TEMPLATE_TYPE" @create="handleCreate" />
+                <div class="min-w-0 flex-1 cursor-pointer" @click="handleView(item)">
+                    <p class="truncate text-sm font-medium text-highlighted">{{ item.title }}</p>
+                    <p class="truncate text-sm text-muted">{{ item.content }}</p>
+                </div>
 
-            <TemplateCard v-for="template in templateList[TEMPLATE_TYPE]" :key="template.id" :template="template"
-                @view="handleView" @edit="handleEdit" @delete="handleDeleteClick" />
-        </div>
+                <UBadge :color="visibilityColor(item)" variant="subtle" size="sm"
+                    class="hidden shrink-0 sm:inline-flex">
+                    {{ visibilityLabel(item) }}
+                </UBadge>
 
-        <!-- Empty state -->
-        <div v-else class="flex flex-col items-center justify-center py-16 space-y-4">
-            <div class="p-6 rounded-full bg-info/10">
-                <Icon name="lucide:message-circle" class="size-12 text-info" />
-            </div>
-            <h3 class="text-xl font-semibold">{{ t('no_templates') }}</h3>
-            <p class="text-muted-foreground text-center max-w-md">
-                {{ t('create_first') }}
-            </p>
-            <UButton icon="lucide:plus" color="primary" size="lg" @click="handleCreate">
-                {{ t('create_template') }}
-            </UButton>
-        </div>
+                <span class="hidden w-28 shrink-0 whitespace-nowrap text-right text-xs text-muted lg:block">
+                    {{ formatDate(item) }}
+                </span>
+
+                <UDropdownMenu :items="menuItems(item)" :content="{ align: 'end' }">
+                    <UButton icon="lucide:more-vertical" color="neutral" variant="ghost" size="xs"
+                        :aria-label="t('actions')" />
+                </UDropdownMenu>
+            </template>
+
+            <template #empty>
+                <UButton icon="lucide:plus" color="primary" size="lg" @click="handleCreate">
+                    {{ t('create_template') }}
+                </UButton>
+            </template>
+        </BaseCollectionList>
 
         <!-- Modals -->
         <TemplateFormModal v-model:open="isFormModalOpen" :template="selectedTemplate" :default-type="TEMPLATE_TYPE"
-            @save="handleSave" @cancel="isFormModalOpen = false" />
+            @save="handleSave" @cancel="closeFormModal" />
 
         <DeleteTemplateModal v-model:open="isDeleteModalOpen" :template="selectedTemplate"
-            @confirm="handleConfirmDelete" @cancel="isDeleteModalOpen = false" />
+            @confirm="handleConfirmDelete" @cancel="closeDeleteModal" />
 
         <ViewTemplateModal v-model:open="isViewModalOpen" :template="selectedTemplate" @edit="handleEditFromView"
-            @close="isViewModalOpen = false" />
-    </div>
+            @close="closeViewModal" />
+    </BaseCollectionPage>
 </template>
 <style scoped></style>

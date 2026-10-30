@@ -1,44 +1,23 @@
 <i18n src="./posts.json"></i18n>
 
 <script lang="ts" setup>
-import { h, resolveComponent } from 'vue'
-import type { TableColumn } from '@nuxt/ui'
-import type { Row } from '@tanstack/vue-table'
+/**
+ * Admin → Posts.
+ *
+ * Table + list over every post across businesses. The generic admin table
+ * (`useAdminDataTable`) still owns fetching, pagination and mutations; the
+ * shared collection toolbar owns the visible search / status / platform state.
+ * Search and status are server-side (debounced refetch); platform is derived
+ * from `targetPlatforms` on the loaded page.
+ */
 import type { AdminColumnMeta } from '#layers/BaseDB/server/services/admin-data.service'
+import type { CollectionTableColumn } from '#layers/BaseUI/app/utils/collection'
 import { useAdminDataTable, type AdminTableRow } from '~/composables/useAdminDataTable'
 import { formatAdminCellValue, type AdminFormValues } from '~/utils/admin-data'
 
 definePageMeta({
   layout: 'dashboard-layout',
 })
-
-const { t } = useI18n()
-const toast = useToast()
-
-const UButton = resolveComponent('UButton')
-const UBadge = resolveComponent('UBadge')
-const UCheckbox = resolveComponent('UCheckbox')
-const UDropdownMenu = resolveComponent('UDropdownMenu')
-
-const {
-  columns,
-  rows,
-  pagination,
-  loading,
-  loadError,
-  searchInput,
-  filters,
-  rowSelection,
-  selectedKeys,
-  selectedCount,
-  fetchRows,
-  setFilter,
-  setPage,
-  getRowKey,
-  clearSelection,
-  updateRow,
-  deleteRows,
-} = useAdminDataTable('posts')
 
 const POST_PREVIEW_KEYS = [
   'content',
@@ -50,11 +29,13 @@ const POST_PREVIEW_KEYS = [
   'userId',
 ]
 
-const previewColumns = computed(() =>
-  POST_PREVIEW_KEYS
-    .map(key => columns.value.find(column => column.key === key))
-    .filter((column): column is AdminColumnMeta => !!column),
-)
+const HIDE_BELOW: Record<string, CollectionTableColumn['hideBelow']> = {
+  postFormat: 'lg',
+  scheduledAt: 'xl',
+  publishedAt: 'xl',
+  businessId: 'xl',
+  userId: 'lg',
+}
 
 const STATUS_COLORS: Record<string, 'success' | 'error' | 'warning' | 'neutral'> = {
   published: 'success',
@@ -62,96 +43,173 @@ const STATUS_COLORS: Record<string, 'success' | 'error' | 'warning' | 'neutral'>
   pending: 'warning',
 }
 
-const statusTabs = computed(() => [
-  { label: t('status.all'), value: 'all' },
-  { label: t('status.draft'), value: 'draft' },
-  { label: t('status.pending'), value: 'pending' },
-  { label: t('status.published'), value: 'published' },
-  { label: t('status.failed'), value: 'failed' },
+const { t } = useI18n()
+const toast = useToast()
+
+const {
+  columns,
+  rows,
+  pagination,
+  loading,
+  loadError,
+  searchInput,
+  rowSelection,
+  selectedKeys,
+  fetchRows,
+  setFilter: setServerFilter,
+  setPage,
+  clearSelection,
+  updateRow,
+  deleteRows,
+} = useAdminDataTable('posts')
+
+const {
+  view,
+  setView,
+  search,
+  setSearch,
+  filters,
+  setFilter,
+  filtered,
+  isAll,
+} = useCollectionView<AdminTableRow>({
+  key: 'admin-posts',
+  modes: ['table', 'list'],
+  defaultView: 'table',
+  rows,
+  searchFields: row => rowSearchValues(row),
+  filterFns: {
+    status: (row, value) => String(row.status ?? '') === value,
+    platform: (row, value) => platformsOf(row).includes(value),
+  },
+})
+
+// The toolbar owns the visible search box; the debounced server fetch listens
+// to `searchInput`, so mirror every keystroke into it.
+watch(search, value => {
+  searchInput.value = value
+})
+
+watch(
+  () => filters.value.status,
+  value => {
+    setServerFilter('status', isAll(value) ? '' : value)
+  },
+)
+
+const rowKey = (row: AdminTableRow): string => row._key
+
+/** Selection is a plain id list; the composable keeps it page-scoped. */
+const selected = computed<string[]>({
+  get: () => selectedKeys.value,
+  set: ids => {
+    const next: Record<string, boolean> = {}
+    for (const id of ids) next[id] = true
+    rowSelection.value = next
+  },
+})
+
+function rowSearchValues(row: AdminTableRow): string[] {
+  return Object.values(row).map(value => (typeof value === 'string' ? value : ''))
+}
+
+function parsePlatformList(raw: unknown): string[] {
+  if (Array.isArray(raw)) return raw.map(String)
+  if (typeof raw !== 'string' || !raw) return []
+  return parsePlatformJson(raw)
+}
+
+function parsePlatformJson(raw: string): string[] {
+  try {
+    const parsed: unknown = JSON.parse(raw)
+    return Array.isArray(parsed) ? parsed.map(String) : [raw]
+  } catch {
+    return [raw]
+  }
+}
+
+function platformsOf(row: AdminTableRow): string[] {
+  return parsePlatformList(row.targetPlatforms)
+}
+
+function platformLabel(value: string): string {
+  const words = value.replace(/[-_]/g, ' ')
+  return words.charAt(0).toUpperCase() + words.slice(1)
+}
+
+function platformText(row: AdminTableRow): string {
+  const labels = platformsOf(row).map(platformLabel)
+  return labels.length > 0 ? labels.join(', ') : '—'
+}
+
+function statusTone(value: unknown): 'success' | 'error' | 'warning' | 'neutral' {
+  return STATUS_COLORS[String(value)] ?? 'neutral'
+}
+
+function previewColumn(key: string): AdminColumnMeta | undefined {
+  return columns.value.find(column => column.key === key)
+}
+
+function formatCell(key: string, row: AdminTableRow): string {
+  const column = previewColumn(key)
+  return column ? formatAdminCellValue(column, row[key]) : String(row[key] ?? '')
+}
+
+const previewColumns = computed(() =>
+  POST_PREVIEW_KEYS
+    .map(key => previewColumn(key))
+    .filter((column): column is AdminColumnMeta => !!column),
+)
+
+const tableColumns = computed<CollectionTableColumn[]>(() =>
+  previewColumns.value.map(column => ({
+    key: column.key,
+    label: column.label,
+    hideBelow: HIDE_BELOW[column.key],
+  })),
+)
+
+const subtitle = computed(() =>
+  t('description', { total: pagination.value.total, plural: pagination.value.total === 1 ? '' : 's' }),
+)
+
+const statusOptions = computed(() => [
+  { value: 'all', label: t('status.all') },
+  { value: 'draft', label: t('status.draft') },
+  { value: 'pending', label: t('status.pending') },
+  { value: 'published', label: t('status.published') },
+  { value: 'failed', label: t('status.failed') },
 ])
 
-const activeStatus = ref('all')
-
-function handleStatusTab(value: string | number) {
-  const status = String(value)
-  activeStatus.value = status
-  setFilter('status', status === 'all' ? '' : status)
-}
-
-function renderContentCell(column: AdminColumnMeta, row: AdminTableRow) {
-  return h('span', { class: 'line-clamp-2 block max-w-[320px] text-sm' }, formatAdminCellValue(column, row[column.key]))
-}
-
-function renderEnumCell(value: unknown, text: string) {
-  return h(UBadge, { color: STATUS_COLORS[String(value)] ?? 'neutral', variant: 'subtle', size: 'sm' }, () => text)
-}
-
-function renderValueCell(column: AdminColumnMeta, row: AdminTableRow) {
-  const text = formatAdminCellValue(column, row[column.key])
-  if (column.type === 'enum') return renderEnumCell(row[column.key], text)
-  return h('span', { class: 'block max-w-[220px] truncate text-sm' }, text)
-}
-
-interface RowActionItem {
-  type?: 'label' | 'separator'
-  label?: string
-  icon?: string
-  color?: 'error'
-  onSelect?: () => void
-}
-
-function getRowItems(row: Row<AdminTableRow>): RowActionItem[] {
-  return [
-    { type: 'label', label: t('actions.label') },
-    { label: t('actions.view'), icon: 'i-lucide-eye', onSelect: () => openDetail(row.original) },
-    { label: t('actions.edit'), icon: 'i-lucide-pencil', onSelect: () => openEdit(row.original) },
-    { type: 'separator' },
-    { label: t('actions.delete'), icon: 'i-lucide-trash-2', color: 'error', onSelect: () => confirmDeleteRows([row.original._key]) },
-  ]
-}
-
-const tableColumns = computed<TableColumn<AdminTableRow>[]>(() => {
-  const selectionColumn: TableColumn<AdminTableRow> = {
-    id: 'select',
-    header: ({ table }) =>
-      h(UCheckbox, {
-        modelValue: table.getIsSomePageRowsSelected()
-          ? 'indeterminate'
-          : table.getIsAllPageRowsSelected(),
-        'onUpdate:modelValue': (value: boolean | 'indeterminate') =>
-          table.toggleAllPageRowsSelected(!!value),
-        'aria-label': t('a11y.selectAll'),
-      }),
-    cell: ({ row }) =>
-      h(UCheckbox, {
-        modelValue: row.getIsSelected(),
-        'onUpdate:modelValue': (value: boolean | 'indeterminate') => row.toggleSelected(!!value),
-        'aria-label': t('a11y.selectRow'),
-      }),
-  }
-
-  const valueColumns = previewColumns.value.map(column => ({
-    id: column.key,
-    header: column.label,
-    cell: ({ row }: { row: Row<AdminTableRow> }) =>
-      column.key === 'content' ? renderContentCell(column, row.original) : renderValueCell(column, row.original),
-  })) as TableColumn<AdminTableRow>[]
-
-  const actionsColumn: TableColumn<AdminTableRow> = {
-    id: 'actions',
-    header: () => h('div', { class: 'text-right' }, t('actions.label')),
-    cell: ({ row }) =>
-      h('div', { class: 'text-right' }, [
-        h(
-          UDropdownMenu,
-          { content: { align: 'end' }, items: getRowItems(row), 'aria-label': t('a11y.actions') },
-          () => h(UButton, { variant: 'ghost', icon: 'i-lucide-ellipsis-vertical', size: 'sm' }),
-        ),
-      ]),
-  }
-
-  return [selectionColumn, ...valueColumns, actionsColumn]
+const platformOptions = computed(() => {
+  const ids = new Set(rows.value.flatMap(row => platformsOf(row)))
+  const options = [...ids]
+    .sort((a, b) => platformLabel(a).localeCompare(platformLabel(b)))
+    .map(id => ({ value: id, label: platformLabel(id) }))
+  return [{ value: 'all', label: t('filters.allPlatforms') }, ...options]
 })
+
+const viewOptions = computed(() => [
+  { value: 'table', label: t('views.table'), icon: 'i-lucide-table' },
+  { value: 'list', label: t('views.list'), icon: 'i-lucide-list' },
+])
+
+const toolbarFilters = computed(() => [
+  {
+    key: 'status',
+    label: t('filters.status'),
+    value: filters.value.status || 'all',
+    options: statusOptions.value,
+    width: 'w-full sm:w-40',
+  },
+  {
+    key: 'platform',
+    label: t('filters.platform'),
+    value: filters.value.platform || 'all',
+    options: platformOptions.value,
+    width: 'w-full sm:w-44',
+  },
+])
 
 const currentPage = computed({
   get: () => pagination.value.page,
@@ -205,6 +263,19 @@ function handleBulkDelete() {
   confirmDeleteRows(selectedKeys.value)
 }
 
+function menuItems(row: AdminTableRow) {
+  return [
+    { label: t('actions.view'), icon: 'i-lucide-eye', onSelect: () => openDetail(row) },
+    { label: t('actions.edit'), icon: 'i-lucide-pencil', onSelect: () => openEdit(row) },
+    {
+      label: t('actions.delete'),
+      icon: 'i-lucide-trash-2',
+      color: 'error' as const,
+      onSelect: () => confirmDeleteRows([row._key]),
+    },
+  ]
+}
+
 async function saveEdit(values: AdminFormValues) {
   const row = editRow.value
   if (!row) return
@@ -238,42 +309,31 @@ async function applyDelete() {
 </script>
 
 <template>
-  <UContainer class="space-y-6 py-6">
-    <div class="flex flex-wrap items-start justify-between gap-4">
-      <div>
-        <h1 class="text-2xl font-bold tracking-tight">{{ t('title') }}</h1>
-        <p class="text-muted-foreground">
-          {{ t('description', { total: pagination.total, plural: pagination.total === 1 ? '' : 's' }) }}
-        </p>
-      </div>
-      <div class="flex items-center gap-2">
-        <UButton to="/app/admin/data/posts" variant="outline" icon="lucide:database">
-          {{ t('rawTable') }}
-        </UButton>
-        <UButton
-          variant="outline"
-          icon="lucide:refresh-cw"
-          :loading="loading"
-          @click="fetchRows"
-        >
-          {{ t('refresh') }}
-        </UButton>
-      </div>
-    </div>
+  <BaseCollectionPage :title="t('title')" :description="subtitle">
+    <template #actions>
+      <UButton to="/app/admin/data/posts" variant="outline" icon="lucide:database" :label="t('rawTable')" />
+      <UButton
+        variant="outline"
+        icon="lucide:refresh-cw"
+        :loading="loading"
+        :label="t('refresh')"
+        @click="fetchRows"
+      />
+    </template>
 
-    <div class="flex flex-wrap items-center gap-3">
-      <UTabs
-        :model-value="activeStatus"
-        :items="statusTabs"
-        @update:model-value="handleStatusTab"
+    <template #toolbar>
+      <BaseCollectionToolbar
+        :search="search"
+        :search-placeholder="t('searchPlaceholder')"
+        :filters="toolbarFilters"
+        :view="view"
+        :views="viewOptions"
+        :busy="loading"
+        @update:search="setSearch"
+        @update:filter="(key: string, value: string) => setFilter(key, value)"
+        @update:view="setView"
       />
-      <UInput
-        v-model="searchInput"
-        icon="lucide:search"
-        :placeholder="t('searchPlaceholder')"
-        class="max-w-sm"
-      />
-    </div>
+    </template>
 
     <UAlert
       v-if="loadError"
@@ -283,50 +343,121 @@ async function applyDelete() {
       :title="t('loadFailed')"
     >
       <template #actions>
-        <UButton variant="outline" size="sm" @click="fetchRows">
-          {{ t('retry') }}
-        </UButton>
+        <UButton variant="outline" size="sm" :label="t('retry')" @click="fetchRows" />
       </template>
     </UAlert>
 
-    <UCard v-else variant="soft">
-      <UTable
-        v-model:row-selection="rowSelection"
-        :data="rows"
-        :columns="tableColumns"
-        :loading="loading"
-        :get-row-id="getRowKey"
-        :empty="t('empty')"
-      />
-      <div class="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-        <p class="text-sm text-muted-foreground">
-          {{ t('footer.selected', { selected: selectedCount, total: pagination.total }) }}
-        </p>
-        <UPagination
-          v-model="currentPage"
-          :items-per-page="pagination.limit"
-          :total="pagination.total"
-        />
-      </div>
-    </UCard>
-
-    <div
-      v-if="selectedCount > 0"
-      v-motion-slide-bottom
-      :duration="200"
-      class="sticky bottom-4 z-20 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-inverted px-4 py-3 text-inverted shadow-lg"
+    <BaseDataTable
+      v-else-if="view === 'table'"
+      v-model:selected="selected"
+      :rows="filtered"
+      :columns="tableColumns"
+      :row-key="rowKey"
+      :loading="loading"
+      selectable
+      :empty-title="t('empty')"
+      empty-icon="i-lucide-file-text"
     >
-      <p class="text-sm font-medium">{{ t('bulk.selected', { count: selectedCount }) }}</p>
-      <div class="flex items-center gap-2">
-        <UButton color="error" size="sm" @click="handleBulkDelete">
-          <UIcon name="lucide:trash-2" class="mr-2 h-4 w-4" />
-          {{ t('bulk.delete') }}
-        </UButton>
-        <UButton variant="ghost" size="sm" color="neutral" @click="clearSelection">
-          {{ t('bulk.clear') }}
-        </UButton>
-      </div>
-    </div>
+      <template #bulk>
+        <span class="text-sm font-medium">{{ t('bulk.selected', { count: selected.length }) }}</span>
+        <div class="ms-auto flex items-center gap-2">
+          <UButton
+            color="error"
+            size="xs"
+            icon="i-lucide-trash-2"
+            :label="t('bulk.delete')"
+            @click="handleBulkDelete"
+          />
+          <UButton
+            variant="ghost"
+            color="neutral"
+            size="xs"
+            :label="t('bulk.clear')"
+            @click="clearSelection"
+          />
+        </div>
+      </template>
+
+      <template #cell-content="{ row }">
+        <span class="line-clamp-2 block max-w-80 text-sm">{{ formatCell('content', row) }}</span>
+      </template>
+      <template #cell-status="{ row }">
+        <UBadge :color="statusTone(row.status)" variant="subtle" size="sm">{{ formatCell('status', row) }}</UBadge>
+      </template>
+      <template #cell-postFormat="{ row }">
+        <span class="text-sm text-muted">{{ formatCell('postFormat', row) }}</span>
+      </template>
+      <template #cell-scheduledAt="{ row }">
+        <span class="whitespace-nowrap text-sm text-muted">{{ formatCell('scheduledAt', row) }}</span>
+      </template>
+      <template #cell-publishedAt="{ row }">
+        <span class="whitespace-nowrap text-sm text-muted">{{ formatCell('publishedAt', row) }}</span>
+      </template>
+      <template #cell-businessId="{ row }">
+        <span class="block max-w-44 truncate text-xs text-muted">{{ formatCell('businessId', row) }}</span>
+      </template>
+      <template #cell-userId="{ row }">
+        <span class="block max-w-44 truncate text-xs text-muted">{{ formatCell('userId', row) }}</span>
+      </template>
+      <template #row-actions="{ row }">
+        <UDropdownMenu :items="menuItems(row)" :content="{ align: 'end' }">
+          <UButton
+            icon="i-lucide-ellipsis-vertical"
+            color="neutral"
+            variant="ghost"
+            size="xs"
+            :aria-label="t('a11y.actions')"
+          />
+        </UDropdownMenu>
+      </template>
+
+      <template #footer>
+        <div class="mt-3 flex flex-wrap items-center justify-between gap-3 px-1">
+          <p class="text-sm text-muted">
+            {{ t('footer.selected', { selected: selected.length, total: pagination.total }) }}
+          </p>
+          <UPagination
+            v-model="currentPage"
+            :items-per-page="pagination.limit"
+            :total="pagination.total"
+          />
+        </div>
+      </template>
+    </BaseDataTable>
+
+    <BaseCollectionList
+      v-else
+      :items="filtered"
+      :row-key="rowKey"
+      :loading="loading"
+      :empty-title="t('empty')"
+      empty-icon="i-lucide-file-text"
+    >
+      <template #item="{ item: row }">
+        <span class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-elevated">
+          <UIcon name="i-lucide-file-text" class="size-4" />
+        </span>
+        <div class="min-w-0 flex-1">
+          <p class="truncate text-sm font-medium text-highlighted">{{ formatCell('content', row) }}</p>
+          <p class="truncate text-xs text-muted">{{ platformText(row) }}</p>
+        </div>
+        <UBadge class="hidden shrink-0 sm:inline-flex" :color="statusTone(row.status)" variant="subtle" size="sm">
+          {{ formatCell('status', row) }}
+        </UBadge>
+        <span class="hidden w-40 text-right text-xs text-muted lg:block">
+          {{ formatCell('scheduledAt', row) }}
+        </span>
+        <UDropdownMenu :items="menuItems(row)" :content="{ align: 'end' }">
+          <UButton
+            icon="i-lucide-ellipsis-vertical"
+            color="neutral"
+            variant="ghost"
+            size="xs"
+            :aria-label="t('a11y.actions')"
+          />
+        </UDropdownMenu>
+      </template>
+    </BaseCollectionList>
 
     <AdminRowDetailModal
       :open="detailRow !== null"
@@ -356,5 +487,5 @@ async function applyDelete() {
       @update:open="handleDeleteOpen"
       @confirm="applyDelete"
     />
-  </UContainer>
+  </BaseCollectionPage>
 </template>

@@ -22,7 +22,9 @@
         "images": "Images",
         "videos": "Videos",
         "documents": "Documents",
-        "storage": "Storage"
+        "storage": "Storage",
+        "file_count": "{count} files",
+        "other": "Other"
       },
       "filters": {
         "filter": "Filter:",
@@ -41,6 +43,12 @@
         "all": "All assets",
         "unfiled": "Unfiled",
         "with_count": "{name} ({count})"
+      },
+      "views": {
+        "masonry": "Masonry",
+        "grid": "Grid",
+        "list": "List",
+        "carousel": "Carousel"
       }
     },
     "alerts": {
@@ -72,6 +80,7 @@
       }
     },
     "messages": {
+      "success": "Success",
       "upload_complete": "Successfully uploaded {count} file{plural}",
       "upload_failed": "Upload failed: {message}",
       "drive_imported": "{count} asset{plural} imported from Google Drive.",
@@ -110,7 +119,9 @@
         "images": "Imágenes",
         "videos": "Videos",
         "documents": "Documentos",
-        "storage": "Almacenamiento"
+        "storage": "Almacenamiento",
+        "file_count": "{count} archivos",
+        "other": "Otros"
       },
       "filters": {
         "filter": "Filtrar:",
@@ -129,6 +140,12 @@
         "all": "Todos los recursos",
         "unfiled": "Sin carpeta",
         "with_count": "{name} ({count})"
+      },
+      "views": {
+        "masonry": "Mosaico",
+        "grid": "Cuadrícula",
+        "list": "Lista",
+        "carousel": "Carrusel"
       }
     },
     "alerts": {
@@ -160,6 +177,7 @@
       }
     },
     "messages": {
+      "success": "Éxito",
       "upload_complete": "Subiste exitosamente {count} archivo{plural}",
       "upload_failed": "Falló la subida: {message}",
       "drive_imported": "{count} recurso{plural} importado{plural} desde Google Drive.",
@@ -198,7 +216,9 @@
         "images": "Bilder",
         "videos": "Videos",
         "documents": "Dokumente",
-        "storage": "Speicher"
+        "storage": "Speicher",
+        "file_count": "{count} Dateien",
+        "other": "Sonstiges"
       },
       "filters": {
         "filter": "Filter:",
@@ -217,6 +237,12 @@
         "all": "Alle Assets",
         "unfiled": "Nicht abgelegt",
         "with_count": "{name} ({count})"
+      },
+      "views": {
+        "masonry": "Mosaik",
+        "grid": "Raster",
+        "list": "Liste",
+        "carousel": "Karussell"
       }
     },
     "alerts": {
@@ -248,6 +274,7 @@
       }
     },
     "messages": {
+      "success": "Erfolg",
       "upload_complete": "{count} Datei{plural} erfolgreich hochgeladen",
       "upload_failed": "Upload fehlgeschlagen: {message}",
       "drive_imported": "{count} Asset{plural} aus Google Drive importiert.",
@@ -286,7 +313,9 @@
         "images": "Images",
         "videos": "Vidéos",
         "documents": "Documents",
-        "storage": "Stockage"
+        "storage": "Stockage",
+        "file_count": "{count} fichiers",
+        "other": "Autres"
       },
       "filters": {
         "filter": "Filtrer:",
@@ -305,6 +334,12 @@
         "all": "Toutes les ressources",
         "unfiled": "Non classé",
         "with_count": "{name} ({count})"
+      },
+      "views": {
+        "masonry": "Mosaïque",
+        "grid": "Grille",
+        "list": "Liste",
+        "carousel": "Carrousel"
       }
     },
     "alerts": {
@@ -336,6 +371,7 @@
       }
     },
     "messages": {
+      "success": "Succès",
       "upload_complete": "{count} fichier{plural} téléchargé avec succès",
       "upload_failed": "Échec du téléchargement : {message}",
       "drive_imported": "{count} ressource{plural} importée{plural} depuis Google Drive.",

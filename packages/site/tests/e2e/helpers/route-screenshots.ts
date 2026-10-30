@@ -72,7 +72,7 @@ export function removeActionScreenshots(route: string, action: string): number {
 
 /** Dev-only overlays that must never appear in a captured image. */
 const DEV_OVERLAY_CSS =
-  '#vue-tracer-overlay,nuxt-devtools-frame,nuxt-devtools-inspect-panel,#__nuxt-devtools__,nuxt-devtools-timing,nuxt-devtools-frame-timing{display:none!important}'
+  '#vue-tracer-overlay,nuxt-devtools-frame,nuxt-devtools-inspect-panel,#__nuxt-devtools__,nuxt-devtools-timing,nuxt-devtools-frame-timing,nuxt-error-overlay{display:none!important}'
 
 /**
  * Remove Nuxt DevTools overlays before capture.
@@ -87,7 +87,7 @@ export async function suppressDevOverlays(page: Page): Promise<void> {
     .evaluate(() => {
       for (const el of document.querySelectorAll('*')) {
         const tag = el.tagName.toLowerCase()
-        if (tag.includes('devtools') || tag === 'vue-tracer-overlay') el.remove()
+        if (tag.includes('devtools') || tag === 'vue-tracer-overlay' || tag === 'nuxt-error-overlay') el.remove()
       }
     })
     .catch(() => {})

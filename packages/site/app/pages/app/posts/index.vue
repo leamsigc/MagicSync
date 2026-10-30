@@ -3,57 +3,87 @@
 
 <script lang="ts" setup>
 /**
+ * Posts — one collection shell over five views.
  *
- * Post previews
- *
- * @author Reflect-Media <reflect.media GmbH>
- * @version 0.0.1
- *
- * @todo [ ] Test the component
- * @todo [ ] Integration test.
- * @todo [✔] Update the typescript.
+ * Grid, List, Table, Feed and Board read the same `postList` from
+ * `usePostManager`; `BaseCollectionToolbar` adds search + the view switcher and
+ * the existing `PostFiltersBar` keeps the server-side filters (status, platform,
+ * format, dates, page size).
  */
-import { ref } from 'vue';
-import { usePostManager } from '#layers/BaseShared/app/composables/usePostManager';
-import NewPostModal from '#layers/BaseScheduler/app/components/scheduler/posts/components/NewPostModal.vue';
-import PostsGridView from '#layers/BaseScheduler/app/components/scheduler/posts/components/views/PostsGridView.vue';
-import PostsBoardView from '#layers/BaseScheduler/app/components/scheduler/posts/components/views/PostsBoardView.vue';
-import PostsTableView from '#layers/BaseScheduler/app/components/scheduler/posts/components/views/PostsTableView.vue';
-import PostsFeedView from '#layers/BaseScheduler/app/components/scheduler/posts/components/views/PostsFeedView.vue';
-import PostFiltersBar from "#layers/BaseScheduler/app/components/scheduler/calendar/components/PostFiltersBar.vue"
-import type { PostFilters } from '#layers/BaseScheduler/server/utils/SchedulerTypes';
-import dayjs from 'dayjs';
+import { usePostManager } from '#layers/BaseShared/app/composables/usePostManager'
+import type { PostWithAllData } from '#layers/BaseDB/db/schema'
+import type { CollectionViewOption } from '#layers/BaseUI/app/utils/collection'
+import { useCollectionView } from '#layers/BaseUI/app/composables/useCollectionView'
+import NewPostModal from '#layers/BaseScheduler/app/components/scheduler/posts/components/NewPostModal.vue'
+import PostsGridView from '#layers/BaseScheduler/app/components/scheduler/posts/components/views/PostsGridView.vue'
+import PostsListView from '#layers/BaseScheduler/app/components/scheduler/posts/components/views/PostsListView.vue'
+import PostsBoardView from '#layers/BaseScheduler/app/components/scheduler/posts/components/views/PostsBoardView.vue'
+import PostsTableView from '#layers/BaseScheduler/app/components/scheduler/posts/components/views/PostsTableView.vue'
+import PostsFeedView from '#layers/BaseScheduler/app/components/scheduler/posts/components/views/PostsFeedView.vue'
+import PostFiltersBar from '#layers/BaseScheduler/app/components/scheduler/calendar/components/PostFiltersBar.vue'
+import type { PostFilters } from '#layers/BaseScheduler/server/utils/SchedulerTypes'
+import dayjs from 'dayjs'
 import MicRecorder from '#layers/BaseTools/app/components/MicRecorder.vue'
 import PostAIAssistant from '#layers/BaseTemplate/app/components/PostAIAssistant.vue'
 import TemplateVariablePopUp from '#layers/BaseTemplate/app/components/TemplateVariablePopUp.vue'
 
-const activeBusinessId = useState<string>('business:id');
-const { getPosts, postList, t } = usePostManager();
+type PostsView = 'Feed' | 'Grid' | 'List' | 'Table' | 'Board'
+
+const activeBusinessId = useState<string>('business:id')
+const { getPosts, postList, t } = usePostManager()
+
 // Same request the filter bar issues on mount (current month, default
 // `scheduledAt`, 25 rows), so the two collapse into one in-flight request on
 // client-side navigation instead of racing.
 getPosts(activeBusinessId.value, { page: 1, limit: 25 }, {
   startDate: dayjs().startOf('month').format('YYYY-MM-DD'),
   endDate: dayjs().endOf('month').format('YYYY-MM-DD'),
-  dateType: 'scheduledAt'
-});
+  dateType: 'scheduledAt',
+})
 
-useHead({
+useSeoMeta({
   title: t('seo_title_all'),
-  meta: [
-    { name: 'description', content: t('seo_description_all') }
-  ]
-});
+  description: t('seo_description_all'),
+})
 
-const currentView = ref<'Board' | 'Table' | 'Grid' | 'Feed'>('Feed');
+const startDate = ref(dayjs().startOf('month').format('YYYY-MM-DD'))
+const endDate = ref(dayjs().endOf('month').format('YYYY-MM-DD'))
 
-// get filters from route
+const {
+  view,
+  setView,
+  search,
+  setSearch,
+  filtered,
+} = useCollectionView<PostWithAllData>({
+  key: 'app-posts',
+  modes: ['Feed', 'Grid', 'List', 'Table', 'Board'] satisfies PostsView[],
+  defaultView: 'Feed',
+  rows: postList,
+  searchFields: post => [
+    post.content,
+    post.user?.name,
+    ...(post.platformPosts ?? []).map(platform => platform.platformPostId),
+  ],
+})
 
-const startDate = ref(dayjs().startOf('month').format('YYYY-MM-DD'));
-const endDate = ref(dayjs().endOf('month').format('YYYY-MM-DD'));
-const handleFilterChange = async (filters: PostFilters & { page: number, limit: number }) => {
-  startDate.value = filters.startDate || dayjs().startOf('month').format('YYYY-MM-DD');
-  endDate.value = filters.endDate || dayjs().endOf('month').format('YYYY-MM-DD');
+const viewOptions = computed<CollectionViewOption[]>(() => [
+  { value: 'Grid', label: t('views.grid'), icon: 'i-lucide-grid-2x2' },
+  { value: 'List', label: t('views.list'), icon: 'i-lucide-list' },
+  { value: 'Table', label: t('views.table'), icon: 'i-lucide-table' },
+  { value: 'Feed', label: t('views.feed'), icon: 'i-heroicons-bars-3-bottom-left' },
+  { value: 'Board', label: t('views.board'), icon: 'i-heroicons-squares-2x2' },
+])
+
+const filteredPosts = computed(() => filtered.value)
+
+function setPostsView(next: string) {
+  setView(next as PostsView)
+}
+
+async function handleFilterChange(filters: PostFilters & { page: number, limit: number }) {
+  startDate.value = filters.startDate || dayjs().startOf('month').format('YYYY-MM-DD')
+  endDate.value = filters.endDate || dayjs().endOf('month').format('YYYY-MM-DD')
   await getPosts(
     activeBusinessId.value,
     { page: filters.page, limit: filters.limit },
@@ -63,8 +93,8 @@ const handleFilterChange = async (filters: PostFilters & { page: number, limit: 
       endDate: filters.endDate || endDate.value,
       dateType: filters.dateType,
       postFormat: filters.postFormat,
-      platforms: filters.platforms
-    }
+      platforms: filters.platforms,
+    },
   )
 }
 
@@ -72,70 +102,61 @@ const handleFilterChange = async (filters: PostFilters & { page: number, limit: 
 watch(activeBusinessId, () => {
   getPosts(activeBusinessId.value, { page: 1, limit: 100 }, {
     startDate: startDate.value,
-    endDate: endDate.value
+    endDate: endDate.value,
   })
 })
 </script>
 
 <template>
-  <div class="mx-auto space-y-6">
-    <BasePageHeader :title="t('title')" :description="t('description')">
-      <template #actions>
-        <div data-tour="create-new-post-step-0" class="lg:pr-4">
-          <NewPostModal>
-            <template #mic-recorder="{ onTranscript }">
-              <MicRecorder @transcript="onTranscript" />
-            </template>
-            <template #template-variable="{ onAction }">
-              <TemplateVariablePopUp @action="onAction" />
-            </template>
-            <template #ai-assistant="{ loading, onAction, onTemplateAction }">
-              <PostAIAssistant :loading="loading" @action="onAction" @template-action="onTemplateAction" />
-            </template>
-          </NewPostModal>
+  <BaseCollectionPage :title="t('title')" :description="t('description')">
+    <template #actions>
+      <div data-tour="create-new-post-step-0">
+        <NewPostModal>
+          <template #mic-recorder="{ onTranscript }">
+            <MicRecorder @transcript="onTranscript" />
+          </template>
+          <template #template-variable="{ onAction }">
+            <TemplateVariablePopUp @action="onAction" />
+          </template>
+          <template #ai-assistant="{ loading, onAction, onTemplateAction }">
+            <PostAIAssistant :loading="loading" @action="onAction" @template-action="onTemplateAction" />
+          </template>
+        </NewPostModal>
+      </div>
+    </template>
+
+    <template #toolbar>
+      <div class="space-y-3">
+        <BaseCollectionToolbar
+          :search="search"
+          :search-placeholder="t('searchPlaceholder')"
+          :view="view"
+          :views="viewOptions"
+          @update:search="setSearch"
+          @update:view="setPostsView"
+        />
+        <div data-tour="posts-step-0">
+          <PostFiltersBar @filter-change="handleFilterChange" />
         </div>
-      </template>
-    </BasePageHeader>
-    <div class="flex flex-wrap items-center justify-between gap-2 p-2">
-      <section class="flex flex-wrap items-center gap-1" data-tour="posts-step-0">
-        <PostFiltersBar @filter-change="handleFilterChange" />
-        <section data-tour="posts-step-1" class="flex gap-1">
-          <UButton icon="i-lucide-grid-2x2" :variant="currentView === 'Grid' ? 'solid' : 'ghost'" size="sm"
-            class="rounded-xl" @click="() => { currentView = 'Grid' }">
-            <span class="hidden sm:inline">Grid</span>
-          </UButton>
-          <UButton icon="i-heroicons-bars-3-bottom-left" :variant="currentView === 'Feed' ? 'solid' : 'ghost'" size="sm"
-            class="rounded-xl" @click="() => { currentView = 'Feed' }">
-            <span class="hidden sm:inline">Feed</span>
-          </UButton>
-          <UButton icon="i-heroicons-squares-2x2" :variant="currentView === 'Board' ? 'solid' : 'ghost'" size="sm"
-            class="rounded-xl" @click="() => { currentView = 'Board' }">
-            <span class="hidden sm:inline">Board</span>
-          </UButton>
-          <UButton icon="i-heroicons-table-cells" :variant="currentView === 'Table' ? 'solid' : 'ghost'" size="sm"
-            class="rounded-xl" @click="() => { currentView = 'Table' }">
-            <span class="hidden sm:inline">Table</span>
-          </UButton>
-        </section>
-      </section>
+      </div>
+    </template>
 
-      <!-- <UMonthPicker v-model="monthDate" /> -->
-    </div>
-
-    <!-- List of all posts -->
-    <section class="lg:pr-4">
-      <PostsGridView v-if="currentView === 'Grid'" :posts="postList" />
-
-      <PostsFeedView v-if="currentView === 'Feed'" :posts="postList" />
-
-      <PostsBoardView v-if="currentView === 'Board'" :posts="postList" />
-
-      <PostsTableView v-if="currentView === 'Table'" :posts="postList">
+    <section data-tour="posts-step-1">
+      <BaseCollectionEmpty
+        v-if="filteredPosts.length === 0"
+        icon="i-lucide-file-text"
+        :title="t('list.emptyTitle')"
+        :hint="t('list.emptyHint')"
+      />
+      <PostsGridView v-else-if="view === 'Grid'" :posts="filteredPosts" />
+      <PostsListView v-else-if="view === 'List'" :posts="filteredPosts" />
+      <PostsTableView v-else-if="view === 'Table'" :posts="filteredPosts">
         <template #mic-recorder="{ onTranscript }">
           <MicRecorder @transcript="onTranscript" />
         </template>
       </PostsTableView>
+      <PostsFeedView v-else-if="view === 'Feed'" :posts="filteredPosts" />
+      <PostsBoardView v-else :posts="filteredPosts" />
     </section>
-  </div>
+  </BaseCollectionPage>
 </template>
-<style scoped></style>

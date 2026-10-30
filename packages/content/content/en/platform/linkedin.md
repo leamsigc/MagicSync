@@ -47,7 +47,7 @@ list:
     description: Manage your CEO's personal brand and your company's official page from the same dashboard. Switch context instantly.
     icon: "lucide:building-2"
   - title: First Comment Links
-    description: "link in comments" automation. Keep your posts algorithm-friendly by automatically adding external links in the first comment.
+    description: 'Automate the "link in comments" workflow. Keep your posts algorithm-friendly by automatically adding external links in the first comment.'
     icon: "lucide:external-link"
   - title: Text Formatting
     description: Stand out in the feed. Use bold, italic, and bullet points in your posts to make your copy more readable and engaging.
@@ -61,6 +61,8 @@ list:
 ---
 #title
 Unlock B2B Opportunities
+#subtitle
+What you can do with MagicSync
 #description
 Consistent posting is the key to inbound leads. Automate your strategy today.
 ::

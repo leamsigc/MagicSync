@@ -6,10 +6,12 @@
  *
  * Component Description: Single post detail route.
  * Delegates the whole surface to the shared PostDetailPane so the route and
- * the Feed view's inline detail pane stay identical.
+ * the Feed view's inline detail pane stay identical. The route adopts the
+ * shared collection shell (header + primary action) but declares no view
+ * modes: one post is a record, not a collection, so the pane stays the body.
  *
  * @author Ismael Garcia <leamsigc@leamsigc.com>
- * @version 0.0.2
+ * @version 0.0.3
  */
 
 import type { PostWithAllData } from '#layers/BaseDB/db/schema';
@@ -22,6 +24,14 @@ const router = useRouter();
 const post = ref<PostWithAllData | null>(null);
 const isLoading = ref(true);
 const loadError = ref('');
+
+const shortId = computed(() => post.value?.id?.slice(0, 8) ?? '');
+
+const subtitle = computed(() => {
+  if (!post.value) return t('postDetail.loading')
+  const author = post.value.user?.name || ''
+  return author ? `${author} · #${shortId.value}` : `#${shortId.value}`
+});
 
 const loadPost = async () => {
   isLoading.value = true;
@@ -53,9 +63,14 @@ useHead({
 </script>
 
 <template>
-  <div class="min-h-screen bg-default">
+  <BaseCollectionPage :title="t('postDetail.title')" :description="subtitle" back-to="" container="wide">
+    <template #actions>
+      <UButton icon="i-lucide-refresh-cw" color="neutral" variant="outline" :loading="isLoading"
+        :label="t('postDetail.refresh')" @click="loadPost" />
+    </template>
+
     <PostDetailPane :post="post" :loading="isLoading" :error="loadError" show-back @back="goBack" @retry="loadPost" />
-  </div>
+  </BaseCollectionPage>
 </template>
 
 <style scoped></style>

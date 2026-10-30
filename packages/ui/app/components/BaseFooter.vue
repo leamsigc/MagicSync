@@ -25,7 +25,7 @@ const logoUrl = appConfig.BaseUiLayer.main.logo
         <!-- Left Section - About -->
         <div class="lg:col-span-5">
           <NuxtLink to="#" class="mb-5 inline-flex items-center gap-3">
-            <img :src="logoUrl" fit="contain" :alt="companyName" :title="companyName" class="h-10 object-contain" />
+            <NuxtImg :src="logoUrl" fit="contain" width="40" height="40" :alt="companyName" :title="companyName" class="h-10 object-contain" />
             <span class="text-2xl font-bold">{{ companyName }}</span>
           </NuxtLink>
           <p class="mb-6 text-muted-foreground">
@@ -81,6 +81,53 @@ const logoUrl = appConfig.BaseUiLayer.main.logo
             </ul>
           </div>
         </div>
+      </div>
+
+      <!-- SEO link blocks: every supported network and AI agent, one crawlable
+           link each with a descriptive label. Rendered site-wide so the footer
+           passes consistent anchor text to the matching landing pages. -->
+      <div class="mt-12 border-t border-default pt-10">
+        <section aria-labelledby="footer-social-platforms">
+          <h3 id="footer-social-platforms" class="mb-5 text-sm font-semibold tracking-wider uppercase">
+            {{ footerLinks.socialPlatforms.title }}
+          </h3>
+          <ul class="grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
+            <li v-for="item in footerLinks.socialPlatforms.items" :key="item.label">
+              <NuxtLinkLocale :to="item.to" class="group flex items-start gap-2.5"
+                :title="`${item.label} — ${item.description}`">
+                <Icon :name="item.icon"
+                  class="mt-0.5 size-4 shrink-0 text-muted-foreground transition-colors group-hover:text-primary" />
+                <span class="min-w-0">
+                  <span class="block text-sm font-medium text-foreground transition-colors group-hover:text-primary">
+                    {{ item.label }}
+                  </span>
+                  <span class="block text-xs leading-snug text-muted-foreground">{{ item.description }}</span>
+                </span>
+              </NuxtLinkLocale>
+            </li>
+          </ul>
+        </section>
+
+        <section aria-labelledby="footer-ai-agents" class="mt-10">
+          <h3 id="footer-ai-agents" class="mb-5 text-sm font-semibold tracking-wider uppercase">
+            {{ footerLinks.aiAgents.title }}
+          </h3>
+          <ul class="grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
+            <li v-for="item in footerLinks.aiAgents.items" :key="item.label">
+              <NuxtLinkLocale :to="item.to" class="group flex items-start gap-2.5"
+                :title="`${item.label} — ${item.description}`">
+                <Icon :name="item.icon"
+                  class="mt-0.5 size-4 shrink-0 text-muted-foreground transition-colors group-hover:text-primary" />
+                <span class="min-w-0">
+                  <span class="block text-sm font-medium text-foreground transition-colors group-hover:text-primary">
+                    {{ item.label }}
+                  </span>
+                  <span class="block text-xs leading-snug text-muted-foreground">{{ item.description }}</span>
+                </span>
+              </NuxtLinkLocale>
+            </li>
+          </ul>
+        </section>
       </div>
     </template>
 

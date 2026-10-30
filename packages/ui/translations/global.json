@@ -59,6 +59,12 @@
       "url": "Please enter a valid URL",
       "date": "Please enter a valid date",
       "time": "Please enter a valid time"
+    },
+    "faq": {
+      "title": "FAQs",
+      "subtitle": "Common questions",
+      "stillHaveQuestions": "Still have questions?",
+      "contactUs": "Contact us"
     }
   },
   "es": {
@@ -121,6 +127,12 @@
       "url": "Por favor, ingresa una URL válida",
       "date": "Por favor, ingresa una fecha válida",
       "time": "Por favor, ingresa una hora válida"
+    },
+    "faq": {
+      "title": "Preguntas frecuentes",
+      "subtitle": "Preguntas comunes",
+      "stillHaveQuestions": "¿Aún tienes preguntas?",
+      "contactUs": "Contáctanos"
     }
   },
   "de": {
@@ -183,6 +195,12 @@
       "url": "Bitte geben Sie eine gültige URL ein",
       "date": "Bitte geben Sie ein gültiges Datum ein",
       "time": "Bitte geben Sie eine gültige Zeit ein"
+    },
+    "faq": {
+      "title": "FAQ",
+      "subtitle": "Häufige Fragen",
+      "stillHaveQuestions": "Noch Fragen?",
+      "contactUs": "Kontakt aufnehmen"
     }
   },
   "fr": {
@@ -245,6 +263,12 @@
       "url": "Veuillez saisir une URL valide",
       "date": "Veuillez saisir une date valide",
       "time": "Veuillez saisir une heure valide"
+    },
+    "faq": {
+      "title": "FAQ",
+      "subtitle": "Questions fréquentes",
+      "stillHaveQuestions": "Vous avez encore des questions ?",
+      "contactUs": "Contactez-nous"
     }
   }
 }

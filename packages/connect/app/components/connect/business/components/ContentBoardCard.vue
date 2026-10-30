@@ -1,6 +1,7 @@
 <i18n src="#site/app/pages/app/business/[id]/content.json"></i18n>
 <script setup lang="ts">
 import { platformConfigurations } from '#layers/BaseShared/shared/platformConstants'
+import { publishedLinksFor } from '#layers/BaseShared/utils/published-post-links'
 import {
   cardDate,
   cardDayLabel,
@@ -57,10 +58,10 @@ const emit = defineEmits<{
 
 const { t, te, locale } = useI18n()
 
-const route = useRoute()
 const toast = useToast()
 
 const menuOpen = ref(false)
+const copying = ref(false)
 
 const published = computed(() => props.column === 'published')
 const needsWrite = computed(() => props.column === 'planned')
@@ -118,9 +119,6 @@ function platformLabel(platform: string): string {
 
 const avatarInitials = computed(() => (props.item.createdBy === 'agent' ? 'AI' : (props.viewerInitials || 'ME')))
 
-/** The card's own detail route, shared by the menu's Copy link. */
-const detailUrl = computed(() => `/app/business/${route.params.id}/content/${props.item.id}`)
-
 /** Columns the state machine accepts from here, excluding the one we are in. */
 const statusTargets = computed(() => BOARD_COLUMN_ORDER
   .filter(column => column !== props.column && canMoveTo(props.item, column)))
@@ -131,13 +129,13 @@ const menuItems = computed(() => {
     : []
   const statusItem = statusTargets.value.length > 0
     ? [{
-        label: t('card.menuStatus'),
-        icon: 'i-heroicons-arrow-path-rounded-square',
-        children: statusTargets.value.map(column => ({
-          label: t(`board.columns.${column}`),
-          onSelect: () => handleMoveTo(column),
-        })),
-      }]
+      label: t('card.menuStatus'),
+      icon: 'i-heroicons-arrow-path-rounded-square',
+      children: statusTargets.value.map(column => ({
+        label: t(`board.columns.${column}`),
+        onSelect: () => handleMoveTo(column),
+      })),
+    }]
     : []
   return [
     { label: t('card.menuOpen'), icon: 'i-heroicons-arrow-top-right-on-square', onSelect: handleOpen },
@@ -189,13 +187,41 @@ function handleOpenMenu() {
   menuOpen.value = true
 }
 
-async function handleCopyLink() {
+/**
+ * The public URL of the post this card produced.
+ *
+ * The card only knows the linked `postId`, so the published link is resolved
+ * from the post's platform rows (`publishDetail[accountId].publishedUrl`).
+ * Copying the internal board route was misleading — nobody can open that link.
+ */
+async function resolvePublishedUrl(): Promise<string> {
+  if (!props.item.postId) return ''
   try {
-    await navigator.clipboard.writeText(detailUrl.value)
-    toast.add({ title: t('card.linkCopied'), icon: 'i-heroicons-check-circle', color: 'success' })
+    const response = await $fetch<{ success: boolean, data: Parameters<typeof publishedLinksFor>[0] }>(`/api/v1/posts/${props.item.postId}`)
+    return publishedLinksFor(response.data)[0]?.url ?? ''
+  }
+  catch {
+    return ''
+  }
+}
+
+async function handleCopyLink() {
+  if (copying.value) return
+  copying.value = true
+  try {
+    const url = await resolvePublishedUrl()
+    if (!url) {
+      toast.add({ title: t('card.noPublishedLink'), icon: 'i-heroicons-link-slash', color: 'warning' })
+      return
+    }
+    await navigator.clipboard.writeText(url)
+    toast.add({ title: t('card.linkCopied'), description: url, icon: 'i-heroicons-check-circle', color: 'success' })
   }
   catch {
     toast.add({ title: t('card.linkCopyFailed'), icon: 'i-heroicons-x-circle', color: 'error' })
+  }
+  finally {
+    copying.value = false
   }
 }
 
@@ -210,34 +236,22 @@ function handleDragEnd() {
 </script>
 
 <template>
-  <div
-    draggable="true"
+  <div draggable="true"
     class="group flex cursor-grab flex-col gap-2 rounded-xl border border-default bg-default p-3 transition-colors hover:border-primary/40 active:cursor-grabbing"
-    :class="busy ? 'opacity-70' : ''"
-    :aria-busy="busy"
-    :data-testid="`board-card-${item.id}`"
-    :data-column="column"
-    @dragstart="handleDragStart"
-    @dragend="handleDragEnd"
-    @contextmenu.prevent="handleOpenMenu"
-  >
+    :class="busy ? 'opacity-70' : ''" :aria-busy="busy" :data-testid="`board-card-${item.id}`" :data-column="column"
+    @dragstart="handleDragStart" @dragend="handleDragEnd" @contextmenu.prevent="handleOpenMenu">
     <span class="sr-only" :data-testid="`board-card-handle-${item.id}`" />
 
     <div class="flex items-start gap-2">
       <div class="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
-        <span
-          v-if="formatChip"
+        <span v-if="formatChip"
           class="inline-flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-medium text-muted"
-          :data-testid="`board-card-format-${item.id}`"
-        >
+          :data-testid="`board-card-format-${item.id}`">
           <UIcon :name="formatChip.icon" class="size-3" />
           {{ formatChip.label }}
         </span>
-        <span
-          v-for="chip in platformChips"
-          :key="chip.key"
-          class="inline-flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 text-[11px] text-muted"
-        >
+        <span v-for="chip in platformChips" :key="chip.key"
+          class="inline-flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 text-[11px] text-muted">
           <span class="size-1.5 rounded-full" :style="{ backgroundColor: chip.color }" />
           {{ chip.label }}
         </span>
@@ -245,23 +259,17 @@ function handleDragEnd() {
 
       <span
         class="grid size-6 shrink-0 place-items-center rounded-full bg-primary/15 text-[10px] font-semibold text-primary"
-        :title="item.createdBy === 'agent' ? t('card.creatorAgent') : t('card.creatorYou')"
-      >
+        :title="item.createdBy === 'agent' ? t('card.creatorAgent') : t('card.creatorYou')">
         {{ avatarInitials }}
       </span>
     </div>
 
-    <button
-      type="button"
-      class="flex w-full items-start gap-1.5 text-left"
-      :data-testid="`board-card-open-${item.id}`"
-      @click="handleOpen"
-    >
-      <UIcon v-if="published" name="i-heroicons-check-circle" class="mt-0.5 size-4 shrink-0 text-success" aria-hidden="true" />
-      <span
-        class="line-clamp-2 text-sm font-medium"
-        :class="published ? 'text-muted line-through' : 'text-highlighted'"
-      >
+    <button type="button" class="flex w-full items-start gap-1.5 text-left" :data-testid="`board-card-open-${item.id}`"
+      @click="handleOpen">
+      <UIcon v-if="published" name="i-heroicons-check-circle" class="mt-0.5 size-4 shrink-0 text-success"
+        aria-hidden="true" />
+      <span class="line-clamp-2 text-sm font-medium"
+        :class="published ? 'text-muted line-through' : 'text-highlighted'">
         {{ item.title }}
       </span>
     </button>
@@ -279,85 +287,36 @@ function handleDragEnd() {
       <span v-if="platformCount > 2" class="ml-auto">+{{ platformCount - 2 }}</span>
     </div>
 
-    <div v-if="busy" v-motion-fade :duration="150" class="flex items-center gap-1.5 text-[11px] text-muted" data-testid="board-card-busy">
+    <div v-if="busy" v-motion-fade :duration="150" class="flex items-center gap-1.5 text-[11px] text-muted"
+      data-testid="board-card-busy">
       <UIcon name="i-heroicons-arrow-path" class="size-3.5 animate-spin" />
       {{ t('board.running') }}
     </div>
 
-    <div class="flex items-center justify-end gap-0.5 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100 group-focus-within:opacity-100">
-      <UButton
-        v-if="needsWrite"
-        size="2xs"
-        variant="soft"
-        color="primary"
-        icon="i-heroicons-pencil"
-        :label="t('board.writeNow')"
-        :disabled="busy"
-        :data-testid="`board-card-write-${item.id}`"
-        @click="handleWrite"
-      />
+    <div class="mt-1 flex items-center gap-1.5 border-t border-default pt-2">
+      <UButton v-if="needsWrite" size="xs" variant="soft" color="primary" icon="i-heroicons-pencil"
+        :label="t('board.writeNow')" :disabled="busy" class="min-w-0 flex-1 justify-center"
+        :data-testid="`board-card-write-${item.id}`" @click="handleWrite" />
 
-      <template v-if="published">
-        <UButton
-          size="2xs"
-          variant="ghost"
-          color="neutral"
-          icon="i-heroicons-pencil-square"
-          :aria-label="t('board.edit')"
-          :data-testid="`board-card-edit-${item.id}`"
-          @click="handleEdit"
-        />
-        <UButton
-          v-if="targetUrl"
-          size="2xs"
-          variant="ghost"
-          color="neutral"
-          icon="i-heroicons-arrow-top-right-on-square"
-          :aria-label="t('board.view')"
-          :to="targetUrl"
-          external
-          :data-testid="`board-card-view-${item.id}`"
-        />
-      </template>
+      <div class="flex items-center gap-0.5" :class="needsWrite ? '' : 'ms-auto'">
+        <template v-if="published">
+          <UButton size="xs" variant="ghost" color="neutral" icon="i-heroicons-pencil-square"
+            :aria-label="t('board.edit')" :data-testid="`board-card-edit-${item.id}`" @click="handleEdit" />
+          <UButton v-if="targetUrl" size="xs" variant="ghost" color="neutral"
+            icon="i-heroicons-arrow-top-right-on-square" :aria-label="t('board.view')" :to="targetUrl" external
+            :data-testid="`board-card-view-${item.id}`" />
+        </template>
 
-      <UButton
-        v-if="moveLeft"
-        size="2xs"
-        variant="ghost"
-        color="neutral"
-        icon="i-heroicons-chevron-left"
-        :aria-label="t('board.moveLeft')"
-        :data-testid="`board-card-left-${item.id}`"
-        @click="handleMoveLeft"
-      />
-      <UButton
-        v-if="moveRight"
-        size="2xs"
-        variant="ghost"
-        color="neutral"
-        icon="i-heroicons-chevron-right"
-        :aria-label="t('board.moveRight')"
-        :data-testid="`board-card-right-${item.id}`"
-        @click="handleMoveRight"
-      />
+        <UButton v-if="moveLeft" size="xs" variant="ghost" color="neutral" icon="i-heroicons-chevron-left"
+          :aria-label="t('board.moveLeft')" :data-testid="`board-card-left-${item.id}`" @click="handleMoveLeft" />
+        <UButton v-if="moveRight" size="xs" variant="ghost" color="neutral" icon="i-heroicons-chevron-right"
+          :aria-label="t('board.moveRight')" :data-testid="`board-card-right-${item.id}`" @click="handleMoveRight" />
 
-      <UDropdownMenu
-        v-model:open="menuOpen"
-        :items="menuItems"
-        :disabled="busy"
-        :content="{ class: 'min-w-44' }"
-      >
-        <UButton
-          size="2xs"
-          variant="ghost"
-          color="neutral"
-          icon="i-heroicons-ellipsis-horizontal"
-          :aria-label="t('card.menu')"
-          :disabled="busy"
-          :data-testid="`board-card-menu-${item.id}`"
-          @click.stop
-        />
-      </UDropdownMenu>
+        <UDropdownMenu v-model:open="menuOpen" :items="menuItems" :disabled="busy" :content="{ class: 'min-w-44' }">
+          <UButton size="xs" variant="ghost" color="neutral" icon="i-heroicons-ellipsis-horizontal"
+            :aria-label="t('card.menu')" :disabled="busy" :data-testid="`board-card-menu-${item.id}`" @click.stop />
+        </UDropdownMenu>
+      </div>
     </div>
   </div>
 </template>

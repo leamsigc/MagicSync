@@ -5,14 +5,23 @@
     "searchPlaceholder": "Search users...",
     "createUser": "Create User",
     "noUsers": "No users found",
+    "views": {
+      "table": "Table",
+      "list": "List"
+    },
+    "filters": {
+      "role": "Role",
+      "status": "Status",
+      "allRoles": "All roles",
+      "allStatuses": "All statuses"
+    },
     "unnamed": "Unnamed",
     "defaultBanReason": "Violated terms of service",
     "columns": {
       "user": "User",
       "role": "Role",
       "status": "Status",
-      "verified": "Verified",
-      "actions": "Actions"
+      "verified": "Verified"
     },
     "status": {
       "banned": "Banned",
@@ -33,8 +42,6 @@
       "delete": "Delete"
     },
     "a11y": {
-      "selectAll": "Select all",
-      "selectRow": "Select row",
       "actions": "Actions dropdown"
     },
     "footer": {
@@ -120,14 +127,23 @@
     "searchPlaceholder": "Buscar usuarios...",
     "createUser": "Crear usuario",
     "noUsers": "No se encontraron usuarios",
+    "views": {
+      "table": "Tabla",
+      "list": "Lista"
+    },
+    "filters": {
+      "role": "Rol",
+      "status": "Estado",
+      "allRoles": "Todos los roles",
+      "allStatuses": "Todos los estados"
+    },
     "unnamed": "Sin nombre",
     "defaultBanReason": "Violación de los términos del servicio",
     "columns": {
       "user": "Usuario",
       "role": "Rol",
       "status": "Estado",
-      "verified": "Verificado",
-      "actions": "Acciones"
+      "verified": "Verificado"
     },
     "status": {
       "banned": "Bloqueado",
@@ -148,8 +164,6 @@
       "delete": "Eliminar"
     },
     "a11y": {
-      "selectAll": "Seleccionar todo",
-      "selectRow": "Seleccionar fila",
       "actions": "Menú de acciones"
     },
     "footer": {
@@ -235,14 +249,23 @@
     "searchPlaceholder": "Benutzer suchen...",
     "createUser": "Benutzer erstellen",
     "noUsers": "Keine Benutzer gefunden",
+    "views": {
+      "table": "Tabelle",
+      "list": "Liste"
+    },
+    "filters": {
+      "role": "Rolle",
+      "status": "Status",
+      "allRoles": "Alle Rollen",
+      "allStatuses": "Alle Status"
+    },
     "unnamed": "Unbenannt",
     "defaultBanReason": "Verstoß gegen die Nutzungsbedingungen",
     "columns": {
       "user": "Benutzer",
       "role": "Rolle",
       "status": "Status",
-      "verified": "Verifiziert",
-      "actions": "Aktionen"
+      "verified": "Verifiziert"
     },
     "status": {
       "banned": "Gesperrt",
@@ -263,8 +286,6 @@
       "delete": "Löschen"
     },
     "a11y": {
-      "selectAll": "Alle auswählen",
-      "selectRow": "Zeile auswählen",
       "actions": "Aktionsmenü"
     },
     "footer": {
@@ -350,14 +371,23 @@
     "searchPlaceholder": "Rechercher des utilisateurs...",
     "createUser": "Créer un utilisateur",
     "noUsers": "Aucun utilisateur trouvé",
+    "views": {
+      "table": "Tableau",
+      "list": "Liste"
+    },
+    "filters": {
+      "role": "Rôle",
+      "status": "Statut",
+      "allRoles": "Tous les rôles",
+      "allStatuses": "Tous les statuts"
+    },
     "unnamed": "Sans nom",
     "defaultBanReason": "Violation des conditions d'utilisation",
     "columns": {
       "user": "Utilisateur",
       "role": "Rôle",
       "status": "Statut",
-      "verified": "Vérifié",
-      "actions": "Actions"
+      "verified": "Vérifié"
     },
     "status": {
       "banned": "Banni",
@@ -378,8 +408,6 @@
       "delete": "Supprimer"
     },
     "a11y": {
-      "selectAll": "Tout sélectionner",
-      "selectRow": "Sélectionner la ligne",
       "actions": "Menu d'actions"
     },
     "footer": {

@@ -11,6 +11,7 @@
       "conversation": "Conversation",
       "noContent": "This post has no text content.",
       "loadError": "We couldn't load this post.",
+      "refresh": "Refresh",
       "retry": "Retry",
       "statuses": {
         "draft": "Draft",
@@ -33,7 +34,9 @@
       },
       "empty": "No additional details available",
       "loading": "Loading post...",
-      "viewRawData": "View Raw Data"
+      "viewRawData": "View Raw Data",
+      "openPublished": "Open published post",
+      "publishedOn": "Published on"
     },
     "feeds": {
       "tabs": {
@@ -110,6 +113,7 @@
       "conversation": "Conversación",
       "noContent": "Esta publicación no tiene texto.",
       "loadError": "No pudimos cargar esta publicación.",
+      "refresh": "Actualizar",
       "retry": "Reintentar",
       "statuses": {
         "draft": "Borrador",
@@ -132,7 +136,9 @@
       },
       "empty": "No hay detalles adicionales disponibles",
       "loading": "Cargando publicación...",
-      "viewRawData": "Ver datos en bruto"
+      "viewRawData": "Ver datos en bruto",
+      "openPublished": "Abrir publicación publicada",
+      "publishedOn": "Publicada en"
     }
   },
   "fr": {
@@ -178,6 +184,7 @@
       "conversation": "Conversation",
       "noContent": "Cette publication n'a pas de texte.",
       "loadError": "Nous n'avons pas pu charger cette publication.",
+      "refresh": "Actualiser",
       "retry": "Réessayer",
       "statuses": {
         "draft": "Brouillon",
@@ -200,7 +207,9 @@
       },
       "empty": "Aucun détail supplémentaire disponible",
       "loading": "Chargement de la publication...",
-      "viewRawData": "Voir les données brutes"
+      "viewRawData": "Voir les données brutes",
+      "openPublished": "Ouvrir la publication publiée",
+      "publishedOn": "Publié sur"
     }
   },
   "de": {
@@ -246,6 +255,7 @@
       "conversation": "Unterhaltung",
       "noContent": "Dieser Beitrag hat keinen Text.",
       "loadError": "Dieser Beitrag konnte nicht geladen werden.",
+      "refresh": "Aktualisieren",
       "retry": "Erneut versuchen",
       "statuses": {
         "draft": "Entwurf",
@@ -268,7 +278,9 @@
       },
       "empty": "Keine weiteren Details verfügbar",
       "loading": "Beitrag wird geladen...",
-      "viewRawData": "Rohdaten anzeigen"
+      "viewRawData": "Rohdaten anzeigen",
+      "openPublished": "Veröffentlichten Beitrag öffnen",
+      "publishedOn": "Veröffentlicht auf"
     }
   }
 }

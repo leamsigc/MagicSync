@@ -8,15 +8,18 @@ const querySchema = z.object({
 })
 
 /**
- * GET /api/v1/auto-reply/media?socialAccountId=…&limit=10 — recent Instagram
- * media (id, thumbnail, caption, counts) for the campaign post-picker UI.
- * IDs returned here are Instagram media IDs — the same IDs watched-post
- * lists expect (NOT MagicSync internal post IDs).
+ * GET /api/v1/auto-reply/media?socialAccountId=…&limit=10 — posts MagicSync
+ * published on this account, for the campaign post-picker.
+ *
+ * Only `platform_posts` rows with `status = 'published'` and a real platform id
+ * qualify, and only on Instagram/TikTok accounts. The returned `id` is the
+ * platform post id — exactly what a watched-post list matches against, NOT a
+ * MagicSync internal post id. Native media is covered by the match-all switch.
  */
 export default defineEventHandler(async (event) => {
   const user = await checkUserIsLogin(event)
   const parsed = querySchema.parse(getQuery(event))
-  const result = await autoReplyService.listRecentMedia(user.id, parsed.socialAccountId, parsed.limit)
+  const result = await autoReplyService.listPublishedPosts(user.id, parsed.socialAccountId, parsed.limit)
   if (result.error) {
     const status = result.code === 'NOT_FOUND' ? 404 : result.code === 'UNSUPPORTED' ? 400 : 500
     throw createError({ statusCode: status, statusMessage: result.error })

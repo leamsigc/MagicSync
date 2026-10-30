@@ -1,256 +1,157 @@
+<i18n src="./PostsTableView.json"></i18n>
 <script lang="ts" setup>
 /**
+ * Posts table view on the shared `BaseDataTable`.
  *
- * Posts Table View Component Description: Displays posts in a table layout.
- *
- * @author Ismael Garcia <leamsigc@leamsigc.com>
- * @version 0.0.1
- *
- * @todo [ ] Test the component
- * @todo [ ] Integration test.
- * @todo [✔] Update the typescript.
+ * Selection is key-based (post ids) instead of TanStack row indexes, so filter
+ * changes can never desync it. Row actions and the update modal are unchanged.
  */
-import type { PostWithAllData } from '#layers/BaseDB/db/posts/posts';
-import { h, resolveComponent, useTemplateRef } from 'vue'
-import type { TableColumn } from '@nuxt/ui'
-import type { Row } from '@tanstack/vue-table'
-import { usePostManager } from '#layers/BaseShared/app/composables/usePostManager';
-import UpdatePostModal from '../UpdatePostModal.vue';
+import type { PostWithAllData } from '#layers/BaseDB/db/posts/posts'
+import type { CollectionTableColumn } from '#layers/BaseUI/app/utils/collection'
+import { usePostManager } from '#layers/BaseShared/app/composables/usePostManager'
+import UpdatePostModal from '../UpdatePostModal.vue'
 
-const UButton = resolveComponent('UButton')
-const UBadge = resolveComponent('UBadge')
-const UDropdownMenu = resolveComponent('UDropdownMenu')
-const UCheckbox = resolveComponent('UCheckbox')
+const props = defineProps<{
+  posts: PostWithAllData[]
+}>()
+
+const { t } = useI18n()
 const toast = useToast()
-
-const { deletePost, getPosts, activeBusinessId } = usePostManager();
-defineProps<{
-  posts: PostWithAllData[];
-}>();
-
-const rowSelection = ref<Record<string, boolean>>({})
-
 const router = useRouter()
-const openPostDetails = (id: string) => {
+const { deletePost, getPosts, activeBusinessId } = usePostManager()
+
+const selected = ref<string[]>([])
+const updatePostModalRef = ref<InstanceType<typeof UpdatePostModal> | null>(null)
+
+const rows = computed(() => props.posts)
+
+const columns = computed<CollectionTableColumn[]>(() => [
+  { key: 'content', label: t('columns.content') },
+  { key: 'status', label: t('columns.status') },
+])
+
+function rowKey(post: PostWithAllData): string {
+  return post.id
+}
+
+function openPostDetails(id: string) {
   router.push(`/app/posts/feeds/${id}`)
 }
 
+function statusColor(status: string): 'success' | 'warning' | 'error' | 'neutral' {
+  if (status === 'published') return 'success'
+  if (status === 'pending') return 'warning'
+  if (status === 'failed') return 'error'
+  return 'neutral'
+}
 
-const columns: TableColumn<PostWithAllData>[] = [
-  {
-    id: 'select',
-    header: ({ table }) =>
-      h(UCheckbox, {
-        modelValue: table.getIsSomePageRowsSelected()
-          ? 'indeterminate'
-          : table.getIsAllPageRowsSelected(),
-        'onUpdate:modelValue': (value: boolean | 'indeterminate') =>
-          table.toggleAllPageRowsSelected(!!value),
-        'aria-label': 'Select all'
-      }),
-    cell: ({ row }) =>
-      h(UCheckbox, {
-        modelValue: row.getIsSelected(),
-        'onUpdate:modelValue': (value: boolean | 'indeterminate') => row.toggleSelected(!!value),
-        'aria-label': 'Select row'
-      })
-  },
-  {
-    accessorKey: 'content',
-    header: '#',
-    cell: ({ row }) => {
-      const contentDescription = row.getValue('content') as string;
-      return h('button', {
-        class: 'text-left hover:underline text-default cursor-pointer',
-        type: 'button',
-        onClick: () => openPostDetails(row.original.id)
-      }, contentDescription.slice(0, 100))
-    }
-  },
-  {
-    accessorKey: 'status',
-    header: 'Status',
-    cell: ({ row }) => {
-      const color = {
-        paid: 'success' as const,
-        failed: 'error' as const,
-        refunded: 'neutral' as const
-      }[row.getValue('status') as string]
+function openUpdateModal(post: PostWithAllData) {
+  updatePostModalRef.value?.openModal(post)
+}
 
-      return h(UBadge, { class: 'capitalize', variant: 'subtle', color }, () =>
-        row.getValue('status')
-      )
-    }
-  },
-  {
-    id: 'actions',
-    cell: ({ row }) => {
-      return h(
-        'div',
-        { class: 'text-right' },
-        h(
-          UDropdownMenu,
-          {
-            content: {
-              align: 'end'
-            },
-            items: getRowItems(row),
-            'aria-label': 'Actions dropdown'
-          },
-          () =>
-            h(UButton, {
-              icon: 'i-lucide-ellipsis-vertical',
-              color: 'neutral',
-              variant: 'ghost',
-              class: 'ml-auto',
-              'aria-label': 'Actions dropdown'
-            })
-        )
-      )
-    }
-  }
-
-];
-function getRowItems(row: Row<PostWithAllData>) {
+function rowItems(post: PostWithAllData) {
   return [
-    {
-      type: 'label',
-      label: 'Actions'
-    },
-    {
-      label: 'Update',
-      onSelect() {
-        HandleEventClicked(row.original)
-      }
-    },
-    {
-      label: 'Delete',
-      onSelect() {
-        toast.add({
-          title: 'Delete Post',
-          description: 'Are you sure you want to delete this post?',
-          color: 'error',
-          actions: [
-            {
-              label: 'Delete',
-              color: 'error',
-              variant: 'solid',
-              onClick: () => {
-                deletePost(row.original.id)
-                toast.add({
-                  title: 'The social media post has been deleted.',
-                  color: 'success',
-                  icon: 'i-heroicons-check-circle'
-                })
-              }
-            },
-            {
-              label: 'Cancel',
-              color: 'neutral',
-              variant: 'outline'
-            }
-          ]
-        })
-      }
-    },
-    {
-      type: 'separator'
-    },
-    {
-      label: 'View details',
-      icon: 'i-heroicons-eye',
-      onSelect() {
-        openPostDetails(row.original.id)
-      }
-    }
+    { label: t('actions'), type: 'label' as const },
+    { label: t('update'), onSelect: () => openUpdateModal(post) },
+    { label: t('delete'), onSelect: () => confirmDelete(post) },
+    { type: 'separator' as const },
+    { label: t('view_details'), icon: 'i-heroicons-eye', onSelect: () => openPostDetails(post.id) },
   ]
 }
 
-const updatePostModalRef = ref<InstanceType<typeof UpdatePostModal> | null>(null);
-const table = useTemplateRef('table')
-const HandleRefresh = async () => {
+function confirmDelete(post: PostWithAllData) {
   toast.add({
-    title: 'The social media post has been updated.',
-    color: 'success',
-    icon: 'i-heroicons-check-circle'
-  })
-  await getPosts(activeBusinessId.value, {
-    page: 1,
-    limit: 100
-  });
-}
-const HandleEventClicked = (post: PostWithAllData) => {
-  updatePostModalRef.value?.openModal(post);
-}
-
-const handleBulkDelete = () => {
-  const selectedRows = table.value?.tableApi?.getFilteredSelectedRowModel().rows || []
-  if (selectedRows.length === 0) return
-
-  toast.add({
-    title: 'Delete Selected Posts',
-    description: `Are you sure you want to delete ${selectedRows.length} post(s)?`,
+    title: t('delete_title'),
+    description: t('delete_description'),
     color: 'error',
     actions: [
-      {
-        label: 'Delete',
-        color: 'error',
-        variant: 'solid',
-        onClick: async () => {
-          const deletePromises = selectedRows.map(row => deletePost(row.original.id))
-          await Promise.all(deletePromises)
-          rowSelection.value = {} // Clear selection
-          toast.add({
-            title: `${selectedRows.length} post(s) have been deleted.`,
-            color: 'success',
-            icon: 'i-heroicons-check-circle'
-          })
-          // Refresh posts
-          await getPosts(activeBusinessId.value, {
-            page: 1,
-            limit: 100
-          });
-        }
-      },
-      {
-        label: 'Cancel',
-        color: 'neutral',
-        variant: 'outline'
-      }
-    ]
+      { label: t('delete_confirm'), color: 'error', variant: 'solid', onClick: () => removePost(post.id) },
+      { label: t('cancel'), color: 'neutral', variant: 'outline' },
+    ],
   })
+}
+
+async function removePost(id: string) {
+  await deletePost(id)
+  selected.value = selected.value.filter(selectedId => selectedId !== id)
+  toast.add({ title: t('deleted'), color: 'success', icon: 'i-heroicons-check-circle' })
+}
+
+function confirmBulkDelete() {
+  if (selected.value.length === 0) return
+  toast.add({
+    title: t('bulk_title'),
+    description: t('bulk_description', { count: selected.value.length }),
+    color: 'error',
+    actions: [
+      { label: t('delete_confirm'), color: 'error', variant: 'solid', onClick: () => removeSelected() },
+      { label: t('cancel'), color: 'neutral', variant: 'outline' },
+    ],
+  })
+}
+
+async function removeSelected() {
+  const ids = [...selected.value]
+  await Promise.all(ids.map(id => deletePost(id)))
+  selected.value = []
+  toast.add({ title: t('bulk_success', { count: ids.length }), color: 'success', icon: 'i-heroicons-check-circle' })
+  await getPosts(activeBusinessId.value, { page: 1, limit: 100 })
+}
+
+function clearSelection() {
+  selected.value = []
+}
+
+async function handleRefresh() {
+  toast.add({ title: t('refresh'), color: 'success', icon: 'i-heroicons-check-circle' })
+  await getPosts(activeBusinessId.value, { page: 1, limit: 100 })
 }
 </script>
 
 <template>
   <div class="mt-4">
-    <div class="rounded  overflow-hidden">
-      <UTable ref="table" v-model:row-selection="rowSelection" :data="posts" :columns="columns" class="flex-1"
-        :ui="{ 'tr': 'bg-transparent', 'td': 'border-0', 'th': 'border-0' }" />
-
-      <div class="px-5 py-4  text-sm text-muted flex items-center justify-between">
-        <div>
-          {{ table?.tableApi?.getFilteredSelectedRowModel().rows.length || 0 }} of
-          {{ table?.tableApi?.getFilteredRowModel().rows.length || 0 }} row(s) selected.
-        </div>
-        <UButton v-if="(table?.tableApi?.getFilteredSelectedRowModel().rows.length || 0) > 0" color="error"
-          variant="outline" size="sm" @click="handleBulkDelete">
-          Delete Selected
+    <BaseDataTable
+      v-model:selected="selected"
+      selectable
+      :rows="rows"
+      :columns="columns"
+      :row-key="rowKey"
+      :empty-title="t('columns.content')"
+      empty-icon="i-lucide-file-text"
+    >
+      <template #cell-content="{ row }">
+        <button type="button" class="max-w-md truncate text-left text-default hover:underline" @click="() => openPostDetails(row.id)">
+          {{ String(row.content || '').slice(0, 100) }}
+        </button>
+      </template>
+      <template #cell-status="{ row }">
+        <UBadge :color="statusColor(row.status)" variant="subtle" class="capitalize">{{ t(`status.${row.status}`) }}</UBadge>
+      </template>
+      <template #row-actions="{ row }">
+        <UDropdownMenu :items="rowItems(row)" :content="{ align: 'end' }">
+          <UButton icon="i-lucide-ellipsis-vertical" color="neutral" variant="ghost" size="xs" :aria-label="t('actions')" />
+        </UDropdownMenu>
+      </template>
+      <template #bulk="{ selected: selectedIds }">
+        <span class="text-sm font-medium">{{ t('selected', { selected: selectedIds.length, total: rows.length }) }}</span>
+        <UButton size="xs" color="error" variant="outline" icon="i-lucide-trash-2" @click="confirmBulkDelete">
+          {{ t('delete') }}
         </UButton>
-      </div>
+        <UButton size="xs" variant="ghost" color="neutral" @click="clearSelection">{{ t('cancel') }}</UButton>
+      </template>
+    </BaseDataTable>
 
-      <UpdatePostModal ref="updatePostModalRef" @refresh="HandleRefresh">
-        <template v-if="$slots['mic-recorder']" #mic-recorder="slotProps">
-          <slot name="mic-recorder" v-bind="slotProps" />
-        </template>
-        <template v-if="$slots['template-variable']" #template-variable="slotProps">
-          <slot name="template-variable" v-bind="slotProps" />
-        </template>
-        <template v-if="$slots['ai-assistant']" #ai-assistant="slotProps">
-          <slot name="ai-assistant" v-bind="slotProps" />
-        </template>
-      </UpdatePostModal>
-    </div>
+    <UpdatePostModal ref="updatePostModalRef" @refresh="handleRefresh">
+      <template v-if="$slots['mic-recorder']" #mic-recorder="slotProps">
+        <slot name="mic-recorder" v-bind="slotProps" />
+      </template>
+      <template v-if="$slots['template-variable']" #template-variable="slotProps">
+        <slot name="template-variable" v-bind="slotProps" />
+      </template>
+      <template v-if="$slots['ai-assistant']" #ai-assistant="slotProps">
+        <slot name="ai-assistant" v-bind="slotProps" />
+      </template>
+    </UpdatePostModal>
   </div>
 </template>
 

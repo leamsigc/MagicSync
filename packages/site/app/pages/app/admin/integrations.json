@@ -1,0 +1,166 @@
+{
+  "en": {
+    "title": "Integrations",
+    "description": "Monitor platform connections and their users",
+    "search": "Search connections...",
+    "refresh": "Refresh",
+    "empty": "No connections match your filters",
+    "clearFilters": "Clear filters",
+    "unnamed": "Unnamed",
+    "unknownUser": "User",
+    "accountLabel": "Account: {account}",
+    "connectedOn": "Connected {date}",
+    "providers": {
+      "linkedinPage": "LinkedIn Page",
+      "emailPassword": "Email / Password"
+    },
+    "filters": {
+      "provider": "Provider",
+      "allProviders": "All providers"
+    },
+    "sort": {
+      "recent": "Newest first",
+      "oldest": "Oldest first",
+      "provider": "Provider (A–Z)",
+      "user": "User (A–Z)"
+    },
+    "views": {
+      "grid": "Grid",
+      "list": "List",
+      "table": "Table"
+    },
+    "columns": {
+      "platform": "Platform",
+      "user": "User",
+      "account": "Account ID",
+      "connected": "Connected"
+    },
+    "toast": {
+      "error": "Error",
+      "loadFailed": "Failed to load connections"
+    }
+  },
+  "es": {
+    "title": "Integraciones",
+    "description": "Supervisa las conexiones de plataformas y sus usuarios",
+    "search": "Buscar conexiones...",
+    "refresh": "Actualizar",
+    "empty": "Ninguna conexión coincide con los filtros",
+    "clearFilters": "Limpiar filtros",
+    "unnamed": "Sin nombre",
+    "unknownUser": "Usuario",
+    "accountLabel": "Cuenta: {account}",
+    "connectedOn": "Conectada el {date}",
+    "providers": {
+      "linkedinPage": "Página de LinkedIn",
+      "emailPassword": "Correo / Contraseña"
+    },
+    "filters": {
+      "provider": "Proveedor",
+      "allProviders": "Todos los proveedores"
+    },
+    "sort": {
+      "recent": "Más recientes primero",
+      "oldest": "Más antiguas primero",
+      "provider": "Proveedor (A–Z)",
+      "user": "Usuario (A–Z)"
+    },
+    "views": {
+      "grid": "Cuadrícula",
+      "list": "Lista",
+      "table": "Tabla"
+    },
+    "columns": {
+      "platform": "Plataforma",
+      "user": "Usuario",
+      "account": "ID de cuenta",
+      "connected": "Conectada"
+    },
+    "toast": {
+      "error": "Error",
+      "loadFailed": "No se pudieron cargar las conexiones"
+    }
+  },
+  "de": {
+    "title": "Integrationen",
+    "description": "Plattformverbindungen und ihre Benutzer überwachen",
+    "search": "Verbindungen suchen...",
+    "refresh": "Aktualisieren",
+    "empty": "Keine Verbindungen passen zu den Filtern",
+    "clearFilters": "Filter zurücksetzen",
+    "unnamed": "Unbenannt",
+    "unknownUser": "Benutzer",
+    "accountLabel": "Konto: {account}",
+    "connectedOn": "Verbunden am {date}",
+    "providers": {
+      "linkedinPage": "LinkedIn-Seite",
+      "emailPassword": "E-Mail / Passwort"
+    },
+    "filters": {
+      "provider": "Anbieter",
+      "allProviders": "Alle Anbieter"
+    },
+    "sort": {
+      "recent": "Neueste zuerst",
+      "oldest": "Älteste zuerst",
+      "provider": "Anbieter (A–Z)",
+      "user": "Benutzer (A–Z)"
+    },
+    "views": {
+      "grid": "Raster",
+      "list": "Liste",
+      "table": "Tabelle"
+    },
+    "columns": {
+      "platform": "Plattform",
+      "user": "Benutzer",
+      "account": "Konto-ID",
+      "connected": "Verbunden"
+    },
+    "toast": {
+      "error": "Fehler",
+      "loadFailed": "Verbindungen konnten nicht geladen werden"
+    }
+  },
+  "fr": {
+    "title": "Intégrations",
+    "description": "Surveiller les connexions aux plateformes et leurs utilisateurs",
+    "search": "Rechercher des connexions...",
+    "refresh": "Actualiser",
+    "empty": "Aucune connexion ne correspond aux filtres",
+    "clearFilters": "Réinitialiser les filtres",
+    "unnamed": "Sans nom",
+    "unknownUser": "Utilisateur",
+    "accountLabel": "Compte : {account}",
+    "connectedOn": "Connectée le {date}",
+    "providers": {
+      "linkedinPage": "Page LinkedIn",
+      "emailPassword": "E-mail / Mot de passe"
+    },
+    "filters": {
+      "provider": "Fournisseur",
+      "allProviders": "Tous les fournisseurs"
+    },
+    "sort": {
+      "recent": "Plus récentes d'abord",
+      "oldest": "Plus anciennes d'abord",
+      "provider": "Fournisseur (A–Z)",
+      "user": "Utilisateur (A–Z)"
+    },
+    "views": {
+      "grid": "Grille",
+      "list": "Liste",
+      "table": "Tableau"
+    },
+    "columns": {
+      "platform": "Plateforme",
+      "user": "Utilisateur",
+      "account": "ID de compte",
+      "connected": "Connectée"
+    },
+    "toast": {
+      "error": "Erreur",
+      "loadFailed": "Impossible de charger les connexions"
+    }
+  }
+}

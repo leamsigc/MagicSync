@@ -15,6 +15,7 @@
 
 import type { PostWithAllData } from '#layers/BaseDB/db/posts/posts';
 import { usePlatformIcons, type SocialMediaPlatform } from '#layers/BaseUI/app/composables/usePlatformIcons';
+import { publishedLinkFor } from '#layers/BaseShared/utils/published-post-links';
 import dayjs from 'dayjs';
 import PostCommentsView from './views/PostCommentsView.vue';
 import PostStatsView from './views/PostStatsView.vue';
@@ -70,6 +71,8 @@ const showRawData = ref(false)
 const postData = computed(() => props.post)
 const mediaAssets = computed(() => postData.value?.assets ?? [])
 const shortId = computed(() => postData.value?.id?.slice(0, 8) ?? '')
+const publishedLinks = computed(() => platformStatuses.value.filter(platform => !!platform.url))
+
 const publishedCount = computed(() =>
   (postData.value?.platformPosts ?? []).filter(platform => platform.status === 'published').length
 )
@@ -80,6 +83,7 @@ const platformStatuses = computed(() =>
     platform: platform.platformPostId || platform.socialAccountId,
     status: platform.status,
     publishedAt: platform.publishedAt,
+    url: publishedLinkFor(platform)?.url ?? '',
   }))
 )
 
@@ -206,6 +210,22 @@ const onRetry = () => {
         </p>
         <p v-else class="text-muted italic">{{ t('postDetail.noContent') }}</p>
 
+        <div v-if="publishedLinks.length" class="mt-4 flex flex-wrap items-center gap-2 rounded-xl bg-elevated/60 p-3">
+          <span class="text-xs font-medium text-muted">{{ t('postDetail.publishedOn') }}</span>
+          <UButton
+            v-for="link in publishedLinks"
+            :key="link.key"
+            :to="link.url"
+            target="_blank"
+            size="xs"
+            variant="soft"
+            color="neutral"
+            icon="i-lucide-external-link"
+          >
+            {{ link.platform }}
+          </UButton>
+        </div>
+
         <div v-if="mediaAssets.length > 0" class="mt-4 overflow-hidden rounded-2xl">
           <div class="grid grid-cols-1 gap-px bg-border" :class="{ 'sm:grid-cols-2': mediaAssets.length > 1 }">
             <template v-for="(asset, index) in mediaAssets" :key="asset.id || index">
@@ -260,6 +280,16 @@ const onRetry = () => {
                 <span class="font-medium capitalize text-highlighted">{{ platform.platform }}</span>
               </div>
               <div class="flex items-center gap-2">
+                <UButton
+                  v-if="platform.url"
+                  :to="platform.url"
+                  target="_blank"
+                  size="xs"
+                  variant="ghost"
+                  color="neutral"
+                  icon="i-lucide-external-link"
+                  :label="t('postDetail.openPublished')"
+                />
                 <UBadge :color="statusTone(platform.status)" variant="subtle" size="sm">
                   {{ statusLabel(platform.status) }}
                 </UBadge>

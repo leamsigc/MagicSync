@@ -78,16 +78,14 @@ useHead({
 </script>
 
 <template>
-  <div class="p-4 lg:mx-auto lg:p-6">
-    <BasePageHeader :title="t('title')" :description="subtitle">
-      <template #actions>
-        <div data-tour="create-business-step-0 ">
-          <UButton icon="i-lucide-plus" color="primary" :label="t('actions.new_business')" @click="openAddModal" />
-        </div>
-      </template>
-    </BasePageHeader>
+  <BaseCollectionPage :title="t('title')" :description="subtitle">
+    <template #actions>
+      <div data-tour="create-business-step-0 ">
+        <UButton icon="i-lucide-plus" color="primary" :label="t('actions.new_business')" @click="openAddModal" />
+      </div>
+    </template>
 
-    <div class="mt-4" data-tour="create-business-step-1">
+    <div data-tour="create-business-step-1">
       <BusinessDirectory :businesses="businessList" :active-business-id="activeBusinessId" @edit="handleEditBusiness"
         @delete="handleDeleteBusiness" @select="handleSelectBusiness" />
     </div>
@@ -99,6 +97,6 @@ useHead({
 
     <DeleteBusinessModal :model-value="deleteModalOpen" :business-id="businessToDelete"
       @update:model-value="handleDeleteModalUpdate" @deleted="handleBusinessDeleted" />
-  </div>
+  </BaseCollectionPage>
 </template>
 <style scoped></style>

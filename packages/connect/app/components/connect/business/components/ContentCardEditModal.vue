@@ -1,5 +1,6 @@
 <i18n src="#site/app/pages/app/business/[id]/content.json"></i18n>
 <script setup lang="ts">
+import ContentPlatformPicker from './ContentPlatformPicker.vue'
 import { displayAngle } from '../../../../utils/content-brief'
 import type { ContentItemView } from '../../../../composables/useContentEditor'
 
@@ -16,6 +17,7 @@ import type { ContentItemView } from '../../../../composables/useContentEditor'
 interface ContentDraft {
   title: string
   brief: string
+  platforms: string[]
 }
 
 const props = defineProps<{
@@ -31,19 +33,32 @@ const { t } = useI18n()
 
 const title = ref('')
 const brief = ref('')
-const seed = ref<ContentDraft>({ title: '', brief: '' })
+const platforms = ref<string[]>([])
+const seed = ref<ContentDraft>({ title: '', brief: '', platforms: [] })
 
-const dirty = computed(() => title.value.trim() !== seed.value.title || brief.value.trim() !== seed.value.brief)
+function samePlatforms(next: string[]): boolean {
+  const current = [...next].sort().join(',')
+  const original = [...seed.value.platforms].sort().join(',')
+  return current === original
+}
+
+const dirty = computed(() =>
+  title.value.trim() !== seed.value.title
+  || brief.value.trim() !== seed.value.brief
+  || !samePlatforms(platforms.value),
+)
 const canSave = computed(() => title.value.trim().length > 0 && dirty.value && !props.busy)
 
 function loadItem(item: ContentItemView | null) {
   const draft: ContentDraft = {
     title: item?.title ?? '',
     brief: item ? displayAngle(item.brief) : '',
+    platforms: [...(item?.platforms ?? [])],
   }
   seed.value = draft
   title.value = draft.title
   brief.value = draft.brief
+  platforms.value = [...draft.platforms]
 }
 
 function handleCancel() {
@@ -53,7 +68,7 @@ function handleCancel() {
 
 function handleSave() {
   if (!canSave.value) return
-  emit('save', { title: title.value.trim(), brief: brief.value.trim() })
+  emit('save', { title: title.value.trim(), brief: brief.value.trim(), platforms: [...platforms.value] })
 }
 
 watch(open, (value) => {
@@ -68,7 +83,7 @@ watch(open, (value) => {
     :description="t('card.editHint')"
     :dismissible="!busy"
     :close="!busy"
-    :ui="{ content: 'sm:max-w-lg' }"
+    :ui="{ content: 'sm:max-w-xl' }"
   >
     <template #body>
       <div class="space-y-4" data-testid="card-edit-modal">
@@ -89,6 +104,9 @@ watch(open, (value) => {
             :placeholder="t('card.briefPlaceholder')"
             data-testid="card-edit-brief"
           />
+        </UFormField>
+        <UFormField :label="t('card.platformsField')" :hint="t('card.platformsHint')" name="card-edit-platforms">
+          <ContentPlatformPicker v-model="platforms" :disabled="busy" />
         </UFormField>
       </div>
     </template>

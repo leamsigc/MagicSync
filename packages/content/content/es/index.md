@@ -69,6 +69,8 @@ items:
 ---
 #title
 Por Qué las Pequeñas Empresas Eligen MagicSync
+#subtitle
+Por qué los equipos eligen MagicSync
 #description
 Todo lo que necesitas para tener éxito en redes sociales, sin la complejidad ni el costo de herramientas empresariales.
 ::
@@ -160,6 +162,17 @@ Todo lo que Necesitas para Tener Éxito
 Herramientas poderosas diseñadas para pequeñas empresas, sin complejidad empresarial.
 #description
 Funciones poderosas diseñadas para pequeñas empresas, sin complejidad empresarial.
+::
+
+
+::MagicImageGallery
+---
+featured: true
+seo: false
+columns: 4
+title: Mira MagicSync en Acción
+description: Un vistazo al calendario, el tablero de contenido, el chat de agentes, la analítica y la facturación, capturados del producto real.
+---
 ::
 
 

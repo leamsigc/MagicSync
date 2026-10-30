@@ -61,6 +61,8 @@ list:
 ---
 #title
 Viral Growth Tools
+#subtitle
+What you can do with MagicSync
 #description
 Everything you need to go form zero to hero on X.
 ::

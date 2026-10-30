@@ -27,6 +27,8 @@
     "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
+    "@comark/nuxt": "catalog:",
+    "@iconify-json/logos": "^1.2.18",
     "@iconify/utils": "catalog:",
     "@local-monorepo/agent": "workspace:*",
     "@local-monorepo/ai-tools": "workspace:*",
@@ -46,6 +48,9 @@
     "@nuxtjs/i18n": "catalog:",
     "@nuxtjs/mcp-toolkit": "catalog:",
     "better-auth": "catalog:",
+    "consola": "catalog:",
+    "driver.js": "catalog:",
+    "evlog": "catalog:",
     "nuxt": "catalog:",
     "nuxt-umami": "catalog:",
     "tailwindcss": "catalog:",
@@ -53,11 +58,7 @@
     "unhead": "catalog:",
     "vue": "catalog:",
     "vue-router": "catalog:",
-    "zod": "catalog:",
-    "evlog": "catalog:",
-    "consola": "catalog:",
-    "@comark/nuxt": "catalog:",
-    "driver.js": "catalog:"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@libsql/client": "catalog:",

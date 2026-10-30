@@ -1,7 +1,7 @@
 {
   "en": {
     "title": "Social media posts",
-    "description": "All the social media post for the next weeks are here",
+    "description": "All your social media posts for the coming weeks live here.",
     "seo_title_all": "All Posts",
     "seo_description_all": "All the social media post for the next weeks are here",
     "buttons": {
@@ -68,12 +68,36 @@
       "emptyNone": "No posts yet",
       "unknownUser": "User",
       "emptyHint": "Create a post and it will show up here.",
+      "loadError": "We couldn't load the posts.",
       "emptyFiltered": "No posts match this filter",
       "emptyFilteredHint": "Try another status to see more posts.",
       "selectTitle": "Select a post",
       "selectHint": "Pick a post from the list to read its content, details, comments and stats.",
+      "title": "Post feeds",
+      "description": "Every post for the active business. Search, filter by status and switch between list and table.",
+      "search": "Search posts…",
+      "refresh": "Refresh",
+      "clearFilters": "Clear filters",
+      "open": "Open details",
+      "allStatuses": "All statuses",
+      "sort": {
+        "recent": "Newest first",
+        "oldest": "Oldest first"
+      },
+      "views": {
+        "list": "List",
+        "table": "Table"
+      },
+      "columns": {
+        "content": "Post",
+        "author": "Author",
+        "status": "Status",
+        "platforms": "Platforms",
+        "scheduled": "Scheduled"
+      },
       "filter": {
         "all": "All",
+        "draft": "Draft",
         "pending": "Pending",
         "published": "Published",
         "failed": "Failed"
@@ -94,6 +118,23 @@
       "appliedTitle": "Platforms formatted",
       "appliedDescription": "{count} platform(s) now have custom overrides.",
       "appliedOne": "{platform} override created."
+    },
+    "views": {
+      "grid": "Grid",
+      "list": "List",
+      "table": "Table",
+      "feed": "Feed",
+      "board": "Board"
+    },
+    "searchPlaceholder": "Search posts…",
+    "publishedOn": "Published on",
+    "openPublished": "Open post",
+    "details": "Details",
+    "list": {
+      "emptyTitle": "No posts match your filters",
+      "emptyHint": "Adjust the filters or create a new post.",
+      "scheduled": "Scheduled",
+      "platforms": "Platforms"
     }
   },
   "es": {
@@ -165,12 +206,36 @@
       "emptyNone": "Aún no hay publicaciones",
       "unknownUser": "Usuario",
       "emptyHint": "Crea una publicación y aparecerá aquí.",
+      "loadError": "No pudimos cargar las publicaciones.",
       "emptyFiltered": "Ninguna publicación coincide con este filtro",
       "emptyFilteredHint": "Prueba con otro estado para ver más publicaciones.",
       "selectTitle": "Selecciona una publicación",
       "selectHint": "Elige una publicación de la lista para ver su contenido, detalles, comentarios y estadísticas.",
+      "title": "Feeds de publicaciones",
+      "description": "Todas las publicaciones del negocio activo. Busca, filtra por estado y cambia entre lista y tabla.",
+      "search": "Buscar publicaciones…",
+      "refresh": "Actualizar",
+      "clearFilters": "Limpiar filtros",
+      "open": "Abrir detalles",
+      "allStatuses": "Todos los estados",
+      "sort": {
+        "recent": "Más recientes primero",
+        "oldest": "Más antiguas primero"
+      },
+      "views": {
+        "list": "Lista",
+        "table": "Tabla"
+      },
+      "columns": {
+        "content": "Publicación",
+        "author": "Autor",
+        "status": "Estado",
+        "platforms": "Plataformas",
+        "scheduled": "Programada"
+      },
       "filter": {
         "all": "Todas",
+        "draft": "Borrador",
         "pending": "Pendientes",
         "published": "Publicadas",
         "failed": "Fallidas"
@@ -191,6 +256,23 @@
       "appliedTitle": "Plataformas formateadas",
       "appliedDescription": "{count} plataforma(s) tienen ahora contenido personalizado.",
       "appliedOne": "Contenido personalizado creado para {platform}."
+    },
+    "views": {
+      "grid": "Cuadrícula",
+      "list": "Lista",
+      "table": "Tabla",
+      "feed": "Feed",
+      "board": "Tablero"
+    },
+    "searchPlaceholder": "Buscar publicaciones…",
+    "publishedOn": "Publicada en",
+    "openPublished": "Abrir publicación",
+    "details": "Detalles",
+    "list": {
+      "emptyTitle": "Ninguna publicación coincide",
+      "emptyHint": "Ajusta los filtros o crea una publicación.",
+      "scheduled": "Programada",
+      "platforms": "Plataformas"
     }
   },
   "fr": {
@@ -262,12 +344,36 @@
       "emptyNone": "Aucune publication pour l'instant",
       "unknownUser": "Utilisateur",
       "emptyHint": "Créez une publication et elle apparaîtra ici.",
+      "loadError": "Impossible de charger les publications.",
       "emptyFiltered": "Aucune publication ne correspond à ce filtre",
       "emptyFilteredHint": "Essayez un autre statut pour voir plus de publications.",
       "selectTitle": "Sélectionnez une publication",
       "selectHint": "Choisissez une publication dans la liste pour voir son contenu, ses détails, ses commentaires et ses statistiques.",
+      "title": "Flux de publications",
+      "description": "Toutes les publications de l’entreprise active. Recherchez, filtrez par statut et passez de la liste au tableau.",
+      "search": "Rechercher des publications…",
+      "refresh": "Actualiser",
+      "clearFilters": "Réinitialiser les filtres",
+      "open": "Ouvrir les détails",
+      "allStatuses": "Tous les statuts",
+      "sort": {
+        "recent": "Plus récentes d’abord",
+        "oldest": "Plus anciennes d’abord"
+      },
+      "views": {
+        "list": "Liste",
+        "table": "Tableau"
+      },
+      "columns": {
+        "content": "Publication",
+        "author": "Auteur",
+        "status": "Statut",
+        "platforms": "Plateformes",
+        "scheduled": "Planifiée"
+      },
       "filter": {
         "all": "Toutes",
+        "draft": "Brouillon",
         "pending": "En attente",
         "published": "Publiées",
         "failed": "Échouées"
@@ -288,6 +394,23 @@
       "appliedTitle": "Plateformes formatées",
       "appliedDescription": "{count} plateforme(s) ont désormais un contenu personnalisé.",
       "appliedOne": "Contenu personnalisé créé pour {platform}."
+    },
+    "views": {
+      "grid": "Grille",
+      "list": "Liste",
+      "table": "Tableau",
+      "feed": "Fil",
+      "board": "Tableau"
+    },
+    "searchPlaceholder": "Rechercher des publications…",
+    "publishedOn": "Publié sur",
+    "openPublished": "Ouvrir la publication",
+    "details": "Détails",
+    "list": {
+      "emptyTitle": "Aucune publication ne correspond",
+      "emptyHint": "Ajustez les filtres ou créez une publication.",
+      "scheduled": "Planifiée",
+      "platforms": "Plateformes"
     }
   },
   "de": {
@@ -359,12 +482,36 @@
       "emptyNone": "Noch keine Beiträge",
       "unknownUser": "Benutzer",
       "emptyHint": "Erstelle einen Beitrag und er erscheint hier.",
+      "loadError": "Die Beiträge konnten nicht geladen werden.",
       "emptyFiltered": "Keine Beiträge passen zu diesem Filter",
       "emptyFilteredHint": "Wähle einen anderen Status, um mehr Beiträge zu sehen.",
       "selectTitle": "Beitrag auswählen",
       "selectHint": "Wähle einen Beitrag aus der Liste, um Inhalt, Details, Kommentare und Statistiken zu sehen.",
+      "title": "Beitrags-Feeds",
+      "description": "Alle Beiträge des aktiven Unternehmens. Suchen, nach Status filtern und zwischen Liste und Tabelle wechseln.",
+      "search": "Beiträge suchen…",
+      "refresh": "Aktualisieren",
+      "clearFilters": "Filter zurücksetzen",
+      "open": "Details öffnen",
+      "allStatuses": "Alle Status",
+      "sort": {
+        "recent": "Neueste zuerst",
+        "oldest": "Älteste zuerst"
+      },
+      "views": {
+        "list": "Liste",
+        "table": "Tabelle"
+      },
+      "columns": {
+        "content": "Beitrag",
+        "author": "Autor",
+        "status": "Status",
+        "platforms": "Plattformen",
+        "scheduled": "Geplant"
+      },
       "filter": {
         "all": "Alle",
+        "draft": "Entwurf",
         "pending": "Ausstehend",
         "published": "Veröffentlicht",
         "failed": "Fehlgeschlagen"
@@ -385,6 +532,23 @@
       "appliedTitle": "Plattformen formatiert",
       "appliedDescription": "{count} Plattform(en) haben jetzt eigene Inhalte.",
       "appliedOne": "Eigener Inhalt für {platform} erstellt."
+    },
+    "views": {
+      "grid": "Raster",
+      "list": "Liste",
+      "table": "Tabelle",
+      "feed": "Feed",
+      "board": "Board"
+    },
+    "searchPlaceholder": "Beiträge suchen…",
+    "publishedOn": "Veröffentlicht auf",
+    "openPublished": "Beitrag öffnen",
+    "details": "Details",
+    "list": {
+      "emptyTitle": "Keine Beiträge passen zu den Filtern",
+      "emptyHint": "Passe die Filter an oder erstelle einen Beitrag.",
+      "scheduled": "Geplant",
+      "platforms": "Plattformen"
     }
   }
 }

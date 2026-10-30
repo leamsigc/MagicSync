@@ -14,7 +14,29 @@
     "error": "Failed to save configuration",
     "enabled": "Auto-repost enabled",
     "disabled": "Auto-repost disabled",
-    "noConfig": "No auto-repost configuration found"
+    "noConfig": "No auto-repost configuration found",
+    "search": "Search rules…",
+    "clearFilters": "Clear filters",
+    "formTitle": "Rule settings",
+    "load": "Load configuration",
+    "listSummary": "Every {interval}h · up to {max} reposts · {count} done",
+    "postId": "Post ID",
+    "postIdPlaceholder": "post_…",
+    "status": {
+      "enabled": "Enabled",
+      "disabled": "Disabled"
+    },
+    "views": {
+      "list": "List",
+      "table": "Table"
+    },
+    "columns": {
+      "postId": "Post",
+      "state": "Status"
+    },
+    "emptyHint": "Enter a post ID and save the configuration to create a rule.",
+    "emptyFiltered": "No rules match this search",
+    "emptyFilteredHint": "Clear the search to see the rule again."
   },
   "es": {
     "title": "Auto-Re-publicar",
@@ -31,7 +53,29 @@
     "error": "Error al guardar la configuración",
     "enabled": "Auto-re-publicación habilitada",
     "disabled": "Auto-re-publicación deshabilitada",
-    "noConfig": "No se encontró configuración de auto-re-publicación"
+    "noConfig": "No se encontró configuración de auto-re-publicación",
+    "search": "Buscar reglas…",
+    "clearFilters": "Limpiar filtros",
+    "formTitle": "Ajustes de la regla",
+    "load": "Cargar configuración",
+    "listSummary": "Cada {interval} h · hasta {max} re-publicaciones · {count} hechas",
+    "postId": "ID de publicación",
+    "postIdPlaceholder": "post_…",
+    "status": {
+      "enabled": "Habilitada",
+      "disabled": "Deshabilitada"
+    },
+    "views": {
+      "list": "Lista",
+      "table": "Tabla"
+    },
+    "columns": {
+      "postId": "Publicación",
+      "state": "Estado"
+    },
+    "emptyHint": "Introduce un ID de publicación y guarda la configuración para crear una regla.",
+    "emptyFiltered": "Ninguna regla coincide con esta búsqueda",
+    "emptyFilteredHint": "Limpia la búsqueda para volver a ver la regla."
   },
   "de": {
     "title": "Auto-Repost",
@@ -48,7 +92,29 @@
     "error": "Fehler beim Speichern der Konfiguration",
     "enabled": "Auto-Repost aktiviert",
     "disabled": "Auto-Repost deaktiviert",
-    "noConfig": "Keine Auto-Repost-Konfiguration gefunden"
+    "noConfig": "Keine Auto-Repost-Konfiguration gefunden",
+    "search": "Regeln suchen…",
+    "clearFilters": "Filter zurücksetzen",
+    "formTitle": "Regel-Einstellungen",
+    "load": "Konfiguration laden",
+    "listSummary": "Alle {interval} Std. · bis zu {max} Reposts · {count} erledigt",
+    "postId": "Beitrags-ID",
+    "postIdPlaceholder": "post_…",
+    "status": {
+      "enabled": "Aktiviert",
+      "disabled": "Deaktiviert"
+    },
+    "views": {
+      "list": "Liste",
+      "table": "Tabelle"
+    },
+    "columns": {
+      "postId": "Beitrag",
+      "state": "Status"
+    },
+    "emptyHint": "Geben Sie eine Beitrags-ID ein und speichern Sie die Konfiguration, um eine Regel zu erstellen.",
+    "emptyFiltered": "Keine Regeln passen zu dieser Suche",
+    "emptyFilteredHint": "Setzen Sie die Suche zurück, um die Regel wieder zu sehen."
   },
   "fr": {
     "title": "Auto-Repost",
@@ -65,6 +131,28 @@
     "error": "Échec de l'enregistrement de la configuration",
     "enabled": "Auto-Repost activé",
     "disabled": "Auto-Repost désactivé",
-    "noConfig": "Aucune configuration d'auto-repost trouvée"
+    "noConfig": "Aucune configuration d'auto-repost trouvée",
+    "search": "Rechercher des règles…",
+    "clearFilters": "Réinitialiser les filtres",
+    "formTitle": "Réglages de la règle",
+    "load": "Charger la configuration",
+    "listSummary": "Toutes les {interval} h · jusqu’à {max} reposts · {count} effectués",
+    "postId": "ID de publication",
+    "postIdPlaceholder": "post_…",
+    "status": {
+      "enabled": "Activée",
+      "disabled": "Désactivée"
+    },
+    "views": {
+      "list": "Liste",
+      "table": "Tableau"
+    },
+    "columns": {
+      "postId": "Publication",
+      "state": "Statut"
+    },
+    "emptyHint": "Saisissez un ID de publication et enregistrez la configuration pour créer une règle.",
+    "emptyFiltered": "Aucune règle ne correspond à cette recherche",
+    "emptyFilteredHint": "Réinitialisez la recherche pour revoir la règle."
   }
 }

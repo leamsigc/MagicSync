@@ -156,8 +156,21 @@ list:
 ---
 #title
 Everything You Need to Succeed
+#subtitle
+Powerful Features for Small Businesses
 #description
 Powerful features designed for small businesses, not enterprise complexity.
+::
+
+
+::MagicImageGallery
+---
+featured: true
+seo: false
+columns: 4
+title: See MagicSync in Action
+description: A quick look at the calendar, content board, agent chat, analytics and billing — captured from the live product.
+---
 ::
 
 

@@ -1,0 +1,298 @@
+{
+  "en": {
+    "title": "Businesses",
+    "subtitle": "{active} active of {total} total",
+    "search": "Search businesses...",
+    "refresh": "Refresh",
+    "unnamed": "Unnamed business",
+    "noDetails": "No details yet",
+    "empty": "No businesses match your filters",
+    "clearFilters": "Clear filters",
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "filters": {
+      "status": "Status",
+      "allStatuses": "All statuses"
+    },
+    "sort": {
+      "recent": "Newest first",
+      "oldest": "Oldest first",
+      "name": "Name (A–Z)"
+    },
+    "views": {
+      "grid": "Grid",
+      "list": "List",
+      "table": "Table"
+    },
+    "columns": {
+      "business": "Business",
+      "category": "Category",
+      "website": "Website",
+      "status": "Status"
+    },
+    "actions": {
+      "edit": "Edit",
+      "delete": "Delete",
+      "more": "More actions"
+    },
+    "confirmDelete": {
+      "title": "Delete business",
+      "description": "Are you sure you want to delete {name}?",
+      "confirm": "Delete",
+      "cancel": "Cancel"
+    },
+    "toast": {
+      "error": "Error",
+      "loadFailed": "Failed to load businesses",
+      "updatedTitle": "Business updated",
+      "updatedDescription": "{name} has been updated",
+      "updateFailed": "Failed to update business",
+      "deletedTitle": "Business deleted",
+      "deletedDescription": "{name} has been deleted",
+      "deleteFailed": "Failed to delete business"
+    },
+    "modal": {
+      "title": "Edit business",
+      "name": "Name",
+      "namePlaceholder": "Business name",
+      "category": "Category",
+      "categoryPlaceholder": "Category",
+      "address": "Address",
+      "addressPlaceholder": "Address",
+      "website": "Website",
+      "websitePlaceholder": "https://...",
+      "phone": "Phone",
+      "phonePlaceholder": "Phone",
+      "description": "Description",
+      "descriptionPlaceholder": "Description",
+      "active": "Active",
+      "activeLabel": "Business is active",
+      "cancel": "Cancel",
+      "save": "Save changes"
+    }
+  },
+  "es": {
+    "title": "Negocios",
+    "subtitle": "{active} activos de {total} en total",
+    "search": "Buscar negocios...",
+    "refresh": "Actualizar",
+    "unnamed": "Negocio sin nombre",
+    "noDetails": "Aún sin detalles",
+    "empty": "Ningún negocio coincide con los filtros",
+    "clearFilters": "Limpiar filtros",
+    "status": {
+      "active": "Activo",
+      "inactive": "Inactivo"
+    },
+    "filters": {
+      "status": "Estado",
+      "allStatuses": "Todos los estados"
+    },
+    "sort": {
+      "recent": "Más recientes primero",
+      "oldest": "Más antiguos primero",
+      "name": "Nombre (A–Z)"
+    },
+    "views": {
+      "grid": "Cuadrícula",
+      "list": "Lista",
+      "table": "Tabla"
+    },
+    "columns": {
+      "business": "Negocio",
+      "category": "Categoría",
+      "website": "Sitio web",
+      "status": "Estado"
+    },
+    "actions": {
+      "edit": "Editar",
+      "delete": "Eliminar",
+      "more": "Más acciones"
+    },
+    "confirmDelete": {
+      "title": "Eliminar negocio",
+      "description": "¿Seguro que desea eliminar {name}?",
+      "confirm": "Eliminar",
+      "cancel": "Cancelar"
+    },
+    "toast": {
+      "error": "Error",
+      "loadFailed": "No se pudieron cargar los negocios",
+      "updatedTitle": "Negocio actualizado",
+      "updatedDescription": "{name} ha sido actualizado",
+      "updateFailed": "No se pudo actualizar el negocio",
+      "deletedTitle": "Negocio eliminado",
+      "deletedDescription": "{name} ha sido eliminado",
+      "deleteFailed": "No se pudo eliminar el negocio"
+    },
+    "modal": {
+      "title": "Editar negocio",
+      "name": "Nombre",
+      "namePlaceholder": "Nombre del negocio",
+      "category": "Categoría",
+      "categoryPlaceholder": "Categoría",
+      "address": "Dirección",
+      "addressPlaceholder": "Dirección",
+      "website": "Sitio web",
+      "websitePlaceholder": "https://...",
+      "phone": "Teléfono",
+      "phonePlaceholder": "Teléfono",
+      "description": "Descripción",
+      "descriptionPlaceholder": "Descripción",
+      "active": "Activo",
+      "activeLabel": "El negocio está activo",
+      "cancel": "Cancelar",
+      "save": "Guardar cambios"
+    }
+  },
+  "de": {
+    "title": "Unternehmen",
+    "subtitle": "{active} aktiv von {total} insgesamt",
+    "search": "Unternehmen suchen...",
+    "refresh": "Aktualisieren",
+    "unnamed": "Unbenanntes Unternehmen",
+    "noDetails": "Noch keine Details",
+    "empty": "Keine Unternehmen passen zu den Filtern",
+    "clearFilters": "Filter zurücksetzen",
+    "status": {
+      "active": "Aktiv",
+      "inactive": "Inaktiv"
+    },
+    "filters": {
+      "status": "Status",
+      "allStatuses": "Alle Status"
+    },
+    "sort": {
+      "recent": "Neueste zuerst",
+      "oldest": "Älteste zuerst",
+      "name": "Name (A–Z)"
+    },
+    "views": {
+      "grid": "Raster",
+      "list": "Liste",
+      "table": "Tabelle"
+    },
+    "columns": {
+      "business": "Unternehmen",
+      "category": "Kategorie",
+      "website": "Website",
+      "status": "Status"
+    },
+    "actions": {
+      "edit": "Bearbeiten",
+      "delete": "Löschen",
+      "more": "Weitere Aktionen"
+    },
+    "confirmDelete": {
+      "title": "Unternehmen löschen",
+      "description": "Möchten Sie {name} wirklich löschen?",
+      "confirm": "Löschen",
+      "cancel": "Abbrechen"
+    },
+    "toast": {
+      "error": "Fehler",
+      "loadFailed": "Unternehmen konnten nicht geladen werden",
+      "updatedTitle": "Unternehmen aktualisiert",
+      "updatedDescription": "{name} wurde aktualisiert",
+      "updateFailed": "Unternehmen konnte nicht aktualisiert werden",
+      "deletedTitle": "Unternehmen gelöscht",
+      "deletedDescription": "{name} wurde gelöscht",
+      "deleteFailed": "Unternehmen konnte nicht gelöscht werden"
+    },
+    "modal": {
+      "title": "Unternehmen bearbeiten",
+      "name": "Name",
+      "namePlaceholder": "Name des Unternehmens",
+      "category": "Kategorie",
+      "categoryPlaceholder": "Kategorie",
+      "address": "Adresse",
+      "addressPlaceholder": "Adresse",
+      "website": "Website",
+      "websitePlaceholder": "https://...",
+      "phone": "Telefon",
+      "phonePlaceholder": "Telefon",
+      "description": "Beschreibung",
+      "descriptionPlaceholder": "Beschreibung",
+      "active": "Aktiv",
+      "activeLabel": "Unternehmen ist aktiv",
+      "cancel": "Abbrechen",
+      "save": "Änderungen speichern"
+    }
+  },
+  "fr": {
+    "title": "Entreprises",
+    "subtitle": "{active} actives sur {total} au total",
+    "search": "Rechercher des entreprises...",
+    "refresh": "Actualiser",
+    "unnamed": "Entreprise sans nom",
+    "noDetails": "Pas encore de détails",
+    "empty": "Aucune entreprise ne correspond aux filtres",
+    "clearFilters": "Réinitialiser les filtres",
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "filters": {
+      "status": "Statut",
+      "allStatuses": "Tous les statuts"
+    },
+    "sort": {
+      "recent": "Plus récentes d'abord",
+      "oldest": "Plus anciennes d'abord",
+      "name": "Nom (A–Z)"
+    },
+    "views": {
+      "grid": "Grille",
+      "list": "Liste",
+      "table": "Tableau"
+    },
+    "columns": {
+      "business": "Entreprise",
+      "category": "Catégorie",
+      "website": "Site web",
+      "status": "Statut"
+    },
+    "actions": {
+      "edit": "Modifier",
+      "delete": "Supprimer",
+      "more": "Plus d'actions"
+    },
+    "confirmDelete": {
+      "title": "Supprimer l'entreprise",
+      "description": "Voulez-vous vraiment supprimer {name} ?",
+      "confirm": "Supprimer",
+      "cancel": "Annuler"
+    },
+    "toast": {
+      "error": "Erreur",
+      "loadFailed": "Impossible de charger les entreprises",
+      "updatedTitle": "Entreprise mise à jour",
+      "updatedDescription": "{name} a été mise à jour",
+      "updateFailed": "Impossible de mettre à jour l'entreprise",
+      "deletedTitle": "Entreprise supprimée",
+      "deletedDescription": "{name} a été supprimée",
+      "deleteFailed": "Impossible de supprimer l'entreprise"
+    },
+    "modal": {
+      "title": "Modifier l'entreprise",
+      "name": "Nom",
+      "namePlaceholder": "Nom de l'entreprise",
+      "category": "Catégorie",
+      "categoryPlaceholder": "Catégorie",
+      "address": "Adresse",
+      "addressPlaceholder": "Adresse",
+      "website": "Site web",
+      "websitePlaceholder": "https://...",
+      "phone": "Téléphone",
+      "phonePlaceholder": "Téléphone",
+      "description": "Description",
+      "descriptionPlaceholder": "Description",
+      "active": "Active",
+      "activeLabel": "L'entreprise est active",
+      "cancel": "Annuler",
+      "save": "Enregistrer les modifications"
+    }
+  }
+}

@@ -6,7 +6,18 @@
         "description": "Create and manage quick response templates for chat communications",
         "create_template": "Create Chat Template",
         "no_templates": "No chat templates yet",
-        "create_first": "Create your first chat template to get started"
+        "create_first": "Create your first chat template to get started",
+        "search_placeholder": "Search templates…",
+        "visibility_label": "Visibility",
+        "visibility_all": "All templates",
+        "visibility_public": "Public",
+        "visibility_private": "Private",
+        "view_grid": "Grid",
+        "view_list": "List",
+        "actions": "Actions",
+        "action_view": "View",
+        "action_edit": "Edit",
+        "action_delete": "Delete"
     },
     "es": {
         "seo_title": "Plantillas de Chat",
@@ -15,7 +26,18 @@
         "description": "Crea y gestiona plantillas de respuesta rápida para comunicaciones de chat",
         "create_template": "Crear Plantilla de Chat",
         "no_templates": "Aún no hay plantillas de chat",
-        "create_first": "Crea tu primera plantilla de chat para comenzar"
+        "create_first": "Crea tu primera plantilla de chat para comenzar",
+        "search_placeholder": "Buscar plantillas…",
+        "visibility_label": "Visibilidad",
+        "visibility_all": "Todas las plantillas",
+        "visibility_public": "Públicas",
+        "visibility_private": "Privadas",
+        "view_grid": "Cuadrícula",
+        "view_list": "Lista",
+        "actions": "Acciones",
+        "action_view": "Ver",
+        "action_edit": "Editar",
+        "action_delete": "Eliminar"
     },
     "de": {
         "seo_title": "Chat-Vorlagen",
@@ -24,7 +46,18 @@
         "description": "Erstellen und verwalten Sie Schnellantwort-Vorlagen für Chat-Kommunikation",
         "create_template": "Chat-Vorlage erstellen",
         "no_templates": "Noch keine Chat-Vorlagen",
-        "create_first": "Erstellen Sie Ihre erste Chat-Vorlage, um zu beginnen"
+        "create_first": "Erstellen Sie Ihre erste Chat-Vorlage, um zu beginnen",
+        "search_placeholder": "Vorlagen suchen…",
+        "visibility_label": "Sichtbarkeit",
+        "visibility_all": "Alle Vorlagen",
+        "visibility_public": "Öffentlich",
+        "visibility_private": "Privat",
+        "view_grid": "Raster",
+        "view_list": "Liste",
+        "actions": "Aktionen",
+        "action_view": "Ansehen",
+        "action_edit": "Bearbeiten",
+        "action_delete": "Löschen"
     },
     "fr": {
         "seo_title": "Modèles de Chat",
@@ -33,6 +66,17 @@
         "description": "Créez et gérez des modèles de réponse rapide pour les communications par chat",
         "create_template": "Créer un Modèle de Chat",
         "no_templates": "Pas encore de modèles de chat",
-        "create_first": "Créez votre premier modèle de chat pour commencer"
+        "create_first": "Créez votre premier modèle de chat pour commencer",
+        "search_placeholder": "Rechercher des modèles…",
+        "visibility_label": "Visibilité",
+        "visibility_all": "Tous les modèles",
+        "visibility_public": "Public",
+        "visibility_private": "Privé",
+        "view_grid": "Grille",
+        "view_list": "Liste",
+        "actions": "Actions",
+        "action_view": "Voir",
+        "action_edit": "Modifier",
+        "action_delete": "Supprimer"
     }
 }

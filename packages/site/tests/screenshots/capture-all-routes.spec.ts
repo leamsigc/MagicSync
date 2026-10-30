@@ -18,7 +18,7 @@
 import { expect, test, type Page } from '@playwright/test'
 import { writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { createActiveBusiness, createTestUser, loginWith } from '../e2e/helpers/e2e-utils'
+import { createActiveBusiness, createTestUser, loginWith, promoteToAdmin } from '../e2e/helpers/e2e-utils'
 import { captureRouteAction, SCREENSHOT_ROOT, slugifyRoute } from '../e2e/helpers/route-screenshots'
 import { routeManifestPath, selectStaticRoutes } from '../e2e/helpers/route-list'
 
@@ -99,6 +99,10 @@ test('capture every static route', async ({ page, playwright }) => {
   // bouncing to /login. Most /app routes also need an active business.
   const authed = await playwright.request.newContext({ baseURL: BASE_URL })
   const user = await createTestUser(authed)
+  // `/app/admin/*` redirects non-admins to the dashboard, which would capture the
+  // wrong page as evidence. Promote before the first login so every admin route
+  // renders its real state.
+  await promoteToAdmin(authed, user)
   await loginWith(page, user)
   await createActiveBusiness(authed, user)
 

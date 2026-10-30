@@ -106,6 +106,11 @@ export const useDashboardNavigation = () => {
             icon: 'i-lucide-messages-square'
           },
           {
+            label: m.menu.autoRepost,
+            to: '/app/posts/auto-repost',
+            icon: 'i-lucide-repeat-2'
+          },
+          {
             label: m.menu.bulkCreate,
             to: '/app/bulk-scheduler',
             icon: 'i-lucide-layers'

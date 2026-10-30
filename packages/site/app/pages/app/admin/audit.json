@@ -1,0 +1,310 @@
+{
+  "en": {
+    "title": "Audit Log",
+    "description": "Review system activity and events",
+    "searchPlaceholder": "Search audit log...",
+    "empty": "No log entries found",
+    "filters": {
+      "status": "Status",
+      "action": "Action",
+      "allStatuses": "All statuses",
+      "allActions": "All actions"
+    },
+    "status": {
+      "success": "Success",
+      "failure": "Failure",
+      "pending": "Pending"
+    },
+    "columns": {
+      "time": "Time",
+      "category": "Category",
+      "action": "Action",
+      "status": "Status",
+      "details": "Details"
+    },
+    "actions": {
+      "deleteSelected": "Delete selected",
+      "deleteAll": "Delete all",
+      "clearSelection": "Clear selection",
+      "refresh": "Refresh"
+    },
+    "menu": {
+      "view": "View details",
+      "delete": "Delete"
+    },
+    "a11y": {
+      "actions": "Actions dropdown"
+    },
+    "footer": {
+      "selected": "{selected} of {total} row(s) selected."
+    },
+    "detail": {
+      "title": "Log details",
+      "close": "Close",
+      "id": "ID",
+      "category": "Category",
+      "action": "Action",
+      "status": "Status",
+      "noStatus": "Unknown",
+      "target": "Target",
+      "userId": "User ID",
+      "details": "Details",
+      "ipAddress": "IP address"
+    },
+    "deleteOne": {
+      "title": "Delete log entry",
+      "description": "Delete audit log entry #{id}?",
+      "confirm": "Delete"
+    },
+    "deleteAll": {
+      "title": "Delete all logs",
+      "description": "Delete all {count} audit log entries? This cannot be undone.",
+      "confirm": "Delete all"
+    },
+    "common": {
+      "cancel": "Cancel"
+    },
+    "toast": {
+      "error": "Error",
+      "loadFailed": "Failed to load audit log",
+      "deleted": "Log deleted",
+      "deletedDescription": "Audit log entry #{id} has been deleted",
+      "deleteFailed": "Failed to delete log",
+      "deletedManyDescription": "{count} audit log entries deleted",
+      "deleteSelectedFailed": "Failed to delete selected logs",
+      "deletedAllDescription": "All audit log entries deleted",
+      "deleteAllFailed": "Failed to delete all logs"
+    }
+  },
+  "es": {
+    "title": "Registro de auditoría",
+    "description": "Revisa la actividad y los eventos del sistema",
+    "searchPlaceholder": "Buscar en el registro...",
+    "empty": "No se encontraron registros",
+    "filters": {
+      "status": "Estado",
+      "action": "Acción",
+      "allStatuses": "Todos los estados",
+      "allActions": "Todas las acciones"
+    },
+    "status": {
+      "success": "Correcto",
+      "failure": "Fallido",
+      "pending": "Pendiente"
+    },
+    "columns": {
+      "time": "Hora",
+      "category": "Categoría",
+      "action": "Acción",
+      "status": "Estado",
+      "details": "Detalles"
+    },
+    "actions": {
+      "deleteSelected": "Eliminar seleccionados",
+      "deleteAll": "Eliminar todo",
+      "clearSelection": "Limpiar selección",
+      "refresh": "Actualizar"
+    },
+    "menu": {
+      "view": "Ver detalles",
+      "delete": "Eliminar"
+    },
+    "a11y": {
+      "actions": "Menú de acciones"
+    },
+    "footer": {
+      "selected": "{selected} de {total} fila(s) seleccionadas."
+    },
+    "detail": {
+      "title": "Detalles del registro",
+      "close": "Cerrar",
+      "id": "ID",
+      "category": "Categoría",
+      "action": "Acción",
+      "status": "Estado",
+      "noStatus": "Desconocido",
+      "target": "Objetivo",
+      "userId": "ID de usuario",
+      "details": "Detalles",
+      "ipAddress": "Dirección IP"
+    },
+    "deleteOne": {
+      "title": "Eliminar registro",
+      "description": "¿Eliminar el registro de auditoría #{id}?",
+      "confirm": "Eliminar"
+    },
+    "deleteAll": {
+      "title": "Eliminar todos los registros",
+      "description": "¿Eliminar los {count} registros de auditoría? Esta acción no se puede deshacer.",
+      "confirm": "Eliminar todo"
+    },
+    "common": {
+      "cancel": "Cancelar"
+    },
+    "toast": {
+      "error": "Error",
+      "loadFailed": "No se pudo cargar el registro de auditoría",
+      "deleted": "Registro eliminado",
+      "deletedDescription": "Se eliminó el registro de auditoría #{id}",
+      "deleteFailed": "No se pudo eliminar el registro",
+      "deletedManyDescription": "{count} registros de auditoría eliminados",
+      "deleteSelectedFailed": "No se pudieron eliminar los registros seleccionados",
+      "deletedAllDescription": "Se eliminaron todos los registros de auditoría",
+      "deleteAllFailed": "No se pudieron eliminar todos los registros"
+    }
+  },
+  "de": {
+    "title": "Audit-Protokoll",
+    "description": "Systemaktivitäten und Ereignisse prüfen",
+    "searchPlaceholder": "Audit-Protokoll durchsuchen...",
+    "empty": "Keine Protokolleinträge gefunden",
+    "filters": {
+      "status": "Status",
+      "action": "Aktion",
+      "allStatuses": "Alle Status",
+      "allActions": "Alle Aktionen"
+    },
+    "status": {
+      "success": "Erfolgreich",
+      "failure": "Fehlgeschlagen",
+      "pending": "Ausstehend"
+    },
+    "columns": {
+      "time": "Zeit",
+      "category": "Kategorie",
+      "action": "Aktion",
+      "status": "Status",
+      "details": "Details"
+    },
+    "actions": {
+      "deleteSelected": "Ausgewählte löschen",
+      "deleteAll": "Alle löschen",
+      "clearSelection": "Auswahl aufheben",
+      "refresh": "Aktualisieren"
+    },
+    "menu": {
+      "view": "Details anzeigen",
+      "delete": "Löschen"
+    },
+    "a11y": {
+      "actions": "Aktionsmenü"
+    },
+    "footer": {
+      "selected": "{selected} von {total} Zeile(n) ausgewählt."
+    },
+    "detail": {
+      "title": "Protokolldetails",
+      "close": "Schließen",
+      "id": "ID",
+      "category": "Kategorie",
+      "action": "Aktion",
+      "status": "Status",
+      "noStatus": "Unbekannt",
+      "target": "Ziel",
+      "userId": "Benutzer-ID",
+      "details": "Details",
+      "ipAddress": "IP-Adresse"
+    },
+    "deleteOne": {
+      "title": "Protokolleintrag löschen",
+      "description": "Audit-Protokolleintrag #{id} löschen?",
+      "confirm": "Löschen"
+    },
+    "deleteAll": {
+      "title": "Alle Protokolle löschen",
+      "description": "Alle {count} Audit-Protokolleinträge löschen? Dies kann nicht rückgängig gemacht werden.",
+      "confirm": "Alle löschen"
+    },
+    "common": {
+      "cancel": "Abbrechen"
+    },
+    "toast": {
+      "error": "Fehler",
+      "loadFailed": "Audit-Protokoll konnte nicht geladen werden",
+      "deleted": "Protokoll gelöscht",
+      "deletedDescription": "Audit-Protokolleintrag #{id} wurde gelöscht",
+      "deleteFailed": "Protokoll konnte nicht gelöscht werden",
+      "deletedManyDescription": "{count} Audit-Protokolleinträge gelöscht",
+      "deleteSelectedFailed": "Ausgewählte Protokolle konnten nicht gelöscht werden",
+      "deletedAllDescription": "Alle Audit-Protokolleinträge gelöscht",
+      "deleteAllFailed": "Protokolle konnten nicht gelöscht werden"
+    }
+  },
+  "fr": {
+    "title": "Journal d'audit",
+    "description": "Consultez l'activité et les événements du système",
+    "searchPlaceholder": "Rechercher dans le journal...",
+    "empty": "Aucune entrée de journal trouvée",
+    "filters": {
+      "status": "Statut",
+      "action": "Action",
+      "allStatuses": "Tous les statuts",
+      "allActions": "Toutes les actions"
+    },
+    "status": {
+      "success": "Succès",
+      "failure": "Échec",
+      "pending": "En attente"
+    },
+    "columns": {
+      "time": "Heure",
+      "category": "Catégorie",
+      "action": "Action",
+      "status": "Statut",
+      "details": "Détails"
+    },
+    "actions": {
+      "deleteSelected": "Supprimer la sélection",
+      "deleteAll": "Tout supprimer",
+      "clearSelection": "Effacer la sélection",
+      "refresh": "Actualiser"
+    },
+    "menu": {
+      "view": "Voir les détails",
+      "delete": "Supprimer"
+    },
+    "a11y": {
+      "actions": "Menu des actions"
+    },
+    "footer": {
+      "selected": "{selected} sur {total} ligne(s) sélectionnée(s)."
+    },
+    "detail": {
+      "title": "Détails du journal",
+      "close": "Fermer",
+      "id": "ID",
+      "category": "Catégorie",
+      "action": "Action",
+      "status": "Statut",
+      "noStatus": "Inconnu",
+      "target": "Cible",
+      "userId": "ID utilisateur",
+      "details": "Détails",
+      "ipAddress": "Adresse IP"
+    },
+    "deleteOne": {
+      "title": "Supprimer l'entrée",
+      "description": "Supprimer l'entrée de journal #{id} ?",
+      "confirm": "Supprimer"
+    },
+    "deleteAll": {
+      "title": "Supprimer tout le journal",
+      "description": "Supprimer les {count} entrées du journal d'audit ? Cette action est irréversible.",
+      "confirm": "Tout supprimer"
+    },
+    "common": {
+      "cancel": "Annuler"
+    },
+    "toast": {
+      "error": "Erreur",
+      "loadFailed": "Échec du chargement du journal d'audit",
+      "deleted": "Entrée supprimée",
+      "deletedDescription": "L'entrée de journal #{id} a été supprimée",
+      "deleteFailed": "Échec de la suppression de l'entrée",
+      "deletedManyDescription": "{count} entrées du journal supprimées",
+      "deleteSelectedFailed": "Échec de la suppression des entrées sélectionnées",
+      "deletedAllDescription": "Toutes les entrées du journal ont été supprimées",
+      "deleteAllFailed": "Échec de la suppression de toutes les entrées"
+    }
+  }
+}

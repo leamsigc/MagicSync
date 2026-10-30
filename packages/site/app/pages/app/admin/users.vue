@@ -1,23 +1,19 @@
 <i18n src="./users.json"></i18n>
 
 <script lang="ts" setup>
-import { h, resolveComponent } from 'vue'
-import type { TableColumn } from '@nuxt/ui'
-import type { Row } from '@tanstack/vue-table'
+/**
+ * Admin → Users.
+ *
+ * Table + list over every account. Selection is key-based (`v-model:selected`
+ * with row ids) so filtering never desyncs it, and every mutation is applied
+ * optimistically to the local row and rolled back on failure.
+ */
+import type { CollectionTableColumn } from '#layers/BaseUI/app/utils/collection'
 import { authClient } from '#layers/BaseAuth/lib/auth-client'
 
 definePageMeta({
-  layout: 'dashboard-layout'
+  layout: 'dashboard-layout',
 })
-
-const UButton = resolveComponent('UButton')
-const UBadge = resolveComponent('UBadge')
-const UDropdownMenu = resolveComponent('UDropdownMenu')
-const UCheckbox = resolveComponent('UCheckbox')
-const UAvatar = resolveComponent('UAvatar')
-
-const { t } = useI18n()
-const toast = useToast()
 
 interface AdminUser {
   id: string
@@ -31,31 +27,87 @@ interface AdminUser {
   createdAt: string
 }
 
+interface BulkItemResult {
+  userId: string
+  ok: boolean
+  skipped?: boolean
+  error?: string
+}
+
+const { t } = useI18n()
+const toast = useToast()
+
 const users = ref<AdminUser[]>([])
 const loading = ref(true)
-const searchQuery = ref('')
-const rowSelection = ref<Record<string, boolean>>({})
+const selectedIds = ref<string[]>([])
 const bulkBusy = ref(false)
 
 const { user: currentUser, fetchSession } = UseUser()
 
-const selectedCount = computed(() => Object.values(rowSelection.value).filter(Boolean).length)
-
-// Stable row identity: without this TanStack keys selection by row index,
-// which desyncs from rowSelection whenever the list is filtered or mutated.
-function getUserRowId(row: AdminUser) {
-  return row.id
-}
-
-const filteredUsers = computed(() => {
-  if (!searchQuery.value) return users.value
-  const q = searchQuery.value.toLowerCase()
-  return users.value.filter(u =>
-    u.name?.toLowerCase().includes(q) ||
-    u.email.toLowerCase().includes(q) ||
-    u.role.toLowerCase().includes(q)
-  )
+const {
+  view,
+  setView,
+  search,
+  setSearch,
+  filters,
+  setFilter,
+  filtered,
+} = useCollectionView<AdminUser>({
+  key: 'admin-users',
+  modes: ['table', 'list'],
+  defaultView: 'table',
+  rows: users,
+  searchFields: user => [user.name, user.email, user.role],
+  filterFns: {
+    role: (user, value) => user.role === value,
+    status: (user, value) => (user.banned ? 'banned' : 'active') === value,
+  },
 })
+
+const rowKey = (user: AdminUser): string => user.id
+
+const selectedCount = computed(() => selectedIds.value.length)
+
+const viewOptions = computed(() => [
+  { value: 'table', label: t('views.table'), icon: 'i-lucide-table' },
+  { value: 'list', label: t('views.list'), icon: 'i-lucide-list' },
+])
+
+const roleFilterOptions = computed(() => [
+  { value: 'all', label: t('filters.allRoles') },
+  { value: 'user', label: t('roles.user') },
+  { value: 'admin', label: t('roles.admin') },
+])
+
+const statusFilterOptions = computed(() => [
+  { value: 'all', label: t('filters.allStatuses') },
+  { value: 'active', label: t('status.active') },
+  { value: 'banned', label: t('status.banned') },
+])
+
+const toolbarFilters = computed(() => [
+  {
+    key: 'role',
+    label: t('filters.role'),
+    value: filters.value.role || 'all',
+    options: roleFilterOptions.value,
+    width: 'w-full sm:w-40',
+  },
+  {
+    key: 'status',
+    label: t('filters.status'),
+    value: filters.value.status || 'all',
+    options: statusFilterOptions.value,
+    width: 'w-full sm:w-40',
+  },
+])
+
+const columns = computed<CollectionTableColumn[]>(() => [
+  { key: 'user', label: t('columns.user') },
+  { key: 'role', label: t('columns.role') },
+  { key: 'status', label: t('columns.status') },
+  { key: 'verified', label: t('columns.verified'), hideBelow: 'md' },
+])
 
 async function fetchUsers() {
   loading.value = true
@@ -72,6 +124,9 @@ async function fetchUsers() {
 onMounted(fetchUsers)
 
 const showCreateModal = ref(false)
+const creating = ref(false)
+const savingRole = ref(false)
+const banning = ref(false)
 const createForm = ref({ name: '', email: '', password: '', role: 'user' })
 
 async function createUser() {
@@ -79,19 +134,26 @@ async function createUser() {
     toast.add({ title: t('toast.error'), description: t('toast.createRequiresFields'), color: 'error' })
     return
   }
+  creating.value = true
   try {
     await authClient.admin.createUser({
       name: createForm.value.name,
       email: createForm.value.email,
       password: createForm.value.password,
-      role: createForm.value.role
+      role: createForm.value.role,
     })
-    toast.add({ title: t('toast.created'), description: t('toast.createdDescription', { name: createForm.value.name }), color: 'success' })
+    toast.add({
+      title: t('toast.created'),
+      description: t('toast.createdDescription', { name: createForm.value.name }),
+      color: 'success',
+    })
     showCreateModal.value = false
     createForm.value = { name: '', email: '', password: '', role: 'user' }
     await fetchUsers()
   } catch {
     toast.add({ title: t('toast.error'), description: t('toast.createFailed'), color: 'error' })
+  } finally {
+    creating.value = false
   }
 }
 
@@ -130,13 +192,20 @@ async function saveUser() {
   const userLabel = selectedUser.value.name || selectedUser.value.email
   const prevRole = selectedUser.value.role
   patchUser(userId, { role: newRole })
+  savingRole.value = true
   try {
     await authClient.admin.setRole({ userId, role: newRole })
-    toast.add({ title: t('toast.updated'), description: t('toast.updatedDescription', { name: userLabel }), color: 'success' })
+    toast.add({
+      title: t('toast.updated'),
+      description: t('toast.updatedDescription', { name: userLabel }),
+      color: 'success',
+    })
     showEditModal.value = false
   } catch {
     patchUser(userId, { role: prevRole })
     toast.add({ title: t('toast.error'), description: t('toast.updateFailed'), color: 'error' })
+  } finally {
+    savingRole.value = false
   }
 }
 
@@ -146,13 +215,6 @@ function toggleBan(user: AdminUser) {
   } else {
     openEdit(user)
   }
-}
-
-interface BulkItemResult {
-  userId: string
-  ok: boolean
-  skipped?: boolean
-  error?: string
 }
 
 function patchUser(id: string, patch: Partial<AdminUser>) {
@@ -167,14 +229,11 @@ function removeUsersLocal(ids: string[]) {
   users.value = users.value.filter(item => !gone.has(item.id))
 }
 
+/** Maps selected row ids back to rows; selection lives in `selectedIds`. */
 function selectedRows(): AdminUser[] {
-  const ids = new Set(
-    Object.entries(rowSelection.value)
-      .filter(([, selected]) => selected)
-      .map(([id]) => id)
-  )
+  const ids = new Set(selectedIds.value)
   if (ids.size === 0) return []
-  return filteredUsers.value.filter(user => ids.has(user.id))
+  return users.value.filter(user => ids.has(user.id))
 }
 
 function actionLabel(action: 'ban' | 'unban' | 'delete') {
@@ -197,7 +256,11 @@ async function unban(user: AdminUser) {
   patchUser(user.id, { banned: false, banReason: null })
   try {
     await authClient.admin.unbanUser({ userId: user.id })
-    toast.add({ title: t('toast.unbanned'), description: t('toast.unbannedDescription', { name: user.name || user.email }), color: 'success' })
+    toast.add({
+      title: t('toast.unbanned'),
+      description: t('toast.unbannedDescription', { name: user.name || user.email }),
+      color: 'success',
+    })
   } catch {
     patchUser(user.id, { banned: true, banReason: user.banReason })
     toast.add({ title: t('toast.error'), description: t('toast.unbanFailed'), color: 'error' })
@@ -207,13 +270,20 @@ async function unban(user: AdminUser) {
 async function banUser(user: AdminUser) {
   const reason = banReason.value || t('defaultBanReason')
   patchUser(user.id, { banned: true, banReason: reason })
+  banning.value = true
   try {
     await authClient.admin.banUser({ userId: user.id, banReason: reason })
-    toast.add({ title: t('toast.banned'), description: t('toast.bannedDescription', { name: user.name || user.email }), color: 'success' })
+    toast.add({
+      title: t('toast.banned'),
+      description: t('toast.bannedDescription', { name: user.name || user.email }),
+      color: 'success',
+    })
     showEditModal.value = false
   } catch {
     patchUser(user.id, { banned: false, banReason: null })
     toast.add({ title: t('toast.error'), description: t('toast.banFailed'), color: 'error' })
+  } finally {
+    banning.value = false
   }
 }
 
@@ -239,7 +309,11 @@ async function handleImpersonate(target: AdminUser) {
     if (error) throw error
     clearNuxtData('auth-session')
     await fetchSession()
-    toast.add({ title: t('toast.impersonated'), description: t('toast.impersonatedDescription', { name: target.name || target.email }), color: 'success' })
+    toast.add({
+      title: t('toast.impersonated'),
+      description: t('toast.impersonatedDescription', { name: target.name || target.email }),
+      color: 'success',
+    })
     await navigateTo('/app')
   } catch {
     toast.add({ title: t('toast.error'), description: t('toast.impersonateFailed'), color: 'error' })
@@ -256,7 +330,11 @@ async function deleteUser(user: AdminUser) {
   }
   try {
     await authClient.admin.removeUser({ userId: user.id })
-    toast.add({ title: t('toast.deleted'), description: t('toast.deletedDescription', { name: user.name || user.email }), color: 'success' })
+    toast.add({
+      title: t('toast.deleted'),
+      description: t('toast.deletedDescription', { name: user.name || user.email }),
+      color: 'success',
+    })
   } catch {
     if (snapshot) {
       users.value.splice(Math.min(index, users.value.length), 0, snapshot)
@@ -281,9 +359,13 @@ function applyBulkResults(action: 'ban' | 'unban' | 'delete', eligible: AdminUse
       failedNames.push(target.name || target.email)
     }
   }
-  rowSelection.value = {}
+  selectedIds.value = []
   if (succeeded > 0) {
-    toast.add({ title: t('toast.bulkTitle'), description: t('toast.bulkSuccess', { count: succeeded, action: actionLabel(action) }), color: 'success' })
+    toast.add({
+      title: t('toast.bulkTitle'),
+      description: t('toast.bulkSuccess', { count: succeeded, action: actionLabel(action) }),
+      color: 'success',
+    })
   }
   if (failedNames.length > 0) {
     toast.add({ title: t('toast.bulkPartial'), description: failedNames.join(', '), color: 'error' })
@@ -295,7 +377,7 @@ function splitEligible(targets: AdminUser[]) {
   const selfId = currentUser.value?.id
   return {
     eligible: targets.filter(target => target.id !== selfId),
-    skippedSelf: targets.some(target => target.id === selfId)
+    skippedSelf: targets.some(target => target.id === selfId),
   }
 }
 
@@ -313,14 +395,18 @@ async function runBulk(action: 'ban' | 'unban' | 'delete', targets: AdminUser[])
   try {
     const response = await $fetch<{ results: BulkItemResult[] }>('/api/v1/admin/users/bulk', {
       method: 'POST',
-      body: { action, userIds: eligible.map(target => target.id) }
+      body: { action, userIds: eligible.map(target => target.id) },
     })
     const skippedByServer = applyBulkResults(action, eligible, response.results)
     if (skippedSelf || skippedByServer > 0) {
       toast.add({ title: t('toast.skippedSelf'), description: t('toast.skippedSelfDescription'), color: 'info' })
     }
   } catch {
-    toast.add({ title: t('toast.error'), description: t('toast.bulkFailed', { action: actionLabel(action) }), color: 'error' })
+    toast.add({
+      title: t('toast.error'),
+      description: t('toast.bulkFailed', { action: actionLabel(action) }),
+      color: 'error',
+    })
   } finally {
     bulkBusy.value = false
   }
@@ -335,7 +421,7 @@ function handleBulkUnban() {
 }
 
 function clearSelection() {
-  rowSelection.value = {}
+  selectedIds.value = []
 }
 
 const showDeleteModal = ref(false)
@@ -349,13 +435,17 @@ function askDelete(targets: AdminUser[], run: (selections: AdminUser[]) => Promi
 }
 
 function askDeleteSingle(user: AdminUser) {
-  askDelete([user], async ([target]) => { await deleteUser(target) })
+  askDelete([user], async ([target]) => {
+    await deleteUser(target)
+  })
 }
 
 function askDeleteSelected() {
   const targets = selectedRows()
   if (targets.length === 0) return
-  askDelete(targets, async selections => { await runBulk('delete', selections) })
+  askDelete(targets, async selections => {
+    await runBulk('delete', selections)
+  })
 }
 
 function closeDeleteModal() {
@@ -373,183 +463,205 @@ async function confirmDeleteModal() {
   }
 }
 
-function getRowItems(row: Row<AdminUser>) {
-  const isSelf = row.original.id === currentUser.value?.id
-  return [
-    { type: 'label', label: t('menu.title') },
-    { label: t('menu.edit'), onSelect: () => openEdit(row.original) },
-    { label: row.original.banned ? t('menu.unban') : t('menu.ban'), disabled: isSelf, onSelect: () => toggleBan(row.original) },
-    { label: t('menu.impersonate'), disabled: !canImpersonate(row.original) || impersonatingId.value === row.original.id, onSelect: () => handleImpersonate(row.original) },
-    { type: 'separator' },
-    { label: t('menu.delete'), disabled: isSelf, onSelect: () => askDeleteSingle(row.original) }
-  ]
-}
-
 function roleColor(role: string): 'warning' | 'info' {
   return role === 'admin' ? 'warning' : 'info'
+}
+
+function roleLabel(role: string): string {
+  return role === 'admin' ? t('roles.admin') : t('roles.user')
 }
 
 function roleOptions() {
   return [
     { label: t('roles.user'), value: 'user' },
-    { label: t('roles.admin'), value: 'admin' }
+    { label: t('roles.admin'), value: 'admin' },
   ]
 }
 
-const columns: TableColumn<AdminUser>[] = [
-  {
-    id: 'select',
-    header: ({ table }) =>
-      h(UCheckbox, {
-        modelValue: table.getIsSomePageRowsSelected()
-          ? 'indeterminate'
-          : table.getIsAllPageRowsSelected(),
-        'onUpdate:modelValue': (value: boolean | 'indeterminate') =>
-          table.toggleAllPageRowsSelected(!!value),
-        'aria-label': t('a11y.selectAll')
-      }),
-    cell: ({ row }) =>
-      h(UCheckbox, {
-        modelValue: row.getIsSelected(),
-        'onUpdate:modelValue': (value: boolean | 'indeterminate') => row.toggleSelected(!!value),
-        'aria-label': t('a11y.selectRow')
-      })
-  },
-  {
-    accessorKey: 'email',
-    header: t('columns.user'),
-    cell: ({ row }) => {
-      const user = row.original
-      return h('div', { class: 'flex items-center gap-3' }, [
-        h(UAvatar, { src: user.image || undefined, alt: user.name || user.email, size: 'sm' }),
-        h('div', null, [
-          h('p', { class: 'font-medium text-sm' }, user.name || t('unnamed')),
-          h('p', { class: 'text-xs text-muted-foreground' }, user.email)
-        ])
-      ])
-    }
-  },
-  {
-    accessorKey: 'role',
-    header: t('columns.role'),
-    cell: ({ row }) =>
-      h(UBadge, { color: roleColor(row.original.role), variant: 'subtle', size: 'sm' }, () =>
-        row.original.role
-      )
-  },
-  {
-    accessorKey: 'banned',
-    header: t('columns.status'),
-    cell: ({ row }) => {
-      if (row.original.banned) {
-        return h(UBadge, { color: 'error', variant: 'subtle', size: 'sm' }, () => t('status.banned'))
-      }
-      return h('span', { class: 'text-xs text-muted-foreground' }, t('status.active'))
-    }
-  },
-  {
-    accessorKey: 'emailVerified',
-    header: t('columns.verified'),
-    cell: ({ row }) =>
-      h(UBadge, { color: row.original.emailVerified ? 'success' : 'neutral', variant: 'subtle', size: 'sm' }, () =>
-        row.original.emailVerified ? t('status.verified') : t('status.unverified')
-      )
-  },
-  {
-    id: 'actions',
-    header: () => h('div', { class: 'text-right' }, t('columns.actions')),
-    cell: ({ row }) =>
-      h('div', { class: 'text-right' }, [
-        h(UDropdownMenu, {
-          content: { align: 'end' },
-          items: getRowItems(row),
-          'aria-label': t('a11y.actions')
-        }, () =>
-          h(UButton, {
-            icon: 'i-lucide-ellipsis-vertical',
-            color: 'neutral',
-            variant: 'ghost',
-            size: 'sm',
-            'aria-label': t('a11y.actions')
-          })
-        )
-      ])
-  }
-]
+function isSelf(user: AdminUser): boolean {
+  return user.id === currentUser.value?.id
+}
+
+function menuItems(user: AdminUser) {
+  return [
+    { type: 'label' as const, label: t('menu.title') },
+    { label: t('menu.edit'), onSelect: () => openEdit(user) },
+    {
+      label: user.banned ? t('menu.unban') : t('menu.ban'),
+      disabled: isSelf(user),
+      onSelect: () => toggleBan(user),
+    },
+    {
+      label: t('menu.impersonate'),
+      disabled: !canImpersonate(user) || impersonatingId.value === user.id,
+      onSelect: () => handleImpersonate(user),
+    },
+    { type: 'separator' as const },
+    { label: t('menu.delete'), disabled: isSelf(user), onSelect: () => askDeleteSingle(user) },
+  ]
+}
 </script>
 
 <template>
-  <div class="space-y-6">
-    <div v-motion-fade-visible-once
-      class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-      <div>
-        <h1 class="text-2xl font-bold tracking-tight">{{ t('title') }}</h1>
-        <p class="text-muted-foreground">{{ t('description') }}</p>
-      </div>
-      <div class="flex flex-col sm:flex-row gap-2">
-        <UInput v-model="searchQuery" :placeholder="t('searchPlaceholder')" icon="i-heroicons-magnifying-glass"
-          size="sm" class="sm:w-64" />
-        <UButton icon="i-lucide-user-plus" size="sm" @click="openCreateModal">
-          {{ t('createUser') }}
-        </UButton>
-      </div>
-    </div>
+  <BaseCollectionPage :title="t('title')" :description="t('description')">
+    <template #actions>
+      <UButton icon="i-lucide-user-plus" :label="t('createUser')" @click="openCreateModal" />
+    </template>
 
-    <div v-if="selectedCount > 0" v-motion-slide-bottom :duration="250"
-      class="flex flex-wrap items-center gap-2 rounded shadow px-4 py-3">
-      <span class="text-sm font-medium">{{ t('bulk.selected', { count: selectedCount }) }}</span>
-      <div class="flex-1" />
-      <UButton icon="i-lucide-ban" size="sm" color="warning" variant="soft" :loading="bulkBusy" @click="handleBulkBan">
-        {{ t('bulk.ban') }}
-      </UButton>
-      <UButton icon="i-lucide-undo-2" size="sm" color="success" variant="soft" :loading="bulkBusy"
-        @click="handleBulkUnban">
-        {{ t('bulk.unban') }}
-      </UButton>
-      <UButton icon="i-lucide-trash-2" size="sm" color="error" variant="soft" :loading="bulkBusy"
-        @click="askDeleteSelected">
-        {{ t('bulk.delete') }}
-      </UButton>
-      <UButton size="sm" color="neutral" variant="ghost" @click="clearSelection">
-        {{ t('bulk.clear') }}
-      </UButton>
-    </div>
+    <template #toolbar>
+      <BaseCollectionToolbar
+        :search="search"
+        :search-placeholder="t('searchPlaceholder')"
+        :filters="toolbarFilters"
+        :view="view"
+        :views="viewOptions"
+        :busy="loading"
+        @update:search="setSearch"
+        @update:filter="(key: string, value: string) => setFilter(key, value)"
+        @update:view="setView"
+      />
+    </template>
 
-    <div v-if="loading" class=" rounded flex justify-center py-12">
-      <UIcon name="i-heroicons-arrow-path" class="w-6 h-6 animate-spin text-muted-foreground" />
-    </div>
+    <BaseDataTable
+      v-if="view === 'table'"
+      v-model:selected="selectedIds"
+      :rows="filtered"
+      :columns="columns"
+      :row-key="rowKey"
+      :loading="loading"
+      selectable
+      :empty-title="t('noUsers')"
+      empty-icon="i-lucide-users"
+    >
+      <template #bulk>
+        <span class="text-sm font-medium">{{ t('bulk.selected', { count: selectedCount }) }}</span>
+        <div class="ms-auto flex flex-wrap items-center gap-2">
+          <UButton
+            icon="i-lucide-ban"
+            size="xs"
+            color="warning"
+            variant="soft"
+            :loading="bulkBusy"
+            :label="t('bulk.ban')"
+            @click="handleBulkBan"
+          />
+          <UButton
+            icon="i-lucide-undo-2"
+            size="xs"
+            color="success"
+            variant="soft"
+            :loading="bulkBusy"
+            :label="t('bulk.unban')"
+            @click="handleBulkUnban"
+          />
+          <UButton
+            icon="i-lucide-trash-2"
+            size="xs"
+            color="error"
+            variant="soft"
+            :loading="bulkBusy"
+            :label="t('bulk.delete')"
+            @click="askDeleteSelected"
+          />
+          <UButton size="xs" color="neutral" variant="ghost" :label="t('bulk.clear')" @click="clearSelection" />
+        </div>
+      </template>
 
-    <div v-else v-motion-fade-visible-once class="shadow rounded overflow-hidden">
-      <div v-if="filteredUsers.length === 0" class="text-center py-12 text-muted-foreground">
-        {{ t('noUsers') }}
-      </div>
+      <template #cell-user="{ row }">
+        <div class="flex items-center gap-3">
+          <UAvatar :src="row.image || undefined" :alt="row.name || row.email" size="sm" />
+          <div class="min-w-0">
+            <p class="truncate text-sm font-medium text-highlighted">{{ row.name || t('unnamed') }}</p>
+            <p class="truncate text-xs text-muted">{{ row.email }}</p>
+          </div>
+        </div>
+      </template>
+      <template #cell-role="{ row }">
+        <UBadge :color="roleColor(row.role)" variant="subtle" size="sm">{{ roleLabel(row.role) }}</UBadge>
+      </template>
+      <template #cell-status="{ row }">
+        <UBadge v-if="row.banned" color="error" variant="subtle" size="sm">{{ t('status.banned') }}</UBadge>
+        <span v-else class="text-xs text-muted">{{ t('status.active') }}</span>
+      </template>
+      <template #cell-verified="{ row }">
+        <UBadge :color="row.emailVerified ? 'success' : 'neutral'" variant="subtle" size="sm">
+          {{ row.emailVerified ? t('status.verified') : t('status.unverified') }}
+        </UBadge>
+      </template>
+      <template #row-actions="{ row }">
+        <UDropdownMenu :items="menuItems(row)" :content="{ align: 'end' }">
+          <UButton
+            icon="i-lucide-ellipsis-vertical"
+            color="neutral"
+            variant="ghost"
+            size="xs"
+            :aria-label="t('a11y.actions')"
+          />
+        </UDropdownMenu>
+      </template>
 
-      <UTable v-else v-model:row-selection="rowSelection" :data="filteredUsers" :columns="columns"
-        :get-row-id="getUserRowId" class="flex-1"
-        :ui="{ 'tr': 'bg-transparent transition-colors', 'td': 'border-0', 'th': 'border-0' }" />
+      <template #footer>
+        <p class="mt-3 px-1 text-sm text-muted">
+          {{ t('footer.selected', { selected: selectedCount, total: filtered.length }) }}
+        </p>
+      </template>
+    </BaseDataTable>
 
-      <div class="px-5 py-4  text-sm text-muted flex items-center justify-between">
-        <span :key="selectedCount" v-motion-fade :duration="200">
-          {{ t('footer.selected', { selected: selectedCount, total: filteredUsers.length }) }}
-        </span>
-      </div>
-    </div>
+    <BaseCollectionList
+      v-else
+      :items="filtered"
+      :row-key="rowKey"
+      :loading="loading"
+      :empty-title="t('noUsers')"
+      empty-icon="i-lucide-users"
+    >
+      <template #item="{ item: user }">
+        <UAvatar :src="user.image || undefined" :alt="user.name || user.email" size="sm" />
+        <div class="min-w-0 flex-1">
+          <p class="truncate text-sm font-medium text-highlighted">{{ user.name || t('unnamed') }}</p>
+          <p class="truncate text-sm text-muted">{{ user.email }}</p>
+        </div>
+        <UBadge class="hidden shrink-0 sm:inline-flex" :color="roleColor(user.role)" variant="subtle" size="sm">
+          {{ roleLabel(user.role) }}
+        </UBadge>
+        <UBadge
+          v-if="user.banned"
+          class="hidden shrink-0 md:inline-flex"
+          color="error"
+          variant="subtle"
+          size="sm"
+        >
+          {{ t('status.banned') }}
+        </UBadge>
+        <UDropdownMenu :items="menuItems(user)" :content="{ align: 'end' }">
+          <UButton
+            icon="i-lucide-ellipsis-vertical"
+            color="neutral"
+            variant="ghost"
+            size="xs"
+            :aria-label="t('a11y.actions')"
+          />
+        </UDropdownMenu>
+      </template>
+    </BaseCollectionList>
 
     <UModal v-model:open="showDeleteModal">
       <template #content>
         <UCard>
           <template #header>
             <h3 class="text-lg font-semibold">
-              {{ deleteTargets.length === 1 ? t('deleteModal.titleSingle') : t('deleteModal.titleMany', {
-                count: deleteTargets.length }) }}
+              {{ deleteTargets.length === 1
+                ? t('deleteModal.titleSingle')
+                : t('deleteModal.titleMany', { count: deleteTargets.length }) }}
             </h3>
           </template>
           <div class="space-y-2">
             <p class="text-sm text-muted-foreground">
-              {{ deleteTargets.length === 1 ? t('deleteModal.descriptionSingle') :
-                t('deleteModal.descriptionMany') }}
+              {{ deleteTargets.length === 1
+                ? t('deleteModal.descriptionSingle')
+                : t('deleteModal.descriptionMany') }}
             </p>
-            <ul class="max-h-40 overflow-y-auto space-y-1 text-sm">
+            <ul class="max-h-40 space-y-1 overflow-y-auto text-sm">
               <li v-for="target in deleteTargets.slice(0, 5)" :key="target.id" class="truncate font-medium">
                 {{ target.name || target.email }}
               </li>
@@ -560,9 +672,8 @@ const columns: TableColumn<AdminUser>[] = [
           </div>
           <template #footer>
             <div class="flex justify-end gap-3">
-              <UButton variant="ghost" color="neutral" @click="closeDeleteModal">{{ t('deleteModal.cancel') }}
-              </UButton>
-              <UButton color="error" @click="confirmDeleteModal">{{ t('deleteModal.confirm') }}</UButton>
+              <UButton variant="ghost" color="neutral" :label="t('deleteModal.cancel')" @click="closeDeleteModal" />
+              <UButton color="error" :label="t('deleteModal.confirm')" @click="confirmDeleteModal" />
             </div>
           </template>
         </UCard>
@@ -580,12 +691,20 @@ const columns: TableColumn<AdminUser>[] = [
               <UInput v-model="createForm.name" :placeholder="t('createModal.namePlaceholder')" class="w-full" />
             </UFormField>
             <UFormField :label="t('createModal.email')">
-              <UInput v-model="createForm.email" type="email" :placeholder="t('createModal.emailPlaceholder')"
-                class="w-full" />
+              <UInput
+                v-model="createForm.email"
+                type="email"
+                :placeholder="t('createModal.emailPlaceholder')"
+                class="w-full"
+              />
             </UFormField>
             <UFormField :label="t('createModal.password')">
-              <UInput v-model="createForm.password" type="password"
-                :placeholder="t('createModal.passwordPlaceholder')" class="w-full" />
+              <UInput
+                v-model="createForm.password"
+                type="password"
+                :placeholder="t('createModal.passwordPlaceholder')"
+                class="w-full"
+              />
             </UFormField>
             <UFormField :label="t('createModal.role')">
               <USelect v-model="createForm.role" :items="roleOptions()" class="w-full" />
@@ -593,9 +712,8 @@ const columns: TableColumn<AdminUser>[] = [
           </div>
           <template #footer>
             <div class="flex justify-end gap-3">
-              <UButton variant="ghost" color="neutral" @click="closeCreateModal">{{ t('createModal.cancel') }}
-              </UButton>
-              <UButton color="primary" @click="createUser">{{ t('createModal.submit') }}</UButton>
+              <UButton variant="ghost" color="neutral" :label="t('createModal.cancel')" @click="closeCreateModal" />
+              <UButton color="primary" :loading="creating" :label="t('createModal.submit')" @click="createUser" />
             </div>
           </template>
         </UCard>
@@ -610,10 +728,13 @@ const columns: TableColumn<AdminUser>[] = [
           </template>
           <div class="space-y-4">
             <div class="flex items-center gap-3">
-              <UAvatar :src="selectedUser.image || undefined" :alt="selectedUser.name || selectedUser.email"
-                size="sm" />
+              <UAvatar
+                :src="selectedUser.image || undefined"
+                :alt="selectedUser.name || selectedUser.email"
+                size="sm"
+              />
               <div>
-                <p class="font-medium text-sm">{{ selectedUser.name || t('unnamed') }}</p>
+                <p class="text-sm font-medium">{{ selectedUser.name || t('unnamed') }}</p>
                 <p class="text-xs text-muted-foreground">{{ selectedUser.email }}</p>
               </div>
             </div>
@@ -621,21 +742,30 @@ const columns: TableColumn<AdminUser>[] = [
               <USelect v-model="editForm.role" :items="roleOptions()" class="w-full" />
             </UFormField>
             <UFormField v-if="selectedUser.banned" :label="t('editModal.banReason')">
-              <UTextarea v-model="banReason" :placeholder="t('editModal.banReasonPlaceholder')" :rows="3"
-                class="w-full" />
+              <UTextarea
+                v-model="banReason"
+                :placeholder="t('editModal.banReasonPlaceholder')"
+                :rows="3"
+                class="w-full"
+              />
             </UFormField>
           </div>
           <template #footer>
             <div class="flex justify-end gap-3">
-              <UButton variant="ghost" color="neutral" @click="closeEditModal">{{ t('editModal.cancel') }}</UButton>
-              <UButton v-if="!selectedUser.banned" color="error" variant="outline" @click="handleBanFromEdit">
-                {{ t('editModal.ban') }}
-              </UButton>
-              <UButton color="primary" @click="saveUser">{{ t('editModal.save') }}</UButton>
+              <UButton variant="ghost" color="neutral" :label="t('editModal.cancel')" @click="closeEditModal" />
+              <UButton
+                v-if="!selectedUser.banned"
+                color="error"
+                variant="outline"
+                :loading="banning"
+                :label="t('editModal.ban')"
+                @click="handleBanFromEdit"
+              />
+              <UButton color="primary" :loading="savingRole" :label="t('editModal.save')" @click="saveUser" />
             </div>
           </template>
         </UCard>
       </template>
     </UModal>
-  </div>
+  </BaseCollectionPage>
 </template>

@@ -61,6 +61,8 @@ list:
 ---
 #title
 Dominate Local Search
+#subtitle
+What you can do with MagicSync
 #description
 Optimize your listings and turn searchers into customers with powerful automation tools.
 ::

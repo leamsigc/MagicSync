@@ -1,14 +1,19 @@
 <script lang="ts" setup>
 interface Props {
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'full';
 }
 
-const { size = 'md' } = defineProps<Props>();
+const { size = 'full' } = defineProps<Props>();
 </script>
 
 <template>
   <div class="min-h-screen">
-    <div class="container mx-auto flex max-w-7xl gap-2 px-4 py-4 sm:gap-4">
+    <div class="container mx-auto flex gap-2 px-4 py-4 sm:gap-4" :class="{
+      'max-w-7xl': size === 'lg',
+      'max-w-2xl': size === 'md',
+      'max-w-xl': size === 'sm',
+      'max-w-[unset]': size === 'full'
+    }">
       <!-- Left Sidebar (Navigation) - dark glass floating.
            Narrower on a phone so the main column still fits. -->
       <header class="w-16 shrink-0 sm:w-20 xl:w-72">
@@ -23,7 +28,8 @@ const { size = 'md' } = defineProps<Props>();
       <main class="w-full min-w-0 flex-1" :class="{
         'max-w-7xl': size === 'lg',
         'max-w-2xl': size === 'md',
-        'max-w-xl': size === 'sm'
+        'max-w-xl': size === 'sm',
+        '': size === 'full'
       }">
         <div class=" rounded-2xl min-h-screen ">
           <div class="sticky top-0 z-10  rounded-t-2xl border-b border-primary/10 px-5 py-4">

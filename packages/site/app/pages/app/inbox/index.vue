@@ -263,12 +263,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <UContainer class="py-8 max-w-6xl">
-    <div class="flex items-center justify-between mb-8">
-      <div>
-        <h1 class="text-3xl font-bold mb-2">{{ t('title') }}</h1>
-        <p class="text-muted-foreground">{{ t('description') }}</p>
-      </div>
+  <BaseCollectionPage :title="t('title')" :description="t('description')">
+    <template #actions>
       <UButton
         v-if="unreadCount > 0"
         variant="outline"
@@ -277,7 +273,7 @@ onMounted(() => {
       >
         {{ t('mark_all_read') }}
       </UButton>
-    </div>
+    </template>
 
     <UTabs :items="tabItems" :model-value="activeTab" class="w-full" @update:model-value="handleTabChange" />
 
@@ -592,5 +588,5 @@ onMounted(() => {
         />
       </div>
     </div>
-  </UContainer>
+  </BaseCollectionPage>
 </template>

@@ -2,6 +2,14 @@
   "en": {
     "title": "Agents & skills",
     "description": "Versioned specialists with explicit tool scopes. Runs pin exact versions.",
+    "views": {
+      "grid": "Grid",
+      "list": "List"
+    },
+    "searchAgents": "Search agents…",
+    "searchSkills": "Search skills…",
+    "clearFilters": "Clear filters",
+    "noResults": "No results match your search.",
     "seed": {
       "cta": "Seed built-ins",
       "needsBusiness": "Select a business before seeding built-ins",
@@ -15,6 +23,7 @@
       "description": "Description",
       "systemPrompt": "System prompt",
       "tools": "Allowed tools (comma separated)",
+      "toolsPlaceholder": "web_search, retrieve",
       "cancel": "Cancel",
       "save": "Create agent",
       "nameRequired": "A name is required"
@@ -23,6 +32,7 @@
       "title": "Specialized agents",
       "description": "Each run records the exact agent and skill versions used.",
       "empty": "No agents yet — seed the built-ins or create one.",
+      "noDescription": "No description yet.",
       "reviewRequired": "Human review"
     },
     "skills": {
@@ -58,6 +68,14 @@
   "es": {
     "title": "Agentes y habilidades",
     "description": "Especialistas versionados con permisos explícitos. Las ejecuciones fijan versiones exactas.",
+    "views": {
+      "grid": "Cuadrícula",
+      "list": "Lista"
+    },
+    "searchAgents": "Buscar agentes…",
+    "searchSkills": "Buscar habilidades…",
+    "clearFilters": "Limpiar filtros",
+    "noResults": "Ningún resultado coincide con tu búsqueda.",
     "seed": {
       "cta": "Cargar integrados",
       "needsBusiness": "Selecciona un negocio antes de cargar",
@@ -71,6 +89,7 @@
       "description": "Descripción",
       "systemPrompt": "Prompt del sistema",
       "tools": "Herramientas permitidas (separadas por comas)",
+      "toolsPlaceholder": "web_search, retrieve",
       "cancel": "Cancelar",
       "save": "Crear agente",
       "nameRequired": "El nombre es obligatorio"
@@ -79,6 +98,7 @@
       "title": "Agentes especializados",
       "description": "Cada ejecución registra las versiones exactas usadas.",
       "empty": "Aún no hay agentes — carga los integrados o crea uno.",
+      "noDescription": "Sin descripción todavía.",
       "reviewRequired": "Revisión humana"
     },
     "skills": {
@@ -114,6 +134,14 @@
   "de": {
     "title": "Agenten & Skills",
     "description": "Versionierte Spezialisten mit expliziten Tool-Rechten. Läufe pinnen exakte Versionen.",
+    "views": {
+      "grid": "Raster",
+      "list": "Liste"
+    },
+    "searchAgents": "Agenten suchen…",
+    "searchSkills": "Skills suchen…",
+    "clearFilters": "Filter zurücksetzen",
+    "noResults": "Keine Ergebnisse für deine Suche.",
     "seed": {
       "cta": "Built-ins laden",
       "needsBusiness": "Wähle zuerst ein Unternehmen",
@@ -127,6 +155,7 @@
       "description": "Beschreibung",
       "systemPrompt": "System-Prompt",
       "tools": "Erlaubte Tools (kommagetrennt)",
+      "toolsPlaceholder": "web_search, retrieve",
       "cancel": "Abbrechen",
       "save": "Agent erstellen",
       "nameRequired": "Ein Name ist erforderlich"
@@ -135,6 +164,7 @@
       "title": "Spezialisierte Agenten",
       "description": "Jeder Lauf zeichnet die exakten Versionen auf.",
       "empty": "Noch keine Agenten — lade die Built-ins oder erstelle einen.",
+      "noDescription": "Noch keine Beschreibung.",
       "reviewRequired": "Menschliche Prüfung"
     },
     "skills": {
@@ -170,6 +200,14 @@
   "fr": {
     "title": "Agents et compétences",
     "description": "Spécialistes versionnés aux autorisations explicites. Les exécutions épinglent les versions exactes.",
+    "views": {
+      "grid": "Grille",
+      "list": "Liste"
+    },
+    "searchAgents": "Rechercher des agents…",
+    "searchSkills": "Rechercher des compétences…",
+    "clearFilters": "Réinitialiser les filtres",
+    "noResults": "Aucun résultat ne correspond à votre recherche.",
     "seed": {
       "cta": "Charger les intégrés",
       "needsBusiness": "Sélectionne d’abord une entreprise",
@@ -183,6 +221,7 @@
       "description": "Description",
       "systemPrompt": "Prompt système",
       "tools": "Outils autorisés (séparés par des virgules)",
+      "toolsPlaceholder": "web_search, retrieve",
       "cancel": "Annuler",
       "save": "Créer l’agent",
       "nameRequired": "Un nom est requis"
@@ -191,6 +230,7 @@
       "title": "Agents spécialisés",
       "description": "Chaque exécution enregistre les versions exactes utilisées.",
       "empty": "Aucun agent — charge les intégrés ou crées-en un.",
+      "noDescription": "Pas encore de description.",
       "reviewRequired": "Révision humaine"
     },
     "skills": {

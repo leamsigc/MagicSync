@@ -5,10 +5,13 @@
 /**
  * Page Description: Asset Gallery Management
  *
- * Comprehensive asset gallery for browsing, uploading, and managing media files
+ * Comprehensive asset gallery for browsing, uploading, and managing media files.
+ * The page owns the collection state (folder scope, type filter, search, view
+ * mode); the shared `BaseCollectionToolbar` renders the controls and
+ * `MediaGallery` keeps the masonry / grid / list renderings.
  *
  * @author Ismael Garcia <leamsigc@leamsigc.com>
- * @version 0.0.1
+ * @version 0.0.2
  *
  * @todo [ ] Test the page
  * @todo [ ] Integration test
@@ -19,7 +22,6 @@ import type { Asset } from '#layers/BaseDB/db/schema'
 import type { FolderScope } from '#layers/BaseShared/shared/utils/asset-folders'
 import AssetDeletionProgressModal from '#layers/BaseAssets/app/components/assets/media/components/AssetDeletionProgressModal.vue'
 import MediaFilters from '#layers/BaseAssets/app/components/assets/media/components/MediaFilters.vue'
-import MediaPageHeader from '#layers/BaseAssets/app/components/assets/media/components/MediaPageHeader.vue'
 import MediaStats from '#layers/BaseAssets/app/components/assets/media/components/MediaStats.vue'
 
 // Translation composable
@@ -55,7 +57,7 @@ const selectedTab = ref('library')
 const selectedAssetForEdit = ref<Asset | null>(null)
 const filterType = ref<'all' | 'image' | 'video' | 'document'>('all')
 const searchQuery = ref('')
-const viewMode = ref<'grid' | 'list'>('grid')
+const viewMode = ref<'masonry' | 'grid' | 'list' | 'carousel'>('masonry')
 const showCreateFolder = ref(false)
 const newFolderName = ref('')
 const isCreatingFolder = ref(false)
@@ -66,6 +68,27 @@ const activeScope = ref<FolderScope>({ kind: 'unfiled' })
 const selectedBusinessId = ref<string | undefined>(activeBusinessId.value)
 const hasSelectedBusiness = computed(() => !!selectedBusinessId.value)
 const storageUsage = computed(() => getStorageUsage())
+
+const assetStats = computed(() => {
+  const list = assets.value ?? []
+  return {
+    total: list.length,
+    images: list.filter(asset => asset.mimeType.startsWith('image/')).length,
+    videos: list.filter(asset => asset.mimeType.startsWith('video/')).length,
+    documents: list.filter(asset => !asset.mimeType.startsWith('image/') && !asset.mimeType.startsWith('video/')).length,
+  }
+})
+
+const storageBreakdown = computed(() => {
+  const buckets = { images: 0, videos: 0, documents: 0, other: 0 }
+  for (const asset of assets.value ?? []) {
+    if (asset.mimeType.startsWith('image/')) buckets.images += asset.size
+    else if (asset.mimeType.startsWith('video/')) buckets.videos += asset.size
+    else if (asset.mimeType.startsWith('audio/') || asset.mimeType.startsWith('application/')) buckets.documents += asset.size
+    else buckets.other += asset.size
+  }
+  return buckets
+})
 
 // Keep the selected business in sync with the app-wide active business
 watch(activeBusinessId, (id) => {
@@ -154,15 +177,6 @@ const handleMoveSelected = async (folderId: string | null) => {
   toast.add({ title: t('messages.assets_moved', { count: result.moved }), color: 'success' })
 }
 
-const assetStats = computed(() => {
-  const list = assets.value ?? []
-  return {
-    total: list.length,
-    images: list.filter(a => a.mimeType.startsWith('image/')).length,
-    videos: list.filter(a => a.mimeType.startsWith('video/')).length,
-    documents: list.filter(a => !a.mimeType.startsWith('image/') && !a.mimeType.startsWith('video/')).length
-  }
-})
 
 // Methods
 const handleAssetSelected = (asset: Asset) => {
@@ -189,6 +203,10 @@ const showDeleteConfirm = ref(false)
 
 const openUploader = () => {
   showUploader.value = true
+}
+
+function handleSelectType(type: 'all' | 'image' | 'video' | 'document') {
+  filterType.value = type
 }
 
 const closeUploader = () => {
@@ -243,7 +261,7 @@ const mediaTabs = computed(() => [{
 
 const handleDriveImport = async (imported: Asset[]) => {
   toast.add({
-    title: 'Success',
+    title: t('messages.success'),
     description: t('messages.drive_imported', {
       count: imported.length,
       plural: imported.length !== 1 ? 's' : ''
@@ -257,41 +275,58 @@ const handleDriveImport = async (imported: Asset[]) => {
 </script>
 
 <template>
-  <UContainer class="py-6 space-y-6 ">
-    <!-- Header -->
-    <MediaPageHeader :selected-assets-count="selectedAssets.length" :is-deleting-assets="isDeletingAssets"
-      @delete-selected="openDeleteConfirm" @upload-assets="openUploader" @create-folder="handleCreateFolder"
-      data-tour="add-assets-step-0" />
-
-    <!-- Business Selection Warning -->
-    <UAlert v-if="!hasSelectedBusiness" color="neutral" variant="soft" icon="lucide:info" class="mb-4">
-      <template #title>
-        {{ t('alerts.select_business.title') }}
-      </template>
-      <template #description>
-        {{ t('alerts.select_business.description') }}
-        <NuxtLink to="/app/business" class="underline ml-2">{{ t('alerts.select_business.link_text') }}</NuxtLink>
-      </template>
-    </UAlert>
-    <!-- Error Alert -->
-    <UAlert v-if="error" color="error" variant="soft" icon="lucide:triangle-alert">
-      <template #title>
-        {{ t('alerts.error') }}
-      </template>
-      <template #description>
-        {{ error }}
-      </template>
-      <template #actions>
-        <UButton variant="outline" size="sm" @click="clearError">
-          {{ t('buttons.dismiss') }}
+  <BaseCollectionPage :title="t('title')" :description="t('description')" container="full" back-to="">
+    <template #actions>
+      <div class="flex items-center gap-2" data-tour="add-assets-step-0">
+        <UButton v-if="selectedAssets.length > 0" color="error" variant="solid" :disabled="isDeletingAssets"
+          @click="openDeleteConfirm">
+          <Icon name="lucide:trash-2" class="mr-2 h-4 w-4" />
+          {{ t('buttons.delete_selected', { count: selectedAssets.length }) }}
         </UButton>
-      </template>
-    </UAlert>
 
-    <!-- Stats and Filters -->
+        <UButton variant="outline" @click="handleCreateFolder">
+          <Icon name="lucide:folder-plus" class="mr-2 h-4 w-4" />
+          <span class="hidden md:inline">{{ t('buttons.new_folder') }}</span>
+        </UButton>
+
+        <UButton @click="openUploader">
+          <Icon name="lucide:upload" class="mr-2 h-4 w-4" />
+          <span class="hidden md:inline">{{ t('buttons.upload_assets') }}</span>
+        </UButton>
+      </div>
+    </template>
+
     <div class="space-y-4">
+      <!-- Business Selection Warning -->
+      <UAlert v-if="!hasSelectedBusiness" color="neutral" variant="soft" icon="lucide:info">
+        <template #title>
+          {{ t('alerts.select_business.title') }}
+        </template>
+        <template #description>
+          {{ t('alerts.select_business.description') }}
+          <NuxtLink to="/app/business" class="underline ml-2">{{ t('alerts.select_business.link_text') }}</NuxtLink>
+        </template>
+      </UAlert>
+
+      <!-- Error Alert -->
+      <UAlert v-if="error" color="error" variant="soft" icon="lucide:triangle-alert">
+        <template #title>
+          {{ t('alerts.error') }}
+        </template>
+        <template #description>
+          {{ error }}
+        </template>
+        <template #actions>
+          <UButton variant="outline" size="sm" @click="clearError">
+            {{ t('buttons.dismiss') }}
+          </UButton>
+        </template>
+      </UAlert>
+
       <!-- Stats -->
-      <MediaStats :asset-stats="assetStats" :storage-usage="storageUsage" />
+      <MediaStats :storage-usage="storageUsage" :storage-breakdown="storageBreakdown" :asset-stats="assetStats"
+        :active-type="filterType" @upload="openUploader" @create-folder="handleCreateFolder"
+        @select-type="handleSelectType" />
 
       <!-- Library / Google Drive tabs -->
       <UTabs v-model="selectedTab" :items="mediaTabs" class="w-full">
@@ -303,25 +338,15 @@ const handleDriveImport = async (imported: Asset[]) => {
 
         <template #library>
           <div class="space-y-4 mt-4">
-            <!-- Filters and Search -->
-            <MediaFilters v-model:filter-type="filterType" v-model:search-query="searchQuery" v-model:view-mode="viewMode"
-              v-model:folder-scope="activeScope" :folders="assetFolders" hide-view-mode data-tour="add-assets-step-1" />
+            <!-- Search / folder / type filters and the view switcher -->
+            <MediaFilters v-model:filter-type="filterType" v-model:search-query="searchQuery"
+              v-model:view-mode="viewMode" v-model:folder-scope="activeScope" :folders="assetFolders"
+              data-tour="add-assets-step-1" />
 
             <!-- Delete the selected folder. Its assets fall back to the unfiled bucket. -->
-            <div
-              v-if="activeFolderId"
-              class="flex justify-end"
-              v-motion-fade
-              :duration="250"
-            >
-              <UButton
-                variant="outline"
-                color="error"
-                size="sm"
-                :loading="isDeletingFolder"
-                :disabled="!selectedBusinessId"
-                @click="handleDeleteFolder"
-              >
+            <div v-if="activeFolderId" class="flex justify-end" v-motion-fade :duration="250">
+              <UButton variant="outline" color="error" size="sm" :loading="isDeletingFolder"
+                :disabled="!selectedBusinessId" @click="handleDeleteFolder">
                 <Icon name="lucide:folder-x" class="mr-2 h-4 w-4" />
                 {{ t('buttons.delete_folder', { name: activeFolderName }) }}
               </UButton>
@@ -329,10 +354,11 @@ const handleDriveImport = async (imported: Asset[]) => {
 
             <!-- Asset Gallery -->
             <UCard class="p-6" variant="soft" data-tour="add-assets-step-2">
-              <MediaGallery :business-id="selectedBusinessId" :selectable="true" :multi-select="true" :show-uploader="false"
-                :filter-type="filterType" :folder-scope="activeScope" :folders="assetFolders" @select="handleAssetSelected"
-                @deselect="handleAssetDeselected" @upload="handleFileUpload"
-                @open-edit-modal="handleOpenEditModal" @move-selected="handleMoveSelected" />
+              <MediaGallery :business-id="selectedBusinessId" :selectable="true" :multi-select="true"
+                :show-uploader="false" :filter-type="filterType" :search-query="searchQuery" :view-mode="viewMode"
+                :folder-scope="activeScope" :folders="assetFolders" @select="handleAssetSelected"
+                @deselect="handleAssetDeselected" @upload="handleFileUpload" @open-edit-modal="handleOpenEditModal"
+                @move-selected="handleMoveSelected" />
             </UCard>
           </div>
         </template>
@@ -353,7 +379,6 @@ const handleDriveImport = async (imported: Asset[]) => {
       <template #description>
         {{ t('dialogs.upload_assets.description') }}
       </template>
-      <UButton :label="t('buttons.upload_assets')" />
 
       <template #body>
         <MediaUploader :business-id="selectedBusinessId" @upload="handleFileUpload" @error="handleUploadError" />
@@ -385,11 +410,8 @@ const handleDriveImport = async (imported: Asset[]) => {
           <UButton variant="outline" @click="closeCreateFolder">
             {{ t('dialogs.create_folder.cancel') }}
           </UButton>
-          <UButton
-            :loading="isCreatingFolder"
-            :disabled="!newFolderName.trim() || !selectedBusinessId"
-            @click="submitCreateFolder"
-          >
+          <UButton :loading="isCreatingFolder" :disabled="!newFolderName.trim() || !selectedBusinessId"
+            @click="submitCreateFolder">
             <Icon name="lucide:folder-plus" class="mr-2 h-4 w-4" />
             {{ t('dialogs.create_folder.create') }}
           </UButton>
@@ -425,5 +447,5 @@ const handleDriveImport = async (imported: Asset[]) => {
     <!-- Asset Editor Dialog -->
     <!-- <AssetEditor v-if="selectedAssetForEdit" v-model:open="showEditor" :asset="selectedAssetForEdit"
       @save="handleEditorSave" @close="handleEditorClose" /> -->
-  </UContainer>
+  </BaseCollectionPage>
 </template>

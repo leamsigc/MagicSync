@@ -10,6 +10,8 @@
  * @author Ismael Garcia <leamsigc@leamsigc.com>
  * @version 0.0.1
  */
+import type { CollectionTableColumn } from '#layers/BaseUI/app/utils/collection'
+
 const props = defineProps<{
   businessId: string
   businessName?: string
@@ -37,10 +39,8 @@ interface Invitation {
 }
 
 type Role = 'owner' | 'admin' | 'member'
-type AssignableRole = 'owner' | 'member'
-type RoleFilter = 'all' | AssignableRole
 
-interface RosterRow {
+type RosterRow = {
   key: string
   kind: 'member' | 'invitation'
   id: string
@@ -60,8 +60,6 @@ const members = ref<Member[]>([])
 const invitations = ref<Invitation[]>([])
 const isLoading = ref(true)
 const busyId = ref<string | null>(null)
-const search = ref('')
-const roleFilter = ref<RoleFilter>('all')
 
 const inviteModalOpen = ref(false)
 const inviteMode = ref<'single' | 'bulk'>('single')
@@ -77,12 +75,6 @@ const roleOptions = computed<{ value: string, label: string }[]>(() => [
   { value: 'owner', label: t('team.roleOwner') },
   { value: 'member', label: t('team.roleMember') },
 ])
-
-const roleFilters: { value: RoleFilter, label: string }[] = [
-  { value: 'all', label: 'team.roleAll' },
-  { value: 'owner', label: 'team.roleOwner' },
-  { value: 'member', label: 'team.roleMember' },
-]
 
 const avatarColor = (name: string): string => AVATAR_COLORS[name.length % AVATAR_COLORS.length] ?? AVATAR_COLORS[0]!
 const initialOf = (name: string): string => name.charAt(0).toUpperCase() || '?'
@@ -118,21 +110,63 @@ const roster = computed<RosterRow[]>(() => [
   })),
 ])
 
-const filteredRoster = computed(() => {
-  const term = search.value.trim().toLowerCase()
-  return roster.value.filter((row) => {
-    const matchesTerm = !term || `${row.name} ${row.email}`.toLowerCase().includes(term)
-    const matchesRole = roleFilter.value === 'all' || row.role === roleFilter.value
-    return matchesTerm && matchesRole
-  })
+const {
+  view,
+  setView,
+  search,
+  setSearch,
+  filters,
+  setFilter,
+  filtered,
+  hasActiveFilters,
+  resetFilters,
+} = useCollectionView<RosterRow>({
+  key: 'business-team-members',
+  modes: ['table', 'list'],
+  defaultView: 'table',
+  rows: roster,
+  searchFields: row => [row.name, row.email],
+  filterFns: {
+    role: (row, value) => row.role === value,
+  },
 })
+
+const roleFilterOptions = computed(() => [
+  { value: 'all', label: t('team.roleAll') },
+  { value: 'owner', label: t('team.roleOwner') },
+  { value: 'member', label: t('team.roleMember') },
+])
+
+const viewOptions = computed(() => [
+  { value: 'table', label: t('team.viewTable'), icon: 'i-lucide-table' },
+  { value: 'list', label: t('team.viewList'), icon: 'i-lucide-list' },
+])
+
+const toolbarFilters = computed(() => [
+  {
+    key: 'role',
+    label: t('team.columns.role'),
+    value: filters.value.role || 'all',
+    options: roleFilterOptions.value,
+    width: 'w-full sm:w-36',
+  },
+])
+
+const columns = computed<CollectionTableColumn[]>(() => [
+  { key: 'member', label: t('team.columns.member') },
+  { key: 'role', label: t('team.columns.role') },
+  { key: 'status', label: t('team.columns.status'), hideBelow: 'sm' },
+  { key: 'added', label: t('team.columns.added'), hideBelow: 'md' },
+])
+
+const rowKey = (row: RosterRow): string => row.key
 
 const subtitle = computed(() =>
   t('team.subtitle', {
     count: members.value.length,
     business: props.businessName || '',
     pending: invitations.value.length,
-  })
+  }),
 )
 
 const canRemove = (row: RosterRow): boolean => row.kind === 'member' && canManage.value && row.role !== 'owner' && row.role !== 'admin' && !isSelf(row)
@@ -140,6 +174,18 @@ const canRemove = (row: RosterRow): boolean => row.kind === 'member' && canManag
 // admin area, and ownership transfer is not a team action.
 const canChangeRole = (row: RosterRow): boolean => row.kind === 'member' && canManage.value && row.role === 'member'
 const showRowMenu = (row: RosterRow): boolean => row.kind === 'invitation' || canRemove(row)
+
+function handleViewChange(next: string) {
+  setView(next)
+}
+
+function handleFilterChange(key: string, value: string) {
+  setFilter(key, value)
+}
+
+function handleSearchChange(value: string) {
+  setSearch(value)
+}
 
 async function loadTeam() {
   isLoading.value = true
@@ -176,6 +222,10 @@ async function changeRole(row: RosterRow, role: string) {
   finally {
     busyId.value = null
   }
+}
+
+function handleRoleChange(row: RosterRow, value: string) {
+  void changeRole(row, value)
 }
 
 async function removeMember(row: RosterRow) {
@@ -246,10 +296,6 @@ const rowMenuItems = (row: RosterRow) => {
   ]]
 }
 
-const selectRoleFilter = (value: RoleFilter) => {
-  roleFilter.value = value
-}
-
 const setInviteMode = (mode: 'single' | 'bulk') => {
   inviteMode.value = mode
 }
@@ -283,7 +329,7 @@ async function sendInvites() {
   try {
     const response = await $fetch<{ invitations: { email: string, acceptUrl: string }[] }>(
       `/api/v1/business/${props.businessId}/invite`,
-      { method: 'POST', body: { emails, role: inviteRole.value } }
+      { method: 'POST', body: { emails, role: inviteRole.value } },
     )
     sentLinks.value = response.invitations ?? []
     toast.add({ title: t('team.invited'), description: t('team.invitedCount', { count: sentLinks.value.length }), color: 'success' })
@@ -311,98 +357,160 @@ async function sendInvites() {
       </div>
     </template>
 
-    <!-- Toolbar: search + role filter -->
-    <div class="mb-4 flex flex-wrap items-center gap-3">
-      <UInput v-model="search" icon="i-lucide-search" :placeholder="t('team.search')" class="w-full sm:w-72" />
-      <div class="flex flex-wrap items-center gap-1">
-        <button v-for="chip in roleFilters" :key="chip.value" type="button"
-          class="rounded-lg border border-default px-3 py-1.5 text-sm font-medium transition-colors"
-          :class="roleFilter === chip.value
-            ? 'bg-accented text-highlighted'
-            : 'text-muted hover:bg-accented/50 hover:text-highlighted'"
-          @click="selectRoleFilter(chip.value)">
-          {{ t(chip.label) }}
-        </button>
-      </div>
-    </div>
+    <div class="space-y-4">
+      <BaseCollectionToolbar
+        :search="search"
+        :search-placeholder="t('team.search')"
+        :filters="toolbarFilters"
+        :view="view"
+        :views="viewOptions"
+        :busy="isLoading"
+        @update:search="handleSearchChange"
+        @update:filter="handleFilterChange"
+        @update:view="handleViewChange"
+      />
 
-    <!-- Roster -->
-    <div v-if="isLoading" class="flex justify-center py-10">
-      <UIcon name="i-lucide-loader-circle" class="size-5 animate-spin text-dimmed" />
-    </div>
+      <BaseDataTable
+        v-if="view === 'table'"
+        :rows="filtered"
+        :columns="columns"
+        :row-key="rowKey"
+        :loading="isLoading"
+        min-width="44rem"
+      >
+        <template #cell-member="{ row }">
+          <div class="flex items-center gap-3">
+            <UAvatar v-if="row.image" :src="row.image" :alt="row.name" size="sm" class="shrink-0" />
+            <span
+              v-else
+              class="flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white"
+              :class="avatarColor(row.name)"
+            >{{ initialOf(row.name) }}</span>
+            <div class="min-w-0">
+              <p class="truncate font-medium text-highlighted">
+                {{ row.name }}
+                <span v-if="isSelf(row)" class="text-muted">{{ t('team.you') }}</span>
+              </p>
+              <p class="truncate text-xs text-muted">{{ row.email }}</p>
+            </div>
+          </div>
+        </template>
 
-    <div v-else-if="!filteredRoster.length" class="py-12 text-center">
-      <UIcon name="i-lucide-users" class="mx-auto mb-3 size-9 text-dimmed" />
-      <p class="text-muted">{{ roster.length ? t('team.noResults') : t('team.empty') }}</p>
-    </div>
+        <template #cell-role="{ row }">
+          <span v-if="row.role === 'owner'" class="inline-flex items-center gap-1.5 text-default">
+            <UIcon name="i-lucide-crown" class="size-4 text-warning" />{{ t('team.roleOwner') }}
+          </span>
+          <UBadge v-else-if="row.role === 'admin'" color="primary" variant="subtle" size="sm">
+            {{ t('team.roleAdmin') }}
+          </UBadge>
+          <USelect
+            v-else-if="canChangeRole(row)"
+            :model-value="row.role"
+            :items="roleOptions"
+            value-key="value"
+            label-key="label"
+            size="sm"
+            class="w-32"
+            :disabled="busyId === row.id"
+            @update:model-value="(value: string) => handleRoleChange(row, String(value))"
+          />
+          <span v-else class="capitalize text-muted">{{ row.role }}</span>
+        </template>
 
-    <div v-else class="overflow-x-auto">
-      <table class="w-full min-w-[44rem] text-sm">
-        <thead>
-          <tr class="border-b border-default text-left text-xs text-muted">
-            <th class="px-3 py-2.5 font-medium">{{ t('team.columns.member') }}</th>
-            <th class="px-3 py-2.5 font-medium">{{ t('team.columns.role') }}</th>
-            <th class="px-3 py-2.5 font-medium">{{ t('team.columns.status') }}</th>
-            <th class="px-3 py-2.5 font-medium">{{ t('team.columns.added') }}</th>
-            <th class="px-3 py-2.5" />
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="row in filteredRoster" :key="row.key"
-            class="border-b border-default last:border-0 hover:bg-accented/30">
-            <!-- Member -->
-            <td class="px-3 py-3">
-              <div class="flex items-center gap-3">
-                <UAvatar v-if="row.image" :src="row.image" :alt="row.name" size="sm" class="shrink-0" />
-                <span v-else
-                  class="flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white"
-                  :class="avatarColor(row.name)">{{ initialOf(row.name) }}</span>
-                <div class="min-w-0">
-                  <p class="truncate font-medium text-highlighted">
-                    {{ row.name }}
-                    <span v-if="isSelf(row)" class="text-muted">{{ t('team.you') }}</span>
-                  </p>
-                  <p class="truncate text-xs text-muted">{{ row.email }}</p>
-                </div>
-              </div>
-            </td>
+        <template #cell-status="{ row }">
+          <UBadge :color="row.invited ? 'warning' : 'success'" variant="subtle" size="sm">
+            {{ row.invited ? t('team.statusInvited') : t('team.statusActive') }}
+          </UBadge>
+        </template>
 
-            <!-- Role -->
-            <td class="px-3 py-3">
-              <span v-if="row.role === 'owner'" class="inline-flex items-center gap-1.5 text-default">
-                <UIcon name="i-lucide-crown" class="size-4 text-warning" />{{ t('team.roleOwner') }}
-              </span>
-              <UBadge v-else-if="row.role === 'admin'" color="primary" variant="subtle" size="sm">
-                {{ t('team.roleAdmin') }}
-              </UBadge>
-              <USelect v-else-if="canChangeRole(row)" :model-value="row.role" :items="roleOptions" value-key="value"
-                label-key="label" size="sm" class="w-32" :disabled="busyId === row.id"
-                @update:model-value="value => changeRole(row, String(value))" />
-              <span v-else class="capitalize text-muted">{{ row.role }}</span>
-            </td>
+        <template #cell-added="{ row }">
+          <span class="whitespace-nowrap text-muted">{{ formatDate(row.createdAt) }}</span>
+        </template>
 
-            <!-- Status -->
-            <td class="px-3 py-3">
-              <UBadge :color="row.invited ? 'warning' : 'success'" variant="subtle" size="sm">
-                {{ row.invited ? t('team.statusInvited') : t('team.statusActive') }}
-              </UBadge>
-            </td>
+        <template #row-actions="{ row }">
+          <UDropdownMenu v-if="showRowMenu(row)" :items="rowMenuItems(row)" :content="{ align: 'end' }">
+            <UButton
+              icon="i-lucide-ellipsis-vertical"
+              color="neutral"
+              variant="ghost"
+              size="xs"
+              :loading="busyId === row.id"
+              :aria-label="t('team.actions')"
+            />
+          </UDropdownMenu>
+        </template>
 
-            <!-- Added -->
-            <td class="px-3 py-3 whitespace-nowrap text-muted">{{ formatDate(row.createdAt) }}</td>
+        <template #empty>
+          <div class="py-8 text-center">
+            <UIcon name="i-lucide-users" class="mx-auto mb-3 size-9 text-dimmed" />
+            <p class="font-medium text-highlighted">{{ roster.length ? t('team.noResults') : t('team.empty') }}</p>
+            <UButton
+              v-if="hasActiveFilters"
+              class="mt-3"
+              variant="ghost"
+              size="sm"
+              icon="i-lucide-filter-x"
+              :label="t('team.clearFilters')"
+              @click="resetFilters"
+            />
+          </div>
+        </template>
+      </BaseDataTable>
 
-            <!-- Actions -->
-            <td class="px-3 py-3">
-              <div class="flex justify-end">
-                <UDropdownMenu v-if="showRowMenu(row)" :items="rowMenuItems(row)" :content="{ align: 'end' }">
-                  <UButton icon="i-lucide-ellipsis-vertical" color="neutral" variant="ghost" size="xs"
-                    :loading="busyId === row.id" :aria-label="t('team.actions')" />
-                </UDropdownMenu>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <BaseCollectionList
+        v-else
+        :items="filtered"
+        :row-key="rowKey"
+        :loading="isLoading"
+        empty-icon="i-lucide-users"
+        :empty-title="roster.length ? t('team.noResults') : t('team.empty')"
+      >
+        <template #item="{ item: row }">
+          <UAvatar v-if="row.image" :src="row.image" :alt="row.name" size="sm" class="shrink-0" />
+          <span
+            v-else
+            class="flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white"
+            :class="avatarColor(row.name)"
+          >{{ initialOf(row.name) }}</span>
+
+          <div class="min-w-0 flex-1">
+            <p class="truncate text-sm font-medium text-highlighted">
+              {{ row.name }}
+              <span v-if="isSelf(row)" class="text-muted">{{ t('team.you') }}</span>
+            </p>
+            <p class="truncate text-xs text-muted">{{ row.email }}</p>
+          </div>
+
+          <UBadge class="hidden shrink-0 sm:inline-flex" :color="row.invited ? 'warning' : 'success'" variant="subtle" size="sm">
+            {{ row.invited ? t('team.statusInvited') : t('team.statusActive') }}
+          </UBadge>
+
+          <span class="hidden w-24 shrink-0 capitalize text-xs text-muted md:block">{{ row.role }}</span>
+          <span class="hidden w-24 shrink-0 text-right text-xs text-muted lg:block">{{ formatDate(row.createdAt) }}</span>
+
+          <UDropdownMenu v-if="showRowMenu(row)" :items="rowMenuItems(row)" :content="{ align: 'end' }">
+            <UButton
+              icon="i-lucide-ellipsis-vertical"
+              color="neutral"
+              variant="ghost"
+              size="xs"
+              :loading="busyId === row.id"
+              :aria-label="t('team.actions')"
+            />
+          </UDropdownMenu>
+        </template>
+
+        <template #empty>
+          <UButton
+            v-if="hasActiveFilters"
+            variant="ghost"
+            size="sm"
+            icon="i-lucide-filter-x"
+            :label="t('team.clearFilters')"
+            @click="resetFilters"
+          />
+        </template>
+      </BaseCollectionList>
     </div>
 
     <!-- Invite modal -->
@@ -410,15 +518,30 @@ async function sendInvites() {
       <template #body>
         <div class="space-y-4">
           <div class="flex gap-1">
-            <UButton :variant="inviteMode === 'single' ? 'solid' : 'ghost'" color="neutral" size="sm"
-              :label="t('team.modeSingle')" @click="setInviteMode('single')" />
-            <UButton :variant="inviteMode === 'bulk' ? 'solid' : 'ghost'" color="neutral" size="sm"
-              :label="t('team.modeBulk')" @click="setInviteMode('bulk')" />
+            <UButton
+              :variant="inviteMode === 'single' ? 'solid' : 'ghost'"
+              color="neutral"
+              size="sm"
+              :label="t('team.modeSingle')"
+              @click="() => setInviteMode('single')"
+            />
+            <UButton
+              :variant="inviteMode === 'bulk' ? 'solid' : 'ghost'"
+              color="neutral"
+              size="sm"
+              :label="t('team.modeBulk')"
+              @click="() => setInviteMode('bulk')"
+            />
           </div>
 
           <UFormField v-if="inviteMode === 'single'" :label="t('team.emailLabel')">
-            <UInput v-model="inviteEmail" type="email" icon="i-lucide-mail" :placeholder="t('team.emailPlaceholder')"
-              class="w-full" />
+            <UInput
+              v-model="inviteEmail"
+              type="email"
+              icon="i-lucide-mail"
+              :placeholder="t('team.emailPlaceholder')"
+              class="w-full"
+            />
           </UFormField>
 
           <UFormField v-else :label="t('team.emailsLabel')" :help="t('team.emailsHelp')">
@@ -434,8 +557,14 @@ async function sendInvites() {
             <ul class="space-y-1.5">
               <li v-for="link in sentLinks" :key="link.email" class="flex items-center gap-2 text-sm">
                 <span class="min-w-0 flex-1 truncate text-muted">{{ link.email }}</span>
-                <UButton icon="i-lucide-copy" color="neutral" variant="ghost" size="xs" :label="t('team.copy')"
-                  @click="handleCopySentLink(link)" />
+                <UButton
+                  icon="i-lucide-copy"
+                  color="neutral"
+                  variant="ghost"
+                  size="xs"
+                  :label="t('team.copy')"
+                  @click="handleCopySentLink(link)"
+                />
               </li>
             </ul>
           </div>
@@ -445,12 +574,15 @@ async function sendInvites() {
       <template #footer>
         <div class="flex w-full justify-end gap-2">
           <UButton color="neutral" variant="ghost" :label="t('form.cancel')" @click="closeInviteModal" />
-          <UButton color="primary" :loading="sending" :disabled="!parsedEmails().length" :label="t('team.sendInvite')"
-            @click="sendInvites" />
+          <UButton
+            color="primary"
+            :loading="sending"
+            :disabled="!parsedEmails().length"
+            :label="t('team.sendInvite')"
+            @click="sendInvites"
+          />
         </div>
       </template>
     </UModal>
   </UCard>
 </template>
-
-<style scoped></style>

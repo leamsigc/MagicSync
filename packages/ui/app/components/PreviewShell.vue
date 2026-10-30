@@ -37,6 +37,7 @@ const componentDescriptions: Record<string, { name: string; description: string 
   'BaseHero': { name: 'Hero', description: 'Hero section component with image and actions.' },
   'BaseHeroB': { name: 'Hero B', description: 'Alternative hero component with different styling.' },
   'BaseHowItWorks': { name: 'How It Works', description: 'Step-by-step process component.' },
+  'MagicImageGallery': { name: 'Magic Image Gallery', description: 'Lazy-loaded screenshot grid with a full-screen lightbox.' },
   'BaseNotFoundView': { name: 'Not Found View', description: '404 error page component.' },
   'BasePricing': { name: 'Pricing', description: 'Pricing plans component.' },
   'BaseReviewCard': { name: 'Review Card', description: 'Testimonial card component.' },

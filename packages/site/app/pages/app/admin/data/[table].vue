@@ -1,9 +1,16 @@
 <i18n src="./[table].json"></i18n>
 
 <script lang="ts" setup>
-import { h, resolveComponent } from 'vue'
-import type { TableColumn } from '@nuxt/ui'
-import type { Row } from '@tanstack/vue-table'
+/**
+ * Generic admin table browser — one page for every registry table.
+ *
+ * Columns come from the admin registry, so they are mapped to
+ * `CollectionTableColumn` descriptors and each value renders through a dynamic
+ * `#cell-<key>` slot (booleans/enums become badges). Search + enum filters go
+ * to the server through `useAdminDataTable`; selection stays key-based
+ * (`_key`) so bulk delete keeps working across pagination.
+ */
+import type { CollectionTableColumn } from '#layers/BaseUI/app/utils/collection'
 import type { AdminColumnMeta } from '#layers/BaseDB/server/services/admin-data.service'
 import { useAdminDataTable, type AdminTableRow } from '~/composables/useAdminDataTable'
 import { formatAdminCellValue, type AdminFormValues } from '~/utils/admin-data'
@@ -12,50 +19,15 @@ definePageMeta({
   layout: 'dashboard-layout',
 })
 
-const route = useRoute()
-const { t } = useI18n()
-const toast = useToast()
+type BadgeTone = 'success' | 'error' | 'warning' | 'neutral'
 
-const UButton = resolveComponent('UButton')
-const UBadge = resolveComponent('UBadge')
-const UCheckbox = resolveComponent('UCheckbox')
-const UDropdownMenu = resolveComponent('UDropdownMenu')
+/** Nuxt UI forbids empty-string SelectItem values, so "All" uses a sentinel. */
+const FILTER_ALL_VALUE = '__all__'
 
-const tableKey = computed(() => String(route.params.table ?? ''))
-const {
-  table: tableInfo,
-  columns,
-  rows,
-  pagination,
-  loading,
-  loadError,
-  searchInput,
-  filters,
-  rowSelection,
-  selectedKeys,
-  selectedCount,
-  fetchRows,
-  setFilter,
-  setPage,
-  getRowKey,
-  clearSelection,
-  updateRow,
-  deleteRows,
-} = useAdminDataTable(tableKey)
+/** Extra registry columns fold away on narrow screens, keeping the pk visible. */
+const HIDE_BELOW: Array<CollectionTableColumn['hideBelow']> = ['lg', 'lg', 'xl', 'xl']
 
-const tableLabel = computed(() => tableInfo.value?.label ?? tableKey.value)
-const editableCount = computed(() => columns.value.filter(column => column.editable).length)
-const enumColumns = computed(() =>
-  columns.value.filter(column => column.type === 'enum' && (column.enumValues?.length ?? 0) > 0),
-)
-
-const previewColumns = computed(() => {
-  const pkColumns = columns.value.filter(column => column.pk)
-  const sampleColumns = columns.value.filter(column => !column.pk && column.type !== 'json').slice(0, 4)
-  return [...pkColumns, ...sampleColumns]
-})
-
-const STATUS_COLORS: Record<string, 'success' | 'error' | 'warning' | 'neutral'> = {
+const STATUS_TONES: Record<string, BadgeTone> = {
   published: 'success',
   failed: 'error',
   pending: 'warning',
@@ -63,93 +35,95 @@ const STATUS_COLORS: Record<string, 'success' | 'error' | 'warning' | 'neutral'>
   banned: 'error',
 }
 
-function renderBooleanCell(text: string) {
-  return h(UBadge, { color: text === '✓' ? 'success' : 'neutral', variant: 'subtle', size: 'sm' }, () => text)
-}
+const route = useRoute()
+const { t } = useI18n()
+const toast = useToast()
 
-function renderEnumCell(value: unknown, text: string) {
-  return h(UBadge, { color: STATUS_COLORS[String(value)] ?? 'neutral', variant: 'subtle', size: 'sm' }, () => text)
-}
+const tableKey = computed(() => String(route.params.table ?? ''))
+const {
+  table: tableInfo,
+  columns: registryColumns,
+  rows,
+  pagination,
+  loading,
+  loadError,
+  searchInput,
+  rowSelection,
+  selectedKeys,
+  selectedCount,
+  fetchRows,
+  setFilter: setServerFilter,
+  setPage,
+  clearSelection,
+  updateRow,
+  deleteRows,
+} = useAdminDataTable(tableKey)
 
-function renderValueCell(column: AdminColumnMeta, row: AdminTableRow) {
-  const text = formatAdminCellValue(column, row[column.key])
-  if (column.type === 'boolean') return renderBooleanCell(text)
-  if (column.type === 'enum') return renderEnumCell(row[column.key], text)
-  return h('span', { class: 'block max-w-[220px] truncate text-sm' }, text)
-}
+const {
+  search,
+  setSearch,
+  filters,
+  setFilter,
+  filtered,
+} = useCollectionView<AdminTableRow>({
+  key: 'admin-data',
+  modes: ['table'],
+  rows,
+  searchFields: row => Object.values(row).map(value => String(value ?? '')),
+})
 
-interface RowActionItem {
-  type?: 'label' | 'separator'
-  label?: string
-  icon?: string
-  color?: 'error'
-  onSelect?: () => void
-}
+/** Server owns search on this page; mirror the toolbar term into the fetcher. */
+watch(search, value => {
+  searchInput.value = value
+})
 
-function getRowItems(row: Row<AdminTableRow>): RowActionItem[] {
-  const items: RowActionItem[] = [
-    { type: 'label', label: t('actions.label') },
-    { label: t('actions.view'), icon: 'i-lucide-eye', onSelect: () => openDetail(row.original) },
-  ]
-  if (editableCount.value > 0) {
-    items.push({ label: t('actions.edit'), icon: 'i-lucide-pencil', onSelect: () => openEdit(row.original) })
-  }
-  items.push(
-    { type: 'separator' },
-    { label: t('actions.delete'), icon: 'i-lucide-trash-2', color: 'error', onSelect: () => confirmDeleteRows([row.original._key]) },
-  )
-  return items
-}
+/** Switching tables inside the same route component must not keep the old term. */
+watch(tableKey, () => {
+  setSearch('')
+})
 
-const tableColumns = computed<TableColumn<AdminTableRow>[]>(() => {
-  const selectionColumn: TableColumn<AdminTableRow> = {
-    id: 'select',
-    header: ({ table }) =>
-      h(UCheckbox, {
-        modelValue: table.getIsSomePageRowsSelected()
-          ? 'indeterminate'
-          : table.getIsAllPageRowsSelected(),
-        'onUpdate:modelValue': (value: boolean | 'indeterminate') =>
-          table.toggleAllPageRowsSelected(!!value),
-        'aria-label': t('a11y.selectAll'),
-      }),
-    cell: ({ row }) =>
-      h(UCheckbox, {
-        modelValue: row.getIsSelected(),
-        'onUpdate:modelValue': (value: boolean | 'indeterminate') => row.toggleSelected(!!value),
-        'aria-label': t('a11y.selectRow'),
-      }),
-  }
+const tableLabel = computed(() => tableInfo.value?.label ?? tableKey.value)
+const editableCount = computed(() => registryColumns.value.filter(column => column.editable).length)
+const enumColumns = computed(() =>
+  registryColumns.value.filter(column => column.type === 'enum' && (column.enumValues?.length ?? 0) > 0),
+)
 
-  const valueColumns = previewColumns.value.map(column => ({
-    id: column.key,
-    header: column.label,
-    cell: ({ row }: { row: Row<AdminTableRow> }) => renderValueCell(column, row.original),
-  })) as TableColumn<AdminTableRow>[]
+const previewColumns = computed(() => {
+  const pkColumns = registryColumns.value.filter(column => column.pk)
+  const sampleColumns = registryColumns.value.filter(column => !column.pk && column.type !== 'json').slice(0, 4)
+  return [...pkColumns, ...sampleColumns]
+})
 
-  const actionsColumn: TableColumn<AdminTableRow> = {
-    id: 'actions',
-    header: () => h('div', { class: 'text-right' }, t('actions.label')),
-    cell: ({ row }) =>
-      h('div', { class: 'text-right' }, [
-        h(
-          UDropdownMenu,
-          { content: { align: 'end' }, items: getRowItems(row), 'aria-label': t('a11y.actions') },
-          () => h(UButton, { variant: 'ghost', icon: 'i-lucide-ellipsis-vertical', size: 'sm' }),
-        ),
-      ]),
-  }
+const columns = computed<CollectionTableColumn[]>(() =>
+  previewColumns.value.map((column, index) => ({
+    key: column.key,
+    label: column.label,
+    hideBelow: HIDE_BELOW[index],
+  })),
+)
 
-  return [selectionColumn, ...valueColumns, actionsColumn]
+const toolbarFilters = computed(() =>
+  enumColumns.value.map(column => ({
+    key: column.key,
+    label: column.label,
+    value: filters.value[column.key] || FILTER_ALL_VALUE,
+    options: filterItems(column),
+    width: 'w-full sm:w-44',
+  })),
+)
+
+/** Registry selection is keyed by `_key`; the table speaks `string[]`. */
+const selectedModel = computed<string[]>({
+  get: () => selectedKeys.value,
+  set: keys => {
+    rowSelection.value = Object.fromEntries(keys.map(key => [key, true]))
+  },
 })
 
 const currentPage = computed({
   get: () => pagination.value.page,
   set: page => setPage(page),
 })
-
-/** Nuxt UI forbids empty-string SelectItem values, so "All" uses a sentinel. */
-const FILTER_ALL_VALUE = '__all__'
 
 function filterItems(column: AdminColumnMeta) {
   return [
@@ -158,9 +132,18 @@ function filterItems(column: AdminColumnMeta) {
   ]
 }
 
-function handleFilterChange(column: string, value: unknown) {
-  const raw = value === FILTER_ALL_VALUE || value === undefined || value === null ? '' : String(value)
-  setFilter(column, raw)
+function rowKey(row: Record<string, any>): string {
+  return String(row._key)
+}
+
+function statusTone(value: unknown): BadgeTone {
+  return STATUS_TONES[String(value)] ?? 'neutral'
+}
+
+function handleFilter(key: string, value: string) {
+  const isAll = value === FILTER_ALL_VALUE
+  setFilter(key, isAll ? 'all' : value)
+  setServerFilter(key, isAll ? '' : value)
 }
 
 const detailRow = ref<AdminTableRow | null>(null)
@@ -210,6 +193,29 @@ function handleBulkDelete() {
   confirmDeleteRows(selectedKeys.value)
 }
 
+interface RowActionItem {
+  type?: 'label' | 'separator'
+  label?: string
+  icon?: string
+  color?: 'error'
+  onSelect?: () => void
+}
+
+function menuItems(row: AdminTableRow): RowActionItem[] {
+  const items: RowActionItem[] = [
+    { type: 'label', label: t('actions.label') },
+    { label: t('actions.view'), icon: 'i-lucide-eye', onSelect: () => openDetail(row) },
+  ]
+  if (editableCount.value > 0) {
+    items.push({ label: t('actions.edit'), icon: 'i-lucide-pencil', onSelect: () => openEdit(row) })
+  }
+  items.push(
+    { type: 'separator' },
+    { label: t('actions.delete'), icon: 'i-lucide-trash-2', color: 'error', onSelect: () => confirmDeleteRows([row._key]) },
+  )
+  return items
+}
+
 async function saveEdit(values: AdminFormValues) {
   const row = editRow.value
   if (!row) return
@@ -243,48 +249,33 @@ async function applyDelete() {
 </script>
 
 <template>
-  <UContainer class="space-y-6 py-6">
-    <div class="flex flex-wrap items-start justify-between gap-4">
-      <div class="space-y-1">
-        <UButton to="/app/admin/data" variant="link" icon="lucide:arrow-left" size="xs" class="px-0">
-          {{ t('back') }}
-        </UButton>
-        <h1 class="text-2xl font-bold tracking-tight">{{ tableLabel }}</h1>
-        <p class="text-muted-foreground">
-          {{ t('description', { total: pagination.total, plural: pagination.total === 1 ? '' : 's' }) }}
-        </p>
-      </div>
-      <UButton
-        variant="outline"
-        icon="lucide:refresh-cw"
-        :loading="loading"
-        @click="fetchRows"
-      >
+  <BaseCollectionPage
+    :title="tableLabel"
+    :description="t('description', { total: pagination.total, plural: pagination.total === 1 ? '' : 's' })"
+    back-to="/app/admin/data"
+  >
+    <template #actions>
+      <UButton variant="outline" icon="i-lucide-refresh-cw" :loading="loading" @click="fetchRows">
         {{ t('refresh') }}
       </UButton>
-    </div>
+    </template>
 
-    <div class="flex flex-wrap items-center gap-3">
-      <UInput
-        v-model="searchInput"
-        icon="lucide:search"
-        :placeholder="t('searchPlaceholder')"
-        class="max-w-sm"
+    <template #toolbar>
+      <BaseCollectionToolbar
+        :search="search"
+        :search-placeholder="t('searchPlaceholder')"
+        :filters="toolbarFilters"
+        :busy="loading"
+        @update:search="setSearch"
+        @update:filter="handleFilter"
       />
-      <USelect
-        v-for="column in enumColumns"
-        :key="column.key"
-        :model-value="filters[column.key] || FILTER_ALL_VALUE"
-        :items="filterItems(column)"
-        @update:model-value="handleFilterChange(column.key, $event)"
-      />
-    </div>
+    </template>
 
     <UAlert
       v-if="loadError"
       color="error"
       variant="soft"
-      icon="lucide:triangle-alert"
+      icon="i-lucide-triangle-alert"
       :title="t('loadFailed')"
     >
       <template #actions>
@@ -294,49 +285,81 @@ async function applyDelete() {
       </template>
     </UAlert>
 
-    <UCard v-else variant="soft">
-      <UTable
-        v-model:row-selection="rowSelection"
-        :data="rows"
-        :columns="tableColumns"
-        :loading="loading"
-        :get-row-id="getRowKey"
-        :empty="t('empty')"
-      />
-      <div class="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-        <p class="text-sm text-muted-foreground">
-          {{ t('footer.selected', { selected: selectedCount, total: pagination.total }) }}
-        </p>
-        <UPagination
-          v-model="currentPage"
-          :items-per-page="pagination.limit"
-          :total="pagination.total"
-        />
-      </div>
-    </UCard>
-
-    <div
-      v-if="selectedCount > 0"
-      v-motion-slide-bottom
-      :duration="200"
-      class="sticky bottom-4 z-20 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-inverted px-4 py-3 text-inverted shadow-lg"
+    <BaseDataTable
+      v-else
+      v-model:selected="selectedModel"
+      :rows="filtered"
+      :columns="columns"
+      :row-key="rowKey"
+      :loading="loading"
+      :selectable="true"
+      :empty-title="t('empty')"
+      empty-icon="i-lucide-table"
+      min-width="56rem"
     >
-      <p class="text-sm font-medium">{{ t('bulk.selected', { count: selectedCount }) }}</p>
-      <div class="flex items-center gap-2">
-        <UButton color="error" size="sm" @click="handleBulkDelete">
-          <UIcon name="lucide:trash-2" class="mr-2 h-4 w-4" />
-          {{ t('bulk.delete') }}
-        </UButton>
-        <UButton variant="ghost" size="sm" color="neutral" @click="clearSelection">
-          {{ t('bulk.clear') }}
-        </UButton>
-      </div>
-    </div>
+      <template
+        v-for="column in previewColumns"
+        :key="column.key"
+        #[`cell-${column.key}`]="{ row }"
+      >
+        <UBadge
+          v-if="column.type === 'boolean'"
+          :color="row[column.key] ? 'success' : 'neutral'"
+          variant="subtle"
+          size="sm"
+        >
+          {{ formatAdminCellValue(column, row[column.key]) }}
+        </UBadge>
+        <UBadge v-else-if="column.type === 'enum'" :color="statusTone(row[column.key])" variant="subtle" size="sm">
+          {{ formatAdminCellValue(column, row[column.key]) }}
+        </UBadge>
+        <span v-else class="block max-w-[260px] truncate text-sm">
+          {{ formatAdminCellValue(column, row[column.key]) }}
+        </span>
+      </template>
+
+      <template #bulk>
+        <p class="text-sm font-medium">{{ t('bulk.selected', { count: selectedCount }) }}</p>
+        <div class="ms-auto flex items-center gap-2">
+          <UButton color="error" size="xs" icon="i-lucide-trash-2" @click="handleBulkDelete">
+            {{ t('bulk.delete') }}
+          </UButton>
+          <UButton variant="ghost" color="neutral" size="xs" @click="clearSelection">
+            {{ t('bulk.clear') }}
+          </UButton>
+        </div>
+      </template>
+
+      <template #row-actions="{ row }">
+        <UDropdownMenu :items="menuItems(row)" :content="{ align: 'end' }">
+          <UButton
+            icon="i-lucide-ellipsis-vertical"
+            color="neutral"
+            variant="ghost"
+            size="xs"
+            :aria-label="t('a11y.actions')"
+          />
+        </UDropdownMenu>
+      </template>
+
+      <template #footer>
+        <div class="flex flex-wrap items-center justify-between gap-3 px-1 py-3">
+          <p class="text-sm text-muted">
+            {{ t('footer.selected', { selected: selectedCount, total: pagination.total }) }}
+          </p>
+          <UPagination
+            v-model="currentPage"
+            :items-per-page="pagination.limit"
+            :total="pagination.total"
+          />
+        </div>
+      </template>
+    </BaseDataTable>
 
     <AdminRowDetailModal
       :open="detailRow !== null"
       :table-label="tableLabel"
-      :columns="columns"
+      :columns="registryColumns"
       :row="detailRow"
       @update:open="handleDetailOpen"
       @edit="editFromDetail"
@@ -346,7 +369,7 @@ async function applyDelete() {
     <AdminRowEditModal
       :open="editRow !== null"
       :table-label="tableLabel"
-      :columns="columns"
+      :columns="registryColumns"
       :row="editRow"
       :saving="saving"
       @update:open="handleEditOpen"
@@ -361,5 +384,5 @@ async function applyDelete() {
       @update:open="handleDeleteOpen"
       @confirm="applyDelete"
     />
-  </UContainer>
+  </BaseCollectionPage>
 </template>

@@ -1,0 +1,106 @@
+{
+  "en": {
+    "columns": {
+      "content": "Post",
+      "status": "Status"
+    },
+    "status": {
+      "draft": "Draft",
+      "pending": "Pending",
+      "published": "Published",
+      "failed": "Failed"
+    },
+    "actions": "Actions",
+    "update": "Update",
+    "delete": "Delete",
+    "delete_title": "Delete post",
+    "delete_description": "Are you sure you want to delete this post?",
+    "delete_confirm": "Delete",
+    "cancel": "Cancel",
+    "deleted": "The social media post has been deleted.",
+    "bulk_title": "Delete selected posts",
+    "bulk_description": "Are you sure you want to delete {count} post(s)?",
+    "bulk_success": "{count} post(s) have been deleted.",
+    "selected": "{selected} of {total} selected",
+    "view_details": "View details",
+    "refresh": "The social media post has been updated."
+  },
+  "es": {
+    "columns": {
+      "content": "Publicación",
+      "status": "Estado"
+    },
+    "status": {
+      "draft": "Borrador",
+      "pending": "Pendiente",
+      "published": "Publicada",
+      "failed": "Fallida"
+    },
+    "actions": "Acciones",
+    "update": "Editar",
+    "delete": "Eliminar",
+    "delete_title": "Eliminar publicación",
+    "delete_description": "¿Seguro que quieres eliminar esta publicación?",
+    "delete_confirm": "Eliminar",
+    "cancel": "Cancelar",
+    "deleted": "La publicación se ha eliminado.",
+    "bulk_title": "Eliminar publicaciones seleccionadas",
+    "bulk_description": "¿Seguro que quieres eliminar {count} publicación(es)?",
+    "bulk_success": "Se eliminaron {count} publicación(es).",
+    "selected": "{selected} de {total} seleccionadas",
+    "view_details": "Ver detalles",
+    "refresh": "La publicación se ha actualizado."
+  },
+  "de": {
+    "columns": {
+      "content": "Beitrag",
+      "status": "Status"
+    },
+    "status": {
+      "draft": "Entwurf",
+      "pending": "Ausstehend",
+      "published": "Veröffentlicht",
+      "failed": "Fehlgeschlagen"
+    },
+    "actions": "Aktionen",
+    "update": "Bearbeiten",
+    "delete": "Löschen",
+    "delete_title": "Beitrag löschen",
+    "delete_description": "Diesen Beitrag wirklich löschen?",
+    "delete_confirm": "Löschen",
+    "cancel": "Abbrechen",
+    "deleted": "Der Beitrag wurde gelöscht.",
+    "bulk_title": "Ausgewählte Beiträge löschen",
+    "bulk_description": "{count} Beitrag/Beiträge wirklich löschen?",
+    "bulk_success": "{count} Beitrag/Beiträge wurden gelöscht.",
+    "selected": "{selected} von {total} ausgewählt",
+    "view_details": "Details ansehen",
+    "refresh": "Der Beitrag wurde aktualisiert."
+  },
+  "fr": {
+    "columns": {
+      "content": "Publication",
+      "status": "Statut"
+    },
+    "status": {
+      "draft": "Brouillon",
+      "pending": "En attente",
+      "published": "Publiée",
+      "failed": "Échouée"
+    },
+    "actions": "Actions",
+    "update": "Modifier",
+    "delete": "Supprimer",
+    "delete_title": "Supprimer la publication",
+    "delete_description": "Voulez-vous vraiment supprimer cette publication ?",
+    "delete_confirm": "Supprimer",
+    "cancel": "Annuler",
+    "deleted": "La publication a été supprimée.",
+    "bulk_title": "Supprimer les publications sélectionnées",
+    "bulk_description": "Supprimer {count} publication(s) ?",
+    "bulk_success": "{count} publication(s) supprimée(s).",
+    "selected": "{selected} sur {total} sélectionnée(s)",
+    "view_details": "Voir les détails",
+    "refresh": "La publication a été mise à jour."
+  }
+}

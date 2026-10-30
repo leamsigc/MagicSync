@@ -1,0 +1,110 @@
+{
+  "en": {
+    "title": "Invoices",
+    "subtitle": "Past invoices for this workspace.",
+    "search": "Search invoices…",
+    "statusFilter": "Status",
+    "allStatuses": "All statuses",
+    "sortNewest": "Newest first",
+    "sortOldest": "Oldest first",
+    "empty": "No invoices yet.",
+    "emptyHint": "Invoices appear here after your first payment.",
+    "noResults": "No invoices match your filters.",
+    "noResultsHint": "Try another status or clear the search.",
+    "clearFilters": "Clear filters",
+    "columns": {
+      "invoice": "Invoice",
+      "date": "Date",
+      "amount": "Amount",
+      "status": "Status"
+    },
+    "status": {
+      "draft": "Draft",
+      "open": "Open",
+      "paid": "Paid",
+      "void": "Void",
+      "uncollectible": "Uncollectible"
+    }
+  },
+  "es": {
+    "title": "Facturas",
+    "subtitle": "Facturas anteriores de este espacio.",
+    "search": "Buscar facturas…",
+    "statusFilter": "Estado",
+    "allStatuses": "Todos los estados",
+    "sortNewest": "Más recientes primero",
+    "sortOldest": "Más antiguas primero",
+    "empty": "Todavía no hay facturas.",
+    "emptyHint": "Las facturas aparecen aquí tras tu primer pago.",
+    "noResults": "Ninguna factura coincide con tus filtros.",
+    "noResultsHint": "Prueba otro estado o limpia la búsqueda.",
+    "clearFilters": "Limpiar filtros",
+    "columns": {
+      "invoice": "Factura",
+      "date": "Fecha",
+      "amount": "Importe",
+      "status": "Estado"
+    },
+    "status": {
+      "draft": "Borrador",
+      "open": "Pendiente",
+      "paid": "Pagada",
+      "void": "Anulada",
+      "uncollectible": "Incobrable"
+    }
+  },
+  "de": {
+    "title": "Rechnungen",
+    "subtitle": "Frühere Rechnungen für diesen Arbeitsbereich.",
+    "search": "Rechnungen suchen…",
+    "statusFilter": "Status",
+    "allStatuses": "Alle Status",
+    "sortNewest": "Neueste zuerst",
+    "sortOldest": "Älteste zuerst",
+    "empty": "Noch keine Rechnungen.",
+    "emptyHint": "Rechnungen erscheinen hier nach Ihrer ersten Zahlung.",
+    "noResults": "Keine Rechnungen passen zu den Filtern.",
+    "noResultsHint": "Wählen Sie einen anderen Status oder setzen Sie die Suche zurück.",
+    "clearFilters": "Filter zurücksetzen",
+    "columns": {
+      "invoice": "Rechnung",
+      "date": "Datum",
+      "amount": "Betrag",
+      "status": "Status"
+    },
+    "status": {
+      "draft": "Entwurf",
+      "open": "Offen",
+      "paid": "Bezahlt",
+      "void": "Storniert",
+      "uncollectible": "Uneinbringlich"
+    }
+  },
+  "fr": {
+    "title": "Factures",
+    "subtitle": "Factures passées pour cet espace.",
+    "search": "Rechercher des factures…",
+    "statusFilter": "Statut",
+    "allStatuses": "Tous les statuts",
+    "sortNewest": "Plus récentes d’abord",
+    "sortOldest": "Plus anciennes d’abord",
+    "empty": "Aucune facture pour l’instant.",
+    "emptyHint": "Les factures apparaissent ici après votre premier paiement.",
+    "noResults": "Aucune facture ne correspond à vos filtres.",
+    "noResultsHint": "Essayez un autre statut ou effacez la recherche.",
+    "clearFilters": "Réinitialiser les filtres",
+    "columns": {
+      "invoice": "Facture",
+      "date": "Date",
+      "amount": "Montant",
+      "status": "Statut"
+    },
+    "status": {
+      "draft": "Brouillon",
+      "open": "En attente",
+      "paid": "Payée",
+      "void": "Annulée",
+      "uncollectible": "Irrécouvrable"
+    }
+  }
+}

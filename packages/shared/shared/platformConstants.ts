@@ -737,3 +737,43 @@ export const platformConfigurations: SocialMediaPlatformConfigurations = {
   },
 };
 
+
+/**
+ * Catalog used by content idea scans and the board's platform picker.
+ *
+ * Kept next to `platformConfigurations` so the list of publishable platforms
+ * cannot drift between the two surfaces. Brand names are proper nouns and stay
+ * untranslated.
+ */
+export interface ContentPlatformCatalogEntry {
+  name: string
+  display_name: string
+  max_length: number
+  recommended_length: number
+  max_hashtags: number
+  max_images: number
+  hashtag_placement: 'inline' | 'end'
+  link_handling: 'inline' | 'bio' | 'shorten'
+  supports_threads: boolean
+}
+
+export const CONTENT_PLATFORMS: ContentPlatformCatalogEntry[] = [
+  { name: 'twitter', display_name: 'Twitter / X', max_length: 280, recommended_length: 240, max_hashtags: 3, max_images: 4, hashtag_placement: 'inline', link_handling: 'shorten', supports_threads: true },
+  { name: 'instagram', display_name: 'Instagram', max_length: 2200, recommended_length: 300, max_hashtags: 10, max_images: 10, hashtag_placement: 'end', link_handling: 'bio', supports_threads: false },
+  { name: 'facebook', display_name: 'Facebook', max_length: 63206, recommended_length: 400, max_hashtags: 5, max_images: 10, hashtag_placement: 'end', link_handling: 'inline', supports_threads: false },
+  { name: 'linkedin', display_name: 'LinkedIn', max_length: 3000, recommended_length: 600, max_hashtags: 5, max_images: 9, hashtag_placement: 'end', link_handling: 'inline', supports_threads: false },
+  { name: 'linkedin-page', display_name: 'LinkedIn Page', max_length: 3000, recommended_length: 600, max_hashtags: 5, max_images: 9, hashtag_placement: 'end', link_handling: 'inline', supports_threads: false },
+  { name: 'tiktok', display_name: 'TikTok', max_length: 2200, recommended_length: 150, max_hashtags: 8, max_images: 1, hashtag_placement: 'end', link_handling: 'bio', supports_threads: false },
+  { name: 'bluesky', display_name: 'Bluesky', max_length: 300, recommended_length: 260, max_hashtags: 3, max_images: 4, hashtag_placement: 'inline', link_handling: 'inline', supports_threads: false },
+  { name: 'youtube', display_name: 'YouTube', max_length: 5000, recommended_length: 300, max_hashtags: 5, max_images: 1, hashtag_placement: 'end', link_handling: 'inline', supports_threads: false },
+  { name: 'threads', display_name: 'Threads', max_length: 500, recommended_length: 400, max_hashtags: 3, max_images: 10, hashtag_placement: 'end', link_handling: 'inline', supports_threads: true },
+  { name: 'pinterest', display_name: 'Pinterest', max_length: 500, recommended_length: 200, max_hashtags: 5, max_images: 1, hashtag_placement: 'end', link_handling: 'bio', supports_threads: false },
+  { name: 'reddit', display_name: 'Reddit', max_length: 40000, recommended_length: 500, max_hashtags: 0, max_images: 20, hashtag_placement: 'end', link_handling: 'inline', supports_threads: false },
+  { name: 'snapchat', display_name: 'Snapchat', max_length: 250, recommended_length: 160, max_hashtags: 0, max_images: 1, hashtag_placement: 'end', link_handling: 'inline', supports_threads: false },
+  { name: 'mastodon', display_name: 'Mastodon', max_length: 500, recommended_length: 400, max_hashtags: 5, max_images: 4, hashtag_placement: 'end', link_handling: 'inline', supports_threads: false },
+  { name: 'discord', display_name: 'Discord', max_length: 2000, recommended_length: 500, max_hashtags: 0, max_images: 10, hashtag_placement: 'end', link_handling: 'inline', supports_threads: false },
+  { name: 'dribbble', display_name: 'Dribbble', max_length: 500, recommended_length: 200, max_hashtags: 5, max_images: 4, hashtag_placement: 'end', link_handling: 'inline', supports_threads: false },
+  { name: 'devto', display_name: 'DEV Community', max_length: 80000, recommended_length: 800, max_hashtags: 4, max_images: 20, hashtag_placement: 'end', link_handling: 'inline', supports_threads: false },
+  { name: 'wordpress', display_name: 'WordPress', max_length: 10000, recommended_length: 1200, max_hashtags: 10, max_images: 20, hashtag_placement: 'end', link_handling: 'inline', supports_threads: false },
+  { name: 'google', display_name: 'Google Business Profile', max_length: 1500, recommended_length: 300, max_hashtags: 0, max_images: 10, hashtag_placement: 'end', link_handling: 'inline', supports_threads: false },
+]

@@ -53,6 +53,7 @@ interface ScanRequest {
 interface ContentDraft {
   title: string
   brief: string
+  platforms: string[]
 }
 
 const { t } = useI18n()
@@ -178,7 +179,13 @@ async function handleCreate(draft: ContentDraft) {
   try {
     await $fetch('/api/v1/content-items', {
       method: 'POST',
-      body: { businessId, title: draft.title, brief: draft.brief, sourceType: 'manual' },
+      body: {
+        businessId,
+        title: draft.title,
+        brief: draft.brief,
+        platforms: draft.platforms,
+        sourceType: 'manual',
+      },
     })
     createOpen.value = false
     await load()
@@ -198,12 +205,19 @@ function handleEditMeta(item: ContentItemView) {
 }
 
 /** D04: only what the owner actually changed leaves the browser. */
+function platformSignature(platforms: string[]): string {
+  return [...platforms].sort().join(',')
+}
+
 function changedFields(item: ContentItemView, draft: ContentDraft): Record<string, unknown> {
   const body: Record<string, unknown> = { businessId, itemId: item.id }
   const title = draft.title.trim()
   if (title && title !== item.title) body.title = title
   const brief = draft.brief.trim()
   if (brief !== displayAngle(item.brief)) body.brief = brief
+  if (platformSignature(draft.platforms) !== platformSignature(item.platforms ?? [])) {
+    body.platforms = draft.platforms
+  }
   return body
 }
 

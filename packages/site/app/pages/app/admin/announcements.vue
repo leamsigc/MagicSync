@@ -1,21 +1,23 @@
 <i18n src="./announcements.json"></i18n>
 
 <script lang="ts" setup>
-import { h, resolveComponent } from 'vue'
-import type { TableColumn } from '@nuxt/ui'
+/**
+ * Admin announcements — table and list views on the shared collection shell.
+ *
+ * `useCollectionView` owns search + the derived active/scheduled/expired
+ * filter; the create/edit/delete flows keep their original API calls.
+ */
 import type { EditorToolbarItem } from '@nuxt/ui'
-import type { Row } from '@tanstack/vue-table'
+import type { CollectionTableColumn } from '#layers/BaseUI/app/utils/collection'
 
 definePageMeta({
   layout: 'dashboard-layout'
 })
 
-const UButton = resolveComponent('UButton')
-const UBadge = resolveComponent('UBadge')
-const UDropdownMenu = resolveComponent('UDropdownMenu')
-
 const { t } = useI18n()
 const toast = useToast()
+
+type AnnouncementStatus = 'active' | 'scheduled' | 'expired'
 
 interface AdminAnnouncement {
   id: string
@@ -38,14 +40,56 @@ const toolbarItems: EditorToolbarItem[] = [
 
 const announcements = ref<AdminAnnouncement[]>([])
 const loading = ref(true)
-const searchQuery = ref('')
 const saving = ref(false)
 
-const filteredAnnouncements = computed(() => {
-  if (!searchQuery.value) return announcements.value
-  const q = searchQuery.value.toLowerCase()
-  return announcements.value.filter(a => a.title.toLowerCase().includes(q))
+const {
+  view,
+  setView,
+  search,
+  setSearch,
+  filters,
+  setFilter,
+  filtered,
+  hasActiveFilters,
+  resetFilters,
+} = useCollectionView<AdminAnnouncement>({
+  key: 'admin-announcements',
+  modes: ['table', 'list'],
+  defaultView: 'table',
+  rows: announcements,
+  searchFields: item => [item.title],
+  filterFns: {
+    status: (item, value) => announcementStatus(item) === value,
+  },
 })
+
+const viewOptions = computed(() => [
+  { value: 'table', label: t('views.table'), icon: 'i-lucide-table' },
+  { value: 'list', label: t('views.list'), icon: 'i-lucide-list' },
+])
+
+const statusFilterOptions = computed(() => [
+  { label: t('filters.all'), value: 'all' },
+  { label: t('status.active'), value: 'active' },
+  { label: t('status.scheduled'), value: 'scheduled' },
+  { label: t('status.expired'), value: 'expired' },
+])
+
+const toolbarFilters = computed(() => [
+  {
+    key: 'status',
+    label: t('columns.status'),
+    value: filters.value.status || 'all',
+    options: statusFilterOptions.value,
+    width: 'w-full sm:w-44',
+  },
+])
+
+const columns = computed<CollectionTableColumn[]>(() => [
+  { key: 'title', label: t('columns.title') },
+  { key: 'publishAt', label: t('columns.schedule'), hideBelow: 'md' },
+  { key: 'status', label: t('columns.status'), width: '9rem' },
+])
 
 async function fetchAnnouncements() {
   loading.value = true
@@ -61,14 +105,22 @@ async function fetchAnnouncements() {
 
 onMounted(fetchAnnouncements)
 
-function announcementStatus(a: AdminAnnouncement): 'active' | 'scheduled' | 'expired' {
+function handleFilter(key: string, value: string) {
+  setFilter(key, value)
+}
+
+function handleView(next: string) {
+  setView(next)
+}
+
+function announcementStatus(announcement: AdminAnnouncement): AnnouncementStatus {
   const now = Date.now()
-  if (Date.parse(a.publishAt) > now) return 'scheduled'
-  if (a.expiresAt && Date.parse(a.expiresAt) <= now) return 'expired'
+  if (Date.parse(announcement.publishAt) > now) return 'scheduled'
+  if (announcement.expiresAt && Date.parse(announcement.expiresAt) <= now) return 'expired'
   return 'active'
 }
 
-function statusColor(status: 'active' | 'scheduled' | 'expired'): 'success' | 'info' | 'neutral' {
+function statusColor(status: AnnouncementStatus): 'success' | 'info' | 'neutral' {
   if (status === 'active') return 'success'
   if (status === 'scheduled') return 'info'
   return 'neutral'
@@ -76,6 +128,15 @@ function statusColor(status: 'active' | 'scheduled' | 'expired'): 'success' | 'i
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleString()
+}
+
+function scheduleRange(announcement: AdminAnnouncement): string {
+  if (!announcement.expiresAt) return `${formatDate(announcement.publishAt)} → ∞`
+  return `${formatDate(announcement.publishAt)} → ${formatDate(announcement.expiresAt)}`
+}
+
+function announcementId(item: Record<string, any>): string {
+  return String(item.id)
 }
 
 function toLocal(iso: string): string {
@@ -110,20 +171,24 @@ function openCreate() {
   showModal.value = true
 }
 
-function openEdit(a: AdminAnnouncement) {
-  editingId.value = a.id
+function openEdit(announcement: AdminAnnouncement) {
+  editingId.value = announcement.id
   form.value = {
-    title: a.title,
-    html: a.html,
-    publishLocal: toLocal(a.publishAt),
-    expiryLocal: a.expiresAt ? toLocal(a.expiresAt) : '',
-    noExpiry: a.expiresAt === null
+    title: announcement.title,
+    html: announcement.html,
+    publishLocal: toLocal(announcement.publishAt),
+    expiryLocal: announcement.expiresAt ? toLocal(announcement.expiresAt) : '',
+    noExpiry: announcement.expiresAt === null
   }
   showModal.value = true
 }
 
 function closeModal() {
   showModal.value = false
+}
+
+function handleModalOpen(open: boolean) {
+  if (!open) closeModal()
 }
 
 function validateForm(): string | null {
@@ -162,8 +227,8 @@ async function saveAnnouncement() {
 
 const pendingDelete = ref<AdminAnnouncement | null>(null)
 
-function askDelete(a: AdminAnnouncement) {
-  pendingDelete.value = a
+function askDelete(announcement: AdminAnnouncement) {
+  pendingDelete.value = announcement
 }
 
 function closeDeleteModal() {
@@ -178,7 +243,7 @@ async function confirmDelete() {
   const target = pendingDelete.value
   if (!target) return
   const snapshot = [...announcements.value]
-  announcements.value = announcements.value.filter(a => a.id !== target.id)
+  announcements.value = announcements.value.filter(item => item.id !== target.id)
   pendingDelete.value = null
   try {
     await $fetch(`/api/v1/admin/announcements/${target.id}`, { method: 'DELETE' })
@@ -189,102 +254,117 @@ async function confirmDelete() {
   }
 }
 
-function getRowItems(row: Row<AdminAnnouncement>) {
+function menuItems(announcement: AdminAnnouncement) {
   return [
-    { type: 'label', label: t('menu.title') },
-    { label: t('menu.edit'), onSelect: () => openEdit(row.original) },
-    { type: 'separator' },
-    { label: t('menu.delete'), onSelect: () => askDelete(row.original) }
+    [
+      { label: t('menu.edit'), icon: 'i-lucide-pencil', onSelect: () => openEdit(announcement) },
+    ],
+    [
+      { label: t('menu.delete'), icon: 'i-lucide-trash-2', color: 'error' as const, onSelect: () => askDelete(announcement) },
+    ],
   ]
 }
-
-function getRowId(row: AdminAnnouncement) {
-  return row.id
-}
-
-const columns: TableColumn<AdminAnnouncement>[] = [
-  {
-    accessorKey: 'title',
-    header: () => t('columns.title'),
-    cell: ({ row }) => {
-      const a = row.original
-      return h('div', null, [
-        h('p', { class: 'font-medium text-sm' }, a.title),
-        h('p', { class: 'text-xs text-muted-foreground' }, `${t('columns.created')} ${formatDate(a.createdAt)}`)
-      ])
-    }
-  },
-  {
-    accessorKey: 'publishAt',
-    header: () => t('columns.schedule'),
-    cell: ({ row }) => {
-      const a = row.original
-      const range = a.expiresAt
-        ? `${formatDate(a.publishAt)} → ${formatDate(a.expiresAt)}`
-        : `${formatDate(a.publishAt)} → ∞`
-      return h('span', { class: 'text-xs text-muted-foreground' }, range)
-    }
-  },
-  {
-    id: 'status',
-    header: () => t('columns.status'),
-    cell: ({ row }) => {
-      const status = announcementStatus(row.original)
-      return h(UBadge, { color: statusColor(status), variant: 'subtle', size: 'sm' }, () => t(`status.${status}`))
-    }
-  },
-  {
-    id: 'actions',
-    header: () => h('div', { class: 'text-right' }, t('columns.actions')),
-    cell: ({ row }) =>
-      h('div', { class: 'text-right' }, [
-        h(UDropdownMenu, {
-          content: { align: 'end' },
-          items: getRowItems(row),
-          'aria-label': t('a11y.actions')
-        }, () =>
-          h(UButton, {
-            icon: 'i-lucide-ellipsis-vertical',
-            color: 'neutral',
-            variant: 'ghost',
-            size: 'sm',
-            'aria-label': t('a11y.actions')
-          })
-        )
-      ])
-  }
-]
 </script>
 
 <template>
-  <div class="space-y-6">
-    <div v-motion-fade-visible-once class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-      <div>
-        <h1 class="text-2xl font-bold tracking-tight">{{ t('title') }}</h1>
-        <p class="text-muted-foreground">{{ t('description') }}</p>
-      </div>
-      <div class="flex flex-col sm:flex-row gap-2">
-        <UInput v-model="searchQuery" :placeholder="t('searchPlaceholder')" icon="i-heroicons-magnifying-glass"
-          size="sm" class="sm:w-64" />
-        <UButton icon="i-lucide-megaphone" size="sm" @click="openCreate">
-          {{ t('createAnnouncement') }}
-        </UButton>
-      </div>
-    </div>
+  <BaseCollectionPage :title="t('title')" :description="t('description')">
+    <template #actions>
+      <UButton icon="i-lucide-megaphone" @click="openCreate">
+        {{ t('createAnnouncement') }}
+      </UButton>
+    </template>
 
-    <div v-if="loading" class="rounded flex justify-center py-12">
-      <UIcon name="i-heroicons-arrow-path" class="w-6 h-6 animate-spin text-muted-foreground" />
-    </div>
+    <template #toolbar>
+      <BaseCollectionToolbar
+        :search="search"
+        :search-placeholder="t('searchPlaceholder')"
+        :filters="toolbarFilters"
+        :view="view"
+        :views="viewOptions"
+        :busy="loading"
+        @update:search="setSearch"
+        @update:filter="handleFilter"
+        @update:view="handleView"
+      />
+    </template>
 
-    <div v-else v-motion-fade-visible-once class="shadow rounded overflow-hidden">
-      <div v-if="filteredAnnouncements.length === 0" class="text-center py-12 text-muted-foreground">
-        {{ t('noAnnouncements') }}
-      </div>
-      <UTable v-else :data="filteredAnnouncements" :columns="columns" :get-row-id="getRowId" class="flex-1"
-        :ui="{ 'tr': 'bg-transparent transition-colors', 'td': 'border-0', 'th': 'border-0' }" />
-    </div>
+    <BaseCollectionList
+      v-if="view === 'list'"
+      :items="filtered"
+      :row-key="announcementId"
+      :loading="loading"
+      :empty-icon="'i-lucide-megaphone'"
+      :empty-title="t('noAnnouncements')"
+    >
+      <template #item="{ item: announcement }">
+        <div class="min-w-0 flex-1">
+          <p class="truncate text-sm font-medium text-highlighted">{{ announcement.title }}</p>
+          <p class="truncate text-xs text-muted">
+            {{ t('columns.created') }} {{ formatDate(announcement.createdAt) }}
+          </p>
+        </div>
+        <span class="hidden shrink-0 text-xs text-muted md:block">{{ scheduleRange(announcement) }}</span>
+        <UBadge class="shrink-0" :color="statusColor(announcementStatus(announcement))" variant="subtle" size="sm">
+          {{ t(`status.${announcementStatus(announcement)}`) }}
+        </UBadge>
+        <UDropdownMenu :items="menuItems(announcement)" :content="{ align: 'end' }">
+          <UButton
+            icon="i-lucide-ellipsis-vertical"
+            color="neutral"
+            variant="ghost"
+            size="xs"
+            :aria-label="t('a11y.actions')"
+          />
+        </UDropdownMenu>
+      </template>
 
-    <UModal v-model:open="showModal" :ui="{ content: 'max-w-3xl' }">
+      <template #empty>
+        <UButton v-if="hasActiveFilters" variant="ghost" @click="resetFilters">{{ t('clearFilters') }}</UButton>
+      </template>
+    </BaseCollectionList>
+
+    <BaseDataTable
+      v-else
+      :rows="filtered"
+      :columns="columns"
+      :row-key="announcementId"
+      :loading="loading"
+    >
+      <template #cell-title="{ row }">
+        <div class="min-w-0">
+          <p class="truncate text-sm font-medium text-highlighted">{{ row.title }}</p>
+          <p class="text-xs text-muted">{{ t('columns.created') }} {{ formatDate(row.createdAt) }}</p>
+        </div>
+      </template>
+
+      <template #cell-publishAt="{ row }">
+        <span class="whitespace-nowrap text-xs text-muted">{{ scheduleRange(row) }}</span>
+      </template>
+
+      <template #cell-status="{ row }">
+        <UBadge :color="statusColor(announcementStatus(row))" variant="subtle" size="sm">
+          {{ t(`status.${announcementStatus(row)}`) }}
+        </UBadge>
+      </template>
+
+      <template #row-actions="{ row }">
+        <UDropdownMenu :items="menuItems(row)" :content="{ align: 'end' }">
+          <UButton
+            icon="i-lucide-ellipsis-vertical"
+            color="neutral"
+            variant="ghost"
+            size="xs"
+            :aria-label="t('a11y.actions')"
+          />
+        </UDropdownMenu>
+      </template>
+
+      <template #empty>
+        <UButton v-if="hasActiveFilters" variant="ghost" :label="t('clearFilters')" @click="resetFilters" />
+      </template>
+    </BaseDataTable>
+
+    <UModal :open="showModal" :ui="{ content: 'max-w-3xl' }" @update:open="handleModalOpen">
       <template #content>
         <UCard>
           <template #header>
@@ -298,11 +378,11 @@ const columns: TableColumn<AdminAnnouncement>[] = [
             </UFormField>
             <UFormField :label="t('modal.contentLabel')">
               <UEditor v-slot="{ editor }" v-model="form.html" content-type="html"
-                class="w-full rounded-xl border border-default bg-muted/30 p-4 min-h-48">
+                class="min-h-48 w-full rounded-xl border border-default bg-muted/30 p-4">
                 <UEditorToolbar :editor="editor" :items="toolbarItems" />
               </UEditor>
             </UFormField>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <UFormField :label="t('modal.publishLabel')">
                 <UInput v-model="form.publishLocal" type="datetime-local" class="w-full" />
               </UFormField>
@@ -311,7 +391,7 @@ const columns: TableColumn<AdminAnnouncement>[] = [
               </UFormField>
             </div>
             <UCheckbox v-model="form.noExpiry" :label="t('modal.noExpiry')" />
-            <p class="text-xs text-muted-foreground">{{ t('modal.scheduleHint') }}</p>
+            <p class="text-xs text-muted">{{ t('modal.scheduleHint') }}</p>
           </div>
           <template #footer>
             <div class="flex justify-end gap-3">
@@ -329,7 +409,7 @@ const columns: TableColumn<AdminAnnouncement>[] = [
           <template #header>
             <h3 class="text-lg font-semibold">{{ t('deleteModal.title') }}</h3>
           </template>
-          <p class="text-sm text-muted-foreground">{{ t('deleteModal.description', { title: pendingDelete.title }) }}</p>
+          <p class="text-sm text-muted">{{ t('deleteModal.description', { title: pendingDelete.title }) }}</p>
           <template #footer>
             <div class="flex justify-end gap-3">
               <UButton variant="ghost" color="neutral" @click="closeDeleteModal">{{ t('deleteModal.cancel') }}
@@ -340,5 +420,5 @@ const columns: TableColumn<AdminAnnouncement>[] = [
         </UCard>
       </template>
     </UModal>
-  </div>
+  </BaseCollectionPage>
 </template>

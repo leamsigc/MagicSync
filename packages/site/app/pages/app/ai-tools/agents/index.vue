@@ -1,5 +1,14 @@
 <i18n src="./agents.json"></i18n>
 <script setup lang="ts">
+/**
+ * Agents & skills registry — shared collection shell.
+ *
+ * Two collections live on this page: the specialized agents (Grid / List +
+ * search) and the read-only skill registry (List + search). Every fetch,
+ * publish/disable/delete call and the create modal are unchanged; only the
+ * surface moved to `BaseCollectionPage` and the collection components.
+ */
+import { useCollectionView } from '#layers/BaseUI/app/composables/useCollectionView'
 
 interface RegistrySkill {
   id: string
@@ -34,6 +43,9 @@ interface ServiceResult<T> {
   error?: string
 }
 
+type AgentView = 'grid' | 'list'
+type BadgeTone = 'success' | 'warning' | 'error' | 'neutral'
+
 const { t } = useI18n()
 const toast = useToast()
 const activeBusinessId = useState<string | null>('business:id', () => null)
@@ -55,6 +67,59 @@ const newAgent = ref({
   requiresHumanReview: true,
 })
 
+const {
+  view,
+  setView,
+  search,
+  setSearch,
+  filtered: filteredAgents,
+  hasActiveFilters: hasAgentFilters,
+  resetFilters: resetAgentFilters,
+} = useCollectionView<RegistryAgent>({
+  key: 'app-ai-tools-agents',
+  modes: ['grid', 'list'] satisfies AgentView[],
+  defaultView: 'grid',
+  rows: agents,
+  searchFields: agent => [
+    agent.name,
+    agent.description,
+    agent.outputKind,
+    t(`statuses.${agent.status}`),
+    ...toolList(agent.allowedToolNames),
+  ],
+})
+
+const {
+  search: skillSearch,
+  setSearch: setSkillSearch,
+  filtered: filteredSkills,
+  hasActiveFilters: hasSkillFilters,
+  resetFilters: resetSkillFilters,
+} = useCollectionView<RegistrySkill>({
+  key: 'app-ai-tools-agent-skills',
+  modes: ['list'],
+  defaultView: 'list',
+  rows: skills,
+  searchFields: skill => [skill.name, skill.description, skill.sourceType, t(`statuses.${skill.status}`)],
+})
+
+const viewOptions = computed(() => [
+  { value: 'grid', label: t('views.grid'), icon: 'i-lucide-layout-grid' },
+  { value: 'list', label: t('views.list'), icon: 'i-lucide-list' },
+])
+
+function handleViewChange(next: AgentView) {
+  setView(next)
+}
+
+function agentRowKey(agent: RegistryAgent): string {
+  return agent.id
+}
+
+function skillRowKey(skill: RegistrySkill): string {
+  return skill.id
+}
+
 function scopeQuery(): string {
   return activeBusinessId.value ? `?businessId=${activeBusinessId.value}` : ''
 }
@@ -74,11 +139,15 @@ function toolList(raw: string): string[] {
   }
 }
 
-function statusColor(status: string): string {
+function statusColor(status: string): BadgeTone {
   if (status === 'active') return 'success'
   if (status === 'draft') return 'warning'
   if (status === 'disabled') return 'error'
   return 'neutral'
+}
+
+function statusLabel(status: string): string {
+  return t(`statuses.${status}`)
 }
 
 async function loadAll() {
@@ -185,6 +254,18 @@ function handleCloseCreate() {
   showCreateModal.value = false
 }
 
+function handlePublish(agent: RegistryAgent) {
+  void handleAgentAction(agent.id, 'publish')
+}
+
+function handleDisable(agent: RegistryAgent) {
+  void handleAgentAction(agent.id, 'disable')
+}
+
+function handleDelete(agent: RegistryAgent) {
+  void handleAgentAction(agent.id, 'delete')
+}
+
 onMounted(loadAll)
 watch(activeBusinessId, () => {
   void loadAll()
@@ -192,107 +273,206 @@ watch(activeBusinessId, () => {
 </script>
 
 <template>
-  <div class="mx-auto max-w-5xl space-y-6">
-    <BasePageHeader :title="t('title')" :description="t('description')">
-      <template #actions>
-        <div class="flex flex-wrap gap-2">
-          <UButton color="neutral" variant="outline" icon="i-heroicons-sparkles" :loading="seeding"
-            data-testid="agents-seed" @click="handleSeed">
-            {{ t('seed.cta') }}
-          </UButton>
-          <UButton color="primary" variant="solid" icon="i-heroicons-plus" data-testid="agents-create"
-            @click="handleOpenCreate">
-            {{ t('form.cta') }}
-          </UButton>
-        </div>
-      </template>
-    </BasePageHeader>
+  <BaseCollectionPage :title="t('title')" :description="t('description')">
+    <template #actions>
+      <div class="flex flex-wrap gap-2">
+        <UButton color="neutral" variant="outline" icon="i-heroicons-sparkles" :loading="seeding"
+          data-testid="agents-seed" @click="handleSeed">
+          {{ t('seed.cta') }}
+        </UButton>
+        <UButton color="primary" variant="solid" icon="i-heroicons-plus" data-testid="agents-create"
+          @click="handleOpenCreate">
+          {{ t('form.cta') }}
+        </UButton>
+      </div>
+    </template>
+
+    <template #toolbar>
+      <BaseCollectionToolbar
+        :search="search"
+        :search-placeholder="t('searchAgents')"
+        :view="view"
+        :views="viewOptions"
+        :busy="pageBusy"
+        @update:search="setSearch"
+        @update:view="handleViewChange"
+      />
+    </template>
 
     <div v-if="pageBusy" class="flex items-center justify-center py-20">
       <UIcon name="i-heroicons-arrow-path" class="size-6 animate-spin" />
     </div>
 
     <template v-else>
-      <UCard v-motion-fade-visible :duration="200">
-        <template #header>
+      <section>
+        <div class="mb-3">
           <h2 class="font-semibold">{{ t('agents.title') }}</h2>
-          <p class="text-muted text-sm">{{ t('agents.description') }}</p>
-        </template>
-        <div v-if="agents.length === 0" class="py-4 text-center text-sm text-muted">
-          {{ t('agents.empty') }}
+          <p class="text-sm text-muted">{{ t('agents.description') }}</p>
         </div>
-        <ul v-else class="space-y-2">
-          <li v-for="agent in agents" :key="agent.id" :data-testid="`agent-row-${agent.id}`"
-            class="rounded-xl bg-elevated p-3">
-            <div class="flex flex-wrap items-center gap-2">
-              <span class="text-sm font-semibold">{{ agent.name }}</span>
-              <UBadge :color="statusColor(agent.status)" variant="subtle" size="xs" class="capitalize">
-                {{ t(`statuses.${agent.status}`) }}
-              </UBadge>
-              <UBadge color="neutral" variant="outline" size="xs">v{{ agent.version }}</UBadge>
-              <UBadge v-if="agent.requiresHumanReview" color="warning" variant="outline" size="xs">
-                {{ t('agents.reviewRequired') }}
-              </UBadge>
-              <span class="ms-auto flex gap-1">
-                <UButton v-if="agent.status === 'draft' || agent.status === 'disabled'" color="primary" variant="ghost"
-                  size="xs" :loading="rowBusyId === agent.id" @click="handleAgentAction(agent.id, 'publish')">
-                  {{ t('actions.publish') }}
-                </UButton>
-                <UButton v-if="agent.status === 'active'" color="neutral" variant="ghost" size="xs"
-                  :loading="rowBusyId === agent.id" @click="handleAgentAction(agent.id, 'disable')">
-                  {{ t('actions.disable') }}
-                </UButton>
-                <UButton v-if="agent.status !== 'active'" color="error" variant="ghost" size="xs"
-                  :loading="rowBusyId === agent.id" @click="handleAgentAction(agent.id, 'delete')">
-                  {{ t('actions.delete') }}
-                </UButton>
-              </span>
-            </div>
-            <p v-if="agent.description" class="mt-1 text-xs text-muted">{{ agent.description }}</p>
-            <div class="mt-2 flex flex-wrap gap-1">
-              <UBadge v-for="tool in toolList(agent.allowedToolNames)" :key="tool" color="neutral" variant="outline"
-                size="xs">
-                {{ tool }}
-              </UBadge>
-              <UBadge color="neutral" variant="subtle" size="xs">{{ agent.outputKind }}</UBadge>
-            </div>
-          </li>
-        </ul>
-      </UCard>
 
-      <UCard v-motion-fade-visible :duration="200">
-        <template #header>
+        <BaseCollectionGrid
+          v-if="view === 'grid'"
+          :items="filteredAgents"
+          :row-key="agentRowKey"
+          :empty-title="hasAgentFilters ? t('noResults') : t('agents.empty')"
+          empty-icon="i-heroicons-cpu-chip"
+        >
+          <template #item="{ item: agent }">
+            <BaseCollectionCard
+              :title="agent.name"
+              :description="agent.description || t('agents.noDescription')"
+              icon="i-heroicons-cpu-chip"
+              :badge="statusLabel(agent.status)"
+              :badge-color="statusColor(agent.status)"
+            >
+              <div class="mt-2 flex flex-wrap gap-1">
+                <UBadge color="neutral" variant="outline" size="xs">v{{ agent.version }}</UBadge>
+                <UBadge v-if="agent.requiresHumanReview" color="warning" variant="outline" size="xs">
+                  {{ t('agents.reviewRequired') }}
+                </UBadge>
+                <UBadge color="neutral" variant="subtle" size="xs">{{ agent.outputKind }}</UBadge>
+                <UBadge v-for="tool in toolList(agent.allowedToolNames)" :key="tool" color="neutral" variant="outline"
+                  size="xs">
+                  {{ tool }}
+                </UBadge>
+              </div>
+
+              <template #footer>
+                <div class="flex flex-wrap gap-1">
+                  <UButton v-if="agent.status === 'draft' || agent.status === 'disabled'" color="primary" variant="ghost"
+                    size="xs" :loading="rowBusyId === agent.id" @click="() => handlePublish(agent)">
+                    {{ t('actions.publish') }}
+                  </UButton>
+                  <UButton v-if="agent.status === 'active'" color="neutral" variant="ghost" size="xs"
+                    :loading="rowBusyId === agent.id" @click="() => handleDisable(agent)">
+                    {{ t('actions.disable') }}
+                  </UButton>
+                  <UButton v-if="agent.status !== 'active'" color="error" variant="ghost" size="xs"
+                    :loading="rowBusyId === agent.id" @click="() => handleDelete(agent)">
+                    {{ t('actions.delete') }}
+                  </UButton>
+                </div>
+              </template>
+            </BaseCollectionCard>
+          </template>
+
+          <template #empty>
+            <UButton v-if="hasAgentFilters" variant="ghost" icon="i-lucide-filter-x" @click="resetAgentFilters">
+              {{ t('clearFilters') }}
+            </UButton>
+          </template>
+        </BaseCollectionGrid>
+
+        <BaseCollectionList
+          v-else
+          :items="filteredAgents"
+          :row-key="agentRowKey"
+          :empty-title="hasAgentFilters ? t('noResults') : t('agents.empty')"
+          empty-icon="i-heroicons-cpu-chip"
+        >
+          <template #item="{ item: agent }">
+            <span class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-elevated">
+              <UIcon name="i-heroicons-cpu-chip" class="size-4" />
+            </span>
+            <div class="min-w-0 flex-1">
+              <div class="flex flex-wrap items-center gap-2">
+                <p class="truncate text-sm font-medium text-highlighted">{{ agent.name }}</p>
+                <UBadge :color="statusColor(agent.status)" variant="subtle" size="xs">
+                  {{ statusLabel(agent.status) }}
+                </UBadge>
+                <UBadge color="neutral" variant="outline" size="xs">v{{ agent.version }}</UBadge>
+                <UBadge v-if="agent.requiresHumanReview" color="warning" variant="outline" size="xs">
+                  {{ t('agents.reviewRequired') }}
+                </UBadge>
+              </div>
+              <p class="truncate text-sm text-muted">{{ agent.description }}</p>
+              <div class="mt-1 flex flex-wrap gap-1">
+                <UBadge color="neutral" variant="subtle" size="xs">{{ agent.outputKind }}</UBadge>
+                <UBadge v-for="tool in toolList(agent.allowedToolNames)" :key="tool" color="neutral" variant="outline"
+                  size="xs">
+                  {{ tool }}
+                </UBadge>
+              </div>
+            </div>
+            <div class="flex shrink-0 flex-wrap justify-end gap-1">
+              <UButton v-if="agent.status === 'draft' || agent.status === 'disabled'" color="primary" variant="ghost"
+                size="xs" :loading="rowBusyId === agent.id" @click="() => handlePublish(agent)">
+                {{ t('actions.publish') }}
+              </UButton>
+              <UButton v-if="agent.status === 'active'" color="neutral" variant="ghost" size="xs"
+                :loading="rowBusyId === agent.id" @click="() => handleDisable(agent)">
+                {{ t('actions.disable') }}
+              </UButton>
+              <UButton v-if="agent.status !== 'active'" color="error" variant="ghost" size="xs"
+                :loading="rowBusyId === agent.id" @click="() => handleDelete(agent)">
+                {{ t('actions.delete') }}
+              </UButton>
+            </div>
+          </template>
+
+          <template #empty>
+            <UButton v-if="hasAgentFilters" variant="ghost" icon="i-lucide-filter-x" @click="resetAgentFilters">
+              {{ t('clearFilters') }}
+            </UButton>
+          </template>
+        </BaseCollectionList>
+      </section>
+
+      <section class="mt-10">
+        <div class="mb-3">
           <h2 class="font-semibold">{{ t('skills.title') }}</h2>
-          <p class="text-muted text-sm">{{ t('skills.description') }}</p>
-        </template>
-        <div v-if="skills.length === 0" class="py-4 text-center text-sm text-muted">
-          {{ t('skills.empty') }}
+          <p class="text-sm text-muted">{{ t('skills.description') }}</p>
         </div>
-        <ul v-else class="space-y-2">
-          <li v-for="skill in skills" :key="skill.id" class="rounded-xl bg-elevated p-3">
-            <div class="flex flex-wrap items-center gap-2">
-              <span class="text-sm font-semibold">{{ skill.name }}</span>
-              <UBadge :color="statusColor(skill.status)" variant="subtle" size="xs" class="capitalize">
-                {{ t(`statuses.${skill.status}`) }}
-              </UBadge>
-              <UBadge color="neutral" variant="outline" size="xs">v{{ skill.version }}</UBadge>
-              <UBadge v-if="skill.sourceType === 'imported'" color="warning" variant="outline" size="xs">
-                {{ t('skills.imported') }}
-              </UBadge>
-              <UBadge v-if="skill.sourceType === 'built_in'" color="neutral" variant="outline" size="xs">
-                {{ t('skills.builtin') }}
-              </UBadge>
+
+        <div class="mb-3">
+          <BaseCollectionToolbar
+            :search="skillSearch"
+            :search-placeholder="t('searchSkills')"
+            @update:search="setSkillSearch"
+          />
+        </div>
+
+        <BaseCollectionList
+          :items="filteredSkills"
+          :row-key="skillRowKey"
+          :empty-title="hasSkillFilters ? t('noResults') : t('skills.empty')"
+          empty-icon="i-heroicons-academic-cap"
+        >
+          <template #item="{ item: skill }">
+            <span class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-elevated">
+              <UIcon name="i-heroicons-academic-cap" class="size-4" />
+            </span>
+            <div class="min-w-0 flex-1">
+              <div class="flex flex-wrap items-center gap-2">
+                <p class="truncate text-sm font-medium text-highlighted">{{ skill.name }}</p>
+                <UBadge :color="statusColor(skill.status)" variant="subtle" size="xs">
+                  {{ statusLabel(skill.status) }}
+                </UBadge>
+                <UBadge color="neutral" variant="outline" size="xs">v{{ skill.version }}</UBadge>
+                <UBadge v-if="skill.sourceType === 'imported'" color="warning" variant="outline" size="xs">
+                  {{ t('skills.imported') }}
+                </UBadge>
+                <UBadge v-if="skill.sourceType === 'built_in'" color="neutral" variant="outline" size="xs">
+                  {{ t('skills.builtin') }}
+                </UBadge>
+              </div>
+              <p class="truncate text-sm text-muted">{{ skill.description }}</p>
+              <div class="mt-1 flex flex-wrap gap-1">
+                <UBadge v-for="tool in toolList(skill.allowedTools)" :key="tool" color="neutral" variant="outline"
+                  size="xs">
+                  {{ tool }}
+                </UBadge>
+              </div>
             </div>
-            <p v-if="skill.description" class="mt-1 text-xs text-muted">{{ skill.description }}</p>
-            <div class="mt-2 flex flex-wrap gap-1">
-              <UBadge v-for="tool in toolList(skill.allowedTools)" :key="tool" color="neutral" variant="outline"
-                size="xs">
-                {{ tool }}
-              </UBadge>
-            </div>
-          </li>
-        </ul>
-      </UCard>
+          </template>
+
+          <template #empty>
+            <UButton v-if="hasSkillFilters" variant="ghost" icon="i-lucide-filter-x" @click="resetSkillFilters">
+              {{ t('clearFilters') }}
+            </UButton>
+          </template>
+        </BaseCollectionList>
+      </section>
     </template>
 
     <UModal v-model:open="showCreateModal" :title="t('form.title')" :ui="{ content: 'max-w-2xl' }">
@@ -308,7 +488,7 @@ watch(activeBusinessId, () => {
             <UTextarea v-model="newAgent.systemPrompt" :rows="4" class="w-full font-mono text-xs" />
           </UFormField>
           <UFormField :label="t('form.tools')" name="agent-tools">
-            <UInput v-model="newAgent.allowedToolNames" placeholder="web_search, retrieve"
+            <UInput v-model="newAgent.allowedToolNames" :placeholder="t('form.toolsPlaceholder')"
               class="w-full font-mono text-xs" />
           </UFormField>
         </div>
@@ -324,7 +504,5 @@ watch(activeBusinessId, () => {
         </div>
       </template>
     </UModal>
-  </div>
+  </BaseCollectionPage>
 </template>
-
-<style scoped></style>

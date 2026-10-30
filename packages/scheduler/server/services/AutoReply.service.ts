@@ -1,6 +1,7 @@
-import { and, desc, eq, like } from 'drizzle-orm'
+import { and, desc, eq, inArray, like } from 'drizzle-orm'
 import { entityDetails } from '#layers/BaseDB/db/entityDetails/entityDetails'
-import { platformPosts } from '#layers/BaseDB/db/posts/posts'
+import { platformPosts, posts } from '#layers/BaseDB/db/posts/posts'
+import { assets } from '#layers/BaseDB/db/assets/assets'
 import { socialMediaAccounts } from '#layers/BaseDB/db/socialMedia/socialMedia'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
 import type { ServiceResponse } from '#layers/BaseDB/server/services/types'
@@ -141,6 +142,83 @@ function markProcessed(state: CampaignState, key: string): void {
 function parseDetails<T>(raw: unknown): T | null {
   if (!raw || typeof raw !== 'object') return null
   return raw as T
+}
+
+/**
+ * The platform-native id a plugin stored on `publish_detail`. `platform_post_id`
+ * is initialised with the platform *name*, so it is never the id to watch.
+ */
+function parsePublishDetail(raw: unknown): Record<string, unknown> {
+  if (typeof raw === 'string') {
+    try {
+      return asPlainRecord(JSON.parse(raw))
+    } catch {
+      return {}
+    }
+  }
+  return asPlainRecord(raw)
+}
+
+function asPlainRecord(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {}
+  return Object.fromEntries(Object.entries(value))
+}
+
+function readString(source: unknown, key: string): string | null {
+  if (!source || typeof source !== 'object') return null
+  const value = (source as Record<string, unknown>)[key]
+  return typeof value === 'string' && value ? value : null
+}
+
+function externalPostIdOf(raw: unknown, socialAccountId: string): string | null {
+  const detail = parsePublishDetail(raw)
+  return readString(detail[socialAccountId], 'publishedId') || readString(detail, 'postId')
+}
+
+/** Asset ids off a post's `mediaAssets` JSON string (first frame first). */
+function parseMediaAssetIds(raw: string | null): string[] {
+  if (!raw) return []
+  try {
+    const parsed: unknown = JSON.parse(raw)
+    return Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === 'string') : []
+  } catch {
+    return []
+  }
+}
+
+/** LLM output hygiene: strip fences/quotes and cap to the IG DM limit. */
+function cleanAiText(raw: string | undefined | null): string {
+  if (!raw) return ''
+  const text = raw
+    .replace(/```[a-z]*/gi, '')
+    .replace(/^["'`\s]+|["'`\s]+$/g, '')
+    .trim()
+  return text.slice(0, 1000)
+}
+
+const AUTO_REPLY_AI_SYSTEM_PROMPT = [
+  'You write Instagram direct-message replies for a comment-to-DM automation.',
+  'The person commented a trigger keyword on the account\'s post, so the reply is the first DM they receive.',
+  'Be warm, direct and human. No hashtags. No marketing filler. Never invent a URL.',
+  'Address the person with {username} when it reads naturally.',
+].join(' ')
+
+interface AutoReplyTemplateInput {
+  keywords?: string[]
+  dmTemplate?: string
+  publicReplyTemplate?: string
+  links?: AutoReplyLinkInput[]
+  tone?: 'friendly' | 'professional' | 'casual'
+  businessId?: string
+  useBusinessContext?: boolean
+}
+
+function describeLinks(links: AutoReplyLinkInput[] | undefined): string {
+  const valid = (links || []).filter((l) => !!l.target?.trim())
+  if (valid.length === 0) return 'No destination link yet.'
+  return valid
+    .map((l, index) => `- {link${index + 1}}: ${l.label || `Link ${index + 1}`} → ${l.target}`)
+    .join('\n')
 }
 
 class AutoReplyStore {
@@ -452,22 +530,72 @@ export class AutoReplyService {
   }
 
   /**
-   * Recent IG media for the post-picker UI (and match-all discovery uses the
-   * same plugin call). Ownership-checked; never throws.
+   * Posts the picker may watch: only rows MagicSync actually published
+   * (`platform_posts.status = 'published'` with a real platform post id) on an
+   * Instagram or TikTok account. Native posts the user never published through
+   * MagicSync are intentionally excluded — they have no audit trail here, and
+   * for Instagram the "watch all posts" switch covers them instead.
    */
-  async listRecentMedia(userId: string, socialAccountId: string, limit = 10): Promise<ServiceResponse<Array<{ id: string; caption?: string; mediaType?: string; imageUrl?: string; timestamp?: string; likeCount?: number; commentsCount?: number }>>> {
+  async listPublishedPosts(userId: string, socialAccountId: string, limit = 10): Promise<ServiceResponse<Array<{ id: string; caption?: string; mediaType?: string; imageUrl?: string; timestamp?: string; likeCount?: number; commentsCount?: number }>>> {
     try {
       const account = await socialMediaAccountService.getAccountById(socialAccountId, userId)
       if (!account) return { success: false, error: 'Social media account not found', code: 'NOT_FOUND' }
-      if (account.platform !== 'instagram') {
-        return { success: false, error: 'Post picker is only supported for Instagram accounts', code: 'UNSUPPORTED' }
+      if (account.platform !== 'instagram' && account.platform !== 'tiktok') {
+        return { success: false, error: 'Watched posts are only supported for Instagram and TikTok accounts', code: 'UNSUPPORTED' }
       }
-      const plugin = this.instagramPlugin()
       const capped = Math.min(Math.max(limit, 1), 25)
-      const media = await plugin.getRecentMedia(account as PluginSocialMediaAccount, capped)
-      return { success: true, data: media }
+      const rows = await useDrizzle()
+        .select({
+          publishDetail: platformPosts.publishDetail,
+          publishedAt: platformPosts.publishedAt,
+          content: posts.content,
+          mediaAssets: posts.mediaAssets,
+          platform: socialMediaAccounts.platform,
+        })
+        .from(platformPosts)
+        .innerJoin(posts, eq(platformPosts.postId, posts.id))
+        .innerJoin(socialMediaAccounts, eq(platformPosts.socialAccountId, socialMediaAccounts.id))
+        .where(and(
+          eq(platformPosts.socialAccountId, socialAccountId),
+          eq(platformPosts.status, 'published'),
+          eq(posts.userId, userId),
+        ))
+        .orderBy(desc(platformPosts.publishedAt))
+        .limit(capped)
+      const published = rows
+        .map(row => ({ ...row, externalId: externalPostIdOf(row.publishDetail, socialAccountId) }))
+        .filter(row => !!row.externalId && (row.platform === 'instagram' || row.platform === 'tiktok'))
+      const assetIds = published.map(row => parseMediaAssetIds(row.mediaAssets)[0]).filter((id): id is string => !!id)
+      const thumbnails = await this.assetThumbnails(assetIds)
+      return {
+        success: true,
+        data: published.map(row => {
+          const firstAssetId = parseMediaAssetIds(row.mediaAssets)[0]
+          return {
+            id: row.externalId as string,
+            caption: row.content,
+            mediaType: 'published',
+            imageUrl: firstAssetId ? thumbnails.get(firstAssetId) : undefined,
+            timestamp: row.publishedAt?.toISOString(),
+          }
+        }),
+      }
     } catch {
-      return { success: false, error: 'Failed to load recent posts' }
+      return { success: false, error: 'Failed to load published posts' }
+    }
+  }
+
+  /** First-frame thumbnails for the picker, keyed by asset id. */
+  private async assetThumbnails(ids: string[]): Promise<Map<string, string>> {
+    if (ids.length === 0) return new Map()
+    try {
+      const rows = await useDrizzle()
+        .select({ id: assets.id, url: assets.url, thumbnailUrl: assets.thumbnailUrl })
+        .from(assets)
+        .where(inArray(assets.id, ids))
+      return new Map(rows.map(row => [row.id, row.thumbnailUrl || row.url]))
+    } catch {
+      return new Map()
     }
   }
 
@@ -476,6 +604,42 @@ export class AutoReplyService {
       return { success: true, data: { matched: matchKeywords(text, keywords, mode) } }
     } catch {
       return { success: false, error: 'Match test failed' }
+    }
+  }
+
+  /**
+   * Draft a DM template for the campaign form ("Generate with AI").
+   * Returns text with {username}/{link1}/{link2} placeholders preserved so it
+   * renders through the same path as a hand-written template.
+   */
+  async generateTemplate(userId: string, input: AutoReplyTemplateInput): Promise<ServiceResponse<{ text: string }>> {
+    try {
+      const keywords = (input.keywords || []).filter((k) => !!k.trim())
+      const tone = input.tone || 'friendly'
+      const draft = input.dmTemplate?.trim()
+      const { text } = await schedulerUnifiedAI.generateText({
+        systemPrompt: AUTO_REPLY_AI_SYSTEM_PROMPT,
+        prompt: [
+          `Write the DM that is sent when someone comments one of these keywords: ${keywords.join(', ') || 'LINK'}.`,
+          `Tone: ${tone}.`,
+          `Destination links (use the exact placeholders):\n${describeLinks(input.links)}`,
+          draft ? `Current draft to improve (keep its intent and placeholders): ${draft}` : 'There is no draft yet.',
+          input.publicReplyTemplate
+            ? `The public comment reply that accompanies it is: ${input.publicReplyTemplate}`
+            : 'There is no public reply.',
+          'Rules: 1-3 short sentences, at most 300 characters, no hashtags, no emojis unless the draft has them.',
+          'Return the DM text only.',
+        ].join('\n'),
+        temperature: 0.7,
+        userId,
+        businessId: input.businessId ?? null,
+        useBusinessContext: input.useBusinessContext === true,
+      })
+      const cleaned = cleanAiText(text)
+      if (!cleaned) return { success: false, error: 'The AI returned an empty message. Try again.' }
+      return { success: true, data: { text: cleaned } }
+    } catch {
+      return { success: false, error: 'AI generation failed. Configure an AI provider key in AI settings and try again.' }
     }
   }
 
@@ -514,16 +678,7 @@ export class AutoReplyService {
       const rows = await db.select().from(platformPosts).where(eq(platformPosts.socialAccountId, campaign.socialAccountId)).limit(50)
       const discovered: string[] = []
       for (const row of rows) {
-        const raw = row.publishDetail
-        let detail: Record<string, unknown> = {}
-        if (typeof raw === 'string') {
-          try { detail = JSON.parse(raw) } catch { detail = {} }
-        } else if (raw && typeof raw === 'object') {
-          detail = raw as Record<string, unknown>
-        }
-        const byAccount = (detail as Record<string, { publishedId?: string }>)[campaign.socialAccountId]?.publishedId
-        const flat = (detail as { postId?: string }).postId
-        const ext = byAccount || flat
+        const ext = externalPostIdOf(row.publishDetail, campaign.socialAccountId)
         if (ext && !discovered.includes(ext)) discovered.push(ext)
       }
       addIds(discovered)
@@ -592,13 +747,24 @@ export class AutoReplyService {
   private async resolveAiText(campaign: AutoReplyCampaign, comment: PlatformComment, fallback: string): Promise<{ text: string; usedAi: boolean }> {
     if (campaign.mode !== 'ai') return { text: fallback, usedAi: false }
     try {
-      const res = await $fetch<{ text?: string; reply?: string }>(`/api/ai-tools/social-media/generate`, {
-        method: 'POST',
-        body: { comment: comment.text, author: comment.authorName, template: fallback },
-      }).catch(() => null)
-      const aiText = res?.text || res?.reply
-      if (aiText) return { text: aiText.slice(0, 1000), usedAi: true }
-      return { text: fallback, usedAi: false }
+      const links = (campaign.linkIds || []).map((linkId) => trackedUrl(campaign.id, linkId))
+      const { text } = await schedulerUnifiedAI.generateText({
+        systemPrompt: AUTO_REPLY_AI_SYSTEM_PROMPT,
+        prompt: [
+          `The person commented: "${(comment.text || '').slice(0, 500)}"`,
+          `Their username: ${comment.authorName || 'unknown'}`,
+          `Trigger keywords: ${(campaign.keywords || []).join(', ')}`,
+          `Template to improve (keep its intent and the placeholders): ${campaign.dmTemplate}`,
+          links.length > 0
+            ? `The only URLs allowed in the reply are these tracked short links:\n${links.map((url, index) => `- {link${index + 1}} → ${url}`).join('\n')}`
+            : 'There is no link to send. Answer the comment directly.',
+          'Write the DM text only.',
+        ].join('\n'),
+        temperature: 0.6,
+        userId: campaign.userId,
+      })
+      const cleaned = cleanAiText(text)
+      return cleaned ? { text: cleaned, usedAi: true } : { text: fallback, usedAi: false }
     } catch {
       return { text: fallback, usedAi: false }
     }

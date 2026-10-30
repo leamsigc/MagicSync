@@ -57,7 +57,11 @@
       "download": "Download",
       "edit": "Edit",
       "preview": "Preview",
-      "delete": "Delete"
+      "delete": "Delete",
+      "previous": "Previous asset",
+      "next": "Next asset",
+      "select": "Select",
+      "selected": "Selected"
     },
     "delete_dialog": {
       "title": "Delete Assets",
@@ -70,7 +74,9 @@
       "type": "Type:",
       "created": "Created:",
       "dimensions": "Dimensions:",
-      "tags": "Tags:"
+      "tags": "Tags:",
+      "previous": "Previous asset",
+      "next": "Next asset"
     },
     "asset_quality": "Optimized",
     "move_selected": "Move selected",
@@ -145,7 +151,11 @@
       "download": "Descargar",
       "edit": "Editar",
       "preview": "Vista previa",
-      "delete": "Eliminar"
+      "delete": "Eliminar",
+      "previous": "Archivo anterior",
+      "next": "Archivo siguiente",
+      "select": "Seleccionar",
+      "selected": "Seleccionado"
     },
     "delete_dialog": {
       "title": "Eliminar Activos",
@@ -158,7 +168,9 @@
       "type": "Tipo:",
       "created": "Creado:",
       "dimensions": "Dimensiones:",
-      "tags": "Etiquetas:"
+      "tags": "Etiquetas:",
+      "previous": "Archivo anterior",
+      "next": "Archivo siguiente"
     },
     "asset_quality": "Optimizado",
     "move_selected": "Mover seleccionados",
@@ -233,7 +245,11 @@
       "download": "Downloaden",
       "edit": "Bearbeiten",
       "preview": "Vorschau",
-      "delete": "Löschen"
+      "delete": "Löschen",
+      "previous": "Vorheriges Asset",
+      "next": "Nächstes Asset",
+      "select": "Auswählen",
+      "selected": "Ausgewählt"
     },
     "delete_dialog": {
       "title": "Assets Löschen",
@@ -246,7 +262,9 @@
       "type": "Typ:",
       "created": "Erstellt:",
       "dimensions": "Abmessungen:",
-      "tags": "Tags:"
+      "tags": "Tags:",
+      "previous": "Vorheriges Asset",
+      "next": "Nächstes Asset"
     },
     "asset_quality": "Optimiert",
     "move_selected": "Auswahl verschieben",
@@ -321,7 +339,11 @@
       "download": "Télécharger",
       "edit": "Modifier",
       "preview": "Aperçu",
-      "delete": "Supprimer"
+      "delete": "Supprimer",
+      "previous": "Fichier précédent",
+      "next": "Fichier suivant",
+      "select": "Sélectionner",
+      "selected": "Sélectionné"
     },
     "delete_dialog": {
       "title": "Supprimer les Ressources",
@@ -334,7 +356,9 @@
       "type": "Type:",
       "created": "Créé:",
       "dimensions": "Dimensions:",
-      "tags": "Étiquettes:"
+      "tags": "Étiquettes:",
+      "previous": "Fichier précédent",
+      "next": "Fichier suivant"
     },
     "asset_quality": "Optimisé",
     "move_selected": "Déplacer la sélection",

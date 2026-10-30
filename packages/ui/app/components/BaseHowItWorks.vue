@@ -17,6 +17,7 @@ interface Props {
     description: string;
     image: string;
   }[];
+  type: 'default' | 'vertical' | 'horizontal';
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -46,6 +47,7 @@ const props = withDefaults(defineProps<Props>(), {
       image: "https://shadcn-vue-landing-page.vercel.app/gamestation.png",
     },
   ],
+  type: 'default'
 });
 const { list } = toRefs(props);
 </script>
@@ -64,9 +66,9 @@ const { list } = toRefs(props);
       </h3>
     </div>
 
-    <div class="lg:w-[80%] mx-auto relative">
+    <div class=" mx-auto relative">
       <div v-for="({ badgeTitle, title, description, image }, index) in list" :key="title"
-        :class="['flex mb-8 items-center', { ' flex-row-reverse': index % 2 !== 0 }]">
+        :class="['flex mb-8 items-center gap-2', { ' flex-row-reverse': index % 2 !== 0 }]">
         <UCard class="h-full bg-transparent border-0 shadow-none">
           <template #header>
             <div class="pb-4">
@@ -85,8 +87,8 @@ const { list } = toRefs(props);
           </template>
         </UCard>
 
-        <NuxtImg :src="image" :alt="`Image describing ${title} `"
-          class="w-[150px] md:w-[250px] lg:w-[300px] mx-auto -scale-x-100" width="150" height="350" />
+        <NuxtImg :src="image" :alt="`Image describing ${title} `" class=" mx-auto -scale-x-100"
+          :class="{ 'w-[150px] md:w-[250px] lg:w-[300px]': type === 'default', 'w-1/2 aspect-video': type === 'vertical', 'w-[400px]': type === 'horizontal' }" />
         <div :class="[
           '-z-10 absolute right-0 w-44 h-72  lg:w-64 lg:h-80 rounded-full bg-primary/15 dark:bg-primary/10 blur-3xl',
           {

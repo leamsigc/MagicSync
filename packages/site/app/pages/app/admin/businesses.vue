@@ -1,17 +1,19 @@
+<i18n src="./businesses.json"></i18n>
+
 <script lang="ts" setup>
-import { h, resolveComponent, useTemplateRef } from 'vue'
-import type { TableColumn } from '@nuxt/ui'
-import type { Row } from '@tanstack/vue-table'
+/**
+ * Admin → Businesses.
+ *
+ * Grid / list / table directory over every business profile, built on the
+ * shared collection shell: `useCollectionView` owns search / status / sort,
+ * `BaseCollectionToolbar` renders the controls and each view reads the same
+ * `filtered` list so they can never disagree.
+ */
+import type { CollectionTableColumn } from '#layers/BaseUI/app/utils/collection'
 
 definePageMeta({
-  layout: 'dashboard-layout'
+  layout: 'dashboard-layout',
 })
-
-const UButton = resolveComponent('UButton')
-const UBadge = resolveComponent('UBadge')
-const UDropdownMenu = resolveComponent('UDropdownMenu')
-
-const toast = useToast()
 
 interface AdminBusiness {
   id: string
@@ -26,22 +28,105 @@ interface AdminBusiness {
   createdAt: string
 }
 
+const { t } = useI18n()
+const toast = useToast()
+
 const businesses = ref<AdminBusiness[]>([])
 const loading = ref(true)
-const searchQuery = ref('')
-const viewMode = ref<'cards' | 'table'>('cards')
-const table = useTemplateRef('table')
 
-const filteredBusinesses = computed(() => {
-  if (!searchQuery.value) return businesses.value
-  const q = searchQuery.value.toLowerCase()
-  return businesses.value.filter(b =>
-    b.name?.toLowerCase().includes(q) ||
-    b.category?.toLowerCase().includes(q) ||
-    b.website?.toLowerCase().includes(q) ||
-    b.address?.toLowerCase().includes(q)
-  )
+const {
+  view,
+  setView,
+  search,
+  setSearch,
+  filters,
+  setFilter,
+  sort,
+  setSort,
+  filtered,
+  hasActiveFilters,
+  resetFilters,
+} = useCollectionView<AdminBusiness>({
+  key: 'admin-businesses',
+  modes: ['grid', 'list', 'table'],
+  defaultView: 'grid',
+  rows: businesses,
+  searchFields: business => [
+    business.name,
+    business.description,
+    business.category,
+    business.website,
+    business.address,
+    business.phone,
+  ],
+  filterFns: {
+    status: (business, value) => (business.isActive ? 'active' : 'inactive') === value,
+  },
+  sorters: {
+    recent: (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    oldest: (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+    name: (a, b) => (a.name || '').localeCompare(b.name || ''),
+  },
+  initialSort: 'recent',
 })
+
+const activeCount = computed(() => businesses.value.filter(business => business.isActive).length)
+const subtitle = computed(() => t('subtitle', { active: activeCount.value, total: businesses.value.length }))
+
+const rowKey = (business: AdminBusiness): string => business.id
+
+function displayName(business: AdminBusiness): string {
+  return business.name || t('unnamed')
+}
+
+function initial(business: AdminBusiness): string {
+  return displayName(business).trim().charAt(0).toUpperCase()
+}
+
+function statusLabel(business: AdminBusiness): string {
+  return business.isActive ? t('status.active') : t('status.inactive')
+}
+
+function statusTone(business: AdminBusiness): 'success' | 'neutral' {
+  return business.isActive ? 'success' : 'neutral'
+}
+
+const statusOptions = computed(() => [
+  { value: 'all', label: t('filters.allStatuses') },
+  { value: 'active', label: t('status.active') },
+  { value: 'inactive', label: t('status.inactive') },
+])
+
+const sortOptions = computed(() => [
+  { value: 'recent', label: t('sort.recent') },
+  { value: 'oldest', label: t('sort.oldest') },
+  { value: 'name', label: t('sort.name') },
+])
+
+const viewOptions = computed(() => [
+  { value: 'grid', label: t('views.grid'), icon: 'i-lucide-layout-grid' },
+  { value: 'list', label: t('views.list'), icon: 'i-lucide-list' },
+  { value: 'table', label: t('views.table'), icon: 'i-lucide-table' },
+])
+
+const toolbarFilters = computed(() => [
+  {
+    key: 'status',
+    label: t('filters.status'),
+    value: filters.value.status || 'all',
+    options: statusOptions.value,
+    width: 'w-full sm:w-44',
+  },
+])
+
+const toolbarSort = computed(() => ({ value: sort.value, options: sortOptions.value }))
+
+const columns = computed<CollectionTableColumn[]>(() => [
+  { key: 'business', label: t('columns.business') },
+  { key: 'category', label: t('columns.category'), hideBelow: 'md' },
+  { key: 'website', label: t('columns.website'), hideBelow: 'lg' },
+  { key: 'status', label: t('columns.status') },
+])
 
 async function fetchBusinesses() {
   loading.value = true
@@ -49,7 +134,7 @@ async function fetchBusinesses() {
     const data = await $fetch<{ businesses: AdminBusiness[] }>('/api/v1/admin/businesses')
     businesses.value = data.businesses
   } catch {
-    toast.add({ title: 'Error', description: 'Failed to load businesses', color: 'error' })
+    toast.add({ title: t('toast.error'), description: t('toast.loadFailed'), color: 'error' })
   } finally {
     loading.value = false
   }
@@ -57,8 +142,17 @@ async function fetchBusinesses() {
 
 onMounted(fetchBusinesses)
 
+function handleRefresh() {
+  fetchBusinesses()
+}
+
+function handleResetFilters() {
+  resetFilters()
+}
+
 const selectedBusiness = ref<AdminBusiness | null>(null)
 const showEditModal = ref(false)
+const saving = ref(false)
 const editForm = ref<{
   name: string
   category: string
@@ -74,19 +168,19 @@ const editForm = ref<{
   website: '',
   phone: '',
   description: '',
-  isActive: true
+  isActive: true,
 })
 
-function openEdit(biz: AdminBusiness) {
-  selectedBusiness.value = biz
+function openEdit(business: AdminBusiness) {
+  selectedBusiness.value = business
   editForm.value = {
-    name: biz.name || '',
-    category: biz.category || '',
-    address: biz.address || '',
-    website: biz.website || '',
-    phone: biz.phone || '',
-    description: biz.description || '',
-    isActive: biz.isActive ?? true
+    name: business.name || '',
+    category: business.category || '',
+    address: business.address || '',
+    website: business.website || '',
+    phone: business.phone || '',
+    description: business.description || '',
+    isActive: business.isActive ?? true,
   }
   showEditModal.value = true
 }
@@ -97,200 +191,245 @@ function closeEditModal() {
 
 async function saveBusiness() {
   if (!selectedBusiness.value) return
+  const label = displayName(selectedBusiness.value)
+  saving.value = true
   try {
     await $fetch(`/api/v1/admin/businesses/${selectedBusiness.value.id}`, {
       method: 'PUT',
-      body: editForm.value
+      body: editForm.value,
     })
-    toast.add({ title: 'Business Updated', description: `${editForm.value.name || 'Business'} has been updated`, color: 'success' })
+    toast.add({
+      title: t('toast.updatedTitle'),
+      description: t('toast.updatedDescription', { name: label }),
+      color: 'success',
+    })
     showEditModal.value = false
     await fetchBusinesses()
   } catch {
-    toast.add({ title: 'Error', description: 'Failed to update business', color: 'error' })
+    toast.add({ title: t('toast.error'), description: t('toast.updateFailed'), color: 'error' })
+  } finally {
+    saving.value = false
   }
 }
 
-async function deleteBusiness(biz: AdminBusiness) {
+async function deleteBusiness(business: AdminBusiness) {
   try {
-    await $fetch(`/api/v1/admin/businesses/${biz.id}`, { method: 'DELETE' })
-    toast.add({ title: 'Business Deleted', description: `${biz.name || 'Business'} has been deleted`, color: 'success' })
+    await $fetch(`/api/v1/admin/businesses/${business.id}`, { method: 'DELETE' })
+    toast.add({
+      title: t('toast.deletedTitle'),
+      description: t('toast.deletedDescription', { name: displayName(business) }),
+      color: 'success',
+    })
     await fetchBusinesses()
   } catch {
-    toast.add({ title: 'Error', description: 'Failed to delete business', color: 'error' })
+    toast.add({ title: t('toast.error'), description: t('toast.deleteFailed'), color: 'error' })
   }
 }
 
-function confirmDelete(biz: AdminBusiness) {
+function confirmDelete(business: AdminBusiness) {
   toast.add({
-    title: 'Delete Business',
-    description: `Are you sure you want to delete ${biz.name || 'this business'}?`,
+    title: t('confirmDelete.title'),
+    description: t('confirmDelete.description', { name: displayName(business) }),
     color: 'error',
     actions: [
-      { label: 'Delete', color: 'error', variant: 'solid', onClick: () => deleteBusiness(biz) },
-      { label: 'Cancel', color: 'neutral', variant: 'outline' }
-    ]
+      { label: t('confirmDelete.confirm'), color: 'error', variant: 'solid', onClick: () => deleteBusiness(business) },
+      { label: t('confirmDelete.cancel'), color: 'neutral', variant: 'outline' },
+    ],
   })
 }
 
-function getRowItems(row: Row<AdminBusiness>) {
-  return [
-    { type: 'label', label: 'Actions' },
-    { label: 'Edit', onSelect: () => openEdit(row.original) },
-    { type: 'separator' },
-    { label: 'Delete', onSelect: () => confirmDelete(row.original) }
-  ]
+function menuItems(business: AdminBusiness) {
+  return [[
+    { label: t('actions.edit'), icon: 'i-lucide-pencil', onSelect: () => openEdit(business) },
+    { label: t('actions.delete'), icon: 'i-lucide-trash-2', color: 'error' as const, onSelect: () => confirmDelete(business) },
+  ]]
 }
-
-const columns: TableColumn<AdminBusiness>[] = [
-  {
-    accessorKey: 'name',
-    header: 'Name',
-    cell: ({ row }) => h('span', { class: 'font-medium text-sm' }, row.original.name || 'Unnamed Business')
-  },
-  {
-    accessorKey: 'category',
-    header: 'Category',
-    cell: ({ row }) => h('span', { class: 'text-sm text-muted-foreground' }, row.original.category || '—')
-  },
-  {
-    accessorKey: 'website',
-    header: 'Website',
-    cell: ({ row }) => h('span', { class: 'text-sm text-muted-foreground' }, row.original.website || '—')
-  },
-  {
-    accessorKey: 'isActive',
-    header: 'Status',
-    cell: ({ row }) =>
-      h(UBadge, { color: row.original.isActive ? 'success' : 'neutral', variant: 'subtle', size: 'sm' }, () =>
-        row.original.isActive ? 'Active' : 'Inactive'
-      )
-  },
-  {
-    id: 'actions',
-    header: () => h('div', { class: 'text-right' }, 'Actions'),
-    cell: ({ row }) =>
-      h('div', { class: 'text-right' }, [
-        h(UDropdownMenu, {
-          content: { align: 'end' },
-          items: getRowItems(row),
-          'aria-label': 'Actions dropdown'
-        }, () =>
-          h(UButton, {
-            icon: 'i-lucide-ellipsis-vertical',
-            color: 'neutral',
-            variant: 'ghost',
-            size: 'sm',
-            'aria-label': 'Actions dropdown'
-          })
-        )
-      ])
-  }
-]
 </script>
 
 <template>
-  <div class="space-y-6">
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-      <div>
-        <h1 class="text-2xl font-bold tracking-tight">Businesses</h1>
-        <p class="text-muted-foreground">View and manage all businesses</p>
-      </div>
-      <div class="flex flex-col sm:flex-row gap-2">
-        <UInput v-model="searchQuery" placeholder="Search businesses..." icon="i-heroicons-magnifying-glass" size="sm"
-          class="sm:w-64" />
-        <UButtonGroup size="sm">
-          <UButton :variant="viewMode === 'cards' ? 'solid' : 'outline'" icon="i-lucide-layout-grid"
-            @click="() => { viewMode = 'cards' }">
-            Cards
-          </UButton>
-          <UButton :variant="viewMode === 'table' ? 'solid' : 'outline'" icon="i-lucide-table"
-            @click="() => { viewMode = 'table' }">
-            Table
-          </UButton>
-        </UButtonGroup>
-      </div>
-    </div>
+  <BaseCollectionPage :title="t('title')" :description="subtitle">
+    <template #actions>
+      <UButton
+        icon="i-lucide-refresh-cw"
+        variant="outline"
+        :loading="loading"
+        :label="t('refresh')"
+        @click="handleRefresh"
+      />
+    </template>
 
-    <div v-if="loading" class="rounded flex justify-center py-12">
-      <UIcon name="i-heroicons-arrow-path" class="w-6 h-6 animate-spin text-muted-foreground" />
-    </div>
+    <template #toolbar>
+      <BaseCollectionToolbar
+        :search="search"
+        :search-placeholder="t('search')"
+        :filters="toolbarFilters"
+        :sort="toolbarSort"
+        :view="view"
+        :views="viewOptions"
+        :busy="loading"
+        @update:search="setSearch"
+        @update:filter="(key: string, value: string) => setFilter(key, value)"
+        @update:sort="setSort"
+        @update:view="setView"
+      />
+    </template>
 
-    <div v-else-if="filteredBusinesses.length === 0" class="rounded text-center py-12 text-muted-foreground">
-      No businesses found
-    </div>
-
-    <div v-else-if="viewMode === 'cards'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      <div v-for="biz in filteredBusinesses" :key="biz.id" class="rounded p-4 hover:shadow-lg transition-shadow">
-        <div class="space-y-3">
-          <div class="flex items-start justify-between gap-2">
-            <div class="flex-1 min-w-0">
-              <h3 class="font-semibold truncate">{{ biz.name || 'Unnamed Business' }}</h3>
-              <p v-if="biz.category" class="text-xs text-muted-foreground">{{ biz.category }}</p>
-            </div>
-            <UBadge :color="biz.isActive ? 'success' : 'neutral'" variant="subtle" size="sm">
-              {{ biz.isActive ? 'Active' : 'Inactive' }}
-            </UBadge>
-          </div>
-          <p v-if="biz.description" class="text-sm text-muted-foreground line-clamp-2">{{ biz.description }}</p>
-          <div class="flex flex-wrap gap-2 text-xs text-muted-foreground">
-            <span v-if="biz.website" class="flex items-center gap-1">
-              <UIcon name="lucide:globe" class="w-3 h-3" /> {{ biz.website }}
+    <BaseCollectionGrid
+      v-if="view === 'grid'"
+      :items="filtered"
+      :row-key="rowKey"
+      :loading="loading"
+      :empty-title="t('empty')"
+      empty-icon="i-lucide-building-2"
+    >
+      <template #item="{ item: business }">
+        <BaseCollectionCard
+          :title="displayName(business)"
+          :description="business.description || ''"
+          :avatar-text="initial(business)"
+          :badge="statusLabel(business)"
+          :badge-color="statusTone(business)"
+          :menu="menuItems(business)"
+        >
+          <template #meta>
+            <span v-if="business.category" class="flex items-center gap-1">
+              <UIcon name="i-lucide-tag" class="size-3.5" />
+              {{ business.category }}
             </span>
-            <span v-if="biz.phone" class="flex items-center gap-1">
-              <UIcon name="lucide:phone" class="w-3 h-3" /> {{ biz.phone }}
+            <span v-if="business.website" class="flex items-center gap-1">
+              <UIcon name="i-lucide-globe" class="size-3.5" />
+              {{ business.website }}
             </span>
-          </div>
-          <div class="flex gap-2 pt-1">
-            <UButton size="xs" icon="i-lucide-pencil" variant="outline" @click="() => openEdit(biz)">Edit</UButton>
-            <UButton size="xs" icon="i-lucide-trash-2" variant="outline" color="error"
-              @click="() => confirmDelete(biz)">Delete</UButton>
-          </div>
+            <span v-if="business.phone" class="flex items-center gap-1">
+              <UIcon name="i-lucide-phone" class="size-3.5" />
+              {{ business.phone }}
+            </span>
+          </template>
+        </BaseCollectionCard>
+      </template>
+
+      <template #empty>
+        <UButton v-if="hasActiveFilters" variant="ghost" :label="t('clearFilters')" @click="handleResetFilters" />
+      </template>
+    </BaseCollectionGrid>
+
+    <BaseCollectionList
+      v-else-if="view === 'list'"
+      :items="filtered"
+      :row-key="rowKey"
+      :loading="loading"
+      :empty-title="t('empty')"
+      empty-icon="i-lucide-building-2"
+    >
+      <template #item="{ item: business }">
+        <span class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary text-xs font-bold text-white">
+          {{ initial(business) }}
+        </span>
+        <div class="min-w-0 flex-1">
+          <p class="truncate text-sm font-medium text-highlighted">{{ displayName(business) }}</p>
+          <p class="truncate text-sm text-muted">
+            {{ business.category || business.website || business.address || t('noDetails') }}
+          </p>
         </div>
-      </div>
-    </div>
+        <UBadge class="hidden shrink-0 sm:inline-flex" :color="statusTone(business)" variant="subtle" size="sm">
+          {{ statusLabel(business) }}
+        </UBadge>
+        <span class="hidden w-40 truncate text-right text-xs text-muted lg:block">
+          {{ business.website || '—' }}
+        </span>
+        <UDropdownMenu :items="menuItems(business)" :content="{ align: 'end' }">
+          <UButton
+            icon="i-lucide-ellipsis-vertical"
+            color="neutral"
+            variant="ghost"
+            size="xs"
+            :aria-label="t('actions.more')"
+          />
+        </UDropdownMenu>
+      </template>
+    </BaseCollectionList>
 
-    <div v-else class="rounded overflow-hidden">
-      <UTable ref="table" :data="filteredBusinesses" :columns="columns" class="flex-1"
-        :ui="{ 'tr': 'bg-transparent', 'td': 'border-0', 'th': 'border-0' }" />
-    </div>
+    <BaseDataTable
+      v-else
+      :rows="filtered"
+      :columns="columns"
+      :row-key="rowKey"
+      :loading="loading"
+      :empty-title="t('empty')"
+      empty-icon="i-lucide-building-2"
+    >
+      <template #cell-business="{ row }">
+        <div class="flex items-center gap-3">
+          <span class="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-xs font-bold text-white">
+            {{ initial(row) }}
+          </span>
+          <span class="truncate font-medium text-highlighted">{{ displayName(row) }}</span>
+        </div>
+      </template>
+      <template #cell-category="{ row }">
+        <span class="text-muted">{{ row.category || '—' }}</span>
+      </template>
+      <template #cell-website="{ row }">
+        <span class="block max-w-48 truncate text-muted">{{ row.website || '—' }}</span>
+      </template>
+      <template #cell-status="{ row }">
+        <UBadge :color="statusTone(row)" variant="subtle" size="sm">{{ statusLabel(row) }}</UBadge>
+      </template>
+      <template #row-actions="{ row }">
+        <UDropdownMenu :items="menuItems(row)" :content="{ align: 'end' }">
+          <UButton
+            icon="i-lucide-ellipsis-vertical"
+            color="neutral"
+            variant="ghost"
+            size="xs"
+            :aria-label="t('actions.more')"
+          />
+        </UDropdownMenu>
+      </template>
+    </BaseDataTable>
 
     <UModal v-model:open="showEditModal">
       <template #content>
         <UCard v-if="selectedBusiness">
           <template #header>
-            <h3 class="text-lg font-semibold">Edit Business</h3>
+            <h3 class="text-lg font-semibold">{{ t('modal.title') }}</h3>
           </template>
           <div class="space-y-4">
-            <UFormField label="Name">
-              <UInput v-model="editForm.name" placeholder="Business name" class="w-full" />
+            <UFormField :label="t('modal.name')">
+              <UInput v-model="editForm.name" :placeholder="t('modal.namePlaceholder')" class="w-full" />
             </UFormField>
-            <UFormField label="Category">
-              <UInput v-model="editForm.category" placeholder="Category" class="w-full" />
+            <UFormField :label="t('modal.category')">
+              <UInput v-model="editForm.category" :placeholder="t('modal.categoryPlaceholder')" class="w-full" />
             </UFormField>
-            <UFormField label="Address">
-              <UInput v-model="editForm.address" placeholder="Address" class="w-full" />
+            <UFormField :label="t('modal.address')">
+              <UInput v-model="editForm.address" :placeholder="t('modal.addressPlaceholder')" class="w-full" />
             </UFormField>
-            <UFormField label="Website">
-              <UInput v-model="editForm.website" placeholder="https://..." class="w-full" />
+            <UFormField :label="t('modal.website')">
+              <UInput v-model="editForm.website" :placeholder="t('modal.websitePlaceholder')" class="w-full" />
             </UFormField>
-            <UFormField label="Phone">
-              <UInput v-model="editForm.phone" placeholder="Phone" class="w-full" />
+            <UFormField :label="t('modal.phone')">
+              <UInput v-model="editForm.phone" :placeholder="t('modal.phonePlaceholder')" class="w-full" />
             </UFormField>
-            <UFormField label="Description">
-              <UTextarea v-model="editForm.description" placeholder="Description" :rows="3" class="w-full" />
+            <UFormField :label="t('modal.description')">
+              <UTextarea
+                v-model="editForm.description"
+                :placeholder="t('modal.descriptionPlaceholder')"
+                :rows="3"
+                class="w-full"
+              />
             </UFormField>
-            <UFormField label="Active">
-              <UCheckbox v-model="editForm.isActive" label="Business is active" />
+            <UFormField :label="t('modal.active')">
+              <UCheckbox v-model="editForm.isActive" :label="t('modal.activeLabel')" />
             </UFormField>
           </div>
           <template #footer>
             <div class="flex justify-end gap-3">
-              <UButton variant="ghost" color="neutral" @click="closeEditModal">Cancel</UButton>
-              <UButton color="primary" @click="saveBusiness">Save Changes</UButton>
+              <UButton variant="ghost" color="neutral" :label="t('modal.cancel')" @click="closeEditModal" />
+              <UButton color="primary" :loading="saving" :label="t('modal.save')" @click="saveBusiness" />
             </div>
           </template>
         </UCard>
       </template>
     </UModal>
-  </div>
+  </BaseCollectionPage>
 </template>

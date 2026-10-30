@@ -1,10 +1,19 @@
 <i18n src="./knowledge.json"></i18n>
 
 <script setup lang="ts">
-
+/**
+ * Knowledge base — folder tree + document collection.
+ *
+ * The folder tree (drag & drop move, create/delete folder, upload) and the
+ * detail panel are unchanged; the document surface now renders through the
+ * shared collection shell: one toolbar (search + folder filter + Grid / List /
+ * Table) and every view reading the same filtered list.
+ */
 import type { TreeItem } from '@nuxt/ui'
 import { useSortable } from '@vueuse/integrations/useSortable'
 import { useTemplateRef } from 'vue'
+import type { CollectionTableColumn } from '#layers/BaseUI/app/utils/collection'
+import { useCollectionView } from '#layers/BaseUI/app/composables/useCollectionView'
 
 interface Folder {
   id: string
@@ -26,6 +35,8 @@ interface KBDocument {
   content?: string
 }
 
+type KnowledgeView = 'grid' | 'list' | 'table'
+
 const { t } = useI18n()
 const toast = useToast()
 const uploading = ref(false)
@@ -41,6 +52,66 @@ const showDetailPanel = ref(false)
 const newFolderName = ref('')
 const showNewFolderModal = ref(false)
 const treeRef = useTemplateRef<HTMLElement>('tree')
+
+const {
+  view,
+  setView,
+  search,
+  setSearch,
+  filters,
+  setFilter,
+  filtered,
+  hasActiveFilters,
+  resetFilters,
+} = useCollectionView<KBDocument>({
+  key: 'app-ai-tools-knowledge',
+  modes: ['grid', 'list', 'table'] satisfies KnowledgeView[],
+  defaultView: 'table',
+  rows: documents,
+  searchFields: doc => [doc.originalName, doc.filename, doc.mimeType, folderPathOf(doc)],
+  filterFns: {
+    folder: matchesFolder,
+  },
+})
+
+function matchesFolder(doc: KBDocument, value: string): boolean {
+  if (value === 'root') return doc.folderId === null
+  return doc.folderId === value
+}
+
+const folderFilterOptions = computed(() => [
+  { value: 'all', label: t('allFolders') },
+  { value: 'root', label: t('root') },
+  ...folders.value.map(folder => ({ value: folder.id, label: folder.name })),
+])
+
+const toolbarFilters = computed(() => [
+  {
+    key: 'folder',
+    label: t('filterFolder'),
+    value: filters.value.folder ?? 'all',
+    options: folderFilterOptions.value,
+    width: 'w-full sm:w-52',
+  },
+])
+
+const viewOptions = computed(() => [
+  { value: 'grid', label: t('viewGrid'), icon: 'i-lucide-layout-grid' },
+  { value: 'list', label: t('viewList'), icon: 'i-lucide-list' },
+  { value: 'table', label: t('viewTable'), icon: 'i-lucide-table' },
+])
+
+const columns = computed<CollectionTableColumn[]>(() => [
+  { key: 'name', label: t('columns.name') },
+  { key: 'folder', label: t('columns.folder'), hideBelow: 'md' },
+  { key: 'type', label: t('columns.type'), hideBelow: 'lg' },
+  { key: 'size', label: t('columns.size'), hideBelow: 'lg', align: 'right' },
+  { key: 'created', label: t('columns.created'), hideBelow: 'xl' },
+])
+
+const emptyTitle = computed(() => hasActiveFilters.value ? t('noResults') : t('noDocuments'))
+
+const items = ref<TreeItem[]>([])
 
 function getDocumentsInFolder(folderId: string | null) {
   return documents.value.filter(d => d.folderId === folderId)
@@ -91,7 +162,7 @@ function buildTreeItems(): TreeItem[] {
 
   return [{
     id: 'root',
-    label: 'All Documents',
+    label: t('allDocuments'),
     icon: 'i-heroicons-home',
     defaultExpanded: true,
     children: rootChildren,
@@ -99,14 +170,12 @@ function buildTreeItems(): TreeItem[] {
   }]
 }
 
-const items = ref<TreeItem[]>([])
-
 async function fetchFolders() {
   try {
     const data = await $fetch<Folder[]>('/api/ai-tools/folders')
     folders.value = data || []
-  } catch (e) {
-    toast.add({ title: 'Error', description: 'Failed to load folders', color: 'error' })
+  } catch {
+    toast.add({ title: t('errorTitle'), description: t('loadFoldersFailed'), color: 'error' })
   }
 }
 
@@ -114,8 +183,8 @@ async function fetchDocuments() {
   try {
     const data = await $fetch<KBDocument[]>('/api/ai-tools/documents')
     documents.value = data || []
-  } catch (e) {
-    toast.add({ title: 'Error', description: 'Failed to load documents', color: 'error' })
+  } catch {
+    toast.add({ title: t('errorTitle'), description: t('loadDocumentsFailed'), color: 'error' })
   }
 }
 
@@ -126,44 +195,52 @@ async function loadData() {
   loading.value = false
 }
 
+interface FlatTreeEntry {
+  item: TreeItem
+  parent: TreeItem[]
+  index: number
+}
+
+interface DocumentMove {
+  doc: KBDocument
+  folderId: string
+}
+
 function flatten(
   treeItems: TreeItem[],
   parent = treeItems
-): { item: TreeItem; parent: TreeItem[]; index: number }[] {
+): FlatTreeEntry[] {
   return treeItems.flatMap((item, index) => [
     { item, parent, index },
     ...(item.children?.length && item.defaultExpanded ? flatten(item.children, item.children) : [])
   ])
 }
 
+function resolveDocumentMove(flat: FlatTreeEntry[], oldIndex: number, newIndex: number): DocumentMove | null {
+  const source = flat[oldIndex]
+  const target = flat[newIndex]
+  if (!source || !target) return null
+  if (source.item.data?.type !== 'document') return null
+  if (target.item.data?.type !== 'folder') return null
+  const folder = target.item.data as Folder
+  return { doc: source.item.data as KBDocument, folderId: folder.id }
+}
 
 async function moveItem(oldIndex: number, newIndex: number) {
   if (oldIndex === newIndex) return
 
-  const flat = flatten(items.value)
-  const source = flat[oldIndex]
-  const target = flat[newIndex]
-
-  if (!source || !target) return
-
-  const sourceItem = source.item
-  const targetItem = target.item
-
-  if (sourceItem.data?.type !== 'document') return
-  if (targetItem.data?.type !== 'folder') return
-
-  const doc = sourceItem.data as KBDocument
-  const targetFolder = targetItem.data as Folder
+  const move = resolveDocumentMove(flatten(items.value), oldIndex, newIndex)
+  if (!move) return
 
   try {
-    await $fetch(`/api/ai-tools/documents/${doc.id}/move`, {
+    await $fetch(`/api/ai-tools/documents/${move.doc.id}/move`, {
       method: 'PATCH',
-      body: { folderId: targetFolder.id }
+      body: { folderId: move.folderId }
     })
     await loadData()
     toast.add({ title: t('fileMoved'), color: 'success' })
-  } catch (e) {
-    toast.add({ title: 'Error', description: 'Failed to move file', color: 'error' })
+  } catch {
+    toast.add({ title: t('errorTitle'), description: t('moveFileFailed'), color: 'error' })
   }
 }
 
@@ -175,6 +252,12 @@ function onTreeSelect(item: TreeItem) {
   } else if (item.data?.type === 'folder') {
     showDetailPanel.value = false
   }
+}
+
+function handleOpenDocument(doc: Record<string, any>) {
+  const target = doc as KBDocument
+  selectedItem.value = { id: target.id, label: target.originalName, data: { type: 'document', ...target } }
+  showDetailPanel.value = true
 }
 
 function getSelectedDocument(): KBDocument | null {
@@ -196,7 +279,7 @@ async function createFolder() {
   const parentId = folder?.id ?? null
 
   if (!newFolderName.value.trim()) {
-    toast.add({ title: 'Error', description: 'Folder name is required', color: 'error' })
+    toast.add({ title: t('errorTitle'), description: t('folderNameRequired'), color: 'error' })
     return
   }
 
@@ -216,8 +299,8 @@ async function createFolder() {
     await fetchFolders()
     items.value = buildTreeItems()
     toast.add({ title: t('folderCreated'), color: 'success' })
-  } catch (e) {
-    toast.add({ title: 'Error', description: 'Failed to create folder', color: 'error' })
+  } catch {
+    toast.add({ title: t('errorTitle'), description: t('createFolderFailed'), color: 'error' })
   }
 }
 
@@ -231,8 +314,8 @@ async function deleteFolder(folderId: string) {
     await fetchFolders()
     items.value = buildTreeItems()
     toast.add({ title: t('folderDeleted'), color: 'success' })
-  } catch (e) {
-    toast.add({ title: 'Error', description: 'Failed to delete folder', color: 'error' })
+  } catch {
+    toast.add({ title: t('errorTitle'), description: t('deleteFolderFailed'), color: 'error' })
   }
 }
 
@@ -262,9 +345,9 @@ async function handleUpload(files: FileList | null) {
         body: formData,
       })
       toast.add({ title: t('uploadSuccess'), color: 'success' })
-    } catch (e: any) {
-      const msg = e?.data?.statusMessage || t('uploadError')
-      toast.add({ title: msg, color: 'error' })
+    } catch (err: unknown) {
+      const failure = err as { data?: { statusMessage?: string } }
+      toast.add({ title: failure?.data?.statusMessage || t('uploadError'), color: 'error' })
     }
   }
   uploading.value = false
@@ -285,15 +368,23 @@ function onDragLeave() {
   dragOver.value = false
 }
 
-
 function formatSize(bytes: number): string {
   if (bytes < 1024) return bytes + ' B'
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
   return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
 }
 
+function formatDate(value: string): string {
+  return new Date(value).toLocaleDateString()
+}
+
+function folderPathOf(doc: { folderId?: string | null }): string {
+  if (!doc.folderId) return '/'
+  return folders.value.find(folder => folder.id === doc.folderId)?.path ?? '/'
+}
+
 const folderOptions = computed(() => {
-  const opts = [{ label: 'Root (No Folder)', value: '' }]
+  const opts = [{ label: t('noFolder'), value: '' }]
   for (const folder of folders.value) {
     opts.push({ label: folder.name, value: folder.id })
   }
@@ -312,8 +403,8 @@ async function handleMoveToFolder() {
     await loadData()
     toast.add({ title: t('fileMoved'), color: 'success' })
     moveToFolderId.value = ''
-  } catch (e) {
-    toast.add({ title: 'Error', description: 'Failed to move file', color: 'error' })
+  } catch {
+    toast.add({ title: t('errorTitle'), description: t('moveFileFailed'), color: 'error' })
   }
 }
 
@@ -325,6 +416,27 @@ function getFileIcon(mimeType: string): string {
   if (type.includes('text') || type.includes('txt') || type === 'application/octet-stream') return 'i-heroicons-document-text'
   if (type.includes('markdown') || type.includes('md')) return 'i-heroicons-document-text'
   return 'i-heroicons-document'
+}
+
+function handleViewChange(next: KnowledgeView) {
+  setView(next)
+}
+
+function handleUploadClick() {
+  fileInput.value?.click()
+}
+
+function handleFileInputChange(event: Event) {
+  const input = event.target as HTMLInputElement
+  void handleUpload(input.files)
+}
+
+function handleOpenFolderModal() {
+  showNewFolderModal.value = true
+}
+
+function handleCloseFolderModal() {
+  showNewFolderModal.value = false
 }
 
 onMounted(() => {
@@ -339,117 +451,248 @@ useSortable(treeRef, items, {
 </script>
 
 <template>
-  <div class="h-full flex flex-col">
-    <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-      <div class="flex items-center gap-2">
-        <h1 class="text-xl font-semibold">{{ t('title') }}</h1>
-      </div>
-      <div class="flex items-center gap-2">
+  <BaseCollectionPage :title="t('title')" :description="t('description')" container="full">
+    <template #actions>
+      <div class="flex flex-wrap items-center gap-2">
         <input ref="fileInput" type="file" class="hidden" accept=".pdf,.txt,.md,.html,.docx,.csv,.json" multiple
-          @change="handleUpload(($event.target as HTMLInputElement).files)">
-        <UButton color="primary" :loading="uploading" @click="fileInput?.click()">
-          <UIcon name="i-heroicons-arrow-up-tray" class="mr-1" />
+          @change="handleFileInputChange">
+        <UButton color="primary" icon="i-heroicons-arrow-up-tray" :loading="uploading" @click="handleUploadClick">
           {{ t('upload') }}
         </UButton>
-        <UButton color="primary" @click="showNewFolderModal = true">
-          <UIcon name="i-heroicons-folder-plus" class="mr-1" />
+        <UButton color="neutral" variant="outline" icon="i-heroicons-folder-plus" @click="handleOpenFolderModal">
           {{ t('newFolder') }}
         </UButton>
       </div>
-    </div>
+    </template>
 
-    <div v-if="loading" class="flex-1 flex items-center justify-center">
-      <UProgress indicator />
-    </div>
+    <template #toolbar>
+      <BaseCollectionToolbar
+        :search="search"
+        :search-placeholder="t('searchPlaceholder')"
+        :filters="toolbarFilters"
+        :view="view"
+        :views="viewOptions"
+        :busy="loading"
+        @update:search="setSearch"
+        @update:filter="setFilter"
+        @update:view="handleViewChange"
+      />
+    </template>
 
-    <div v-else class="flex-1 flex overflow-hidden">
-      <div class="w-80 border-r border-gray-200 dark:border-gray-700 flex flex-col" @drop.prevent="onDrop"
-        @dragover="onDragOver" @dragleave="onDragLeave">
+    <div class="flex flex-col gap-4 lg:flex-row">
+      <aside
+        class="relative flex min-h-80 w-full flex-col rounded-2xl border border-default lg:w-72 lg:shrink-0"
+        @drop.prevent="onDrop"
+        @dragover="onDragOver"
+        @dragleave="onDragLeave"
+      >
+        <div class="flex items-center gap-2 border-b border-default px-3 py-2 text-sm font-medium">
+          <UIcon name="i-heroicons-folder" class="size-4" />
+          {{ t('folders') }}
+        </div>
+        <div v-if="getSelectedFolder()" class="flex items-center justify-between gap-2 border-b border-default px-3 py-2">
+          <span class="truncate text-sm text-muted">{{ getSelectedFolder()!.name }}</span>
+          <UTooltip :text="t('deleteFolder')">
+            <UButton size="xs" color="error" variant="ghost" icon="i-heroicons-trash" :aria-label="t('deleteFolder')"
+              @click="() => deleteFolder(getSelectedFolder()!.id)" />
+          </UTooltip>
+        </div>
         <UTree ref="tree" :items="items" class="flex-1 overflow-y-auto p-2" @select="onTreeSelect" />
         <div v-if="dragOver"
-          class="absolute inset-0 bg-primary-50/90 dark:bg-primary-900/50 flex items-center justify-center border-2 border-dashed border-primary-500 rounded-lg m-2">
-          <p class="text-primary-600 dark:text-primary-400 font-medium">{{ t('dropHere') }}</p>
+          class="absolute inset-2 flex items-center justify-center rounded-xl border-2 border-dashed border-primary bg-primary/10">
+          <p class="text-sm font-medium text-primary">{{ t('dropHere') }}</p>
         </div>
+      </aside>
+
+      <div class="min-w-0 flex-1">
+        <BaseCollectionGrid
+          v-if="view === 'grid'"
+          :items="filtered"
+          row-key="id"
+          :loading="loading"
+          :empty-title="emptyTitle"
+          empty-icon="i-heroicons-document-text"
+        >
+          <template #item="{ item: doc }">
+            <BaseCollectionCard
+              :title="doc.originalName"
+              :description="folderPathOf(doc)"
+              :icon="getFileIcon(doc.mimeType)"
+              :badge="formatSize(doc.size)"
+            >
+              <template #meta>
+                <span class="flex items-center gap-1">
+                  <UIcon name="i-heroicons-calendar" class="size-3.5" />
+                  {{ formatDate(doc.createdAt) }}
+                </span>
+                <span class="flex items-center gap-1">
+                  <UIcon name="i-heroicons-tag" class="size-3.5" />
+                  {{ doc.mimeType }}
+                </span>
+              </template>
+              <template #footer>
+                <UButton variant="soft" size="xs" icon="i-lucide-eye" @click="() => handleOpenDocument(doc)">
+                  {{ t('open') }}
+                </UButton>
+              </template>
+            </BaseCollectionCard>
+          </template>
+
+          <template #empty>
+            <UButton v-if="hasActiveFilters" variant="ghost" icon="i-lucide-filter-x" @click="resetFilters">
+              {{ t('clearFilters') }}
+            </UButton>
+            <UButton v-else icon="i-heroicons-arrow-up-tray" @click="handleUploadClick">{{ t('upload') }}</UButton>
+          </template>
+        </BaseCollectionGrid>
+
+        <BaseCollectionList
+          v-else-if="view === 'list'"
+          :items="filtered"
+          row-key="id"
+          :loading="loading"
+          :empty-title="emptyTitle"
+          empty-icon="i-heroicons-document-text"
+        >
+          <template #item="{ item: doc }">
+            <span class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-elevated">
+              <UIcon :name="getFileIcon(doc.mimeType)" class="size-4" />
+            </span>
+            <div class="min-w-0 flex-1">
+              <p class="truncate text-sm font-medium text-highlighted">{{ doc.originalName }}</p>
+              <p class="truncate text-xs text-muted">{{ folderPathOf(doc) }}</p>
+            </div>
+            <span class="hidden shrink-0 text-xs text-muted sm:block">{{ formatSize(doc.size) }}</span>
+            <span class="hidden shrink-0 text-xs text-muted lg:block">{{ formatDate(doc.createdAt) }}</span>
+            <UButton variant="ghost" size="xs" icon="i-lucide-eye" :aria-label="t('open')"
+              @click="() => handleOpenDocument(doc)" />
+          </template>
+
+          <template #empty>
+            <UButton v-if="hasActiveFilters" variant="ghost" icon="i-lucide-filter-x" @click="resetFilters">
+              {{ t('clearFilters') }}
+            </UButton>
+            <UButton v-else icon="i-heroicons-arrow-up-tray" @click="handleUploadClick">{{ t('upload') }}</UButton>
+          </template>
+        </BaseCollectionList>
+
+        <BaseDataTable
+          v-else
+          :rows="filtered"
+          :columns="columns"
+          row-key="id"
+          :loading="loading"
+          :empty-title="emptyTitle"
+          empty-icon="i-heroicons-document-text"
+          min-width="40rem"
+          clickable
+          @row-click="handleOpenDocument"
+        >
+          <template #cell-name="{ row }">
+            <div class="flex items-center gap-3">
+              <UIcon :name="getFileIcon(row.mimeType)" class="size-5 shrink-0 text-muted" />
+              <span class="truncate font-medium text-highlighted">{{ row.originalName }}</span>
+            </div>
+          </template>
+          <template #cell-folder="{ row }">
+            <span class="truncate text-muted">{{ folderPathOf(row) }}</span>
+          </template>
+          <template #cell-type="{ row }">
+            <UBadge color="neutral" variant="subtle" size="sm">{{ row.mimeType }}</UBadge>
+          </template>
+          <template #cell-size="{ row }">
+            <span class="tabular-nums text-muted">{{ formatSize(row.size) }}</span>
+          </template>
+          <template #cell-created="{ row }">
+            <span class="whitespace-nowrap text-muted">{{ formatDate(row.createdAt) }}</span>
+          </template>
+
+          <template #row-actions="{ row }">
+            <UButton variant="ghost" size="xs" icon="i-lucide-eye" :aria-label="t('open')"
+              @click="() => handleOpenDocument(row)" />
+          </template>
+
+          <template #empty>
+            <UButton v-if="hasActiveFilters" variant="ghost" icon="i-lucide-filter-x" @click="resetFilters">
+              {{ t('clearFilters') }}
+            </UButton>
+            <UButton v-else icon="i-heroicons-arrow-up-tray" @click="handleUploadClick">{{ t('upload') }}</UButton>
+          </template>
+        </BaseDataTable>
       </div>
 
-      <div v-if="showDetailPanel"
-        class="w-96 border-l border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden">
-        <div class="p-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 class="text-lg font-semibold">File Details</h2>
+      <aside v-if="showDetailPanel" class="w-full rounded-2xl border border-default lg:w-96 lg:shrink-0">
+        <div class="border-b border-default px-4 py-3">
+          <h2 class="text-base font-semibold">{{ t('fileDetails') }}</h2>
         </div>
 
-        <div class="flex-1 overflow-y-auto p-4 space-y-4">
-          <div v-if="getSelectedDocument()">
-            <div class="flex items-center gap-3 mb-4">
-              <UIcon :name="getFileIcon(getSelectedDocument()!.mimeType)" class="w-12 h-12 text-gray-400" />
-              <div>
-                <p class="font-medium">{{ getSelectedDocument()!.originalName }}</p>
-                <p class="text-sm text-gray-500">{{ getSelectedDocument()!.filename }}</p>
-              </div>
+        <div v-if="getSelectedDocument()" class="space-y-4 p-4">
+          <div class="flex items-center gap-3">
+            <UIcon :name="getFileIcon(getSelectedDocument()!.mimeType)" class="size-10 text-muted" />
+            <div class="min-w-0">
+              <p class="truncate font-medium">{{ getSelectedDocument()!.originalName }}</p>
+              <p class="truncate text-sm text-muted">{{ getSelectedDocument()!.filename }}</p>
             </div>
+          </div>
 
-            <div class="space-y-3 text-sm">
-              <div class="flex justify-between">
-                <span class="text-gray-500">Size</span>
-                <span>{{ formatSize(getSelectedDocument()!.size) }}</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-gray-500">Type</span>
-                <span>{{ getSelectedDocument()!.mimeType }}</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-gray-500">Created</span>
-                <span>{{ new Date(getSelectedDocument()!.createdAt).toLocaleString() }}</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-gray-500">Path</span>
-                <span class="truncate">{{getSelectedDocument()!.folderId ? folders.find(f => f.id ===
-                  getSelectedDocument()!.folderId)?.path : '/'}}</span>
-              </div>
-
-              <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                <label class="text-sm text-gray-500 block mb-2">Move to folder</label>
-                <USelect v-model="moveToFolderId" :items="folderOptions" :placeholder="t('selectFolder')"
-                  @update:model-value="handleMoveToFolder" />
-              </div>
+          <dl class="space-y-3 text-sm">
+            <div class="flex justify-between gap-4">
+              <dt class="text-muted">{{ t('size') }}</dt>
+              <dd>{{ formatSize(getSelectedDocument()!.size) }}</dd>
             </div>
+            <div class="flex justify-between gap-4">
+              <dt class="text-muted">{{ t('type') }}</dt>
+              <dd class="truncate">{{ getSelectedDocument()!.mimeType }}</dd>
+            </div>
+            <div class="flex justify-between gap-4">
+              <dt class="text-muted">{{ t('created') }}</dt>
+              <dd>{{ formatDate(getSelectedDocument()!.createdAt) }}</dd>
+            </div>
+            <div class="flex justify-between gap-4">
+              <dt class="text-muted">{{ t('path') }}</dt>
+              <dd class="truncate">{{ folderPathOf(getSelectedDocument()!) }}</dd>
+            </div>
+          </dl>
 
-            <div v-if="getSelectedDocument()!.metadata" class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-              <h3 class="font-medium mb-2">Metadata</h3>
-              <div class="space-y-2 text-sm">
-                <div v-for="(value, key) in getSelectedDocument()!.metadata" :key="key" class="flex justify-between">
-                  <span class="text-gray-500">{{ key }}</span>
-                  <span>{{ value }}</span>
-                </div>
+          <div class="border-t border-default pt-4">
+            <label class="mb-2 block text-sm text-muted">{{ t('moveToFolder') }}</label>
+            <USelect v-model="moveToFolderId" :items="folderOptions" :placeholder="t('selectFolder')"
+              @update:model-value="handleMoveToFolder" />
+          </div>
+
+          <div v-if="getSelectedDocument()!.metadata" class="border-t border-default pt-4">
+            <h3 class="mb-2 font-medium">{{ t('metadata') }}</h3>
+            <div class="space-y-2 text-sm">
+              <div v-for="(value, key) in getSelectedDocument()!.metadata" :key="key" class="flex justify-between gap-4">
+                <span class="text-muted">{{ key }}</span>
+                <span class="truncate">{{ value }}</span>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div v-else class="flex-1 flex items-center justify-center text-gray-500">
-        <div class="text-center">
-          <UIcon name="i-heroicons-folder-open" class="w-16 h-16 text-gray-400 mx-auto mb-3" />
-          <p>Select a file to view details</p>
-          <p class="text-sm mt-2">Drag and drop files to move them to folders</p>
+        <div v-else class="p-6 text-center text-sm text-muted">
+          <UIcon name="i-heroicons-folder-open" class="mx-auto mb-3 size-10 text-dimmed" />
+          <p>{{ t('selectFileTitle') }}</p>
+          <p class="mt-2">{{ t('selectFileHint') }}</p>
         </div>
-      </div>
+      </aside>
     </div>
 
     <UModal v-model:open="showNewFolderModal" :title="t('createFolder')">
-      <template #content>
-        <div class="p-4">
-          <UInput v-model="newFolderName" :placeholder="t('folderNamePlaceholder')" @keyup.enter="createFolder" />
-        </div>
-        <section class="flex gap-4 justify-end p-4 border-t border-gray-200 dark:border-gray-700">
-          <UButton variant="ghost" @click="showNewFolderModal = false">
+      <template #body>
+        <UInput v-model="newFolderName" :placeholder="t('folderNamePlaceholder')" @keyup.enter="createFolder" />
+      </template>
+      <template #footer>
+        <div class="flex w-full justify-end gap-2">
+          <UButton variant="ghost" @click="handleCloseFolderModal">
             {{ t('cancel') }}
           </UButton>
           <UButton color="primary" @click="createFolder">
             {{ t('create') }}
           </UButton>
-        </section>
+        </div>
       </template>
     </UModal>
-  </div>
+  </BaseCollectionPage>
 </template>

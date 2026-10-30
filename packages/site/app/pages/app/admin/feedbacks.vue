@@ -1,17 +1,17 @@
 <i18n src="./feedbacks.json"></i18n>
 
 <script lang="ts" setup>
-import { h, resolveComponent } from 'vue'
-import type { TableColumn } from '@nuxt/ui'
-import type { Row } from '@tanstack/vue-table'
+/**
+ * Admin feedback inbox — table and list views on the shared collection shell.
+ *
+ * `useCollectionView` owns search + status, both views read from the same
+ * `filtered` list, and the detail/delete modals keep their original API calls.
+ */
+import type { CollectionTableColumn } from '#layers/BaseUI/app/utils/collection'
 
 definePageMeta({
   layout: 'dashboard-layout'
 })
-
-const UButton = resolveComponent('UButton')
-const UBadge = resolveComponent('UBadge')
-const UDropdownMenu = resolveComponent('UDropdownMenu')
 
 const { t } = useI18n()
 const toast = useToast()
@@ -30,21 +30,63 @@ interface AdminFeedback {
 const feedbacks = ref<AdminFeedback[]>([])
 const loading = ref(true)
 const saving = ref(false)
-const searchQuery = ref('')
-const statusFilter = ref<'all' | AdminFeedback['status']>('all')
 
-const filteredFeedbacks = computed(() => {
-  const byStatus = statusFilter.value === 'all'
-    ? feedbacks.value
-    : feedbacks.value.filter(f => f.status === statusFilter.value)
-  if (!searchQuery.value) return byStatus
-  const q = searchQuery.value.toLowerCase()
-  return byStatus.filter(f =>
-    f.message.toLowerCase().includes(q) ||
-    f.userName?.toLowerCase().includes(q) ||
-    f.category.toLowerCase().includes(q)
-  )
+const {
+  view,
+  setView,
+  search,
+  setSearch,
+  filters,
+  setFilter,
+  filtered,
+  hasActiveFilters,
+  resetFilters,
+} = useCollectionView<AdminFeedback>({
+  key: 'admin-feedbacks',
+  modes: ['table', 'list'],
+  defaultView: 'table',
+  rows: feedbacks,
+  searchFields: item => [item.message, item.userName, item.category, item.status],
+  filterFns: {
+    status: (item, value) => item.status === value,
+  },
 })
+
+const viewOptions = computed(() => [
+  { value: 'table', label: t('views.table'), icon: 'i-lucide-table' },
+  { value: 'list', label: t('views.list'), icon: 'i-lucide-list' },
+])
+
+const toolbarFilters = computed(() => [
+  {
+    key: 'status',
+    label: t('columns.status'),
+    value: filters.value.status || 'all',
+    options: filterOptions(),
+    width: 'w-full sm:w-44',
+  },
+])
+
+const columns = computed<CollectionTableColumn[]>(() => [
+  { key: 'message', label: t('columns.feedback') },
+  { key: 'category', label: t('columns.category'), hideBelow: 'sm', width: '10rem' },
+  { key: 'status', label: t('columns.status'), width: '9rem' },
+])
+
+function filterOptions() {
+  return [
+    { label: t('filters.all'), value: 'all' },
+    ...statusOptions()
+  ]
+}
+
+function statusOptions() {
+  return [
+    { label: t('status.new'), value: 'new' },
+    { label: t('status.reviewed'), value: 'reviewed' },
+    { label: t('status.resolved'), value: 'resolved' }
+  ]
+}
 
 async function fetchFeedbacks() {
   loading.value = true
@@ -59,6 +101,14 @@ async function fetchFeedbacks() {
 }
 
 onMounted(fetchFeedbacks)
+
+function handleFilter(key: string, value: string) {
+  setFilter(key, value)
+}
+
+function handleView(next: string) {
+  setView(next)
+}
 
 function statusColor(status: AdminFeedback['status']): 'error' | 'info' | 'success' {
   if (status === 'new') return 'error'
@@ -82,27 +132,16 @@ function truncate(message: string): string {
   return `${message.slice(0, 90)}…`
 }
 
-function statusOptions() {
-  return [
-    { label: t('status.new'), value: 'new' },
-    { label: t('status.reviewed'), value: 'reviewed' },
-    { label: t('status.resolved'), value: 'resolved' }
-  ]
-}
-
-function filterOptions() {
-  return [
-    { label: t('filters.all'), value: 'all' },
-    ...statusOptions()
-  ]
+function feedbackId(item: Record<string, any>): string {
+  return String(item.id)
 }
 
 const selectedFeedback = ref<AdminFeedback | null>(null)
 const detailForm = ref({ status: 'new' as AdminFeedback['status'], adminNote: '' })
 
-function openDetail(fb: AdminFeedback) {
-  selectedFeedback.value = fb
-  detailForm.value = { status: fb.status, adminNote: fb.adminNote || '' }
+function openDetail(feedback: AdminFeedback) {
+  selectedFeedback.value = feedback
+  detailForm.value = { status: feedback.status, adminNote: feedback.adminNote || '' }
 }
 
 function closeDetail() {
@@ -141,8 +180,8 @@ async function saveDetail() {
 
 const pendingDelete = ref<AdminFeedback | null>(null)
 
-function askDelete(fb: AdminFeedback) {
-  pendingDelete.value = fb
+function askDelete(feedback: AdminFeedback) {
+  pendingDelete.value = feedback
 }
 
 function closeDeleteModal() {
@@ -157,7 +196,7 @@ async function confirmDelete() {
   const target = pendingDelete.value
   if (!target) return
   const snapshot = [...feedbacks.value]
-  feedbacks.value = feedbacks.value.filter(f => f.id !== target.id)
+  feedbacks.value = feedbacks.value.filter(item => item.id !== target.id)
   pendingDelete.value = null
   if (selectedFeedback.value?.id === target.id) {
     selectedFeedback.value = null
@@ -171,102 +210,122 @@ async function confirmDelete() {
   }
 }
 
-function getRowItems(row: Row<AdminFeedback>) {
+function menuItems(feedback: AdminFeedback) {
   return [
-    { type: 'label', label: t('menu.title') },
-    { label: t('menu.view'), onSelect: () => openDetail(row.original) },
-    { type: 'separator' },
-    { label: t('menu.delete'), onSelect: () => askDelete(row.original) }
+    [
+      { label: t('menu.view'), icon: 'i-lucide-eye', onSelect: () => openDetail(feedback) },
+    ],
+    [
+      { label: t('menu.delete'), icon: 'i-lucide-trash-2', color: 'error' as const, onSelect: () => askDelete(feedback) },
+    ],
   ]
 }
-
-function getRowId(row: AdminFeedback) {
-  return row.id
-}
-
-const columns: TableColumn<AdminFeedback>[] = [
-  {
-    accessorKey: 'message',
-    header: () => t('columns.feedback'),
-    cell: ({ row }) => {
-      const fb = row.original
-      return h('div', { class: 'max-w-md' }, [
-        h('p', { class: 'text-sm' }, truncate(fb.message)),
-        h('p', { class: 'text-xs text-muted-foreground' }, `${fb.userName || t('unknownUser')} · ${formatDate(fb.createdAt)}`)
-      ])
-    }
-  },
-  {
-    accessorKey: 'category',
-    header: () => t('columns.category'),
-    cell: ({ row }) =>
-      h(UBadge, { color: categoryColor(row.original.category), variant: 'subtle', size: 'sm' }, () =>
-        t(`categories.${row.original.category}`)
-      )
-  },
-  {
-    accessorKey: 'status',
-    header: () => t('columns.status'),
-    cell: ({ row }) =>
-      h(UBadge, { color: statusColor(row.original.status), variant: 'subtle', size: 'sm' }, () =>
-        t(`status.${row.original.status}`)
-      )
-  },
-  {
-    id: 'actions',
-    header: () => h('div', { class: 'text-right' }, t('columns.actions')),
-    cell: ({ row }) =>
-      h('div', { class: 'text-right' }, [
-        h(UDropdownMenu, {
-          content: { align: 'end' },
-          items: getRowItems(row),
-          'aria-label': t('a11y.actions')
-        }, () =>
-          h(UButton, {
-            icon: 'i-lucide-ellipsis-vertical',
-            color: 'neutral',
-            variant: 'ghost',
-            size: 'sm',
-            'aria-label': t('a11y.actions')
-          })
-        )
-      ])
-  }
-]
 </script>
 
 <template>
-  <div class="space-y-6">
-    <div v-motion-fade-visible-once class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-      <div>
-        <h1 class="text-2xl font-bold tracking-tight">{{ t('title') }}</h1>
-        <p class="text-muted-foreground">{{ t('description') }}</p>
-      </div>
-      <div class="flex flex-col sm:flex-row gap-2">
-        <USelect v-model="statusFilter" :items="filterOptions()" size="sm" class="sm:w-44" />
-        <UInput v-model="searchQuery" :placeholder="t('searchPlaceholder')" icon="i-heroicons-magnifying-glass"
-          size="sm" class="sm:w-64" />
-      </div>
-    </div>
+  <BaseCollectionPage :title="t('title')" :description="t('description')">
+    <template #toolbar>
+      <BaseCollectionToolbar
+        :search="search"
+        :search-placeholder="t('searchPlaceholder')"
+        :filters="toolbarFilters"
+        :view="view"
+        :views="viewOptions"
+        :busy="loading"
+        @update:search="setSearch"
+        @update:filter="handleFilter"
+        @update:view="handleView"
+      />
+    </template>
 
-    <div v-if="loading" class="rounded flex justify-center py-12">
-      <UIcon name="i-heroicons-arrow-path" class="w-6 h-6 animate-spin text-muted-foreground" />
-    </div>
+    <BaseCollectionList
+      v-if="view === 'list'"
+      :items="filtered"
+      :row-key="feedbackId"
+      :loading="loading"
+      :empty-icon="'i-lucide-message-square'"
+      :empty-title="t('noFeedback')"
+    >
+      <template #item="{ item: feedback }">
+        <div class="min-w-0 flex-1">
+          <p class="truncate text-sm font-medium text-highlighted">{{ truncate(feedback.message) }}</p>
+          <p class="truncate text-xs text-muted">
+            {{ feedback.userName || t('unknownUser') }} · {{ formatDate(feedback.createdAt) }}
+          </p>
+        </div>
+        <UBadge class="hidden shrink-0 sm:inline-flex" :color="categoryColor(feedback.category)" variant="subtle" size="sm">
+          {{ t(`categories.${feedback.category}`) }}
+        </UBadge>
+        <UBadge class="shrink-0" :color="statusColor(feedback.status)" variant="subtle" size="sm">
+          {{ t(`status.${feedback.status}`) }}
+        </UBadge>
+        <UDropdownMenu :items="menuItems(feedback)" :content="{ align: 'end' }">
+          <UButton
+            icon="i-lucide-ellipsis-vertical"
+            color="neutral"
+            variant="ghost"
+            size="xs"
+            :aria-label="t('a11y.actions')"
+          />
+        </UDropdownMenu>
+      </template>
 
-    <div v-else v-motion-fade-visible-once class="shadow rounded overflow-hidden">
-      <div v-if="filteredFeedbacks.length === 0" class="text-center py-12 text-muted-foreground">
-        {{ t('noFeedback') }}
-      </div>
-      <UTable v-else :data="filteredFeedbacks" :columns="columns" :get-row-id="getRowId" class="flex-1"
-        :ui="{ 'tr': 'bg-transparent transition-colors', 'td': 'border-0', 'th': 'border-0' }" />
-    </div>
+      <template #empty>
+        <UButton v-if="hasActiveFilters" variant="ghost" @click="resetFilters">{{ t('clearFilters') }}</UButton>
+      </template>
+    </BaseCollectionList>
+
+    <BaseDataTable
+      v-else
+      :rows="filtered"
+      :columns="columns"
+      :row-key="feedbackId"
+      :loading="loading"
+    >
+      <template #cell-message="{ row }">
+        <div class="max-w-md">
+          <p class="text-sm">{{ truncate(row.message) }}</p>
+          <p class="text-xs text-muted">
+            {{ row.userName || t('unknownUser') }} · {{ formatDate(row.createdAt) }}
+          </p>
+        </div>
+      </template>
+
+      <template #cell-category="{ row }">
+        <UBadge :color="categoryColor(row.category)" variant="subtle" size="sm">
+          {{ t(`categories.${row.category}`) }}
+        </UBadge>
+      </template>
+
+      <template #cell-status="{ row }">
+        <UBadge :color="statusColor(row.status)" variant="subtle" size="sm">
+          {{ t(`status.${row.status}`) }}
+        </UBadge>
+      </template>
+
+      <template #row-actions="{ row }">
+        <UDropdownMenu :items="menuItems(row)" :content="{ align: 'end' }">
+          <UButton
+            icon="i-lucide-ellipsis-vertical"
+            color="neutral"
+            variant="ghost"
+            size="xs"
+            :aria-label="t('a11y.actions')"
+          />
+        </UDropdownMenu>
+      </template>
+
+      <template #empty>
+        <UButton v-if="hasActiveFilters" variant="ghost" :label="t('clearFilters')" @click="resetFilters" />
+      </template>
+    </BaseDataTable>
 
     <UModal :open="selectedFeedback !== null" @update:open="handleDetailOpenChange">
       <template #content>
         <UCard v-if="selectedFeedback">
           <template #header>
             <h3 class="text-lg font-semibold">{{ t('detail.title') }}</h3>
-            <p class="text-sm text-muted-foreground">
+            <p class="text-sm text-muted">
               {{ selectedFeedback.userName || t('unknownUser') }} · {{ formatDate(selectedFeedback.createdAt) }}
             </p>
           </template>
@@ -279,7 +338,7 @@ const columns: TableColumn<AdminFeedback>[] = [
                 {{ t(`status.${selectedFeedback.status}`) }}
               </UBadge>
             </div>
-            <p class="text-sm whitespace-pre-wrap">{{ selectedFeedback.message }}</p>
+            <p class="whitespace-pre-wrap text-sm">{{ selectedFeedback.message }}</p>
             <UFormField :label="t('detail.status')">
               <USelect v-model="detailForm.status" :items="statusOptions()" class="w-full" />
             </UFormField>
@@ -309,7 +368,7 @@ const columns: TableColumn<AdminFeedback>[] = [
           <template #header>
             <h3 class="text-lg font-semibold">{{ t('deleteModal.title') }}</h3>
           </template>
-          <p class="text-sm text-muted-foreground">{{ t('deleteModal.description') }}</p>
+          <p class="text-sm text-muted">{{ t('deleteModal.description') }}</p>
           <template #footer>
             <div class="flex justify-end gap-3">
               <UButton variant="ghost" color="neutral" @click="closeDeleteModal">{{ t('deleteModal.cancel') }}
@@ -320,5 +379,5 @@ const columns: TableColumn<AdminFeedback>[] = [
         </UCard>
       </template>
     </UModal>
-  </div>
+  </BaseCollectionPage>
 </template>

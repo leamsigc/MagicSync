@@ -61,6 +61,8 @@ list:
 ---
 #title
 Grow Your Community
+#subtitle
+What you can do with MagicSync
 #description
 Build stronger connections with your audience using tools designed for engagement.
 ::

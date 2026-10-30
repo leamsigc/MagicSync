@@ -45,7 +45,10 @@
             "minutesAgo": "{count} minutes ago",
             "hoursAgo": "{count} hours ago",
             "daysAgo": "{count} days ago"
-        }
+        },
+        "searchPlaceholder": "Search notifications…",
+        "clearFilters": "Clear filters",
+        "noResults": "No notifications match your search."
     },
     "es": {
         "title": "Notificaciones",
@@ -93,7 +96,10 @@
             "minutesAgo": "Hace {count} minutos",
             "hoursAgo": "Hace {count} horas",
             "daysAgo": "Hace {count} días"
-        }
+        },
+        "searchPlaceholder": "Buscar notificaciones…",
+        "clearFilters": "Limpiar filtros",
+        "noResults": "Ninguna notificación coincide con tu búsqueda."
     },
     "de": {
         "title": "Benachrichtigungen",
@@ -141,7 +147,10 @@
             "minutesAgo": "Vor {count} Minuten",
             "hoursAgo": "Vor {count} Stunden",
             "daysAgo": "Vor {count} Tagen"
-        }
+        },
+        "searchPlaceholder": "Benachrichtigungen suchen…",
+        "clearFilters": "Filter zurücksetzen",
+        "noResults": "Keine Benachrichtigungen passen zur Suche."
     },
     "fr": {
         "title": "Notifications",
@@ -189,6 +198,9 @@
             "minutesAgo": "Il y a {count} minutes",
             "hoursAgo": "Il y a {count} heures",
             "daysAgo": "Il y a {count} jours"
-        }
+        },
+        "searchPlaceholder": "Rechercher des notifications…",
+        "clearFilters": "Réinitialiser les filtres",
+        "noResults": "Aucune notification ne correspond à votre recherche."
     }
 }

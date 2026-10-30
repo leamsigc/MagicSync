@@ -42,6 +42,7 @@ const props = withDefaults(defineProps<Props>(), {
   ],
 });
 const { list } = toRefs(props);
+const { t } = useI18n()
 
 // FAQPage structured data for rich results. Driven by the same `list` prop
 // the accordion renders, so every page using this component stays eligible
@@ -61,20 +62,22 @@ useSchemaOrg(computed(() => ([
     :duration="1200">
     <div class="text-center mb-8">
       <h2 class="text-lg text-primary text-center mb-2 tracking-wider">
-        <slot name="title" mdc-unwrap="p"> FAQS </slot>
+        <slot name="title" mdc-unwrap="p"> {{ t('faq.title') }} </slot>
       </h2>
 
       <h3 class="text-3xl md:text-4xl text-center font-bold">
-        <slot name="subtitle" mdc-unwrap="p"> Common Questions </slot>
+        <slot name="subtitle" mdc-unwrap="p"> {{ t('faq.subtitle') }} </slot>
       </h3>
     </div>
 
     <UAccordion :items="list" type="single" collapsible class="AccordionRoot" />
 
     <h3 class="font-medium mt-4">
-      Still have questions?
-      <NuxtLink href="/" class="text-muted-foreground underline" aria-label="Contact us" title="Contact us">Contact us
-      </NuxtLink>
+      {{ t('faq.stillHaveQuestions') }}
+      <NuxtLinkLocale to="/contact" class="text-muted-foreground underline" :aria-label="t('faq.contactUs')"
+        :title="t('faq.contactUs')">
+        {{ t('faq.contactUs') }}
+      </NuxtLinkLocale>
     </h3>
   </section>
 </template>

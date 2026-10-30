@@ -1,3 +1,4 @@
+<i18n src="#site/app/pages/app/posts/posts.json"></i18n>
 <script lang="ts" setup>
 /**
  *
@@ -10,12 +11,14 @@
  */
 import type { PostWithAllData } from '#layers/BaseDB/db/schema';
 import { usePlatformIcons, type SocialMediaPlatform } from '#layers/BaseUI/app/composables/usePlatformIcons';
+import { publishedLinksFor } from '#layers/BaseShared/utils/published-post-links';
 import dayjs from 'dayjs';
 
 const props = defineProps<{
   post: PostWithAllData;
 }>();
 
+const { t } = useI18n();
 const router = useRouter();
 const showComments = ref(false);
 const { getPlatformIcon } = usePlatformIcons();
@@ -40,6 +43,8 @@ const formattedTime = computed(() =>
 );
 
 const comments = computed(() => props.post.platformContent?.comment || []);
+
+const publishedLinks = computed(() => publishedLinksFor(props.post));
 </script>
 
 <template>
@@ -84,12 +89,31 @@ const comments = computed(() => props.post.platformContent?.comment || []);
           </UChip>
         </div>
 
+        <!-- Live links: open the actual published post on each platform -->
+        <div v-if="publishedLinks.length" class="mt-2 flex flex-wrap items-center gap-1.5">
+          <span class="text-xs text-muted">{{ t('publishedOn') }}</span>
+          <UButton
+            v-for="link in publishedLinks"
+            :key="link.id"
+            :to="link.url"
+            target="_blank"
+            size="xs"
+            variant="soft"
+            color="neutral"
+            icon="i-lucide-external-link"
+            :title="link.platform"
+            @click.stop
+          >
+            {{ link.platform }}
+          </UButton>
+        </div>
+
         <!-- Action bar -->
         <div class="flex items-center gap-1 mt-3 -ml-2 text-muted">
           <UButton icon="i-heroicons-chat-bubble-oval-left-ellipsis" color="neutral" variant="ghost" size="sm"
             :label="comments.length ? String(comments.length) : ''" @click.stop="showComments = !showComments" />
           <UButton icon="i-heroicons-arrow-top-right-on-square" color="neutral" variant="ghost" size="sm"
-            label="Details" @click.stop="openPost" />
+            :label="t('details')" @click.stop="openPost" />
         </div>
 
         <!-- Comments -->

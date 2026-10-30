@@ -58,7 +58,13 @@
       "linkCopied": "Link copied",
       "linkCopyFailed": "Could not copy the link",
       "creatorAgent": "Made by the agent",
-      "creatorYou": "Made by you"
+      "creatorYou": "Made by you",
+      "noPublishedLink": "This card has no published link yet",
+      "platformsField": "Platforms",
+      "platformsHint": "Where this card should be published. Leave empty to decide while writing.",
+      "platformsSelected": "{count} selected",
+      "platformsEmpty": "No platform selected yet",
+      "platformsClear": "Clear"
     },
     "board": {
       "columns": {
@@ -351,7 +357,13 @@
       "linkCopied": "Enlace copiado",
       "linkCopyFailed": "No se pudo copiar el enlace",
       "creatorAgent": "Creada por el agente",
-      "creatorYou": "Creada por ti"
+      "creatorYou": "Creada por ti",
+      "noPublishedLink": "Esta tarjeta aún no tiene un enlace publicado",
+      "platformsField": "Plataformas",
+      "platformsHint": "Dónde debe publicarse esta tarjeta. Déjalo vacío para decidirlo al escribir.",
+      "platformsSelected": "{count} seleccionadas",
+      "platformsEmpty": "Aún no hay plataforma seleccionada",
+      "platformsClear": "Limpiar"
     },
     "board": {
       "columns": {
@@ -644,7 +656,13 @@
       "linkCopied": "Link kopiert",
       "linkCopyFailed": "Der Link konnte nicht kopiert werden",
       "creatorAgent": "Vom Agenten erstellt",
-      "creatorYou": "Von dir erstellt"
+      "creatorYou": "Von dir erstellt",
+      "noPublishedLink": "Diese Karte hat noch keinen veröffentlichten Link",
+      "platformsField": "Plattformen",
+      "platformsHint": "Wo diese Karte veröffentlicht werden soll. Leer lassen, um es beim Schreiben zu entscheiden.",
+      "platformsSelected": "{count} ausgewählt",
+      "platformsEmpty": "Noch keine Plattform ausgewählt",
+      "platformsClear": "Zurücksetzen"
     },
     "board": {
       "columns": {
@@ -937,7 +955,13 @@
       "linkCopied": "Lien copié",
       "linkCopyFailed": "Impossible de copier le lien",
       "creatorAgent": "Créée par l’agent",
-      "creatorYou": "Créée par vous"
+      "creatorYou": "Créée par vous",
+      "noPublishedLink": "Cette carte n'a pas encore de lien publié",
+      "platformsField": "Plateformes",
+      "platformsHint": "Où cette carte doit être publiée. Laissez vide pour décider à la rédaction.",
+      "platformsSelected": "{count} sélectionnée(s)",
+      "platformsEmpty": "Aucune plateforme sélectionnée",
+      "platformsClear": "Effacer"
     },
     "board": {
       "columns": {

@@ -9,6 +9,15 @@
     "empty": "No posts found",
     "loadFailed": "Failed to load posts",
     "retry": "Retry",
+    "views": {
+      "table": "Table",
+      "list": "List"
+    },
+    "filters": {
+      "status": "Status",
+      "platform": "Platform",
+      "allPlatforms": "All platforms"
+    },
     "status": {
       "all": "All",
       "draft": "Draft",
@@ -17,14 +26,11 @@
       "failed": "Failed"
     },
     "actions": {
-      "label": "Actions",
       "view": "View details",
       "edit": "Edit",
       "delete": "Delete"
     },
     "a11y": {
-      "selectAll": "Select all",
-      "selectRow": "Select row",
       "actions": "Actions dropdown"
     },
     "footer": {
@@ -52,6 +58,15 @@
     "empty": "No se encontraron publicaciones",
     "loadFailed": "No se pudieron cargar las publicaciones",
     "retry": "Reintentar",
+    "views": {
+      "table": "Tabla",
+      "list": "Lista"
+    },
+    "filters": {
+      "status": "Estado",
+      "platform": "Plataforma",
+      "allPlatforms": "Todas las plataformas"
+    },
     "status": {
       "all": "Todas",
       "draft": "Borrador",
@@ -60,14 +75,11 @@
       "failed": "Fallida"
     },
     "actions": {
-      "label": "Acciones",
       "view": "Ver detalles",
       "edit": "Editar",
       "delete": "Eliminar"
     },
     "a11y": {
-      "selectAll": "Seleccionar todo",
-      "selectRow": "Seleccionar fila",
       "actions": "Menú de acciones"
     },
     "footer": {
@@ -95,6 +107,15 @@
     "empty": "Keine Beiträge gefunden",
     "loadFailed": "Beiträge konnten nicht geladen werden",
     "retry": "Erneut versuchen",
+    "views": {
+      "table": "Tabelle",
+      "list": "Liste"
+    },
+    "filters": {
+      "status": "Status",
+      "platform": "Plattform",
+      "allPlatforms": "Alle Plattformen"
+    },
     "status": {
       "all": "Alle",
       "draft": "Entwurf",
@@ -103,14 +124,11 @@
       "failed": "Fehlgeschlagen"
     },
     "actions": {
-      "label": "Aktionen",
       "view": "Details anzeigen",
       "edit": "Bearbeiten",
       "delete": "Löschen"
     },
     "a11y": {
-      "selectAll": "Alle auswählen",
-      "selectRow": "Zeile auswählen",
       "actions": "Aktionsmenü"
     },
     "footer": {
@@ -138,6 +156,15 @@
     "empty": "Aucune publication trouvée",
     "loadFailed": "Impossible de charger les publications",
     "retry": "Réessayer",
+    "views": {
+      "table": "Tableau",
+      "list": "Liste"
+    },
+    "filters": {
+      "status": "Statut",
+      "platform": "Plateforme",
+      "allPlatforms": "Toutes les plateformes"
+    },
     "status": {
       "all": "Toutes",
       "draft": "Brouillon",
@@ -146,14 +173,11 @@
       "failed": "Échouée"
     },
     "actions": {
-      "label": "Actions",
       "view": "Voir les détails",
       "edit": "Modifier",
       "delete": "Supprimer"
     },
     "a11y": {
-      "selectAll": "Tout sélectionner",
-      "selectRow": "Sélectionner la ligne",
       "actions": "Menu des actions"
     },
     "footer": {

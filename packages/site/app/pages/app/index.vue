@@ -219,104 +219,102 @@ function getPlatformGrowth(graph: PlatformGraph): { absolute: number; percentage
   return growth
 }
 
+function chartGradient(color: string, opacity: number) {
+  return {
+    type: 'linear' as const,
+    x: 0,
+    y: 0,
+    x2: 0,
+    y2: 1,
+    colorStops: [
+      { offset: 0, color: withAlpha(color, opacity) },
+      { offset: 1, color: withAlpha(color, 0) },
+    ],
+  }
+}
+
+function withAlpha(hex: string, alpha: number): string {
+  const value = hex.replace('#', '')
+  const r = Number.parseInt(value.slice(0, 2), 16)
+  const g = Number.parseInt(value.slice(2, 4), 16)
+  const b = Number.parseInt(value.slice(4, 6), 16)
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
+
+/**
+ * Dashboard trend chart, drawn like the reference area chart: smooth lines,
+ * soft vertical gradients, horizontal grid lines only, no axis chrome — but in
+ * the MagicSync palette (primary orange, info blue, success green).
+ */
 function getChartOptions(platformGraph: PlatformGraph): EChartsOption {
   const isDark = colorMode.value === 'dark'
   const textColor = isDark ? '#A1A09E' : '#79747E'
-  const lineColor = isDark ? '#1C1917' : '#E5E4E0'
-  const primaryColor = isDark ? '#D94F12' : '#F97316'
+  const lineColor = isDark ? '#2A2622' : '#E5E4E0'
+  const followersColor = isDark ? '#F97316' : '#EA580C'
+  const postsColor = isDark ? '#60A5FA' : '#3B82F6'
+  const engagementColor = isDark ? '#34D399' : '#10B981'
+
+  const series = [
+    { name: t('followers'), color: followersColor, data: platformGraph.followers },
+    { name: t('posts'), color: postsColor, data: platformGraph.posts },
+    { name: t('engagement'), color: engagementColor, data: platformGraph.engagement },
+  ].map(item => ({
+    name: item.name,
+    type: 'line' as const,
+    smooth: true,
+    symbol: 'none',
+    showSymbol: false,
+    data: item.data,
+    lineStyle: { color: item.color, width: 2.5 },
+    itemStyle: { color: item.color },
+    areaStyle: { color: chartGradient(item.color, isDark ? 0.45 : 0.3), opacity: 1 },
+    emphasis: { focus: 'series' as const },
+  }))
 
   return {
+    color: [followersColor, postsColor, engagementColor],
     tooltip: {
       trigger: 'axis',
+      axisPointer: { type: 'line', lineStyle: { color: lineColor } },
       backgroundColor: isDark ? '#1C1917' : '#FFFFFF',
       borderColor: lineColor,
-      textStyle: {
-        color: isDark ? '#FAF9F7' : '#0F0E0D',
-      },
+      textStyle: { color: isDark ? '#FAF9F7' : '#0F0E0D' },
+      extraCssText: 'border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);',
+    },
+    legend: {
+      show: platformGraph.labels.length > 0,
+      top: 0,
+      right: 0,
+      icon: 'circle',
+      itemWidth: 8,
+      itemHeight: 8,
+      itemGap: 14,
+      textStyle: { color: textColor, fontSize: 11 },
     },
     grid: {
-      left: '3%',
-      right: '4%',
-      bottom: '3%',
+      left: 4,
+      right: 8,
+      top: 36,
+      bottom: 4,
       containLabel: true,
     },
     xAxis: {
       type: 'category',
       boundaryGap: false,
       data: platformGraph.labels,
-      axisLine: { lineStyle: { color: lineColor } },
-      axisLabel: { color: textColor, fontSize: 10 },
+      axisLine: { show: false },
+      axisTick: { show: false },
+      axisLabel: { color: textColor, fontSize: 11, margin: 12 },
     },
     yAxis: {
       type: 'value',
-      axisLine: { lineStyle: { color: lineColor } },
+      splitNumber: 4,
+      axisLine: { show: false },
+      axisTick: { show: false },
       axisLabel: { color: textColor, fontSize: 10 },
-      splitLine: { lineStyle: { color: lineColor, opacity: 0.3 } },
+      splitLine: { lineStyle: { color: lineColor, opacity: isDark ? 0.6 : 0.9, type: 'solid' } },
     },
-    series: [
-      {
-        name: t('followers'),
-        type: 'line',
-        smooth: true,
-        data: platformGraph.followers,
-        lineStyle: { color: primaryColor, width: 2 },
-        areaStyle: {
-          opacity: 0.3,
-          color: {
-            type: 'linear',
-            x: 0, y: 0, x2: 0, y2: 1,
-            colorStops: [
-              { offset: 0, color: primaryColor },
-              { offset: 1, color: 'transparent' },
-            ],
-          },
-        },
-        itemStyle: { color: primaryColor },
-      },
-      {
-        name: t('posts'),
-        type: 'line',
-        smooth: true,
-        data: platformGraph.posts,
-        lineStyle: { color: '#3B82F6', width: 2 },
-        areaStyle: {
-          opacity: 0.2,
-          color: {
-            type: 'linear',
-            x: 0, y: 0, x2: 0, y2: 1,
-            colorStops: [
-              { offset: 0, color: '#3B82F6' },
-              { offset: 1, color: 'transparent' },
-            ],
-          },
-        },
-        itemStyle: { color: '#3B82F6' },
-      },
-      {
-        name: t('engagement'),
-        type: 'line',
-        smooth: true,
-        data: platformGraph.engagement,
-        lineStyle: { color: '#10B981', width: 2 },
-        areaStyle: {
-          opacity: 0.2,
-          color: {
-            type: 'linear',
-            x: 0, y: 0, x2: 0, y2: 1,
-            colorStops: [
-              { offset: 0, color: '#10B981' },
-              { offset: 1, color: 'transparent' },
-            ],
-          },
-        },
-        itemStyle: { color: '#10B981' },
-      },
-    ],
-    legend: {
-      show: platformGraph.labels.length > 0,
-      top: 0,
-      textStyle: { color: textColor, fontSize: 10 },
-    },
+    series,
   }
 }
 

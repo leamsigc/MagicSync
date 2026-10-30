@@ -92,7 +92,7 @@ function baseFooter(): string {
     <mj-section background-color="${HEADER_COLOR}" padding="5px 0 20px 0">
       <mj-column width="100%">
         <mj-text align="center" font-size="11px" color="#888888" font-family="Arial, sans-serif" padding="0 25px">
-          &copy; ${new Date().getFullYear()} ${BRAND_NAME}. All rights reserved.
+          ${new Date().getFullYear()} ${BRAND_NAME}. All rights reserved.
           <br />
           This email was sent to you as a registered user of ${BRAND_NAME}.
           <br />

@@ -83,6 +83,17 @@ export default defineAppConfig({
         variant: 'outline'
       }
     },
+    switch: {
+      slots: {
+        // The stock unchecked track is `bg-accented`, which resolves to
+        // #faf9f8 in light mode — invisible on a white card. Give it a
+        // readable track + inset ring so "off" is obviously a control.
+        base: 'data-[state=unchecked]:bg-inverted/15 data-[state=unchecked]:ring-1 data-[state=unchecked]:ring-inset data-[state=unchecked]:ring-border',
+        root: 'cursor-pointer',
+        label: 'cursor-pointer select-none',
+        description: 'cursor-pointer select-none'
+      }
+    },
     input: {
       slots: {
         root: 'relative inline-flex items-center',

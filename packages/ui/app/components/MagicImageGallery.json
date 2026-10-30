@@ -1,0 +1,54 @@
+{
+  "en": {
+    "title": "MagicSync Product Screenshots",
+    "description": "Browse full-resolution screenshots of MagicSync: social media calendar, AI content board, agent chat, media library, analytics, billing and mobile layouts.",
+    "seoTitle": "MagicSync Screenshots: Social Media Scheduler & AI Agents",
+    "seoDescription": "See MagicSync in action: scheduling calendar, AI content board, agent chat, analytics, billing and mobile views in full-resolution screenshots.",
+    "openImage": "Open {title} full screen",
+    "close": "Close gallery",
+    "previous": "Previous screenshot",
+    "next": "Next screenshot",
+    "counter": "{current} of {total}",
+    "fallbackAlt": "MagicSync interface screenshot",
+    "regionLabel": "MagicSync screenshot gallery"
+  },
+  "es": {
+    "title": "Capturas de MagicSync",
+    "description": "Explora capturas a resolución completa de MagicSync: calendario de redes sociales, tablero de contenido con IA, chat de agentes, biblioteca de medios, analítica, facturación y vistas móviles.",
+    "seoTitle": "Capturas de MagicSync: Programador de Redes y Agentes IA",
+    "seoDescription": "Mira MagicSync por dentro: calendario de programación, tablero de contenido con IA, agentes, analítica, facturación y vistas móviles en capturas a resolución completa.",
+    "openImage": "Abrir {title} a pantalla completa",
+    "close": "Cerrar galería",
+    "previous": "Captura anterior",
+    "next": "Captura siguiente",
+    "counter": "{current} de {total}",
+    "fallbackAlt": "Captura de la interfaz de MagicSync",
+    "regionLabel": "Galería de capturas de MagicSync"
+  },
+  "de": {
+    "title": "MagicSync Produkt-Screenshots",
+    "description": "Entdecke MagicSync in voller Auflösung: Social-Media-Kalender, KI-Content-Board, Agenten-Chat, Medienbibliothek, Analytik, Abrechnung und mobile Ansichten.",
+    "seoTitle": "MagicSync Screenshots: Social-Media-Planer & KI-Agenten",
+    "seoDescription": "Sieh MagicSync im Einsatz: Planungskalender, KI-Content-Board, Agenten-Chat, Analytik, Abrechnung und mobile Ansichten in hochauflösenden Screenshots.",
+    "openImage": "{title} im Vollbild öffnen",
+    "close": "Galerie schließen",
+    "previous": "Vorheriger Screenshot",
+    "next": "Nächster Screenshot",
+    "counter": "{current} von {total}",
+    "fallbackAlt": "Screenshot der MagicSync-Oberfläche",
+    "regionLabel": "MagicSync Screenshot-Galerie"
+  },
+  "fr": {
+    "title": "Captures produit MagicSync",
+    "description": "Explorez MagicSync en pleine résolution : calendrier de réseaux sociaux, tableau de contenu IA, chat d’agents, médiathèque, analytique, facturation et vues mobiles.",
+    "seoTitle": "Captures MagicSync : planificateur social et agents IA",
+    "seoDescription": "Découvrez MagicSync en action : calendrier de planification, tableau de contenu IA, chat d’agents, analytique, facturation et vues mobiles en captures haute résolution.",
+    "openImage": "Ouvrir {title} en plein écran",
+    "close": "Fermer la galerie",
+    "previous": "Capture précédente",
+    "next": "Capture suivante",
+    "counter": "{current} sur {total}",
+    "fallbackAlt": "Capture de l’interface MagicSync",
+    "regionLabel": "Galerie de captures MagicSync"
+  }
+}

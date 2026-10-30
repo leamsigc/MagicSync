@@ -1,6 +1,7 @@
 <i18n src="./[id].json"></i18n>
 <script setup lang="ts">
 import { useAutoReply, type AutoReplyCampaign, type AutoReplyLog } from '~/composables/useAutoReply'
+import type { CollectionTableColumn } from '#layers/BaseUI/app/utils/collection'
 
 const { t } = useI18n()
 const toast = useToast()
@@ -15,9 +16,6 @@ const campaign = ref<AutoReplyCampaign | null>(null)
 const loading = ref(true)
 const stats = ref<{ sent: number, skipped: number, failed: number, clicksPerLink: Array<{ linkId: string, label: string, target: string, clicks: number }> } | null>(null)
 const logs = ref<AutoReplyLog[]>([])
-const logsLoading = ref(false)
-const filter = ref<'all' | 'sent' | 'skipped' | 'failed'>('all')
-const search = ref('')
 const copied = ref<string | null>(null)
 const toggling = ref(false)
 const deleting = ref(false)
@@ -25,16 +23,71 @@ const showDelete = ref(false)
 const showEdit = ref(false)
 const testText = ref('')
 const testResult = ref<string | null>(null)
+const testRan = ref(false)
 const accounts = ref<Array<{ id: string, accountName: string }>>([])
-const editName = ref('')
-const editKeywords = ref('')
-const editDm = ref('')
-const editSaving = ref(false)
 
-useHead({
-  title: t('seo_title'),
-  meta: [{ name: 'description', content: t('seo_description') }],
+const logRows = computed<Record<string, any>[]>(() => (logs.value ?? []).map(log => ({ ...log })))
+
+const {
+  search,
+  setSearch,
+  filters,
+  setFilter,
+  filtered,
+  hasActiveFilters,
+  resetFilters,
+} = useCollectionView<Record<string, any>>({
+  key: 'auto-reply-logs',
+  modes: ['table'],
+  defaultView: 'table',
+  rows: logRows,
+  searchFields: log => [log.authorName, log.matchedKeyword, log.reason],
+  filterFns: {
+    action: (log, value) => log.action === value,
+  },
 })
+
+const actionFilterOptions = computed(() => [
+  { value: 'all', label: t('filter_all') },
+  { value: 'sent', label: t('filter_sent') },
+  { value: 'skipped', label: t('filter_skipped') },
+  { value: 'failed', label: t('filter_failed') },
+])
+
+const toolbarFilters = computed(() => [
+  {
+    key: 'action',
+    label: t('action'),
+    value: filters.value.action || 'all',
+    options: actionFilterOptions.value,
+    width: 'w-full sm:w-36',
+  },
+])
+
+const columns = computed<CollectionTableColumn[]>(() => [
+  { key: 'time', label: t('time') },
+  { key: 'author', label: t('author') },
+  { key: 'keyword', label: t('keyword'), hideBelow: 'md' },
+  { key: 'action', label: t('action') },
+  { key: 'reason', label: t('reason'), hideBelow: 'lg' },
+])
+
+const logRowKey = (log: Record<string, any>): string => `${log.commentId}-${log.at}`
+
+const pageTitle = computed(() => campaign.value?.name || t('seo_title'))
+const pageDescription = computed(() => {
+  if (!campaign.value) return t('seo_description')
+  return `${t('updated', { date: formatDate(campaign.value.updatedAt) })} · ${t('created', { date: formatDate(campaign.value.createdAt) })}`
+})
+
+useSeoMeta({
+  title: t('seo_title'),
+  description: t('seo_description'),
+})
+
+// One "now" captured on the server and serialized to the client, so the
+// relative labels hydrate identically instead of drifting with the clock.
+const nowMs = useState<number>('auto-reply-relative-now', () => Date.now())
 
 function errorMessage(error: unknown): string {
   const data = (error as { data?: { statusMessage?: string, message?: string } } | null)?.data
@@ -45,17 +98,26 @@ function formatDate(value: string | undefined): string {
   if (!value) return ''
   try {
     return new Date(value).toLocaleString()
-  } catch {
+  }
+  catch {
     return value
   }
 }
 
+function formatTime(value: string): string {
+  return new Date(value).toLocaleTimeString()
+}
+
 function formatRelative(at: string): string {
-  const diff = Date.now() - new Date(at).getTime()
+  const diff = nowMs.value - new Date(at).getTime()
   const days = Math.floor(diff / (1000 * 60 * 60 * 24))
   if (days === 0) return t('today')
   if (days === 1) return t('yesterday')
   return t('days_ago', { count: days })
+}
+
+function authorLabel(log: Record<string, any>): string {
+  return log.authorName || String(log.authorId).slice(0, 6)
 }
 
 function badgeColor(action: string): 'success' | 'warning' | 'error' | 'neutral' {
@@ -65,52 +127,31 @@ function badgeColor(action: string): 'success' | 'warning' | 'error' | 'neutral'
   return 'neutral'
 }
 
-function handleBack() {
-  router.push('/app/auto-reply')
-}
-
 function handleCopy(text: string) {
   navigator.clipboard.writeText(text).then(() => {
     copied.value = text
     toast.add({ title: t('copied'), color: 'success' })
     setTimeout(() => { copied.value = null }, 1500)
+  }).catch(() => {
+    toast.add({ title: t('copy_failed'), color: 'error' })
   })
 }
 
 function handleEdit() {
-  if (!campaign.value) return
-  editName.value = campaign.value.name
-  editKeywords.value = (campaign.value.keywords || []).join(', ')
-  editDm.value = campaign.value.dmTemplate
   showEdit.value = true
 }
 
-function handleCloseEdit() {
+function handleSaved(updated: AutoReplyCampaign) {
+  campaign.value = updated
   showEdit.value = false
 }
 
-async function handleSaveEdit() {
-  if (!campaign.value) return
-  editSaving.value = true
-  try {
-    await updateCampaign(campaign.value.id, {
-      name: editName.value.trim(),
-      keywords: editKeywords.value.split(',').map(item => item.trim()).filter(Boolean),
-      dmTemplate: editDm.value,
-    })
-    campaign.value = await fetchCampaign(campaignId)
-    toast.add({ title: t('edit'), color: 'success' })
-    showEdit.value = false
-  } catch (error) {
-    toast.add({ title: errorMessage(error), color: 'error' })
-  } finally {
-    editSaving.value = false
-  }
+function handleSearchChange(value: string) {
+  setSearch(value)
 }
 
-function handleViewLogs() {
-  const el = document.getElementById('logs-section')
-  el?.scrollIntoView({ behavior: 'smooth' })
+function handleFilterChange(key: string, value: string) {
+  setFilter(key, value)
 }
 
 const totalClicks = computed(() => (stats.value?.clicksPerLink || []).reduce((sum, link) => sum + (link.clicks || 0), 0))
@@ -118,14 +159,6 @@ const ctr = computed(() => {
   const sent = stats.value?.sent || 0
   if (sent === 0) return 0
   return Math.round((totalClicks.value / sent) * 100)
-})
-
-const filteredLogs = computed(() => {
-  let list = logs.value
-  if (filter.value !== 'all') list = list.filter(item => item.action === filter.value)
-  const term = search.value.trim().toLowerCase()
-  if (term) list = list.filter(item => `${item.authorName} ${item.matchedKeyword ?? ''} ${item.reason}`.toLowerCase().includes(term))
-  return list
 })
 
 const chartData = computed(() => {
@@ -147,29 +180,23 @@ const chartData = computed(() => {
 
 const maxChart = computed(() => Math.max(1, ...chartData.value.map(item => item.count)))
 
-function handleSelectFilter(value: 'all' | 'sent' | 'skipped' | 'failed') {
-  filter.value = value
-}
-
-function handleSearchInput(value: string) {
-  search.value = value
-}
-
 async function handleToggle() {
   if (!campaign.value) return
   toggling.value = true
   try {
-    await updateCampaign(campaign.value.id, { enabled: !campaign.value.enabled })
-    campaign.value = await fetchCampaign(campaignId)
-    toast.add({ title: campaign.value?.enabled ? t('toggle_enabled') : t('toggle_disabled'), color: 'success' })
-  } catch (error) {
+    const updated = await updateCampaign(campaign.value.id, { enabled: !campaign.value.enabled })
+    campaign.value = updated
+    toast.add({ title: updated.enabled ? t('toggle_enabled') : t('toggle_disabled'), color: 'success' })
+  }
+  catch (error) {
     toast.add({ title: errorMessage(error), color: 'error' })
-  } finally {
+  }
+  finally {
     toggling.value = false
   }
 }
 
-async function handleDelete() {
+function handleDelete() {
   showDelete.value = true
 }
 
@@ -179,15 +206,17 @@ async function handleConfirmDelete() {
     await deleteCampaign(campaignId)
     toast.add({ title: t('confirm_delete'), color: 'success' })
     router.push('/app/auto-reply')
-  } catch (error) {
+  }
+  catch (error) {
     toast.add({ title: errorMessage(error), color: 'error' })
-  } finally {
+  }
+  finally {
     deleting.value = false
     showDelete.value = false
   }
 }
 
-async function handleCancelDelete() {
+function handleCancelDelete() {
   showDelete.value = false
 }
 
@@ -195,13 +224,15 @@ async function handleTest() {
   if (!campaign.value) return
   const matched = await testMatch(campaign.value.id, testText.value, campaign.value.keywords, campaign.value.matchMode)
   testResult.value = matched
+  testRan.value = true
 }
 
 async function loadAccounts() {
   try {
     const list = await $fetch<Array<{ id: string, accountName: string, platform: string }>>('/api/v1/social-accounts')
     accounts.value = (list || []).filter(item => item.platform === 'instagram').map(item => ({ id: item.id, accountName: item.accountName }))
-  } catch {
+  }
+  catch {
     accounts.value = []
   }
 }
@@ -220,9 +251,11 @@ async function loadAll() {
       stats.value = s
       logs.value = l
     }
-  } catch (error) {
+  }
+  catch (error) {
     toast.add({ title: errorMessage(error), color: 'error' })
-  } finally {
+  }
+  finally {
     loading.value = false
   }
 }
@@ -234,14 +267,11 @@ onMounted(() => {
 </script>
 
 <template>
-  <UContainer class="py-6 max-w-6xl">
-    <div class="flex items-center gap-2 mb-4">
-      <UButton variant="ghost" color="neutral" icon="i-heroicons-arrow-left" @click="handleBack">{{ t('back') }}</UButton>
-      <div class="ml-auto flex items-center gap-2">
-        <UButton v-if="campaign" size="sm" variant="ghost" icon="i-heroicons-pencil" @click="handleEdit">{{ t('edit') }}</UButton>
-        <UButton v-if="campaign" size="sm" variant="ghost" color="error" icon="i-heroicons-trash" @click="handleDelete">{{ t('delete') }}</UButton>
-      </div>
-    </div>
+  <BaseCollectionPage :title="pageTitle" :description="pageDescription" back-to="/app/auto-reply">
+    <template #actions>
+      <UButton v-if="campaign" size="sm" variant="ghost" icon="i-heroicons-pencil" @click="handleEdit">{{ t('edit') }}</UButton>
+      <UButton v-if="campaign" size="sm" variant="ghost" color="error" icon="i-heroicons-trash" @click="handleDelete">{{ t('delete') }}</UButton>
+    </template>
 
     <div v-if="loading" class="flex justify-center py-16">
       <UIcon name="i-heroicons-arrow-path" class="h-8 w-8 animate-spin text-muted-foreground" />
@@ -259,13 +289,11 @@ onMounted(() => {
         <div class="flex flex-wrap items-start justify-between gap-4">
           <div class="min-w-0">
             <div class="flex flex-wrap items-center gap-2">
-              <h1 class="text-2xl font-bold tracking-tight">{{ campaign.name }}</h1>
               <UBadge :color="campaign.enabled ? 'success' : 'neutral'" variant="subtle">{{ campaign.enabled ? t('enabled') : t('disabled') }}</UBadge>
-              <UBadge v-if="campaign.storyDmEnabled" color="primary" variant="subtle" size="xs">Story DM</UBadge>
-              <UBadge v-if="campaign.followGate" color="warning" variant="subtle" size="xs">Follow gate</UBadge>
-              <UBadge v-if="campaign.mode === 'ai'" color="info" variant="subtle" size="xs">AI</UBadge>
+              <UBadge v-if="campaign.storyDmEnabled" color="primary" variant="subtle" size="xs">{{ t('story_dm') }}</UBadge>
+              <UBadge v-if="campaign.followGate" color="warning" variant="subtle" size="xs">{{ t('follow_gate') }}</UBadge>
+              <UBadge v-if="campaign.mode === 'ai'" color="info" variant="subtle" size="xs">{{ t('ai_mode') }}</UBadge>
             </div>
-            <p class="mt-1 text-sm text-muted-foreground">{{ t('updated', { date: formatDate(campaign.updatedAt) }) }} · {{ t('created', { date: formatDate(campaign.createdAt) }) }}</p>
             <div class="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
               <span class="inline-flex items-center gap-1"><UIcon name="i-lucide-at-sign" class="size-3.5" />{{ accountNameFor(campaign.socialAccountId) }}</span>
               <span>·</span>
@@ -275,7 +303,7 @@ onMounted(() => {
             </div>
           </div>
           <div class="flex items-center gap-2">
-            <span class="text-sm text-muted-foreground hidden sm:inline">{{ campaign.enabled ? t('enabled') : t('disabled') }}</span>
+            <span class="hidden text-sm text-muted-foreground sm:inline">{{ campaign.enabled ? t('enabled') : t('disabled') }}</span>
             <USwitch :model-value="campaign.enabled" :loading="toggling" @update:model-value="handleToggle" />
           </div>
         </div>
@@ -333,8 +361,8 @@ onMounted(() => {
             </div>
           </template>
           <div v-if="chartData.every(item => item.count === 0)" class="py-8 text-center text-sm text-muted-foreground">{{ t('chart_empty') }}</div>
-          <div v-else class="flex items-end gap-1.5 h-28">
-            <div v-for="item in chartData" :key="item.date" class="flex-1 flex flex-col items-center gap-1">
+          <div v-else class="flex h-28 items-end gap-1.5">
+            <div v-for="item in chartData" :key="item.date" class="flex flex-1 flex-col items-center gap-1">
               <div class="w-full rounded-t-md bg-primary transition-all" :style="{ height: `${(item.count / maxChart) * 80 + 8}px`, opacity: item.count ? 1 : 0.15 }" />
               <span class="text-[10px] text-muted-foreground">{{ item.date.slice(5) }}</span>
               <span class="text-[11px] font-medium">{{ item.count }}</span>
@@ -343,20 +371,20 @@ onMounted(() => {
           <div class="mt-4 flex flex-wrap gap-2 text-xs">
             <UBadge variant="subtle" color="primary">{{ t('funnel_sent') }}: {{ stats?.sent ?? 0 }}</UBadge>
             <UBadge variant="subtle" color="success">{{ t('funnel_clicked') }}: {{ totalClicks }}</UBadge>
-            <UBadge variant="subtle" color="neutral">CTR {{ ctr }}%</UBadge>
+            <UBadge variant="subtle" color="neutral">{{ t('ctr') }} {{ ctr }}%</UBadge>
           </div>
         </UCard>
 
         <UCard v-motion-fade :duration="220">
           <template #header><h3 class="font-semibold">{{ t('links_performance') }}</h3></template>
-          <div v-if="!stats?.clicksPerLink?.length" class="text-sm text-muted-foreground py-6 text-center">{{ t('no_links') }}</div>
+          <div v-if="!stats?.clicksPerLink?.length" class="py-6 text-center text-sm text-muted-foreground">{{ t('no_links') }}</div>
           <div v-else class="space-y-3">
             <div v-for="link in stats.clicksPerLink" :key="link.linkId" class="rounded-xl border border-default p-3">
               <div class="flex items-center justify-between gap-2">
-                <p class="font-medium text-sm truncate">{{ link.label }}</p>
+                <p class="truncate text-sm font-medium">{{ link.label }}</p>
                 <UBadge :color="link.clicks ? 'success' : 'neutral'" variant="subtle" size="xs">{{ link.clicks }} {{ t('clicks') }}</UBadge>
               </div>
-              <p class="text-xs text-muted-foreground truncate">{{ link.target }}</p>
+              <p class="truncate text-xs text-muted-foreground">{{ link.target }}</p>
               <div class="mt-2 flex items-center gap-2">
                 <UInput :model-value="`/r/${campaign.id}/${link.linkId}`" readonly size="xs" class="flex-1 font-mono text-xs" />
                 <UButton size="xs" variant="ghost" :icon="copied === `/r/${campaign.id}/${link.linkId}` ? 'i-heroicons-check' : 'i-heroicons-clipboard'" @click="() => handleCopy(`/r/${campaign.id}/${link.linkId}`)">{{ t('copy') }}</UButton>
@@ -373,7 +401,7 @@ onMounted(() => {
           <template #header><h3 class="font-semibold">{{ t('targeting') }}</h3></template>
           <div class="space-y-3 text-sm">
             <div class="flex justify-between"><span class="text-muted-foreground">{{ t('account') }}</span><span class="font-medium">{{ accountNameFor(campaign.socialAccountId) }}</span></div>
-            <div class="flex justify-between"><span class="text-muted-foreground">{{ t('watching') }}</span><span class="font-medium text-right max-w-[60%]">{{ campaign.matchAllPosts ? t('watching_all') : t('posts', { count: campaign.externalPostIds.length }) }}</span></div>
+            <div class="flex justify-between"><span class="text-muted-foreground">{{ t('watching') }}</span><span class="max-w-[60%] text-right font-medium">{{ campaign.matchAllPosts ? t('watching_all') : t('posts', { count: (campaign.externalPostIds || []).length }) }}</span></div>
             <div v-if="!campaign.matchAllPosts" class="rounded-lg bg-muted p-2 font-mono text-xs break-all">{{ campaign.externalPostIds.join(', ') || '—' }}</div>
             <div class="flex flex-wrap gap-1.5">
               <UBadge v-for="kw in campaign.keywords" :key="kw" variant="subtle" color="primary">{{ kw }}</UBadge>
@@ -385,19 +413,19 @@ onMounted(() => {
           <template #header><h3 class="font-semibold">{{ t('messaging') }}</h3></template>
           <div class="space-y-3 text-sm">
             <div>
-              <p class="text-muted-foreground text-xs">{{ t('dm_template') }}</p>
-              <p class="mt-1 rounded-lg bg-muted p-2.5 font-mono text-xs whitespace-pre-wrap">{{ campaign.dmTemplate }}</p>
+              <p class="text-xs text-muted-foreground">{{ t('dm_template') }}</p>
+              <p class="mt-1 whitespace-pre-wrap rounded-lg bg-muted p-2.5 font-mono text-xs">{{ campaign.dmTemplate }}</p>
             </div>
             <div v-if="campaign.publicReplyTemplate">
-              <p class="text-muted-foreground text-xs">{{ t('public_reply') }}</p>
+              <p class="text-xs text-muted-foreground">{{ t('public_reply') }}</p>
               <p class="mt-1 rounded-lg bg-muted p-2 text-xs">{{ campaign.publicReplyTemplate }}</p>
             </div>
             <div class="flex flex-wrap gap-2">
-              <UBadge :color="campaign.storyDmEnabled ? 'success' : 'neutral'" variant="subtle" size="xs">{{ t('story_dm') }}: {{ campaign.storyDmEnabled ? 'Yes' : 'No' }}</UBadge>
-              <UBadge :color="campaign.followGate ? 'warning' : 'neutral'" variant="subtle" size="xs">{{ t('follow_gate') }}: {{ campaign.followGate ? 'Yes' : 'No' }}</UBadge>
-              <UBadge :color="campaign.mode === 'ai' ? 'info' : 'neutral'" variant="subtle" size="xs">{{ t('ai_mode') }}</UBadge>
+              <UBadge :color="campaign.storyDmEnabled ? 'success' : 'neutral'" variant="subtle" size="xs">{{ t('story_dm') }}: {{ campaign.storyDmEnabled ? t('yes') : t('no') }}</UBadge>
+              <UBadge :color="campaign.followGate ? 'warning' : 'neutral'" variant="subtle" size="xs">{{ t('follow_gate') }}: {{ campaign.followGate ? t('yes') : t('no') }}</UBadge>
+              <UBadge :color="campaign.mode === 'ai' ? 'info' : 'neutral'" variant="subtle" size="xs">{{ t('ai_mode') }}: {{ campaign.mode === 'ai' ? t('yes') : t('no') }}</UBadge>
             </div>
-            <div v-if="campaign.followGate && campaign.followPromptTemplate" class="rounded-lg bg-amber-50 dark:bg-amber-950/30 p-2 text-xs">{{ campaign.followPromptTemplate }}</div>
+            <div v-if="campaign.followGate && campaign.followPromptTemplate" class="rounded-lg bg-amber-50 p-2 text-xs dark:bg-amber-950/30">{{ campaign.followPromptTemplate }}</div>
           </div>
         </UCard>
       </div>
@@ -413,69 +441,83 @@ onMounted(() => {
           <UInput v-model="testText" :placeholder="t('test_placeholder')" class="w-full" />
           <div class="flex gap-2">
             <UButton size="sm" variant="outline" @click="handleTest">{{ t('test_button') }}</UButton>
-            <span v-if="testResult !== null" class="text-sm"><span class="text-muted-foreground">{{ t('matched') }}:</span> <UBadge :color="testResult ? 'success' : 'neutral'">{{ testResult || t('no_match') }}</UBadge></span>
+            <span v-if="testRan" class="text-sm"><span class="text-muted-foreground">{{ t('matched') }}:</span> <UBadge :color="testResult ? 'success' : 'neutral'" variant="subtle">{{ testResult || t('no_match') }}</UBadge></span>
           </div>
-          <div class="rounded-xl border border-dashed p-3 bg-muted/30">
+          <div class="rounded-xl border border-dashed bg-muted/30 p-3">
             <p class="text-xs text-muted-foreground">{{ t('preview_with', { username: 'alex' }) }}</p>
-            <p class="mt-1 text-sm whitespace-pre-wrap">{{ (campaign.dmTemplate || '').replaceAll('{username}', 'alex').replaceAll('{link1}', `/r/${campaign.id}/link1`).replaceAll('{link2}', `/r/${campaign.id}/link2`) }}</p>
+            <p class="mt-1 whitespace-pre-wrap text-sm">{{ (campaign.dmTemplate || '').replaceAll('{username}', 'alex').replaceAll('{link1}', `/r/${campaign.id}/link1`).replaceAll('{link2}', `/r/${campaign.id}/link2`) }}</p>
           </div>
         </div>
       </UCard>
 
       <UCard id="logs-section" class="mt-6" v-motion-fade :duration="200">
         <template #header>
-          <div class="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h3 class="font-semibold">{{ t('logs') }}</h3>
-              <p class="text-xs text-muted-foreground">{{ t('logs_description') }}</p>
-            </div>
-            <div class="flex items-center gap-2">
-              <USelect v-model="filter" :items="[{ label: t('filter_all'), value: 'all' }, { label: t('filter_sent'), value: 'sent' }, { label: t('filter_skipped'), value: 'skipped' }, { label: t('filter_failed'), value: 'failed' }]" class="w-36" @update:model-value="handleSelectFilter" />
-            </div>
+          <div>
+            <h3 class="font-semibold">{{ t('logs') }}</h3>
+            <p class="text-xs text-muted-foreground">{{ t('logs_description') }}</p>
           </div>
         </template>
-        <UInput :model-value="search" :placeholder="t('search_logs')" icon="i-heroicons-magnifying-glass" class="mb-3" @update:model-value="handleSearchInput" />
-        <div v-if="logsLoading" class="flex justify-center py-8"><UIcon name="i-heroicons-arrow-path" class="size-6 animate-spin" /></div>
-        <div v-else-if="filteredLogs.length === 0" class="py-8 text-center text-sm text-muted-foreground">{{ logs.length === 0 ? t('no_logs') : t('no_logs_filtered') }}</div>
-        <div v-else class="overflow-x-auto">
-          <table class="w-full text-sm">
-            <thead class="text-xs text-muted-foreground border-b border-default">
-              <tr>
-                <th class="text-left py-2 px-2 font-medium">{{ t('time') }}</th>
-                <th class="text-left py-2 px-2 font-medium">{{ t('author') }}</th>
-                <th class="text-left py-2 px-2 font-medium">{{ t('keyword') }}</th>
-                <th class="text-left py-2 px-2 font-medium">{{ t('action') }}</th>
-                <th class="text-left py-2 px-2 font-medium">{{ t('reason') }}</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-default">
-              <tr v-for="item in filteredLogs.slice(0, 100)" :key="item.commentId + item.at" class="hover:bg-muted/50">
-                <td class="py-2 px-2 whitespace-nowrap text-xs"><span class="font-mono">{{ formatRelative(item.at) }}</span><span class="ml-1 text-muted-foreground hidden md:inline">{{ new Date(item.at).toLocaleTimeString() }}</span></td>
-                <td class="py-2 px-2"><span class="font-medium">{{ item.authorName || item.authorId.slice(0,6) }}</span></td>
-                <td class="py-2 px-2"><UBadge v-if="item.matchedKeyword" variant="subtle" size="xs">{{ item.matchedKeyword }}</UBadge><span v-else class="text-muted-foreground">—</span></td>
-                <td class="py-2 px-2"><UBadge :color="badgeColor(item.action)" variant="subtle" size="xs">{{ item.action }}</UBadge></td>
-                <td class="py-2 px-2 text-xs max-w-[180px] truncate" :title="item.reason">{{ item.reason }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+
+        <BaseCollectionToolbar
+          class="mb-4"
+          :search="search"
+          :search-placeholder="t('search_logs')"
+          :filters="toolbarFilters"
+          @update:search="handleSearchChange"
+          @update:filter="handleFilterChange"
+        />
+
+        <BaseDataTable
+          :rows="filtered"
+          :columns="columns"
+          :row-key="logRowKey"
+          min-width="42rem"
+        >
+          <template #cell-time="{ row }">
+            <span class="whitespace-nowrap text-xs">
+              <span class="font-mono">{{ formatRelative(row.at) }}</span>
+              <ClientOnly>
+                <span class="ml-1 hidden text-muted-foreground md:inline">{{ formatTime(row.at) }}</span>
+              </ClientOnly>
+            </span>
+          </template>
+
+          <template #cell-author="{ row }">
+            <span class="font-medium">{{ authorLabel(row) }}</span>
+          </template>
+
+          <template #cell-keyword="{ row }">
+            <UBadge v-if="row.matchedKeyword" variant="subtle" size="xs">{{ row.matchedKeyword }}</UBadge>
+            <span v-else class="text-muted-foreground">—</span>
+          </template>
+
+          <template #cell-action="{ row }">
+            <UBadge :color="badgeColor(row.action)" variant="subtle" size="xs">{{ row.action }}</UBadge>
+          </template>
+
+          <template #cell-reason="{ row }">
+            <span class="block max-w-[220px] truncate text-xs" :title="row.reason">{{ row.reason }}</span>
+          </template>
+
+          <template #empty>
+            <div class="py-8 text-center">
+              <UIcon name="i-lucide-history" class="mx-auto mb-3 size-9 text-dimmed" />
+              <p class="text-sm text-muted">{{ logs.length === 0 ? t('no_logs') : t('no_logs_filtered') }}</p>
+              <UButton
+                v-if="hasActiveFilters"
+                class="mt-3"
+                variant="ghost"
+                size="sm"
+                icon="i-lucide-filter-x"
+                :label="t('clear_filters')"
+                @click="resetFilters"
+              />
+            </div>
+          </template>
+        </BaseDataTable>
       </UCard>
 
-      <UModal v-model:open="showEdit" :title="t('edit')">
-        <template #body>
-          <div class="space-y-3">
-            <UFormField :label="t('campaign_name')"><UInput v-model="editName" class="w-full" /></UFormField>
-            <UFormField :label="t('keywords')"><UInput v-model="editKeywords" class="w-full" /></UFormField>
-            <UFormField :label="t('dm_template')"><UTextarea v-model="editDm" :rows="3" class="w-full" /></UFormField>
-          </div>
-        </template>
-        <template #footer>
-          <div class="flex justify-end gap-2">
-            <UButton variant="ghost" @click="handleCloseEdit">{{ t('cancel') }}</UButton>
-            <UButton color="primary" :loading="editSaving" @click="handleSaveEdit">{{ t('edit') }}</UButton>
-          </div>
-        </template>
-      </UModal>
+      <AutoReplyCampaignForm v-model:open="showEdit" :campaign="campaign" @saved="handleSaved" />
 
       <UModal v-model:open="showDelete" :title="t('confirm_delete_title')" :description="t('confirm_delete_description')">
         <template #footer>
@@ -486,5 +528,5 @@ onMounted(() => {
         </template>
       </UModal>
     </template>
-  </UContainer>
+  </BaseCollectionPage>
 </template>

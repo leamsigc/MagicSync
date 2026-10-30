@@ -25,6 +25,10 @@
     "filters": {
       "all": "All statuses"
     },
+    "views": {
+      "table": "Table",
+      "list": "List"
+    },
     "menu": {
       "title": "Actions",
       "view": "View",
@@ -57,7 +61,8 @@
       "deleted": "Feedback Deleted",
       "deletedDescription": "The feedback has been removed",
       "deleteFailed": "Failed to delete feedback"
-    }
+    },
+    "clearFilters": "Clear filters"
   },
   "es": {
     "title": "Comentarios",
@@ -84,6 +89,10 @@
     },
     "filters": {
       "all": "Todos los estados"
+    },
+    "views": {
+      "table": "Tabla",
+      "list": "Lista"
     },
     "menu": {
       "title": "Acciones",
@@ -117,7 +126,8 @@
       "deleted": "Comentario eliminado",
       "deletedDescription": "El comentario ha sido eliminado",
       "deleteFailed": "No se pudo eliminar"
-    }
+    },
+    "clearFilters": "Limpiar filtros"
   },
   "de": {
     "title": "Feedback",
@@ -144,6 +154,10 @@
     },
     "filters": {
       "all": "Alle Status"
+    },
+    "views": {
+      "table": "Tabelle",
+      "list": "Liste"
     },
     "menu": {
       "title": "Aktionen",
@@ -177,7 +191,8 @@
       "deleted": "Feedback gelöscht",
       "deletedDescription": "Das Feedback wurde entfernt",
       "deleteFailed": "Feedback konnte nicht gelöscht werden"
-    }
+    },
+    "clearFilters": "Filter zurücksetzen"
   },
   "fr": {
     "title": "Commentaires",
@@ -204,6 +219,10 @@
     },
     "filters": {
       "all": "Tous les statuts"
+    },
+    "views": {
+      "table": "Tableau",
+      "list": "Liste"
     },
     "menu": {
       "title": "Actions",
@@ -237,6 +256,7 @@
       "deleted": "Commentaire supprimé",
       "deletedDescription": "Le commentaire a été retiré",
       "deleteFailed": "Échec de la suppression"
-    }
+    },
+    "clearFilters": "Effacer les filtres"
   }
 }

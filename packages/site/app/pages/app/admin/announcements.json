@@ -5,6 +5,13 @@
     "createAnnouncement": "New Announcement",
     "searchPlaceholder": "Search announcements...",
     "noAnnouncements": "No announcements yet",
+    "filters": {
+      "all": "All statuses"
+    },
+    "views": {
+      "table": "Table",
+      "list": "List"
+    },
     "columns": {
       "title": "Title",
       "schedule": "Schedule",
@@ -58,7 +65,8 @@
       "deleted": "Announcement Deleted",
       "deletedDescription": "The banner has been removed",
       "deleteFailed": "Failed to delete announcement"
-    }
+    },
+    "clearFilters": "Clear filters"
   },
   "es": {
     "title": "Anuncios",
@@ -66,6 +74,13 @@
     "createAnnouncement": "Nuevo anuncio",
     "searchPlaceholder": "Buscar anuncios...",
     "noAnnouncements": "Aún no hay anuncios",
+    "filters": {
+      "all": "Todos los estados"
+    },
+    "views": {
+      "table": "Tabla",
+      "list": "Lista"
+    },
     "columns": {
       "title": "Título",
       "schedule": "Programación",
@@ -119,7 +134,8 @@
       "deleted": "Anuncio eliminado",
       "deletedDescription": "El aviso ha sido eliminado",
       "deleteFailed": "No se pudo eliminar el anuncio"
-    }
+    },
+    "clearFilters": "Limpiar filtros"
   },
   "de": {
     "title": "Ankündigungen",
@@ -127,6 +143,13 @@
     "createAnnouncement": "Neue Ankündigung",
     "searchPlaceholder": "Ankündigungen suchen...",
     "noAnnouncements": "Noch keine Ankündigungen",
+    "filters": {
+      "all": "Alle Status"
+    },
+    "views": {
+      "table": "Tabelle",
+      "list": "Liste"
+    },
     "columns": {
       "title": "Titel",
       "schedule": "Zeitplan",
@@ -180,7 +203,8 @@
       "deleted": "Ankündigung gelöscht",
       "deletedDescription": "Das Banner wurde entfernt",
       "deleteFailed": "Ankündigung konnte nicht gelöscht werden"
-    }
+    },
+    "clearFilters": "Filter zurücksetzen"
   },
   "fr": {
     "title": "Annonces",
@@ -188,6 +212,13 @@
     "createAnnouncement": "Nouvelle annonce",
     "searchPlaceholder": "Rechercher des annonces...",
     "noAnnouncements": "Aucune annonce pour le moment",
+    "filters": {
+      "all": "Tous les statuts"
+    },
+    "views": {
+      "table": "Tableau",
+      "list": "Liste"
+    },
     "columns": {
       "title": "Titre",
       "schedule": "Planification",
@@ -241,6 +272,7 @@
       "deleted": "Annonce supprimée",
       "deletedDescription": "La bannière a été retirée",
       "deleteFailed": "Échec de la suppression"
-    }
+    },
+    "clearFilters": "Effacer les filtres"
   }
 }

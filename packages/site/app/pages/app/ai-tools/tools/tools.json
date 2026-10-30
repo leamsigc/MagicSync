@@ -8,7 +8,13 @@
     "sqlGenerate": "Generate",
     "sqlCopied": "SQL copied",
     "searchPlaceholder": "Search the web...",
-    "searchSubmit": "Search"
+    "searchSubmit": "Search",
+    "filterResults": "Filter results…",
+    "viewGrid": "Grid",
+    "viewList": "List",
+    "noResults": "No results yet. Run a search to see results here.",
+    "noResultsFiltered": "No results match your filter.",
+    "clearFilters": "Clear filters"
   },
   "es": {
     "title": "Herramientas de IA",
@@ -19,7 +25,13 @@
     "sqlGenerate": "Generar",
     "sqlCopied": "SQL copiado",
     "searchPlaceholder": "Buscar en la web...",
-    "searchSubmit": "Buscar"
+    "searchSubmit": "Buscar",
+    "filterResults": "Filtrar resultados…",
+    "viewGrid": "Cuadrícula",
+    "viewList": "Lista",
+    "noResults": "Aún no hay resultados. Ejecuta una búsqueda para verlos aquí.",
+    "noResultsFiltered": "Ningún resultado coincide con tu filtro.",
+    "clearFilters": "Limpiar filtros"
   },
   "de": {
     "title": "KI-Tools",
@@ -30,7 +42,13 @@
     "sqlGenerate": "Erzeugen",
     "sqlCopied": "SQL kopiert",
     "searchPlaceholder": "Im Web suchen...",
-    "searchSubmit": "Suchen"
+    "searchSubmit": "Suchen",
+    "filterResults": "Ergebnisse filtern…",
+    "viewGrid": "Raster",
+    "viewList": "Liste",
+    "noResults": "Noch keine Ergebnisse. Starte eine Suche.",
+    "noResultsFiltered": "Keine Ergebnisse passen zum Filter.",
+    "clearFilters": "Filter zurücksetzen"
   },
   "fr": {
     "title": "Outils IA",
@@ -41,6 +59,12 @@
     "sqlGenerate": "Générer",
     "sqlCopied": "SQL copié",
     "searchPlaceholder": "Rechercher sur le web...",
-    "searchSubmit": "Rechercher"
+    "searchSubmit": "Rechercher",
+    "filterResults": "Filtrer les résultats…",
+    "viewGrid": "Grille",
+    "viewList": "Liste",
+    "noResults": "Aucun résultat pour l’instant. Lancez une recherche.",
+    "noResultsFiltered": "Aucun résultat ne correspond au filtre.",
+    "clearFilters": "Réinitialiser les filtres"
   }
 }

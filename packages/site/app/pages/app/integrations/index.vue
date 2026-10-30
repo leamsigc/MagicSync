@@ -131,7 +131,9 @@ function providerHealth(accountId: string): IntegrationHealth | undefined {
 }
 
 const providerConnections = computed<ConnectDirectoryItem[]>(() =>
-  accountsList.value.map(account => ({
+  // `accountsList` also carries better-auth's `credential` row (email/password).
+  // It is not a social connection, so it must never become a provider card.
+  accountsList.value.filter(account => account.providerId !== 'credential').map(account => ({
     id: account.id,
     name: account.providerId,
     icon: getPlatformIcon(account.providerId as SocialMediaPlatform),
@@ -151,16 +153,14 @@ const subtitle = computed(() =>
 </script>
 
 <template>
-  <div class="p-4 lg:mx-auto lg:p-6">
-    <BasePageHeader :title="t('title')" :description="subtitle">
-      <template #actions>
-        <div data-tour="connect-social-media-step-0">
-          <ConnectAddAccount variant="button" />
-        </div>
-      </template>
-    </BasePageHeader>
+  <BaseCollectionPage :title="t('title')" :description="subtitle">
+    <template #actions>
+      <div data-tour="connect-social-media-step-0">
+        <ConnectAddAccount variant="button" />
+      </div>
+    </template>
 
-    <h2 class="mb-3 text-sm font-semibold tracking-wide text-muted uppercase">
+    <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-muted">
       {{ t('sections.providers') }}
     </h2>
     <div data-tour="connect-social-media-step-1">
@@ -176,7 +176,7 @@ const subtitle = computed(() =>
       </p>
     </div>
 
-    <h2 class="mt-8 mb-3 text-sm font-semibold tracking-wide text-muted uppercase">
+    <h2 class="mt-8 mb-3 text-sm font-semibold uppercase tracking-wide text-muted">
       {{ t('sections.pages') }}
     </h2>
     <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4" data-tour="connect-social-media-step-2">
@@ -199,6 +199,6 @@ const subtitle = computed(() =>
           :health="socialHealth.get(social.id)" :platform="social.platform" :accountId="social.accountId" />
       </template>
     </div>
-  </div>
+  </BaseCollectionPage>
 </template>
 <style scoped></style>

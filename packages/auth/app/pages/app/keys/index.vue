@@ -1,24 +1,22 @@
 <i18n src="./index.json"></i18n>
 
 <script lang="ts" setup>
-import type { ApiKey } from '@better-auth/api-key';
-import type { TableColumn } from '@nuxt/ui'
+import type { CollectionTableColumn } from '#layers/BaseUI/app/utils/collection'
 import type { OAuthGrantItem } from '../../../composables/useOAuthGrants'
 
 const { t } = useI18n()
-const activeBusinessId = useState<string>('business:id');
-const toast = useToast();
+const activeBusinessId = useState<string>('business:id')
+const toast = useToast()
 const {
   apiKeys,
   loading,
-  error,
   newApiKey,
   showKeyModal,
   fetchApiKeys,
   createApiKey,
   deleteApiKey,
   closeKeyModal,
-  copyToClipboard
+  copyToClipboard,
 } = useApiKeyManagement()
 const {
   grants,
@@ -26,8 +24,8 @@ const {
   fetchGrants,
   revokeGrant,
 } = useOAuthGrants()
-const revokeLoading = ref<string | null>(null)
 
+const revokeLoading = ref<string | null>(null)
 const showCreateModal = ref(false)
 const newKeyName = ref('')
 const newKeyExpires = ref(90)
@@ -35,18 +33,58 @@ const creating = ref(false)
 const deleteLoading = ref<string | null>(null)
 const copied = ref(false)
 
-const expirationOptions = [
-  { label: '30 days', value: (30 * 24 * 60 * 60) },
-  { label: '60 days', value: (60 * 24 * 60 * 60) },
-  { label: '90 days', value: (90 * 24 * 60 * 60) },
-  { label: '6 months', value: (6 * 30 * 24 * 60 * 60) },
-  { label: '1 year', value: (365 * 24 * 60 * 60) },
-  { label: 'Never', value: 0 }
-]
+const expirationOptions = computed(() => [
+  { label: t('expirationOptions.30'), value: 30 * 24 * 60 * 60 },
+  { label: t('expirationOptions.60'), value: 60 * 24 * 60 * 60 },
+  { label: t('expirationOptions.90'), value: 90 * 24 * 60 * 60 },
+  { label: t('expirationOptions.180'), value: 6 * 30 * 24 * 60 * 60 },
+  { label: t('expirationOptions.365'), value: 365 * 24 * 60 * 60 },
+  { label: t('expirationOptions.never'), value: 0 },
+])
+
+const keyRows = computed<Record<string, any>[]>(() => (apiKeys.value ?? []).map(key => ({ ...key })))
+const grantRows = computed<Record<string, any>[]>(() => (grants.value ?? []).map(grant => ({ ...grant })))
+
+const { search, setSearch, sort, setSort, filtered, hasActiveFilters, resetFilters } = useCollectionView<Record<string, any>>({
+  key: 'app-keys',
+  modes: ['table'],
+  defaultView: 'table',
+  rows: keyRows,
+  searchFields: key => [key.name, key.prefix, key.id],
+  sorters: {
+    newest: (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    oldest: (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+  },
+  initialSort: 'newest',
+})
+
+const sortOptions = computed(() => [
+  { value: 'newest', label: t('sortNewest') },
+  { value: 'oldest', label: t('sortOldest') },
+])
+
+const toolbarSort = computed(() => ({ value: sort.value, options: sortOptions.value }))
+
+const columns = computed<CollectionTableColumn[]>(() => [
+  { key: 'id', label: t('columns.id'), hideBelow: 'md' },
+  { key: 'name', label: t('columns.name') },
+  { key: 'prefix', label: t('columns.prefix'), hideBelow: 'sm' },
+  { key: 'createdAt', label: t('columns.created'), hideBelow: 'md' },
+  { key: 'expiresAt', label: t('columns.expires'), hideBelow: 'lg' },
+])
+
+const grantColumns = computed<CollectionTableColumn[]>(() => [
+  { key: 'clientName', label: t('grantClient') },
+  { key: 'scopes', label: t('grantScopes'), hideBelow: 'sm' },
+  { key: 'businessName', label: t('grantBusiness'), hideBelow: 'md' },
+  { key: 'createdAt', label: t('grantGranted'), hideBelow: 'lg' },
+])
+
+const grantRowKey = (grant: Record<string, any>): string => String(grant.id)
 
 watch(activeBusinessId, (newVal) => {
   if (newVal) {
-    fetchApiKeys(newVal)
+    void fetchApiKeys(newVal)
   }
 }, { immediate: true })
 
@@ -58,24 +96,47 @@ function grantAccessLabel(scopes: string[]): string {
   return scopes.includes('mcp:full') ? t('scopeFull') : t('scopeRead')
 }
 
+function grantClientLabel(grant: OAuthGrantItem): string {
+  return grant.clientName || grant.clientId
+}
+
+function grantBusinessLabel(grant: OAuthGrantItem): string {
+  return grant.businessName || grant.businessId || '—'
+}
+
+function errorText(error: unknown, fallbackKey: string): string {
+  return error instanceof Error && error.message ? error.message : t(fallbackKey)
+}
+
+function formatDate(dateStr: string | null): string {
+  return dateStr ? new Date(dateStr).toLocaleDateString() : t('never')
+}
+
+function handleOpenCreate() {
+  showCreateModal.value = true
+}
+
+function handleCloseCreate() {
+  showCreateModal.value = false
+}
+
 async function handleRevokeGrant(id: string): Promise<void> {
   revokeLoading.value = id
   try {
     await revokeGrant(id)
     toast.add({ title: t('grantRevoked'), color: 'success' })
   }
-  catch (err: unknown) {
-    toast.add({ title: err instanceof Error ? err.message : t('grantRevokeFailed'), color: 'error' })
+  catch (error: unknown) {
+    toast.add({ title: errorText(error, 'grantRevokeFailed'), color: 'error' })
   }
   finally {
     revokeLoading.value = null
   }
 }
 
-
-const handleCreate = async () => {
+async function handleCreate(): Promise<void> {
   if (!newKeyName.value.trim()) {
-    toast.add({ title: 'Please enter a key name', color: 'error' })
+    toast.add({ title: t('keyNameRequired'), color: 'error' })
     return
   }
 
@@ -85,184 +146,189 @@ const handleCreate = async () => {
     showCreateModal.value = false
     newKeyName.value = ''
     newKeyExpires.value = 90
-    toast.add({ title: 'API Key created successfully', color: 'success' })
-  } catch (err: any) {
-    toast.add({ title: err.message || 'Failed to create API key', color: 'error' })
-  } finally {
+    toast.add({ title: t('keyCreatedSuccess'), color: 'success' })
+  }
+  catch (error: unknown) {
+    toast.add({ title: errorText(error, 'keyCreateFailed'), color: 'error' })
+  }
+  finally {
     creating.value = false
   }
 }
 
-const handleDelete = async (keyId: string) => {
+async function handleDelete(keyId: string): Promise<void> {
   deleteLoading.value = keyId
   try {
     await deleteApiKey(keyId)
-    toast.add({ title: 'API Key deleted successfully', color: 'success' })
-  } catch (err: any) {
-    toast.add({ title: err.message || 'Failed to delete API key', color: 'error' })
-  } finally {
+    toast.add({ title: t('keyDeletedSuccess'), color: 'success' })
+  }
+  catch (error: unknown) {
+    toast.add({ title: errorText(error, 'keyDeleteFailed'), color: 'error' })
+  }
+  finally {
     deleteLoading.value = null
   }
 }
 
-const handleCopy = async () => {
-  if (newApiKey.value) {
-    const success = await copyToClipboard(newApiKey.value.key)
-    if (success) {
-      copied.value = true
-      setTimeout(() => {
-        copied.value = false
-      }, 2000)
-    }
-  }
-}
-
-const formatDate = (dateStr: string | null) => {
-  if (!dateStr) return t('never')
-  return new Date(dateStr).toLocaleDateString()
+async function handleCopy(): Promise<void> {
+  if (!newApiKey.value) return
+  const success = await copyToClipboard(newApiKey.value.key)
+  if (!success) return
+  copied.value = true
+  setTimeout(() => {
+    copied.value = false
+  }, 2000)
 }
 
 useHead({
   title: t('title'),
-  meta: [{ name: 'description', content: t('description') }]
+  meta: [{ name: 'description', content: t('description') }],
 })
-
-
-const columns: TableColumn<ApiKey>[] = [  {
-    accessorKey: 'id',
-    header: '#',
-    cell: ({ row }) => `#${row.getValue('id')}`
-  },
-  {
-    accessorKey: 'name',
-    header: t('columns.name'),
-    cell: ({ row }) => row.getValue('name')
-  },
-  {
-    accessorKey: 'prefix',
-    header: t('columns.prefix'),
-    cell: ({ row }) => row.getValue('prefix')
-  },
-  {
-    accessorKey: 'createdAt',
-    header: t('columns.created'),
-    cell: ({ row }) => formatDate(row.getValue('createdAt'))
-  },
-  {
-    accessorKey: 'expiresAt',
-    header: t('columns.expires'),
-    cell: ({ row }) => formatDate(row.getValue('expiresAt'))
-  },
-  {
-    header: t('columns.actions'),
-    cell: ({ row }) => h(UButton, {
-      variant: 'ghost',
-      color: 'error',
-      size: 'sm',
-      icon: 'i-lucide-trash-2',
-      loading: deleteLoading.value === row.getValue('id'),
-      onClick: () => handleDelete(row.getValue('id'))
-    })
-  }
-
-]
-
-const grantColumns: TableColumn<OAuthGrantItem>[] = [
-  {
-    accessorKey: 'clientName',
-    header: t('grantClient'),
-    cell: ({ row }) => row.getValue('clientName') || row.getValue('clientId'),
-  },
-  {
-    accessorKey: 'scopes',
-    header: t('grantScopes'),
-    cell: ({ row }) => h(UBadge, { variant: 'soft' }, () => grantAccessLabel(row.getValue('scopes'))),
-  },
-  {
-    accessorKey: 'businessName',
-    header: t('grantBusiness'),
-    cell: ({ row }) => row.getValue('businessName') || row.getValue('businessId') || '—',
-  },
-  {
-    accessorKey: 'createdAt',
-    header: t('grantGranted'),
-    cell: ({ row }) => formatDate(row.getValue('createdAt')),
-  },
-  {
-    header: t('columns.actions'),
-    cell: ({ row }) => h(UButton, {
-      variant: 'ghost',
-      color: 'error',
-      size: 'sm',
-      icon: 'i-lucide-unplug',
-      loading: revokeLoading.value === row.getValue('id'),
-      onClick: () => handleRevokeGrant(row.getValue('id')),
-    }),
-  },
-]
 </script>
 
 <template>
-  <UContainer class="py-8 max-w-4xl">
-    <div class="flex items-center justify-between mb-8">
-      <div>
-        <h1 class="text-3xl font-bold mb-2">{{ t('heading') }}</h1>
-        <p class="text-muted-foreground">{{ t('subheading') }}</p>
-      </div>
-
-      <UButton v-if="activeBusinessId" icon="i-lucide-plus" @click="showCreateModal = true">
+  <BaseCollectionPage :title="t('heading')" :description="t('subheading')">
+    <template #actions>
+      <UButton v-if="activeBusinessId" icon="i-lucide-plus" @click="handleOpenCreate">
         {{ t('createButton') }}
       </UButton>
+    </template>
+
+    <template #toolbar>
+      <BaseCollectionToolbar
+        v-if="activeBusinessId"
+        :search="search"
+        :search-placeholder="t('searchKeys')"
+        :sort="toolbarSort"
+        @update:search="setSearch"
+        @update:sort="setSort"
+      />
+    </template>
+
+    <div v-if="!activeBusinessId" class="py-12 text-center">
+      <UIcon name="i-lucide-building-2" class="mx-auto mb-4 size-12 text-dimmed" />
+      <h3 class="mb-2 text-lg font-medium">{{ t('noBusiness') }}</h3>
+      <p class="text-muted">{{ t('noBusinessDescription') }}</p>
     </div>
 
-    <div v-if="!activeBusinessId" class="text-center py-12">
-      <UIcon name="i-lucide-building-2" class="w-12 h-12 text-muted-foreground mb-4" />
-      <h3 class="text-lg font-medium mb-2">{{ t('noBusiness') }}</h3>
-      <p class="text-muted-foreground">{{ t('noBusinessDescription') }}</p>
-    </div>
+    <BaseDataTable
+      v-else
+      :rows="filtered"
+      :columns="columns"
+      row-key="id"
+      :loading="loading"
+      min-width="40rem"
+    >
+      <template #cell-id="{ row }">
+        <span class="font-mono text-xs text-muted">#{{ row.id }}</span>
+      </template>
+      <template #cell-name="{ row }">
+        <span class="font-medium text-highlighted">{{ row.name }}</span>
+      </template>
+      <template #cell-prefix="{ row }">
+        <code class="rounded bg-elevated px-1.5 py-0.5 font-mono text-xs">{{ row.prefix }}</code>
+      </template>
+      <template #cell-createdAt="{ row }">
+        <span class="whitespace-nowrap text-muted">{{ formatDate(row.createdAt) }}</span>
+      </template>
+      <template #cell-expiresAt="{ row }">
+        <span class="whitespace-nowrap text-muted">{{ formatDate(row.expiresAt) }}</span>
+      </template>
 
-    <div v-else-if="apiKeys && apiKeys.length === 0 && !loading" class="text-center py-12">
-      <UIcon name="i-lucide-key" class="w-12 h-12 text-muted-foreground mb-4" />
-      <h3 class="text-lg font-medium mb-2">{{ t('noKeys') }}</h3>
-      <p class="text-muted-foreground mb-4">{{ t('noKeysDescription') }}</p>
-      <UButton icon="i-lucide-plus" @click="showCreateModal = true">
-        {{ t('createButton') }}
-      </UButton>
-    </div>
+      <template #row-actions="{ row }">
+        <UButton
+          variant="ghost"
+          color="error"
+          size="sm"
+          icon="i-lucide-trash-2"
+          :loading="deleteLoading === row.id"
+          :aria-label="t('delete')"
+          @click="() => handleDelete(row.id)"
+        />
+      </template>
 
-    <UTable v-else :data="apiKeys" :columns="columns" :loading="loading" class="flex-1 overflow-scroll"
-      :ui="{ 'tr': 'bg-transparent', 'td': 'border-0', 'th': 'border-0' }">
-    </UTable>
+      <template #empty>
+        <div v-if="keyRows.length === 0" class="py-10 text-center">
+          <UIcon name="i-lucide-key" class="mx-auto mb-3 size-9 text-dimmed" />
+          <p class="font-medium text-highlighted">{{ t('noKeys') }}</p>
+          <p class="mt-1 text-sm text-muted">{{ t('noKeysDescription') }}</p>
+          <UButton class="mt-4" icon="i-lucide-plus" :label="t('createButton')" @click="handleOpenCreate" />
+        </div>
+        <div v-else class="py-10 text-center">
+          <p class="text-sm text-muted">{{ t('noResults') }}</p>
+          <UButton
+            v-if="hasActiveFilters"
+            class="mt-3"
+            variant="ghost"
+            size="sm"
+            icon="i-lucide-filter-x"
+            :label="t('clearFilters')"
+            @click="resetFilters"
+          />
+        </div>
+      </template>
+    </BaseDataTable>
 
-    <div class="mt-12">
-      <h2 class="text-2xl font-bold mb-2">{{ t('connectedApps') }}</h2>
-      <p class="text-muted-foreground mb-6">{{ t('connectedAppsDescription') }}</p>
+    <section class="mt-10">
+      <h2 class="mb-2 text-2xl font-bold">{{ t('connectedApps') }}</h2>
+      <p class="mb-6 text-muted">{{ t('connectedAppsDescription') }}</p>
 
-      <div v-if="grants.length === 0 && !grantsLoading" class="text-center py-8">
-        <UIcon name="i-lucide-plug" class="w-10 h-10 text-muted-foreground mb-3" />
-        <h3 class="text-lg font-medium mb-1">{{ t('noGrants') }}</h3>
-        <p class="text-muted-foreground">{{ t('noGrantsDescription') }}</p>
-      </div>
+      <BaseDataTable
+        :rows="grantRows"
+        :columns="grantColumns"
+        :row-key="grantRowKey"
+        :loading="grantsLoading"
+        min-width="40rem"
+      >
+        <template #cell-clientName="{ row }">
+          <span class="font-medium text-highlighted">{{ grantClientLabel(row) }}</span>
+        </template>
+        <template #cell-scopes="{ row }">
+          <UBadge variant="soft">{{ grantAccessLabel(row.scopes) }}</UBadge>
+        </template>
+        <template #cell-businessName="{ row }">
+          <span class="text-muted">{{ grantBusinessLabel(row) }}</span>
+        </template>
+        <template #cell-createdAt="{ row }">
+          <span class="whitespace-nowrap text-muted">{{ formatDate(row.createdAt) }}</span>
+        </template>
 
-      <UTable v-else :data="grants" :columns="grantColumns" :loading="grantsLoading" class="flex-1 overflow-scroll"
-        :ui="{ 'tr': 'bg-transparent', 'td': 'border-0', 'th': 'border-0' }">
-      </UTable>
-    </div>
+        <template #row-actions="{ row }">
+          <UButton
+            variant="ghost"
+            color="error"
+            size="sm"
+            icon="i-lucide-unplug"
+            :loading="revokeLoading === row.id"
+            :aria-label="t('grantRevoke')"
+            @click="() => handleRevokeGrant(row.id)"
+          />
+        </template>
+
+        <template #empty>
+          <div class="py-8 text-center">
+            <UIcon name="i-lucide-plug" class="mx-auto mb-3 size-10 text-dimmed" />
+            <p class="font-medium text-highlighted">{{ t('noGrants') }}</p>
+            <p class="mt-1 text-sm text-muted">{{ t('noGrantsDescription') }}</p>
+          </div>
+        </template>
+      </BaseDataTable>
+    </section>
 
     <UModal v-model:open="showCreateModal" :title="t('createButton')">
       <template #body>
         <div class="space-y-4">
           <div>
-            <label class="block text-sm font-medium mb-2">{{ t('keyName') }}</label>
+            <label class="mb-2 block text-sm font-medium">{{ t('keyName') }}</label>
             <UInput v-model="newKeyName" :placeholder="t('keyNamePlaceholder')" />
           </div>
           <div>
-            <label class="block text-sm font-medium mb-2">{{ t('expiresIn') }}</label>
+            <label class="mb-2 block text-sm font-medium">{{ t('expiresIn') }}</label>
             <USelect v-model="newKeyExpires" :items="expirationOptions" value-key="value" label-key="label" />
           </div>
         </div>
         <div class="flex justify-end gap-2">
-          <UButton variant="ghost" @click="showCreateModal = false">
+          <UButton variant="ghost" @click="handleCloseCreate">
             {{ t('cancel') }}
           </UButton>
           <UButton :loading="creating" @click="handleCreate">
@@ -275,31 +341,31 @@ const grantColumns: TableColumn<OAuthGrantItem>[] = [
     <UModal v-model:open="showKeyModal" :title="t('keyCreated')" :close="false">
       <template #body>
         <div class="space-y-4">
-          <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <p class="text-sm text-yellow-800 font-medium">{{ t('keyCreatedDescription') }}</p>
+          <div class="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
+            <p class="text-sm font-medium text-yellow-800">{{ t('keyCreatedDescription') }}</p>
           </div>
           <div>
-            <label class="block text-sm font-medium mb-2">{{ t('keyName') }}</label>
+            <label class="mb-2 block text-sm font-medium">{{ t('keyName') }}</label>
             <p class="font-medium">{{ newApiKey?.name }}</p>
           </div>
           <div>
-            <label class="block text-sm font-medium mb-2">API Key</label>
+            <label class="mb-2 block text-sm font-medium">{{ t('apiKeyLabel') }}</label>
             <div class="flex gap-2">
-              <code class="flex-1 p-3 bg-muted rounded font-mono text-sm break-all">
-            {{ newApiKey?.key }}
-          </code>
+              <code class="flex-1 break-all rounded bg-muted p-3 font-mono text-sm">
+                {{ newApiKey?.key }}
+              </code>
               <UButton :icon="copied ? 'i-lucide-check' : 'i-lucide-copy'" @click="handleCopy">
                 {{ copied ? t('copied') : t('copy') }}
               </UButton>
             </div>
           </div>
           <div v-if="newApiKey?.metadata?.businessName">
-            <label class="block text-sm font-medium mb-2">Business</label>
+            <label class="mb-2 block text-sm font-medium">{{ t('businessLabel') }}</label>
             <p>{{ newApiKey.metadata.businessName }}</p>
           </div>
           <div v-if="newApiKey?.metadata?.connectedPlatforms?.length">
-            <label class="block text-sm font-medium mb-2">{{ t('platforms') }}</label>
-            <div class="flex gap-2 flex-wrap">
+            <label class="mb-2 block text-sm font-medium">{{ t('platforms') }}</label>
+            <div class="flex flex-wrap gap-2">
               <UBadge v-for="platform in newApiKey.metadata.connectedPlatforms" :key="platform">
                 {{ platform }}
               </UBadge>
@@ -313,5 +379,5 @@ const grantColumns: TableColumn<OAuthGrantItem>[] = [
         </div>
       </template>
     </UModal>
-  </UContainer>
+  </BaseCollectionPage>
 </template>

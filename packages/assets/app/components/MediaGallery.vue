@@ -13,6 +13,10 @@ interface Props {
   selectedAssets?: Asset[]
   showUploader?: boolean
   filterType?: 'image' | 'video' | 'document' | 'all'
+  /** Search term owned by the page toolbar; the filter itself runs here. */
+  searchQuery?: string
+  /** View mode owned by the page toolbar; masonry/grid/list rendering stays here. */
+  viewMode?: 'masonry' | 'grid' | 'list' | 'carousel'
   /** Which bucket to list. Passed down rather than fetched again. */
   folderScope?: FolderScope
   folders?: AssetFolderSummary[]
@@ -34,6 +38,8 @@ const props = withDefaults(defineProps<Props>(), {
   selectedAssets: () => [],
   showUploader: true,
   filterType: 'all',
+  searchQuery: '',
+  viewMode: 'masonry',
   folderScope: () => ({ kind: 'unfiled' }),
   folders: () => [],
 })
@@ -58,15 +64,12 @@ const {
   deselectAllAssets,
   isAssetSelected,
   getAssetsByType,
-  getStorageUsage,
   loadMoreAssets,
   setFolderScope
 } = useAssetManagement()
 
 const { getAssetType, formatFileSize, getAssetPreviewUrl, getAssetDisplayName } = useAsset()
 
-const viewMode = ref<'masonry' | 'grid' | 'list'>('masonry')
-const searchQuery = ref('')
 const showDeleteDialog = ref(false)
 const assetsToDelete = ref<Asset[]>([])
 const showPreviewModal = ref(false)
@@ -80,46 +83,37 @@ const optimizationProgress = ref(0)
 const isPreviewFullscreen = ref(false)
 
 const filteredAssets = computed(() => {
-  let filtered = [...assets.value]
-  if (props.filterType !== 'all') {
-    filtered = getAssetsByType(props.filterType)
-  }
-  if (searchQuery.value.trim()) {
-    const query = searchQuery.value.toLowerCase()
-    filtered = filtered.filter(asset =>
-      getAssetDisplayName(asset).toLowerCase().includes(query)
-    )
-  }
-  if (selectedTags.value.length > 0) {
-    filtered = filtered.filter(asset => {
+  const list = props.filterType === 'all' ? [...assets.value] : getAssetsByType(props.filterType)
+  const term = props.searchQuery.trim().toLowerCase()
+  const searched = term
+    ? list.filter(asset => getAssetDisplayName(asset).toLowerCase().includes(term))
+    : list
+  const tagged = selectedTags.value.length > 0
+    ? searched.filter(asset => {
       const metadata = parseAssetMetadata(asset)
       const assetTags = metadata.tags || []
       return selectedTags.value.some(tag => assetTags.includes(tag))
     })
-  }
-  filtered.sort((a, b) => {
-    let comparison = 0
-    switch (sortBy.value) {
-      case 'name':
-        comparison = getAssetDisplayName(a).localeCompare(getAssetDisplayName(b))
-        break
-      case 'date':
-        comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-        break
-      case 'size':
-        comparison = a.size - b.size
-        break
-      case 'type':
-        comparison = a.mimeType.localeCompare(b.mimeType)
-        break
-    }
-    return sortOrder.value === 'asc' ? comparison : -comparison
-  })
-  return filtered
+    : searched
+  const direction = sortOrder.value === 'asc' ? 1 : -1
+  return [...tagged].sort((a, b) => compareAssets(a, b) * direction)
 })
 
 const hasSelectedAssets = computed(() => selectedAssets.value.length > 0)
-const storageUsage = computed(() => getStorageUsage())
+
+/** Sort comparator for the page-owned `sortBy` / `sortOrder` state. */
+function compareAssets(a: Asset, b: Asset): number {
+  switch (sortBy.value) {
+    case 'name':
+      return getAssetDisplayName(a).localeCompare(getAssetDisplayName(b))
+    case 'size':
+      return a.size - b.size
+    case 'type':
+      return a.mimeType.localeCompare(b.mimeType)
+    default:
+      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+  }
+}
 
 const sortItems = computed(() => [
   { label: t('date'), value: 'date' },
@@ -156,6 +150,71 @@ const handlePreview = (asset: Asset) => {
   emit('preview', asset)
 }
 
+/** Index of the open asset inside the currently visible list (carousel source). */
+const previewIndex = computed(() => {
+  if (!previewAsset.value) return -1
+  return filteredAssets.value.findIndex(asset => asset.id === previewAsset.value?.id)
+})
+
+const hasPreviewNavigation = computed(() => filteredAssets.value.length > 1)
+
+/** Carousel view: one large asset at a time, driven by the filtered list. */
+const carouselIndex = ref(0)
+const carouselAsset = computed(() => filteredAssets.value[carouselIndex.value] ?? filteredAssets.value[0] ?? null)
+
+watch(filteredAssets, (list) => {
+  if (carouselIndex.value >= list.length) carouselIndex.value = 0
+})
+
+function selectCarousel(index: number) {
+  carouselIndex.value = index
+}
+
+function stepCarousel(direction: 1 | -1) {
+  const total = filteredAssets.value.length
+  if (total === 0) return
+  carouselIndex.value = (carouselIndex.value + direction + total) % total
+}
+
+function handleCarouselPrev() {
+  stepCarousel(-1)
+}
+
+function handleCarouselNext() {
+  stepCarousel(1)
+}
+
+function stepPreview(direction: 1 | -1) {
+  const list = filteredAssets.value
+  if (list.length === 0) return
+  const current = previewIndex.value
+  const next = current < 0 ? 0 : (current + direction + list.length) % list.length
+  previewAsset.value = list[next] ?? null
+}
+
+function handlePreviewPrev() {
+  stepPreview(-1)
+}
+
+function handlePreviewNext() {
+  stepPreview(1)
+}
+
+function handlePreviewKeydown(event: KeyboardEvent) {
+  if (!showPreviewModal.value) {
+    if (props.viewMode === 'carousel' && filteredAssets.value.length > 1) {
+      if (event.key === 'ArrowLeft') handleCarouselPrev()
+      if (event.key === 'ArrowRight') handleCarouselNext()
+    }
+    return
+  }
+  if (event.key === 'ArrowLeft') handlePreviewPrev()
+  if (event.key === 'ArrowRight') handlePreviewNext()
+}
+
+onMounted(() => window.addEventListener('keydown', handlePreviewKeydown))
+onBeforeUnmount(() => window.removeEventListener('keydown', handlePreviewKeydown))
+
 const handleAssetClick = (asset: Asset) => {
   if (props.selectable) {
     toggleAssetSelection(asset)
@@ -169,10 +228,6 @@ const handleAssetClick = (asset: Asset) => {
     showPreviewModal.value = true
     emit('preview', asset)
   }
-}
-
-const setViewMode = (mode: 'masonry' | 'grid' | 'list') => {
-  viewMode.value = mode
 }
 
 const toggleFullscreen = () => {
@@ -231,11 +286,6 @@ const toggleTag = (tag: string) => {
   } else {
     selectedTags.value.splice(index, 1)
   }
-}
-
-const clearFilters = () => {
-  selectedTags.value = []
-  searchQuery.value = ''
 }
 
 // One watcher over business AND folder scope: the composable holds the scope so
@@ -316,51 +366,27 @@ const handleDeleteAsset = (asset: Asset) => {
 
 <template>
   <div class="w-full">
-    <div class="bg-card  rounded-xl p-4 mb-8">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div class="flex items-center gap-3">
-          <UButton variant="outline" size="sm" @click="selectAllAssets">
-            {{ t('toolbar.select_all') }}
-          </UButton>
-          <UButton variant="outline" size="sm" :disabled="!hasSelectedAssets" @click="deselectAllAssets">
-            {{ t('toolbar.deselect_all') }}
-          </UButton>
-          <span class="text-sm text-muted-foreground">
-            {{ t('toolbar.selected_count', { count: selectedAssets.length }) }}
-          </span>
-          <UButton v-if="hasSelectedAssets" variant="solid" color="error" size="sm"
-            :aria-label="t('toolbar.delete_selected')" :disabled="isDeletingAssets" @click="handleDeleteSelected">
-            <Icon name="lucide:trash-2" class="w-4 h-4" />
-          </UButton>
-          <div
-            v-if="hasSelectedAssets"
-            class="flex items-center gap-2"
-            v-motion-slide-bottom
-            :duration="250"
-          >
-            <USelect v-model="moveTargetToken" :items="moveTargets" class="w-[180px]" size="sm"
-              :aria-label="t('folders')" />
-            <UButton size="sm" variant="outline" @click="handleMoveSelected">
-              <Icon name="lucide:folder-input" class="w-4 h-4" />
-              {{ t('move_selected') }}
-            </UButton>
-          </div>
-        </div>
-        <div class="flex rounded-lg  overflow-hidden">
-          <UButton variant="ghost" size="sm" :aria-label="t('view_mode.masonry')"
-            :class="{ 'bg-accent text-accent-foreground': viewMode === 'masonry' }"
-            @click="setViewMode('masonry')">
-            <Icon name="lucide:layout-grid" class="w-4 h-4" />
-          </UButton>
-          <UButton variant="ghost" size="sm" :aria-label="t('view_mode.grid')"
-            :class="{ 'bg-accent text-accent-foreground': viewMode === 'grid' }"
-            @click="setViewMode('grid')">
-            <Icon name="lucide:grid-3x3" class="w-4 h-4" />
-          </UButton>
-          <UButton variant="ghost" size="sm" :aria-label="t('view_mode.list')"
-            :class="{ 'bg-accent text-accent-foreground': viewMode === 'list' }"
-            @click="setViewMode('list')">
-            <Icon name="lucide:list" class="w-4 h-4" />
+    <div class="bg-card rounded-xl p-4">
+      <div class="flex flex-wrap items-center gap-3">
+        <UButton variant="outline" size="sm" @click="selectAllAssets">
+          {{ t('toolbar.select_all') }}
+        </UButton>
+        <UButton variant="outline" size="sm" :disabled="!hasSelectedAssets" @click="deselectAllAssets">
+          {{ t('toolbar.deselect_all') }}
+        </UButton>
+        <span class="text-sm text-muted-foreground">
+          {{ t('toolbar.selected_count', { count: selectedAssets.length }) }}
+        </span>
+        <UButton v-if="hasSelectedAssets" variant="solid" color="error" size="sm"
+          :aria-label="t('toolbar.delete_selected')" :disabled="isDeletingAssets" @click="handleDeleteSelected">
+          <Icon name="lucide:trash-2" class="w-4 h-4" />
+        </UButton>
+        <div v-if="hasSelectedAssets" class="flex items-center gap-2" v-motion-slide-bottom :duration="250">
+          <USelect v-model="moveTargetToken" :items="moveTargets" class="w-[180px]" size="sm"
+            :aria-label="t('folders')" />
+          <UButton size="sm" variant="outline" @click="handleMoveSelected">
+            <Icon name="lucide:folder-input" class="w-4 h-4" />
+            {{ t('move_selected') }}
           </UButton>
         </div>
       </div>
@@ -390,87 +416,49 @@ const handleDeleteAsset = (asset: Asset) => {
       </p>
     </div>
 
-    <div v-if="viewMode === 'masonry'" class="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4">
-      <div v-for="(asset, index) in filteredAssets" :key="asset.id" class="break-inside-avoid mb-4 group cursor-pointer"
-        @click="handleAssetClick(asset)">
-        <div class="bg-card  rounded-xl overflow-hidden transition-shadow hover:shadow-md"
-          :class="{ 'ring-2 ring-primary': props.selectable && isAssetSelected(asset) }">
-          <div class="relative overflow-hidden">
-            <div class="relative w-full">
-              <video v-if="getAssetType(asset.mimeType) === 'video'" :src="asset.url" :alt="getAssetDisplayName(asset)"
-                class="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105 aspect-video"
-                loading="lazy" />
-              <img v-else-if="getAssetType(asset.mimeType) === 'image'" :src="getAssetPreviewUrl(asset)"
-                :alt="getAssetDisplayName(asset)"
-                class="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105"
-                loading="lazy" />
-              <div v-else class="aspect-square bg-muted flex items-center justify-center relative">
-                <div class="text-center p-6">
-                  <Icon name="lucide:file" class="w-12 h-12 text-muted-foreground mx-auto mb-2" />
-                  <p class="text-sm text-muted-foreground font-medium">
-                    {{ getAssetDisplayName(asset) }}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div
-              class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center bg-black/90">
-              <div class="flex items-center justify-center gap-2">
-                <UButton size="sm" variant="outline" :aria-label="t('buttons.preview')" @click.stop="handlePreview(asset)">
-                  <Icon name="lucide:eye" class="w-4 h-4" />
-                </UButton>
-                <UButton size="sm" variant="outline" :aria-label="t('buttons.download')" @click.stop="handleOpenInNewTab(asset)">
-                  <Icon name="lucide:download" class="w-4 h-4" />
-                </UButton>
-                <UButton v-if="getAssetType(asset.mimeType) === 'image'" size="sm" variant="outline"
-                  :aria-label="t('buttons.edit')" @click.stop="handleOpedEditModal(asset)">
-                  <Icon name="lucide:edit" class="w-4 h-4" />
-                </UButton>
-                <UButton size="sm" variant="outline" :aria-label="t('buttons.delete')" :disabled="isDeletingAssets"
-                  @click.stop="handleDeleteAsset(asset)">
-                  <Icon name="lucide:trash-2" class="w-4 h-4" />
-                </UButton>
-              </div>
-            </div>
-
-            <div v-if="props.selectable"
-              class="absolute top-2 right-2 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200 z-10"
-              :class="{
-                'bg-primary border-primary': isAssetSelected(asset),
-                'border-border bg-background': !isAssetSelected(asset)
-              }">
-              <Icon v-if="isAssetSelected(asset)" name="lucide:check" class="text-primary-foreground" size="14" />
-            </div>
-
-            <div v-if="isOptimizing && Math.random() > 0.7" class="absolute bottom-2 left-2">
-              <Icon name="lucide:sparkles" class="w-3 h-3 text-primary animate-spin" />
-            </div>
+    <div v-if="viewMode === 'masonry'" class="columns-1 gap-3 sm:columns-2 lg:columns-3 xl:columns-4">
+      <div v-for="asset in filteredAssets" :key="asset.id"
+        class="group relative mb-3 break-inside-avoid cursor-pointer overflow-hidden rounded-xl bg-elevated"
+        :class="{ 'ring-2 ring-primary': props.selectable && isAssetSelected(asset) }" @click="handleAssetClick(asset)">
+        <video v-if="getAssetType(asset.mimeType) === 'video'" :src="asset.url" class="h-auto w-full object-cover" muted
+          playsinline preload="metadata" />
+        <img v-else-if="getAssetType(asset.mimeType) === 'image'" :src="getAssetPreviewUrl(asset)"
+          :alt="getAssetDisplayName(asset)"
+          class="h-auto w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+          loading="lazy" />
+        <div v-else class="flex aspect-4/3 items-center justify-center p-6">
+          <div class="text-center">
+            <Icon name="lucide:file" class="mx-auto mb-2 size-8 text-muted" />
+            <p class="line-clamp-2 text-xs font-medium text-muted">{{ getAssetDisplayName(asset) }}</p>
           </div>
+        </div>
 
-          <div class="p-3">
-            <h3 class="font-medium text-sm truncate mb-1 text-foreground">
-              {{ getAssetDisplayName(asset) }}
-            </h3>
-            <div class="flex items-center justify-between text-xs text-muted-foreground mb-1">
-              <span class="flex items-center gap-1">
-                <Icon name="lucide:hard-drive" class="w-3 h-3" />
-                {{ formatFileSize(asset.size) }}
-              </span>
-              <span class="flex items-center gap-1">
-                <Icon name="lucide:calendar" class="w-3 h-3" />
-                {{ new Date(asset.createdAt).toLocaleDateString() }}
-              </span>
-            </div>
+        <span v-if="getAssetType(asset.mimeType) === 'video'"
+          class="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <span class="flex size-10 items-center justify-center rounded-full bg-black/50 backdrop-blur-sm">
+            <Icon name="lucide:play" class="size-4 translate-x-px text-white" />
+          </span>
+        </span>
 
-            <div v-if="parseAssetMetadata(asset).tags?.length" class="flex flex-wrap gap-1">
-              <UBadge v-for="(tag, tagIndex) in parseAssetMetadata(asset).tags?.slice(0, 2)" :key="tag"
-                variant="outline" size="xs">
-                {{ tag }}
-              </UBadge>
-              <UBadge v-if="parseAssetMetadata(asset).tags?.length > 2" variant="outline" size="xs">
-                +{{ parseAssetMetadata(asset).tags.length - 2 }}
-              </UBadge>
+        <div v-if="props.selectable"
+          class="absolute left-2 top-2 z-10 size-5 rounded-full border-2 transition-all duration-200"
+          :class="isAssetSelected(asset) ? 'border-primary bg-primary' : 'border-white/80 bg-black/30'">
+          <Icon v-if="isAssetSelected(asset)" name="lucide:check" class="text-white" size="12" />
+        </div>
+
+        <div
+          class="pointer-events-none absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/65 via-black/5 to-transparent opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100">
+          <div class="pointer-events-auto flex items-end justify-between gap-2 p-2">
+            <p class="min-w-0 truncate text-xs font-medium text-white">{{ getAssetDisplayName(asset) }}</p>
+            <div class="flex shrink-0 items-center gap-1">
+              <UButton size="xs" variant="solid" color="neutral" icon="lucide:eye" :aria-label="t('buttons.preview')"
+                @click.stop="handlePreview(asset)" />
+              <UButton size="xs" variant="solid" color="neutral" icon="lucide:download"
+                :aria-label="t('buttons.download')" @click.stop="handleOpenInNewTab(asset)" />
+              <UButton v-if="getAssetType(asset.mimeType) === 'image'" size="xs" variant="solid" color="neutral"
+                icon="lucide:edit" :aria-label="t('buttons.edit')" @click.stop="handleOpedEditModal(asset)" />
+              <UButton size="xs" variant="solid" color="error" icon="lucide:trash-2" :aria-label="t('buttons.delete')"
+                :disabled="isDeletingAssets" @click.stop="handleDeleteAsset(asset)" />
             </div>
           </div>
         </div>
@@ -517,7 +505,7 @@ const handleDeleteAsset = (asset: Asset) => {
       </div>
     </div>
 
-    <div v-else class="space-y-2">
+    <div v-else-if="viewMode === 'list'" class="space-y-2">
       <div v-for="asset in filteredAssets" :key="asset.id"
         class="flex items-center gap-4 p-3  rounded-lg hover:bg-accent cursor-pointer"
         :class="{ 'bg-primary/5 border-primary': props.selectable && isAssetSelected(asset) }"
@@ -551,6 +539,76 @@ const handleDeleteAsset = (asset: Asset) => {
       </div>
     </div>
 
+    <div v-else class="space-y-3">
+      <div class="relative overflow-hidden rounded-2xl border border-default bg-elevated/30">
+        <div class="flex min-h-[360px] items-center justify-center p-3 sm:p-6">
+          <video v-if="carouselAsset && getAssetType(carouselAsset.mimeType) === 'video'" :src="carouselAsset.url"
+            controls class="max-h-[68vh] w-full rounded-xl bg-black"></video>
+          <img v-else-if="carouselAsset" :src="getAssetPreviewUrl(carouselAsset)"
+            :alt="getAssetDisplayName(carouselAsset)"
+            class="max-h-[68vh] w-auto max-w-full cursor-zoom-in rounded-xl object-contain"
+            @click="handlePreview(carouselAsset)" />
+          <div v-else class="py-16 text-center">
+            <Icon name="lucide:image-off" class="mx-auto size-12 text-muted" />
+            <p class="mt-3 text-sm text-muted">{{ t('states.no_assets_title') }}</p>
+          </div>
+        </div>
+
+        <div v-if="props.selectable && carouselAsset" class="absolute left-3 top-3">
+          <UButton size="sm" :variant="isAssetSelected(carouselAsset) ? 'solid' : 'soft'"
+            :color="isAssetSelected(carouselAsset) ? 'primary' : 'neutral'" icon="lucide:check"
+            :label="isAssetSelected(carouselAsset) ? t('buttons.selected') : t('buttons.select')"
+            @click="() => toggleAssetSelection(carouselAsset!)" />
+        </div>
+
+        <template v-if="filteredAssets.length > 1">
+          <UButton class="absolute left-2 top-1/2 -translate-y-1/2 rounded-full shadow-lg sm:left-4" size="lg"
+            variant="solid" color="neutral" icon="i-lucide-chevron-left" :aria-label="t('buttons.previous')"
+            @click="handleCarouselPrev" />
+          <UButton class="absolute right-2 top-1/2 -translate-y-1/2 rounded-full shadow-lg sm:right-4" size="lg"
+            variant="solid" color="neutral" icon="i-lucide-chevron-right" :aria-label="t('buttons.next')"
+            @click="handleCarouselNext" />
+        </template>
+
+        <div v-if="carouselAsset"
+          class="pointer-events-none absolute inset-x-0 bottom-0 flex flex-wrap items-end justify-between gap-2 bg-gradient-to-t from-black/70 via-black/20 to-transparent p-3">
+          <div class="min-w-0 text-white">
+            <p class="truncate text-sm font-medium">{{ getAssetDisplayName(carouselAsset) }}</p>
+            <p class="text-xs text-white/70">
+              {{ formatFileSize(carouselAsset.size) }} · {{ getAssetType(carouselAsset.mimeType) }}
+            </p>
+          </div>
+          <div class="pointer-events-auto flex items-center gap-1">
+            <UBadge variant="solid" color="neutral" size="sm" class="tabular-nums">
+              {{ carouselIndex + 1 }} / {{ filteredAssets.length }}
+            </UBadge>
+            <UButton size="xs" variant="solid" color="neutral" icon="lucide:eye" :aria-label="t('buttons.preview')"
+              @click="() => handlePreview(carouselAsset!)" />
+            <UButton size="xs" variant="solid" color="neutral" icon="lucide:download"
+              :aria-label="t('buttons.download')" @click="() => handleOpenInNewTab(carouselAsset!)" />
+            <UButton v-if="getAssetType(carouselAsset.mimeType) === 'image'" size="xs" variant="solid" color="neutral"
+              icon="lucide:edit" :aria-label="t('buttons.edit')" @click="() => handleOpedEditModal(carouselAsset!)" />
+            <UButton size="xs" variant="solid" color="error" icon="lucide:trash-2" :aria-label="t('buttons.delete')"
+              :disabled="isDeletingAssets" @click="() => handleDeleteAsset(carouselAsset!)" />
+          </div>
+        </div>
+      </div>
+
+      <div v-if="filteredAssets.length > 1" class="flex gap-2 overflow-x-auto pb-1">
+        <button v-for="(asset, index) in filteredAssets" :key="asset.id" type="button"
+          class="relative size-16 shrink-0 overflow-hidden rounded-lg border-2 transition-opacity"
+          :class="index === carouselIndex ? 'border-primary' : 'border-transparent opacity-60 hover:opacity-100'"
+          @click="() => selectCarousel(index)">
+          <img v-if="getAssetType(asset.mimeType) === 'image'" :src="getAssetPreviewUrl(asset)"
+            :alt="getAssetDisplayName(asset)" class="size-full object-cover" loading="lazy" />
+          <span v-else class="flex size-full items-center justify-center bg-elevated">
+            <Icon :name="getAssetType(asset.mimeType) === 'video' ? 'lucide:video' : 'lucide:file'"
+              class="size-5 text-muted" />
+          </span>
+        </button>
+      </div>
+    </div>
+
     <div v-if="pagination.page < pagination.totalPages" ref="sentinelRef"
       class="flex items-center justify-center gap-2 py-6">
       <Icon v-if="isLoadingMore" name="lucide:loader-2" class="w-5 h-5 animate-spin text-muted-foreground" />
@@ -567,7 +625,8 @@ const handleDeleteAsset = (asset: Asset) => {
             <h3 class="text-lg font-semibold">{{ previewAsset ? getAssetDisplayName(previewAsset) : '' }}</h3>
           </div>
           <div class="flex items-center gap-2">
-            <UButton variant="outline" size="sm">
+            <UButton variant="outline" size="sm" :disabled="!previewAsset"
+              @click="previewAsset && handleOpenInNewTab(previewAsset)">
               <Icon name="lucide:download" class="w-4 h-4" />
               {{ t('buttons.download') }}
             </UButton>
@@ -585,19 +644,32 @@ const handleDeleteAsset = (asset: Asset) => {
       </template>
 
       <template #body>
-        <div class="flex-1 flex items-center justify-center p-4">
+        <div class="relative flex min-h-[45vh] flex-1 items-center justify-center p-2 sm:p-4">
           <img v-if="previewAsset && getAssetType(previewAsset.mimeType) === 'image'"
             :src="getAssetPreviewUrl(previewAsset)" :alt="getAssetDisplayName(previewAsset)"
-            class="max-w-full max-h-[70vh] object-contain rounded-lg" />
-          <div v-else-if="previewAsset && getAssetType(previewAsset.mimeType) === 'video'" class="w-full max-w-2xl">
-            <video :src="previewAsset.url" controls class="w-full aspect-video rounded-lg"></video>
+            class="max-h-[78vh] max-w-full rounded-lg object-contain" />
+          <div v-else-if="previewAsset && getAssetType(previewAsset.mimeType) === 'video'" class="w-full max-w-4xl">
+            <video :src="previewAsset.url" controls class="max-h-[78vh] w-full rounded-lg bg-black"></video>
           </div>
-          <div v-else-if="previewAsset" class="w-64 h-64 bg-muted rounded-lg flex items-center justify-center">
+          <div v-else-if="previewAsset" class="flex size-64 items-center justify-center rounded-lg bg-elevated">
             <div class="text-center">
-              <Icon name="lucide:file" class="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-              <p class="text-muted-foreground">{{ getAssetDisplayName(previewAsset) }}</p>
+              <Icon name="lucide:file" class="mx-auto mb-4 size-16 text-muted" />
+              <p class="text-muted">{{ getAssetDisplayName(previewAsset) }}</p>
             </div>
           </div>
+
+          <template v-if="hasPreviewNavigation">
+            <UButton class="absolute left-1 top-1/2 -translate-y-1/2 rounded-full shadow-lg sm:left-3" size="lg"
+              variant="solid" color="neutral" icon="i-lucide-chevron-left" :aria-label="t('preview_modal.previous')"
+              @click="handlePreviewPrev" />
+            <UButton class="absolute right-1 top-1/2 -translate-y-1/2 rounded-full shadow-lg sm:right-3" size="lg"
+              variant="solid" color="neutral" icon="i-lucide-chevron-right" :aria-label="t('preview_modal.next')"
+              @click="handlePreviewNext" />
+            <UBadge class="absolute bottom-3 left-1/2 -translate-x-1/2 tabular-nums" variant="solid" color="neutral"
+              size="sm">
+              {{ previewIndex + 1 }} / {{ filteredAssets.length }}
+            </UBadge>
+          </template>
         </div>
 
         <div v-if="previewAsset" class="px-6 py-4 space-y-3 ">

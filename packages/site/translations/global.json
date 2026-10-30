@@ -61,28 +61,69 @@
       "time": "Please enter a valid time"
     },
     "navigation": {
-      "devDocs": "Dev docs",
       "blogs": "Blogs",
       "platform": "Platform",
       "googleMyBusiness": "Google My Business",
-      "googleMyBusinessDesc": "Grow your Google My Business audience with use of AI",
       "facebook": "Facebook",
-      "facebookDesc": "Grow your Facebook audience with use of AI",
       "twitter": "Twitter",
-      "twitterDesc": "Grow your Twitter audience with use of AI",
       "instagram": "Instagram",
-      "instagramDesc": "Grow your Instagram audience with use of AI",
       "linkedin": "Linkedin",
-      "linkedinDesc": "Grow your Linkedin audience with use of AI",
       "pinterest": "Pinterest",
-      "pinterestDesc": "Grow your Pinterest audience with use of AI",
       "tools": "Tools",
       "playground": "Playground",
-      "aiTools": "AI Tools",
-      "assistant": "Chat",
       "home": "Home",
       "login": "Login",
-      "openOnGitHub": "Open on GitHub"
+      "openOnGitHub": "Open on GitHub",
+      "useAi": "Use AI",
+      "agentDesc": {
+        "chatgpt": "Schedule and publish social posts from ChatGPT",
+        "claude": "Run your social calendar from Claude",
+        "claudeCode": "Publish from Claude Code in your terminal",
+        "codex": "Automate social workflows from Codex",
+        "cursor": "Announce releases from Cursor",
+        "openclaw": "Post from OpenClaw",
+        "hermes": "Publishing loop for Hermes Agent",
+        "grokBot": "Post from Grok Bot",
+        "grokBuild": "Ship social posts from Grok Build",
+        "muse": "A week of posts in one message",
+        "perplexity": "Research and publish with Perplexity",
+        "nanoclaw": "Post from WhatsApp or Telegram",
+        "paperclip": "Social publishing for agent teams",
+        "mcp": "One MCP endpoint for any AI client",
+        "cli": "Headless social automation for agents"
+      },
+      "platformDesc": {
+        "facebook": "Grow your Facebook audience with AI",
+        "instagram": "Grow your Instagram audience with AI",
+        "twitter": "Schedule threads and grow on X",
+        "linkedin": "Build authority on LinkedIn",
+        "tiktok": "Schedule TikToks and track short-video growth",
+        "youtube": "Schedule Shorts and videos, track views",
+        "threads": "Schedule Threads posts and grow your audience",
+        "bluesky": "Schedule Bluesky posts and threads",
+        "pinterest": "Schedule Pins and drive traffic",
+        "reddit": "Schedule Reddit posts to the right communities",
+        "discord": "Announce to your Discord community on time",
+        "dribbble": "Schedule shots and grow your reach",
+        "devto": "Publish DEV articles and track reactions",
+        "wordpress": "Publish WordPress articles from MagicSync",
+        "mastodon": "Schedule Mastodon posts across instances",
+        "snapchat": "Plan Snapchat content and stories",
+        "google": "Manage Google Business posts and reviews"
+      },
+      "toolDesc": {
+        "chat": "Chat with your content and calendar",
+        "knowledge": "Ground the assistant in your documents",
+        "skills": "Reusable AI workflows for your team",
+        "agents": "Build and run specialist AI agents",
+        "aiTools": "Test AI generation and models",
+        "growth": "Plan content around growth goals",
+        "imageEditor": "Edit and export social images free",
+        "flutterClipper": "Generate Flutter clip paths",
+        "videoSilence": "Remove silence from videos online",
+        "textBehindImage": "Create text-behind-image edits free",
+        "playground": "Experiment with UI and components"
+      }
     },
     "footer": {
       "description": "We're on a mission to transform the way teams collaborate and build products together. Join us in shaping the future of work.",
@@ -112,10 +153,86 @@
       "partners": "Partners",
       "contact": "Contact",
       "legal": "Legal",
-      "copyrightText": "&copy; {year} MagicSync, Inc. All rights reserved.",
+      "copyrightText": "{year} MagicSync, Inc. All rights reserved.",
       "privacyPolicy": "Privacy Policy",
       "termsOfService": "Terms of Service",
-      "cookiePolicy": "Cookie Policy"
+      "cookiePolicy": "Cookie Policy",
+      "socialPlatformsTitle": "Social media platforms",
+      "aiAgentsTitle": "Supported AI agents",
+      "platformItems": {
+        "facebook": {
+          "label": "Facebook",
+          "description": "Schedule posts, Reels and Stories, and manage pages and groups."
+        },
+        "instagram": {
+          "label": "Instagram",
+          "description": "Plan the grid, queue Reels and Stories, and publish automatically."
+        },
+        "twitter": {
+          "label": "X (Twitter)",
+          "description": "Schedule threads, repost your best posts and track impressions."
+        },
+        "linkedin": {
+          "label": "LinkedIn",
+          "description": "Publish personal and company posts, PDF carousels and reports."
+        },
+        "pinterest": {
+          "label": "Pinterest",
+          "description": "Pin to multiple boards and drive steady traffic to your site."
+        },
+        "googleBusiness": {
+          "label": "Google Business Profile",
+          "description": "Share local updates, offers and events across locations."
+        },
+        "tiktok": {
+          "label": "TikTok",
+          "description": "Queue short-form video and keep a consistent posting rhythm."
+        },
+        "youtube": {
+          "label": "YouTube",
+          "description": "Schedule video uploads with titles, tags and partial retry."
+        },
+        "bluesky": {
+          "label": "Bluesky",
+          "description": "Schedule posts and grow your audience with follow-back scoring."
+        },
+        "threads": {
+          "label": "Threads",
+          "description": "Publish text and media posts next to your Instagram workflow."
+        },
+        "reddit": {
+          "label": "Reddit",
+          "description": "Schedule community posts and monitor the conversations that matter."
+        },
+        "discord": {
+          "label": "Discord",
+          "description": "Announce launches and updates to your community servers."
+        },
+        "mastodon": {
+          "label": "Mastodon",
+          "description": "Publish to the fediverse and reach independent communities."
+        },
+        "dribbble": {
+          "label": "Dribbble",
+          "description": "Share shots and project updates with design clients."
+        },
+        "devto": {
+          "label": "Dev.to",
+          "description": "Cross-post technical articles to reach developer audiences."
+        },
+        "wordpress": {
+          "label": "WordPress",
+          "description": "Publish articles to your blog and keep social posts in sync."
+        },
+        "snapchat": {
+          "label": "Snapchat",
+          "description": "Schedule Stories and reach a younger mobile audience."
+        },
+        "devnull": {
+          "label": "dev-null.sh",
+          "description": "Publish developer posts to the dev-null.sh community."
+        }
+      }
     },
     "features": {
       "multiPlatform": {
@@ -164,6 +281,66 @@
         "stats": "Overrides"
       },
       "exploreAll": "Explore all features"
+    },
+    "faq": {
+      "title": "FAQs",
+      "subtitle": "Common questions",
+      "stillHaveQuestions": "Still have questions?",
+      "contactUs": "Contact us"
+    },
+    "agentConnect": {
+      "eyebrow": "MCP connector",
+      "title": "Connect {agent} in 60 seconds",
+      "steps": {
+        "1": {
+          "title": "Copy the endpoint",
+          "description": "The MagicSync MCP server lives at {endpoint} and works in every MCP client."
+        },
+        "2": {
+          "title": "Add it to {agent}",
+          "description": "Paste the endpoint as a custom MCP connector (or register it with your CLI) and sign in with your MagicSync account. OAuth clients need no API key."
+        },
+        "3": {
+          "title": "Approve access",
+          "description": "Choose read-only or full access. Write actions such as publishing stay gated until you confirm them."
+        },
+        "4": {
+          "title": "Ask for a post",
+          "description": "Name the platforms, the time and the tone. {agent} calls the MagicSync tools and the post publishes on time."
+        }
+      },
+      "endpointLabel": "MCP endpoint",
+      "copy": "Copy endpoint",
+      "copied": "Copied",
+      "copySuccess": "Endpoint copied to your clipboard",
+      "copyFailed": "Could not copy the endpoint — select it and copy manually"
+    },
+    "agentPrompt": {
+      "title": "Prompts to try",
+      "description": "This is what a request looks like when your agent calls MagicSync tools.",
+      "windowLabel": "MagicSync MCP",
+      "prompt1": "Schedule a launch post for X and LinkedIn tomorrow at 9am. Keep it short and upbeat.",
+      "prompt2": "Plan a week of posts about our new feature and use the best times for each channel.",
+      "prompt3": "Draft a WordPress article from this brief, schedule it for Monday, and give me the link.",
+      "events": {
+        "research": "Researching",
+        "researchDetail": "Reviewed your last 12 posts",
+        "create": "Creating post",
+        "createDetail": "Draft for X and LinkedIn",
+        "attach": "Adding attachment",
+        "attachDetail": "launch-hero.png",
+        "schedule": "Scheduled to Facebook",
+        "scheduleDetail": "Tomorrow · 9:00 AM"
+      },
+      "answer": "Done. The launch post is scheduled for tomorrow at 9:00 and the WordPress article is queued for Monday. I’ll tell you when both are live.",
+      "replay": "Replay"
+    },
+    "agentOther": {
+      "title": "Other agents that post through MagicSync",
+      "description": "Any MCP client can use the same endpoint. Pick another agent and it inherits the accounts you already connected — no second setup.",
+      "guide": "View guide",
+      "platformsTitle": "Publish to the same channels",
+      "platformsDescription": "Every agent publishes to the accounts connected in MagicSync, with each channel’s limits and previews."
     }
   },
   "es": {
@@ -228,28 +405,69 @@
       "time": "Por favor, ingresa una hora válida"
     },
     "navigation": {
-      "devDocs": "Documentación",
       "blogs": "Blogs",
       "platform": "Plataforma",
       "googleMyBusiness": "Google My Business",
-      "googleMyBusinessDesc": "Haz crecer tu audiencia de Google My Business con el uso de IA",
       "facebook": "Facebook",
-      "facebookDesc": "Haz crecer tu audiencia de Facebook con el uso de IA",
       "twitter": "Twitter",
-      "twitterDesc": "Haz crecer tu audiencia de Twitter con el uso de IA",
       "instagram": "Instagram",
-      "instagramDesc": "Haz crecer tu audiencia de Instagram con el uso de IA",
       "linkedin": "Linkedin",
-      "linkedinDesc": "Haz crecer tu audiencia de Linkedin con el uso de IA",
       "pinterest": "Pinterest",
-      "pinterestDesc": "Haz crecer tu audiencia de Pinterest con el uso de IA",
       "tools": "Herramientas",
       "playground": "Playground",
-      "aiTools": "IA",
-      "assistant": "Chat",
       "home": "Inicio",
       "login": "Iniciar sesión",
-      "openOnGitHub": "Abrir en GitHub"
+      "openOnGitHub": "Abrir en GitHub",
+      "useAi": "Usar IA",
+      "agentDesc": {
+        "chatgpt": "Programa y publica desde ChatGPT",
+        "claude": "Gestiona tu calendario desde Claude",
+        "claudeCode": "Publica desde Claude Code en tu terminal",
+        "codex": "Automatiza flujos sociales desde Codex",
+        "cursor": "Anuncia releases desde Cursor",
+        "openclaw": "Publica desde OpenClaw",
+        "hermes": "Flujo de publicación para Hermes Agent",
+        "grokBot": "Publica desde Grok Bot",
+        "grokBuild": "Publica desde Grok Build",
+        "muse": "Una semana de posts en un mensaje",
+        "perplexity": "Investiga y publica con Perplexity",
+        "nanoclaw": "Publica desde WhatsApp o Telegram",
+        "paperclip": "Publicación social para equipos de agentes",
+        "mcp": "Un endpoint MCP para cualquier IA",
+        "cli": "Automatización social headless para agentes"
+      },
+      "platformDesc": {
+        "facebook": "Crece en Facebook con IA",
+        "instagram": "Crece en Instagram con IA",
+        "twitter": "Programa hilos y crece en X",
+        "linkedin": "Construye autoridad en LinkedIn",
+        "tiktok": "Programa TikToks y mide su crecimiento",
+        "youtube": "Programa Shorts y vídeos, mide vistas",
+        "threads": "Programa en Threads y crece",
+        "bluesky": "Programa posts e hilos en Bluesky",
+        "pinterest": "Programa Pins y atrae tráfico",
+        "reddit": "Publica en las comunidades correctas",
+        "discord": "Anuncia en tu comunidad a tiempo",
+        "dribbble": "Programa shots y gana alcance",
+        "devto": "Publica artículos en DEV y mide reacciones",
+        "wordpress": "Publica artículos de WordPress desde MagicSync",
+        "mastodon": "Programa en Mastodon entre instancias",
+        "snapchat": "Planifica contenido e historias de Snapchat",
+        "google": "Gestiona publicaciones y reseñas de Google"
+      },
+      "toolDesc": {
+        "chat": "Chatea con tu contenido y calendario",
+        "knowledge": "Fundamenta el asistente en tus documentos",
+        "skills": "Flujos de IA reutilizables",
+        "agents": "Crea y ejecuta agentes especialistas",
+        "aiTools": "Prueba generación y modelos de IA",
+        "growth": "Planifica contenido según tus objetivos",
+        "imageEditor": "Edita y exporta imágenes gratis",
+        "flutterClipper": "Genera rutas de recorte Flutter",
+        "videoSilence": "Elimina silencios de vídeos",
+        "textBehindImage": "Texto detrás de la imagen gratis",
+        "playground": "Experimenta con UI y componentes"
+      }
     },
     "footer": {
       "description": "Estamos en una misión para transformar la forma en que los equipos colaboran y construyen productos juntos. Únete a nosotros para dar forma al futuro del trabajo.",
@@ -279,10 +497,86 @@
       "partners": "Socios",
       "contact": "Contacto",
       "legal": "Legal",
-      "copyrightText": "&copy; {year} MagicSync, Inc. Todos los derechos reservados.",
+      "copyrightText": "{year} MagicSync, Inc. Todos los derechos reservados.",
       "privacyPolicy": "Política de privacidad",
       "termsOfService": "Términos del servicio",
-      "cookiePolicy": "Política de cookies"
+      "cookiePolicy": "Política de cookies",
+      "socialPlatformsTitle": "Redes sociales compatibles",
+      "aiAgentsTitle": "Agentes de IA compatibles",
+      "platformItems": {
+        "facebook": {
+          "label": "Facebook",
+          "description": "Programa publicaciones, Reels y Stories, y gestiona páginas y grupos."
+        },
+        "instagram": {
+          "label": "Instagram",
+          "description": "Planifica la cuadrícula, encola Reels y Stories y publica solo."
+        },
+        "twitter": {
+          "label": "X (Twitter)",
+          "description": "Programa hilos, republica tus mejores posts y mide impresiones."
+        },
+        "linkedin": {
+          "label": "LinkedIn",
+          "description": "Publica en perfiles y empresas, carruseles PDF e informes."
+        },
+        "pinterest": {
+          "label": "Pinterest",
+          "description": "Publica en varios tableros y lleva tráfico constante a tu web."
+        },
+        "googleBusiness": {
+          "label": "Google Business Profile",
+          "description": "Comparte novedades, ofertas y eventos locales por ubicación."
+        },
+        "tiktok": {
+          "label": "TikTok",
+          "description": "Encola vídeo corto y mantén un ritmo de publicación constante."
+        },
+        "youtube": {
+          "label": "YouTube",
+          "description": "Programa subidas con título, etiquetas y reintento parcial."
+        },
+        "bluesky": {
+          "label": "Bluesky",
+          "description": "Programa posts y haz crecer tu audiencia con puntuación de seguimiento."
+        },
+        "threads": {
+          "label": "Threads",
+          "description": "Publica texto y medios junto a tu flujo de Instagram."
+        },
+        "reddit": {
+          "label": "Reddit",
+          "description": "Programa publicaciones y sigue las conversaciones que importan."
+        },
+        "discord": {
+          "label": "Discord",
+          "description": "Anuncia lanzamientos y novedades en tus servidores."
+        },
+        "mastodon": {
+          "label": "Mastodon",
+          "description": "Publica en el fediverso y llega a comunidades independientes."
+        },
+        "dribbble": {
+          "label": "Dribbble",
+          "description": "Comparte shots y avances de proyectos con clientes de diseño."
+        },
+        "devto": {
+          "label": "Dev.to",
+          "description": "Publica artículos técnicos y llega a audiencias developer."
+        },
+        "wordpress": {
+          "label": "WordPress",
+          "description": "Publica artículos en tu blog y sincroniza las redes."
+        },
+        "snapchat": {
+          "label": "Snapchat",
+          "description": "Programa Stories y llega a un público móvil más joven."
+        },
+        "devnull": {
+          "label": "dev-null.sh",
+          "description": "Publica contenido para desarrolladores en dev-null.sh."
+        }
+      }
     },
     "features": {
       "multiPlatform": {
@@ -331,6 +625,66 @@
         "stats": "Anulaciones"
       },
       "exploreAll": "Explora todas las características"
+    },
+    "faq": {
+      "title": "Preguntas frecuentes",
+      "subtitle": "Preguntas comunes",
+      "stillHaveQuestions": "¿Aún tienes preguntas?",
+      "contactUs": "Contáctanos"
+    },
+    "agentConnect": {
+      "eyebrow": "Conector MCP",
+      "title": "Conecta {agent} en 60 segundos",
+      "steps": {
+        "1": {
+          "title": "Copia el endpoint",
+          "description": "El servidor MCP de MagicSync está en {endpoint} y funciona en cualquier cliente MCP."
+        },
+        "2": {
+          "title": "Añádelo a {agent}",
+          "description": "Pega el endpoint como conector MCP personalizado (o regístralo con tu CLI) e inicia sesión con tu cuenta de MagicSync. Con OAuth no hay API key que copiar."
+        },
+        "3": {
+          "title": "Aprueba el acceso",
+          "description": "Elige solo lectura o acceso total. Las escrituras, como publicar, quedan bloqueadas hasta que las confirmes."
+        },
+        "4": {
+          "title": "Pide una publicación",
+          "description": "Indica plataformas, hora y tono. {agent} llama a las herramientas de MagicSync y el post se publica a tiempo."
+        }
+      },
+      "endpointLabel": "Endpoint MCP",
+      "copy": "Copiar endpoint",
+      "copied": "Copiado",
+      "copySuccess": "Endpoint copiado al portapapeles",
+      "copyFailed": "No se pudo copiar el endpoint: selecciónalo y cópialo a mano"
+    },
+    "agentPrompt": {
+      "title": "Prompts para probar",
+      "description": "Así se ve una petición cuando tu agente llama a las herramientas de MagicSync.",
+      "windowLabel": "MagicSync MCP",
+      "prompt1": "Programa un post de lanzamiento para X y LinkedIn mañana a las 9. Breve y con energía.",
+      "prompt2": "Planifica una semana de publicaciones sobre nuestra nueva función y usa las mejores horas por canal.",
+      "prompt3": "Redacta un artículo de WordPress con este brief, prográmalo para el lunes y dame el enlace.",
+      "events": {
+        "research": "Investigando",
+        "researchDetail": "Revisadas tus últimas 12 publicaciones",
+        "create": "Creando publicación",
+        "createDetail": "Borrador para X y LinkedIn",
+        "attach": "Añadiendo adjunto",
+        "attachDetail": "launch-hero.png",
+        "schedule": "Programado en Facebook",
+        "scheduleDetail": "Mañana · 9:00"
+      },
+      "answer": "Listo. El post de lanzamiento está programado para mañana a las 9:00 y el artículo de WordPress queda para el lunes. Te aviso cuando ambos estén publicados.",
+      "replay": "Repetir"
+    },
+    "agentOther": {
+      "title": "Otros agentes que publican con MagicSync",
+      "description": "Cualquier cliente MCP puede usar el mismo endpoint. Elige otro agente y hereda las cuentas que ya conectaste, sin configurar nada de nuevo.",
+      "guide": "Ver guía",
+      "platformsTitle": "Publica en los mismos canales",
+      "platformsDescription": "Cada agente publica en las cuentas conectadas en MagicSync, con los límites y las vistas previas de cada canal."
     }
   },
   "de": {
@@ -395,28 +749,69 @@
       "time": "Bitte geben Sie eine gültige Zeit ein"
     },
     "navigation": {
-      "devDocs": "Entwicklerdokumentation",
       "blogs": "Blogs",
       "platform": "Plattform",
       "googleMyBusiness": "Google My Business",
-      "googleMyBusinessDesc": "Erweitern Sie Ihre Google My Business-Zielgruppe mit Hilfe von KI",
       "facebook": "Facebook",
-      "facebookDesc": "Erweitern Sie Ihre Facebook-Zielgruppe mit Hilfe von KI",
       "twitter": "Twitter",
-      "twitterDesc": "Erweitern Sie Ihre Twitter-Zielgruppe mit Hilfe von KI",
       "instagram": "Instagram",
-      "instagramDesc": "Erweitern Sie Ihre Instagram-Zielgruppe mit Hilfe von KI",
       "linkedin": "Linkedin",
-      "linkedinDesc": "Erweitern Sie Ihre Linkedin-Zielgruppe mit Hilfe von KI",
       "pinterest": "Pinterest",
-      "pinterestDesc": "Erweitern Sie Ihre Pinterest-Zielgruppe mit Hilfe von KI",
       "tools": "Tools",
       "playground": "Spielplatz",
-      "aiTools": "KI",
-      "assistant": "Chat",
       "home": "Startseite",
       "login": "Anmelden",
-      "openOnGitHub": "Auf GitHub öffnen"
+      "openOnGitHub": "Auf GitHub öffnen",
+      "useAi": "KI nutzen",
+      "agentDesc": {
+        "chatgpt": "Beiträge aus ChatGPT planen und veröffentlichen",
+        "claude": "Social-Kalender aus Claude steuern",
+        "claudeCode": "Aus Claude Code im Terminal veröffentlichen",
+        "codex": "Social-Workflows aus Codex automatisieren",
+        "cursor": "Releases aus Cursor ankündigen",
+        "openclaw": "Aus OpenClaw veröffentlichen",
+        "hermes": "Publishing-Loop für Hermes Agent",
+        "grokBot": "Aus Grok Bot veröffentlichen",
+        "grokBuild": "Social-Posts aus Grok Build",
+        "muse": "Eine Woche Beiträge in einer Nachricht",
+        "perplexity": "Mit Perplexity recherchieren und veröffentlichen",
+        "nanoclaw": "Aus WhatsApp oder Telegram veröffentlichen",
+        "paperclip": "Social Publishing für Agenten-Teams",
+        "mcp": "Ein MCP-Endpunkt für jeden KI-Client",
+        "cli": "Headless Social-Automation für Agenten"
+      },
+      "platformDesc": {
+        "facebook": "Facebook-Reichweite mit KI ausbauen",
+        "instagram": "Instagram-Reichweite mit KI ausbauen",
+        "twitter": "Threads planen und auf X wachsen",
+        "linkedin": "Autorität auf LinkedIn aufbauen",
+        "tiktok": "TikToks planen und Wachstum messen",
+        "youtube": "Shorts und Videos planen, Aufrufe messen",
+        "threads": "Threads planen und Reichweite aufbauen",
+        "bluesky": "Bluesky-Posts und -Threads planen",
+        "pinterest": "Pins planen und Traffic aufbauen",
+        "reddit": "In den richtigen Communities posten",
+        "discord": "Rechtzeitig in der Community ankündigen",
+        "dribbble": "Shots planen und Reichweite gewinnen",
+        "devto": "DEV-Artikel veröffentlichen und Reaktionen messen",
+        "wordpress": "WordPress-Artikel aus MagicSync veröffentlichen",
+        "mastodon": "Mastodon-Posts über Instanzen planen",
+        "snapchat": "Snapchat-Content und Stories planen",
+        "google": "Google-Unternehmensposts und Rezensionen verwalten"
+      },
+      "toolDesc": {
+        "chat": "Mit Inhalten und Kalender chatten",
+        "knowledge": "Assistent mit deinen Dokumenten fundieren",
+        "skills": "Wiederverwendbare KI-Workflows",
+        "agents": "Spezialisierte KI-Agenten erstellen",
+        "aiTools": "KI-Generierung und Modelle testen",
+        "growth": "Content an Wachstumszielen planen",
+        "imageEditor": "Social-Bilder kostenlos bearbeiten",
+        "flutterClipper": "Flutter-Clip-Pfade erzeugen",
+        "videoSilence": "Stille aus Videos entfernen",
+        "textBehindImage": "Text hinter Bildern kostenlos",
+        "playground": "Mit UI und Komponenten experimentieren"
+      }
     },
     "footer": {
       "description": "Wir sind auf einer Mission, die Art und Weise zu transformieren, wie Teams zusammenarbeiten und Produkte bauen. Schließen Sie sich uns an, um die Zukunft der Arbeit zu gestalten.",
@@ -446,10 +841,86 @@
       "partners": "Partner",
       "contact": "Kontakt",
       "legal": "Legal",
-      "copyrightText": "&copy; {year} MagicSync, Inc. Alle Rechte vorbehalten.",
+      "copyrightText": "{year} MagicSync, Inc. Alle Rechte vorbehalten.",
       "privacyPolicy": "Datenschutzrichtlinie",
       "termsOfService": "Nutzungsbedingungen",
-      "cookiePolicy": "Cookie-Richtlinie"
+      "cookiePolicy": "Cookie-Richtlinie",
+      "socialPlatformsTitle": "Social-Media-Plattformen",
+      "aiAgentsTitle": "Unterstützte KI-Agenten",
+      "platformItems": {
+        "facebook": {
+          "label": "Facebook",
+          "description": "Beiträge, Reels und Stories planen und Seiten sowie Gruppen verwalten."
+        },
+        "instagram": {
+          "label": "Instagram",
+          "description": "Raster planen, Reels und Stories einreihen und automatisch posten."
+        },
+        "twitter": {
+          "label": "X (Twitter)",
+          "description": "Threads planen, beste Beiträge erneut teilen und Impressionen messen."
+        },
+        "linkedin": {
+          "label": "LinkedIn",
+          "description": "Profil- und Unternehmensbeiträge, PDF-Karussells und Reports."
+        },
+        "pinterest": {
+          "label": "Pinterest",
+          "description": "Auf mehreren Boards pinnen und konstant Traffic aufbauen."
+        },
+        "googleBusiness": {
+          "label": "Google Unternehmensprofil",
+          "description": "Lokale Updates, Angebote und Events pro Standort teilen."
+        },
+        "tiktok": {
+          "label": "TikTok",
+          "description": "Kurzvideos einreihen und einen konstanten Postingrhythmus halten."
+        },
+        "youtube": {
+          "label": "YouTube",
+          "description": "Uploads mit Titel, Tags und teilweisem Wiederholen planen."
+        },
+        "bluesky": {
+          "label": "Bluesky",
+          "description": "Beiträge planen und die Community mit Follow-Back-Scoring ausbauen."
+        },
+        "threads": {
+          "label": "Threads",
+          "description": "Text- und Medienbeiträge neben dem Instagram-Workflow posten."
+        },
+        "reddit": {
+          "label": "Reddit",
+          "description": "Community-Beiträge planen und relevante Gespräche verfolgen."
+        },
+        "discord": {
+          "label": "Discord",
+          "description": "Launches und Updates in deinen Community-Servern ankündigen."
+        },
+        "mastodon": {
+          "label": "Mastodon",
+          "description": "Im Fediverse veröffentlichen und unabhängige Communities erreichen."
+        },
+        "dribbble": {
+          "label": "Dribbble",
+          "description": "Shots und Projektupdates mit Designkunden teilen."
+        },
+        "devto": {
+          "label": "Dev.to",
+          "description": "Technische Artikel crossposten und Developer erreichen."
+        },
+        "wordpress": {
+          "label": "WordPress",
+          "description": "Artikel im Blog veröffentlichen und Social Posts synchron halten."
+        },
+        "snapchat": {
+          "label": "Snapchat",
+          "description": "Stories planen und ein jüngeres mobiles Publikum erreichen."
+        },
+        "devnull": {
+          "label": "dev-null.sh",
+          "description": "Entwicklerbeiträge in der dev-null.sh-Community veröffentlichen."
+        }
+      }
     },
     "features": {
       "multiPlatform": {
@@ -498,6 +969,66 @@
         "stats": "Overrides"
       },
       "exploreAll": "Alle Funktionen erkunden"
+    },
+    "faq": {
+      "title": "FAQ",
+      "subtitle": "Häufige Fragen",
+      "stillHaveQuestions": "Noch Fragen?",
+      "contactUs": "Kontakt aufnehmen"
+    },
+    "agentConnect": {
+      "eyebrow": "MCP-Connector",
+      "title": "{agent} in 60 Sekunden verbinden",
+      "steps": {
+        "1": {
+          "title": "Endpunkt kopieren",
+          "description": "Der MagicSync-MCP-Server läuft unter {endpoint} und funktioniert in jedem MCP-Client."
+        },
+        "2": {
+          "title": "Zu {agent} hinzufügen",
+          "description": "Endpunkt als eigenen MCP-Connector einfügen (oder in der CLI registrieren) und mit MagicSync anmelden. Bei OAuth ist kein API-Key nötig."
+        },
+        "3": {
+          "title": "Zugriff freigeben",
+          "description": "Lese- oder Vollzugriff wählen. Schreibvorgänge wie Veröffentlichen bleiben gesperrt, bis du sie bestätigst."
+        },
+        "4": {
+          "title": "Beitrag anfordern",
+          "description": "Plattformen, Zeit und Ton nennen. {agent} ruft die MagicSync-Tools auf und der Beitrag erscheint pünktlich."
+        }
+      },
+      "endpointLabel": "MCP-Endpunkt",
+      "copy": "Endpunkt kopieren",
+      "copied": "Kopiert",
+      "copySuccess": "Endpunkt in die Zwischenablage kopiert",
+      "copyFailed": "Endpunkt konnte nicht kopiert werden — markiere ihn und kopiere manuell"
+    },
+    "agentPrompt": {
+      "title": "Prompts zum Ausprobieren",
+      "description": "So sieht eine Anfrage aus, wenn dein Agent die MagicSync-Tools aufruft.",
+      "windowLabel": "MagicSync MCP",
+      "prompt1": "Plane morgen um 9 Uhr einen Launch-Beitrag für X und LinkedIn. Kurz und positiv.",
+      "prompt2": "Plane eine Woche Beiträge zum neuen Feature und nutze die besten Zeiten je Kanal.",
+      "prompt3": "Schreibe einen WordPress-Artikel aus diesem Briefing, plane ihn für Montag und gib mir den Link.",
+      "events": {
+        "research": "Recherche",
+        "researchDetail": "Letzte 12 Beiträge geprüft",
+        "create": "Beitrag wird erstellt",
+        "createDetail": "Entwurf für X und LinkedIn",
+        "attach": "Anhang wird hinzugefügt",
+        "attachDetail": "launch-hero.png",
+        "schedule": "Auf Facebook geplant",
+        "scheduleDetail": "Morgen · 9:00"
+      },
+      "answer": "Fertig. Der Launch-Beitrag ist für morgen um 9:00 geplant, der WordPress-Artikel für Montag. Ich melde mich, wenn beide live sind.",
+      "replay": "Erneut abspielen"
+    },
+    "agentOther": {
+      "title": "Weitere Agenten, die über MagicSync posten",
+      "description": "Jeder MCP-Client kann denselben Endpunkt nutzen. Wähle einen anderen Agenten und er übernimmt die bereits verbundenen Konten — ohne zweites Setup.",
+      "guide": "Anleitung ansehen",
+      "platformsTitle": "Auf denselben Kanälen veröffentlichen",
+      "platformsDescription": "Jeder Agent veröffentlicht auf den in MagicSync verbundenen Konten, mit den Limits und Vorschauen des jeweiligen Kanals."
     }
   },
   "fr": {
@@ -562,28 +1093,69 @@
       "time": "Veuillez saisir une heure valide"
     },
     "navigation": {
-      "devDocs": "Docs",
       "blogs": "Blogs",
       "platform": "Plateforme",
       "googleMyBusiness": "Google My Business",
-      "googleMyBusinessDesc": "Développez votre audience Google My Business avec l'utilisation de l'IA",
       "facebook": "Facebook",
-      "facebookDesc": "Développez votre audience Facebook avec l'utilisation de l'IA",
       "twitter": "Twitter",
-      "twitterDesc": "Développez votre audience Twitter avec l'utilisation de l'IA",
       "instagram": "Instagram",
-      "instagramDesc": "Développez votre audience Instagram avec l'utilisation de l'IA",
       "linkedin": "Linkedin",
-      "linkedinDesc": "Développez votre audience Linkedin avec l'utilisation de l'IA",
       "pinterest": "Pinterest",
-      "pinterestDesc": "Développez votre audience Pinterest avec l'utilisation de l'IA",
       "tools": "Outils",
       "playground": "Terrain de jeu",
-      "aiTools": "Outils IA",
-      "assistant": "Discussion",
       "home": "Accueil",
       "login": "Connexion",
-      "openOnGitHub": "Ouvrir sur GitHub"
+      "openOnGitHub": "Ouvrir sur GitHub",
+      "useAi": "Utiliser l’IA",
+      "agentDesc": {
+        "chatgpt": "Planifiez et publiez depuis ChatGPT",
+        "claude": "Pilotez votre calendrier depuis Claude",
+        "claudeCode": "Publiez depuis Claude Code dans le terminal",
+        "codex": "Automatisez vos workflows depuis Codex",
+        "cursor": "Annoncez vos releases depuis Cursor",
+        "openclaw": "Publiez depuis OpenClaw",
+        "hermes": "Boucle de publication pour Hermes Agent",
+        "grokBot": "Publiez depuis Grok Bot",
+        "grokBuild": "Publiez depuis Grok Build",
+        "muse": "Une semaine de posts en un message",
+        "perplexity": "Recherchez et publiez avec Perplexity",
+        "nanoclaw": "Publiez depuis WhatsApp ou Telegram",
+        "paperclip": "Publication sociale pour équipes d’agents",
+        "mcp": "Un endpoint MCP pour toute IA",
+        "cli": "Automatisation sociale headless pour agents"
+      },
+      "platformDesc": {
+        "facebook": "Développez Facebook avec l’IA",
+        "instagram": "Développez Instagram avec l’IA",
+        "twitter": "Planifiez des fils et grandissez sur X",
+        "linkedin": "Construisez votre autorité sur LinkedIn",
+        "tiktok": "Planifiez vos TikToks et suivez la croissance",
+        "youtube": "Planifiez Shorts et vidéos, suivez les vues",
+        "threads": "Planifiez sur Threads et gagnez en audience",
+        "bluesky": "Planifiez posts et fils Bluesky",
+        "pinterest": "Planifiez des Pins et générez du trafic",
+        "reddit": "Publiez dans les bonnes communautés",
+        "discord": "Annoncez à l’heure dans votre communauté",
+        "dribbble": "Planifiez vos shots et gagnez en portée",
+        "devto": "Publiez des articles DEV et suivez les réactions",
+        "wordpress": "Publiez vos articles WordPress depuis MagicSync",
+        "mastodon": "Planifiez sur Mastodon entre instances",
+        "snapchat": "Planifiez vos contenus et stories Snapchat",
+        "google": "Gérez les posts et avis Google"
+      },
+      "toolDesc": {
+        "chat": "Discutez avec votre contenu et calendrier",
+        "knowledge": "Ancrez l’assistant dans vos documents",
+        "skills": "Workflows IA réutilisables",
+        "agents": "Créez des agents IA spécialisés",
+        "aiTools": "Testez la génération et les modèles IA",
+        "growth": "Planifiez selon vos objectifs",
+        "imageEditor": "Éditez et exportez vos images",
+        "flutterClipper": "Générez des chemins de clip Flutter",
+        "videoSilence": "Supprimez les silences des vidéos",
+        "textBehindImage": "Texte derrière l’image gratuit",
+        "playground": "Expérimentez l’UI et les composants"
+      }
     },
     "footer": {
       "description": "Nous sommes en mission pour transformer la façon dont les équipes collaborent et construisent des produits ensemble. Rejoignez-nous pour façonner l'avenir du travail.",
@@ -613,10 +1185,86 @@
       "partners": "Partenaires",
       "contact": "Contact",
       "legal": "Mentions légales",
-      "copyrightText": "&copy; {year} MagicSync, Inc. Tous droits réservés.",
+      "copyrightText": "{year} MagicSync, Inc. Tous droits réservés.",
       "privacyPolicy": "Politique de confidentialité",
       "termsOfService": "Conditions d'utilisation",
-      "cookiePolicy": "Politique des cookies"
+      "cookiePolicy": "Politique des cookies",
+      "socialPlatformsTitle": "Réseaux sociaux pris en charge",
+      "aiAgentsTitle": "Agents IA compatibles",
+      "platformItems": {
+        "facebook": {
+          "label": "Facebook",
+          "description": "Planifiez publications, Reels et Stories, gérez pages et groupes."
+        },
+        "instagram": {
+          "label": "Instagram",
+          "description": "Planifiez la grille, enfilez Reels et Stories et publiez automatiquement."
+        },
+        "twitter": {
+          "label": "X (Twitter)",
+          "description": "Planifiez des threads, republiez vos meilleurs posts et suivez les impressions."
+        },
+        "linkedin": {
+          "label": "LinkedIn",
+          "description": "Publiez profils et entreprises, carrousels PDF et rapports."
+        },
+        "pinterest": {
+          "label": "Pinterest",
+          "description": "Épinglez sur plusieurs tableaux et générez un trafic régulier."
+        },
+        "googleBusiness": {
+          "label": "Google Business Profile",
+          "description": "Partagez actualités, offres et événements par établissement."
+        },
+        "tiktok": {
+          "label": "TikTok",
+          "description": "Enfilez des vidéos courtes et gardez un rythme de publication régulier."
+        },
+        "youtube": {
+          "label": "YouTube",
+          "description": "Planifiez les imports avec titre, tags et reprise partielle."
+        },
+        "bluesky": {
+          "label": "Bluesky",
+          "description": "Planifiez des posts et développez votre audience avec le suivi des abonnés en retour."
+        },
+        "threads": {
+          "label": "Threads",
+          "description": "Publiez textes et médias à côté de votre flux Instagram."
+        },
+        "reddit": {
+          "label": "Reddit",
+          "description": "Planifiez des posts communautaires et suivez les conversations utiles."
+        },
+        "discord": {
+          "label": "Discord",
+          "description": "Annoncez lancements et nouveautés sur vos serveurs communautaires."
+        },
+        "mastodon": {
+          "label": "Mastodon",
+          "description": "Publiez dans le fediverse et touchez des communautés indépendantes."
+        },
+        "dribbble": {
+          "label": "Dribbble",
+          "description": "Partagez shots et avancées de projets avec vos clients design."
+        },
+        "devto": {
+          "label": "Dev.to",
+          "description": "Cross-postez des articles techniques pour toucher les développeurs."
+        },
+        "wordpress": {
+          "label": "WordPress",
+          "description": "Publiez des articles sur votre blog et synchronisez les réseaux."
+        },
+        "snapchat": {
+          "label": "Snapchat",
+          "description": "Planifiez des Stories et touchez un public mobile plus jeune."
+        },
+        "devnull": {
+          "label": "dev-null.sh",
+          "description": "Publiez du contenu développeur sur la communauté dev-null.sh."
+        }
+      }
     },
     "features": {
       "multiPlatform": {
@@ -665,6 +1313,66 @@
         "stats": "Overrides"
       },
       "exploreAll": "Explorer toutes les fonctionnalités"
+    },
+    "faq": {
+      "title": "FAQ",
+      "subtitle": "Questions fréquentes",
+      "stillHaveQuestions": "Vous avez encore des questions ?",
+      "contactUs": "Contactez-nous"
+    },
+    "agentConnect": {
+      "eyebrow": "Connecteur MCP",
+      "title": "Connectez {agent} en 60 secondes",
+      "steps": {
+        "1": {
+          "title": "Copiez l’endpoint",
+          "description": "Le serveur MCP MagicSync est sur {endpoint} et fonctionne dans tout client MCP."
+        },
+        "2": {
+          "title": "Ajoutez-le à {agent}",
+          "description": "Collez l’endpoint comme connecteur MCP personnalisé (ou enregistrez-le dans la CLI) et connectez-vous avec MagicSync. Avec OAuth, aucune clé API à copier."
+        },
+        "3": {
+          "title": "Validez l’accès",
+          "description": "Choisissez lecture seule ou accès complet. Les écritures, comme la publication, restent bloquées jusqu’à validation."
+        },
+        "4": {
+          "title": "Demandez une publication",
+          "description": "Indiquez les plateformes, l’heure et le ton. {agent} appelle les outils MagicSync et le post part à l’heure."
+        }
+      },
+      "endpointLabel": "Endpoint MCP",
+      "copy": "Copier l’endpoint",
+      "copied": "Copié",
+      "copySuccess": "Endpoint copié dans le presse-papiers",
+      "copyFailed": "Impossible de copier l’endpoint — sélectionnez-le et copiez-le à la main"
+    },
+    "agentPrompt": {
+      "title": "Prompts à essayer",
+      "description": "Voici à quoi ressemble une demande quand votre agent appelle les outils MagicSync.",
+      "windowLabel": "MagicSync MCP",
+      "prompt1": "Planifie un post de lancement sur X et LinkedIn demain à 9 h. Court et positif.",
+      "prompt2": "Planifie une semaine de posts sur notre nouvelle fonctionnalité avec les meilleurs horaires.",
+      "prompt3": "Rédige un article WordPress à partir de ce brief, planifie-le lundi et donne-moi le lien.",
+      "events": {
+        "research": "Recherche",
+        "researchDetail": "Vos 12 derniers posts analysés",
+        "create": "Création du post",
+        "createDetail": "Brouillon pour X et LinkedIn",
+        "attach": "Ajout de la pièce jointe",
+        "attachDetail": "launch-hero.png",
+        "schedule": "Programmé sur Facebook",
+        "scheduleDetail": "Demain · 9 h"
+      },
+      "answer": "C’est fait. Le post de lancement est programmé demain à 9 h et l’article WordPress pour lundi. Je vous préviens dès que les deux sont en ligne.",
+      "replay": "Rejouer"
+    },
+    "agentOther": {
+      "title": "D’autres agents qui publient via MagicSync",
+      "description": "Tout client MCP peut utiliser le même endpoint. Choisissez un autre agent : il hérite des comptes déjà connectés, sans seconde configuration.",
+      "guide": "Voir le guide",
+      "platformsTitle": "Publiez sur les mêmes canaux",
+      "platformsDescription": "Chaque agent publie sur les comptes connectés dans MagicSync, avec les limites et les aperçus de chaque canal."
     }
   }
 }

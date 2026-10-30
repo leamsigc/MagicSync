@@ -35,6 +35,7 @@ const components = ref<ComponentInfo[]>([
   { name: 'Hero', description: 'Hero section component with image and actions.', componentName: 'BaseHero', icon: 'lucide:image' },
   { name: 'Hero B', description: 'Alternative hero component with different styling.', componentName: 'BaseHeroB', icon: 'lucide:image-plus' },
   { name: 'How It Works', description: 'Step-by-step process component.', componentName: 'BaseHowItWorks', icon: 'lucide:list-ordered' },
+  { name: 'Magic Image Gallery', description: 'Lazy-loaded screenshot grid with a full-screen lightbox.', componentName: 'MagicImageGallery', icon: 'lucide:images' },
   { name: 'Not Found View', description: '404 error page component.', componentName: 'BaseNotFoundView', icon: 'lucide:file-x' },
   { name: 'Pricing', description: 'Pricing plans component.', componentName: 'BasePricing', icon: 'lucide:dollar-sign' },
   { name: 'Review Card', description: 'Testimonial card component.', componentName: 'BaseReviewCard', icon: 'lucide:quote' },

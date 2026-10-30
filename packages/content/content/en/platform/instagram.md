@@ -61,6 +61,8 @@ list:
 ---
 #title
 Grow Real Followers
+#subtitle
+What you can do with MagicSync
 #description
 Tools to help you reach more people and turn followers into customers.
 ::

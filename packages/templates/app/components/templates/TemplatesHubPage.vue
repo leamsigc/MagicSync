@@ -60,9 +60,9 @@ const templateTypes = [
 </script>
 
 <template>
-    <div class=" p-4 lg:mx-auto lg:p-6">
-        <BasePageHeader :title="t('title')" :description="t('description')" data-tour="templates-step-0" />
-
+    <!-- `templates-step-0` used to anchor the page header; with the shared shell the
+         whole page is the highlight, which is what the step describes. -->
+    <BaseCollectionPage :title="t('title')" :description="t('description')" data-tour="templates-step-0">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" data-tour="templates-step-1">
             <NuxtLink v-for="item in templateTypes" :key="item.type" :to="item.route">
                 <UCard
@@ -95,6 +95,6 @@ const templateTypes = [
                 </UCard>
             </NuxtLink>
         </div>
-    </div>
+    </BaseCollectionPage>
 </template>
 <style scoped></style>

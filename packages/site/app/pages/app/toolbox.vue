@@ -26,16 +26,7 @@ const groupedTools = computed(() => {
 </script>
 
 <template>
-  <div class="max-w-6xl mx-auto p-6">
-    <header class="mb-8">
-      <h1 class="text-3xl font-bold tracking-tight text-foreground">
-        {{ t('title') }}
-      </h1>
-      <p class="mt-2 text-sm text-muted-foreground">
-        {{ t('description') }}
-      </p>
-    </header>
-
+  <BaseCollectionPage :title="t('title')" :description="t('description')">
     <section v-for="group in groupedTools" :key="group.category" class="mb-10">
       <h2 class="text-lg font-semibold tracking-tight text-foreground mb-4">
         {{ t(`categories.${group.category}`) }}
@@ -65,7 +56,7 @@ const groupedTools = computed(() => {
         </BaseShinyCard>
       </div>
     </section>
-  </div>
+  </BaseCollectionPage>
 </template>
 
 <style scoped></style>

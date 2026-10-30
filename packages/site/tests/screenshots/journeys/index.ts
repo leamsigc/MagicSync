@@ -23,6 +23,15 @@ import { businessCreateJourney } from './business-create'
 import { contentBoardJourney } from './content-board'
 import { chatJourney } from './chat'
 import { socialConnectionsJourney } from './social-connections'
+import { autoReplyCampaignsJourney } from './auto-reply-campaigns'
+import { businessDirectoryJourney } from './business-directory'
+import { integrationsDirectoryJourney } from './integrations-directory'
+import { adminUsersJourney } from './admin-users'
+import { adminBusinessesJourney } from './admin-directories'
+import { postsViewsJourney } from './posts-views'
+import { mediaGalleryJourney } from './media-gallery'
+import { dashboardTrendJourney } from './dashboard-trend'
+import { agentLandingsJourney } from './agent-landings'
 
 export interface JourneyContext {
   page: Page
@@ -59,4 +68,4 @@ export interface JourneyDefinition {
   run(ctx: JourneyContext): Promise<void>
 }
 
-export const journeys: JourneyDefinition[] = [contentBoardJourney, businessCreateJourney, chatJourney, socialConnectionsJourney]
+export const journeys: JourneyDefinition[] = [contentBoardJourney, businessCreateJourney, chatJourney, socialConnectionsJourney, autoReplyCampaignsJourney, businessDirectoryJourney, integrationsDirectoryJourney, adminUsersJourney, adminBusinessesJourney, postsViewsJourney, mediaGalleryJourney, dashboardTrendJourney, agentLandingsJourney]

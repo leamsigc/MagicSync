@@ -1,16 +1,709 @@
 {
-  "generatedAt": "2026-10-18T12:10:45.142Z",
+  "generatedAt": "2026-10-30T13:59:33.979Z",
   "baseUrl": "http://localhost:3000",
   "action": "page",
-  "total": 1,
-  "captured": 1,
+  "total": 78,
+  "captured": 78,
   "entries": [
+    {
+      "route": "/app",
+      "slug": "app",
+      "action": "page",
+      "file": "app/page.png",
+      "finalUrl": "http://localhost:3000/app",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/admin",
+      "slug": "app-admin",
+      "action": "page",
+      "file": "app-admin/page.png",
+      "finalUrl": "http://localhost:3000/app/admin",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/admin/announcements",
+      "slug": "app-admin-announcements",
+      "action": "page",
+      "file": "app-admin-announcements/page.png",
+      "finalUrl": "http://localhost:3000/app/admin/announcements",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/admin/audit",
+      "slug": "app-admin-audit",
+      "action": "page",
+      "file": "app-admin-audit/page.png",
+      "finalUrl": "http://localhost:3000/app/admin/audit",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/admin/businesses",
+      "slug": "app-admin-businesses",
+      "action": "page",
+      "file": "app-admin-businesses/page.png",
+      "finalUrl": "http://localhost:3000/app/admin/businesses",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/admin/data",
+      "slug": "app-admin-data",
+      "action": "page",
+      "file": "app-admin-data/page.png",
+      "finalUrl": "http://localhost:3000/app/admin/data",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/admin/feedbacks",
+      "slug": "app-admin-feedbacks",
+      "action": "page",
+      "file": "app-admin-feedbacks/page.png",
+      "finalUrl": "http://localhost:3000/app/admin/feedbacks",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/admin/integrations",
+      "slug": "app-admin-integrations",
+      "action": "page",
+      "file": "app-admin-integrations/page.png",
+      "finalUrl": "http://localhost:3000/app/admin/integrations",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/admin/posts",
+      "slug": "app-admin-posts",
+      "action": "page",
+      "file": "app-admin-posts/page.png",
+      "finalUrl": "http://localhost:3000/app/admin/posts",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/admin/users",
+      "slug": "app-admin-users",
+      "action": "page",
+      "file": "app-admin-users/page.png",
+      "finalUrl": "http://localhost:3000/app/admin/users",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/ai-tools/agents",
+      "slug": "app-ai-tools-agents",
+      "action": "page",
+      "file": "app-ai-tools-agents/page.png",
+      "finalUrl": "http://localhost:3000/app/ai-tools/agents",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/ai-tools/knowledge",
+      "slug": "app-ai-tools-knowledge",
+      "action": "page",
+      "file": "app-ai-tools-knowledge/page.png",
+      "finalUrl": "http://localhost:3000/app/ai-tools/knowledge",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/ai-tools/settings",
+      "slug": "app-ai-tools-settings",
+      "action": "page",
+      "file": "app-ai-tools-settings/page.png",
+      "finalUrl": "http://localhost:3000/app/ai-tools/settings",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/ai-tools/skills",
+      "slug": "app-ai-tools-skills",
+      "action": "page",
+      "file": "app-ai-tools-skills/page.png",
+      "finalUrl": "http://localhost:3000/app/ai-tools/skills",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/ai-tools/tools",
+      "slug": "app-ai-tools-tools",
+      "action": "page",
+      "file": "app-ai-tools-tools/page.png",
+      "finalUrl": "http://localhost:3000/app/ai-tools/tools",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/auto-reply",
+      "slug": "app-auto-reply",
+      "action": "page",
+      "file": "app-auto-reply/page.png",
+      "finalUrl": "http://localhost:3000/app/auto-reply",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/billing",
+      "slug": "app-billing",
+      "action": "page",
+      "file": "app-billing/page.png",
+      "finalUrl": "http://localhost:3000/app/billing",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/bulk-scheduler",
+      "slug": "app-bulk-scheduler",
+      "action": "page",
+      "file": "app-bulk-scheduler/page.png",
+      "finalUrl": "http://localhost:3000/app/bulk-scheduler",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/bulk-scheduler/csv-import",
+      "slug": "app-bulk-scheduler-csv-import",
+      "action": "page",
+      "file": "app-bulk-scheduler-csv-import/page.png",
+      "finalUrl": "http://localhost:3000/app/bulk-scheduler/csv-import",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/bulk-scheduler/generate",
+      "slug": "app-bulk-scheduler-generate",
+      "action": "page",
+      "file": "app-bulk-scheduler-generate/page.png",
+      "finalUrl": "http://localhost:3000/app/bulk-scheduler/generate",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/business",
+      "slug": "app-business",
+      "action": "page",
+      "file": "app-business/page.png",
+      "finalUrl": "http://localhost:3000/app/business",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/business/initial",
+      "slug": "app-business-initial",
+      "action": "page",
+      "file": "app-business-initial/page.png",
+      "finalUrl": "http://localhost:3000/app/business/initial",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/calendar",
+      "slug": "app-calendar",
+      "action": "page",
+      "file": "app-calendar/page.png",
+      "finalUrl": "http://localhost:3000/app/calendar/month/2026-10-30",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/calendar/day",
+      "slug": "app-calendar-day",
+      "action": "page",
+      "file": "app-calendar-day/page.png",
+      "finalUrl": "http://localhost:3000/app/calendar/day/2026-10-30",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/calendar/month",
+      "slug": "app-calendar-month",
+      "action": "page",
+      "file": "app-calendar-month/page.png",
+      "finalUrl": "http://localhost:3000/app/calendar/month/2026-10-30",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/calendar/weeks",
+      "slug": "app-calendar-weeks",
+      "action": "page",
+      "file": "app-calendar-weeks/page.png",
+      "finalUrl": "http://localhost:3000/app/calendar/week/2026-10-30",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/chat",
+      "slug": "app-chat",
+      "action": "page",
+      "file": "app-chat/page.png",
+      "finalUrl": "http://localhost:3000/app/chat",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/grow",
+      "slug": "app-grow",
+      "action": "page",
+      "file": "app-grow/page.png",
+      "finalUrl": "http://localhost:3000/app/grow",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/home",
+      "slug": "app-home",
+      "action": "page",
+      "file": "app-home/page.png",
+      "finalUrl": "http://localhost:3000/app/home",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/inbox",
+      "slug": "app-inbox",
+      "action": "page",
+      "file": "app-inbox/page.png",
+      "finalUrl": "http://localhost:3000/app/inbox",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/integrations",
+      "slug": "app-integrations",
+      "action": "page",
+      "file": "app-integrations/page.png",
+      "finalUrl": "http://localhost:3000/app/integrations",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/integrations/active",
+      "slug": "app-integrations-active",
+      "action": "page",
+      "file": "app-integrations-active/page.png",
+      "finalUrl": "http://localhost:3000/app/integrations/active",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/keys",
+      "slug": "app-keys",
+      "action": "page",
+      "file": "app-keys/page.png",
+      "finalUrl": "http://localhost:3000/app/keys",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/media",
+      "slug": "app-media",
+      "action": "page",
+      "file": "app-media/page.png",
+      "finalUrl": "http://localhost:3000/app/media",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/media/upload",
+      "slug": "app-media-upload",
+      "action": "page",
+      "file": "app-media-upload/page.png",
+      "finalUrl": "http://localhost:3000/app/media/upload",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/notifications",
+      "slug": "app-notifications",
+      "action": "page",
+      "file": "app-notifications/page.png",
+      "finalUrl": "http://localhost:3000/app/notifications",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/post/video",
+      "slug": "app-post-video",
+      "action": "page",
+      "file": "app-post-video/page.png",
+      "finalUrl": "http://localhost:3000/app/post/video",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/posts",
+      "slug": "app-posts",
+      "action": "page",
+      "file": "app-posts/page.png",
+      "finalUrl": "http://localhost:3000/app/posts",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/posts/auto-repost",
+      "slug": "app-posts-auto-repost",
+      "action": "page",
+      "file": "app-posts-auto-repost/page.png",
+      "finalUrl": "http://localhost:3000/app/posts/auto-repost",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/posts/feeds",
+      "slug": "app-posts-feeds",
+      "action": "page",
+      "file": "app-posts-feeds/page.png",
+      "finalUrl": "http://localhost:3000/app/posts/feeds",
+      "status": 200,
+      "ok": true
+    },
     {
       "route": "/app/posts/new",
       "slug": "app-posts-new",
       "action": "page",
       "file": "app-posts-new/page.png",
       "finalUrl": "http://localhost:3000/app/posts/new",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/profile",
+      "slug": "app-profile",
+      "action": "page",
+      "file": "app-profile/page.png",
+      "finalUrl": "http://localhost:3000/app/profile",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/templates",
+      "slug": "app-templates",
+      "action": "page",
+      "file": "app-templates/page.png",
+      "finalUrl": "http://localhost:3000/app/templates",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/templates/chat",
+      "slug": "app-templates-chat",
+      "action": "page",
+      "file": "app-templates-chat/page.png",
+      "finalUrl": "http://localhost:3000/app/templates/chat",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/templates/email",
+      "slug": "app-templates-email",
+      "action": "page",
+      "file": "app-templates-email/page.png",
+      "finalUrl": "http://localhost:3000/app/templates/email",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/templates/images",
+      "slug": "app-templates-images",
+      "action": "page",
+      "file": "app-templates-images/page.png",
+      "finalUrl": "http://localhost:3000/app/templates/images",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/templates/variables",
+      "slug": "app-templates-variables",
+      "action": "page",
+      "file": "app-templates-variables/page.png",
+      "finalUrl": "http://localhost:3000/app/templates/variables",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/toolbox",
+      "slug": "app-toolbox",
+      "action": "page",
+      "file": "app-toolbox/page.png",
+      "finalUrl": "http://localhost:3000/app/toolbox",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/tools",
+      "slug": "app-tools",
+      "action": "page",
+      "file": "app-tools/page.png",
+      "finalUrl": "http://localhost:3000/app/tools",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/tools/content-split",
+      "slug": "app-tools-content-split",
+      "action": "page",
+      "file": "app-tools-content-split/page.png",
+      "finalUrl": "http://localhost:3000/app/tools/content-split",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/tools/growth-stratergy",
+      "slug": "app-tools-growth-stratergy",
+      "action": "page",
+      "file": "app-tools-growth-stratergy/page.png",
+      "finalUrl": "http://localhost:3000/app/tools/growth-stratergy",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/tools/growth-stratergy/create",
+      "slug": "app-tools-growth-stratergy-create",
+      "action": "page",
+      "file": "app-tools-growth-stratergy-create/page.png",
+      "finalUrl": "http://localhost:3000/app/tools/growth-stratergy/create",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/tools/growth-stratergy/data",
+      "slug": "app-tools-growth-stratergy-data",
+      "action": "page",
+      "file": "app-tools-growth-stratergy-data/page.png",
+      "finalUrl": "http://localhost:3000/app/tools/growth-stratergy/data",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/tools/text-to-speech",
+      "slug": "app-tools-text-to-speech",
+      "action": "page",
+      "file": "app-tools-text-to-speech/page.png",
+      "finalUrl": "http://localhost:3000/app/tools/text-to-speech",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/app/tools/video-cropper",
+      "slug": "app-tools-video-cropper",
+      "action": "page",
+      "file": "app-tools-video-cropper/page.png",
+      "finalUrl": "http://localhost:3000/app/tools/video-cropper",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/for",
+      "slug": "for",
+      "action": "page",
+      "file": "for/page.png",
+      "finalUrl": "http://localhost:3000/for",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/for/chatgpt",
+      "slug": "for-chatgpt",
+      "action": "page",
+      "file": "for-chatgpt/page.png",
+      "finalUrl": "http://localhost:3000/for/chatgpt",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/platform",
+      "slug": "platform",
+      "action": "page",
+      "file": "platform/page.png",
+      "finalUrl": "http://localhost:3000/platform",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/platform/bluesky",
+      "slug": "platform-bluesky",
+      "action": "page",
+      "file": "platform-bluesky/page.png",
+      "finalUrl": "http://localhost:3000/platform/bluesky",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/platform/devto",
+      "slug": "platform-devto",
+      "action": "page",
+      "file": "platform-devto/page.png",
+      "finalUrl": "http://localhost:3000/platform/devto",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/platform/discord",
+      "slug": "platform-discord",
+      "action": "page",
+      "file": "platform-discord/page.png",
+      "finalUrl": "http://localhost:3000/platform/discord",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/platform/dribbble",
+      "slug": "platform-dribbble",
+      "action": "page",
+      "file": "platform-dribbble/page.png",
+      "finalUrl": "http://localhost:3000/platform/dribbble",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/platform/facebook",
+      "slug": "platform-facebook",
+      "action": "page",
+      "file": "platform-facebook/page.png",
+      "finalUrl": "http://localhost:3000/platform/facebook",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/platform/google-my-business",
+      "slug": "platform-google-my-business",
+      "action": "page",
+      "file": "platform-google-my-business/page.png",
+      "finalUrl": "http://localhost:3000/platform/google-my-business",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/platform/instagram",
+      "slug": "platform-instagram",
+      "action": "page",
+      "file": "platform-instagram/page.png",
+      "finalUrl": "http://localhost:3000/platform/instagram",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/platform/linkedin",
+      "slug": "platform-linkedin",
+      "action": "page",
+      "file": "platform-linkedin/page.png",
+      "finalUrl": "http://localhost:3000/platform/linkedin",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/platform/mastodon",
+      "slug": "platform-mastodon",
+      "action": "page",
+      "file": "platform-mastodon/page.png",
+      "finalUrl": "http://localhost:3000/platform/mastodon",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/platform/pinterest",
+      "slug": "platform-pinterest",
+      "action": "page",
+      "file": "platform-pinterest/page.png",
+      "finalUrl": "http://localhost:3000/platform/pinterest",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/platform/reddit",
+      "slug": "platform-reddit",
+      "action": "page",
+      "file": "platform-reddit/page.png",
+      "finalUrl": "http://localhost:3000/platform/reddit",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/platform/snapchat",
+      "slug": "platform-snapchat",
+      "action": "page",
+      "file": "platform-snapchat/page.png",
+      "finalUrl": "http://localhost:3000/platform/snapchat",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/platform/threads",
+      "slug": "platform-threads",
+      "action": "page",
+      "file": "platform-threads/page.png",
+      "finalUrl": "http://localhost:3000/platform/threads",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/platform/tiktok",
+      "slug": "platform-tiktok",
+      "action": "page",
+      "file": "platform-tiktok/page.png",
+      "finalUrl": "http://localhost:3000/platform/tiktok",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/platform/twitter",
+      "slug": "platform-twitter",
+      "action": "page",
+      "file": "platform-twitter/page.png",
+      "finalUrl": "http://localhost:3000/platform/twitter",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/platform/wordpress",
+      "slug": "platform-wordpress",
+      "action": "page",
+      "file": "platform-wordpress/page.png",
+      "finalUrl": "http://localhost:3000/platform/wordpress",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/platform/youtube",
+      "slug": "platform-youtube",
+      "action": "page",
+      "file": "platform-youtube/page.png",
+      "finalUrl": "http://localhost:3000/platform/youtube",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/for/chatgpt",
+      "slug": "for-chatgpt",
+      "action": "connect",
+      "file": "for-chatgpt/connect.png",
+      "finalUrl": "http://localhost:3000/for/chatgpt",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/for/chatgpt",
+      "slug": "for-chatgpt",
+      "action": "prompts",
+      "file": "for-chatgpt/prompts.png",
+      "finalUrl": "http://localhost:3000/for/chatgpt",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "route": "/for/chatgpt",
+      "slug": "for-chatgpt",
+      "action": "other-agents",
+      "file": "for-chatgpt/other-agents.png",
+      "finalUrl": "http://localhost:3000/for/chatgpt",
       "status": 200,
       "ok": true
     }

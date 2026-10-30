@@ -19,6 +19,11 @@ const { locale, localeProperties } = useI18n()
 
 const slug = computed(() => withLeadingSlash(String(route.params.slug||'')))
 
+// Locale-free path for content lookups. The collections store paths without the
+// locale prefix (`content_en`: `/platform/tiktok`), and `/es/...` must resolve
+// to the same document before the English fallback is attempted.
+const contentPath = computed(() => route.path.replace(/^\/(es|de|fr)(?=\/|$)/, '') || '/')
+
 // Blog documents are stored with the public `/blogs` prefix (see content.config.ts),
 // so normalize any locale-prefixed route (/es/blogs/x -> /blogs/x) before querying.
 const blogPath = computed(() => route.path.replace(/^\/(?:es|de|fr)?\/blogs/, '/blogs'))
@@ -26,7 +31,7 @@ const blogPath = computed(() => route.path.replace(/^\/(?:es|de|fr)?\/blogs/, '/
 const { data: page } = await useAsyncData(`page-${slug.value}`, async () => {
 
   const collection = (`${collectionType}_${locale.value}`) as keyof Collections
-  const path = collectionType === 'blog' ? blogPath.value : slug.value.replace(',', '/')
+  const path = collectionType === 'blog' ? blogPath.value : contentPath.value
 
 
   let content = await queryCollection(collection).path(`${path}`).first()
@@ -34,7 +39,7 @@ const { data: page } = await useAsyncData(`page-${slug.value}`, async () => {
   // Fallback to default locale if content is missing
   if (!content && locale.value !== 'en') {
     const defaultCollection = (`${collectionType}_en`) as keyof Collections;
-    content = await queryCollection(defaultCollection).path(`${collectionType === 'blog' ? blogPath.value : slug.value}`).first()
+    content = await queryCollection(defaultCollection).path(`${collectionType === 'blog' ? blogPath.value : contentPath.value}`).first()
   }
 
   return content
@@ -44,6 +49,12 @@ const { data: page } = await useAsyncData(`page-${slug.value}`, async () => {
 // if (!page.value) {
 //   throw createError({ statusCode: 404, statusMessage: 'Page not found', fatal: true })
 // }
+// Agent landings live under /for; a missing agent slug must be a real 404,
+// not the generic soft-404 shell (search engines would index it as a page).
+if (!page.value && slug.value.startsWith('/for')) {
+  throw createError({ statusCode: 404, statusMessage: 'Agent page not found', fatal: true })
+}
+
 useHead(page.value?.meta || {})
 useSeoMeta(page.value?.seo || {})
 

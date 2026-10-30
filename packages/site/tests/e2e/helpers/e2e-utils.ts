@@ -93,6 +93,30 @@ export async function createTestUser(request: APIRequestContext): Promise<TestUs
   return user
 }
 
+/**
+ * Promote a fixture user to admin and refresh its session cookie.
+ *
+ * better-auth's cookie cache carries the role captured at sign-in, so the role
+ * must be written before a new sign-in: otherwise admin APIs keep answering 403
+ * for the life of the cached session.
+ */
+export async function promoteToAdmin(request: APIRequestContext, user: TestUser): Promise<TestUser> {
+  await getDb().execute({ sql: "UPDATE user SET role = 'admin' WHERE id = ?", args: [user.id] })
+  // The request context already holds a session cookie, so better-auth's CSRF
+  // guard requires an Origin on this second sign-in.
+  const signIn = await request.post('/api/auth/sign-in/email', {
+    headers: { origin: process.env.SCREENSHOT_BASE_URL ?? 'http://localhost:3000' },
+    data: { email: user.email, password: user.password },
+  })
+  if (!signIn.ok()) throw new Error(`Admin re-signin failed (${signIn.status()}): ${await signIn.text()}`)
+  const setCookie = signIn.headersArray().find(h => h.name.toLowerCase() === 'set-cookie')
+  if (!setCookie) throw new Error('No session cookie returned from the admin sign-in')
+  const raw = setCookie.value.split(';')[0]
+  const eq = raw.indexOf('=')
+  user.sessionCookie = { name: raw.slice(0, eq), value: raw.slice(eq + 1) }
+  return user
+}
+
 /** Applies the session cookie to a browser context. */
 export async function loginWith(page: Page, user: TestUser): Promise<void> {
   await page.context().addCookies([{
@@ -144,6 +168,130 @@ export async function createTestAccount(userId: string, businessId: string): Pro
     args: [id, userId, businessId, 'twitter', `e2e-${id}`, 'E2E Account', 'e2e-token', now, now],
   })
   return { id }
+}
+
+/** Connected Instagram account fixture (the only platform auto-reply can send from). */
+export async function createTestInstagramAccount(userId: string, businessId: string): Promise<TestAccount> {
+  const id = `e2e-ig-${Date.now()}${Math.floor(Math.random() * 1000)}`
+  const now = Math.floor(Date.now() / 1000)
+  await getDb().execute({
+    sql: 'INSERT INTO social_media_accounts (id, user_id, business_id, platform, account_id, account_name, access_token, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?)',
+    args: [id, userId, businessId, 'instagram', `e2e-ig-${id}`, 'E2E Instagram', 'e2e-token', now, now],
+  })
+  return { id }
+}
+
+export interface TestPublishedPost {
+  postId: string
+  platformPostId: string
+}
+
+/**
+ * A post published through MagicSync on `socialAccountId`. The auto-reply
+ * picker lists exactly these rows — never arbitrary native media.
+ */
+export async function createPublishedPostFixture(
+  userId: string,
+  businessId: string,
+  socialAccountId: string,
+  options: { caption?: string, platformPostId?: string, publishedUrl?: string } = {},
+): Promise<TestPublishedPost> {
+  const suffix = `${Date.now()}${Math.floor(Math.random() * 1000)}`
+  const postId = `e2e-post-${suffix}`
+  const platformPostId = options.platformPostId ?? `179${suffix}`
+  const now = Math.floor(Date.now() / 1000)
+  await getDb().execute({
+    sql: 'INSERT INTO posts (id, user_id, business_id, content, media_assets, status, target_platforms, scheduled_at, created_at, updated_at, published_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    args: [postId, userId, businessId, options.caption ?? 'E2E published post', '[]', 'published', '["instagram"]', now, now, now, now],
+  })
+  await getDb().execute({
+    sql: "INSERT INTO platform_posts (id, post_id, social_account_id, platform_post_id, status, publish_detail, published_at, created_at) VALUES (?, ?, ?, ?, 'published', ?, ?, ?)",
+    args: [
+      `e2e-pp-${suffix}`,
+      postId,
+      socialAccountId,
+      'instagram',
+      JSON.stringify({
+        [socialAccountId]: {
+          publishedId: platformPostId,
+          publishedUrl: options.publishedUrl ?? `https://instagram.com/p/${platformPostId}`,
+        },
+      }),
+      now,
+      now,
+    ],
+  })
+  return { postId, platformPostId }
+}
+
+export interface TestAssets {
+  ids: string[]
+}
+
+/** Image assets for the media gallery (external placeholder URLs, no upload). */
+export async function createTestAssets(
+  userId: string,
+  businessId: string,
+  count = 6,
+): Promise<TestAssets> {
+  const suffix = `${Date.now()}${Math.floor(Math.random() * 1000)}`
+  const now = Math.floor(Date.now() / 1000)
+  const ids: string[] = []
+  for (let index = 0; index < count; index++) {
+    const id = `e2e-asset-${suffix}-${index}`
+    ids.push(id)
+    await getDb().execute({
+      sql: 'INSERT INTO assets (id, user_id, business_id, filename, original_name, mime_type, size, url, is_public, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?)',
+      args: [
+        id,
+        userId,
+        businessId,
+        `asset-${index}.jpg`,
+        `E2E asset ${index}`,
+        'image/jpeg',
+        (index + 1) * 2_000_000,
+        `https://picsum.photos/id/${10 + index}/900/${900 + index * 40}`,
+        now,
+      ],
+    })
+  }
+  return { ids }
+}
+
+/**
+ * 30 days of account metrics so the dashboard trend chart renders real series
+ * (the chart hides itself when there is no history).
+ */
+export async function createAccountMetrics(
+  userId: string,
+  businessId: string,
+  days = 30,
+): Promise<{ accountId: string }> {
+  const suffix = `${Date.now()}${Math.floor(Math.random() * 1000)}`
+  const accountId = `e2e-metrics-${suffix}`
+  const now = Math.floor(Date.now() / 1000)
+  await getDb().execute({
+    sql: 'INSERT INTO social_media_accounts (id, user_id, business_id, platform, account_id, account_name, access_token, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?)',
+    args: [accountId, userId, businessId, 'instagram', `e2e-metrics-${accountId}`, 'E2E Metrics', 'e2e-token', now, now],
+  })
+  for (let index = days - 1; index >= 0; index--) {
+    const day = new Date(Date.now() - index * 86_400_000).toISOString().slice(0, 10)
+    await getDb().execute({
+      sql: "INSERT INTO account_metrics (id, social_account_id, platform, snapshot_date, followers, following, posts, engagement, source, status, collected_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'manual', 'success', ?)",
+      args: [
+        `e2e-metric-${suffix}-${index}`,
+        accountId,
+        'instagram',
+        day,
+        1200 + index * 18 + Math.round(120 * Math.sin(index / 3)),
+        300,
+        40 + index,
+        JSON.stringify({ total: Math.round(320 + index * 6 + 80 * Math.sin(index / 4)) }),
+        now - index * 86_400,
+      ],
+    })
+  }
+  return { accountId }
 }
 
 /**

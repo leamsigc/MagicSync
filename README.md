@@ -14,6 +14,25 @@
 </a>
 </p>
 
+<h3 align="center"><strong><a href="https://magicsync.dev/for">Schedule social posts from your AI agent</a></strong></h3>
+<div class="flex" align="center">
+  <a href="https://magicsync.dev/for/chatgpt" title="ChatGPT"><img alt="ChatGPT" src="./images/agents/chatgpt.svg" width="32"></a>
+  <a href="https://magicsync.dev/for/claude" title="Claude"><img alt="Claude" src="./images/agents/claude.svg" width="32"></a>
+  <a href="https://magicsync.dev/for/claude-code" title="Claude Code"><img alt="Claude Code" src="./images/agents/claude-code.svg" width="32"></a>
+  <a href="https://magicsync.dev/for/codex" title="Codex"><img alt="Codex" src="./images/agents/codex.svg" width="32"></a>
+  <a href="https://magicsync.dev/for/cursor" title="Cursor"><img alt="Cursor" src="./images/agents/cursor.svg" width="32"></a>
+  <a href="https://magicsync.dev/for/openclaw" title="OpenClaw"><img alt="OpenClaw" src="./images/agents/openclaw.svg" width="32"></a>
+  <a href="https://magicsync.dev/for/hermes-agent" title="Hermes Agent"><img alt="Hermes Agent" src="./images/agents/hermes-agent.svg" width="32"></a>
+  <a href="https://magicsync.dev/for/grok-bot" title="Grok Bot"><img alt="Grok Bot" src="./images/agents/grok-bot.svg" width="32"></a>
+  <a href="https://magicsync.dev/for/grok-build" title="Grok Build"><img alt="Grok Build" src="./images/agents/grok-build.svg" width="32"></a>
+  <a href="https://magicsync.dev/for/muse" title="Muse"><img alt="Muse" src="./images/agents/muse.svg" width="32"></a>
+  <a href="https://magicsync.dev/for/perplexity-computer" title="Perplexity Computer"><img alt="Perplexity Computer" src="./images/agents/perplexity-computer.svg" width="32"></a>
+  <a href="https://magicsync.dev/for/nanoclaw" title="nanoclaw"><img alt="nanoclaw" src="./images/agents/nanoclaw.svg" width="32"></a>
+  <a href="https://magicsync.dev/for/paperclip" title="Paperclip"><img alt="Paperclip" src="./images/agents/paperclip.svg" width="32"></a>
+  <a href="https://magicsync.dev/for/mcp" title="MCP Server"><img alt="MCP Server" src="./images/agents/mcp-server.svg" width="32"></a>
+  <a href="https://magicsync.dev/for/agent" title="AI Agents CLI"><img alt="AI Agents CLI" src="./images/agents/ai-agents-cli.svg" width="32"></a>
+</div>
+
 <h3 align="center"><strong><a href="https://github.com/leamsigc/MagicSync/tree/main/magic-sync-skill">
  NEW: check out MagicSync Agent Skill perfect for your N8N workflows or AI Harness</a>
  </strong></h3>

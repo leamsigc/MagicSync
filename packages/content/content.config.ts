@@ -95,5 +95,43 @@ export const collections = {
       prefix: '/blogs',
     },
     schema: blogSchema
+  }),
+
+  content_de: defineCollection({
+    type: 'page',
+    source: {
+      include: 'de/**',
+      exclude: ["de/blogs/**"],
+      prefix: '',
+    },
+    schema: blogSchema
+  }),
+
+  blog_de: defineCollection({
+    type: 'page',
+    source: {
+      include: 'de/blogs/**',
+      prefix: '/blogs',
+    },
+    schema: blogSchema
+  }),
+
+  content_fr: defineCollection({
+    type: 'page',
+    source: {
+      include: 'fr/**',
+      exclude: ["fr/blogs/**"],
+      prefix: '',
+    },
+    schema: blogSchema
+  }),
+
+  blog_fr: defineCollection({
+    type: 'page',
+    source: {
+      include: 'fr/blogs/**',
+      prefix: '/blogs',
+    },
+    schema: blogSchema
   })
 }
