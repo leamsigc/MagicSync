@@ -10,14 +10,14 @@
  *
  * The default image list is generated from every PNG in
  * `packages/doc/public/img/screenshots` and `screenshots-mobile`, served from
- * the VitePress base URL. Regenerate `app/data/magicImageGallery.ts` after
+ * the VitePress base URL. Regenerate `app/utils/magicImageGallery.ts` after
  * adding screenshots (see the multilingual-content-pages skill).
  *
  * @author MagicSync
  * @version 0.0.1
  */
-import type { MagicGalleryImage } from '../data/magicImageGallery'
-import { defaultGalleryImages, featuredGalleryImages } from '../data/magicImageGallery'
+import type { MagicGalleryImage } from '../utils/magicImageGallery'
+import { defaultGalleryImages, featuredGalleryImages } from '../utils/magicImageGallery'
 
 interface Props {
   /** Override the default generated screenshot list. */
