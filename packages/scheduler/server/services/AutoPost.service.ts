@@ -28,6 +28,9 @@ import { auth } from '#layers/BaseAuth/lib/auth';
 import { notificationService } from '#layers/BaseAuth/server/services/notification.service';
 import { platformConfigurations } from '#layers/BaseShared/shared/platformConstants';
 
+/** Platforms that hold no Better Auth refresh token; `token:health` renews them itself. */
+const SKIP_BETTER_AUTH_REFRESH: ReadonlySet<string> = new Set(['devnull', 'threads'])
+
 function isPageTokenAuthError(message: string | undefined): boolean {
   if (!message) return false
   return /validating access token|session has expired|has expired|revoked|invalid oauth|must be called with a Page Access Token|User Access Token Is Not Supported/i.test(message)
@@ -233,9 +236,10 @@ export class AutoPostService {
           }
           return
         }
-        // dev-null.sh is not an OAuth provider — its credential is an
-        // encrypted SSH private key, not a Better Auth token. Skip refresh.
-        const skipRefresh = platform === 'devnull';
+        // Platforms with no Better Auth refresh token: dev-null.sh (an
+        // encrypted SSH key, not OAuth) and Threads (extended in place by
+        // token:health). Asking Better Auth to refresh them only fails.
+        const skipRefresh = SKIP_BETTER_AUTH_REFRESH.has(platform);
         // Refresh the access token via Better Auth before posting.
         // Better Auth resolves strictly by its own account row id — passing
         // our social_media_accounts id (or the provider account id) yields

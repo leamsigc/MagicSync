@@ -1,5 +1,6 @@
 import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
 import { autoReplyService } from '#layers/BaseScheduler/server/services/AutoReply.service'
+import { FOLLOW_BUTTON_MAX_CHARS } from '#layers/BaseShared/utils/auto-reply-limits'
 import { z } from 'zod'
 
 const linkSchema = z.object({
@@ -21,6 +22,7 @@ const updateSchema = z.object({
   storyDmEnabled: z.boolean().optional(),
   followGate: z.boolean().optional(),
   followPromptTemplate: z.string().max(500).optional(),
+  followButtonLabel: z.string().max(FOLLOW_BUTTON_MAX_CHARS).optional(),
   enabled: z.boolean().optional(),
   mode: z.enum(['template', 'ai']).optional(),
 })

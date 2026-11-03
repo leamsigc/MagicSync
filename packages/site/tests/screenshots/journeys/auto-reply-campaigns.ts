@@ -12,6 +12,7 @@
  */
 import { expect } from '@playwright/test'
 import {
+  createAutoReplyLogFixture,
   createPublishedPostFixture,
   createTestInstagramAccount,
   waitForHydration,
@@ -59,6 +60,8 @@ export const autoReplyCampaignsJourney: JourneyDefinition = {
     'autoreply-toggle',
     'autoreply-edit',
     'autoreply-delete-confirm',
+    'autoreply-logs',
+    'autoreply-logs-tooltip',
   ],
 
   async setup({ user, business }: JourneyContext) {
@@ -154,6 +157,27 @@ export const autoReplyCampaignsJourney: JourneyDefinition = {
       await card.getByRole('button', { name: 'Delete' }).click()
       await expect(page.getByRole('dialog').filter({ hasText: 'Delete campaign?' })).toBeVisible()
       await page.getByRole('button', { name: 'Cancel' }).click()
+    })
+
+    await journey.step('autoreply-logs', async () => {
+      const response = await context.authed.get('/api/v1/auto-reply/campaigns')
+      const body = await response.json() as { data?: Array<{ id: string, name: string }> }
+      const campaignId = body.data?.find(entry => entry.name === CAMPAIGN_NAME)?.id
+      if (!campaignId) throw new Error('auto-reply campaign fixture missing')
+      await createAutoReplyLogFixture(campaignId, [
+        { authorName: 'lena.links', action: 'sent', reason: 'keyword', matchedKeyword: 'LINK' },
+        { authorName: 'marco.maybe', action: 'skipped', reason: 'cooldown', matchedKeyword: 'LINK' },
+        { authorName: 'sofia.shop', action: 'failed', reason: '{"error":{"message":"Invalid OAuth access token - Cannot parse access token"}}' },
+      ])
+      await page.goto(`${baseURL}/app/auto-reply/${campaignId}`)
+      await waitForHydration(page)
+      await expect(page.getByText(CAMPAIGN_NAME).first()).toBeVisible()
+      await expect(page.getByText('Already contacted').first()).toBeVisible()
+    })
+
+    await journey.step('autoreply-logs-tooltip', async () => {
+      await page.getByText('Already contacted').first().hover()
+      await expect(page.getByText(/no automatic retry/i).filter({ visible: true }).first()).toBeVisible()
     })
   },
 }

@@ -15,6 +15,11 @@ Give each subagent a self-contained task: what you already know, what to find or
 - After research, save the brief with `board_update` before drafting.
 - Nothing is scheduled or published without an approved artifact version.
 
+## Auto-reply (comment-to-DM)
+- Use `auto_reply_overview` to show the business's Instagram accounts, campaigns (active and inactive), recent posts, or one campaign's stats and logs.
+- Use `create_auto_reply_campaign` only after the owner gave the trigger keyword(s) and the DM text/links. Use their words and URLs verbatim; never invent links.
+- A campaign watches every post unless the owner names specific posts (`postIds`).
+
 ## Response style
 - Do the work first, then summarize what changed (card ids, state names, artifacts).
 - For broad business goals ("help me get more customers", "research my competitors", "find opportunities", "make a marketing plan"), call `execute_goal` with the owner's own words and report its verified outcome. Do not improvise your own multi-step plan for those.

@@ -9,6 +9,7 @@
  * the picker and made it unclickable.
  */
 import type { AutoReplyCampaign, AutoReplyMediaItem } from '~/composables/useAutoReply'
+import { FOLLOW_BUTTON_MAX_CHARS } from '#layers/BaseShared/utils/auto-reply-limits'
 
 const props = withDefaults(defineProps<{
   open: boolean
@@ -64,6 +65,7 @@ const form = reactive({
   storyDmEnabled: false,
   followGate: false,
   followPromptTemplate: '',
+  followButtonLabel: '',
 })
 
 const isEditing = computed(() => !!props.campaign)
@@ -118,6 +120,7 @@ function resetForm() {
   form.storyDmEnabled = false
   form.followGate = false
   form.followPromptTemplate = ''
+  form.followButtonLabel = ''
 }
 
 function applyCampaign(campaign: AutoReplyCampaign) {
@@ -137,6 +140,7 @@ function applyCampaign(campaign: AutoReplyCampaign) {
   form.storyDmEnabled = !!campaign.storyDmEnabled
   form.followGate = !!campaign.followGate
   form.followPromptTemplate = campaign.followPromptTemplate || ''
+  form.followButtonLabel = campaign.followButtonLabel || ''
 }
 
 async function initialise() {
@@ -201,6 +205,7 @@ function buildPayload() {
     storyDmEnabled: form.storyDmEnabled,
     followGate: form.followGate,
     followPromptTemplate: form.followPromptTemplate.trim() || undefined,
+    followButtonLabel: form.followButtonLabel.trim() || undefined,
     enabled: props.campaign?.enabled ?? true,
     mode: form.aiMode ? 'ai' as const : 'template' as const,
   }
@@ -426,6 +431,9 @@ function formatMediaDate(iso: string | undefined) {
           </div>
           <UFormField v-if="form.followGate" v-motion-fade :duration="150" :label="t('follow_prompt')" name="followPrompt" :help="t('follow_prompt_hint')">
             <UInput v-model="form.followPromptTemplate" class="w-full" />
+          </UFormField>
+          <UFormField v-if="form.followGate" v-motion-fade :duration="150" :label="t('follow_button')" name="followButton" :help="t('follow_button_hint')">
+            <UInput v-model="form.followButtonLabel" class="w-full" :placeholder="t('follow_button_placeholder')" :maxlength="FOLLOW_BUTTON_MAX_CHARS" />
           </UFormField>
         </section>
 

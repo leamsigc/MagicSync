@@ -14,6 +14,7 @@ import { fetchClientMetadataResource } from "@better-auth/cimd/node"
 import * as schema from '#layers/BaseDB/db/schema'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
 import { logAuditService } from '#layers/BaseDB/server/services/auditLog.service'
+import { exchangeThreadsLongLivedToken } from '#layers/BaseDB/server/utils/threads-token'
 
 // Google OIDC profiles carry `given_name` / `family_name` / `name` — never our
 // `firstName` / `lastName` additionalFields. Map them so social sign-ups and
@@ -53,6 +54,65 @@ export async function fetchSnapchatProfile(accessToken: string): Promise<Snapcha
     ignoreResponseError: true,
   })
   return response?.data?.me ?? null
+}
+
+export interface ThreadsProfile {
+  id: string
+  username: string
+  threads_profile_picture_url?: string
+}
+
+export async function fetchThreadsProfile(accessToken: string): Promise<ThreadsProfile | null> {
+  const profile = await $fetch<ThreadsProfile>(
+    'https://graph.threads.net/v1.0/me?fields=id,username,threads_profile_picture_url',
+    {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      ignoreResponseError: true,
+    }
+  )
+  return profile?.id ? profile : null
+}
+
+async function linkThreadsAccount(
+  account: { id: string; accessToken: string | null },
+  user: schema.User,
+  actorUserId: string | undefined,
+) {
+  const shortLivedToken = account.accessToken ?? ''
+  const longLived = await exchangeThreadsLongLivedToken(
+    shortLivedToken,
+    process.env.NUXT_THREADS_CLIENT_SECRET as string,
+  )
+  if (!longLived) {
+    authLog.warn({ message: 'threads long-lived token exchange failed; storing the 1-hour token' })
+  }
+  const accessToken = longLived?.accessToken ?? shortLivedToken
+  const profile = await fetchThreadsProfile(accessToken)
+  if (!profile) {
+    authLog.error({ message: 'threads profile read failed after linking' })
+    return
+  }
+  await socialMediaAccountService.createOrUpdateAccountFromAuth({
+    id: profile.id,
+    name: profile.username,
+    access_token: accessToken,
+    picture: profile.threads_profile_picture_url ?? '',
+    username: profile.username,
+    platformId: 'threads',
+    user,
+    tokenExpiresAt: longLived?.expiresAt,
+  })
+  await logAuditService.logAuditEvent({
+    userId: actorUserId,
+    category: 'after:create',
+    action: 'AUTH_CREATE_SOCIAL_MEDIA',
+    targetType: 'threads',
+    targetId: account.id,
+    ipAddress: "",
+    userAgent: "",
+    status: 'success',
+    details: `threads_user_id=${profile.id} username=${profile.username} from THREADS`,
+  })
 }
 
 /**
@@ -681,21 +741,18 @@ export const auth = betterAuth({
           clientId: process.env.NUXT_THREADS_CLIENT_ID as string,
           clientSecret: process.env.NUXT_THREADS_CLIENT_SECRET as string,
           authorizationUrl: 'https://threads.net/oauth/authorize',
-          tokenUrl: 'https://api.threads.net/oauth/access_token',
+          // `api.threads.net` has NO DNS record — every token exchange threw
+          // and surfaced as `invalid_code`. The exchange endpoint lives on the
+          // Graph host (same host the getUserInfo call below already uses).
+          tokenUrl: 'https://graph.threads.net/oauth/access_token',
           // Threads is plain OAuth2 (no OIDC id_token), so Better Auth cannot
           // build a profile from the token alone. Without getUserInfo /
           // userInfoUrl the callback fails with UNABLE_TO_GET_USER_INFO and NO
           // `account` row is created — which also means the account.create hook
           // below never runs, so the social media account is never created.
           getUserInfo: async (tokens) => {
-            const profile = await $fetch<{ id: string, username: string, threads_profile_picture_url?: string }>(
-              'https://graph.threads.net/v1.0/me?fields=id,username,threads_profile_picture_url',
-              {
-                headers: { Authorization: `Bearer ${tokens.accessToken}` },
-                ignoreResponseError: true
-              }
-            );
-            if (!profile?.id) return null;
+            const profile = await fetchThreadsProfile(tokens.accessToken)
+            if (!profile) return null
             return {
               ...profile,
               id: profile.id,
@@ -814,37 +871,11 @@ export const auth = betterAuth({
           try {
             const user = await socialMediaAccountService.getUserByAccountId(account.userId);
             if (account.providerId === "threads") {
-              //Get user information then create SocialMedia from the user details
-              // Token in the Authorization header, not the query string — query
-              // strings end up in access logs, proxies, and error reports.
-              const { id, username, threads_profile_picture_url } = await $fetch<{ id: string, username: string, threads_profile_picture_url: string }>(
-                'https://graph.threads.net/v1.0/me?fields=id,username,threads_profile_picture_url',
-                { headers: { Authorization: `Bearer ${account.accessToken}` } },
-              );
-
-
-              await socialMediaAccountService.createOrUpdateAccountFromAuth({
-                id: id,
-                name: username,
-                access_token: account.accessToken as string,
-                picture: threads_profile_picture_url,
-                username: username,
-                platformId: 'threads',
-                user: user as schema.User
-              });
-              await logAuditService.logAuditEvent({
-                userId: ctx?.context.session?.user.id,
-                category: 'after:create',
-                action: 'AUTH_CREATE_SOCIAL_MEDIA',
-                targetType: 'threads',
-                targetId: account.id,
-                ipAddress: "",
-                userAgent: "",
-                status: 'success',
-                // SAFE: only log non-sensitive profile fields, never tokens or full account object
-                details: `threads_user_id=${id} username=${username} from THREADS`,
-              })
-
+              await linkThreadsAccount(
+                account,
+                user as schema.User,
+                ctx?.context.session?.user.id,
+              )
               return;
             }
             if (account.providerId === "instagram") {

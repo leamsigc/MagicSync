@@ -120,6 +120,35 @@ function authorLabel(log: Record<string, any>): string {
   return log.authorName || String(log.authorId).slice(0, 6)
 }
 
+const KNOWN_REASONS = new Set([
+  'keyword', 'ai', 'follow_verified', 'story_dm', 'inbound_dm',
+  'dup', 'self', 'cooldown', 'no_match', 'follow_gate',
+  'rate_limited_750', 'rate_limited_memory', 'follow_prompt_failed', 'send_failed',
+])
+
+function reasonSlug(reason: string): string | null {
+  const slug = String(reason || '').replaceAll('-', '_')
+  return KNOWN_REASONS.has(slug) ? slug : null
+}
+
+function reasonLabel(reason: string): string {
+  const slug = reasonSlug(reason)
+  return slug ? t(`reason_${slug}`) : t('reason_unknown')
+}
+
+function reasonHelp(reason: string): string {
+  const slug = reasonSlug(reason)
+  return slug ? t(`reason_${slug}_help`) : t('reason_unknown_help')
+}
+
+function actionLabel(action: string): string {
+  return t(`log_action_${action}`)
+}
+
+function actionHelp(action: string): string {
+  return t(`log_action_help_${action}`)
+}
+
 function badgeColor(action: string): 'success' | 'warning' | 'error' | 'neutral' {
   if (action === 'sent') return 'success'
   if (action === 'skipped') return 'warning'
@@ -425,7 +454,10 @@ onMounted(() => {
               <UBadge :color="campaign.followGate ? 'warning' : 'neutral'" variant="subtle" size="xs">{{ t('follow_gate') }}: {{ campaign.followGate ? t('yes') : t('no') }}</UBadge>
               <UBadge :color="campaign.mode === 'ai' ? 'info' : 'neutral'" variant="subtle" size="xs">{{ t('ai_mode') }}: {{ campaign.mode === 'ai' ? t('yes') : t('no') }}</UBadge>
             </div>
-            <div v-if="campaign.followGate && campaign.followPromptTemplate" class="rounded-lg bg-amber-50 p-2 text-xs dark:bg-amber-950/30">{{ campaign.followPromptTemplate }}</div>
+            <div v-if="campaign.followGate && campaign.followPromptTemplate" class="rounded-lg bg-amber-50 p-2 text-xs dark:bg-amber-950/30">
+              <p>{{ campaign.followPromptTemplate }}</p>
+              <p v-if="campaign.followButtonLabel" class="mt-1 font-medium">[ {{ campaign.followButtonLabel }} ]</p>
+            </div>
           </div>
         </UCard>
       </div>
@@ -492,11 +524,22 @@ onMounted(() => {
           </template>
 
           <template #cell-action="{ row }">
-            <UBadge :color="badgeColor(row.action)" variant="subtle" size="xs">{{ row.action }}</UBadge>
+            <UTooltip :text="actionHelp(row.action)">
+              <UBadge :color="badgeColor(row.action)" variant="subtle" size="xs" class="cursor-help">{{ actionLabel(row.action) }}</UBadge>
+            </UTooltip>
           </template>
 
           <template #cell-reason="{ row }">
-            <span class="block max-w-[220px] truncate text-xs" :title="row.reason">{{ row.reason }}</span>
+            <UTooltip :content="{ side: 'left', align: 'center', collisionPadding: 16 }">
+              <template #content>
+                <p class="max-w-xs whitespace-normal text-pretty text-xs">{{ reasonHelp(row.reason) }}</p>
+                <p class="mt-1 max-w-xs break-words font-mono text-[10px] text-muted-foreground">{{ t('reason_raw', { code: row.reason }) }}</p>
+              </template>
+              <span class="flex w-fit max-w-[220px] cursor-help items-center gap-1 text-xs" tabindex="0">
+                <span class="truncate">{{ reasonLabel(row.reason) }}</span>
+                <UIcon name="i-lucide-info" class="size-3 shrink-0 text-dimmed" />
+              </span>
+            </UTooltip>
           </template>
 
           <template #empty>

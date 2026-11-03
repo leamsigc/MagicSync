@@ -224,6 +224,40 @@ export async function createPublishedPostFixture(
   return { postId, platformPostId }
 }
 
+export interface TestAutoReplyLog {
+  authorName: string
+  action: 'sent' | 'skipped' | 'failed'
+  reason: string
+  matchedKeyword?: string
+}
+
+export async function createAutoReplyLogFixture(campaignId: string, entries: TestAutoReplyLog[]): Promise<void> {
+  const base = Date.now()
+  const now = Math.floor(base / 1000)
+  for (const [index, entry] of entries.entries()) {
+    const at = new Date(base - index * 60_000).toISOString()
+    await getDb().execute({
+      sql: 'INSERT INTO entity_details (id, entity_id, entity_type, details, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
+      args: [
+        `e2e-log-${base}-${index}`,
+        `${campaignId}::${at}::e2e${index}`,
+        'autoreply_log',
+        JSON.stringify({
+          commentId: `e2e-comment-${index}`,
+          authorId: `e2e-user-${index}`,
+          authorName: entry.authorName,
+          matchedKeyword: entry.matchedKeyword,
+          action: entry.action,
+          reason: entry.reason,
+          at,
+        }),
+        now,
+        now,
+      ],
+    })
+  }
+}
+
 export interface TestAssets {
   ids: string[]
 }

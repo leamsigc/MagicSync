@@ -82,11 +82,23 @@ export interface WebhookMessageEvent {
   storyReply: boolean
   referral?: string
   isUserFollowBusiness?: boolean
+  postbackPayload?: string
   isEcho: boolean
   at: string
 }
 
 export type WebhookParsedEvent = WebhookCommentEvent | WebhookMessageEvent
+
+export const FOLLOW_GATE_PREFIX = 'followcheck:'
+
+export function followGatePayload(campaignId: string): string {
+  return `${FOLLOW_GATE_PREFIX}${campaignId}`
+}
+
+export function parseFollowGatePayload(payload: string | undefined): string | null {
+  if (!payload?.startsWith(FOLLOW_GATE_PREFIX)) return null
+  return payload.slice(FOLLOW_GATE_PREFIX.length) || null
+}
 
 function asRecord(v: unknown): Record<string, unknown> {
   return v && typeof v === 'object' ? (v as Record<string, unknown>) : {}
@@ -145,6 +157,7 @@ function parseMessagingItem(entryId: string, item: unknown, at: string): Webhook
     storyReply: Object.keys(replyTo).length > 0,
     referral: ref,
     isUserFollowBusiness: typeof followFlag === 'boolean' ? followFlag : undefined,
+    postbackPayload: asString(postback['payload']) || undefined,
     isEcho: false,
     at,
   }

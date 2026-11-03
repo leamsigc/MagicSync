@@ -12,7 +12,7 @@ import {
   type WebhookParsedEvent,
 } from '#layers/BaseScheduler/server/services/auto-reply-pure'
 
-export const META_WEBHOOK_FIELDS = ['comments', 'messages', 'story_mentions'] as const
+export const META_WEBHOOK_FIELDS = ['comments', 'messages', 'story_mentions', 'messaging_postbacks'] as const
 
 function constantTimeEquals(a: string, b: string): boolean {
   const left = Buffer.from(a)

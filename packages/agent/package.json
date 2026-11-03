@@ -21,6 +21,7 @@
     "@flue/runtime": "catalog:",
     "@local-monorepo/auth": "workspace:*",
     "@local-monorepo/db": "workspace:*",
+    "@local-monorepo/scheduler": "workspace:*",
     "@local-monorepo/shared": "workspace:*",
     "ai": "catalog:",
     "evlog": "catalog:",

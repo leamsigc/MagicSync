@@ -35,6 +35,8 @@ export const AGENT_TOOL_CATALOG: AgentToolInfo[] = [
   { name: 'publish', group: 'delivery', description: 'Publish an approved artifact through the publishing service.' },
   { name: 'create_post', group: 'delivery', description: 'Create a post row from an approved artifact.' },
   { name: 'bulk_schedule_posts', group: 'delivery', description: 'Schedule several posts at once, one per item, each to its own time.' },
+  { name: 'auto_reply_overview', group: 'delivery', description: 'List the business Instagram accounts and comment-to-DM campaigns, with posts, stats and logs on request.' },
+  { name: 'create_auto_reply_campaign', group: 'delivery', description: 'Create a comment-to-DM campaign: watch every or specific posts, match keywords, DM tracked links.' },
   { name: 'get_business_profile', group: 'board', description: 'Read the active business profile.' },
   { name: 'update_business_profile', group: 'board', description: 'Update the active business profile fields.' },
   { name: 'get_performance_stats', group: 'board', description: 'Read top-performing posts and metrics for the business.' },

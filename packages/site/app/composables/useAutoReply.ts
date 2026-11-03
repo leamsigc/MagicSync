@@ -23,6 +23,7 @@ export interface AutoReplyCampaign {
   storyDmEnabled?: boolean
   followGate: boolean
   followPromptTemplate?: string
+  followButtonLabel?: string
   enabled: boolean
   mode?: 'template' | 'ai'
   createdAt: string

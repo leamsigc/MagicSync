@@ -1,3 +1,4 @@
+import { FOLLOW_BUTTON_MAX_CHARS } from '#layers/BaseShared/utils/auto-reply-limits';
 import { parseJsonObject, toJsonString } from '#layers/BaseShared/utils/json';
 import type { PostResponse, GetCommentsResponse, GetConversationsResponse, ReplyCommentResponse, PlatformComment, PlatformConversation, PluginPostDetails, PluginSocialMediaAccount, PostInsight, PlatformStats } from '#layers/BaseDB/server/services/SchedulerPost.service';
 import { BaseSchedulerPlugin, createPostInsightsFallback, extractExternalPostId } from '#layers/BaseDB/server/services/SchedulerPost.service';
@@ -899,40 +900,144 @@ export class InstagramPlugin extends BaseSchedulerPlugin {
     }
   }
 
+  async getUserProfile(
+    socialMediaAccount: PluginSocialMediaAccount | Pick<SocialMediaAccount, 'accessToken'>,
+    igsid: string
+  ): Promise<{ follows: boolean | null; username: string | null }> {
+    const unknown = { follows: null, username: null };
+    try {
+      const token = (socialMediaAccount as { accessToken: string }).accessToken;
+      if (!token || !igsid) return unknown;
+      const params = new URLSearchParams({
+        access_token: token,
+        fields: 'is_user_follow_business,username',
+      });
+      const url = this._getGraphApiUrl(`${igsid}?${params.toString()}`);
+      const response = await fetch(url);
+      if (!response.ok) return unknown;
+      const data = (await response.json().catch(() => ({}))) as Record<string, unknown>;
+      return this.normalizeProfile(data);
+    } catch {
+      return unknown;
+    }
+  }
+
+  private normalizeProfile(data: Record<string, unknown>): { follows: boolean | null; username: string | null } {
+    return {
+      follows: typeof data.is_user_follow_business === 'boolean' ? data.is_user_follow_business : null,
+      username: typeof data.username === 'string' ? data.username : null,
+    };
+  }
+
+  private buttonMessage(text: string, buttonTitle: string, payload: string) {
+    return {
+      attachment: {
+        type: 'template',
+        payload: {
+          template_type: 'button',
+          text: text.slice(0, 640),
+          buttons: [{ type: 'postback', title: buttonTitle.slice(0, FOLLOW_BUTTON_MAX_CHARS), payload }],
+        },
+      },
+    };
+  }
+
+  private async sendButtonMessage(
+    socialMediaAccount: PluginSocialMediaAccount | Pick<SocialMediaAccount, 'accessToken' | 'accountId'>,
+    recipient: { comment_id: string } | { id: string },
+    text: string,
+    buttonTitle: string,
+    payload: string
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    try {
+      const token = (socialMediaAccount as { accessToken: string }).accessToken;
+      const igUserId = (socialMediaAccount as { accountId: string }).accountId;
+      if (!token || !igUserId) {
+        return { success: false, error: 'Missing access token or IG user id' };
+      }
+      const params = new URLSearchParams({ access_token: token });
+      const url = this._getGraphApiUrl(`${igUserId}/messages?${params.toString()}`);
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ recipient, message: this.buttonMessage(text, buttonTitle, payload) }),
+      });
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => '');
+        this.logPluginEvent('button-message-error', 'failure', `Error: ${errorText}`, payload);
+        return { success: false, error: errorText || `Meta API error ${response.status}` };
+      }
+      const data = (await response.json().catch(() => ({}))) as { message_id?: string };
+      return { success: true, messageId: data.message_id };
+    } catch (error) {
+      const msg = (error as Error).message || 'Failed to send button message';
+      this.logPluginEvent('button-message-error', 'failure', `Error: ${msg}`, payload);
+      return { success: false, error: msg };
+    }
+  }
+
+  async sendPrivateReplyWithButton(
+    socialMediaAccount: PluginSocialMediaAccount | Pick<SocialMediaAccount, 'accessToken' | 'accountId'>,
+    commentId: string,
+    text: string,
+    buttonTitle: string,
+    payload: string
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    return this.sendButtonMessage(socialMediaAccount, { comment_id: commentId }, text, buttonTitle, payload);
+  }
+
+  async sendDirectMessageWithButton(
+    socialMediaAccount: PluginSocialMediaAccount | Pick<SocialMediaAccount, 'accessToken' | 'accountId'>,
+    igsid: string,
+    text: string,
+    buttonTitle: string,
+    payload: string
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    return this.sendButtonMessage(socialMediaAccount, { id: igsid }, text, buttonTitle, payload);
+  }
+
   /**
-   * Send a private reply (comment-to-DM) via Instagram Graph API.
-   * POST /{comment-id}/private_replies?message={text}
-   * Requires instagram_manage_messages scope + IG Business/Creator account.
+   * Send a private reply (comment-to-DM) via the Instagram Messaging API.
+   *
+   * POST /{ig-user-id}/messages with `recipient.comment_id` — NOT
+   * `/{comment-id}/private_replies`. That edge only exists for Facebook Pages;
+   * on the Instagram API Meta answers "Unsupported post request. Object with ID
+   * '<comment>' does not exist…".
+   *
+   * Requires instagram_manage_messages (or the business equivalent) plus an
+   * IG Business/Creator account, and the comment must be < 7 days old.
    * Text-only API — tracked links are rendered inline as short URLs by the caller.
    * Never throws: returns { success:false } on Meta errors (24h window, self-comment, etc.).
    */
   async sendPrivateReply(
-    socialMediaAccount: PluginSocialMediaAccount | Pick<SocialMediaAccount, 'accessToken'>,
+    socialMediaAccount: PluginSocialMediaAccount | Pick<SocialMediaAccount, 'accessToken' | 'accountId'>,
     commentId: string,
     message: string
   ): Promise<{ success: boolean; messageId?: string; error?: string }> {
     try {
       const token = (socialMediaAccount as { accessToken: string }).accessToken;
-      if (!token) {
-        return { success: false, error: 'Missing access token' };
+      const igUserId = (socialMediaAccount as { accountId: string }).accountId;
+      if (!token || !igUserId || !commentId || !message?.trim()) {
+        return { success: false, error: 'accessToken, IG user id, commentId and message are required' };
       }
-      if (!commentId || !message?.trim()) {
-        return { success: false, error: 'commentId and message are required' };
-      }
-      const params = new URLSearchParams({
-        access_token: token,
-        message: message.slice(0, 1000),
+      const params = new URLSearchParams({ access_token: token });
+      const url = this._getGraphApiUrl(`${igUserId}/messages?${params.toString()}`);
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          recipient: { comment_id: commentId },
+          message: { text: message.slice(0, 1000) },
+        }),
       });
-      const url = this._getGraphApiUrl(`${commentId}/private_replies?${params.toString()}`);
-      const response = await fetch(url, { method: 'POST' });
       if (!response.ok) {
         const errorText = await response.text().catch(() => '');
         this.logPluginEvent('private-reply-error', 'failure', `Error: ${errorText}`, commentId);
         return { success: false, error: errorText || `Meta API error ${response.status}` };
       }
-      const data = (await response.json().catch(() => ({}))) as { id?: string };
-      this.emit('instagram:private-reply:sent', { commentId, messageId: data.id });
-      return { success: true, messageId: data.id };
+      const data = (await response.json().catch(() => ({}))) as { message_id?: string };
+      this.emit('instagram:private-reply:sent', { commentId, messageId: data.message_id });
+      return { success: true, messageId: data.message_id };
     } catch (error) {
       const msg = (error as Error).message || 'Failed to send private reply';
       this.logPluginEvent('private-reply-error', 'failure', `Error: ${msg}`, commentId);

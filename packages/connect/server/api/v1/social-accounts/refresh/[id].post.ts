@@ -1,12 +1,29 @@
 import { socialMediaAccountService, type SocialMediaPlatform } from "#layers/BaseDB/server/services/social-media-account.service"
+import type { SocialMediaAccount } from "#layers/BaseDB/db/schema"
 import { auth } from '#layers/BaseAuth/lib/auth'
 import { useAuthApi } from '#layers/BaseAuth/server/utils/useAuthApi'
 import { checkUserIsLogin } from "#layers/BaseAuth/server/utils/AuthHelpers"
-import { refreshFacebookPageToken, refreshInstagramPageToken } from '#layers/BaseDB/server/services/TokenRefresh.service'
+import { refreshFacebookPageToken, refreshInstagramPageToken, refreshThreadsToken } from '#layers/BaseDB/server/services/TokenRefresh.service'
 
 // NOTE: lives under /refresh/[id] and NOT /[id]/refresh — Nitro routes the
 // latter to [platform]/[id]/index.post.ts (fully-dynamic 2-segment route
 // shadows the static suffix), which made refresh unreachable (500s).
+
+function refreshedResponse(account: SocialMediaAccount, fresh: SocialMediaAccount | null) {
+  return {
+    success: true,
+    message: 'Access token refreshed successfully',
+    data: {
+      id: account.id,
+      platform: account.platform,
+      accountName: account.accountName,
+      isActive: fresh?.isActive ?? true,
+      lastSyncAt: fresh?.lastSyncAt ?? new Date(),
+      hasValidToken: true,
+    },
+  }
+}
+
 export default defineEventHandler(async (event) => {
   const log = useLogger(event)
   try {
@@ -74,18 +91,21 @@ export default defineEventHandler(async (event) => {
       }
       const fresh = await socialMediaAccountService.getAccountById(smAccount.id)
       log.info({ message: 'Access token refreshed', accountId, platform })
-      return {
-        success: true,
-        message: 'Access token refreshed successfully',
-        data: {
-          id: smAccount.id,
-          platform: smAccount.platform,
-          accountName: smAccount.accountName,
-          isActive: fresh?.isActive ?? true,
-          lastSyncAt: fresh?.lastSyncAt ?? new Date(),
-          hasValidToken: true
-        }
+      return refreshedResponse(smAccount, fresh)
+    }
+    if (platform === 'threads' && smAccount) {
+      const renewed = await refreshThreadsToken(smAccount)
+      if (renewed.error) {
+        log.error({ message: 'Token refresh failed', accountId, error: renewed.error })
+        await socialMediaAccountService.updateAccount(smAccount.id, { isActive: false })
+        throw createError({
+          statusCode: 400,
+          statusMessage: 'Failed to refresh tokens. Account may need to be reconnected.'
+        })
       }
+      const fresh = await socialMediaAccountService.getAccountById(smAccount.id)
+      log.info({ message: 'Access token refreshed', accountId, platform })
+      return refreshedResponse(smAccount, fresh)
     }
     if (platform === 'facebook' && smAccount) {
       const renewed = await refreshFacebookPageToken(user.id, smAccount.id, smAccount.accountId)
@@ -99,18 +119,7 @@ export default defineEventHandler(async (event) => {
       }
       const fresh = await socialMediaAccountService.getAccountById(smAccount.id)
       log.info({ message: 'Access token refreshed', accountId, platform })
-      return {
-        success: true,
-        message: 'Access token refreshed successfully',
-        data: {
-          id: smAccount.id,
-          platform: smAccount.platform,
-          accountName: smAccount.accountName,
-          isActive: fresh?.isActive ?? true,
-          lastSyncAt: fresh?.lastSyncAt ?? new Date(),
-          hasValidToken: true
-        }
-      }
+      return refreshedResponse(smAccount, fresh)
     }
 
     try {

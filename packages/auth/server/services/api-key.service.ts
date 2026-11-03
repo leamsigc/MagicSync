@@ -1,5 +1,8 @@
 import type { H3Event } from 'h3'
+import { and, eq, inArray } from 'drizzle-orm'
 import { auth } from '#layers/BaseAuth/lib/auth'
+import { apikey, businessProfiles, member, organization } from '#layers/BaseDB/db/schema'
+import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
 import { businessOrgService } from './business-org.service'
 import { useAuthApi } from '../utils/useAuthApi'
 
@@ -16,6 +19,8 @@ export interface ApiKeyContext {
    * the granted scope (mcp:read/mcp:full). Enforced by requireScope().
    */
   mcpScope?: 'read' | 'full'
+  metadata?: Record<string, unknown>
+  ownerUserId?: string
 }
 
 export interface ApiKeyVerificationResult {
@@ -45,13 +50,55 @@ export interface ApiKeyListItem {
   enabled: boolean
 }
 
-import { parseJsonObject } from '#layers/BaseShared/utils/json'
+import { parseJsonObject, toJsonString } from '#layers/BaseShared/utils/json'
 
-function parseConnectedPlatforms(raw?: string | null): string[] {
-  if (!raw) return []
-  const parsed = parseJsonObject(raw)
-  const list = parsed.connectedPlatforms
+function parseKeyMetadata(raw: unknown): Record<string, unknown> {
+  return raw ? parseJsonObject(toJsonString(raw)) : {}
+}
+
+function parseConnectedPlatforms(metadata: Record<string, unknown>): string[] {
+  const list = metadata.connectedPlatforms
   return Array.isArray(list) ? (list as string[]) : []
+}
+
+async function businessOwnerId(businessId: string): Promise<string | null> {
+  const [row] = await useDrizzle()
+    .select({ userId: businessProfiles.userId })
+    .from(businessProfiles)
+    .where(eq(businessProfiles.id, businessId))
+    .limit(1)
+  return row?.userId ?? null
+}
+
+async function hasBusinessAccess(userId: string, businessId: string): Promise<boolean> {
+  if (!userId) return false
+  const db = useDrizzle()
+  const [owned] = await db
+    .select({ id: businessProfiles.id })
+    .from(businessProfiles)
+    .where(and(eq(businessProfiles.id, businessId), eq(businessProfiles.userId, userId)))
+    .limit(1)
+  if (owned) return true
+  const memberships = await db
+    .select({ organizationId: member.organizationId })
+    .from(member)
+    .where(eq(member.userId, userId))
+  if (memberships.length === 0) return false
+  const orgs = await db
+    .select({ metadata: organization.metadata })
+    .from(organization)
+    .where(inArray(organization.id, memberships.map(entry => entry.organizationId)))
+  return orgs.some(org => parseKeyMetadata(org.metadata).businessId === businessId)
+}
+
+async function effectiveBusinessId(
+  metadata: Record<string, unknown>,
+  orgBusinessId: string | null,
+  ownerUserId: string | null
+): Promise<string | null> {
+  const requested = typeof metadata.businessId === 'string' ? metadata.businessId : null
+  if (!requested || !orgBusinessId || !ownerUserId) return orgBusinessId
+  return (await hasBusinessAccess(ownerUserId, requested)) ? requested : orgBusinessId
 }
 
 export const apiKeyService = {
@@ -84,7 +131,12 @@ export const apiKeyService = {
 
       const keyData = result.key
       const orgId = keyData.referenceId
-      const businessId = await businessOrgService.getBusinessIdFromOrg(orgId)
+      const metadata = parseKeyMetadata(keyData.metadata)
+      const orgBusinessId = await businessOrgService.getBusinessIdFromOrg(orgId)
+      const ownerUserId = orgBusinessId ? await businessOwnerId(orgBusinessId) : null
+
+      const userId = (keyData as { userId?: string }).userId ?? ""
+      const businessId = await effectiveBusinessId(metadata, orgBusinessId, ownerUserId)
 
       if (!businessId) {
         return {
@@ -96,10 +148,7 @@ export const apiKeyService = {
       // Inactive businesses keep full CLI and MCP access. isActive tracks
       // Google Business linkage only, never abuse, and rate limiting is
       // enforced by the better-auth apiKey plugin.
-      const connectedPlatforms = parseConnectedPlatforms(keyData.metadata)
-
-      // userId may be undefined for org-level keys
-      const userId = (keyData as { userId?: string }).userId ?? ""
+      const connectedPlatforms = parseConnectedPlatforms(metadata)
 
       return {
         success: true,
@@ -111,6 +160,8 @@ export const apiKeyService = {
           userId,
           connectedPlatforms,
           name: keyData.name,
+          metadata,
+          ownerUserId: ownerUserId ?? undefined,
         },
       }
     } catch {
@@ -157,6 +208,32 @@ export const apiKeyService = {
       }
     }
     return result
+  },
+
+  async switchBusiness(context: ApiKeyContext, targetBusinessId: string): Promise<ApiKeyVerificationResult> {
+    if (!context.metadata) {
+      return {
+        success: false,
+        error: { statusCode: 403, message: 'Business switching is only available for API-key MCP connections. OAuth connections are scoped to their grant.' }
+      }
+    }
+    const ownerUserId = context.ownerUserId ?? await businessOwnerId(context.businessId)
+    if (!ownerUserId || !(await hasBusinessAccess(ownerUserId, targetBusinessId))) {
+      return {
+        success: false,
+        error: { statusCode: 403, message: 'The key owner does not have access to that business.' }
+      }
+    }
+    try {
+      const metadata = { ...context.metadata, businessId: targetBusinessId }
+      await useDrizzle()
+        .update(apikey)
+        .set({ metadata: toJsonString(metadata), updatedAt: new Date() })
+        .where(eq(apikey.id, context.keyId))
+      return { success: true, context: { ...context, businessId: targetBusinessId, metadata } }
+    } catch {
+      return { success: false, error: { statusCode: 500, message: 'Failed to switch the API key business' } }
+    }
   },
 
   /**

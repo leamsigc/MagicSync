@@ -11,7 +11,7 @@ import { InstagramPlugin } from '#layers/BaseDB/server/services/plugins/instagra
 import { platformRateLimiter } from '#layers/BaseScheduler/server/services/RateLimiter.service'
 import { inboxService } from '#layers/BaseScheduler/server/services/Inbox.service'
 import { renewRowToken } from '#layers/BaseDB/server/services/TokenRefresh.service'
-import { hourBucketUtc as hourBucketUtcPure, isHttpsUrl as isHttpsUrlPure, matchKeywords as matchKeywordsPure, renderTemplate as renderTemplatePure, trackedUrl as trackedUrlPure, trimContacted as trimContactedPure, type WebhookCommentEvent, type WebhookMessageEvent } from '#layers/BaseScheduler/server/services/auto-reply-pure'
+import { hourBucketUtc as hourBucketUtcPure, isHttpsUrl as isHttpsUrlPure, matchKeywords as matchKeywordsPure, renderTemplate as renderTemplatePure, trackedUrl as trackedUrlPure, trimContacted as trimContactedPure, followGatePayload, parseFollowGatePayload, type WebhookCommentEvent, type WebhookMessageEvent } from '#layers/BaseScheduler/server/services/auto-reply-pure'
 
 export const AUTOREPLY_CAMPAIGN = 'autoreply_campaign'
 export const AUTOREPLY_STATE = 'autoreply_state'
@@ -26,6 +26,16 @@ const WATCHED_POST_CAP = 20
 const PROCESSED_CAP = 500
 const SEEN_DRAIN_CAP = 200
 const SEEN_MAX_AGE_DAYS = 7
+/**
+ * Meta's `is_user_follow_business` lags a brand-new follow (~20-70 s in
+ * OpenReply's measurements), and the gate's button invites an immediate tap, so
+ * a single `false` rejects people who did what was asked. Retried once.
+ */
+const FOLLOW_RECHECK_MS = 5000
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
 
 export interface AutoReplyLinkInput {
   label: string
@@ -50,6 +60,7 @@ export interface AutoReplyCampaign {
   storyDmEnabled?: boolean
   followGate: boolean
   followPromptTemplate?: string
+  followButtonLabel?: string
   enabled: boolean
   mode?: 'template' | 'ai'
   createdAt: string
@@ -429,6 +440,7 @@ export class AutoReplyService {
         storyDmEnabled: input.storyDmEnabled || false,
         followGate: input.followGate || false,
         followPromptTemplate: input.followPromptTemplate,
+        followButtonLabel: input.followButtonLabel,
         enabled: input.enabled !== false,
         mode: input.mode || 'template',
         createdAt: now,
@@ -737,11 +749,7 @@ export class AutoReplyService {
 
   private buildDmText(campaign: AutoReplyCampaign, username: string): string {
     const links = (campaign.linkIds || []).map((linkId) => trackedUrl(campaign.id, linkId))
-    let text = renderTemplate(campaign.dmTemplate, { username, links })
-    if (campaign.followGate && campaign.followPromptTemplate) {
-      text = `${text}\n\n${renderTemplate(campaign.followPromptTemplate, { username, links })}`
-    }
-    return text
+    return renderTemplate(campaign.dmTemplate, { username, links })
   }
 
   private async resolveAiText(campaign: AutoReplyCampaign, comment: PlatformComment, fallback: string): Promise<{ text: string; usedAi: boolean }> {
@@ -796,6 +804,10 @@ export class AutoReplyService {
       return { outcome: 'failed', reason: 'rate_limited_750' }
     }
     const plugin = this.instagramPlugin()
+    if (campaign.followGate) {
+      const gated = await this.promptFollowWhenNeeded(campaign, account, comment, plugin)
+      if (gated) return gated
+    }
     const fallback = this.buildDmText(campaign, comment.authorName || 'there')
     const resolved = await this.resolveAiText(campaign, comment, fallback)
     const sent = await plugin.sendPrivateReply(account, comment.id, resolved.text)
@@ -958,11 +970,12 @@ export class AutoReplyService {
     try {
       const db = useDrizzle()
       const [row] = await db
-        .select()
+        .select({ id: socialMediaAccounts.id })
         .from(socialMediaAccounts)
         .where(eq(socialMediaAccounts.accountId, providerAccountId))
         .limit(1)
-      return row || null
+      if (!row) return null
+      return socialMediaAccountService.getAccountById(row.id)
     } catch {
       return null
     }
@@ -1061,13 +1074,153 @@ export class AutoReplyService {
     if (campaign.followPromptTemplate) {
       return renderTemplate(campaign.followPromptTemplate, { username, links: [] })
     }
-    return `Hey ${username}! Please follow us first, then reply again and I'll send your link right over.`
+    return `Hey ${username}! Please follow us first, then tap the button below and I'll send your link right over.`
+  }
+
+  private followButton(campaign: AutoReplyCampaign): string {
+    return campaign.followButtonLabel?.trim() || "I'm following"
+  }
+
+  private async promptFollowWhenNeeded(
+    campaign: AutoReplyCampaign,
+    account: PluginSocialMediaAccount,
+    comment: PlatformComment,
+    plugin: InstagramPlugin,
+  ): Promise<{ outcome: 'skipped' | 'failed'; reason: string } | null> {
+    const profile = await this.followProfile(plugin, account, comment.authorId)
+    if (profile.follows === true) return null
+    const sent = await plugin.sendPrivateReplyWithButton(
+      account,
+      comment.id,
+      this.followPrompt(campaign, comment.authorName || 'there'),
+      this.followButton(campaign),
+      followGatePayload(campaign.id),
+    )
+    if (!sent.success) {
+      return { outcome: 'failed', reason: (sent.error || 'follow_prompt_failed').slice(0, 120) }
+    }
+    await this.bumpRateCount(account.id, hourBucketUtc())
+    return { outcome: 'skipped', reason: 'follow_gate' }
+  }
+
+  private async followProfile(
+    plugin: InstagramPlugin,
+    account: PluginSocialMediaAccount,
+    igsid: string | undefined,
+  ): Promise<{ follows: boolean | null; username: string | null }> {
+    if (!igsid) return { follows: null, username: null }
+    const first = await plugin.getUserProfile(account, igsid)
+    if (first.follows !== false) return first
+    await sleep(FOLLOW_RECHECK_MS)
+    return plugin.getUserProfile(account, igsid)
+  }
+
+  private async processFollowPostback(
+    ev: WebhookMessageEvent,
+    campaignId: string,
+    campaigns: AutoReplyCampaign[],
+  ): Promise<{ sent: number; skipped: number; failed: number }> {
+    const account = await this.findAccountByProviderId(ev.entryId)
+    if (!account || account.platform !== 'instagram') return { sent: 0, skipped: 1, failed: 0 }
+    const campaign = campaigns.find(
+      (c) => c.id === campaignId && c.socialAccountId === account.id && c.followGate,
+    )
+    if (!campaign) return { sent: 0, skipped: 1, failed: 0 }
+    const state = await this.readPostState(campaign.id, 'dm')
+    if (state.contactedUserIds.includes(ev.senderId)) return { sent: 0, skipped: 1, failed: 0 }
+    const plugin = this.instagramPlugin()
+    const profile = await this.followProfile(plugin, account, ev.senderId)
+    const username = profile.username || ev.senderId
+    if (profile.follows !== true) return this.repromptFollow(campaign, account, ev, plugin, username)
+    return this.deliverGatedLink(campaign, account, ev, state, plugin, username)
+  }
+
+  private async repromptFollow(
+    campaign: AutoReplyCampaign,
+    account: PluginSocialMediaAccount,
+    ev: WebhookMessageEvent,
+    plugin: InstagramPlugin,
+    username: string,
+  ): Promise<{ sent: number; skipped: number; failed: number }> {
+    const sent = await plugin.sendDirectMessageWithButton(
+      account,
+      ev.senderId,
+      this.followPrompt(campaign, username),
+      this.followButton(campaign),
+      followGatePayload(campaign.id),
+    )
+    await this.writeLog(campaign.id, {
+      commentId: ev.mid || ev.senderId,
+      authorId: ev.senderId,
+      authorName: ev.senderId,
+      matchedKeyword: 'follow_gate',
+      action: sent.success ? 'skipped' : 'failed',
+      reason: 'follow_gate',
+      at: new Date().toISOString(),
+    })
+    if (!sent.success) return { sent: 0, skipped: 0, failed: 1 }
+    await this.bumpRateCount(account.id, hourBucketUtc())
+    return { sent: 0, skipped: 1, failed: 0 }
+  }
+
+  private async deliverGatedLink(
+    campaign: AutoReplyCampaign,
+    account: PluginSocialMediaAccount,
+    ev: WebhookMessageEvent,
+    state: CampaignState,
+    plugin: InstagramPlugin,
+    username: string,
+  ): Promise<{ sent: number; skipped: number; failed: number }> {
+    const gate = await this.checkRateLimit(campaign, account.id)
+    if (!gate.ok) {
+      await this.writeLog(campaign.id, {
+        commentId: ev.mid || ev.senderId,
+        authorId: ev.senderId,
+        authorName: ev.senderId,
+        matchedKeyword: 'follow_gate',
+        action: 'failed',
+        reason: gate.reason,
+        at: new Date().toISOString(),
+      })
+      return { sent: 0, skipped: 0, failed: 1 }
+    }
+    const dm = await plugin.sendDirectMessage(account, ev.senderId, this.buildDmText(campaign, username))
+    markProcessed(state, ev.mid || `${ev.senderId}::follow`)
+    if (!state.contactedUserIds.includes(ev.senderId)) {
+      state.contactedUserIds = trimContacted([...state.contactedUserIds, ev.senderId])
+    }
+    await this.writePostState(campaign.id, 'dm', state)
+    if (!dm.success) {
+      await this.writeLog(campaign.id, {
+        commentId: ev.mid || ev.senderId,
+        authorId: ev.senderId,
+        authorName: ev.senderId,
+        matchedKeyword: 'follow_gate',
+        action: 'failed',
+        reason: (dm.error || 'send_failed').slice(0, 120),
+        at: new Date().toISOString(),
+      })
+      return { sent: 0, skipped: 0, failed: 1 }
+    }
+    await this.bumpRateCount(account.id, gate.bucket)
+    await this.writeLog(campaign.id, {
+      commentId: ev.mid || ev.senderId,
+      authorId: ev.senderId,
+      authorName: ev.senderId,
+      matchedKeyword: 'follow_gate',
+      action: 'sent',
+      reason: 'follow_verified',
+      at: new Date().toISOString(),
+    })
+    return { sent: 1, skipped: 0, failed: 0 }
   }
 
   private async processSeenMessage(
     ev: WebhookMessageEvent,
     campaigns: AutoReplyCampaign[],
   ): Promise<{ sent: number; skipped: number; failed: number }> {
+    const followCampaignId = parseFollowGatePayload(ev.postbackPayload)
+    if (followCampaignId) return this.processFollowPostback(ev, followCampaignId, campaigns)
     let sent = 0
     let skipped = 0
     let failed = 0
@@ -1104,7 +1257,13 @@ export class AutoReplyService {
       if (campaign.followGate && ev.isUserFollowBusiness === false) {
         markProcessed(state, dedupeKey)
         await this.writePostState(campaign.id, 'dm', state)
-        await plugin.sendDirectMessage(pluginAccount, ev.senderId, this.followPrompt(campaign, ev.senderId))
+        await plugin.sendDirectMessageWithButton(
+          pluginAccount,
+          ev.senderId,
+          this.followPrompt(campaign, ev.senderId),
+          this.followButton(campaign),
+          followGatePayload(campaign.id),
+        )
         await this.writeLog(campaign.id, {
           commentId: ev.mid || dedupeKey,
           authorId: ev.senderId,
@@ -1238,7 +1397,7 @@ export class AutoReplyService {
           continue
         }
         // Heal page-token rows before sending (same pattern as the AutoPost
-        // publish path): a mirrored user token makes private_replies fail
+        // publish path): a mirrored user token makes the private reply fail
         // with Meta 100/33. Renewal is a no-op for healthy rows and never
         // throws, so a failure here must not block processing.
         try {

@@ -5,6 +5,7 @@ import { createContentTools } from './content.tools'
 import { createDeliveryTools } from './delivery.tools'
 import { createGoalTools } from './goal.tools'
 import { createMediaTools } from './media.tools'
+import { createAutoReplyTools } from './autoreply.tools'
 import { createPythonTools } from './python.tools'
 import { createResearchTools } from './research.tools'
 import { createScrapegraphTools } from './scrapegraph.tools'
@@ -28,6 +29,7 @@ export function createAgentTools(ctx: AgentToolContext): ToolDefinition[] {
     ...createContentTools(ctx),
     ...createMediaTools(ctx),
     ...createDeliveryTools(ctx),
+    ...createAutoReplyTools(ctx),
     ...createWorkspaceTools(ctx),
     ...createTemplateTools(ctx),
     ...createPythonTools(ctx),

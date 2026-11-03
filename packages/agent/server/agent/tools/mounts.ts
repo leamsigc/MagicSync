@@ -30,10 +30,9 @@ export const TOOL_NOT_ALLOWED = 'TOOL_NOT_ALLOWED'
  *
  * Raised 7 → 8 so the chat orchestrator can own `bulk_schedule_posts` alongside
  * the four original tools: chat is the operator surface, and a bulk schedule is a
- * chat-first action. Still a small mount — a representative turn never sees the
- * 46-tool catalog.
+ * chat-first action.
  */
-export const MAX_TOOLS_PER_TURN = 8
+export const MAX_TOOLS_PER_TURN = 10
 
 /** Flue's own tools, offered on top of our mount. Never ours to gate. */
 export const FRAMEWORK_TOOL_NAMES = ['task', 'activate_skill'] as const
@@ -70,6 +69,8 @@ export const CHAT_AGENT_MOUNT: readonly string[] = [
   'schedule_post',
   'schedule_direct_posts',
   'bulk_schedule_posts',
+  'auto_reply_overview',
+  'create_auto_reply_campaign',
 ]
 
 /** Tools offered to the model for a mount of `ourTools` (framework included). */

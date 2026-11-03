@@ -3,6 +3,7 @@ import { socialMediaAccountService } from '#layers/BaseDB/server/services/social
 import type { ServiceResponse } from '#layers/BaseDB/server/services/types'
 import { SchedulerPost } from '#layers/BaseDB/server/services/SchedulerPost.service'
 import { FacebookPlugin } from '#layers/BaseDB/server/services/plugins/facebook.plugin'
+import { refreshThreadsLongLivedToken } from '#layers/BaseDB/server/utils/threads-token'
 
 /**
  * TokenRefresh service — provider-specific renewal that Better Auth can't
@@ -83,6 +84,30 @@ export async function refreshInstagramPageToken(
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
     return { success: false, error: message || 'Failed to refresh Instagram token' }
+  }
+}
+
+export async function refreshThreadsToken(
+  row: { id: string; accessToken?: string | null }
+): Promise<ServiceResponse<{ renewed: boolean }>> {
+  try {
+    if (!row.accessToken) {
+      return { success: false, error: 'No Threads access token stored — reconnect the account' }
+    }
+    const renewed = await refreshThreadsLongLivedToken(row.accessToken)
+    if (!renewed) {
+      return { success: false, error: 'Threads rejected the refresh — reconnect the account' }
+    }
+    await socialMediaAccountService.updateAccount(row.id, {
+      accessToken: renewed.accessToken,
+      tokenExpiresAt: renewed.expiresAt,
+      isActive: true,
+      lastSyncAt: new Date(),
+    })
+    return { success: true, data: { renewed: true } }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    return { success: false, error: message || 'Failed to refresh Threads token' }
   }
 }
 
