@@ -83,6 +83,7 @@ interface CampaignState {
   contactedUserIds: string[]
   /** Webhook/poll dedup: comment ids + message mids already acted on (FIFO). */
   processedCommentIds?: string[]
+  lastSeenCommentAt?: string
 }
 
 export const AUTO_REPLY_PRESETS: Array<{ key: string; name: string; keywords: string[]; dmTemplate: string; publicReplyTemplate: string }> = [
@@ -148,6 +149,11 @@ function trimProcessed(ids: string[] | undefined): string[] {
 
 function markProcessed(state: CampaignState, key: string): void {
   state.processedCommentIds = trimProcessed([...(state.processedCommentIds || []), key])
+}
+
+/** One follow prompt per comment, even when the poll or webhook re-reads it. */
+function markCommentPrompted(state: CampaignState, commentId: string): void {
+  markProcessed(state, commentId)
 }
 
 function parseDetails<T>(raw: unknown): T | null {
@@ -805,7 +811,7 @@ export class AutoReplyService {
     }
     const plugin = this.instagramPlugin()
     if (campaign.followGate) {
-      const gated = await this.promptFollowWhenNeeded(campaign, account, comment, plugin)
+      const gated = await this.promptFollowWhenNeeded(campaign, account, comment, plugin, state)
       if (gated) return gated
     }
     const fallback = this.buildDmText(campaign, comment.authorName || 'there')
@@ -920,9 +926,13 @@ export class AutoReplyService {
       }
       checked += comments.length
       let newestId = state.lastSeenCommentId
+      let newestAt = state.lastSeenCommentAt
       const internalPostId = await this.resolveInternalPostId(account.id, externalPostId)
       for (const comment of comments) {
-        if (state.lastSeenCommentId && comment.id === state.lastSeenCommentId) break
+        // Timestamp cursor, not "first in the list": Meta does not guarantee
+        // comment order, and an order-based cursor re-read every older comment
+        // on each poll (and re-prompted them).
+        if (this.isCommentSeen(state, comment)) continue
         await this.recordInboxComment({
           userId: campaign.userId,
           socialAccountId: account.id,
@@ -954,10 +964,14 @@ export class AutoReplyService {
             at: new Date().toISOString(),
           })
         }
-        if (!newestId) newestId = comment.id
+        if (!newestAt || (comment.createdAt && comment.createdAt > newestAt)) {
+          newestAt = comment.createdAt || newestAt
+          newestId = comment.id
+        }
       }
       await this.writePostState(campaign.id, externalPostId, {
         lastSeenCommentId: newestId || state.lastSeenCommentId,
+        lastSeenCommentAt: newestAt,
         lastCheckedAt: new Date().toISOString(),
         contactedUserIds: state.contactedUserIds,
         processedCommentIds: state.processedCommentIds,
@@ -1070,6 +1084,11 @@ export class AutoReplyService {
     return { sent, skipped, failed }
   }
 
+  private isCommentSeen(state: CampaignState, comment: PlatformComment): boolean {
+    if (state.lastSeenCommentAt && comment.createdAt) return comment.createdAt <= state.lastSeenCommentAt
+    return !!state.lastSeenCommentId && comment.id === state.lastSeenCommentId
+  }
+
   private followPrompt(campaign: AutoReplyCampaign, username: string): string {
     if (campaign.followPromptTemplate) {
       return renderTemplate(campaign.followPromptTemplate, { username, links: [] })
@@ -1086,6 +1105,7 @@ export class AutoReplyService {
     account: PluginSocialMediaAccount,
     comment: PlatformComment,
     plugin: InstagramPlugin,
+    state: CampaignState,
   ): Promise<{ outcome: 'skipped' | 'failed'; reason: string } | null> {
     const profile = await this.followProfile(plugin, account, comment.authorId)
     if (profile.follows === true) return null
@@ -1099,6 +1119,7 @@ export class AutoReplyService {
     if (!sent.success) {
       return { outcome: 'failed', reason: (sent.error || 'follow_prompt_failed').slice(0, 120) }
     }
+    markCommentPrompted(state, comment.id)
     await this.bumpRateCount(account.id, hourBucketUtc())
     return { outcome: 'skipped', reason: 'follow_gate' }
   }
@@ -1131,35 +1152,23 @@ export class AutoReplyService {
     const plugin = this.instagramPlugin()
     const profile = await this.followProfile(plugin, account, ev.senderId)
     const username = profile.username || ev.senderId
-    if (profile.follows !== true) return this.repromptFollow(campaign, account, ev, plugin, username)
+    if (profile.follows !== true) return this.logSkippedFollowTap(campaign, ev)
     return this.deliverGatedLink(campaign, account, ev, state, plugin, username)
   }
 
-  private async repromptFollow(
+  private async logSkippedFollowTap(
     campaign: AutoReplyCampaign,
-    account: PluginSocialMediaAccount,
     ev: WebhookMessageEvent,
-    plugin: InstagramPlugin,
-    username: string,
   ): Promise<{ sent: number; skipped: number; failed: number }> {
-    const sent = await plugin.sendDirectMessageWithButton(
-      account,
-      ev.senderId,
-      this.followPrompt(campaign, username),
-      this.followButton(campaign),
-      followGatePayload(campaign.id),
-    )
     await this.writeLog(campaign.id, {
       commentId: ev.mid || ev.senderId,
       authorId: ev.senderId,
       authorName: ev.senderId,
       matchedKeyword: 'follow_gate',
-      action: sent.success ? 'skipped' : 'failed',
+      action: 'skipped',
       reason: 'follow_gate',
       at: new Date().toISOString(),
     })
-    if (!sent.success) return { sent: 0, skipped: 0, failed: 1 }
-    await this.bumpRateCount(account.id, hourBucketUtc())
     return { sent: 0, skipped: 1, failed: 0 }
   }
 

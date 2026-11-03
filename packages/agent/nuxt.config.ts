@@ -25,7 +25,7 @@ function rawTextPlugin() {
 
 export default defineNuxtConfig({
   compatibilityDate: '2026-09-07',
-  extends: ['@local-monorepo/db', '@local-monorepo/auth', '@local-monorepo/scheduler'],
+  extends: ['@local-monorepo/db', '@local-monorepo/auth'],
   experimental: {
     viteEnvironmentApi: true,
     typescriptPlugin: true

@@ -507,9 +507,6 @@ importers:
       '@local-monorepo/db':
         specifier: workspace:*
         version: link:../db
-      '@local-monorepo/scheduler':
-        specifier: workspace:*
-        version: link:../scheduler
       '@local-monorepo/shared':
         specifier: workspace:*
         version: link:../shared
