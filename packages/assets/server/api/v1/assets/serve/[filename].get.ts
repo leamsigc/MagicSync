@@ -2,6 +2,7 @@ import { promises as fs } from 'node:fs'
 import { resolve, sep, basename } from 'node:path'
 import { assetService } from '#layers/BaseShared/server/services/asset.service'
 import { businessProfileService } from '#layers/BaseDB/server/services/business-profile.service'
+import { verifySignedAsset } from '#layers/BaseShared/server/utils/signed-url'
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event)
@@ -9,9 +10,18 @@ export default defineEventHandler(async (event) => {
 
 
   try {
-    // Get user from session
-    const user = await checkUserIsLogin(event)
-    log.set({ userId: user.id })
+    // Automation consumers (batch/MP4/webhook links) present an HMAC signature
+    // instead of a session. A valid, unexpired signature is full authorization.
+    const query = getQuery(event)
+    const signed = typeof query.expires === 'string' || typeof query.signature === 'string'
+    const signedValid = signed
+      && verifySignedAsset(getRequestURL(event).pathname, String(query.expires ?? ''), String(query.signature ?? ''))
+    if (signed && !signedValid) {
+      throw createError({ statusCode: 403, statusMessage: 'Invalid or expired signature' })
+    }
+
+    const user = signedValid ? null : await checkUserIsLogin(event)
+    if (user) log.set({ userId: user.id })
 
     const filename = getRouterParam(event, 'filename')
     log.set({ filename })
@@ -44,11 +54,11 @@ export default defineEventHandler(async (event) => {
 
     // Access control: the asset owner, or a member of the asset's business
     // organization (businessProfileService.findById handles owner + org-member).
-    const isOwner = asset.userId === user.id
-    const canAccessBusiness = asset.businessId
+    const isOwner = !!user && asset.userId === user.id
+    const canAccessBusiness = !!user && asset.businessId
       ? (await businessProfileService.findById(asset.businessId, user.id, event)).success
       : false
-    if (!isOwner && !canAccessBusiness) {
+    if (!signedValid && !isOwner && !canAccessBusiness) {
       throw createError({
         statusCode: 403,
         statusMessage: 'Forbidden'

@@ -99,6 +99,15 @@ const handleCreate = () => {
     isFormModalOpen.value = true
 }
 
+/** Reopen a stored studio design in the image editor. */
+const handleOpenInEditor = (template: Template) => {
+    navigateTo(`/tools/image-editor?designId=${encodeURIComponent(template.id)}`)
+}
+
+const handleNewDesign = () => {
+    navigateTo('/tools/image-editor')
+}
+
 const handleEdit = (template: Template) => {
     selectedTemplate.value = template
     isFormModalOpen.value = true
@@ -168,16 +177,24 @@ const visibilityColor = (template: Template): 'success' | 'neutral' =>
 
 const formatDate = (template: Template) => new Date(template.updatedAt).toLocaleDateString()
 
-const menuItems = (template: Template) => [[
-    { label: t('action_view'), icon: 'lucide:eye', onSelect: () => handleView(template) },
-    { label: t('action_edit'), icon: 'lucide:edit', onSelect: () => handleEdit(template) },
-    { label: t('action_delete'), icon: 'lucide:trash', color: 'error' as const, onSelect: () => handleDeleteClick(template) },
-]]
+const menuItems = (template: Template) => [
+    ...(template.type === 'IMAGES'
+        ? [[{ label: t('action_open'), icon: 'lucide:pen-tool', onSelect: () => handleOpenInEditor(template) }]]
+        : []),
+    [
+        { label: t('action_view'), icon: 'lucide:eye', onSelect: () => handleView(template) },
+        { label: t('action_edit'), icon: 'lucide:edit', onSelect: () => handleEdit(template) },
+        { label: t('action_delete'), icon: 'lucide:trash', color: 'error' as const, onSelect: () => handleDeleteClick(template) },
+    ],
+]
 </script>
 
 <template>
     <BaseCollectionPage :title="t('title')" :description="t('description')" back-to="">
         <template #actions>
+            <UButton icon="lucide:pen-tool" color="neutral" variant="outline" @click="handleNewDesign">
+                {{ t('open_editor') }}
+            </UButton>
             <UButton icon="lucide:plus" color="primary" @click="handleCreate">
                 {{ t('create_template') }}
             </UButton>
@@ -196,7 +213,7 @@ const menuItems = (template: Template) => [[
             <template #item="{ item }">
                 <CreateTemplateCard v-if="isCreateTile(item)" :type="TEMPLATE_TYPE" @create="handleCreate" />
                 <TemplateCard v-else :template="item.template" @view="handleView" @edit="handleEdit"
-                    @delete="handleDeleteClick" />
+                    @delete="handleDeleteClick" @open="handleOpenInEditor" />
             </template>
 
             <template #empty>

@@ -3,6 +3,19 @@ import { Canvas, IText, Rect, Circle, Triangle, PencilBrush, FabricImage, filter
 import { BaseFabricPlugin, FabricEditor, type FabricObjectWithName } from './FabricEditor';
 import { nextTick, toRaw } from 'vue';
 import type { CorePlugin } from './CorePlugin';
+import { fileToDataUrl } from '../../../../../shared/image-editor/file-to-data-url';
+
+const waitForVideo = (video: HTMLVideoElement): Promise<void> => new Promise((resolve) => {
+  let settled = false;
+  const done = () => {
+    if (settled) return;
+    settled = true;
+    resolve();
+  };
+  video.onloadeddata = done;
+  video.onerror = done;
+  setTimeout(done, 4000);
+});
 
 export class ToolsPlugin extends BaseFabricPlugin {
   static readonly pluginName = 'tools';
@@ -26,6 +39,7 @@ export class ToolsPlugin extends BaseFabricPlugin {
     'setPosition',
     'addImageLayerFromUrl',
     'addImageLayer',
+    'addVideoLayer',
     'applyImageAdjustment',
     'applyOpacity',
     'applyPresetFilter',
@@ -238,21 +252,69 @@ export class ToolsPlugin extends BaseFabricPlugin {
 
 
 
+  /** Center a new media layer in the frame and make it active. */
+  private placeMedia(canvas: Canvas, media: FabricImage) {
+    const frame = this.editor.globalSettings.value;
+    const width = media.width || 1;
+    const height = media.height || 1;
+    const fit = Math.min(1, frame.width / width, frame.height / height);
+    // Fabric v7 defaults to a centered origin; documents use 0-based top-left
+    // coordinates, so an imported image would otherwise sit half off-canvas.
+    media.set({
+      originX: 'left',
+      originY: 'top',
+      scaleX: fit,
+      scaleY: fit,
+      left: (frame.width - width * fit) / 2,
+      top: (frame.height - height * fit) / 2,
+    });
+    canvas.add(media);
+    canvas.setActiveObject(media);
+    canvas.requestRenderAll();
+  }
+
   async addImageLayerFromUrl(url: string) {
-    if (this.canvas) {
-      const fabricImage = await FabricImage.fromURL(url);
-      if (fabricImage) {
-        this.canvas?.add(fabricImage);
-        this.canvas?.setActiveObject(fabricImage);
-      }
-    }
+    const canvas = this.canvas;
+    if (!canvas) return;
+    const fabricImage = await FabricImage.fromURL(url, { crossOrigin: 'anonymous' });
+    if (!fabricImage) return;
+    this.placeMedia(canvas, fabricImage);
   }
 
   async addImageLayer(imageFile: File) {
-    if (this.canvas) {
-      const imageUrl = URL.createObjectURL(imageFile);
-      this.addImageLayerFromUrl(imageUrl);
-    }
+    const dataUrl = await fileToDataUrl(imageFile).catch(() => '');
+    if (dataUrl) await this.addImageLayerFromUrl(dataUrl);
+  }
+
+  /**
+   * Add a playable video layer. Fabric renders the live <video> element; the
+   * document stores `poster` as `src` so batch/server renders keep a still.
+   */
+  async addVideoLayer(url: string, poster?: string) {
+    const canvas = this.canvas;
+    if (!canvas || !url) return;
+    const video = document.createElement('video');
+    video.crossOrigin = 'anonymous';
+    video.muted = true;
+    video.loop = true;
+    video.playsInline = true;
+    video.autoplay = true;
+    video.preload = 'auto';
+    if (poster) video.poster = poster;
+    video.src = url;
+    await waitForVideo(video);
+    const width = video.videoWidth || 640;
+    const height = video.videoHeight || 360;
+    // Fabric reads `element.naturalWidth || element.width` as the source size.
+    // Videos have no naturalWidth, so mirror the frame size onto the element.
+    video.width = width;
+    video.height = height;
+    const media = new FabricImage(video, { width, height });
+    // Video pixels change every frame; object caching would freeze the first
+    // (often empty) cache canvas forever.
+    media.set({ videoUrl: url, poster: poster ?? '', objectCaching: false });
+    this.placeMedia(canvas, media);
+    video.play().catch(() => {});
   }
 
   applyImageAdjustment(

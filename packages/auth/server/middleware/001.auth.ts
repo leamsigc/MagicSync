@@ -23,6 +23,15 @@ const PUBLIC_API_PATHS = [
   '/api/v1/podcast/audio',
   '/api/v1/menu-board/public',
   '/api/v1/carousel/public',
+  // Design-studio template library: public reads are anonymous (free tools
+  // surface). Mutations and owned reads still call requireDesignAuth inside
+  // the handlers, so widening the prefix does not expose writes.
+  // Asset serving performs its own auth: a session owner/business check, or
+  // a valid HMAC signature for automation links (batch/MP4/webhooks).
+  '/api/v1/assets/serve',
+  '/api/v1/image-editor/designs',
+  '/api/v1/image-editor/google-fonts',
+  '/api/v1/image-editor/backgrounds',
   // OAuth failure landing (see packages/connect/server/api/v1/social-accounts/
   // oauth-error.get.ts). Better Auth redirects here with `?error=<code>`; it
   // reads only that code and redirects onward, so anonymous sign-in failures
@@ -45,7 +54,8 @@ function isPublicApiPath(path: string): boolean {
 }
 
 export default defineEventHandler(async (event) => {
-  const path = event.path ?? ''
+  // h3 exposes `event.path` including the query string; matching must use the pathname.
+  const path = (event.path ?? '').split('?')[0] ?? ''
   if (!path.startsWith('/api/')) return
   if (isPublicApiPath(path)) return
   if (matchesPrefix(path, API_KEY_PREFIX)) return

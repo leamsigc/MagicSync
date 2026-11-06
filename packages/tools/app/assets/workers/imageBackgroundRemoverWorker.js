@@ -50,15 +50,13 @@ self.onmessage = async (event) => {
         self.postMessage({ type: 'status', status: 'processing', progress: 0 });
         const { image } = payload;
 
-        let imageInput = image;
-        if (image instanceof File || image instanceof Blob) {
-          imageInput = URL.createObjectURL(image);
-        }
-        // Single input -> single RawImage (not an array)
-        const output = await extractor(imageInput);
+        // Pass the File/Blob straight to the pipeline. Turning it into an
+        // object URL makes transformers `fetch()` a blob:, which the app CSP
+        // blocks (`connect-src 'self' https: ...`). RawImage reads Blobs with
+        // createImageBitmap instead — no network, no CSP entry needed.
+        const output = await extractor(image);
         const cutout = Array.isArray(output) ? output[0] : output;
         const blob = await cutout.toBlob('image/png');
-        if (imageInput !== image && typeof imageInput === 'string') URL.revokeObjectURL(imageInput);
         const name = typeof image?.name === 'string' && image.name
           ? image.name.replace(/\.[^.]+$/, '') + '-no-bg.png'
           : 'no-background.png';

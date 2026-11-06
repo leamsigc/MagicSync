@@ -34,11 +34,12 @@ export function requireScope(mcp: ApiKeyContext, scope: 'read' | 'full'): void {
 
 /**
  * Resolve a writable userId for service calls. Org-level keys carry no userId,
- * and PostService scopes reads/writes by user — so fall back to the first
- * connected account owner for the key's business.
+ * and services scope reads/writes by user — so fall back to the business owner,
+ * then to the first connected account owner (older keys/businesses).
  */
 export async function resolveUserId(mcp: ApiKeyContext): Promise<string> {
   if (mcp.userId) return mcp.userId
+  if (mcp.ownerUserId) return mcp.ownerUserId
   const accounts = await socialMediaAccountService.getAccountsByBusinessId(mcp.businessId)
   const ownerId = accounts.find(a => a.userId)?.userId
   if (!ownerId) {

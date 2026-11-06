@@ -68,7 +68,10 @@ export const useTemplateManager = () => {
 
             const response = await $fetch<PaginatedResponse<Template>>(`/api/v1/templates?${query}`)
 
-            templateList.value[filters.type] = response.data ?? []
+            const rows = response.data ?? []
+            if (filters.type) {
+                templateList.value = { ...templateList.value, [filters.type]: rows }
+            }
             pagination.value = response.pagination ?? null
 
             return response
@@ -111,8 +114,10 @@ export const useTemplateManager = () => {
             })
 
             if (response.success && response.data) {
-                // Add to list
-                templateList.value = [response.data, ...templateList.value]
+                // Add to the type bucket (templateList is a record keyed by type)
+                const created = response.data
+                const bucket = templateList.value[created.type] ?? []
+                templateList.value = { ...templateList.value, [created.type]: [created, ...bucket] }
 
                 toast.add({
                     title: 'Success',
@@ -152,9 +157,10 @@ export const useTemplateManager = () => {
 
             if (response.success && response.data) {
                 // Update in list
-                const index = templateList.value[type].findIndex(t => t.id === id)
+                const bucket = templateList.value[type] ?? []
+                const index = bucket.findIndex(t => t.id === id)
                 if (index !== -1) {
-                    templateList.value[type][index] = response.data
+                    templateList.value = { ...templateList.value, [type]: bucket.map(row => row.id === id ? response.data : row) }
                 }
 
                 toast.add({
@@ -193,8 +199,12 @@ export const useTemplateManager = () => {
             })
 
             if (response.success) {
-                // Remove from list
-                templateList.value = templateList.value.filter(t => t.id !== id)
+                // Remove from every type bucket (record-vs-array fix)
+                const next: Record<string, Template[]> = {}
+                for (const [key, rows] of Object.entries(templateList.value)) {
+                    next[key] = (rows ?? []).filter(t => t.id !== id)
+                }
+                templateList.value = next as typeof templateList.value
 
                 toast.add({
                     title: 'Success',

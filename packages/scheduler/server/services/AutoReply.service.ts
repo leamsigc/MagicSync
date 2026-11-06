@@ -161,6 +161,41 @@ function parseDetails<T>(raw: unknown): T | null {
   return raw as T
 }
 
+interface StoredLinkRow {
+  entityId: string
+  details: unknown
+}
+
+/**
+ * A link row is the campaign's real link configuration: the editor and the
+ * click stats both read these rows, while `linkIds` on the campaign is only a
+ * cached index. Rows store `${campaignId}::${linkId}` as the entity id.
+ */
+function readLinkRow(row: StoredLinkRow): { id: string; label: string; target: string; clicks: number } {
+  const details = parseDetails<{ label?: string; target?: string; clicks?: number }>(row.details) || {}
+  return {
+    id: row.entityId.split('::')[1] || '',
+    label: details.label || '',
+    target: details.target || '',
+    clicks: details.clicks || 0,
+  }
+}
+
+/** link1 before link2, regardless of the row order the database returns. */
+function compareLinkIds(a: { id: string }, b: { id: string }): number {
+  return a.id.localeCompare(b.id)
+}
+
+function linkIdOf(entityId: string): string {
+  return entityId.split('::')[1] || ''
+}
+
+/** Editing a campaign must not reset the click count of an unchanged link. */
+function clicksFor(previous: { details: unknown } | undefined, target: string): number {
+  const before = previous ? parseDetails<{ target?: string; clicks?: number }>(previous.details) : null
+  return before?.target === target ? (before.clicks || 0) : 0
+}
+
 /**
  * The platform-native id a plugin stored on `publish_detail`. `platform_post_id`
  * is initialised with the platform *name*, so it is never the id to watch.
@@ -359,6 +394,12 @@ class AutoReplyStore {
       .where(and(eq(entityDetails.entityType, AUTOREPLY_LINK), like(entityDetails.entityId, `${campaignId}::%`)))
   }
 
+  async deleteLinkRow(entityId: string) {
+    await this.db
+      .delete(entityDetails)
+      .where(and(eq(entityDetails.entityType, AUTOREPLY_LINK), eq(entityDetails.entityId, entityId)))
+  }
+
   async insertLogRow(entityId: string, details: unknown) {
     await this.db.insert(entityDetails).values({ id: crypto.randomUUID(), entityId, entityType: AUTOREPLY_LOG, details: details as never })
   }
@@ -381,7 +422,10 @@ export class AutoReplyService {
         .map((r) => this.toCampaign(userId, r))
         .filter((c): c is AutoReplyCampaign => c !== null)
         .sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''))
-      return { success: true, data: campaigns }
+      // The list powers the edit dialog too. Without `links` the dialog opens
+      // empty and saving sends `links: []`, which wipes the campaign's links.
+      const enriched = await Promise.all(campaigns.map((campaign) => this.withLinks(campaign)))
+      return { success: true, data: enriched }
     } catch {
       return { success: false, error: 'Failed to list auto-reply campaigns' }
     }
@@ -403,14 +447,27 @@ export class AutoReplyService {
   private async withLinks(campaign: AutoReplyCampaign): Promise<AutoReplyCampaign> {
     try {
       const rows = await this.store.listLinkRows(campaign.id)
-      const links = rows.map((r) => {
-        const d = parseDetails<{ label: string; target: string; clicks: number }>(r.details) || { label: '', target: '', clicks: 0 }
-        return { id: r.entityId.split('::')[1] || r.entityId, label: d.label, target: d.target, clicks: d.clicks || 0 }
-      })
+      const links = rows.map(readLinkRow).sort(compareLinkIds).map(({ id, label, target, clicks }) => ({ id, label, target, clicks }))
       return { ...campaign, links }
     } catch {
       return campaign
     }
+  }
+
+  /**
+   * URLs for `{link1}` / `{link2}`. The stored link rows win over the cached
+   * `linkIds`, so a campaign saved by an older editor (which sent an empty
+   * `links` array and wiped `linkIds`) still delivers the configured link.
+   */
+  private async resolveLinkUrls(campaign: AutoReplyCampaign): Promise<string[]> {
+    try {
+      const rows = await this.store.listLinkRows(campaign.id)
+      const configured = rows.map(readLinkRow).filter((link) => !!link.id && !!link.target).sort(compareLinkIds)
+      if (configured.length > 0) return configured.map((link) => trackedUrl(campaign.id, link.id))
+    } catch {
+      // Fall back to the cached ids if the link rows cannot be read.
+    }
+    return (campaign.linkIds || []).map((linkId) => trackedUrl(campaign.id, linkId))
   }
 
   private validateLinks(links: AutoReplyLinkInput[]): string | null {
@@ -463,10 +520,18 @@ export class AutoReplyService {
   }
 
   private async saveLinks(campaignId: string, links: AutoReplyLinkInput[]) {
+    const existing = await this.store.listLinkRows(campaignId)
+    const keep = new Set(links.map((_, i) => `link${i + 1}`))
+    for (const row of existing) {
+      if (!keep.has(linkIdOf(row.entityId))) await this.store.deleteLinkRow(row.entityId)
+    }
+    const previousById = new Map(existing.map((row) => [linkIdOf(row.entityId), row]))
     for (let i = 0; i < links.length; i++) {
       const link = links[i]
       if (!link) continue
-      await this.store.saveLinkRow(`${campaignId}::link${i + 1}`, { label: link.label, target: link.target, clicks: 0 })
+      const linkId = `link${i + 1}`
+      const clicks = clicksFor(previousById.get(linkId), link.target)
+      await this.store.saveLinkRow(`${campaignId}::${linkId}`, { label: link.label, target: link.target, clicks })
     }
   }
 
@@ -753,32 +818,46 @@ export class AutoReplyService {
     }
   }
 
-  private buildDmText(campaign: AutoReplyCampaign, username: string): string {
-    const links = (campaign.linkIds || []).map((linkId) => trackedUrl(campaign.id, linkId))
+  private buildDmText(campaign: AutoReplyCampaign, username: string, links: string[]): string {
     return renderTemplate(campaign.dmTemplate, { username, links })
   }
 
-  private async resolveAiText(campaign: AutoReplyCampaign, comment: PlatformComment, fallback: string): Promise<{ text: string; usedAi: boolean }> {
+  private aiPrompt(campaign: AutoReplyCampaign, comment: PlatformComment, links: string[]): string {
+    const allowedUrls = links.length > 0
+      ? `The only URLs allowed in the reply are these tracked short links:\n${links.map((url, index) => `- {link${index + 1}} → ${url}`).join('\n')}`
+      : 'There is no link to send. Answer the comment directly.'
+    return [
+      `The person commented: "${(comment.text || '').slice(0, 500)}"`,
+      `Their username: ${comment.authorName || 'unknown'}`,
+      `Trigger keywords: ${(campaign.keywords || []).join(', ')}`,
+      `Template to improve (keep its intent and the placeholders): ${campaign.dmTemplate}`,
+      allowedUrls,
+      'Write the DM text only.',
+    ].join('\n')
+  }
+
+  private aiText(cleaned: string, fallback: string, username: string, links: string[]): { text: string; usedAi: boolean } {
+    if (!cleaned) return { text: fallback, usedAi: false }
+    return { text: renderTemplate(cleaned, { username, links }), usedAi: true }
+  }
+
+  private async resolveAiText(
+    campaign: AutoReplyCampaign,
+    comment: PlatformComment,
+    fallback: string,
+    links: string[],
+  ): Promise<{ text: string; usedAi: boolean }> {
     if (campaign.mode !== 'ai') return { text: fallback, usedAi: false }
     try {
-      const links = (campaign.linkIds || []).map((linkId) => trackedUrl(campaign.id, linkId))
       const { text } = await schedulerUnifiedAI.generateText({
         systemPrompt: AUTO_REPLY_AI_SYSTEM_PROMPT,
-        prompt: [
-          `The person commented: "${(comment.text || '').slice(0, 500)}"`,
-          `Their username: ${comment.authorName || 'unknown'}`,
-          `Trigger keywords: ${(campaign.keywords || []).join(', ')}`,
-          `Template to improve (keep its intent and the placeholders): ${campaign.dmTemplate}`,
-          links.length > 0
-            ? `The only URLs allowed in the reply are these tracked short links:\n${links.map((url, index) => `- {link${index + 1}} → ${url}`).join('\n')}`
-            : 'There is no link to send. Answer the comment directly.',
-          'Write the DM text only.',
-        ].join('\n'),
+        prompt: this.aiPrompt(campaign, comment, links),
         temperature: 0.6,
         userId: campaign.userId,
       })
-      const cleaned = cleanAiText(text)
-      return cleaned ? { text: cleaned, usedAi: true } : { text: fallback, usedAi: false }
+      // The prompt asks the model to keep the placeholders, but a model that
+      // drops `{link1}` would ship a DM with no link. Render whatever survived.
+      return this.aiText(cleanAiText(text), fallback, comment.authorName || 'there', links)
     } catch {
       return { text: fallback, usedAi: false }
     }
@@ -814,8 +893,9 @@ export class AutoReplyService {
       const gated = await this.promptFollowWhenNeeded(campaign, account, comment, plugin, state)
       if (gated) return gated
     }
-    const fallback = this.buildDmText(campaign, comment.authorName || 'there')
-    const resolved = await this.resolveAiText(campaign, comment, fallback)
+    const links = await this.resolveLinkUrls(campaign)
+    const fallback = this.buildDmText(campaign, comment.authorName || 'there', links)
+    const resolved = await this.resolveAiText(campaign, comment, fallback, links)
     const sent = await plugin.sendPrivateReply(account, comment.id, resolved.text)
     if (!sent.success) {
       return { outcome: 'failed', reason: (sent.error || 'send_failed').slice(0, 120) }
@@ -1193,7 +1273,8 @@ export class AutoReplyService {
       })
       return { sent: 0, skipped: 0, failed: 1 }
     }
-    const dm = await plugin.sendDirectMessage(account, ev.senderId, this.buildDmText(campaign, username))
+    const links = await this.resolveLinkUrls(campaign)
+    const dm = await plugin.sendDirectMessage(account, ev.senderId, this.buildDmText(campaign, username, links))
     markProcessed(state, ev.mid || `${ev.senderId}::follow`)
     if (!state.contactedUserIds.includes(ev.senderId)) {
       state.contactedUserIds = trimContacted([...state.contactedUserIds, ev.senderId])
@@ -1299,10 +1380,11 @@ export class AutoReplyService {
         })
         continue
       }
-      const fallback = this.buildDmText(campaign, ev.senderId)
+      const links = await this.resolveLinkUrls(campaign)
+      const fallback = this.buildDmText(campaign, ev.senderId, links)
       const resolved = await this.resolveAiText(campaign, {
         id: dedupeKey, text: ev.text, authorName: ev.senderId, authorId: ev.senderId, createdAt: ev.at,
-      }, fallback)
+      }, fallback, links)
       const dm = await plugin.sendDirectMessage(pluginAccount, ev.senderId, resolved.text)
       markProcessed(state, dedupeKey)
       if (!state.contactedUserIds.includes(ev.senderId)) {

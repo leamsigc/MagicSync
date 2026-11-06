@@ -2,8 +2,8 @@
     "en": {
         "seo_title": "Image Templates",
         "seo_description": "Manage your image templates",
-        "title": "Image Templates",
-        "description": "Create and manage reusable image templates for your visual content",
+        "title": "My Designs",
+        "description": "Browse your saved designs and reopen them in the design studio",
         "create_template": "Create Image Template",
         "no_templates": "No image templates yet",
         "create_first": "Create your first image template to get started",
@@ -17,13 +17,15 @@
         "actions": "Actions",
         "action_view": "View",
         "action_edit": "Edit",
-        "action_delete": "Delete"
+        "action_delete": "Delete",
+        "action_open": "Open in editor",
+        "open_editor": "New design"
     },
     "es": {
         "seo_title": "Plantillas de Imágenes",
         "seo_description": "Gestiona tus plantillas de imágenes",
-        "title": "Plantillas de Imágenes",
-        "description": "Crea y gestiona plantillas de imágenes reutilizables para tu contenido visual",
+        "title": "Mis diseños",
+        "description": "Explora tus diseños guardados y vuelve a abrirlos en el estudio de diseño",
         "create_template": "Crear Plantilla de Imagen",
         "no_templates": "Aún no hay plantillas de imágenes",
         "create_first": "Crea tu primera plantilla de imagen para comenzar",
@@ -37,13 +39,15 @@
         "actions": "Acciones",
         "action_view": "Ver",
         "action_edit": "Editar",
-        "action_delete": "Eliminar"
+        "action_delete": "Eliminar",
+        "action_open": "Abrir en el editor",
+        "open_editor": "Nuevo diseño"
     },
     "de": {
         "seo_title": "Bildvorlagen",
         "seo_description": "Verwalten Sie Ihre Bildvorlagen",
-        "title": "Bildvorlagen",
-        "description": "Erstellen und verwalten Sie wiederverwendbare Bildvorlagen für Ihre visuellen Inhalte",
+        "title": "Meine Designs",
+        "description": "Durchsuche deine gespeicherten Designs und öffne sie im Design-Studio",
         "create_template": "Bildvorlage erstellen",
         "no_templates": "Noch keine Bildvorlagen",
         "create_first": "Erstellen Sie Ihre erste Bildvorlage, um zu beginnen",
@@ -57,13 +61,15 @@
         "actions": "Aktionen",
         "action_view": "Ansehen",
         "action_edit": "Bearbeiten",
-        "action_delete": "Löschen"
+        "action_delete": "Löschen",
+        "action_open": "Im Editor öffnen",
+        "open_editor": "Neues Design"
     },
     "fr": {
         "seo_title": "Modèles d'Images",
         "seo_description": "Gérez vos modèles d'images",
-        "title": "Modèles d'Images",
-        "description": "Créez et gérez des modèles d'images réutilisables pour votre contenu visuel",
+        "title": "Mes designs",
+        "description": "Parcourez vos designs enregistrés et rouvrez-les dans le studio de design",
         "create_template": "Créer un Modèle d'Image",
         "no_templates": "Pas encore de modèles d'images",
         "create_first": "Créez votre premier modèle d'image pour commencer",
@@ -77,6 +83,8 @@
         "actions": "Actions",
         "action_view": "Voir",
         "action_edit": "Modifier",
-        "action_delete": "Supprimer"
+        "action_delete": "Supprimer",
+        "action_open": "Ouvrir dans l’éditeur",
+        "open_editor": "Nouveau design"
     }
 }

@@ -67,7 +67,7 @@ const defaultState: EditorStateSchema = {
         height: 1660,
         backgroundColor: '#ffffff',
         zoom: 1,
-        fill: '#1DA1F2',
+        fill: '#ffffff',
         stroke: '#cccccc',
         strokeWidth: 1,
     },

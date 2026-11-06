@@ -20,6 +20,7 @@ const emit = defineEmits<{
     edit: [template: Template]
     delete: [template: Template]
     view: [template: Template]
+    open: [template: Template]
 }>()
 
 const typeIcons: Record<string, string> = {
@@ -45,7 +46,14 @@ const truncatedContent = computed(() => {
     return content.length > 100 ? content.substring(0, 100) + '...' : content
 })
 
-const editorOptions = [
+const editorOptions = computed(() => [
+    ...(props.template.type === 'IMAGES'
+        ? [[{
+            label: 'Open in editor',
+            icon: 'lucide:pen-tool',
+            onSelect: () => emit('open', props.template)
+        }]]
+        : []),
     [{
         label: 'Edit',
         icon: 'lucide:edit',
@@ -57,7 +65,7 @@ const editorOptions = [
         color: 'error' as const,
         onSelect: () => emit('delete', props.template)
     }]
-];
+]);
 </script>
 
 <template>

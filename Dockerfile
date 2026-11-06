@@ -57,6 +57,11 @@ RUN pnpm dev:prepare
 # the site build. The asset directory is .gitignored to keep pushes small.
 RUN bash ./scripts/tts_assets_folder.sh
 
+# Bundled design-studio fonts (13 families) into the node-render asset dir and
+# packages/site/public/fonts — same .gitignored pattern as TTS assets, fetched
+# before the site build so the editor's /fonts/<family>/<file> URLs resolve.
+RUN node packages/tools/scripts/download-fonts.mjs
+
 # Pinned yt-dlp musllinux binary + sha256 verification (small). Copied into
 # the runtime image below. Consumed by two server routes: the `download_video`
 # agent tool (which persists the result) and GET /api/v1/media/video-download

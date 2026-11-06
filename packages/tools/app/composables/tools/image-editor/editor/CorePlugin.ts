@@ -90,11 +90,20 @@ export class CorePlugin extends BaseFabricPlugin {
       height,
       id: 'workspace',
       strokeWidth: 0,
+      // Fabric v7 defaults to centered origin; documents use 0-based
+      // coordinates, so the frame must start at (0,0) or clipPath cuts content.
+      originX: 'left',
+      originY: 'top',
+      left: 0,
+      top: 0,
     });
     workspace.set('selectable', false);
     workspace.set('hasControls', false);
     workspace.hoverCursor = 'default';
     this.canvas.add(workspace);
+    // The frame must sit behind every design object; re-creating it after a
+    // template load otherwise paints the page background over the content.
+    this.canvas.sendObjectToBack(workspace);
     this.canvas.renderAll();
 
     this.workspace = workspace;
@@ -179,7 +188,11 @@ export class CorePlugin extends BaseFabricPlugin {
   }
 
   _getScale() {
-    return util.findScaleToFit(this.getWorkspace(), {
+    const workspace = this.getWorkspace();
+    // The observer can fire once more while the editor tears down, after the
+    // canvas objects are gone. Treat that as "nothing to fit".
+    if (!workspace) return 0;
+    return util.findScaleToFit(workspace, {
       width: this.workspaceEl.offsetWidth,
       height: this.workspaceEl.offsetHeight,
     });
@@ -225,7 +238,7 @@ export class CorePlugin extends BaseFabricPlugin {
   }
 
   override onDestroy() {
-    // this.resizeObserver.disconnect();
+    this.resizeObserver?.disconnect();
     this.canvas.off(); // Disconnect all canvas events
     log.debug({ message: 'CorePlugin destroyed' });
   }

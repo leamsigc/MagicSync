@@ -3,21 +3,47 @@
 <script lang="ts" setup>
 import { ref, computed } from 'vue';
 import { useFabricJs } from '../../../composables/tools/image-editor/useFabricJs';
+import StudioVariablesPanel from './StudioVariablesPanel.vue';
+import StudioShapesPanel from './StudioShapesPanel.vue';
+import StudioStockPanel from './StudioStockPanel.vue';
+import StudioFontsPanel from './StudioFontsPanel.vue';
+import StudioTimelinePanel from './StudioTimelinePanel.vue';
+import StudioTemplatesPanel from './StudioTemplatesPanel.vue';
+import StudioResizePanel from './StudioResizePanel.vue';
+import StudioDesignPanel from './StudioDesignPanel.vue';
+import StudioColorField from './StudioColorField.vue';
+import StudioBackgroundPanel from './StudioBackgroundPanel.vue';
 
 const { t } = useI18n();
 const toast = useToast();
 const {
   editor,
+  sidebarTab: activeTab,
 } = useFabricJs();
-
-// --- STATE ---
-const activeTab = ref('layers'); // layers | shapes-alias(elements) | text | uploads | templates
 
 // --- LAYERS LOGIC ---
 const layers = ref<any[]>([]);
 
 const updateLayers = () => {
-  layers.value = editor.value && (editor.value as any).getLayers ? [...(editor.value as any).getLayers()] : [];
+  const all = editor.value && (editor.value as any).getLayers ? [...(editor.value as any).getLayers()] : [];
+  const workspace = all.find((layer: { id?: string }) => layer.id === 'workspace') as { width?: number; height?: number } | undefined;
+  const frameWidth = workspace?.width ?? 0;
+  const frameHeight = workspace?.height ?? 0;
+  const isBackgroundFill = (layer: { type?: string; width?: number; height?: number; visible?: boolean }) =>
+    layer.type === 'rect' && layer.visible === false
+    && frameWidth > 0 && frameHeight > 0
+    && (layer.width ?? 0) >= frameWidth * 0.95 && (layer.height ?? 0) >= frameHeight * 0.95;
+  const seen = new Set<string>();
+  layers.value = all.filter((layer: { id?: string; type?: string; width?: number; height?: number; visible?: boolean }) => {
+    if (layer.id === 'workspace' || layer.id === '__background' || layer.id === '__template-fill') return false;
+    if (isBackgroundFill(layer)) return false;
+    // Fabric can expose the same instance twice while a group is being edited.
+    const key = layer.id || String((layer as { __uid?: string }).__uid ?? '');
+    if (!key) return true;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 };
 
 // Reversed layers to show top layer first (visual stacking order)
@@ -48,17 +74,22 @@ const handleToggleVisibility = (layer: any) => {
 };
 
 const moveLayerUp = (layer: any) => {
+  editor.value?.fabricCanvas?.setActiveObject(layer);
   editor.value?.arrangeFront?.(layer);
+  editor.value?.fabricCanvas?.requestRenderAll();
   updateLayers();
 };
 
 const moveLayerDown = (layer: any) => {
+  editor.value?.fabricCanvas?.setActiveObject(layer);
   editor.value?.arrangeBack?.(layer);
+  editor.value?.fabricCanvas?.requestRenderAll();
   updateLayers();
 };
 
 const LAYER_KIND_KEYS: Record<string, string> = {
   image: 'panel.layerKind.image',
+  video: 'panel.layerKind.video',
   text: 'panel.layerKind.text',
   rect: 'panel.layerKind.rect',
   circle: 'panel.layerKind.circle',
@@ -67,6 +98,7 @@ const LAYER_KIND_KEYS: Record<string, string> = {
 };
 const LAYER_ICONS: Record<string, string> = {
   image: 'lucide:image',
+  video: 'lucide:film',
   text: 'lucide:type',
   rect: 'lucide:square',
   circle: 'lucide:circle',
@@ -74,14 +106,22 @@ const LAYER_ICONS: Record<string, string> = {
   path: 'lucide:pencil',
 };
 
-const normalizeLayerKind = (type: string | undefined) => {
-  if (type === 'i-text') return 'text';
-  return type ?? 'object';
+const normalizeLayerKind = (type: string | undefined, videoUrl?: string) => {
+  if (videoUrl) return 'video';
+  if (!type) return 'object';
+  if (type === 'i-text' || type === 'itext' || type === 'textbox' || type === 'text') return 'text';
+  if (type === 'group' || type === 'activeSelection') return 'object';
+  return type;
 };
 
-const getLayerType = (layer: any) => t(LAYER_KIND_KEYS[normalizeLayerKind(layer.type)] ?? 'panel.layerKind.object');
+/** Prefer the layer's variable/name label over the raw type. */
+const getLayerType = (layer: { type?: string; name?: string }) => {
+  const named = typeof layer.name === 'string' ? layer.name.trim() : '';
+  if (named) return named.replace(/^\{|\}$/g, '');
+  return t(LAYER_KIND_KEYS[normalizeLayerKind(layer.type, layer.videoUrl)] ?? 'panel.layerKind.object');
+};
 
-const getLayerIcon = (layer: any) => LAYER_ICONS[normalizeLayerKind(layer.type)] ?? 'lucide:box';
+const getLayerIcon = (layer: any) => LAYER_ICONS[normalizeLayerKind(layer.type, layer.videoUrl)] ?? 'lucide:box';
 
 // Watch for changes in canvas to update layers
 // Note: In a real app we might want a better event system
@@ -102,53 +142,7 @@ watch(() => editor.value?.state.value, (val) => {
 }, { immediate: true });
 
 
-// --- TEMPLATES LOGIC ---
-// Hardcoded JSON from previous component
-const templateJson = `
-{
-	"version": "6.7.1",
-	"objects": [
-		{
-			"type": "Rect",
-			"originX": "left",
-			"originY": "top",
-			"left": 0,
-			"top": 0,
-			"width": 1242,
-			"height": 1660,
-			"fill": "white",
-			"selectable": false
-		},
-		{
-			"type": "i-text",
-			"originX": "left",
-			"originY": "top",
-            "left": 100,
-            "top": 100,
-            "width": 300,
-            "height": 50,
-            "fill": "#333",
-            "text": "Hello World",
-            "fontSize": 60,
-            "fontFamily": "Arial"
-		}
-	],
-	"background": "#f3f3f3"
-}
-`;
-
-// Simple example templates
-const templates = ref([
-  { title: 'Poster Simple', description: 'A basic white poster', json: templateJson },
-  // Add more real templates here
-]);
-
-const loadTemplate = (jsonStr: string) => {
-  editor.value?.loadTemplateFromJson?.(jsonStr);
-  updateLayers();
-};
-
-
+// --- STUDIO PANELS (visible per tab; registered below) ---
 // --- UPLOAD LOGIC ---
 const handleUploadFiles = (files: File | File[] | undefined) => {
   const list = normalizeUploadFiles(files);
@@ -171,16 +165,6 @@ const isImageFile = (file: File) => file.type.startsWith('image/');
 const addUploadLayer = (file: File) => {
   editor.value?.addImageLayer?.(file);
 };
-const onTemplateSelect = async (files: FileList) => {
-  if (files.length > 0) {
-    const reader = new FileReader();
-    reader.onload = (e: any) => {
-      templates.value.push({ title: t('panel.templateCustom'), description: 'Uploaded template', json: e.target.result });
-    }
-    await reader.readAsText(files[0] as Blob);
-  }
-};
-const templateInput = ref<HTMLInputElement>();
 
 
 
@@ -190,15 +174,46 @@ const tabs = [
   { id: 'elements', icon: 'lucide:shapes', labelKey: 'rail.shapes' },
   { id: 'text', icon: 'lucide:type', labelKey: 'rail.text' },
   { id: 'uploads', icon: 'lucide:upload', labelKey: 'rail.uploads' },
+  { id: 'background', icon: 'lucide:wallpaper', labelKey: 'rail.background' },
   { id: 'templates', icon: 'lucide:layout-template', labelKey: 'rail.templates' },
+  { id: 'variables', icon: 'lucide:braces', labelKey: 'rail.variables' },
+  { id: 'stock', icon: 'lucide:image', labelKey: 'rail.stock' },
+  { id: 'fonts', icon: 'lucide:case-sensitive', labelKey: 'rail.fonts' },
+  { id: 'timeline', icon: 'lucide:film', labelKey: 'rail.timeline' },
+  { id: 'resize', icon: 'lucide:ruler', labelKey: 'rail.resize' },
+  { id: 'designs', icon: 'lucide:swatch-book', labelKey: 'rail.designs' },
 ];
+
+const RAIL_GROUPS: Array<{ id: string; items: string[] }> = [
+  { id: 'create', items: ['templates', 'elements', 'text', 'uploads', 'background'] },
+  { id: 'studio', items: ['stock', 'fonts', 'variables', 'resize', 'timeline'] },
+  { id: 'manage', items: ['layers', 'designs'] },
+]
+
+const tabById = (id: string) => tabs.find(tab => tab.id === id)
+const panelCollapsed = ref(false)
+const togglePanel = () => {
+  panelCollapsed.value = !panelCollapsed.value
+}
+
+const STUDIO_PANEL_TITLES: Record<string, string> = {
+  background: 'panel.backgroundTitle',
+  variables: 'panel.variablesTitle',
+  stock: 'panel.stockTitle',
+  fonts: 'panel.fontsTitle',
+  timeline: 'panel.timelineTitle',
+  resize: 'panel.resizeTitle',
+  designs: 'panel.designsTitle',
+};
 
 const panelTitle = computed(() => {
   if (activeTab.value === 'layers') return t('panel.layersTitle');
   if (activeTab.value === 'elements') return t('panel.shapesTitle');
   if (activeTab.value === 'text') return t('panel.textTitle');
   if (activeTab.value === 'uploads') return t('panel.uploadsTitle');
-  return t('panel.templatesTitle');
+  if (activeTab.value === 'templates') return t('panel.templatesTitle');
+  const studio = STUDIO_PANEL_TITLES[activeTab.value];
+  return studio ? t(studio) : t('panel.layersTitle');
 });
 
 // --- BRUSH STATE ---
@@ -211,6 +226,7 @@ const HandleAddTextLayer = ({ text = 'Add a heading', fontSize = 32, fontWeight 
 }
 const selectTab = (id: string) => {
   activeTab.value = id;
+  panelCollapsed.value = false;
   editor.value?.stopDrawingMode?.();
 }
 const HandleSelectTool = () => {
@@ -226,107 +242,107 @@ const HandleAddBrushLayer = () => {
   editor.value?.stopDrawingMode?.();
   editor.value?.addBrushLayer?.(brushColor.value, brushWidth.value)
 }
-const handleUploadTemplateClick = () => {
-  templateInput.value?.click();
-}
-const handleTemplateFileChange = (event: Event) => {
-  const files = (event.target as HTMLInputElement).files;
-  if (files) onTemplateSelect(files);
-}
 </script>
 
 <template>
-  <div class="h-full flex flex-row border-r border-default bg-default w-[300px]">
+  <aside
+    class="h-full flex flex-row border-r border-default bg-default shrink-0 transition-[width] duration-200"
+    :class="panelCollapsed ? 'w-[76px]' : 'w-[76px] sm:w-[340px]'">
 
-    <!-- Icon rail -->
-    <div
-      class="w-14 flex flex-col items-center py-3 border-r border-default bg-muted/50 gap-1.5">
+    <!-- Icon rail with labels (Polotno-style) -->
+    <nav
+      class="w-[76px] shrink-0 flex flex-col items-center gap-0.5 border-r border-default bg-muted/40 py-2 overflow-y-auto"
+      :aria-label="t('rail.label')">
       <UTooltip :text="t('rail.select')" placement="right">
         <UButton
           color="neutral" variant="ghost"
-          icon="lucide:mouse-pointer-2"
+          class="flex-col gap-1 h-auto w-[60px] py-1.5 px-1 rounded-lg"
           :aria-label="t('rail.select')"
-          data-testid="tool-select" @click="HandleSelectTool" />
+          data-testid="tool-select" @click="HandleSelectTool">
+          <Icon name="lucide:mouse-pointer-2" class="size-[18px]" />
+          <span class="text-[9px] leading-none">{{ t('rail.select') }}</span>
+        </UButton>
       </UTooltip>
-      <div class="h-px w-8 bg-accented my-1" aria-hidden="true" />
-      <template v-for="tab in tabs" :key="tab.id">
-        <UTooltip :text="t(tab.labelKey)" placement="right">
+
+      <template v-for="group in RAIL_GROUPS" :key="group.id">
+        <div class="h-px w-10 my-1 bg-accented" aria-hidden="true" />
+        <UTooltip
+          v-for="id in group.items" :key="id"
+          :text="t(tabById(id)?.labelKey ?? id)" placement="right">
           <UButton
-            :color="activeTab === tab.id ? 'primary' : 'neutral'"
-            :variant="activeTab === tab.id ? 'soft' : 'ghost'"
-            :icon="tab.icon"
-            :aria-label="t(tab.labelKey)"
-            :data-testid="`tab-${tab.id}`" @click="selectTab(tab.id)" />
+            :color="activeTab === id ? 'primary' : 'neutral'"
+            :variant="activeTab === id ? 'soft' : 'ghost'"
+            class="flex-col gap-1 h-auto w-[60px] py-1.5 px-1 rounded-lg"
+            :aria-label="t(tabById(id)?.labelKey ?? id)"
+            :data-testid="`tab-${id}`" @click="selectTab(id)">
+            <Icon :name="tabById(id)?.icon ?? 'lucide:square'" class="size-[18px]" />
+            <span class="text-[9px] leading-none w-full text-center truncate">{{ t(tabById(id)?.labelKey ?? id) }}</span>
+          </UButton>
         </UTooltip>
       </template>
-    </div>
+    </nav>
 
     <!-- Contextual panel -->
-    <div class="flex-1 flex flex-col min-w-0">
-      <header class="h-12 border-b border-default flex items-center px-3 shrink-0">
-        <h2 class="font-semibold text-sm">{{ panelTitle }}</h2>
+    <div v-show="!panelCollapsed" class="flex-1 flex flex-col min-w-0">
+      <header class="h-12 border-b border-default flex items-center gap-2 px-3 shrink-0">
+        <h2 class="font-semibold text-sm truncate flex-1">{{ panelTitle }}</h2>
+        <UButton
+          color="neutral" variant="ghost" size="xs" icon="lucide:panel-left-close"
+          :aria-label="t('rail.collapse')" @click="togglePanel" />
       </header>
 
       <div class="flex-1 overflow-y-auto p-3">
 
-        <!-- TEMPLATES TAB -->
-        <div v-if="activeTab === 'templates'" v-motion-fade-visible :duration="200" class="space-y-3">
-          <section>
-            <UButton block icon="lucide:upload" variant="outline" @click="handleUploadTemplateClick">
-              {{ t('panel.templatesUpload') }}
-            </UButton>
-            <input
-              ref="templateInput" type="file" accept='application/json' class="hidden"
-              @change="handleTemplateFileChange" >
+        <!-- TEMPLATES TAB (public library + JSON import) -->
+        <div v-if="activeTab === 'templates'" v-motion-fade-visible :duration="200">
+          <StudioTemplatesPanel />
+        </div>
 
-            <div class="text-xs text-center text-muted mt-3">
-              {{ t('panel.templatesHint') }}
-            </div>
-          </section>
-          <div
-            v-for="(tpl, idx) in templates" :key="idx"
-            class="border border-default rounded-xl p-2 hover:border-primary cursor-pointer transition-colors bg-elevated/50"
-            @click="loadTemplate(tpl.json)">
-            <div class="aspect-3/4 bg-muted rounded-lg mb-2 flex items-center justify-center">
-              <Icon name="lucide:layout-template" class="w-8 h-8 text-dimmed" />
-            </div>
-            <div class="text-xs font-medium">{{ tpl.title }}</div>
-            <div class="text-[11px] text-muted">{{ tpl.description }}</div>
-          </div>
+        <!-- BACKGROUND TAB (colors, Unsplash backgrounds, gradients) -->
+        <div v-if="activeTab === 'background'" v-motion-fade-visible :duration="200">
+          <StudioBackgroundPanel />
+        </div>
+
+        <!-- VARIABLES TAB ({name} bindings + live apply) -->
+        <div v-if="activeTab === 'variables'" v-motion-fade-visible :duration="200">
+          <StudioVariablesPanel />
+        </div>
+
+        <!-- STOCK TAB (Pexels / Unsplash / Pexels video) -->
+        <div v-if="activeTab === 'stock'" v-motion-fade-visible :duration="200">
+          <StudioStockPanel />
+        </div>
+
+        <!-- FONTS TAB (bundled families + pairs) -->
+        <div v-if="activeTab === 'fonts'" v-motion-fade-visible :duration="200">
+          <StudioFontsPanel />
+        </div>
+
+        <!-- TIMELINE TAB (animations + transitions + playback) -->
+        <div v-if="activeTab === 'timeline'" v-motion-fade-visible :duration="200">
+          <StudioTimelinePanel />
+        </div>
+
+        <!-- RESIZE TAB (catalog + custom size) -->
+        <div v-if="activeTab === 'resize'" v-motion-fade-visible :duration="200">
+          <StudioResizePanel />
+        </div>
+
+        <!-- DESIGNS TAB (save / versions / brand kits / my designs) -->
+        <div v-if="activeTab === 'designs'" v-motion-fade-visible :duration="200">
+          <StudioDesignPanel />
         </div>
 
         <!-- ELEMENTS TAB -->
         <div v-if="activeTab === 'elements'" v-motion-fade-visible :duration="200" class="space-y-5">
-          <div>
-            <h3 class="text-[11px] font-semibold text-dimmed mb-2 uppercase tracking-wider">{{ t('panel.shapesBasic') }}</h3>
-            <div class="grid grid-cols-3 gap-2">
-              <UButton
-                variant="outline" data-testid="add-rect"
-                class="aspect-square flex-col gap-1 h-auto py-3" @click="HandleAddShapeLayer('rect', { fill: '#333' })">
-                <Icon name="lucide:square" class="w-5 h-5" />
-                <span class="text-[10px]">{{ t('panel.rect') }}</span>
-              </UButton>
-              <UButton
-                variant="outline" data-testid="add-circle"
-                class="aspect-square flex-col gap-1 h-auto py-3" @click="HandleAddShapeLayer('circle', { fill: '#333' })">
-                <Icon name="lucide:circle" class="w-5 h-5" />
-                <span class="text-[10px]">{{ t('panel.circle') }}</span>
-              </UButton>
-              <UButton
-                variant="outline" data-testid="add-triangle"
-                class="aspect-square flex-col gap-1 h-auto py-3" @click="HandleAddShapeLayer('triangle', { fill: '#333' })">
-                <Icon name="lucide:triangle" class="w-5 h-5" />
-                <span class="text-[10px]">{{ t('panel.triangle') }}</span>
-              </UButton>
-            </div>
-          </div>
+          <StudioShapesPanel />
 
           <div>
             <h3 class="text-[11px] font-semibold text-dimmed mb-2 uppercase tracking-wider">{{ t('panel.drawingTitle') }}</h3>
             <div class="space-y-3 rounded-xl border border-default bg-elevated/50 p-3">
               <div class="flex items-center justify-between gap-2">
                 <span class="text-xs text-toned">{{ t('panel.brushColor') }}</span>
-                <UColorPicker v-model="brushColor" />
+                <StudioColorField v-model="brushColor" />
               </div>
               <div>
                 <div class="flex items-center justify-between mb-1">
@@ -385,7 +401,8 @@ const handleTemplateFileChange = (event: Event) => {
           </div>
 
           <div
-            v-for="(layer, index) in reversedLayers" :key="`layer-${index}`"
+            v-for="layer in reversedLayers" :key="(layer as any).id ?? (layer as any).__uid ?? layer"
+            :data-layer-id="(layer as any).id ?? ''"
             class="group flex items-center gap-1.5 p-1.5 rounded-lg cursor-pointer border transition-colors"
             :class="layer === activeLayer ? 'bg-primary/10 border-primary/30' : 'border-transparent hover:border-default hover:bg-elevated'" @click="handleLayerClick(layer)">
 
@@ -430,5 +447,5 @@ const handleTemplateFileChange = (event: Event) => {
 
       </div>
     </div>
-  </div>
+  </aside>
 </template>

@@ -3,23 +3,23 @@
 <script lang="ts" setup>
 import { computed } from 'vue';
 import { useFabricJs } from '../../../composables/tools/image-editor/useFabricJs';
+import { useDesignStudio } from '../../../composables/tools/image-editor/useDesignStudio';
 
 const { t } = useI18n();
 const toast = useToast();
 const {
   undo,
   redo,
-  zoomIn,
-  zoomOut,
   downloadCanvasImage,
   getFrameDataUrl,
-  zoomPercent,
   editor,
   bgStatus,
   setPropertiesTab,
+  openBulkModal,
 } = useFabricJs();
 
 const { start: startAiModel } = useImageTransformer();
+const designStudio = useDesignStudio();
 
 const showSaveAssetModal = ref(false);
 const pendingDataUrl = ref<string | null>(null);
@@ -126,7 +126,11 @@ const handleExportClick = () => {
       <UTooltip :text="t('header.back')">
         <UButton variant="ghost" color="neutral" icon="lucide:arrow-left" :aria-label="t('header.back')" @click="handleHomeClick" />
       </UTooltip>
-      <span class="font-semibold text-sm hidden sm:block truncate">{{ t('header.docTitle') }}</span>
+      <UInput
+        :model-value="designStudio.currentTitle.value"
+        variant="ghost" size="sm" class="w-32 sm:w-52 font-semibold"
+        :aria-label="t('studio.design.title')"
+        @update:model-value="value => designStudio.setTitle(String(value))" />
 
       <UTooltip :text="aiBadgeHint">
         <UBadge
@@ -161,11 +165,6 @@ const handleExportClick = () => {
         </UTooltip>
       </div>
 
-      <div class="hidden md:flex items-center gap-1 bg-muted rounded-lg p-0.5 ml-2">
-        <UButton variant="ghost" color="neutral" icon="lucide:minus" size="xs" :aria-label="t('menu.vertical.zoomOut')" @click="zoomOut" />
-        <span data-testid="zoom-level" class="text-xs font-mono w-12 text-center text-toned">{{ zoomPercent }}%</span>
-        <UButton variant="ghost" color="neutral" icon="lucide:plus" size="xs" :aria-label="t('menu.vertical.zoomIn')" @click="zoomIn" />
-      </div>
     </div>
 
     <!-- Right: actions -->
@@ -178,16 +177,30 @@ const handleExportClick = () => {
         data-testid="btn-use-in-post"
         @click="handleUseInPost" />
       <UButton
-        color="neutral" variant="outline" size="sm" icon="lucide:download" :label="t('menu.main.save', 'Save')"
-        @click="downloadCanvasImage" />
+        color="neutral" variant="outline" size="sm" icon="lucide:download"
+        :aria-label="t('menu.main.save', 'Save')"
+        @click="downloadCanvasImage">
+        <span class="hidden sm:inline">{{ t('menu.main.save', 'Save') }}</span>
+      </UButton>
       <UButton
         color="neutral" variant="outline" size="sm" icon="lucide:library-big"
-        :label="t('menu.main.saveToLibrary', 'Save to Library')"
+        :aria-label="t('menu.main.saveToLibrary', 'Save to Library')"
         data-testid="btn-save-to-library"
-        @click="handleSaveToLibrary" />
+        @click="handleSaveToLibrary">
+        <span class="hidden sm:inline">{{ t('menu.main.saveToLibrary', 'Save to Library') }}</span>
+      </UButton>
       <UButton
-        color="primary" variant="solid" size="sm" icon="lucide:share" :label="t('menu.main.export', 'Export')"
-        data-testid="btn-open-export" @click="handleExportClick" />
+        color="neutral" variant="outline" size="sm" icon="lucide:layers"
+        :aria-label="t('menu.main.bulk', 'Bulk generate')"
+        data-testid="btn-open-bulk" @click="openBulkModal">
+        <span class="hidden sm:inline">{{ t('menu.main.bulk', 'Bulk generate') }}</span>
+      </UButton>
+      <UButton
+        color="primary" variant="solid" size="sm" icon="lucide:share"
+        :aria-label="t('menu.main.export', 'Export')"
+        data-testid="btn-open-export" @click="handleExportClick">
+        <span class="hidden sm:inline">{{ t('menu.main.export', 'Export') }}</span>
+      </UButton>
     </div>
 
     <BaseSaveAssetModal

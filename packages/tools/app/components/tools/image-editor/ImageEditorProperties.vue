@@ -1,8 +1,15 @@
 <i18n src="#site/app/pages/tools/image-editor/ImageEditor.json"></i18n>
 <script lang="ts" setup>
+import { Gradient, type FabricObject } from 'fabric';
+import StudioColorField from './StudioColorField.vue';
+import { loadGoogleFont } from '../../../../shared/image-editor/google-fonts';
 import { computed, watch, ref } from 'vue';
 import { BG_BUSY_CODE } from '../../../composables/useImageTransformer';
 import { useFabricJs, type BgRemovalOutcome } from '../../../composables/tools/image-editor/useFabricJs';
+import { useDesignStudio } from '../../../composables/tools/image-editor/useDesignStudio';
+import { useDesignMp4Export } from '../../../composables/tools/image-editor/useDesignMp4Export';
+import { fileToDataUrl } from '../../../../shared/image-editor/file-to-data-url';
+import { replaceImageSource } from '../../../../shared/image-editor/studio-canvas';
 
 // --- IMPORTS REUSE ---
 interface TextAdjustmentProps {
@@ -27,6 +34,7 @@ const {
   bgProgress,
   isBgBusy,
   propertiesTab: activeTab,
+  setSidebarTab,
 } = useFabricJs();
 
 const { start, result, error } = useImageTransformer();
@@ -36,6 +44,96 @@ const activeLayer = computed(() => editor?.value?.activeLayer?.value);
 const isTextLayerActive = computed(() => activeLayer.value?.type === 'i-text' || activeLayer.value?.type === 'text');
 const isImageLayerActive = computed(() => activeLayer.value?.type === 'image');
 const isNoSelection = computed(() => !activeLayer.value);
+const designStudio = useDesignStudio();
+const { exportingMp4, exportMp4 } = useDesignMp4Export();
+
+const handleExportMp4 = () => {
+  void exportMp4();
+};
+
+// --- REPLACE IMAGE STATE ---
+type ReplaceSource = 'upload' | 'url' | 'assets';
+const replaceSource = ref<ReplaceSource>('upload');
+const replaceUrl = ref('');
+const replaceResize = ref(false);
+const replacing = ref(false);
+const replaceInput = ref<HTMLInputElement | null>(null);
+const designAssets = ref<Array<{ name: string; mimeType: string }>>([]);
+const assetsLoading = ref(false);
+const assetsLoaded = ref(false);
+const assetsError = ref(false);
+
+const setReplaceSource = (source: ReplaceSource) => {
+  replaceSource.value = source;
+  if (source === 'assets') void loadDesignAssets();
+};
+
+function triggerReplaceInput() {
+  replaceInput.value?.click();
+}
+
+function assetUrl(name: string): string {
+  return `/api/v1/image-editor/assets/${encodeURIComponent(name)}`;
+}
+
+/** Swap the selected layer's bitmap while keeping its position and box. */
+async function applyReplacement(src: string | null) {
+  const canvas = editor.value?.fabricCanvas;
+  const target = canvas?.getActiveObject();
+  if (!canvas || !target || !src) return;
+  replacing.value = true;
+  try {
+    await replaceImageSource(target as FabricObject, src, replaceResize.value);
+    canvas.requestRenderAll();
+    designStudio.markDirty();
+    replaceUrl.value = '';
+    toast.add({
+      title: t('studio.replace.done'),
+      description: replaceResize.value ? t('studio.replace.doneResized') : t('studio.replace.doneKept'),
+      color: 'success',
+      icon: 'lucide:image-up',
+    });
+  } catch {
+    toast.add({ title: t('studio.replace.failed'), color: 'error', icon: 'lucide:x-circle' });
+  }
+  replacing.value = false;
+}
+
+async function handleReplaceUpload(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  if (!file) return;
+  const dataUrl = await fileToDataUrl(file).catch(() => '');
+  await applyReplacement(dataUrl || null);
+  input.value = '';
+}
+
+async function applyReplaceUrl() {
+  const value = replaceUrl.value.trim();
+  if (!/^(https?:\/\/|data:image\/)/i.test(value)) {
+    toast.add({ title: t('studio.replace.invalidUrl'), color: 'warning', icon: 'lucide:link-2-off' });
+    return;
+  }
+  await applyReplacement(value);
+}
+
+async function loadDesignAssets() {
+  if (assetsLoaded.value || assetsLoading.value) return;
+  assetsLoading.value = true;
+  assetsError.value = false;
+  try {
+    const response = await $fetch<{ assets: Array<{ name: string; mimeType: string }> }>('/api/v1/image-editor/assets');
+    designAssets.value = (response.assets ?? []).filter(asset => asset.mimeType.startsWith('image/')).slice(0, 60);
+    assetsLoaded.value = true;
+  } catch {
+    assetsError.value = true;
+  }
+  assetsLoading.value = false;
+}
+
+async function applyAsset(name: string) {
+  await applyReplacement(assetUrl(name));
+}
 
 // --- TRANSFORM STATE ---
 const position = ref({ x: 0, y: 0 });
@@ -44,6 +142,10 @@ const opacity = ref(100);
 
 // --- APPEARANCE STATE ---
 const objectFill = ref('#cccccc');
+const fillMode = ref<'solid' | 'gradient'>('solid');
+const gradientStart = ref('#c2410c');
+const gradientEnd = ref('#f59e0b');
+const gradientAngle = ref(45);
 const stroke = ref({
   width: 0,
   color: '#000000',
@@ -212,6 +314,30 @@ const handleObjectFillUpdate = () => {
   }
 };
 
+const setFillMode = (mode: 'solid' | 'gradient') => {
+  fillMode.value = mode;
+  if (mode === 'solid') handleObjectFillUpdate();
+};
+
+const applyGradientFill = () => {
+  if (!activeLayer.value) return;
+  const radians = (gradientAngle.value * Math.PI) / 180;
+  const dx = Math.cos(radians) / 2;
+  const dy = Math.sin(radians) / 2;
+  const gradient = new Gradient({
+    type: 'linear',
+    gradientUnits: 'percentage',
+    coords: { x1: 0.5 - dx, y1: 0.5 - dy, x2: 0.5 + dx, y2: 0.5 + dy },
+    colorStops: [
+      { offset: 0, color: gradientStart.value },
+      { offset: 1, color: gradientEnd.value },
+    ],
+  });
+  activeLayer.value.set('fill', gradient);
+  (activeLayer.value as { dirty?: boolean }).dirty = true;
+  editor.value?.fabricCanvas?.requestRenderAll();
+};
+
 const handleStrokeUpdate = () => {
   const dashArray = stroke.value.style === 'dashed' ? [10, 5] : undefined;
   editor.value?.updateStroke?.({ width: stroke.value.width, color: stroke.value.color, dashArray });
@@ -262,9 +388,11 @@ const handleBackgroundUpdate = () => {
 };
 
 const handleAddGuideline = (orientation: 'horizontal' | 'vertical') => {
-  const pos = 100;
-  const id = editor.value?.addGuideline?.(orientation, pos);
-  if (id) guidelines.value.push({ id, orientation, position: pos });
+  const id = editor.value?.addGuideline?.(orientation);
+  if (!id) return;
+  const all = (editor.value?.getGuidelines?.() ?? []) as Array<{ id: string; orientation: 'horizontal' | 'vertical'; position: number }>;
+  const created = all.find(guide => guide.id === id);
+  guidelines.value.push({ id, orientation, position: created?.position ?? 0 });
 };
 
 const handleRemoveGuideline = (id: string) => {
@@ -277,6 +405,24 @@ const getGuideLabel = (guide: { orientation: string; position: number }) => {
   return `${kind} · ${guide.position}`;
 };
 
+const handleClipImage = () => {
+  const ok = editor.value?.clipActiveImage?.(24)
+  useToast().add({
+    title: ok ? t('section.clipApplied') : t('section.clipFailed'),
+    color: ok ? 'success' : 'warning',
+    icon: 'i-lucide-scissors',
+  })
+}
+
+const handleRemoveClip = () => {
+  const ok = editor.value?.removeImageClip?.()
+  useToast().add({
+    title: ok ? t('section.clipRemoved') : t('section.clipFailed'),
+    color: ok ? 'neutral' : 'warning',
+    icon: 'i-lucide-x',
+  })
+}
+
 const isBgIdle = computed(() => bgStatus.value === 'idle');
 
 const handleLoadModel = async () => {
@@ -288,7 +434,28 @@ const handleLoadModel = async () => {
   }
 };
 
-const fontFamilies = ['Arial', 'Verdana', 'Helvetica', 'Times New Roman', 'Courier New', 'Roboto', 'Open Sans', 'Lato'];
+const BUNDLED_FONT_FAMILIES = ['Arial', 'Verdana', 'Helvetica', 'Times New Roman', 'Courier New', 'Roboto', 'Open Sans', 'Lato'];
+
+/**
+ * A compact list — the full Google catalog (~1,900) used to be passed to this
+ * Select. Mounting that when a text layer was selected blocked the main thread
+ * for ~2s (Reka Select processed every item). The Fonts panel is the searchable
+ * place for the full catalog.
+ */
+const fontFamilies = computed(() => {
+  const families = new Set<string>(BUNDLED_FONT_FAMILIES);
+  for (const object of editor.value?.fabricCanvas?.getObjects() ?? []) {
+    const family = (object as { fontFamily?: string }).fontFamily;
+    if (family) families.add(family);
+  }
+  const current = localTextSettings.value.fontFamily;
+  if (current) families.add(current);
+  return [...families];
+});
+
+const browseFonts = () => {
+  setSidebarTab('fonts');
+};
 
 const HandleAlignObjects = (position: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom') => {
   editor.value?.alignObjects?.(position)
@@ -404,9 +571,11 @@ const handleRemoveBackground = async () => {
   }
 };
 
-const handleFontFamilyChange = (value: string | null) => {
-  localTextSettings.value.fontFamily = value ?? localTextSettings.value.fontFamily;
-  updateTextSettings({ fontFamily: localTextSettings.value.fontFamily });
+const handleFontFamilyChange = async (value: string | null) => {
+  const family = value ?? localTextSettings.value.fontFamily;
+  localTextSettings.value.fontFamily = family;
+  await loadGoogleFont(family);
+  updateTextSettings({ fontFamily: family });
 };
 
 const handleFontSizeChange = () => {
@@ -459,7 +628,7 @@ const isUnderlineActive = computed(() => !!localTextSettings.value.underline);
 </script>
 
 <template>
-  <div class="h-full border-l border-default bg-default w-[300px] flex flex-col" data-testid="right-panel">
+  <div class="h-full min-h-0 border-l border-default bg-default w-[300px] flex flex-col" data-testid="right-panel">
 
     <!-- Tabs -->
     <div class="flex gap-1 border-b border-default p-2 shrink-0">
@@ -476,7 +645,7 @@ const isUnderlineActive = computed(() => !!localTextSettings.value.underline);
     </div>
 
     <!-- Content -->
-    <div class="flex-1 overflow-y-auto p-3">
+    <div class="flex-1 min-h-0 overflow-y-auto p-3">
 
       <div v-if="activeTab === 'design'" class="space-y-5">
 
@@ -582,10 +751,18 @@ const isUnderlineActive = computed(() => !!localTextSettings.value.underline);
 
           <div class="space-y-3">
             <UFormField :label="t('section.fontFamily')" size="xs">
-              <USelect
-                v-model="localTextSettings.fontFamily" :items="fontFamilies" size="xs"
-                data-testid="select-font-family"
-                @update:model-value="handleFontFamilyChange" />
+              <div class="space-y-1">
+                <USelect
+                  v-model="localTextSettings.fontFamily" :items="fontFamilies" size="sm"
+                  class="w-full"
+                  data-testid="select-font-family"
+                  @update:model-value="handleFontFamilyChange" />
+                <UButton
+                  size="xs" variant="ghost" color="neutral" icon="lucide:search"
+                  data-testid="browse-fonts" @click="browseFonts">
+                  {{ t('section.browseFonts') }}
+                </UButton>
+              </div>
             </UFormField>
 
             <div class="flex items-end gap-2">
@@ -595,7 +772,7 @@ const isUnderlineActive = computed(() => !!localTextSettings.value.underline);
                   data-testid="input-font-size" @change="handleFontSizeChange" />
               </UFormField>
               <UFormField :label="t('section.textColor')" size="xs" class="flex-1">
-                <UColorPicker v-model="localTextSettings.fill" @update:model-value="handleTextFillInput" />
+                <StudioColorField v-model="localTextSettings.fill" testid="input-text-fill" @update:model-value="handleTextFillInput" />
               </UFormField>
             </div>
 
@@ -635,9 +812,36 @@ const isUnderlineActive = computed(() => !!localTextSettings.value.underline);
         <section v-if="!isNoSelection && !isImageLayerActive">
           <USeparator class="my-1" />
           <h3 class="text-[11px] font-semibold text-dimmed uppercase tracking-wider my-2">{{ t('section.fillTitle') }}</h3>
-          <UColorPicker
+          <div class="mb-2 flex gap-1">
+            <UButton size="xs" :variant="fillMode === 'solid' ? 'soft' : 'ghost'" :color="fillMode === 'solid' ? 'primary' : 'neutral'" @click="setFillMode('solid')">
+              {{ t('section.fillSolid') }}
+            </UButton>
+            <UButton size="xs" :variant="fillMode === 'gradient' ? 'soft' : 'ghost'" :color="fillMode === 'gradient' ? 'primary' : 'neutral'" @click="setFillMode('gradient')">
+              {{ t('section.fillGradient') }}
+            </UButton>
+          </div>
+
+          <StudioColorField
+            v-if="fillMode === 'solid'"
             v-model="objectFill"
-            data-testid="input-fill" @update:model-value="handleObjectFillUpdate" />
+            testid="input-fill" @update:model-value="handleObjectFillUpdate" />
+
+          <div v-else class="space-y-2">
+            <UFormField :label="t('section.gradientStart')" size="xs">
+              <StudioColorField v-model="gradientStart" testid="input-gradient-start" />
+            </UFormField>
+            <UFormField :label="t('section.gradientEnd')" size="xs">
+              <StudioColorField v-model="gradientEnd" testid="input-gradient-end" />
+            </UFormField>
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-muted">{{ t('section.gradientAngle') }}</span>
+              <USlider v-model="gradientAngle" :min="0" :max="360" size="xs" class="flex-1" />
+              <span class="w-9 text-right text-[11px] font-mono">{{ gradientAngle }}°</span>
+            </div>
+            <UButton block size="xs" color="primary" variant="soft" icon="lucide:paintbrush" @click="applyGradientFill">
+              {{ t('section.applyGradient') }}
+            </UButton>
+          </div>
         </section>
 
         <!-- STROKE -->
@@ -646,7 +850,7 @@ const isUnderlineActive = computed(() => !!localTextSettings.value.underline);
           <h3 class="text-[11px] font-semibold text-dimmed uppercase tracking-wider my-2">{{ t('section.strokeTitle') }}</h3>
           <div class="space-y-2">
             <UFormField :label="t('section.textColor')" size="xs">
-              <UColorPicker v-model="stroke.color" @update:model-value="handleStrokeUpdate" />
+              <StudioColorField v-model="stroke.color" testid="input-stroke-color" @update:model-value="handleStrokeUpdate" />
             </UFormField>
             <UFormField :label="`${t('section.strokeWidth')} (${t('section.strokePx')})`" size="xs">
               <UInput
@@ -683,7 +887,7 @@ const isUnderlineActive = computed(() => !!localTextSettings.value.underline);
               </UFormField>
             </div>
             <UFormField :label="t('section.shadowColor')" size="xs">
-              <UColorPicker v-model="shadow.color" @update:model-value="handleShadowUpdate" />
+              <StudioColorField v-model="shadow.color" testid="input-shadow-color" @update:model-value="handleShadowUpdate" />
             </UFormField>
           </div>
         </section>
@@ -731,9 +935,99 @@ const isUnderlineActive = computed(() => !!localTextSettings.value.underline);
           </div>
         </section>
 
+        <!-- REPLACE IMAGE -->
+        <section v-if="isImageLayerActive">
+          <USeparator class="my-1" />
+          <h3 class="text-[11px] font-semibold text-dimmed uppercase tracking-wider my-2">{{ t('studio.replace.title') }}</h3>
+          <div class="rounded-xl border border-default bg-elevated/50 p-3 space-y-2">
+            <div class="flex gap-1">
+              <UButton
+                size="xs" class="flex-1"
+                :variant="replaceSource === 'upload' ? 'soft' : 'ghost'"
+                :color="replaceSource === 'upload' ? 'primary' : 'neutral'"
+                data-testid="replace-tab-upload" @click="setReplaceSource('upload')">
+                {{ t('studio.replace.upload') }}
+              </UButton>
+              <UButton
+                size="xs" class="flex-1"
+                :variant="replaceSource === 'url' ? 'soft' : 'ghost'"
+                :color="replaceSource === 'url' ? 'primary' : 'neutral'"
+                data-testid="replace-tab-url" @click="setReplaceSource('url')">
+                {{ t('studio.replace.url') }}
+              </UButton>
+              <UButton
+                size="xs" class="flex-1"
+                :variant="replaceSource === 'assets' ? 'soft' : 'ghost'"
+                :color="replaceSource === 'assets' ? 'primary' : 'neutral'"
+                data-testid="replace-tab-assets" @click="setReplaceSource('assets')">
+                {{ t('studio.replace.assets') }}
+              </UButton>
+            </div>
+
+            <div v-if="replaceSource === 'upload'" class="space-y-2">
+              <input
+                ref="replaceInput" type="file" accept="image/*" class="hidden"
+                data-testid="replace-image-input" @change="handleReplaceUpload">
+              <UButton
+                block size="xs" variant="soft" color="primary" icon="lucide:upload"
+                :loading="replacing" data-testid="replace-upload-button" @click="triggerReplaceInput">
+                {{ t('studio.replace.choose') }}
+              </UButton>
+            </div>
+
+            <div v-else-if="replaceSource === 'url'" class="space-y-2">
+              <UInput
+                v-model="replaceUrl" size="xs"
+                :placeholder="t('studio.replace.urlPlaceholder')"
+                data-testid="replace-url-input"
+                @keydown.enter="applyReplaceUrl" />
+              <UButton
+                block size="xs" variant="soft" color="primary" icon="lucide:link"
+                :loading="replacing" data-testid="replace-url-apply" @click="applyReplaceUrl">
+                {{ t('studio.replace.applyUrl') }}
+              </UButton>
+            </div>
+
+            <div v-else class="space-y-2">
+              <div v-if="assetsLoading" class="py-2 text-center text-xs text-muted">{{ t('studio.replace.loading') }}</div>
+              <UAlert
+                v-else-if="assetsError" color="warning" variant="soft"
+                icon="i-lucide-lock" :title="t('studio.replace.assetsAuth')" />
+              <div v-else-if="designAssets.length === 0" class="py-2 text-center text-xs text-muted">
+                {{ t('studio.replace.assetsEmpty') }}
+              </div>
+              <div v-else class="grid grid-cols-3 gap-1 max-h-44 overflow-y-auto">
+                <button
+                  v-for="asset in designAssets" :key="asset.name"
+                  type="button"
+                  class="aspect-square overflow-hidden rounded border border-default hover:border-primary"
+                  :aria-label="asset.name"
+                  @click="applyAsset(asset.name)">
+                  <img :src="assetUrl(asset.name)" alt="" class="h-full w-full object-cover" loading="lazy">
+                </button>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-[11px] text-muted">{{ t('studio.replace.fit') }}</span>
+              <USwitch v-model="replaceResize" size="xs" data-testid="replace-fit" />
+            </div>
+          </div>
+        </section>
+
         <!-- IMAGE FILTERS -->
         <section v-if="isImageLayerActive">
           <USeparator class="my-1" />
+
+          <h3 class="text-[11px] font-semibold text-dimmed uppercase tracking-wider my-2">{{ t('section.clip') }}</h3>
+          <div class="flex gap-2 mb-3">
+            <UButton size="xs" variant="outline" icon="lucide:scissors" @click="handleClipImage">
+              {{ t('section.clipRounded') }}
+            </UButton>
+            <UButton size="xs" variant="ghost" color="neutral" icon="lucide:x" @click="handleRemoveClip">
+              {{ t('section.removeClip') }}
+            </UButton>
+          </div>
 
           <h3 class="text-[11px] font-semibold text-dimmed uppercase tracking-wider my-2">{{ t('section.filtersTitle') }}</h3>
 
@@ -833,7 +1127,7 @@ const isUnderlineActive = computed(() => !!localTextSettings.value.underline);
                   data-testid="select-bg-type" @update:model-value="handleBackgroundTypeChange" />
               </UFormField>
               <div v-if="background.type === 'solid'" v-motion-fade-visible :duration="200" class="mt-3 rounded-xl border border-default bg-elevated/50 p-3">
-                <UColorPicker
+                <StudioColorField
                   v-model="background.solidColor"
                   @update:model-value="handleBackgroundUpdate" />
               </div>
@@ -853,9 +1147,9 @@ const isUnderlineActive = computed(() => !!localTextSettings.value.underline);
                     @update:model-value="HandleUpdateGradientAngle" />
                 </div>
                 <div class="flex gap-2">
-                  <UColorPicker
+                  <StudioColorField
                     v-for="(color, index) in background.gradientColors" :key="`${index}-${color}`"
-                    :default-value="color"
+                    :model-value="color"
                     @update:model-value="(c) => HandleUpdateGradientColorByPosition(index, c)" />
                 </div>
               </div>
@@ -870,6 +1164,8 @@ const isUnderlineActive = computed(() => !!localTextSettings.value.underline);
         <p class="text-sm text-muted mb-4">{{ t('section.exportHint') }}</p>
         <div class="w-full space-y-2">
           <UButton color="primary" block icon="lucide:download" :label="t('section.downloadPng')" @click="handleDownloadPng" />
+          <UButton color="neutral" variant="outline" block icon="lucide:film" :label="t('studio.timeline.mp4')" :loading="exportingMp4" data-testid="btn-export-mp4" @click="handleExportMp4" />
+          <p class="text-[10px] leading-tight text-muted">{{ t('studio.timeline.mp4Hint') }}</p>
           <UButton color="neutral" variant="outline" block icon="lucide:file-json" :label="t('section.exportJson')" @click="handleExportJson" />
         </div>
       </div>

@@ -32,6 +32,7 @@ import { postsViewsJourney } from './posts-views'
 import { mediaGalleryJourney } from './media-gallery'
 import { dashboardTrendJourney } from './dashboard-trend'
 import { agentLandingsJourney } from './agent-landings'
+import { imageEditorStudioJourney } from './image-editor-studio'
 
 export interface JourneyContext {
   page: Page
@@ -68,4 +69,4 @@ export interface JourneyDefinition {
   run(ctx: JourneyContext): Promise<void>
 }
 
-export const journeys: JourneyDefinition[] = [contentBoardJourney, businessCreateJourney, chatJourney, socialConnectionsJourney, autoReplyCampaignsJourney, businessDirectoryJourney, integrationsDirectoryJourney, adminUsersJourney, adminBusinessesJourney, postsViewsJourney, mediaGalleryJourney, dashboardTrendJourney, agentLandingsJourney]
+export const journeys: JourneyDefinition[] = [contentBoardJourney, businessCreateJourney, chatJourney, socialConnectionsJourney, autoReplyCampaignsJourney, businessDirectoryJourney, integrationsDirectoryJourney, adminUsersJourney, adminBusinessesJourney, postsViewsJourney, mediaGalleryJourney, dashboardTrendJourney, agentLandingsJourney, imageEditorStudioJourney]

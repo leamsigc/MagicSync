@@ -203,7 +203,6 @@ export class ThreadsPlugin extends BaseSchedulerPlugin {
   public override exposedMethods = [
     'threadsMaxLength',
     'getProfile',
-    'getPublishingLimit',
   ] as const;
   override maxConcurrentJob = platformConfigurations.threads.maxConcurrentJob;
 

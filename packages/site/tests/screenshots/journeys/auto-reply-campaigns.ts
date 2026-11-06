@@ -144,6 +144,10 @@ export const autoReplyCampaignsJourney: JourneyDefinition = {
     })
 
     await journey.step('autoreply-edit', async () => {
+      // Reload first: the bug is only visible when the dialog is fed by the
+      // list API (`GET /campaigns`) instead of the create response in memory.
+      await page.reload()
+      await waitForHydration(page)
       await card.getByRole('button', { name: 'Edit' }).click()
       const dialog = page.getByRole('dialog').filter({ hasText: 'Edit campaign' })
       await expect(dialog).toBeVisible()

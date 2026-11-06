@@ -1348,6 +1348,12 @@ importers:
       canvas:
         specifier: 'catalog:'
         version: 3.2.3
+      fflate:
+        specifier: ^0.8.2
+        version: 0.8.3
+      papaparse:
+        specifier: ^5.5.2
+        version: 5.7.0
     devDependencies:
       '@ai-sdk/google':
         specifier: 'catalog:'

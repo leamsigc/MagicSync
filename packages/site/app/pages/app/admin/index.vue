@@ -48,6 +48,7 @@ const adminLinks = [
   { labelKey: 'links.audit', to: '/app/admin/audit', icon: 'lucide:scroll-text', descriptionKey: 'links.auditDescription' },
   { labelKey: 'links.posts', to: '/app/admin/posts', icon: 'lucide:clipboard-list', descriptionKey: 'links.postsDescription' },
   { labelKey: 'links.data', to: '/app/admin/data', icon: 'lucide:database', descriptionKey: 'links.dataDescription' },
+  { labelKey: 'links.designAssets', to: '/app/admin/design-assets', icon: 'lucide:images', descriptionKey: 'links.designAssetsDescription' },
 ]
 </script>
 

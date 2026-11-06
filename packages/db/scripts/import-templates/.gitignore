@@ -1,0 +1,6 @@
+# Drop your own template JSON files here. They are intentionally not committed.
+# Each file must be { "id": "...", "title": "...", "document": { ... } }
+# (or a raw Polotno export converted with packages/tools/scripts/convert-polotno-template.mjs).
+*
+!.gitignore
+!README.md

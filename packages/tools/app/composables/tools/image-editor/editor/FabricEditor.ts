@@ -167,7 +167,7 @@ export class FabricEditor extends SimpleEventEmitter {
   public globalSettings: Ref<{ width: number; height: number, fill: string, stroke: string, strokeWidth: number }> = ref({
     width: 1242,
     height: 1660,
-    fill: '#1DA1F2',
+    fill: '#ffffff',
     stroke: '#ccc',
     strokeWidth: 1,
   });

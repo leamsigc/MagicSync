@@ -1,6 +1,6 @@
 <i18n src="#site/app/pages/tools/image-editor/ImageEditor.json"></i18n>
 <script lang="ts" setup>
-import { computed } from 'vue';
+import { computed, onUnmounted } from 'vue';
 import { CorePlugin } from '../../../composables/tools/image-editor/editor/CorePlugin';
 import { HooksPlugin } from '../../../composables/tools/image-editor/editor/HooksPlugin';
 import { HistoryPlugin } from '../../../composables/tools/image-editor/editor/plugins/HistoryPlugin';
@@ -18,15 +18,28 @@ import { HotkeyPlugin } from '../../../composables/tools/image-editor/editor/plu
 import { GroupPlugin } from '../../../composables/tools/image-editor/editor/plugins/GroupPlugin';
 import { LockPlugin } from '../../../composables/tools/image-editor/editor/plugins/LockPlugin';
 import { RulerPlugin } from '../../../composables/tools/image-editor/editor/plugins/RulerPlugin';
+import { AlignGuidelinePlugin } from '../../../composables/tools/image-editor/editor/plugins/AlignGuidelinePlugin';
+import { MiddleMousePlugin } from '../../../composables/tools/image-editor/editor/plugins/MiddleMousePlugin';
+import { WatermarkPlugin } from '../../../composables/tools/image-editor/editor/plugins/WatermarkPlugin';
+import { QrCodePlugin } from '../../../composables/tools/image-editor/editor/plugins/QrCodePlugin';
+import { SimpleClipImagePlugin } from '../../../composables/tools/image-editor/editor/plugins/SimpleClipImagePlugin';
 import { TransformPlugin } from '../../../composables/tools/image-editor/editor/plugins/TransformPlugin';
 import { ToolsPlugin } from '../../../composables/tools/image-editor/editor/ToolsPlugin';
+import { StudioPlugin } from '../../../composables/tools/image-editor/editor/plugins/StudioPlugin';
+import { AnimationPlugin } from '../../../composables/tools/image-editor/editor/plugins/AnimationPlugin';
+import { ResizePlugin } from '../../../composables/tools/image-editor/editor/plugins/ResizePlugin';
+import { TouchPlugin } from '../../../composables/tools/image-editor/editor/plugins/TouchPlugin';
+import { VideoPlugin } from '../../../composables/tools/image-editor/editor/plugins/VideoPlugin';
 import { useFabricJs } from '../../../composables/tools/image-editor/useFabricJs';
+import { useDesignStudio } from '../../../composables/tools/image-editor/useDesignStudio';
+import StudioTimelineBar from './StudioTimelineBar.vue';
 
 const { t } = useI18n();
 const toast = useToast();
-const { run, editor, bgStatus, bgProgress } = useFabricJs();
+const { run, editor, bgStatus, bgProgress, zoomIn, zoomOut, zoomPercent, timelineOpen } = useFabricJs();
 const canvas = useTemplateRef('canvas');
 const route = useRoute();
+const designStudio = useDesignStudio();
 
 const isAiBusy = computed(() => bgStatus.value === 'loading' || bgStatus.value === 'processing');
 const aiOverlayLabel = computed(() => {
@@ -34,6 +47,13 @@ const aiOverlayLabel = computed(() => {
   if (bgStatus.value === 'processing') return t('canvas.aiWorking', { progress });
   return t('canvas.aiLoading', { progress });
 });
+
+const resetZoom = () => {
+  const canvas = editor.value?.fabricCanvas;
+  if (!canvas) return;
+  canvas.setZoom(1);
+  canvas.requestRenderAll();
+};
 
 onMounted(async () => {
   if (editor.value) {
@@ -59,7 +79,18 @@ onMounted(async () => {
     GroupPlugin,
     LockPlugin,
     RulerPlugin,
-    TransformPlugin
+    AlignGuidelinePlugin,
+    MiddleMousePlugin,
+    WatermarkPlugin,
+    QrCodePlugin,
+    SimpleClipImagePlugin,
+    TransformPlugin,
+    StudioPlugin,
+    AnimationPlugin,
+    ResizePlugin,
+    VideoPlugin,
+    // H5: enable two-finger zoom only on narrow/touch viewports
+    ...(typeof window !== 'undefined' && window.innerWidth < 768 ? [TouchPlugin] : [])
   ]);
 
   // Note: the AI model preload lives in ImageEditorProperties (single
@@ -81,6 +112,47 @@ onMounted(async () => {
     }
   }
 
+  // Deep link: /tools/image-editor?designId=<id> reopens a saved studio design
+  const designId = route.query.designId as string;
+  if (designId && editor.value?.getPlugin('studio')) {
+    const opened = await designStudio.openDesign(designId);
+    if (opened) {
+      toast.add({
+        title: t('studio.templates.opened'),
+        icon: 'i-lucide-check',
+        color: 'success'
+      });
+    }
+  }
+
+  attachAutosave();
+
+});
+
+/** Autosave: canvas mutations mark the design dirty; saved designs debounce. */
+let autosaveTimer: ReturnType<typeof setTimeout> | null = null;
+
+const scheduleAutosave = () => {
+  if (designStudio.busy.value) return;
+  designStudio.markDirty();
+  if (!designStudio.currentId.value) return;
+  if (autosaveTimer) clearTimeout(autosaveTimer);
+  autosaveTimer = setTimeout(() => {
+    autosaveTimer = null;
+    void designStudio.saveDesign({ silent: true });
+  }, designStudio.AUTOSAVE_DELAY_MS);
+};
+
+const attachAutosave = () => {
+  const fabricCanvas = editor.value?.fabricCanvas;
+  if (!fabricCanvas) return;
+  fabricCanvas.on('object:modified', scheduleAutosave);
+  fabricCanvas.on('object:added', scheduleAutosave);
+  fabricCanvas.on('object:removed', scheduleAutosave);
+};
+
+onUnmounted(() => {
+  if (autosaveTimer) clearTimeout(autosaveTimer);
 });
 
 const showImageLoadFailed = () => {
@@ -89,9 +161,7 @@ const showImageLoadFailed = () => {
     icon: 'i-heroicons-exclamation-triangle',
     color: 'warning'
   });
-};
-
-// Handle Drag and Drop on the workspace to add images
+};// Handle Drag and Drop on the workspace to add images
 const onDrop = (e: DragEvent) => {
   e.preventDefault();
   const file = e.dataTransfer?.files?.[0];
@@ -117,11 +187,29 @@ const showDropRejected = () => {
 <template>
   <div
     id="workspace"
-    class="canvas-dots flex-1 overflow-hidden bg-muted relative flex items-center justify-center"
+    class="canvas-dots flex-1 overflow-hidden bg-muted/60 relative flex items-center justify-center"
     @dragover.prevent @drop="onDrop">
-    <div class="canvas-box shadow-2xl">
+    <div class="canvas-box shadow-2xl ring-1 ring-black/10">
       <canvas ref="canvas" class="editor" />
     </div>
+
+    <!-- Bottom zoom pill (Polotno-style) -->
+    <div
+      class="absolute left-1/2 -translate-x-1/2 flex items-center gap-0.5 rounded-full border border-default bg-elevated/90 backdrop-blur-md px-1.5 py-1 shadow-lg"
+      :class="timelineOpen ? 'bottom-[7.5rem]' : 'bottom-3'">
+      <UButton variant="ghost" color="neutral" icon="lucide:minus" size="xs" :aria-label="t('menu.vertical.zoomOut')" @click="zoomOut" />
+      <button
+        type="button"
+        class="px-2 min-w-14 text-center text-xs font-mono text-toned hover:text-highlighted transition-colors"
+        data-testid="zoom-level"
+        :aria-label="t('menu.vertical.resetZoom')"
+        @click="resetZoom">
+        {{ zoomPercent }}%
+      </button>
+      <UButton variant="ghost" color="neutral" icon="lucide:plus" size="xs" :aria-label="t('menu.vertical.zoomIn')" @click="zoomIn" />
+    </div>
+
+    <StudioTimelineBar />
 
     <!-- Floating AI status pill -->
     <div
@@ -138,7 +226,7 @@ const showDropRejected = () => {
 
 <style scoped>
 .canvas-dots {
-  background-image: radial-gradient(color-mix(in srgb, currentColor 14%, transparent) 1px, transparent 1px);
+  background-image: radial-gradient(color-mix(in srgb, currentColor 9%, transparent) 1px, transparent 1px);
   background-size: 22px 22px;
   color: var(--ui-text-dimmed, #a8a8a8);
 }

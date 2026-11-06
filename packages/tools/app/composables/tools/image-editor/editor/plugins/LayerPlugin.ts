@@ -15,24 +15,22 @@ export class LayerPlugin extends BaseFabricPlugin {
 
   protected init() { }
 
-  arrangeFront() {
-    if (this.canvas) {
-      const activeObject = this.canvas.getActiveObject();
-      if (activeObject) {
-        (this.canvas as any).bringObjectForward(activeObject);
-        this.canvas.requestRenderAll();
-      }
-    }
+  /**
+   * Move one step up. `target` lets the layer-list arrows move the row the
+   * user clicked instead of whichever object happened to be selected.
+   */
+  arrangeFront(target?: FabricObject) {
+    const object = target ?? this.canvas?.getActiveObject();
+    if (!this.canvas || !object) return;
+    (this.canvas as any).bringObjectForward(object);
+    this.canvas.requestRenderAll();
   }
 
-  arrangeBack() {
-    if (this.canvas) {
-      const activeObject = this.canvas.getActiveObject();
-      if (activeObject) {
-        (this.canvas as Canvas).sendObjectBackwards(activeObject);
-        this.canvas.requestRenderAll();
-      }
-    }
+  arrangeBack(target?: FabricObject) {
+    const object = target ?? this.canvas?.getActiveObject();
+    if (!this.canvas || !object) return;
+    (this.canvas as Canvas).sendObjectBackwards(object);
+    this.canvas.requestRenderAll();
   }
 
   getLayers() {
