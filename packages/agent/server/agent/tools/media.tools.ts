@@ -36,7 +36,7 @@ async function listBusinessAssets(ctx: AgentToolContext, limit: number, prefix: 
   const assetService = await loadAssets()
   const result = await assetService.findByBusinessId(ctx.businessId, ctx.userId, {
     pagination: { page: 1, limit },
-  })
+  }, ctx.event)
   if (!result.success) toolError(result.error, 'Failed to list assets')
   const normalized = prefix?.toLowerCase()
   return (result.data ?? [])

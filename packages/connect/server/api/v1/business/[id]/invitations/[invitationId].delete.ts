@@ -16,10 +16,11 @@ export default defineEventHandler(async (event) => {
   }
 
   log.set({ userId: user.id, businessId, invitationId })
-  const result = await businessTeamService.cancelInvitation(event, businessId, invitationId)
+  const result = await businessTeamService.cancelInvitation(event, businessId, user.id, invitationId)
   if (!result.success) {
     log.error({ message: 'Failed to cancel invitation', error: result.error })
-    throw createError({ statusCode: 400, message: result.error })
+    const statusCode = result.code === 'FORBIDDEN' ? 403 : result.code === 'NOT_FOUND' ? 404 : 400
+    throw createError({ statusCode, message: result.error })
   }
 
   log.info({ message: 'Invitation canceled', businessId, invitationId })

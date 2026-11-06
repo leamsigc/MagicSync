@@ -1,5 +1,6 @@
 import type { H3Event } from 'h3'
 import type { ServiceResponse } from '#layers/BaseDB/server/services/types'
+import { requireBusinessAccess, requireBusinessOwner } from '#layers/BaseDB/server/utils/business-access'
 import { businessOrgService, type OrgDetails } from './business-org.service'
 import { useAuthApi } from '../utils/useAuthApi'
 
@@ -9,6 +10,10 @@ import { useAuthApi } from '../utils/useAuthApi'
  * members and invitations come straight from `getFullOrganization`.
  *
  * Every method returns a `ServiceResponse` — never throws.
+ *
+ * Authorization is enforced here, not only in the routes: the roster is
+ * readable by any business member, while every mutation requires the creator
+ * or an invited organization owner.
  */
 
 export interface TeamMember {
@@ -74,9 +79,16 @@ const findMember = (org: OrgDetails, idOrEmail: string): TeamMember | undefined 
     member => member.id === idOrEmail || member.user?.email === idOrEmail
   )
 
+const ownerCount = (org: OrgDetails): number =>
+  (org.members as TeamMember[] | undefined)?.filter(member => member.role === 'owner').length ?? 0
+
 export const businessTeamService = {
-  /** Members plus pending invitations. Read-only: never creates the org. */
-  async getTeam(event: H3Event, businessId: string): Promise<ServiceResponse<TeamSnapshot>> {
+  async getTeam(event: H3Event, businessId: string, userId: string): Promise<ServiceResponse<TeamSnapshot>> {
+    const access = await requireBusinessAccess(event, userId, businessId)
+    if (!access.success || !access.data) {
+      return { success: false, error: access.error ?? 'Business not found', code: access.code }
+    }
+
     try {
       const org = await businessOrgService.getOrgForBusiness(event, businessId)
       if (!org) {
@@ -110,11 +122,17 @@ export const businessTeamService = {
   async invite(
     event: H3Event,
     businessId: string,
+    userId: string,
     emails: string[],
     role: AssignableTeamRole = 'member'
   ): Promise<ServiceResponse<{ invitations: CreatedInvitation[], failed: { email: string, error: string }[] }>> {
     if (!isAssignableRole(role)) {
       return { success: false, error: 'Admins are created from the admin area, not by invitation' }
+    }
+
+    const access = await requireBusinessOwner(event, userId, businessId)
+    if (!access.success || !access.data) {
+      return { success: false, error: access.error ?? 'Business not found', code: access.code }
     }
 
     try {
@@ -150,13 +168,20 @@ export const businessTeamService = {
     }
   },
 
-  /** Remove a member by member id or email. */
-  async removeMember(event: H3Event, businessId: string, memberIdOrEmail: string): Promise<ServiceResponse<{ removed: true }>> {
+  async removeMember(event: H3Event, businessId: string, userId: string, memberIdOrEmail: string): Promise<ServiceResponse<{ removed: true }>> {
+    const access = await requireBusinessOwner(event, userId, businessId)
+    if (!access.success || !access.data) {
+      return { success: false, error: access.error ?? 'Business not found', code: access.code }
+    }
+
     try {
       const org = await businessOrgService.getOrCreateOrgForBusiness(event, businessId)
       const member = findMember(org, memberIdOrEmail)
       if (!member) {
         return { success: false, error: 'Member not found' }
+      }
+      if (member.role === 'owner' && ownerCount(org) <= 1) {
+        return { success: false, error: 'A business must keep at least one owner' }
       }
 
       await useAuthApi(event).removeMember({
@@ -169,10 +194,20 @@ export const businessTeamService = {
     }
   },
 
-  /** Change a member's role. Only owner / member are assignable — never admin. */
-  async updateRole(event: H3Event, businessId: string, memberId: string, role: AssignableTeamRole): Promise<ServiceResponse<{ updated: true }>> {
+  async updateRole(
+    event: H3Event,
+    businessId: string,
+    userId: string,
+    memberId: string,
+    role: AssignableTeamRole
+  ): Promise<ServiceResponse<{ updated: true }>> {
     if (!isAssignableRole(role)) {
       return { success: false, error: 'Admins are managed from the admin area, not from the team' }
+    }
+
+    const access = await requireBusinessOwner(event, userId, businessId)
+    if (!access.success || !access.data) {
+      return { success: false, error: access.error ?? 'Business not found', code: access.code }
     }
 
     try {
@@ -180,6 +215,9 @@ export const businessTeamService = {
       const member = findMember(org, memberId)
       if (!member) {
         return { success: false, error: 'Member not found' }
+      }
+      if (member.role === 'owner' && role !== 'owner' && ownerCount(org) <= 1) {
+        return { success: false, error: 'A business must keep at least one owner' }
       }
 
       await useAuthApi(event).updateMemberRole({
@@ -192,8 +230,12 @@ export const businessTeamService = {
     }
   },
 
-  /** Cancel a pending invitation that belongs to this business's organization. */
-  async cancelInvitation(event: H3Event, businessId: string, invitationId: string): Promise<ServiceResponse<{ canceled: true }>> {
+  async cancelInvitation(event: H3Event, businessId: string, userId: string, invitationId: string): Promise<ServiceResponse<{ canceled: true }>> {
+    const access = await requireBusinessOwner(event, userId, businessId)
+    if (!access.success || !access.data) {
+      return { success: false, error: access.error ?? 'Business not found', code: access.code }
+    }
+
     try {
       const org = await businessOrgService.getOrgForBusiness(event, businessId)
       const owned = org?.invitations?.some(invitation => invitation.id === invitationId)

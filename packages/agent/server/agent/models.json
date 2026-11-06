@@ -51,12 +51,9 @@
       ]
     },
     "google": {
-   "baseUrl": "https://generativelanguage.googleapis.com/v1beta/openai",
-   "api": "openai-completions",
+   "baseUrl": "https://generativelanguage.googleapis.com/v1beta",
+   "api": "google-generative-ai",
    "apiKey": "$NUXT_GOOGLE_GENERATIVE_AI_API_KEY",
-   "compat": {
-    "supportsStore": false
-   },
    "models": [
     {
      "id": "gemini-3.8-flash",

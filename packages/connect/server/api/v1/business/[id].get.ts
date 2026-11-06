@@ -1,6 +1,6 @@
-import { businessProfileService } from '#layers/BaseDB/server/services/business-profile.service';
 import { checkUserIsLogin } from "#layers/BaseAuth/server/utils/AuthHelpers"
 import { entityDetailsService } from '#layers/BaseDB/server/services/entity-details.service';
+import { accessErrorStatus, requireBusinessAccess } from '#layers/BaseDB/server/utils/business-access';
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event)
@@ -18,19 +18,18 @@ export default defineEventHandler(async (event) => {
 
   log.set({ businessId: id })
 
-  const business = await businessProfileService.findById(id, user.id);
-  // Get entity related to the business
-  const entityDetails = await entityDetailsService.getDetailsByEntity(id, 'business_details');
-
-  if (business.error) {
+  const access = await requireBusinessAccess(event, user.id, id);
+  if (!access.success || !access.data) {
     log.error({ message: 'Business not found or access denied', businessId: id })
     throw createError({
-      statusCode: 404,
-      message: business.error
+      statusCode: accessErrorStatus(access.code),
+      message: access.error
     });
   }
 
-  log.info({ message: 'Business profile retrieved', businessId: id })
+  const entityDetails = await entityDetailsService.getDetailsByEntity(id, 'business_details');
 
-  return { ...business, entityDetails };
+  log.info({ message: 'Business profile retrieved', businessId: id, role: access.data.role })
+
+  return { data: access.data.business, entityDetails, role: access.data.role };
 });

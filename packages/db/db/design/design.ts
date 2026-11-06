@@ -1,6 +1,7 @@
 import type { InferSelectModel } from 'drizzle-orm'
 import { integer, real, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import { user } from '../auth/auth'
+import { businessProfiles } from '../business/business'
 import { templates } from '../templates/templates'
 
 /**
@@ -25,6 +26,7 @@ export const designVersions = sqliteTable('design_versions', {
 export const brandKits = sqliteTable('brand_kits', {
   id: text('id').primaryKey(),
   ownerId: text('ownerId').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  businessId: text('businessId').references(() => businessProfiles.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
   colors: text('colors', { mode: 'json' }).notNull().default([]),
   fonts: text('fonts', { mode: 'json' }).notNull().default({}),

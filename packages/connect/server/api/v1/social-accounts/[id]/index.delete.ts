@@ -1,4 +1,5 @@
 import { socialMediaAccountService } from "#layers/BaseDB/server/services/social-media-account.service"
+import { accessErrorStatus, requireBusinessOwner } from '#layers/BaseDB/server/utils/business-access'
 
 
 export default defineEventHandler(async (event) => {
@@ -29,8 +30,15 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // Verify user owns this account
-    if (account.userId !== user.id) {
+    if (account.businessId) {
+      const access = await requireBusinessOwner(event, user.id, account.businessId)
+      if (!access.success || !access.data) {
+        throw createError({
+          statusCode: accessErrorStatus(access.code),
+          statusMessage: access.error ?? 'Access denied'
+        })
+      }
+    } else if (account.userId !== user.id) {
       throw createError({
         statusCode: 403,
         statusMessage: 'Access denied'

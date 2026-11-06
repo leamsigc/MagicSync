@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
   const locationId = decodeURIComponent(getRouterParam(event, 'locationId') || '')
   if (!businessId || !locationId) throw createError({ statusCode: 400, message: 'businessId query param and locationId route param required' })
 
-  const business = await businessProfileService.findById(businessId, user.id)
+  const business = await businessProfileService.findById(businessId, user.id, event)
   if (business.error) throw createError({ statusCode: 404, message: business.error })
 
   const gmbAccounts = await socialMediaAccountService.getAccounts({ businessId, platform: 'googlemybusiness' })

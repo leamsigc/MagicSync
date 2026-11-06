@@ -8,7 +8,9 @@ import {
   type Provider,
 } from '@earendil-works/pi-ai'
 import { openAICompletionsApi } from '@earendil-works/pi-ai/api/openai-completions.lazy'
+import { googleGenerativeAIApi } from '@earendil-works/pi-ai/api/google-generative-ai.lazy'
 import { setProvider, type Agent, type ToolDefinition } from '@flue/runtime'
+import { isGoogleEndpoint, normalizeGoogleBaseUrl } from '../utils/google-endpoint'
 import deploymentModelsRaw from '../agent/models.json?raw'
 
 /**
@@ -145,12 +147,20 @@ export async function stopFlueRuntime(): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// Providers (T26) — one OpenAI-compatible provider per business, credentials
-// held in the closure and isolated by a business-scoped registry key.
+// Providers (T26) — one provider per business, credentials held in the closure
+// and isolated by a business-scoped registry key.
 // ---------------------------------------------------------------------------
 
-/** A pi provider on the OpenAI-completions wire protocol (Ollama, llama.cpp, DeepSeek, OpenRouter, custom gateways). */
-export type FlueProvider = Provider<'openai-completions'>
+/**
+ * A pi provider Flue can register. Most providers speak OpenAI-completions;
+ * Google Gemini uses pi's native `google-generative-ai` adapter because the
+ * OpenAI-compatible endpoint drops each tool call's `thought_signature`, and
+ * Gemini 3 rejects the next turn without it (400, empty body).
+ */
+export type FlueProvider = Provider
+
+/** Wire protocols this module builds. */
+export type FlueProviderApi = 'openai-completions' | 'google-generative-ai'
 
 /** One model the provider declares; undeclared ids fail Flue's model resolution. */
 export interface ProviderModelDescriptor {
@@ -200,16 +210,11 @@ function resolveProviderAuth(apiKey: string | null | undefined, source: string):
   return { auth: { apiKey: key }, source }
 }
 
-function toModel(
-  providerId: string,
-  baseUrl: string,
-  descriptor: ProviderModelDescriptor,
-  compat?: OpenAICompletionsCompat,
-): Model<'openai-completions'> {
+/** Fields every pi model declares, independent of wire protocol. */
+function baseModel(providerId: string, baseUrl: string, descriptor: ProviderModelDescriptor) {
   return {
     id: descriptor.id,
     name: descriptor.name ?? descriptor.id,
-    api: 'openai-completions',
     provider: providerId,
     baseUrl,
     reasoning: descriptor.reasoning ?? MODEL_DEFAULTS.reasoning,
@@ -217,7 +222,33 @@ function toModel(
     cost: descriptor.cost ?? MODEL_DEFAULTS.cost,
     contextWindow: descriptor.contextWindow ?? MODEL_DEFAULTS.contextWindow,
     maxTokens: descriptor.maxTokens ?? MODEL_DEFAULTS.maxTokens,
+  }
+}
+
+function toModel(
+  providerId: string,
+  baseUrl: string,
+  descriptor: ProviderModelDescriptor,
+  compat?: OpenAICompletionsCompat,
+): Model<'openai-completions'> {
+  return {
+    ...baseModel(providerId, baseUrl, descriptor),
+    api: 'openai-completions',
     ...(compat ? { compat } : {}),
+  }
+}
+
+function toGoogleModel(providerId: string, baseUrl: string, descriptor: ProviderModelDescriptor): Model<'google-generative-ai'> {
+  return { ...baseModel(providerId, baseUrl, descriptor), api: 'google-generative-ai' }
+}
+
+/** The API-key auth block shared by every provider flavor. */
+function providerAuth(input: BuildProviderInput, source: string) {
+  return {
+    apiKey: {
+      name: `${source} key`,
+      resolve: () => Promise.resolve(resolveProviderAuth(input.apiKey, source)),
+    },
   }
 }
 
@@ -226,21 +257,36 @@ function toModel(
  * `resolve()` closure and nowhere else — nothing is persisted, and the
  * provider object is immutable once built.
  */
-export function buildOpenAiCompatProvider(input: BuildProviderInput): FlueProvider {
+export function buildOpenAiCompatProvider(input: BuildProviderInput): Provider<'openai-completions'> {
   const source = input.providerName ?? input.providerId
   const { providerId, baseUrl } = input
   return createProvider<'openai-completions'>({
     id: providerId,
     name: source,
     baseUrl,
-    auth: {
-      apiKey: {
-        name: `${source} key`,
-        resolve: () => Promise.resolve(resolveProviderAuth(input.apiKey, source)),
-      },
-    },
+    auth: providerAuth(input, source),
     models: input.models.map(model => toModel(providerId, baseUrl, model, input.compat)),
     api: openAICompletionsApi(),
+  })
+}
+
+/**
+ * Native Gemini provider. The OpenAI-compatible surface works for plain text,
+ * but pi's openai-completions adapter does not carry a tool call's
+ * `extra_content.google.thought_signature` into the next request, and Gemini 3
+ * rejects a replayed function call without it. The native adapter stores it as
+ * `ToolCall.thoughtSignature` and replays it.
+ */
+export function buildGoogleProvider(input: BuildProviderInput): Provider<'google-generative-ai'> {
+  const source = input.providerName ?? input.providerId
+  const { providerId, baseUrl } = input
+  return createProvider<'google-generative-ai'>({
+    id: providerId,
+    name: source,
+    baseUrl,
+    auth: providerAuth(input, source),
+    models: input.models.map(model => toGoogleModel(providerId, baseUrl, model)),
+    api: googleGenerativeAIApi(),
   })
 }
 
@@ -248,6 +294,8 @@ export function buildOpenAiCompatProvider(input: BuildProviderInput): FlueProvid
 interface CatalogProviderEntry {
   name?: string
   baseUrl?: string
+  /** pi wire protocol; defaults to `openai-completions` for custom gateways. */
+  api?: string
   /** `"$ENV_VAR"` reference or a literal key. Never persisted; resolved per run. */
   apiKey?: string
   compat?: OpenAICompletionsCompat
@@ -385,6 +433,25 @@ function declaredModels(config: BusinessProviderConfig, entry: CatalogProviderEn
 }
 
 /**
+ * Wire protocol for one config. Gemini goes native so tool-call thought
+ * signatures survive the turn; a per-business `apiBaseUrl` means a custom
+ * OpenAI-compatible gateway, which keeps that wire.
+ */
+function resolveProviderApi(config: BusinessProviderConfig, entry: CatalogProviderEntry | undefined): FlueProviderApi {
+  if (entry?.api !== 'google-generative-ai') return 'openai-completions'
+  // No override or a Google host → native. Any other override is a custom
+  // OpenAI-compatible gateway.
+  const override = config.apiBaseUrl?.trim() ?? ''
+  if (override === '' || isGoogleEndpoint(override)) return 'google-generative-ai'
+  return 'openai-completions'
+}
+
+/** Native Gemini needs the bare Google base, never the `/openai` suffix. */
+function providerBaseUrl(api: FlueProviderApi, baseUrl: string): string {
+  return api === 'google-generative-ai' ? normalizeGoogleBaseUrl(baseUrl) : baseUrl
+}
+
+/**
  * Build (but do not register) one business's provider plus the model specifier
  * for `useModel()`. Throws `FlueProviderConfigError` when no base URL resolves.
  */
@@ -399,14 +466,17 @@ export function buildBusinessProvider(config: BusinessProviderConfig): BusinessP
   const ownKey = config.apiKey?.trim() ?? ''
   const fallback = ownKey === '' ? resolveCatalogKey(entry) : { key: '', fromEnv: false }
   const apiKey = ownKey !== '' ? ownKey : fallback.key
-  const provider = buildOpenAiCompatProvider({
+  const api = resolveProviderApi(config, entry)
+  const providerInput: BuildProviderInput = {
     providerId,
     providerName: entry?.name ?? config.provider,
-    baseUrl: resolveBaseUrl(config, entry),
+    baseUrl: providerBaseUrl(api, resolveBaseUrl(config, entry)),
     apiKey,
     models: declaredModels(config, entry),
-    ...(entry?.compat ? { compat: entry.compat } : {}),
-  })
+  }
+  const provider = api === 'google-generative-ai'
+    ? buildGoogleProvider(providerInput)
+    : buildOpenAiCompatProvider({ ...providerInput, ...(entry?.compat ? { compat: entry.compat } : {}) })
   return {
     providerId,
     provider,

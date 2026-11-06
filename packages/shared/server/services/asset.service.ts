@@ -243,11 +243,28 @@ export class AssetService {
     }
   }
 
-  async findById(id: string, userId: string): Promise<ServiceResponse<Asset>> {
+  async findById(id: string, userId: string, event?: H3Event): Promise<ServiceResponse<Asset>> {
     try {
-      const asset = await this.db.query.assets.findFirst({
+      let asset = await this.db.query.assets.findFirst({
         where: and(eq(assets.id, id), eq(assets.userId, userId)),
       });
+
+      if (!asset) {
+        const probe = await this.db.query.assets.findFirst({
+          where: eq(assets.id, id),
+          columns: { businessId: true },
+        });
+        if (!probe || !probe.businessId) {
+          return { success: false, error: 'Asset not found', code: 'NOT_FOUND' };
+        }
+        const access = await businessProfileService.findById(probe.businessId, userId, event);
+        if (!access.success) {
+          return { success: false, error: 'Asset not found', code: 'NOT_FOUND' };
+        }
+        asset = await this.db.query.assets.findFirst({
+          where: eq(assets.id, id),
+        });
+      }
 
       if (!asset) {
         return { success: false, error: 'Asset not found', code: 'NOT_FOUND' };
@@ -259,11 +276,21 @@ export class AssetService {
     }
   }
 
-  async findByBusinessId(businessId: string, userId: string, options: QueryOptions = {}): Promise<PaginatedResponse<Asset>> {
+  async findByBusinessId(businessId: string, userId: string, options: QueryOptions = {}, event?: H3Event): Promise<PaginatedResponse<Asset>> {
     try {
+      const gate = await this.gateBusiness(businessId, userId, event);
+      if (!gate.ok) {
+        return {
+          success: false,
+          error: gate.error,
+          code: gate.code,
+          data: [],
+        } as PaginatedResponse<Asset>;
+      }
+
       const { page, limit, offset } = pageWindow(options.pagination);
       const whereClause = buildAssetWhere(
-        or(eq(assets.businessId, businessId), eq(assets.userId, userId)),
+        eq(assets.businessId, businessId),
         options.filters,
       );
 
@@ -345,16 +372,16 @@ export class AssetService {
     }
   }
 
-  async delete(id: string, userId: string): Promise<ServiceResponse<Asset>> {
+  async delete(id: string, userId: string, event?: H3Event): Promise<ServiceResponse<Asset>> {
     try {
-      const existingResult = await this.findById(id, userId);
+      const existingResult = await this.findById(id, userId, event);
       if (!existingResult.success) {
         return existingResult;
       }
 
       const [deleted] = await this.db
         .delete(assets)
-        .where(and(eq(assets.id, id), eq(assets.userId, userId)))
+        .where(eq(assets.id, id))
         .returning();
 
       return { success: true, data: deleted };
@@ -363,18 +390,55 @@ export class AssetService {
     }
   }
 
-  async deleteMultiple(ids: string[], userId: string): Promise<ServiceResponse<Asset[]>> {
+  private async isAssetRowAccessible(
+    row: { id: string, userId: string, businessId: string | null },
+    userId: string,
+    event: H3Event | undefined,
+    cache: Map<string, boolean>,
+  ): Promise<boolean> {
+    if (row.userId === userId) return true
+    if (!row.businessId) return false
+
+    let allowed = cache.get(row.businessId)
+    if (allowed === undefined) {
+      allowed = (await businessProfileService.findById(row.businessId, userId, event)).success
+      cache.set(row.businessId, allowed)
+    }
+    return allowed
+  }
+
+  private async accessibleAssetIds(
+    rows: Array<{ id: string, userId: string, businessId: string | null }>,
+    userId: string,
+    event?: H3Event,
+  ): Promise<string[]> {
+    const cache = new Map<string, boolean>()
+    const accessible: string[] = []
+    for (const row of rows) {
+      if (await this.isAssetRowAccessible(row, userId, event, cache)) accessible.push(row.id)
+    }
+    return accessible
+  }
+
+  async deleteMultiple(ids: string[], userId: string, event?: H3Event): Promise<ServiceResponse<Asset[]>> {
     try {
       if (ids.length === 0) {
         return { success: true, data: [] };
       }
 
+      const rows = await this.db.query.assets.findMany({
+        where: inArray(assets.id, ids),
+        columns: { id: true, userId: true, businessId: true },
+      });
+      const accessibleIds = await this.accessibleAssetIds(rows, userId, event)
+
+      if (accessibleIds.length === 0) {
+        return { success: true, data: [] };
+      }
+
       const deleted = await this.db
         .delete(assets)
-        .where(and(
-          inArray(assets.id, ids),
-          eq(assets.userId, userId)
-        ))
+        .where(inArray(assets.id, accessibleIds))
         .returning();
 
       return { success: true, data: deleted };
@@ -383,14 +447,19 @@ export class AssetService {
     }
   }
 
-  async updateMetadata(id: string, userId: string, metadata: AssetMetadata): Promise<ServiceResponse<Asset>> {
+  async updateMetadata(id: string, userId: string, metadata: AssetMetadata, event?: H3Event): Promise<ServiceResponse<Asset>> {
     try {
+      const existing = await this.findById(id, userId, event);
+      if (!existing.success) {
+        return existing;
+      }
+
       const [updated] = await this.db
         .update(assets)
         .set({
           metadata: JSON.stringify(metadata),
         })
-        .where(and(eq(assets.id, id), eq(assets.userId, userId)))
+        .where(eq(assets.id, id))
         .returning();
 
       if (!updated) {

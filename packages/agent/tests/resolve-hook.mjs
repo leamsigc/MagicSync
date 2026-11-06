@@ -1,5 +1,6 @@
 import fs from 'node:fs'
 import path from 'node:path'
+import { createRequire } from 'node:module'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 // Repo-relative resolution for agent-layer tests: Nuxt layer aliases are mapped
@@ -48,7 +49,10 @@ export async function resolve(specifier, context, next) {
     }
   }
   // The real drizzle helper connects to Turso; tests inject a file DB instead.
-  if (specifier === '#layers/BaseDB/server/utils/drizzle') {
+  // Some db services import it relatively (`../utils/drizzle`), bypassing the
+  // layer alias above — route those to the same stub or they read `local.db`.
+  if (specifier === '#layers/BaseDB/server/utils/drizzle'
+    || (context.parentURL?.includes('/packages/db/') && (specifier === '../utils/drizzle' || specifier === './drizzle'))) {
     return {
       url: pathToFileURL(path.join(PACKAGES, 'db', 'tests', 'stubs', 'drizzle-stub.mjs')).href,
       shortCircuit: true,
@@ -92,6 +96,16 @@ export async function resolve(specifier, context, next) {
   }
   // zod is a transitive workspace dep; resolve it through the site package.
   if (specifier === 'zod') {
+    return next(specifier, { ...context, parentURL: pathToFileURL(path.join(ROOT, 'packages', 'site', 'package.json')).href })
+  }
+  // The db layer's `.ts` sources import h3 (declared by the agent package) and
+  // consola (declared by site). Resolve the exact same copy the app uses so no
+  // second module instance exists; the generic fallback would duplicate
+  // @flue/runtime and break its global provider registry.
+  if (specifier === 'h3') {
+    return next(specifier, { ...context, parentURL: pathToFileURL(path.join(AGENT, 'package.json')).href })
+  }
+  if (specifier === 'consola') {
     return next(specifier, { ...context, parentURL: pathToFileURL(path.join(ROOT, 'packages', 'site', 'package.json')).href })
   }
   return next(specifier, context)

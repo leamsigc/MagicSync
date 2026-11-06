@@ -15,7 +15,7 @@ export default defineEventHandler(async (event) => {
   const businessId = body.businessId
   if (!businessId) throw createError({ statusCode: 400, message: 'businessId is required' })
 
-  const business = await businessProfileService.findById(businessId, user.id)
+  const business = await businessProfileService.findById(businessId, user.id, event)
   if (business.error) throw createError({ statusCode: 404, message: business.error })
   if (!business.data?.googleBusinessId) throw createError({ statusCode: 400, message: 'Business not connected to GMB' })
 

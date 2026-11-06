@@ -28,6 +28,14 @@ export default defineEventHandler(async (event) => {
 
   log.set({ businessId: id })
 
+  const owned = await businessProfileService.findByIdOnly(id)
+  if (!owned.success || !owned.data) {
+    throw createError({ statusCode: 404, statusMessage: owned.error ?? 'Business not found' })
+  }
+  if (owned.data.userId !== user.id) {
+    throw createError({ statusCode: 403, statusMessage: 'Only the business creator can delete it' })
+  }
+
   const body = await readBody(event).catch(() => ({}))
   const parsed = DeleteBusinessSchema.safeParse(body ?? {})
   if (!parsed.success) {

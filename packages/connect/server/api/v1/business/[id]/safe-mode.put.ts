@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
 import { businessProfileService } from '#layers/BaseDB/server/services/business-profile.service'
+import { accessErrorStatus, requireBusinessOwner } from '#layers/BaseDB/server/utils/business-access'
 
 const SafeModeSchema = z.object({ safeMode: z.boolean() })
 
@@ -8,6 +9,11 @@ export default defineEventHandler(async (event) => {
   const user = await checkUserIsLogin(event)
   const id = getRouterParam(event, 'id')
   if (!id) throw createError({ statusCode: 400, statusMessage: 'Business ID is required' })
+
+  const access = await requireBusinessOwner(event, user.id, id)
+  if (!access.success || !access.data) {
+    throw createError({ statusCode: accessErrorStatus(access.code), statusMessage: access.error })
+  }
 
   const body = await readValidatedBody(event, SafeModeSchema.parse)
 

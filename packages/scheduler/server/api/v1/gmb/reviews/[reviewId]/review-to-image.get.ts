@@ -13,10 +13,10 @@ export default defineEventHandler(async (event) => {
   const reviewId = getRouterParam(event, 'reviewId')
   if (!businessId || !reviewId) throw createError({ statusCode: 400, message: 'businessId query param and reviewId route param required' })
 
-  const reviewResult = await reviewService.findById(reviewId, user.id)
+  const reviewResult = await reviewService.findById(reviewId, user.id, event)
   if (reviewResult.error) throw createError({ statusCode: 404, message: reviewResult.error })
 
-  const businessResult = await businessProfileService.findById(businessId, user.id)
+  const businessResult = await businessProfileService.findById(businessId, user.id, event)
   if (businessResult.error) throw createError({ statusCode: 404, message: businessResult.error })
 
   const review = reviewResult.data!

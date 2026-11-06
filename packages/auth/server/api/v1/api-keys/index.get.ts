@@ -1,6 +1,6 @@
 import { apiKeyService } from '#layers/BaseAuth/server/services/api-key.service'
 import { businessOrgService } from '#layers/BaseAuth/server/services/business-org.service'
-import { businessProfileService } from '#layers/BaseDB/server/services/business-profile.service'
+import { accessErrorStatus, requireBusinessAccess } from '#layers/BaseDB/server/utils/business-access'
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event)
@@ -14,26 +14,18 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Business ID is required' })
   }
 
-  // Verify the business belongs to the user
-  const businessResult = await businessProfileService.findById(businessId, user.id)
-  if (!businessResult.data) {
-    throw createError({ statusCode: 404, statusMessage: 'Business not found' })
+  const access = await requireBusinessAccess(event, user.id, businessId)
+  if (!access.success || !access.data) {
+    throw createError({ statusCode: accessErrorStatus(access.code), statusMessage: access.error })
   }
 
-  // Get existing org or create one if needed, then check membership
-  let org = await businessOrgService.getOrgForBusiness(event, businessId)
+  const org = await businessOrgService.getOrgForBusiness(event, businessId)
   if (!org) {
-    org = await businessOrgService.getOrCreateOrgForBusiness(event, businessId)
-  }
-  if (!org) {
-    throw createError({ statusCode: 500, statusMessage: 'Failed to get or create organization' })
-  }
-  if (!businessOrgService.isUserMemberOfOrg(org, user.id)) {
-    throw createError({ statusCode: 403, statusMessage: 'You are not a member of this business' })
+    return { apiKeys: [], total: 0, role: access.data.role }
   }
 
   const apiKeys = await apiKeyService.listApiKeys(event, org.id, user.id)
-  log.info({ content: 'Listed API keys', total: apiKeys.length })
+  log.info({ content: 'Listed API keys', total: apiKeys.length, role: access.data.role })
 
-  return { apiKeys, total: apiKeys.length }
+  return { apiKeys, total: apiKeys.length, role: access.data.role }
 })

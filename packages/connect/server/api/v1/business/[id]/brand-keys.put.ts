@@ -1,6 +1,6 @@
 import { BrandKeySchema } from '#layers/BaseDB/db/schema';
 import { businessCorpusService } from '#layers/BaseDB/server/services/business-corpus.service';
-import { accessErrorStatus, requireBusinessAccess } from '#layers/BaseDB/server/utils/business-access';
+import { accessErrorStatus, requireBusinessOwner } from '#layers/BaseDB/server/utils/business-access';
 import { checkUserIsLogin } from "#layers/BaseAuth/server/utils/AuthHelpers"
 import z from 'zod';
 
@@ -26,7 +26,7 @@ export default defineEventHandler(async (event) => {
 
   const body = await readValidatedBody(event, BrandKeyPutSchema.parse);
 
-  const access = await requireBusinessAccess(event, user.id, id);
+  const access = await requireBusinessOwner(event, user.id, id);
   if (!access.success || !access.data) {
     throw createError({
       statusCode: accessErrorStatus(access.code),

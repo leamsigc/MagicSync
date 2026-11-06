@@ -1,12 +1,14 @@
 import type { InferSelectModel } from 'drizzle-orm'
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import { user } from '../auth/auth'
+import { businessProfiles } from '../business/business'
 
 export const TemplateType = ['EMAIL', 'IMAGES', 'CHAT', 'VARIABLE'] as const
 
 export const templates = sqliteTable('templates', {
   id: text('id').primaryKey(),
   ownerId: text('ownerId').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  businessId: text('businessId').references(() => businessProfiles.id, { onDelete: 'cascade' }),
   type: text('type', { enum: TemplateType }).notNull(),
   title: text('title').notNull(),
   content: text('content').notNull(),

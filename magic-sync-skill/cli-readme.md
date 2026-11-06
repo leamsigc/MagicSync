@@ -34,6 +34,28 @@ curl -H "X-Api-Key: your-api-key-here" http://localhost:3000/api/v1/cli/ping
 | GET | `/info` | Get connected platforms and their rules |
 | POST | `/validate` | Validate content against platform rules |
 | POST | `/post` | Create and optionally publish/schedule a post |
+| POST | `/batch` | Queue a multi-day batch (posts/carousels/reels/repurpose) |
+| POST | `/trend-scan` | Find the business's best-performing posts |
+| POST | `/generate-approved` | Start a workflow graph run for an approved pipeline |
+| POST | `/publish-approved` | Publish an approved artifact to a connection |
+
+## Business Context
+
+Every API key is scoped to one business and acts as that business's owner. The
+CLI cannot switch businesses. `info` returns the key's `businessId`; `batch`,
+`trend-scan`, and `publish-approved` require it in the body.
+
+A business has one creator and invited organization members:
+
+- **Creator / invited owner** — full access to the business.
+- **Member** — read-only on business details, API keys, and playbook; can create
+  and edit posts, assets, content board, auto-reply, templates, brand kits, and
+  chat.
+- **Creator only** — delete the business.
+
+Content created through the CLI is shared with the whole business. A request
+that targets a business outside the key's scope returns `403` or `404`.
+
 
 ---
 
@@ -261,6 +283,111 @@ curl -X POST \
 
 ---
 
+### POST /batch
+
+Queue a multi-day batch. `action` is one of `multi-day-post`,
+`multi-day-carousel`, `multi-day-reel`, or `repurpose`.
+
+**Request:**
+```bash
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -H "X-Api-Key: your-api-key" \
+  -d '{
+    "businessId": "biz_xxx",
+    "action": "multi-day-post",
+    "days": 7,
+    "theme": "launch week"
+  }' \
+  http://localhost:3000/api/v1/cli/batch
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `businessId` | string | Yes | The key's business |
+| `action` | string | Yes | `multi-day-post`, `multi-day-carousel`, `multi-day-reel`, `repurpose` |
+| `days` | number | No | 1–30, default 1 |
+| `theme` | string | No | Batch theme |
+| `sourcePostId` | string | No | Source post for `repurpose` |
+| `formats` | string[] | No | `posts`, `carousels`, `reels` |
+
+---
+
+### POST /trend-scan
+
+Find the business's best-performing posts for a lookback window.
+
+```bash
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -H "X-Api-Key: your-api-key" \
+  -d '{
+    "businessId": "biz_xxx",
+    "lookbackDays": 30,
+    "limit": 5,
+    "platform": "instagram"
+  }' \
+  http://localhost:3000/api/v1/cli/trend-scan
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `businessId` | string | Yes | The key's business |
+| `lookbackDays` | number | No | Default 30 |
+| `limit` | number | No | Default 5 |
+| `platform` | string | No | Restrict to one platform |
+
+---
+
+### POST /generate-approved
+
+Start a workflow graph run for an approved pipeline.
+
+```bash
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -H "X-Api-Key: your-api-key" \
+  -d '{
+    "pipelineId": "pipeline_xxx",
+    "input": { "topic": "launch week" }
+  }' \
+  http://localhost:3000/api/v1/cli/generate-approved
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `pipelineId` | string | Yes | Approved pipeline id |
+| `input` | object | No | Pipeline input values |
+
+---
+
+### POST /publish-approved
+
+Publish an approved artifact to a connection. The exact `artifactVersion` must
+already be approved; the API enforces this inside `createJob`/`executeJob`.
+
+```bash
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -H "X-Api-Key: your-api-key" \
+  -d '{
+    "businessId": "biz_xxx",
+    "connectionId": "conn_xxx",
+    "artifactId": "art_xxx",
+    "artifactVersion": 1
+  }' \
+  http://localhost:3000/api/v1/cli/publish-approved
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `businessId` | string | Yes | The key's business |
+| `connectionId` | string | Yes | Target publishing connection |
+| `artifactId` | string | Yes | Approved artifact |
+| `artifactVersion` | number | Yes | Exact approved version |
+
+---
+
 ## Platform IDs
 
 | Platform | ID | Max Length | Max Images | Supports Video |
@@ -350,6 +477,32 @@ curl -X POST \
 
 ---
 
+## Business-scoped Workflows
+
+`info` returns the key's `businessId`. Pass it to `batch`, `trend-scan`, and
+`publish-approved`; the API rejects a business outside the key's scope with
+`403`/`404`.
+
+```bash
+# 1. Read the key's business
+INFO=$(curl -s -H "X-Api-Key: $MAGICSYNC_API_TOKEN" "$BASE_URL/info")
+BUSINESS_ID=$(echo "$INFO" | jq -r '.data.businessId')
+
+# 2. Find the best posts, then queue a batch from the winning themes
+curl -X POST -H "Content-Type: application/json" -H "X-Api-Key: $MAGICSYNC_API_TOKEN" \
+  -d "{\"businessId\":\"$BUSINESS_ID\",\"lookbackDays\":30,\"limit\":5}" \
+  "$BASE_URL/trend-scan"
+
+curl -X POST -H "Content-Type: application/json" -H "X-Api-Key: $MAGICSYNC_API_TOKEN" \
+  -d "{\"businessId\":\"$BUSINESS_ID\",\"action\":\"multi-day-post\",\"days\":7}" \
+  "$BASE_URL/batch"
+```
+
+Posts, auto-reply campaigns, templates, brand kits, and chat threads created
+through the API are shared with every member of that business.
+
+---
+
 ## Error Responses
 
 ### 401 Unauthorized
@@ -357,6 +510,22 @@ curl -X POST \
 {
   "statusCode": 401,
   "statusMessage": "Invalid or missing API key"
+}
+```
+
+### 403 Forbidden
+```json
+{
+  "statusCode": 403,
+  "statusMessage": "Only the business owner can perform this action"
+}
+```
+
+### 404 Not Found
+```json
+{
+  "statusCode": 404,
+  "statusMessage": "Business not found"
 }
 ```
 

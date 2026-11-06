@@ -463,7 +463,7 @@ export class SocialMediaAccountService implements SocialMediaAccountServiceType 
    * Create or update social media account
    * Handles platform-specific token expiry (Facebook 60d vs Google 1h)
    */
-  async createOrUpdateAccount({ id, name, access_token, refresh_token, picture, username, user, businessId, platformId, tokenExpiresAt, baseUrl }: {
+  async createOrUpdateAccount({ id, name, access_token, refresh_token, picture, username, user, businessId, platformId, tokenExpiresAt, baseUrl, businessOwnerUserId }: {
     id: string;
     name: string;
     access_token: string;
@@ -475,13 +475,20 @@ export class SocialMediaAccountService implements SocialMediaAccountServiceType 
     platformId: SocialMediaPlatform
     tokenExpiresAt?: Date
     baseUrl?: string | null
+    businessOwnerUserId?: string
   }) {
     const account = await this.db.query.socialMediaAccounts.findFirst({
-      where: and(
-        eq(socialMediaAccounts.userId, user.id),
-        eq(socialMediaAccounts.platform, platformId),
-        eq(socialMediaAccounts.accountId, id),
-      ),
+      where: businessId
+        ? and(
+            eq(socialMediaAccounts.businessId, businessId),
+            eq(socialMediaAccounts.platform, platformId),
+            eq(socialMediaAccounts.accountId, id),
+          )
+        : and(
+            eq(socialMediaAccounts.userId, user.id),
+            eq(socialMediaAccounts.platform, platformId),
+            eq(socialMediaAccounts.accountId, id),
+          ),
       with: { entityDetail: true },
     })
 
@@ -532,7 +539,7 @@ export class SocialMediaAccountService implements SocialMediaAccountServiceType 
     } else {
       // create account
       socialMediaAccount = await this.createAccount({
-        userId: user.id,
+        userId: businessOwnerUserId ?? user.id,
         businessId: businessId,
         platform: platformId,
         accountId: id,
@@ -912,7 +919,8 @@ export class SocialMediaAccountService implements SocialMediaAccountServiceType 
   async updateConnectionSettings(
     id: string,
     requestingUserId: string,
-    data: UpdateConnectionSettingsData
+    data: UpdateConnectionSettingsData,
+    options: { allowBusinessId?: string } = {}
   ): Promise<{ success: boolean; error?: string }> {
     const account = await this.db.query.socialMediaAccounts.findFirst({
       where: eq(socialMediaAccounts.id, id),
@@ -922,7 +930,11 @@ export class SocialMediaAccountService implements SocialMediaAccountServiceType 
       return { success: false, error: 'Account not found' }
     }
 
-    if (account.userId !== requestingUserId) {
+    const isOriginalOwner = account.userId === requestingUserId
+    const isBusinessOwner = !!options.allowBusinessId
+      && !!account.businessId
+      && account.businessId === options.allowBusinessId
+    if (!isOriginalOwner && !isBusinessOwner) {
       return { success: false, error: 'Only the account owner can update settings' }
     }
 

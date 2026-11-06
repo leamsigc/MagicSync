@@ -16,6 +16,7 @@ import {
   resolveRunModel,
   type CompleteInput,
 } from './pi-runtime'
+import { normalizeGoogleBaseUrl } from './google-endpoint'
 
 export interface RunConfig {
   runtime: ModelRuntime
@@ -115,6 +116,16 @@ export function extractJsonObject(raw: string): Record<string, unknown> | null {
 }
 
 /**
+ * Per-business base URL override, normalized per provider. Google's OpenAI-compat
+ * suffix cannot be used with the native Gemini adapter, so a Google host is
+ * pinned to the native base; custom gateways pass through.
+ */
+function resolveBaseUrlOverride(provider: string, apiBaseUrl: string | null | undefined): string | null {
+  if (!apiBaseUrl) return null
+  return provider === 'google' ? normalizeGoogleBaseUrl(apiBaseUrl) : apiBaseUrl
+}
+
+/**
  * One resolution path for provider/model/key + current Brand Playbook context.
  * Context failure is loud (PRD failure semantics).
  */
@@ -139,7 +150,8 @@ export async function buildAgentRunConfig(
   }
 
   const runtime = await createAgentModelRuntime()
-  if (llm.data?.apiBaseUrl) applyRunBaseUrl(runtime, provider, llm.data.apiBaseUrl)
+  const baseUrlOverride = resolveBaseUrlOverride(provider, llm.data?.apiBaseUrl)
+  if (baseUrlOverride) applyRunBaseUrl(runtime, provider, baseUrlOverride)
   if (llm.data?.apiKey) await applyRunApiKey(runtime, provider, llm.data.apiKey)
   let model = resolveRunModel(runtime, provider, modelId)
   if (!model && DYNAMIC_MODEL_PROVIDERS.has(provider)) {

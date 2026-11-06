@@ -22,7 +22,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // Delete the asset
-    const result = await assetService.delete(assetId, user.id)
+    const result = await assetService.delete(assetId, user.id, event)
 
     if (!result.success) {
       log.error('Failed to delete asset', { code: result.code, error: result.error })

@@ -1,10 +1,12 @@
 import { z } from 'zod'
 import { designService, brandKitService } from '#layers/BaseDB/server/services/design.service'
+import { accessErrorStatus, requireBusinessAccess } from '#layers/BaseDB/server/utils/business-access'
 import { requireDesignAuth } from '../../../utils/design-auth'
 
 const brandSchema = z.object({
   action: z.enum(['list', 'create', 'update', 'delete']),
   id: z.string().max(64).optional(),
+  businessId: z.string().max(64).optional(),
   name: z.string().max(80).optional(),
   colors: z.unknown().optional(),
   fonts: z.unknown().optional(),
@@ -22,8 +24,18 @@ export default defineEventHandler(async (event) => {
   log.set({ userId: principal.userId })
   const body = await readValidatedBody(event, raw => brandSchema.parse(raw))
 
+  const access = body.businessId
+    ? await requireBusinessAccess(event, principal.userId, body.businessId)
+    : null
+  if (body.businessId && (!access || !access.success || !access.data)) {
+    throw createError({
+      statusCode: access ? accessErrorStatus(access.code) : 403,
+      statusMessage: access?.error ?? 'You do not have access to this business',
+    })
+  }
+
   if (body.action === 'list') {
-    const result = await brandKitService.list(principal.userId)
+    const result = await brandKitService.list(principal.userId, body.businessId)
     return { kits: result.success ? result.data : [] }
   }
   if (body.action === 'create') {
@@ -33,7 +45,7 @@ export default defineEventHandler(async (event) => {
       fonts: body.fonts,
       logoUrl: body.logoUrl,
       defaults: body.defaults,
-    })
+    }, body.businessId, access?.data?.ownerUserId)
     if (!result.success || !result.data) throw createError({ statusCode: 400, statusMessage: result.error ?? 'Failed to create brand kit' })
     return { kit: result.data }
   }

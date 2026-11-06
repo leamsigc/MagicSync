@@ -1,10 +1,12 @@
 import { and, desc, eq, inArray, like } from 'drizzle-orm'
+import type { H3Event } from 'h3'
 import { entityDetails } from '#layers/BaseDB/db/entityDetails/entityDetails'
 import { platformPosts, posts } from '#layers/BaseDB/db/posts/posts'
 import { assets } from '#layers/BaseDB/db/assets/assets'
 import { socialMediaAccounts } from '#layers/BaseDB/db/socialMedia/socialMedia'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
 import type { ServiceResponse } from '#layers/BaseDB/server/services/types'
+import { businessAccessService } from '#layers/BaseDB/server/services/business-access.service'
 import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service'
 import { SchedulerPost, type PlatformComment, type PluginSocialMediaAccount } from '#layers/BaseDB/server/services/SchedulerPost.service'
 import { InstagramPlugin } from '#layers/BaseDB/server/services/plugins/instagram.plugin'
@@ -283,6 +285,14 @@ class AutoReplyStore {
       .where(and(eq(entityDetails.entityType, AUTOREPLY_CAMPAIGN), like(entityDetails.entityId, `${userId}::%`)))
   }
 
+  async findCampaignRowsBySuffix(campaignId: string) {
+    return this.db
+      .select()
+      .from(entityDetails)
+      .where(and(eq(entityDetails.entityType, AUTOREPLY_CAMPAIGN), like(entityDetails.entityId, `%::${campaignId}`)))
+      .limit(25)
+  }
+
   async getCampaignRow(entityId: string) {
     const [row] = await this.db
       .select()
@@ -408,18 +418,66 @@ class AutoReplyStore {
 export class AutoReplyService {
   private store = new AutoReplyStore()
 
-  private toCampaign(userId: string, row: { entityId: string; details: unknown; updatedAt: Date | null }): AutoReplyCampaign | null {
+  private toCampaign(row: { entityId: string; details: unknown; updatedAt: Date | null }): AutoReplyCampaign | null {
     const details = parseDetails<Omit<AutoReplyCampaign, 'id' | 'userId'>>(row.details)
     if (!details) return null
-    const id = row.entityId.split('::')[1] || row.entityId
-    return { ...details, id, userId } as AutoReplyCampaign
+    const [userId, id] = row.entityId.split('::')
+    return { ...details, id: id || row.entityId, userId: userId || '' } as AutoReplyCampaign
   }
 
-  async listCampaigns(userId: string): Promise<ServiceResponse<AutoReplyCampaign[]>> {
+  private async findCampaignRow(userId: string, id: string, event?: H3Event) {
+    const direct = await this.store.getCampaignRow(ownedEntityId(userId, id))
+    if (direct) return direct
+
+    const rows = await this.store.findCampaignRowsBySuffix(id)
+    for (const row of rows) {
+      const details = parseDetails<{ businessId?: string }>(row.details)
+      if (!details?.businessId) continue
+      const access = await businessAccessService.resolve(userId, details.businessId, event)
+      if (access.success) return row
+    }
+    return null
+  }
+
+  private campaignRowMatches(row: { entityId: string; details: unknown }, businessId: string, userId: string): boolean {
+    const details = parseDetails<{ businessId?: string }>(row.details)
+    if (details?.businessId === businessId) return true
+    return !details?.businessId && row.entityId.startsWith(`${userId}::`)
+  }
+
+  private dedupeCampaignRows(
+    rows: Array<{ entityId: string; details: unknown; updatedAt: Date | null }>,
+    businessId: string | undefined,
+    userId: string,
+  ) {
+    const seen = new Set<string>()
+    const result: typeof rows = []
+    for (const row of rows) {
+      const campaignId = row.entityId.split('::')[1] || row.entityId
+      if (seen.has(campaignId)) continue
+      seen.add(campaignId)
+      if (!businessId || this.campaignRowMatches(row, businessId, userId)) result.push(row)
+    }
+    return result
+  }
+
+  async listCampaigns(userId: string, businessId?: string, event?: H3Event): Promise<ServiceResponse<AutoReplyCampaign[]>> {
     try {
-      const rows = await this.store.listCampaignRows(userId)
-      const campaigns = rows
-        .map((r) => this.toCampaign(userId, r))
+      let ownerUserId = userId
+      if (businessId) {
+        const access = await businessAccessService.resolve(userId, businessId, event)
+        if (!access.success || !access.data) {
+          return { success: false, error: 'Business not found', code: 'NOT_FOUND' }
+        }
+        ownerUserId = access.data.ownerUserId
+      }
+
+      const rows = await this.store.listCampaignRows(ownerUserId)
+      const legacy = ownerUserId !== userId ? await this.store.listCampaignRows(userId) : []
+      const all = this.dedupeCampaignRows([...rows, ...legacy], businessId, userId)
+
+      const campaigns = all
+        .map(row => this.toCampaign(row))
         .filter((c): c is AutoReplyCampaign => c !== null)
         .sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''))
       // The list powers the edit dialog too. Without `links` the dialog opens
@@ -431,11 +489,11 @@ export class AutoReplyService {
     }
   }
 
-  async getCampaign(userId: string, id: string): Promise<ServiceResponse<AutoReplyCampaign>> {
+  async getCampaign(userId: string, id: string, event?: H3Event): Promise<ServiceResponse<AutoReplyCampaign>> {
     try {
-      const row = await this.store.getCampaignRow(ownedEntityId(userId, id))
+      const row = await this.findCampaignRow(userId, id, event)
       if (!row) return { success: false, error: 'Campaign not found', code: 'NOT_FOUND' }
-      const campaign = this.toCampaign(userId, row)
+      const campaign = this.toCampaign(row)
       if (!campaign) return { success: false, error: 'Campaign data is corrupted', code: 'CORRUPTED' }
       const enriched = await this.withLinks(campaign)
       return { success: true, data: enriched }
@@ -454,7 +512,7 @@ export class AutoReplyService {
     }
   }
 
-  /**
+/**
    * URLs for `{link1}` / `{link2}`. The stored link rows win over the cached
    * `linkIds`, so a campaign saved by an older editor (which sent an empty
    * `links` array and wiped `linkIds`) still delivers the configured link.
@@ -479,8 +537,17 @@ export class AutoReplyService {
     return null
   }
 
-  async createCampaign(userId: string, input: Omit<AutoReplyCampaign, 'id' | 'userId' | 'createdAt' | 'updatedAt'> & { links?: AutoReplyLinkInput[] }): Promise<ServiceResponse<AutoReplyCampaign>> {
+  async createCampaign(userId: string, input: Omit<AutoReplyCampaign, 'id' | 'userId' | 'createdAt' | 'updatedAt'> & { links?: AutoReplyLinkInput[] }, event?: H3Event): Promise<ServiceResponse<AutoReplyCampaign>> {
     try {
+      let ownerUserId = userId
+      if (input.businessId) {
+        const access = await businessAccessService.resolve(userId, input.businessId, event)
+        if (!access.success || !access.data) {
+          return { success: false, error: 'Business not found', code: 'NOT_FOUND' }
+        }
+        ownerUserId = access.data.ownerUserId
+      }
+
       const id = crypto.randomUUID().slice(0, 8)
       const now = new Date().toISOString()
       const linkError = this.validateLinks(input.links || [])
@@ -488,7 +555,7 @@ export class AutoReplyService {
       const linkIds = (input.links || []).map((_, i) => `link${i + 1}`)
       const campaign: AutoReplyCampaign = {
         id,
-        userId,
+        userId: ownerUserId,
         businessId: input.businessId,
         name: input.name,
         platform: 'instagram',
@@ -511,7 +578,7 @@ export class AutoReplyService {
       }
       const { links: _omit, ...persisted } = { ...campaign, links: undefined }
       void _omit
-      await this.store.saveCampaignRow(ownedEntityId(userId, id), persisted)
+      await this.store.saveCampaignRow(ownedEntityId(ownerUserId, id), persisted)
       await this.saveLinks(id, input.links || [])
       return { success: true, data: await this.withLinks(campaign) }
     } catch {
@@ -535,51 +602,67 @@ export class AutoReplyService {
     }
   }
 
-  async updateCampaign(userId: string, id: string, patch: Partial<Omit<AutoReplyCampaign, 'id' | 'userId'>> & { links?: AutoReplyLinkInput[] }): Promise<ServiceResponse<AutoReplyCampaign>> {
+  private buildUpdatedCampaign(
+    base: AutoReplyCampaign,
+    patch: Partial<Omit<AutoReplyCampaign, 'id' | 'userId'>> & { links?: AutoReplyLinkInput[] },
+  ): { campaign: AutoReplyCampaign } | { error: string } {
+    if (patch.links) {
+      const linkError = this.validateLinks(patch.links)
+      if (linkError) return { error: linkError }
+    }
+    const merged: AutoReplyCampaign = {
+      ...base,
+      ...patch,
+      id: base.id,
+      userId: base.userId,
+      platform: 'instagram',
+      linkIds: patch.links ? patch.links.map((_, i) => `link${i + 1}`) : base.linkIds,
+      updatedAt: new Date().toISOString(),
+    }
+    if (merged.externalPostIds) merged.externalPostIds = merged.externalPostIds.slice(0, WATCHED_POST_CAP)
+    return { campaign: merged }
+  }
+
+  async updateCampaign(userId: string, id: string, patch: Partial<Omit<AutoReplyCampaign, 'id' | 'userId'>> & { links?: AutoReplyLinkInput[] }, event?: H3Event): Promise<ServiceResponse<AutoReplyCampaign>> {
     try {
-      const current = await this.getCampaign(userId, id)
-      if (current.error || !current.data) return { success: false, error: current.error || 'Campaign not found', code: current.code || 'NOT_FOUND' }
-      if (patch.links) {
-        const linkError = this.validateLinks(patch.links)
-        if (linkError) return { success: false, error: linkError, code: 'VALIDATION' }
+      const row = await this.findCampaignRow(userId, id, event)
+      if (!row) return { success: false, error: 'Campaign not found', code: 'NOT_FOUND' }
+      const current = this.toCampaign(row)
+      if (!current) return { success: false, error: 'Campaign not found', code: 'NOT_FOUND' }
+
+      const built = this.buildUpdatedCampaign(current, patch)
+      if ('error' in built) {
+        return { success: false, error: built.error, code: 'VALIDATION' }
       }
-      const base = current.data
-      const merged: AutoReplyCampaign = {
-        ...base,
-        ...patch,
-        id: base.id,
-        userId,
-        platform: 'instagram',
-        linkIds: patch.links ? patch.links.map((_, i) => `link${i + 1}`) : base.linkIds,
-        updatedAt: new Date().toISOString(),
-      }
-      if (merged.externalPostIds) merged.externalPostIds = merged.externalPostIds.slice(0, WATCHED_POST_CAP)
-      const { links: _omit2, ...persisted } = { ...merged, links: undefined }
+
+      const { links: _omit2, ...persisted } = { ...built.campaign, links: undefined }
       void _omit2
-      await this.store.saveCampaignRow(ownedEntityId(userId, id), persisted)
+      await this.store.saveCampaignRow(row.entityId, persisted)
       if (patch.links) await this.saveLinks(id, patch.links)
-      return { success: true, data: await this.withLinks(merged) }
+      return { success: true, data: await this.withLinks(built.campaign) }
     } catch {
       return { success: false, error: 'Failed to update campaign' }
     }
   }
 
-  async deleteCampaign(userId: string, id: string): Promise<ServiceResponse<true>> {
+  async deleteCampaign(userId: string, id: string, event?: H3Event): Promise<ServiceResponse<true>> {
     try {
-      await this.store.deleteCampaignRows(userId, id)
+      const row = await this.findCampaignRow(userId, id, event)
+      if (!row) return { success: false, error: 'Campaign not found', code: 'NOT_FOUND' }
+      await this.store.deleteCampaignRows(row.entityId.split('::')[0] || userId, id)
       return { success: true, data: true }
     } catch {
       return { success: false, error: 'Failed to delete campaign' }
     }
   }
 
-  async toggleCampaign(userId: string, id: string, enabled: boolean): Promise<ServiceResponse<AutoReplyCampaign>> {
-    return this.updateCampaign(userId, id, { enabled })
+  async toggleCampaign(userId: string, id: string, enabled: boolean, event?: H3Event): Promise<ServiceResponse<AutoReplyCampaign>> {
+    return this.updateCampaign(userId, id, { enabled }, event)
   }
 
-  async getLogs(userId: string, campaignId: string, limit = 25): Promise<ServiceResponse<AutoReplyLogEntry[]>> {
+  async getLogs(userId: string, campaignId: string, limit = 25, event?: H3Event): Promise<ServiceResponse<AutoReplyLogEntry[]>> {
     try {
-      const owned = await this.store.getCampaignRow(ownedEntityId(userId, campaignId))
+      const owned = await this.findCampaignRow(userId, campaignId, event)
       if (!owned) return { success: false, error: 'Campaign not found', code: 'NOT_FOUND' }
       const rows = await this.store.listLogRows(campaignId, limit)
       const logs = rows
@@ -591,28 +674,33 @@ export class AutoReplyService {
     }
   }
 
-  async getStats(userId: string, campaignId: string): Promise<ServiceResponse<{ sent: number; skipped: number; failed: number; clicksPerLink: Array<{ linkId: string; label: string; target: string; clicks: number }> }>> {
+  private countLogActions(rows: Array<{ details: unknown }>): { sent: number; skipped: number; failed: number } {
+    let sent = 0
+    let skipped = 0
+    let failed = 0
+    for (const r of rows) {
+      const logEntry = parseDetails<AutoReplyLogEntry>(r.details)
+      if (logEntry?.action === 'sent') sent++
+      else if (logEntry?.action === 'skipped') skipped++
+      else if (logEntry?.action === 'failed') failed++
+    }
+    return { sent, skipped, failed }
+  }
+
+  async getStats(userId: string, campaignId: string, event?: H3Event): Promise<ServiceResponse<{ sent: number; skipped: number; failed: number; clicksPerLink: Array<{ linkId: string; label: string; target: string; clicks: number }> }>> {
     try {
-      const campaign = await this.getCampaign(userId, campaignId)
+      const campaign = await this.getCampaign(userId, campaignId, event)
       if (campaign.error || !campaign.data) return { success: false, error: campaign.error || 'Campaign not found', code: campaign.code || 'NOT_FOUND' }
       const rows = await this.store.listLogRows(campaignId, 100)
-      let sent = 0
-      let skipped = 0
-      let failed = 0
-      for (const r of rows) {
-        const logEntry = parseDetails<AutoReplyLogEntry>(r.details)
-        if (logEntry?.action === 'sent') sent++
-        else if (logEntry?.action === 'skipped') skipped++
-        else if (logEntry?.action === 'failed') failed++
-      }
+      const counts = this.countLogActions(rows)
       const clicksPerLink = (campaign.data.links || []).map((l) => ({ linkId: l.id, label: l.label, target: l.target, clicks: l.clicks }))
-      return { success: true, data: { sent, skipped, failed, clicksPerLink } }
+      return { success: true, data: { ...counts, clicksPerLink } }
     } catch {
       return { success: false, error: 'Failed to load stats' }
     }
   }
 
-  /**
+/**
    * Posts the picker may watch: only rows MagicSync actually published
    * (`platform_posts.status = 'published'` with a real platform post id) on an
    * Instagram or TikTok account. Native posts the user never published through
@@ -621,12 +709,15 @@ export class AutoReplyService {
    */
   async listPublishedPosts(userId: string, socialAccountId: string, limit = 10): Promise<ServiceResponse<Array<{ id: string; caption?: string; mediaType?: string; imageUrl?: string; timestamp?: string; likeCount?: number; commentsCount?: number }>>> {
     try {
-      const account = await socialMediaAccountService.getAccountById(socialAccountId, userId)
+      const account = await socialMediaAccountService.getAccountById(socialAccountId)
       if (!account) return { success: false, error: 'Social media account not found', code: 'NOT_FOUND' }
       if (account.platform !== 'instagram' && account.platform !== 'tiktok') {
         return { success: false, error: 'Watched posts are only supported for Instagram and TikTok accounts', code: 'UNSUPPORTED' }
       }
       const capped = Math.min(Math.max(limit, 1), 25)
+      const postScope = account.businessId
+        ? eq(posts.businessId, account.businessId)
+        : eq(posts.userId, userId)
       const rows = await useDrizzle()
         .select({
           publishDetail: platformPosts.publishDetail,
@@ -641,7 +732,7 @@ export class AutoReplyService {
         .where(and(
           eq(platformPosts.socialAccountId, socialAccountId),
           eq(platformPosts.status, 'published'),
-          eq(posts.userId, userId),
+          postScope,
         ))
         .orderBy(desc(platformPosts.publishedAt))
         .limit(capped)
@@ -690,7 +781,7 @@ export class AutoReplyService {
     }
   }
 
-  /**
+/**
    * Draft a DM template for the campaign form ("Generate with AI").
    * Returns text with {username}/{link1}/{link2} placeholders preserved so it
    * renders through the same path as a hand-written template.
@@ -748,7 +839,7 @@ export class AutoReplyService {
     // THROUGH MagicSync — natively posted reels (the common case) would
     // otherwise be invisible to match-all campaigns.
     try {
-      const account = await socialMediaAccountService.getAccountById(campaign.socialAccountId, campaign.userId)
+      const account = await socialMediaAccountService.getAccountById(campaign.socialAccountId)
       if (account) {
         const plugin = this.instagramPlugin()
         addIds(await plugin.getRecentMediaIds(account as PluginSocialMediaAccount, WATCHED_POST_CAP))
@@ -926,7 +1017,7 @@ export class AutoReplyService {
     return { outcome: 'sent', reason: resolved.usedAi ? 'ai' : 'keyword' }
   }
 
-  /**
+/**
    * Map a platform's own post id back to the internal post row, so inbox items
    * can carry the postId foreign key and cascade when the post is deleted.
    */
@@ -948,7 +1039,7 @@ export class AutoReplyService {
     }
   }
 
-  /**
+/**
    * Mirror a polled comment into the unified inbox. Without this the inbox has
    * no writer at all and /app/inbox can only ever render its empty state.
    */
@@ -1082,9 +1173,15 @@ export class AutoReplyService {
     for (const row of rows) {
       const details = parseDetails<Omit<AutoReplyCampaign, 'id' | 'userId'>>(row.details)
       if (!details || (details as { enabled?: boolean }).enabled === false) continue
-      const userId = row.entityId.split('::')[0] || ''
+      const keyUserId = row.entityId.split('::')[0] || ''
       const id = row.entityId.split('::')[1] || row.entityId
-      if (!userId || !id) continue
+      if (!keyUserId || !id) continue
+
+      const businessId = (details as { businessId?: string }).businessId
+      const userId = businessId
+        ? (await businessAccessService.getOwnerUserId(businessId)) ?? keyUserId
+        : keyUserId
+
       campaigns.push({ ...(details as AutoReplyCampaign), id, userId })
     }
     return campaigns
@@ -1419,7 +1516,7 @@ export class AutoReplyService {
     return { sent, skipped, failed }
   }
 
-  /**
+/**
    * Drain webhook-ingested `autoreply_seen` rows (Phase B live path).
    * Same sender path as polling (cooldown, rate, logs); rows are deleted once
    * consumed, stale rows (>7d, e.g. receiver wrote but account was deleted)
@@ -1478,11 +1575,15 @@ export class AutoReplyService {
       for (const row of rows) {
         const details = parseDetails<Omit<AutoReplyCampaign, 'id' | 'userId'>>(row.details)
         if (!details || (details as { enabled?: boolean }).enabled === false) continue
-        const userId = row.entityId.split('::')[0] || ''
+        const keyUserId = row.entityId.split('::')[0] || ''
         const id = row.entityId.split('::')[1] || row.entityId
-        if (!userId || !id) continue
+        if (!keyUserId || !id) continue
+        const businessId = (details as { businessId?: string }).businessId
+        const userId = businessId
+          ? (await businessAccessService.getOwnerUserId(businessId)) ?? keyUserId
+          : keyUserId
         const campaign = { ...(details as AutoReplyCampaign), id, userId }
-        let account = await socialMediaAccountService.getAccountById(campaign.socialAccountId, userId)
+        let account = await socialMediaAccountService.getAccountById(campaign.socialAccountId)
         if (!account) {
           failed++
           continue
@@ -1494,14 +1595,14 @@ export class AutoReplyService {
         try {
           const renewed = await renewRowToken({
             id: account.id,
-            userId,
+            userId: account.userId,
             platform: account.platform,
             accountId: account.accountId,
             accessToken: account.accessToken,
             tokenExpiresAt: account.tokenExpiresAt,
           })
           if (renewed.success && renewed.data?.renewed) {
-            const fresh = await socialMediaAccountService.getAccountById(campaign.socialAccountId, userId)
+            const fresh = await socialMediaAccountService.getAccountById(campaign.socialAccountId)
             if (fresh?.accessToken) account = fresh
           }
         } catch {

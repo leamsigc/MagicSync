@@ -68,6 +68,7 @@ export interface AutoReplyTemplateRequest {
 }
 
 export function useAutoReply() {
+  const activeBusinessId = useState<string>('business:id')
   const campaigns = useState<AutoReplyCampaign[]>('auto-reply-campaigns', () => [])
   const loading = useState<boolean>('auto-reply-loading', () => false)
   const error = useState<string | null>('auto-reply-error', () => null)
@@ -88,7 +89,9 @@ export function useAutoReply() {
     loading.value = true
     error.value = null
     try {
-      const res = await $fetch<{ success: boolean; data: AutoReplyCampaign[] }>('/api/v1/auto-reply/campaigns')
+      const res = await $fetch<{ success: boolean; data: AutoReplyCampaign[] }>('/api/v1/auto-reply/campaigns', {
+        query: activeBusinessId.value ? { businessId: activeBusinessId.value } : {},
+      })
       campaigns.value = res.data || []
     } catch (err) {
       error.value = toMessage(err, 'Failed to load campaigns')
@@ -103,7 +106,10 @@ export function useAutoReply() {
     try {
       const res = await $fetch<{ success: boolean; data: AutoReplyCampaign }>('/api/v1/auto-reply/campaigns', {
         method: 'POST',
-        body: input,
+        body: {
+          ...input,
+          businessId: input.businessId ?? (activeBusinessId.value || undefined),
+        },
       })
       campaigns.value = [res.data, ...campaigns.value]
       return res.data

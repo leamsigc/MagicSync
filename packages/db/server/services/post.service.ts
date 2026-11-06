@@ -1,5 +1,6 @@
 import type { PlatformPost, Post, PostCreateBase, PostWithAllData, PostWithBusinessData, Asset } from '#layers/BaseDB/db/schema'
 import type {
+  FilterOptions,
   PaginatedResponse,
   QueryOptions,
   ServiceResponse,
@@ -11,6 +12,7 @@ import { assets, businessProfiles, member, organization, platformPosts, posts, s
 import { parseJsonObject, toJsonString } from '#layers/BaseShared/utils/json'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
 import { ValidationError } from './types'
+import { businessAccessService } from './business-access.service'
 
 
 export interface UpdatePostData extends Partial<Omit<PostCreateBase, 'businessId' | 'userId'>> { }
@@ -242,6 +244,26 @@ export class PostService implements PostServiceType {
     }
   }
 
+  private async findPostForBusinessMember(
+    id: string,
+    userId: string,
+    include: Record<string, boolean>,
+  ): Promise<PostWithAllData | Post | undefined> {
+    const probe = await this.db.query.posts.findFirst({
+      where: eq(posts.id, id),
+      columns: { businessId: true },
+    })
+    if (!probe) return undefined
+
+    const access = await businessAccessService.resolve(userId, probe.businessId)
+    if (!access.success || !access.data) return undefined
+
+    return this.db.query.posts.findFirst({
+      where: eq(posts.id, id),
+      with: include
+    })
+  }
+
   async findById(id: string, userId: string, includePlatforms: boolean = false, includeUser: boolean = false): Promise<ServiceResponse<PostWithAllData | Post>> {
     try {
       const include: Record<string, boolean> = {}
@@ -252,10 +274,15 @@ export class PostService implements PostServiceType {
         include.user = true
       }
 
-      const post = await this.db.query.posts.findFirst({
+      let post = await this.db.query.posts.findFirst({
         where: and(eq(posts.id, id), eq(posts.userId, userId)),
         with: include
       })
+
+      if (!post) {
+        post = await this.findPostForBusinessMember(id, userId, include)
+      }
+
       if (!post) {
         return { success: false, error: 'Post not found', code: 'NOT_FOUND' }
       }
@@ -265,45 +292,54 @@ export class PostService implements PostServiceType {
     }
   }
 
+  private dateFieldFor(dateType: unknown) {
+    if (dateType === 'createdAt') return posts.createdAt
+    if (dateType === 'publishedAt') return posts.publishedAt
+    return posts.scheduledAt
+  }
+
+  private buildPostFilterConditions(businessId: string, filters: FilterOptions): SQL[] {
+    const conditions: SQL[] = [eq(posts.businessId, businessId)]
+    if (filters.status) {
+      conditions.push(eq(posts.status, filters.status as Post['status']))
+    }
+    if (filters.postFormat) {
+      conditions.push(eq(posts.postFormat, filters.postFormat as Post['postFormat']))
+    }
+
+    const dateField = this.dateFieldFor(filters.dateType)
+    if (filters.startDate) {
+      conditions.push(gte(dateField, new Date(filters.startDate as string)))
+    }
+    if (filters.endDate) {
+      conditions.push(lte(dateField, new Date(filters.endDate as string)))
+    }
+
+    const platforms = filters.platforms as string[] | undefined
+    if (platforms && platforms.length > 0) {
+      conditions.push(sql`
+        ${posts.targetPlatforms} LIKE ${'%' + platforms[0] + '%'}
+      `)
+    }
+    return conditions
+  }
+
   async findByBusinessId(businessId: string, userId: string, options: QueryOptions = {}): Promise<PaginatedResponse<PostWithAllData>> {
     try {
+      const access = await businessAccessService.resolve(userId, businessId)
+      if (!access.success || !access.data) {
+        return {
+          success: false,
+          error: access.error ?? 'Business not found',
+          code: access.code ?? 'NOT_FOUND',
+          data: [],
+        } as PaginatedResponse<PostWithAllData>
+      }
+
       const { pagination = { page: 1, limit: 10 }, filters = {} } = options
       const offset = ((pagination.page || 1) - 1) * (pagination.limit || 10)
+      const whereConditions = this.buildPostFilterConditions(businessId, filters)
 
-      const whereConditions = [
-        eq(posts.businessId, businessId),
-        eq(posts.userId, userId)
-      ]
-
-      // Apply status filter if provided
-      if (filters.status) {
-        whereConditions.push(eq(posts.status, filters.status))
-      }
-
-      // Apply post format filter
-      if (filters.postFormat) {
-        whereConditions.push(eq(posts.postFormat, filters.postFormat))
-      }
-
-      // Determine which date field to filter by
-      const dateField = filters.dateType === 'createdAt' ? posts.createdAt
-        : filters.dateType === 'publishedAt' ? posts.publishedAt
-          : posts.scheduledAt
-
-      // Apply date range filters
-      if (filters.startDate) {
-        whereConditions.push(gte(dateField, new Date(filters.startDate)))
-      }
-      if (filters.endDate) {
-        whereConditions.push(lte(dateField, new Date(filters.endDate)))
-      }
-
-      // Apply platform filter (filter by target platforms)
-      if (filters.platforms && filters.platforms.length > 0) {
-        whereConditions.push(sql`
-          ${posts.targetPlatforms} LIKE ${'%' + filters.platforms[0] + '%'}
-        `)
-      }
       const postList = await this.db.query.posts.findMany({
         where: and(...whereConditions),
         with: {
@@ -642,47 +678,68 @@ export class PostService implements PostServiceType {
     return [...ids]
   }
 
+  private buildPostUpdateData(data: UpdatePostData): Record<string, unknown> {
+    const updateData: Record<string, unknown> = {
+      ...data,
+      updatedAt: dayjs.utc().toDate()
+    }
+    // Handle JSON fields (empty arrays stringify too — raw arrays cannot bind)
+    if (data.mediaAssets !== undefined) {
+      updateData.mediaAssets = data.mediaAssets ? JSON.stringify(data.mediaAssets) : null
+    }
+    if (data.targetPlatforms !== undefined) {
+      updateData.targetPlatforms = JSON.stringify(data.targetPlatforms)
+    }
+    return updateData
+  }
+
+  private async applyPostUpdateSideEffects(
+    tx: Parameters<Parameters<ReturnType<typeof useDrizzle>['transaction']>[0]>[0],
+    id: string,
+    data: UpdatePostData,
+    updatedAt: Date,
+  ): Promise<void> {
+    if (data.mediaAssets && data.mediaAssets.length > 0) {
+      await tx
+        .update(assets)
+        .set({ isPublic: true })
+        .where(inArray(assets.id, data.mediaAssets))
+    }
+    if (data.targetPlatforms) {
+      await syncPlatformPostsAfterUpdate(tx, id, data, updatedAt)
+    }
+  }
+
   async update(id: string, userId: string, data: UpdatePostData): Promise<ServiceResponse<Post>> {
     try {
+      const probe = await this.db.query.posts.findFirst({
+        where: eq(posts.id, id),
+        columns: { businessId: true },
+      })
+      if (!probe) {
+        return { success: false, error: 'Post not found' }
+      }
+      const access = await businessAccessService.resolve(userId, probe.businessId)
+      if (!access.success || !access.data) {
+        return { success: false, error: 'Post not found' }
+      }
+
       return await this.db.transaction(async (tx) => {
-        // Check if post exists and belongs to user INSIDE transaction to prevent race condition
         const existingPost = await tx.query.posts.findFirst({
-          where: and(eq(posts.id, id), eq(posts.userId, userId))
+          where: eq(posts.id, id)
         })
         if (!existingPost) {
           return { success: false, error: 'Post not found' }
         }
 
-        const updateData: Record<string, unknown> = {
-          ...data,
-          updatedAt: dayjs.utc().toDate()
-        }
-
-        // Handle JSON fields (empty arrays stringify too — raw arrays cannot bind)
-        if (data.mediaAssets !== undefined) {
-          updateData.mediaAssets = data.mediaAssets ? JSON.stringify(data.mediaAssets) : null
-        }
-        if (data.targetPlatforms !== undefined) {
-          updateData.targetPlatforms = JSON.stringify(data.targetPlatforms)
-        }
-
+        const updateData = this.buildPostUpdateData(data)
         const [updated] = await tx
           .update(posts)
           .set(updateData)
-          .where(and(eq(posts.id, id), eq(posts.userId, userId)))
+          .where(eq(posts.id, id))
           .returning()
 
-        if (data.mediaAssets && data.mediaAssets.length > 0) {
-          await tx
-            .update(assets)
-            .set({ isPublic: true })
-            .where(inArray(assets.id, data.mediaAssets))
-        }
-        // Reconcile platform rows: keep what already published, retry only the
-        // rows that did not, and add rows for newly targeted accounts.
-        if (data.targetPlatforms) {
-          await syncPlatformPostsAfterUpdate(tx, id, data, updateData.updatedAt as Date)
-        }
+        await this.applyPostUpdateSideEffects(tx, id, data, updateData.updatedAt as Date)
         return { success: true, data: updated }
       })
     } catch (error) {
@@ -750,8 +807,17 @@ export class PostService implements PostServiceType {
 
   async delete(id: string, userId: string): Promise<ServiceResponse<void>> {
     try {
-      // Check if post exists and belongs to user
-      const existingResult = await this.findById(id, userId)
+      const probe = await this.db.query.posts.findFirst({
+        where: eq(posts.id, id),
+        columns: { businessId: true },
+      })
+      if (!probe) {
+        return { success: false, error: 'Post not found', code: 'NOT_FOUND' }
+      }
+      const access = await businessAccessService.resolve(userId, probe.businessId)
+      if (!access.success || !access.data) {
+        return { success: false, error: 'Post not found', code: 'NOT_FOUND' }
+      }
 
       // Delete platform posts first (cascade should handle this, but being explicit)
       await this.db
@@ -761,7 +827,7 @@ export class PostService implements PostServiceType {
       // Delete the post
       await this.db
         .delete(posts)
-        .where(and(eq(posts.id, id), eq(posts.userId, userId)))
+        .where(eq(posts.id, id))
 
       return { success: true }
 

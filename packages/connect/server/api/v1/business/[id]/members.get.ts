@@ -15,10 +15,11 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'Business ID is required' })
   }
 
-  const result = await businessTeamService.getTeam(event, businessId)
+  const result = await businessTeamService.getTeam(event, businessId, user.id)
   if (!result.success) {
     log.error({ message: 'Failed to load team', error: result.error })
-    throw createError({ statusCode: 500, message: result.error })
+    const statusCode = result.code === 'FORBIDDEN' ? 403 : result.code === 'NOT_FOUND' ? 404 : 500
+    throw createError({ statusCode, message: result.error })
   }
 
   log.info({

@@ -40,6 +40,7 @@ export const useTemplateManager = () => {
     const error = ref<string | null>(null)
     const templateList = useState<Record<TemplateTypeValue, Template[]>>('templates:list', () => ({}))
     const pagination = useState<{ page: number; limit: number; total: number; totalPages: number } | null>('templates:pagination', () => null)
+    const activeBusinessId = useState<string>('business:id')
 
     const toast = useToast()
 
@@ -64,6 +65,9 @@ export const useTemplateManager = () => {
             }
             if (filters.isPublic !== undefined) {
                 query.append('isPublic', filters.isPublic.toString())
+            }
+            if (activeBusinessId.value) {
+                query.append('businessId', activeBusinessId.value)
             }
 
             const response = await $fetch<PaginatedResponse<Template>>(`/api/v1/templates?${query}`)
@@ -110,7 +114,10 @@ export const useTemplateManager = () => {
         try {
             const response = await $fetch<{ success: boolean; data: TemplateWithAssets }>('/api/v1/templates', {
                 method: 'POST',
-                body: data
+                body: {
+                    ...data,
+                    businessId: activeBusinessId.value || undefined,
+                }
             })
 
             if (response.success && response.data) {

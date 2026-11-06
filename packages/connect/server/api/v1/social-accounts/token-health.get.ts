@@ -1,6 +1,6 @@
 import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service'
 import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
-import { businessOrgService } from '#layers/BaseAuth/server/services/business-org.service'
+import { accessErrorStatus, requireBusinessAccess } from '#layers/BaseDB/server/utils/business-access'
 
 export default defineEventHandler(async (event) => {
   const user = await checkUserIsLogin(event)
@@ -11,9 +11,9 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'Business ID is required' })
   }
 
-  const org = await businessOrgService.getOrgForBusiness(event, businessId)
-  if (!org || !businessOrgService.isUserMemberOfOrg(org, user.id)) {
-    throw createError({ statusCode: 403, message: 'You do not have access to this business' })
+  const access = await requireBusinessAccess(event, user.id, businessId)
+  if (!access.success || !access.data) {
+    throw createError({ statusCode: accessErrorStatus(access.code), message: access.error ?? 'You do not have access to this business' })
   }
 
   const accounts = await socialMediaAccountService.getBusinessTokenHealth(businessId)

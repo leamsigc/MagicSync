@@ -33,7 +33,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // Update asset metadata
-    const result = await assetService.updateMetadata(assetId, user.id, body.metadata)
+    const result = await assetService.updateMetadata(assetId, user.id, body.metadata, event)
 
     if (!result.success) {
       log.error('Failed to update asset metadata', { code: result.code, error: result.error })

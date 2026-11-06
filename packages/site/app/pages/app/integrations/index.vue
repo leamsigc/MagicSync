@@ -35,6 +35,7 @@ const socialHealth = ref<Map<string, TokenHealth>>(new Map())
 
 const { t, getAllSocialMediaAccounts, pagesList, getAllAccountDetails, accountsList } = useConnectionManager();
 const { activeBusinessId } = useBusinessManager();
+const { isOwner, load: loadAccess } = useBusinessAccess(activeBusinessId);
 const { getPlatformIcon } = usePlatformIcons();
 const { worstHealth } = useIntegrationDirectory();
 const { user } = UseUser();
@@ -101,10 +102,13 @@ onMounted(async () => {
 // Connections are business-scoped: reload them on switch, mirroring active.vue.
 watch(activeBusinessId, async (newId) => {
   if (!newId) return
+  void loadAccess()
   await getAllSocialMediaAccounts(newId)
   await getAllAccountDetails()
   await fetchTokenHealth()
 })
+
+onMounted(() => { void loadAccess() })
 
 useSeoMeta({
   title: t('seo_title_all'),
@@ -156,7 +160,7 @@ const subtitle = computed(() =>
   <BaseCollectionPage :title="t('title')" :description="subtitle">
     <template #actions>
       <div data-tour="connect-social-media-step-0">
-        <ConnectAddAccount variant="button" />
+        <ConnectAddAccount variant="button" :readonly="!isOwner" />
       </div>
     </template>
 
@@ -182,8 +186,7 @@ const subtitle = computed(() =>
     <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4" data-tour="connect-social-media-step-2">
       <template v-for="account in accountsList">
         <template v-if="account.entityDetail?.details?.pages">
-          <ConnectIntegrationCard v-for="social in account.entityDetail.details.pages" :id="social.id" :key="social.id"
-            :name="social.name" :image="social.imageBase64 || ''"
+          <ConnectIntegrationCard v-for="social in account.entityDetail.details.pages" :id="social.id" :key="social.id" :readonly="!isOwner" :name="social.name" :image="social.imageBase64 || ''"
             :icon="getPlatformIcon(account.providerId as SocialMediaPlatform)" :tags="[social.id]"
             :time="dayjs(account.createdAt).format('YYYY-MM-DD')"
             :connected="connectedAccounts.includes(social.id)" :show-pages="false" :show-menu="false"
@@ -192,6 +195,7 @@ const subtitle = computed(() =>
       </template>
       <template v-for="social in pagesList" :key="social.id">
         <ConnectIntegrationCard v-if="!accountPages.includes(social.accountId)" :id="social.id"
+          :readonly="!isOwner"
           :name="social.accountName"
           :image="social.entityDetail?.details?.picture || ''"
           :icon="getPlatformIcon(social.platform as SocialMediaPlatform)" :tags="[social.accountId]"

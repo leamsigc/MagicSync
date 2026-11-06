@@ -16,10 +16,11 @@ export default defineEventHandler(async (event) => {
   }
 
   log.set({ userId: user.id, businessId, memberIdOrEmail })
-  const result = await businessTeamService.removeMember(event, businessId, memberIdOrEmail)
+  const result = await businessTeamService.removeMember(event, businessId, user.id, memberIdOrEmail)
   if (!result.success) {
     log.error({ message: 'Failed to remove member', error: result.error })
-    throw createError({ statusCode: 400, message: result.error })
+    const statusCode = result.code === 'FORBIDDEN' ? 403 : result.code === 'NOT_FOUND' ? 404 : 400
+    throw createError({ statusCode, message: result.error })
   }
 
   log.info({ message: 'Team member removed', businessId, memberIdOrEmail })

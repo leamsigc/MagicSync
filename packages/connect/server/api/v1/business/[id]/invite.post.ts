@@ -30,10 +30,11 @@ export default defineEventHandler(async (event) => {
   const emails = body.emails?.length ? body.emails : [body.email as string]
   log.set({ userId: user.id, businessId, inviteCount: emails.length, role: body.role })
 
-  const result = await businessTeamService.invite(event, businessId, emails, body.role)
+  const result = await businessTeamService.invite(event, businessId, user.id, emails, body.role)
   if (!result.success) {
     log.error({ message: 'Failed to invite team members', error: result.error })
-    throw createError({ statusCode: 400, message: result.error })
+    const statusCode = result.code === 'FORBIDDEN' ? 403 : result.code === 'NOT_FOUND' ? 404 : 400
+    throw createError({ statusCode, message: result.error })
   }
 
   log.info({

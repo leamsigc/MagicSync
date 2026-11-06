@@ -22,6 +22,7 @@ const { t } = useI18n()
 
 interface Props {
   result: InformationSchemaBusinessResponse;
+  readonly?: boolean;
 }
 
 const props = defineProps<Props>()
@@ -77,6 +78,7 @@ const handleCancel = () => {
 <template>
   <div class="animate-in fade-in slide-in-from-bottom-4 duration-500 min-h-[500px] grid grid-cols-1 content-center">
     <UForm :schema="schema" :state="state.businessDetails" @submit="handleSubmit" class="space-y-6">
+      <fieldset :disabled="readonly" class="space-y-6">
       <!-- Enhanced Tab System -->
       <BusinessTabs v-model="selectedTab" :tabs="tabs">
         <template #default="{ selectedTab }">
@@ -94,7 +96,7 @@ const handleCancel = () => {
       <!-- Form Actions -->
       <!-- Margin matches the card body padding at each size (p-4 sm:p-6), so the
            action bar never bleeds past the card on a phone. -->
-      <div class="flex flex-col justify-end gap-3 pt-6 mt-8 -mx-4 -mb-4 px-4 py-4 backdrop-blur-sm sm:flex-row sm:-mx-6 sm:-mb-6 sm:px-6">
+      <div v-if="!readonly" class="flex flex-col justify-end gap-3 pt-6 mt-8 -mx-4 -mb-4 px-4 py-4 backdrop-blur-sm sm:flex-row sm:-mx-6 sm:-mb-6 sm:px-6">
         <UButton color="neutral" variant="soft" class="w-full sm:w-auto justify-center" @click="handleCancel">
           {{ t('form.cancel') }}
         </UButton>
@@ -103,6 +105,7 @@ const handleCancel = () => {
           {{ t('form.save') }}
         </UButton>
       </div>
+      </fieldset>
     </UForm>
   </div>
 </template>

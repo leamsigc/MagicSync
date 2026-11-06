@@ -304,9 +304,10 @@ export function useDesignStudio() {
 
   async function fetchBrandKits(): Promise<void> {
     try {
+      const activeBusinessId = useState<string>('business:id')
       const response = await $fetch<{ kits: BrandKit[] }>('/api/v1/image-editor/brand-kits', {
         method: 'POST',
-        body: { action: 'list' },
+        body: { action: 'list', businessId: activeBusinessId.value || undefined },
       })
       brandKits.value = response?.kits ?? []
     } catch {
@@ -319,7 +320,13 @@ export function useDesignStudio() {
     try {
       await $fetch('/api/v1/image-editor/brand-kits', {
         method: 'POST',
-        body: { action: 'create', name, colors, fonts },
+        body: {
+          action: 'create',
+          name,
+          colors,
+          fonts,
+          businessId: useState<string>('business:id').value || undefined,
+        },
       })
       await fetchBrandKits()
       useToast().add({ title: t('studio.design.kitCreated'), color: 'success', icon: 'i-lucide-swatch-book' })

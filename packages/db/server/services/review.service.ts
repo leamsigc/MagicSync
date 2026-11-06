@@ -9,6 +9,7 @@ import type { ReviewServiceType } from './interfaces'
 import { and, desc, eq, gte, lte, sql, type SQL } from 'drizzle-orm'
 import { businessProfiles, reviews } from '#layers/BaseDB/db/schema'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
+import { businessAccessService } from './business-access.service'
 import {
   createGMBClient,
   formatReviewForStorage
@@ -97,18 +98,12 @@ export class ReviewService implements ReviewServiceType {
 
       if (profile) return { success: true, data: undefined }
 
-      // Fall back to org membership check if event is available
       if (!event) {
         return { success: false, error: 'Not authorized to access this review', code: 'UNAUTHORIZED' }
       }
 
-      // useAuthApi is auto-imported globally by Nuxt from
-      // packages/auth/server/utils/useAuthApi — no static import needed.
-      const authApi = (useAuthApi as (e: H3Event) => ReturnType<typeof useAuthApi>)(event)
-      const orgMembers = await authApi.listOrgMembers(userId)
-      const isOrgMember = orgMembers.some(member => member.userId === review.businessId)
-
-      if (!isOrgMember) {
+      const access = await businessAccessService.resolve(userId, review.businessId, event)
+      if (!access.success || !access.data) {
         return { success: false, error: 'Not authorized to access this review', code: 'UNAUTHORIZED' }
       }
 

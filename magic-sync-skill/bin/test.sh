@@ -49,6 +49,10 @@ Commands:
     info                    Get connected platforms and their rules
     validate [json]         Validate content against platform rules
     post [json]             Create and optionally publish/schedule a post
+    batch [json]            Queue a multi-day batch (posts/carousels/reels/repurpose)
+    trend-scan [json]       Find best-performing posts for the business
+    generate-approved [json] Start a workflow graph run for an approved pipeline
+    publish-approved [json] Publish an approved artifact to a connection
     all                     Run all tests in sequence
     help                    Show this help message
 
@@ -88,6 +92,15 @@ Examples:
 
     # Post with custom JSON payload
     MAGICSYNC_API_TOKEN=your-key ./test.sh post '{"content": "Hello World", "platforms": ["twitter", "bluesky"]}'
+
+    # Queue a 7-day batch of posts
+    MAGICSYNC_API_TOKEN=your-key ./test.sh batch '{"businessId": "biz_xxx", "action": "multi-day-post", "days": 7, "theme": "launch week"}'
+
+    # Find the best posts from the last 30 days
+    MAGICSYNC_API_TOKEN=your-key ./test.sh trend-scan '{"businessId": "biz_xxx", "lookbackDays": 30, "limit": 5}'
+
+    # Publish an approved artifact
+    MAGICSYNC_API_TOKEN=your-key ./test.sh publish-approved '{"businessId": "biz_xxx", "connectionId": "conn_xxx", "artifactId": "art_xxx", "artifactVersion": 1}'
 
 EOF
 }
@@ -239,6 +252,56 @@ cmd_post() {
     fi
 }
 
+cmd_cli_post() {
+    local endpoint="$1"
+    local payload="$2"
+
+    if [ -z "$payload" ]; then
+        print_error "A JSON payload is required for $endpoint"
+        return 1
+    fi
+
+    print_header "Calling $endpoint"
+    print_info "Endpoint: $CLI_ENDPOINT/$endpoint"
+    echo "$payload" | jq '.' 2>/dev/null || print_warning "Invalid JSON in payload, sending as-is"
+
+    response=$(curl -s -w "\n%{http_code}" \
+        -X POST \
+        -H "Content-Type: application/json" \
+        -H "x-api-key: $MAGICSYNC_API_TOKEN" \
+        -d "$payload" \
+        "$CLI_ENDPOINT/$endpoint")
+
+    http_code=$(echo "$response" | tail -n1)
+    body=$(echo "$response" | sed '$d')
+
+    if [ "$http_code" = "200" ]; then
+        print_success "$endpoint succeeded (HTTP $http_code)"
+        echo "$body" | jq '.' 2>/dev/null || echo "$body"
+        return 0
+    else
+        print_error "$endpoint failed (HTTP $http_code)"
+        echo "$body" | jq '.' 2>/dev/null || echo "$body"
+        return 1
+    fi
+}
+
+cmd_batch() {
+    cmd_cli_post "batch" "${1:-}"
+}
+
+cmd_trend_scan() {
+    cmd_cli_post "trend-scan" "${1:-}"
+}
+
+cmd_generate_approved() {
+    cmd_cli_post "generate-approved" "${1:-}"
+}
+
+cmd_publish_approved() {
+    cmd_cli_post "publish-approved" "${1:-}"
+}
+
 cmd_all() {
     print_header "Running All CLI Tests"
     print_info "Base URL: $BASE_URL"
@@ -294,6 +357,22 @@ main() {
         post)
             check_token
             cmd_post "${2:-}"
+            ;;
+        batch)
+            check_token
+            cmd_batch "${2:-}"
+            ;;
+        trend-scan)
+            check_token
+            cmd_trend_scan "${2:-}"
+            ;;
+        generate-approved)
+            check_token
+            cmd_generate_approved "${2:-}"
+            ;;
+        publish-approved)
+            check_token
+            cmd_publish_approved "${2:-}"
             ;;
         all)
             check_token

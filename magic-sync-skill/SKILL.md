@@ -1,8 +1,8 @@
 ---
 name: magic-sync
 description: MagicSync social media CLI — Create, schedule, and manage social media posts across multiple platforms. Use when asked to create a social media post, schedule content, manage posts, generate social media content, post to Twitter/Facebook/Instagram/Bluesky/LinkedIn, or any social media management task.
-argument-hint: "<action: create-post, schedule-post, validate-content, get-platforms, ping-api, test-cli, or 'describe the task'>"
-version: 1.1.0
+argument-hint: "<action: create-post, schedule-post, validate-content, get-platforms, ping-api, test-cli, batch, trend-scan, generate-approved, publish-approved, or 'describe the task'>"
+version: 1.2.0
 allowed-tools:
   - Bash
   - Read
@@ -32,11 +32,43 @@ triggers:
   - connected accounts
   - social media platforms
   - cross-post
+  - batch schedule
+  - multi-day post
+  - trend scan
+  - best posts
+  - publish approved
+  - generate approved
 ---
 
 ## Overview
 
 The MagicSync CLI skill enables AI agents to create, validate, schedule, and publish social media posts across multiple platforms (Twitter/X, Facebook, Instagram, Bluesky, LinkedIn, TikTok, etc.).
+
+## Business Context & Roles
+
+Every API key belongs to one **business** and acts as that business's owner.
+The CLI cannot switch businesses: the key's `businessId` is the scope for
+`info`, `post`, `batch`, `trend-scan`, and `publish-approved`.
+
+A business has one **creator** and zero or more invited organization members:
+
+| Role | CLI / API access |
+|---|---|
+| Creator / invited **owner** | Full access to the key's business (post, connect, invite, keys, playbook, shared content) |
+| **Member** | Read-only on business details, API keys, and playbook; can create/edit posts, assets, content board, auto-reply, templates, brand kits, and chat |
+| **Creator only** | Delete the business |
+
+What the CLI creates is **shared with the business**:
+
+- Posts created by `post` / `batch` are visible to every business member.
+- Auto-reply campaigns, templates, brand kits, and agent chat threads created
+  through the app or MCP are visible to the whole business.
+- Connected accounts returned by `info` are the business's accounts, not the
+  API key owner's personal accounts.
+
+If a request targets a `businessId` other than the key's business, the API
+returns `403` or `404`. Never try to cross businesses by passing another id.
+
 
 ## Setup
 
@@ -263,6 +295,47 @@ echo "{\"content\":\"Your post\",\"platforms\":[\"$FACEBOOK_ACCOUNT\"],\"schedul
   ${CLAUDE_SKILL_DIR}/magic-sync-skill/bin/test.sh post
 ```
 
+### batch
+Queue a multi-day batch. Requires the key's `businessId` and an `action`:
+`multi-day-post`, `multi-day-carousel`, `multi-day-reel`, or `repurpose`.
+
+```bash
+MAGICSYNC_API_TOKEN="your-key" \
+  ${CLAUDE_SKILL_DIR}/magic-sync-skill/bin/test.sh batch \
+  '{"businessId":"biz_xxx","action":"multi-day-post","days":7,"theme":"launch week"}'
+```
+
+Optional fields: `days` (1–30, default 1), `theme`, `sourcePostId` (for
+`repurpose`), `formats` (`posts`, `carousels`, `reels`).
+
+### trend-scan
+Find the business's best-performing posts for a lookback window.
+
+```bash
+MAGICSYNC_API_TOKEN="your-key" \
+  ${CLAUDE_SKILL_DIR}/magic-sync-skill/bin/test.sh trend-scan \
+  '{"businessId":"biz_xxx","lookbackDays":30,"limit":5,"platform":"instagram"}'
+```
+
+### generate-approved
+Start a workflow graph run for an approved pipeline.
+
+```bash
+MAGICSYNC_API_TOKEN="your-key" \
+  ${CLAUDE_SKILL_DIR}/magic-sync-skill/bin/test.sh generate-approved \
+  '{"pipelineId":"pipeline_xxx","input":{"topic":"launch week"}}'
+```
+
+### publish-approved
+Publish an approved artifact to a connection. The exact `artifactVersion` must
+already be approved; the API enforces that inside `createJob`/`executeJob`.
+
+```bash
+MAGICSYNC_API_TOKEN="your-key" \
+  ${CLAUDE_SKILL_DIR}/magic-sync-skill/bin/test.sh publish-approved \
+  '{"businessId":"biz_xxx","connectionId":"conn_xxx","artifactId":"art_xxx","artifactVersion":1}'
+```
+
 ---
 
 ## Post Payload Structure
@@ -320,6 +393,8 @@ These are **platform names** used for `platformContent` overrides, NOT account I
 | Error | Cause | Resolution |
 |-------|-------|------------|
 | `401 Invalid or missing API key` | Invalid or expired API token | Get a new API key from dashboard |
+| `403 Forbidden` | The key's business role cannot perform the write (member on an owner-only surface) | Use an owner key or ask the business owner |
+| `404 Not Found` | The business, connection, artifact, or campaign is outside the key's business | Check the id belongs to the key's `businessId` |
 | `400 Platforms not connected` | User hasn't connected that platform | Have user connect via dashboard first |
 | `400 Validation failed` | Content exceeds platform limits | Shorten content or reduce media |
 | `NOT_FOUND` when reading platforms.json | No cached platform info | Run `info` command to fetch and save |
@@ -334,3 +409,7 @@ These are **platform names** used for `platformContent` overrides, NOT account I
 4. **Ask user explicitly** — "Which account(s): all or specific?" rather than assuming
 5. **Validate before posting** — Catch errors early with the validate command
 6. **Schedule strategic timing** — Use `scheduledAt` for optimal posting times (e.g., 8 AM CST for Mexican audiences)
+7. **Stay inside the key's business** — `info` returns the key's `businessId`; never pass another business id to `batch`, `trend-scan`, or `publish-approved`
+8. **Treat CLI content as shared** — posts, auto-reply campaigns, templates, brand kits, and chat threads are visible to every business member
+9. **Use `trend-scan` before `batch`** — feed the best-performing themes into a multi-day batch instead of guessing
+10. **Use `publish-approved` only with an approved version** — the API rejects an artifact version that is not approved for the exact connection

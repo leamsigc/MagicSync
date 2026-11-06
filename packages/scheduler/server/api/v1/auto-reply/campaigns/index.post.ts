@@ -30,7 +30,7 @@ const createSchema = z.object({
 export default defineEventHandler(async (event) => {
   const user = await checkUserIsLogin(event)
   const body = await readValidatedBody(event, createSchema.parse)
-  const result = await autoReplyService.createCampaign(user.id, body)
+  const result = await autoReplyService.createCampaign(user.id, body, event)
   if (result.error) {
     const status = result.code === 'VALIDATION' ? 400 : 500
     throw createError({ statusCode: status, statusMessage: result.error })

@@ -2,6 +2,7 @@ import { UpdateBusinessProfileSchema } from '#layers/BaseDB/db/schema';
 import { businessProfileService } from '#layers/BaseDB/server/services/business-profile.service';
 import { entityDetailsService } from '#layers/BaseDB/server/services/entity-details.service';
 import { checkUserIsLogin } from "#layers/BaseAuth/server/utils/AuthHelpers"
+import { accessErrorStatus, requireBusinessOwner } from '#layers/BaseDB/server/utils/business-access';
 import { z } from 'zod';
 import { ZodError } from 'zod';
 
@@ -58,7 +59,17 @@ export default defineEventHandler(async (event) => {
   }
 
   const { entityDetails, ...profileFields } = body;
-  const updatedBusiness = await businessProfileService.update(id, user.id, profileFields);
+
+  const access = await requireBusinessOwner(event, user.id, id);
+  if (!access.success || !access.data) {
+    log.error({ message: 'Business not found or user not authorized', businessId: id, code: access.code })
+    throw createError({
+      statusCode: accessErrorStatus(access.code),
+      statusMessage: access.error || 'Business not found or user not authorized to update it'
+    });
+  }
+
+  const updatedBusiness = await businessProfileService.updateAsBusinessOwner(id, profileFields);
 
   if (!updatedBusiness.success) {
     log.error({ message: updatedBusiness.error || 'Business not found or user not authorized', businessId: id })

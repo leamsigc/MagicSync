@@ -11,7 +11,7 @@ export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
   if (!id) throw createError({ statusCode: 400, statusMessage: 'Campaign id required' })
   const parsed = querySchema.parse(getQuery(event))
-  const result = await autoReplyService.getLogs(user.id, id, parsed.limit)
+  const result = await autoReplyService.getLogs(user.id, id, parsed.limit, event)
   if (result.error) {
     const status = result.code === 'NOT_FOUND' ? 404 : 500
     throw createError({ statusCode: status, statusMessage: result.error })

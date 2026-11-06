@@ -1,9 +1,10 @@
-import { and, desc, eq, or, sql } from 'drizzle-orm'
+import { and, desc, eq, isNull, or, sql } from 'drizzle-orm'
 import type { BrandKit, DesignVersion } from '#layers/BaseDB/db/schema'
 import { brandKits, designVersions, templateAssets, templates } from '#layers/BaseDB/db/schema'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
 import type { ServiceResponse } from '#layers/BaseShared/server/types/service.types'
 import { ValidationError } from './types'
+import { businessAccessService } from './business-access.service'
 
 /**
  * Design service — the design-studio half of the templates table.
@@ -274,21 +275,28 @@ const BRAND_COLORS_MAX = 12
 export class BrandKitService {
   private db = useDrizzle()
 
-  async list(userId: string): Promise<ServiceResponse<BrandKit[]>> {
+  async list(userId: string, businessId?: string): Promise<ServiceResponse<BrandKit[]>> {
     try {
-      const rows = await this.db.select().from(brandKits).where(eq(brandKits.ownerId, userId)).orderBy(desc(brandKits.createdAt))
+      const where = businessId
+        ? or(
+            eq(brandKits.businessId, businessId),
+            and(isNull(brandKits.businessId), eq(brandKits.ownerId, userId)),
+          )
+        : eq(brandKits.ownerId, userId)
+      const rows = await this.db.select().from(brandKits).where(where).orderBy(desc(brandKits.createdAt))
       return { success: true, data: rows }
     } catch {
       return { success: false, error: 'Failed to list brand kits' }
     }
   }
 
-  async create(userId: string, input: BrandKitInput): Promise<ServiceResponse<BrandKit>> {
+  async create(userId: string, input: BrandKitInput, businessId?: string, ownerUserId?: string): Promise<ServiceResponse<BrandKit>> {
     try {
       if (!input.name || input.name.trim().length === 0 || input.name.length > 80) throw new ValidationError('Brand kit name is required (≤80 chars)')
       const [row] = await this.db.insert(brandKits).values({
         id: crypto.randomUUID(),
-        ownerId: userId,
+        ownerId: ownerUserId ?? userId,
+        businessId: businessId ?? null,
         name: input.name,
         colors: normalizeColors(input.colors),
         fonts: sanitizeFonts(input.fonts),
@@ -304,13 +312,19 @@ export class BrandKitService {
 
   async update(id: string, userId: string, input: BrandKitInput): Promise<ServiceResponse<BrandKit>> {
     try {
+      const existing = await this.db.query.brandKits.findFirst({ where: eq(brandKits.id, id) })
+      if (!existing) return { success: false, error: 'Brand kit not found', code: 'NOT_FOUND' }
+      const allowed = existing.ownerId === userId
+        || (!!existing.businessId && await businessAccessService.isMember(userId, existing.businessId))
+      if (!allowed) return { success: false, error: 'Brand kit not found', code: 'NOT_FOUND' }
+
       const [row] = await this.db.update(brandKits).set({
         name: input.name && input.name.length <= 80 ? input.name : undefined,
         colors: input.colors !== undefined ? sanitizeColors(input.colors) : undefined,
         fonts: input.fonts !== undefined ? sanitizeFonts(input.fonts) : undefined,
         logoUrl: input.logoUrl !== undefined ? sanitizeUrlish(input.logoUrl) ?? '' : undefined,
         updatedAt: new Date(),
-      }).where(and(eq(brandKits.id, id), eq(brandKits.ownerId, userId))).returning()
+      }).where(eq(brandKits.id, id)).returning()
       if (!row) return { success: false, error: 'Brand kit not found', code: 'NOT_FOUND' }
       return { success: true, data: row }
     } catch (error) {
@@ -320,7 +334,13 @@ export class BrandKitService {
 
   async remove(id: string, userId: string): Promise<ServiceResponse<{ id: string }>> {
     try {
-      const rows = await this.db.delete(brandKits).where(and(eq(brandKits.id, id), eq(brandKits.ownerId, userId))).returning()
+      const existing = await this.db.query.brandKits.findFirst({ where: eq(brandKits.id, id) })
+      if (!existing) return { success: false, error: 'Brand kit not found', code: 'NOT_FOUND' }
+      const allowed = existing.ownerId === userId
+        || (!!existing.businessId && await businessAccessService.isMember(userId, existing.businessId))
+      if (!allowed) return { success: false, error: 'Brand kit not found', code: 'NOT_FOUND' }
+
+      const rows = await this.db.delete(brandKits).where(eq(brandKits.id, id)).returning()
       if (rows.length === 0) return { success: false, error: 'Brand kit not found', code: 'NOT_FOUND' }
       return { success: true, data: { id } }
     } catch {

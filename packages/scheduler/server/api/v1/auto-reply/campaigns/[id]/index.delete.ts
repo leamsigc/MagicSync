@@ -5,7 +5,7 @@ export default defineEventHandler(async (event) => {
   const user = await checkUserIsLogin(event)
   const id = getRouterParam(event, 'id')
   if (!id) throw createError({ statusCode: 400, statusMessage: 'Campaign id required' })
-  const result = await autoReplyService.deleteCampaign(user.id, id)
+  const result = await autoReplyService.deleteCampaign(user.id, id, event)
   if (result.error) {
     throw createError({ statusCode: 500, statusMessage: result.error })
   }

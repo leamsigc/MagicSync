@@ -6,6 +6,7 @@ import type { OAuthGrantItem } from '../../../composables/useOAuthGrants'
 
 const { t } = useI18n()
 const activeBusinessId = useState<string>('business:id')
+const { isOwner, load: loadAccess } = useBusinessAccess(activeBusinessId)
 const toast = useToast()
 const {
   apiKeys,
@@ -90,6 +91,7 @@ watch(activeBusinessId, (newVal) => {
 
 onMounted(() => {
   void fetchGrants()
+  void loadAccess()
 })
 
 function grantAccessLabel(scopes: string[]): string {
@@ -189,7 +191,7 @@ useHead({
 <template>
   <BaseCollectionPage :title="t('heading')" :description="t('subheading')">
     <template #actions>
-      <UButton v-if="activeBusinessId" icon="i-lucide-plus" @click="handleOpenCreate">
+      <UButton v-if="activeBusinessId && isOwner" icon="i-lucide-plus" @click="handleOpenCreate">
         {{ t('createButton') }}
       </UButton>
     </template>
@@ -237,6 +239,7 @@ useHead({
 
       <template #row-actions="{ row }">
         <UButton
+          v-if="isOwner"
           variant="ghost"
           color="error"
           size="sm"
@@ -252,7 +255,7 @@ useHead({
           <UIcon name="i-lucide-key" class="mx-auto mb-3 size-9 text-dimmed" />
           <p class="font-medium text-highlighted">{{ t('noKeys') }}</p>
           <p class="mt-1 text-sm text-muted">{{ t('noKeysDescription') }}</p>
-          <UButton class="mt-4" icon="i-lucide-plus" :label="t('createButton')" @click="handleOpenCreate" />
+          <UButton v-if="isOwner" class="mt-4" icon="i-lucide-plus" :label="t('createButton')" @click="handleOpenCreate" />
         </div>
         <div v-else class="py-10 text-center">
           <p class="text-sm text-muted">{{ t('noResults') }}</p>

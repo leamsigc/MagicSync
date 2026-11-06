@@ -154,7 +154,10 @@ async function cardSupplement(userId: string, businessId: string, cardId: string
 
 async function resolveThread(userId: string, body: ChatRequest) {
   if (body.threadId) return chatService.getThread(body.threadId, userId)
-  return chatService.createThread(userId, { title: body.message.slice(0, 80) || 'New Chat' })
+  return chatService.createThread(userId, {
+    title: body.message.slice(0, 80) || 'New Chat',
+    businessId: body.businessId,
+  })
 }
 
 export default defineEventHandler(async (event) => {

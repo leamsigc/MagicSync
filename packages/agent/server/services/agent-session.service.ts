@@ -7,6 +7,7 @@ import {
   type AgentChatSession,
 } from '#layers/BaseDB/db/schema'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
+import { businessAccessService } from '#layers/BaseDB/server/services/business-access.service'
 
 export interface CreateAgentChatSessionData {
   businessId: string
@@ -42,14 +43,23 @@ export class AgentSessionService {
     }
   }
 
+  /** Session is readable by its creator or any member of its business. */
+  private async canAccess(userId: string, session: AgentChatSession): Promise<boolean> {
+    if (session.ownerUserId === userId) return true
+    return businessAccessService.isMember(userId, session.businessId)
+  }
+
   async getSession(userId: string, sessionId: string): Promise<ServiceResponse<AgentChatSession>> {
     try {
       const [row] = await this.db
         .select()
         .from(agentChatSessions)
-        .where(and(eq(agentChatSessions.id, sessionId), eq(agentChatSessions.ownerUserId, userId)))
+        .where(eq(agentChatSessions.id, sessionId))
         .limit(1)
       if (!row) return { success: false, error: 'Agent chat session not found', code: 'NOT_FOUND' }
+      if (!(await this.canAccess(userId, row))) {
+        return { success: false, error: 'Agent chat session not found', code: 'NOT_FOUND' }
+      }
       return { success: true, data: row }
     } catch {
       return { success: false, error: 'Failed to load agent chat session' }
@@ -61,10 +71,14 @@ export class AgentSessionService {
       const [row] = await this.db
         .select()
         .from(agentChatSessions)
-        .where(and(eq(agentChatSessions.ownerUserId, userId), eq(agentChatSessions.threadId, threadId)))
+        .where(eq(agentChatSessions.threadId, threadId))
         .orderBy(desc(agentChatSessions.updatedAt))
         .limit(1)
-      return { success: true, data: row ?? null }
+      if (!row) return { success: true, data: null }
+      if (!(await this.canAccess(userId, row))) {
+        return { success: true, data: null }
+      }
+      return { success: true, data: row }
     } catch {
       return { success: false, error: 'Failed to load agent chat session for thread' }
     }
@@ -76,8 +90,10 @@ export class AgentSessionService {
     limit = 50,
   ): Promise<ServiceResponse<AgentChatSession[]>> {
     try {
+      // A business's chat history is shared by its members; without a business
+      // the list stays personal.
       const scope = businessId
-        ? and(eq(agentChatSessions.ownerUserId, userId), eq(agentChatSessions.businessId, businessId))
+        ? eq(agentChatSessions.businessId, businessId)
         : eq(agentChatSessions.ownerUserId, userId)
       const rows = await this.db
         .select()
@@ -101,6 +117,11 @@ export class AgentSessionService {
     entries: unknown[],
   ): Promise<ServiceResponse<AppendEntriesResult>> {
     try {
+      const existing = await this.getSession(userId, sessionId)
+      if (!existing.success) {
+        return { success: false, error: existing.error, code: existing.code }
+      }
+
       const count = entries.length
       const [session] = await this.db
         .update(agentChatSessions)
@@ -108,7 +129,7 @@ export class AgentSessionService {
           lastEntrySeq: sql`${agentChatSessions.lastEntrySeq} + ${count}`,
           updatedAt: new Date(),
         })
-        .where(and(eq(agentChatSessions.id, sessionId), eq(agentChatSessions.ownerUserId, userId)))
+        .where(eq(agentChatSessions.id, sessionId))
         .returning()
       if (!session) return { success: false, error: 'Agent chat session not found', code: 'NOT_FOUND' }
 
@@ -149,10 +170,13 @@ export class AgentSessionService {
     patch: { threadId?: string },
   ): Promise<ServiceResponse<AgentChatSession>> {
     try {
+      const existing = await this.getSession(userId, sessionId)
+      if (!existing.success) return existing
+
       const [row] = await this.db
         .update(agentChatSessions)
         .set({ ...patch, updatedAt: new Date() })
-        .where(and(eq(agentChatSessions.id, sessionId), eq(agentChatSessions.ownerUserId, userId)))
+        .where(eq(agentChatSessions.id, sessionId))
         .returning()
       if (!row) return { success: false, error: 'Agent chat session not found', code: 'NOT_FOUND' }
       return { success: true, data: row }

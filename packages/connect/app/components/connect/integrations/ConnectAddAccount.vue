@@ -18,7 +18,7 @@ import * as z from 'zod'
 import type { AuthFormField, FormSubmitEvent } from '@nuxt/ui'
 const { t, connectionList, setConnectionList, HandleConnectTo } = useConnectionManager();
 
-const props = withDefaults(defineProps<{ variant?: 'tile' | 'button' }>(), { variant: 'tile' })
+const props = withDefaults(defineProps<{ variant?: 'tile' | 'button', readonly?: boolean }>(), { variant: 'tile', readonly: false })
 
 setConnectionList();
 const blueskyModal = ref(false)
@@ -83,7 +83,7 @@ const HandleConnectToBluesky = (payload: FormSubmitEvent<Schema>) => {
     <UButton v-if="props.variant === 'button'" icon="i-lucide-plus" color="primary"
       :label="t('states.add_connection')" data-tour="connect-add-account" @click="mainModal = true" />
     <button
-      v-else
+      v-else-if="!readonly"
       type="button"
       class="w-full md:min-h-60 rounded-xl border-2 border-dashed border-border hover:border-primary bg-elevated/50 hover:bg-elevated transition-colors flex flex-col items-center justify-center gap-3 p-6 cursor-pointer text-highlighted"
       data-tour="connect-add-account"

@@ -1,6 +1,7 @@
 <i18n src="../../business.json"></i18n>
 <script lang="ts" setup>
 import { useBusinessManager } from '#layers/BaseShared/app/composables/useBusinessManager';
+import { useBusinessAccess } from '#layers/BaseShared/app/composables/useBusinessAccess';
 import { coerceJsonObject } from '#layers/BaseShared/utils/json';
 import BusinessFormStep from '#layers/BaseConnect/app/components/connect/business/components/BusinessFormStep.vue';
 import BusinessWorkspaceTabs from '#layers/BaseConnect/app/components/connect/business/components/BusinessWorkspaceTabs.vue';
@@ -17,6 +18,7 @@ const toast = useToast();
 
 const businessId = route.params.id as string;
 const { updateBusiness } = useBusinessManager();
+const { isOwner, load: loadAccess } = useBusinessAccess(businessId);
 
 const isLoading = ref(true);
 const isSaving = ref(false);
@@ -30,6 +32,7 @@ const toBrandObject = (value: unknown): Record<string, unknown> => coerceJsonObj
 
 onMounted(async () => {
   void loadSafeMode();
+  void loadAccess();
   try {
     const data = await $fetch<{ data: BusinessProfile, entityDetails: EntityDetails }>(`/api/v1/business/${businessId}`);
 
@@ -71,6 +74,7 @@ onMounted(async () => {
 });
 
 const handleSubmit = async (payload: BodySchemaCreateBusinessType) => {
+  if (!isOwner.value) return
   isSaving.value = true;
   try {
     const entityDetails = {
@@ -177,10 +181,10 @@ useHead({
     </div>
 
     <div v-else-if="responseResult" class="space-y-6">
-      <BusinessFormStep :result="responseResult" @submit="handleSubmit" @cancel="handleCancel" />
+      <BusinessFormStep :result="responseResult" :readonly="!isOwner" @submit="handleSubmit" @cancel="handleCancel" />
       <USeparator class="my-8" />
-      <TeamMembers :business-id="businessId" :business-name="responseResult.businessProfile.name" />
-      <UCard class="border border-default">
+      <TeamMembers :business-id="businessId" :business-name="responseResult.businessProfile.name" :readonly="!isOwner" :can-manage="isOwner" />
+      <UCard v-if="isOwner" class="border border-default">
         <template #header>
           <h2 class="font-semibold text-highlighted">{{ t('safe_mode.section') }}</h2>
           <p class="text-sm text-muted">{{ t('safe_mode.sectionDescription') }}</p>
@@ -193,7 +197,7 @@ useHead({
           <USwitch :model-value="safeMode" :loading="safeModeLoading" @update:model-value="handleToggleSafeMode" />
         </div>
       </UCard>
-      <UCard class="border border-default">
+      <UCard v-if="isOwner" class="border border-default">
         <template #header>
           <h2 class="font-semibold text-highlighted">{{ t('settings.title') }}</h2>
           <p class="text-sm text-muted">{{ t('settings.description') }}</p>

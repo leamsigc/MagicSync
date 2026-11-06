@@ -24,6 +24,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const { user } = UseUser()
 const {
   initial,
   avatarColor,
@@ -119,13 +120,17 @@ function handleSelect(id: string) {
 }
 
 function menuItems(business: BusinessProfile) {
-  return [[
+  const items = [[
     { label: t('actions.edit'), icon: 'i-heroicons-pencil', onSelect: () => handleEdit(business.id) },
     { label: t('actions.playbook'), icon: 'i-lucide-book-open', onSelect: () => navigateTo(`/app/business/${business.id}/content/playbook`) },
     { label: t('actions.google_business'), icon: 'i-logos-google', onSelect: () => navigateTo(`/app/business/${business.id}/gmb`) },
-  ], [
-    { label: t('actions.delete'), icon: 'i-heroicons-trash', color: 'error' as const, onSelect: () => handleDelete(business.id) },
   ]]
+  if (business.userId === user.value?.id) {
+    items.push([
+      { label: t('actions.delete'), icon: 'i-heroicons-trash', color: 'error' as const, onSelect: () => handleDelete(business.id) },
+    ])
+  }
+  return items
 }
 </script>
 

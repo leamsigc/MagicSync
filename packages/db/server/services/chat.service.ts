@@ -1,11 +1,13 @@
-import { eq, and, desc, asc, inArray, isNotNull } from 'drizzle-orm'
+import { eq, and, desc, asc, inArray, isNotNull, or } from 'drizzle-orm'
 import { type ServiceResponse } from './types'
 import type { ChatServiceType } from './interfaces'
 import { chatThreads, chatMessages, agentChatSessions, type ChatThread, type ChatMessage } from '#layers/BaseDB/db/schema'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
+import { businessAccessService } from './business-access.service'
 
 export interface CreateThreadData {
   title: string
+  businessId?: string
 }
 
 export interface CreateMessageData {
@@ -35,6 +37,7 @@ export class ChatService implements ChatServiceType {
       const [thread] = await this.db.insert(chatThreads).values({
         id,
         userId,
+        businessId: data.businessId ?? null,
         title: data.title,
         lastMessageAt: now,
         createdAt: now,
@@ -60,31 +63,27 @@ export class ChatService implements ChatServiceType {
     }
   }
 
-  /**
-   * Threads for one business. `chat_threads` has no business column, so the
-   * business link is read from `agent_chat_sessions` (which owns threadId →
-   * businessId) — the same link the agent runtime writes on every run. No
-   * migration needed; a brand-new thread appears once its first run is recorded.
-   */
   async getThreadsByBusiness(userId: string, businessId: string): Promise<ServiceResponse<ChatThread[]>> {
     try {
       const links = await this.db
         .select({ threadId: agentChatSessions.threadId })
         .from(agentChatSessions)
         .where(and(
-          eq(agentChatSessions.ownerUserId, userId),
           eq(agentChatSessions.businessId, businessId),
           isNotNull(agentChatSessions.threadId),
         ))
-      const threadIds = links
+      const legacyThreadIds = links
         .map(link => link.threadId)
         .filter((id): id is string => Boolean(id))
-      if (threadIds.length === 0) return { success: true, data: [] }
+
+      const scope = legacyThreadIds.length > 0
+        ? or(eq(chatThreads.businessId, businessId), inArray(chatThreads.id, legacyThreadIds))!
+        : eq(chatThreads.businessId, businessId)
 
       const threads = await this.db
         .select()
         .from(chatThreads)
-        .where(and(eq(chatThreads.userId, userId), inArray(chatThreads.id, threadIds)))
+        .where(scope)
         .orderBy(desc(chatThreads.lastMessageAt))
 
       return { success: true, data: threads }
@@ -98,10 +97,16 @@ export class ChatService implements ChatServiceType {
       const [thread] = await this.db
         .select()
         .from(chatThreads)
-        .where(and(eq(chatThreads.id, threadId), eq(chatThreads.userId, userId)))
+        .where(eq(chatThreads.id, threadId))
         .limit(1)
 
       if (!thread) {
+        return { success: false, error: 'Thread not found', code: 'NOT_FOUND' }
+      }
+
+      const allowed = thread.userId === userId
+        || (!!thread.businessId && await businessAccessService.isMember(userId, thread.businessId))
+      if (!allowed) {
         return { success: false, error: 'Thread not found', code: 'NOT_FOUND' }
       }
 
@@ -113,9 +118,25 @@ export class ChatService implements ChatServiceType {
 
   async deleteThread(threadId: string, userId: string): Promise<ServiceResponse<ChatThread>> {
     try {
+      const [thread] = await this.db
+        .select()
+        .from(chatThreads)
+        .where(eq(chatThreads.id, threadId))
+        .limit(1)
+
+      if (!thread) {
+        return { success: false, error: 'Thread not found', code: 'NOT_FOUND' }
+      }
+
+      const allowed = thread.userId === userId
+        || (!!thread.businessId && await businessAccessService.isMember(userId, thread.businessId))
+      if (!allowed) {
+        return { success: false, error: 'Thread not found', code: 'NOT_FOUND' }
+      }
+
       const [deleted] = await this.db
         .delete(chatThreads)
-        .where(and(eq(chatThreads.id, threadId), eq(chatThreads.userId, userId)))
+        .where(eq(chatThreads.id, threadId))
         .returning()
 
       if (!deleted) {
@@ -130,10 +151,13 @@ export class ChatService implements ChatServiceType {
 
   async updateThreadTitle(threadId: string, userId: string, title: string): Promise<ServiceResponse<ChatThread>> {
     try {
+      const access = await this.getThread(threadId, userId)
+      if (!access.success) return access
+
       const [updated] = await this.db
         .update(chatThreads)
         .set({ title })
-        .where(and(eq(chatThreads.id, threadId), eq(chatThreads.userId, userId)))
+        .where(eq(chatThreads.id, threadId))
         .returning()
 
       if (!updated) {
@@ -150,6 +174,9 @@ export class ChatService implements ChatServiceType {
 
   async addMessage(data: CreateMessageData): Promise<ServiceResponse<ChatMessage>> {
     try {
+      const access = await this.getThread(data.threadId, data.userId)
+      if (!access.success) return access
+
       const id = crypto.randomUUID()
       const now = new Date()
 
@@ -181,11 +208,13 @@ export class ChatService implements ChatServiceType {
     options: MessagePaginationOptions = {}
   ): Promise<ServiceResponse<ChatMessage[]>> {
     try {
+      const access = await this.getThread(threadId, userId)
+      if (!access.success) return access
+
       const { limit = 50, before, after } = options
 
       const conditions = [
         eq(chatMessages.threadId, threadId),
-        eq(chatMessages.userId, userId),
       ]
 
       let query = this.db

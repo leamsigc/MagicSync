@@ -6,6 +6,7 @@ import { YouTubePlugin } from '#layers/BaseDB/server/services/plugins/youtube.pl
 import { GooglePlugin } from '#layers/BaseDB/server/services/plugins/google.plugin';
 import { SchedulerPost, type SchedulerPluginConstructor } from '#layers/BaseDB/server/services/SchedulerPost.service';
 import { checkUserIsLogin, getAccessTokenHelper } from '#layers/BaseAuth/server/utils/AuthHelpers';
+import { accessErrorStatus, requireBusinessOwner } from '#layers/BaseDB/server/utils/business-access';
 import { H3Error, readBody } from 'h3';
 
 interface ConnectSocialMediaAccountBody {
@@ -100,6 +101,15 @@ export default defineEventHandler(async (event) => {
 
     log.set({ businessId: body.businessId })
 
+    if (!body.businessId) {
+      throw createError({ statusCode: 400, statusMessage: 'Business ID is required' })
+    }
+
+    const access = await requireBusinessOwner(event, user.id, body.businessId)
+    if (!access.success || !access.data) {
+      throw createError({ statusCode: accessErrorStatus(access.code), statusMessage: access.error })
+    }
+
     // Use the social media manager to get the page details
     const account = await resolveProviderAccounts(platform, user.id)
     if (account.length === 0) {
@@ -189,6 +199,7 @@ export default defineEventHandler(async (event) => {
       ...pageDetails,
       user,
       businessId: body.businessId,
+      businessOwnerUserId: access.data.ownerUserId,
       platformId: instagramId ? 'instagram' : platform,
     });
 

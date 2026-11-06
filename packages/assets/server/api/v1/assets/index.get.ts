@@ -64,7 +64,7 @@ export default defineEventHandler(async (event) => {
     const result = await assetService.findByBusinessId(businessId, user.id, {
       pagination: { page, limit },
       filters,
-    })
+    }, event)
 
     if (!result.success) {
       log.error('Failed to fetch assets', { error: result.error })

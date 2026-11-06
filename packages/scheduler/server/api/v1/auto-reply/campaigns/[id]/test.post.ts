@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
   if (body.campaignId || id) {
     const targetId = body.campaignId || id
     if (targetId) {
-      const campaign = await autoReplyService.getCampaign(user.id, targetId)
+      const campaign = await autoReplyService.getCampaign(user.id, targetId, event)
       if (!campaign.error && campaign.data) {
         const matched = autoReplyService.testMatch(body.text, campaign.data.keywords, campaign.data.matchMode)
         return { success: true, data: matched.data }

@@ -1,5 +1,6 @@
 import { brandPlaybookService } from '#layers/BaseDB/server/services/brand-playbook.service';
 import { checkUserIsLogin } from "#layers/BaseAuth/server/utils/AuthHelpers"
+import { assertBusinessOwner } from '#layers/BaseDB/server/utils/business-access'
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event)
@@ -15,6 +16,8 @@ export default defineEventHandler(async (event) => {
   }
 
   log.set({ businessId: id })
+
+  await assertBusinessOwner(event, user.id, id)
 
   const result = await brandPlaybookService.sync(user.id, id, event);
 

@@ -6,7 +6,7 @@ export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
   if (!id) throw createError({ statusCode: 400, statusMessage: 'Business ID is required' })
 
-  const access = await businessProfileService.findById(id, user.id)
+  const access = await businessProfileService.findById(id, user.id, event)
   if (!access.success || !access.data) {
     throw createError({ statusCode: 404, statusMessage: 'Business not found' })
   }

@@ -5,7 +5,7 @@ export default defineEventHandler(async (event) => {
   const user = await checkUserIsLogin(event)
   const id = getRouterParam(event, 'id')
   if (!id) throw createError({ statusCode: 400, statusMessage: 'Campaign id required' })
-  const result = await autoReplyService.getCampaign(user.id, id)
+  const result = await autoReplyService.getCampaign(user.id, id, event)
   if (result.error) {
     const status = result.code === 'NOT_FOUND' ? 404 : 500
     throw createError({ statusCode: status, statusMessage: result.error })

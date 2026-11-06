@@ -2,6 +2,7 @@ import type { InferSelectModel } from 'drizzle-orm'
 import { integer, sqliteTable, text, blob } from 'drizzle-orm/sqlite-core'
 import { relations } from 'drizzle-orm'
 import { user } from '../auth/auth'
+import { businessProfiles } from '../business/business'
 
 // Knowledge base folders for hierarchical navigation
 export const knowledgeFolders = sqliteTable('knowledge_folders', {
@@ -53,6 +54,7 @@ export const documentChunks = sqliteTable('document_chunks', {
 export const chatThreads = sqliteTable('chat_threads', {
   id: text('id').primaryKey(),
   userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  businessId: text('business_id').references(() => businessProfiles.id, { onDelete: 'cascade' }),
   title: text('title').notNull(),
   lastMessageAt: integer('last_message_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
   createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()).notNull()
@@ -112,6 +114,10 @@ export const chatThreadsRelations = relations(chatThreads, ({ one, many }) => ({
   user: one(user, {
     fields: [chatThreads.userId],
     references: [user.id]
+  }),
+  business: one(businessProfiles, {
+    fields: [chatThreads.businessId],
+    references: [businessProfiles.id]
   }),
   messages: many(chatMessages)
 }))

@@ -241,6 +241,10 @@ export const templatesRelations = relations(templates, ({ one, many }) => ({
     fields: [templates.ownerId],
     references: [user.id]
   }),
+  business: one(businessProfiles, {
+    fields: [templates.businessId],
+    references: [businessProfiles.id]
+  }),
   assets: many(templateAssets)
 }))
 

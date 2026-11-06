@@ -268,10 +268,23 @@ export const apiKeyService = {
    * Does NOT check membership or fetch/create the org — the caller handles that.
    */
   async listApiKeys(event: H3Event, orgId: string, userId?: string): Promise<ApiKeyListItem[]> {
-    const authApi = useAuthApi(event)
-    const result = await authApi.listApiKeys({ query: { organizationId: orgId, configId: "org-keys", } })
+    // Read the rows directly instead of going through `auth.api.listApiKeys`:
+    // Better Auth restricts that endpoint to organization admins, but business
+    // members must be able to *read* the key list. The caller has already
+    // resolved business access, and only non-secret metadata is returned.
+    const rows = await useDrizzle()
+      .select({
+        id: apikey.id,
+        name: apikey.name,
+        prefix: apikey.prefix,
+        expiresAt: apikey.expiresAt,
+        createdAt: apikey.createdAt,
+        enabled: apikey.enabled,
+      })
+      .from(apikey)
+      .where(and(eq(apikey.referenceId, orgId), eq(apikey.configId, 'org-keys')))
 
-    return result.apiKeys.map((key: ApiKeyListItem) => ({
+    return rows.map(key => ({
       id: key.id,
       name: key.name,
       prefix: key.prefix,

@@ -8,6 +8,7 @@
 import { checkUserIsLogin } from "#layers/BaseAuth/server/utils/AuthHelpers"
 import { templateService } from "#layers/BaseDB/server/services/template.service"
 import { TemplateType } from "#layers/BaseDB/db/schema"
+import { accessErrorStatus, requireBusinessAccess } from '#layers/BaseDB/server/utils/business-access'
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event)
@@ -18,6 +19,7 @@ export default defineEventHandler(async (event) => {
 
     // Get query parameters
     const query = getQuery(event)
+    const businessId = typeof query.businessId === 'string' ? query.businessId : undefined
 
     // Parse pagination parameters
     const page = parseInt(query.page as string) || 1
@@ -32,13 +34,19 @@ export default defineEventHandler(async (event) => {
       filters.isPublic = query.isPublic === 'true'
     }
 
-    log.info('Templates retrieved', { page, limit, filters })
+    if (businessId) {
+      const access = await requireBusinessAccess(event, user.id, businessId)
+      if (!access.success) {
+        throw createError({ statusCode: accessErrorStatus(access.code), statusMessage: access.error })
+      }
+    }
 
-    // Get templates for owner
+    log.info('Templates retrieved', { page, limit, filters, businessId })
+
     const result = await templateService.findByOwner(user.id, {
       pagination: { page, limit },
       filters
-    })
+    }, businessId)
 
     return result
   } catch (error: unknown) {

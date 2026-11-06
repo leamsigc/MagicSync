@@ -1,4 +1,4 @@
-import { eq, and, or, sql, SQL } from 'drizzle-orm';
+import { eq, and, or, sql, inArray, isNull, SQL } from 'drizzle-orm';
 import {
   type ServiceResponse,
   ValidationError,
@@ -8,9 +8,11 @@ import {
 import type { TemplateServiceType } from './interfaces';
 import { templates, templateAssets, type Template, type TemplateAsset, TemplateType } from '#layers/BaseDB/db/schema';
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle';
+import { businessAccessService } from './business-access.service';
 
 export interface CreateTemplateData {
   ownerId: string;
+  businessId?: string;
   type: typeof TemplateType[number];
   title: string;
   content: string;
@@ -27,6 +29,7 @@ export interface UpdateTemplateData {
 export interface TemplateWithAssets {
   id: string;
   ownerId: string;
+  businessId?: string | null;
   type: typeof TemplateType[number];
   title: string;
   content: string;
@@ -46,10 +49,10 @@ export class TemplateService implements TemplateServiceType {
       const id = crypto.randomUUID();
       const now = new Date();
 
-      // Create template
       const [template] = await this.db.insert(templates).values({
         id,
         ownerId: data.ownerId,
+        businessId: data.businessId ?? null,
         type: data.type,
         title: data.title,
         content: data.content,
@@ -78,8 +81,14 @@ export class TemplateService implements TemplateServiceType {
 
   async findById(id: string, userId: string): Promise<ServiceResponse<TemplateWithAssets>> {
     try {
+      const accessibleBusinessIds = await businessAccessService.listAccessibleBusinessIds(userId)
+      const scope = [eq(templates.ownerId, userId), eq(templates.isPublic, true)]
+      if (accessibleBusinessIds.length > 0) {
+        scope.push(inArray(templates.businessId, accessibleBusinessIds))
+      }
+
       const template = await this.db.query.templates.findFirst({
-        where: and(eq(templates.id, id), or(eq(templates.ownerId, userId), eq(templates.isPublic, true))),
+        where: and(eq(templates.id, id), or(...scope)),
         with: {
           assets: true
         }
@@ -95,12 +104,17 @@ export class TemplateService implements TemplateServiceType {
     }
   }
 
-  async findByOwner(ownerId: string, options: QueryOptions = {}): Promise<PaginatedResponse<Template>> {
+  async findByOwner(ownerId: string, options: QueryOptions = {}, businessId?: string): Promise<PaginatedResponse<Template>> {
     try {
       const { pagination = { page: 1, limit: 20 }, filters = {} } = options;
       const offset = ((pagination.page || 1) - 1) * (pagination.limit || 20);
 
-      let whereConditions = eq(templates.ownerId, ownerId);
+      let whereConditions = businessId
+        ? or(
+            eq(templates.businessId, businessId),
+            and(isNull(templates.businessId), eq(templates.ownerId, ownerId)),
+          )!
+        : eq(templates.ownerId, ownerId);
 
       // Apply filters
       if (filters.type && TemplateType.includes(filters.type)) {
@@ -186,10 +200,19 @@ export class TemplateService implements TemplateServiceType {
     }
   }
 
+  private async canWrite(template: { ownerId: string; businessId?: string | null }, userId: string): Promise<boolean> {
+    if (template.ownerId === userId) return true;
+    if (!template.businessId) return false;
+    return businessAccessService.isMember(userId, template.businessId);
+  }
+
   async update(id: string, userId: string, data: UpdateTemplateData): Promise<ServiceResponse<Template>> {
     try {
       const existing = await this.findById(id, userId);
-      if (!existing.success) return existing;
+      if (!existing.success || !existing.data) return existing;
+      if (!(await this.canWrite(existing.data, userId))) {
+        return { success: false, error: 'Template not found', code: 'NOT_FOUND' };
+      }
 
       const [updated] = await this.db
         .update(templates)
@@ -197,7 +220,7 @@ export class TemplateService implements TemplateServiceType {
           ...data,
           updatedAt: new Date(),
         })
-        .where(and(eq(templates.id, id), eq(templates.ownerId, userId)))
+        .where(eq(templates.id, id))
         .returning();
 
       if (!updated) {
@@ -212,15 +235,17 @@ export class TemplateService implements TemplateServiceType {
 
   async delete(id: string, userId: string): Promise<ServiceResponse<Template>> {
     try {
-      // Check if template exists and belongs to user
       const existing = await this.findById(id, userId);
-      if (!existing.success) return existing;
+      if (!existing.success || !existing.data) return existing;
+      if (!(await this.canWrite(existing.data, userId))) {
+        return { success: false, error: 'Template not found', code: 'NOT_FOUND' };
+      }
 
       // Delete template assets first (this happens via cascade)
       // Delete template
       const [deleted] = await this.db
         .delete(templates)
-        .where(and(eq(templates.id, id), eq(templates.ownerId, userId)))
+        .where(eq(templates.id, id))
         .returning();
 
       return { success: true, data: deleted };

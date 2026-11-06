@@ -15,6 +15,8 @@ import type { CollectionTableColumn } from '#layers/BaseUI/app/utils/collection'
 const props = defineProps<{
   businessId: string
   businessName?: string
+  readonly?: boolean
+  canManage?: boolean
 }>()
 
 const { t } = useI18n()
@@ -81,7 +83,10 @@ const initialOf = (name: string): string => name.charAt(0).toUpperCase() || '?'
 const formatDate = (value?: string): string => (value ? new Date(value).toLocaleDateString() : '—')
 
 const currentMember = computed(() => members.value.find(member => member.userId === user.value?.id))
-const canManage = computed(() => ['owner', 'admin'].includes(currentMember.value?.role ?? ''))
+const canManage = computed(() => {
+  if (props.readonly) return false
+  return props.canManage ?? (members.value.length > 0 && currentMember.value?.role === 'owner')
+})
 const isSelf = (row: RosterRow): boolean => Boolean(row.userId && row.userId === user.value?.id)
 
 const roster = computed<RosterRow[]>(() => [
@@ -353,7 +358,7 @@ async function sendInvites() {
           <h2 class="text-lg font-semibold text-highlighted">{{ t('team.membersTitle') }}</h2>
           <p v-if="!isLoading" class="mt-0.5 text-sm text-muted">{{ subtitle }}</p>
         </div>
-        <UButton color="primary" icon="i-lucide-user-plus" :label="t('team.inviteMember')" @click="openInviteModal" />
+        <UButton v-if="canManage" color="primary" icon="i-lucide-user-plus" :label="t('team.inviteMember')" @click="openInviteModal" />
       </div>
     </template>
 

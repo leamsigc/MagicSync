@@ -36,6 +36,22 @@ export interface UpdateBusinessProfileData extends Partial<CreateBusinessProfile
   safeMode?: boolean
 }
 
+/** A business row plus the caller's role on it, used by the directory/UI. */
+export type BusinessProfileWithRole = BusinessProfile & { role: 'owner' | 'member' }
+
+function businessIdFromOrgMetadata(metadata: unknown): string | undefined {
+  try {
+    const meta = parseJsonObject(toJsonString(metadata))
+    return typeof meta.businessId === 'string' && meta.businessId ? meta.businessId : undefined
+  } catch {
+    return undefined
+  }
+}
+
+function selectActiveBusiness(profiles: BusinessProfile[]): BusinessProfile | undefined {
+  return profiles.find(profile => profile.isActive) ?? profiles[0]
+}
+
 export interface BusinessDeleteSocialAccount {
   id: string
   platform: string
@@ -258,11 +274,32 @@ export class BusinessProfileService implements BusinessProfileServiceType {
     }
   }
 
+  private async memberBusinessRoles(userId: string): Promise<Map<string, 'owner' | 'member'>> {
+    const roles = new Map<string, 'owner' | 'member'>()
+    const memberships = await this.db
+      .select({ organizationId: member.organizationId, role: member.role })
+      .from(member)
+      .where(eq(member.userId, userId))
+    if (memberships.length === 0) return roles
+
+    const roleByOrgId = new Map(memberships.map(entry => [entry.organizationId, entry.role]))
+    const orgs = await this.db
+      .select({ id: organization.id, metadata: organization.metadata })
+      .from(organization)
+      .where(inArray(organization.id, memberships.map(entry => entry.organizationId)))
+
+    for (const org of orgs) {
+      const businessId = businessIdFromOrgMetadata(org.metadata)
+      if (!businessId) continue
+      roles.set(businessId, roleByOrgId.get(org.id) === 'owner' ? 'owner' : 'member')
+    }
+    return roles
+  }
+
   /**
-   * Find all businesses for a user including those where they are org members.
-   * Used for listing businesses in the UI - invited members should see the business.
+   * Find all businesses for a user, including org-membership businesses.
    */
-  async findByUserIdWithMembership(userId: string, options: QueryOptions = {}): Promise<PaginatedResponse<BusinessProfile>> {
+  async findByUserIdWithMembership(userId: string, options: QueryOptions = {}): Promise<PaginatedResponse<BusinessProfileWithRole>> {
     try {
       const { pagination = { page: 1, limit: 10 } } = options
       const offset = ((pagination.page || 1) - 1) * (pagination.limit || 10)
@@ -274,31 +311,11 @@ export class BusinessProfileService implements BusinessProfileServiceType {
         .where(eq(businessProfiles.userId, userId))
 
       // Member via organization: member -> organization -> metadata.businessId
-      const memberships = await this.db
-        .select({ organizationId: member.organizationId })
-        .from(member)
-        .where(eq(member.userId, userId))
-
-      const orgIds = memberships.map(m => m.organizationId)
-      let memberBusinessIds: string[] = []
-      if (orgIds.length) {
-        const orgs = await this.db
-          .select({ id: organization.id, metadata: organization.metadata })
-          .from(organization)
-          .where(inArray(organization.id, orgIds))
-        memberBusinessIds = orgs
-          .map(o => {
-            try {
-              const meta = parseJsonObject(toJsonString(o.metadata))
-              return meta.businessId as string | undefined
-            } catch { return undefined }
-          })
-          .filter((id): id is string => !!id)
-      }
+      const memberBusinessRoles = await this.memberBusinessRoles(userId)
 
       // Deduplicate and fetch member businesses not already owned
       const ownedIds = new Set(owned.map(b => b.id))
-      const memberOnlyIds = memberBusinessIds.filter(id => !ownedIds.has(id))
+      const memberOnlyIds = [...memberBusinessRoles.keys()].filter(id => !ownedIds.has(id))
       let memberBusinesses: BusinessProfile[] = []
       if (memberOnlyIds.length) {
         memberBusinesses = await this.db
@@ -307,7 +324,13 @@ export class BusinessProfileService implements BusinessProfileServiceType {
           .where(inArray(businessProfiles.id, memberOnlyIds))
       }
 
-      const all = [...owned, ...memberBusinesses]
+      const all: BusinessProfileWithRole[] = [
+        ...owned.map(business => ({ ...business, role: 'owner' as const })),
+        ...memberBusinesses.map(business => ({
+          ...business,
+          role: memberBusinessRoles.get(business.id) ?? 'member' as const,
+        })),
+      ]
       // Simple pagination on combined array (owned + member, small numbers)
       const paginated = all.slice(offset, offset + (pagination.limit || 10))
 
@@ -322,7 +345,7 @@ export class BusinessProfileService implements BusinessProfileServiceType {
         }
       }
     } catch (error) {
-      return { success: false, error: 'Failed to fetch business profiles' } as PaginatedResponse<BusinessProfile>
+      return { success: false, error: 'Failed to fetch business profiles' } as PaginatedResponse<BusinessProfileWithRole>
     }
   }
 
@@ -375,6 +398,10 @@ export class BusinessProfileService implements BusinessProfileServiceType {
     } catch (error) {
       return { success: false, error: 'Failed to update business profile' }
     }
+  }
+
+  async updateAsBusinessOwner(id: string, data: UpdateBusinessProfileData): Promise<ServiceResponse<BusinessProfile>> {
+    return this.updateRaw(id, data)
   }
 
   private async countRows(businessId: string): Promise<BusinessDeletePreview['counts']> {
@@ -619,17 +646,14 @@ export class BusinessProfileService implements BusinessProfileServiceType {
   }
   async getActive(userId: string): Promise<ServiceResponse<BusinessProfile>> {
     try {
-      const existingResult = await this.findByUserId(userId)
-      if (!existingResult.data) {
+      const existingResult = await this.findByUserIdWithMembership(userId, {
+        pagination: { page: 1, limit: 100 },
+      })
+      if (!existingResult.data?.length) {
         return { success: false, error: 'No business profiles found', code: "404" }
       }
 
-      const activeProfile = existingResult.data?.find(profile => profile.isActive)
-      if (!activeProfile) {
-        return { success: false, error: 'No active business profile found' }
-      }
-
-      return { success: true, data: activeProfile }
+      return { success: true, data: selectActiveBusiness(existingResult.data)! }
     } catch (error) {
       return { success: false, error: 'Failed to fetch active business profile' }
     }

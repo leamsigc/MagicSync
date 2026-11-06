@@ -25,6 +25,7 @@ interface Props {
   health?: HealthStatus;
   platform?: string;
   accountId?: string;
+  readonly?: boolean;
 }
 
 const { t, handleDisconnect, HandleReconnect } = useConnectionManager();
@@ -33,13 +34,15 @@ const modalStatus = ref(false);
 
 const editModalStatus = ref(false);
 
-const props = withDefaults(defineProps<Props>(), { showPages: true, showMenu: true, showEdit: true, platform: '', accountId: '' });
+const props = withDefaults(defineProps<Props>(), { showPages: true, showMenu: true, showEdit: true, platform: '', accountId: '', readonly: false });
 
 const reconnectPlatform = computed(() => props.platform || props.name);
 const reconnectAccountId = computed(() => props.accountId || props.id || '');
 const canReconnect = computed(() => reconnectAccountId.value.length > 0);
 
-const items = computed(() => [
+const items = computed(() => {
+  if (props.readonly) return []
+  return [
   [
     ...(props.showPages
       ? [
@@ -82,7 +85,8 @@ const items = computed(() => [
       ]
       : []),
   ],
-]);
+  ]
+});
 
 const handleEditSaved = async () => {
   // handled by parent
@@ -137,14 +141,14 @@ const showReconnectBanner = computed(() => hasExpiredToken.value || isExpiringSo
             </UTooltip>
           </template>
         </div>
-        <UButton v-if="showReconnectBanner && canReconnect" color="primary" variant="soft" size="sm" class="mt-3"
+        <UButton v-if="showReconnectBanner && canReconnect && !props.readonly" color="primary" variant="soft" size="sm" class="mt-3"
           :label="props.health?.status === 'expired' ? 'Token Expired — Reconnect' : 'Token Expiring Soon — Reconnect'"
           icon="i-heroicons-arrow-path" @click="HandleReconnect(reconnectAccountId.value, reconnectPlatform.value)" />
-        <UButton v-if="showReconnectBanner && !props.connected && canReconnect" color="red" variant="solid" size="sm"
+        <UButton v-if="showReconnectBanner && !props.connected && canReconnect && !props.readonly" color="red" variant="solid" size="sm"
           class="mt-2" label="Account Inactive — Reconnect" icon="i-heroicons-link-slash"
           @click="HandleReconnect(reconnectAccountId.value, reconnectPlatform.value)" />
       </section>
-      <div v-if="props.showMenu" class="absolute top-1 right-1">
+      <div v-if="props.showMenu && !props.readonly" class="absolute top-1 right-1">
         <UDropdownMenu :items="items" :popper="{ placement: 'bottom-start' }">
           <UButton color="neutral" variant="ghost" icon="i-heroicons-ellipsis-vertical-20-solid" />
         </UDropdownMenu>

@@ -28,9 +28,10 @@ export const BUSINESS_LLM_OVERRIDE_TYPE = 'business_llm_override'
  * implementation at all, so every capability run failed with
  * MODEL_NOT_AVAILABLE for any user without a `user_llm_configs` row — the
  * content pipeline returned "no ideas" and nothing else. Google is now
- * registered through its OpenAI-compatible endpoint
- * (`generativelanguage.googleapis.com/v1beta/openai`), so the same provider id
- * resolves through pi.
+ * registered through pi's native `google-generative-ai` adapter
+ * (`generativelanguage.googleapis.com/v1beta`) — NOT the OpenAI-compatible
+ * surface, which drops the `thought_signature` of every tool call and makes
+ * Gemini 3 reject the next turn with an opaque 400.
  *
  * Keep these two in sync with models.json. A default the catalog cannot
  * resolve breaks the entire agent layer for every new user.

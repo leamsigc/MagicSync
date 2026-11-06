@@ -77,7 +77,7 @@ export default defineEventHandler(async (event) => {
 
     // Search assets
     log.info('Searching assets', { businessId, filters })
-    const result = await assetService.findByBusinessId(businessId, user.id, options)
+    const result = await assetService.findByBusinessId(businessId, user.id, options, event)
 
     if (!result.success) {
       log.error('Failed to search assets', { error: result.error })

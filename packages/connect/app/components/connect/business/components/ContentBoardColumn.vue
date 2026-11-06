@@ -184,7 +184,7 @@ watch(() => props.draggingItem, () => {
       </span>
       <h2 class="truncate text-sm font-semibold text-highlighted">
         {{ t(`board.columns.${column}`) }}
-        <span class="font-normal text-muted">{{ items.length }}</span>
+        <span class="font-normal text-muted" :data-testid="`board-count-${column}`">{{ items.length }}</span>
       </h2>
 
       <div class="ml-auto flex shrink-0 items-center gap-0.5">

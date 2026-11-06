@@ -2,7 +2,7 @@
 <script lang="ts" setup>
 import dayjs from 'dayjs'
 
-const props = defineProps<{ businessId: string }>()
+const props = defineProps<{ businessId: string, readonly?: boolean }>()
 
 const { t } = useI18n()
 const toast = useToast()
@@ -549,7 +549,7 @@ onMounted(loadPage)
           <h2 class="text-lg font-semibold text-white/90 mb-2">{{ t('empty.title') }}</h2>
           <p class="text-sm text-white/40">{{ t('empty.description') }}</p>
         </div>
-        <div class="flex flex-wrap justify-center gap-3">
+        <div v-if="!props.readonly" class="flex flex-wrap justify-center gap-3">
           <UButton color="primary" variant="solid" icon="i-heroicons-sparkles" :loading="generating"
             @click="handleGenerate">
             {{ t('empty.cta') }}
@@ -585,7 +585,7 @@ onMounted(loadPage)
           </div>
 
           <!-- Action bar -->
-          <div v-motion-fade :duration="200" class="flex flex-wrap items-center gap-2">
+          <div v-if="!props.readonly" v-motion-fade :duration="200" class="flex flex-wrap items-center gap-2">
             <UButton color="primary" variant="solid" icon="i-heroicons-check" :loading="publishingId !== null"
               @click="handlePublishCurrent">
               {{ t('actions.publish') }}
@@ -668,7 +668,7 @@ onMounted(loadPage)
         <!-- Right column: History + Quick actions -->
         <aside class="space-y-4">
           <!-- Quick actions card -->
-          <UCard v-motion-fade :duration="200">
+          <UCard v-if="!props.readonly" v-motion-fade :duration="200">
             <template #header>
               <h3 class="font-semibold text-white/80">{{ t('actions.title') }}</h3>
             </template>

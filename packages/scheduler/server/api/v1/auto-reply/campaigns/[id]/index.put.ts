@@ -32,7 +32,7 @@ export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
   if (!id) throw createError({ statusCode: 400, statusMessage: 'Campaign id required' })
   const body = await readValidatedBody(event, updateSchema.parse)
-  const result = await autoReplyService.updateCampaign(user.id, id, body)
+  const result = await autoReplyService.updateCampaign(user.id, id, body, event)
   if (result.error) {
     const status = result.code === 'NOT_FOUND' ? 404 : result.code === 'VALIDATION' ? 400 : 500
     throw createError({ statusCode: status, statusMessage: result.error })

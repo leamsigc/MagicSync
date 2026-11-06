@@ -1,5 +1,6 @@
 import { socialMediaAccountService, type SocialMediaPlatform } from "#layers/BaseDB/server/services/social-media-account.service"
 import { checkUserIsLogin } from "#layers/BaseAuth/server/utils/AuthHelpers"
+import { accessErrorStatus, requireBusinessOwner } from '#layers/BaseDB/server/utils/business-access'
 import { sanitizeSocialMediaAccount } from "#layers/BaseDB/server/services/social-media-account.service"
 
 /**
@@ -39,6 +40,11 @@ export default defineEventHandler(async (event) => {
     }
 
     log.set({ businessId })
+
+    const access = await requireBusinessOwner(event, user.id, businessId)
+    if (!access.success || !access.data) {
+      throw createError({ statusCode: accessErrorStatus(access.code), statusMessage: access.error })
+    }
 
     if (!credentials) {
       throw createError({
@@ -199,6 +205,7 @@ export default defineEventHandler(async (event) => {
       baseUrl: accountInfo.baseUrl,
       user,
       businessId,
+      businessOwnerUserId: access.data.ownerUserId,
       platformId: platform
     })
 

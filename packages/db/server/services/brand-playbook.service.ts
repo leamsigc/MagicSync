@@ -13,7 +13,7 @@ import {
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
 import { coerceJsonObject } from '#layers/BaseShared/utils/json'
 import { businessCorpusService } from './business-corpus.service'
-import { businessProfileService } from './business-profile.service'
+import { businessAccessService } from './business-access.service'
 
 export const PLAYBOOK_ENTITY_TYPE = 'brand_playbook_edition'
 export const MAX_EDITIONS = 10
@@ -969,16 +969,16 @@ export class BrandPlaybookService {
   private store = new PlaybookStore()
 
   private async ownBusiness(userId: string, businessId: string, event?: H3Event) {
-    const profile = await businessProfileService.findById(businessId, userId, event)
-    if (!profile.success || !profile.data) {
+    const access = await businessAccessService.resolve(userId, businessId, event)
+    if (!access.success || !access.data) {
       return { success: false as const, error: 'Business profile not found', code: 'NOT_FOUND' }
     }
     return {
       success: true as const,
       data: {
-        profile: profile.data,
-        role: (profile.data.userId === userId ? 'owner' : 'member') as 'owner' | 'member',
-        ownerId: profile.data.userId,
+        profile: access.data.business,
+        role: access.data.role,
+        ownerId: access.data.ownerUserId,
       },
     }
   }

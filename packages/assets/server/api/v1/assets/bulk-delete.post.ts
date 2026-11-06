@@ -32,7 +32,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // Delete multiple assets
-    const result = await assetService.deleteMultiple(body.assetIds, user.id)
+    const result = await assetService.deleteMultiple(body.assetIds, user.id, event)
 
     if (!result.success) {
       log.error('Failed to delete assets', { error: result.error })

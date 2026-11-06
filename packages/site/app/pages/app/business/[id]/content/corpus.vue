@@ -1,6 +1,7 @@
 <i18n src="./corpus.json"></i18n>
 <script lang="ts" setup>
 import BusinessWorkspaceTabs from '#layers/BaseConnect/app/components/connect/business/components/BusinessWorkspaceTabs.vue'
+import { useBusinessAccess } from '#layers/BaseShared/app/composables/useBusinessAccess'
 
 const { t } = useI18n()
 const toast = useToast()
@@ -8,6 +9,8 @@ const route = useRoute()
 const router = useRouter()
 
 const businessId = route.params.id as string
+const { isOwner, load: loadAccess } = useBusinessAccess(businessId)
+onMounted(() => { void loadAccess() })
 
 interface ServiceResult<T> {
   success: boolean
@@ -270,7 +273,7 @@ onMounted(loadPage)
             data-testid="corpus-export" @click="handleExportCorpus">
             {{ t('actions.export') }}
           </UButton>
-          <UButton variant="outline" color="neutral" icon="i-heroicons-arrow-up-tray" :loading="importing"
+          <UButton v-if="isOwner" variant="outline" color="neutral" icon="i-heroicons-arrow-up-tray" :loading="importing"
             data-testid="corpus-import" @click="handleTriggerCorpusImport">
             {{ t('actions.import') }}
           </UButton>
@@ -314,7 +317,7 @@ onMounted(loadPage)
               <UBadge :color="isFilled(section) ? 'success' : 'neutral'" variant="subtle" size="xs">
                 {{ isFilled(section) ? t('actions.filledBadge') : t('actions.emptyBadge') }}
               </UBadge>
-              <UButton class="ms-auto" size="xs" color="primary" variant="outline" :loading="busyKey === section"
+              <UButton v-if="isOwner" class="ms-auto" size="xs" color="primary" variant="outline" :loading="busyKey === section"
                 :data-testid="`corpus-save-${section}`" @click="handleSaveSection(section)">
                 {{ t('actions.save') }}
               </UButton>
@@ -332,7 +335,7 @@ onMounted(loadPage)
           <section v-for="key in KEY_IDS" :key="key" :data-testid="`corpus-key-${key}`">
             <div class="mb-1 flex items-center gap-2">
               <h3 class="text-sm font-semibold">{{ t(`keys.${key}`) }}</h3>
-              <UButton class="ms-auto" size="xs" color="primary" variant="outline" :loading="busyKey === key"
+              <UButton v-if="isOwner" class="ms-auto" size="xs" color="primary" variant="outline" :loading="busyKey === key"
                 :data-testid="`corpus-save-${key}`" @click="handleSaveKey(key)">
                 {{ t('actions.save') }}
               </UButton>

@@ -1,4 +1,5 @@
 import { assetService } from '#layers/BaseShared/server/services/asset.service';
+import { businessAccessService } from '#layers/BaseDB/server/services/business-access.service';
 import { assetBlobKey, useAssetBlobStore } from '#layers/BaseShared/server/services/asset-blob-store';
 import { safeFetch } from '#layers/BaseShared/server/utils/ssrf';
 import { readMultipartFormData, readBody } from 'h3'
@@ -86,6 +87,13 @@ export default defineEventHandler(async (event) => {
       const businessIdField = formData?.find(part => part.name === 'businessId')
       const businessId = businessIdField?.data?.toString() || undefined
 
+      if (businessId) {
+        const access = await businessAccessService.resolve(user.id, businessId, event)
+        if (!access.success) {
+          throw createError({ statusCode: 403, statusMessage: 'You do not have access to this business' })
+        }
+      }
+
       for (const part of fileParts) {
         try {
           const originalName = part.filename || 'file'
@@ -164,6 +172,13 @@ export default defineEventHandler(async (event) => {
           statusCode: 400,
           statusMessage: 'No files uploaded'
         })
+      }
+
+      if (body.businessId) {
+        const access = await businessAccessService.resolve(user.id, body.businessId, event)
+        if (!access.success) {
+          throw createError({ statusCode: 403, statusMessage: 'You do not have access to this business' })
+        }
       }
 
       // Remote URL import: fetch the file server-side and store it

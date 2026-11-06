@@ -3,7 +3,7 @@ import { AutoPostService } from '#layers/BaseScheduler/server/services/AutoPost.
 import { checkUserIsLogin } from "#layers/BaseAuth/server/utils/AuthHelpers"
 import type { PostCreateBase } from "#layers/BaseDB/db/schema"
 import { postService } from "#layers/BaseDB/server/services/post.service"
-import { businessProfileService } from "#layers/BaseDB/server/services/business-profile.service"
+import { accessErrorStatus, requireBusinessAccess } from '#layers/BaseDB/server/utils/business-access'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -21,12 +21,11 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // Verify business ownership before creating post
-    const business = await businessProfileService.findById(body.businessId, user.id)
-    if (!business || !business.data) {
+    const access = await requireBusinessAccess(event, user.id, body.businessId)
+    if (!access.success || !access.data) {
       throw createError({
-        statusCode: 403,
-        statusMessage: 'You do not have permission to create posts for this business'
+        statusCode: accessErrorStatus(access.code),
+        statusMessage: access.error ?? 'You do not have permission to create posts for this business'
       })
     }
 

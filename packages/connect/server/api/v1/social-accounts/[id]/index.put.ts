@@ -1,5 +1,6 @@
 import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service'
 import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
+import { accessErrorStatus, requireBusinessOwner } from '#layers/BaseDB/server/utils/business-access'
 import { z } from 'zod'
 
 const UpdateConnectionSettingsSchema = z.object({
@@ -45,10 +46,29 @@ export default defineEventHandler(async (event) => {
       })
     }
 
+    const account = await socialMediaAccountService.getAccountById(accountId)
+    if (!account) {
+      throw createError({ statusCode: 404, statusMessage: 'Social media account not found' })
+    }
+
+    if (account.businessId) {
+      const access = await requireBusinessOwner(event, user.id, account.businessId)
+      if (!access.success || !access.data) {
+        throw createError({ statusCode: accessErrorStatus(access.code), statusMessage: access.error ?? 'Access denied' })
+      }
+    }
+    if (parsed.data.businessId && parsed.data.businessId !== account.businessId) {
+      const target = await requireBusinessOwner(event, user.id, parsed.data.businessId)
+      if (!target.success || !target.data) {
+        throw createError({ statusCode: accessErrorStatus(target.code), statusMessage: target.error ?? 'Access denied' })
+      }
+    }
+
     const result = await socialMediaAccountService.updateConnectionSettings(
       accountId,
       user.id,
-      parsed.data
+      parsed.data,
+      { allowBusinessId: account.businessId ?? undefined }
     )
 
     if (!result.success) {

@@ -8,6 +8,7 @@
 import { checkUserIsLogin } from "#layers/BaseAuth/server/utils/AuthHelpers"
 import { templateService } from "#layers/BaseDB/server/services/template.service"
 import { TemplateType } from "#layers/BaseDB/db/schema"
+import { accessErrorStatus, requireBusinessAccess } from '#layers/BaseDB/server/utils/business-access'
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event)
@@ -46,8 +47,19 @@ export default defineEventHandler(async (event) => {
     }
 
     // Create template
+    const businessId = typeof body.businessId === 'string' && body.businessId ? body.businessId : undefined
+    let ownerId = user.id
+    if (businessId) {
+      const access = await requireBusinessAccess(event, user.id, businessId)
+      if (!access.success || !access.data) {
+        throw createError({ statusCode: accessErrorStatus(access.code), statusMessage: access.error })
+      }
+      ownerId = access.data.ownerUserId
+    }
+
     const result = await templateService.create(user.id, {
-      ownerId: user.id,
+      ownerId,
+      businessId,
       type: body.type,
       title: body.title.trim(),
       content: body.content,
