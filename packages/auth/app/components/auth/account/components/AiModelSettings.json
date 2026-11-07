@@ -41,7 +41,8 @@
       "openai": "OpenAI",
       "anthropic": "Anthropic",
       "openrouter": "OpenRouter",
-      "deepseek": "DeepSeek"
+      "deepseek": "DeepSeek",
+      "opencode": "OpenCode Zen"
     },
     "tools": {
       "title": "Tool backends",
@@ -70,7 +71,9 @@
       "pythonUrlPlaceholder": "http://localhost:8100"
     },
     "useSystemAi": "Use the system AI",
-    "systemApplied": "Now using the system AI for this business"
+    "systemApplied": "Now using the system AI for this business",
+    "apiKeyOptionalPlaceholder": "API key (optional)",
+    "apiKeyHelpLocal": "Optional. Stored encrypted; use it when your local gateway requires a token. Leave blank to keep the saved key."
   },
   "es": {
     "titleGlobal": "Modelo de IA",
@@ -114,7 +117,8 @@
       "openai": "OpenAI",
       "anthropic": "Anthropic",
       "openrouter": "OpenRouter",
-      "deepseek": "DeepSeek"
+      "deepseek": "DeepSeek",
+      "opencode": "OpenCode Zen"
     },
     "tools": {
       "title": "Backends de herramientas",
@@ -143,7 +147,9 @@
       "pythonUrlPlaceholder": "http://localhost:8100"
     },
     "useSystemAi": "Usar la IA del sistema",
-    "systemApplied": "Ahora se usa la IA del sistema para este negocio"
+    "systemApplied": "Ahora se usa la IA del sistema para este negocio",
+    "apiKeyOptionalPlaceholder": "Clave API (opcional)",
+    "apiKeyHelpLocal": "Opcional. Se guarda cifrada; úsala si tu gateway local requiere un token. Déjala vacía para conservar la clave guardada."
   },
   "de": {
     "titleGlobal": "KI-Modell",
@@ -187,7 +193,8 @@
       "openai": "OpenAI",
       "anthropic": "Anthropic",
       "openrouter": "OpenRouter",
-      "deepseek": "DeepSeek"
+      "deepseek": "DeepSeek",
+      "opencode": "OpenCode Zen"
     },
     "tools": {
       "title": "Tool-Backends",
@@ -216,7 +223,9 @@
       "pythonUrlPlaceholder": "http://localhost:8100"
     },
     "useSystemAi": "System-KI verwenden",
-    "systemApplied": "Dieses Geschäft nutzt jetzt die System-KI"
+    "systemApplied": "Dieses Geschäft nutzt jetzt die System-KI",
+    "apiKeyOptionalPlaceholder": "API-Schlüssel (optional)",
+    "apiKeyHelpLocal": "Optional. Verschlüsselt gespeichert; nutze ihn, wenn dein lokales Gateway ein Token verlangt. Leer lassen, um den gespeicherten Schlüssel zu behalten."
   },
   "fr": {
     "titleGlobal": "Modèle IA",
@@ -260,7 +269,8 @@
       "openai": "OpenAI",
       "anthropic": "Anthropic",
       "openrouter": "OpenRouter",
-      "deepseek": "DeepSeek"
+      "deepseek": "DeepSeek",
+      "opencode": "OpenCode Zen"
     },
     "tools": {
       "title": "Backends d'outils",
@@ -289,6 +299,8 @@
       "pythonUrlPlaceholder": "http://localhost:8100"
     },
     "useSystemAi": "Utiliser l'IA système",
-    "systemApplied": "Ce commerce utilise désormais l’IA système"
+    "systemApplied": "Ce commerce utilise désormais l’IA système",
+    "apiKeyOptionalPlaceholder": "Clé API (facultative)",
+    "apiKeyHelpLocal": "Facultative. Stockée chiffrée ; utilise-la si ta passerelle locale exige un jeton. Laisse vide pour conserver la clé enregistrée."
   }
 }

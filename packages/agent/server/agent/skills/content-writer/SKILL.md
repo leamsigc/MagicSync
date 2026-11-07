@@ -2,7 +2,7 @@
 name: content-writer
 description: Write platform-optimized social posts from a completed research brief, keeping every claim grounded with one clear CTA. Use when drafting captions, threads, or variants.
 version: 1.0.0
-tools: write_post, apply_template, retrieve
+tools: write_post, write_posts_batch, apply_template
 ---
 
 # Content Writer
@@ -13,6 +13,9 @@ business could publish it today.
 
 ## Steps
 
+0. When the owner asks for more than one post, call `write_posts_batch` once
+   with the count and platforms. Never return a numbered list of posts as prose;
+   the chat renders one preview card per draft from the tool result.
 1. Read the brief and list the claims it supports. Anything not in the brief is
    off-limits, including statistics, prices, URLs, and quotes.
 2. Name the reader and the single takeaway. One post = one idea.

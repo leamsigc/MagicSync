@@ -1,10 +1,12 @@
 import { and, eq } from 'drizzle-orm'
+import type { H3Event } from 'h3'
 import { timingSafeEqual } from 'node:crypto'
 import { entityDetails } from '#layers/BaseDB/db/entityDetails/entityDetails'
 import { socialMediaAccounts } from '#layers/BaseDB/db/socialMedia/socialMedia'
 import { useDrizzle } from '#layers/BaseDB/server/utils/drizzle'
 import type { ServiceResponse } from '#layers/BaseDB/server/services/types'
 import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service'
+import { businessAccessService } from '#layers/BaseDB/server/services/business-access.service'
 import { AUTOREPLY_SEEN } from '#layers/BaseScheduler/server/services/AutoReply.service'
 import {
   parseMetaWebhook,
@@ -120,18 +122,43 @@ export class AutoReplyWebhookService {
     }
   }
 
-  private async resolvePageCredentials(socialAccountId: string, userId: string): Promise<{ pageId: string; token: string } | null> {
-    const account = await socialMediaAccountService.getAccountById(socialAccountId, userId)
-    if (!account) return null
+  private async canManageAccount(
+    userId: string,
+    account: { userId: string; businessId: string | null },
+    event?: H3Event,
+  ): Promise<boolean> {
+    if (account.businessId) {
+      const access = await businessAccessService.resolve(userId, account.businessId, event)
+      return access.success && access.data?.role === 'owner'
+    }
+    return account.userId === userId
+  }
+
+  private async facebookPageFor(
+    account: { platform: string; accountId: string; accessToken: string; businessId: string | null },
+    userId: string,
+  ): Promise<{ pageId: string; token: string } | null> {
     if (account.platform === 'facebook') {
       return { pageId: account.accountId, token: account.accessToken }
     }
-    if (account.platform === 'instagram') {
-      const siblings = await socialMediaAccountService.getAccounts({ userId, platform: 'facebook' })
-      const page = siblings.find((s) => s.accessToken)
-      if (page) return { pageId: page.accountId, token: page.accessToken }
-    }
-    return null
+    if (account.platform !== 'instagram') return null
+
+    const siblings = account.businessId
+      ? await socialMediaAccountService.getAccounts({ businessId: account.businessId, platform: 'facebook' })
+      : await socialMediaAccountService.getAccounts({ userId, platform: 'facebook' })
+    const page = siblings.find(s => s.accessToken)
+    return page ? { pageId: page.accountId, token: page.accessToken } : null
+  }
+
+  private async resolvePageCredentials(
+    socialAccountId: string,
+    userId: string,
+    event?: H3Event,
+  ): Promise<{ pageId: string; token: string } | null> {
+    const account = await socialMediaAccountService.getAccountById(socialAccountId)
+    if (!account) return null
+    if (!(await this.canManageAccount(userId, account, event))) return null
+    return this.facebookPageFor(account, userId)
   }
 
   /**
@@ -140,9 +167,9 @@ export class AutoReplyWebhookService {
    * App-dashboard subscription to the Instagram object (comments, messages,
    * story_mentions) is still manual, one-time per app (see docs).
    */
-  async subscribePage(socialAccountId: string, userId: string): Promise<ServiceResponse<{ subscribed_fields: string[] }>> {
+  async subscribePage(socialAccountId: string, userId: string, event?: H3Event): Promise<ServiceResponse<{ subscribed_fields: string[] }>> {
     try {
-      const creds = await this.resolvePageCredentials(socialAccountId, userId)
+      const creds = await this.resolvePageCredentials(socialAccountId, userId, event)
       if (!creds) {
         return { success: false, error: 'No Facebook Page with a token found for this account', code: 'NOT_FOUND' }
       }

@@ -9,7 +9,9 @@ import {
 import ResearchSection from './tool-results/sections/ResearchSection.vue'
 import IdeasSection from './tool-results/sections/IdeasSection.vue'
 import CarouselSection from './tool-results/sections/CarouselSection.vue'
+import ImageSection from './tool-results/sections/ImageSection.vue'
 import DraftSection from './tool-results/sections/DraftSection.vue'
+import ScheduleSection from './tool-results/sections/ScheduleSection.vue'
 import BoardSection from './tool-results/sections/BoardSection.vue'
 import DeliverySection from './tool-results/sections/DeliverySection.vue'
 import type { MessageRunState } from '../../../composables/ai-tools/chat/useAgentChat'
@@ -37,6 +39,14 @@ const approvalLoading = ref(false)
 // research) stay visible so a mixed turn never hides its own results.
 const sections = computed(() => groupSections(props.calls))
 const hasCarousel = computed(() => sections.value.some(section => section.kind === 'carousel'))
+// A run that produced something the owner must look at opens itself: a post
+// preview, a rendered design, or a schedule result. Raw JSON stays collapsed.
+const hasEmbeddedResult = computed(() => sections.value.some(section => {
+  return section.kind === 'carousel' || section.kind === 'image' || section.kind === 'draft' || section.kind === 'schedule'
+}))
+watch(hasEmbeddedResult, (value) => {
+  if (value) open.value = true
+}, { immediate: true })
 const visibleCalls = computed(() => sections.value.flatMap(section => section.calls))
 const rail = computed(() => hasCarousel.value ? [] : railSteps(props.run as MessageRunLike | undefined, visibleCalls.value))
 
@@ -193,11 +203,19 @@ async function handleApprovalAction(actionId: string, actionLabel: string): Prom
           :is-streaming="isStreaming"
           @revise="handleRevise"
         />
+        <ImageSection
+          v-else-if="section.kind === 'image'"
+          :calls="section.calls"
+        />
         <DraftSection
           v-else-if="section.kind === 'draft'"
           :calls="section.calls"
           :business-id="businessId"
           @compose="handleCompose"
+        />
+        <ScheduleSection
+          v-else-if="section.kind === 'schedule'"
+          :calls="section.calls"
         />
         <BoardSection v-else-if="section.kind === 'board'" :calls="section.calls" />
         <DeliverySection v-else :calls="section.calls" />

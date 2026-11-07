@@ -36,12 +36,16 @@ export function campaignSummary(campaign: AutoReplyCampaign) {
 
 export async function requireCampaign(mcp: ApiKeyContext, userId: string, campaignId: string) {
   const { ids } = await autoReplyAccounts(mcp)
-  const result = await autoReplyService.getCampaign(userId, campaignId)
-  if (!result.success || !result.data) {
+  const result = await autoReplyService.listCampaigns(userId, mcp.businessId)
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to list auto-reply campaigns')
+  }
+  const campaign = (result.data ?? []).find(entry => entry.id === campaignId)
+  if (!campaign) {
     throw new Error(`Auto-reply campaign "${campaignId}" was not found.`)
   }
-  if (!ids.has(result.data.socialAccountId)) {
+  if (!ids.has(campaign.socialAccountId)) {
     throw new Error(`Auto-reply campaign "${campaignId}" belongs to another business.`)
   }
-  return result.data
+  return campaign
 }

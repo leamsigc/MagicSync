@@ -54,9 +54,12 @@ export default defineEventHandler(async (event) => {
 
     // Access control: the asset owner, or a member of the asset's business
     // organization (businessProfileService.findById handles owner + org-member).
+    // Legacy assets uploaded before business scoping have no businessId; resolve
+    // the business from the post that references them.
+    const assetBusinessId = asset.businessId || await assetService.findBusinessIdForAsset(asset.id)
     const isOwner = !!user && asset.userId === user.id
-    const canAccessBusiness = !!user && asset.businessId
-      ? (await businessProfileService.findById(asset.businessId, user.id, event)).success
+    const canAccessBusiness = !!user && assetBusinessId
+      ? (await businessProfileService.findById(assetBusinessId, user.id, event)).success
       : false
     if (!signedValid && !isOwner && !canAccessBusiness) {
       throw createError({

@@ -12,7 +12,7 @@ import { validateLlmBaseUrl } from '#layers/BaseDB/server/utils/llm-base-url'
  * translates it to `SYSTEM_DEFAULT_*` — but it is storable so the account UI
  * can offer "use the system AI" and a user can delete their own key.
  */
-export type SupportedProvider = 'google' | 'ollama' | 'llama' | 'openai' | 'anthropic' | 'openrouter' | 'deepseek' | 'system'
+export type SupportedProvider = 'google' | 'ollama' | 'llama' | 'openai' | 'anthropic' | 'openrouter' | 'deepseek' | 'opencode' | 'system'
 
 export const BUSINESS_LLM_OVERRIDE_TYPE = 'business_llm_override'
 // entitydetails-kv: one row per (user, business); point reads by

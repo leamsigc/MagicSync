@@ -28,11 +28,10 @@ export const TOOL_NOT_ALLOWED = 'TOOL_NOT_ALLOWED'
  * included (T11). `task` is always offered; `activate_skill` whenever the agent
  * mounts skills — every specialist does.
  *
- * Raised 7 → 8 so the chat orchestrator can own `bulk_schedule_posts` alongside
- * the four original tools: chat is the operator surface, and a bulk schedule is a
- * chat-first action.
+ * Raised 10 → 12 for the chat operator's feature bridge (`list_features` +
+ * `use_feature`), which reaches every `/mcp` tool without mounting all of them.
  */
-export const MAX_TOOLS_PER_TURN = 10
+export const MAX_TOOLS_PER_TURN = 14
 
 /** Flue's own tools, offered on top of our mount. Never ours to gate. */
 export const FRAMEWORK_TOOL_NAMES = ['task', 'activate_skill'] as const
@@ -58,19 +57,26 @@ export interface ToolGuardOptions {
 }
 
 /**
- * The chat orchestrator's mount: five of our tools plus Flue's `task` and
- * `activate_skill` is the whole turn. Everything else in the catalog is reached
- * through a specialist delegate or the `/api/v1/content/*` capabilities.
+ * The chat orchestrator's mount. The curated tools are the fast paths for the
+ * daily flows; `list_features` + `use_feature` are the operator escape hatch
+ * that reaches every `/mcp` tool (posts, media, image editor, analytics,
+ * platforms, menu boards, carousels) without mounting 60+ schemas per turn.
+ * Everything else in the catalog is also reachable through a specialist
+ * delegate or the `/api/v1/content/*` capabilities.
  */
 export const CHAT_AGENT_MOUNT: readonly string[] = [
   'board_list',
   'write_post',
+  'write_posts_batch',
   'generate_carousel',
   'schedule_post',
   'schedule_direct_posts',
   'bulk_schedule_posts',
+  'create_posts_batch',
   'auto_reply_overview',
   'create_auto_reply_campaign',
+  'list_features',
+  'use_feature',
 ]
 
 /** Tools offered to the model for a mount of `ourTools` (framework included). */

@@ -42,6 +42,7 @@ const CHAT_IDS = [
   'content-ops',
   'carousel',
   'content-score',
+  'image-designer',
 ]
 
 /**

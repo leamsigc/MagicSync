@@ -15,7 +15,7 @@ export default defineMcpTool({
     const mcp = requireMcp()
     const userId = await resolveUserId(mcp)
     const { ids } = await autoReplyAccounts(mcp)
-    const result = await autoReplyService.listCampaigns(userId)
+    const result = await autoReplyService.listCampaigns(userId, mcp.businessId)
     if (!result.success) throw new Error(result.error || 'Failed to list auto-reply campaigns')
 
     const owned = (result.data ?? []).filter(campaign => ids.has(campaign.socialAccountId))

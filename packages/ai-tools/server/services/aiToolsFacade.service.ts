@@ -70,7 +70,7 @@ export class AiToolsFacadeService {
     return userLlmConfigService.getOverride(userId, businessId)
   }
 
-  async saveLlmOverride(userId: string, businessId: string, data: { provider: 'google' | 'ollama' | 'llama' | 'openai' | 'anthropic' | 'openrouter' | 'deepseek'; model: string; apiKey?: string | null; apiBaseUrl?: string | null; temperature?: number; maxTokens?: number }) {
+  async saveLlmOverride(userId: string, businessId: string, data: { provider: 'google' | 'ollama' | 'llama' | 'openai' | 'anthropic' | 'openrouter' | 'deepseek' | 'opencode'; model: string; apiKey?: string | null; apiBaseUrl?: string | null; temperature?: number; maxTokens?: number }) {
     return userLlmConfigService.saveOverride(userId, businessId, data)
   }
 
@@ -239,11 +239,11 @@ export class AiToolsFacadeService {
     return userLlmConfigService.getDefaultConfig(userId)
   }
 
-  async createLlmConfig(userId: string, data: { provider: 'google' | 'ollama' | 'llama' | 'openai' | 'anthropic' | 'openrouter' | 'deepseek'; model: string; apiKey?: string | null; apiBaseUrl?: string | null; isDefault?: boolean; temperature?: number; maxTokens?: number }): Promise<ServiceResponse<UserLlmConfig>> {
+  async createLlmConfig(userId: string, data: { provider: 'google' | 'ollama' | 'llama' | 'openai' | 'anthropic' | 'openrouter' | 'deepseek' | 'opencode'; model: string; apiKey?: string | null; apiBaseUrl?: string | null; isDefault?: boolean; temperature?: number; maxTokens?: number }): Promise<ServiceResponse<UserLlmConfig>> {
     return userLlmConfigService.createConfig(userId, data)
   }
 
-  async updateLlmConfig(userId: string, configId: string, data: { provider?: 'google' | 'ollama' | 'llama' | 'openai' | 'anthropic' | 'openrouter' | 'deepseek'; model?: string; apiKey?: string | null; apiBaseUrl?: string | null; isDefault?: boolean; temperature?: number; maxTokens?: number }): Promise<ServiceResponse<UserLlmConfig>> {
+  async updateLlmConfig(userId: string, configId: string, data: { provider?: 'google' | 'ollama' | 'llama' | 'openai' | 'anthropic' | 'openrouter' | 'deepseek' | 'opencode'; model?: string; apiKey?: string | null; apiBaseUrl?: string | null; isDefault?: boolean; temperature?: number; maxTokens?: number }): Promise<ServiceResponse<UserLlmConfig>> {
     return userLlmConfigService.updateConfig(userId, configId, data)
   }
 

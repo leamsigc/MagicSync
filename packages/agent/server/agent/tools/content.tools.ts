@@ -102,6 +102,25 @@ export function createContentTools(ctx: AgentToolContext): ToolDefinition[] {
       },
     }),
     defineTool({
+      name: 'write_posts_batch',
+      description: 'Draft several distinct social posts in one call, one preview per post. Use this whenever the owner asks for more than one post; never list multiple posts as prose.',
+      input: v.object({
+        brief: v.pipe(v.string(), v.description('What the posts are about')),
+        count: v.pipe(v.number(), v.description('How many different posts to write (1-10)')),
+        platforms: v.optional(v.array(v.pipe(v.string(), v.description('Target platform names')))),
+      }),
+      run: async (toolCtx) => {
+        const { brief, count, platforms } = toolCtx.data
+        const result = await contentChainService.writePostsBatch(chainContext(ctx), {
+          brief,
+          count,
+          platforms: platforms ?? [],
+        })
+        if (!result.success) toolError(result.code, result.error)
+        return toolResult({ count: result.data.length, drafts: result.data })
+      },
+    }),
+    defineTool({
       name: 'humanize',
       description: 'Rewrite a draft to sound natural while preserving every claim.',
       input: v.object({

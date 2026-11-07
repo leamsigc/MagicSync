@@ -64,6 +64,32 @@ async function materializeAndSchedule(ctx: AgentToolContext, itemId: string) {
   return { card: moved.data.item, postId, duplicate: materialized.data.duplicate }
 }
 
+interface BatchItem {
+  brief: string
+  platforms: string[]
+  timeframe?: string
+  scheduledAt?: string
+  accountIds?: string[]
+}
+
+/** One independent direct-schedule attempt per item; failures stay per item. */
+async function scheduleBatch(ctx: AgentToolContext, items: BatchItem[]) {
+  const results: unknown[] = []
+  for (const item of items) {
+    const scheduled = await directScheduleService.scheduleDirect(ctx.userId, ctx.businessId, {
+      brief: item.brief,
+      platforms: item.platforms,
+      timeframe: item.timeframe ?? 'now',
+      scheduledAt: item.scheduledAt,
+      accountIds: item.accountIds,
+    }, ctx.event)
+    results.push(scheduled.success
+      ? { brief: item.brief, items: scheduled.data.items, rejected: scheduled.data.rejected }
+      : { brief: item.brief, error: scheduled.error, code: scheduled.code })
+  }
+  return { count: results.length, results }
+}
+
 /**
  * The five delivery tools for one run. `actorKind: 'user'` is kept exactly as
  * before on the state transitions the materialize/schedule/publish flows
@@ -147,21 +173,26 @@ export function createDeliveryTools(ctx: AgentToolContext): ToolDefinition[] {
           scheduledAt: v.optional(v.pipe(v.string(), v.description('ISO datetime for this item'))),
         })), v.description('Posts to schedule')),
       }),
-      run: async (toolCtx) => {
-        const results: unknown[] = []
-        for (const item of toolCtx.data.items) {
-          const scheduled = await directScheduleService.scheduleDirect(ctx.userId, ctx.businessId, {
-            brief: item.brief,
-            platforms: item.platforms,
-            timeframe: item.timeframe ?? 'now',
-            scheduledAt: item.scheduledAt,
-          }, ctx.event)
-          results.push(scheduled.success
-            ? { brief: item.brief, items: scheduled.data.items, rejected: scheduled.data.rejected }
-            : { brief: item.brief, error: scheduled.error, code: scheduled.code })
-        }
-        return toolResult({ count: results.length, results })
-      },
+      run: async toolCtx => toolResult(await scheduleBatch(ctx, toolCtx.data.items)),
+    }),
+    defineTool({
+      name: 'create_posts_batch',
+      description: 'Create several social posts at once from the exact captions the owner already approved in the preview. Pass each caption verbatim as content; never rewrite them. Omit scheduledAt to schedule them now.',
+      input: v.object({
+        items: v.pipe(v.array(v.object({
+          content: v.pipe(v.string(), v.description('The exact approved caption, copied from the preview')),
+          platforms: v.pipe(v.array(v.string()), v.description('Platform names for this post')),
+          scheduledAt: v.optional(v.pipe(v.string(), v.description('ISO datetime for this post'))),
+          accountIds: v.optional(v.pipe(v.array(v.string()), v.description('Specific connected account ids'))),
+        })), v.description('Posts to create')),
+      }),
+      run: async toolCtx => toolResult(await scheduleBatch(ctx, toolCtx.data.items.map(item => ({
+        brief: item.content,
+        platforms: item.platforms,
+        timeframe: item.scheduledAt ? 'at' : 'now',
+        scheduledAt: item.scheduledAt,
+        accountIds: item.accountIds,
+      })))),
     }),
   ]
 }

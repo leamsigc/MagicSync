@@ -16,7 +16,7 @@ const subscribeSchema = z.object({
 export default defineEventHandler(async (event) => {
   const user = await checkUserIsLogin(event)
   const body = await readValidatedBody(event, subscribeSchema.parse)
-  const result = await autoReplyWebhookService.subscribePage(body.socialAccountId, user.id)
+  const result = await autoReplyWebhookService.subscribePage(body.socialAccountId, user.id, event)
   if (result.error) {
     const status = result.code === 'NOT_FOUND' ? 404 : result.code === 'PERMISSIONS' ? 403 : 502
     // NOTE: statusMessage must stay single-line ASCII — Meta's messages contain

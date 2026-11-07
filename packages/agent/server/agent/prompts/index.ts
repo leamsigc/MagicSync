@@ -4,6 +4,7 @@ import research from './research.md?raw'
 import researchSynthesis from './research-synthesis.md?raw'
 import researchTopic from './research-topic.md?raw'
 import writePost from './write-post.md?raw'
+import writePostsBatch from './write-posts-batch.md?raw'
 import writeArticle from './write-article.md?raw'
 import writeVariant from './write-variant.md?raw'
 import fixArticle from './fix-article.md?raw'
@@ -26,6 +27,7 @@ export const AGENT_PROMPTS = {
   researchSynthesis,
   researchTopic,
   writePost,
+  writePostsBatch,
   writeArticle,
   writeVariant,
   fixArticle,

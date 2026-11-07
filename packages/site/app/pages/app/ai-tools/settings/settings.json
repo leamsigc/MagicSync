@@ -32,8 +32,15 @@
       "anthropic": "Anthropic",
       "anthropicDescription": "Claude models. Requires an API key.",
       "openrouter": "OpenRouter",
-      "openrouterDescription": "Access many models with one API key."
-    }
+      "openrouterDescription": "Access many models with one API key.",
+      "llama": "llama.cpp (Local)",
+      "llamaDescription": "Run GGUF models with llama.cpp. Optional API key and any base URL.",
+      "deepseek": "DeepSeek",
+      "deepseekDescription": "DeepSeek chat and reasoning models. Requires an API key.",
+      "opencode": "OpenCode Zen",
+      "opencodeDescription": "OpenCode Console gateway with many models. Requires an API key."
+    },
+    "apiKeyHelpLocal": "Optional for local endpoints. Stored encrypted and used only for your requests."
   },
   "es": {
     "title": "Configuración de LLM",
@@ -68,8 +75,15 @@
       "anthropic": "Anthropic",
       "anthropicDescription": "Modelos Claude. Requiere una clave API.",
       "openrouter": "OpenRouter",
-      "openrouterDescription": "Accede a muchos modelos con una sola clave API."
-    }
+      "openrouterDescription": "Accede a muchos modelos con una sola clave API.",
+      "llama": "llama.cpp (local)",
+      "llamaDescription": "Ejecuta modelos GGUF con llama.cpp. Clave API opcional y cualquier URL base.",
+      "deepseek": "DeepSeek",
+      "deepseekDescription": "Modelos de chat y razonamiento de DeepSeek. Requiere una clave API.",
+      "opencode": "OpenCode Zen",
+      "opencodeDescription": "Gateway de OpenCode Console con muchos modelos. Requiere una clave API."
+    },
+    "apiKeyHelpLocal": "Opcional para endpoints locales. Se guarda cifrada y solo se usa en tus solicitudes."
   },
   "de": {
     "title": "LLM-Einstellungen",
@@ -104,8 +118,15 @@
       "anthropic": "Anthropic",
       "anthropicDescription": "Claude-Modelle. API-Schlüssel erforderlich.",
       "openrouter": "OpenRouter",
-      "openrouterDescription": "Viele Modelle mit einem API-Schlüssel nutzen."
-    }
+      "openrouterDescription": "Viele Modelle mit einem API-Schlüssel nutzen.",
+      "llama": "llama.cpp (lokal)",
+      "llamaDescription": "GGUF-Modelle mit llama.cpp ausführen. Optionaler API-Schlüssel und beliebige Basis-URL.",
+      "deepseek": "DeepSeek",
+      "deepseekDescription": "DeepSeek Chat- und Reasoning-Modelle. Erfordert einen API-Schlüssel.",
+      "opencode": "OpenCode Zen",
+      "opencodeDescription": "OpenCode-Console-Gateway mit vielen Modellen. Erfordert einen API-Schlüssel."
+    },
+    "apiKeyHelpLocal": "Optional für lokale Endpunkte. Verschlüsselt gespeichert und nur für deine Anfragen verwendet."
   },
   "fr": {
     "title": "Paramètres LLM",
@@ -140,7 +161,14 @@
       "anthropic": "Anthropic",
       "anthropicDescription": "Modèles Claude. Clé API requise.",
       "openrouter": "OpenRouter",
-      "openrouterDescription": "Accédez à de nombreux modèles avec une seule clé API."
-    }
+      "openrouterDescription": "Accédez à de nombreux modèles avec une seule clé API.",
+      "llama": "llama.cpp (local)",
+      "llamaDescription": "Exécute des modèles GGUF avec llama.cpp. Clé API facultative et URL de base libre.",
+      "deepseek": "DeepSeek",
+      "deepseekDescription": "Modèles de chat et de raisonnement DeepSeek. Nécessite une clé API.",
+      "opencode": "OpenCode Zen",
+      "opencodeDescription": "Passerelle OpenCode Console avec de nombreux modèles. Nécessite une clé API."
+    },
+    "apiKeyHelpLocal": "Facultative pour les points de terminaison locaux. Stockée chiffrée et utilisée uniquement pour tes requêtes."
   }
 }

@@ -312,7 +312,30 @@
         "connectCta": "Connect accounts",
         "scheduled": "Post saved",
         "scheduleFailed": "Could not save the post",
-        "openEditor": "Edit & schedule"
+        "openEditor": "Edit & schedule",
+        "postLabel": "Post {index} of {total}",
+        "batchHint": "Review the {count} posts, then create them all at once.",
+        "createAll": "Create all {count} posts",
+        "createdAll": "Created {count} posts",
+        "createdSome": "Created {created} of {total} posts",
+        "noTargets": "Connect an account first, then try again."
+      },
+      "image": {
+        "title": "Generated designs",
+        "count": "{count} images",
+        "download": "Download",
+        "openEditor": "Open in editor",
+        "notRendered": "Rendered image will appear here",
+        "empty": "No image was produced",
+        "untitled": "Untitled design"
+      },
+      "scheduleResult": {
+        "title": "Scheduled posts",
+        "created": "{count} created",
+        "view": "View posts",
+        "unknownPlatform": "Unknown platform",
+        "noTime": "No time set",
+        "empty": "No posts were created"
       }
     },
     "toolNames": {
@@ -332,7 +355,18 @@
       "title": "Operator console",
       "description": "Approvals waiting on you, and what the agent has done."
     },
-    "optionsHint": "Agent, session, tool and skill settings."
+    "optionsHint": "Agent, session, tool and skill settings.",
+    "mentions": {
+      "title": "Skills",
+      "hint": "Type {'@'} to force a skill for this message",
+      "placeholder": "Search skills",
+      "empty": "No matching skill",
+      "remove": "Remove {name}",
+      "chipLabel": "{'@'}{name}",
+      "groupBundled": "Built-in skills",
+      "groupRegistered": "Your skills",
+      "forced": "Forced for this message: {name}"
+    }
   },
   "fr": {
     "welcome": "De quoi as-tu besoin ?",
@@ -647,7 +681,30 @@
         "connectCta": "Connecter des comptes",
         "scheduled": "Publication enregistrée",
         "scheduleFailed": "Impossible d’enregistrer la publication",
-        "openEditor": "Modifier et planifier"
+        "openEditor": "Modifier et planifier",
+        "postLabel": "Publication {index} sur {total}",
+        "batchHint": "Vérifie les {count} publications, puis crée-les toutes en une fois.",
+        "createAll": "Créer les {count} publications",
+        "createdAll": "{count} publications créées",
+        "createdSome": "{created} publications sur {total} créées",
+        "noTargets": "Connecte d’abord un compte, puis réessaie."
+      },
+      "image": {
+        "title": "Designs générés",
+        "count": "{count} images",
+        "download": "Télécharger",
+        "openEditor": "Ouvrir dans l’éditeur",
+        "notRendered": "L’image rendue apparaîtra ici",
+        "empty": "Aucune image n’a été produite",
+        "untitled": "Design sans titre"
+      },
+      "scheduleResult": {
+        "title": "Publications planifiées",
+        "created": "{count} créées",
+        "view": "Voir les publications",
+        "unknownPlatform": "Plateforme inconnue",
+        "noTime": "Aucune heure définie",
+        "empty": "Aucune publication n’a été créée"
       }
     },
     "toolNames": {
@@ -667,7 +724,18 @@
       "title": "Console opérateur",
       "description": "Approbations en attente et actions de l’agent."
     },
-    "optionsHint": "Réglages agent, session, outils et compétences."
+    "optionsHint": "Réglages agent, session, outils et compétences.",
+    "mentions": {
+      "title": "Compétences",
+      "hint": "Tape {'@'} pour forcer une compétence pour ce message",
+      "placeholder": "Rechercher des compétences",
+      "empty": "Aucune compétence correspondante",
+      "remove": "Retirer {name}",
+      "chipLabel": "{'@'}{name}",
+      "groupBundled": "Compétences intégrées",
+      "groupRegistered": "Tes compétences",
+      "forced": "Forcée pour ce message : {name}"
+    }
   },
   "es": {
     "welcome": "¿En qué necesitas ayuda?",
@@ -982,7 +1050,30 @@
         "connectCta": "Conectar cuentas",
         "scheduled": "Publicación guardada",
         "scheduleFailed": "No se pudo guardar la publicación",
-        "openEditor": "Editar y programar"
+        "openEditor": "Editar y programar",
+        "postLabel": "Publicación {index} de {total}",
+        "batchHint": "Revisa las {count} publicaciones y créalas todas a la vez.",
+        "createAll": "Crear las {count} publicaciones",
+        "createdAll": "Se crearon {count} publicaciones",
+        "createdSome": "Se crearon {created} de {total} publicaciones",
+        "noTargets": "Conecta una cuenta primero e inténtalo de nuevo."
+      },
+      "image": {
+        "title": "Diseños generados",
+        "count": "{count} imágenes",
+        "download": "Descargar",
+        "openEditor": "Abrir en el editor",
+        "notRendered": "La imagen renderizada aparecerá aquí",
+        "empty": "No se generó ninguna imagen",
+        "untitled": "Diseño sin título"
+      },
+      "scheduleResult": {
+        "title": "Publicaciones programadas",
+        "created": "{count} creadas",
+        "view": "Ver publicaciones",
+        "unknownPlatform": "Plataforma desconocida",
+        "noTime": "Sin hora",
+        "empty": "No se creó ninguna publicación"
       }
     },
     "toolNames": {
@@ -1002,7 +1093,18 @@
       "title": "Consola del operador",
       "description": "Aprobaciones que te esperan y lo que ha hecho el agente."
     },
-    "optionsHint": "Ajustes de agente, sesión, herramientas y habilidades."
+    "optionsHint": "Ajustes de agente, sesión, herramientas y habilidades.",
+    "mentions": {
+      "title": "Habilidades",
+      "hint": "Escribe {'@'} para forzar una habilidad en este mensaje",
+      "placeholder": "Buscar habilidades",
+      "empty": "No hay habilidades coincidentes",
+      "remove": "Quitar {name}",
+      "chipLabel": "{'@'}{name}",
+      "groupBundled": "Habilidades integradas",
+      "groupRegistered": "Tus habilidades",
+      "forced": "Forzada para este mensaje: {name}"
+    }
   },
   "de": {
     "welcome": "Wobei brauchst du Hilfe?",
@@ -1317,7 +1419,30 @@
         "connectCta": "Konten verbinden",
         "scheduled": "Beitrag gespeichert",
         "scheduleFailed": "Beitrag konnte nicht gespeichert werden",
-        "openEditor": "Bearbeiten und planen"
+        "openEditor": "Bearbeiten und planen",
+        "postLabel": "Beitrag {index} von {total}",
+        "batchHint": "Prüfe die {count} Beiträge und erstelle sie dann alle auf einmal.",
+        "createAll": "Alle {count} Beiträge erstellen",
+        "createdAll": "{count} Beiträge erstellt",
+        "createdSome": "{created} von {total} Beiträgen erstellt",
+        "noTargets": "Verbinde zuerst ein Konto und versuche es erneut."
+      },
+      "image": {
+        "title": "Generierte Designs",
+        "count": "{count} Bilder",
+        "download": "Herunterladen",
+        "openEditor": "Im Editor öffnen",
+        "notRendered": "Das gerenderte Bild erscheint hier",
+        "empty": "Es wurde kein Bild erzeugt",
+        "untitled": "Unbenanntes Design"
+      },
+      "scheduleResult": {
+        "title": "Geplante Beiträge",
+        "created": "{count} erstellt",
+        "view": "Beiträge ansehen",
+        "unknownPlatform": "Unbekannte Plattform",
+        "noTime": "Keine Zeit gesetzt",
+        "empty": "Es wurden keine Beiträge erstellt"
       }
     },
     "toolNames": {
@@ -1337,6 +1462,17 @@
       "title": "Operator-Konsole",
       "description": "Freigaben, die auf dich warten, und was der Agent getan hat."
     },
-    "optionsHint": "Agent-, Sitzungs-, Tool- und Skill-Einstellungen."
+    "optionsHint": "Agent-, Sitzungs-, Tool- und Skill-Einstellungen.",
+    "mentions": {
+      "title": "Skills",
+      "hint": "Tippe {'@'}, um einen Skill für diese Nachricht zu erzwingen",
+      "placeholder": "Skills suchen",
+      "empty": "Kein passender Skill",
+      "remove": "{name} entfernen",
+      "chipLabel": "{'@'}{name}",
+      "groupBundled": "Integrierte Skills",
+      "groupRegistered": "Deine Skills",
+      "forced": "Für diese Nachricht erzwungen: {name}"
+    }
   }
 }

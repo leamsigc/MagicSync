@@ -110,6 +110,42 @@
           "name": "Claude Sonnet 4 (OpenRouter)"
         }
       ]
+    },
+    "opencode": {
+      "name": "OpenCode Zen",
+      "baseUrl": "https://opencode.ai/inference/openai/v1",
+      "api": "openai-completions",
+      "apiKey": "$OPENCODE_API_KEY",
+      "compat": {
+        "supportsDeveloperRole": false,
+        "supportsReasoningEffort": false
+      },
+      "models": [
+        {
+          "id": "deepseek-v4.1-flash",
+          "name": "DeepSeek V4.1 Flash (OpenCode Zen)"
+        },
+        {
+          "id": "glm-5.3-flash",
+          "name": "GLM 5.3 Flash (OpenCode Zen)"
+        },
+        {
+          "id": "kimi-k2.5",
+          "name": "Kimi K2.5 (OpenCode Zen)"
+        },
+        {
+          "id": "qwen3.8-max",
+          "name": "Qwen3.8 Max (OpenCode Zen)"
+        },
+        {
+          "id": "claude-sonnet-4-5",
+          "name": "Claude Sonnet 4.5 (OpenCode Zen)"
+        },
+        {
+          "id": "gpt-5.1-codex",
+          "name": "GPT-5.1 Codex (OpenCode Zen)"
+        }
+      ]
     }
   }
 }

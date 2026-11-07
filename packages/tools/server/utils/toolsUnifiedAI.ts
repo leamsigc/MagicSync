@@ -19,13 +19,14 @@ import { wrapAiModel } from '#layers/BaseShared/server/utils/evlog'
 
 const DEFAULT_TEMPERATURE = 0.7
 
-type ProviderName = 'google' | 'ollama' | 'llama' | 'openai' | 'anthropic' | 'openrouter' | 'deepseek'
+type ProviderName = 'google' | 'ollama' | 'llama' | 'openai' | 'anthropic' | 'openrouter' | 'deepseek' | 'opencode'
 
 const PROVIDER_BASE_URLS: Record<string, string> = {
   ollama: 'http://localhost:11434/v1',
   llama: 'http://localhost:8888/v1',
   openrouter: 'https://openrouter.ai/api/v1',
   deepseek: 'https://api.deepseek.com/v1',
+  opencode: 'https://opencode.ai/inference/openai/v1',
 }
 
 function resolveApiKey(userKey?: string | null, ...envVars: string[]): string | undefined {
@@ -54,11 +55,13 @@ function createModel(provider: ProviderName, modelName: string, userApiKey?: str
     }
     case 'ollama': {
       const baseURL = apiBaseUrl || PROVIDER_BASE_URLS.ollama
-      return openai.chat(modelName, { baseURL })
+      const apiKey = resolveApiKey(userApiKey, 'NUXT_OLLAMA_API_KEY', 'OLLAMA_API_KEY')
+      return openai.chat(modelName, { baseURL, apiKey: apiKey || undefined })
     }
     case 'llama': {
       const baseURL = apiBaseUrl || PROVIDER_BASE_URLS.llama
-      return openai.chat(modelName, { baseURL })
+      const apiKey = resolveApiKey(userApiKey, 'NUXT_LLAMA_API_KEY', 'LLAMA_API_KEY')
+      return openai.chat(modelName, { baseURL, apiKey: apiKey || undefined })
     }
     case 'openrouter': {
       const baseURL = apiBaseUrl || PROVIDER_BASE_URLS.openrouter
@@ -68,6 +71,11 @@ function createModel(provider: ProviderName, modelName: string, userApiKey?: str
     case 'deepseek': {
       const baseURL = apiBaseUrl || PROVIDER_BASE_URLS.deepseek
       const apiKey = resolveApiKey(userApiKey, 'NUXT_DEEPSEEK_API_KEY', 'DEEPSEEK_API_KEY')
+      return openai.chat(modelName, { baseURL, apiKey: apiKey || undefined })
+    }
+    case 'opencode': {
+      const baseURL = apiBaseUrl || PROVIDER_BASE_URLS.opencode
+      const apiKey = resolveApiKey(userApiKey, 'NUXT_OPENCODE_API_KEY', 'OPENCODE_API_KEY')
       return openai.chat(modelName, { baseURL, apiKey: apiKey || undefined })
     }
     default:

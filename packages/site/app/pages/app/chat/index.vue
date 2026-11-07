@@ -20,7 +20,19 @@ const toast = useToast()
 const router = useRouter()
 
 const input = ref('')
+const inputRef = ref<{ $el?: HTMLElement } | null>(null)
 const fileInput = ref<HTMLInputElement | null>(null)
+
+interface ForcedMention {
+  kind: 'bundled' | 'registered'
+  id: string
+  name: string
+}
+
+const forcedMentions = ref<ForcedMention[]>([])
+const mentionOpen = ref(false)
+const mentionQuery = ref('')
+const mentionIndex = ref(0)
 const revisionTarget = ref<{ artifactId: string, slideId: string, version: number } | null>(null)
 const composerOpen = ref(false)
 const composerDraft = ref<{ content: string, accounts: Array<{ id: string, platform: string }>, platformVariants?: Record<string, string> } | null>(null)
@@ -119,6 +131,117 @@ function selectedSkills(values: string[]): string[] | undefined {
   return values.length > 0 ? values : undefined
 }
 
+interface MentionOption extends ForcedMention {
+  description: string
+}
+
+/** Skills offered by the `@` picker: bundled first, then the business's own. */
+const mentionOptions = computed<MentionOption[]>(() => {
+  const query = mentionQuery.value.toLowerCase()
+  const bundled = (caps.value?.skills.bundled ?? []).map((skill): MentionOption => ({
+    kind: 'bundled',
+    id: skill.slug ?? '',
+    name: skill.name,
+    description: skill.description,
+  }))
+  const registered = (caps.value?.skills.registered ?? []).map((skill): MentionOption => ({
+    kind: 'registered',
+    id: skill.id ?? '',
+    name: skill.name,
+    description: skill.description,
+  }))
+  return [...bundled, ...registered]
+    .filter(option => option.id && (!query || option.name.toLowerCase().includes(query) || option.id.includes(query)))
+    .slice(0, 12)
+})
+
+function syncMention(): void {
+  const match = /(?:^|\s)@([\w-]*)$/.exec(input.value)
+  mentionQuery.value = match ? match[1] ?? '' : ''
+  mentionOpen.value = Boolean(match)
+  mentionIndex.value = 0
+}
+
+watch(input, syncMention)
+
+function focusInput(): void {
+  const textarea = inputRef.value?.$el?.querySelector('textarea')
+  textarea?.focus()
+}
+
+function addForcedMention(option: MentionOption): void {
+  const exists = forcedMentions.value.some(entry => entry.kind === option.kind && entry.id === option.id)
+  if (!exists) forcedMentions.value.push({ kind: option.kind, id: option.id, name: option.name })
+}
+
+function handleMentionSelect(option: MentionOption): void {
+  const match = /(?:^|\s)@([\w-]*)$/.exec(input.value)
+  if (match) {
+    const start = match.index + (match[0].startsWith('@') ? 0 : 1)
+    input.value = input.value.slice(0, start)
+  }
+  addForcedMention(option)
+  mentionOpen.value = false
+  void nextTick(focusInput)
+}
+
+function handleRemoveMention(kind: 'bundled' | 'registered', id: string): void {
+  forcedMentions.value = forcedMentions.value.filter(entry => entry.kind !== kind || entry.id !== id)
+}
+
+function handleOpenMentions(): void {
+  if (!caps.value) void fetchCapabilities()
+  if (!input.value.endsWith('@')) {
+    input.value = `${input.value}${input.value ? ' ' : ''}@`
+  }
+  mentionOpen.value = true
+  void nextTick(focusInput)
+}
+
+function moveMention(delta: number): void {
+  const count = mentionOptions.value.length
+  if (count === 0) return
+  mentionIndex.value = (mentionIndex.value + delta + count) % count
+}
+
+function selectCurrentMention(): boolean {
+  const option = mentionOptions.value[mentionIndex.value]
+  if (!option) return false
+  handleMentionSelect(option)
+  return true
+}
+
+/** Returns true when the key belonged to the picker and must not submit. */
+function handleMentionKeydown(event: KeyboardEvent): boolean {
+  if (!mentionOpen.value) return false
+  if (event.key === 'ArrowDown') {
+    moveMention(1)
+    return true
+  }
+  if (event.key === 'ArrowUp') {
+    moveMention(-1)
+    return true
+  }
+  if (event.key === 'Escape') {
+    mentionOpen.value = false
+    return true
+  }
+  if (event.key === 'Enter' || event.key === 'Tab') return selectCurrentMention()
+  return false
+}
+
+/** A single `@skill` forces that skill's profile; several load their bodies. */
+function mentionPayload(): { agentName?: string, skillSlugs?: string[], registeredSkillIds?: string[] } {
+  const bundled = forcedMentions.value.filter(entry => entry.kind === 'bundled').map(entry => entry.id)
+  const registered = forcedMentions.value.filter(entry => entry.kind === 'registered').map(entry => entry.id)
+  const forcedAgent = bundled.length === 1 && !selection.value.agentName ? bundled[0] : selection.value.agentName ?? undefined
+  return {
+    agentName: forcedAgent,
+    skillSlugs: selectedSkills([...new Set([...selection.value.skillSlugs, ...bundled])]),
+    registeredSkillIds: selectedSkills([...new Set([...selection.value.registeredSkillIds, ...registered])]),
+  }
+}
+
 function onSubmit() {
   if (isStreaming.value) return
   if (!input.value.trim()) return
@@ -126,16 +249,19 @@ function onSubmit() {
     toast.add({ title: t('needBusinessTitle'), icon: 'i-heroicons-x-circle', color: 'error' })
     return
   }
+  const mentions = mentionPayload()
   void sendMessage(input.value.trim(), {
     businessId: activeBusinessId.value,
     cardId: cardId.value ?? undefined,
-    agentName: selection.value.agentName ?? undefined,
+    agentName: mentions.agentName,
     allowedTools: selection.value.tools ?? undefined,
-    skillSlugs: selectedSkills(selection.value.skillSlugs),
-    registeredSkillIds: selectedSkills(selection.value.registeredSkillIds),
+    skillSlugs: mentions.skillSlugs,
+    registeredSkillIds: mentions.registeredSkillIds,
     carouselRevision: carouselRevision(),
   })
   revisionTarget.value = null
+  forcedMentions.value = []
+  mentionOpen.value = false
   input.value = ''
   showSidebar.value = false
 }
@@ -488,6 +614,10 @@ function handleToggleSettings() {
 }
 
 function handleInputKeydown(event: KeyboardEvent) {
+  if (handleMentionKeydown(event)) {
+    event.preventDefault()
+    return
+  }
   if (event.key !== 'Enter' || event.shiftKey) return
   event.preventDefault()
   onSubmit()
@@ -851,8 +981,52 @@ onMounted(async () => {
                   @click="handleCancelRevision" />
               </UBadge>
             </div>
+            <div v-if="mentionOpen" v-motion-slide-bottom :duration="150"
+              class="mb-2 overflow-hidden rounded-xl border border-default bg-elevated shadow-lg"
+              data-testid="chat-mention-picker">
+              <div class="flex items-center justify-between gap-2 border-b border-default px-3 py-2">
+                <p class="text-xs font-semibold text-highlighted">{{ t('mentions.title') }}</p>
+                <p class="hidden text-xs text-muted sm:block">{{ t('mentions.hint') }}</p>
+              </div>
+              <div v-if="mentionOptions.length === 0" class="p-3 text-sm text-muted">{{ t('mentions.empty') }}</div>
+              <div v-else class="max-h-64 overflow-y-auto p-1">
+                <button
+                  v-for="(option, index) in mentionOptions"
+                  :key="`${option.kind}:${option.id}`"
+                  type="button"
+                  class="flex w-full items-start gap-2 rounded-lg px-2 py-1.5 text-left transition-colors"
+                  :class="index === mentionIndex ? 'bg-primary/10' : 'hover:bg-default'"
+                  @click="handleMentionSelect(option)"
+                >
+                  <UIcon name="i-heroicons-sparkles" class="mt-0.5 size-4 shrink-0 text-primary" />
+                  <span class="min-w-0">
+                    <span class="block text-sm font-medium text-highlighted">{{ option.name }}</span>
+                    <span class="block truncate text-xs text-muted">{{ option.description }}</span>
+                  </span>
+                </button>
+              </div>
+            </div>
             <UCard :ui="{ body: 'px-3 py-2' }" class="rounded-2xl border border-default bg-elevated shadow-sm">
-              <UTextarea v-model="input"
+              <div v-if="forcedMentions.length > 0" class="mb-2 flex flex-wrap gap-1" data-testid="chat-forced-skills">
+                <UBadge
+                  v-for="mention in forcedMentions"
+                  :key="`${mention.kind}:${mention.id}`"
+                  color="primary"
+                  variant="subtle"
+                  size="sm"
+                  class="gap-1"
+                >
+                  {{ t('mentions.chipLabel', { name: mention.name }) }}
+                  <UButton
+                    icon="i-heroicons-x-mark"
+                    variant="ghost"
+                    size="xs"
+                    :aria-label="t('mentions.remove', { name: mention.name })"
+                    @click="handleRemoveMention(mention.kind, mention.id)"
+                  />
+                </UBadge>
+              </div>
+              <UTextarea ref="inputRef" v-model="input"
                 :placeholder="revisionTarget ? t('carousel.revisionPlaceholder') : t('inputPlaceholder')"
                 :disabled="isStreaming" autoresize :rows="1" variant="none" class="w-full" data-tour="ai-chat-step-2"
                 data-testid="chat-input"
@@ -862,6 +1036,10 @@ onMounted(async () => {
                   <UTooltip :text="t('attachHint')">
                     <UButton icon="i-heroicons-paper-clip" color="neutral" variant="ghost" :aria-label="t('attach')"
                       :disabled="isStreaming" data-tour="ai-chat-step-1" @click="handleAttachClick" />
+                  </UTooltip>
+                  <UTooltip :text="t('mentions.hint')">
+                    <UButton icon="i-heroicons-at-symbol" color="neutral" variant="ghost" :aria-label="t('mentions.title')"
+                      :disabled="isStreaming" data-testid="chat-mention-toggle" @click="handleOpenMentions" />
                   </UTooltip>
                   <button type="button"
                     class="inline-flex size-8 items-center justify-center rounded-md text-default transition-colors hover:bg-elevated hover:text-highlighted disabled:pointer-events-none disabled:opacity-50"

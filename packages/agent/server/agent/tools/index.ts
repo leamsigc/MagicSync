@@ -3,6 +3,7 @@ import type { AgentToolContext } from '../tool-context'
 import { createBoardTools } from './board.tools'
 import { createContentTools } from './content.tools'
 import { createDeliveryTools } from './delivery.tools'
+import { createFeatureTools } from './features.tools'
 import { createGoalTools } from './goal.tools'
 import { createMediaTools } from './media.tools'
 import { createAutoReplyTools } from './autoreply.tools'
@@ -30,6 +31,7 @@ export function createAgentTools(ctx: AgentToolContext): ToolDefinition[] {
     ...createMediaTools(ctx),
     ...createDeliveryTools(ctx),
     ...createAutoReplyTools(ctx),
+    ...createFeatureTools(ctx),
     ...createWorkspaceTools(ctx),
     ...createTemplateTools(ctx),
     ...createPythonTools(ctx),

@@ -15,6 +15,7 @@ import trendScoutBody from '../agent/skills/trend-scout/SKILL.md?raw'
 import contentOpsBody from '../agent/skills/content-ops/SKILL.md?raw'
 import carouselBody from '../agent/skills/carousel/SKILL.md?raw'
 import contentScoreBody from '../agent/skills/content-score/SKILL.md?raw'
+import imageDesignerBody from '../agent/skills/image-designer/SKILL.md?raw'
 import evidenceRubric from '../agent/skills/social-research/references/evidence-rubric.md?raw'
 import scoringRubric from '../agent/skills/content-score/references/scoring-rubric.md?raw'
 import researchBusinessBody from '../agentic/skills/research-business/SKILL.md?raw'
@@ -108,12 +109,13 @@ const SKILL_SPECS: SkillSpec[] = [
   { id: 'create-content-ideas', kind: 'goal', body: createContentIdeasBody, tools: [], executable: createContentIdeasSkill },
   { id: 'langsearch', kind: 'chat', body: langsearchBody, tools: ['web_search'] },
   { id: 'social-research', kind: 'chat', body: socialResearchBody, tools: ['web_search', 'scrape_url', 'retrieve'] },
-  { id: 'content-writer', kind: 'chat', body: contentWriterBody, tools: ['write_post', 'apply_content_template', 'retrieve', 'list_media'] },
+  { id: 'content-writer', kind: 'chat', body: contentWriterBody, tools: ['write_post', 'write_posts_batch', 'apply_content_template', 'list_media'] },
   { id: 'humanizer', kind: 'chat', body: humanizerBody, tools: ['humanize'] },
   { id: 'trend-scout', kind: 'chat', body: trendScoutBody, tools: ['scan_trends', 'web_search', 'board_add_cards', 'get_performance_stats', 'list_calendar_posts'] },
   { id: 'content-ops', kind: 'chat', body: contentOpsBody, tools: ['board_list', 'board_move', 'board_add_cards', 'list_media', 'delete_media'] },
   { id: 'carousel', kind: 'chat', body: carouselBody, tools: ['retrieve', 'generate_carousel', 'revise_carousel'] },
   { id: 'content-score', kind: 'chat', body: contentScoreBody, tools: ['get_business_profile', 'update_business_profile', 'list_templates', 'list_content_templates'] },
+  { id: 'image-designer', kind: 'chat', body: imageDesignerBody, tools: ['list_features', 'use_feature', 'list_media'] },
 ]
 
 function buildEntry(spec: SkillSpec): FlueSkillEntry {

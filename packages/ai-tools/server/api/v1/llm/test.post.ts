@@ -3,7 +3,7 @@ import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
 import { userLlmConfigService } from '#layers/BaseDB/server/services/user-llm-config.service'
 import { createAgentModelRuntime, testModelConnection } from '#layers/BaseAgent/server/utils/pi-runtime'
 
-const SUPPORTED = ['google', 'ollama', 'llama', 'openai', 'anthropic', 'openrouter', 'deepseek'] as const
+const SUPPORTED = ['google', 'ollama', 'llama', 'openai', 'anthropic', 'openrouter', 'deepseek', 'opencode'] as const
 
 const TestSchema = z.object({
   provider: z.enum(SUPPORTED).optional(),

@@ -8,7 +8,7 @@
  * a faked local phase.
  */
 
-export type SectionKind = 'research' | 'ideas' | 'carousel' | 'draft' | 'board' | 'delivery'
+export type SectionKind = 'research' | 'ideas' | 'carousel' | 'image' | 'draft' | 'schedule' | 'board' | 'delivery'
 export type RailStatus = 'done' | 'active' | 'todo' | 'failed' | 'running'
 
 export interface ToolCallLike {
@@ -45,12 +45,29 @@ export interface MessageRunLike {
   completed: boolean
 }
 
-const DRAFT_TOOLS = ['write_post', 'humanize', 'revise_draft', 'check_seo', 'check_geo', 'check_links']
+const DRAFT_TOOLS = ['write_post', 'write_posts_batch', 'humanize', 'revise_draft', 'check_seo', 'check_geo', 'check_links']
 const RESEARCH_TOOLS = ['research_topic', 'web_search', 'scrape_url', 'retrieve', 'scan_trends']
 const BOARD_TOOLS = ['board_list', 'board_add_cards', 'board_move', 'board_update', 'subagent']
 const CAROUSEL_TOOLS = ['generate_carousel', 'revise_carousel']
+const IMAGE_TOOLS = [
+  'render-design',
+  'create-design',
+  'batch-generate-designs',
+  'get-design-template',
+  'list-design-templates',
+  'update-design',
+  'create-asset-from-url',
+]
+const SCHEDULE_TOOLS = [
+  'bulk_schedule_posts',
+  'create_posts_batch',
+  'schedule_direct_posts',
+  'create-post',
+  'publish-now',
+  'retry-post',
+]
 
-const SECTION_ORDER: SectionKind[] = ['research', 'ideas', 'carousel', 'draft', 'board', 'delivery']
+const SECTION_ORDER: SectionKind[] = ['research', 'ideas', 'carousel', 'image', 'draft', 'schedule', 'board', 'delivery']
 
 type Payload = Record<string, unknown> | null
 
@@ -87,7 +104,7 @@ function isIdeasPayload(payload: Payload): boolean {
 }
 
 function isDraftPayload(payload: Payload): boolean {
-  return payload?.draft !== undefined || payload?.caption !== undefined || payload?.check !== undefined || Array.isArray(payload?.claims)
+  return payload?.draft !== undefined || Array.isArray(payload?.drafts) || payload?.caption !== undefined || payload?.check !== undefined || Array.isArray(payload?.claims)
 }
 
 function isResearchPayload(payload: Payload): boolean {
@@ -98,21 +115,75 @@ function isBoardPayload(payload: Payload): boolean {
   return payload?.card !== undefined || Array.isArray(payload?.cards)
 }
 
+function recordOf(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null
+}
+
+function isDesignSummary(payload: Record<string, unknown>): boolean {
+  return typeof payload.id === 'string' && typeof payload.title === 'string' && Array.isArray(payload.fields)
+}
+
+function isImagePayload(payload: Payload): boolean {
+  if (!payload) return false
+  const list = Array.isArray(payload.images) ? payload.images : Array.isArray(payload.results) ? payload.results : []
+  const hasUrl = typeof payload.url === 'string'
+    || typeof payload.assetUrl === 'string'
+    || list.some(item => typeof (item as Record<string, unknown> | null)?.url === 'string')
+  return hasUrl || isDesignSummary(payload)
+}
+
+function isScheduleItem(value: unknown): boolean {
+  const record = recordOf(value)
+  if (!record) return false
+  return typeof record.postId === 'string' || typeof record.platform === 'string'
+}
+
+function isScheduleGroup(value: unknown): boolean {
+  const record = recordOf(value)
+  if (!record) return false
+  return Array.isArray(record.items) || Array.isArray(record.rejected)
+}
+
+function isPostedResult(payload: Record<string, unknown>): boolean {
+  return typeof payload.postId === 'string' && payload.scheduledAt !== undefined
+}
+
+function isItemList(value: unknown): boolean {
+  return Array.isArray(value) && value.some(isScheduleItem)
+}
+
+function isSchedulePayload(payload: Payload): boolean {
+  if (!payload) return false
+  if (isPostedResult(payload)) return true
+  if (Array.isArray(payload.results)) return payload.results.some(isScheduleGroup)
+  return isItemList(payload.items)
+}
+
+const PAYLOAD_RULES: Array<[SectionKind, (payload: Payload) => boolean]> = [
+  ['carousel', isCarouselPayload],
+  ['image', isImagePayload],
+  ['schedule', isSchedulePayload],
+  ['ideas', isIdeasPayload],
+  ['draft', isDraftPayload],
+  ['research', isResearchPayload],
+  ['board', isBoardPayload],
+]
+
+const NAME_RULES: Array<[SectionKind, string[]]> = [
+  ['carousel', CAROUSEL_TOOLS],
+  ['image', IMAGE_TOOLS],
+  ['schedule', SCHEDULE_TOOLS],
+  ['draft', DRAFT_TOOLS],
+  ['research', RESEARCH_TOOLS],
+  ['board', BOARD_TOOLS],
+]
+
 function payloadKindOf(payload: Payload): SectionKind | null {
-  if (isCarouselPayload(payload)) return 'carousel'
-  if (isIdeasPayload(payload)) return 'ideas'
-  if (isDraftPayload(payload)) return 'draft'
-  if (isResearchPayload(payload)) return 'research'
-  if (isBoardPayload(payload)) return 'board'
-  return null
+  return PAYLOAD_RULES.find(([, matches]) => matches(payload))?.[0] ?? null
 }
 
 function nameKindOf(name: string): SectionKind | null {
-  if (CAROUSEL_TOOLS.includes(name)) return 'carousel'
-  if (DRAFT_TOOLS.includes(name)) return 'draft'
-  if (RESEARCH_TOOLS.includes(name)) return 'research'
-  if (BOARD_TOOLS.includes(name)) return 'board'
-  return null
+  return NAME_RULES.find(([, names]) => names.includes(name))?.[0] ?? null
 }
 
 /** Lenient payload parse shared by section renderers (object or boxed array). */
@@ -148,11 +219,51 @@ export function sectionKindOf(name: string, result?: string): SectionKind {
   return nameKindOf(name) ?? 'delivery'
 }
 
+export interface EffectiveCall {
+  name: string
+  args: Record<string, unknown>
+  result?: string
+}
+
+function featureNameOfCall(call: ToolCallLike, payload: Payload): string {
+  if (typeof call.args?.feature === 'string') return call.args.feature
+  return typeof payload?.feature === 'string' ? payload.feature : call.name
+}
+
+function nestedResultOf(payload: Payload): unknown {
+  return payload && 'result' in payload ? payload.result : undefined
+}
+
+/**
+ * `use_feature` hides the real tool behind its arguments. Every renderer reads
+ * the effective call so a post, design or schedule produced through the
+ * dispatcher looks the same as one produced by a curated tool.
+ */
+export function effectiveCall(call: ToolCallLike): EffectiveCall {
+  if (call.name !== 'use_feature') {
+    return { name: call.name, args: call.args ?? {}, result: call.result }
+  }
+  const payload = parsePayload(call.result)
+  const args = recordOf(call.args?.arguments) ?? recordOf(payload?.arguments) ?? {}
+  const nested = nestedResultOf(payload)
+  return {
+    name: featureNameOfCall(call, payload),
+    args,
+    result: nested === undefined ? call.result : JSON.stringify(nested),
+  }
+}
+
+/** Section kind for a full call, including the `use_feature` indirection. */
+export function sectionKindOfCall(call: ToolCallLike): SectionKind {
+  const effective = effectiveCall(call)
+  return sectionKindOf(effective.name, effective.result)
+}
+
 /** Group a run's calls into at most one section per kind, in rail order. */
 export function groupSections(calls: ToolCallLike[]): RunSection[] {
   const groups = new Map<SectionKind, ToolCallLike[]>()
   for (const call of calls) {
-    const kind = sectionKindOf(call.name, call.result)
+    const kind = sectionKindOfCall(call)
     const list = groups.get(kind) ?? []
     list.push(call)
     groups.set(kind, list)
@@ -168,9 +279,10 @@ function shortLabel(name: string): string {
 }
 
 function callToStep(call: ToolCallLike): RailStep {
-  if (call.error) return { id: call.id, label: shortLabel(call.name), status: 'failed' }
-  if (call.result) return { id: call.id, label: shortLabel(call.name), status: 'done' }
-  return { id: call.id, label: shortLabel(call.name), status: 'running' }
+  const label = shortLabel(effectiveCall(call).name)
+  if (call.error) return { id: call.id, label, status: 'failed' }
+  if (call.result) return { id: call.id, label, status: 'done' }
+  return { id: call.id, label, status: 'running' }
 }
 
 function applyActiveMarker(steps: EnvelopeStep[]): RailStep[] {

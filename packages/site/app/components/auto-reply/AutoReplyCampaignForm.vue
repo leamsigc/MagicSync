@@ -93,7 +93,8 @@ function isHttpsTarget(value: string): boolean {
 async function loadAccounts() {
   accountsLoading.value = true
   try {
-    const list = await $fetch<Array<{ id: string, accountName: string, platform: string }>>('/api/v1/social-accounts')
+    const query = activeBusinessId.value ? `?businessId=${encodeURIComponent(activeBusinessId.value)}` : ''
+    const list = await $fetch<Array<{ id: string, accountName: string, platform: string }>>(`/api/v1/social-accounts${query}`)
     accounts.value = (list || []).filter(account => account.platform === 'instagram').map(account => ({ id: account.id, accountName: account.accountName }))
   } catch {
     accounts.value = []

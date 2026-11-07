@@ -1,0 +1,80 @@
+{
+  "schema": "magicsync/image-editor@1",
+  "version": 1,
+  "frame": { "width": 1080, "height": 1350, "fill": "#fdf6ec" },
+  "fields": [
+    { "name": "quote", "targets": [{ "objectId": "quote", "property": "text" }] },
+    { "name": "author", "targets": [{ "objectId": "author", "property": "text" }] }
+  ],
+  "meta": { "title": "Quote card", "category": "social", "tags": ["template", "quote"] },
+  "pages": [
+    {
+      "id": "page-1",
+      "name": "Page 1",
+      "duration": 4000,
+      "objects": [
+        {
+          "id": "quote-mark",
+          "type": "textbox",
+          "left": 70,
+          "top": 30,
+          "width": 300,
+          "text": "“",
+          "fontSize": 260,
+          "fontFamily": "Abril Fatface",
+          "fontWeight": "normal",
+          "fill": "#ea580c",
+          "textAlign": "left",
+          "lineHeight": 1,
+          "originX": "left",
+          "originY": "top"
+        },
+        {
+          "id": "quote",
+          "type": "textbox",
+          "name": "{quote}",
+          "left": 130,
+          "top": 360,
+          "width": 820,
+          "text": "The best way to predict the future is to create it.",
+          "fontSize": 64,
+          "fontFamily": "Georgia",
+          "fontWeight": "normal",
+          "fill": "#1f2937",
+          "textAlign": "left",
+          "lineHeight": 1.2,
+          "originX": "left",
+          "originY": "top"
+        },
+        {
+          "id": "divider",
+          "type": "rect",
+          "left": 130,
+          "top": 930,
+          "width": 120,
+          "height": 6,
+          "fill": "#f97316"
+        },
+        {
+          "id": "author",
+          "type": "textbox",
+          "name": "{author}",
+          "left": 130,
+          "top": 980,
+          "width": 700,
+          "text": "— Peter Drucker",
+          "fontSize": 32,
+          "fontFamily": "Arial",
+          "fontWeight": "bold",
+          "fill": "#6b7280",
+          "textAlign": "left",
+          "lineHeight": 1.2,
+          "originX": "left",
+          "originY": "top"
+        }
+      ],
+      "background": { "fill": "#fdf6ec" },
+      "animation": { "layers": {} }
+    }
+  ]
+}

@@ -7,6 +7,7 @@ const { t } = useI18n()
 const toast = useToast()
 const route = useRoute()
 const router = useRouter()
+const activeBusinessId = useState<string>('business:id')
 
 const campaignId = route.params.id as string
 
@@ -258,7 +259,8 @@ async function handleTest() {
 
 async function loadAccounts() {
   try {
-    const list = await $fetch<Array<{ id: string, accountName: string, platform: string }>>('/api/v1/social-accounts')
+    const query = activeBusinessId.value ? `?businessId=${encodeURIComponent(activeBusinessId.value)}` : ''
+    const list = await $fetch<Array<{ id: string, accountName: string, platform: string }>>(`/api/v1/social-accounts${query}`)
     accounts.value = (list || []).filter(item => item.platform === 'instagram').map(item => ({ id: item.id, accountName: item.accountName }))
   }
   catch {

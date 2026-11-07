@@ -12,6 +12,7 @@
  * keyword filters); every store call and modal is unchanged.
  */
 import { useCollectionView } from '#layers/BaseUI/app/composables/useCollectionView'
+import { useBusinessAccess } from '#layers/BaseShared/app/composables/useBusinessAccess'
 import { useAutoReply, type AutoReplyCampaign, type AutoReplyLog, type AutoReplyStats } from '~/composables/useAutoReply'
 
 type CampaignView = 'grid' | 'list'
@@ -19,6 +20,8 @@ type CampaignView = 'grid' | 'list'
 const { t } = useI18n()
 const toast = useToast()
 const router = useRouter()
+const activeBusinessId = useState<string>('business:id')
+const { isOwner, load: loadAccess } = useBusinessAccess(activeBusinessId)
 const { campaigns, loading, error, fetchCampaigns, updateCampaign, deleteCampaign, fetchLogs, fetchStats, fetchWebhookStatus, subscribeWebhooks } = useAutoReply()
 
 const showForm = ref(false)
@@ -181,7 +184,8 @@ async function handleOpenLogs(campaign: AutoReplyCampaign) {
 
 async function loadAccounts() {
   try {
-    const list = await $fetch<Array<{ id: string, accountName: string, platform: string }>>('/api/v1/social-accounts')
+    const query = activeBusinessId.value ? `?businessId=${encodeURIComponent(activeBusinessId.value)}` : ''
+    const list = await $fetch<Array<{ id: string, accountName: string, platform: string }>>(`/api/v1/social-accounts${query}`)
     accounts.value = (list || []).filter(account => account.platform === 'instagram')
   } catch {
     accounts.value = []
@@ -212,7 +216,13 @@ useSeoMeta({
 })
 
 onMounted(async () => {
-  await Promise.all([fetchCampaigns(), loadAccounts(), loadWebhookStatus()])
+  await Promise.all([fetchCampaigns(), loadAccounts(), loadWebhookStatus(), loadAccess()])
+})
+
+watch(activeBusinessId, () => {
+  void fetchCampaigns()
+  void loadAccounts()
+  void loadAccess()
 })
 </script>
 
@@ -256,7 +266,7 @@ onMounted(async () => {
           <UFormField :label="t('webhook_callback')" name="callback">
             <UInput :model-value="webhookStatus?.callbackUrl || ''" readonly class="w-full font-mono text-xs" />
           </UFormField>
-          <div v-if="accounts.length > 0" class="flex flex-wrap gap-2">
+          <div v-if="isOwner && accounts.length > 0" class="flex flex-wrap gap-2">
             <UButton
               v-for="account in accounts"
               :key="account.id"

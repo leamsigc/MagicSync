@@ -1,7 +1,8 @@
 <i18n src="#site/app/pages/app/chat/chat.json"></i18n>
 <script setup lang="ts">
-import { parseSectionPayload, type ToolCallLike } from '../../../../../composables/ai-tools/chat/runSections'
-import { accountForTab, buildPostPayload, platformLabel, type PostTab, type SocialAccount } from './draftPreview'
+import { effectiveCall, parseSectionPayload, type ToolCallLike } from '../../../../../composables/ai-tools/chat/runSections'
+import { type SocialAccount } from './draftPreview'
+import DraftCard from './DraftCard.vue'
 
 const props = defineProps<{
   calls: ToolCallLike[]
@@ -21,185 +22,99 @@ const emit = defineEmits<{
 const { t } = useI18n()
 const toast = useToast()
 const accounts = ref<SocialAccount[]>([])
-const selectedTab = ref('')
-const busyKey = ref<string | null>(null)
-const showAccounts = ref(false)
+const creatingAll = ref(false)
 
 function recordOf(value: unknown): Record<string, unknown> | null {
   return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null
 }
 
-function payloadOf(call: ToolCallLike): Record<string, unknown> {
-  return parseSectionPayload(call.result) ?? {}
-}
-
 function draftOf(call: ToolCallLike): Record<string, unknown> {
-  const payload = payloadOf(call)
+  const payload = parseSectionPayload(effectiveCall(call).result) ?? {}
   return recordOf(payload.draft) ?? payload
 }
 
-function claimsOf(value: Record<string, unknown>): string[] {
-  return Array.isArray(value.claims)
-    ? value.claims.filter((claim): claim is string => typeof claim === 'string').slice(0, 4)
-    : []
+/** A batch tool returns many drafts; render one card per draft. */
+function asDraftCards(call: ToolCallLike): ToolCallLike[] {
+  const payload = parseSectionPayload(effectiveCall(call).result)
+  const drafts = payload?.drafts
+  if (!Array.isArray(drafts)) return [call]
+  return drafts.map((draft, index) => ({
+    id: `${call.id}-${index}`,
+    name: 'write_post',
+    args: effectiveCall(call).args,
+    result: JSON.stringify({ draft }),
+  }))
 }
 
-function accountsFor(platform: string, call: ToolCallLike): SocialAccount[] {
-  const targetIds = Array.isArray(call.args?.targetAccountIds)
-    ? call.args.targetAccountIds.filter((id): id is string => typeof id === 'string')
-    : []
-  return accounts.value.filter(account => {
-    if (targetIds.length > 0 && !targetIds.includes(account.id)) return false
-    return account.platform?.toLowerCase() === platform.toLowerCase()
+const draftCards = computed(() => props.calls.flatMap(asDraftCards))
+
+function requestedPlatforms(call: ToolCallLike): string[] {
+  const args = effectiveCall(call).args
+  const platforms = args.platforms
+  if (Array.isArray(platforms)) return platforms.filter((platform): platform is string => typeof platform === 'string')
+  const variants = recordOf(draftOf(call).platformVariants)
+  return variants ? Object.keys(variants) : []
+}
+
+function targetAccounts(call: ToolCallLike): SocialAccount[] {
+  const platforms = requestedPlatforms(call).map(platform => platform.toLowerCase())
+  if (platforms.length === 0) return accounts.value.slice(0, 1)
+  return accounts.value.filter(account => account.platform && platforms.includes(account.platform.toLowerCase()))
+}
+
+function captionOf(call: ToolCallLike): string {
+  const caption = draftOf(call).caption
+  return typeof caption === 'string' ? caption : ''
+}
+
+interface CreateTarget {
+  caption: string
+  accountIds: string[]
+}
+
+function createTargets(): CreateTarget[] {
+  return draftCards.value.flatMap((call): CreateTarget[] => {
+    const caption = captionOf(call)
+    const accountIds = targetAccounts(call).map(account => account.id)
+    return caption && accountIds.length > 0 ? [{ caption, accountIds }] : []
   })
 }
 
-function tabsOf(call: ToolCallLike): PostTab[] {
-  const payload = draftOf(call)
-  const variants = recordOf(payload.platformVariants) ?? {}
-  const variantEntries = Object.entries(variants).filter(([, value]) => typeof value === 'string')
-  const claims = claimsOf(payload)
-  if (variantEntries.length === 0 && typeof payload.caption === 'string') {
-    return [{ id: call.id, label: t('workflow.defaultPostTab'), platform: 'social', caption: payload.caption, claims }]
-  }
-  return variantEntries.flatMap(([platform, value]) => {
-    const targetedAccounts = accountsFor(platform, call)
-    if (targetedAccounts.length === 0) {
-      return [{ id: `${call.id}-${platform}`, label: platformLabel(platform), platform, caption: String(value), claims }]
-    }
-    return targetedAccounts.map(account => ({
-      id: `${call.id}-${platform}-${account.id}`,
-      label: account.accountName ?? platformLabel(platform),
-      platform,
-      account: account.accountName,
-      accountId: account.id,
-      caption: String(value),
-      claims,
-    }))
+function createOne(target: CreateTarget): Promise<unknown> {
+  return $fetch('/api/v1/posts', {
+    method: 'POST',
+    body: {
+      businessId: props.businessId,
+      content: target.caption,
+      targetPlatforms: target.accountIds,
+      scheduledAt: new Date().toISOString(),
+      status: 'scheduled',
+    },
   })
 }
 
-const tabs = computed(() => props.calls.flatMap(tabsOf))
-const activeTab = computed(() => tabs.value.find(tab => tab.id === selectedTab.value) ?? tabs.value[0] ?? null)
-
-watch(tabs, (nextTabs) => {
-  if (!nextTabs.some(tab => tab.id === selectedTab.value)) selectedTab.value = nextTabs[0]?.id ?? ''
-}, { immediate: true })
-
-function handleSelectTab(id: string): void {
-  selectedTab.value = id
-}
-
-const activeAccount = computed(() => {
-  if (!activeTab.value) return null
-  return accountForTab(accounts.value, activeTab.value)
-})
-
-const isConnected = computed(() => activeAccount.value !== null)
-
-const platformAccounts = computed(() => {
-  const tab = activeTab.value
-  if (!tab) return []
-  if (tab.platform === 'social') return accounts.value
-  const key = tab.platform.toLowerCase()
-  return accounts.value.filter(account => account.platform?.toLowerCase() === key)
-})
-
-function notifyScheduleFailed(description?: string): void {
-  toast.add({
-    title: t('workflow.draft.scheduleFailed'),
-    description,
-    icon: 'i-heroicons-x-circle',
-    color: 'error',
-  })
-}
-
-async function submitPost(busy: string, status: 'scheduled' | 'published', scheduledAt: string): Promise<void> {
-  const businessId = props.businessId
-  const account = activeAccount.value
-  const caption = activeTab.value?.caption
-  if (!businessId || !account || !caption) {
-    notifyScheduleFailed()
+async function handleCreateAll(): Promise<void> {
+  const targets = createTargets()
+  if (!props.businessId || targets.length === 0) {
+    toast.add({ title: t('workflow.draft.noTargets'), icon: 'i-heroicons-x-circle', color: 'warning' })
     return
   }
-  busyKey.value = busy
+  creatingAll.value = true
   try {
-    const at = new Date(scheduledAt).toISOString()
-    await $fetch('/api/v1/posts', {
-      method: 'POST',
-      body: buildPostPayload({ businessId, caption, accountId: account.id, scheduledAt: at, status }),
+    const settled = await Promise.allSettled(targets.map(createOne))
+    const created = settled.filter(result => result.status === 'fulfilled').length
+    const title = created === targets.length
+      ? t('workflow.draft.createdAll', { count: created })
+      : t('workflow.draft.createdSome', { created, total: targets.length })
+    toast.add({
+      title,
+      icon: created === targets.length ? 'i-heroicons-check-circle' : 'i-heroicons-exclamation-triangle',
+      color: created === targets.length ? 'success' : 'warning',
     })
-    toast.add({ title: t('workflow.draft.scheduled'), icon: 'i-heroicons-check-circle', color: 'success' })
-  }
-  catch (error: unknown) {
-    notifyScheduleFailed(error instanceof Error ? error.message : undefined)
   }
   finally {
-    busyKey.value = null
+    creatingAll.value = false
   }
-}
-
-function handleScheduleNow(): void {
-  void submitPost('schedule-now', 'scheduled', new Date().toISOString())
-}
-
-function handlePostNow(): void {
-  void submitPost('post-now', 'published', new Date().toISOString())
-}
-
-function handleScheduleTimeframe(value: string): void {
-  if (!value) {
-    notifyScheduleFailed()
-    return
-  }
-  void submitPost('schedule-timeframe', 'scheduled', value)
-}
-
-function handleSelectAccount(): void {
-  if (accounts.value.length === 0) {
-    void reloadAccountsForSelect()
-    return
-  }
-  showAccounts.value = !showAccounts.value
-}
-
-/** Every string platform variant on the tool call the active tab belongs to. */
-function variantsFor(tab: PostTab): Record<string, string> {
-  const call = props.calls.find(entry => tab.id.startsWith(entry.id))
-  if (!call) return {}
-  const variants = recordOf(draftOf(call).platformVariants) ?? {}
-  return Object.fromEntries(
-    Object.entries(variants).filter((entry): entry is [string, string] => typeof entry[1] === 'string'),
-  )
-}
-
-/** Hand the draft to the full composer so it can be finished with real parity. */
-function handleCompose(): void {
-  const tab = activeTab.value
-  if (!tab) return
-  emit('compose', {
-    content: tab.caption,
-    platformVariants: variantsFor(tab),
-    accounts: platformAccounts.value.map(account => ({ id: account.id, platform: account.platform ?? '' })),
-  })
-}
-
-async function reloadAccountsForSelect(): Promise<void> {
-  busyKey.value = 'select-account'
-  try {
-    await loadAccounts()
-  }
-  finally {
-    busyKey.value = null
-    showAccounts.value = true
-  }
-}
-
-function handlePickAccount(id: string): void {
-  const platform = activeTab.value?.platform
-  const tab = tabs.value.find(entry => entry.accountId === id && entry.platform === platform)
-  if (tab) selectedTab.value = tab.id
-  showAccounts.value = false
 }
 
 async function loadAccounts(): Promise<void> {
@@ -215,6 +130,10 @@ async function loadAccounts(): Promise<void> {
   }
 }
 
+function handleCompose(payload: ComposePayload): void {
+  emit('compose', payload)
+}
+
 onMounted(() => {
   void loadAccounts()
 })
@@ -225,83 +144,39 @@ watch(() => props.businessId, () => {
 </script>
 
 <template>
-  <section v-motion-fade data-testid="run-section" data-kind="draft" :duration="200" class="overflow-hidden rounded-xl border border-default bg-default">
-    <div v-for="call in calls" :key="call.id">
-      <div v-if="call.error" class="m-3 rounded-xl bg-error/10 p-3">
-        <p class="text-sm whitespace-pre-wrap text-error/90">{{ call.error }}</p>
-      </div>
+  <section
+    v-motion-fade
+    data-testid="run-section"
+    data-kind="draft"
+    :duration="200"
+    class="space-y-2"
+  >
+    <div
+      v-if="draftCards.length > 1"
+      class="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-primary/20 bg-primary/5 px-3 py-2"
+    >
+      <p class="text-xs text-muted">{{ t('workflow.draft.batchHint', { count: draftCards.length }) }}</p>
+      <UButton
+        size="sm"
+        color="primary"
+        icon="i-heroicons-rocket-launch"
+        :loading="creatingAll"
+        data-testid="draft-create-all"
+        @click="handleCreateAll"
+      >
+        {{ t('workflow.draft.createAll', { count: draftCards.length }) }}
+      </UButton>
     </div>
-    <template v-if="tabs.length > 0 && activeTab">
-      <div class="flex gap-1 overflow-x-auto border-b border-default px-3 pt-2" role="tablist" :aria-label="t('workflow.platformTabs')">
-        <button
-          v-for="tab in tabs"
-          :key="tab.id"
-          type="button"
-          role="tab"
-          :aria-selected="activeTab.id === tab.id"
-          class="shrink-0 border-b-2 px-3 py-2 text-xs font-medium transition-colors"
-          :class="activeTab.id === tab.id ? 'border-primary text-highlighted' : 'border-transparent text-muted hover:text-highlighted'"
-          @click="handleSelectTab(tab.id)"
-        >
-          {{ tab.label }}
-        </button>
-      </div>
-      <div class="space-y-4 p-4">
-        <div class="flex items-center justify-between gap-3">
-          <div>
-            <p class="text-xs font-semibold uppercase tracking-wide text-primary">{{ platformLabel(activeTab.platform) }}</p>
-            <p v-if="activeTab.account" class="mt-1 text-xs text-muted">{{ activeTab.account }}</p>
-          </div>
-          <div class="flex items-center gap-2">
-            <UBadge color="neutral" variant="subtle" size="xs">{{ t('workflow.draftStatus') }}</UBadge>
-            <UButton
-              size="xs"
-              variant="outline"
-              color="neutral"
-              icon="i-heroicons-pencil-square"
-              data-testid="draft-open-editor"
-              @click="handleCompose"
-            >
-              {{ t('workflow.draft.openEditor') }}
-            </UButton>
-          </div>
-        </div>
-        <DraftPreviewCard
-          :tab="activeTab"
-          :account="activeAccount"
-          :connected="isConnected"
-          :busy-key="busyKey"
-          @schedule-now="handleScheduleNow"
-          @post-now="handlePostNow"
-          @schedule-timeframe="handleScheduleTimeframe"
-          @select-account="handleSelectAccount"
-        />
-        <div v-if="showAccounts" v-motion-fade :duration="200" class="rounded-xl border border-default bg-elevated p-2">
-          <button
-            v-for="option in platformAccounts"
-            :key="option.id"
-            type="button"
-            class="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm hover:bg-default"
-            @click="handlePickAccount(option.id)"
-          >
-            <UAvatar :alt="option.accountName ?? option.id" size="xs" />
-            <span class="font-medium">{{ option.accountName ?? option.id }}</span>
-            <span v-if="option.platform" class="truncate text-muted">{{ platformLabel(option.platform) }}</span>
-          </button>
-          <p v-if="platformAccounts.length === 0" class="p-2 text-xs text-muted">
-            {{ t('workflow.draft.connectPrompt', { platform: platformLabel(activeTab.platform) }) }}
-          </p>
-        </div>
-        <div v-if="activeTab.claims.length > 0" class="rounded-xl border border-default bg-elevated p-3">
-          <p class="text-xs font-semibold text-muted">{{ t('workflow.claims') }}</p>
-          <ul class="mt-1 list-disc space-y-0.5 pl-4 text-xs text-muted">
-            <li v-for="claim in activeTab.claims" :key="claim">{{ claim }}</li>
-          </ul>
-        </div>
-      </div>
-    </template>
-    <div v-else-if="calls.every(call => !call.error)" class="p-4 text-sm text-muted">
-      {{ t('workflow.noOutput') }}
-    </div>
+
+    <DraftCard
+      v-for="(call, index) in draftCards"
+      :key="call.id"
+      :call="call"
+      :accounts="accounts"
+      :business-id="businessId"
+      :index="index + 1"
+      :total="draftCards.length"
+      @compose="handleCompose"
+    />
   </section>
 </template>

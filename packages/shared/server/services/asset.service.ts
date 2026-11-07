@@ -1,4 +1,4 @@
-import { eq, and, sql, or, inArray, isNull, type SQL } from 'drizzle-orm';
+import { eq, and, sql, or, inArray, isNull, isNotNull, type SQL } from 'drizzle-orm';
 import type { H3Event } from 'h3';
 import {
   type ServiceResponse,
@@ -8,7 +8,7 @@ import {
   type FilterOptions,
   type PaginatedResponse
 } from '../types';
-import { assets, assetFolders, type Asset, type AssetFolder } from '#layers/BaseDB/db/schema';
+import { assets, assetFolders, posts, type Asset, type AssetFolder } from '#layers/BaseDB/db/schema';
 import { businessProfileService } from '#layers/BaseDB/server/services/business-profile.service';
 import { parseFolderScope, type AssetFolderSummary, type FolderScope, type MoveAssetsInput } from '#layers/BaseShared/shared/utils/asset-folders';
 import { assetBlobKey, useAssetBlobStore } from './asset-blob-store';
@@ -112,6 +112,16 @@ function folderPredicate(scope: FolderScope): SQL | undefined {
   if (scope.kind === 'unfiled') return isNull(assets.folderId);
   if (scope.kind === 'folder') return eq(assets.folderId, scope.id);
   return undefined;
+}
+
+function parseMediaAssetIds(raw: string | null): string[] {
+  if (!raw) return []
+  try {
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === 'string') : []
+  } catch {
+    return []
+  }
 }
 
 /**
@@ -243,6 +253,22 @@ export class AssetService {
     }
   }
 
+  private async findBusinessAccessibleAsset(id: string, userId: string, event?: H3Event): Promise<Asset | undefined> {
+    const probe = await this.db.query.assets.findFirst({
+      where: eq(assets.id, id),
+      columns: { businessId: true },
+    });
+    if (!probe) return undefined
+
+    const businessId = probe.businessId || await this.findBusinessIdForAsset(id)
+    if (!businessId) return undefined
+
+    const access = await businessProfileService.findById(businessId, userId, event)
+    if (!access.success) return undefined
+
+    return this.db.query.assets.findFirst({ where: eq(assets.id, id) })
+  }
+
   async findById(id: string, userId: string, event?: H3Event): Promise<ServiceResponse<Asset>> {
     try {
       let asset = await this.db.query.assets.findFirst({
@@ -250,20 +276,7 @@ export class AssetService {
       });
 
       if (!asset) {
-        const probe = await this.db.query.assets.findFirst({
-          where: eq(assets.id, id),
-          columns: { businessId: true },
-        });
-        if (!probe || !probe.businessId) {
-          return { success: false, error: 'Asset not found', code: 'NOT_FOUND' };
-        }
-        const access = await businessProfileService.findById(probe.businessId, userId, event);
-        if (!access.success) {
-          return { success: false, error: 'Asset not found', code: 'NOT_FOUND' };
-        }
-        asset = await this.db.query.assets.findFirst({
-          where: eq(assets.id, id),
-        });
+        asset = await this.findBusinessAccessibleAsset(id, userId, event)
       }
 
       if (!asset) {
@@ -314,18 +327,79 @@ export class AssetService {
     }
   }
 
-  async findByIds(ids: string[], userId: string): Promise<ServiceResponse<Asset[]>> {
+  private async legacyBusinessAssetIds(businessId: string, ids: string[]): Promise<string[]> {
+    const wanted = new Set(ids)
+    const rows = await this.db
+      .select({ mediaAssets: posts.mediaAssets })
+      .from(posts)
+      .where(eq(posts.businessId, businessId))
+    const result = new Set<string>()
+    for (const row of rows) {
+      for (const id of parseMediaAssetIds(row.mediaAssets)) {
+        if (wanted.has(id)) result.add(id)
+      }
+    }
+    return [...result]
+  }
+
+  private async addLegacyBusinessAssets(assetList: Asset[], businessId: string, ids: string[]): Promise<Asset[]> {
+    const found = new Set(assetList.map(asset => asset.id))
+    const missing = ids.filter(id => !found.has(id))
+    if (missing.length === 0) return assetList
+
+    const legacyIds = await this.legacyBusinessAssetIds(businessId, missing)
+    if (legacyIds.length === 0) return assetList
+
+    const legacyAssets = await this.db.query.assets.findMany({
+      where: and(inArray(assets.id, legacyIds), isNull(assets.businessId)),
+    })
+    return [...assetList, ...legacyAssets]
+  }
+
+  /** Business that references this asset from a post, for legacy `business_id = null` rows. */
+  async findBusinessIdForAsset(assetId: string): Promise<string | null> {
+    try {
+      const rows = await this.db
+        .select({ businessId: posts.businessId, mediaAssets: posts.mediaAssets })
+        .from(posts)
+        .where(isNotNull(posts.mediaAssets))
+        .limit(5000)
+      for (const row of rows) {
+        if (row.businessId && parseMediaAssetIds(row.mediaAssets).includes(assetId)) return row.businessId
+      }
+      return null
+    } catch {
+      return null
+    }
+  }
+
+  async findByIds(ids: string[], userId: string, businessId?: string, event?: H3Event): Promise<ServiceResponse<Asset[]>> {
     try {
       if (ids.length === 0) {
         return { success: true, data: [] };
       }
 
-      const assetList = await this.db.query.assets.findMany({
+      if (businessId) {
+        const gate = await this.gateBusiness(businessId, userId, event);
+        if (!gate.ok) return { success: false, error: gate.error, code: gate.code };
+      }
+
+      // Business assets are shared; the caller's personal assets stay private.
+      // An asset owned by another user with no businessId must not leak.
+      const ownership = businessId
+        ? or(eq(assets.businessId, businessId), and(eq(assets.userId, userId), isNull(assets.businessId)))
+        : eq(assets.userId, userId);
+
+      let assetList = await this.db.query.assets.findMany({
         where: and(
           inArray(assets.id, ids),
-          eq(assets.userId, userId)
+          ownership
         ),
       });
+
+      if (businessId) {
+        assetList = await this.addLegacyBusinessAssets(assetList, businessId, ids)
+      }
 
       // Preserve requested order — DB IN clause does not guarantee ordering
       const byId = new Map(assetList.map(asset => [asset.id, asset]));

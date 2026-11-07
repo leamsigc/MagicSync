@@ -8,7 +8,7 @@ import { contentBoardService } from '#layers/BaseDB/server/services/content-boar
 import { agentRunnerService } from '#layers/BaseAgent/server/services/agent-runner.service'
 import { buildAgentRunConfig, runConfigErrorStatus } from '#layers/BaseAgent/server/utils/run-config'
 import { AGENT_TOOL_NAMES } from '#layers/BaseAgent/server/agent/tool-catalog'
-import { BUNDLED_SKILLS } from '#layers/BaseAgent/server/flue/skills'
+import { BUNDLED_SKILLS, findBundledSkill } from '#layers/BaseAgent/server/flue/skills'
 import { isSpecialistProfileName } from '#layers/BaseAgent/server/flue/specialists'
 
 const ChatRequestSchema = z.object({
@@ -153,7 +153,13 @@ async function cardSupplement(userId: string, businessId: string, cardId: string
 }
 
 async function resolveThread(userId: string, body: ChatRequest) {
-  if (body.threadId) return chatService.getThread(body.threadId, userId)
+  if (body.threadId) {
+    const existing = await chatService.getThread(body.threadId, userId)
+    if (existing.success) return existing
+    // A client can hold a thread id from a deleted thread, a previous business,
+    // or a run that failed before the thread row was written. Starting a fresh
+    // thread is always better than failing the whole message with 500.
+  }
   return chatService.createThread(userId, {
     title: body.message.slice(0, 80) || 'New Chat',
     businessId: body.businessId,
@@ -200,9 +206,14 @@ export default defineEventHandler(async (event) => {
     carousel.kind === 'none' ? null : carousel.systemContext,
   ].filter(Boolean).join('\n\n')
 
-  const agentName = !isCarouselTurn && body.agentName && isSpecialistProfileName(body.agentName)
-    ? body.agentName
-    : undefined
+  /**
+   * The composer can force a specialist or a bundled skill with `@name`. A skill
+   * becomes the run profile, so both its instruction body and its tool scope are
+   * mounted for this turn.
+   */
+  const requestedAgent = body.agentName
+    && (isSpecialistProfileName(body.agentName) || findBundledSkill(body.agentName) !== undefined)
+  const agentName = !isCarouselTurn && requestedAgent ? body.agentName : undefined
   const allowedTools = carousel.allowedTools
   const skillSlugs = new Set(BUNDLED_SKILLS.map(skill => skill.slug))
   const extraSkillSlugs = body.skillSlugs?.filter(slug => skillSlugs.has(slug))

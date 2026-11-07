@@ -44,6 +44,10 @@ triggers:
 
 The MagicSync CLI skill enables AI agents to create, validate, schedule, and publish social media posts across multiple platforms (Twitter/X, Facebook, Instagram, Bluesky, LinkedIn, TikTok, etc.).
 
+> Creating an image-editor template? Use the self-contained subskill at
+> `design-template-builder/SKILL.md`. Its copy-paste chat prompt is
+> `design-template-builder/MASTER_PROMPT.md`.
+
 ## Business Context & Roles
 
 Every API key belongs to one **business** and acts as that business's owner.

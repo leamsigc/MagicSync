@@ -20,12 +20,12 @@ export default defineEventHandler(async (event) => {
     if (assetIds && assetIds.length > 0) {
       const ids = typeof assetIds === 'string' ? [assetIds] : assetIds
       log.info('Searching assets by IDs', { count: ids.length })
-      const result = await assetService.findByIds(ids, user.id)
+      const result = await assetService.findByIds(ids, user.id, businessId || undefined, event)
 
       if (!result.success) {
         log.error('Failed to fetch assets by IDs', { error: result.error })
         throw createError({
-          statusCode: 500,
+          statusCode: result.code === 'NOT_FOUND' ? 404 : 500,
           statusMessage: result.error
         })
       }

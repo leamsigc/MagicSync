@@ -6,7 +6,7 @@ import { userLlmConfigService } from '#layers/BaseDB/server/services/user-llm-co
 // SYSTEM_DEFAULT_PROVIDER/MODEL and never hands the sentinel to pi. Its
 // `model` is irrelevant, so it may be empty — the account UI sends that when a
 // user resets a business back to the system model.
-const SUPPORTED = ['system', 'google', 'ollama', 'llama', 'openai', 'anthropic', 'openrouter', 'deepseek'] as const
+const SUPPORTED = ['system', 'google', 'ollama', 'llama', 'openai', 'anthropic', 'openrouter', 'deepseek', 'opencode'] as const
 
 const OverrideSchema = z.object({
   businessId: z.string().min(1).max(128),

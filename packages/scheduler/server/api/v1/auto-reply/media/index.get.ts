@@ -1,5 +1,7 @@
 import { checkUserIsLogin } from '#layers/BaseAuth/server/utils/AuthHelpers'
 import { autoReplyService } from '#layers/BaseScheduler/server/services/AutoReply.service'
+import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service'
+import { accessErrorStatus, requireBusinessAccess } from '#layers/BaseDB/server/utils/business-access'
 import { z } from 'zod'
 
 const querySchema = z.object({
@@ -19,6 +21,20 @@ const querySchema = z.object({
 export default defineEventHandler(async (event) => {
   const user = await checkUserIsLogin(event)
   const parsed = querySchema.parse(getQuery(event))
+
+  const account = await socialMediaAccountService.getAccountById(parsed.socialAccountId)
+  if (!account) {
+    throw createError({ statusCode: 404, statusMessage: 'Social media account not found' })
+  }
+  if (account.businessId) {
+    const access = await requireBusinessAccess(event, user.id, account.businessId)
+    if (!access.success || !access.data) {
+      throw createError({ statusCode: accessErrorStatus(access.code), statusMessage: access.error ?? 'Access denied' })
+    }
+  } else if (account.userId !== user.id) {
+    throw createError({ statusCode: 403, statusMessage: 'Access denied' })
+  }
+
   const result = await autoReplyService.listPublishedPosts(user.id, parsed.socialAccountId, parsed.limit)
   if (result.error) {
     const status = result.code === 'NOT_FOUND' ? 404 : result.code === 'UNSUPPORTED' ? 400 : 500

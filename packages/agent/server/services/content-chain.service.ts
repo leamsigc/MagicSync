@@ -586,6 +586,13 @@ function linkVerdict(checkable: LinkProbe[]): { status: ContentCheckStatus, scor
  *  2. LLM brief -> scrape its cited URLs (SSRF-safe) -> synthesis
  *  3. LLM brief alone when nothing on the web is reachable
  */
+/** Upper bound for one batch call; the UI renders one card per draft. */
+const BATCH_POST_LIMIT = 10
+
+function asPostArray(value: unknown): unknown[] {
+  return Array.isArray(value) ? value : []
+}
+
 export class ContentChainService {
   async researchTopic(
     ctx: ChainContext,
@@ -726,6 +733,39 @@ export class ContentChainService {
     }
     catch (error) {
       return { success: false, error: error instanceof Error ? error.message : 'Draft failed', code: 'WRITE_FAILED' }
+    }
+  }
+
+  /**
+   * Several distinct drafts in one model call. The chat renders one preview card
+   * per entry, which is what makes "create the five posts" a single reliable
+   * action instead of five independent tool calls the model may skip.
+   */
+  async writePostsBatch(
+    ctx: ChainContext,
+    input: { brief: string, count: number, platforms: string[] },
+  ): Promise<ServiceResponse<DraftOutput[]>> {
+    const count = Math.min(Math.max(Math.round(input.count), 1), BATCH_POST_LIMIT)
+    try {
+      const raw = await ctx.complete({
+        system: brandSystem(ctx.brandContext),
+        prompt: renderPrompt('writePostsBatch', {
+          count: String(count),
+          platforms: input.platforms.join(', ') || 'general social',
+          brief: input.brief,
+          platformGuidance: platformGuidance(input.platforms),
+        }),
+        maxTokens: 6000,
+      })
+      const posts = asPostArray(extractJsonObject(raw)?.posts).slice(0, count)
+      const drafts = posts.map(post => normalizeDraft(JSON.stringify(post)))
+      if (drafts.length > 0) return { success: true, data: drafts }
+      const single = await this.writePost(ctx, { brief: input.brief, platforms: input.platforms })
+      if (!single.success) return single
+      return { success: true, data: [single.data] }
+    }
+    catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Batch draft failed', code: 'WRITE_FAILED' }
     }
   }
 

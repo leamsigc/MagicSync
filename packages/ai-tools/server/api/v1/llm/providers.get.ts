@@ -8,6 +8,7 @@ const SERVER_KEY_ENV: Record<string, string | undefined> = {
   anthropic: process.env.ANTHROPIC_API_KEY,
   openrouter: process.env.OPENROUTER_API_KEY,
   deepseek: process.env.DEEPSEEK_API_KEY,
+  opencode: process.env.OPENCODE_API_KEY ?? process.env.NUXT_OPENCODE_API_KEY,
   ollama: 'local',
 }
 

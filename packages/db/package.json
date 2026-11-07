@@ -15,6 +15,7 @@
     "db:generate:local": "npx dotenv -e ../../.env -- drizzle-kit generate --config ./config/drizzle.config.ts",
     "db:migrate": "drizzle-kit migrate --config ./config/drizzle.config.ts",
     "db:migrate:local": "npx dotenv -e ../../.env -- drizzle-kit migrate --config ./config/drizzle.config.ts",
+    "db:backfill-post-assets": "npx dotenv -e ../../.env -- node scripts/backfill-post-asset-business.mjs",
     "db:studio": "npx dotenv -e ../../.env -- drizzle-kit studio --config ./config/drizzle.config.ts"
   },
   "dependencies": {

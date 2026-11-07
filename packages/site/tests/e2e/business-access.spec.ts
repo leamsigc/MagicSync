@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 import { createClient } from '@libsql/client'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
-import { createActiveBusiness, createTestAccount, createTestUser, loginWith, waitForHydration, type TestUser } from './helpers/e2e-utils'
+import { createActiveBusiness, createTestAccount, createTestAssets, createTestInstagramAccount, createTestUser, loginWith, waitForHydration, type TestUser } from './helpers/e2e-utils'
 import { captureRouteAction } from './helpers/route-screenshots'
 
 /**
@@ -38,6 +38,8 @@ test('business access — invited owner parity and member read-only', async ({ p
   const creator = await createTestUser(creatorRequest)
   const business = await createActiveBusiness(creatorRequest, creator, 'Access E2E')
   const account = await createTestAccount(creator.id, business.id)
+  const instagram = await createTestInstagramAccount(creator.id, business.id)
+  const assets = await createTestAssets(creator.id, business.id, 1)
   const content = `Access check post ${Date.now()}`
 
   const created = await creatorRequest.post('/api/v1/posts', {
@@ -46,6 +48,7 @@ test('business access — invited owner parity and member read-only', async ({ p
       businessId: business.id,
       content,
       targetPlatforms: [account.id],
+      mediaAssets: assets.ids,
       status: 'draft',
     },
   })
@@ -83,6 +86,55 @@ test('business access — invited owner parity and member read-only', async ({ p
   const postsBody = await memberPosts.json()
   expect(postsBody.data.some((post: { content: string }) => post.content === content)).toBeTruthy()
 
+  // Post attachments are shared with the business.
+  const memberAssets = await memberRequest.get(`/api/v1/assets/search?businessId=${business.id}&assetIds=${assets.ids[0]}`)
+  expect(memberAssets.status()).toBe(200)
+  expect((await memberAssets.json()).data.some((asset: { id: string }) => asset.id === assets.ids[0])).toBeTruthy()
+
+  const memberAsset = await memberRequest.get(`/api/v1/assets/${assets.ids[0]}`)
+  expect(memberAsset.status()).toBe(200)
+
+  // Legacy asset with no businessId, referenced by a business post, is still
+  // visible to members through the post fallback.
+  const legacyAssetId = `e2e-legacy-asset-${Date.now()}`
+  const legacyAssetNow = Math.floor(Date.now() / 1000)
+  await db().execute({
+    sql: 'INSERT INTO assets (id, user_id, business_id, filename, original_name, mime_type, size, url, is_public, created_at) VALUES (?, ?, NULL, ?, ?, ?, ?, ?, 0, ?)',
+    args: [
+      legacyAssetId,
+      creator.id,
+      `${legacyAssetId}.jpg`,
+      'Legacy asset',
+      'image/jpeg',
+      1000,
+      'https://example.com/legacy.jpg',
+      legacyAssetNow,
+    ],
+  })
+  const legacyPost = await creatorRequest.post('/api/v1/posts', {
+    cookies: cookie(creator),
+    data: {
+      businessId: business.id,
+      content: `Legacy media post ${Date.now()}`,
+      targetPlatforms: [account.id],
+      mediaAssets: [legacyAssetId],
+      status: 'draft',
+    },
+  })
+  expect(legacyPost.ok()).toBeTruthy()
+
+  const memberLegacyAssets = await memberRequest.get(`/api/v1/assets/search?businessId=${business.id}&assetIds=${legacyAssetId}`)
+  expect(memberLegacyAssets.status()).toBe(200)
+  expect((await memberLegacyAssets.json()).data.some((asset: { id: string }) => asset.id === legacyAssetId)).toBeTruthy()
+
+  const memberLegacyAsset = await memberRequest.get(`/api/v1/assets/${legacyAssetId}`)
+  expect(memberLegacyAsset.status()).toBe(200)
+
+  // The auto-reply account picker reads the business's shared Instagram account.
+  const memberAccounts = await memberRequest.get(`/api/v1/social-accounts?businessId=${business.id}`)
+  expect(memberAccounts.status()).toBe(200)
+  expect((await memberAccounts.json()).some((item: { id: string }) => item.id === instagram.id)).toBeTruthy()
+
   await loginWith(page, member)
   await page.goto('/app/posts')
   await waitForHydration(page)
@@ -116,7 +168,7 @@ test('business access — invited owner parity and member read-only', async ({ p
     data: {
       name: 'Shared campaign',
       businessId: business.id,
-      socialAccountId: account.id,
+      socialAccountId: instagram.id,
       keywords: ['LINK'],
       dmTemplate: 'Here is your link',
     },
@@ -124,14 +176,66 @@ test('business access — invited owner parity and member read-only', async ({ p
   expect(campaignCreate.ok()).toBeTruthy()
   const campaignId = (await campaignCreate.json()).data.id as string
 
+  // A legacy campaign keyed by the member and missing businessId is still
+  // visible because it targets one of the business's accounts.
+  const legacyCampaignId = `legacy${Date.now()}`
+  const legacyNow = Math.floor(Date.now() / 1000)
+  await db().execute({
+    sql: 'INSERT INTO entity_details (id, entity_id, entity_type, details, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
+    args: [
+      `e2e-legacy-campaign-${legacyCampaignId}`,
+      `${member.id}::${legacyCampaignId}`,
+      'autoreply_campaign',
+      JSON.stringify({
+        name: 'Legacy shared campaign',
+        socialAccountId: instagram.id,
+        enabled: true,
+        keywords: ['LINK'],
+        dmTemplate: 'Legacy link',
+        linkIds: [],
+        externalPostIds: [],
+        matchMode: 'whole',
+        followGate: false,
+      }),
+      legacyNow,
+      legacyNow,
+    ],
+  })
+
   const memberCampaigns = await memberRequest.get(`/api/v1/auto-reply/campaigns?businessId=${business.id}`)
   expect(memberCampaigns.status()).toBe(200)
-  expect((await memberCampaigns.json()).data.some((c: { id: string }) => c.id === campaignId)).toBeTruthy()
+  const memberCampaignList = (await memberCampaigns.json()).data as Array<{ id: string }>
+  expect(memberCampaignList.some((c) => c.id === campaignId)).toBeTruthy()
+  expect(memberCampaignList.some((c) => c.id === legacyCampaignId)).toBeTruthy()
 
   const memberCampaignUpdate = await memberRequest.put(`/api/v1/auto-reply/campaigns/${campaignId}`, {
     data: { name: 'Shared campaign renamed' },
   })
   expect(memberCampaignUpdate.status()).toBe(200)
+
+  const memberCampaignCreate = await memberRequest.post('/api/v1/auto-reply/campaigns', {
+    data: {
+      name: 'Member campaign',
+      businessId: business.id,
+      socialAccountId: instagram.id,
+      keywords: ['INFO'],
+      dmTemplate: 'Member link',
+    },
+  })
+  expect(memberCampaignCreate.ok()).toBeTruthy()
+
+  // The auto-reply page shows the shared campaigns and the shared Instagram
+  // account in the create modal for a member.
+  await page.goto('/app/auto-reply')
+  await waitForHydration(page)
+  await expect(page.getByText('Shared campaign').first()).toBeVisible({ timeout: 30000 })
+  await expect(page.getByText('Legacy shared campaign').first()).toBeVisible()
+  await captureRouteAction(page, { route: '/app/auto-reply', action: 'member-shared-campaigns', fullPage: false })
+
+  await page.getByRole('button', { name: 'New campaign' }).click()
+  await expect(page.getByText('E2E Instagram').first()).toBeVisible({ timeout: 15000 })
+  await captureRouteAction(page, { route: '/app/auto-reply', action: 'member-account-picker', fullPage: false })
+  await page.keyboard.press('Escape')
 
   // Templates are shared with the business (Email/Images/Chat/Variables).
   const templateCreate = await creatorRequest.post('/api/v1/templates', {

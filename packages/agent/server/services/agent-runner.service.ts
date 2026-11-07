@@ -457,7 +457,7 @@ function buildSystemPrompt(input: AgentRunInput, profile: SpecialistSessionProfi
     AGENT_PROMPTS.base,
     AGENT_PROMPTS[profile.prompt],
     formatBundledSkillsForPrompt(selectBundledSkills(profile.skills)),
-    ...loadedSkillBlocks([...profile.forceSkills, ...(input.extraSkillSlugs ?? [])]),
+    ...loadedSkillBlocks([...new Set([...profile.forceSkills, ...(input.extraSkillSlugs ?? [])])]),
     ...(input.extraPromptBlocks ?? []),
   ]
   if (input.systemContext) parts.push(input.systemContext)

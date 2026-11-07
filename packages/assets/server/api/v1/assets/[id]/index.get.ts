@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // Fetch the asset
-    const result = await assetService.findById(assetId, user.id)
+    const result = await assetService.findById(assetId, user.id, event)
 
     if (!result.success) {
       log.error('Failed to fetch asset', { code: result.code, error: result.error })

@@ -1,0 +1,119 @@
+{
+  "schema": "magicsync/image-editor@1",
+  "version": 1,
+  "frame": { "width": 1080, "height": 1080, "fill": "#0b1120" },
+  "fields": [
+    { "name": "eyebrow", "targets": [{ "objectId": "eyebrow", "property": "text" }] },
+    { "name": "headline", "targets": [{ "objectId": "headline", "property": "text" }] },
+    { "name": "body", "targets": [{ "objectId": "body", "property": "text" }] },
+    { "name": "cta", "targets": [{ "objectId": "cta", "property": "text" }] }
+  ],
+  "meta": { "title": "Square promo", "category": "social", "tags": ["template", "promo"] },
+  "pages": [
+    {
+      "id": "page-1",
+      "name": "Page 1",
+      "duration": 4000,
+      "objects": [
+        {
+          "id": "accent",
+          "type": "rect",
+          "left": 0,
+          "top": 0,
+          "width": 1080,
+          "height": 14,
+          "fill": "#22d3ee"
+        },
+        {
+          "id": "badge",
+          "type": "circle",
+          "left": 780,
+          "top": 120,
+          "radius": 120,
+          "fill": "#f97316"
+        },
+        {
+          "id": "eyebrow",
+          "type": "textbox",
+          "name": "{eyebrow}",
+          "left": 96,
+          "top": 170,
+          "width": 700,
+          "text": "NEW COLLECTION",
+          "fontSize": 34,
+          "fontFamily": "Arial",
+          "fontWeight": "bold",
+          "fill": "#22d3ee",
+          "textAlign": "left",
+          "lineHeight": 1.2,
+          "originX": "left",
+          "originY": "top"
+        },
+        {
+          "id": "headline",
+          "type": "textbox",
+          "name": "{headline}",
+          "left": 96,
+          "top": 230,
+          "width": 840,
+          "text": "Summer\nSale",
+          "fontSize": 128,
+          "fontFamily": "Archivo Black",
+          "fontWeight": "bold",
+          "fill": "#ffffff",
+          "textAlign": "left",
+          "lineHeight": 0.95,
+          "originX": "left",
+          "originY": "top"
+        },
+        {
+          "id": "body",
+          "type": "textbox",
+          "name": "{body}",
+          "left": 96,
+          "top": 600,
+          "width": 720,
+          "text": "Up to 40% off selected styles.",
+          "fontSize": 40,
+          "fontFamily": "Arial",
+          "fontWeight": "normal",
+          "fill": "#cbd5e1",
+          "textAlign": "left",
+          "lineHeight": 1.3,
+          "originX": "left",
+          "originY": "top"
+        },
+        {
+          "id": "cta-bg",
+          "type": "rect",
+          "left": 96,
+          "top": 800,
+          "width": 360,
+          "height": 92,
+          "rx": 46,
+          "ry": 46,
+          "fill": "#22d3ee"
+        },
+        {
+          "id": "cta",
+          "type": "textbox",
+          "name": "{cta}",
+          "left": 96,
+          "top": 824,
+          "width": 360,
+          "text": "SHOP NOW",
+          "fontSize": 30,
+          "fontFamily": "Arial",
+          "fontWeight": "bold",
+          "fill": "#0b1120",
+          "textAlign": "center",
+          "lineHeight": 1.2,
+          "originX": "left",
+          "originY": "top"
+        }
+      ],
+      "background": { "fill": "#0b1120" },
+      "animation": { "layers": {} }
+    }
+  ]
+}

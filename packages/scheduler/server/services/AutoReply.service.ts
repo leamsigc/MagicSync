@@ -285,6 +285,14 @@ class AutoReplyStore {
       .where(and(eq(entityDetails.entityType, AUTOREPLY_CAMPAIGN), like(entityDetails.entityId, `${userId}::%`)))
   }
 
+  /** Every campaign row, used to find legacy rows created by any business member. */
+  async listAllCampaignRows() {
+    return this.db
+      .select()
+      .from(entityDetails)
+      .where(eq(entityDetails.entityType, AUTOREPLY_CAMPAIGN))
+  }
+
   async findCampaignRowsBySuffix(campaignId: string) {
     return this.db
       .select()
@@ -425,30 +433,58 @@ export class AutoReplyService {
     return { ...details, id: id || row.entityId, userId: userId || '' } as AutoReplyCampaign
   }
 
+  private async canAccessCampaignRow(
+    userId: string,
+    row: { entityId: string; details: unknown },
+    event?: H3Event,
+  ): Promise<boolean> {
+    const details = parseDetails<{ businessId?: string; socialAccountId?: string }>(row.details)
+    if (details?.businessId) {
+      const access = await businessAccessService.resolve(userId, details.businessId, event)
+      return access.success
+    }
+    if (details?.socialAccountId) {
+      const account = await socialMediaAccountService.getAccountById(details.socialAccountId)
+      if (account?.businessId) {
+        const access = await businessAccessService.resolve(userId, account.businessId, event)
+        return access.success
+      }
+      return account?.userId === userId
+    }
+    return row.entityId.startsWith(`${userId}::`)
+  }
+
   private async findCampaignRow(userId: string, id: string, event?: H3Event) {
     const direct = await this.store.getCampaignRow(ownedEntityId(userId, id))
     if (direct) return direct
 
     const rows = await this.store.findCampaignRowsBySuffix(id)
     for (const row of rows) {
-      const details = parseDetails<{ businessId?: string }>(row.details)
-      if (!details?.businessId) continue
-      const access = await businessAccessService.resolve(userId, details.businessId, event)
-      if (access.success) return row
+      if (await this.canAccessCampaignRow(userId, row, event)) return row
     }
     return null
   }
 
-  private campaignRowMatches(row: { entityId: string; details: unknown }, businessId: string, userId: string): boolean {
-    const details = parseDetails<{ businessId?: string }>(row.details)
-    if (details?.businessId === businessId) return true
-    return !details?.businessId && row.entityId.startsWith(`${userId}::`)
+  private campaignRowMatches(
+    row: { entityId: string; details: unknown },
+    businessId: string,
+    userId: string,
+    ownerUserId: string,
+    businessAccountIds: Set<string>,
+  ): boolean {
+    const details = parseDetails<{ businessId?: string; socialAccountId?: string }>(row.details)
+    if (details?.businessId) return details.businessId === businessId
+    if (details?.socialAccountId) return businessAccountIds.has(details.socialAccountId)
+    const rowUserId = row.entityId.split('::')[0]
+    return rowUserId === userId || rowUserId === ownerUserId
   }
 
   private dedupeCampaignRows(
     rows: Array<{ entityId: string; details: unknown; updatedAt: Date | null }>,
     businessId: string | undefined,
     userId: string,
+    ownerUserId: string,
+    businessAccountIds: Set<string>,
   ) {
     const seen = new Set<string>()
     const result: typeof rows = []
@@ -456,7 +492,9 @@ export class AutoReplyService {
       const campaignId = row.entityId.split('::')[1] || row.entityId
       if (seen.has(campaignId)) continue
       seen.add(campaignId)
-      if (!businessId || this.campaignRowMatches(row, businessId, userId)) result.push(row)
+      if (!businessId || this.campaignRowMatches(row, businessId, userId, ownerUserId, businessAccountIds)) {
+        result.push(row)
+      }
     }
     return result
   }
@@ -472,9 +510,15 @@ export class AutoReplyService {
         ownerUserId = access.data.ownerUserId
       }
 
-      const rows = await this.store.listCampaignRows(ownerUserId)
-      const legacy = ownerUserId !== userId ? await this.store.listCampaignRows(userId) : []
-      const all = this.dedupeCampaignRows([...rows, ...legacy], businessId, userId)
+      const rows = businessId
+        ? await this.store.listAllCampaignRows()
+        : await this.store.listCampaignRows(userId)
+
+      const businessAccountIds = businessId
+        ? new Set((await socialMediaAccountService.getAccountsByBusinessIdWithOutActiveCheck(businessId)).map(account => account.id))
+        : new Set<string>()
+
+      const all = this.dedupeCampaignRows(rows, businessId, userId, ownerUserId, businessAccountIds)
 
       const campaigns = all
         .map(row => this.toCampaign(row))
@@ -537,16 +581,34 @@ export class AutoReplyService {
     return null
   }
 
+  private async resolveCampaignScope(
+    userId: string,
+    input: { businessId?: string; socialAccountId: string },
+    event?: H3Event,
+  ): Promise<ServiceResponse<{ businessId: string; ownerUserId: string }>> {
+    const account = await socialMediaAccountService.getAccountById(input.socialAccountId)
+    if (!account) {
+      return { success: false, error: 'Social account not found', code: 'NOT_FOUND' }
+    }
+    const businessId = input.businessId ?? account.businessId
+    if (!businessId) {
+      return { success: false, error: 'A business is required', code: 'VALIDATION' }
+    }
+    if (account.businessId !== businessId) {
+      return { success: false, error: 'Social account does not belong to this business', code: 'FORBIDDEN' }
+    }
+    const access = await businessAccessService.resolve(userId, businessId, event)
+    if (!access.success || !access.data) {
+      return { success: false, error: 'Business not found', code: 'NOT_FOUND' }
+    }
+    return { success: true, data: { businessId, ownerUserId: access.data.ownerUserId } }
+  }
+
   async createCampaign(userId: string, input: Omit<AutoReplyCampaign, 'id' | 'userId' | 'createdAt' | 'updatedAt'> & { links?: AutoReplyLinkInput[] }, event?: H3Event): Promise<ServiceResponse<AutoReplyCampaign>> {
     try {
-      let ownerUserId = userId
-      if (input.businessId) {
-        const access = await businessAccessService.resolve(userId, input.businessId, event)
-        if (!access.success || !access.data) {
-          return { success: false, error: 'Business not found', code: 'NOT_FOUND' }
-        }
-        ownerUserId = access.data.ownerUserId
-      }
+      const scope = await this.resolveCampaignScope(userId, input, event)
+      if (!scope.success || !scope.data) return scope
+      const { businessId, ownerUserId } = scope.data
 
       const id = crypto.randomUUID().slice(0, 8)
       const now = new Date().toISOString()
@@ -556,7 +618,7 @@ export class AutoReplyService {
       const campaign: AutoReplyCampaign = {
         id,
         userId: ownerUserId,
-        businessId: input.businessId,
+        businessId,
         name: input.name,
         platform: 'instagram',
         socialAccountId: input.socialAccountId,
@@ -1166,6 +1228,13 @@ export class AutoReplyService {
     }
   }
 
+  private async campaignBusinessId(details: { businessId?: string; socialAccountId?: string }): Promise<string | undefined> {
+    if (details.businessId) return details.businessId
+    if (!details.socialAccountId) return undefined
+    const account = await socialMediaAccountService.getAccountById(details.socialAccountId)
+    return account?.businessId ?? undefined
+  }
+
   private async listEnabledCampaigns(): Promise<AutoReplyCampaign[]> {
     const db = useDrizzle()
     const rows = await db.select().from(entityDetails).where(eq(entityDetails.entityType, AUTOREPLY_CAMPAIGN))
@@ -1177,7 +1246,7 @@ export class AutoReplyService {
       const id = row.entityId.split('::')[1] || row.entityId
       if (!keyUserId || !id) continue
 
-      const businessId = (details as { businessId?: string }).businessId
+      const businessId = await this.campaignBusinessId(details as { businessId?: string; socialAccountId?: string })
       const userId = businessId
         ? (await businessAccessService.getOwnerUserId(businessId)) ?? keyUserId
         : keyUserId
@@ -1578,7 +1647,7 @@ export class AutoReplyService {
         const keyUserId = row.entityId.split('::')[0] || ''
         const id = row.entityId.split('::')[1] || row.entityId
         if (!keyUserId || !id) continue
-        const businessId = (details as { businessId?: string }).businessId
+        const businessId = await this.campaignBusinessId(details as { businessId?: string; socialAccountId?: string })
         const userId = businessId
           ? (await businessAccessService.getOwnerUserId(businessId)) ?? keyUserId
           : keyUserId

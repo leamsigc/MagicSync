@@ -11,7 +11,7 @@ const emit = defineEmits<{ saved: [] }>()
 const { t } = useI18n()
 const toast = useToast()
 
-const PROVIDERS = ['system', 'google', 'ollama', 'llama', 'openai', 'anthropic', 'openrouter', 'deepseek'] as const
+const PROVIDERS = ['system', 'google', 'ollama', 'llama', 'openai', 'anthropic', 'openrouter', 'deepseek', 'opencode'] as const
 type Provider = typeof PROVIDERS[number]
 
 const MODELS: Record<Provider, string[]> = {
@@ -22,7 +22,8 @@ const MODELS: Record<Provider, string[]> = {
   openai: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo'],
   anthropic: ['claude-3-5-sonnet-20241022', 'claude-3-haiku-20240307', 'claude-3-opus-20240229'],
   openrouter: ['openai/gpt-4o', 'anthropic/claude-3.5-sonnet', 'meta-llama/llama-3.1-405b-instruct', 'mistralai/mistral-large'],
-  deepseek: ['deepseek-chat', 'deepseek-reasoner']
+  deepseek: ['deepseek-chat', 'deepseek-reasoner'],
+  opencode: ['deepseek-v4.1-flash', 'glm-5.3-flash', 'kimi-k2.5', 'qwen3.8-max', 'claude-sonnet-4-5', 'gpt-5.1-codex'],
 }
 
 const DEFAULT_TEMPERATURE = 0.7
@@ -61,9 +62,13 @@ const availableModels = computed(() => MODELS[selectedProvider.value] ?? [])
 const isSystemProvider = computed(() => selectedProvider.value === 'system')
 const isLocalProvider = computed(() => isLocalProviderName(selectedProvider.value))
 const showCustomModelInput = computed(() => isLocalProvider.value && useCustomModel.value)
-const showApiKeyField = computed(() => !isLocalProvider.value && !isSystemProvider.value)
+const showApiKeyField = computed(() => !isSystemProvider.value)
 const showBaseUrlField = computed(() => isLocalProvider.value)
-const keyPlaceholder = computed(() => hasKey.value ? t('keySaved') : t('apiKeyPlaceholder'))
+const keyPlaceholder = computed(() => {
+  if (hasKey.value) return t('keySaved')
+  return isLocalProvider.value ? t('apiKeyOptionalPlaceholder') : t('apiKeyPlaceholder')
+})
+const apiKeyHelp = computed(() => isLocalProvider.value ? t('apiKeyHelpLocal') : t('apiKeyHelp'))
 const baseUrlPlaceholder = computed(() => selectedProvider.value === 'llama'
   ? 'http://localhost:8888/v1'
   : selectedProvider.value === 'ollama' ? 'http://localhost:11434/v1' : t('baseUrlPlaceholder'))
@@ -457,7 +462,7 @@ onMounted(() => {
         <UFormField :label="t('apiKey')" name="apiKey">
           <UInput v-model="apiKey" type="password" :placeholder="keyPlaceholder" autocomplete="off" />
         </UFormField>
-        <p class="text-xs text-muted-foreground mt-1">{{ t('apiKeyHelp') }}</p>
+        <p class="text-xs text-muted-foreground mt-1">{{ apiKeyHelp }}</p>
       </div>
 
       <div v-if="showBaseUrlField" v-motion-fade :duration="250">

@@ -16,16 +16,22 @@ interface LlmConfig {
 
 const providerOptions = computed(() => [
   { label: t('providers.ollama'), value: 'ollama', description: t('providers.ollamaDescription') },
+  { label: t('providers.llama'), value: 'llama', description: t('providers.llamaDescription') },
   { label: t('providers.openai'), value: 'openai', description: t('providers.openaiDescription') },
   { label: t('providers.anthropic'), value: 'anthropic', description: t('providers.anthropicDescription') },
   { label: t('providers.openrouter'), value: 'openrouter', description: t('providers.openrouterDescription') },
+  { label: t('providers.deepseek'), value: 'deepseek', description: t('providers.deepseekDescription') },
+  { label: t('providers.opencode'), value: 'opencode', description: t('providers.opencodeDescription') },
 ])
 
 const modelsByProvider: Record<string, string[]> = {
   ollama: ['qwen3.5', 'llama3.2', 'mistral', 'phi3', 'gemma2', 'codegemma'],
+  llama: ['prism-ml/Ternary-Bonsai-2-27B-gguf:Q2_0'],
   openai: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo'],
   anthropic: ['claude-3-5-sonnet-20241022', 'claude-3-haiku-20240307', 'claude-3-opus-20240229'],
   openrouter: ['openai/gpt-4o', 'anthropic/claude-3.5-sonnet', 'meta-llama/llama-3.1-405b-instruct', 'mistralai/mistral-large'],
+  deepseek: ['deepseek-chat', 'deepseek-reasoner'],
+  opencode: ['deepseek-v4.1-flash', 'glm-5.3-flash', 'kimi-k2.5', 'qwen3.8-max', 'claude-sonnet-4-5', 'gpt-5.1-codex'],
 }
 
 const { data: configs, refresh } = await useFetch<LlmConfig[]>('/api/ai-tools/llm')
@@ -42,8 +48,9 @@ const saveError = ref('')
 const saveSuccess = ref(false)
 
 const availableModels = computed(() => modelsByProvider[selectedProvider.value] ?? [])
-const showApiKeyField = computed(() => ['openai', 'anthropic', 'openrouter'].includes(selectedProvider.value))
-const showBaseUrlField = computed(() => selectedProvider.value === 'ollama')
+const showApiKeyField = computed(() => true)
+const showBaseUrlField = computed(() => selectedProvider.value === 'ollama' || selectedProvider.value === 'llama')
+const apiKeyHelp = computed(() => ['ollama', 'llama'].includes(selectedProvider.value) ? t('apiKeyHelpLocal') : t('apiKeyHelp'))
 
 function selectProvider(provider: string) {
   selectedProvider.value = provider
@@ -163,7 +170,7 @@ function loadConfig(config: LlmConfig) {
           <div v-if="showApiKeyField">
             <label class="block text-sm font-medium text-gray-200 mb-2">{{ t('apiKey') }}</label>
             <UInput v-model="apiKey" type="password" :placeholder="t('apiKeyPlaceholder')" />
-            <p class="text-xs text-gray-500 mt-1">{{ t('apiKeyHelp') }}</p>
+            <p class="text-xs text-gray-500 mt-1">{{ apiKeyHelp }}</p>
           </div>
 
           <div v-if="showBaseUrlField">

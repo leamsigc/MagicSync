@@ -1,10 +1,10 @@
 import { defineTool, type ToolDefinition } from '@flue/runtime'
 import * as v from 'valibot'
-import { getHeaders } from 'h3'
 import { socialMediaAccountService } from '#layers/BaseDB/server/services/social-media-account.service'
 import { businessProfileService } from '#layers/BaseDB/server/services/business-profile.service'
 import { FOLLOW_BUTTON_MAX_CHARS } from '#layers/BaseShared/utils/auto-reply-limits'
 import type { AgentToolContext } from '../tool-context'
+import { appApi } from './app-api'
 import { toolFailure, toolResult } from './tool-result'
 
 const toolError = (code: string | undefined, message: string): never => toolFailure(code, message, 'AUTOREPLY_ERROR')
@@ -30,29 +30,16 @@ interface Campaign {
   mode?: 'template' | 'ai'
 }
 
-function appBaseUrl(): string {
-  const url = process.env.NUXT_APP_URL || process.env.NUXT_BETTER_AUTH_URL || 'http://localhost:3000'
-  return url.replace(/\/$/, '')
-}
-
 async function replyApi<T>(
   ctx: AgentToolContext,
   path: string,
   options: { method?: 'GET' | 'POST', body?: unknown } = {},
 ): Promise<T> {
-  const event = ctx.event
-  if (!event) toolError('UNAVAILABLE', 'Auto-reply tools are only available during a signed-in chat request')
-  try {
-    const response = await $fetch<{ data?: T }>(`${appBaseUrl()}${path}`, {
-      method: options.method ?? 'GET',
-      body: options.body,
-      headers: getHeaders(event),
-    })
-    return response.data as T
-  } catch (error) {
-    const data = (error as { data?: { statusMessage?: string, message?: string } }).data
-    toolError('API_ERROR', data?.statusMessage || data?.message || 'Auto-reply request failed')
-  }
+  const response = await appApi<{ data?: T }>(ctx, path, {
+    method: options.method ?? 'GET',
+    body: options.body,
+  })
+  return response.data as T
 }
 
 async function autoReplyAccountIds(ctx: AgentToolContext): Promise<Set<string>> {
@@ -62,7 +49,7 @@ async function autoReplyAccountIds(ctx: AgentToolContext): Promise<Set<string>> 
 
 async function ownedCampaigns(ctx: AgentToolContext): Promise<Campaign[]> {
   const ids = await autoReplyAccountIds(ctx)
-  const campaigns = await replyApi<Campaign[]>(ctx, '/api/v1/auto-reply/campaigns')
+  const campaigns = await replyApi<Campaign[]>(ctx, `/api/v1/auto-reply/campaigns?businessId=${encodeURIComponent(ctx.businessId)}`)
   return campaigns.filter(campaign => ids.has(campaign.socialAccountId))
 }
 
