@@ -9,7 +9,8 @@ const props = defineProps<{
 const { t } = useI18n()
 
 interface DesignEntry {
-  id?: string
+  designId?: string
+  assetId?: string
   title: string
   url?: string
   width?: number
@@ -26,10 +27,14 @@ function numberField(record: Record<string, unknown>, key: string): number | und
   return typeof value === 'number' ? value : undefined
 }
 
+function isDesignSummary(record: Record<string, unknown>): boolean {
+  return typeof record.id === 'string' && (Array.isArray(record.fields) || 'document' in record)
+}
+
 function recordsOf(call: ToolCallLike): Record<string, unknown>[] {
   const payload = parseSectionPayload(effectiveCall(call).result)
   if (!payload) return []
-  for (const key of ['images', 'results', 'items', 'designs']) {
+  for (const key of ['images', 'results', 'items', 'designs', 'renders']) {
     const list = payload[key]
     if (Array.isArray(list)) return list as Record<string, unknown>[]
   }
@@ -38,7 +43,8 @@ function recordsOf(call: ToolCallLike): Record<string, unknown>[] {
 
 function entryOf(record: Record<string, unknown>): DesignEntry {
   return {
-    id: stringOf(record, 'id') ?? stringOf(record, 'assetId') ?? stringOf(record, 'designId'),
+    designId: stringOf(record, 'designId') ?? (isDesignSummary(record) ? stringOf(record, 'id') : undefined),
+    assetId: stringOf(record, 'assetId'),
     title: stringOf(record, 'title') ?? stringOf(record, 'source') ?? stringOf(record, 'name') ?? t('workflow.image.untitled'),
     url: stringOf(record, 'url') ?? stringOf(record, 'assetUrl') ?? stringOf(record, 'imageUrl'),
     width: numberField(record, 'width'),
@@ -47,10 +53,14 @@ function entryOf(record: Record<string, unknown>): DesignEntry {
 }
 
 const entries = computed(() => props.calls.flatMap(call => recordsOf(call).map(entryOf)))
-const designs = computed(() => entries.value.filter(entry => entry.url || entry.id))
+const designs = computed(() => entries.value.filter(entry => entry.url || entry.designId))
 
 function editorLink(id: string): string {
   return `/tools/image-editor?designId=${encodeURIComponent(id)}`
+}
+
+function entryKey(entry: DesignEntry, index: number): string {
+  return entry.designId ?? entry.assetId ?? entry.url ?? String(index)
 }
 
 function sizeLabel(entry: DesignEntry): string {
@@ -80,7 +90,7 @@ function sizeLabel(entry: DesignEntry): string {
       <div class="grid gap-3 p-3 sm:grid-cols-2">
         <figure
           v-for="(entry, index) in designs"
-          :key="`${entry.id ?? entry.url ?? index}`"
+          :key="entryKey(entry, index)"
           class="overflow-hidden rounded-xl border border-default bg-elevated"
         >
           <div class="flex min-h-32 items-center justify-center bg-default">
@@ -114,8 +124,8 @@ function sizeLabel(entry: DesignEntry): string {
                 :label="t('workflow.image.download')"
               />
               <UButton
-                v-if="entry.id"
-                :to="editorLink(entry.id)"
+                v-if="entry.designId"
+                :to="editorLink(entry.designId)"
                 size="xs"
                 variant="outline"
                 color="neutral"

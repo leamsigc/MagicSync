@@ -185,6 +185,11 @@ function isCustomModelMissing() {
   return showCustomModelInput.value && getEffectiveModel() === ''
 }
 
+function errorMessageOf(error: unknown): string | null {
+  const data = (error as { data?: { statusMessage?: string, message?: string } }).data
+  return data?.statusMessage ?? data?.message ?? (error instanceof Error ? error.message : null)
+}
+
 async function saveGlobalConfig() {
   const payload = buildPayload()
   if (existingId.value && existingId.value !== 'default') {
@@ -226,8 +231,8 @@ async function handleSave() {
     toast.add({ title: t('saved'), color: 'success' })
     emit('saved')
     await loadConfig()
-  } catch {
-    toast.add({ title: t('saveError'), color: 'error' })
+  } catch (error: unknown) {
+    toast.add({ title: errorMessageOf(error) ?? t('saveError'), color: 'error' })
   } finally {
     isSaving.value = false
   }

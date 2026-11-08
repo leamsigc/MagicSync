@@ -32,8 +32,9 @@ function forwardHeaders(event: H3Event): Record<string, string> {
 }
 
 interface AppApiOptions {
-  method?: 'GET' | 'POST'
+  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
   body?: unknown
+  query?: Record<string, unknown>
 }
 
 export async function appApi<T>(ctx: AgentToolContext, path: string, options: AppApiOptions = {}): Promise<T> {
@@ -43,6 +44,7 @@ export async function appApi<T>(ctx: AgentToolContext, path: string, options: Ap
     return await $fetch<T>(`${appBaseUrl()}${path}`, {
       method: options.method ?? 'GET',
       body: options.body,
+      ...(options.query ? { query: options.query } : {}),
       headers: forwardHeaders(event),
     })
   }

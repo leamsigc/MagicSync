@@ -1,15 +1,13 @@
 import { defineTool, type ToolDefinition } from '@flue/runtime'
 import * as v from 'valibot'
 import type { AgentToolContext } from '../tool-context'
-import { appApi } from './app-api'
+import { listNativeFeatures, nativeFeatureDetail, runNativeFeature, type FeatureSummary } from '../features/catalog'
 import { toolFailure, toolResult } from './tool-result'
 
 /**
- * Chat is the operator surface: it can reach every feature the `/mcp` server
- * exposes (posts, media, image editor, analytics, platforms, menu boards,
- * carousels, auto-reply) without mounting 63 schemas in one turn. `list_features`
- * discovers and `use_feature` dispatches through the site's feature route, which
- * runs the exact MCP handler under the chat session's identity.
+ * Native chat capabilities. There is no MCP call in this path: every feature
+ * maps to a product `/api/v1/*` route, executed with the chat session's cookies,
+ * and those routes enforce owner/member access for the active business.
  */
 
 interface FeatureQuery {
@@ -18,30 +16,33 @@ interface FeatureQuery {
   feature?: string
 }
 
-interface FeatureCatalogResponse {
-  total: number
-  groups: Array<{ name: string, features: Array<{ name: string, description: string }> }>
-  feature?: { name: string, group: string, description: string, fields: unknown[] }
+function matches(feature: FeatureSummary, group?: string, query?: string): boolean {
+  if (group && feature.group !== group) return false
+  if (!query) return true
+  const needle = query.toLowerCase()
+  return feature.name.includes(needle) || feature.description.toLowerCase().includes(needle)
 }
 
-function catalogQuery(ctx: AgentToolContext, input: FeatureQuery): string {
-  const params = new URLSearchParams({ businessId: ctx.businessId })
-  for (const key of ['group', 'query', 'feature'] as const) {
-    const value = input[key]?.trim()
-    if (value) params.set(key, value)
+function groupFeatures(features: FeatureSummary[]) {
+  const groups = new Map<string, FeatureSummary[]>()
+  for (const feature of features) {
+    const list = groups.get(feature.group) ?? []
+    list.push(feature)
+    groups.set(feature.group, list)
   }
-  return params.toString()
+  return [...groups.entries()].map(([group, entries]) => ({ group, features: entries }))
 }
 
-async function listFeatures(ctx: AgentToolContext, input: FeatureQuery) {
-  const catalog = await appApi<FeatureCatalogResponse>(ctx, `/api/v1/agent/features?${catalogQuery(ctx, input)}`)
-  if (catalog.feature) return toolResult(catalog.feature)
+async function listFeatures(_ctx: AgentToolContext, input: FeatureQuery) {
+  if (input.feature) {
+    const detail = nativeFeatureDetail(input.feature)
+    if (!detail) toolFailure('NOT_FOUND', `Unknown feature "${input.feature}"`, 'FEATURE_ERROR')
+    return toolResult(detail)
+  }
+  const features = listNativeFeatures().filter(feature => matches(feature, input.group, input.query))
   return toolResult({
-    total: catalog.total,
-    groups: catalog.groups.map(group => ({
-      group: group.name,
-      features: group.features.map(feature => ({ name: feature.name, description: feature.description })),
-    })),
+    total: features.length,
+    groups: groupFeatures(features),
     hint: 'Call list_features with feature=<name> to see its arguments, then use_feature with those arguments.',
   })
 }
@@ -53,25 +54,23 @@ interface FeatureInvocation {
 }
 
 async function useFeature(ctx: AgentToolContext, input: { feature: string, arguments?: Record<string, unknown> }) {
-  const response = await appApi<FeatureInvocation>(ctx, '/api/v1/agent/features/invoke', {
-    method: 'POST',
-    body: {
-      businessId: ctx.businessId,
-      feature: input.feature,
-      arguments: input.arguments ?? {},
-    },
-  })
-  if (!response.success) toolFailure('FEATURE_ERROR', response.error ?? `Feature "${input.feature}" failed`, 'FEATURE_ERROR')
-  return toolResult({ feature: input.feature, result: response.data })
+  try {
+    const result = await runNativeFeature(ctx, input.feature, input.arguments ?? {})
+    return toolResult({ feature: input.feature, result })
+  }
+  catch (error) {
+    const message = error instanceof Error ? error.message : `Feature "${input.feature}" failed`
+    toolFailure('FEATURE_ERROR', message, 'FEATURE_ERROR')
+  }
 }
 
 export function createFeatureTools(ctx: AgentToolContext): ToolDefinition[] {
   return [
     defineTool({
       name: 'list_features',
-      description: 'List every product feature this chat can operate (posts, media, image editor, analytics, platforms, carousels, menu boards). Pass feature=<name> for its arguments.',
+      description: 'List every native product feature this chat can operate (accounts, posts, media, designs, templates, analytics, business). Pass feature=<name> for its arguments.',
       input: v.object({
-        group: v.optional(v.pipe(v.string(), v.description('Only this group, e.g. posts, media, image-editor'))),
+        group: v.optional(v.pipe(v.string(), v.description('Only this group, e.g. posts, designs, media'))),
         query: v.optional(v.pipe(v.string(), v.description('Search names and descriptions'))),
         feature: v.optional(v.pipe(v.string(), v.description('Show one feature\'s exact arguments'))),
       }),
@@ -79,9 +78,9 @@ export function createFeatureTools(ctx: AgentToolContext): ToolDefinition[] {
     }),
     defineTool({
       name: 'use_feature',
-      description: 'Run any product feature by name with validated arguments. Use list_features first to find the name and its fields.',
+      description: 'Run any native product feature by name with validated arguments. Use list_features first to find the name and its fields.',
       input: v.object({
-        feature: v.pipe(v.string(), v.description('Feature name from list_features, e.g. create-post, preview-post, render-design')),
+        feature: v.pipe(v.string(), v.description('Feature name from list_features, e.g. list-posts, create-post, render-design-batch')),
         arguments: v.optional(v.pipe(v.record(v.string(), v.unknown()), v.description('Arguments object matching the feature fields'))),
       }),
       run: async toolCtx => useFeature(ctx, {

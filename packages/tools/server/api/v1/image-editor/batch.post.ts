@@ -11,6 +11,7 @@ import { signAssetPath } from '#layers/BaseShared/server/utils/signed-url'
 import { deliverDesignWebhook, type DesignWebhookEvent } from '../../../utils/design-webhook'
 import { assetService } from '#layers/BaseShared/server/services/asset.service'
 import { designWebhookService } from '#layers/BaseDB/server/services/design-webhook.service'
+import { requireBusinessAccess } from '#layers/BaseDB/server/utils/business-access'
 
 /**
  * Batch design generation — rows or cartesian value arrays, bounded at
@@ -37,6 +38,8 @@ const batchSchema = sourceSchema.extend({
   scale: z.number().min(0.1).max(4).optional(),
   page: z.number().int().min(0).max(50).optional(),
   nameTemplate: z.string().max(80).optional(),
+  /** Session callers (chat) pass the active business so renders land in its library. */
+  businessId: z.string().min(1).max(128).optional(),
 })
 
 export default defineEventHandler(async (event) => {
@@ -50,6 +53,14 @@ export default defineEventHandler(async (event) => {
 
   const body = await readValidatedBody(event, raw => batchSchema.parse(raw))
   const source = await resolveDesignSource(principal, body)
+
+  const assetBusinessId = principal.key?.businessId ?? body.businessId
+  if (!principal.key && body.businessId) {
+    const access = await requireBusinessAccess(event, principal.userId, body.businessId)
+    if (!access.success) {
+      throw createError({ statusCode: 403, statusMessage: access.error ?? 'You do not have access to this business' })
+    }
+  }
 
   let renders: FieldValues[]
   try {
@@ -92,7 +103,7 @@ export default defineEventHandler(async (event) => {
         data: `data:${rendered.mimeType};base64,${rendered.buffer.toString('base64')}`,
         mimeType: rendered.mimeType,
         originalName: outputName(body, index, extension),
-        ...(principal.key ? { businessId: principal.key.businessId } : {}),
+        ...(assetBusinessId ? { businessId: assetBusinessId } : {}),
       })
       if (!stored.success || !stored.data) throw new Error(stored.error ?? 'Failed to store render')
       const serveUrl = signAssetPath(stored.data.url).url
@@ -113,7 +124,7 @@ export default defineEventHandler(async (event) => {
       data: `data:${ZIP_MIME};base64,${zip.toString('base64')}`,
       mimeType: ZIP_MIME,
       originalName: outputName(body, 0, 'zip'),
-      ...(principal.key ? { businessId: principal.key.businessId } : {}),
+      ...(assetBusinessId ? { businessId: assetBusinessId } : {}),
     })
     if (storedZip.success && storedZip.data) zipUrl = signAssetPath(storedZip.data.url, { ttlSeconds: 7 * 24 * 3600 }).url
   }

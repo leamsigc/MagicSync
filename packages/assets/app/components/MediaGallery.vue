@@ -20,6 +20,8 @@ interface Props {
   /** Which bucket to list. Passed down rather than fetched again. */
   folderScope?: FolderScope
   folders?: AssetFolderSummary[]
+  /** Only the caller's rows that have no business ("Only mine" on /app/media). */
+  unattachedOnly?: boolean
 }
 
 interface Emits {
@@ -42,6 +44,7 @@ const props = withDefaults(defineProps<Props>(), {
   viewMode: 'masonry',
   folderScope: () => ({ kind: 'unfiled' }),
   folders: () => [],
+  unattachedOnly: false,
 })
 
 const router = useRouter()
@@ -291,17 +294,19 @@ const toggleTag = (tag: string) => {
 // One watcher over business AND folder scope: the composable holds the scope so
 // infinite scroll pages the same bucket the first page came from.
 watch(
-  () => [props.businessId, props.folderScope] as const,
-  ([businessId, scope]) => {
+  () => [props.businessId, props.folderScope, props.unattachedOnly] as const,
+  ([businessId, scope, unattachedOnly]) => {
     if (!businessId) return
     setFolderScope(scope)
-    fetchAssets(businessId, { filters: { folderScope: scope } })
+    fetchAssets(businessId, { filters: { folderScope: scope, unattached: unattachedOnly } })
   },
   { immediate: true },
 )
 
 const retryFetch = () => {
-  fetchAssets(props.businessId || '0', { filters: { folderScope: props.folderScope } })
+  fetchAssets(props.businessId || '0', {
+    filters: { folderScope: props.folderScope, unattached: props.unattachedOnly },
+  })
 }
 
 const moveTargetToken = ref(UNFILED_TOKEN)

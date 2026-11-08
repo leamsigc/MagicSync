@@ -366,6 +366,28 @@
       "groupBundled": "Built-in skills",
       "groupRegistered": "Your skills",
       "forced": "Forced for this message: {name}"
+    },
+    "weekPlan": {
+      "title": "{days}-day content plan",
+      "accountsTitle": "Choose social accounts",
+      "accountsHint": "The plan will be scheduled to the selected accounts.",
+      "continue": "Continue",
+      "noAccounts": "No social accounts are connected yet. Connect an account first.",
+      "templateTitle": "Design template",
+      "noTemplates": "No design templates were found. Create or publish a template first.",
+      "approveAll": "Approve all {count}",
+      "approveSelected": "Approve selected ({count})",
+      "approved": "Created {count} posts",
+      "approvePartial": "Created {created} of {total} posts",
+      "approveFailed": "Could not create the posts",
+      "requestChanges": "Request changes",
+      "feedbackPlaceholder": "What should change?",
+      "feedbackRequired": "Write the changes you want first.",
+      "postLabel": "Post {index}",
+      "imagePending": "Image preview pending",
+      "selectedAccounts": "{count} accounts",
+      "nothingSelected": "Select at least one post or account.",
+      "createdBadge": "Created"
     }
   },
   "fr": {
@@ -735,6 +757,28 @@
       "groupBundled": "Compétences intégrées",
       "groupRegistered": "Tes compétences",
       "forced": "Forcée pour ce message : {name}"
+    },
+    "weekPlan": {
+      "title": "Plan de contenu sur {days} jours",
+      "accountsTitle": "Choisir les comptes sociaux",
+      "accountsHint": "Le plan sera programmé sur les comptes sélectionnés.",
+      "continue": "Continuer",
+      "noAccounts": "Aucun compte social connecté. Connecte d’abord un compte.",
+      "templateTitle": "Modèle de design",
+      "noTemplates": "Aucun modèle de design trouvé. Crée ou publie d’abord un modèle.",
+      "approveAll": "Approuver les {count}",
+      "approveSelected": "Approuver la sélection ({count})",
+      "approved": "{count} publications créées",
+      "approvePartial": "{created} publications sur {total} créées",
+      "approveFailed": "Impossible de créer les publications",
+      "requestChanges": "Demander des modifications",
+      "feedbackPlaceholder": "Qu’est-ce qui doit changer ?",
+      "feedbackRequired": "Écris d’abord les modifications souhaitées.",
+      "postLabel": "Publication {index}",
+      "imagePending": "Aperçu de l’image en attente",
+      "selectedAccounts": "{count} comptes",
+      "nothingSelected": "Sélectionne au moins une publication ou un compte.",
+      "createdBadge": "Créée"
     }
   },
   "es": {
@@ -1104,6 +1148,28 @@
       "groupBundled": "Habilidades integradas",
       "groupRegistered": "Tus habilidades",
       "forced": "Forzada para este mensaje: {name}"
+    },
+    "weekPlan": {
+      "title": "Plan de contenido de {days} días",
+      "accountsTitle": "Elige las cuentas sociales",
+      "accountsHint": "El plan se programará en las cuentas seleccionadas.",
+      "continue": "Continuar",
+      "noAccounts": "Aún no hay cuentas sociales conectadas. Conecta una primero.",
+      "templateTitle": "Plantilla de diseño",
+      "noTemplates": "No se encontraron plantillas de diseño. Crea o publica una primero.",
+      "approveAll": "Aprobar las {count}",
+      "approveSelected": "Aprobar seleccionadas ({count})",
+      "approved": "Se crearon {count} publicaciones",
+      "approvePartial": "Se crearon {created} de {total} publicaciones",
+      "approveFailed": "No se pudieron crear las publicaciones",
+      "requestChanges": "Pedir cambios",
+      "feedbackPlaceholder": "¿Qué quieres cambiar?",
+      "feedbackRequired": "Escribe primero los cambios que quieres.",
+      "postLabel": "Publicación {index}",
+      "imagePending": "Vista previa de imagen pendiente",
+      "selectedAccounts": "{count} cuentas",
+      "nothingSelected": "Selecciona al menos una publicación o cuenta.",
+      "createdBadge": "Creada"
     }
   },
   "de": {
@@ -1473,6 +1539,28 @@
       "groupBundled": "Integrierte Skills",
       "groupRegistered": "Deine Skills",
       "forced": "Für diese Nachricht erzwungen: {name}"
+    },
+    "weekPlan": {
+      "title": "{days}-Tage-Content-Plan",
+      "accountsTitle": "Social-Konten wählen",
+      "accountsHint": "Der Plan wird auf den ausgewählten Konten geplant.",
+      "continue": "Weiter",
+      "noAccounts": "Noch keine Social-Konten verbunden. Verbinde zuerst ein Konto.",
+      "templateTitle": "Design-Vorlage",
+      "noTemplates": "Keine Design-Vorlagen gefunden. Erstelle oder veröffentliche zuerst eine.",
+      "approveAll": "Alle {count} freigeben",
+      "approveSelected": "Ausgewählte freigeben ({count})",
+      "approved": "{count} Beiträge erstellt",
+      "approvePartial": "{created} von {total} Beiträgen erstellt",
+      "approveFailed": "Beiträge konnten nicht erstellt werden",
+      "requestChanges": "Änderungen anfordern",
+      "feedbackPlaceholder": "Was soll geändert werden?",
+      "feedbackRequired": "Schreibe zuerst die gewünschten Änderungen.",
+      "postLabel": "Beitrag {index}",
+      "imagePending": "Bildvorschau ausstehend",
+      "selectedAccounts": "{count} Konten",
+      "nothingSelected": "Wähle mindestens einen Beitrag oder ein Konto.",
+      "createdBadge": "Erstellt"
     }
   }
 }

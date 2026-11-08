@@ -12,6 +12,14 @@ import { TemplateType } from '#layers/BaseDB/db/schema'
 
 export type TemplateTypeValue = typeof TemplateType[number]
 
+/**
+ * Which rows a template list shows:
+ * - `business`: the active workspace's templates plus this user's templates that
+ *   have no business (the service's ownership OR).
+ * - `mine`: every template this user owns, attached to any business or none.
+ */
+export type TemplateScope = 'business' | 'mine' | 'unattached'
+
 export type TemplateWithAssets = Template & {
     assets: TemplateAsset[]
 }
@@ -33,6 +41,8 @@ export type UpdateTemplateData = {
 export type TemplateFilters = {
     type?: TemplateTypeValue
     isPublic?: boolean
+    /** Only rows with no business (owned by the caller). */
+    unattached?: boolean
 }
 
 export const useTemplateManager = () => {
@@ -49,7 +59,8 @@ export const useTemplateManager = () => {
      */
     const getTemplates = async (
         filters: TemplateFilters = {},
-        paginationOptions: PaginationOptions = { page: 1, limit: 20 }
+        paginationOptions: PaginationOptions = { page: 1, limit: 20 },
+        businessId: string | undefined = activeBusinessId.value,
     ) => {
         isLoading.value = true
         error.value = null
@@ -66,8 +77,11 @@ export const useTemplateManager = () => {
             if (filters.isPublic !== undefined) {
                 query.append('isPublic', filters.isPublic.toString())
             }
-            if (activeBusinessId.value) {
-                query.append('businessId', activeBusinessId.value)
+            if (filters.unattached !== undefined) {
+                query.append('unattached', filters.unattached.toString())
+            }
+            if (businessId) {
+                query.append('businessId', businessId)
             }
 
             const response = await $fetch<PaginatedResponse<Template>>(`/api/v1/templates?${query}`)
@@ -99,9 +113,14 @@ export const useTemplateManager = () => {
      */
     const getTemplatesByType = async (
         type: TemplateTypeValue,
-        paginationOptions: PaginationOptions = { page: 1, limit: 20 }
+        paginationOptions: PaginationOptions = { page: 1, limit: 20 },
+        scope: TemplateScope = 'business',
     ) => {
-        return getTemplates({ type }, paginationOptions)
+        return getTemplates(
+            scope === 'unattached' ? { type, unattached: true } : { type },
+            paginationOptions,
+            scope === 'mine' ? undefined : activeBusinessId.value,
+        )
     }
 
     /**
@@ -181,6 +200,48 @@ export const useTemplateManager = () => {
         } catch (err: unknown) {
             const fetchError = err as { data?: { message?: string }; message?: string }
             const errorMessage = fetchError.data?.message || fetchError.message || 'Failed to update template'
+            error.value = errorMessage
+            toast.add({
+                title: 'Error',
+                description: errorMessage,
+                color: 'error'
+            })
+            throw err
+        } finally {
+            isLoading.value = false
+        }
+    }
+
+    /**
+     * Attach an owned template to a business the user belongs to.
+     */
+    const attachTemplateToBusiness = async (id: string, businessId: string, type: TemplateTypeValue) => {
+        isLoading.value = true
+        error.value = null
+
+        try {
+            const response = await $fetch<{ success: boolean; data: Template }>(`/api/v1/templates/${id}/attach`, {
+                method: 'POST',
+                body: { businessId }
+            })
+
+            if (response.success && response.data) {
+                const bucket = templateList.value[type] ?? []
+                templateList.value = {
+                    ...templateList.value,
+                    [type]: bucket.map(row => row.id === id ? response.data : row)
+                }
+                toast.add({
+                    title: 'Success',
+                    description: 'Template attached to the business',
+                    color: 'success'
+                })
+            }
+
+            return response
+        } catch (err: unknown) {
+            const fetchError = err as { data?: { message?: string }; message?: string }
+            const errorMessage = fetchError.data?.message || fetchError.message || 'Failed to attach template'
             error.value = errorMessage
             toast.add({
                 title: 'Error',
@@ -274,10 +335,11 @@ export const useTemplateManager = () => {
         getTemplateById,
         createTemplate,
         updateTemplate,
+        attachTemplateToBusiness,
         deleteTemplate,
 
         // Utilities
         clearError: () => { error.value = null },
-        clearTemplates: () => { templateList.value = [] }
+        clearTemplates: () => { templateList.value = {} as Record<TemplateTypeValue, Template[]> }
     }
 }

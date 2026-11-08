@@ -123,6 +123,9 @@ export class TemplateService implements TemplateServiceType {
       if (filters.isPublic !== undefined) {
         whereConditions = and(whereConditions, eq(templates.isPublic, filters.isPublic))!;
       }
+      if (filters.unattached === true) {
+        whereConditions = and(whereConditions, isNull(templates.businessId))!;
+      }
 
       const templateList = await this.db.query.templates.findMany({
         where: whereConditions,
@@ -204,6 +207,46 @@ export class TemplateService implements TemplateServiceType {
     if (template.ownerId === userId) return true;
     if (!template.businessId) return false;
     return businessAccessService.isMember(userId, template.businessId);
+  }
+
+  /** The caller's own template, or a not-found response. */
+  private async ownedTemplate(id: string, userId: string): Promise<ServiceResponse<TemplateWithAssets>> {
+    const existing = await this.findById(id, userId);
+    if (!existing.success || !existing.data) return existing;
+    if (existing.data.ownerId !== userId) {
+      return { success: false, error: 'Template not found', code: 'NOT_FOUND' };
+    }
+    return existing;
+  }
+
+  /**
+   * Attach a template the caller owns to a business they belong to. Unattached
+   * rows are created by tools/pickers that had no active workspace; adopting
+   * them is the only way they become shared with the business.
+   */
+  async attachToBusiness(id: string, userId: string, businessId: string): Promise<ServiceResponse<Template>> {
+    try {
+      const existing = await this.ownedTemplate(id, userId);
+      if (!existing.success || !existing.data) return existing;
+      const isMember = await businessAccessService.isMember(userId, businessId);
+      if (!isMember) {
+        return { success: false, error: 'You do not have access to this business', code: 'FORBIDDEN' };
+      }
+
+      const [updated] = await this.db
+        .update(templates)
+        .set({ businessId, updatedAt: new Date() })
+        .where(and(eq(templates.id, id), eq(templates.ownerId, userId)))
+        .returning();
+
+      if (!updated) {
+        return { success: false, error: 'Template not found', code: 'NOT_FOUND' };
+      }
+
+      return { success: true, data: updated };
+    } catch (error) {
+      return { success: false, error: 'Failed to attach template' };
+    }
   }
 
   async update(id: string, userId: string, data: UpdateTemplateData): Promise<ServiceResponse<Template>> {

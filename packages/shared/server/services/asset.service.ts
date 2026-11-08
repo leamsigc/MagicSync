@@ -97,7 +97,7 @@ export type {
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 20;
 
-type AssetQueryFilters = { mimeType?: string; folder: FolderScope };
+type AssetQueryFilters = { mimeType?: string; folder: FolderScope; unattached: boolean };
 
 function parseAssetFilters(raw: FilterOptions | undefined): AssetQueryFilters {
   const filters = raw ?? {};
@@ -105,6 +105,8 @@ function parseAssetFilters(raw: FilterOptions | undefined): AssetQueryFilters {
   return {
     mimeType: typeof mimeType === 'string' && mimeType.length > 0 ? mimeType : undefined,
     folder: parseFolderScope(filters.folderId),
+    // "Mine" view: only the caller's rows that never got a business.
+    unattached: filters.unattached === true || filters.unattached === 'true',
   };
 }
 
@@ -133,6 +135,7 @@ function buildAssetWhere(ownership: SQL | undefined, rawFilters: FilterOptions |
   const filters = parseAssetFilters(rawFilters);
   const parts = [
     ownership,
+    filters.unattached ? isNull(assets.businessId) : undefined,
     folderPredicate(filters.folder),
     filters.mimeType ? sql`${assets.mimeType} LIKE ${`${filters.mimeType}%`}` : undefined,
   ].filter((part): part is SQL => part !== undefined);
@@ -302,8 +305,14 @@ export class AssetService {
       }
 
       const { page, limit, offset } = pageWindow(options.pagination);
+      // Business rows are shared with every member; the caller's personal rows
+      // (no business, e.g. "Save to library" designs and Pexels/Drive imports)
+      // stay visible without pulling another business's rows into this one.
       const whereClause = buildAssetWhere(
-        eq(assets.businessId, businessId),
+        or(
+          eq(assets.businessId, businessId),
+          and(eq(assets.userId, userId), isNull(assets.businessId)),
+        ),
         options.filters,
       );
 
@@ -776,6 +785,39 @@ export class AssetService {
     } catch (error) {
       log.error({ message: 'assetService.deleteFolder failed', folderId: id, businessId, error: String(error) });
       return { success: false, error: 'Failed to delete asset folder' };
+    }
+  }
+
+  /**
+   * Adopt the caller's personal rows into a business they belong to. Only
+   * `business_id IS NULL` rows owned by the caller are touched, so another
+   * member's personal library can never be claimed.
+   */
+  async attachToBusiness(
+    assetIds: string[],
+    userId: string,
+    businessId: string,
+    event?: H3Event,
+  ): Promise<ServiceResponse<{ attached: number }>> {
+    const gate = await this.gateBusiness(businessId, userId, event);
+    if (!gate.ok) return { success: false, error: gate.error, code: gate.code };
+    if (assetIds.length === 0) return { success: true, data: { attached: 0 } };
+
+    try {
+      const attached = await this.db
+        .update(assets)
+        .set({ businessId })
+        .where(and(
+          inArray(assets.id, assetIds),
+          eq(assets.userId, userId),
+          isNull(assets.businessId),
+        ))
+        .returning({ id: assets.id });
+
+      return { success: true, data: { attached: attached.length } };
+    } catch (error) {
+      log.error({ message: 'assetService.attachToBusiness failed', businessId, error: String(error) });
+      return { success: false, error: 'Failed to attach assets' };
     }
   }
 

@@ -39,6 +39,7 @@ const {
   assetFolders,
   folderScope,
   deleteAssets,
+  attachAssets,
   isDeletingAssets,
   getStorageUsage,
   clearError,
@@ -56,17 +57,22 @@ const showEditor = ref(false)
 const selectedTab = ref('library')
 const selectedAssetForEdit = ref<Asset | null>(null)
 const filterType = ref<'all' | 'image' | 'video' | 'document'>('all')
+// "This business" = business rows + my unfiled rows; "Only mine" = my rows with
+// no business at all (tool saves / imports), so they can be seen and attached.
+const mediaScope = ref<'business' | 'unattached'>('business')
 const searchQuery = ref('')
 const viewMode = ref<'masonry' | 'grid' | 'list' | 'carousel'>('masonry')
 const showCreateFolder = ref(false)
 const newFolderName = ref('')
 const isCreatingFolder = ref(false)
 const isDeletingFolder = ref(false)
+const isAttaching = ref(false)
 const activeScope = ref<FolderScope>({ kind: 'unfiled' })
 
 // Computed
 const selectedBusinessId = ref<string | undefined>(activeBusinessId.value)
 const hasSelectedBusiness = computed(() => !!selectedBusinessId.value)
+const unattachedSelectedCount = computed(() => selectedAssets.value.filter(asset => !asset.businessId).length)
 const storageUsage = computed(() => getStorageUsage())
 
 const assetStats = computed(() => {
@@ -106,6 +112,12 @@ watch(selectedBusinessId, async (id) => {
   setFolderScope(activeScope.value)
   await fetchFolders(id)
 }, { immediate: true })
+
+watch(mediaScope, (scope) => {
+  if (scope === 'unattached' && activeScope.value.kind !== 'unfiled') {
+    handleFolderScopeChange({ kind: 'unfiled' })
+  }
+})
 
 const handleFolderScopeChange = (scope: FolderScope) => {
   activeScope.value = scope
@@ -185,6 +197,20 @@ const handleAssetSelected = (asset: Asset) => {
 
 const handleAssetDeselected = (asset: Asset) => {
   log.debug({ message: 'asset deselected', assetId: asset.id, filename: asset.filename })
+}
+
+const handleAttachSelected = async () => {
+  if (!selectedBusinessId.value) return
+  const ids = selectedAssets.value.filter(asset => !asset.businessId).map(asset => asset.id)
+  if (ids.length === 0) return
+  isAttaching.value = true
+  const attached = await attachAssets(selectedBusinessId.value, ids, mediaScope.value === 'unattached')
+  isAttaching.value = false
+  if (attached === null) {
+    toast.add({ title: t('alerts.error'), description: error.value ?? '', color: 'error' })
+    return
+  }
+  toast.add({ title: t('messages.attached', { count: attached }), color: 'success' })
 }
 
 const handleFileUpload = async (files: File[]) => {
@@ -278,6 +304,13 @@ const handleDriveImport = async (imported: Asset[]) => {
   <BaseCollectionPage :title="t('title')" :description="t('description')" container="full" back-to="">
     <template #actions>
       <div class="flex items-center gap-2" data-tour="add-assets-step-0">
+        <UButton v-if="unattachedSelectedCount > 0 && selectedBusinessId" v-motion-fade-visible :duration="200"
+          color="primary" variant="soft" :loading="isAttaching" :disabled="isDeletingAssets"
+          @click="handleAttachSelected">
+          <Icon name="lucide:building-2" class="mr-2 h-4 w-4" />
+          {{ t('buttons.attach_to_business') }}
+        </UButton>
+
         <UButton v-if="selectedAssets.length > 0" color="error" variant="solid" :disabled="isDeletingAssets"
           @click="openDeleteConfirm">
           <Icon name="lucide:trash-2" class="mr-2 h-4 w-4" />
@@ -340,8 +373,8 @@ const handleDriveImport = async (imported: Asset[]) => {
           <div class="space-y-4 mt-4">
             <!-- Search / folder / type filters and the view switcher -->
             <MediaFilters v-model:filter-type="filterType" v-model:search-query="searchQuery"
-              v-model:view-mode="viewMode" v-model:folder-scope="activeScope" :folders="assetFolders"
-              data-tour="add-assets-step-1" />
+              v-model:view-mode="viewMode" v-model:folder-scope="activeScope" v-model:scope="mediaScope"
+              :folders="assetFolders" data-tour="add-assets-step-1" />
 
             <!-- Delete the selected folder. Its assets fall back to the unfiled bucket. -->
             <div v-if="activeFolderId" class="flex justify-end" v-motion-fade :duration="250">
@@ -356,7 +389,8 @@ const handleDriveImport = async (imported: Asset[]) => {
             <UCard class="p-6" variant="soft" data-tour="add-assets-step-2">
               <MediaGallery :business-id="selectedBusinessId" :selectable="true" :multi-select="true"
                 :show-uploader="false" :filter-type="filterType" :search-query="searchQuery" :view-mode="viewMode"
-                :folder-scope="activeScope" :folders="assetFolders" @select="handleAssetSelected"
+                :folder-scope="activeScope" :folders="assetFolders"
+                :unattached-only="mediaScope === 'unattached'" @select="handleAssetSelected"
                 @deselect="handleAssetDeselected" @upload="handleFileUpload" @open-edit-modal="handleOpenEditModal"
                 @move-selected="handleMoveSelected" />
             </UCard>

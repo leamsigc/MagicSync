@@ -38,7 +38,7 @@ useHead({
     ]
 })
 
-const { getTemplatesByType, templateList, isLoading, createTemplate, updateTemplate, deleteTemplate } = useTemplateManager()
+const { getTemplatesByType, templateList, isLoading, createTemplate, updateTemplate, attachTemplateToBusiness, deleteTemplate } = useTemplateManager()
 
 // Fetch templates on mount
 onMounted(() => {
@@ -46,7 +46,14 @@ onMounted(() => {
 })
 
 // Collection state: grid + list, search, visibility filter
-const rows = computed(() => templateList[TEMPLATE_TYPE] ?? [])
+const rows = computed(() => templateList.value[TEMPLATE_TYPE] ?? [])
+
+// Server-side scope. "This business" merges the workspace's templates with the
+// ones this user created before a workspace existed; "Only mine" drops
+// `businessId`; "Only unattached" sends `unattached=true` to show just the rows
+// that still need attaching.
+const scope = ref<'business' | 'mine' | 'unattached'>('business')
+const activeBusinessId = useState<string | undefined>('business:id')
 
 const { view, setView, search, setSearch, filters, setFilter, filtered } = useCollectionView<Template>({
     key: 'app-templates-variables',
@@ -78,9 +85,25 @@ const visibilityOptions = computed(() => [
     { value: 'private', label: t('visibility_private') },
 ])
 
+const scopeOptions = computed(() => [
+    { value: 'business', label: t('scope_business') },
+    { value: 'mine', label: t('scope_mine') },
+    { value: 'unattached', label: t('scope_unattached') },
+])
+
 const toolbarFilters = computed(() => [
+    { key: 'scope', label: t('scope_label'), value: scope.value, options: scopeOptions.value, width: 'w-full sm:w-44' },
     { key: 'visibility', label: t('visibility_label'), value: filters.value.visibility || 'all', options: visibilityOptions.value, width: 'w-full sm:w-44' },
 ])
+
+const handleFilterChange = (key: string, value: string) => {
+    if (key !== 'scope') {
+        setFilter(key, value)
+        return
+    }
+    scope.value = value === 'mine' || value === 'unattached' ? value : 'business'
+    void getTemplatesByType(TEMPLATE_TYPE, { page: 1, limit: 20 }, scope.value)
+}
 
 const viewOptions = computed(() => [
     { value: 'grid', label: t('view_grid'), icon: 'i-lucide-layout-grid' },
@@ -123,8 +146,8 @@ const handleSave = async (data: CreateTemplateData | UpdateTemplateData) => {
         }
         isFormModalOpen.value = false
         selectedTemplate.value = null
-        // Refresh list
-        await getTemplatesByType(TEMPLATE_TYPE)
+        // Refresh list in the scope the user is looking at
+        await getTemplatesByType(TEMPLATE_TYPE, { page: 1, limit: 20 }, scope.value)
     } catch {
         // Error is handled by composable with toast
     }
@@ -168,11 +191,31 @@ const visibilityColor = (template: Template): 'success' | 'neutral' =>
 
 const formatDate = (template: Template) => new Date(template.updatedAt).toLocaleDateString()
 
-const menuItems = (template: Template) => [[
-    { label: t('action_view'), icon: 'lucide:eye', onSelect: () => handleView(template) },
-    { label: t('action_edit'), icon: 'lucide:edit', onSelect: () => handleEdit(template) },
-    { label: t('action_delete'), icon: 'lucide:trash', color: 'error' as const, onSelect: () => handleDeleteClick(template) },
-]]
+const handleAttachToBusiness = async (template: Template) => {
+    if (!activeBusinessId.value) return
+    try {
+        await attachTemplateToBusiness(template.id, activeBusinessId.value, TEMPLATE_TYPE)
+        await getTemplatesByType(TEMPLATE_TYPE, { page: 1, limit: 20 }, scope.value)
+    } catch {
+        // Error toast is raised by the composable.
+    }
+}
+
+const menuItems = (template: Template) => {
+    const items = [
+        { label: t('action_view'), icon: 'lucide:eye', onSelect: () => handleView(template) },
+        { label: t('action_edit'), icon: 'lucide:edit', onSelect: () => handleEdit(template) },
+    ]
+    if (activeBusinessId.value && !template.businessId) {
+        items.push({
+            label: t('action_attach_business'), icon: 'lucide:building-2', onSelect: () => handleAttachToBusiness(template),
+        })
+    }
+    items.push({
+        label: t('action_delete'), icon: 'lucide:trash', color: 'error' as const, onSelect: () => handleDeleteClick(template),
+    })
+    return [items]
+}
 </script>
 
 <template>
@@ -186,7 +229,7 @@ const menuItems = (template: Template) => [[
         <template #toolbar>
             <BaseCollectionToolbar :search="search" :search-placeholder="t('search_placeholder')"
                 :filters="toolbarFilters" :view="view" :views="viewOptions" :busy="isLoading"
-                @update:search="setSearch" @update:filter="(key: string, value: string) => setFilter(key, value)"
+                @update:search="setSearch" @update:filter="handleFilterChange"
                 @update:view="setView" />
         </template>
 

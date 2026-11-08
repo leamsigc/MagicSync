@@ -79,7 +79,8 @@ async function saveConfig() {
     toast.add({ title: t('saved'), color: 'success' })
   }
   catch (error) {
-    const message = error instanceof Error ? error.message : t('saveError')
+    const message = (error as { data?: { statusMessage?: string, message?: string } }).data?.statusMessage
+      ?? (error instanceof Error ? error.message : t('saveError'))
     saveError.value = message
     toast.add({ title: t('saveError'), description: message, color: 'error' })
   }

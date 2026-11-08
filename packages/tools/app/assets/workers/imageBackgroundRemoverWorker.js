@@ -1,4 +1,21 @@
-import { pipeline } from '@huggingface/transformers';
+import { env, pipeline } from '@huggingface/transformers';
+
+// transformers.js points ONNX Runtime at its CDN by default and then "caches"
+// the WASM factory by fetching it, wrapping it in a `blob:` URL and dynamic-
+// importing that blob. The app CSP has no `blob:` in `script-src`, so that
+// import is rejected (`Failed to fetch dynamically imported module: blob:…`)
+// and the pipeline dies with `no available backend found`.
+//
+// Clearing `wasmPaths` makes ORT fall back to the factory and `.wasm` that Vite
+// already bundled next to this worker (same-origin, allowed by `'self'`).
+// Single-threaded keeps it working without SharedArrayBuffer/cross-origin
+// isolation, which `/tools/**` routes don't get (only `/app/tools/**` does).
+const onnxWasm = env.backends.onnx?.wasm;
+if (onnxWasm) {
+  delete onnxWasm.wasmPaths;
+  onnxWasm.numThreads = 1;
+}
+env.useWasmCache = false;
 
 // NOTE: the model MUST have a `model_type` supported by the installed
 // transformers version for the `background-removal` task

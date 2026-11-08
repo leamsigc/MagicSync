@@ -19,6 +19,8 @@ export interface AssetFilters {
   search?: string
   /** Undefined means "no folder predicate" — every asset, filed or not. */
   folderScope?: FolderScope
+  /** Only rows the caller created that never got a business. */
+  unattached?: boolean
 }
 
 export interface AssetPagination {
@@ -70,6 +72,16 @@ function getErrorMessage(error: unknown, fallback: string): string {
 function appendFolderScope(params: URLSearchParams, scope: FolderScope | undefined) {
   const token = scope ? folderScopeToken(scope) : undefined
   if (token) params.append('folderId', token)
+}
+
+function appendListFilters(
+  params: URLSearchParams,
+  filters: AssetFilters | undefined,
+  scope: FolderScope | undefined,
+) {
+  if (filters?.mimeType) params.append('mimeType', filters.mimeType)
+  appendFolderScope(params, scope)
+  if (filters?.unattached) params.append('unattached', 'true')
 }
 
 function resolveDeletionItem(id: string): AssetDeletionItem {
@@ -145,11 +157,7 @@ export const useAssetManagement = () => {
         limit: (options?.limit || pagination.value.limit).toString()
       })
 
-      if (options?.filters?.mimeType) {
-        params.append('mimeType', options.filters.mimeType)
-      }
-
-      appendFolderScope(params, options?.filters?.folderScope)
+      appendListFilters(params, options?.filters, options?.filters?.folderScope)
 
       const response = await $fetch<{
         success: boolean
@@ -339,6 +347,39 @@ export const useAssetManagement = () => {
       return asset ?? null
     } catch (err: any) {
       error.value = err.data?.message || err.message || 'Failed to upload from URL'
+      return null
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  /**
+   * Adopt the caller's personal rows into a business (active workspace).
+   * `dropFromList` is for the "Only mine" scope, where attached rows no longer
+   * match the current filter and must leave the grid.
+   */
+  const attachAssets = async (
+    businessId: string,
+    assetIds: string[],
+    dropFromList = false,
+  ): Promise<number | null> => {
+    isLoading.value = true
+    error.value = null
+    try {
+      const response = await $fetch<{ success: boolean; data: { attached: number }; error?: string }>(
+        '/api/v1/assets/attach',
+        { method: 'POST', body: { businessId, assetIds } },
+      )
+      if (!response.success) throw new Error(response.error || 'Failed to attach assets')
+
+      const attachedIds = new Set(assetIds)
+      assets.value = dropFromList
+        ? assets.value.filter(asset => !attachedIds.has(asset.id))
+        : assets.value.map(asset => attachedIds.has(asset.id) ? { ...asset, businessId } : asset)
+      selectedAssets.value = selectedAssets.value.filter(asset => !attachedIds.has(asset.id))
+      return response.data.attached
+    } catch (caught: unknown) {
+      error.value = getErrorMessage(caught, 'Failed to attach assets')
       return null
     } finally {
       isLoading.value = false
@@ -535,11 +576,7 @@ export const useAssetManagement = () => {
         limit: pagination.value.limit.toString()
       })
 
-      if (filters.value.mimeType) {
-        params.append('mimeType', filters.value.mimeType)
-      }
-
-      appendFolderScope(params, folderScope.value)
+      appendListFilters(params, filters.value, folderScope.value)
 
       const response = await $fetch<{
         success: boolean
@@ -585,6 +622,7 @@ export const useAssetManagement = () => {
     clearError,
     uploadFiles,
     uploadFromUrl,
+    attachAssets,
     deleteAssets,
     clearDeletionHistory,
     refreshAssets,

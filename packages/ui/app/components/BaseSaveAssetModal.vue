@@ -29,6 +29,12 @@ const isSaving = ref(false)
 const assetName = ref(props.filename)
 const errorMessage = ref<string | null>(null)
 
+// Uploading inside the app should land in the workspace the user is in, the
+// same way `/app/media` uploads do. Personal rows (`businessId = null`) are
+// still listed by the media page for their creator, so saving without an
+// active business keeps working.
+const activeBusinessId = useState<string | undefined>('business:id')
+
 watch(() => props.filename, (name) => {
   assetName.value = name
 })
@@ -60,6 +66,10 @@ function buildFile(): File | null {
   return new File([bytes], name, { type: mime })
 }
 
+function appendActiveBusiness(formData: FormData) {
+  if (activeBusinessId.value) formData.append('businessId', activeBusinessId.value)
+}
+
 async function handleConfirm() {
   const file = buildFile()
   if (!file) return
@@ -68,6 +78,7 @@ async function handleConfirm() {
   try {
     const formData = new FormData()
     formData.append('files', file)
+    appendActiveBusiness(formData)
     const response = await $fetch<{ success: boolean; data: SavedAsset[] }>('/api/v1/assets', {
       method: 'POST',
       body: formData

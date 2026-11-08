@@ -19,6 +19,7 @@ import { ALL_SCOPE_TOKEN, folderScopeToken, parseFolderScope, type AssetFolderSu
 
 type FilterType = 'all' | 'image' | 'video' | 'document'
 type ViewMode = 'masonry' | 'grid' | 'list' | 'carousel'
+type MediaScope = 'business' | 'unattached'
 
 interface Props {
   filterType?: FilterType
@@ -28,6 +29,8 @@ interface Props {
   hideViewMode?: boolean
   folderScope?: FolderScope
   folders?: AssetFolderSummary[]
+  /** Business rows (+ own unfiled) vs only the caller's rows with no business. */
+  scope?: MediaScope
 }
 
 interface Emits {
@@ -35,6 +38,7 @@ interface Emits {
   'update:searchQuery': [value: string]
   'update:viewMode': [value: ViewMode]
   'update:folderScope': [value: FolderScope]
+  'update:scope': [value: MediaScope]
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -44,6 +48,7 @@ const props = withDefaults(defineProps<Props>(), {
   hideViewMode: false,
   folderScope: () => ({ kind: 'unfiled' }),
   folders: () => [],
+  scope: 'business',
 })
 
 const emit = defineEmits<Emits>()
@@ -60,6 +65,11 @@ const folderOptions = computed(() => [
   })),
 ])
 
+const scopeOptions = computed(() => [
+  { value: 'business', label: t('sections.filter_options.business') },
+  { value: 'unattached', label: t('sections.filter_options.unattached') },
+])
+
 const typeOptions = computed(() => [
   { value: 'all', label: t('sections.filter_options.all_files') },
   { value: 'image', label: t('sections.filter_options.images') },
@@ -68,6 +78,13 @@ const typeOptions = computed(() => [
 ])
 
 const filters = computed<CollectionFilter[]>(() => [
+  {
+    key: 'scope',
+    label: t('sections.filters.scope'),
+    value: props.scope,
+    options: scopeOptions.value,
+    width: 'w-full sm:w-48',
+  },
   {
     key: 'folder',
     label: t('sections.filters.folder'),
@@ -101,6 +118,10 @@ function handleSearch(value: string) {
 function handleFilter(key: string, value: string) {
   if (key === 'folder') {
     emit('update:folderScope', parseFolderScope(value))
+    return
+  }
+  if (key === 'scope') {
+    emit('update:scope', value as MediaScope)
     return
   }
   emit('update:filterType', value as FilterType)

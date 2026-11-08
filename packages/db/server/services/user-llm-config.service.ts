@@ -121,6 +121,32 @@ function withRevealedKey(row: UserLlmConfig): UserLlmConfig {
   return { ...row, apiKey: revealSecret(row.apiKey) }
 }
 
+/**
+ * Turn the swallowed DB/crypto error into an actionable message. The generic
+ * "Failed to create LLM config" hid the two production cases that matter:
+ * a missing `NUXT_PUBLISH_SECRET` (API keys cannot be encrypted) and a
+ * production database that never ran the schema migrations.
+ */
+function saveFailure(error: unknown, fallback: string): { success: false, error: string, code: string } {
+  const detail = error instanceof Error ? error.message : String(error)
+  log.error({ message: fallback, error: detail })
+  if (detail.includes('NUXT_PUBLISH_SECRET') || detail.includes('publish-crypto')) {
+    return {
+      success: false,
+      error: 'API key encryption is not configured on the server. Set NUXT_PUBLISH_SECRET (openssl rand -hex 32) and redeploy.',
+      code: 'CREDENTIAL_ENCRYPTION_UNAVAILABLE',
+    }
+  }
+  if (detail.includes('no column named') || detail.includes('no such column')) {
+    return {
+      success: false,
+      error: `Database schema is out of date: ${detail}. Run the pending migrations.`,
+      code: 'SCHEMA_OUT_OF_DATE',
+    }
+  }
+  return { success: false, error: `${fallback}: ${detail}`, code: 'CONFIG_SAVE_FAILED' }
+}
+
 function toEffectiveConfig(userId: string, businessId: string, override: BusinessLlmOverride): UserLlmConfig {
   const now = new Date()
   return {
@@ -240,7 +266,7 @@ export class UserLlmConfigService implements UserLlmConfigServiceType {
 
       return { success: true, data: withRevealedKey(config) }
     } catch (error) {
-      return { success: false, error: 'Failed to create LLM config' }
+      return saveFailure(error, 'Failed to create LLM config')
     }
   }
 
@@ -297,7 +323,7 @@ export class UserLlmConfigService implements UserLlmConfigServiceType {
 
       return { success: true, data: withRevealedKey(updated) }
     } catch (error) {
-      return { success: false, error: 'Failed to update LLM config' }
+      return saveFailure(error, 'Failed to update LLM config')
     }
   }
 
@@ -371,8 +397,8 @@ export class UserLlmConfigService implements UserLlmConfigServiceType {
         return { success: false, error: 'Failed to save business LLM override' }
       }
       return { success: true, data: saved.data }
-    } catch {
-      return { success: false, error: 'Failed to save business LLM override' }
+    } catch (error) {
+      return saveFailure(error, 'Failed to save business LLM override')
     }
   }
 

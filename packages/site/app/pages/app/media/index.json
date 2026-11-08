@@ -14,7 +14,8 @@
       "new_folder": "New Folder",
       "delete_folder": "Delete folder {name}",
       "cancel": "Cancel",
-      "delete": "Delete"
+      "delete": "Delete",
+      "attach_to_business": "Attach to business"
     },
     "sections": {
       "stats": {
@@ -31,9 +32,12 @@
         "search": "Search:",
         "view": "View:",
         "search_placeholder": "Search assets...",
-        "folder": "Folder:"
+        "folder": "Folder:",
+        "scope": "Show:"
       },
       "filter_options": {
+        "business": "This business",
+        "unattached": "Only mine (unattached)",
         "all_files": "All Files",
         "images": "Images",
         "videos": "Videos",
@@ -89,7 +93,8 @@
       "folder_created": "Folder \"{name}\" created.",
       "folder_deleted": "Folder \"{name}\" deleted. {count} asset(s) moved to Unfiled.",
       "assets_moved": "{count} asset(s) moved.",
-      "move_partial": "Moved {moved} of {total}; the rest belong to another account."
+      "move_partial": "Moved {moved} of {total}; the rest belong to another account.",
+      "attached": "Successfully attached {count} asset{plural} to the business"
     },
     "upload": {
       "title": "Upload Assets",
@@ -111,7 +116,8 @@
       "new_folder": "Nueva Carpeta",
       "delete_folder": "Eliminar carpeta {name}",
       "cancel": "Cancelar",
-      "delete": "Eliminar"
+      "delete": "Eliminar",
+      "attach_to_business": "Asociar al negocio"
     },
     "sections": {
       "stats": {
@@ -128,9 +134,12 @@
         "search": "Buscar:",
         "view": "Vista:",
         "search_placeholder": "Buscar recursos...",
-        "folder": "Carpeta:"
+        "folder": "Carpeta:",
+        "scope": "Mostrar:"
       },
       "filter_options": {
+        "business": "Este negocio",
+        "unattached": "Solo míos (sin negocio)",
         "all_files": "Todos los Archivos",
         "images": "Imágenes",
         "videos": "Videos",
@@ -186,7 +195,8 @@
       "folder_created": "Carpeta \"{name}\" creada.",
       "folder_deleted": "Carpeta \"{name}\" eliminada. {count} recurso(s) movidos a Sin carpeta.",
       "assets_moved": "{count} recurso(s) movidos.",
-      "move_partial": "Se movieron {moved} de {total}; el resto pertenece a otra cuenta."
+      "move_partial": "Se movieron {moved} de {total}; el resto pertenece a otra cuenta.",
+      "attached": "Se asociaron {count} archivo{plural} al negocio"
     },
     "upload": {
       "title": "Subir Recursos",
@@ -208,7 +218,8 @@
       "new_folder": "Neuer Ordner",
       "delete_folder": "Ordner {name} löschen",
       "cancel": "Abbrechen",
-      "delete": "Löschen"
+      "delete": "Löschen",
+      "attach_to_business": "Mit Unternehmen verknüpfen"
     },
     "sections": {
       "stats": {
@@ -225,9 +236,12 @@
         "search": "Suchen:",
         "view": "Ansicht:",
         "search_placeholder": "Assets suchen...",
-        "folder": "Ordner:"
+        "folder": "Ordner:",
+        "scope": "Anzeigen:"
       },
       "filter_options": {
+        "business": "Dieses Unternehmen",
+        "unattached": "Nur meine (ohne Unternehmen)",
         "all_files": "Alle Dateien",
         "images": "Bilder",
         "videos": "Videos",
@@ -283,7 +297,8 @@
       "folder_created": "Ordner \"{name}\" erstellt.",
       "folder_deleted": "Ordner \"{name}\" gelöscht. {count} Asset(s) nach \"Nicht abgelegt\" verschoben.",
       "assets_moved": "{count} Asset(s) verschoben.",
-      "move_partial": "{moved} von {total} verschoben; der Rest gehört einem anderen Konto."
+      "move_partial": "{moved} von {total} verschoben; der Rest gehört einem anderen Konto.",
+      "attached": "{count} Datei{plural} mit dem Unternehmen verknüpft"
     },
     "upload": {
       "title": "Assets Hochladen",
@@ -305,7 +320,8 @@
       "new_folder": "Nouveau Dossier",
       "delete_folder": "Supprimer le dossier {name}",
       "cancel": "Annuler",
-      "delete": "Supprimer"
+      "delete": "Supprimer",
+      "attach_to_business": "Associer à l'entreprise"
     },
     "sections": {
       "stats": {
@@ -322,9 +338,12 @@
         "search": "Rechercher:",
         "view": "Vue:",
         "search_placeholder": "Rechercher ressources...",
-        "folder": "Dossier :"
+        "folder": "Dossier :",
+        "scope": "Afficher :"
       },
       "filter_options": {
+        "business": "Cette entreprise",
+        "unattached": "Seulement les miens (non associés)",
         "all_files": "Tous les Fichiers",
         "images": "Images",
         "videos": "Vidéos",
@@ -380,7 +399,8 @@
       "folder_created": "Dossier « {name} » créé.",
       "folder_deleted": "Dossier « {name} » supprimé. {count} ressource(s) déplacée(s) vers Non classé.",
       "assets_moved": "{count} ressource(s) déplacée(s).",
-      "move_partial": "{moved} sur {total} déplacée(s) ; le reste appartient à un autre compte."
+      "move_partial": "{moved} sur {total} déplacée(s) ; le reste appartient à un autre compte.",
+      "attached": "{count} fichier{plural} associés à l'entreprise"
     },
     "upload": {
       "title": "Téléverser Ressources",

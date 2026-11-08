@@ -8,7 +8,7 @@
  * a faked local phase.
  */
 
-export type SectionKind = 'research' | 'ideas' | 'carousel' | 'image' | 'draft' | 'schedule' | 'board' | 'delivery'
+export type SectionKind = 'research' | 'ideas' | 'carousel' | 'plan' | 'image' | 'draft' | 'schedule' | 'board' | 'delivery'
 export type RailStatus = 'done' | 'active' | 'todo' | 'failed' | 'running'
 
 export interface ToolCallLike {
@@ -51,11 +51,10 @@ const BOARD_TOOLS = ['board_list', 'board_add_cards', 'board_move', 'board_updat
 const CAROUSEL_TOOLS = ['generate_carousel', 'revise_carousel']
 const IMAGE_TOOLS = [
   'render-design',
+  'render-design-batch',
   'create-design',
+  'duplicate-design-template',
   'batch-generate-designs',
-  'get-design-template',
-  'list-design-templates',
-  'update-design',
   'create-asset-from-url',
 ]
 const SCHEDULE_TOOLS = [
@@ -66,8 +65,9 @@ const SCHEDULE_TOOLS = [
   'publish-now',
   'retry-post',
 ]
+const PLAN_TOOLS = ['plan_week_posts']
 
-const SECTION_ORDER: SectionKind[] = ['research', 'ideas', 'carousel', 'image', 'draft', 'schedule', 'board', 'delivery']
+const SECTION_ORDER: SectionKind[] = ['research', 'ideas', 'carousel', 'plan', 'image', 'draft', 'schedule', 'board', 'delivery']
 
 type Payload = Record<string, unknown> | null
 
@@ -159,8 +159,14 @@ function isSchedulePayload(payload: Payload): boolean {
   return isItemList(payload.items)
 }
 
+function isPlanPayload(payload: Payload): boolean {
+  if (!payload) return false
+  return payload.plan !== undefined || payload.requiresAccounts === true || payload.requiresTemplate === true
+}
+
 const PAYLOAD_RULES: Array<[SectionKind, (payload: Payload) => boolean]> = [
   ['carousel', isCarouselPayload],
+  ['plan', isPlanPayload],
   ['image', isImagePayload],
   ['schedule', isSchedulePayload],
   ['ideas', isIdeasPayload],
@@ -171,6 +177,7 @@ const PAYLOAD_RULES: Array<[SectionKind, (payload: Payload) => boolean]> = [
 
 const NAME_RULES: Array<[SectionKind, string[]]> = [
   ['carousel', CAROUSEL_TOOLS],
+  ['plan', PLAN_TOOLS],
   ['image', IMAGE_TOOLS],
   ['schedule', SCHEDULE_TOOLS],
   ['draft', DRAFT_TOOLS],

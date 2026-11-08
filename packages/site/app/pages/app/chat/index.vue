@@ -106,6 +106,34 @@ function handleCompose(payload: { content: string, accounts: Array<{ id: string,
   composerOpen.value = true
 }
 
+interface PlanReviseIntent {
+  kind: 'accounts' | 'template' | 'revise'
+  brief: string
+  feedback?: string
+  indexes?: number[]
+  accountIds?: string[]
+  templateId?: string
+}
+
+/** The week-plan card turns a pick/feedback into one structured chat turn. */
+function handlePlanRevise(intent: PlanReviseIntent): void {
+  if (isStreaming.value) return
+  if (intent.kind === 'accounts') {
+    const args = { brief: intent.brief, accountIds: intent.accountIds ?? [] }
+    input.value = `Call plan_week_posts now with ${JSON.stringify(args)}. Then show the preview.`
+  }
+  else if (intent.kind === 'template') {
+    const args = { brief: intent.brief, templateId: intent.templateId, accountIds: intent.accountIds ?? [] }
+    input.value = `Call plan_week_posts now with ${JSON.stringify(args)}. Then show the preview.`
+  }
+  else {
+    const posts = (intent.indexes ?? []).map(index => index + 1).join(', ')
+    const args = { brief: intent.brief, feedback: intent.feedback ?? '', accountIds: intent.accountIds ?? [], templateId: intent.templateId }
+    input.value = `Call plan_week_posts again with ${JSON.stringify(args)} and focus on post(s) ${posts}. Then show the updated preview.`
+  }
+  onSubmit()
+}
+
 function handleComposerOpen(value: boolean) {
   composerOpen.value = value
 }
@@ -941,7 +969,7 @@ onMounted(async () => {
             <div v-if="message.role === 'assistant' && (message.toolCalls?.length ?? 0) > 0"
               class="mt-1 w-full max-w-[85%]">
               <RunCard :calls="message.toolCalls ?? []" :run="message.run" :business-id="activeBusinessId"
-                @compose="handleCompose"
+                @compose="handleCompose" @plan-revise="handlePlanRevise"
                 :is-streaming="isStreaming && index === messages.length - 1" :cancel-loading="isCancelling"
                 @revise="handleCarouselRevision" @cancel="handleCancelRun" />
             </div>

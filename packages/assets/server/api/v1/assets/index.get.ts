@@ -10,6 +10,7 @@ const querySchema = z.object({
   mimeType: z.string().optional(),
   own: z.string().optional(),
   folderId: z.string().optional(),
+  unattached: z.string().optional(),
 })
 
 type AssetListQuery = {
@@ -19,6 +20,7 @@ type AssetListQuery = {
   mimeType?: string
   own?: string
   folderId?: string
+  unattached?: string
 }
 
 function parseAssetListQuery(raw: unknown): AssetListQuery {
@@ -26,7 +28,7 @@ function parseAssetListQuery(raw: unknown): AssetListQuery {
   if (!parsed.success) {
     throw createError({ statusCode: 400, statusMessage: 'Invalid asset list query' })
   }
-  const { businessId, page, limit, mimeType, own, folderId } = parsed.data
+  const { businessId, page, limit, mimeType, own, folderId, unattached } = parsed.data
   // A folder belongs to a business. Without one there is nothing to scope it to, so
   // this is a 400 — never a silent fall-through to the `own` branch.
   if (folderId !== undefined && !businessId) {
@@ -39,7 +41,17 @@ function parseAssetListQuery(raw: unknown): AssetListQuery {
     mimeType,
     own,
     folderId,
+    unattached,
   }
+}
+
+/** Filters shared by the business and `own` branches. Built once, no ordering debt. */
+function buildListFilters(query: AssetListQuery): Record<string, unknown> {
+  const filters: Record<string, unknown> = {}
+  if (query.mimeType) filters.mimeType = query.mimeType
+  if (query.folderId !== undefined) filters.folderId = query.folderId
+  if (query.unattached === 'true') filters.unattached = true
+  return filters
 }
 
 export default defineEventHandler(async (event) => {
@@ -48,18 +60,15 @@ export default defineEventHandler(async (event) => {
     const user = await checkUserIsLogin(event)
     log.set({ userId: user.id })
 
-    const { businessId, page, limit, mimeType, own, folderId } = parseAssetListQuery(getQuery(event))
+    const { businessId, page, limit, mimeType, own, folderId, unattached } = parseAssetListQuery(getQuery(event))
     log.set({ businessId, pagination: { page, limit }, folderId })
 
-    if (own === 'true') {
-      log.info('Listing user assets', { userId: user.id, page, limit })
-      const ownFilters = mimeType ? { mimeType } : {}
-      return await assetService.findByUserId(user.id, { pagination: { page, limit }, filters: ownFilters })
-    }
+    const filters = buildListFilters({ businessId, page, limit, mimeType, own, folderId, unattached })
 
-    const filters: Record<string, unknown> = {}
-    if (mimeType) filters.mimeType = mimeType
-    if (folderId !== undefined) filters.folderId = folderId
+    if (own === 'true') {
+      log.info('Listing user assets', { userId: user.id, page, limit, unattached })
+      return await assetService.findByUserId(user.id, { pagination: { page, limit }, filters })
+    }
 
     const result = await assetService.findByBusinessId(businessId, user.id, {
       pagination: { page, limit },

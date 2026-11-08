@@ -10,6 +10,7 @@ import ResearchSection from './tool-results/sections/ResearchSection.vue'
 import IdeasSection from './tool-results/sections/IdeasSection.vue'
 import CarouselSection from './tool-results/sections/CarouselSection.vue'
 import ImageSection from './tool-results/sections/ImageSection.vue'
+import WeekPlanSection from './tool-results/sections/WeekPlanSection.vue'
 import DraftSection from './tool-results/sections/DraftSection.vue'
 import ScheduleSection from './tool-results/sections/ScheduleSection.vue'
 import BoardSection from './tool-results/sections/BoardSection.vue'
@@ -24,10 +25,20 @@ const props = defineProps<{
   cancelLoading?: boolean
 }>()
 
+interface PlanRevisePayload {
+  kind: 'accounts' | 'template' | 'revise'
+  brief: string
+  feedback?: string
+  indexes?: number[]
+  accountIds?: string[]
+  templateId?: string
+}
+
 const emit = defineEmits<{
   (event: 'revise', intent: { artifactId: string, slideId: string, version: number }): void
   (event: 'cancel'): void
   (event: 'compose', payload: { content: string, accounts: Array<{ id: string, platform: string }>, platformVariants?: Record<string, string> }): void
+  (event: 'plan-revise', payload: PlanRevisePayload): void
 }>()
 
 const { t } = useI18n()
@@ -42,7 +53,7 @@ const hasCarousel = computed(() => sections.value.some(section => section.kind =
 // A run that produced something the owner must look at opens itself: a post
 // preview, a rendered design, or a schedule result. Raw JSON stays collapsed.
 const hasEmbeddedResult = computed(() => sections.value.some(section => {
-  return section.kind === 'carousel' || section.kind === 'image' || section.kind === 'draft' || section.kind === 'schedule'
+  return section.kind === 'carousel' || section.kind === 'plan' || section.kind === 'image' || section.kind === 'draft' || section.kind === 'schedule'
 }))
 watch(hasEmbeddedResult, (value) => {
   if (value) open.value = true
@@ -114,6 +125,10 @@ function handleRevise(intent: { artifactId: string, slideId: string, version: nu
 
 function handleCompose(payload: { content: string, accounts: Array<{ id: string, platform: string }>, platformVariants?: Record<string, string> }): void {
   emit('compose', payload)
+}
+
+function handlePlanRevise(payload: PlanRevisePayload): void {
+  emit('plan-revise', payload)
 }
 
 function handleCancel(): void {
@@ -206,6 +221,12 @@ async function handleApprovalAction(actionId: string, actionLabel: string): Prom
         <ImageSection
           v-else-if="section.kind === 'image'"
           :calls="section.calls"
+        />
+        <WeekPlanSection
+          v-else-if="section.kind === 'plan'"
+          :calls="section.calls"
+          :business-id="businessId"
+          @revise="handlePlanRevise"
         />
         <DraftSection
           v-else-if="section.kind === 'draft'"

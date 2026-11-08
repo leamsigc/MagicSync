@@ -14,6 +14,7 @@ import { createSkillsTools } from './skills.tools'
 import { createPublishingTools } from './publishing.tools'
 import { createWorkspaceTools } from './workspace.tools'
 import { createTemplateTools } from './templates.tools'
+import { createWeekPlanTools } from './week-plan.tools'
 
 /**
  * T28 — the whole Flue tool set for one run, tenant closed over by `ctx`.
@@ -34,6 +35,7 @@ export function createAgentTools(ctx: AgentToolContext): ToolDefinition[] {
     ...createFeatureTools(ctx),
     ...createWorkspaceTools(ctx),
     ...createTemplateTools(ctx),
+    ...createWeekPlanTools(ctx),
     ...createPythonTools(ctx),
     ...createSkillsTools(ctx),
     ...createGoalTools(ctx),

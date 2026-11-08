@@ -10,6 +10,20 @@ import { templateService } from "#layers/BaseDB/server/services/template.service
 import { TemplateType } from "#layers/BaseDB/db/schema"
 import { accessErrorStatus, requireBusinessAccess } from '#layers/BaseDB/server/utils/business-access'
 
+function parseTemplateFilters(query: Record<string, unknown>): Record<string, unknown> {
+  const filters: Record<string, unknown> = {}
+  if (query.type && TemplateType.includes(query.type as typeof TemplateType[number])) {
+    filters.type = query.type as string
+  }
+  if (query.isPublic !== undefined) {
+    filters.isPublic = query.isPublic === 'true'
+  }
+  if (query.unattached === 'true') {
+    filters.unattached = true
+  }
+  return filters
+}
+
 export default defineEventHandler(async (event) => {
   const log = useLogger(event)
   try {
@@ -25,14 +39,7 @@ export default defineEventHandler(async (event) => {
     const page = parseInt(query.page as string) || 1
     const limit = parseInt(query.limit as string) || 20
 
-    // Parse filter parameters
-    const filters: Record<string, unknown> = {}
-    if (query.type && TemplateType.includes(query.type as typeof TemplateType[number])) {
-      filters.type = query.type as string
-    }
-    if (query.isPublic !== undefined) {
-      filters.isPublic = query.isPublic === 'true'
-    }
+    const filters = parseTemplateFilters(query)
 
     if (businessId) {
       const access = await requireBusinessAccess(event, user.id, businessId)
